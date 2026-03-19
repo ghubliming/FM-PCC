@@ -183,9 +183,17 @@ class Trainer(object):
             self.step += 1
 
     def train(self):
-        n_epochs = int(self.n_train_steps // self.n_steps_per_epoch)
-        for epoch in range(n_epochs):
-            self.train_epoch(self.n_steps_per_epoch, epoch)
+        if self.step >= self.n_train_steps:
+            return
+
+        remaining_steps = int(self.n_train_steps - self.step)
+        epoch = int(self.step // self.n_steps_per_epoch)
+
+        while remaining_steps > 0:
+            steps_this_epoch = min(self.n_steps_per_epoch, remaining_steps)
+            self.train_epoch(steps_this_epoch, epoch)
+            remaining_steps -= steps_this_epoch
+            epoch += 1
 
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
