@@ -1,5 +1,9 @@
 # FM-PCC
 
+## Training
+
+For the current training commands and options, see [TRAINING_USAGE.md](TRAINING_USAGE.md).
+
 ## 1. Traditional Model Predictive Control (MPC)
 **Methodology:**
 This baseline utilizes a classical receding horizon control framework. At each physical time $t$, the controller solves a constrained optimization problem over a finite horizon $H$. It minimizes a predefined cost function while strictly adhering to the system's transition dynamics, $s_{t+1} = f(s_t, a_t)$, and operational boundaries.
