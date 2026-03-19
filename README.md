@@ -36,11 +36,6 @@ $$
 * **Efficiency Gains:** By eliminating random noise injection ($\epsilon_k$) during the generation process, the trajectory follows a smooth, direct path. This reduces the computational load on the geometric projection operator, leading to faster inference and more stable physical execution.
 * **Refined Selection:** Since paths are deterministic and smooth, selection criteria like Cumulative Projection Cost are largely replaced by simpler consistency filters.
 
-
----
-
-Here is a new section designed to be appended directly to your `README.md`. It bridges the theoretical math of Flow Matching with the physical reality of the control solver, effectively explaining the exact dynamic visible in your system plot.
-
 ---
 # Appendix
 **Methodology:**
