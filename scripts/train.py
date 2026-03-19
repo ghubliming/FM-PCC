@@ -12,6 +12,21 @@ import diffuser.utils as utils
 exp = 'avoiding-d3il'
 DEFAULT_SEEDS = [5, 6, 7, 8, 9]
 
+
+def sanitize_wandb_env():
+    """Clear malformed W&B service tokens that can crash wandb.init in Colab."""
+    service_env_keys = ('WANDB_SERVICE', 'WANDB__SERVICE')
+
+    for env_key in service_env_keys:
+        token = os.environ.get(env_key)
+        if token is None:
+            continue
+
+        # W&B expects exactly 5 '-' separated token parts.
+        if len(token.split('-')) != 5:
+            print(f'[ train ] Clearing malformed {env_key}: {token}')
+            os.environ.pop(env_key, None)
+
 class Parser(utils.Parser):
     dataset: str = exp
     config: str = 'config.' + exp
@@ -200,6 +215,7 @@ for seed in selected_seeds:
 
     run = None
     if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
+        sanitize_wandb_env()
         import wandb
 
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else f'{args.dataset}-{args.exp_name}'
