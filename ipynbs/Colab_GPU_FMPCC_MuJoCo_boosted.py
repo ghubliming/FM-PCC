@@ -384,8 +384,7 @@ echo "downloaded zip: $ZIP_FILE"
 # ## 14) Evaluation and Results
 
 # %% [markdown]
-# Remember to edit the yaml in config to choose seeds
-
+# Remember to edit the yaml in /config to choose seeds and must write_to_file: True
 # %%
 !/content/miniconda3/envs/FMPCC/bin/python scripts/eval.py
 !/content/miniconda3/envs/FMPCC/bin/python scripts/load_results.py
