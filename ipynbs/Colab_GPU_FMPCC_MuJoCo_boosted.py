@@ -121,20 +121,43 @@ echo "Persistent pip cache path: $PIP_CACHE"
 %%bash
 set -e
 
-if [ ! -x "/content/miniconda3/bin/conda" ]; then
+ROOT="/content/drive/MyDrive/FMPCC"
+PERSIST_CONDA="$ROOT/miniconda3"
+RUNTIME_CONDA="/content/miniconda3"
+CONDA_BIN="$PERSIST_CONDA/bin/conda"
+
+# Ensure the runtime path points to the persistent conda directory.
+if [ -L "$RUNTIME_CONDA" ]; then
+  LINK_TARGET="$(readlink -f "$RUNTIME_CONDA" || true)"
+  if [ "$LINK_TARGET" != "$PERSIST_CONDA" ]; then
+    rm -f "$RUNTIME_CONDA"
+    ln -s "$PERSIST_CONDA" "$RUNTIME_CONDA"
+  fi
+elif [ ! -e "$RUNTIME_CONDA" ]; then
+  ln -s "$PERSIST_CONDA" "$RUNTIME_CONDA"
+fi
+
+if [ ! -x "$CONDA_BIN" ] || ! "$CONDA_BIN" --version >/dev/null 2>&1; then
+  # Clean partial/corrupt install so installer can create a fresh tree.
+  rm -rf "$PERSIST_CONDA"
   wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /content/miniconda.sh
-  bash /content/miniconda.sh -b -p /content/miniconda3 -u
+  bash /content/miniconda.sh -b -p "$PERSIST_CONDA" -u
 fi
 
-/content/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-/content/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+"$CONDA_BIN" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+"$CONDA_BIN" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
-if ! /content/miniconda3/bin/conda env list | grep -q "^FMPCC "; then
-  /content/miniconda3/bin/conda create -n FMPCC python=3.10 -y -q
+if ! "$CONDA_BIN" env list | grep -q "^FMPCC "; then
+  "$CONDA_BIN" create -n FMPCC python=3.10 -y -q
 fi
 
-/content/miniconda3/envs/FMPCC/bin/python -V
-/content/miniconda3/envs/FMPCC/bin/pip --version
+if [ ! -x "$PERSIST_CONDA/envs/FMPCC/bin/python" ] || [ ! -x "$PERSIST_CONDA/envs/FMPCC/bin/pip" ]; then
+  "$CONDA_BIN" remove -n FMPCC --all -y || true
+  "$CONDA_BIN" create -n FMPCC python=3.10 -y -q
+fi
+
+"$PERSIST_CONDA/envs/FMPCC/bin/python" -V
+"$PERSIST_CONDA/envs/FMPCC/bin/pip" --version
 
 # %% [markdown]
 # ## 5) Install D3IL (Install Once + Verify)
