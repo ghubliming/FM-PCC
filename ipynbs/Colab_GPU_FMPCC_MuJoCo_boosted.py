@@ -44,6 +44,8 @@ set -e
 
 ROOT="/content/drive/MyDrive/FMPCC"
 REPO="$ROOT/FM-PCC"
+UPDATE_REPO="${UPDATE_REPO:-1}"
+OVERWRITE_LOCAL_CHANGES="${OVERWRITE_LOCAL_CHANGES:-0}"
 
 mkdir -p "$ROOT"
 cd "$ROOT"
@@ -52,7 +54,32 @@ if [ ! -d "$REPO/.git" ]; then
   git clone --recurse-submodules https://github.com/ghubliming/FM-PCC.git
 else
   cd "$REPO"
-  git pull --ff-only
+  if [ "$UPDATE_REPO" != "1" ]; then
+    echo "Repo update disabled (UPDATE_REPO=$UPDATE_REPO). Using existing local checkout."
+    echo "Repo ready: $REPO"
+    exit 0
+  fi
+
+  CHANGED_FILES="$(git status --porcelain)"
+  if [ -n "$CHANGED_FILES" ]; then
+    echo "WARNING: Local changes detected in repo."
+    echo "Changed files:"
+    echo "$CHANGED_FILES"
+
+    if [ "$OVERWRITE_LOCAL_CHANGES" = "1" ]; then
+      echo "OVERWRITE_LOCAL_CHANGES=1 -> discarding local changes and untracked files"
+      git reset --hard HEAD
+      git clean -fd
+    else
+      echo "Skipping git pull to protect local changes."
+      echo "Set OVERWRITE_LOCAL_CHANGES=1 to force overwrite on next run."
+      echo "Repo ready: $REPO"
+      exit 0
+    fi
+  fi
+
+  git fetch origin
+  git reset --hard origin/main
   git submodule update --init --recursive
 fi
 
