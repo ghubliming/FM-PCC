@@ -233,7 +233,19 @@ then
 else
   echo "Package validation failed; installing requirements"
   PIP_CACHE_DIR="$PIP_CACHE" "$PIP" install -r requirements.txt
-  "$PIP" check
+
+  # pip check may report known non-fatal issues on Colab (platform/extra metadata).
+  PIP_CHECK_OUT="$("$PIP" check 2>&1 || true)"
+  echo "$PIP_CHECK_OUT"
+
+  UNEXPECTED_PIP_CHECK="$(echo "$PIP_CHECK_OUT" | grep -Ev '(^$|gurobipy .* is not supported on this platform|WARNING: typer .* does not provide the extra .all.)' || true)"
+  if [ -n "$UNEXPECTED_PIP_CHECK" ]; then
+    echo "Unexpected pip check issues found:"
+    echo "$UNEXPECTED_PIP_CHECK"
+    exit 1
+  else
+    echo "Only known non-fatal pip check warnings detected; continuing"
+  fi
 fi
 
 # Quick sanity check
