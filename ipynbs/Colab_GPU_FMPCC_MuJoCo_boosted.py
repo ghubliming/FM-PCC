@@ -535,10 +535,15 @@ if not ok:
 PY
 
 # %% [markdown]
-# ## 10) Dataset Preparation (Avoiding)
+## 10) Dataset Preparation (Avoiding)
 #
 # ### Option A: Use existing zip from old DPCC path
-# Keeps your original logic. This exits quickly if avoiding data already exists.
+#
+# Warning! : It searches the ~15Gb Zip in the DPCC Path, not this FMPCC Path!
+#
+#
+# This exits quickly if avoiding data already exists.
+
 
 # %%
 %%bash
@@ -572,25 +577,26 @@ echo "avoiding dataset ready: $(ls "$AVOIDING_DATA" | wc -l) files"
 # %% [markdown]
 # ### Option B: Download full D3IL dataset zip with gdown (only if Option A unavailable)
 
-# %%
-%%bash
-set -e
-
-REPO="/content/drive/MyDrive/FMPCC/FM-PCC"
-DATA_DIR="$REPO/d3il/environments/dataset/data"
-ZIP_FILE="$DATA_DIR/dataset.zip"
-
-if [ -f "$ZIP_FILE" ]; then
-  echo "zip already exists: $ZIP_FILE"
-  exit 0
-fi
-
-/content/miniconda3/envs/FMPCC/bin/pip install gdown -q
-/content/miniconda3/envs/FMPCC/bin/python -m gdown \
-  "https://drive.google.com/uc?id=1SQhbhzV85zf_ltnQ8Cbge2lsSWInxVa8" \
-  -O "$ZIP_FILE"
-
-echo "downloaded zip: $ZIP_FILE"
+# %% [markdown]
+# ```bash
+# set -e
+# 
+# REPO="/content/drive/MyDrive/FMPCC/FM-PCC"
+# DATA_DIR="$REPO/d3il/environments/dataset/data"
+# ZIP_FILE="$DATA_DIR/dataset.zip"
+# 
+# if [ -f "$ZIP_FILE" ]; then
+#   echo "zip already exists: $ZIP_FILE"
+#   exit 0
+# fi
+# 
+# /content/miniconda3/envs/FMPCC/bin/pip install gdown -q
+# /content/miniconda3/envs/FMPCC/bin/python -m gdown \
+#   "https://drive.google.com/uc?id=1SQhbhzV85zf_ltnQ8Cbge2lsSWInxVa8" \
+#   -O "$ZIP_FILE"
+# 
+# echo "downloaded zip: $ZIP_FILE"
+# ```
 
 # %% [markdown]
 # ## 11) Smoke Test Train
