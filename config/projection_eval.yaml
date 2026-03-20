@@ -1,9 +1,11 @@
 # General
-write_to_file: False
+write_to_file: True
 exps: [
   'avoiding-d3il',
   ]
-seeds: [0, 1, 2, 3, 4]
+#seeds: [0, 1, 2, 3, 4]
+seeds: [5]
+
 avoiding_halfspace_variants: [
   'top-right-hard',    # /
   'top-left-hard',    # \

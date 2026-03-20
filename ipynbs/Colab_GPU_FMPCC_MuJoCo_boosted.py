@@ -110,9 +110,9 @@ fi
 /content/miniconda3/envs/FMPCC/bin/pip --version
 
 # %% [markdown]
-# ## 5) Install D3IL (Critical Original Logic)
+# ## 5) Install D3IL (Install Once + Verify)
 #
-# Uses editable installs for both D3IL core and `gym_avoiding_env`.
+# Uses editable installs for both D3IL core and `gym_avoiding_env`, but skips reinstall when editable links already exist.
 
 # %%
 %%bash
@@ -128,15 +128,19 @@ if [ ! -d "$D3IL/.git" ]; then
   git clone https://github.com/ALRhub/d3il.git "$D3IL"
 fi
 
-"$PIP" install -e "$D3IL/environments/d3il"
-"$PIP" install -e "$D3IL/environments/d3il/envs/gym_avoiding_env"
+if "$PIP" freeze | grep -Fq "d3il/environments/d3il" && "$PIP" freeze | grep -Fq "d3il/envs/gym_avoiding_env"; then
+  echo "D3IL editable installs already present; skipping reinstall"
+else
+  "$PIP" install -e "$D3IL/environments/d3il"
+  "$PIP" install -e "$D3IL/environments/d3il/envs/gym_avoiding_env"
+fi
 
 echo "D3IL installed"
 
 # %% [markdown]
-# ## 6) Install Requirements (Stable, Pinned)
+# ## 6) Install Requirements (Install Once + Verify)
 #
-# Adds stamp-based skip logic and persistent pip cache to avoid reinstalling on every restart.
+# Runs validation first and only installs when the environment is missing or inconsistent.
 
 # %%
 %%bash
@@ -146,29 +150,40 @@ REPO="/content/drive/MyDrive/FMPCC/FM-PCC"
 PIP="/content/miniconda3/envs/FMPCC/bin/pip"
 PY="/content/miniconda3/envs/FMPCC/bin/python"
 PIP_CACHE="/content/drive/MyDrive/FMPCC/.pip-cache"
-STAMP="/content/drive/MyDrive/FMPCC/.requirements.sha256"
 
 mkdir -p "$PIP_CACHE"
 cd "$REPO"
 
-REQ_HASH="$(sha256sum requirements.txt | awk '{print $1}')"
-
-if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$REQ_HASH" ]; then
-  echo "requirements hash unchanged; running import check and skipping reinstall"
-  "$PY" - <<'PY'
+if "$PY" - <<'PY'
 import importlib
+import sys
+
 pkgs = [
     'torch', 'numpy', 'scipy', 'gym', 'gymnasium', 'gymnasium_robotics',
     'minari', 'wandb', 'mujoco', 'diffusers', 'transformers'
 ]
+
+ok = True
 for p in pkgs:
-    importlib.import_module(p)
-print('Import check passed, reuse environment')
+    try:
+        importlib.import_module(p)
+    except Exception as e:
+        ok = False
+        print(f'Missing/broken package: {p} ({type(e).__name__}: {e})')
+
+import numpy
+if int(numpy.__version__.split('.')[0]) >= 2:
+    ok = False
+    print(f'Invalid numpy version: {numpy.__version__}; expected 1.x for this workflow')
+
+sys.exit(0 if ok else 2)
 PY
+then
+  echo "Package validation passed; skipping requirements reinstall"
 else
-  echo "requirements changed or stamp missing; installing dependencies"
+  echo "Package validation failed; installing requirements"
   PIP_CACHE_DIR="$PIP_CACHE" "$PIP" install -r requirements.txt
-  echo "$REQ_HASH" > "$STAMP"
+  "$PIP" check
 fi
 
 # Quick sanity check
