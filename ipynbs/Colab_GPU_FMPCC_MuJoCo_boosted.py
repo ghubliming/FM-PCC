@@ -125,6 +125,12 @@ ROOT="/content/drive/MyDrive/FMPCC"
 PERSIST_CONDA="$ROOT/miniconda3"
 RUNTIME_CONDA="/content/miniconda3"
 CONDA_BIN="$PERSIST_CONDA/bin/conda"
+LOCAL_FALLBACK_CONDA="/content/miniconda3_runtime"
+CONDA_SNAPSHOT_DIR="$ROOT/cache"
+CONDA_SNAPSHOT="$CONDA_SNAPSHOT_DIR/fmpcc_conda_env.tar.gz"
+FORCE_REINSTALL_CONDA="${FORCE_REINSTALL_CONDA:-0}"
+REFRESH_CONDA_SNAPSHOT="${REFRESH_CONDA_SNAPSHOT:-0}"
+REBUILD_CONDA_SNAPSHOT=0
 
 # Ensure the runtime path points to the persistent conda directory.
 if [ -L "$RUNTIME_CONDA" ]; then
@@ -137,11 +143,79 @@ elif [ ! -e "$RUNTIME_CONDA" ]; then
   ln -s "$PERSIST_CONDA" "$RUNTIME_CONDA"
 fi
 
-if [ ! -x "$CONDA_BIN" ] || ! "$CONDA_BIN" --version >/dev/null 2>&1; then
-  # Clean partial/corrupt install so installer can create a fresh tree.
+if [ "$FORCE_REINSTALL_CONDA" = "1" ]; then
+  echo "FORCE_REINSTALL_CONDA=1 -> reinstalling Miniconda"
   rm -rf "$PERSIST_CONDA"
-  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /content/miniconda.sh
-  bash /content/miniconda.sh -b -p "$PERSIST_CONDA" -u
+  REBUILD_CONDA_SNAPSHOT=1
+fi
+
+if [ -f "$CONDA_SNAPSHOT" ] && ! tar -tzf "$CONDA_SNAPSHOT" >/dev/null 2>&1; then
+  echo "Conda snapshot is corrupted -> removing and rebuilding"
+  rm -f "$CONDA_SNAPSHOT"
+  REBUILD_CONDA_SNAPSHOT=1
+fi
+
+if [ ! -f "$CONDA_SNAPSHOT" ]; then
+  REBUILD_CONDA_SNAPSHOT=1
+fi
+
+if [ ! -d "$PERSIST_CONDA" ]; then
+  echo "First run detected: no persistent conda directory yet"
+fi
+
+# 1) Check if conda exists and works.
+NEED_CONDA_INSTALL=0
+if [ -x "$CONDA_BIN" ]; then
+  chmod +x "$PERSIST_CONDA/bin/python" "$PERSIST_CONDA/bin/conda" || true
+  if ! "$CONDA_BIN" --version >/tmp/conda_check.log 2>&1; then
+    if grep -qi "Permission denied" /tmp/conda_check.log; then
+      echo "Drive conda is not executable (permission denied). Switching to local runtime conda."
+      if [ -L "$RUNTIME_CONDA" ] || [ -e "$RUNTIME_CONDA" ]; then
+        rm -rf "$RUNTIME_CONDA"
+      fi
+      ln -s "$LOCAL_FALLBACK_CONDA" "$RUNTIME_CONDA"
+      PERSIST_CONDA="$LOCAL_FALLBACK_CONDA"
+      CONDA_BIN="$PERSIST_CONDA/bin/conda"
+      if [ -x "$CONDA_BIN" ]; then
+        echo "Reusing existing local runtime conda."
+      else
+        echo "No local runtime conda found yet; it will be installed now."
+        NEED_CONDA_INSTALL=1
+      fi
+    else
+      echo "Conda exists but failed health check -> reinstalling"
+      rm -rf "$PERSIST_CONDA"
+      NEED_CONDA_INSTALL=1
+    fi
+  else
+    echo "Conda exists and passed health check -> skip reinstall"
+  fi
+else
+  NEED_CONDA_INSTALL=1
+fi
+
+# 2) If there is a problem, reinstall.
+if [ "$NEED_CONDA_INSTALL" = "1" ]; then
+  if [ -f "$CONDA_SNAPSHOT" ]; then
+    echo "Restoring conda snapshot: $CONDA_SNAPSHOT"
+    rm -rf "$PERSIST_CONDA"
+    mkdir -p "$PERSIST_CONDA"
+    if ! tar -xzf "$CONDA_SNAPSHOT" -C "$PERSIST_CONDA" --strip-components=1; then
+      echo "Snapshot restore failed -> will run installer fallback"
+      rm -rf "$PERSIST_CONDA"
+      rm -f "$CONDA_SNAPSHOT"
+      REBUILD_CONDA_SNAPSHOT=1
+    fi
+  fi
+
+  if [ ! -x "$CONDA_BIN" ] || ! "$CONDA_BIN" --version >/dev/null 2>&1; then
+    echo "Conda snapshot missing/broken -> installing Miniconda"
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /content/miniconda.sh
+    bash /content/miniconda.sh -b -p "$PERSIST_CONDA" -u
+    REBUILD_CONDA_SNAPSHOT=1
+  else
+    echo "Conda restored from snapshot"
+  fi
 fi
 
 "$CONDA_BIN" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
@@ -156,8 +230,45 @@ if [ ! -x "$PERSIST_CONDA/envs/FMPCC/bin/python" ] || [ ! -x "$PERSIST_CONDA/env
   "$CONDA_BIN" create -n FMPCC python=3.10 -y -q
 fi
 
+# If env binaries on Drive are not executable, switch to local runtime conda and rebuild env there.
+if ! "$PERSIST_CONDA/envs/FMPCC/bin/python" -V >/tmp/env_python_check.log 2>&1; then
+  if grep -qi "Permission denied" /tmp/env_python_check.log; then
+    echo "FMPCC env python is not executable on current path. Switching env to local runtime conda."
+    if [ -L "$RUNTIME_CONDA" ] || [ -e "$RUNTIME_CONDA" ]; then
+      rm -rf "$RUNTIME_CONDA"
+    fi
+    ln -s "$LOCAL_FALLBACK_CONDA" "$RUNTIME_CONDA"
+    PERSIST_CONDA="$LOCAL_FALLBACK_CONDA"
+    CONDA_BIN="$PERSIST_CONDA/bin/conda"
+
+    if [ ! -x "$CONDA_BIN" ]; then
+      wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /content/miniconda.sh
+      bash /content/miniconda.sh -b -p "$PERSIST_CONDA" -u
+    fi
+
+    "$CONDA_BIN" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    "$CONDA_BIN" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+    "$CONDA_BIN" remove -n FMPCC --all -y || true
+    "$CONDA_BIN" create -n FMPCC python=3.10 -y -q
+  else
+    cat /tmp/env_python_check.log
+    exit 1
+  fi
+fi
+
 "$PERSIST_CONDA/envs/FMPCC/bin/python" -V
 "$PERSIST_CONDA/envs/FMPCC/bin/pip" --version
+
+# Save a conda snapshot for fast restore on future Colab runtimes.
+mkdir -p "$CONDA_SNAPSHOT_DIR"
+if [ "$REBUILD_CONDA_SNAPSHOT" = "1" ] || [ ! -f "$CONDA_SNAPSHOT" ] || [ "$REFRESH_CONDA_SNAPSHOT" = "1" ]; then
+  echo "Creating conda snapshot: $CONDA_SNAPSHOT"
+  if ! tar -czf "$CONDA_SNAPSHOT" -C "$PERSIST_CONDA" .; then
+    echo "Snapshot creation failed -> continuing without cache update"
+  fi
+else
+  echo "Conda snapshot exists -> skipping snapshot refresh"
+fi
 
 # %% [markdown]
 # ## 5) Install D3IL (Install Once + Verify)
@@ -200,11 +311,30 @@ REPO="/content/drive/MyDrive/FMPCC/FM-PCC"
 PIP="/content/miniconda3/envs/FMPCC/bin/pip"
 PY="/content/miniconda3/envs/FMPCC/bin/python"
 PIP_CACHE="/content/drive/MyDrive/FMPCC/.pip-cache"
+CACHE_DIR="/content/drive/MyDrive/FMPCC/cache"
+REQ_FILE="$REPO/requirements.txt"
+REQ_HASH="$(sha256sum "$REQ_FILE" | awk '{print $1}')"
+WHEELHOUSE="$CACHE_DIR/wheelhouse_$REQ_HASH"
+REQ_STAMP="/content/miniconda3/envs/FMPCC/.fmpcc_requirements_hash"
+FORCE_REINSTALL_REQS="${FORCE_REINSTALL_REQS:-0}"
+REBUILD_WHEELHOUSE=0
 
-mkdir -p "$PIP_CACHE"
+mkdir -p "$PIP_CACHE" "$CACHE_DIR"
 cd "$REPO"
 
-if "$PY" - <<'PY'
+if [ ! -d "$WHEELHOUSE" ]; then
+  REBUILD_WHEELHOUSE=1
+else
+  WHEEL_COUNT_EXISTING="$(find "$WHEELHOUSE" -maxdepth 1 -type f \( -name '*.whl' -o -name '*.tar.gz' -o -name '*.zip' \) | wc -l)"
+  if [ "$WHEEL_COUNT_EXISTING" -eq 0 ]; then
+    REBUILD_WHEELHOUSE=1
+  fi
+fi
+
+if [ "$FORCE_REINSTALL_REQS" = "1" ]; then
+  echo "FORCE_REINSTALL_REQS=1 -> forcing requirements reinstall"
+  REQ_VALID=0
+elif "$PY" - <<'PY'
 import importlib
 import sys
 
@@ -229,10 +359,50 @@ if int(numpy.__version__.split('.')[0]) >= 2:
 sys.exit(0 if ok else 2)
 PY
 then
-  echo "Package validation passed; skipping requirements reinstall"
+  REQ_VALID=1
+else
+  REQ_VALID=0
+fi
+
+if [ "$REQ_VALID" = "1" ]; then
+  if [ "$REBUILD_WHEELHOUSE" = "1" ]; then
+    echo "First run or broken wheelhouse detected -> creating wheel cache"
+    rm -rf "$WHEELHOUSE"
+    mkdir -p "$WHEELHOUSE"
+    PIP_CACHE_DIR="$PIP_CACHE" "$PIP" download -r requirements.txt -d "$WHEELHOUSE" || true
+  fi
+
+  if [ -f "$REQ_STAMP" ] && grep -Fxq "$REQ_HASH" "$REQ_STAMP"; then
+    echo "Package validation passed and requirements hash unchanged; skipping reinstall"
+  else
+    echo "Package validation passed but requirements hash stamp missing/changed; updating stamp only"
+    echo "$REQ_HASH" > "$REQ_STAMP"
+  fi
 else
   echo "Package validation failed; installing requirements"
-  PIP_CACHE_DIR="$PIP_CACHE" "$PIP" install -r requirements.txt
+
+  # Build or reuse a Drive-backed wheelhouse for faster future reinstalls.
+  if [ "$REBUILD_WHEELHOUSE" = "1" ] || [ ! -d "$WHEELHOUSE" ] || [ -z "$(ls -A "$WHEELHOUSE" 2>/dev/null || true)" ]; then
+    echo "Building wheelhouse cache at: $WHEELHOUSE"
+    rm -rf "$WHEELHOUSE"
+    mkdir -p "$WHEELHOUSE"
+    PIP_CACHE_DIR="$PIP_CACHE" "$PIP" download -r requirements.txt -d "$WHEELHOUSE" || true
+  else
+    echo "Wheelhouse cache found: $WHEELHOUSE"
+  fi
+
+  WHEEL_COUNT="$(find "$WHEELHOUSE" -maxdepth 1 -type f \( -name '*.whl' -o -name '*.tar.gz' -o -name '*.zip' \) | wc -l)"
+  if [ "$WHEEL_COUNT" -gt 0 ] && PIP_CACHE_DIR="$PIP_CACHE" "$PIP" install --no-index --find-links "$WHEELHOUSE" -r requirements.txt; then
+    echo "Offline wheelhouse install succeeded"
+  else
+    echo "First run or incomplete wheelhouse -> running online install"
+    rm -rf "$WHEELHOUSE"
+    mkdir -p "$WHEELHOUSE"
+    PIP_CACHE_DIR="$PIP_CACHE" "$PIP" install -r requirements.txt
+
+    # Backfill wheelhouse after a successful online install for faster future runs.
+    PIP_CACHE_DIR="$PIP_CACHE" "$PIP" download -r requirements.txt -d "$WHEELHOUSE" || true
+  fi
 
   # pip check may report known non-fatal issues on Colab (platform/extra metadata).
   PIP_CHECK_OUT="$("$PIP" check 2>&1 || true)"
@@ -246,6 +416,8 @@ else
   else
     echo "Only known non-fatal pip check warnings detected; continuing"
   fi
+
+  echo "$REQ_HASH" > "$REQ_STAMP"
 fi
 
 # Quick sanity check
