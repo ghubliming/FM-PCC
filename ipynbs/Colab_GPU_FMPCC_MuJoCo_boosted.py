@@ -535,11 +535,11 @@ if not ok:
 PY
 
 # %% [markdown]
-## 10) Dataset Preparation (Avoiding)
+# ## 10) Dataset Preparation (Avoiding)
 #
 # ### Option A: Use existing zip from old DPCC path
 #
-# Warning! : It searches the ~15Gb Zip in the DPCC Path, not this FMPCC Path!
+# Warning: This searches for the ~15 GB zip in the DPCC path, not in this FMPCC path.
 #
 #
 # This exits quickly if avoiding data already exists.
@@ -624,9 +624,18 @@ echo "avoiding dataset ready: $(ls "$AVOIDING_DATA" | wc -l) files"
 # ## 14) Evaluation and Results
 
 # %% [markdown]
-# Remember to edit the yaml in /config to choose seeds and must write_to_file: True
+# Remember to edit the YAML in /config to choose the seeds and set write_to_file: True.
 # %%
 !/content/miniconda3/envs/FMPCC/bin/python scripts/eval.py
+
+# %% [markdown]
+# ### Load Results
+#
+# If the process crashes, update the YAML to resume from the crash point.
+#
+# Save path: logs/avoiding-d3il/plans/H8_K20_Dmodels.GaussianDiffusion/0/results/
+
+# %%
 !/content/miniconda3/envs/FMPCC/bin/python scripts/load_results.py
 
 # %% [markdown]
