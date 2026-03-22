@@ -128,9 +128,17 @@ def extract(a, t, x_shape):
     return out.reshape(b, *((1,) * (len(x_shape) - 1)))
 
 def cosine_beta_schedule(timesteps, s=0.008, dtype=torch.float32):
-    # TODO: Implement Flow Matching logic here
-    # (Replaces: cosine beta noise schedule used by DDPM/DDIM diffusion discretization.)
-    raise NotImplementedError("Flow Matching not yet implemented")
+    """
+    Kept for compatibility with legacy config/code paths that still reference this helper.
+    Flow Matching code paths do not rely on a diffusion beta schedule.
+    """
+    steps = timesteps + 1
+    x = np.linspace(0, steps, steps)
+    alphas_cumprod = np.cos(((x / steps) + s) / (1 + s) * np.pi * 0.5) ** 2
+    alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
+    betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
+    betas_clipped = np.clip(betas, a_min=0, a_max=0.999)
+    return torch.tensor(betas_clipped, dtype=dtype)
 
 def apply_conditioning(x, conditions, action_dim, goal_dim=0, noise=False):
     '''
