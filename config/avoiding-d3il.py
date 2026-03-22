@@ -66,7 +66,7 @@ base = {
     'flow_matching': {
         # FM version: same as 'diffusion' but uses FM implementation
         'model': 'models.UNet1DTemporalCondModel',
-        'diffusion': 'flow_matcher.models.diffusion.GaussianDiffusion',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
         'n_diffusion_steps': 20,
         'loss_type': 'l2',
