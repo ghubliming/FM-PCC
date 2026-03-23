@@ -1,140 +1,250 @@
-
 # Guide: Modifying Training Parameters for the Diffusion Model
 
-This guide provides **exact, code-verified instructions** for changing the training and evaluation parameters of the original diffusion model (not Flow Matcher) in this repository.
+This guide provides **code-verified instructions** for changing the training and evaluation parameters of the diffusion model in this repository.
 
 ---
 
-## 1. Where to Set Parameters
+## 1. Architecture Overview: How Parameters Are Set
 
-- **Training parameters** are set via command-line arguments to `scripts/train.py`.
-- Some parameters can also be set in config files (YAML/JSON), but CLI always overrides config values.
+This project uses a **two-layer parameter system**:
 
----
+1. **Top-level CLI arguments** (`scripts/train.py`): Control seeds, resumption, and W&B logging. These are parsed via `argparse` in the `parse_top_level_args()` function.
+2. **Config-file parameters** (`config/avoiding-d3il.py`): Control model architecture, dataset, and training hyperparameters. These are loaded via `utils.Parser.read_config()` from a Python config module.
 
-## 2. Main Training Parameters (as in code)
+> [!IMPORTANT]
+> Training hyperparameters (batch size, learning rate, etc.) are **not** standard CLI flags. They are defined in `config/avoiding-d3il.py` under the `base['diffusion']` dictionary and loaded at runtime by `utils.Parser`.
 
-All of these can be set via CLI or config. **Parameter names must match exactly.**
-
-| Argument                        | Type    | Default   | Description                                      |
-|----------------------------------|---------|-----------|--------------------------------------------------|
-| `--n_train_steps`                | int     | 100000    | Total number of training steps                   |
-| `--n_steps_per_epoch`            | int     | 1000      | Number of steps per epoch                        |
-| `--batch_size`                   | int     | 32        | Batch size for training                          |
-| `--learning_rate`                | float   | 2e-5      | Learning rate for Adam optimizer                 |
-| `--gradient_accumulate_every`    | int     | 2         | Gradient accumulation steps                      |
-| `--ema_decay`                    | float   | 0.995     | Exponential moving average decay                 |
-| `--train_test_split`             | float   | 1.0       | Fraction of data for training (rest for test)    |
-| `--device`                       | str     | 'cuda'    | Device to use ('cuda' or 'cpu')                  |
-
-### Example CLI usage
-
-```bash
-python scripts/train.py --n_train_steps 200000 --n_steps_per_epoch 500 --batch_size 64 --learning_rate 0.0001 --gradient_accumulate_every 4 --ema_decay 0.99 --train_test_split 0.9 --device cuda
+```
+scripts/train.py
+├── parse_top_level_args()     → --seed, --seeds, --use-wandb, --auto-resume, etc.
+├── utils.Parser.parse_args()  → loads config/avoiding-d3il.py → sets args.*
+└── utils.Trainer(...)         → receives args.batch_size, args.learning_rate, etc.
 ```
 
 ---
 
-## 3. Seed and Resume Parameters
+## 2. Training Hyperparameters (from `config/avoiding-d3il.py`)
 
-| Argument                | Type   | Description                                                        |
-|-------------------------|--------|--------------------------------------------------------------------|
-| `--seed`                | int    | Train a single seed                                                |
-| `--seeds`               | ints   | Train a list of seeds                                              |
-| `--seeds-from-config`   | path   | Load seeds from a JSON file                                        |
-| `--num-seeds`           | int    | Use only the first N seeds from the list                           |
-| `--resume-step`         | int    | Resume from a specific training step                               |
-| `--resume-seed`         | int    | Seed for manual resume step loading                                |
-| `--auto-resume`         | flag   | Auto-resume each seed from latest local checkpoint if present      |
+These parameters are defined in `config/avoiding-d3il.py` → `base['diffusion']`. To change them, **edit the config file directly**.
+
+### 2.1 Model Architecture
+
+| Parameter              | Config Default                    | Description                                        |
+|------------------------|-----------------------------------|----------------------------------------------------|
+| `model`                | `'models.UNet1DTemporalCondModel'` | Model class                                        |
+| `diffusion`            | `'models.GaussianDiffusion'`      | Diffusion model class                              |
+| `horizon`              | `8`                               | Planning horizon length                            |
+| `n_diffusion_steps`    | `20`                              | Number of diffusion timesteps                      |
+| `dim`                  | `32`                              | Base channel dimension of UNet                     |
+| `dim_mults`            | `(1, 2, 4, 8)`                    | Channel multipliers per UNet level                 |
+| `hidden_dim`           | `256`                             | Hidden dimension for inverse dynamics model        |
+| `predict_epsilon`      | `True`                            | Predict noise (epsilon) vs. direct prediction      |
+| `loss_type`            | `'l2'`                            | Loss function type                                 |
+| `loss_discount`        | `1.0`                             | Discount factor for loss weighting over horizon     |
+| `action_weight`        | `10`                              | Weight for action prediction loss                  |
+| `condition_dropout`    | `0.25`                            | Dropout rate for classifier-free guidance          |
+| `condition_guidance_w` | `1.2`                             | Guidance weight for conditional generation         |
+| `returns_condition`    | `False`                           | Whether to condition on returns                    |
+| `clip_denoised`        | `False`                           | Whether to clip denoised samples                   |
+| `attention`            | `False`                           | Whether to use attention in UNet                   |
+| `dynamic_loss`         | `False`                           | Whether to use dynamic loss weighting              |
+| `test_ret`             | `0.9`                             | Target return for test-time conditioning           |
+
+### 2.2 Training
+
+| Parameter                    | Config Default | Trainer Param Name           | Description                                       |
+|------------------------------|----------------|------------------------------|---------------------------------------------------|
+| `n_train_steps`              | `1e5` (100k)   | `n_train_steps`              | Total training steps                              |
+| `n_steps_per_epoch`          | `1000`         | `n_steps_per_epoch`          | Steps per epoch (controls logging/checkpoint frequency) |
+| `batch_size`                 | `8`            | `train_batch_size`           | Training batch size                               |
+| `learning_rate`              | `1e-4`         | `train_lr`                   | Learning rate for Adam optimizer                  |
+| `gradient_accumulate_every`  | `2`            | `gradient_accumulate_every`  | Gradient accumulation steps                       |
+| `ema_decay`                  | `0.995`        | `ema_decay`                  | Exponential moving average decay                  |
+| `train_test_split`           | `0.9`          | `train_test_split`           | Fraction of data for training (rest for test)     |
+| `device`                     | `'cuda'`       | `train_device`               | Device to use                                     |
+| `seed`                       | `0`            | —                            | Overwritten by the seed loop in `train.py`        |
+
+> [!NOTE]
+> The config parameter names (left column) are what you edit in the config file. They get mapped to the Trainer constructor parameter names (middle column) in `scripts/train.py` lines 328–339.
+
+### 2.3 Trainer-Internal Parameters (hardcoded defaults in `Trainer.__init__`)
+
+These are **not** exposed in the config file but have defaults in `diffuser/utils/training.py`:
+
+| Trainer Parameter    | Default  | Description                                           |
+|----------------------|----------|-------------------------------------------------------|
+| `lr_warmup_steps`    | `1000`   | Cosine LR warmup steps                                |
+| `step_start_ema`     | `2000`   | Step to start EMA updates                             |
+| `update_ema_every`   | `10`     | Update EMA model every N steps                        |
+| `log_freq`           | `1000`   | Log losses every N steps                              |
+| `save_freq`          | `n_train_steps // 5` | Checkpoint save frequency (auto-computed) |
+
+### 2.4 Dataset
+
+| Parameter        | Config Default              | Description                              |
+|------------------|-----------------------------|------------------------------------------|
+| `loader`         | `'datasets.SequenceDataset'` | Dataset class                            |
+| `normalizer`     | `'LimitsNormalizer'`        | Data normalizer class                    |
+| `preprocess_fns` | `[]`                        | Preprocessing functions                  |
+| `use_padding`    | `True`                      | Pad shorter trajectories                 |
+| `max_path_length`| `150`                       | Maximum trajectory length                |
+| `include_returns`| `True`                      | Include returns in dataset               |
+| `returns_scale`  | `400`                       | Scale factor for returns                 |
+| `discount`       | `0.99`                      | Discount factor                          |
 
 ---
 
-## 4. Weights & Biases (W&B) Logging
+## 3. How to Change Training Parameters
 
-| Argument            | Type   | Description                                  |
-|---------------------|--------|----------------------------------------------|
-| `--use-wandb`       | flag   | Enable W&B runs per seed                     |
-| `--wandb-project`   | str    | W&B project name (default: fm-pcc-diffusion) |
-| `--wandb-entity`    | str    | W&B entity/team name                         |
-| `--wandb-group`     | str    | W&B group name for per-seed runs             |
-| `--wandb-mode`      | str    | W&B mode: online, offline, or disabled       |
+### 3.1 Edit the Config File (recommended)
 
----
+Open `config/avoiding-d3il.py` and modify values in the `base['diffusion']` dictionary:
 
-## 5. Setting Parameters in Config Files
-
-Some parameters can be set in YAML or JSON config files (see `config/` folder). Use the `--config` option if supported by your script:
-
-```bash
-python scripts/train.py --config config/projection_eval.yaml
+```python
+# config/avoiding-d3il.py
+base = {
+    'diffusion': {
+        # ...
+        'n_train_steps': 2e5,        # Train for 200k steps instead of 100k
+        'batch_size': 16,            # Increase batch size
+        'learning_rate': 5e-5,       # Change learning rate
+        'train_test_split': 0.8,     # 80/20 train/test split
+        # ...
+    },
+}
 ```
 
-**Note:** CLI arguments always override config file values.
+### 3.2 To Expose Trainer-Internal Parameters
+
+To change `lr_warmup_steps`, `step_start_ema`, etc., you must either:
+
+1. Add them to the config dict in `config/avoiding-d3il.py`, **and** pass them through in the `trainer_config` in `scripts/train.py`:
+
+```python
+# scripts/train.py, line ~328
+trainer_config = utils.Config(
+    utils.Trainer,
+    savepath=(args.savepath, 'trainer_config.pkl'),
+    train_test_split=args.train_test_split,
+    ema_decay=args.ema_decay,
+    n_train_steps=args.n_train_steps,
+    n_steps_per_epoch=args.n_steps_per_epoch,
+    train_batch_size=args.batch_size,
+    train_lr=args.learning_rate,
+    gradient_accumulate_every=args.gradient_accumulate_every,
+    lr_warmup_steps=args.lr_warmup_steps,       # ← add this
+    results_folder=args.savepath,
+)
+```
+
+2. Or modify the defaults directly in `diffuser/utils/training.py` → `Trainer.__init__`.
 
 ---
 
-## 6. To See All Available Options
+## 4. Top-Level CLI Arguments (`scripts/train.py`)
 
-Run:
+These are standard CLI flags handled by `parse_top_level_args()`.
+
+### 4.1 Seed Management
+
+| Argument              | Type       | Default          | Description                                        |
+|-----------------------|------------|------------------|----------------------------------------------------|
+| `--seed`              | `int`      | —                | Train a single seed                                |
+| `--seeds`             | `int` list | —                | Train a list of seeds, e.g. `--seeds 5 6 7`        |
+| `--seeds-from-config` | `str`      | —                | Path to JSON file with `seed_list` or `seeds`      |
+| `--num-seeds`         | `int`      | —                | Use only the first N seeds from the resolved list  |
+
+If none of the above are provided, the default seed list `[5, 6, 7, 8, 9]` is used (defined as `DEFAULT_SEEDS` in `train.py`).
+
+### 4.2 Checkpoint Resume
+
+| Argument         | Type   | Default | Description                                          |
+|------------------|--------|---------|------------------------------------------------------|
+| `--resume-step`  | `int`  | —       | Resume from a specific checkpoint step               |
+| `--resume-seed`  | `int`  | —       | Which seed to apply the manual resume to             |
+| `--auto-resume`  | flag   | `False` | Auto-resume each seed from latest local checkpoint   |
+
+### 4.3 Weights & Biases Logging
+
+| Argument           | Type  | Default                | Description                          |
+|--------------------|-------|------------------------|--------------------------------------|
+| `--use-wandb`      | flag  | `False`                | Enable W&B logging per seed          |
+| `--wandb-project`  | `str` | `'fm-pcc-diffusion'`   | W&B project name                     |
+| `--wandb-entity`   | `str` | `None`                 | W&B entity/team name                 |
+| `--wandb-group`    | `str` | `None`                 | W&B group name (default: auto-generated) |
+| `--wandb-mode`     | `str` | `'online'`             | `online`, `offline`, or `disabled`   |
+
+### 4.4 Example CLI Usage
 
 ```bash
-python scripts/train.py --help
+# Train with default config, seeds 5-9
+python scripts/train.py
+
+# Train a single seed with W&B logging
+python scripts/train.py --seed 42 --use-wandb --wandb-project my-project
+
+# Resume training from step 80000, auto-detect latest checkpoint
+python scripts/train.py --seeds 5 6 7 --auto-resume
+
+# Resume a specific seed from a specific step
+python scripts/train.py --seeds 5 6 7 --resume-seed 5 --resume-step 80000
 ```
 
 ---
 
-## 7. Reference: Trainer Class (diffuser/utils/training.py)
+## 5. Evaluation Parameters (`scripts/eval.py`)
 
-The following parameters are passed to the `Trainer` class:
+The evaluation script does **not** use CLI arguments. It reads all configuration from `config/projection_eval.yaml`.
 
-- `n_train_steps`, `n_steps_per_epoch`, `train_batch_size`, `train_lr`, `gradient_accumulate_every`, `ema_decay`, `train_test_split`, `train_device`
+### 5.1 Key Evaluation Settings (from `projection_eval.yaml`)
 
----
+| Parameter                     | Value/Type | Description                                     |
+|-------------------------------|------------|-------------------------------------------------|
+| `exps`                        | list       | Experiment names (e.g. `['avoiding-d3il']`)     |
+| `seeds`                       | list       | Seeds to evaluate (e.g. `[5]`)                  |
+| `n_trials`                    | `int`      | Number of evaluation trials per variant         |
+| `projection_variants`         | list       | Projection method variants to test              |
+| `constraint_types`            | list       | Types of constraints (halfspace, obstacles, etc.) |
+| `avoiding_halfspace_variants` | list       | Halfspace constraint configurations             |
+| `plot_how_many`               | `int`      | Max number of trials to plot                    |
 
-**All parameter names and defaults above are verified from the codebase.**
+### 5.2 Model/Policy Parameters (loaded from `config/avoiding-d3il.py` → `base['plan']`)
 
-- CLI arguments always override config file values.
-- Edit the config file directly to change defaults.
+| Parameter              | Default          | Description                                 |
+|------------------------|------------------|---------------------------------------------|
+| `max_episode_length`   | `200`            | Maximum episode length for evaluation       |
+| `batch_size`           | `4`              | Number of parallel trajectory samples       |
+| `diffusion_epoch`      | `'best'`         | Which checkpoint to load (`'best'`/`'latest'`) |
+| `test_ret`             | `0`              | Target return for test-time conditioning    |
+| `horizon`              | `8`              | Planning horizon                            |
 
----
-
-## 4. Evaluation Parameters
-
-Run evaluation with:
-
-```bash
-python scripts/eval.py [OPTIONS]
-```
-
-**Common options:**
-
-- `--batch-size N` — Batch size for evaluation
-- `--checkpoint PATH` — Path to model checkpoint
-- `--config CONFIG_PATH` — Config file for evaluation
-- `--seed S` — Evaluation seed
-
-**Example:**
+### 5.3 Running Evaluation
 
 ```bash
-python scripts/eval.py --checkpoint logs/model/state_best.pt --batch-size 128
+python scripts/eval.py
 ```
 
----
-
-## 5. Finding All Available Parameters
-
-- Run `python scripts/train.py --help` or `python scripts/eval.py --help` to see all available options and their descriptions.
-- Check the top of `scripts/train.py` and `scripts/eval.py` for argument parser definitions.
+Edit `config/projection_eval.yaml` to change evaluation settings (seeds, variants, constraints, etc.).
 
 ---
 
-## 6. Notes
+## 6. File Reference
 
-- **Seeds**: You can set seeds easily via CLI (`--seed` or `--seeds`).
-- **Epochs**: If not available as `--epochs`, look for `--n-epochs`, `--max-epochs`, or similar.
-- **Config files**: For advanced setups, edit YAML/JSON in `config/` and pass with `--config`.
-- **Defaults**: If you omit a parameter, the script uses its default value (see `--help`).
+| File                           | Purpose                                                 |
+|--------------------------------|---------------------------------------------------------|
+| `scripts/train.py`            | Training entry point; CLI arg parsing; seed/W&B/resume logic |
+| `scripts/eval.py`             | Evaluation entry point; reads from YAML config          |
+| `config/avoiding-d3il.py`     | Python config defining model/training/planning defaults |
+| `config/projection_eval.yaml` | YAML config for evaluation scenarios                    |
+| `diffuser/utils/setup.py`     | `Parser` class: loads config modules, sets up save paths |
+| `diffuser/utils/training.py`  | `Trainer` class: training loop, EMA, checkpointing     |
+| `diffuser/utils/config.py`    | `Config` class: deferred object construction            |
 
 ---
 
-For more details, see the comments and docstrings in `scripts/train.py` and `diffuser/utils/training.py`.
+## 7. Common Pitfalls
+
+- **"I passed `--batch_size 64` on the CLI but nothing changed"**: Training hyperparameters are not CLI flags. Edit `config/avoiding-d3il.py` instead.
+- **Config param vs. Trainer param name mismatch**: `batch_size` in config → `train_batch_size` in Trainer; `learning_rate` in config → `train_lr` in Trainer; `device` in config → `train_device` in Trainer. The mapping happens in `scripts/train.py` lines 328–339.
+- **`returns_scale` is overridden**: In `train.py`, `returns_scale` from the config is replaced with `args.max_path_length` (line 247). The config value `400` is unused.
+- **Seed from config is overwritten**: The `seed: 0` in the config is always overwritten by the seed loop in `train.py`.
