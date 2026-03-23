@@ -46,9 +46,9 @@ These parameters are defined in `config/avoiding-d3il.py` → `base['diffusion']
 | `condition_guidance_w` | `1.2`                             | Guidance weight for conditional generation         |
 | `returns_condition`    | `False`                           | Whether to condition on returns                    |
 | `clip_denoised`        | `False`                           | Whether to clip denoised samples                   |
-| `attention`            | `False`                           | Whether to use attention in UNet                   |
-| `dynamic_loss`         | `False`                           | Whether to use dynamic loss weighting              |
-| `test_ret`             | `0.9`                             | Target return for test-time conditioning           |
+| `attention`            | `False`                           | ⚠️ **DEAD** — set on `args` but never passed to any constructor in training scripts |
+| `dynamic_loss`         | `False`                           | ⚠️ **DEAD** — set on `args` but never passed to any constructor in training scripts |
+| `test_ret`             | `0.9`                             | ⚠️ **DEAD in training** — only used in the `plan` config for evaluation, not consumed by training scripts |
 
 ### 2.2 Training
 
@@ -62,7 +62,7 @@ These parameters are defined in `config/avoiding-d3il.py` → `base['diffusion']
 | `ema_decay`                  | `0.995`        | `ema_decay`                  | Exponential moving average decay                  |
 | `train_test_split`           | `0.9`          | `train_test_split`           | Fraction of data for training (rest for test)     |
 | `device`                     | `'cuda'`       | `train_device`               | Device to use                                     |
-| `seed`                       | `0`            | —                            | Overwritten by the seed loop in `train.py`        |
+| `seed`                       | `0`            | —                            | ⚠️ **DEAD** — always overwritten by `parse_args(seed=seed)` in the seed loop (`setup.py` line 63) |
 
 > [!NOTE]
 > The config parameter names (left column) are what you edit in the config file. They get mapped to the Trainer constructor parameter names (middle column) in `scripts/train.py` lines 328–339.
@@ -89,7 +89,7 @@ These are **not** exposed in the config file but have defaults in `diffuser/util
 | `use_padding`    | `True`                      | Pad shorter trajectories                 |
 | `max_path_length`| `150`                       | Maximum trajectory length                |
 | `include_returns`| `True`                      | Include returns in dataset               |
-| `returns_scale`  | `400`                       | Scale factor for returns                 |
+| `returns_scale`  | `400`                       | ⚠️ **DEAD** — config value is ignored; `args.max_path_length` is hardcoded instead (`train.py` line 247) |
 | `discount`       | `0.99`                      | Discount factor                          |
 
 ---
@@ -242,9 +242,24 @@ Edit `config/projection_eval.yaml` to change evaluation settings (seeds, variant
 
 ---
 
-## 7. Common Pitfalls
+## 7. Dead / Unused Parameters in Config
+
+These parameters exist in `config/avoiding-d3il.py` under both `diffusion` and `flow_matching` blocks but have **no effect** during training:
+
+| Parameter        | Why Dead | Evidence |
+|------------------|----------|---------|
+| `seed: 0`        | Always overwritten by `parse_args(seed=seed)` in the seed loop | `setup.py` line 63: `args.seed = seed if seed is not None else args.seed` |
+| `returns_scale: 400` | Hardcoded to `args.max_path_length` instead | `train.py` line 247, `train_FM.py` line 154 |
+| `test_ret: 0.9`  | Only meaningful for evaluation (`plan` config); never consumed during training | Not passed to `model_config`, `diffusion_config`, or `trainer_config` |
+| `dynamic_loss: False` | Set on `args` but never passed to any constructor | Not in `model_config`, `diffusion_config`, or `trainer_config` kwargs |
+| `attention: False` | Set on `args` but never passed to any constructor | Not in `model_config`, `diffusion_config`, or `trainer_config` kwargs |
+
+> [!CAUTION]
+> Changing any of these 5 parameters in the config will have **zero effect** on training. If you want them to actually work, you must also wire them into the corresponding `utils.Config(...)` constructor calls in `scripts/train.py` / `FM_test/train_FM.py`.
+
+---
+
+## 8. Common Pitfalls
 
 - **"I passed `--batch_size 64` on the CLI but nothing changed"**: Training hyperparameters are not CLI flags. Edit `config/avoiding-d3il.py` instead.
 - **Config param vs. Trainer param name mismatch**: `batch_size` in config → `train_batch_size` in Trainer; `learning_rate` in config → `train_lr` in Trainer; `device` in config → `train_device` in Trainer. The mapping happens in `scripts/train.py` lines 328–339.
-- **`returns_scale` is overridden**: In `train.py`, `returns_scale` from the config is replaced with `args.max_path_length` (line 247). The config value `400` is unused.
-- **Seed from config is overwritten**: The `seed: 0` in the config is always overwritten by the seed loop in `train.py`.
