@@ -143,4 +143,37 @@ base = {
         'verbose': False,
         'suffix': '0',
     },
+    
+    'plan_fm': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/',
+        'exp_name': watch(args_to_watch),
+
+        ## flow matching model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
 }
