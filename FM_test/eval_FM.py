@@ -47,7 +47,7 @@ for exp in exps:
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
         for seed in seeds:
-            args = Parser().parse_args(experiment='plan', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm', seed=seed)
             # Get model
             fm_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
             fm_model = fm_experiment.diffusion
