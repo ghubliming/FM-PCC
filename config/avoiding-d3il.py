@@ -66,7 +66,7 @@ base = {
     'flow_matching': {
         # FM version: same as 'diffusion' but uses FM implementation
         'model': 'models.UNet1DTemporalCondModel',
-        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'diffusion': 'models.diffusion.GaussianDiffusion',  # Here is full long path, it distinguishes from the diffusion model, name in folder is longer
         'horizon': 8,
         'n_diffusion_steps': 20,
         'loss_type': 'l2',
