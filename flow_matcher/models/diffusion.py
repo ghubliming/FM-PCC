@@ -119,7 +119,8 @@ class GaussianDiffusion(nn.Module):
 
         velocity = self._predict_velocity(x, cond, t, returns=returns)
         dt = 1.0 / max(self.n_timesteps, 1)
-        model_mean = x - velocity * dt
+        # FIX: + not -, integrate forward along the flow
+        model_mean = x + velocity * dt
 
         if projector is not None and projector.gradient:
             if self.goal_dim > 0:
@@ -155,20 +156,24 @@ class GaussianDiffusion(nn.Module):
             diffusion = [x]
         costs = {}
 
-        # Reverse-time Euler integration from t=1 to t=0.
-        last_timestep = -repeat_last if repeat_last > 0 and projector is not None else 0
-        for i in reversed(range(last_timestep, self.n_timesteps)):
-            t = i if i >= 0 else 0
+        # Forward integration t=0 → t=T (noise → data)
+        total_steps = self.n_timesteps + repeat_last
+        for i in range(total_steps):
+            t = min(i, self.n_timesteps - 1)   # clamp for repeat_last extra steps
             timesteps = torch.full((batch_size,), t, device=device, dtype=torch.long)
 
-            if projector is not None and projector.gradient and t <= projector.diffusion_timestep_threshold * self.n_timesteps:
+            # Apply projector near the END of integration (near t=1, near data)
+            near_end = t >= (1.0 - projector.diffusion_timestep_threshold) * self.n_timesteps \
+                       if projector is not None else False
+
+            if projector is not None and projector.gradient and near_end:
                 x = self.p_sample(x, cond, timesteps, returns, projector=projector, constraints=constraints)
             else:
                 x = self.p_sample(x, cond, timesteps, returns)
 
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
-            if projector is not None and not projector.gradient and t <= projector.diffusion_timestep_threshold * self.n_timesteps:
+            if projector is not None and not projector.gradient and near_end:
                 if self.goal_dim > 0:
                     x[:, :, :-self.goal_dim], projection_costs = projector.project(x[:, :, :-self.goal_dim], constraints)
                     costs[i] = projection_costs
@@ -213,7 +218,8 @@ class GaussianDiffusion(nn.Module):
         if return_diffusion:
             diffusion = [x]
 
-        for i in reversed(range(0, self.n_timesteps)):
+        # FIX: forward integration t=0 → t=T (noise → data)
+        for i in range(0, self.n_timesteps):
             timesteps = torch.full((batch_size,), i, device=device, dtype=torch.long)
             x = self.grad_p_sample(x, cond, timesteps, returns)
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
