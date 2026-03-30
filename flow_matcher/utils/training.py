@@ -268,10 +268,12 @@ class Trainer(object):
                 
                 for key in current_losses:
                     if key in data:
-                        existing_steps = {entry[0] for entry in data[key]}
-                        new_entries = [e for e in current_losses[key] if e[0] not in existing_steps]
-                        data[key].extend(new_entries)
-                        data[key].sort(key=lambda x: x[0])
+                        # Use dict for merging to prefer NEW entries for any overlapping steps
+                        # This handles "rewind" resumes where step history is being redone
+                        merged_dict = {entry[0]: entry for entry in data[key]}
+                        for entry in current_losses[key]:
+                            merged_dict[entry[0]] = entry
+                        data[key] = [merged_dict[s] for s in sorted(merged_dict.keys())]
                     else:
                         data[key] = current_losses[key]
             except Exception as e:
@@ -282,6 +284,30 @@ class Trainer(object):
 
         with open(savepath, 'wb') as f:
             pickle.dump(data, f)
+
+        # 2. Update the .json exhaustive log ("save all we done")
+        # The JSON version will be a cumulative history of all reported points, chronologically.
+        json_path = savepath.replace('.pkl', '.json')
+        try:
+            import json
+            history = {}
+            if os.path.exists(json_path):
+                with open(json_path, 'r') as f:
+                    history = json.load(f)
+            
+            for key in current_losses:
+                if key not in history:
+                    history[key] = []
+                # Append only truly NEW points from this session to the history
+                # (Assuming Trainer.train_losses only grows during a session)
+                existing_steps = {tuple(e) for e in history[key]}
+                new_entries = [e for e in current_losses[key] if tuple(e) not in existing_steps]
+                history[key].extend(new_entries)
+            
+            with open(json_path, 'w') as f:
+                json.dump(history, f, indent=4)
+        except Exception as e:
+            print(f'[ utils/training ] Error saving exhaustive losses to {json_path}: {e}')
 
     def load(self, epoch):
         '''
