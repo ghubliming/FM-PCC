@@ -33,8 +33,27 @@ class Config(Mapping):
 
         if savepath is not None:
             savepath = os.path.join(*savepath) if type(savepath) is tuple else savepath
-            pickle.dump(self, open(savepath, 'wb'))
-            print(f'[ utils/config ] Saved config to: {savepath}\n')
+            if not os.path.exists(savepath):
+                pickle.dump(self, open(savepath, 'wb'))
+                print(f'[ utils/config ] Saved config to: {savepath}\n')
+
+            # Also save as JSON for better robustness/readability
+            json_path = savepath.replace('.pkl', '.json')
+            if not os.path.exists(json_path):
+                try:
+                    import json
+                    def default_json(obj):
+                        if hasattr(obj, '__name__'): return obj.__name__
+                        return str(obj)
+                    
+                    with open(json_path, 'w') as f:
+                        json.dump({
+                            '_class': self._class.__name__,
+                            **self._dict
+                        }, f, indent=4, default=default_json)
+                    print(f'[ utils/config ] Saved config to: {json_path}\n')
+                except Exception:
+                    pass
 
     def __repr__(self):
         string = f'\n[utils/config ] Config: {self._class}\n'
