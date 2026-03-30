@@ -38,22 +38,31 @@ class Config(Mapping):
                 print(f'[ utils/config ] Saved config to: {savepath}\n')
 
             # Also save as JSON for better robustness/readability
-            json_path = savepath.replace('.pkl', '.json')
-            if not os.path.exists(json_path):
-                try:
-                    import json
-                    def default_json(obj):
-                        if hasattr(obj, '__name__'): return obj.__name__
-                        return str(obj)
-                    
-                    with open(json_path, 'w') as f:
-                        json.dump({
-                            '_class': self._class.__name__,
-                            **self._dict
-                        }, f, indent=4, default=default_json)
-                    print(f'[ utils/config ] Saved config to: {json_path}\n')
-                except Exception:
-                    pass
+            json_base = savepath.replace('.pkl', '')
+            final_json_path = f'{json_base}.json'
+            
+            # If primary json already exists, we are resuming/re-running.
+            # Preserve the original and save the current as a numbered version.
+            if os.path.exists(final_json_path):
+                resume_idx = 1
+                while os.path.exists(f'{json_base}_resume_{resume_idx}.json'):
+                    resume_idx += 1
+                final_json_path = f'{json_base}_resume_{resume_idx}.json'
+
+            try:
+                import json
+                def default_json(obj):
+                    if hasattr(obj, '__name__'): return obj.__name__
+                    return str(obj)
+                
+                with open(final_json_path, 'w') as f:
+                    json.dump({
+                        '_class': self._class.__name__,
+                        **self._dict
+                    }, f, indent=4, default=default_json)
+                print(f'[ utils/config ] Saved config to: {final_json_path}\n')
+            except Exception:
+                pass
 
     def __repr__(self):
         string = f'\n[utils/config ] Config: {self._class}\n'

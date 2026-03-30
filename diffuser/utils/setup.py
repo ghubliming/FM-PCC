@@ -47,10 +47,19 @@ class Parser(argparse.ArgumentParser):
 
     def save(self, args):
         fullpath = os.path.join(self.savepath, 'args.json')
+        
+        # If primary args.json already exists, we are resuming/re-running.
+        # Preserve the original and save the current as a numbered version.
+        if os.path.exists(fullpath):
+            json_base = fullpath.replace('.json', '')
+            resume_idx = 1
+            while os.path.exists(f'{json_base}_resume_{resume_idx}.json'):
+                resume_idx += 1
+            fullpath = f'{json_base}_resume_{resume_idx}.json'
+
         with open(fullpath, 'w') as f:
             json.dump(vars(args), f, skipkeys=True)
         # print(f'[ utils/setup ] Saved args to {fullpath}')
-        # super().save(fullpath, skip_unpicklable=True)
 
     def parse_args(self, experiment=None, seed=None):
         args = super().parse_args()
