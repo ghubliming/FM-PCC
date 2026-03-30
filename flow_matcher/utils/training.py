@@ -223,7 +223,11 @@ class Trainer(object):
         data = {
             'step': self.step,
             'model': self.model.state_dict(),
-            'ema': self.ema_model.state_dict()
+            'ema': self.ema_model.state_dict(),
+            'train_losses': self.train_losses,
+            'test_losses': self.test_losses,
+            'train_a0_losses': self.train_a0_losses,
+            'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
         torch.save(data, savepath)
@@ -237,20 +241,44 @@ class Trainer(object):
         data = {
             'step': self.step,
             'model': self.model.state_dict(),
-            'ema': self.ema_model.state_dict()
+            'ema': self.ema_model.state_dict(),
+            'train_losses': self.train_losses,
+            'test_losses': self.test_losses,
+            'train_a0_losses': self.train_a0_losses,
+            'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, f'state_best.pt')
         torch.save(data, savepath)
         # print(f'Saved best model to {savepath}', flush=True)
 
     def save_losses(self):
-        data = {
+        current_losses = {
             'training_losses': self.train_losses,
             'test_losses': self.test_losses,
             'training_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, 'losses.pkl')
+
+        # If existing losses exist on disk, merge them to avoid overwriting on resume
+        if os.path.isfile(savepath):
+            try:
+                with open(savepath, 'rb') as f:
+                    data = pickle.load(f)
+                
+                for key in current_losses:
+                    if key in data:
+                        existing_steps = {entry[0] for entry in data[key]}
+                        new_entries = [e for e in current_losses[key] if e[0] not in existing_steps]
+                        data[key].extend(new_entries)
+                        data[key].sort(key=lambda x: x[0])
+                    else:
+                        data[key] = current_losses[key]
+            except Exception as e:
+                print(f'[ utils/training ] Error merging losses at {savepath}: {e}')
+                data = current_losses
+        else:
+            data = current_losses
 
         with open(savepath, 'wb') as f:
             pickle.dump(data, f)
@@ -265,3 +293,25 @@ class Trainer(object):
         self.step = data['step']
         self.model.load_state_dict(data['model'])
         self.ema_model.load_state_dict(data['ema'])
+
+        # Restore losses from checkpoint if available
+        if 'train_losses' in data:
+            self.train_losses = data['train_losses']
+            self.test_losses = data.get('test_losses', [])
+            self.train_a0_losses = data.get('train_a0_losses', [])
+            self.test_a0_losses = data.get('test_a0_losses', [])
+            print(f'[ utils/training ] Restored loss history from checkpoint at step {self.step}')
+        else:
+            # Fallback to losses.pkl if not in checkpoint
+            losses_path = os.path.join(self.logdir, 'losses.pkl')
+            if os.path.exists(losses_path):
+                try:
+                    with open(losses_path, 'rb') as f:
+                        losses = pickle.load(f)
+                    self.train_losses = losses.get('training_losses', [])
+                    self.test_losses = losses.get('test_losses', [])
+                    self.train_a0_losses = losses.get('training_a0_losses', [])
+                    self.test_a0_losses = losses.get('test_a0_losses', [])
+                    print(f'[ utils/training ] Restored loss history from {losses_path}')
+                except Exception as e:
+                    print(f'[ utils/training ] Error loading losses from {losses_path}: {e}')
