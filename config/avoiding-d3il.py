@@ -172,7 +172,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/',
+        'prefix': 'plans/diffusion/',
         'exp_name': watch(args_to_watch),
 
         ## diffusion model
@@ -205,7 +205,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/',
+        'prefix': 'plans/flow_matching/',
         'exp_name': watch(args_to_watch),
 
         ## flow matching model
