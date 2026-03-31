@@ -81,7 +81,7 @@ class ResidualTemporalBlock(nn.Module):
 
         return out + self.residual_conv(x)
 
-class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
+class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
 
     def __init__(
         self,
