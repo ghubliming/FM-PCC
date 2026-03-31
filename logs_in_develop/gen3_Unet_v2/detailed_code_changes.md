@@ -1,5 +1,17 @@
 # Flow Matching U-Net V2 (Gen3) Implementation Log
 
+> [!WARNING]
+> **CRITICAL LOG LOCATION CHANGE:** 
+> The original Flow Matching output paths heavily intermixed evaluation results in `plans/`. To prevent data clashes, the **Gen3 U-Net V2** explicitly isolates weights and plans.
+> 
+> **Old Paths:**
+> - Training Weights: `logs/avoiding-d3il/flow_matching/...`
+> - Evaluation Plans: `logs/avoiding-d3il/plans/...`
+> 
+> **New Gen3 Paths:**
+> - Training Weights: `logs/avoiding-d3il/flow_matching_unet_v2/...`
+> - Evaluation Plans: `logs/avoiding-d3il/plans/flow_matching_unet_v2/...`
+
 ## Goal Approached
 1. **Incremental Update & Code Isolation:** Implement a safe, independent pipeline (`flow_matcher_unet_v2`) to develop and test a new U-Net architecture without risking stability or modifying the established `diffusion` and `flow_matcher` codebases.
 2. **Preventing Data Clashing:** Eliminate the issue where evaluation and plan outputs overwrite each other. By assigning unique folder prefixes, both the training weights and evaluation plans for the new U-Net model are saved into strictly isolated subfolders (`logs/avoiding-d3il/flow_matching_unet_v2/` and `logs/avoiding-d3il/plans/flow_matching_unet_v2/`).
