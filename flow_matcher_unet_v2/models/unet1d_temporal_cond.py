@@ -81,6 +81,9 @@ class ResidualTemporalBlock(nn.Module):
 
         return out + self.residual_conv(x)
 
+# TODO: [Structural Modification] This class is the core for the new U-Net v2.
+# Structural changes to the layer depth, attention mechanisms, and skip connections 
+# should be implemented within this class.
 class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
 
     def __init__(
@@ -128,6 +131,8 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
         else:
             embed_dim = dim
 
+        # TODO: [Structural Modification] Initialize new architectural components such as 
+        # Self-Attention, Cross-Attention, or Transformer blocks here for Gen3 U-Net.
         self.downs = nn.ModuleList([])
         self.ups = nn.ModuleList([])
         num_resolutions = len(in_out)
@@ -199,6 +204,8 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
 
         h = []
 
+
+        # TODO: [Structural Modification] Update forward pass for new blocks\n        # Ensure new attention/transformer blocks are correctly integrated into the\n        # down-sampling, bottleneck, and up-sampling paths.
         for resnet, resnet2, downsample in self.downs:
             x = resnet(x, t)
             x = resnet2(x, t)
