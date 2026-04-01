@@ -1,8 +1,16 @@
 # FM-PCC
 
-## Training
+## Training Usage in CLI
 
 For the current training commands and options, see [TRAINING_USAGE.md](TRAINING_USAGE.md).
+
+## How to modify the parameters
+
+See [MODIFY_DIFFUSION_TRAINING_PARAMS.md](MODIFY_DIFFUSION_TRAINING_PARAMS.md).
+
+---
+
+# Methodology 
 
 ## 1. Traditional Model Predictive Control (MPC)
 **Methodology:**
@@ -42,7 +50,8 @@ $$
 
 ---
 # Appendix
-**Methodology:**
+
+**Core Architecture:**
 The core architecture decouples the generative "brain" from the physical "brakes." The AI operates in an idealized mathematical space, while the Model Predictive Control (MPC) enforces strict real-world hardware limits. The success of the framework depends entirely on the handoff between these two mathematical regimes.
 
 **The Dual-Path Dynamics:**
