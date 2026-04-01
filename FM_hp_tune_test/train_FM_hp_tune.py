@@ -1,4 +1,4 @@
-# FM version of train.py
+# HP tuning version of train_FM.py — uses original flow_matcher model
 import argparse
 import glob
 import json
@@ -12,6 +12,72 @@ import flow_matcher.utils as utils
 
 exp = 'avoiding-d3il'
 DEFAULT_SEEDS = [5, 6, 7, 8, 9]
+
+def sanitize_wandb_env():
+    """Clear malformed W&B service tokens that can crash wandb.init in Colab."""
+    service_env_keys = ('WANDB_SERVICE', 'WANDB__SERVICE')
+
+    for env_key in service_env_keys:
+        token = os.environ.get(env_key)
+        if token is None:
+            continue
+
+        # W&B expects exactly 5 '-' separated token parts.
+        if len(token.split('-')) != 5:
+            print(f'[ train ] Clearing malformed {env_key}: {token}')
+            os.environ.pop(env_key, None)
+
+def log_wandb_curves_from_losses(losses_path, run):
+    if not os.path.exists(losses_path):
+        return
+
+    with open(losses_path, 'rb') as f:
+        losses = pickle.load(f)
+
+    training_losses = losses.get('training_losses', [])
+    test_losses = losses.get('test_losses', [])
+    training_a0_losses = losses.get('training_a0_losses', [])
+    test_a0_losses = losses.get('test_a0_losses', [])
+
+    test_by_step = {step: value for step, value in test_losses}
+    train_a0_by_step = {step: value for step, value in training_a0_losses}
+    test_a0_by_step = {step: value for step, value in test_a0_losses}
+
+    for step, train_loss in training_losses:
+        log_dict = {'train/loss': train_loss}
+        if step in test_by_step:
+            log_dict['test/loss'] = test_by_step[step]
+        if step in train_a0_by_step:
+            log_dict['train/a0_loss'] = train_a0_by_step[step]
+        if step in test_a0_by_step:
+            log_dict['test/a0_loss'] = test_a0_by_step[step]
+        run.log(log_dict, step=step)
+
+    if len(training_losses) > 0:
+        run.summary['final_train_loss'] = training_losses[-1][1]
+    if len(test_losses) > 0:
+        run.summary['final_test_loss'] = test_losses[-1][1]
+
+def upload_wandb_artifact(run, seed, args):
+    artifact = run.Artifact(
+        name=f'{args.dataset}-seed-{seed}-model',
+        type='model',
+        metadata={
+            'dataset': args.dataset,
+            'seed': seed,
+            'savepath': args.savepath,
+            'n_train_steps': args.n_train_steps,
+        },
+    )
+
+    files_to_add = ['state_best.pt', 'losses.pkl', 'args.json']
+    for filename in files_to_add:
+        filepath = os.path.join(args.savepath, filename)
+        if os.path.exists(filepath):
+            artifact.add_file(filepath)
+
+    run.log_artifact(artifact)
+
 
 class Parser(utils.Parser):
     dataset: str = exp
@@ -118,7 +184,7 @@ original_argv = list(sys.argv)
 sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
 for seed in selected_seeds:
-    args = Parser().parse_args(experiment='flow_matching', seed=seed)
+    args = Parser().parse_args(experiment='flow_matching_hp_tune1', seed=seed)
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
@@ -126,6 +192,7 @@ for seed in selected_seeds:
         manifest_written = True
     run = None
     if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
+        sanitize_wandb_env()
         import wandb
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else f'{args.dataset}-{args.exp_name}'
         run = wandb.init(
@@ -217,5 +284,10 @@ for seed in selected_seeds:
             print(f'[ train ] Resume requested but checkpoint not found: {checkpoint_path}')
     trainer.train()
     if run is not None:
+        losses_path = os.path.join(args.savepath, 'losses.pkl')
+        log_wandb_curves_from_losses(losses_path, run)
+        upload_wandb_artifact(run, seed, args)
+        run.summary['status'] = 'completed'
+        run.summary['seed'] = seed
         run.finish()
-print('FM training completed.')
+print('FM HP tuning training completed.')
