@@ -1,5 +1,34 @@
 # Hyperparameter Tuning Guide
 
+## ⚡ TL;DR — Quick Workflow for Each New Tuning Run
+
+> **You NEVER need to touch any script in `FM_hp_tune_test/`.**
+> The scripts are fixed. The only file you edit is `config/avoiding-d3il.py`.
+
+For each new hyperparameter experiment, make **3 changes in `config/avoiding-d3il.py`** inside the `flow_matching_hp_tune1` and `plan_fm_hp_tune1` blocks:
+
+| # | Where | What to change | Example |
+|---|-------|----------------|---------|
+| 1 | Training block → `prefix` | Increment the suffix number | `'flow_matching_hp_tune1/'` → `'flow_matching_hp_tune2/'` |
+| 2 | Plan block → `prefix` | Same increment | `'plans/flow_matching_hp_tune1/'` → `'plans/flow_matching_hp_tune2/'` |
+| 3 | Plan block → `diffusion_loadpath` | Same increment | `'f:flow_matching_hp_tune1/H...'` → `'f:flow_matching_hp_tune2/H...'` |
+
+Then change your actual hyperparameters (e.g., `learning_rate`, `dim`, `batch_size`) inside the training block, and run normally:
+
+```bash
+python FM_hp_tune_test/train_FM_hp_tune.py --seeds 5 6 7
+python FM_hp_tune_test/eval_FM_hp_tune.py
+```
+
+> [!WARNING]
+> If you forget to update even **one** of the 3 locations above, data from your new run may overwrite or load from the wrong folder. Always update all 3 together.
+
+> [!TIP]
+> Use descriptive names instead of numbers for clarity. For example, `'flow_matching_hp_lr1e3/'` instead of `'flow_matching_hp_tune2/'`. Months later you'll thank yourself.
+
+---
+
+
 > [!IMPORTANT]
 > **Golden Rule:** Every tuning experiment needs **three things**:
 > 1. A **config block pair** (training + plan) in `config/avoiding-d3il.py` with a **unique `prefix`**
