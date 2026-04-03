@@ -32,7 +32,7 @@ for variant in projection_variants:
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             # Use 'plan_fm' instead of 'plan' to correctly load Flow Matching results
-            args = Parser().parse_args(experiment='plan_fm_hp_tune1', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm_hp_tune', seed=seed)
 
             # Get data
             try:

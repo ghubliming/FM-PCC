@@ -184,7 +184,7 @@ original_argv = list(sys.argv)
 sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
 for seed in selected_seeds:
-    args = Parser().parse_args(experiment='flow_matching_hp_tune1', seed=seed)
+    args = Parser().parse_args(experiment='flow_matching_hp_tune', seed=seed)
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
