@@ -265,7 +265,7 @@ base = {
     ## CRITICAL: Always use a unique 'prefix' to avoid overwriting data.
     ## See: logs_in_develop/guiding_hyperpara_tuning/hyperparameter_tuning_guide.md
 
-    'flow_matching_hp_tune1': {
+    'flow_matching_hp_tune': {
         # HP Tune 1: example tuning run — same model, different hyperparams
         'model': 'models.UNet1DTemporalCondModel',
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -313,7 +313,7 @@ base = {
         'seed': 0,
     },
 
-    'plan_fm_hp_tune1': {
+    'plan_fm_hp_tune': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
         'batch_size': 4,
@@ -336,7 +336,7 @@ base = {
         'predict_epsilon': True,
         'dynamic_loss': False,
 
-        ## loading — points to the hp_tune1 training folder
+        ## loading — points to the hp_tune training folder
         'diffusion_loadpath': 'f:flow_matching_hp_tune1/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 

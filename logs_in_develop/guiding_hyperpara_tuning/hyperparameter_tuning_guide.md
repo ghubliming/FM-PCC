@@ -5,18 +5,18 @@
 > **You NEVER need to touch any script in `FM_hp_tune_test/`.**
 > The scripts are fixed. The only file you edit is `config/avoiding-d3il.py`.
 
-For each new hyperparameter experiment, make **3 changes in `config/avoiding-d3il.py`** inside the `flow_matching_hp_tune1` and `plan_fm_hp_tune1` blocks:
+For each new hyperparameter experiment, make **3 changes in `config/avoiding-d3il.py`** inside the `flow_matching_hp_tune` and `plan_fm_hp_tune` blocks:
 
 | # | Where | What to change | Example |
 |---|-------|----------------|---------|
 | 1 | Training block → `prefix` | Increment the suffix number | `'flow_matching_hp_tune1/'` → `'flow_matching_hp_tune2/'` |
-| 2 | Plan block → `prefix` | Same increment | `'plans/flow_matching_hp_tune1/'` → `'plans/flow_matching_hp_tune2/'` |
-| 3 | Plan block → `diffusion_loadpath` | Same increment | `'f:flow_matching_hp_tune1/H...'` → `'f:flow_matching_hp_tune2/H...'` |
+| 2 | Plan block → `prefix` | Same change | `'plans/flow_matching_hp_tune1/'` → `'plans/flow_matching_hp_tune2/'` |
+| 3 | Plan block → `diffusion_loadpath` | Same change | `'f:flow_matching_hp_tune1/H...'` → `'f:flow_matching_hp_tune2/H...'` |
 
-Then change your actual hyperparameters (e.g., `learning_rate`, `dim`, `batch_size`) inside the training block, and run normally:
+Then change your actual hyperparameters (e.g., `learning_rate`, `batch_size`) right there inside the block, and run normally:
 
 ```bash
-python FM_hp_tune_test/train_FM_hp_tune.py --seeds 5 6 7
+python FM_hp_tune_test/train_FM_hp_tune.py
 python FM_hp_tune_test/eval_FM_hp_tune.py
 ```
 
@@ -46,54 +46,39 @@ Contains three scripts copied from `FM_Unet_v2_test/` and modified:
 
 | Script | Import | Experiment Name |
 |--------|--------|-----------------|
-| `train_FM_hp_tune.py` | `flow_matcher.utils` | `flow_matching_hp_tune1` |
-| `eval_FM_hp_tune.py` | `flow_matcher.sampling.*` | `plan_fm_hp_tune1` |
-| `load_results_FM_hp_tune.py` | `flow_matcher.utils` | `plan_fm_hp_tune1` |
+| `train_FM_hp_tune.py` | `flow_matcher.utils` | `flow_matching_hp_tune` |
+| `eval_FM_hp_tune.py` | `flow_matcher.sampling.*` | `plan_fm_hp_tune` |
+| `load_results_FM_hp_tune.py` | `flow_matcher.utils` | `plan_fm_hp_tune` |
 
 ### Config: `config/avoiding-d3il.py`
 Two new entries at the bottom:
 
 | Block Key | `prefix` | Model |
 |-----------|----------|-------|
-| `flow_matching_hp_tune1` | `flow_matching_hp_tune1/` | `models.UNet1DTemporalCondModel` (original) |
-| `plan_fm_hp_tune1` | `plans/flow_matching_hp_tune1/` | loads from `flow_matching_hp_tune1/` folder |
+| `flow_matching_hp_tune` | `flow_matching_hp_tune1/` | `models.UNet1DTemporalCondModel` (original) |
+| `plan_fm_hp_tune` | `plans/flow_matching_hp_tune1/` | loads from `flow_matching_hp_tune1/` folder |
 
-## Step-by-Step: Create a New Tuning Experiment
+## Step-by-Step: Run a Tuning Experiment
 
-### Step 1: Copy the Config Block Pair
-In `config/avoiding-d3il.py`, duplicate:
-- `'flow_matching_hp_tune1'` → rename to e.g., `'flow_matching_hp_tune2'`
-- `'plan_fm_hp_tune1'` → rename to e.g., `'plan_fm_hp_tune2'`
+You do **not** need to copy the config block every time. Just edit the existing `flow_matching_hp_tune` blocks!
 
-### Step 2: Set Unique Prefixes (CRITICAL)
-Training block:
+### Step 1: Set Unique Prefixes (CRITICAL)
+Whenever you want to test a new parameter (like dropping your learning rate), just increment the number.
+Update the training block:
 ```python
 'prefix': 'flow_matching_hp_tune2/',
 ```
-Planning block:
+Update the planning block:
 ```python
 'prefix': 'plans/flow_matching_hp_tune2/',
 'diffusion_loadpath': 'f:flow_matching_hp_tune2/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
 ```
 
-### Step 3: Change Hyperparameters
-Modify whatever you want in the training block (`learning_rate`, `dim`, `batch_size`, etc.). The model class stays as `'models.UNet1DTemporalCondModel'`.
+### Step 2: Change Hyperparameters
+Modify whatever you want in the training block (`learning_rate`, `batch_size`, etc.).
 
-### Step 4: Update the Script Experiment Names
-In `FM_hp_tune_test/train_FM_hp_tune.py`, change:
-```python
-args = Parser().parse_args(experiment='flow_matching_hp_tune2', seed=seed)
-```
-In `FM_hp_tune_test/eval_FM_hp_tune.py`, change:
-```python
-args = Parser().parse_args(experiment='plan_fm_hp_tune2', seed=seed)
-```
-In `FM_hp_tune_test/load_results_FM_hp_tune.py`, change:
-```python
-args = Parser().parse_args(experiment='plan_fm_hp_tune2', seed=seed)
-```
-
-### Step 5: Run
+### Step 3: Run
+Since the scripts natively point. to `flow_matching_hp_tune`, just run them:
 ```bash
 python FM_hp_tune_test/train_FM_hp_tune.py --seeds 5 6 7
 python FM_hp_tune_test/eval_FM_hp_tune.py
@@ -117,13 +102,13 @@ python FM_hp_tune_test/load_results_FM_hp_tune.py
 ```
 logs/avoiding-d3il/
 ├── flow_matching/                   # Original FM baseline
-├── flow_matching_hp_tune1/          # HP tuning experiment 1
+├── flow_matching_hp_tune/          # HP tuning experiment 1
 ├── flow_matching_hp_tune2/          # HP tuning experiment 2
 ├── flow_matching_unet_v2/           # U-Net V2 architecture
 ├── plans/
 │   ├── diffusion/                   # Diffuser eval results
 │   ├── flow_matching/               # FM baseline eval results
-│   ├── flow_matching_hp_tune1/      # HP tune 1 eval results
+│   ├── flow_matching_hp_tune/      # HP tune 1 eval results
 │   ├── flow_matching_hp_tune2/      # HP tune 2 eval results
 │   └── flow_matching_unet_v2/       # U-Net V2 eval results
 ```
