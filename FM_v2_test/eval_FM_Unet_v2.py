@@ -1,4 +1,4 @@
-# HP tuning version of eval_FM.py — uses original flow_matcher model
+# FM_Unet_v2 version of eval_FM.py
 import time
 import yaml
 import os
@@ -8,9 +8,9 @@ import minari
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import flow_matcher.utils as utils
-from flow_matcher.sampling.policies import Policy
-from flow_matcher.sampling.projection import Projector
+import flow_matcher_v2.utils as utils
+from flow_matcher_v2.sampling.policies import Policy
+from flow_matcher_v2.sampling.projection import Projector
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 
 with open('config/projection_eval.yaml', 'r') as file:
@@ -47,7 +47,7 @@ for exp in exps:
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
         for seed in seeds:
-            args = Parser().parse_args(experiment='plan_fm_hp_tune', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm_v2', seed=seed)
             # Get model
             fm_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
             fm_model = fm_experiment.diffusion

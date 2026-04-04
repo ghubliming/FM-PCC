@@ -1,4 +1,4 @@
-# HP tuning version of train_FM.py — uses original flow_matcher model
+# FM_Unet_v2 version of train_FM.py
 import argparse
 import glob
 import json
@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 
 import torch
-import flow_matcher.utils as utils
+import flow_matcher_v2.utils as utils
 
 exp = 'avoiding-d3il'
 DEFAULT_SEEDS = [5, 6, 7, 8, 9]
@@ -184,7 +184,7 @@ original_argv = list(sys.argv)
 sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
 for seed in selected_seeds:
-    args = Parser().parse_args(experiment='flow_matching_hp_tune', seed=seed)
+    args = Parser().parse_args(experiment='flow_matching_v2', seed=seed)
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
@@ -253,6 +253,10 @@ for seed in selected_seeds:
         loss_discount=args.loss_discount,
         returns_condition=args.returns_condition,
         condition_guidance_w=args.condition_guidance_w,
+        time_beta_alpha_v2=args.time_beta_alpha_v2,
+        time_beta_beta_v2=args.time_beta_beta_v2,
+        vf_time_bins_v2=args.vf_time_bins_v2,
+        ode_inference_steps_v2=args.ode_inference_steps_v2,
         device=args.device,
     )
     trainer_config = utils.Config(
@@ -290,4 +294,4 @@ for seed in selected_seeds:
         run.summary['status'] = 'completed'
         run.summary['seed'] = seed
         run.finish()
-print('FM HP tuning training completed.')
+print('FM_Unet_v2 training completed.')

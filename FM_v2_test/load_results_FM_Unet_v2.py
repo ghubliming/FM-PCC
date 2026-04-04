@@ -1,7 +1,7 @@
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
-import flow_matcher.utils as utils
+import flow_matcher_v2.utils as utils
 
 # Load configuration
 with open('config/projection_eval.yaml', 'r') as file:
@@ -32,7 +32,7 @@ for variant in projection_variants:
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             # Use 'plan_fm' instead of 'plan' to correctly load Flow Matching results
-            args = Parser().parse_args(experiment='plan_fm_hp_tune', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm_v2', seed=seed)
 
             # Get data
             try:
