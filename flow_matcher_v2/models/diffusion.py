@@ -12,7 +12,8 @@ class GaussianDiffusion(nn.Module):
     def __init__(self, model, horizon, observation_dim, action_dim, goal_dim=0, n_timesteps=1000,
         loss_type='l1', clip_denoised=False, predict_epsilon=True, action_weight=1.0, 
         loss_discount=1.0, loss_weights=None, returns_condition=False, condition_guidance_w=0.1,
-        time_beta_alpha_v2=1.5, time_beta_beta_v2=1.0,):
+        time_beta_alpha_v2=1.5, time_beta_beta_v2=1.0,
+        vf_time_bins_v2=None, ode_inference_steps_v2=None,):
         super().__init__()
         self.horizon = horizon
         self.observation_dim = observation_dim
@@ -33,6 +34,8 @@ class GaussianDiffusion(nn.Module):
         self.predict_epsilon = predict_epsilon
         self.time_beta_alpha_v2 = float(time_beta_alpha_v2)
         self.time_beta_beta_v2 = float(time_beta_beta_v2)
+        self.vf_time_bins_v2 = int(vf_time_bins_v2) if vf_time_bins_v2 is not None else int(n_timesteps)
+        self.ode_inference_steps_v2 = int(ode_inference_steps_v2) if ode_inference_steps_v2 is not None else int(n_timesteps)
 
         self.register_buffer('betas', betas)
         self.register_buffer('alphas_cumprod', alphas_cumprod)
@@ -58,8 +61,12 @@ class GaussianDiffusion(nn.Module):
         if t.is_floating_point():
             return t.clamp(0.0, 1.0)
         t_float = t.float()
-        denom = max(self.n_timesteps - 1, 1)
+        denom = max(self.vf_time_bins_v2 - 1, 1)
         return (t_float / denom).clamp_(0.0, 1.0)
+
+    def _model_timestep_from_continuous(self, t_cont):
+        t_cont = t_cont.clamp(0.0, 1.0)
+        return torch.clamp((t_cont * self.vf_time_bins_v2).long(), min=0, max=self.vf_time_bins_v2 - 1)
 
     def _predict_velocity(self, x, cond, t, returns=None):
         if self.returns_condition:
@@ -123,7 +130,7 @@ class GaussianDiffusion(nn.Module):
         #     returns = torch.tensor(returns, requires_grad=True)
 
         velocity = self._predict_velocity(x, cond, t, returns=returns)
-        dt = 1.0 / max(self.n_timesteps, 1)
+        dt = 1.0 / max(self.ode_inference_steps_v2, 1)
         # FIX: + not -, integrate forward along the flow
         model_mean = x + velocity * dt
 
@@ -162,13 +169,14 @@ class GaussianDiffusion(nn.Module):
         costs = {}
 
         # Forward integration t=0 → t=T (noise → data)
-        total_steps = self.n_timesteps + repeat_last
+        total_steps = self.ode_inference_steps_v2 + repeat_last
         for i in range(total_steps):
-            t = min(i, self.n_timesteps - 1)   # clamp for repeat_last extra steps
-            timesteps = torch.full((batch_size,), t, device=device, dtype=torch.long)
+            loop_idx = min(i, self.ode_inference_steps_v2 - 1)   # clamp for repeat_last extra steps
+            t_cont = torch.full((batch_size,), loop_idx / max(self.ode_inference_steps_v2, 1), device=device, dtype=torch.float32)
+            timesteps = self._model_timestep_from_continuous(t_cont)
 
             # Apply projector near the END of integration (near t=1, near data)
-            near_end = t >= (1.0 - projector.diffusion_timestep_threshold) * self.n_timesteps \
+            near_end = loop_idx >= (1.0 - projector.diffusion_timestep_threshold) * self.ode_inference_steps_v2 \
                        if projector is not None else False
 
             if projector is not None and projector.gradient and near_end:
@@ -224,8 +232,9 @@ class GaussianDiffusion(nn.Module):
             diffusion = [x]
 
         # FIX: forward integration t=0 → t=T (noise → data)
-        for i in range(0, self.n_timesteps):
-            timesteps = torch.full((batch_size,), i, device=device, dtype=torch.long)
+        for i in range(0, self.ode_inference_steps_v2):
+            t_cont = torch.full((batch_size,), i / max(self.ode_inference_steps_v2, 1), device=device, dtype=torch.float32)
+            timesteps = self._model_timestep_from_continuous(t_cont)
             x = self.grad_p_sample(x, cond, timesteps, returns)
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
@@ -269,7 +278,8 @@ class GaussianDiffusion(nn.Module):
         v_target = x_start - x_base
         v_target = apply_conditioning(v_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        v_pred = self._predict_velocity(x_t, cond, t, returns=returns)
+        t_model = self._model_timestep_from_continuous(t)
+        v_pred = self._predict_velocity(x_t, cond, t_model, returns=returns)
         if not self.predict_epsilon:
             v_pred = apply_conditioning(v_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 

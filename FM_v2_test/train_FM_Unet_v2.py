@@ -255,6 +255,8 @@ for seed in selected_seeds:
         condition_guidance_w=args.condition_guidance_w,
         time_beta_alpha_v2=args.time_beta_alpha_v2,
         time_beta_beta_v2=args.time_beta_beta_v2,
+        vf_time_bins_v2=args.vf_time_bins_v2,
+        ode_inference_steps_v2=args.ode_inference_steps_v2,
         device=args.device,
     )
     trainer_config = utils.Config(

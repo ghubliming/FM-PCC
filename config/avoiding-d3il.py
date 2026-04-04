@@ -184,6 +184,10 @@ base = {
         'time_beta_alpha_v2': 1.5,
         'time_beta_beta_v2': 1.0,
 
+        # v2 ODE/VF decoupling parameters
+        'vf_time_bins_v2': 20,
+        'ode_inference_steps_v2': 20,
+
         # dataset
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',
@@ -330,6 +334,8 @@ base = {
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
         'n_diffusion_steps': 20,
+        'vf_time_bins_v2': 20,
+        'ode_inference_steps_v2': 20,
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
