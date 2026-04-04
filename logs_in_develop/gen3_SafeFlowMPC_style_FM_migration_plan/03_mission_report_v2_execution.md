@@ -74,9 +74,9 @@ This implements the SafeFlowMPC-style time sampling behavior in the copied v2 FM
 ## B) Copied v2 train/eval scripts rewired to v2 naming
 
 Edited files:
-1. `FM_v2_test/train_FM_Unet_v2.py`
-2. `FM_v2_test/eval_FM_Unet_v2.py`
-3. `FM_v2_test/load_results_FM_Unet_v2.py`
+1. `FM_v2_test/train_FM_v2.py`
+2. `FM_v2_test/eval_FM_v2.py`
+3. `FM_v2_test/load_results_FM_v2.py`
 
 Changes:
 1. Imports changed from `flow_matcher_unet_v2...` to `flow_matcher_v2...`.
@@ -121,9 +121,9 @@ Checks performed:
 Result:
 - No errors found in:
   - `flow_matcher_v2/models/diffusion.py`
-  - `FM_v2_test/train_FM_Unet_v2.py`
-  - `FM_v2_test/eval_FM_Unet_v2.py`
-  - `FM_v2_test/load_results_FM_Unet_v2.py`
+  - `FM_v2_test/train_FM_v2.py`
+  - `FM_v2_test/eval_FM_v2.py`
+  - `FM_v2_test/load_results_FM_v2.py`
   - `config/avoiding-d3il.py`
 
 ---
@@ -136,9 +136,9 @@ Created by copy:
 
 Edited:
 1. `flow_matcher_v2/models/diffusion.py`
-2. `FM_v2_test/train_FM_Unet_v2.py`
-3. `FM_v2_test/eval_FM_Unet_v2.py`
-4. `FM_v2_test/load_results_FM_Unet_v2.py`
+2. `FM_v2_test/train_FM_v2.py`
+3. `FM_v2_test/eval_FM_v2.py`
+4. `FM_v2_test/load_results_FM_v2.py`
 5. `config/avoiding-d3il.py`
 
 Created report:
@@ -149,8 +149,8 @@ Created report:
 ## Notes for Run Usage
 
 Use copied v2 scripts:
-- train via `FM_v2_test/train_FM_Unet_v2.py`
-- eval via `FM_v2_test/eval_FM_Unet_v2.py`
+- train via `FM_v2_test/train_FM_v2.py`
+- eval via `FM_v2_test/eval_FM_v2.py`
 
 These now target:
 - train experiment key: `flow_matching_v2`

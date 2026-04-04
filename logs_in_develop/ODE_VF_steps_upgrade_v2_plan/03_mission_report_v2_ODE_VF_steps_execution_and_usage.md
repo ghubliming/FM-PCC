@@ -14,7 +14,7 @@ This report documents execution of the approved mission:
 
 ### In-scope targets (executed)
 1. `flow_matcher_v2/models/diffusion.py`
-2. `FM_v2_test/train_FM_Unet_v2.py`
+2. `FM_v2_test/train_FM_v2.py`
 3. `config/avoiding-d3il.py`
 4. new mission report in this folder
 
@@ -54,7 +54,7 @@ Implemented:
 
 ## B) v2 train wiring
 Edited file:
-1. `FM_v2_test/train_FM_Unet_v2.py`
+1. `FM_v2_test/train_FM_v2.py`
 
 Implemented:
 1. Passed new args into diffusion config:
@@ -79,7 +79,7 @@ Implemented for `plan_fm_v2`:
 
 Static checks run on edited files:
 1. `flow_matcher_v2/models/diffusion.py` -> no errors
-2. `FM_v2_test/train_FM_Unet_v2.py` -> no errors
+2. `FM_v2_test/train_FM_v2.py` -> no errors
 3. `config/avoiding-d3il.py` -> no errors
 
 ---
@@ -130,8 +130,8 @@ Expected:
 
 ## 4) Training and evaluation entry points
 Use copied v2 scripts:
-1. train: `FM_v2_test/train_FM_Unet_v2.py` with experiment `flow_matching_v2`
-2. eval: `FM_v2_test/eval_FM_Unet_v2.py` with experiment `plan_fm_v2`
+1. train: `FM_v2_test/train_FM_v2.py` with experiment `flow_matching_v2`
+2. eval: `FM_v2_test/eval_FM_v2.py` with experiment `plan_fm_v2`
 
 Both now read the two new parameters from config.
 
@@ -139,7 +139,7 @@ Both now read the two new parameters from config.
 
 ## Final Changed Paths
 1. `flow_matcher_v2/models/diffusion.py`
-2. `FM_v2_test/train_FM_Unet_v2.py`
+2. `FM_v2_test/train_FM_v2.py`
 3. `config/avoiding-d3il.py`
 4. `logs_in_develop/ODE_VF_steps_upgrade_v2_plan/03_mission_report_v2_ODE_VF_steps_execution_and_usage.md`
 

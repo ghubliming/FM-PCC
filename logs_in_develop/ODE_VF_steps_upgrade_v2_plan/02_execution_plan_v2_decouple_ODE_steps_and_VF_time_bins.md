@@ -15,8 +15,8 @@ This plan is scoped for v2 only.
 
 ### In scope
 1. `flow_matcher_v2/models/diffusion.py`
-2. `FM_v2_test/train_FM_Unet_v2.py`
-3. `FM_v2_test/eval_FM_Unet_v2.py` (only if needed for argument plumbing)
+2. `FM_v2_test/train_FM_v2.py`
+3. `FM_v2_test/eval_FM_v2.py` (only if needed for argument plumbing)
 4. `config/avoiding-d3il.py` (`flow_matching_v2`, `plan_fm_v2`)
 5. new mission logs in this folder
 
