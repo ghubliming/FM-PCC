@@ -169,7 +169,7 @@ base = {
         'loss_type': 'l2',
         'loss_discount': 1.0,
         'returns_condition': False,
-        'action_weight': 10,
+        'action_weight': 1, # DPCC is 10
         'dim': 32,
         'dim_mults': (1, 2, 4, 8),
         'predict_epsilon': True,
@@ -186,7 +186,7 @@ base = {
 
         # v2 ODE/VF decoupling parameters
         'vf_time_bins_v2': 20,
-        'ode_inference_steps_v2': 20,
+        'ode_inference_steps_v2': 10, # DPCC is 20
 
         # dataset
         'loader': 'datasets.SequenceDataset',
