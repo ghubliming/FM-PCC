@@ -14,7 +14,7 @@ It is intended as the factual baseline before implementing the v2 ODE-step upgra
 
 ### Key files checked
 1. `flow_matcher_v2/models/diffusion.py`
-2. `FM_v2_test/train_FM_Unet_v2.py`
+2. `FM_v2_test/train_FM_v2.py`
 3. `config/avoiding-d3il.py`
 
 ### Observed behavior
@@ -39,7 +39,7 @@ In `flow_matcher_v2/models/diffusion.py`:
 So ODE integration count and step size are controlled by `self.n_timesteps`.
 
 #### 3) Config/training wiring
-From `FM_v2_test/train_FM_Unet_v2.py` and `config/avoiding-d3il.py`:
+From `FM_v2_test/train_FM_v2.py` and `config/avoiding-d3il.py`:
 - diffusion constructor gets `n_timesteps=args.n_diffusion_steps`
 - current v2 config (`flow_matching_v2` and `plan_fm_v2`) sets `n_diffusion_steps: 20`
 

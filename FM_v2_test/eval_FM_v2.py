@@ -1,4 +1,4 @@
-# FM_Unet_v2 version of eval_FM.py
+# FM_v2 version of eval_FM.py
 import time
 import yaml
 import os

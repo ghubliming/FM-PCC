@@ -1,4 +1,4 @@
-# FM_Unet_v2 version of train_FM.py
+# FM_v2 version of train_FM.py
 import argparse
 import glob
 import json
@@ -294,4 +294,4 @@ for seed in selected_seeds:
         run.summary['status'] = 'completed'
         run.summary['seed'] = seed
         run.finish()
-print('FM_Unet_v2 training completed.')
+print('FM_v2 training completed.')
