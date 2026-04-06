@@ -277,3 +277,62 @@ You can safely evaluate one trained FM checkpoint with multiple `ode_inference_s
 That is expected FM behavior.
 
 But do not treat `vf_time_bins_v2` as a casual runtime-only knob; it is part of model time-conditioning design.
+
+---
+
+## 11) Addendum: Exact FM-v2 training path (what is really happening now)
+
+This section states the current FM-v2 training behavior in direct, concrete terms.
+
+### A) What the model is asked to learn per training sample
+
+For each training sample, FM-v2 builds one time-conditioned point and learns the velocity at that point.
+
+Mathematically:
+1. sample time $t \in [0,1]$,
+2. create interpolated state $x_t = x_0 + t(x_1 - x_0)$,
+3. target velocity is $v^*(x_t,t) = x_1 - x_0$,
+4. train model output $v_\theta(x_t, t_{model})$ to match $v^*$ with MSE.
+
+Training loss shape:
+$$
+\mathcal{L}_{\text{FMv2}} = \mathbb{E}\left[\left\|v_\theta(x_t, t_{model}) - (x_1 - x_0)\right\|^2\right]
+$$
+
+### B) What is `t_model` in current code
+
+`t_model` is the time id sent to the U-Net time embedding path.
+
+In FM-v2 code:
+1. continuous $t$ is sampled in `loss(...)`,
+2. then converted by `_model_timestep_from_continuous(t)`,
+3. this conversion uses `vf_time_bins_v2`.
+
+So the network does not receive "raw ODE step count" during training.
+It receives a time-conditioning id derived from $t$ and `vf_time_bins_v2`.
+
+### C) Where ODE steps are (and are not)
+
+`ode_inference_steps_v2` is used in the sampling/rollout path:
+1. sets $\Delta t = 1 / \text{ode\_inference\_steps\_v2}$,
+2. sets number of Euler iterations in `p_sample_loop(...)`.
+
+It is not used to unroll training loss inside backprop in current FM-v2.
+
+So the current training is:
+1. pointwise velocity regression,
+2. not rollout-supervised trajectory MSE.
+
+### D) Why your expectation is reasonable
+
+You are describing a different objective family:
+1. roll out ODE for $N$ steps during training,
+2. compare final trajectory/state to target,
+3. backprop through the rollout.
+
+That would make ODE steps a true training-loss knob.
+But that is not what current FM-v2 implements.
+
+### E) One-sentence summary
+
+In current FM-v2, `vf_time_bins_v2` affects training-time time conditioning, while `ode_inference_steps_v2` mainly affects inference-time numerical integration.
