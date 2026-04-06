@@ -26,7 +26,7 @@ Keywords: U-Net v2 build, TODO architecture change, no effective behavior change
 2. Structural U-Net-v2 upgrade remained TODO.
 3. Net behavior change was not material in this phase.
 
-## Gen2 Hyperparameter Tuning
+## Gen3 Upgrade 1 Hyperparameter Tuning
 
 Keywords: action_weight_a0 tuning, HP1=1, HP2=5.
 
@@ -34,7 +34,7 @@ Keywords: action_weight_a0 tuning, HP1=1, HP2=5.
 2. HP1 set action_weight_a0 to 1.
 3. HP2 set action_weight_a0 to 5.
 
-## FM-v2
+## Gen3 Upgrade 2 FM-v2
 
 Keywords: beta time, two de facto tests, ODE=10 eval change.
 
@@ -45,7 +45,7 @@ Keywords: beta time, two de facto tests, ODE=10 eval change.
 5. "Beta Time" marks beta-only test.
 6. "ODE=10" marks beta-time plus eval ODE=10 test.
 
-## FM-v3 (Current)
+## Gen3 Upgrade 3 FM-v3
 
 Keywords: SafeFlow-style time semantics, continuous-time query, flow_steps_v3.
 
