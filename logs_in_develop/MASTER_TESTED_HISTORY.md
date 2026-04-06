@@ -40,7 +40,7 @@ Keywords: beta time, two de facto tests, ODE=10 eval change.
 
 1. Implemented beta-time sampling in FM-v2.
 2. De facto test #1: Beta-time only.
-3. De facto test #2: Beta-time plus eval ODE changed to 10.
+3. De facto test #2: Beta-time plus eval ODE changed to 10. (in logs it is mark with FMv2, ie. default name)
 4. Test markings:
 5. "Beta Time" marks beta-only test.
 6. "ODE=10" marks beta-time plus eval ODE=10 test.
