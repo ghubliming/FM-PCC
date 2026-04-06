@@ -335,7 +335,7 @@ base = {
         'horizon': 8,
         'n_diffusion_steps': 20,
         'vf_time_bins_v2': 20,
-        'ode_inference_steps_v2': 20,
+        'ode_inference_steps_v2': 10,
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
