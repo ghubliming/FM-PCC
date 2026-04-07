@@ -1,6 +1,6 @@
-# Tested History
+# Test History
 
-Purpose: concise record of what was tested across generations/vresions.
+Purpose: concise record of what was tested across all generations/vresions. Master logging markdown.
 
 ## Gen1
 

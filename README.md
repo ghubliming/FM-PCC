@@ -8,9 +8,9 @@ For the current training commands and options, see [TRAINING_USAGE.md](TRAINING_
 
 See [MODIFY_DIFFUSION_TRAINING_PARAMS.md](MODIFY_DIFFUSION_TRAINING_PARAMS.md).
 
-## Master Tested History
+## Test History
 
-See [logs_in_develop/MASTER_TESTED_HISTORY.md](logs_in_develop/MASTER_TESTED_HISTORY.md).
+See [logs_in_develop/MASTER_TEST_HISTORY.md](logs_in_develop/MASTER_TEST_HISTORY.md).
 
 ---
 
