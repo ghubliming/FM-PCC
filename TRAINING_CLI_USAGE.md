@@ -1,4 +1,4 @@
-# Training Usage Guide
+# Training CLI Usage Guide
 
 This guide documents the current diffusion training workflow implemented in scripts/train.py.
 
