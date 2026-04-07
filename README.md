@@ -132,3 +132,7 @@ See [MODIFY_DIFFUSION_TRAINING_PARAMS.md](MODIFY_DIFFUSION_TRAINING_PARAMS.md).
 ## Code Versions Develop History & Notes
 
 See [logs_in_develop](logs_in_develop/).
+
+## Trained Weights and Evaluation Results Files 
+
+Current saved in  Developer's Google Drive and local.
