@@ -1,7 +1,7 @@
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
-import flow_matcher_gen4_avoiding_visual.utils as utils
+import flow_matcher_v3_avoiding_visual.utils as utils
 
 # Load configuration
 with open('config/projection_eval_visual.yaml', 'r') as file:
@@ -32,7 +32,7 @@ for variant in projection_variants:
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             # Use 'plan_fm' instead of 'plan' to correctly load Flow Matching results
-            args = Parser().parse_args(experiment='plan_fm_gen4_avoiding_visual', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm_v3_avoiding_visual', seed=seed)
             flow_steps = getattr(args, 'flow_steps_v3', getattr(args, 'ode_inference_steps_v3', 'n/a'))
             ode_steps = getattr(args, 'ode_inference_steps_v3', flow_steps)
             beta_alpha = getattr(args, 'time_beta_alpha_v3', 'n/a')

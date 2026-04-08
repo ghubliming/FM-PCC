@@ -48,11 +48,11 @@ Gen4 implementation must follow exactly 3 steps:
 ### Step 2: Rename into isolated Gen4 paths
 
 Proposed names (final names can be adjusted before coding, but must be unique):
-1. `FM_gen4_avoiding_visual_test/`
-2. `flow_matcher_gen4_avoiding_visual/`
+1. `FM_v3_avoiding_visual_test/`
+2. `flow_matcher_v3_avoiding_visual/`
 3. experiment keys:
-   - `flow_matching_gen4_avoiding_visual`
-   - `plan_fm_gen4_avoiding_visual`
+   - `flow_matching_v3_avoiding_visual`
+   - `plan_fm_v3_avoiding_visual`
 
 ### Step 3: Modify only copied paths
 
@@ -80,8 +80,8 @@ No unlabeled change is allowed.
 1. New Gen4 test folder with 3 major scripts (train/eval/load_results).
 2. New Gen4 flow-matcher engine folder.
 3. Two new Gen4 config files in existing `config/` folder:
-   - `config/avoiding-d3il-gen4-visual.py`
-   - `config/projection_eval_gen4_visual.yaml`
+   - `config/avoiding-d3il-visual.py`
+   - `config/projection_eval_visual.yaml`
 4. Gen4 output label lines for traceability.
 
 ### 5.2 Vendored d3il additive support for visual avoiding
@@ -138,51 +138,51 @@ No unlabeled change is allowed.
 
 ### B) FM-PCC Gen4 copy/rename stage
 
-1. `[FM-PCC]` Copy `FM_v3_test/` -> `FM_gen4_avoiding_visual_test/`.
-2. `[FM-PCC]` Copy `flow_matcher_v3/` -> `flow_matcher_gen4_avoiding_visual/`.
+1. `[FM-PCC]` Copy `FM_v3_test/` -> `FM_v3_avoiding_visual_test/`.
+2. `[FM-PCC]` Copy `flow_matcher_v3/` -> `flow_matcher_v3_avoiding_visual/`.
 3. `[FM-PCC]` Update imports in new Gen4 test scripts to point at new engine package.
 4. `[FM-PCC]` Keep old folders untouched.
 
 ### C) FM-PCC config stage
 
 1. `[FM-PCC]` Keep folder name `config/` unchanged.
-2. `[FM-PCC]` Create `config/avoiding-d3il-gen4-visual.py` by copy-modify from `config/avoiding-d3il.py`:
-   - add `flow_matching_gen4_avoiding_visual`,
-   - add `plan_fm_gen4_avoiding_visual`,
+2. `[FM-PCC]` Create `config/avoiding-d3il-visual.py` by copy-modify from `config/avoiding-d3il.py`:
+   - add `flow_matching_v3_avoiding_visual`,
+   - add `plan_fm_v3_avoiding_visual`,
    - set explicit metadata tags:
      - `task=avoiding`
      - `modality=vision`
-     - `engine=gen4`
+   - `engine=v3`
      - `d3il_source=vendored`.
-3. `[FM-PCC]` Create `config/projection_eval_gen4_visual.yaml` by copy-modify from `config/projection_eval.yaml`:
+3. `[FM-PCC]` Create `config/projection_eval_visual.yaml` by copy-modify from `config/projection_eval.yaml`:
    - keep baseline-compatible fields,
    - add Gen4-specific defaults for visual avoiding evaluation,
    - keep key names consistent with eval/load scripts.
 
 ### C.1) Config consumer binding matrix (must stay consistent)
 
-1. `config/avoiding-d3il-gen4-visual.py` is used by:
-   - `FM_gen4_avoiding_visual_test/train_FM_gen4_avoiding_visual.py`
-   - `FM_gen4_avoiding_visual_test/eval_FM_gen4_avoiding_visual.py`
-   - `FM_gen4_avoiding_visual_test/load_results_FM_gen4_avoiding_visual.py`
-2. `config/projection_eval_gen4_visual.yaml` is used by:
-   - `FM_gen4_avoiding_visual_test/eval_FM_gen4_avoiding_visual.py`
-   - `FM_gen4_avoiding_visual_test/load_results_FM_gen4_avoiding_visual.py`
+1. `config/avoiding-d3il-visual.py` is used by:
+   - `FM_v3_avoiding_visual_test/train_FM_v3_avoiding_visual.py`
+   - `FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py`
+   - `FM_v3_avoiding_visual_test/load_results_FM_v3_avoiding_visual.py`
+2. `config/projection_eval_visual.yaml` is used by:
+   - `FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py`
+   - `FM_v3_avoiding_visual_test/load_results_FM_v3_avoiding_visual.py`
 3. If either filename changes, all listed consumers must be updated in the same commit.
 
 ### D) Gen4 script stage (3 major scripts)
 
-1. `[FM-PCC]` Create/modify `FM_gen4_avoiding_visual_test/train_FM_gen4_avoiding_visual.py`:
-   - set `exp = 'avoiding-d3il-gen4-visual'`,
-   - parser uses module `config.avoiding-d3il-gen4-visual`,
-   - parser experiment uses `flow_matching_gen4_avoiding_visual`.
-2. `[FM-PCC]` Create/modify `FM_gen4_avoiding_visual_test/eval_FM_gen4_avoiding_visual.py`:
-   - read `config/projection_eval_gen4_visual.yaml`,
-   - set `exp = 'avoiding-d3il-gen4-visual'`,
-   - parser uses `plan_fm_gen4_avoiding_visual`.
-3. `[FM-PCC]` Create/modify `FM_gen4_avoiding_visual_test/load_results_FM_gen4_avoiding_visual.py`:
-   - read `config/projection_eval_gen4_visual.yaml`,
-   - set `exp = 'avoiding-d3il-gen4-visual'`,
+1. `[FM-PCC]` Create/modify `FM_v3_avoiding_visual_test/train_FM_v3_avoiding_visual.py`:
+   - set `exp = 'avoiding-d3il-visual'`,
+   - parser uses module `config.avoiding-d3il-visual`,
+   - parser experiment uses `flow_matching_v3_avoiding_visual`.
+2. `[FM-PCC]` Create/modify `FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py`:
+   - read `config/projection_eval_visual.yaml`,
+   - set `exp = 'avoiding-d3il-visual'`,
+   - parser uses `plan_fm_v3_avoiding_visual`.
+3. `[FM-PCC]` Create/modify `FM_v3_avoiding_visual_test/load_results_FM_v3_avoiding_visual.py`:
+   - read `config/projection_eval_visual.yaml`,
+   - set `exp = 'avoiding-d3il-visual'`,
    - emit explicit provenance line in outputs.
 
 ### E) Vendored d3il additive modifications
@@ -333,7 +333,7 @@ Mitigation:
 ### Risk C: import path ambiguity
 
 Mitigation:
-1. Keep Gen4 config bindings only inside Gen4 scripts,
+1. Keep visual-avoiding config bindings only inside v3 avoiding visual scripts,
 2. keep old script paths untouched.
 
 ---
@@ -342,7 +342,7 @@ Mitigation:
 
 1. Vendor d3il snapshot into FM-PCC.
 2. ~~Run legacy baseline pre-check.~~ (User test/run required)
-3. Copy and rename FM-PCC Gen4 test/engine folders.
+3. Copy and rename FM-PCC v3 avoiding visual test/engine folders.
 4. Add two new config files in existing `config/` folder.
 5. Add vendored d3il avoiding-vision config/dataset/sim script.
 6. Wire Gen4 train/eval/load_results scripts to new config filenames.

@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 
 import torch
-import flow_matcher_gen4_avoiding_visual.utils as utils
+import flow_matcher_v3_avoiding_visual.utils as utils
 
 exp = 'avoiding-d3il-visual'
 DEFAULT_SEEDS = [5, 6, 7, 8, 9]
@@ -184,7 +184,7 @@ original_argv = list(sys.argv)
 sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
 for seed in selected_seeds:
-    args = Parser().parse_args(experiment='flow_matching_gen4_avoiding_visual', seed=seed)
+    args = Parser().parse_args(experiment='flow_matching_v3_avoiding_visual', seed=seed)
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)

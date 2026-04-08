@@ -77,7 +77,7 @@ If key names differ from existing eval/load expectations, evaluation scripts bre
 
 Short answer: No.
 
-Besides copying/modifying the two major folders (`FM_gen4_avoiding_visual_test/` and `flow_matcher_gen4_avoiding_visual/`), you must also:
+Besides copying/modifying the two major folders (`FM_gen4_avoiding_visual_test/` and `flow_matcher_v3_avoiding_visual/`), you must also:
 1. create these two config files in existing `config/` folder,
 2. update Gen4 script parser module string to `config.avoiding-d3il-gen4-visual`,
 3. update Gen4 eval/load scripts to open `config/projection_eval_gen4_visual.yaml`,
