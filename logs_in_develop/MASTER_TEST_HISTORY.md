@@ -51,3 +51,8 @@ Keywords: SafeFlow-style time semantics, continuous-time query, flow_steps_v3.
 1. Introduced v3 path with SafeFlow-style continuous-time model query semantics.
 2. Added v3 config/script path and v3 parameter naming.
 3. Kept v2 path intact for rollback and comparison.
+
+
+## Gen 4 Visual Model for Avoiding D3IL
+
+- **DANGER!!! Major code structure change:** The codebase has been refactored so that the D3IL library no longer needs to be cloned separately — it is now integrated directly into the FM-PCC codebase and can be imported directly.
