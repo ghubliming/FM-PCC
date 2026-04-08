@@ -273,8 +273,8 @@ base = {
         'seed': 0,
     },
 
-    'flow_matching_gen4_avoiding_visual': {
-        # Gen4 visual avoiding: isolated training block copied from v3 baseline.
+    'flow_matching_v3_avoiding_visual': {
+        # v3 visual avoiding: isolated training block copied from v3 baseline.
         'model': 'models.Flow_matcher_U_Net_v2',
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
@@ -293,7 +293,7 @@ base = {
         'condition_guidance_w': 1.2,
         'test_ret': 0.9,
 
-        # Gen4 keeps v3 FM-time semantics.
+        # Keep v3 FM-time semantics.
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         'flow_steps_v3': 10,
@@ -302,7 +302,7 @@ base = {
         # metadata tags
         'task': 'avoiding',
         'modality': 'vision',
-        'engine': 'gen4',
+        'engine': 'v3',
         'd3il_source': 'vendored',
 
         # dataset
@@ -318,7 +318,7 @@ base = {
 
         # serialization
         'logbase': logbase,
-        'prefix': 'flow_matching_gen4_avoiding_visual/',
+        'prefix': 'flow_matching_v3_avoiding_visual/',
         'exp_name': watch(args_to_watch),
 
         # training
@@ -504,7 +504,7 @@ base = {
         'suffix': '0',
     },
 
-    'plan_fm_gen4_avoiding_visual': {
+    'plan_fm_v3_avoiding_visual': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
         'batch_size': 4,
@@ -516,7 +516,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/flow_matching_gen4_avoiding_visual/',
+        'prefix': 'plans/flow_matching_v3_avoiding_visual/',
         'exp_name': watch(args_to_watch),
 
         ## flow matching model
@@ -534,11 +534,11 @@ base = {
         # metadata tags
         'task': 'avoiding',
         'modality': 'vision',
-        'engine': 'gen4',
+        'engine': 'v3',
         'd3il_source': 'vendored',
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_gen4_avoiding_visual/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3_avoiding_visual/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 
         'diffusion_epoch': 'best',

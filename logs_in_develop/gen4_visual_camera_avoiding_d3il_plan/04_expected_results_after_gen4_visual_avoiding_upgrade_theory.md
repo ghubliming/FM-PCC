@@ -67,7 +67,7 @@ Required consistency for valid interpretation:
 1. Python config file: config/avoiding-d3il-visual.py.
 2. Eval YAML file: config/projection_eval_visual.yaml.
 3. Experiment id in train/eval/load scripts: avoiding-d3il-visual.
-4. Plan key for eval path: plan_fm_gen4_avoiding_visual.
+4. Plan key for eval path: plan_fm_v3_avoiding_visual.
 
 If any one is mismatched:
 1. Results are not trustworthy,

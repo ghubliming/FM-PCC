@@ -11,13 +11,13 @@ This log records concrete implementation steps executed for the approved Gen4 vi
 - Added provenance file: d3il/VENDORED_FROM.md.
 
 ### 2) Create isolated Gen4 copy-modify folders
-- Copied FM_v3_test -> FM_gen4_avoiding_visual_test.
-- Copied flow_matcher_v3 -> flow_matcher_gen4_avoiding_visual.
+- Copied FM_v3_test -> FM_v3_avoiding_visual_test.
+- Copied flow_matcher_v3 -> flow_matcher_v3_avoiding_visual.
 
 ### 3) Add two Gen4 config files in existing config folder
 - Created config/avoiding-d3il-visual.py from baseline and added:
-  - flow_matching_gen4_avoiding_visual
-  - plan_fm_gen4_avoiding_visual
+  - flow_matching_v3_avoiding_visual
+  - plan_fm_v3_avoiding_visual
   - Gen4-specific prefixes/loadpaths.
 - Created config/projection_eval_visual.yaml and switched to:
   - exps: avoiding-d3il-visual
@@ -25,13 +25,13 @@ This log records concrete implementation steps executed for the approved Gen4 vi
 
 ### 4) Rewire Gen4 FM scripts to isolated paths
 - Added scripts:
-  - FM_gen4_avoiding_visual_test/train_FM_gen4_avoiding_visual.py
-  - FM_gen4_avoiding_visual_test/eval_FM_gen4_avoiding_visual.py
-  - FM_gen4_avoiding_visual_test/load_results_FM_gen4_avoiding_visual.py
+  - FM_v3_avoiding_visual_test/train_FM_v3_avoiding_visual.py
+  - FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py
+  - FM_v3_avoiding_visual_test/load_results_FM_v3_avoiding_visual.py
 - Updated script wiring to use:
-  - flow_matcher_gen4_avoiding_visual package
+  - flow_matcher_v3_avoiding_visual package
   - config/projection_eval_visual.yaml
-  - Gen4 experiment names and dataset id.
+  - v3 avoiding visual experiment names and dataset id.
 
 ### 5) Implement additive d3il visual-avoiding path
 - Added dataset class:
