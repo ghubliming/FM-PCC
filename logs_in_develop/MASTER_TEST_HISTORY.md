@@ -1,7 +1,6 @@
-# MASTER Tested History (Keywords)
+# Test History
 
-Date: 2026-04-06
-Purpose: concise record of what was tested across generations.
+Purpose: concise record of what was tested across all generations/vresions. Master logging markdown.
 
 ## Gen1
 

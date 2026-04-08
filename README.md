@@ -1,16 +1,18 @@
 # FM-PCC
 
-## Training Usage in CLI
+## Training Usage in CLI (new)
 
-For the current training commands and options, see [TRAINING_USAGE.md](TRAINING_USAGE.md).
+For the current training CLI commands and options, see [TRAINING_CLI_USAGE.md](TRAINING_CLI_USAGE.md).
 
-## How to modify the parameters
+## Test History (incl. Code tests and Model tests)
 
-See [MODIFY_DIFFUSION_TRAINING_PARAMS.md](MODIFY_DIFFUSION_TRAINING_PARAMS.md).
+Master Overview See [logs_in_develop/MASTER_TEST_HISTORY.md](logs_in_develop/MASTER_TEST_HISTORY.md).
 
-## Master Tested History
+### Results and Data Analysis
 
-See [logs_in_develop/MASTER_TESTED_HISTORY.md](logs_in_develop/MASTER_TESTED_HISTORY.md).
+See [Results_and_Data_Analysis](Results_and_Data_Analysis/).
+
+And all the Jupyter notebooks used for Colab training/evaluation/data analysis are in [ipynbs](ipynbs/).
 
 ---
 
@@ -53,7 +55,8 @@ $$
 * **Refined Selection:** Since paths are deterministic and smooth, selection criteria like Cumulative Projection Cost are largely replaced by simpler consistency filters.
 
 ---
-# Appendix
+
+# Implementaion
 
 **Core Architecture:**
 The core architecture decouples the generative "brain" from the physical "brakes." The AI operates in an idealized mathematical space, while the Model Predictive Control (MPC) enforces strict real-world hardware limits. The success of the framework depends entirely on the handoff between these two mathematical regimes.
@@ -118,3 +121,18 @@ The core architecture decouples the generative "brain" from the physical "brakes
         ▼
 [ Physical Environment ] ───► s moves to s' (Loop Restarts)
 ```
+
+---
+# Appendix
+
+## Hint: All the DPCC Parameters & How to modify
+
+See [MODIFY_DIFFUSION_TRAINING_PARAMS.md](MODIFY_DIFFUSION_TRAINING_PARAMS.md).
+
+## Code Versions Develop History & Notes
+
+See [logs_in_develop](logs_in_develop/).
+
+## Trained Weights and Evaluation Results Files 
+
+Current saved in  Developer's Google Drive and local.
