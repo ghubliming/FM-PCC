@@ -1,0 +1,286 @@
+import random
+from typing import Optional, Callable, Any
+import logging
+
+import os
+import glob
+import torch
+import pickle
+import numpy as np
+import cv2
+
+from environments.dataset.base_dataset import TrajectoryDataset
+from agents.utils.sim_path import sim_framework_path
+
+
+class Avoiding_Dataset(TrajectoryDataset):
+    def __init__(
+            self,
+            data_directory: os.PathLike,
+            device="cpu",
+            obs_dim: int = 20,
+            action_dim: int = 2,
+            max_len_data: int = 256,
+            window_size: int = 1,
+    ):
+
+        super().__init__(
+            data_directory=data_directory,
+            device=device,
+            obs_dim=obs_dim,
+            action_dim=action_dim,
+            max_len_data=max_len_data,
+            window_size=window_size
+        )
+
+        logging.info("Loading Sorting Dataset")
+
+        inputs = []
+        actions = []
+        masks = []
+
+        data_dir = sim_framework_path(data_directory)
+        state_files = os.listdir(data_dir)
+
+        for file in state_files:
+            with open(os.path.join(data_dir, file), 'rb') as f:
+                env_state = pickle.load(f)
+
+            zero_obs = np.zeros((1, self.max_len_data, self.obs_dim), dtype=np.float32)
+            zero_action = np.zeros((1, self.max_len_data, self.action_dim), dtype=np.float32)
+            zero_mask = np.zeros((1, self.max_len_data), dtype=np.float32)
+
+            # robot and box posistion
+            robot_des_pos = env_state['robot']['des_c_pos'][:, :2]
+            robot_c_pos = env_state['robot']['c_pos'][:, :2]
+
+            input_state = np.concatenate((robot_des_pos, robot_c_pos), axis=-1)
+
+            vel_state = robot_des_pos[1:] - robot_des_pos[:-1]
+            valid_len = len(vel_state)
+
+            zero_obs[0, :valid_len, :] = input_state[:-1]
+            zero_action[0, :valid_len, :] = vel_state
+            zero_mask[0, :valid_len] = 1
+
+            inputs.append(zero_obs)
+            actions.append(zero_action)
+            masks.append(zero_mask)
+
+        # shape: B, T, n
+        self.observations = torch.from_numpy(np.concatenate(inputs)).to(device).float()
+        self.actions = torch.from_numpy(np.concatenate(actions)).to(device).float()
+        self.masks = torch.from_numpy(np.concatenate(masks)).to(device).float()
+
+        self.num_data = len(self.observations)
+
+        self.slices = self.get_slices()
+
+    def get_slices(self):
+        slices = []
+
+        min_seq_length = np.inf
+        for i in range(self.num_data):
+            T = self.get_seq_length(i)
+            min_seq_length = min(T, min_seq_length)
+
+            if T - self.window_size < 0:
+                print(f"Ignored short sequence #{i}: len={T}, window={self.window_size}")
+            else:
+                slices += [
+                    (i, start, start + self.window_size) for start in range(T - self.window_size + 1)
+                ]  # slice indices follow convention [start, end)
+
+        return slices
+
+    def get_seq_length(self, idx):
+        return int(self.masks[idx].sum().item())
+
+    def get_all_actions(self):
+        result = []
+        # mask out invalid actions
+        for i in range(len(self.masks)):
+            T = int(self.masks[i].sum().item())
+            result.append(self.actions[i, :T, :])
+        return torch.cat(result, dim=0)
+
+    def get_all_observations(self):
+        result = []
+        # mask out invalid observations
+        for i in range(len(self.masks)):
+            T = int(self.masks[i].sum().item())
+            result.append(self.observations[i, :T, :])
+        return torch.cat(result, dim=0)
+
+    def __len__(self):
+        return len(self.slices)
+
+    def __getitem__(self, idx):
+
+        i, start, end = self.slices[idx]
+
+        obs = self.observations[i, start:end]
+        act = self.actions[i, start:end]
+        mask = self.masks[i, start:end]
+
+        return obs, act, mask
+
+
+class Avoiding_Img_Dataset(TrajectoryDataset):
+    def __init__(
+            self,
+            data_directory: os.PathLike,
+            device="cpu",
+            obs_dim: int = 20,
+            action_dim: int = 2,
+            max_len_data: int = 256,
+            window_size: int = 1,
+    ):
+
+        super().__init__(
+            data_directory=data_directory,
+            device=device,
+            obs_dim=obs_dim,
+            action_dim=action_dim,
+            max_len_data=max_len_data,
+            window_size=window_size
+        )
+
+        logging.info("Loading Avoiding Vision Dataset")
+
+        inputs = []
+        actions = []
+        masks = []
+        bp_cam_imgs = []
+        inhand_cam_imgs = []
+
+        data_dir = sim_framework_path(data_directory)
+        state_files = sorted(os.listdir(data_dir))
+
+        images_root = os.path.join(data_dir, 'images')
+        bp_root = os.path.join(images_root, 'bp-cam')
+        inhand_root = os.path.join(images_root, 'inhand-cam')
+
+        for file in state_files:
+            file_path = os.path.join(data_dir, file)
+            if not os.path.isfile(file_path) or not file.endswith('.pkl'):
+                continue
+
+            with open(file_path, 'rb') as f:
+                env_state = pickle.load(f)
+
+            zero_obs = np.zeros((1, self.max_len_data, self.obs_dim), dtype=np.float32)
+            zero_action = np.zeros((1, self.max_len_data, self.action_dim), dtype=np.float32)
+            zero_mask = np.zeros((1, self.max_len_data), dtype=np.float32)
+
+            robot_des_pos = env_state['robot']['des_c_pos'][:, :2]
+            robot_c_pos = env_state['robot']['c_pos'][:, :2]
+            input_state = np.concatenate((robot_des_pos, robot_c_pos), axis=-1)
+
+            vel_state = robot_des_pos[1:] - robot_des_pos[:-1]
+            valid_len = len(vel_state)
+
+            zero_obs[0, :valid_len, :] = input_state[:-1]
+            zero_action[0, :valid_len, :] = vel_state
+            zero_mask[0, :valid_len] = 1
+
+            file_stem = os.path.splitext(os.path.basename(file))[0]
+            bp_images = self._load_image_sequence(os.path.join(bp_root, file_stem), valid_len)
+            inhand_images = self._load_image_sequence(os.path.join(inhand_root, file_stem), valid_len)
+
+            bp_cam_imgs.append(bp_images)
+            inhand_cam_imgs.append(inhand_images)
+            inputs.append(zero_obs)
+            actions.append(zero_action)
+            masks.append(zero_mask)
+
+        self.bp_cam_imgs = bp_cam_imgs
+        self.inhand_cam_imgs = inhand_cam_imgs
+
+        self.observations = torch.from_numpy(np.concatenate(inputs)).to(device).float()
+        self.actions = torch.from_numpy(np.concatenate(actions)).to(device).float()
+        self.masks = torch.from_numpy(np.concatenate(masks)).to(device).float()
+
+        self.num_data = len(self.observations)
+        self.slices = self.get_slices()
+
+    def _load_image_sequence(self, sequence_dir, valid_len, image_size=96):
+        image_paths = []
+        if os.path.isdir(sequence_dir):
+            def _sort_key(path):
+                stem = os.path.splitext(os.path.basename(path))[0]
+                try:
+                    return int(stem)
+                except ValueError:
+                    return stem
+
+            image_paths = sorted(glob.glob(os.path.join(sequence_dir, '*')), key=_sort_key)
+
+        images = []
+        for image_path in image_paths[:valid_len]:
+            image = cv2.imread(image_path)
+            if image is None:
+                continue
+            image = cv2.resize(image, (image_size, image_size)).astype(np.float32)
+            image = image.transpose((2, 0, 1)) / 255.0
+            images.append(torch.from_numpy(image).to(self.device).float().unsqueeze(0))
+
+        if len(images) == 0:
+            zeros = torch.zeros((valid_len, 3, image_size, image_size), device=self.device)
+            return zeros
+
+        image_tensor = torch.concatenate(images, dim=0)
+        if image_tensor.shape[0] < valid_len:
+            pad = image_tensor[-1:].repeat(valid_len - image_tensor.shape[0], 1, 1, 1)
+            image_tensor = torch.concatenate((image_tensor, pad), dim=0)
+        return image_tensor[:valid_len]
+
+    def get_slices(self):
+        slices = []
+
+        min_seq_length = np.inf
+        for i in range(self.num_data):
+            T = self.get_seq_length(i)
+            min_seq_length = min(T, min_seq_length)
+
+            if T - self.window_size < 0:
+                print(f"Ignored short sequence #{i}: len={T}, window={self.window_size}")
+            else:
+                slices += [
+                    (i, start, start + self.window_size) for start in range(T - self.window_size + 1)
+                ]
+
+        return slices
+
+    def get_seq_length(self, idx):
+        return int(self.masks[idx].sum().item())
+
+    def get_all_actions(self):
+        result = []
+        for i in range(len(self.masks)):
+            T = int(self.masks[i].sum().item())
+            result.append(self.actions[i, :T, :])
+        return torch.cat(result, dim=0)
+
+    def get_all_observations(self):
+        result = []
+        for i in range(len(self.masks)):
+            T = int(self.masks[i].sum().item())
+            result.append(self.observations[i, :T, :])
+        return torch.cat(result, dim=0)
+
+    def __len__(self):
+        return len(self.slices)
+
+    def __getitem__(self, idx):
+
+        i, start, end = self.slices[idx]
+
+        obs = self.observations[i, start:end]
+        act = self.actions[i, start:end]
+        mask = self.masks[i, start:end]
+
+        bp_imgs = self.bp_cam_imgs[i][start:end]
+        inhand_imgs = self.inhand_cam_imgs[i][start:end]
+
+        return bp_imgs, inhand_imgs, obs, act, mask

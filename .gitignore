@@ -1,7 +1,8 @@
 args.json
 .vscode/
 logs/*
-d3il/*
+# Keep local downloaded d3il datasets out of git (Colab/local sync-safe).
+d3il/environments/dataset/data/
 d4rl-minari-dataset-generation_bkup/*
 diffuser.egg-info/*
 __pycache__/
