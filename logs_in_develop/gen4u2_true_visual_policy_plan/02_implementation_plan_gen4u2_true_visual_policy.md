@@ -1,250 +1,130 @@
 # 02 Implementation Plan: Gen4U2 True Visual Policy
 
 Date: 2026-04-09
-Status: Ready for Execution After Review
-Depends on: 01_current_status_gen4u2_true_visual_policy.md
+Status: Abandoned (Archive, Do Not Execute)
+Notice:
+1. Gen4U2 implementation is abandoned.
+2. Keep this content as historical record; do not delete.
+3. Active path is U5/Gen5: rewire existing visual models first, then extend to Avoiding visual if no fundamental flaw, without rebuilding wheels.
+
+Superseding docs:
+1. logs_in_develop/gen5_rewire_existing_visual_models_plan/01_gen5_reset_abandon_gen4u2.md
+2. logs_in_develop/gen5_rewire_existing_visual_models_plan/02_gen5_rewire_to_existing_visual_models_plan.md
 
 ---
 
-## 1) Goal and Non-Goal
+## Archived Gen4U2 Plan (Retained)
 
-Goal:
-- Convert FM v3 avoiding visual path from state-dominant behavior to true image-conditioned policy behavior, with explicit proof.
+### 1) Planning Rule
 
-Non-goal:
-- Replacing all historical state baselines.
-- Breaking old train/eval scripts that rely on state-only logic.
+This plan follows one hard rule:
+1. do not rebuild wheels,
+2. first extend existing D3IL visual logic into Avoiding planner path,
+3. only add new modules if a concrete gap remains after reuse.
 
----
+### 2) Correction of Last Gen4 Mistake
 
-## 2) Locked Design Decisions
+Explicit correction from prior Gen4 direction:
+1. previous direction leaned toward creating new visual stack first,
+2. that is replaced with a bridge-first approach using existing D3IL visual dataset and agent contracts,
+3. visual mode must not silently run state-only when strict visual mode is requested.
 
-1. Keep trajectory target unchanged for now: action + state trajectory prediction remains numeric.
-2. Add visual conditioning as an additional conditioning stream, not a full decoder redesign in first pass.
-3. Enable strict fail-fast mode when visual conditioning is requested but image assets are missing.
-4. Keep state-only mode available behind explicit config flag.
+Concrete implication:
+1. the avoiding-d3il-visual state-only alias path is compatibility-only,
+2. Gen4U2 true-visual profile must route to image-backed data and fail if image assets are missing.
 
-Rationale:
-- This minimizes regression risk while still forcing true visual dependence in the decision path.
+### 3) Reuse Targets (What We Already Have)
 
----
+#### 3.1 Existing D3IL visual data and env components
 
-## 3) File-Level Implementation Map
+Source components to reuse:
+1. d3il/environments/dataset/avoiding_dataset.py
+2. d3il/environments/d3il/envs/gym_avoiding_env/gym_avoiding/envs/avoiding.py
+3. d3il/simulation/avoiding_sim.py
 
-### 3.1 Data loading and batch contract
+#### 3.2 Existing D3IL visual agent contract
 
-Primary files:
+Reference pattern to reuse:
+1. state = (bp_image, inhand_image, des_robot_pos)
+2. preprocessing and temporal context handling from vision agents.
+
+### 4) File-Level Implementation Map (Updated)
+
+#### 4.1 FM dataset bridge to D3IL visual contract
+
+Target files:
 1. flow_matcher_v3_avoiding_visual/datasets/d4rl.py
 2. flow_matcher_v3_avoiding_visual/datasets/sequence.py
 3. flow_matcher_v3_avoiding_visual/datasets/__init__.py
 
 Actions:
-1. Extend avoiding visual dataset path to optionally load per-timestep images from:
-   - d3il/environments/dataset/data/avoiding/data/images/bp-cam
-   - d3il/environments/dataset/data/avoiding/data/images/inhand-cam
-2. Introduce a visual-enabled dataset class or mode, for example:
-   - SequenceDatasetVisual, or
-   - SequenceDataset with use_vision_cond switch.
-3. Return a batch that includes:
-   - trajectories (unchanged numeric tensor),
-   - conditions[0] (state condition, existing),
-   - conditions['bp_imgs'] and conditions['inhand_imgs'] or single fused key conditions['vision'].
-4. Add hard checks under strict mode:
-   - if use_vision_cond true and expected image folders missing, raise clear error.
+1. add a true-visual dataset mode that reuses Avoiding image folder layout and ordering logic from D3IL,
+2. preserve current state-only mode for baseline compatibility,
+3. return conditions with stable keys,
+4. add strict visual guard for missing image assets.
 
-Acceptance:
-1. Data loader prints or logs non-zero visual sample count.
-2. Training fails immediately when strict visual mode is on and images are absent.
+#### 4.2 FM policy interface extension
 
-### 3.2 Visual encoder and fusion into model
-
-Primary files:
-1. flow_matcher_v3_avoiding_visual/models/unet1d_temporal_cond.py
-2. flow_matcher_v3_avoiding_visual/models/diffusion.py
-3. flow_matcher_v3_avoiding_visual/models/helpers.py
-4. optional new file: flow_matcher_v3_avoiding_visual/models/vision_encoder.py
-
-Actions:
-1. Add a compact visual encoder (shared weights or dual-stream for bp and inhand).
-2. Extract visual embedding from condition tensors each forward pass.
-3. Fuse visual embedding into temporal model path using one of:
-   - additive conditioning into time embedding,
-   - FiLM-style scale/shift on residual blocks,
-   - cross-attention block (optional in later refinement).
-4. Ensure model forward actually consumes non-numeric condition keys. Current path receives cond but effectively ignores it except state overwrite in apply_conditioning.
-5. Keep backward compatibility:
-   - when use_vision_cond false, visual encoder path is bypassed.
-
-Acceptance:
-1. Unit-level check: changing image tensors while keeping state fixed changes model output distribution.
-2. Zero-image and shuffled-image ablations produce measurable output shift.
-
-### 3.3 Config and experiment controls
-
-Primary file:
-1. config/avoiding-d3il-visual.py
-
-Actions:
-1. Add explicit keys:
-   - use_vision_cond: true/false
-   - vision_strict_assets: true/false
-   - vision_image_size
-   - vision_backbone
-   - vision_fusion
-   - vision_use_bp_cam
-   - vision_use_inhand_cam
-2. Keep defaults safe:
-   - state baseline blocks remain unchanged.
-   - Gen4U2-specific blocks enable true visual mode.
-3. Add metadata tag such as claim_level='true_visual_policy_candidate'.
-
-Acceptance:
-1. Config alone determines state-only vs true-visual behavior without code edits.
-
-### 3.4 Train and eval wiring
-
-Primary files:
-1. FM_v3_avoiding_visual_test/train_FM_v3_avoiding_visual.py
-2. FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py
-3. config/projection_eval_visual.yaml
-
-Actions:
-1. Train path:
-   - plumb new config flags to dataset/model constructors.
-2. Eval path:
-   - instantiate avoiding env with if_vision=True for true-visual runs,
-   - pass image observations into policy call,
-   - keep old state-only branch available by config flag.
-3. Projection eval yaml:
-   - add explicit run profile label for visual-conditioned runs to avoid result mixing.
-
-Acceptance:
-1. Eval in true-visual mode errors if image stream is unavailable.
-2. Eval in state-only mode keeps previous behavior.
-
-### 3.5 Policy interface update
-
-Primary file:
+Target file:
 1. flow_matcher_v3_avoiding_visual/sampling/policies.py
 
 Actions:
-1. Extend Policy.__call__ signature to accept optional visual tensors in conditions.
-2. Normalize and batch-repeat visual tensors in _format_conditions.
-3. Preserve compatibility with existing state-only condition dictionary.
+1. extend condition formatting to pass image keys,
+2. keep state-only call path unchanged,
+3. support batch repeat for both state and visual keys.
 
-Acceptance:
-1. No regressions for old calls using only conditions={0: obs}.
-2. Visual mode accepts and forwards camera tensors end-to-end.
+#### 4.3 FM model conditioning integration
 
----
+Target files:
+1. flow_matcher_v3_avoiding_visual/models/unet1d_temporal_cond.py
+2. flow_matcher_v3_avoiding_visual/models/diffusion.py
+3. flow_matcher_v3_avoiding_visual/models/helpers.py
 
-## 4) Execution Phases
+Actions:
+1. integrate visual conditioning using existing D3IL visual input convention,
+2. start with lightweight fusion,
+3. avoid large architecture rewrite.
 
-### Phase A: Data contract upgrade
+#### 4.4 Train/eval wiring to true visual runtime
 
-Deliverables:
-1. Visual-enabled dataset return structure.
-2. Strict asset checks.
-3. Data sanity script output.
+Target files:
+1. FM_v3_avoiding_visual_test/train_FM_v3_avoiding_visual.py
+2. FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py
+3. config/avoiding-d3il-visual.py
+4. config/projection_eval_visual.yaml
 
-Exit gate:
-- At least one training batch contains image tensors with expected shape and non-zero variance.
+Actions:
+1. add explicit mode keys,
+2. true_visual eval path uses if_vision=True,
+3. state_only path remains available,
+4. separate outputs by mode label.
 
-### Phase B: Model conditioning integration
+### 5) Phase Plan
 
-Deliverables:
-1. Visual encoder module.
-2. Fusion path in U-Net forward.
-3. Config switches for enabling/disabling visual path.
+1. Phase A: Reuse bridge first.
+2. Phase B: Model consumes visual conditions.
+3. Phase C: True visual eval rollout.
+4. Phase D: Claim validation by ablations.
 
-Exit gate:
-- Controlled perturbation test confirms output sensitivity to images.
+### 6) Mandatory Test Matrix
 
-### Phase C: Eval pipeline conversion
+1. strict visual asset test,
+2. compatibility test,
+3. conditioning sensitivity test,
+4. runtime wiring test,
+5. baseline regression test.
 
-Deliverables:
-1. True visual eval branch with if_vision=True.
-2. Policy call receives state + visual conditions.
-3. Result directory separation for state-only vs visual-conditioned runs.
+### 7) Risk Controls
 
-Exit gate:
-- End-to-end eval executes with live image inputs.
+1. model ignores images,
+2. image-state sequence misalignment,
+3. confusion between compatibility and true-visual modes.
 
-### Phase D: Claim validation
+### 8) Definition of Done
 
-Deliverables:
-1. Ablation report:
-   - normal images,
-   - zeroed images,
-   - shuffled images,
-   - state-only fallback.
-2. Summary table for success, constraint satisfaction, and violation metrics.
-
-Exit gate:
-- Visual-conditioned run shows meaningful behavior change under image ablations.
-
----
-
-## 5) Test Matrix (Must Pass)
-
-1. Loader strictness test:
-   - use_vision_cond=true + missing image folders => hard fail.
-2. Loader compatibility test:
-   - use_vision_cond=false => old state pipeline still trains.
-3. Forward sensitivity test:
-   - fixed state, varied image => different predicted action trajectory stats.
-4. Eval wiring test:
-   - true visual mode uses if_vision=True and passes image tensors.
-5. Regression test:
-   - previous state baseline metrics remain within tolerance window.
-
----
-
-## 6) Risk Register and Mitigation
-
-1. Risk: Model ignores visual features after integration.
-   - Mitigation: add explicit output-sensitivity checks and fail CI on no-change.
-2. Risk: Data alignment mismatch between pkl timesteps and image frame counts.
-   - Mitigation: enforce deterministic frame sorting and pad/truncate policy.
-3. Risk: Runtime cost increase from image encoding.
-   - Mitigation: cache frame transforms, reduce image size, and benchmark per-step latency.
-4. Risk: Result confusion between state and visual experiments.
-   - Mitigation: isolate output prefixes and metadata tags.
-
----
-
-## 7) Backward Compatibility Contract
-
-1. Existing state-only scripts remain runnable with default false on use_vision_cond.
-2. Existing checkpoints stay loadable for state-only eval.
-3. New checkpoints trained with visual conditioning are stored under separate experiment prefix.
-
----
-
-## 8) Definition of Done for Gen4U2 02
-
-Gen4U2 true visual policy is considered implemented only when all conditions hold:
-1. Data loader consumes camera frames during training.
-2. Model forward path consumes visual embeddings.
-3. Eval path uses if_vision=True and passes image inputs into policy.
-4. Missing-image strict mode fails fast.
-5. Ablations prove visual dependence.
-6. State-only baseline remains functional.
-
----
-
-## 9) Suggested Implementation Order (Low-Risk)
-
-1. Implement data contract and strict checks first.
-2. Integrate visual encoder and fusion second.
-3. Wire eval true-visual branch third.
-4. Run ablations and freeze claims last.
-
----
-
-## 10) Review Prompt
-
-Reviewer decision request:
-1. approve this file-level plan as Gen4U2-02 baseline,
-2. authorize coding execution record creation as 03,
-3. authorize expected-results and risk audit update as 04 after first implementation run.
+1. image-backed dataset active in true_visual mode,
+2. model forward consumes visual condition tensors,
+3. eval true_visual mode uses camera observations,
+4. strict mode blocks silent fallback,
+5. ablations prove image dependence,
+6. state-only baseline remains runnable.
