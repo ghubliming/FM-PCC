@@ -24,10 +24,9 @@ class Avoiding_Sim(BaseSim):
             device: str,
             render: bool,
             n_cores: int = 1,
-            n_trajectories: int = 30,
-            if_vision: bool = False
+            n_trajectories: int = 30
     ):
-        super().__init__(seed, device, render, n_cores, if_vision)
+        super().__init__(seed, device, render, n_cores)
 
         self.n_trajectories = n_trajectories
 
@@ -36,7 +35,7 @@ class Avoiding_Sim(BaseSim):
         print(os.getpid(), cpu_set)
         assign_process_to_cpu(os.getpid(), cpu_set)
 
-        env = ObstacleAvoidanceEnv(render=self.render, if_vision=self.if_vision)
+        env = ObstacleAvoidanceEnv(render=self.render)
         env.start()
 
         random.seed(pid)
@@ -57,37 +56,18 @@ class Avoiding_Sim(BaseSim):
 
             c_pos = [env.robot.current_c_pos]
 
-            if self.if_vision:
-                env_state, bp_image, inhand_image = obs
-                bp_image = bp_image.transpose((2, 0, 1)) / 255.
-                inhand_image = inhand_image.transpose((2, 0, 1)) / 255.
-                des_robot_pos = env_state[:2]
+            while not done:
 
-                while not done:
-                    pred_action = agent.predict((bp_image, inhand_image, des_robot_pos), if_vision=self.if_vision)
-                    pred_action = pred_action[0] + des_robot_pos
-                    pred_action = np.concatenate((pred_action, fixed_z, [0, 1, 0, 0]), axis=0)
+                obs = np.concatenate((pred_action[:2], obs))
 
-                    obs, reward, done, info = env.step(pred_action)
-                    c_pos.append(env.robot.current_c_pos)
+                pred_action = agent.predict(obs)
+                pred_action = pred_action[0] + obs[:2]
 
-                    env_state, bp_image, inhand_image = obs
-                    bp_image = bp_image.transpose((2, 0, 1)) / 255.
-                    inhand_image = inhand_image.transpose((2, 0, 1)) / 255.
-                    des_robot_pos = pred_action[:2]
-            else:
-                while not done:
+                pred_action = np.concatenate((pred_action, fixed_z, [0, 1, 0, 0]), axis=0)
 
-                    obs = np.concatenate((pred_action[:2], obs))
+                obs, reward, done, info = env.step(pred_action)
 
-                    pred_action = agent.predict(obs)
-                    pred_action = pred_action[0] + obs[:2]
-
-                    pred_action = np.concatenate((pred_action, fixed_z, [0, 1, 0, 0]), axis=0)
-
-                    obs, reward, done, info = env.step(pred_action)
-
-                    c_pos.append(env.robot.current_c_pos)
+                c_pos.append(env.robot.current_c_pos)
 
             c_pos = torch.tensor(np.array(c_pos))[:, :2]
             robot_c_pos[pid * n_trajectories + i, :c_pos.shape[0], :] = c_pos
