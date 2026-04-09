@@ -17,6 +17,59 @@ Reason:
 
 ---
 
+## 1.1 Explicit Admission: Wrong Gen4 Avoiding-Vision Block
+
+The following Gen4 execution block is considered wrong in method and must be treated as non-authoritative:
+1. direct additive edits into avoiding baseline files as primary strategy,
+2. trying to evolve Avoiding vision by patching baseline paths first,
+3. mixing baseline and vision evolution concerns in shared files.
+
+Wrong block (admitted):
+1. Added dataset class in `d3il/environments/dataset/avoiding_dataset.py` as primary path.
+2. Extended `d3il/simulation/avoiding_sim.py` for vision mode as primary path.
+3. Extended avoiding env vision return path in `d3il/environments/d3il/envs/gym_avoiding_env/gym_avoiding/envs/avoiding.py` as primary path.
+4. Added `d3il/configs/avoiding_vision_config.yaml` and `d3il/scripts/avoiding_vision/ddpm_encdec_benchmark.sh` on top of this mixed strategy.
+
+Gen5 correction:
+1. follow D3IL pattern using new isolated folders/files first,
+2. avoid mutating baseline Avoiding files unless rollback analysis proves necessity.
+
+---
+
+## 1.2 Verified D3IL Findings (Rollback Decision Input)
+
+Evidence sources used for this section:
+1. Gen4 execution record: logs_in_develop/gen4_visual_camera_avoiding_d3il_plan/03_gen4_coding_execution_record.md
+2. Direct file diff against baseline workspace: /workspaces/d3il vs FM-PCC/d3il for avoiding-related files.
+
+Result summary:
+1. Gen5 Part 1 decision is locked to full rollback of Gen4 avoiding touchpoints,
+2. source of truth is original `/workspaces/d3il`,
+3. objective is a clean baseline entry before any new Gen5 extension.
+
+File-level findings:
+1. `d3il/environments/dataset/avoiding_dataset.py`
+	- Decision: full revert to original D3IL file.
+2. `d3il/simulation/avoiding_sim.py`
+	- Decision: full revert to original D3IL file.
+3. `d3il/environments/d3il/envs/gym_avoiding_env/gym_avoiding/envs/avoiding.py`
+	- Decision: full revert to original D3IL file.
+4. `d3il/configs/avoiding_vision_config.yaml`
+	- Decision: full revert to original D3IL file.
+5. `d3il/scripts/avoiding_vision/ddpm_encdec_benchmark.sh`
+	- Decision: full revert to original D3IL file.
+
+Traceability to Gen4 log 03:
+1. Section "5) Implement additive d3il visual-avoiding path" in Gen4 log 03 lists exactly the five avoiding touchpoints reviewed here.
+2. Rollback scope is intentionally restricted to those five items to avoid accidental reversion of unrelated Gen4 FM-PCC work.
+
+Rollback policy from findings:
+1. full rollback all five Gen4 avoiding touchpoints to `/workspaces/d3il` originals,
+2. no partial keep decisions in Part 1,
+3. all future avoiding-vision work must restart from isolated Gen5 paths only.
+
+---
+
 ## 2) New Gen5 Principle
 
 Do this in order:
@@ -27,6 +80,10 @@ Do this in order:
 Do not do this:
 1. build a new visual stack from scratch before reuse validation,
 2. claim visual policy success from state-only fallback behavior.
+
+Additional lock:
+1. Avoiding visual work must start from isolated Gen5 paths (new config/sim/script/data wrappers),
+2. baseline avoiding paths are read-only unless explicitly approved rollback patch.
 
 ---
 
@@ -96,6 +153,13 @@ No-go if:
 1. fundamental flaw appears in reused stack,
 2. then fix stack first before Avoiding extension.
 
+### Gate D: Rollback and Isolation Gate
+
+Pass criteria:
+1. rollback decision recorded for each wrong Gen4 touchpoint,
+2. new Gen5 Avoiding vision execution uses isolated paths first,
+3. baseline avoiding path remains reproducible without Gen5 vision toggles.
+
 ---
 
 ## 6) Fundamental Flaw Definition
@@ -113,4 +177,5 @@ Any one of these counts as fundamental flaw:
 Execute Gen5-02 implementation plan:
 1. benchmark existing D3IL visual models,
 2. extract reusable contracts,
-3. wire Avoiding visual path by extension, not reinvention.
+3. perform rollback decision matrix for wrong Gen4 avoiding-vision edits,
+4. wire Avoiding visual path by isolated new-folder pattern, not reinvention.

@@ -1,6 +1,5 @@
 import numpy as np
 import copy
-import cv2
 from environments.d3il.d3il_sim.sims.mj_beta.mj_utils.mj_helper import has_collision
 from environments.d3il.d3il_sim.utils.sim_path import d3il_path
 
@@ -56,8 +55,7 @@ class ObstacleAvoidanceEnv(GymEnvWrapper):
             n_substeps: int = 35,
             max_steps_per_episode: int = 250,
             debug: bool = False,
-            render: bool = False,
-            if_vision: bool = False
+            render: bool = False
     ):
 
         sim_factory = MjFactory()
@@ -80,10 +78,8 @@ class ObstacleAvoidanceEnv(GymEnvWrapper):
         )
 
         self.manager = ObstacleAvoidanceManager()
-        self.if_vision = if_vision
 
         self.bp_cam = BPCageCam()
-        self.inhand_cam = robot.inhand_cam
 
         self.scene.add_object(self.bp_cam)
 
@@ -120,14 +116,6 @@ class ObstacleAvoidanceEnv(GymEnvWrapper):
 
     def get_observation(self) -> np.ndarray:
         robot_c_pos = self.robot_state()[:2]
-        if self.if_vision:
-            bp_image = self.bp_cam.get_image(depth=False)
-            bp_image = cv2.cvtColor(bp_image, cv2.COLOR_RGB2BGR)
-
-            inhand_image = self.inhand_cam.get_image(depth=False)
-            inhand_image = cv2.cvtColor(inhand_image, cv2.COLOR_RGB2BGR)
-
-            return robot_c_pos.astype(np.float32), bp_image, inhand_image
         return robot_c_pos.astype(np.float32)
 
     def start(self):
