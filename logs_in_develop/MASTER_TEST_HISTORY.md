@@ -53,22 +53,40 @@ Keywords: SafeFlow-style time semantics, continuous-time query, flow_steps_v3.
 3. Kept v2 path intact for rollback and comparison.
 
 
-## Gen 4 Visual Model for Avoiding D3IL (Abandoned, Not Usable,Code Kept for Reference)
+## Gen4 Visual Model for Avoiding D3IL (Abandoned, Not Usable, Code Kept for Reference)
 
 Keywords: visual avoiding, vendored d3il, config split, copy-modify isolation, compatibility guard.
 
-1. **DANGER!!! Major code structure change:** The codebase has been refactored so that the D3IL library no longer needs to be cloned separately — it is now integrated directly into the FM-PCC codebase and can be imported directly.
-2. Created Gen4 visual-avoiding train/eval path with copy-modify isolation from old baseline path.
-3. Added visual-specific config/eval split for avoiding experiments.
-4. Kept old state baseline runnable for rollback and A/B comparison.
+Objective:
+1. Build a visual-avoiding train/eval path while preserving the old state baseline for rollback and A/B checks.
 
-**Critical Error**: Should not modify the avoiding taks in D3il codebase, but instead implement visual avoiding as an additive extension on top of existing avoiding code. This preserves the original avoiding task as a stable baseline and prevents regression risk. Will Fix in Gen5.
+What was done:
+1. **DANGER: major code structure change.** D3IL was integrated into FM-PCC (vendored) instead of being cloned separately.
+2. Created a Gen4 visual-avoiding train/eval path using copy-modify isolation.
+3. Added visual-specific config and eval split for avoiding experiments.
+4. Kept the old state baseline runnable for rollback and A/B comparison.
 
-## Gen5 Rewire Existing Visual Models First
+Critical error identified:
+1. Avoiding task code in D3IL was modified directly.
+2. This should have been implemented as an additive extension on top of the existing avoiding path.
+3. Direct modification increased regression risk and code entanglement.
 
-Keywords: reuse-first, benchmark existing vision models, avoiding extension, no wheel rebuild.
+Correction rule carried forward:
+1. Fix in Gen5 by keeping baseline avoiding stable and extending via isolated visual paths.
+2. Follow the same separation style used by other D3IL visual models to avoid coupling.
 
-1. Reset strategy to validate existing D3IL vision models first (aligning/sorting/stacking).
-2. Locked rule: rewire and reuse existing visual model contracts before any new architecture work.
-3. Plan to extend validated visual contract into Avoiding only after passing health checks.
-4. Keep fake-vision guard requirement: declared vision mode must not silently fall back to state-only behavior.
+## Gen5 FMv3 Aligning Vision First
+
+Keywords: reuse-first, benchmark existing vision models, FMv3 aligning vision, avoiding extension, fake-vision guard.
+
+Strategy reset:
+1. Validate existing D3IL visual models first (aligning, sorting, stacking) before avoiding extension.
+2. Rewire and reuse existing visual model contracts before any new architecture work.
+
+Execution rules:
+1. Extend into avoiding only after visual health checks pass.
+2. Keep baseline avoiding path stable in vendored FM-PCC/d3il.
+3. Use isolated copy-modify paths for FMv3 aligning vision work.
+
+Non-negotiable guard:
+1. Vision mode must be real image-conditioned behavior and must not silently fall back to state-only behavior.
