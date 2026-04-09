@@ -1,139 +1,124 @@
-# 01 Current Status: Gen4U2 True Visual Policy Transition
+# 01 Current Status: Gen4U2 True Visual Policy
 
 Date: 2026-04-09
-Status: Locked Baseline for Review
-Scope: FM-PCC Gen4U2 (true visual policy path), with DPCC compatibility awareness
+Status: Abandoned (Archive, Do Not Execute)
+Notice:
+1. Gen4U2 is abandoned.
+2. Do not delete this file content; keep as historical record.
+3. Active path is U5/Gen5: rewire existing visual models first, then extend to Avoiding visual only if no fundamental flaw, and do not rebuild wheels.
+
+Superseding docs:
+1. logs_in_develop/gen5_rewire_existing_visual_models_plan/01_gen5_reset_abandon_gen4u2.md
+2. logs_in_develop/gen5_rewire_existing_visual_models_plan/02_gen5_rewire_to_existing_visual_models_plan.md
 
 ---
 
-## 1) Objective
+## Archived Gen4U2 Baseline (Retained)
 
-Define the verified starting point for Gen4U2.
+### 1) Objective
 
-Gen4U2 target is no longer visual-infrastructure-only. It is:
-1. image-backed data usage,
-2. image-conditioned policy inference,
-3. explicit separation from state-only fallback behavior,
-4. preserved backward compatibility for existing state baselines.
+Define the corrected Gen4U2 baseline.
 
----
+Gen4U2 principle:
+1. do not rebuild existing visual wheels,
+2. extend proven D3IL visual logic into Avoiding planning path,
+3. remove silent state-only fallback under visual label,
+4. keep state baseline compatibility as an explicit mode.
 
-## 2) Investigation Summary (Locked)
+### 2) Investigation Summary (Locked)
 
 Based on local test and code tracing:
-1. visual train/eval scripts run successfully even when camera image folders are missing,
-2. this means current visual path is not yet truly image-conditioned,
-3. current path validates config/route plumbing only.
+1. visual train/eval scripts run even when image folders are absent,
+2. current FM visual path for Avoiding is still state-dominant,
+3. this validates route/config only, not true image-conditioned policy.
 
-Practical interpretation:
-1. current Gen4 visual branch is operational,
-2. but scientific claim level is visual-infrastructure-only,
-3. true visual policy requirements remain unmet.
+Additional finding:
+1. D3IL already has visual building blocks for Avoiding and other tasks,
+2. current FM Avoiding visual path is not reusing those blocks end-to-end.
 
----
+### 3) Verified Findings
 
-## 3) Verified Findings
+#### 3.1 D3IL already contains visual logic we should reuse
 
-### 3.1 Dataset loader behavior
+Available components in this workspace:
+1. visual observation path in Avoiding env via if_vision=True.
+2. Avoiding image dataset support in Avoiding_Img_Dataset.
+3. visual agent prediction contract using tuple input (bp_image, inhand_image, des_robot_pos).
+4. image normalization and temporal context handling already implemented in D3IL vision agents.
 
-In the visual flow-matcher dataset loader, avoiding visual env names are routed to the same state extraction path:
-1. parse `env_state` pkl,
-2. read `des_c_pos` and `c_pos`,
-3. concatenate into low-dimensional state,
-4. never load image files.
+Conclusion:
+1. required visual primitives already exist and are production-shaped.
 
-Result:
-- no dependency on `images/bp-cam` or `images/inhand-cam` at training/eval time for current FM visual scripts.
+#### 3.2 Current FM Avoiding visual route bypasses those primitives
 
-### 3.2 Model input contract behavior
+Current flow-matcher dataset route for Avoiding visual still does:
+1. load pkl state only,
+2. build [x_des, y_des, x, y] style observation,
+3. ignore image folders during training batches.
 
-Current model path is a temporal 1D U-Net trajectory model expecting low-dimensional numeric condition vectors.
+Current eval policy call still does:
+1. pass state condition only,
+2. avoid camera tensor path in policy conditioning.
 
-Observed contract pattern:
-1. `cond_dim` aligned to state vector (4),
-2. transition/action path remains numeric sequence modeling,
-3. no native image encoder in the forward path.
+#### 3.3 Last Gen4 wrong direction (explicit correction)
 
-Result:
-- model cannot consume raw camera tensors in current wiring.
+Wrong direction from previous draft:
+1. proposing new visual components first, before integrating existing D3IL visual path,
+2. allowing visual alias to pass through state-only loader path as final behavior.
 
-### 3.3 Eval rollout behavior
+Correction:
+1. Gen4U2 must be reuse-first,
+2. visual mode must not silently degrade to state-only when strict visual is requested.
 
-Current visual eval logic still uses state-concat style condition construction.
+### 4) Root Cause Statement
 
-Result:
-1. rollout can succeed with no images present,
-2. because planner remains state-driven.
+Root cause is integration gap, not missing ecosystem pieces:
+1. D3IL visual components exist,
+2. FM Avoiding visual planner path is not wired to consume them,
+3. therefore visual-named runs can execute without images.
 
----
+### 5) Current Claim Level (Must Be Explicit)
 
-## 4) Root Cause Statement
+Allowed claim now:
+1. visual routing/entrypoint exists,
+2. code executes in state-dominant mode.
 
-Root cause is architectural/wiring mismatch, not data corruption:
-1. visual environment label exists,
-2. but data loader and planner path still implement state-conditioned pipeline,
-3. therefore missing image assets do not break runtime.
+Not allowed claim now:
+1. image-conditioned planning,
+2. true visual policy behavior,
+3. robustness gain from camera input.
 
----
+### 6) Gen4U2 Direction (Pre-02)
 
-## 5) Current Claim Level (Must Be Explicit)
+Gen4U2 is defined as extension, not reinvention.
 
-Allowed claim right now:
-1. Gen4 visual routing/config path works.
-2. aliasing and script entrypoints are functional.
+Required direction:
+1. reuse D3IL visual data/observation contract,
+2. bridge that contract into FM planner conditioning,
+3. enforce strict visual mode semantics,
+4. preserve explicit state-only compatibility mode.
 
-Not yet allowed claim:
-1. true visual policy learning,
-2. image-conditioned decision-making,
-3. visual robustness gains attributable to camera inputs.
+### 7) Constraints and Compatibility Rules
 
----
+1. No wheel rebuilding before reuse path is exhausted.
+2. Keep old state baselines runnable by explicit config switch.
+3. Visual strict mode must fail fast when image assets are missing.
+4. All visual claims must be backed by ablation evidence.
 
-## 6) Gen4U2 Direction (Pre-02)
+### 8) Evidence Requirements Before 02 Is Approved
 
-Gen4U2 is defined as the transition from visual-infrastructure-only to true visual policy.
+02 must include explicit file-level answers for:
+1. where D3IL visual dataset logic is reused,
+2. how FM dataset returns camera conditions,
+3. where policy/model consumes camera conditions,
+4. how eval obtains and forwards camera observations,
+5. how strict visual mode blocks silent state fallback,
+6. which tests prove camera dependence.
 
-Required high-level shift:
-1. data path must load camera images,
-2. model path must include visual encoder + fusion into policy condition path,
-3. eval path must feed image-conditioned inputs end-to-end,
-4. metrics must include visual stress validation.
+### 9) Acceptance Gate for Moving to 02
 
----
-
-## 7) Constraints and Compatibility Rules
-
-1. Keep old state baselines runnable and unchanged by default.
-2. Add true-visual path in isolated Gen4U2 keys/folders.
-3. Any shared edits must be backward-safe and explicitly labeled.
-4. No claim inflation: image conditioning must be verifiable in code path and ablation.
-
----
-
-## 8) Evidence Requirements Before 02 Is Approved
-
-02 implementation plan must include explicit file-level answers for:
-1. which loader reads image files and batch layout,
-2. where visual encoder is inserted,
-3. how fusion enters the denoiser/flow module,
-4. how eval passes image tensors into policy call,
-5. how fallback to state-only is controlled,
-6. what tests prove true visual conditioning.
-
----
-
-## 9) Acceptance Gate for Moving to 02
-
-Proceed to 02 only if this 01 is accepted as the locked baseline statement:
+Proceed to 02 only if this baseline is accepted:
 1. current branch is state-dominant despite visual naming,
-2. Gen4U2 must implement real image-conditioned learning and inference,
-3. backward compatibility must remain intact.
-
----
-
-## 10) Review Prompt
-
-Reviewer decision request:
-1. confirm this diagnosis baseline,
-2. confirm Gen4U2 scope boundaries,
-3. then approve drafting `02_implementation_plan_gen4u2_true_visual_policy.md`.
+2. D3IL already has reusable visual components,
+3. Gen4U2 must extend those components into Avoiding planner path,
+4. no-rebuild-first rule is mandatory.
