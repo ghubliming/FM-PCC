@@ -13,7 +13,7 @@ Gen4U2 is abandoned.
 Reason:
 1. it drifted into partial redesign before fully exploiting existing D3IL vision pipelines,
 2. this increases risk and delays proof of concept,
-3. team direction is now explicit: rewire to existing visual models first.
+3. team direction is now explicit: align to existing visual models first.
 
 ---
 
@@ -67,6 +67,47 @@ Rollback policy from findings:
 1. full rollback all five Gen4 avoiding touchpoints to `/workspaces/d3il` originals,
 2. no partial keep decisions in Part 1,
 3. all future avoiding-vision work must restart from isolated Gen5 paths only.
+
+---
+
+## 1.3 Aligning Visual First: Initial Observation
+
+Observation objective:
+1. validate one existing visual pipeline first,
+2. use that result as entry gate before any avoiding FMv3-align architecture work.
+
+Static verification completed:
+1. `run_vision.py` exists and is wired to visual configs,
+2. `scripts/aligning_vision/ddpm_encdec_benchmark.sh` exists as executable entry,
+3. `configs/aligning_vision_config.yaml` uses image dataset target and `if_vision: True` in train/eval simulation,
+4. original avoiding path has no dedicated avoiding-visual config/script entry in baseline d3il.
+
+Execution status:
+1. first minimal aligning visual run was prepared,
+2. runtime execution was not completed in this turn,
+3. therefore current status is "entry verified by structure, runtime verdict pending".
+
+Decision impact:
+1. keep "aligning visual first" as hard first action,
+2. block avoiding FMv3-align execution until one aligning visual smoke run is recorded.
+
+---
+
+## 1.4 Investigation: What D3IL Visual Actually Conditions On
+
+Input-contract finding (from D3IL code):
+1. D3IL vision policy is not image-only.
+2. It conditions on `(bp_image, inhand_image, state)`.
+3. In aligning path, state is desired robot position (`des_robot_pos`), and action is prediction target, not conditioning input.
+
+FM old avoiding visual-path finding (from archived Gen4 paths):
+1. FM visual avoiding dataset route still uses state pkl stream via `SequenceDataset` branch.
+2. FM eval policy call uses `conditions={0: obs}` state vector path.
+3. Therefore old FM avoiding visual path is effectively state/action-conditioned and does not prove image-conditioned planning.
+
+Practical implication:
+1. To "let visual model work" we likely need multiple coordinated changes (dataset, policy-conditioning interface, model-conditioning path, eval runtime obs path).
+2. Acceptable first success criterion: even a weak model is acceptable if image tensors are truly consumed and affect outputs.
 
 ---
 

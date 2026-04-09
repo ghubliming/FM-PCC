@@ -1,4 +1,4 @@
-# 02 Gen5 Implementation Plan: Rewire to Existing Visual Models First
+# 02 Gen5 Implementation Plan: FMv3 Aligning Vision
 
 Date: 2026-04-09
 Status: Ready
@@ -15,7 +15,7 @@ Primary objective:
 
 Correction objective:
 1. explicitly fix wrong Gen4 Avoiding-vision method,
-2. follow D3IL pattern with isolated new Gen5 folder/file paths first,
+2. follow FMv3 aligning vision pattern with isolated new folder/file paths,
 3. revert prior mixed baseline edits only where rollback matrix says required.
 
 ---
@@ -23,7 +23,7 @@ Correction objective:
 ## 2) Part 1: Rollback Avoiding Only (If Needed)
 
 This part is limited to D3IL Avoiding baseline safety.
-No rewire work is performed in Part 1.
+No architecture migration work is performed in Part 1.
 Source-of-truth baseline for rollback comparison is `/workspaces/d3il`.
 
 ### 2.0 Evidence Input From Gen4 Log
@@ -55,7 +55,7 @@ Exit criteria:
 
 ### 2.2 Findings-Based Preliminary Decision
 
-Based on current code reading and Gen5 reset policy:
+Based on current code reading and reset policy:
 1. `d3il/environments/dataset/avoiding_dataset.py`
    - full revert.
 2. `d3il/simulation/avoiding_sim.py`
@@ -71,7 +71,7 @@ Based on current code reading and Gen5 reset policy:
 
 1. baseline avoiding config path runs without dependence on vision folders,
 2. all five avoiding touchpoints are restored byte-equivalent to `/workspaces/d3il`,
-3. rollback notes are recorded in Gen5 execution record.
+3. rollback notes are recorded in execution record.
 
 ### 2.4 Part 1 Concrete Rollback Procedure
 
@@ -100,7 +100,7 @@ Step D: Safety verification after rollback decisions
 
 Step E: Decision lock
 1. If baseline still breaks after full revert: treat as pre-existing baseline issue and isolate diagnosis before Part 2.
-2. If baseline passes: continue to Part 2 using only isolated Gen5 vision paths.
+2. If baseline passes: continue to Part 2 using only isolated FMv3 aligning vision paths.
 
 ### 2.5 Part 1 Deliverable
 
@@ -114,115 +114,87 @@ Create rollback appendix table with columns:
 
 ---
 
-## 3) Part 2: Rewire to Existing Visual Models
+## 3) Part 2: Simple Copy-Modify on FMv3 Aligning Vision (Locked)
 
 Part 2 starts only after Part 1 acceptance is met.
 
-### 3.1 Execution Phases
+This part is intentionally simple and uses the same copy-modify pattern as abandoned Gen4, while keeping old code as stable baseline.
 
-### Phase 1: Benchmark existing visual stack (no Avoiding edits yet)
+Implementation scope note:
+1. all D3IL-side integration targets the vendored folder `FM-PCC/d3il`.
+2. do not edit `/workspaces/d3il`; it is baseline reference only.
 
-Run representative visual benchmarks from existing folders:
-1. aligning_vision,
-2. sorting_4_vision,
-3. stacking_vision.
+### 3.0 Aligning Visual First Gate (Mandatory)
 
-Use benchmark scripts as-is first, then minimal fix only if required.
+Before Entry 1 starts, run aligning visual as first validation.
 
-Outputs to collect:
-1. run success/failure,
-2. runtime logs,
-3. checkpoint and metric artifacts,
-4. quick sanity on image-conditioned path usage.
+Current observation state:
+1. structural readiness confirmed from existing files,
+2. runtime smoke result not yet recorded,
+3. Part 2 remains blocked until one aligning visual run result is logged.
 
-Exit criteria:
-1. at least one successful end-to-end visual run,
-2. no fundamental flaw.
+Required first command family:
+1. `scripts/aligning_vision/ddpm_encdec_benchmark.sh` or equivalent single-run `run_vision.py` command,
+2. record pass/fail and key error lines in execution record.
 
-### Phase 2: Extract reusable visual contract
+Verified conditioning finding:
+1. D3IL visual path is `visual + state`, not visual-only.
+2. Policy input contract is `(bp_image, inhand_image, des_robot_pos)`.
+3. Action is predicted output target, not part of visual conditioning input tuple.
 
-From passing tasks, lock the reusable interface:
-1. input contract pattern,
-2. dataset contract pattern,
-3. config contract pattern,
-4. sim/eval contract pattern.
+Old FM avoiding visual finding:
+1. archived FM avoiding visual path conditions on state vector (`conditions={0: obs}`),
+2. archived dataset route still uses pkl state stream in avoiding branch,
+3. so old path behaves as state/action-dominant, not proven image-conditioned.
 
-Target reusable baseline (expected):
-1. vision tuple style `(bp_image, inhand_image, state_or_goal_state)`,
-2. `if_vision: True` in simulation config,
-3. image dataset class path in config.
+### 3.1 Three Entry Execution Path
 
-Exit criteria:
-1. one-page contract summary accepted,
-2. no contradictory behavior across selected visual tasks.
+Entry 1: Copy two FMv3 folders, do not edit old folders
+1. copy `flow_matcher_v3_avoiding_visual` to `flow_matcher_v3_avoiding_visual_fmv3_aligning_vision`,
+2. copy `FM_v3_avoiding_visual_test` to `FM_v3_avoiding_visual_fmv3_aligning_vision_test`,
+3. keep original source folders untouched for rollback and A/B reference.
 
-### Phase 3: Rewire Avoiding to existing visual contract
+Entry 2: Modify only the two copied folders
+1. apply FMv3 aligning vision edits only inside the two new copied folders,
+2. do not modify baseline `d3il` avoiding paths,
+3. do not modify old FMv3 folders directly.
 
-Implement minimal, extension-only changes in d3il using isolated new Gen5 paths:
-1. create new config file path for Gen5 avoiding vision (parallel to baseline),
-2. create new simulation path for Gen5 avoiding vision (parallel to baseline),
-3. create new dataset wrapper/path for Gen5 avoiding vision contract,
-4. create new launcher folder for Gen5 avoiding vision benchmark,
-5. ensure selected vision agent receives tuple contract directly.
+Entry 2A: Mandatory integration blocks (expected broad changes)
+1. Dataset block: load and align bp/inhand image sequences with state/action for avoiding.
+2. Policy/model block: accept visual+state conditioning tuple end-to-end in FMv3 path.
+3. Runtime block: eval/training must request vision observation path and fail loudly if image assets are missing.
 
-Do not:
-1. create a brand-new vision architecture,
-2. mutate baseline avoiding files as first-choice implementation,
-3. change unrelated agents/models.
+Entry 3: Add two new config files
+1. create `config/avoiding-d3il-fmv3-aligning-vision.py` for train/runtime,
+2. create `config/projection_eval_fmv3_aligning_vision.yaml` for eval/projection,
+3. keep old configs untouched.
 
-Exit criteria:
-1. Avoiding vision run executes end-to-end using camera observations,
-2. no silent state-only fallback in declared vision mode.
+### 3.2 Scope Locks
 
-### Phase 4: Link learnings back to FM planning path (next generation prep)
-
-After Avoiding vision run is healthy:
-1. map which contracts can be transferred to FM avoiding visual planner path,
-2. identify exactly which FM files need rewire,
-3. defer heavy FM refactor to next generation unless blocking.
-
-Exit criteria:
-1. precise handoff list for next generation,
-2. evidence-backed go/no-go recommendation.
+1. old avoiding and old FMv3 code are preserved as-is,
+2. all new Part 2 edits are isolated to copied FMv3 aligning vision folders and two new config files,
+3. if new path fails, disable only FMv3 aligning vision copied path and keep baseline runnable.
 
 ---
 
 ## 4) Concrete File Targets
 
-### 4.1 D3IL validation and rewiring targets
+### 4.1 Copied FMv3 Aligning Vision folders (new)
 
-1. run_vision.py
-2. configs/aligning_vision_config.yaml
-3. configs/sorting_4_vision_config.yaml
-4. configs/stacking_vision_config.yaml
-5. configs/avoiding_config.yaml
-6. simulation/avoiding_sim.py
-7. environments/dataset/avoiding_dataset.py
-8. agents/*vision*agent.py (only chosen baseline agent)
+1. `flow_matcher_v3_avoiding_visual_fmv3_aligning_vision` (copied from `flow_matcher_v3_avoiding_visual`),
+2. `FM_v3_avoiding_visual_fmv3_aligning_vision_test` (copied from `FM_v3_avoiding_visual_test`).
 
-### 4.1.1 Gen5 isolated Avoiding targets (new-folder pattern)
+### 4.2 Two new config files (new)
 
-1. configs/avoiding_vision_gen5_config.yaml
-2. simulation/avoiding_vision_gen5_sim.py
-3. environments/dataset/avoiding_vision_gen5_dataset.py
-4. scripts/avoiding_vision_gen5/ddpm_encdec_benchmark.sh
+1. `config/avoiding-d3il-fmv3-aligning-vision.py` (train/runtime config),
+2. `config/projection_eval_fmv3_aligning_vision.yaml` (eval config).
 
-Notes:
-1. these are preferred over direct mutation of baseline avoiding paths,
-2. old Gen4 avoiding-vision paths are treated as deprecated once Gen5 isolated path passes.
+### 4.3 Preserved old paths (read-only)
 
-### 4.2 Script launch targets
-
-1. scripts/aligning_vision/ddpm_encdec_benchmark.sh
-2. scripts/sorting_4_vision/ddpm_encdec_benchmark.sh
-3. scripts/stacking_vision/ddpm_encdec_benchmark.sh
-
-### 4.3 FM reference-only targets (do not refactor in this phase)
-
-1. FM_v3_avoiding_visual_test/train_FM_v3_avoiding_visual.py
-2. FM_v3_avoiding_visual_test/eval_FM_v3_avoiding_visual.py
-3. flow_matcher_v3_avoiding_visual/datasets/d4rl.py
-4. config/avoiding-d3il-visual.py
+1. `flow_matcher_v3_avoiding_visual`,
+2. `FM_v3_avoiding_visual_test`,
+3. `config/avoiding-d3il-visual.py`,
+4. baseline `d3il` avoiding files restored in Part 1.
 
 ### 4.4 Rollback-review targets from wrong Gen4 block
 
@@ -236,63 +208,55 @@ Notes:
 
 ## 5) Tests and Evidence Gates
 
-### 5.1 Existing vision stack validation
+### 5.1 FMv3 Aligning Vision copied path smoke validation
 
 Required:
-1. benchmark run command exits successfully,
-2. logs show vision config and vision agent are active,
-3. no runtime path that drops image tensors unexpectedly.
+1. train/eval entrypoints in copied FMv3 aligning vision folders run,
+2. two new config files load correctly,
+3. baseline old path still runs unchanged.
+4. at least one aligning visual run result is recorded before FMv3 aligning vision edits start.
+5. weak-performance run is acceptable only if image perturbation changes predicted action statistics.
 
-### 5.2 Avoiding vision extension validation
-
-Required:
-1. Avoiding run created from vision-style config succeeds,
-2. `if_vision=True` path is exercised,
-3. perturbation sanity check:
-   - changing image input affects action output statistics.
-4. run is executed via new Gen5 isolated path, not baseline-mutated path.
-
-### 5.3 No-fake-vision guard
+### 5.2 Isolation guard
 
 Required:
-1. in declared vision mode, missing image assets fail loudly,
-2. fallback to state-only is allowed only in explicitly declared state mode.
+1. no edits appear in preserved old FMv3 folders,
+2. no new edits appear in baseline `d3il` avoiding files.
 
-### 5.4 Rollback guard
+### 5.3 Rollback guard
 
 Required:
-1. baseline avoiding command path remains stable after rollback decisions,
-2. any non-isolated Gen4 touchpoint is either reverted or hard-guarded.
+1. disabling FMv3 aligning vision copied folders must leave baseline run path valid,
+2. Part 1 rollback state remains intact.
 
 ---
 
 ## 6) Risk Controls
 
-1. Risk: existing visual scripts run but hide conditioning bug.
-   - Control: add sensitivity sanity check in report.
-2. Risk: Avoiding image alignment mismatch.
-   - Control: deterministic file ordering and sequence length checks.
-3. Risk: scope creep into FM redesign.
-   - Control: FM changes limited to reference mapping in Gen5 phase.
+1. Risk: accidental edits to old baseline folders.
+   - Control: edit lock to copied FMv3 aligning vision folders only.
+2. Risk: config collision with old runs.
+   - Control: new config filenames for FMv3 aligning vision path only.
+3. Risk: FMv3 aligning vision path breaks.
+   - Control: old folders remain untouched and immediately reusable.
 
 ---
 
 ## 7) Deliverables
 
-1. Gen5 execution record (03) with benchmark commands, outcomes, and failures/fixes.
-2. Gen5 expected results and risk audit (04) with go/no-go for next generation FM integration.
-3. Optional: migration checklist from D3IL Avoiding-vision success to FM avoiding planner integration.
-4. Rollback matrix appendix for wrong Gen4 touchpoints with keep/revert/supersede decision and reason.
+1. execution record (03) with Part 1 rollback evidence and Part 2 copy-modify commands.
+2. list of copied FMv3 aligning vision folders and modified files inside them.
+3. two new config files and command examples using only FMv3 aligning vision paths.
+4. quick A/B run note: old path vs FMv3 aligning vision path.
 
 ---
 
 ## 8) Definition of Done
 
 Gen5-02 is complete when:
-1. existing D3IL visual stack has been validated by benchmark evidence,
+1. Part 1 rollback/fix acceptance criteria are met,
 2. rollback matrix is completed for wrong Gen4 avoiding-vision touchpoints,
-3. Part 1 rollback/fix acceptance criteria are met,
-4. Avoiding has a vision-enabled run wired via isolated Gen5 path,
-5. fake-vision behavior is prevented by explicit guards,
-6. baseline avoiding remains stable after rollback/guard actions,
-7. next-generation FM handoff is concrete and evidence-based.
+3. exactly two FMv3 folders are copied into FMv3 aligning vision folders,
+4. exactly two new FMv3 aligning vision config files are added,
+5. old FMv3 folders and baseline `d3il` avoiding files remain unchanged after Part 1,
+6. FMv3 aligning vision copied path runs and baseline path still runs.
