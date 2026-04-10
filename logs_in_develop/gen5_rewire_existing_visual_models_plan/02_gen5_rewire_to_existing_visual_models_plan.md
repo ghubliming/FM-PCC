@@ -1,5 +1,21 @@
 # 02 Gen5 Implementation Plan: FMv3 Aligning Vision
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+HUGE WARNING (LOCKED):
+Do NOT run a direct DPCC/FM-PCC Action -> Visual-Action upgrade as primary plan.
+
+Current assumption for safety:
+1. this likely requires a gigantic rebuild and will hide failure behind partial patches,
+2. D3IL Aligning Visual+Action evidence is from DDPM-ACT style path,
+3. we must start from a real Visual-Action model contract, then inject DPCC concept.
+
+Execution order is mandatory:
+1. real Visual-Action baseline first,
+2. DPCC concept integration second,
+3. Aligning proof third,
+4. Avoiding extension last.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Date: 2026-04-09
 Status: Ready
 Depends on: 01_gen5_reset_abandon_gen4u2.md
@@ -9,14 +25,16 @@ Depends on: 01_gen5_reset_abandon_gen4u2.md
 ## 1) Objective
 
 Primary objective:
-1. validate and reuse existing D3IL vision stack,
-2. then extend the same logic into Avoiding,
-3. avoid new architecture unless proven necessary.
+1. use a real Visual-Action baseline model path as control,
+2. integrate DPCC concept incrementally into that baseline path,
+3. prove Aligning behavior before Avoiding migration,
+4. avoid direct one-step Action -> Visual-Action conversion.
 
 Correction objective:
 1. explicitly fix wrong Gen4 Avoiding-vision method,
 2. follow FMv3 aligning vision pattern with isolated new folder/file paths,
 3. revert prior mixed baseline edits only where rollback matrix says required.
+4. enforce that "visual" means actual image-conditioned action behavior.
 
 ---
 
@@ -147,6 +165,32 @@ Old FM avoiding visual finding:
 2. archived dataset route still uses pkl state stream in avoiding branch,
 3. so old path behaves as state/action-dominant, not proven image-conditioned.
 
+Hard interpretation lock:
+1. current DPCC/FM-PCC action-first path is not accepted as direct bridge to Visual-Action,
+2. any attempt to patch this bridge directly is treated as major rebuild risk,
+3. proceed only with real Visual-Action baseline + DPCC concept injection strategy.
+
+### 3.0A Incremental Path (Mandatory)
+
+Phase V0: Control baseline (real Visual-Action)
+1. pick one runnable Visual-Action reference contract from existing D3IL visual stack,
+2. keep training/eval runnable without DPCC concept injection,
+3. record control outputs and failure signatures.
+
+Phase V1: Minimal DPCC concept injection
+1. add only the minimum DPCC concept components needed for first test,
+2. keep data/obs contract unchanged from V0,
+3. verify run still consumes image tensors and predicts action.
+
+Phase V2: Aligning proof
+1. run aligning benchmark on V0 and V1,
+2. compare action statistics under image perturbation,
+3. reject if V1 collapses to state-only behavior.
+
+Phase V3: Avoiding extension
+1. only after V2 proof,
+2. transfer the validated Visual-Action + DPCC concept pattern to Avoiding.
+
 ### 3.1 Three Entry Execution Path
 
 Entry 1: Copy two FMv3 folders, do not edit old folders
@@ -163,6 +207,7 @@ Entry 2A: Mandatory integration blocks (expected broad changes)
 1. Dataset block: load and align bp/inhand image sequences with state/action for avoiding.
 2. Policy/model block: accept visual+state conditioning tuple end-to-end in FMv3 path.
 3. Runtime block: eval/training must request vision observation path and fail loudly if image assets are missing.
+4. DPCC concept block: inject DPCC idea incrementally after Visual-Action baseline is stable; do not change all blocks at once.
 
 Entry 3: Add two new config files
 1. create `config/avoiding-d3il-fmv3-aligning-vision.py` for train/runtime,
@@ -216,6 +261,7 @@ Required:
 3. baseline old path still runs unchanged.
 4. at least one aligning visual run result is recorded before FMv3 aligning vision edits start.
 5. weak-performance run is acceptable only if image perturbation changes predicted action statistics.
+6. if output is image-insensitive after DPCC injection, mark as failed bridge and stop Avoiding migration.
 
 ### 5.2 Isolation guard
 
@@ -259,4 +305,6 @@ Gen5-02 is complete when:
 3. exactly two FMv3 folders are copied into FMv3 aligning vision folders,
 4. exactly two new FMv3 aligning vision config files are added,
 5. old FMv3 folders and baseline `d3il` avoiding files remain unchanged after Part 1,
-6. FMv3 aligning vision copied path runs and baseline path still runs.
+6. FMv3 aligning vision copied path runs and baseline path still runs,
+7. V0 (real Visual-Action control) and V1 (DPCC concept injected) are both executed,
+8. Aligning comparison proves visual-conditioned action behavior before Avoiding migration.
