@@ -1,5 +1,22 @@
 # 01 Gen5 Reset: Abandon Gen4U2 and Reboot Strategy
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+HUGE WARNING (LOCKED):
+Direct upgrade from Action model to Visual-Action model in DPCC/FM-PCC is
+NOT accepted as a working path for this stage.
+
+Reason:
+1. D3IL Aligning Visual+Action evidence is tied to DDPM-ACT style pipeline.
+2. DPCC current path is action-first and likely needs major rebuild for true
+	image-conditioned behavior.
+3. "Visual" naming without real image-action conditioning is treated as false pass.
+
+Mandatory strategy:
+1. use a real existing Visual-Action model path first,
+2. inject DPCC concept into that real Visual-Action path,
+3. then run Aligning test for proof.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Date: 2026-04-09
 Status: Locked
 Owner intent: reuse existing D3IL vision stack first, then decide Avoiding visual
@@ -14,6 +31,13 @@ Reason:
 1. it drifted into partial redesign before fully exploiting existing D3IL vision pipelines,
 2. this increases risk and delays proof of concept,
 3. team direction is now explicit: align to existing visual models first.
+4. direct Action -> Visual-Action upgrade inside DPCC/FM-PCC is now treated as high-risk rebuild path, not incremental path.
+
+Decision lock for Gen5:
+1. do not attempt direct Action -> Visual-Action conversion as first implementation step,
+2. select one real Visual-Action baseline contract and keep it runnable first,
+3. port DPCC concept incrementally into that baseline contract,
+4. only after this, validate Aligning behavior and then consider Avoiding extension.
 
 ---
 
@@ -108,19 +132,23 @@ FM old avoiding visual-path finding (from archived Gen4 paths):
 Practical implication:
 1. To "let visual model work" we likely need multiple coordinated changes (dataset, policy-conditioning interface, model-conditioning path, eval runtime obs path).
 2. Acceptable first success criterion: even a weak model is acceptable if image tensors are truly consumed and affect outputs.
+3. DPCC concept should be integrated into a real Visual-Action backbone, not used to force direct upgrade from action-only path.
 
 ---
 
 ## 2) New Gen5 Principle
 
 Do this in order:
-1. validate existing D3IL visual pipelines are healthy and reproducible,
-2. reuse their contracts and runtime flow,
-3. then extend to Avoiding visual only if no fundamental flaw is found.
+1. validate one real Visual-Action baseline pipeline is healthy and reproducible,
+2. keep this baseline runnable as the control path,
+3. integrate DPCC concept incrementally into this baseline,
+4. run Aligning test as first proof,
+5. then extend to Avoiding visual only if no fundamental flaw is found.
 
 Do not do this:
 1. build a new visual stack from scratch before reuse validation,
 2. claim visual policy success from state-only fallback behavior.
+3. attempt one-step Action -> Visual-Action conversion in DPCC/FM-PCC.
 
 Additional lock:
 1. Avoiding visual work must start from isolated Gen5 paths (new config/sim/script/data wrappers),
@@ -216,7 +244,10 @@ Any one of these counts as fundamental flaw:
 ## 7) Immediate Next Step
 
 Execute Gen5-02 implementation plan:
-1. benchmark existing D3IL visual models,
-2. extract reusable contracts,
+1. lock one real Visual-Action baseline contract as control,
+2. define minimal DPCC concept injection points into that contract,
+3. run Aligning proof on control then on injected variant,
+4. benchmark existing D3IL visual models,
+5. extract reusable contracts,
 3. perform rollback decision matrix for wrong Gen4 avoiding-vision edits,
 4. wire Avoiding visual path by isolated new-folder pattern, not reinvention.
