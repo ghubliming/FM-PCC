@@ -90,3 +90,10 @@ Execution rules:
 
 Non-negotiable guard:
 1. Vision mode must be real image-conditioned behavior and must not silently fall back to state-only behavior.
+
+## Gen3v2 ODE Solver Addon Plan
+
+13. April
+
+Based on Gen3 FM-v3 rollout, we want to add an addon ODE solver path to evaluate whether better integration methods can reduce required step count under similar runtime.
+
