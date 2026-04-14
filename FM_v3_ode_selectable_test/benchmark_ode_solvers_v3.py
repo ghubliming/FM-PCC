@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Standalone ODE solver benchmark for FM-PCC Flow Matching v3 (ODE-selectable).
+"""VF-only ODE integrator benchmark for FM-PCC Flow Matching v3.
 
-This script benchmarks legacy Euler vs torchdiffeq methods on the avoiding env,
-printing metrics to console and saving timestamped outputs to this folder.
+This script benchmarks ODE integration behavior inside the FM vector-field
+sampling path only (legacy_euler vs torchdiffeq methods).
 """
 
 import argparse
@@ -11,14 +11,13 @@ import json
 import os
 import time
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 import torch
 import yaml
 
 import flow_matcher_v3_ode_selectable.utils as utils
-from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 from flow_matcher_v3_ode_selectable.sampling.policies import Policy
 
 
@@ -69,52 +68,6 @@ def parse_solver_specs(specs: str) -> List[Dict[str, object]]:
     return parsed
 
 
-def choose_constraints(proj_cfg: Dict, exp: str, halfspace_variant: str) -> Tuple[List[object], List[object]]:
-    """Return selected halfspace and obstacle constraints for one avoiding variant."""
-    if halfspace_variant == "top-left-hard":
-        polytopic_constraints = [proj_cfg["halfspace_constraints"][exp][0]]
-        obstacle_constraints = [proj_cfg["obstacle_constraints"][exp][3]]
-    elif halfspace_variant == "top-right-hard":
-        polytopic_constraints = [proj_cfg["halfspace_constraints"][exp][1]]
-        obstacle_constraints = [proj_cfg["obstacle_constraints"][exp][4]]
-    elif halfspace_variant == "both-hard":
-        polytopic_constraints = [proj_cfg["halfspace_constraints"][exp][2], proj_cfg["halfspace_constraints"][exp][3]]
-        obstacle_constraints = [proj_cfg["obstacle_constraints"][exp][5]]
-    else:
-        raise ValueError(f"Unknown halfspace variant: {halfspace_variant}")
-
-    return polytopic_constraints, obstacle_constraints
-
-
-def aggregate_trial_metrics(trials: List[Dict[str, float]]) -> Dict[str, float]:
-    if not trials:
-        return {}
-
-    success = np.array([t["success"] for t in trials], dtype=np.float32)
-    success_and_constraints = np.array([t["success_and_constraints"] for t in trials], dtype=np.float32)
-    collision_free = np.array([t["collision_free"] for t in trials], dtype=np.float32)
-    steps = np.array([t["steps"] for t in trials], dtype=np.float32)
-    inference_ms = np.array([t["avg_inference_ms"] for t in trials], dtype=np.float32)
-    violations = np.array([t["n_violations"] for t in trials], dtype=np.float32)
-    violation_mag = np.array([t["total_violation"] for t in trials], dtype=np.float32)
-    path_len = np.array([t["path_length"] for t in trials], dtype=np.float32)
-
-    success_steps = steps[success > 0]
-
-    return {
-        "success_rate": float(success.mean()),
-        "success_and_constraints_rate": float(success_and_constraints.mean()),
-        "collision_free_rate": float(collision_free.mean()),
-        "avg_steps": float(steps.mean()),
-        "avg_steps_success_only": float(success_steps.mean()) if success_steps.size > 0 else 0.0,
-        "avg_inference_ms": float(inference_ms.mean()),
-        "avg_n_violations": float(violations.mean()),
-        "avg_total_violation": float(violation_mag.mean()),
-        "avg_path_length": float(path_len.mean()),
-        "n_trials": int(len(trials)),
-    }
-
-
 def aggregate_vf_only_metrics(trials: List[Dict[str, float]]) -> Dict[str, float]:
     if not trials:
         return {}
@@ -158,94 +111,31 @@ def render_optional_plots(summary_rows: List[Dict[str, object]], out_dir: str, t
 
     labels = [f"{row['backend']}:{row['method']}" for row in summary_rows]
     x = np.arange(len(labels))
-
-    if "success_rate" not in summary_rows[0]:
-        inference_ms = [float(row["avg_inference_ms"]) for row in summary_rows]
-        final_goal_dist = [float(row["avg_final_goal_dist"]) for row in summary_rows]
-        smoothness = [float(row["avg_traj_smoothness"]) for row in summary_rows]
-
-        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-        axes[0].bar(x, inference_ms)
-        axes[0].set_title("Average Inference Time (ms)")
-        axes[1].bar(x, final_goal_dist)
-        axes[1].set_title("Average Final Goal Distance")
-        axes[2].bar(x, smoothness)
-        axes[2].set_title("Average Trajectory Smoothness")
-        for ax in axes:
-            ax.set_xticks(x)
-            ax.set_xticklabels(labels, rotation=30, ha="right")
-        fig.tight_layout()
-        fig.savefig(os.path.join(out_dir, "benchmark_summary_plots.png"), dpi=160, bbox_inches="tight")
-        plt.close(fig)
-
-        fig2, ax2 = plt.subplots(1, 1, figsize=(10, 6))
-        ax2.scatter(inference_ms, final_goal_dist)
-        for i, label in enumerate(labels):
-            ax2.annotate(label, (inference_ms[i], final_goal_dist[i]), xytext=(4, 4), textcoords="offset points")
-        ax2.set_xlabel("Average Inference Time (ms)")
-        ax2.set_ylabel("Average Final Goal Distance")
-        ax2.set_title("VF ODE Trade-off: Speed vs Goal Proximity")
-        fig2.tight_layout()
-        fig2.savefig(os.path.join(out_dir, "benchmark_tradeoff_scatter.png"), dpi=160, bbox_inches="tight")
-        plt.close(fig2)
-
-        fig3, ax3 = plt.subplots(1, 1, figsize=(12, 6))
-        for solver_label, trials in trials_by_solver.items():
-            if not trials:
-                continue
-            ms = [float(t["avg_inference_ms"]) for t in trials]
-            ax3.plot(ms, label=solver_label)
-        ax3.set_xlabel("Trial Index")
-        ax3.set_ylabel("Average Inference Time (ms)")
-        ax3.set_title("Per-Trial Inference Time by Solver (VF-only)")
-        ax3.legend(loc="best")
-        fig3.tight_layout()
-        fig3.savefig(os.path.join(out_dir, "benchmark_inference_per_trial.png"), dpi=160, bbox_inches="tight")
-        plt.close(fig3)
-
-        print("[plot] Saved benchmark plots:")
-        print(f"  - {os.path.join(out_dir, 'benchmark_summary_plots.png')}")
-        print(f"  - {os.path.join(out_dir, 'benchmark_tradeoff_scatter.png')}")
-        print(f"  - {os.path.join(out_dir, 'benchmark_inference_per_trial.png')}")
-        return
-
-    success = [float(row["success_rate"]) for row in summary_rows]
-    safe_success = [float(row["success_and_constraints_rate"]) for row in summary_rows]
     inference_ms = [float(row["avg_inference_ms"]) for row in summary_rows]
-    violations = [float(row["avg_n_violations"]) for row in summary_rows]
+    final_goal_dist = [float(row["avg_final_goal_dist"]) for row in summary_rows]
+    smoothness = [float(row["avg_traj_smoothness"]) for row in summary_rows]
 
-    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
-    axes = axes.flatten()
-
-    axes[0].bar(x, success)
-    axes[0].set_title("Success Rate")
-    axes[0].set_ylim(0.0, 1.0)
-
-    axes[1].bar(x, safe_success)
-    axes[1].set_title("Success + Constraint Satisfaction Rate")
-    axes[1].set_ylim(0.0, 1.0)
-
-    axes[2].bar(x, inference_ms)
-    axes[2].set_title("Average Inference Time Per Step (ms)")
-
-    axes[3].bar(x, violations)
-    axes[3].set_title("Average Number of Violations")
-
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    axes[0].bar(x, inference_ms)
+    axes[0].set_title("Average Inference Time (ms)")
+    axes[1].bar(x, final_goal_dist)
+    axes[1].set_title("Average Final Goal Distance")
+    axes[2].bar(x, smoothness)
+    axes[2].set_title("Average Trajectory Smoothness")
     for ax in axes:
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=30, ha="right")
-
     fig.tight_layout()
     fig.savefig(os.path.join(out_dir, "benchmark_summary_plots.png"), dpi=160, bbox_inches="tight")
     plt.close(fig)
 
     fig2, ax2 = plt.subplots(1, 1, figsize=(10, 6))
-    ax2.scatter(inference_ms, safe_success)
+    ax2.scatter(inference_ms, final_goal_dist)
     for i, label in enumerate(labels):
-        ax2.annotate(label, (inference_ms[i], safe_success[i]), xytext=(4, 4), textcoords="offset points")
-    ax2.set_xlabel("Average Inference Time Per Step (ms)")
-    ax2.set_ylabel("Success + Constraint Satisfaction Rate")
-    ax2.set_title("Solver Trade-off: Speed vs Safe Success")
+        ax2.annotate(label, (inference_ms[i], final_goal_dist[i]), xytext=(4, 4), textcoords="offset points")
+    ax2.set_xlabel("Average Inference Time (ms)")
+    ax2.set_ylabel("Average Final Goal Distance")
+    ax2.set_title("VF ODE Trade-off: Speed vs Goal Proximity")
     fig2.tight_layout()
     fig2.savefig(os.path.join(out_dir, "benchmark_tradeoff_scatter.png"), dpi=160, bbox_inches="tight")
     plt.close(fig2)
@@ -257,8 +147,8 @@ def render_optional_plots(summary_rows: List[Dict[str, object]], out_dir: str, t
         ms = [float(t["avg_inference_ms"]) for t in trials]
         ax3.plot(ms, label=solver_label)
     ax3.set_xlabel("Trial Index")
-    ax3.set_ylabel("Average Inference Time Per Step (ms)")
-    ax3.set_title("Per-Trial Inference Time by Solver")
+    ax3.set_ylabel("Average Inference Time (ms)")
+    ax3.set_title("Per-Trial Inference Time by Solver (VF-only)")
     ax3.legend(loc="best")
     fig3.tight_layout()
     fig3.savefig(os.path.join(out_dir, "benchmark_inference_per_trial.png"), dpi=160, bbox_inches="tight")
@@ -283,17 +173,30 @@ def resolve_model_seed(cli_seed: int, proj_cfg: Dict[str, object]) -> int:
     return 0
 
 
+def sample_condition_observations(dataset, n_trials: int, seed: int) -> List[np.ndarray]:
+    """Sample real condition observations from dataset episodes (no env interaction)."""
+    rng = np.random.default_rng(seed)
+    obs_pool = dataset.fields.observations
+    path_lengths = dataset.path_lengths
+    candidates: List[np.ndarray] = []
+    n_episodes = int(dataset.n_episodes)
+
+    for _ in range(n_trials):
+        ep = int(rng.integers(0, n_episodes))
+        path_len = max(int(path_lengths[ep]), 1)
+        t = int(rng.integers(0, path_len))
+        candidates.append(np.array(obs_pool[ep, t], copy=True))
+
+    return candidates
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark FM-v3 ODE solver options on avoiding env")
+    parser = argparse.ArgumentParser(description="Pure VF ODE integrator benchmark for FM-v3")
     parser.add_argument("--seed", type=int, default=None, help="Model seed/checkpoint seed. If omitted, uses first seed from config/projection_eval.yaml.")
-    parser.add_argument("--n-trials", type=int, default=20, help="Number of env episodes per solver option.")
-    parser.add_argument("--max-episode-length", type=int, default=150, help="Cap episode steps per trial.")
-    parser.add_argument("--batch-size", type=int, default=4, help="Policy batch size for candidate trajectories.")
+    parser.add_argument("--n-trials", type=int, default=50, help="Number of condition observations per solver option.")
     parser.add_argument("--horizon", type=int, default=None, help="Override rollout horizon; defaults to plan config.")
     parser.add_argument("--flow-steps", type=int, default=10, help="Flow rollout steps for all solver options.")
-    parser.add_argument("--benchmark-mode", type=str, default="vf_only", choices=["env_policy", "vf_only"], help="vf_only: benchmark ODE-in-VF sampling only (default); env_policy: full env rollouts.")
     parser.add_argument("--vf-batch-size", type=int, default=16, help="Batch size for vf_only trajectory sampling metrics.")
-    parser.add_argument("--halfspace-variant", type=str, default="both-hard", choices=["top-left-hard", "top-right-hard", "both-hard"], help="Avoiding env layout variant.")
     parser.add_argument(
         "--solver-spec",
         type=str,
@@ -309,11 +212,6 @@ def main() -> None:
     with open(os.path.join(project_root, "config", "projection_eval.yaml"), "r", encoding="utf-8") as f:
         proj_cfg = yaml.safe_load(f)
     model_seed = resolve_model_seed(args.seed, proj_cfg)
-
-    exp = "avoiding-d3il"
-    robot_name = "avoiding"
-    obs_indices = proj_cfg["observation_indices"][robot_name]
-    action_indices = proj_cfg["action_indices"][robot_name]
 
     parser_args = Parser().parse_args(experiment="plan_fm_v3_ode_selectable", seed=model_seed)
     if args.device is not None:
@@ -331,45 +229,34 @@ def main() -> None:
     dataset = fm_experiment.dataset
 
     horizon = int(args.horizon if args.horizon is not None else parser_args.horizon)
-    batch_size = int(args.batch_size)
-    max_episode_length = int(args.max_episode_length)
-
-    polytopic_constraints, obstacle_constraints = choose_constraints(proj_cfg, exp, args.halfspace_variant)
-
-    if fm_model.__class__.__name__ == "GaussianDiffusion":
-        trajectory_dim = fm_model.transition_dim - fm_model.goal_dim
-        action_dim = fm_model.action_dim
-        obs_indices_updated = {key: val + action_dim for key, val in obs_indices.items()}
-        act_obs_indices = {**action_indices, **obs_indices_updated}
+    obs_dim = int(dataset.observation_dim)
+    goal_dim = int(fm_model.goal_dim)
+    if goal_dim > 0 and goal_dim < obs_dim:
+        xy_indices = [max(0, obs_dim - goal_dim - 2), max(0, obs_dim - goal_dim - 1)]
+        goal_xy_indices = [obs_dim - goal_dim, obs_dim - goal_dim + 1]
     else:
-        trajectory_dim = fm_model.observation_dim - fm_model.goal_dim
-        action_dim = 0
-        act_obs_indices = obs_indices
+        xy_indices = [0, 1] if obs_dim >= 2 else [0, 0]
+        goal_xy_indices = xy_indices
 
-    halfspace_eval_constraints = [
-        utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)
-        for constraint in polytopic_constraints
-    ]
+    conditions_pool = sample_condition_observations(dataset, int(args.n_trials), model_seed)
 
     solver_options = parse_solver_specs(args.solver_spec)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    default_out = os.path.join(os.path.dirname(__file__), "benchmark_outputs", f"{timestamp}_seed{model_seed}_{args.halfspace_variant}")
+    default_out = os.path.join(os.path.dirname(__file__), "benchmark_outputs", f"{timestamp}_seed{model_seed}_vf_only")
     out_dir = args.output_dir if args.output_dir is not None else default_out
     os.makedirs(out_dir, exist_ok=True)
 
     meta = {
         "timestamp": timestamp,
-        "experiment": exp,
+        "experiment": str(parser_args.dataset),
         "seed": int(model_seed),
-        "halfspace_variant": args.halfspace_variant,
         "n_trials": int(args.n_trials),
-        "max_episode_length": max_episode_length,
-        "batch_size": batch_size,
+        "vf_batch_size": int(args.vf_batch_size),
         "horizon": horizon,
         "flow_steps_v3": int(args.flow_steps),
         "ode_inference_steps_v3": int(args.flow_steps),
-        "benchmark_mode": args.benchmark_mode,
+        "benchmark_mode": "vf_only",
         "device": str(parser_args.device),
         "solver_options": solver_options,
     }
@@ -377,8 +264,8 @@ def main() -> None:
         json.dump(meta, f, indent=2)
 
     print("=" * 90)
-    print("FM-v3 ODE Solver Benchmark")
-    print(f"mode={args.benchmark_mode} | seed={model_seed} | trials={args.n_trials} | horizon={horizon} | halfspace={args.halfspace_variant}")
+    print("FM-v3 VF ODE Integrator Benchmark")
+    print(f"mode=vf_only | seed={model_seed} | trials={args.n_trials} | horizon={horizon}")
     print(f"outputs={out_dir}")
     print("=" * 90)
 
@@ -413,148 +300,47 @@ def main() -> None:
         )
 
         trials: List[Dict[str, float]] = []
+        for trial in range(args.n_trials):
+            torch.manual_seed(trial)
+            np.random.seed(trial)
 
-        if args.benchmark_mode == "vf_only":
-            env = ObstacleAvoidanceEnv()
-            env.start()
-            for trial in range(args.n_trials):
-                torch.manual_seed(trial)
-                np.random.seed(trial)
+            obs = conditions_pool[trial]
+            t0 = time.time()
+            _action, samples = policy(
+                conditions={0: obs},
+                batch_size=int(args.vf_batch_size),
+                horizon=horizon,
+                disable_projection=True,
+            )
+            elapsed_ms = (time.time() - t0) * 1000.0
 
-                obs = env.reset()
-                action = env.robot_state()[:2]
-                obs = np.concatenate((action[:2], obs))
+            sample_obs = samples.observations  # [batch, horizon, obs_dim]
+            xy = sample_obs[:, :, xy_indices]
+            goal_xy = sample_obs[:, :, goal_xy_indices]
 
-                t0 = time.time()
-                _action, samples = policy(
-                    conditions={0: obs},
-                    batch_size=int(args.vf_batch_size),
-                    horizon=horizon,
-                    disable_projection=True,
-                )
-                elapsed_ms = (time.time() - t0) * 1000.0
+            if xy.shape[1] > 1:
+                traj_smoothness = float(np.mean(np.linalg.norm(xy[:, 1:, :] - xy[:, :-1, :], axis=-1)))
+            else:
+                traj_smoothness = 0.0
+            final_goal_dist = float(np.mean(np.linalg.norm(xy[:, -1, :] - goal_xy[:, -1, :], axis=-1)))
+            batch_final_xy_std = float(np.mean(np.std(xy[:, -1, :], axis=0)))
 
-                sample_obs = samples.observations  # [batch, horizon, obs_dim]
-                xy = sample_obs[:, :, [obs_indices["x"], obs_indices["y"]]]
-                goal_xy = sample_obs[:, :, [obs_indices["x_des"], obs_indices["y_des"]]]
+            trial_record = {
+                "trial": int(trial),
+                "avg_inference_ms": float(elapsed_ms),
+                "traj_smoothness": traj_smoothness,
+                "final_goal_dist": final_goal_dist,
+                "batch_final_xy_std": batch_final_xy_std,
+            }
+            trials.append(trial_record)
 
-                if xy.shape[1] > 1:
-                    traj_smoothness = float(np.mean(np.linalg.norm(xy[:, 1:, :] - xy[:, :-1, :], axis=-1)))
-                else:
-                    traj_smoothness = 0.0
-                final_goal_dist = float(np.mean(np.linalg.norm(xy[:, -1, :] - goal_xy[:, -1, :], axis=-1)))
-                batch_final_xy_std = float(np.mean(np.std(xy[:, -1, :], axis=0)))
+            print(
+                f"  trial={trial:03d} inf_ms={trial_record['avg_inference_ms']:.2f} "
+                f"smooth={trial_record['traj_smoothness']:.4f} "
+                f"goal_dist={trial_record['final_goal_dist']:.4f}"
+            )
 
-                trial_record = {
-                    "trial": int(trial),
-                    "avg_inference_ms": float(elapsed_ms),
-                    "traj_smoothness": traj_smoothness,
-                    "final_goal_dist": final_goal_dist,
-                    "batch_final_xy_std": batch_final_xy_std,
-                }
-                trials.append(trial_record)
-
-                print(
-                    f"  trial={trial:03d} inf_ms={trial_record['avg_inference_ms']:.2f} "
-                    f"smooth={trial_record['traj_smoothness']:.4f} "
-                    f"goal_dist={trial_record['final_goal_dist']:.4f}"
-                )
-
-            env.close()
-            solver_summary = aggregate_vf_only_metrics(trials)
-        else:
-            env = ObstacleAvoidanceEnv()
-            env.start()
-
-            for trial in range(args.n_trials):
-                torch.manual_seed(trial)
-                np.random.seed(trial)
-
-                obs = env.reset()
-                action = env.robot_state()[:2]
-                fixed_z = env.robot_state()[2:]
-                obs = np.concatenate((action[:2], obs))
-
-                n_violations = 0
-                total_violation = 0.0
-                collision_free = 1
-                success = 0
-                inference_time = 0.0
-                path_length = 0.0
-                prev_xy = None
-                steps_done = 0
-
-                for step in range(max_episode_length):
-                    # Halfspace violation check (same style as eval path)
-                    for c, d in halfspace_eval_constraints:
-                        obs_to_check = obs[:-fm_model.goal_dim] if fm_model.goal_dim > 0 else obs
-                        val = float(obs_to_check @ c[action_dim:] - d)
-                        if val >= 0:
-                            n_violations += 1
-                            total_violation += val
-                            collision_free = 0
-
-                    # Obstacle violation check
-                    curr_xy = obs[[obs_indices["x"], obs_indices["y"]]]
-                    for obstacle in obstacle_constraints:
-                        center = np.array(obstacle["center"], dtype=np.float32)
-                        radius = float(obstacle["radius"])
-                        dist = float(np.linalg.norm(curr_xy - center))
-                        if dist < radius:
-                            n_violations += 1
-                            total_violation += (radius - dist)
-                            collision_free = 0
-
-                    t0 = time.time()
-                    action, _samples = policy(
-                        conditions={0: obs},
-                        batch_size=batch_size,
-                        horizon=horizon,
-                        disable_projection=True,
-                    )
-                    inference_time += (time.time() - t0)
-
-                    next_pos_des = action + obs[:2]
-                    obs_raw, _rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
-                    success = int(info[1])
-                    obs = np.concatenate((next_pos_des[:2], obs_raw))
-
-                    curr_xy = obs[[obs_indices["x"], obs_indices["y"]]]
-                    if prev_xy is not None:
-                        path_length += float(np.linalg.norm(curr_xy - prev_xy))
-                    prev_xy = curr_xy
-
-                    steps_done = step + 1
-                    if success:
-                        break
-                    if terminated:
-                        collision_free = 0
-                        break
-
-                avg_inference_ms = (inference_time / max(steps_done, 1)) * 1000.0
-                trial_record = {
-                    "trial": int(trial),
-                    "success": int(success),
-                    "success_and_constraints": int(success and collision_free),
-                    "collision_free": int(collision_free),
-                    "steps": int(steps_done),
-                    "avg_inference_ms": float(avg_inference_ms),
-                    "n_violations": int(n_violations),
-                    "total_violation": float(total_violation),
-                    "path_length": float(path_length),
-                }
-                trials.append(trial_record)
-
-                print(
-                    f"  trial={trial:03d} success={trial_record['success']} "
-                    f"safe={trial_record['collision_free']} steps={trial_record['steps']} "
-                    f"inf_ms={trial_record['avg_inference_ms']:.2f} "
-                    f"viol={trial_record['n_violations']}"
-                )
-
-            env.close()
-
-            solver_summary = aggregate_trial_metrics(trials)
+        solver_summary = aggregate_vf_only_metrics(trials)
         solver_summary.update(
             {
                 "backend": backend,
@@ -574,17 +360,9 @@ def main() -> None:
         trials_by_solver[f"{backend}:{method}"] = trials
 
         print(
-            "  summary: " + (
-                f"success={solver_summary['success_rate']:.3f} "
-                f"safe_success={solver_summary['success_and_constraints_rate']:.3f} "
-                f"avg_steps={solver_summary['avg_steps']:.2f} "
-                f"avg_inf_ms={solver_summary['avg_inference_ms']:.2f} "
-                f"avg_viol={solver_summary['avg_n_violations']:.2f}"
-                if args.benchmark_mode == "env_policy" else
-                f"avg_inf_ms={solver_summary['avg_inference_ms']:.2f} "
-                f"avg_goal_dist={solver_summary['avg_final_goal_dist']:.4f} "
-                f"avg_smooth={solver_summary['avg_traj_smoothness']:.4f}"
-            )
+            f"  summary: avg_inf_ms={solver_summary['avg_inference_ms']:.2f} "
+            f"avg_goal_dist={solver_summary['avg_final_goal_dist']:.4f} "
+            f"avg_smooth={solver_summary['avg_traj_smoothness']:.4f}"
         )
 
     with open(os.path.join(out_dir, "summary.json"), "w", encoding="utf-8") as f:
