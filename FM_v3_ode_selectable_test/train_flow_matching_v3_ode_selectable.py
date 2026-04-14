@@ -257,8 +257,6 @@ for seed in selected_seeds:
         time_beta_beta_v3=args.time_beta_beta_v3,
         flow_steps_v3=args.flow_steps_v3,
         ode_inference_steps_v3=args.ode_inference_steps_v3,
-        ode_solver_backend_v3=getattr(args, 'ode_solver_backend_v3', 'legacy_euler'),
-        ode_solver_method_v3=getattr(args, 'ode_solver_method_v3', 'euler'),
         device=args.device,
     )
     trainer_config = utils.Config(

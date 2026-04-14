@@ -301,19 +301,6 @@ base = {
         'flow_steps_v3': 10,
         'ode_inference_steps_v3': 10,
 
-        # Mandatory ODE selection keys.
-        # Available backend options: legacy_euler, torchdiffeq.
-        'ode_solver_backend_v3': 'legacy_euler',
-        # Available method options (torchdiffeq backend):
-        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
-        # euler, midpoint, heun2, heun3, rk4,
-        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
-        'ode_solver_method_v3': 'euler',
-        # Optional package-solver controls (used only when backend is package mode).
-        'ode_solver_rtol_v3': None,
-        'ode_solver_atol_v3': None,
-        'ode_solver_step_size_v3': None,
-
         # dataset
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',

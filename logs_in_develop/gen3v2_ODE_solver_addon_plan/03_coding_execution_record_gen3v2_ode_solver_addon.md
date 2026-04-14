@@ -23,9 +23,15 @@ Validation outcomes and metric interpretation are documented in 04.
 4. Updated copied diffusion engine to support backend/method selection:
    - legacy explicit Euler path
    - package path (`torchdiffeq`) when enabled
+   - runtime error if backend is `torchdiffeq` but package is not installed
+   - `step_size` option is applied only for fixed-step methods
 5. Added two new selectable config entries:
    - `flow_matching_v3_ode_selectable`
    - `plan_fm_v3_ode_selectable`
+6. Applied strict runtime override in eval entry:
+   - solver and step controls are overwritten from plan args after checkpoint load
+7. Removed solver keys from selectable training config path:
+   - solver selection is plan-time only
 
 ---
 
@@ -46,10 +52,11 @@ Config registry:
 
 ## 4) Final Config Contract (Strict)
 
-Only the two new entries carry ODE-selection keys and option comments:
+ODE solver selection keys are plan-time only and live in:
 
-1. `flow_matching_v3_ode_selectable`
-2. `plan_fm_v3_ode_selectable`
+1. `plan_fm_v3_ode_selectable`
+
+`flow_matching_v3_ode_selectable` remains for training path setup but does not carry ODE backend/method keys.
 
 Keys used:
 1. `ode_solver_backend_v3`
@@ -67,7 +74,7 @@ Documented selectable values:
 ## 5) Guardrail Compliance
 
 1. Original existing entries (`flow_matching_v3`, `plan_fm_v3`) are kept without the new ODE-selection key additions.
-2. ODE option documentation is restricted to the two new selectable entries only.
+2. ODE option documentation and active ODE-selection keys are restricted to the new selectable plan entry (`plan_fm_v3_ode_selectable`).
 3. No CLI method-selection interface was introduced.
 
 ---
@@ -77,4 +84,5 @@ Documented selectable values:
 Gen3v2 addon is implemented as a separate selectable path:
 1. copied test entrypoint path,
 2. copied diffusion engine path,
-3. two new config entries for backend/method selection.
+3. plan-only solver selection contract,
+4. eval-time override to guarantee plan config takes effect.

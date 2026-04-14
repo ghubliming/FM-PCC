@@ -51,6 +51,14 @@ for exp in exps:
             # Get model
             fm_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
             fm_model = fm_experiment.diffusion
+            # Apply plan-time solver selection after loading checkpoint config.
+            fm_model.flow_steps_v3 = int(getattr(args, 'flow_steps_v3', getattr(fm_model, 'flow_steps_v3', 10)))
+            fm_model.ode_inference_steps_v3 = int(getattr(args, 'ode_inference_steps_v3', getattr(fm_model, 'ode_inference_steps_v3', fm_model.flow_steps_v3)))
+            fm_model.ode_solver_backend_v3 = getattr(args, 'ode_solver_backend_v3', getattr(fm_model, 'ode_solver_backend_v3', 'legacy_euler'))
+            fm_model.ode_solver_method_v3 = getattr(args, 'ode_solver_method_v3', getattr(fm_model, 'ode_solver_method_v3', 'euler'))
+            fm_model.ode_solver_rtol_v3 = getattr(args, 'ode_solver_rtol_v3', getattr(fm_model, 'ode_solver_rtol_v3', None))
+            fm_model.ode_solver_atol_v3 = getattr(args, 'ode_solver_atol_v3', getattr(fm_model, 'ode_solver_atol_v3', None))
+            fm_model.ode_solver_step_size_v3 = getattr(args, 'ode_solver_step_size_v3', getattr(fm_model, 'ode_solver_step_size_v3', None))
             dataset = fm_experiment.dataset
             if 'pointmaze' in exp or 'antmaze' in exp:
                 minari_dataset = minari.load_dataset(exp, download=True)
