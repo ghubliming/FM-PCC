@@ -9,32 +9,28 @@ Depends on: 03_coding_execution_record_gen3v2_ode_solver_addon.md
 ## 1) Baseline for Comparison
 
 Use this baseline for first comparison:
-1. `flow_matching_v3_ode_selectable` with backend `legacy_euler` and method `euler`.
-2. `plan_fm_v3_ode_selectable` with the same backend/method pair.
+1. `flow_matching_v3_ode_selectable` as the fixed training entry.
+2. `plan_fm_v3_ode_selectable` with backend `legacy_euler` and method `euler`.
 
 Reason:
 1. This preserves old explicit-Euler behavior inside the new selectable path.
 2. Then package-method changes can be measured fairly as opt-in deltas.
+3. Solver backend/method is plan-time only, so retraining is not required for solver sweeps.
 
 ---
 
-## 2) Train Results We Should Expect
+## 2) Training vs Plan Separation (Critical)
 
-Keywords: parity first, stability first, no collapse.
+Keywords: decoupled control.
 
 Expected:
-1. Training loss should decrease normally for `legacy_euler:euler` baseline run.
-2. Package-method runs should stay in similar loss magnitude if wiring is correct.
-3. No sudden instability caused only by backend/method switch.
-
-Not expected:
-1. Massive train-loss improvement just from solver backend name switch.
-2. Immediate degradation if config keys are mapped correctly.
+1. Training behavior is independent from solver backend/method selection.
+2. Solver comparisons are done by plan/eval runs against existing checkpoints.
+3. No retraining is required when only changing ODE backend/method.
 
 Red flags:
-1. NaN or Inf loss after backend switch.
-2. Loss explosion that does not recover.
-3. Method switch has no observable effect across repeated runs.
+1. Any requirement to retrain only because `ode_solver_backend_v3` or `ode_solver_method_v3` changed.
+2. Any solver setting hidden in training-only config path.
 
 ---
 
@@ -55,6 +51,7 @@ Red flags:
 1. Consistent success drop for all package methods.
 2. Large violation increase with no compensating gain.
 3. Unstable behavior only when backend changes.
+4. Requested `torchdiffeq` backend runs silently as legacy backend.
 
 ---
 
@@ -100,9 +97,11 @@ Interpretation shortcut:
 
 ## 7) Allowed Config Surface (Strict)
 
-Only edit these two entries:
-1. `flow_matching_v3_ode_selectable`
-2. `plan_fm_v3_ode_selectable`
+Only edit this entry for solver selection:
+1. `plan_fm_v3_ode_selectable`
+
+Training entry note:
+1. `flow_matching_v3_ode_selectable` does not own solver backend/method selection.
 
 Primary keys:
 1. `ode_solver_backend_v3`
@@ -158,8 +157,7 @@ python FM_v3_ode_selectable_test/load_results_flow_matching_v3_ode_selectable.py
 ### 8.4 Switch backend and method
 
 Edit `config/avoiding-d3il.py` only under:
-1. `flow_matching_v3_ode_selectable`
-2. `plan_fm_v3_ode_selectable`
+1. `plan_fm_v3_ode_selectable`
 
 Example package run settings:
 
@@ -182,6 +180,8 @@ Example legacy reference settings:
 
 ## 9) Practical Notes
 
-1. If `torchdiffeq` is unavailable, use `legacy_euler`.
-2. Keep old existing entries unchanged.
-3. Treat this addon as an isolated selectable path until validation is complete.
+1. If backend is set to `torchdiffeq` and package is missing, eval raises a runtime error.
+2. `ode_solver_step_size_v3` is only applied for fixed-step methods; other methods ignore it with warning.
+3. Eval overrides solver and step controls from plan args after loading checkpoint config.
+4. Keep old existing entries unchanged.
+5. Treat this addon as an isolated selectable path until validation is complete.

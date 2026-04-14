@@ -1,4 +1,5 @@
 import time
+import warnings
 import torch
 from torch import nn
 
@@ -25,7 +26,8 @@ class GaussianDiffusion(nn.Module):
         loss_discount=1.0, loss_weights=None, returns_condition=False, condition_guidance_w=0.1,
         time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0,
         flow_steps_v3=None, ode_inference_steps_v3=None,
-        ode_solver_backend_v3='legacy_euler', ode_solver_method_v3='euler'):
+        ode_solver_backend_v3='legacy_euler', ode_solver_method_v3='euler',
+        ode_solver_rtol_v3=None, ode_solver_atol_v3=None, ode_solver_step_size_v3=None):
         super().__init__()
         self.horizon = horizon
         self.observation_dim = observation_dim
@@ -54,6 +56,9 @@ class GaussianDiffusion(nn.Module):
         self.ode_inference_steps_v3 = int(self.flow_steps_v3)
         self.ode_solver_backend_v3 = str(ode_solver_backend_v3)
         self.ode_solver_method_v3 = str(ode_solver_method_v3)
+        self.ode_solver_rtol_v3 = ode_solver_rtol_v3
+        self.ode_solver_atol_v3 = ode_solver_atol_v3
+        self.ode_solver_step_size_v3 = ode_solver_step_size_v3
 
         self.register_buffer('betas', betas)
         self.register_buffer('alphas_cumprod', alphas_cumprod)
@@ -182,10 +187,12 @@ class GaussianDiffusion(nn.Module):
             diffusion = [x]
         costs = {}
 
-        use_torchdiffeq = (
-            self.ode_solver_backend_v3 == 'torchdiffeq'
-            and torchdiffeq_odeint is not None
-        )
+        use_torchdiffeq = self.ode_solver_backend_v3 == 'torchdiffeq'
+        if use_torchdiffeq and torchdiffeq_odeint is None:
+            raise RuntimeError(
+                "ode_solver_backend_v3='torchdiffeq' but torchdiffeq is not installed. "
+                "Install torchdiffeq or switch backend to 'legacy_euler'."
+            )
 
         # Forward integration t=0 → t=T (noise → data)
         total_steps = self.flow_steps_v3 + repeat_last
@@ -207,11 +214,32 @@ class GaussianDiffusion(nn.Module):
                     t_batch = torch.ones(batch_size, device=device, dtype=torch.float32) * t_scalar
                     return self._predict_velocity(state, cond, t_batch, returns=returns)
 
+                odeint_kwargs = {
+                    'method': self.ode_solver_method_v3,
+                }
+                if self.ode_solver_rtol_v3 is not None:
+                    odeint_kwargs['rtol'] = float(self.ode_solver_rtol_v3)
+                if self.ode_solver_atol_v3 is not None:
+                    odeint_kwargs['atol'] = float(self.ode_solver_atol_v3)
+                if self.ode_solver_step_size_v3 is not None:
+                    fixed_step_methods = {
+                        'euler', 'midpoint', 'heun2', 'heun3', 'rk4',
+                        'explicit_adams', 'fixed_adams'
+                    }
+                    if self.ode_solver_method_v3 in fixed_step_methods:
+                        odeint_kwargs['options'] = {'step_size': float(self.ode_solver_step_size_v3)}
+                    else:
+                        warnings.warn(
+                            f"Ignoring ode_solver_step_size_v3 for method '{self.ode_solver_method_v3}' "
+                            "because it is not a fixed-step solver method.",
+                            RuntimeWarning,
+                        )
+
                 x = torchdiffeq_odeint(
                     ode_rhs,
                     x,
                     t_span,
-                    method=self.ode_solver_method_v3,
+                    **odeint_kwargs,
                 )[-1]
 
                 if projector is not None and projector.gradient and near_end:
