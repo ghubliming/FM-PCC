@@ -1,18 +1,49 @@
 # 02 Implementation Plan: Gen3v2 ODE Solver Adoption (Strict Rank)
 
-Date: 2026-04-13
-Status: Full Detailed Plan (Policy Rewrite)
+Date: 2026-04-14
+Status: Execution Plan (New Locked Version)
 Depends on: [01_current_status_gen3v2_ode_solver_addon.md](01_current_status_gen3v2_ode_solver_addon.md)
 
 ---
 
 ## 1) Goal
 
-Adopt an ODE solver for FM-v3 evaluation by strict ranking:
+Adopt ODE method selection for FM-v3 evaluation with strict ranking and strict backward compatibility:
 
 1. Open-source/package solver first.
 2. Paid solver options second (with educational-discount/free-license route checked).
 3. Build custom solver only as final fallback.
+
+---
+
+## 1.1 Locked 3-Step Development Rule
+
+Development must follow exactly these 3 steps:
+
+1. Copy the full folder [FM_v3_test](../../FM_v3_test) to a new folder and work only in the copied folder.
+2. Copy the full folder [flow_matcher_v3](../../flow_matcher_v3) to a new folder and work only in the copied folder.
+3. Inject 2 new config parameters in [config/avoiding-d3il.py](../../config/avoiding-d3il.py).
+
+Locked naming:
+
+1. Use `flow_matching_v3_ode_selectable` naming style (same logic as core `flow_matching_v3`).
+
+Locked copied-folder names:
+
+1. `FM_v3_test` copy name: `FM_v3_ode_selectable_test`
+2. `flow_matcher_v3` copy name: `flow_matcher_v3_ode_selectable`
+
+Mandatory 2 parameters only:
+
+1. `ode_solver_backend_v3` default `legacy_euler`
+2. `ode_solver_method_v3` default `euler`
+
+No CLI method selection in this phase.
+
+Hard rule:
+
+1. Do not modify original folders in this phase.
+2. Modify copied folders only.
 
 ---
 
@@ -50,9 +81,9 @@ Custom solver implementation is forbidden unless rank-1 and rank-2 are both reje
 
 ### 3.1 Injection location
 
-Only in FM-v3 sampling path:
+Only in copied FM-v3 sampling path:
 
-1. [flow_matcher_v3/models/diffusion.py](../../flow_matcher_v3/models/diffusion.py)
+1. [flow_matcher_v3_ode_selectable/models/diffusion.py](../../flow_matcher_v3_ode_selectable/models/diffusion.py)
 
 ### 3.2 Explicitly not part of this solver adoption
 
@@ -72,29 +103,93 @@ Reason:
 
 Implement a thin backend adapter only:
 
-1. `ode_solver_backend_v3` default `torchdiffeq`
-2. `ode_solver_method_v3` (method string supported by selected package)
-3. `ode_solver_rtol_v3`, `ode_solver_atol_v3`
+1. `ode_solver_backend_v3` default `legacy_euler`
+2. `ode_solver_method_v3` default `euler` (effective when backend is package mode)
+3. Optional later only: `ode_solver_rtol_v3`, `ode_solver_atol_v3`, `ode_solver_step_size_v3`
+
+Config source of truth:
+
+1. Method selection is in [config/avoiding-d3il.py](../../config/avoiding-d3il.py) only.
+2. No CLI override path.
+3. Missing keys must keep original explicit Euler behavior.
 
 Design rule:
 
 - adapter/wrapper code is allowed,
 - custom numerical solver algorithm implementation is not phase-1 scope.
 
+### 4.1.1 Injection behavior in rollout code
+
+Injection location:
+
+1. [flow_matcher_v3_ode_selectable/models/diffusion.py](../../flow_matcher_v3_ode_selectable/models/diffusion.py) at the existing Euler rollout block.
+
+Branch behavior:
+
+1. Read `ode_solver_backend_v3` and `ode_solver_method_v3` from config-driven args.
+2. If backend is `legacy_euler` (or key missing), execute the current explicit Euler line unchanged.
+3. If backend is package backend (rank-1), execute package ODE stepping using selected method.
+4. Keep tensor shape, dtype, and device consistent with current path.
+
+Default guarantee:
+
+1. Legacy Euler remains default path.
+2. Alternative methods are opt-in only by config values.
+
+### 4.1.2 Available method names for package backend
+
+For `torchdiffeq`, method name can be one of:
+
+1. `dopri8`
+2. `dopri5`
+3. `bosh3`
+4. `fehlberg2`
+5. `adaptive_heun`
+6. `euler`
+7. `midpoint`
+8. `heun2`
+9. `heun3`
+10. `rk4`
+11. `explicit_adams`
+12. `implicit_adams`
+13. `fixed_adams`
+14. `scipy_solver`
+
 ### 4.2 File edits
 
-1. [flow_matcher_v3/models/diffusion.py](../../flow_matcher_v3/models/diffusion.py)
-    - add backend adapter function calling package solver,
-    - keep existing Euler line as legacy fallback mode only.
+1. [flow_matcher_v3_ode_selectable/models/diffusion.py](../../flow_matcher_v3_ode_selectable/models/diffusion.py)
+    - add config-branch wrapper around current rollout update,
+    - keep current explicit Euler update as default `legacy_euler`,
+    - add package call path for opt-in backend.
 2. [config/avoiding-d3il.py](../../config/avoiding-d3il.py)
-    - add backend and tolerance keys.
-3. [FM_v3_test/eval_FM_v3.py](../../FM_v3_test/eval_FM_v3.py)
-    - optional pass-through CLI args for backend/method/tolerances.
+    - inject 2 mandatory keys (`ode_solver_backend_v3`, `ode_solver_method_v3`) in v3 blocks,
+    - create/select variant blocks with core-style naming:
+      - `flow_matching_v3_ode_selectable`
+      - `plan_fm_v3_ode_selectable`
+3. [FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py](../../FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py)
+    - parser experiment should use `flow_matching_v3_ode_selectable`.
+4. [FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py](../../FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py)
+    - parser experiment should use `plan_fm_v3_ode_selectable`.
+5. [FM_v3_ode_selectable_test/load_results_flow_matching_v3_ode_selectable.py](../../FM_v3_ode_selectable_test/load_results_flow_matching_v3_ode_selectable.py)
+    - parser experiment should use `plan_fm_v3_ode_selectable`.
+
+Execution order is fixed:
+
+1. Copy the two folders with locked names.
+2. Modify copied folders only.
+3. Add new config entries in [config/avoiding-d3il.py](../../config/avoiding-d3il.py).
+
+Disallowed in this phase:
+
+1. CLI method flags.
+2. Replacing default Euler behavior.
 
 ### 4.3 Backward compatibility
 
 1. Existing experiments without new keys continue current behavior.
 2. New package backend is opt-in until validation is complete.
+3. Default path remains original explicit Euler rollout.
+4. Config-only switching prevents accidental runtime drift.
 
 ---
 
@@ -145,9 +240,10 @@ Required approval artifact before coding:
 Use same seeds/tasks/constraints and compare:
 
 1. baseline Euler (current)
-2. package solver configuration A
-3. package solver configuration B
-4. paid solver candidate (if rank-2 triggered)
+2. `torchdiffeq:dopri5`
+3. `torchdiffeq:rk4`
+4. `torchdiffeq:midpoint`
+5. paid solver candidate (if rank-2 triggered)
 
 Metrics:
 
