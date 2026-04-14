@@ -1,5 +1,7 @@
 # Benchmark ODE Solvers v3 — Usage Guide
 
+> Based on local WSL, but the Colab version is similar (just adjust paths and env setup).
+
 Date: 2026-04-14
 Script: `FM_v3_ode_selectable_test/benchmark_ode_solvers.py`
 
