@@ -142,3 +142,4 @@ typing_extensions==4.12.1
 urllib3==2.2.1
 wandb==0.17.5
 zipp==3.19.1
+torchdiffeq==0.2.3

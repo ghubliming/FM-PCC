@@ -97,3 +97,10 @@ Non-negotiable guard:
 
 Based on Gen3 FM-v3 rollout, we want to add an addon ODE solver path to evaluate whether better integration methods can reduce required step count under similar runtime.
 
+**DANGER:** requirements.txt updated — added `torchdiffeq` for ODE benchmarking. Review and re-lock environment if using production or deployment scripts.
+
+Main version test: **NOT EXECUTED YET** (as of 15.April).
+
+ODE benchmark test: Only ODE solver speed and chunking penalty tested (not main eval).
+
+Reason: We want to know which ODE solver and integration structure is fastest and most efficient before running full evaluation.
