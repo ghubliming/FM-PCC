@@ -9,9 +9,9 @@ Script: `FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/benchmark_ode_solv
 V2 addresses the architectural flaws discovered in the V1 audit. It acts as a highly accurate proxy for your real evaluation pipeline.
 
 ### Main Improvements:
-1. **Real Model Loading**: Removes the fake `neural` MLP. Now loads exact serialized U-Net checkpoints directly from `/logs/` over `[batch, horizon, transition_dim]` tensors.
-2. **Chunked Integration Mode (`--integration-mode`)**: Can simulate the 20x start-stop PyTorch interruptions that your `eval_flow_matching.py` loop does when applying state constraints.
-3. **No Grad Safety**: Correctly wraps the core solver engines in `@torch.no_grad()`, ensuring PyTorch doesn't construct invisible graphs that unnecessarily bottleneck `torchdiffeq` speeds.
+1. **Real Model Loading & True Pipeline**: `--vf-mode flow_matcher` loads exact serialized U-Net checkpoints directly from `/logs/`. It strictly uses `GaussianDiffusion.p_sample_loop()` for 100% pure representation of the production execution overhead.
+2. **Synthetic V1 Fallbacks**: Supports V1's synthetic `--vf-mode neural` (a 1.5M PyTorch MLP) alongside the analytic `--vf-mode spiral` for granular isolated baseline testing.
+3. **No Grad Safety**: Correctly protects tracking engines with `@torch.no_grad()` to ensure PyTorch doesn't construct invisible graphs that unnecessarily bottleneck `torchdiffeq` speeds.
 
 | In Scope | Out of Scope |
 |---|---|
@@ -33,7 +33,6 @@ python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/benchmark_ode_solver
   --dataset avoiding-d3il \
   --diffusion-loadpath flow_matching/H8_K20_Dmodels.diffusion.GaussianDiffusion \
   --diffusion-seed 6 \
-  --integration-mode chunked \
   --n-trials 10 \
   --batch-size 64 \
   --horizon 128 \
@@ -48,7 +47,6 @@ If you just want to measure pure `numPy` vs `PyTorch` wrapper overhead WITHOUT t
 ```bash
 python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/benchmark_ode_solvers_v2.py \
   --vf-mode spiral \
-  --integration-mode continuous \
   --n-trials 50 \
   --batch-size 128 \
   --state-dim 8 \
@@ -66,7 +64,6 @@ python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/benchmark_ode_solver
 | `--dataset` | E.g., `avoiding-d3il`. The name of the environment/dataset inside the logbase. |
 | `--diffusion-loadpath` | **Required if `flow_matcher`**. Experiment string, e.g. `flow_matching/H8_K20_...` |
 | `--diffusion-seed` | Generally `0` or `1`. The run seed identifier sub-folder. |
-| `--integration-mode`| `chunked` (breaks trajectory into 20 calls, matching eval loop) or `continuous` (one sweeping call, friendly to adaptive solvers). |
 | `--horizon` | Usually `128` or `256`. The sequence length for the U-Net inputs. |
 | `--t0`, `--t1` | `0.0` and `1.0`. The overall timeframe for integration bounds. |
 | `--plot` | Generates 6 precise timing characteristic bar charts in `benchmark_outputs_v2`. |
@@ -75,8 +72,8 @@ python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/benchmark_ode_solver
 
 ## 4) Troubleshooting & Understanding Chunked Overheads
 
-If you test `--integration-mode chunked` with `torchdiffeq:dopri5`, you will immediately notice the inference time skyrockets. 
-This is because:
+If you test `flow_matcher` mode with `torchdiffeq:dopri5`, you will likely notice the inference time skyrockets. 
+This is because `p_sample_loop` breaks integration recursively into chunks to support constraints later on:
 1. The solver must perform initial error derivations from scratch on the very first sub-step.
 2. Breaking a $1.0$-length journey into 20 small $0.05$ increments eliminates the step-size growth advantage Dopri5 is known for.
 
