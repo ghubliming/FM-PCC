@@ -20,6 +20,13 @@ from typing import Any, Callable, Dict, List
 
 import numpy as np
 import torch
+import sys
+
+# --- MINARI MOCK (fixes ModuleNotFoundError on systems without dataset libs) ---
+if 'minari' not in sys.modules:
+    from unittest.mock import MagicMock
+    sys.modules['minari'] = MagicMock()
+# -------------------------------------------------------------------------------
 
 # Dynamically add the project root to sys.path if not present so we can import flow_matcher modules
 _PROJ_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -243,6 +250,7 @@ def main() -> None:
     ap.add_argument("--device",      type=str,   default="cpu", help="Hardware: cpu, cuda")
     ap.add_argument("--output-dir",  type=str,   default=None)
     ap.add_argument("--plot",        action="store_true")
+    ap.add_argument("--include-bridge-tax", action="store_true", help="Include NumPy<->Torch conversion in timing (matches eval.py logic)")
     args = ap.parse_args()
     
     np.random.seed(args.seed)
@@ -283,7 +291,7 @@ def main() -> None:
         
         # Setup exactly matching what Policy does
         shape = (args.batch_size, args.horizon, transition_dim)
-        dummy_obs = torch.zeros(args.batch_size, args.horizon, observation_dim, device=args.device)
+        dummy_obs = torch.zeros(args.batch_size, observation_dim, device=args.device)
         cond = {0: dummy_obs}
 
         hdr = f"ODE Benchmark V2 (REAL PIPELINE) | {vf_label} | steps={args.steps}"
@@ -305,12 +313,28 @@ def main() -> None:
             # Warm-up (loads caches, JIT, torchdiffeq init)
             with torch.no_grad():
                 _ = fm_model.p_sample_loop(shape, cond)
+            if "cuda" in args.device: torch.cuda.synchronize()
 
             trial_times = []
             for trial in range(args.n_trials):
+                # If requested, prepare input on CPU to measure transfer cost
+                if args.include_bridge_tax:
+                    dummy_obs_cpu = dummy_obs.cpu().numpy()
+
+                if "cuda" in args.device: torch.cuda.synchronize()
                 t_start = time.perf_counter()
+                
                 with torch.no_grad():
-                    fm_model.p_sample_loop(shape, cond)
+                    if args.include_bridge_tax:
+                        # Re-upload and run
+                        cond_repack = {0: torch.from_numpy(dummy_obs_cpu).to(args.device)}
+                        res = fm_model.p_sample_loop(shape, cond_repack)
+                        # Sync and move back to CPU (matches utils.to_np in eval.py)
+                        _ = res.cpu().numpy()
+                    else:
+                        fm_model.p_sample_loop(shape, cond)
+                
+                if "cuda" in args.device: torch.cuda.synchronize()
                 ms = (time.perf_counter() - t_start) * 1000.0
                 trial_times.append(ms)
                 print(f"  trial {trial:03d}  {ms:8.3f} ms")
@@ -369,16 +393,18 @@ def main() -> None:
 
         for trial in range(int(args.n_trials)):
             x0 = np.random.randn(*x0_shape).astype(np.float32)
+            if "cuda" in args.device: torch.cuda.synchronize()
             t_start = time.perf_counter()
 
             if backend == "legacy_euler":
                 if _active_neural_vf is not None:
-                    euler_integrate_torch(x0, _active_neural_vf, args.steps, args.t0, args.t1)
+                    _ = euler_integrate_torch(x0, _active_neural_vf, args.steps, args.t0, args.t1)
                 else:
-                    euler_integrate(x0, _active_rhs, args.steps, args.t0, args.t1)
+                    _ = euler_integrate(x0, _active_rhs, args.steps, args.t0, args.t1)
             elif backend == "torchdiffeq":
-                torchdiffeq_integrate_synthetic(x0, method, args.steps, args.t0, args.t1, args.rtol, args.atol, device=args.device)
+                _ = torchdiffeq_integrate_synthetic(x0, method, args.steps, args.t0, args.t1, args.rtol, args.atol, device=args.device)
 
+            if "cuda" in args.device: torch.cuda.synchronize()
             ms = (time.perf_counter() - t_start) * 1000.0
             trial_times.append(ms)
             print(f"  trial {trial:03d}  {ms:8.3f} ms")
