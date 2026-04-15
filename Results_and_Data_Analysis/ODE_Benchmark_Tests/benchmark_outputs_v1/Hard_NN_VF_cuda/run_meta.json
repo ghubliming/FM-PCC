@@ -1,0 +1,30 @@
+{
+  "seed": 0,
+  "n_trials": 100,
+  "batch_size": 1,
+  "state_dim": 8,
+  "vf_mode": "neural",
+  "t0": 0.0,
+  "t1": 1.0,
+  "steps": 20,
+  "rtol": 1e-05,
+  "atol": 1e-06,
+  "solvers": [
+    {
+      "backend": "legacy_euler",
+      "method": "euler"
+    },
+    {
+      "backend": "torchdiffeq",
+      "method": "euler"
+    },
+    {
+      "backend": "torchdiffeq",
+      "method": "midpoint"
+    },
+    {
+      "backend": "torchdiffeq",
+      "method": "rk4"
+    }
+  ]
+}
