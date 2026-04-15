@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Standalone ODE-solver benchmark on a synthetic vector field.
+"""Standalone ODE-solver benchmark on synthetic vector fields.
 
 Compares wall-clock inference time of different ODE backends/methods
 on *exactly the same* deterministic dynamics so the only variable
 is the solver itself.
+
+Supports two VF modes:
+  spiral  — lightweight analytic VF (measures library overhead)
+  neural  — heavy PyTorch MLP VF (measures real-world solver throughput)
 
 No FM model, no dataset, no env rollout — pure numerics.
 """
@@ -53,6 +57,100 @@ def _default_rhs(x: np.ndarray) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
+# 1b. Neural vector field (heavy — simulates real FM model FLOP count)
+# ---------------------------------------------------------------------------
+
+class NeuralVF:
+    """A PyTorch MLP that approximates the computational cost of a real
+    Flow_matcher_U_Net_v2 forward pass.
+
+    Architecture (matches production model scale):
+        time embedding:  SinusoidalPosEmb(128) → Linear(128,512) → Mish → Linear(512,128)
+        trunk:           Linear(dim+128, 512) → Mish
+                         → Linear(512, 1024) → Mish
+                         → Linear(1024, 512) → Mish
+                         → Linear(512, dim)
+
+    Total ~1.5M parameters — comparable to the real UNet with dim=128.
+    """
+
+    def __init__(self, state_dim: int, device: str = "cpu"):
+        import torch
+        import torch.nn as nn
+
+        self.device = torch.device(device)
+        self.state_dim = state_dim
+        embed_dim = 128
+
+        # Sinusoidal time embedding (same as production SinusoidalPosEmb)
+        self.time_mlp = nn.Sequential(
+            nn.Linear(embed_dim, 512),
+            nn.Mish(),
+            nn.Linear(512, embed_dim),
+        ).to(self.device)
+
+        # Main trunk
+        self.trunk = nn.Sequential(
+            nn.Linear(state_dim + embed_dim, 512),
+            nn.Mish(),
+            nn.Linear(512, 1024),
+            nn.Mish(),
+            nn.Linear(1024, 512),
+            nn.Mish(),
+            nn.Linear(512, state_dim),
+        ).to(self.device)
+
+        self.embed_dim = embed_dim
+        # Pre-compute sinusoidal frequencies
+        half = embed_dim // 2
+        freqs = torch.exp(-np.log(10000.0) * torch.arange(0, half, dtype=torch.float32) / half)
+        self._freqs = freqs.to(self.device)
+
+        # Count parameters for logging
+        self.n_params = sum(p.numel() for p in self.time_mlp.parameters()) + \
+                        sum(p.numel() for p in self.trunk.parameters())
+
+    def __call__(self, x_np: np.ndarray) -> np.ndarray:
+        """Evaluate the neural VF: numpy in → numpy out."""
+        import torch
+        with torch.no_grad():
+            x_t = torch.from_numpy(x_np).float().to(self.device)
+            batch = x_t.shape[0]
+
+            # Dummy time = 0.5 (constant across batch, fair for benchmarking)
+            t_scalar = torch.tensor([0.5], device=self.device)
+            args = t_scalar * self._freqs
+            time_embed = torch.cat([args.sin(), args.cos()], dim=-1)  # [embed_dim]
+            time_embed = self.time_mlp(time_embed)                     # [embed_dim]
+            time_embed = time_embed.unsqueeze(0).expand(batch, -1)     # [batch, embed_dim]
+
+            inp = torch.cat([x_t, time_embed], dim=-1)  # [batch, dim + embed_dim]
+            out = self.trunk(inp)                        # [batch, dim]
+            return out.cpu().numpy()
+
+    def __call_torch__(self, t_scalar, x_t):
+        """Evaluate the neural VF: torch tensor in → torch tensor out.
+        Used directly by torchdiffeq to avoid the numpy bridge overhead."""
+        import torch
+        with torch.no_grad():
+            batch = x_t.shape[0]
+            args = t_scalar * self._freqs
+            time_embed = torch.cat([args.sin(), args.cos()], dim=-1)
+            time_embed = self.time_mlp(time_embed)
+            time_embed = time_embed.unsqueeze(0).expand(batch, -1)
+            inp = torch.cat([x_t, time_embed], dim=-1)
+            return self.trunk(inp)
+
+
+# ---------------------------------------------------------------------------
+# Global VF dispatcher — set by main() before any integration
+# ---------------------------------------------------------------------------
+
+_active_rhs: Callable = _default_rhs
+_active_neural_vf: NeuralVF | None = None
+
+
+# ---------------------------------------------------------------------------
 # 2. Integrators
 # ---------------------------------------------------------------------------
 
@@ -67,6 +165,22 @@ def euler_integrate(
     return x
 
 
+def euler_integrate_torch(
+    x0: np.ndarray, neural_vf: NeuralVF, n_steps: int, t0: float, t1: float,
+) -> np.ndarray:
+    """Forward-Euler using PyTorch tensors directly (no numpy bridge).
+    This is the fair comparison for neural VF: both legacy and torchdiffeq
+    stay fully inside PyTorch."""
+    import torch
+    dt = (t1 - t0) / n_steps
+    x = torch.from_numpy(x0).float().to(neural_vf.device)
+    t_val = torch.tensor(t0, device=neural_vf.device)
+    for _ in range(n_steps):
+        x = x + dt * neural_vf.__call_torch__(t_val, x)
+        t_val = t_val + dt
+    return x.cpu().numpy()
+
+
 def torchdiffeq_integrate(
     x0: np.ndarray,
     method: str,
@@ -75,27 +189,33 @@ def torchdiffeq_integrate(
     t1: float,
     rtol: float,
     atol: float,
+    device: str = "cpu",
 ) -> np.ndarray:
     """Integrate with torchdiffeq, return numpy result."""
     import torch
     from torchdiffeq import odeint
 
-    device = torch.device("cpu")
-    x0_t = torch.from_numpy(x0).float().to(device)
+    dev = torch.device(device)
+    x0_t = torch.from_numpy(x0).float().to(dev)
 
-    def rhs_torch(_t: torch.Tensor, x_t: torch.Tensor) -> torch.Tensor:
-        dx_np = _default_rhs(x_t.detach().cpu().numpy())
-        return torch.from_numpy(dx_np).to(dtype=x_t.dtype, device=x_t.device)
+    # Choose RHS: if neural VF is active, call it directly in torch-land
+    if _active_neural_vf is not None:
+        def rhs_torch(_t: torch.Tensor, x_t: torch.Tensor) -> torch.Tensor:
+            return _active_neural_vf.__call_torch__(_t, x_t)
+    else:
+        def rhs_torch(_t: torch.Tensor, x_t: torch.Tensor) -> torch.Tensor:
+            dx_np = _active_rhs(x_t.detach().cpu().numpy())
+            return torch.from_numpy(dx_np).to(dtype=x_t.dtype, device=x_t.device)
 
     # Fixed-step methods need an explicit time grid; adaptive ones need tol
     FIXED = {"euler", "midpoint", "rk4", "heun2", "heun3",
              "explicit_adams", "implicit_adams", "fixed_adams"}
 
     if method in FIXED:
-        ts = torch.linspace(t0, t1, n_steps + 1, device=device)
+        ts = torch.linspace(t0, t1, n_steps + 1, device=dev)
         traj = odeint(rhs_torch, x0_t, ts, method=method)
     else:
-        ts = torch.tensor([t0, t1], dtype=torch.float32, device=device)
+        ts = torch.tensor([t0, t1], dtype=torch.float32, device=dev)
         traj = odeint(rhs_torch, x0_t, ts, method=method, rtol=rtol, atol=atol)
 
     return traj[-1].detach().cpu().numpy()
@@ -183,8 +303,8 @@ def make_plots(summary: List[Dict[str, Any]], out_dir: str) -> None:
         ax.set_title(metric, fontsize=10)
         ax.bar_label(bars, fmt="%.2f", fontsize=7)
         ax.tick_params(axis="x", labelsize=7, rotation=30)
-    fig.suptitle("ODE Solver Benchmark — All Metrics", fontsize=12, y=1.01)
-    fig.tight_layout()
+    fig.suptitle("ODE Solver Benchmark — All Metrics", fontsize=14, fontweight='bold', y=0.98)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(os.path.join(out_dir, "plot_overview.png"), dpi=150)
     plt.close(fig)
     print(f"  Plots saved to {out_dir}/plot_*.png")
@@ -211,6 +331,9 @@ def main() -> None:
     ap.add_argument("--solver-spec", type=str,
                     default="legacy_euler,torchdiffeq:dopri5,torchdiffeq:rk4,torchdiffeq:midpoint",
                     help="Comma-separated list: legacy_euler, torchdiffeq:<method>")
+    ap.add_argument("--vf-mode",     type=str,   default="spiral", choices=["spiral", "neural"],
+                    help="VF mode: 'spiral' (lightweight) or 'neural' (heavy MLP, ~1.5M params)")
+    ap.add_argument("--device",      type=str,   default="cpu", help="Device (cpu, cuda, cuda:0)")
     ap.add_argument("--output-dir",  type=str,   default=None)
     ap.add_argument("--plot",        action="store_true", help="Generate bar-chart PNGs")
     args = ap.parse_args()
@@ -222,6 +345,19 @@ def main() -> None:
 
     np.random.seed(args.seed)
     solvers = parse_solvers(args.solver_spec)
+
+    # ---- Set up VF mode ----
+    global _active_rhs, _active_neural_vf
+    if args.vf_mode == "neural":
+        import torch
+        neural_vf = NeuralVF(args.state_dim, device=args.device)
+        _active_neural_vf = neural_vf
+        _active_rhs = neural_vf  # callable numpy-in/numpy-out
+        vf_label = f"neural MLP ({neural_vf.n_params:,} params)"
+    else:
+        _active_neural_vf = None
+        _active_rhs = _default_rhs
+        vf_label = "spiral (analytic)"
 
     # ---- Output directory ----
     if args.output_dir:
@@ -238,6 +374,7 @@ def main() -> None:
         "n_trials": args.n_trials,
         "batch_size": args.batch_size,
         "state_dim": args.state_dim,
+        "vf_mode": args.vf_mode,
         "t0": args.t0, "t1": args.t1,
         "steps": args.steps,
         "rtol": args.rtol, "atol": args.atol,
@@ -245,12 +382,12 @@ def main() -> None:
     }
     _dump_json(os.path.join(out_dir, "run_meta.json"), meta)
 
-    hdr = (f"Synthetic VF ODE Benchmark | trials={args.n_trials} "
+    hdr = (f"ODE Benchmark | device={args.device} | vf={vf_label} | trials={args.n_trials} \n"
            f"batch={args.batch_size} dim={args.state_dim} steps={args.steps}")
-    print("=" * len(hdr))
+    print("=" * 60)
     print(hdr)
     print(f"output → {out_dir}")
-    print("=" * len(hdr))
+    print("=" * 60)
 
     # ---- Run each solver ----
     all_summary: List[Dict[str, Any]] = []
@@ -262,21 +399,36 @@ def main() -> None:
 
         trial_times: List[float] = []
 
-        for t in range(args.n_trials):
+        # ---- WARM-UP RUN ----
+        # Performs a single un-timed integration to initialize library caches/threads
+        x0_warm = np.random.randn(int(args.batch_size), int(args.state_dim)).astype(np.float32)
+        if backend == "legacy_euler":
+            if _active_neural_vf is not None:
+                _ = euler_integrate_torch(x0_warm, _active_neural_vf, int(args.steps), float(args.t0), float(args.t1))
+            else:
+                _ = euler_integrate(x0_warm, _active_rhs, int(args.steps), float(args.t0), float(args.t1))
+        elif backend == "torchdiffeq":
+            _ = torchdiffeq_integrate(x0_warm, method, int(args.steps), float(args.t0), float(args.t1),
+                                      float(args.rtol), float(args.atol), device=args.device)
+
+        for trial in range(int(args.n_trials)):
             x0 = np.random.randn(args.batch_size, args.state_dim).astype(np.float32)
             t_start = time.perf_counter()
 
             if backend == "legacy_euler":
-                euler_integrate(x0, _default_rhs, args.steps, args.t0, args.t1)
+                if _active_neural_vf is not None:
+                    euler_integrate_torch(x0, _active_neural_vf, args.steps, args.t0, args.t1)
+                else:
+                    euler_integrate(x0, _active_rhs, args.steps, args.t0, args.t1)
             elif backend == "torchdiffeq":
                 torchdiffeq_integrate(x0, method, args.steps, args.t0, args.t1,
-                                      args.rtol, args.atol)
+                                      args.rtol, args.atol, device=args.device)
             else:
                 raise ValueError(f"Unknown backend '{backend}'")
 
             ms = (time.perf_counter() - t_start) * 1000.0
             trial_times.append(ms)
-            print(f"  trial {t:03d}  {ms:8.3f} ms")
+            print(f"  trial {trial:03d}  {ms:8.3f} ms")
 
         stats = compute_stats(trial_times)
         row = {"backend": backend, "method": method, "n_trials": args.n_trials, **stats}
