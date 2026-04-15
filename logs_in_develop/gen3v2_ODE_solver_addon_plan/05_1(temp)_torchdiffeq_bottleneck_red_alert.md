@@ -1,6 +1,7 @@
 # 🚨 RED ALERT: torchdiffeq Bottleneck in ODE Solver Benchmark
 
->https://github.com/ghubliming/FM-PCC-CPU-WSL/tree/main/dpcc/FM_v3_ode_selectable_test/benchmark_outputs
+>https://github.com/ghubliming/FM-PCC-CPU-WSL/tree/main/dpcc/FM_v3_ode_selectable_test/benchmark_outputs (local CPU inital test, outdated)
+> and the follwiing up Colab Tesla T4 tests
 
 **Description:**
 
@@ -15,9 +16,10 @@ Local testing has revealed a significant performance bottleneck when using the `
    - Compare timing results for `torchdiffeq` solvers vs. the raw NumPy Euler integrator.
    - Confirm if the bottleneck persists in the remote setup.
 
-2. **Test Real Training with Faster Model:**
-   - Run a real training session using a theoretically faster ODE solver (e.g., raw NumPy Euler or another efficient method).
-   - Observe and record the impact on training speed and overall performance.
+2. **Test Evaluation with Faster Solver:**
+   - ODE solvers are only used during evaluation (not training) in this benchmark.
+   - Run evaluation/benchmarking using a theoretically faster ODE solver (e.g., raw NumPy Euler or another efficient method).
+   - Observe and record the impact on evaluation speed and overall performance.
 
 ---
 
