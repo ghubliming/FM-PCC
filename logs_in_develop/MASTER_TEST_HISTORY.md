@@ -91,16 +91,22 @@ Execution rules:
 Non-negotiable guard:
 1. Vision mode must be real image-conditioned behavior and must not silently fall back to state-only behavior.
 
-## Gen3v2 ODE Solver Addon Plan
+## Gen3v2 ODE Solver Addon Plan (U2/U3)
 
-13. April
+**DANGER:** `requirements.txt` was updated with `torchdiffeq`.
 
 Based on Gen3 FM-v3 rollout, we want to add an addon ODE solver path to evaluate whether better integration methods can reduce required step count under similar runtime.
 
-**DANGER:** requirements.txt updated — added `torchdiffeq` for ODE benchmarking. Review and re-lock environment if using production or deployment scripts.
+**Status (16. April):**
+*   **Main Evaluation**: NOT EXECUTED YET.
+*   **Speed Benchmarking (U2)**: **VALIDATED**. 
+    - **Investigation: torchdiffeq vs. Native Numpy loops.**
+      - Conclusion: Results as expected and align with theory. `legacy_euler` is the fastest for simple 1st-order math (no library tax).
+    - **Investigation: Batch size effects (B=4 to B=256).**
+      - Conclusion: (~~torchdiffeq handles the batch processing better, even for high complexity solvers, it is still faster than euler numpy loops.~~) werid result, maybe wrong of grid serach code
+    - **Investigation: Scaling of ODE steps and complexity.**
+      - Conclusion: (~~Results as expected and align with theory. Divergence increases with solver complexity and higher step counts.~~)
 
-Main version test: **NOT EXECUTED YET** (as of 15.April).
-
-ODE benchmark test: Only ODE solver speed and chunking penalty tested (not main eval).
-
-Reason: We want to know which ODE solver and integration structure is fastest and most efficient before running full evaluation.
+*   **Current Focus (U3)**: **Accuracy & Fidelity Audit**.
+    - Quantifying "Drift" using high-fidelity Oracles.
+    - Theoretical shift toward **Step Reduction** (e.g., using RK4 S=3 to beat Euler S=10).
