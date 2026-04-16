@@ -19,7 +19,7 @@ At every single environment step (the robot's "thought" cycle):
 
 ## 2. Default Configuration Logic
 
-The default value for evaluation in the `avoiding-d3il` task is **`4`**.
+The value currently set in `config/avoiding-d3il.py` is **`4`**, but a **Deep Analysis of the Evaluation Phase and Gen1 documentation** confirms the intended standard is **`20`**.
 
 ### Where is it defined?
 The primary source of truth is the configuration file:
@@ -49,11 +49,25 @@ The policy then mirrors this batch size to the model and the reward/return tenso
 
 ---
 
-## 3. Why is it set to 4?
+## 3. The "Deep Analysis" Correction: Why 20?
 
-The choice of `4` is a balance between **Safety (Diversity)** and **Hardware Latency**:
-1. **Diversity**: Sampling multiple trajectories allows the "Minimum Projection Cost" logic to choose the safest path among several options.
-2. **GPU Efficiency**: Modern GPUs handle batch sizes of 4 or 8 nearly as fast as a batch size of 1 because the overhead is dominated by Python and data transfer (the "Bridge Tax").
+There is a documented discrepancy between the current code (`batch_size: 4`) and the intended design documented in [Gen1_Debugging.md](file:///workspaces/FM-PCC/logs_in_develop/gen1_output_and_debugging/Gen1_Debugging.md).
+
+### 3.1 The "K20" Terminology Fusion
+In early versions (Gen1), the parameter **`K20`** (which now refers to 20 ODE steps) was explicitly defined as **20 Trajectory Samples** (candidates).
+- **Intended Search Breadth**: Robust MPC requires 20+ candidates to find clear paths in "hard" obstacle scenarios.
+- **Modern Interpretation**: $K=20$ is now used for math precision (Number of Function Evaluations), while `batch_size=4` is a restricted setting likely used for debug speed.
+
+### 3.2 Recommendation for Performance Audits
+For a high-fidelity audit of ODE solvers, you should set `batch_size: 20` to mirror the original DPCC search breadth. This ensures the solver is being tested under the "production-grade" workload where selecting the best of 20 paths is the priority.
+
+---
+
+## 4. Why is it *currently* set to 4?
+
+The choice of `4` in the current config file is a compromise for **Debug Latency**:
+1. **Diversity**: While 4 is better than 1, it only provides a fraction of the search coverage of 20.
+2. **GPU Efficiency**: On many GPUs, batches of 4-16 are "free," but 20 starts to push the hardware closer to the compute-bound regime.
 
 > [!IMPORTANT]
-> If you set `batch_size` to `1`, you are effectively turning off the "Parallel Selection" feature, forcing the robot to rely on a single greedy rollout without any alternatives to fall back on if that path is unsafe.
+> If you are experiencing high collision rates on "hard" tasks, the first fix should be reverting to the **20 candidate standard**.
