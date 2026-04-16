@@ -425,3 +425,94 @@ Meaning in practice:
 - Advisor is asking for stronger numerical-method justification.
 - Best next action: implement inference-time stepper variants first, then benchmark.
 
+## 10. Performance Insights: The Paradox of Advanced Solvers in Python
+
+Recent benchmarking of the "Legacy" (Direct-Math) solvers versus the "Torchdiffeq" (Package) solvers revealed a counter-intuitive paradox: **Higher-order solvers (RK4) in pure Python can be significantly slower than library-wrapped versions, even without the library tax.**
+
+### 10.1 The Python Interpreter Ceiling
+
+When we implement RK4 directly in a Python loop inside the benchmark script:
+*   **Euler (10 steps)**: 10 Python-to-CUDA calls to the U-Net.
+*   **RK4 (10 steps)**: **40 Python-to-CUDA calls** (4 passes per step).
+
+At small batch sizes (**Batch=4**), the actual math calculation on the GPU is nearly instantaneous (sub-millisecond). The majority of the `avg_time` is spent on **CPU/Interpreter overhead**:
+1.  Managing the Python `for` loop.
+2.  Allocating small intermediate tensors for $k_1, k_2, k_3, k_4$.
+3.  The overhead of the Python-to-C++ dispatch for every single U-Net call.
+
+### 10.2 Why Torchdiffeq "Wins" at High Orders
+Even though `torchdiffeq` pays a ~10ms "Entry Tax" to initialize the solver, it is much more efficient at managing the multi-stage transitions (the 4 k-values of RK4) once it is running. 
+
+In contrast, our "Direct Math" implementation in the benchmark script hits the **Python Interpreter Ceiling** 40 times. This is why `legacy:rk4` (~450ms) appeared 3x slower than `torchdiffeq:rk4` (~150ms).
+
+### 10.3 Identifying the Regimes
+
+*   **Interpreter-Limited (Small Batch)**: The number of Python calls is the bottleneck. Euler (10 calls) is much faster than RK4 (40 calls).
+*   **Compute-Limited (Large Batch)**: The GPU math becomes the bottleneck. At Batch 2048+, the difference between a Python loop and a compiled library starts to shrink, but the interpreter still imposes a large "latency floor."
+
+### 10.4 The Final Conclusion on "Failure"
+The advanced methods are **mathematically superior** (more accurate), but they are **computationally expensive in a raw Python loop**. 
+To achieve the **20Hz (50ms) target** with RK4, we cannot use a Python loop at all. We must either:
+1.  **JIT Compile** the entire integration loop using `torch.compile` to fuse the 40 calls into 1 GPU kernel.
+2.  **Vectorize** the solver stages across the GPU directly.
+- Best next action: implement inference-time stepper variants first, then benchmark.
+
+## 11. The "Fixed-Step" Fallacy: Why RK4 Cannot Beat Euler in Raw Time
+
+A common point of confusion is why "Advanced" methods like RK4 often show **higher** latency than "Simple" methods like Euler in these benchmarks.
+
+### 11.1 The Mathematical Tax
+Mathematically, an ODE solver's complexity is defined by its **Stages**.
+*   **Euler**: 1-stage (1 U-Net pass per step).
+*   **Midpoint/RK2**: 2-stage (2 U-Net passes per step).
+*   **RK4**: 4-stage (4 U-Net passes per step).
+
+At a **Fixed Step Count** (e.g., $S=10$), RK4 is performing **40 model passes**, while Euler is only performing **10**. 
+> [!IMPORTANT]
+> There is no scenario where a 4-pass algorithm can be faster than a 1-pass algorithm at the same step count. The "Advanced" label refers to **Accuracy**, not raw execution speed.
+
+### 11.2 Why they often look "Equal" (Sub-optimal regimes)
+In many of our B=4 benchmarks, RK4 (~120ms) and Euler (~110ms) look nearly identical. This is the **Package Tax Paradox**:
+*   The 10ms "Fixed Tax" of the Python/Library overhead is so large compared to the 0.1ms GPU math that the 4x difference in stages is completely hidden by the noise of the interpreter.
+*   The solvers look "equal" only because the system is so inefficient that the actual math doesn't matter yet.
+
+### 11.3 The Real Value of Advanced Methods
+The goal of using RK4 or Midpoint is **Step Reduction**. 
+
+Because RK4 is more accurate ($O(h^4)$), you can potentially achieve the same trajectory quality with **3 steps** of RK4 (12 total passes) that would requires **20 steps** of Euler (20 total passes). 
+
+**The Comparison that Matters**:
+*   **Euler (S=20)**: 20 passes.
+*   **RK4 (S=5)**: 20 passes.
+*   **The Winner**: In this scenario, RK4 will likely produce a **much more accurate** result for the same time budget. 
+
+**Summary**: In a benchmark with **fixed steps**, the higher-order methods will always be slower. You only see the performance benefit of "Advanced" methods when you allow the step count to reflect the higher accuracy of the algorithm.
+
+## 12. Strategic Conclusion: When to Use Advanced Solvers?
+
+The raw latency (ms) is only half of the story. The real decision to use an advanced solver depends on **Accuracy per Second**.
+
+### 12.1 The "Step-Reduction" Strategy
+The most powerful way to use RK4 is to **reduce the total step count ($S$)**. Because RK4 is a 4th-order method, it can often achieve higher precision in very few steps than Euler can in many steps.
+
+| Metric | Euler (S=10) | RK4 (S=3) |
+| :--- | :--- | :--- |
+| **Total Model Passes** | 10 passes | **12 passes** |
+| **Approx. Latency** | ~110 ms | **~125 ms** |
+| **Accuracy (Fidelity)** | High Drift (Pink Line) | **Perfect (Olive Line)** |
+
+**Decision**: For an extra 15ms, you gain massive trajectory fidelity. This is almost always the correct engineering trade-off in robotics.
+
+### 12.2 Decision Matrix
+
+| Choose **Explicit Euler** if... | Choose **RK4 / Midpoint** if... |
+| :--- | :--- |
+| Motion is simple/linear (low curvature). | Motion involves tight gaps or complex obstacles. |
+| Latency is the absolute primary constraint. | **Accuracy/Success Rate** is the primary constraint. |
+| You have a high frequency "Self-Corrector." | You have a **Long Horizon** ($H \ge 8$) where error accumulates. |
+| You are in a Compute-Limited regime (Large B). | You are in an Interpreter-Limited regime (Small B). |
+
+### 12.3 Final Technical Recommendation
+Don't compare **Euler (S=10) vs. RK4 (S=10)**. Instead, find the **Accuracy Break-even Point**. 
+
+For FM-PCC v3, we recommend testing **RK4 with $S=4$**. This provides a significantly more stable and accurate rollout than the current Euler $S=10$ baseline, with a total execution time that is likely comparable or better due to the reduction in total integration steps.
