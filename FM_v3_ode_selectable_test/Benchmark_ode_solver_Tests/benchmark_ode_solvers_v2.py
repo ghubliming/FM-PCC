@@ -20,6 +20,13 @@ from typing import Any, Callable, Dict, List
 
 import numpy as np
 import torch
+import sys
+
+# --- MINARI MOCK (fixes ModuleNotFoundError on systems without dataset libs) ---
+if 'minari' not in sys.modules:
+    from unittest.mock import MagicMock
+    sys.modules['minari'] = MagicMock()
+# -------------------------------------------------------------------------------
 
 # Dynamically add the project root to sys.path if not present so we can import flow_matcher modules
 _PROJ_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -159,8 +166,15 @@ def parse_solvers(spec: str) -> List[Dict[str, str]]:
         else:
             backend, method = entry, entry
         backend, method = backend.strip(), method.strip()
+        
+        # Normalize backend names
         if backend == "legacy_euler":
-            method = "euler"
+            backend, method = "legacy", "euler"
+        elif backend.startswith("legacy_"):
+            # new solvers like legacy_rk4, legacy_midpoint
+            method = backend.split("_", 1)[1]
+            backend = "legacy"
+            
         solvers.append({"backend": backend, "method": method})
     return solvers
 
@@ -243,6 +257,7 @@ def main() -> None:
     ap.add_argument("--device",      type=str,   default="cpu", help="Hardware: cpu, cuda")
     ap.add_argument("--output-dir",  type=str,   default=None)
     ap.add_argument("--plot",        action="store_true")
+    ap.add_argument("--include-bridge-tax", action="store_true", help="Include NumPy<->Torch conversion in timing (matches eval.py logic)")
     args = ap.parse_args()
     
     np.random.seed(args.seed)
@@ -250,10 +265,13 @@ def main() -> None:
 
     # ---- Setup Logging ----
     if args.output_dir:
-        out_dir = args.output_dir
+        # Resolve to absolute path for robustness on remote drives
+        out_dir = os.path.abspath(args.output_dir)
     else:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         out_dir = os.path.join(os.path.dirname(__file__), "benchmark_outputs_v2", f"{ts}_seed{args.seed}")
+    
+    # Use recursive makedirs (already does this, but abspath helps)
     os.makedirs(out_dir, exist_ok=True)
 
     # =========================================================================
@@ -283,7 +301,7 @@ def main() -> None:
         
         # Setup exactly matching what Policy does
         shape = (args.batch_size, args.horizon, transition_dim)
-        dummy_obs = torch.zeros(args.batch_size, args.horizon, observation_dim, device=args.device)
+        dummy_obs = torch.zeros(args.batch_size, observation_dim, device=args.device)
         cond = {0: dummy_obs}
 
         hdr = f"ODE Benchmark V2 (REAL PIPELINE) | {vf_label} | steps={args.steps}"
@@ -305,12 +323,59 @@ def main() -> None:
             # Warm-up (loads caches, JIT, torchdiffeq init)
             with torch.no_grad():
                 _ = fm_model.p_sample_loop(shape, cond)
+            if "cuda" in args.device: torch.cuda.synchronize()
 
             trial_times = []
             for trial in range(args.n_trials):
+                # If requested, prepare input on CPU to measure transfer cost
+                if args.include_bridge_tax:
+                    dummy_obs_cpu = dummy_obs.cpu().numpy()
+
+                if "cuda" in args.device: torch.cuda.synchronize()
                 t_start = time.perf_counter()
+                
                 with torch.no_grad():
-                    fm_model.p_sample_loop(shape, cond)
+                    if backend == "legacy" and method != "euler":
+                        # DIRECT INTERNAL MATH: Bypasses p_sample_loop boilerplate for new methods
+                        x = 0.5 * torch.randn(shape, device=args.device)
+                        dt = 1.0 / args.steps
+                        for s in range(args.steps):
+                            t_scalar = s * dt
+                            t_batch = torch.ones(args.batch_size, device=args.device) * t_scalar
+                            
+                            if method == "midpoint":
+                                v1 = fm_model._predict_velocity(x, cond, t_batch)
+                                x_mid = x + v1 * (dt * 0.5)
+                                t_mid = t_batch + (dt * 0.5)
+                                v2 = fm_model._predict_velocity(x_mid, cond, t_mid)
+                                x = x + v2 * dt
+                            elif method == "rk4":
+                                v1 = fm_model._predict_velocity(x, cond, t_batch)
+                                v2 = fm_model._predict_velocity(x + v1 * (dt * 0.5), cond, t_batch + (dt * 0.5))
+                                v3 = fm_model._predict_velocity(x + v2 * (dt * 0.5), cond, t_batch + (dt * 0.5))
+                                v4 = fm_model._predict_velocity(x + v3 * dt, cond, t_batch + dt)
+                                x = x + (v1 + 2*v2 + 2*v3 + v4) * (dt / 6.0)
+                            elif method == "dopri5":
+                                # Fixed-step Dopri5 (no error control, just throughput check)
+                                v1 = fm_model._predict_velocity(x, cond, t_batch)
+                                v2 = fm_model._predict_velocity(x + v1*(dt/5), cond, t_batch + (dt/5))
+                                v3 = fm_model._predict_velocity(x + v1*(3/40)*dt + v2*(9/40)*dt, cond, t_batch + (3/10)*dt)
+                                v4 = fm_model._predict_velocity(x + v1*(44/45)*dt - v2*(56/15)*dt + v3*(32/9)*dt, cond, t_batch + (4/5)*dt)
+                                v5 = fm_model._predict_velocity(x + v1*(19372/6561)*dt - v2*(25360/2187)*dt + v3*(64448/6561)*dt - v4*(212/729)*dt, cond, t_batch + (8/9)*dt)
+                                v6 = fm_model._predict_velocity(x + v1*(9017/3168)*dt - v2*(355/33)*dt + v3*(46732/5247)*dt + v4*(49/176)*dt - v5*(5103/18656)*dt, cond, t_batch + dt)
+                                x = x + (35/384*v1 + 500/1113*v3 + 125/192*v4 - 2187/6784*v5 + 11/84*v6) * dt
+                        
+                        if args.include_bridge_tax: _ = x.cpu().numpy()
+                    else:
+                        # STANDARD MODE: Uses p_sample_loop (Diffusion.py) or external packages
+                        if args.include_bridge_tax:
+                            cond_repack = {0: torch.from_numpy(dummy_obs_cpu).to(args.device)}
+                            res = fm_model.p_sample_loop(shape, cond_repack)
+                            _ = res.cpu().numpy()
+                        else:
+                            fm_model.p_sample_loop(shape, cond)
+                
+                if "cuda" in args.device: torch.cuda.synchronize()
                 ms = (time.perf_counter() - t_start) * 1000.0
                 trial_times.append(ms)
                 print(f"  trial {trial:03d}  {ms:8.3f} ms")
@@ -369,16 +434,18 @@ def main() -> None:
 
         for trial in range(int(args.n_trials)):
             x0 = np.random.randn(*x0_shape).astype(np.float32)
+            if "cuda" in args.device: torch.cuda.synchronize()
             t_start = time.perf_counter()
 
             if backend == "legacy_euler":
                 if _active_neural_vf is not None:
-                    euler_integrate_torch(x0, _active_neural_vf, args.steps, args.t0, args.t1)
+                    _ = euler_integrate_torch(x0, _active_neural_vf, args.steps, args.t0, args.t1)
                 else:
-                    euler_integrate(x0, _active_rhs, args.steps, args.t0, args.t1)
+                    _ = euler_integrate(x0, _active_rhs, args.steps, args.t0, args.t1)
             elif backend == "torchdiffeq":
-                torchdiffeq_integrate_synthetic(x0, method, args.steps, args.t0, args.t1, args.rtol, args.atol, device=args.device)
+                _ = torchdiffeq_integrate_synthetic(x0, method, args.steps, args.t0, args.t1, args.rtol, args.atol, device=args.device)
 
+            if "cuda" in args.device: torch.cuda.synchronize()
             ms = (time.perf_counter() - t_start) * 1000.0
             trial_times.append(ms)
             print(f"  trial {trial:03d}  {ms:8.3f} ms")

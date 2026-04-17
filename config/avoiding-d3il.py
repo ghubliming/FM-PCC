@@ -484,8 +484,6 @@ base = {
         'n_diffusion_steps': 20,
         'flow_steps_v3': 10,
         'ode_inference_steps_v3': 10,
-        'time_beta_alpha_v3': 1.5,
-        'time_beta_beta_v3': 1.0,
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
@@ -521,8 +519,6 @@ base = {
         'n_diffusion_steps': 20,
         'flow_steps_v3': 10,
         'ode_inference_steps_v3': 10,
-        'time_beta_alpha_v3': 1.5,
-        'time_beta_beta_v3': 1.0,
         # Available backend options: legacy_euler, torchdiffeq.
         'ode_solver_backend_v3': 'legacy_euler',
         # Available method options (torchdiffeq backend):

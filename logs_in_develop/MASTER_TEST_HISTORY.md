@@ -91,9 +91,43 @@ Execution rules:
 Non-negotiable guard:
 1. Vision mode must be real image-conditioned behavior and must not silently fall back to state-only behavior.
 
-## Gen3v2 ODE Solver Addon Plan
+## Gen3v2 ODE Solver Addon Plan (U2/U3)
 
-13. April
+**DANGER:** `requirements.txt` was updated with `torchdiffeq`.
 
 Based on Gen3 FM-v3 rollout, we want to add an addon ODE solver path to evaluate whether better integration methods can reduce required step count under similar runtime.
 
+**Status (16. April):**
+*   **Main Evaluation**: NOT EXECUTED YET.
+
+v1
+
+*   **Speed Benchmarking (U2)**: ~~**VALIDATED**.~~ Wrong code, load from diffusion.py may build bottleneck 
+    - the benchmark_v1 and v2 code: v1 is only naive VF and hard VF, and a compare of cold-warm start of loading torchdiffeq; v2 load the real trained flow matcher model.
+    - **Investigation: torchdiffeq vs. Native Numpy loops.**
+      - Conclusion: Results as expected and align with theory. `legacy_euler` is the fastest for simple 1st-order math (no library tax).
+    - **Investigation: Batch size effects (B=4 to B=256).**
+      - Conclusion: (~~torchdiffeq handles the batch processing better, even for high complexity solvers, it is still faster than euler numpy loops.~~) werid result, maybe wrong of grid serach code
+    - **Investigation: Scaling of ODE steps and complexity.**
+      - Conclusion: (~~Results as expected and align with theory. Divergence increases with solver complexity and higher step counts.~~)
+
+v2 audit and v3 build
+
+*   **Technical Audit (Phase 1: V1 Math Proof)**: 
+    - Verified `naive VF` (analytic spiral) and `hard VF` (1.5M MLP).
+    - Found: Theoretical scaling ($1\times, 4\times$) holds perfectly when boilerplate is removed.
+    - Identified a **1.5s Cold Start Tax** for `torchdiffeq`.
+*   **Technical Audit (Phase 2: V2 Paradox Resolution)**: 
+    - Root cause: **Unfair Pathing**. `legacy:euler` was the only one paying the ~50ms "Python Tax" in `diffusion.py`.
+    - V2 data is misleading for math scaling but proves the dispatch bottleneck.
+*   **Technical Progress (Phase 3: V3 Fair Suite)**: **IN PROGRESS**.
+    - Created `benchmark_ode_solvers_v3.py` with unified `--mode {math, production}` toggles.
+    - Standardized naming to `backend:method`.
+    - Confirmed: "Fair Math Mode" restores the correct scaling (Euler is fastest).
+
+> [!WARNING]
+> **GPU Parallel Scaling Characteristics**: Due to GPU kernel overlapping and overhead "masking," mathematical complexity does not always scale linearly (e.g., RK4 with 4x math may only take 2.7x more time). However, the **relative order** (Euler < Midpoint < RK4) must always remain consistent. A "Paradox" result (where RK4 is faster than Euler) is a guaranteed indicator of a dispatch-bound bottleneck or logic error in the benchmark harness.
+
+*   ~~**Current Focus (Benchmark v2 U3)**: **Accuracy & Fidelity Audit**.~~ *(Stopped, need to test v3 first)*
+*   **Current Focus (U3 V3-Based)**: **Step-Reduction Payoff Audit**.
+    - Moving accuracy audit to the V3 engine for fair fidelity/latency trade-off analysis.
