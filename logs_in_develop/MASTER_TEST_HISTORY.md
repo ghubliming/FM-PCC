@@ -120,10 +120,12 @@ v2 audit and v3 build
 *   **Technical Audit (Phase 2: V2 Paradox Resolution)**: 
     - Root cause: **Unfair Pathing**. `legacy:euler` was the only one paying the ~50ms "Python Tax" in `diffusion.py`.
     - V2 data is misleading for math scaling but proves the dispatch bottleneck.
-*   **Technical Progress (Phase 3: V3 Fair Suite)**: **IN PROGRESS**.
+*   **Technical Progress (Phase 3: V3 Fair Suite)**: **PATCHED & VERIFIED**.
     - Created `benchmark_ode_solvers_v3.py` with unified `--mode {math, production}` toggles.
-    - Standardized naming to `backend:method`.
-    - Confirmed: "Fair Math Mode" restores the correct scaling (Euler is fastest).
+    - [PATCH 17. April]: Fixed a logic bug where `torchdiffeq` was falling back to the `production` path even in `math` mode.
+    - [PATCH 17. April]: Synchronized warm-up logic to match the selected mode (no more "warm-up cross-contamination").
+    - [PATCH 17. April]: Added strict error handling for unsupported legacy solvers.
+    - **Current Status**: All backends now respect the math/production toggles. Previous V3 results from earlier this morning should be discarded as "corrupted by orchestration tax."
 
 > [!WARNING]
 > **GPU Parallel Scaling Characteristics**: Due to GPU kernel overlapping and overhead "masking," mathematical complexity does not always scale linearly (e.g., RK4 with 4x math may only take 2.7x more time). However, the **relative order** (Euler < Midpoint < RK4) must always remain consistent. A "Paradox" result (where RK4 is faster than Euler) is a guaranteed indicator of a dispatch-bound bottleneck or logic error in the benchmark harness.

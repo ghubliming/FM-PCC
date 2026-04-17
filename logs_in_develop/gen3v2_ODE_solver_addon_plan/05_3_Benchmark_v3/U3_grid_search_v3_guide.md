@@ -15,6 +15,20 @@ It produces a consolidated **MASTER_MATRIX_V3_[mode].csv** file.
 
 ---
 
+## 2) Theoretical Context: What does sweeping "Steps" actually test?
+
+When you run a Grid Search over ODE steps (e.g., `1, 2, 5, 10, 20`), you are testing the **"Survival Threshold" (The Pareto Frontier)** of the robot. 
+
+Think of integrating the Flow Matching model like driving a car along a curvy road at night. You can only see the road when you flash your headlights. The ODE integration is always $t=0$ to $t=1$.
+*   **"ODE Steps" is how many times you are allowed to flash your headlights.**
+*   **Euler** assumes the road is a perfectly straight line between flashes. If you only have 5 steps ($dt=0.2$), Euler will drive off the cliff.
+*   **RK4** uses those 5 flashes to calculate the *curvature* of the road, steering smoothly between the checkpoints. It might survive.
+
+**The Ultimate Goal of the Steps Sweep:**
+You are searching for the minimum number of steps a method needs to prevent the robot from crashing (drifting off the neural manifold). If the grid search shows that RK4 survives at **5 steps** (saving rendering latency) while Euler requires **40 steps** to survive, RK4 is practically superior for real-time control, even if its mathematical formula is heavier.
+
+---
+
 ## 2) How to Run
 
 ### Scenario A: Proving Mathematical Scalability Sweep
@@ -43,6 +57,19 @@ python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/grid_search_benchmar
   --device cuda
 ```
 
+### Scenario C: The "Survival Threshold" Sweep (Steps 1 to 20)
+This sweep fixes the batch limits to an aggressive realtime requirement and deeply sweeps the Step budget to find the exact point where solvers begin to fail or become too slow.
+
+```bash
+python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/grid_search_benchmark_for_v3.py \
+  --mode production \
+  --grid-batch 4 \
+  --grid-steps 1,2,5,10,15,20 \
+  --grid-horizon 8 \
+  --solver-spec legacy:euler,legacy:rk4 \
+  --device cuda
+```
+
 ---
 
 ## 3) Output Structure
@@ -56,8 +83,15 @@ The results are saved to `FM_v3_ode_selectable_test/benchmark_grid_search_v3/` b
 
 ## 4) Troubleshooting the Grid Search
 
-### Mismatched Solver Specs
-If you pass a solver spec like `torchdiffeq:rk4` in `math` mode, it will run correctly, but remember that **Torchdiffeq is always "Integrated"**. It always calls the model via the `diffusion.py` logic. Therefore, in `math` mode, `legacy` solvers will look significantly faster than `torchdiffeq` because they are cutting corners that the library cannot cut.
+### ⚠️ The "Identical Latency" Paradox (SOLVED)
+**Observed Phenomenon**: Early versions of the benchmark showed `legacy:rk4` taking the same time as `legacy:euler`.
+**Root Cause**: Confirmed as a **Logic Bias** where the `p_sample_loop` was hardcoded to only run Euler. 
+**Verification**: Verified in V3. You should now see `legacy:rk4` taking ~4.3x longer than `legacy:euler` in both `math` and `production` modes.
+
+### Mismatched Backend Performance
+In `math` mode, you may notice that `torchdiffeq` is significantly faster than `legacy` for high-step solvers (like RK4). 
+*   **Why?**: `legacy:rk4` performs 40 sequential Python trips. `torchdiffeq:rk4` performs **one single Python trip** and handles the 40 evaluations internally in C++.
+*   **The Lesson**: The **Python Dispatch Tax** is the real execution bottleneck of the `legacy` backend, separating the theoretical FLOPs from real-world latency.
 
 ### Aggregation Errors
 If the grid search finishes but the CSV is empty, check the console for mapping errors. Standardize your `--solver-spec` to use the `backend:method` format for best results.

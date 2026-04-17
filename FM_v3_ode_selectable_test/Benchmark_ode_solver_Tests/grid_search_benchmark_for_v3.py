@@ -2,10 +2,13 @@
 import argparse
 import subprocess
 import os
+import sys
 import itertools
 import json
 import csv
 from datetime import datetime
+import matplotlib.pyplot as plt
+from collections import defaultdict
 
 def main():
     ap = argparse.ArgumentParser(description="Grid Search Automated Benchmark Runner V3")
@@ -50,7 +53,7 @@ def main():
         
         print(f"\n[{current_run}/{total_runs}] Running combination: {run_name}")
         cmd = [
-            "python", script_path,
+            sys.executable, script_path,
             "--mode", args.mode,
             "--vf-mode", args.vf_mode,
             "--loadbase", args.loadbase,
@@ -103,6 +106,73 @@ def main():
             w = csv.DictWriter(f, keys)
             w.writeheader(); w.writerows(master_data)
         print(f"✅ Aggregated Data -> {csv_path}")
+        
+        # Print a quick console summary
+        print("\n================ FINAL RESULTS SUMMARY ================")
+        print("TOP 5 FASTEST CONFIGURATIONS:")
+        sorted_data = sorted(master_data, key=lambda x: x["p50_ms"])
+        for i, d in enumerate(sorted_data[:5]):
+            print(f" {i+1}. {d['backend_method']:<20} | H={d['horizon']:<2} S={d['steps']:<2} | Tax: {d['bridge_tax_included']} | {d['p50_ms']:>6.2f} ms")
+        print("=======================================================\n")
+        
+        # 3. MACRO PLOTTING using Matplotlib
+        print("[Generating Macro Plots...]")
+        try:
+            import matplotlib
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+            
+            # Sort data
+            solvers = list(set([r["backend_method"] for r in master_data]))
+            
+            # Plot 1: Batch Scalability
+            fig, ax = plt.subplots(figsize=(10,6))
+            for solver in solvers:
+                points = [r for r in master_data if r["backend_method"]==solver and r["horizon"]==horizon_grid[0] and r["steps"]==steps_grid[-1] and r["bridge_tax_included"]==bridge_grid[-1]]
+                points = sorted(points, key=lambda x: x["batch_size"])
+                if not points: continue
+                ax.plot([p["batch_size"] for p in points], [p["p50_ms"] for p in points], marker='o', label=solver, linewidth=2)
+            ax.set_title(f"Scalability: Solver latency vs Batch Size (h={horizon_grid[0]}, s={steps_grid[-1]}) [{args.mode.upper()}]")
+            ax.set_xlabel("Batch Size")
+            ax.set_ylabel("Latency (ms) [p50]")
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            fig.savefig(os.path.join(args.base_out, f"macroplot_batch_influence_v3_{args.mode}.png"), dpi=150)
+            plt.close(fig)
+
+            # Plot 2: Horizon Complexity 
+            fig, ax = plt.subplots(figsize=(10,6))
+            for solver in solvers:
+                points = [r for r in master_data if r["backend_method"]==solver and r["batch_size"]==batch_grid[0] and r["steps"]==steps_grid[-1] and r["bridge_tax_included"]==bridge_grid[-1]]
+                points = sorted(points, key=lambda x: x["horizon"])
+                if not points: continue
+                ax.plot([p["horizon"] for p in points], [p["p50_ms"] for p in points], marker='s', label=solver, linewidth=2)
+            ax.set_title(f"Sequence Cost: Solver latency vs Horizon (b={batch_grid[0]}, s={steps_grid[-1]}) [{args.mode.upper()}]")
+            ax.set_xlabel("Horizon Length")
+            ax.set_ylabel("Latency (ms) [p50]")
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            fig.savefig(os.path.join(args.base_out, f"macroplot_horizon_influence_v3_{args.mode}.png"), dpi=150)
+            plt.close(fig)
+
+            # Plot 3: Steps Influence
+            fig, ax = plt.subplots(figsize=(10,6))
+            for solver in solvers:
+                points = [r for r in master_data if r["backend_method"]==solver and r["batch_size"]==batch_grid[0] and r["horizon"]==horizon_grid[0] and r["bridge_tax_included"]==bridge_grid[-1]]
+                points = sorted(points, key=lambda x: x["steps"])
+                if not points: continue
+                ax.plot([p["steps"] for p in points], [p["p50_ms"] for p in points], marker='^', label=solver, linewidth=2)
+            ax.set_title(f"Step Cost: Solver latency vs ODE Steps (h={horizon_grid[0]}, b={batch_grid[0]}) [{args.mode.upper()}]")
+            ax.set_xlabel("Integration Steps")
+            ax.set_ylabel("Latency (ms) [p50]")
+            ax.legend()
+            ax.grid(True, linestyle='--', alpha=0.7)
+            fig.savefig(os.path.join(args.base_out, f"macroplot_steps_influence_v3_{args.mode}.png"), dpi=200, bbox_inches='tight')
+            plt.close(fig)
+            
+            print("✅ Macro Summary Plots (Batch, Horizon, Steps) generated successfully!")
+        except ImportError:
+            print("⚠️ Matplotlib not installed, skipping macro plots.")
 
 if __name__ == "__main__":
     main()
