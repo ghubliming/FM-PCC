@@ -18,6 +18,7 @@ def main():
     ap.add_argument("--diffusion-seed", type=int, default=6)
     ap.add_argument("--device", type=str, default="cuda")
     ap.add_argument("--solver-spec", type=str, default="legacy:euler,legacy:rk4")
+    ap.add_argument("--n-trials", type=int, default=1, help="Number of trials per configuration. Default 1 for accuracy.")
     
     # Grid sweeps
     ap.add_argument("--grid-batch", type=str, default="4,32")
@@ -59,9 +60,11 @@ def main():
             "--device", args.device,
             "--solver-spec", args.solver_spec,
             "--batch-size", str(batch),
+            "--n-trials", str(args.n_trials),
             "--steps", str(steps),
             "--output-dir", out_dir,
-            "--plot" # We ask the base script to plot itself too just in case
+            "--track-trajectory", # ENABLE PER-STEP TRACKING BY DEFAULT IN GRID SEARCH
+            "--plot"
         ]
             
         try:
@@ -80,12 +83,16 @@ def main():
         with open(json_path, 'r') as f:
             runs = json.load(f)
         for r in runs:
+            # We convert step_drifts to a semicolon-separated string for CSV portability
+            step_drift_str = ";".join([f"{d:.6f}" for d in r.get("step_drifts", [])])
             row = {
                 "mode": args.mode,
                 "horizon": horizon,
                 "batch_size": batch,
                 "steps": steps,
                 "backend_method": f"{r['backend']}:{r['method']}",
+                "final_l2": r['l2_distance_nm'],
+                "step_drifts_series": step_drift_str,
                 **r
             }
             master_data.append(row)
