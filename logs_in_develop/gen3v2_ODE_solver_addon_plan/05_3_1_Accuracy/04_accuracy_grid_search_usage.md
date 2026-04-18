@@ -115,8 +115,8 @@ Unlike the trivial Euler formula, RK4 has **4 intermediate stages** with complex
 
 ## 4. Interpreting the Macro Plots
 
-### Statistical Error Bands (Mean ± Std)
-On the macro trendlines, each data point now includes **vertical error bars**.
+### Statistical Stability Bands (Mean ± Std)
+On the macro trendlines, each data point represents the **Mean Drift** with **vertical error bars** representing the batch-wise Standard Deviation.
 *   **Interpretation**: If the vertical bars are tight, the solver is "Universal"—it performs equally well across the whole dataset. 
 *   **Edge Cases**: Large error bars suggest the solver is "Brittle"—it might be accurate on average but fails catastrophically on specific complex trajectories.
 

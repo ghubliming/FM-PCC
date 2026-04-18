@@ -7,14 +7,16 @@ This document serves as the technical guide for using the standalone accuracy au
 
 ---
 
-## 1. Technical Architecture: Statistical Batch Variance
+## 1. Technical Architecture: Parallel Batch Workload & Stability Audit
 
 Unlike the latency benchmarks (which measure timing), the accuracy auditor measures the **Euclidean Drift (L2 Distance)** between a candidate solver and a high-precision Ground Truth Oracle.
 
-To ensure the results are scientifically robust without wasting compute time, we utilize **Batch-Wise Spatial Variance**:
-*   **The Oracle**: Runs a single, high-precision `dopri5` integration (`atol=1e-10`) on a fixed batch of 128 noise samples.
-*   **The Candidate**: Runs the same noise samples through the target solver (e.g., Euler 10-steps).
-*   **The Logic**: We calculate the L2 distance for **every individual trajectory** in the batch. This allows us to report not just an average drift, but the **Standard Deviation ($\sigma$)**—showing how the solver's error varies across the Vector Field's spatial distribution.
+To ensure the results are both efficient and mathematically robust, we utilize **Parallel Batch Sampling**:
+*   **Parallel Computing**: We send the entire batch (e.g., 128 robots) to the GPU as a single Tensor. This treats the batch strictly as a **Workload** for measuring throughput.
+*   **Statistical Stability Audit**: Because each of the 128 robots starts at a unique random noise coordinate, they each experience a different "difficulty" in the Vector Field. 
+*   **Mean + STD**: We report the **Mean** (Average Error) and the **Standard Deviation** (Spread). 
+    *   **High Mean**: The solver is generally inaccurate.
+    *   **High STD**: The solver is **unstable**—it works for some starting points but fails catastrophically for others.
 
 ---
 
@@ -35,10 +37,10 @@ The script then loops through your `n-trials`.
 *   **Production Mode**: Uses the same `p_sample_loop_v3_fair` used in RL/Robot control.
 *   **Monkey-Patching**: Since production models usually generate their own random noise, the script temporarily "monkey-patches" `torch.randn` during the run to FORCE the model to use our `global_noise`. This ensures the comparison remains 100% deterministic.
 
-### D. Per-Item Statistical Analysis (Phase 4)
-Instead of looking at the batch as a single block, the code flattens the result into 128 individual trajectories and runs `torch.linalg.vector_norm(..., dim=1)`. 
-*   This yields 128 unique drift data points from a single run.
-*   From this distribution, we calculate the **Mean** (the Bar height) and **Standard Deviation** (the Error Bars).
+### D. Mean Drift Calculation (Phase 4)
+Instead of looking at the batch as a single block, the code calculates the individual Euclidean mistake for each of the 128 trajectories.
+*   The final reported "Accuracy" is the **Average (Mean)** of these errors.
+*   This represents the "Expected Fidelity" of the solver when deployed in a production parallel workload.
 
 ---
 
@@ -75,10 +77,10 @@ The Y-Axis on your generated `accuracy_drift_plot.png` represents the **L2 Eucli
 *   **0.10 (10%)**: **Critical Violation.** The solver's predicted path is significantly detached from the Neural Network's intention. Euler at low step counts often hits this boundary.
 *   **> 0.10**: **Catastrophic Failure.** The integration error is so high that the robot is effectively "guessing" its path.
 
-### The Error Bars (I-Beams):
-*   The black bars on top of the orange columns represent the **Standard Deviation**.
-*   **Short Bars**: The solver is consistently accurate across the entire workspace.
-*   **Long Bars**: The solver struggles in specific "high-curvature" regions of the Vector Field, making it unpredictable.
+### Accuracy Bars:
+*   The orange columns represent the **Mean Drift**.
+*   **High Bars**: The solver is failing to capture the curvature of the Vector Field accurately.
+*   **Low Bars**: The solver is mathematically close to the continuous-time truth.
 
 ---
 
