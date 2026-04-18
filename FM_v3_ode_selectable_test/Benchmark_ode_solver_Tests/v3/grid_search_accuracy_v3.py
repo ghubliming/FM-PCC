@@ -124,14 +124,18 @@ def main():
                 points = sorted(points, key=lambda x: x["steps"])
                 if not points: continue
                 # We expect exponential decay here for RK4!
-                ax.plot([p["steps"] for p in points], [p["l2_distance_nm"] for p in points], marker='^', label=solver, linewidth=2)
+                ax.errorbar(
+                    [p["steps"] for p in points], 
+                    [p["l2_distance_nm"] for p in points], 
+                    yerr=[p.get("l2_std_nm", 0.0) for p in points],
+                    capsize=4, marker='^', label=solver, linewidth=2
+                )
                 
             ax.set_title(f"Accuracy vs ODE Steps (h={horizon_grid[0]}, b={batch_grid[0]}) [{args.mode.upper()}]")
             ax.set_xlabel("Integration Steps ($S$)")
-            ax.set_ylabel("L2 Euclidean Drift (Lower is better)")
+            ax.set_ylabel("L2 Math Drift (Mean ± Std of Batch)")
             ax.legend()
             ax.grid(True, linestyle='--', alpha=0.7)
-            # Log scale y-axis handles exponential differences much better visually
             ax.set_yscale('log')
             fig.savefig(os.path.join(args.base_out, f"macroplot_ACCURACY_vs_STEPS_v3_{args.mode}.png"), dpi=200, bbox_inches='tight')
             plt.close(fig)
@@ -142,11 +146,16 @@ def main():
                 points = [r for r in master_data if r["backend_method"]==solver and r["batch_size"]==batch_grid[0] and r["steps"]==steps_grid[-1]]
                 points = sorted(points, key=lambda x: x["horizon"])
                 if not points: continue
-                ax.plot([p["horizon"] for p in points], [p["l2_distance_nm"] for p in points], marker='s', label=solver, linewidth=2)
+                ax.errorbar(
+                    [p["horizon"] for p in points], 
+                    [p["l2_distance_nm"] for p in points], 
+                    yerr=[p.get("l2_std_nm", 0.0) for p in points],
+                    capsize=4, marker='s', label=solver, linewidth=2
+                )
                 
             ax.set_title(f"Trajectory Elongation Cost: Accuracy vs Horizon (b={batch_grid[0]}, s={steps_grid[-1]}) [{args.mode.upper()}]")
             ax.set_xlabel("Horizon Length ($H$)")
-            ax.set_ylabel("L2 Euclidean Drift (Lower is better)")
+            ax.set_ylabel("L2 Math Drift (Mean ± Std of Batch)")
             ax.legend()
             ax.grid(True, alpha=0.3)
             ax.set_yscale('log')
