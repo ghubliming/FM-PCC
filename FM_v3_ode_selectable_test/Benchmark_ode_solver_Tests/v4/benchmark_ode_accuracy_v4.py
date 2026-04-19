@@ -104,13 +104,29 @@ def main() -> None:
                 if args.mode == "math":
                     if backend == "legacy":
                         x_test = global_noise.clone()
-                        traj_l = [x_test.clone()]; dt = 1.0/args.steps
+                        traj_l = [x_test.clone()]
+                        dt = 1.0 / args.steps
                         for i in range(args.steps):
-                            t_b = torch.ones(args.batch_size, device=args.device) * (i*dt)
-                            if method == "euler": v = fm_model._predict_velocity(x_test, cond, t_b)
+                            t_b = torch.ones(args.batch_size, device=args.device) * (i * dt)
+                            if method == "euler":
+                                v = fm_model._predict_velocity(x_test, cond, t_b)
+                            elif method == "midpoint":
+                                v1 = fm_model._predict_velocity(x_test, cond, t_b)
+                                v = fm_model._predict_velocity(x_test + v1 * (dt * 0.5), cond, t_b + (dt * 0.5))
                             elif method == "rk4":
                                 v1 = fm_model._predict_velocity(x_test, cond, t_b)
-                                v = fm_model._predict_velocity(x_test + v1*(dt*0.5), cond, t_b+(dt*0.5)) # simplified for speed in audit loop
+                                v2 = fm_model._predict_velocity(x_test + v1 * (dt * 0.5), cond, t_b + (dt * 0.5))
+                                v3 = fm_model._predict_velocity(x_test + v2 * (dt * 0.5), cond, t_b + (dt * 0.5))
+                                v4 = fm_model._predict_velocity(x_test + v3 * dt, cond, t_b + dt)
+                                v = (v1 + 2 * v2 + 2 * v3 + v4) / 6.0
+                            elif method == "dopri5":
+                                k1 = fm_model._predict_velocity(x_test, cond, t_b)
+                                k2 = fm_model._predict_velocity(x_test + dt * (1/5) * k1, cond, t_b + dt * (1/5))
+                                k3 = fm_model._predict_velocity(x_test + dt * (3/40 * k1 + 9/40 * k2), cond, t_b + dt * (3/10))
+                                k4 = fm_model._predict_velocity(x_test + dt * (44/45 * k1 - 56/15 * k2 + 32/9 * k3), cond, t_b + dt * (4/5))
+                                k5 = fm_model._predict_velocity(x_test + dt * (19372/6561 * k1 - 25360/2187 * k2 + 64448/6561 * k3 - 212/729 * k4), cond, t_b + dt * (8/9))
+                                k6 = fm_model._predict_velocity(x_test + dt * (9017/3168 * k1 - 355/33 * k2 + 46732/5247 * k3 + 49/176 * k4 - 5103/18656 * k5), cond, t_b + dt)
+                                v = (35/384 * k1 + 500/1113 * k3 + 125/192 * k4 - 2187/6784 * k5 + 11/84 * k6)
                             x_test = x_test + v * dt
                             traj_l.append(x_test.clone())
                         candidate_traj = torch.stack(traj_l)
@@ -141,6 +157,46 @@ def main() -> None:
         print(f"      ✅ L2 Drift: {l2_dist_metric:.6f}")
 
     with open(os.path.join(out_dir, "accuracy_summary.json"), 'w') as f: json.dump(all_summary, f, indent=4)
+        
+    print(f"\n================ FINAL V4 ACCURACY SUMMARY ================")
+    sorted_res = sorted(all_summary, key=lambda x: x["l2_distance_nm"])
+    for i, r in enumerate(sorted_res):
+         print(f" {i+1}. {r['backend']}:{r['method']:<10} | Steps: {r['steps']:<2} | Drift L2: {r['l2_distance_nm']:.6f}")
+    print("===========================================================\n")
+
+    # --- PLOTTING ---
+    if args.plot:
+        try:
+            import matplotlib
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+            
+            # 1. DRIFT BAR CHART
+            labels = [f"{r['backend']}:{r['method']}" for r in all_summary]
+            drifts = [r['l2_distance_nm'] for r in all_summary]
+            fig, ax = plt.subplots(figsize=(10, 6))
+            bars = ax.bar(labels, drifts, color='coral', edgecolor='black')
+            ax.set_title(f"V4 ODE Math Deviation (Locked Batch, Steps={args.steps})", fontsize=14)
+            ax.set_ylabel("L2 Drift")
+            plt.xticks(rotation=15, ha='right')
+            ax.bar_label(bars, fmt='%.4f', padding=3)
+            fig.tight_layout()
+            fig.savefig(os.path.join(out_dir, "accuracy_drift_plot.png"), dpi=150)
+            plt.close(fig)
+
+            # 2. DRIFT ACCUMULATION
+            fig, ax = plt.subplots(figsize=(10, 6))
+            for r in all_summary:
+                tag = f"{r['backend']}:{r['method']}"
+                ax.plot(range(len(r['step_drifts'])), r['step_drifts'], marker='o', markersize=4, label=tag)
+            ax.set_title(f"V4 Mean L2 Drift Accumulation (Steps={args.steps})", fontsize=14)
+            ax.set_yscale('log'); ax.legend(); ax.grid(True, which="both", linestyle='--', alpha=0.5)
+            fig.savefig(os.path.join(out_dir, "accuracy_drift_accumulation.png"), dpi=150)
+            plt.close(fig)
+            print(f"✅ Plots saved to {out_dir}")
+        except ImportError:
+            print("⚠️ Matplotlib not installed, skipping plots.")
+
 
 if __name__ == "__main__":
     main()
