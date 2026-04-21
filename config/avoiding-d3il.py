@@ -221,7 +221,7 @@ base = {
         'model': 'models.Flow_matcher_U_Net_v2',
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
-        'n_diffusion_steps': 20,
+        # 'n_diffusion_steps': 20, # this old parameter is not used in v3
         'loss_type': 'l2',
         'loss_discount': 1.0,
         'returns_condition': False,
@@ -278,7 +278,7 @@ base = {
         'model': 'models.Flow_matcher_U_Net_v2',
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
-        'n_diffusion_steps': 20,
+        # 'n_diffusion_steps': 20, # this old parameter is not used in v3
         'loss_type': 'l2',
         'loss_discount': 1.0,
         'returns_condition': False,
