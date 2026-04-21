@@ -122,3 +122,13 @@ Non-negotiable guard:
 *   **Result**: Tested RK4 ($10$ steps) vs. Legacy Euler ($10$ steps). 
 *   **Outcome**: RK4 only cost more redundant latency (~20%) with zero improvement on environment steps or success metrics. 
 *   **Conclusion**: For the current trained model on the `avoiding-d3il` task, the Vector Field is stable enough that 1st-order integration is sufficient; high-order methods provide mathematical safety overhead but no macro-behavioral gain.
+
+## Gen3v2U1 FMv3 Threshold & Final-Step Snap Fix (21. April)
+
+Keywords: final-step snap, threshold override fix, robotics-grade safety, data-end robustness.
+
+1.  **Problem**: Identified a "Data-End" safety gap where the FMv3 integration could skip the final safety snap if the threshold was small or floating-point math rounded poorly. In contrast, the legacy DPCC code was robust due to its countdown logic.
+2.  **Problem**: Discovered a "Chain of Custody" bug where the `diffusion_timestep_threshold` from the YAML config was ignored by the evaluation scripts.
+3.  **Fix (Logic)**: Modified `flow_matcher_v3_ode_selectable/models/diffusion.py` to use an integer-based boundary and an explicit **force-include for the final integration step** ($idx = S-1$). This guarantees SafeFlow parity.
+4.  **Fix (Override)**: Updated `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` to correctly extract and inject the threshold from the YAML config.
+5.  **Outcome**: The safety window is now truthfully enforced and robotics-grade robust.
