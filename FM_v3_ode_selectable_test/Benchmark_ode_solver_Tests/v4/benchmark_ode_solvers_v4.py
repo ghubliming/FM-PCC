@@ -259,6 +259,7 @@ def main() -> None:
     ap.add_argument("--output-dir",  type=str,   default=None)
     ap.add_argument("--plot",        action="store_true")
     ap.add_argument("--include-bridge-tax", action="store_true")
+    ap.add_argument("--datalog-for-traj", action="store_true", help="Save the generated trajectories from trial 0 without affecting timing")
     args = ap.parse_args()
     
     np.random.seed(args.seed)
@@ -352,6 +353,14 @@ def main() -> None:
             if "cuda" in args.device: torch.cuda.synchronize()
             ms = (time.perf_counter() - t_start) * 1000.0
             trial_times.append(ms); print(f"  trial {trial:03d}  {ms:8.3f} ms")
+
+            # Zero-Interference Logging for Trial 0
+            if trial == 0 and args.datalog_for_traj:
+                if args.mode == "math":
+                    out_tensor = x if backend == "legacy" else res[-1]
+                else:
+                    out_tensor = res
+                np.save(os.path.join(out_dir, f"traj_{backend}_{method}.npy"), out_tensor.cpu().numpy())
 
         stats = compute_stats(trial_times)
         all_summary.append({"backend": backend, "method": method, "n_trials": args.n_trials, **stats})
