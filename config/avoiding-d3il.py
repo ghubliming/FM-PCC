@@ -12,6 +12,13 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
+args_to_watch_v3 = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('diffusion', 'D'),
+]
+
 logbase = 'logs'
 
 base = {
@@ -259,7 +266,7 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -315,7 +322,7 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -476,7 +483,7 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -489,7 +496,7 @@ base = {
         'dynamic_loss': False,
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{flow_steps_v3}_D{diffusion}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 
         'diffusion_epoch': 'best',      # 'latest'
@@ -511,7 +518,7 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -534,7 +541,7 @@ base = {
         'dynamic_loss': False,
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 
         'diffusion_epoch': 'best',      # 'latest'

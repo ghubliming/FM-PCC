@@ -132,3 +132,13 @@ Keywords: final-step snap, threshold override fix, robotics-grade safety, data-e
 3.  **Fix (Logic)**: Modified `flow_matcher_v3_ode_selectable/models/diffusion.py` to use an integer-based boundary and an explicit **force-include for the final integration step** ($idx = S-1$). This guarantees SafeFlow parity.
 4.  **Fix (Override)**: Updated `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` to correctly extract and inject the threshold from the YAML config.
 5.  **Outcome**: The safety window is now truthfully enforced and robotics-grade robust.
+
+## Gen3v2U2 FMv3 Config Naming Alignment (22. April)
+
+Keywords: config renaming, K20 legacy, ODE steps alignment, total synchronization.
+
+1. **Change**: Created `args_to_watch_v3` to globally track `flow_steps_v3` instead of `n_diffusion_steps`.
+2. **Change**: Updated the `exp_name` and `diffusion_loadpath` in `config/avoiding-d3il.py` for all FMv3 training AND plan models (`flow_matching_v3` & `flow_matching_v3_ode_selectable`).
+3. **Outcome**: Total synchronization! The training script will now correctly save newly trained model folders as `K10` (or whatever the ODE steps are), and the evaluation scripts will look for and save results to that exact same `K10` folder. 
+4. > [!NOTE] 
+   > If you have an **old** trained model folder on disk named `K20` (trained before this patch), you will need to manually rename it to `K10` so the evaluation script can find it. Future training runs will name it correctly automatically.
