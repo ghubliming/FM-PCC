@@ -1,6 +1,7 @@
 import time
 import warnings
 import torch
+import sys
 from torch import nn
 
 try:
@@ -13,12 +14,6 @@ from .helpers import (
     apply_conditioning,
     Losses,
 )
-
-# ODE solver configuration contract (read from config/avoiding-d3il.py):
-# - ode_solver_backend_v3:
-#     * "legacy_euler" -> use the built-in explicit Euler step (default/fallback)
-#     * "torchdiffeq"  -> use torchdiffeq.odeint when torchdiffeq is installed
-# - ode_solver_method_v3 and optional tolerances/step-size are config-driven.
 
 class GaussianDiffusion(nn.Module):
     def __init__(self, model, horizon, observation_dim, action_dim, goal_dim=0, n_timesteps=1000,
@@ -37,34 +32,26 @@ class GaussianDiffusion(nn.Module):
         self.model = model
         self.returns_condition = returns_condition
         self.condition_guidance_w = condition_guidance_w
-
-        # Flow Matching uses continuous time; buffers are retained for interface compatibility.
         betas = torch.linspace(1.0, 0.0, n_timesteps, dtype=torch.float32)
         alphas_cumprod = torch.ones(n_timesteps, dtype=torch.float32)
         alphas_cumprod_prev = torch.ones(n_timesteps, dtype=torch.float32)
-
         self.n_timesteps = int(n_timesteps)
         self.clip_denoised = clip_denoised
         self.predict_epsilon = predict_epsilon
         self.time_beta_alpha_v3 = float(time_beta_alpha_v3)
         self.time_beta_beta_v3 = float(time_beta_beta_v3)
         resolved_flow_steps = flow_steps_v3 if flow_steps_v3 is not None else ode_inference_steps_v3
-        if resolved_flow_steps is None:
-            resolved_flow_steps = n_timesteps
+        if resolved_flow_steps is None: resolved_flow_steps = n_timesteps
         self.flow_steps_v3 = int(resolved_flow_steps)
-        # Keep this alias for compatibility with older call sites.
         self.ode_inference_steps_v3 = int(self.flow_steps_v3)
         self.ode_solver_backend_v3 = str(ode_solver_backend_v3)
         self.ode_solver_method_v3 = str(ode_solver_method_v3)
         self.ode_solver_rtol_v3 = ode_solver_rtol_v3
         self.ode_solver_atol_v3 = ode_solver_atol_v3
         self.ode_solver_step_size_v3 = ode_solver_step_size_v3
-
         self.register_buffer('betas', betas)
         self.register_buffer('alphas_cumprod', alphas_cumprod)
         self.register_buffer('alphas_cumprod_prev', alphas_cumprod_prev)
-
-        # Flow Matching does not use diffusion posterior buffers; keep zero tensors for compatibility.
         zeros = torch.zeros(n_timesteps, dtype=torch.float32)
         self.register_buffer('sqrt_alphas_cumprod', zeros)
         self.register_buffer('sqrt_one_minus_alphas_cumprod', zeros)
@@ -75,17 +62,12 @@ class GaussianDiffusion(nn.Module):
         self.register_buffer('posterior_log_variance_clipped', zeros)
         self.register_buffer('posterior_mean_coef1', zeros)
         self.register_buffer('posterior_mean_coef2', zeros)
-
-        ## get loss coefficients and initialize objective
         loss_weights = self.get_loss_weights(action_weight, loss_discount, loss_weights)
         self.loss_fn = Losses[loss_type](loss_weights, self.action_dim)
 
     def _time_from_timestep(self, t):
-        if t.is_floating_point():
-            return t.clamp(0.0, 1.0)
-        t_float = t.float()
-        denom = max(self.n_timesteps - 1, 1)
-        return (t_float / denom).clamp_(0.0, 1.0)
+        if t.is_floating_point(): return t.clamp(0.0, 1.0)
+        return (t.float() / max(self.n_timesteps - 1, 1)).clamp_(0.0, 1.0)
 
     def _predict_velocity(self, x, cond, t, returns=None):
         if self.returns_condition:
@@ -95,179 +77,97 @@ class GaussianDiffusion(nn.Module):
         return self.model(x, cond, t)
 
     def get_loss_weights(self, action_weight, discount, weights_dict):
-        '''
-            sets loss coefficients for trajectory
-
-            action_weight   : float
-                coefficient on first action loss
-            discount   : float
-                multiplies t^th timestep of trajectory loss by discount**t
-            weights_dict    : dict
-                { i: c } multiplies dimension i of observation loss by c
-        '''
         self.action_weight = action_weight
-
         dim_weights = torch.ones(self.transition_dim, dtype=torch.float32)
-
-        ## set loss coefficients for dimensions of observation
         if weights_dict is None: weights_dict = {}
-        for ind, w in weights_dict.items():
-            dim_weights[self.action_dim + ind] *= w
-
-        ## decay loss with trajectory timestep: discount**t
+        for ind, w in weights_dict.items(): dim_weights[self.action_dim + ind] *= w
         discounts = discount ** torch.arange(self.horizon, dtype=torch.float)
         discounts = discounts / discounts.mean()
         loss_weights = torch.einsum('h,t->ht', discounts, dim_weights)
-
-        ## manually set a0 weight
         loss_weights[0, :self.action_dim] = action_weight
         return loss_weights
 
-    #------------------------------------------ sampling ------------------------------------------#
-
     def predict_start_from_noise(self, x_t, t, noise):
-        '''
-            if self.predict_epsilon, model output is (scaled) noise;
-            otherwise, model predicts x0 directly
-        '''
-        # In Flow Matching with linear interpolation, x_t = x_0 + t * v where v = x_1 - x_0.
         t_cont = self._time_from_timestep(t)
-        while t_cont.ndim < x_t.ndim:
-            t_cont = t_cont.unsqueeze(-1)
+        while t_cont.ndim < x_t.ndim: t_cont = t_cont.unsqueeze(-1)
         return x_t - t_cont * noise
 
     def q_posterior(self, x_start, x_t, t):
-        # Flow Matching has deterministic dynamics under the ODE sampler.
         zeros = torch.zeros_like(x_t)
         return x_start, zeros, zeros
 
     def p_mean_variance(self, x, cond, t, returns=None, projector=None, constraints=None):
-        # if self.model.calc_energy:
-        #     assert self.predict_epsilon
-        #     x = torch.tensor(x, requires_grad=True)
-        #     t = torch.tensor(t, dtype=torch.float, requires_grad=True)
-        #     returns = torch.tensor(returns, requires_grad=True)
-
         velocity = self._predict_velocity(x, cond, t, returns=returns)
         dt = 1.0 / max(self.flow_steps_v3, 1)
-        # FIX: + not -, integrate forward along the flow
         model_mean = x + velocity * dt
-
         if projector is not None and projector.gradient:
-            if self.goal_dim > 0:
-                grad = projector.compute_gradient(model_mean[:, :, :-self.goal_dim], constraints)
-            else:
-                grad = projector.compute_gradient(model_mean, constraints)
+            grad = projector.compute_gradient(model_mean[:, :, :-self.goal_dim], constraints) if self.goal_dim > 0 else projector.compute_gradient(model_mean, constraints)
             model_mean = model_mean + grad
-
         zeros = torch.zeros_like(x)
         return model_mean, zeros, zeros
 
     @torch.no_grad()
     def p_sample(self, x, cond, t, returns=None, projector=None, constraints=None):
-        model_mean, _, _ = self.p_mean_variance(
-            x=x,
-            cond=cond,
-            t=t,
-            returns=returns,
-            projector=projector,
-            constraints=constraints,
-        )
+        model_mean, _, _ = self.p_mean_variance(x=x, cond=cond, t=t, returns=returns, projector=projector, constraints=constraints)
         return model_mean
 
     @torch.no_grad()
     def p_sample_loop(self, shape, cond, returns=None, return_diffusion=False, projector=None, constraints=None, repeat_last=0):
+        # --- TERMINATION TEST ---
+        # raise RuntimeError("!!! ODE SOLVER CALLED SUCCESSFULY !!!")
+        
         device = self.betas.device
-
         batch_size = shape[0]
         x = 0.5 * torch.randn(shape, device=device)
         x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
-
-        if return_diffusion:
-            diffusion = [x]
+        if return_diffusion: diffusion = [x]
         costs = {}
-
         use_torchdiffeq = self.ode_solver_backend_v3 == 'torchdiffeq'
         if use_torchdiffeq and torchdiffeq_odeint is None:
-            raise RuntimeError(
-                "ode_solver_backend_v3='torchdiffeq' but torchdiffeq is not installed. "
-                "Install torchdiffeq or switch backend to 'legacy_euler'."
-            )
-
-        # Forward integration t=0 → t=T (noise → data)
+            raise RuntimeError("ode_solver_backend_v3='torchdiffeq' but torchdiffeq is not installed.")
         total_steps = self.flow_steps_v3 + repeat_last
         for i in range(total_steps):
-            loop_idx = min(i, self.flow_steps_v3 - 1)   # clamp for repeat_last extra steps
+            loop_idx = min(i, self.flow_steps_v3 - 1)
+
+            # --- ODE LOGGING BLOCK ---
+            import datetime, os
+            # Ensure the log goes into the local test directory
+            log_dir = "FM_v3_ode_selectable_test"
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, "ode_solver.log")
+            try:
+                with open(log_path, "a") as f:
+                    timestamp = datetime.datetime.now().isoformat()
+                    f.write(f"[{timestamp}] loop_idx={loop_idx}, backend={self.ode_solver_backend_v3}, method={self.ode_solver_method_v3}\n")
+            except Exception:
+                pass
+            # -------------------------
+
             t_cont = torch.full((batch_size,), loop_idx / max(self.flow_steps_v3, 1), device=device, dtype=torch.float32)
             dt = 1.0 / max(self.flow_steps_v3, 1)
-
-            # Apply projector near the END of integration (near t=1, near data)
-            # Robust logic: Ensure final step is ALWAYS snapped and handle boundary math.
             if projector is not None:
                 snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3)
                 near_end = (loop_idx >= snapping_start_idx) or (loop_idx == self.flow_steps_v3 - 1)
-            else:
-                near_end = False
-
+            else: near_end = False
             if use_torchdiffeq:
-                if i == 0:
-                    import datetime
-                    with open("ode_solver.log", "a") as f:
-                        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        f.write(f"[{now}] 🚀 [ ODE Solver Active ]\n")
-                        f.write(f"   > Backend:   {self.ode_solver_backend_v3}\n")
-                        f.write(f"   > Method:    {self.ode_solver_method_v3}\n")
-                        f.write(f"   > Intervals: {self.flow_steps_v3}\n\n")
-                t0 = float(loop_idx) * dt
-                t1 = t0 + dt
+                t0, t1 = float(loop_idx) * dt, float(loop_idx + 1) * dt
                 t_span = torch.tensor([t0, t1], device=device, dtype=torch.float32)
-
                 def ode_rhs(t_scalar, state):
                     t_batch = torch.ones(batch_size, device=device, dtype=torch.float32) * t_scalar
                     return self._predict_velocity(state, cond, t_batch, returns=returns)
-
-                odeint_kwargs = {
-                    'method': self.ode_solver_method_v3,
-                }
-                if self.ode_solver_rtol_v3 is not None:
-                    odeint_kwargs['rtol'] = float(self.ode_solver_rtol_v3)
-                if self.ode_solver_atol_v3 is not None:
-                    odeint_kwargs['atol'] = float(self.ode_solver_atol_v3)
+                odeint_kwargs = {'method': self.ode_solver_method_v3}
+                if self.ode_solver_rtol_v3 is not None: odeint_kwargs['rtol'] = float(self.ode_solver_rtol_v3)
+                if self.ode_solver_atol_v3 is not None: odeint_kwargs['atol'] = float(self.ode_solver_atol_v3)
                 if self.ode_solver_step_size_v3 is not None:
-                    fixed_step_methods = {
-                        'euler', 'midpoint', 'heun2', 'heun3', 'rk4',
-                        'explicit_adams', 'fixed_adams'
-                    }
-                    if self.ode_solver_method_v3 in fixed_step_methods:
+                    if self.ode_solver_method_v3 in {'euler', 'midpoint', 'heun2', 'heun3', 'rk4', 'explicit_adams', 'fixed_adams'}:
                         odeint_kwargs['options'] = {'step_size': float(self.ode_solver_step_size_v3)}
-                    else:
-                        warnings.warn(
-                            f"Ignoring ode_solver_step_size_v3 for method '{self.ode_solver_method_v3}' "
-                            "because it is not a fixed-step solver method.",
-                            RuntimeWarning,
-                        )
-
-                x = torchdiffeq_odeint(
-                    ode_rhs,
-                    x,
-                    t_span,
-                    **odeint_kwargs,
-                )[-1]
-
+                x = torchdiffeq_odeint(ode_rhs, x, t_span, **odeint_kwargs)[-1]
                 if projector is not None and projector.gradient and near_end:
-                    if self.goal_dim > 0:
-                        grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints)
-                    else:
-                        grad = projector.compute_gradient(x, constraints)
+                    grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints) if self.goal_dim > 0 else projector.compute_gradient(x, constraints)
                     x = x + grad
             else:
-                if projector is not None and projector.gradient and near_end:
-                    x = self.p_sample(x, cond, t_cont, returns, projector=projector, constraints=constraints)
-                else:
-                    x = self.p_sample(x, cond, t_cont, returns)
-
+                x = self.p_sample(x, cond, t_cont, returns, projector=projector, constraints=constraints) if (projector is not None and projector.gradient and near_end) else self.p_sample(x, cond, t_cont, returns)
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
-
             if projector is not None and not projector.gradient and near_end:
                 if self.goal_dim > 0:
                     x[:, :, :-self.goal_dim], projection_costs = projector.project(x[:, :, :-self.goal_dim], constraints)
@@ -275,104 +175,47 @@ class GaussianDiffusion(nn.Module):
                 else:
                     x, projection_costs = projector.project(x, constraints)
                     costs[i] = projection_costs
-
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
-
-            if return_diffusion:
-                diffusion.append(x)
-
-        infos = {}
-        if return_diffusion:
-            infos['diffusion'] = torch.stack(diffusion, dim=1)
-        infos['projection_costs'] = costs
-
+            if return_diffusion: diffusion.append(x)
+        infos = {'projection_costs': costs}
+        if return_diffusion: infos['diffusion'] = torch.stack(diffusion, dim=1)
         return x, infos
 
     @torch.no_grad()
     def conditional_sample(self, cond, returns=None, horizon=None, *args, **kwargs):
-        '''
-            conditions : [ (time, state), ... ]
-        '''
-        device = self.betas.device
-        batch_size = len(cond[0])
-        horizon = horizon or self.horizon
-        shape = (batch_size, horizon, self.transition_dim)
+        return self.p_sample_loop((len(cond[0]), horizon or self.horizon, self.transition_dim), cond, returns, *args, **kwargs)
 
-        return self.p_sample_loop(shape, cond, returns, *args, **kwargs)
-
-    def grad_p_sample(self, x, cond, t, returns=None):
-        return self.p_sample(x, cond, t, returns=returns)
+    def grad_p_sample(self, x, cond, t, returns=None): return self.p_sample(x, cond, t, returns=returns)
 
     def grad_p_sample_loop(self, shape, cond, returns=None, verbose=True, return_diffusion=False):
         device = self.betas.device
-
-        batch_size = shape[0]
-        x = 0.5 * torch.randn(shape, device=device)
-        x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
-
-        if return_diffusion:
-            diffusion = [x]
-
-        # FIX: forward integration t=0 → t=T (noise → data)
+        x = apply_conditioning(0.5 * torch.randn(shape, device=device), cond, self.action_dim, goal_dim=self.goal_dim)
+        if return_diffusion: diffusion = [x]
         for i in range(0, self.flow_steps_v3):
-            t_cont = torch.full((batch_size,), i / max(self.flow_steps_v3, 1), device=device, dtype=torch.float32)
-            x = self.grad_p_sample(x, cond, t_cont, returns)
+            x = self.grad_p_sample(x, cond, torch.full((shape[0],), i/max(self.flow_steps_v3, 1), device=device), returns)
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
-
-            if return_diffusion:
-                diffusion.append(x)
-
-        if return_diffusion:
-            return x, torch.stack(diffusion, dim=1)
-        return x
+            if return_diffusion: diffusion.append(x)
+        return (x, torch.stack(diffusion, dim=1)) if return_diffusion else x
 
     def grad_conditional_sample(self, cond, returns=None, horizon=None, *args, **kwargs):
-        '''
-            conditions : [ (time, state), ... ]
-        '''
-        device = self.betas.device
-        batch_size = len(cond[0])
-        horizon = horizon or self.horizon
-        shape = (batch_size, horizon, self.transition_dim)
-
-        return self.grad_p_sample_loop(shape, cond, returns, *args, **kwargs)
-
-    #------------------------------------------ training ------------------------------------------#
+        return self.grad_p_sample_loop((len(cond[0]), horizon or self.horizon, self.transition_dim), cond, returns, *args, **kwargs)
 
     def q_sample(self, x_start, t, noise=None):
-        if noise is None:
-            noise = torch.randn_like(x_start)
-
-        # Linear interpolation path: x_t = (1 - t) * x_0_base + t * x_1_data.
+        if noise is None: noise = torch.randn_like(x_start)
         t_cont = self._time_from_timestep(t)
-        while t_cont.ndim < x_start.ndim:
-            t_cont = t_cont.unsqueeze(-1)
+        while t_cont.ndim < x_start.ndim: t_cont = t_cont.unsqueeze(-1)
         return (1.0 - t_cont) * noise + t_cont * x_start
 
     def p_losses(self, x_start, cond, t, returns=None):
-        x_base = torch.randn_like(x_start)
-        x_base = apply_conditioning(x_base, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
-
-        x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)
-        x_t = apply_conditioning(x_t, cond, self.action_dim, goal_dim=self.goal_dim)
-
-        v_target = x_start - x_base
-        v_target = apply_conditioning(v_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
-
+        x_base = apply_conditioning(torch.randn_like(x_start), cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+        x_t = apply_conditioning(self.q_sample(x_start=x_start, t=t, noise=x_base), cond, self.action_dim, goal_dim=self.goal_dim)
+        v_target = apply_conditioning(x_start - x_base, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
         v_pred = self._predict_velocity(x_t, cond, t, returns=returns)
-        if not self.predict_epsilon:
-            v_pred = apply_conditioning(v_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
-
-        loss, info = self.loss_fn(v_pred, v_target)
-        return loss, info
+        if not self.predict_epsilon: v_pred = apply_conditioning(v_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+        return self.loss_fn(v_pred, v_target)
 
     def loss(self, x, cond, returns=None):
-        batch_size = len(x)
-        alpha = torch.tensor(self.time_beta_alpha_v3, device=x.device)
-        beta = torch.tensor(self.time_beta_beta_v3, device=x.device)
-        beta_dist = torch.distributions.Beta(alpha, beta)
-        t = beta_dist.sample((batch_size,))
-        t = 1.0 - t
+        t = 1.0 - torch.distributions.Beta(self.time_beta_alpha_v3, self.time_beta_beta_v3).sample((len(x),)).to(x.device)
         return self.p_losses(x, cond, t, returns)
 
     def forward(self, cond, *args, **kwargs):
