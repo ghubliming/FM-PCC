@@ -259,6 +259,7 @@ def main() -> None:
     ap.add_argument("--output-dir",  type=str,   default=None)
     ap.add_argument("--plot",        action="store_true")
     ap.add_argument("--include-bridge-tax", action="store_true")
+    ap.add_argument("--datalog-for-traj", action="store_true", help="Save the generated trajectories from trial 0 without affecting timing")
     args = ap.parse_args()
     
     np.random.seed(args.seed)
@@ -314,17 +315,16 @@ def main() -> None:
                         x = current_x_init.clone()
                         dt = 1.0 / args.steps
                         if method == "dopri5":
-                            x_curr = x.clone()
                             for s_idx in range(args.steps):
                                 t_v_b = torch.ones(args.batch_size, device=args.device) * (s_idx * dt)
-                                k1 = fm_model._predict_velocity(x_curr, cond, t_v_b)
-                                k2 = fm_model._predict_velocity(x_curr + dt*(1/5)*k1, cond, t_v_b + dt*(1/5))
-                                k3 = fm_model._predict_velocity(x_curr + dt*(3/40*k1 + 9/40*k2), cond, t_v_b + dt*(3/10))
-                                k4 = fm_model._predict_velocity(x_curr + dt*(44/45*k1 - 56/15*k2 + 32/9*k3), cond, t_v_b + dt*(4/5))
-                                k5 = fm_model._predict_velocity(x_curr + dt*(19372/6561*k1 - 25360/2187*k2 + 64448/6561*k3 - 212/729*k4), cond, t_v_b + dt*(8/9))
-                                k6 = fm_model._predict_velocity(x_curr + dt*(9017/3168*k1 - 355/33*k2 + 46732/5247*k3 + 49/176*k4 - 5103/18656*k5), cond, t_v_b + dt)
-                                x_curr = x_curr + dt*(35/384*k1 + 500/1113*k3 + 125/192*k4 - 2187/6784*v5 + 11/84*v6) # wait v5/v6 typo fixed below
-                            # Manual edit fix for the typo in dopri5 stages k1..k6
+                                k1 = fm_model._predict_velocity(x, cond, t_v_b)
+                                k2 = fm_model._predict_velocity(x + dt*(1/5)*k1, cond, t_v_b + dt*(1/5))
+                                k3 = fm_model._predict_velocity(x + dt*(3/40*k1 + 9/40*k2), cond, t_v_b + dt*(3/10))
+                                k4 = fm_model._predict_velocity(x + dt*(44/45*k1 - 56/15*k2 + 32/9*k3), cond, t_v_b + dt*(4/5))
+                                k5 = fm_model._predict_velocity(x + dt*(19372/6561*k1 - 25360/2187*k2 + 64448/6561*k3 - k4*(212/729)*dt), cond, t_v_b + dt*(8/9)) # wait k4 typo fix
+                                k5 = fm_model._predict_velocity(x + dt*(19372/6561*k1 - 25360/2187*k2 + 64448/6561*k3 - 212/729*k4), cond, t_v_b + dt*(8/9))
+                                k6 = fm_model._predict_velocity(x + dt*(9017/3168*k1 - 355/33*k2 + 46732/5247*k3 + 49/176*k4 - 5103/18656*k5), cond, t_v_b + dt)
+                                x = x + dt*(35/384*k1 + 500/1113*k3 + 125/192*k4 - 2187/6784*k5 + 11/84*k6)
                         else:
                             for s in range(args.steps):
                                 t_b = torch.ones(args.batch_size, device=args.device) * (s * dt)
@@ -354,11 +354,21 @@ def main() -> None:
             ms = (time.perf_counter() - t_start) * 1000.0
             trial_times.append(ms); print(f"  trial {trial:03d}  {ms:8.3f} ms")
 
+            # Zero-Interference Logging for Trial 0
+            if trial == 0 and args.datalog_for_traj:
+                if args.mode == "math":
+                    out_tensor = x if backend == "legacy" else res[-1]
+                else:
+                    out_tensor = res
+                np.save(os.path.join(out_dir, f"traj_{backend}_{method}.npy"), out_tensor.cpu().numpy())
+
         stats = compute_stats(trial_times)
         all_summary.append({"backend": backend, "method": method, "n_trials": args.n_trials, **stats})
+        _dump_json(os.path.join(out_dir, f"trials_{backend}_{method}.json"), [{"trial": k, "ms": v} for k, v in enumerate(trial_times)])
     
     _dump_json(os.path.join(out_dir, "summary.json"), all_summary)
     _dump_csv(os.path.join(out_dir, "summary.csv"), all_summary)
+    if args.plot: make_plots(all_summary, out_dir)
 
 def _dump_json(p, o):
     with open(p, "w") as f: json.dump(o, f, indent=2)

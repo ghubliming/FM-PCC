@@ -202,8 +202,12 @@ class GaussianDiffusion(nn.Module):
             dt = 1.0 / max(self.flow_steps_v3, 1)
 
             # Apply projector near the END of integration (near t=1, near data)
-            near_end = loop_idx >= (1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3 \
-                       if projector is not None else False
+            # Robust logic: Ensure final step is ALWAYS snapped and handle boundary math.
+            if projector is not None:
+                snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3)
+                near_end = (loop_idx >= snapping_start_idx) or (loop_idx == self.flow_steps_v3 - 1)
+            else:
+                near_end = False
 
             if use_torchdiffeq:
                 t0 = float(loop_idx) * dt

@@ -1,0 +1,2 @@
+III add force logging
+when calling ODE solver logging what happened with timemark

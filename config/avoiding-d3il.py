@@ -12,6 +12,13 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
+args_to_watch_v3 = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('diffusion', 'D'),
+]
+
 logbase = 'logs'
 
 base = {
@@ -221,7 +228,7 @@ base = {
         'model': 'models.Flow_matcher_U_Net_v2',
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
-        'n_diffusion_steps': 20,
+        # 'n_diffusion_steps': 20, # this old parameter is not used in v3
         'loss_type': 'l2',
         'loss_discount': 1.0,
         'returns_condition': False,
@@ -259,7 +266,7 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -278,7 +285,7 @@ base = {
         'model': 'models.Flow_matcher_U_Net_v2',
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
-        'n_diffusion_steps': 20,
+        # 'n_diffusion_steps': 20, # this old parameter is not used in v3
         'loss_type': 'l2',
         'loss_discount': 1.0,
         'returns_condition': False,
@@ -286,20 +293,20 @@ base = {
         'dim': 32,
         'dim_mults': (1, 2, 4, 8),
         'predict_epsilon': True,
-        'dynamic_loss': False,
+        # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
         'hidden_dim': 256,
         'attention': False,
         'condition_dropout': 0.25,
         'condition_guidance_w': 1.2,
-        'test_ret': 0.9,
+        # 'test_ret': 0.9, # DEAD code (inference-only parameter)
 
         # v3 SafeFlow-style time sampling parameters.
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
 
         # v3 rollout step control.
-        'flow_steps_v3': 10,
-        'ode_inference_steps_v3': 10,
+        # 'flow_steps_v3': 10, # DEAD code (inference-only parameter)
+        # 'ode_inference_steps_v3': 10, # Dead code
 
         # dataset
         'loader': 'datasets.SequenceDataset',
@@ -315,7 +322,7 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -476,7 +483,7 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -489,7 +496,7 @@ base = {
         'dynamic_loss': False,
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{flow_steps_v3}_D{diffusion}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 
         'diffusion_epoch': 'best',      # 'latest'
@@ -511,14 +518,14 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_v3),
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
-        'n_diffusion_steps': 20,
+        # 'n_diffusion_steps': 20, # DEAD code (mathematically irrelevant for FM flow)
         'flow_steps_v3': 10,
-        'ode_inference_steps_v3': 10,
+        # 'ode_inference_steps_v3': 10, # DEAD code (compatibility alias for flow_steps_v3)
         # Available backend options: legacy_euler, torchdiffeq.
         'ode_solver_backend_v3': 'legacy_euler',
         # Available method options (torchdiffeq backend):
@@ -530,12 +537,12 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'returns_condition': False,
-        'predict_epsilon': True,
-        'dynamic_loss': False,
+        # 'predict_epsilon': True, # DEAD code (not used in inference velocity prediction)
+        # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
-        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        # 'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}', # DEAD code (Value functions not used in FMv3 sampling)
 
         'diffusion_epoch': 'best',      # 'latest'
 

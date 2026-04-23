@@ -23,6 +23,7 @@ halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps
 n_trials = config['n_trials']
 plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
+diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
 
 for exp in exps:
     for halfspace_variant in halfspace_variants:
@@ -126,7 +127,8 @@ for exp in exps:
                     delta_t = 2.0 * dt
                 elif 'dt4p0' in variant:
                     delta_t = 4.0 * dt
-                projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy')
+                projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
+                                        diffusion_timestep_threshold=diffusion_timestep_threshold)
                 projector = None if variant == 'diffuser' else projector
                 trajectory_selection = 'random'
                 if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
