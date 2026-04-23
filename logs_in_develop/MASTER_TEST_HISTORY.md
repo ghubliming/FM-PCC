@@ -133,7 +133,7 @@ Keywords: final-step snap, threshold override fix, robotics-grade safety, data-e
 4.  **Fix (Override)**: Updated `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` to correctly extract and inject the threshold from the YAML config.
 5.  **Outcome**: The safety window is now truthfully enforced and robotics-grade robust.
 
-## Gen3v2U2 FMv3 Config Naming Alignment (22. April)
+## Gen3v2U1.5 FMv3 Config Naming Alignment (22. April)
 
 Keywords: config renaming, K20 legacy, ODE steps alignment, total synchronization.
 
@@ -142,3 +142,15 @@ Keywords: config renaming, K20 legacy, ODE steps alignment, total synchronizatio
 3. **Outcome**: Total synchronization! The training script will now correctly save newly trained model folders as `K10` (or whatever the ODE steps are), and the evaluation scripts will look for and save results to that exact same `K10` folder. 
 4. > [!NOTE] 
    > If you have an **old** trained model folder on disk named `K20` (trained before this patch), you will need to manually rename it to `K10` so the evaluation script can find it. Future training runs will name it correctly automatically.
+
+## Gen3v2u2: RK4 Solver Validation & Loading Hotfix (23. April)
+
+Keywords: RK4 solver, loading hotfix, benchmark auditing, solver validation.
+
+1. **Test "I" (Wrong)**: Failed validation. The benchmark comparison was invalid because the "4x relation" in the diffuser metrics (expected for higher-order solvers) was non-existent in the actual model outputs, indicating the script was not yet running the intended RK4 code.
+2. **Test "II" (Wrong)**: Tested "both-hard" constraints; output was still incorrect. Verified that legacy paths in pickled checkpoints were still overriding the current codebase.
+3. **Test "III" (Success)**: Tested "both-hard" again with the dynamic override active. **Confirmed RK4 is running** correctly! The interceptor successfully pointed the model to the `flow_matcher_v3_ode_selectable` folder.
+4. **Test "IV" (Correct)**: Generated high-fidelity RK4 data. This will serve as the gold standard for comparison against Euler FMv3 to quantify the precision-latency trade-off.
+
+> [!IMPORTANT]
+> **Dynamic Override**: Evaluation scripts now automatically detect and fix pickled module path mismatches (e.g., from `flow_matcher_v3` to `flow_matcher_v3_ode_selectable`) and sanitize outdated keyword arguments at runtime. This ensures that the configuration is always "King" and the most recent code is always used for inference.

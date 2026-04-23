@@ -50,7 +50,56 @@ for exp in exps:
         for seed in seeds:
             args = Parser().parse_args(experiment='plan_fm_v3_ode_selectable', seed=seed)
             # Get model
-            fm_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
+            def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', seed=None):
+                import os
+                import sys
+                print(f'\n[ eval loading ] Intercepting load from {os.path.join(*loadpath)}\n')
+                dataset_config = utils.load_config(*loadpath, 'dataset_config.pkl')
+                model_config = utils.load_config(*loadpath, 'model_config.pkl')
+                diffusion_config = utils.load_config(*loadpath, 'diffusion_config.pkl')
+                trainer_config = utils.load_config(*loadpath, 'trainer_config.pkl')
+                trainer_config._dict['results_folder'] = os.path.join(*loadpath)
+
+                if target_class is not None:
+                    # Resolve target class using the current module's import logic
+                    target_class_resolved = utils.config.import_class(target_class)
+                    target_class_str = target_class_resolved.__module__ + '.' + target_class_resolved.__name__
+                    pickled_class_str = diffusion_config._class.__module__ + '.' + diffusion_config._class.__name__
+                    
+                    if pickled_class_str != target_class_str:
+                        print(f"\n=======================================================", file=sys.stderr)
+                        print(f"[WARNING] Pickled diffusion class does not match existing d3il.py config!", file=sys.stderr)
+                        print(f"Pickled config class: {pickled_class_str}", file=sys.stderr)
+                        print(f"Existing d3il.py class: {target_class_str}", file=sys.stderr)
+                        print(f"Overriding picked config with existing d3il.py config!", file=sys.stderr)
+                        print(f"=======================================================\n", file=sys.stderr)
+                        diffusion_config._class = target_class_resolved
+
+                        # Safely filter _dict to only include arguments the new class accepts
+                        import inspect
+                        sig = inspect.signature(target_class_resolved.__init__)
+                        valid_kwargs = set(sig.parameters.keys())
+                        keys_to_remove = [k for k in diffusion_config._dict if k not in valid_kwargs]
+                        for k in keys_to_remove:
+                            print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
+                            del diffusion_config._dict[k]
+
+                import inspect
+                print(f"\n[INFO] Instantiating Diffusion Model from:", file=sys.stderr)
+                print(f"       -> {inspect.getfile(diffusion_config._class)}\n", file=sys.stderr)
+
+                dataset = dataset_config()
+                model = model_config().to(device)
+                diffusion = diffusion_config(model).to(device)
+                trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
+
+                if epoch == 'latest':
+                    epoch = utils.get_latest_epoch(loadpath)
+                trainer.load(epoch)
+                losses = utils.load_losses(*loadpath, 'losses.pkl')
+                return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
+
+            fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
             fm_model = fm_experiment.diffusion
             # Apply plan-time solver selection after loading checkpoint config.
             fm_model.flow_steps_v3 = int(getattr(args, 'flow_steps_v3', getattr(fm_model, 'flow_steps_v3', 10)))
