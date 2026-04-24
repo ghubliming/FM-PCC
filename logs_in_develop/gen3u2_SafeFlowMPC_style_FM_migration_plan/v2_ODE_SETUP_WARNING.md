@@ -20,6 +20,13 @@ The evaluation runner (`eval_FM_v2.py`) **ignores** any overrides in `config/avo
 ### Summary of "Wrong" Evaluations
 Before today (24 April 2026), all evaluations of FMv2 that attempted to change the ODE step count without re-training the model are **WRONG**. They were silently falling back to the training default (usually 10).
 
+### The Hotfix
+This "Pickle Lock" vulnerability was officially identified and resolved on 23 April. 
+
+See: **## Gen3v2u2: RK4 Solver Validation & Loading Hotfix (23. April)**
+
+The resolution involved implementing a **Dynamic Override** mechanism in the evaluation scripts (currently active in the `FMv3-selectable` path), which manually synchronizes the loaded model with the current configuration attributes.
+
 ### Future Action
 - **Do not use FMv2** for solver-step sensitivity tests.
 - Transition to **FMv3-Selectable**, which has the "Dynamic Override" fix and correctly honors runtime configuration.
