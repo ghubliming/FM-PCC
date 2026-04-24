@@ -25,8 +25,12 @@ This is a brand new standalone script designed to load the saved `.npy` tensors 
 - **Console Debug Output**: Iterates over the specified batch size and explicitly prints the raw `X` and `Y` parameter values for each generated trajectory directly to the console.
 - **Visual Rendering**: Generates `matplotlib` plots containing the unnormalized trajectories overlaid with the environment constraints, saving them as `.png` files directly alongside the source `.npy` arrays in the benchmark output directory.
 
-## Summary of the Bug Context
-During the review of these changes, a potential bug was identified within the newly created `traj_gen_script_for_v4.py`:
-1. **Model Loading Context**: The script calls `utils_serialization.load_diffusion("logs", args.dataset, "", str(args.seed), ...)` which passes an empty string for the `group` name. If the models are nested under a specific group directory (e.g., `logs/avoiding-d3il/0` instead of `logs/avoiding-d3il//0`), this path resolution may fail.
-2. **Batch Consistency Output**: If the objective was to log identical outputs across the batch for verification, the `global_x_init` noise in the benchmark script is still randomly distributed across the batch dimension. If you expect 4 *identical* outputs, the noise tensor initialization needs to be synchronized/broadcasted across the batch dimension.
-3. **Trajectory Dimensionality**: The benchmark currently saves `res[-1]` which represents the *terminal state* rather than the full time-series evolution. If the goal is to plot the time-step progression (the flow), the integration loop may need to return the stacked `traj` array instead of just the final predicted state.
+## 3. Mission Support: Solver Accuracy Comparison
+The framework now explicitly supports the "Solver Comparison" mission (Euler, RK2, RK4 vs. Oracle) through existing backend mappings:
+
+- **RK4**: Supported via `legacy:rk4` (fixed-step) or `torchdiffeq:rk4`.
+- **RK2**: Supported via `legacy:midpoint` (fixed-step).
+- **Euler**: Supported via `legacy:euler`.
+- **Oracle**: Supported via `torchdiffeq:dopri5` by setting `--rtol 1e-10` and `--atol 1e-10` for high-precision ground truth.
+
+All solvers utilize the `global_x_init` noise basis in `--mode math` to ensure 1:1 deterministic comparison across different integration methods.

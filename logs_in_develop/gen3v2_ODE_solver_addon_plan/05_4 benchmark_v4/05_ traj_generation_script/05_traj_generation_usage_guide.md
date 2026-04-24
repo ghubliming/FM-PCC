@@ -66,3 +66,54 @@ The script will drop `.png` files directly into the specified `--benchmark-dir`,
 - **Green Dot**: Indicates the starting position ($t=0$ in the robotic horizon) of the first trajectory in the batch.
 - **Red/Blue Shaded Areas**: These are the environmental constraints (obstacles and halfspaces). The script dynamically loads these from `config/projection_eval.yaml`. 
 - **Safety**: If the blue trajectory lines cross into the shaded constraint areas, it visually indicates a collision or safety violation in the model's generated plan.
+
+---
+
+## 3. Mission: Solver Accuracy & Comparison (Euler, RK2, RK4 vs. Oracle)
+
+This section details how to perform a benchmark mission to compare the physical accuracy of different ODE solvers against a high-precision "Oracle" ground truth.
+
+### Step 1: Generate Standard Solver Trajectories
+Run the benchmark for the primary discrete-step solvers. We use `--mode math` to ensure they all start from the exact same noise basis.
+
+```bash
+python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_ode_solvers_v4.py \
+    --mode math \
+    --datalog-for-traj \
+    --solver-spec "legacy:euler,legacy:midpoint,legacy:rk4" \
+    --steps 20 \
+    --batch-size 4
+```
+*   **RK2**: Represented by `legacy:midpoint`.
+*   **RK4**: Represented by `legacy:rk4`.
+*   **Euler**: Represented by `legacy:euler`.
+
+### Step 2: Generate Oracle Ground Truth
+Run the benchmark again using an adaptive solver with ultra-tight tolerances. 
+
+```bash
+python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_ode_solvers_v4.py \
+    --mode math \
+    --datalog-for-traj \
+    --solver-spec "torchdiffeq:dopri5" \
+    --rtol 1e-10 \
+    --atol 1e-10 \
+    --batch-size 4
+```
+*   **Oracle**: Achieved via `torchdiffeq:dopri5` at `1e-10` precision.
+
+### Step 3: Generate Visualizations
+Point the trajectory generation script at the benchmark output folder(s):
+
+```bash
+python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/traj_gen_script_for_v4.py \
+    --benchmark-dir FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_outputs_v4/[YOUR_TIMESTAMP_DIR] \
+    --dataset avoiding-d3il
+```
+
+### Step 4: Comparison Analysis
+Open the generated `.png` files side-by-side:
+1.  **Oracle (`traj_torchdiffeq_dopri5.png`)**: This is your "Perfect" reference.
+2.  **RK4 (`traj_legacy_rk4.png`)**: Should be very close to Oracle even at 20 steps.
+3.  **RK2 (`traj_legacy_midpoint.png`)**: Moderate accuracy.
+4.  **Euler (`traj_legacy_euler.png`)**: May show significant "drift" compared to Oracle.
