@@ -1,0 +1,66 @@
+Maybe Wrong at ODE time does not even change in eval!
+
+
+---
+
+Confirmed! 25_April
+
+ODE 20 is 10
+
+all same data!
+
+see obsidian note [[BUG ODE 20 is actually 10 in test (Upgrade 2 FM Architecture --(Gen3 --Works - Develop Iterations--Plan & Works (Replace, Update to FM--DPCC Code & Replace Code Works))) (SS26-Thesis-Flow_matching)]]
+
+
+---
+
+
+**Date:** 2026-04-24
+**Subject:** Investigation into FMv2 ODE Solver Step Configuration
+**Status:** **CONFIRMED DEFECTIVE**
+
+## 1. Executive Summary
+The user's suspicion that "nth happened" when changing ODE steps from 20 to 10 in FMv2 is **correct**. The FMv2 implementation contains a critical "Chain of Custody" failure where inference parameters are hard-baked into the model at training time and cannot be overridden by configuration during evaluation.
+
+## 2. Technical Root Cause
+The audit of the FMv2 codebase (`flow_matcher_v2`) reveals the following architectural flaws:
+
+### A. Training-Time Baking (Pickle Lock)
+In `train_FM_v2.py`, the `ode_inference_steps_v2` parameter is passed into the `diffusion_config` object and saved to disk as `diffusion_config.pkl`.
+```python
+# train_FM_v2.py:259
+ode_inference_steps_v2=args.ode_inference_steps_v2,
+```
+
+### B. Evaluation-Time Ignorance
+In `eval_FM_v2.py`, the model is loaded using `utils.load_diffusion`. This function reconstructs the model using the **pickled training config**, completely ignoring the current `args` parsed from `config/avoiding-d3il.py`.
+```python
+# flow_matcher_v2/utils/serialization.py:63
+diffusion = diffusion_config(model).to(device) # Uses saved _dict from training
+```
+
+### C. Missing Dynamic Override
+Unlike FMv3 (which was recently patched), the FMv2 evaluation script lacks the logic to manually push current `args` into the loaded model.
+- **FMv3 (Fixed):** Explicitly sets `fm_model.ode_inference_steps_v3 = args.ode_inference_steps_v3` after loading.
+- **FMv2 (Broken):** Simply loads the model and proceeds. The internal `self.ode_inference_steps_v2` remains stuck at the training value (likely 10).
+
+## 3. Evidence from Development Logs
+The file `logs_in_develop/gen3u2_SafeFlowMPC_style_FM_migration_plan/v2_wrong_setup_train10_eval20_rigid_interpretation.md` documents a scenario where the team *thought* they were evaluating with 20 steps while training with 10. 
+However, based on the code audit, **that evaluation was actually running with 10 steps all along**, regardless of what the user set in the `plan_fm_v2` config block. This explains why results did not shift when the user attempted to tune the parameter.
+
+## 4. Verification of "20 vs 10" Discrepancy
+If the user set `ode_inference_steps_v2 = 20` in the `flow_matching_v2` (training) block, the model would be locked at 20. 
+If they set it to 10 in the `plan_fm_v2` (eval) block, the code would **still run 20 steps**.
+Conversely, if it was 10 in training and 20 in eval, it would **still run 10 steps**.
+
+## 5. Conclusion & Recommendation
+The ODE setup in FMv2 is **non-functional for runtime tuning**. 
+
+### Recommendation:
+1. **Abandon FMv2 Tuning**: Do not trust FMv2 for solver-step ablation studies.
+2. **Transition to FMv3-Selectable**: Use the `flow_matching_v3_ode_selectable` path, which contains the "Dynamic Override" patch (as of 24 April) and properly respects configuration changes at runtime.
+3. **Manual Patch (Optional)**: If FMv2 must be used, `eval_FM_v2.py` must be updated to include:
+   ```python
+   fm_model.ode_inference_steps_v2 = args.ode_inference_steps_v2
+   ```
+   immediately after line 53.
