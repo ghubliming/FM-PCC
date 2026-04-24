@@ -167,6 +167,7 @@ class Parser(argparse.ArgumentParser):
     def mkdir(self, args):
         if 'logbase' in dir(args) and 'dataset' in dir(args) and 'exp_name' in dir(args):
             args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name, str(args.seed))
+            self.savepath = args.savepath
             self._dict['savepath'] = args.savepath
             # if 'suffix' in dir(args):
             #     args.savepath = os.path.join(args.savepath, args.suffix)
