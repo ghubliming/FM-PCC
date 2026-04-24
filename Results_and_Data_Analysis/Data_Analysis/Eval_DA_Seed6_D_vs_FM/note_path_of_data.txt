@@ -1,0 +1,10 @@
+A
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/H8_K20_Dmodels.GaussianDiffusion/6
+
+
+vs 
+
+B
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/H8_K20_Dmodels.diffusion.GaussianDiffusion/6
+
