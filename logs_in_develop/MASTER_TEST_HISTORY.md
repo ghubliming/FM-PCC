@@ -98,6 +98,20 @@ Non-negotiable guard:
 *   **V2 (Failed Real-VF)**: First attempt at the **Real Vector Field** (trained model). **Problem**: Results were invalid due to **Broken Loading Logic**; the runner failed to actually wire the real ODE solvers from `diffusion.py`. 
 *   **V3 (Fixed Integration)**: Successfully bridged the solvers to the production `diffusion.py` paths. **Problem**: High statistical variance across trials because every trial used new random noise batches (**Inter-Trial Divergence**).
 *   **V4 (Deterministic Standard)**: Final standard with a **Locked Noise Basis** (`global_x_init`). **Logic**: Fixes the V3 randomness by ensuring all solvers in the trial integrate the exact same batch for bit-identical auditing.
+*   **V4.1 22. April (Trajectory Visualization)**: Implemented the "Zero-Interference Logging" flag (`--datalog-for-traj`) to capture raw state tensors without affecting latency metrics.
+    *   **New Tool**: Created `traj_gen_script_for_v4.py` which unnormalizes the model's latent robotic plans and overlays them on the exact environmental constraints (obstacles/halfspaces) from `projection_eval.yaml`.
+    *   **Mission Goal**: Enables visual "Precision-Drift" auditing, allowing users to compare solvers like Euler and RK4 directly against the Oracle ground truth to verify robotic safety.
+
+
+#### V4.1: Gen3v2: Solver Comparison Mission (Pending: 25. April)
+
+Keywords: accuracy audit, Euler vs RK4 vs Oracle, trajectory visualization.
+
+1. **Objective**: Run the full "Comparison Mission" as documented in the V4 Usage Guide.
+2. **Target**: Quantify the physical L2 drift of Euler ($K=20$) and RK4 ($K=20$) against the Oracle ($Dopri5$ @ $1e-10$) reference.
+3. **Validation**: Use `traj_gen_script_for_v4.py` to confirm that all solvers respect environmental constraints in the `avoiding-d3il` narrow-gap scenario.
+
+
 
 ### [Benchmarking Conclusion (V1-V4)]
 *   **Backend Reliability**: `torchdiffeq` validated as a stable and reliable backend with manageable initialization/kernel overhead on GPU.
@@ -175,3 +189,5 @@ Keywords: plot output path, FM_test cleanup, dedicated plots folder.
 1. **Problem**: Identified that the `load_results_flow_matching_v3_ode_selectable.py` script was hardcoding its plot outputs to the legacy `FM_test/` root folder, which contains unrelated scripts and is not the designated results directory for the v3-selectable path.
 2. **Fix**: Updated the script to save comparison plots into a dedicated `plots/` subdirectory within `FM_v3_ode_selectable_test/` (relative to the script itself).
 3. **Outcome**: Cleaner directory structure and proper isolation of test results. No more "weird" output in the legacy `FM_test/` folder.
+
+---
