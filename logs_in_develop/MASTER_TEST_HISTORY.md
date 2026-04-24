@@ -43,9 +43,10 @@ Keywords: beta time, two de facto tests, ODE=10 eval change.
 4. > [!CAUTION]
 5. > **ODE Setup Warning**: It has been audited that FMv2 (`flow_matcher_v2`) ignores eval-time ODE step changes due to a "Pickle Lock" (it uses the value saved during training). 
 6. > Thus, any previous test claiming **ODE=20** for FMv2 was actually running at **ODE=10** (the training default).
-7. Test markings:
-8. "Beta Time" marks beta-only test.
-9. "ODE=10" marks beta-time plus eval ODE=10 test.
+7. > This was finally resolved in **## Gen3v2u2: RK4 Solver Validation & Loading Hotfix (23. April)** via the **Dynamic Override** mechanism for FMv3-selectable models.
+8. Test markings:
+9. "Beta Time" marks beta-only test.
+10. "ODE=10" marks beta-time plus eval ODE=10 test.
 
 ## Gen3 Upgrade 3 FM-v3
 
