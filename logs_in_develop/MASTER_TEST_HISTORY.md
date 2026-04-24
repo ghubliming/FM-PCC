@@ -189,5 +189,12 @@ Keywords: plot output path, FM_test cleanup, dedicated plots folder.
 1. **Problem**: Identified that the `load_results_flow_matching_v3_ode_selectable.py` script was hardcoding its plot outputs to the legacy `FM_test/` root folder, which contains unrelated scripts and is not the designated results directory for the v3-selectable path.
 2. **Fix**: Updated the script to save comparison plots into a dedicated `plots/` subdirectory within `FM_v3_ode_selectable_test/` (relative to the script itself).
 3. **Outcome**: Cleaner directory structure and proper isolation of test results. No more "weird" output in the legacy `FM_test/` folder.
-
 ---
+
+## Gen3v2: Metadata Root Leak Hotfix (24. April)
+
+Keywords: metadata leak, root directory cleanup, Parser.savepath fix, resume indexing.
+
+1. **Problem**: Discovered that `args_resume_N.json` files were leaking into the project root directory (reaching index 272). This was caused by the `Parser` class in `utils/setup.py` failing to synchronize its internal `self.savepath` with the experiment-specific `args.savepath`.
+2. **Fix**: Updated `flow_matcher_v3_ode_selectable/utils/setup.py` to ensure `self.savepath` is updated in the `mkdir` method before saving. This forces the metadata into the correct experiment log folder.
+3. **Outcome**: Future runs will no longer pollute the root directory, and run configurations will be properly encapsulated within their respective trial folders.

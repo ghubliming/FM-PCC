@@ -62,10 +62,48 @@ The script will drop `.png` files directly into the specified `--benchmark-dir`,
 - `traj_torchdiffeq_rk4.png`
 
 **Interpretation of the Plots**:
-- **Blue Lines/Curves**: These represent the physical path of the generated trajectories mapped onto the 2D plane. 
-- **Green Dot**: Indicates the starting position ($t=0$ in the robotic horizon) of the first trajectory in the batch.
-- **Red/Blue Shaded Areas**: These are the environmental constraints (obstacles and halfspaces). The script dynamically loads these from `config/projection_eval.yaml`. 
-- **Safety**: If the blue trajectory lines cross into the shaded constraint areas, it visually indicates a collision or safety violation in the model's generated plan.
+- **The Blue Lines (Model Intent)**: These represent the robotic path the model *intends* to take. The model follows its learned "Vector Field." 
+- **The Shaded Areas (Environmental Safety)**: These are the obstacles and halfspaces. They define the "forbidden zones."
+- **The Starting Point (Green Dot)**: The initial position in the robotic horizon ($t=0$).
+
+### Does the "New Obstacle" Matter?
+**Yes, it is the ultimate test of solver precision.** 
+
+1.  **Model vs. Solver**: The model (U-Net) might predict a perfectly safe vector field that goes around a narrow gap. However, the **ODE Solver** is responsible for following that field.
+2.  **Numerical Drift**: Simple solvers like **Euler** have high numerical "drift." Even if the model points in a safe direction, the solver might "cut the corner" or drift off-course because it only looks at the velocity once per step.
+3.  **The Safety Test**:
+    *   In a "Wide Open" environment, Euler and RK4 look the same because there is plenty of room to drift.
+    *   In a **"New/Narrow Gap" environment** (e.g., `top-left-hard`), the gap is tiny. 
+    *   If you see the **Euler** trajectory (Blue Line) crossing into a **Shaded Obstacle**, you have proven that Euler is **numerically unsafe** for that mission, even if the model itself is "good."
+    *   The **Oracle/RK4** should stay perfectly outside the shaded areas because they track the model's safe intent with higher mathematical precision.
+
+### Scientific Soundness: Why Zero-Conditioning?
+You may notice that the benchmark script feeds `torch.zeros` into the U-Net for the environment conditioning. This is a deliberate design choice for "Traj Quality" comparison:
+
+1.  **Pure Math Audit**: By using a static (Zero) environment, we ensure that the model's "intent" is identical every time. This allows us to isolate the **numerical precision** of the solver.
+2.  **Trajectory Quality defined**: In this mission, "Quality" means how faithfully the solver tracks the model's learned Vector Field. 
+3.  **Visual Proof**: Even with zero-conditioning, the model generates a specific path. We overlay "Hard" obstacles on that path to create a high-stakes test. If a solver like Euler drifts into the obstacle while the Oracle stays clear, it is a scientific proof of low **Trajectory Quality** due to numerical integration error.
+
+### The "Two-Step" Logic: Where do the obstacles happen?
+It is important to understand that the obstacles are **NOT** part of the math inside the U-Net during the benchmark. They are introduced later as a "Judge."
+
+1.  **Step 1: The Benchmark (Brain Only)**
+    *   We feed the NN `zeros`. 
+    *   The NN predicts a "default" trajectory. 
+    *   The ODE solver calculates this path and saves it to a `.npy` file.
+    *   *Result*: A raw robotic plan that hasn't seen any obstacles yet.
+
+> [!IMPORTANT]
+> **The NN is completely "blind" to the obstacles during this process.** It is fed `torch.zeros` as conditioning. It only generates a path based on its internal "intuition." The obstacles are only used later to judge the numerical quality of that path.
+
+2.  **Step 2: The Visualization (The Post-Hoc Judge)**
+    *   The `traj_gen_script_for_v4.py` loads the `.npy` file.
+    *   **Crucially**, it then loads the `projection_eval.yaml` constraints.
+    *   It overlays the obstacles (Shaded Areas) onto the plot **on top of** the model's path.
+    *   *The Trap*: We choose a "Hard" obstacle configuration that is positioned **very close** to where the model's default path goes.
+    *   *The Verdict*: If the blue line (Euler) touches the shaded area, it means Euler's math was too "loose" to stay safe in that tight space. If the Oracle stays clear, it proves the Oracle's math is superior.
+
+**In summary**: The obstacle is a "Safety Filter" we apply **after the fact** to visualize the quality of the math.
 
 ---
 
