@@ -167,3 +167,11 @@ FM-PCC\Results_and_Data_Analysis\Data_Analysis\Eval_Seed6_FMv3_RK4_vs_FMv3_Euler
 
 1. **Test Parameters**: `FMv3` testing is currently ongoing with `aw=10`, `ODE=10`, and the `euler` solver.
 2. **Target**: Compare the DPCC style computational and performance cost directly against this configuration.
+
+## Gen3v2: Plot Output Hotfix (24. April)
+
+Keywords: plot output path, FM_test cleanup, dedicated plots folder.
+
+1. **Problem**: Identified that the `load_results_flow_matching_v3_ode_selectable.py` script was hardcoding its plot outputs to the legacy `FM_test/` root folder, which contains unrelated scripts and is not the designated results directory for the v3-selectable path.
+2. **Fix**: Updated the script to save comparison plots into a dedicated `plots/` subdirectory within `FM_v3_ode_selectable_test/` (relative to the script itself).
+3. **Outcome**: Cleaner directory structure and proper isolation of test results. No more "weird" output in the legacy `FM_test/` folder.
