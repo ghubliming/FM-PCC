@@ -147,10 +147,23 @@ Keywords: config renaming, K20 legacy, ODE steps alignment, total synchronizatio
 
 Keywords: RK4 solver, loading hotfix, benchmark auditing, solver validation.
 
+Recap of I,II,III,IV tests:
 1. **Test "I" (Wrong)**: Failed validation. The benchmark comparison was invalid because the "4x relation" in the diffuser metrics (expected for higher-order solvers) was non-existent in the actual model outputs, indicating the script was not yet running the intended RK4 code.
 2. **Test "II" (Wrong)**: Tested "both-hard" constraints; output was still incorrect. Verified that legacy paths in pickled checkpoints were still overriding the current codebase.
 3. **Test "III" (Success)**: Tested "both-hard" again with the dynamic override active. **Confirmed RK4 is running** correctly! The interceptor successfully pointed the model to the `flow_matcher_v3_ode_selectable` folder.
 4. **Test "IV" (Correct)**: Generated high-fidelity RK4 data. This will serve as the gold standard for comparison against Euler FMv3 to quantify the precision-latency trade-off.
 
+### IV results: 24 April Finished
+FM-PCC\Results_and_Data_Analysis\Data_Analysis\Eval_Seed6_FMv3_RK4_vs_FMv3_Euler\IV
+
+
+
 > [!IMPORTANT]
 > **Dynamic Override**: Evaluation scripts now automatically detect and fix pickled module path mismatches (e.g., from `flow_matcher_v3` to `flow_matcher_v3_ode_selectable`) and sanitize outdated keyword arguments at runtime. This ensures that the configuration is always "King" and the most recent code is always used for inference.
+
+---
+
+## Gen3v2: DPCC Style Cost Comparison (Ongoing)
+
+1. **Test Parameters**: `FMv3` testing is currently ongoing with `aw=10`, `ODE=10`, and the `euler` solver.
+2. **Target**: Compare the DPCC style computational and performance cost directly against this configuration.
