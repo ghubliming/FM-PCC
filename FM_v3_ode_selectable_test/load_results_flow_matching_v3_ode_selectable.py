@@ -1,6 +1,7 @@
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 import flow_matcher_v3_ode_selectable.utils as utils
 
 # Load configuration
@@ -8,6 +9,11 @@ with open('config/projection_eval.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 projection_variants = config['projection_variants']
+
+# Set up plot output directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+plot_path = os.path.join(script_dir, 'plots')
+os.makedirs(plot_path, exist_ok=True)
 
 exp = 'avoiding-d3il'
 class Parser(utils.Parser):
@@ -137,7 +143,8 @@ for variants in variants_to_plot:
 
     fig.tight_layout()
 
-    plt.savefig('FM_test/success_rates_tightened_fm.png') if 'tightened' in variants[0] else plt.savefig('FM_test/success_rates_fm.png')
+    save_name = 'success_rates_tightened_fm.png' if 'tightened' in variants[0] else 'success_rates_fm.png'
+    plt.savefig(os.path.join(plot_path, save_name))
     plt.show()
 
     # Create the second bar plot for timesteps
@@ -155,5 +162,6 @@ for variants in variants_to_plot:
     add_labels(bars)
 
     fig.tight_layout()
-    plt.savefig('FM_test/timesteps_tightened_fm.png') if 'tightened' in variants[0] else plt.savefig('FM_test/timesteps_fm.png')
+    save_name = 'timesteps_tightened_fm.png' if 'tightened' in variants[0] else 'timesteps_fm.png'
+    plt.savefig(os.path.join(plot_path, save_name))
     plt.show()
