@@ -1,0 +1,1 @@
+Can get from pkl data in train data or copy console outputs from ipynb, we train 1st until 90% second time finish it, just open 2ed ipynb

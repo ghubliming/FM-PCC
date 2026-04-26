@@ -40,9 +40,13 @@ Keywords: beta time, two de facto tests, ODE=10 eval change.
 1. Implemented beta-time sampling in FM-v2.
 2. De facto test #1: Beta-time only.
 3. De facto test #2: Beta-time plus eval ODE changed to 10. (in logs it is mark with FMv2, ie. default name)
-4. Test markings:
-5. "Beta Time" marks beta-only test.
-6. "ODE=10" marks beta-time plus eval ODE=10 test.
+4. > [!CAUTION]
+5. > **ODE Setup Warning**: It has been audited that FMv2 (`flow_matcher_v2`) ignores eval-time ODE step changes due to a "Pickle Lock" (it uses the value saved during training). 
+6. > Thus, any previous test claiming **ODE=20** for FMv2 was actually running at **ODE=10** (the training default).
+7. > This was finally resolved in **## Gen3v2u2: RK4 Solver Validation & Loading Hotfix (23. April)** via the **Dynamic Override** mechanism for FMv3-selectable models.
+8. Test markings:
+9. "Beta Time" marks beta-only test.
+10. "ODE=10" marks beta-time plus eval ODE=10 test.
 
 ## Gen3 Upgrade 3 FM-v3
 
@@ -98,6 +102,20 @@ Non-negotiable guard:
 *   **V2 (Failed Real-VF)**: First attempt at the **Real Vector Field** (trained model). **Problem**: Results were invalid due to **Broken Loading Logic**; the runner failed to actually wire the real ODE solvers from `diffusion.py`. 
 *   **V3 (Fixed Integration)**: Successfully bridged the solvers to the production `diffusion.py` paths. **Problem**: High statistical variance across trials because every trial used new random noise batches (**Inter-Trial Divergence**).
 *   **V4 (Deterministic Standard)**: Final standard with a **Locked Noise Basis** (`global_x_init`). **Logic**: Fixes the V3 randomness by ensuring all solvers in the trial integrate the exact same batch for bit-identical auditing.
+*   **V4.1 22. April (Trajectory Visualization)**: Implemented the "Zero-Interference Logging" flag (`--datalog-for-traj`) to capture raw state tensors without affecting latency metrics.
+    *   **New Tool**: Created `traj_gen_script_for_v4.py` which unnormalizes the model's latent robotic plans and overlays them on the exact environmental constraints (obstacles/halfspaces) from `projection_eval.yaml`.
+    *   **Mission Goal**: Enables visual "Precision-Drift" auditing, allowing users to compare solvers like Euler and RK4 directly against the Oracle ground truth to verify robotic safety.
+
+
+#### V4.1: Gen3v2: Solver Comparison Mission (Pending: 25. April)
+
+Keywords: accuracy audit, Euler vs RK4 vs Oracle, trajectory visualization.
+
+1. **Objective**: Run the full "Comparison Mission" as documented in the V4 Usage Guide.
+2. **Target**: Quantify the physical L2 drift of Euler ($K=20$) and RK4 ($K=20$) against the Oracle ($Dopri5$ @ $1e-10$) reference.
+3. **Validation**: Use `traj_gen_script_for_v4.py` to confirm that all solvers respect environmental constraints in the `avoiding-d3il` narrow-gap scenario.
+
+
 
 ### [Benchmarking Conclusion (V1-V4)]
 *   **Backend Reliability**: `torchdiffeq` validated as a stable and reliable backend with manageable initialization/kernel overhead on GPU.
@@ -147,10 +165,40 @@ Keywords: config renaming, K20 legacy, ODE steps alignment, total synchronizatio
 
 Keywords: RK4 solver, loading hotfix, benchmark auditing, solver validation.
 
+Recap of I,II,III,IV tests:
 1. **Test "I" (Wrong)**: Failed validation. The benchmark comparison was invalid because the "4x relation" in the diffuser metrics (expected for higher-order solvers) was non-existent in the actual model outputs, indicating the script was not yet running the intended RK4 code.
 2. **Test "II" (Wrong)**: Tested "both-hard" constraints; output was still incorrect. Verified that legacy paths in pickled checkpoints were still overriding the current codebase.
 3. **Test "III" (Success)**: Tested "both-hard" again with the dynamic override active. **Confirmed RK4 is running** correctly! The interceptor successfully pointed the model to the `flow_matcher_v3_ode_selectable` folder.
 4. **Test "IV" (Correct)**: Generated high-fidelity RK4 data. This will serve as the gold standard for comparison against Euler FMv3 to quantify the precision-latency trade-off.
 
+### IV results: 24 April Finished
+FM-PCC\Results_and_Data_Analysis\Data_Analysis\Eval_Seed6_FMv3_RK4_vs_FMv3_Euler\IV
+
+
+
 > [!IMPORTANT]
 > **Dynamic Override**: Evaluation scripts now automatically detect and fix pickled module path mismatches (e.g., from `flow_matcher_v3` to `flow_matcher_v3_ode_selectable`) and sanitize outdated keyword arguments at runtime. This ensures that the configuration is always "King" and the most recent code is always used for inference.
+
+---
+
+## Gen3v2: DPCC Style Cost Comparison (Ongoing)
+
+1. **Test Parameters**: `FMv3` testing is currently ongoing with `aw=10`, `ODE=10`, and the `euler` solver.
+2. **Target**: Compare the DPCC style computational and performance cost directly against this configuration.
+
+## Gen3v2: Plot Output Hotfix (24. April)
+
+Keywords: plot output path, FM_test cleanup, dedicated plots folder.
+
+1. **Problem**: Identified that the `load_results_flow_matching_v3_ode_selectable.py` script was hardcoding its plot outputs to the legacy `FM_test/` root folder, which contains unrelated scripts and is not the designated results directory for the v3-selectable path.
+2. **Fix**: Updated the script to save comparison plots into a dedicated `plots/` subdirectory within `FM_v3_ode_selectable_test/` (relative to the script itself).
+3. **Outcome**: Cleaner directory structure and proper isolation of test results. No more "weird" output in the legacy `FM_test/` folder.
+---
+
+## Gen3v2: Metadata Root Leak Hotfix (24. April)
+
+Keywords: metadata leak, root directory cleanup, Parser.savepath fix, resume indexing.
+
+1. **Problem**: Discovered that `args_resume_N.json` files were leaking into the project root directory (reaching index 272). This was caused by the `Parser` class in `utils/setup.py` failing to synchronize its internal `self.savepath` with the experiment-specific `args.savepath`.
+2. **Fix**: Updated `flow_matcher_v3_ode_selectable/utils/setup.py` to ensure `self.savepath` is updated in the `mkdir` method before saving. This forces the metadata into the correct experiment log folder.
+3. **Outcome**: Future runs will no longer pollute the root directory, and run configurations will be properly encapsulated within their respective trial folders.
