@@ -1,6 +1,6 @@
-# ODE Solver Logic: The Final Theoretical Note
+# Deep Dive: Math vs. Production Logic in FM-PCC
 
-This document provides the ultimate clarification on the V4 benchmark logic, distinguishing between pure mathematical simulation and robot-ready control.
+This document summarizes the design rationale for the two operational modes in the V4 ODE Solver Benchmark and how they relate to the real FM-PCC evaluation pipeline.
 
 ---
 
@@ -35,18 +35,29 @@ Even in Production Mode where the start point is fixed, **noise is still used fo
 
 ---
 
-## 4. Hardware Parallelism
+## 4. Environment & Plotting (Raw Truth)
+In the V4 Trajectory Visualization, we prioritize the **Raw Dataset Environment**.
+
+*   **Original Obstacles**: We plot the original Red Circles from the `avoiding-d3il` dataset.
+*   **No Projection Clutter**: We specifically exclude the "new" blue obstacles and halfspaces from `projection_eval.yaml`. This ensures the audit shows the robot's performance against the environment it was actually trained on.
+
+---
+
+## 5. Hardware Parallelism
 Batch processing (B0-B3) is not done one-by-one. It is processed **simultaneously** on the **CPU (Vectorization)** or **GPU (CUDA)**. Because the Neural Network handles the entire batch tensor in one forward pass, generating 4 or 16 paths costs almost the same amount of time as generating one.
 
 ---
 
-## Summary of the Comparison Logic
-| Mode | Start Point ($p_0$) | Rest of Path ($p_1 \dots p_H$) | Scientific Purpose |
+## Summary Table
+| Feature | Math Mode | Production Mode | Real Eval Script |
 | :--- | :--- | :--- | :--- |
-| **Math** | **Random Noise** (Audit) | **Random Noise** (Diversity) | Audit **Model Precision** |
-| **Production** | **Forced Anchor** (Safe) | **Random Noise** (Diversity) | Audit **Controller Stability** |
+| **Start Point** | Drifts (Audit) | Fixed (Clamped) | Fixed (Clamped) |
+| **Noise Basis** | Static (Deterministic) | Static (Deterministic) | Live (Random) |
+| **Batch Purpose** | Reproducibility audit | Distribution audit | Sample-based planning |
+| **Parallelism** | CPU/CUDA Parallel | CPU/CUDA Parallel | CPU/CUDA Parallel |
 
 ---
 
 > [!TIP]
-> Use the **Per-Batch Audit Plots** (`batch_comparison_B0.png`) to see exactly how different solvers (Euler vs. RK4) handle the **identical random challenge** from the same starting point.
+> Use **Math Mode** to judge the **precision** of the ODE solvers.
+> Use **Production Mode** to judge the **safety and diversity** of the generated plans.

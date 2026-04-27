@@ -115,6 +115,25 @@ Keywords: accuracy audit, Euler vs RK4 vs Oracle, trajectory visualization.
 2. **Target**: Quantify the physical L2 drift of Euler ($K=20$) and RK4 ($K=20$) against the Oracle ($Dopri5$ @ $1e-10$) reference.
 3. **Validation**: Use `traj_gen_script_for_v4.py` to confirm that all solvers respect environmental constraints in the `avoiding-d3il` narrow-gap scenario.
 
+#### V4.2: Gen3v2: Trajectory Quality Audit & Fairness Hotfix (27. April)
+
+Keywords: production mode fairness, shared noise basis, per-batch audit, raw environment restoration.
+
+**Code Hotfixes**:
+1.  **Noise Fairness**: Refactored `benchmark_ode_solvers_v4.py` so that **both** `math` and `production` modes share the exact same noise basis across all solvers in a trial. Euler, RK4, and Oracle now solve the **identical random challenge**.
+2.  **Timing Determinism**: Fixed the trial loop so all trials in a run use the same mathematical workload. Latency averages are now 100% stable.
+3.  **Visual Audit Upgrades**:
+    *   **Per-Batch Audits**: Added `batch_comparison_BX.png` plots to isolate 1:1 solver comparisons on specific noise vectors.
+    *   **Raw Env Restoration**: Stripped "Projection" obstacles from plots to show only original dataset obstacles (Red Circles).
+    *   **High-Res Quality**: Upgraded to 300 DPI, SVG output, and reserved Red for the Oracle.
+
+**Result of Today's Test**:
+*   **Status**: **Not finished, Colab time out.**
+*   **Observations**: 
+    *   Tested Math Mode (raw drift) vs. Production Mode (locked start point).
+    *   **Drift Sensitivity**: In Math Mode (no pullback), the Euler solver often shows better alignment to Dopri5 at the "0,0" starting point, but in other random start positions, the results differ significantly; in some cases, RK4 clearly demonstrates superior precision.
+    *   **Pending**: Full batch=20 audit in Math Mode to quantify the exact influence of different start-point noise on ODE solver error.
+
 
 
 ### [Benchmarking Conclusion (V1-V4)]
@@ -202,3 +221,4 @@ Keywords: metadata leak, root directory cleanup, Parser.savepath fix, resume ind
 1. **Problem**: Discovered that `args_resume_N.json` files were leaking into the project root directory (reaching index 272). This was caused by the `Parser` class in `utils/setup.py` failing to synchronize its internal `self.savepath` with the experiment-specific `args.savepath`.
 2. **Fix**: Updated `flow_matcher_v3_ode_selectable/utils/setup.py` to ensure `self.savepath` is updated in the `mkdir` method before saving. This forces the metadata into the correct experiment log folder.
 3. **Outcome**: Future runs will no longer pollute the root directory, and run configurations will be properly encapsulated within their respective trial folders.
+
