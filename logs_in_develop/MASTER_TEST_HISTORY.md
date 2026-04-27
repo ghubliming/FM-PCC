@@ -222,3 +222,29 @@ Keywords: metadata leak, root directory cleanup, Parser.savepath fix, resume ind
 2. **Fix**: Updated `flow_matcher_v3_ode_selectable/utils/setup.py` to ensure `self.savepath` is updated in the `mkdir` method before saving. This forces the metadata into the correct experiment log folder.
 3. **Outcome**: Future runs will no longer pollute the root directory, and run configurations will be properly encapsulated within their respective trial folders.
 
+## Gen3v2: FMv3 Sensitivity & DPCC Step Floor (27. April)
+
+Keywords: ODE steps (10 vs 20), action weight (aw1 vs aw10), DPCC diffusion floor, FM-VF efficiency.
+
+1. **FMv3 ODE Step Sensitivity (10 vs 20)**:
+   - **Parameters**: `aw=1`, `seed=6`.
+   - **Observation**: Increasing from 10 to 20 ODE steps provided no significant improvement in environment steps or success; in some edge cases, behavior was slightly worse.
+   - **Conclusion**: The FMv3 Vector Field is sufficiently smooth/accurate at 10 steps; additional integration resolution yields diminishing returns for this task.
+   - **Path**: `\Results_and_Data_Analysis\Data_Analysis\Eval_Seed6_FMv3(aw1ODE10)vs_FMv3_aw1_ODE_20` (Upload Pending).
+
+2. **FMv3 Action Weight Ablation (aw=1 vs aw=10)**:
+   - **Parameters**: `ODE=20`, `seed=6`.
+   - **Observation**: Almost no measurable influence on computation time or environment steps across most criteria.
+   - **Conclusion**: The inference quality is robust to these `action_weight` variations.
+   - **Path**: `\Results_and_Data_Analysis\Data_Analysis\Eval_seed6_FMv3_aw1_ode_20_vs_FMv3_aw10_ode20`.
+
+3. **DPCC Diffusion Step Floor (26. April)**:
+   - **Observation**: Reducing DPCC to 10 diffusion steps caused a severe degradation in all performance criteria.
+   - **Conclusion**: **FM-VF vs. Diffusion Efficiency**: We can achieve high-quality planning with lower step counts (10) in a well-trained FM Vector Field, whereas traditional Diffusion (DPCC) requires higher step resolution (20+) to maintain plan quality.
+   - **Path**: `\FM-PCC\Results_and_Data_Analysis\Data_Analysis\Eval_seed_6_FMv3_aw10_ode20_vs_DPCC_vs_DPCC_Step10`.
+
+4. **Training Status Update**:
+   - **FMv3 (aw10, ODE10)**: Training is currently **in progress** (aimed at a direct 1:1 "Step-Floor" comparison with DPCC 10-step results).
+
+
+
