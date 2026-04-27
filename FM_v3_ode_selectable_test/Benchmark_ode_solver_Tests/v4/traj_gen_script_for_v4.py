@@ -63,15 +63,10 @@ def main():
     x_idx = obs_indices["x"]
     y_idx = obs_indices["y"]
 
-    # We use the default 'top-left-hard' configuration similar to eval defaults for simplicity, 
-    # but could be iterated over if needed.
-    halfspace_variant = "top-left-hard"
-    if halfspace_variant == "top-left-hard":
-        polytopic_constraints = [config["halfspace_constraints"][exp][0]]
-        obstacle_constraints = [config["obstacle_constraints"][exp][3]]
-    else:
-        polytopic_constraints = config["halfspace_constraints"][exp]
-        obstacle_constraints = config["obstacle_constraints"][exp]
+    # 2. Load Environment Constraints
+    exp = args.dataset
+    polytopic_constraints = config["halfspace_constraints"][exp]
+    obstacle_constraints = config["obstacle_constraints"][exp]
 
     ax_limits = config["ax_limits"][exp]
     constraint_types = config["constraint_types"]
@@ -171,13 +166,6 @@ def main():
     ax_all.set_ylim(ax_limits[1])
     ax_all.set_title(f"Solver Comparison: All Batches ({exp})")
     utils.plot_environment_constraints(exp, ax_all)
-    if "halfspace" in constraint_types:
-        utils.plot_halfspace_constraints(exp, polytopic_constraints, ax_all, ax_limits)
-    if "obstacles" in constraint_types:
-        for constraint in obstacle_constraints:
-            ax_all.add_patch(matplotlib.patches.Circle(
-                constraint["center"], constraint["radius"], color="b", alpha=0.1
-            ))
     
     # Symbols legend
     ax_all.plot([], [], 'go', markersize=6, label='Start Point')
@@ -221,11 +209,6 @@ def main():
         ax_b.set_ylim(ax_limits[1])
         ax_b.set_title(f"Per-Batch Comparison: Batch {b} (Shared Noise Basis)")
         utils.plot_environment_constraints(exp, ax_b)
-        if "halfspace" in constraint_types:
-            utils.plot_halfspace_constraints(exp, polytopic_constraints, ax_b, ax_limits)
-        if "obstacles" in constraint_types:
-            for constraint in obstacle_constraints:
-                ax_b.add_patch(matplotlib.patches.Circle(constraint["center"], constraint["radius"], color="b", alpha=0.1))
         
         ax_b.legend(loc='upper right', fontsize='small')
         out_b = os.path.join(benchmark_dir, f"batch_comparison_B{b}.png")
