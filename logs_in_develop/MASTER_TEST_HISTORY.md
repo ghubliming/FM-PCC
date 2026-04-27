@@ -222,7 +222,7 @@ Keywords: metadata leak, root directory cleanup, Parser.savepath fix, resume ind
 2. **Fix**: Updated `flow_matcher_v3_ode_selectable/utils/setup.py` to ensure `self.savepath` is updated in the `mkdir` method before saving. This forces the metadata into the correct experiment log folder.
 3. **Outcome**: Future runs will no longer pollute the root directory, and run configurations will be properly encapsulated within their respective trial folders.
 
-## Gen3v2: FMv3 Sensitivity & DPCC Step Floor (27. April)
+## Gen3v2: FMv3 aw & DPCC Step Matrix Tests (27. April)
 
 Keywords: ODE steps (10 vs 20), action weight (aw1 vs aw10), DPCC diffusion floor, FM-VF efficiency.
 
@@ -230,7 +230,7 @@ Keywords: ODE steps (10 vs 20), action weight (aw1 vs aw10), DPCC diffusion floo
    - **Parameters**: `aw=1`, `seed=6`.
    - **Observation**: Increasing from 10 to 20 ODE steps provided no significant improvement in environment steps or success; in some edge cases, behavior was slightly worse.
    - **Conclusion**: The FMv3 Vector Field is sufficiently smooth/accurate at 10 steps; additional integration resolution yields diminishing returns for this task.
-   - **Path**: `\Results_and_Data_Analysis\Data_Analysis\Eval_Seed6_FMv3(aw1ODE10)vs_FMv3_aw1_ODE_20` (Upload Pending).
+   - **Path**: `\Results_and_Data_Analysis\Data_Analysis\Eval_Seed6_FMv3(aw1ODE10)vs_FMv3_aw1_ODE_20` 
 
 2. **FMv3 Action Weight Ablation (aw=1 vs aw=10)**:
    - **Parameters**: `ODE=20`, `seed=6`.
@@ -246,5 +246,12 @@ Keywords: ODE steps (10 vs 20), action weight (aw1 vs aw10), DPCC diffusion floo
 4. **Training Status Update**:
    - **FMv3 (aw10, ODE10)**: Training is currently **in progress** (aimed at a direct 1:1 "Step-Floor" comparison with DPCC 10-step results).
 
+
+---
+
+### Midpoint5 vs ODE10 euler (same NFE test)
+
+train FMv3 midpoint 5 compare to ODE10 euler
+(after the benchmark_test, individual midpoint 5 compare to ODE10 euler, time, accuracy, traj.! (in v4 folder))
 
 
