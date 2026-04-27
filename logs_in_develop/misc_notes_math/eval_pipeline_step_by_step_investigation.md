@@ -1,5 +1,51 @@
 # Eval Pipeline Step-by-Step Investigation
 
+## TLDR: Process Flow & Bottlenecks
+
+```mermaid
+graph LR
+    Start([Start Step]) --> Pre[Formatting]
+    
+    subgraph loop [ODE Integration Loop: 10 Steps]
+        direction TB
+        UNet[<b>UNet Forward Pass</b><br/>Parallel GPU Batch=4] --> ODE[<b>ODE Euler Step</b><br/>Parallel GPU Batch=4]
+        ODE --> Thresh{Is t > Threshold?}
+        
+        Thresh -- No --> LoopEnd[Next Iteration]
+        Thresh -- Yes --> ProjBranch{Variant?}
+        
+        ProjBranch -- diffuser --> LoopEnd
+        ProjBranch -- gradient --> Grad[<b>Gradient Projection</b><br/>Fast GPU/CPU Math]
+        ProjBranch -- DPCC / Post-Proc --> QP[<b>QP Optimization</b><br/>SLSQP - SERIAL CPU Loop x4]
+        
+        Grad --> LoopEnd
+        QP --> LoopEnd
+    end
+
+    Pre --> loop
+    loop --> Select{Selection Logic}
+    
+    Select -- random / dpcc-r --> Exit0[Pick Candidate #0]
+    Select -- dpcc-t --> ExitT[Temporal Consistency Sorting]
+    Select -- dpcc-c --> ExitC[Min Projection Cost Argmin]
+    
+    Exit0 --> End([Action Sent to Env])
+    ExitT --> End
+    ExitC --> End
+
+    style UNet fill:#d4edda,stroke:#28a745
+    style ODE fill:#d4edda,stroke:#28a745
+    style QP fill:#f8d7da,stroke:#dc3545,stroke-width:3px
+    style loop fill:#fff3cd,stroke:#ffc107
+```
+
+### At a Glance:
+1.  **The Bottleneck (Red):** `QP Optimization` is the only **Serial CPU** part of the core loop. Since `batch_size=4`, it runs 4 times sequentially for every single ODE step past the threshold.
+2.  **GPU Parallel (Green):** `UNet` and `ODE` steps process all 4 candidates in a single batched call.
+3.  **Wasted Effort:** `diffuser`, `dpcc-r`, and `post_processing` compute 4 candidates but **ignore 3 of them** at the end. For these, `batch_size=1` would be ~4x faster on the QP portion.
+
+---
+
 > **Date**: 2026-04-25  
 > **Scope**: What happens at each step inside `policy(...)` during eval, how many candidates, what is serial vs parallel, and where the time goes.  
 > **Source files**:  

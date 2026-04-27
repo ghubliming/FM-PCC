@@ -2,26 +2,56 @@
 
 This guide explains how to use the trajectory generation and visualization pipeline for the V4 ODE solver benchmarks, including example commands, expected outputs, and how to interpret the results.
 
-## 1. Running the Benchmark with Data Logging
-First, you need to run the `benchmark_ode_solvers_v4.py` script. By default, the benchmark only calculates execution latency and aggressively discards the generated states to maximize profiling performance. 
+## 1. Running the Benchmark
+The primary script for both performance profiling and trajectory data generation is `benchmark_ode_solvers_v4.py`. Depending on your goal, you will adjust the `--n-trials` and `--datalog-for-traj` flags.
 
-To save the trajectory data so it can be visualized later, you must append the `--datalog-for-traj` flag. 
+### A. Performance Profiling (Time Benchmark)
+Use this mode to measure execution latency across many trials. By default, it aggressively discards data to maximize profiling accuracy.
 
-### Example Command:
+**Example Command:**
 ```bash
 python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_ode_solvers_v4.py \
-    --mode production \
-    --datalog-for-traj \
-    --solver-spec "legacy:euler,torchdiffeq:rk4" \
-    --batch-size 4
+  --mode math \
+  --vf-mode flow_matcher \
+  --loadbase logs \
+  --dataset avoiding-d3il \
+  --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
+  --diffusion-seed 6 \
+  --device cuda \
+  --n-trials 20 \
+  --batch-size 4 \
+  --horizon 8 \
+  --steps 10 \
+  --solver-spec legacy_euler,torchdiffeq:euler,legacy_midpoint,torchdiffeq:midpoint,legacy_rk4,torchdiffeq:rk4 \
+  --plot \
+  --output-dir FM_v3_ode_selectable_test/benchmark_outputs_v4/time/FMv3_VF_test_3_legacy_vs_3_torchdiffeq
+```
+
+### B. Trajectory Generation (Accuracy Setup)
+To save the trajectory data for visualization, you must append the `--datalog-for-traj` flag. This will save `.npy` files for the first trial.
+
+**Example Command:**
+```bash
+python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_ode_solvers_v4.py \
+  --mode math \
+  --vf-mode flow_matcher \
+  --loadbase logs \
+  --dataset avoiding-d3il \
+  --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
+  --diffusion-seed 6 \
+  --device cuda \
+  --n-trials 1 \
+  --batch-size 4 \
+  --horizon 8 \
+  --steps 10 \
+  --solver-spec legacy_euler,torchdiffeq:euler,legacy_midpoint,torchdiffeq:midpoint,legacy_rk4,torchdiffeq:rk4,torchdiffeq:dopri5 \
+  --datalog-for-traj \
+  --plot \
+  --output-dir FM_v3_ode_selectable_test/benchmark_outputs_v4/accuracy/FMv3_VF_test_3_legacy_vs_3_torchdiffeq
 ```
 
 ### Expected Output:
-The script will run the timing benchmark as usual. However, precisely after `trial 0` completes and its timer stops, the script will dump the output tensors to disk. These files will be saved in the auto-generated benchmark output directory (e.g., `benchmark_outputs_v4/20260422_123456_seed0/`).
-
-You will see `.npy` files corresponding to the solvers you specified:
-- `traj_legacy_euler.npy`
-- `traj_torchdiffeq_rk4.npy`
+The script will dump `.npy` files to the output directory (e.g., `traj_legacy_euler.npy`, `traj_torchdiffeq_dopri5.npy`).
 
 ---
 
@@ -33,7 +63,9 @@ Once you have the `.npy` files, use the `traj_gen_script_for_v4.py` to unnormali
 python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/traj_gen_script_for_v4.py \
     --benchmark-dir FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_outputs_v4/20260422_123456_seed0 \
     --dataset avoiding-d3il \
-    --seed 0 \
+    --loadbase logs \
+    --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
+    --diffusion-seed 6 \
     --plot-batch-limit 4
 ```
 
@@ -109,49 +141,69 @@ It is important to understand that the obstacles are **NOT** part of the math in
 
 ## 3. Mission: Solver Accuracy & Comparison (Euler, RK2, RK4 vs. Oracle)
 
-This section details how to perform a benchmark mission to compare the physical accuracy of different ODE solvers against a high-precision "Oracle" ground truth.
+This section details how to perform a benchmark mission to compare the physical accuracy of different ODE solvers against a high-precision "Oracle" ground truth using only the `benchmark_ode_solvers_v4.py` script.
 
-### Step 1: Generate Standard Solver Trajectories
-Run the benchmark for the primary discrete-step solvers. We use `--mode math` to ensure they all start from the exact same noise basis.
+### Step 1: Generate Candidate Trajectories
+Run the benchmark for the solvers you want to test. Use `--mode math` to ensure they all start from the exact same noise basis.
 
 ```bash
 python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_ode_solvers_v4.py \
-    --mode math \
-    --datalog-for-traj \
-    --solver-spec "legacy:euler,legacy:midpoint,legacy:rk4" \
-    --steps 20 \
-    --batch-size 4
+  --mode math \
+  --vf-mode flow_matcher \
+  --loadbase logs \
+  --dataset avoiding-d3il \
+  --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
+  --diffusion-seed 6 \
+  --device cuda \
+  --n-trials 1 \
+  --batch-size 4 \
+  --horizon 8 \
+  --steps 10 \
+  --solver-spec torchdiffeq:euler,torchdiffeq:midpoint,torchdiffeq:rk4 \
+  --datalog-for-traj \
+  --output-dir FM_v3_ode_selectable_test/benchmark_outputs_v4/accuracy/comparison_mission
 ```
-*   **RK2**: Represented by `legacy:midpoint`.
-*   **RK4**: Represented by `legacy:rk4`.
-*   **Euler**: Represented by `legacy:euler`.
+*   **Candidates**: `torchdiffeq` implementations of Euler, Midpoint (RK2), and RK4.
 
 ### Step 2: Generate Oracle Ground Truth
-Run the benchmark again using an adaptive solver with ultra-tight tolerances. 
+Run the benchmark one more time using the adaptive `dopri5` solver with **ultra-tight tolerances**. This creates the "Perfect" mathematical reference.
 
 ```bash
 python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_ode_solvers_v4.py \
-    --mode math \
-    --datalog-for-traj \
-    --solver-spec "torchdiffeq:dopri5" \
-    --rtol 1e-10 \
-    --atol 1e-10 \
-    --batch-size 4
+  --mode math \
+  --vf-mode flow_matcher \
+  --loadbase logs \
+  --dataset avoiding-d3il \
+  --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
+  --diffusion-seed 6 \
+  --device cuda \
+  --n-trials 1 \
+  --batch-size 4 \
+  --horizon 8 \
+  --solver-spec torchdiffeq:dopri5 \
+  --rtol 1e-10 \
+  --atol 1e-10 \
+  --datalog-for-traj \
+  --output-dir FM_v3_ode_selectable_test/benchmark_outputs_v4/accuracy/comparison_mission
 ```
-*   **Oracle**: Achieved via `torchdiffeq:dopri5` at `1e-10` precision.
+> [!IMPORTANT]
+> **Why separate this?** The Oracle requires `--rtol 1e-10` and `--atol 1e-10`. If you run this in the same command as the candidates, you'll be forced to wait for the slow Oracle integration for every trial. Separating it allows you to generate the "Truth" once and compare many fast candidates against it.
 
 ### Step 3: Generate Visualizations
-Point the trajectory generation script at the benchmark output folder(s):
+Point the trajectory generation script at the benchmark output folder:
 
 ```bash
 python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/traj_gen_script_for_v4.py \
-    --benchmark-dir FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/benchmark_outputs_v4/[YOUR_TIMESTAMP_DIR] \
-    --dataset avoiding-d3il
+    --benchmark-dir FM_v3_ode_selectable_test/benchmark_outputs_v4/accuracy/comparison_mission \
+    --dataset avoiding-d3il \
+    --loadbase logs \
+    --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
+    --diffusion-seed 6
 ```
 
 ### Step 4: Comparison Analysis
 Open the generated `.png` files side-by-side:
 1.  **Oracle (`traj_torchdiffeq_dopri5.png`)**: This is your "Perfect" reference.
-2.  **RK4 (`traj_legacy_rk4.png`)**: Should be very close to Oracle even at 20 steps.
+2.  **RK4 (`traj_legacy_rk4.png`)**: Should be very close to Oracle even at 10 steps.
 3.  **RK2 (`traj_legacy_midpoint.png`)**: Moderate accuracy.
 4.  **Euler (`traj_legacy_euler.png`)**: May show significant "drift" compared to Oracle.

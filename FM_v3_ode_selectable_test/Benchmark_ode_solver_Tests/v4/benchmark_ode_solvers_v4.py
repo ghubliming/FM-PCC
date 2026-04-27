@@ -307,7 +307,11 @@ def main() -> None:
         if "cuda" in args.device: torch.cuda.synchronize()
         trial_times = []
         for trial in range(args.n_trials):
-            current_x_init = global_x_init if args.mode == "math" else None
+            # [FIX V4] Always use the same global noise basis for all trials.
+            # This makes the 'n_trials' loop purely about timing statistics 
+            # on an identical mathematical workload.
+            current_x_init = global_x_init
+            
             t_start = time.perf_counter()
             with torch.no_grad():
                 if args.mode == "math":
