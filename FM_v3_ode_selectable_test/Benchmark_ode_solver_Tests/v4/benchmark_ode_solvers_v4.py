@@ -260,6 +260,10 @@ def main() -> None:
     ap.add_argument("--plot",        action="store_true")
     ap.add_argument("--include-bridge-tax", action="store_true")
     ap.add_argument("--datalog-for-traj", action="store_true", help="Save the generated trajectories from trial 0 without affecting timing")
+    ap.add_argument("--n-init-points", type=int, default=1, help="Number of distinct initialization points to test.")
+    ap.add_argument("--randomize-cond", action="store_true", help="Randomize the starting conditioning point instead of using zeros")
+    ap.add_argument("--init-x-range", type=float, nargs=2, default=[0.4, 0.6])
+    ap.add_argument("--init-y-range", type=float, nargs=2, default=[-0.1, 0.1])
     args = ap.parse_args()
     
     np.random.seed(args.seed)
@@ -275,10 +279,51 @@ def main() -> None:
     fm_model.eval()
     t_dim = getattr(fm_model, 'transition_dim', 4)
     o_dim = getattr(fm_model, 'observation_dim', t_dim)
+    
+    batch_size_per_init = args.batch_size
+    args.batch_size = args.n_init_points * args.batch_size
     shape = (args.batch_size, args.horizon, t_dim)
-    cond = {0: torch.zeros(args.batch_size, o_dim, device=args.device)}
     
     # --- V4 DETERMINISTIC BASIS ---
+    # We use numpy for the coordinate sampling to ensure 100% identical results 
+    # across separate cells/runs, as torch CUDA generators can sometimes diverge.
+    np.random.seed(args.seed)
+    
+    if args.randomize_cond or args.n_init_points > 1:
+        # --- NEW: Pull real samples from the dataset instead of pure random noise ---
+        if hasattr(fm_exp.dataset, 'dataset') and 'observations' in fm_exp.dataset.dataset:
+            obs_data = fm_exp.dataset.dataset['observations']
+            # Flatten to [Samples, Dim]
+            obs_flat = obs_data.reshape(-1, obs_data.shape[-1])
+            # Deterministically pick random real samples
+            idx = np.random.choice(len(obs_flat), args.n_init_points, replace=False)
+            base_cond_np = obs_flat[idx, :o_dim].copy()
+        else:
+            # Fallback to random if dataset buffer is not accessible
+            base_cond_np = np.random.rand(args.n_init_points, o_dim)
+        
+        # Limit it (Clip to the requested range)
+        x_min, x_max = args.init_x_range
+        y_min, y_max = args.init_y_range
+        
+        # Indices 0,1 = Goal; Indices 2,3 = Robot Position
+        # We clip both so everything stays in the center of the plot
+        base_cond_np[:, [0, 2]] = np.clip(base_cond_np[:, [0, 2]], x_min, x_max)
+        base_cond_np[:, [1, 3]] = np.clip(base_cond_np[:, [1, 3]], y_min, y_max)
+        
+        # --- CRITICAL FIX: Normalize the physical points before passing to the model ---
+        # The model and plotting script expect normalized conditioning.
+        base_cond_norm = fm_exp.dataset.normalizer.normalize(base_cond_np, "observations")
+        base_cond = torch.from_numpy(base_cond_norm).float().to(args.device)
+    else:
+        # Default is still zeros (0,0 tensor) for backward/forward compatibility
+        base_cond = torch.zeros(args.n_init_points, o_dim, device=args.device)
+        
+    cond_tensor = base_cond.repeat_interleave(batch_size_per_init, dim=0)
+    cond = {0: cond_tensor}
+    
+    # Noise basis must also be deterministic. We reset torch seed here.
+    torch.manual_seed(args.seed + 1000)
     global_x_init = 0.5 * torch.randn(shape, device=args.device)
 
     print("=" * 70)
@@ -307,10 +352,17 @@ def main() -> None:
         if "cuda" in args.device: torch.cuda.synchronize()
         trial_times = []
         for trial in range(args.n_trials):
-            # [FIX V4] Always use the same global noise basis for all trials.
-            # This makes the 'n_trials' loop purely about timing statistics 
-            # on an identical mathematical workload.
-            current_x_init = global_x_init
+            # [FIX V4] Always use the same global basis for all trials.
+            # math mode integrates from data; production mode generates from noise.
+            # math mode: 100% Random Noise (No anchoring - Audit Feature)
+            # production mode: Random Noise + Forced Anchor (Safety Shield)
+            current_x_init = global_x_init.clone()
+            
+            from flow_matcher_v3_ode_selectable.models.helpers import apply_conditioning
+            if args.mode == "production":
+                # Only anchor in production mode
+                current_x_init = apply_conditioning(current_x_init, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
+
             
             t_start = time.perf_counter()
             with torch.no_grad():
@@ -325,10 +377,12 @@ def main() -> None:
                                 k2 = fm_model._predict_velocity(x + dt*(1/5)*k1, cond, t_v_b + dt*(1/5))
                                 k3 = fm_model._predict_velocity(x + dt*(3/40*k1 + 9/40*k2), cond, t_v_b + dt*(3/10))
                                 k4 = fm_model._predict_velocity(x + dt*(44/45*k1 - 56/15*k2 + 32/9*k3), cond, t_v_b + dt*(4/5))
-                                k5 = fm_model._predict_velocity(x + dt*(19372/6561*k1 - 25360/2187*k2 + 64448/6561*k3 - k4*(212/729)*dt), cond, t_v_b + dt*(8/9)) # wait k4 typo fix
                                 k5 = fm_model._predict_velocity(x + dt*(19372/6561*k1 - 25360/2187*k2 + 64448/6561*k3 - 212/729*k4), cond, t_v_b + dt*(8/9))
                                 k6 = fm_model._predict_velocity(x + dt*(9017/3168*k1 - 355/33*k2 + 46732/5247*k3 + 49/176*k4 - 5103/18656*k5), cond, t_v_b + dt)
                                 x = x + dt*(35/384*k1 + 500/1113*k3 + 125/192*k4 - 2187/6784*k5 + 11/84*k6)
+                                if args.mode == "production":
+                                    x = apply_conditioning(x, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
+
                         else:
                             for s in range(args.steps):
                                 t_b = torch.ones(args.batch_size, device=args.device) * (s * dt)
@@ -343,6 +397,10 @@ def main() -> None:
                                     v4 = fm_model._predict_velocity(x+v3*dt, cond, t_b+dt)
                                     v = (v1 + 2*v2 + 2*v3 + v4) / 6.0
                                 x = x + v * dt
+                                if args.mode == "production":
+                                    x = apply_conditioning(x, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
+
+
                         if args.include_bridge_tax: _ = x.cpu().numpy()
                     elif backend == "torchdiffeq":
                         from torchdiffeq import odeint
@@ -351,20 +409,28 @@ def main() -> None:
                         res = odeint(rhs_l, current_x_init, ts_span, method=method, rtol=args.rtol, atol=args.atol)
                         if args.include_bridge_tax: _ = res[-1].cpu().numpy()
                 else:
-                    res = p_sample_loop_v4_fair(fm_model, shape, cond, method, backend, args.steps, args, x_init=current_x_init)
+                    save_traj = (trial == 0 and args.datalog_for_traj)
+                    res = p_sample_loop_v4_fair(fm_model, shape, cond, method, backend, args.steps, args, x_init=current_x_init, return_trajectory=save_traj)
+
                     if args.include_bridge_tax: _ = res.cpu().numpy()
 
             if "cuda" in args.device: torch.cuda.synchronize()
             ms = (time.perf_counter() - t_start) * 1000.0
             trial_times.append(ms); print(f"  trial {trial:03d}  {ms:8.3f} ms")
 
-            # Zero-Interference Logging for Trial 0
             if trial == 0 and args.datalog_for_traj:
                 if args.mode == "math":
+                    # In math mode we also want the full path if we are logging
+                    # However, legacy loop above didn't stack traj. We'll just save the final result 
+                    # unless we refactor legacy to return_trajectory. 
+                    # For now, res[-1] for torchdiffeq, x for legacy.
                     out_tensor = x if backend == "legacy" else res[-1]
                 else:
                     out_tensor = res
+
                 np.save(os.path.join(out_dir, f"traj_{backend}_{method}.npy"), out_tensor.cpu().numpy())
+                np.save(os.path.join(out_dir, "cond_true_start.npy"), cond_tensor.cpu().numpy())
+                _dump_json(os.path.join(out_dir, "traj_metadata.json"), {"n_init_points": args.n_init_points, "batch_size_per_init": batch_size_per_init})
 
         stats = compute_stats(trial_times)
         all_summary.append({"backend": backend, "method": method, "n_trials": args.n_trials, **stats})
