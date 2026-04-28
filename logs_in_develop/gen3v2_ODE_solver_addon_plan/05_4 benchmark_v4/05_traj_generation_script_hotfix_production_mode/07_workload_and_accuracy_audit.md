@@ -40,4 +40,17 @@ The answer is **Mental Integrity**:
 3.  **Safety**: A "short-sighted" model that doesn't understand its full 8-step future is dangerous. We benchmark the whole path to ensure the "Safety Shield" and "Numerical Precision" hold up across the entire predicted window.
 
 **Summary for Debugging:** 
-If your accuracy looks "weird," remember that you are evaluating the model's ability to keep a **consistent 8-step imaginary path** anchored at a single physical point while being refined 10 times.
+## 7. The Anchoring Ratio (The "Hard Reset")
+As confirmed in the `apply_conditioning` helper, our Production Mode uses a **Hard Reset** (also known as Inpainting), exactly like the **Janner et al. Diffuser** architecture.
+
+*   **1/8 Anchoring (The Star)**: Step 0 of the 8-step horizon is forcefully overwritten at every integration step. This is your "Hard Reset" to reality.
+*   **7/8 Floating (The Imagination)**: Steps 1 through 7 are not conditioned. They are "floating" predictions that the neural network generates based on the initial noise.
+
+**Why the "Teleportation" Jump happens:**
+Because the initial noise is centered at `(0,0)` but your Yellow Star might be at `(0.6, 0.1)`, there is a **conflict** between the 1/8 anchored state and the 7/8 noisy state. 
+*   Action 0 is snapped to the Star.
+*   Action 1 is still sitting over where the Noise wanted it to be.
+*   The "Jump" you see is the model trying to bridge that 0.6m gap in a single timestep.
+
+**Summary for Debugging:**
+In a real robot run, "Warm-Starting" (starting the noise near the previous plan) makes this jump disappear. In the benchmark, starting from 100% random noise makes this jump massive.
