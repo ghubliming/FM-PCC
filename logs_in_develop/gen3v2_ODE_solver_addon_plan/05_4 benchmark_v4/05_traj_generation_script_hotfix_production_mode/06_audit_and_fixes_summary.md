@@ -1,34 +1,31 @@
 # Technical Audit & Rebuild Summary: Trajectory Generation (V4)
 
-This document summarizes the audit of the "Abandoned" V4 benchmark code and the fixes implemented during the rebuild.
+This document provides a final verdict on the updates made during the rebuild of the "Abandoned" V4 benchmark pipeline.
 
-## 1. Confirmed Mathematical Bugs (Fixed)
+## 1. File 1: Benchmark Audit
+**Comparison**: `old_main_ben_v4.py` $\rightarrow$ `benchmark_ode_solvers_v4.py`
 
-### A. Plotter Dimension Corruption (`traj_gen_script_for_v4.py`)
-*   **Yesterday (WRONG):** The script used `[:obs_dim]` to slice the trajectory. Because the tensor is structured as `[Action, Observation]`, this accidentally mixed Velocities and Positions together. Unnormalizing this "mixed" slice created corrupted coordinates.
-*   **Today (FIXED):** We implemented `action_dim` offset detection. The script now correctly slices `[action_dim : action_dim + 2]` to isolate the physical $(Rx, Ry)$ coordinates for plotting.
+| Change Component | Old Code Status | New Code Verdict | Reasonableness |
+| :--- | :--- | :--- | :--- |
+| **Manual Normalization** | **WRONG** (Passed raw 0.6) | **CORRECT** (Added `.normalize()`) | **CRITICAL**: Model cannot interpret raw meters; it requires normalized [-1, 1] space. |
+| **Legacy Solver Snap** | **MISSING** in `math` loop | **ADDED** for `production` mode | **CORRECT**: Ensures Euler/RK4 solvers obey the same Step 0 anchoring as the main loop. |
+| **Hybrid Sampling** | **MISSING** (Zeros only) | **ADDED** (Real-state pull) | **CORRECT**: Allows testing on realistic robot positions instead of just origin/noise. |
+| **Dopri5 coefficients** | Contained typos (Line 328) | **FIXED** and standardized | **CORRECT**: Ensures numerical parity with `torchdiffeq`. |
 
-### B. Normalization Mismatch (`benchmark_ode_solvers_v4.py`)
-*   **Yesterday (WRONG):** Manually entered physical points (e.g., `0.6`) were passed directly to the model. Since the model was trained on normalized data (range ~[-1, 1]), passing a raw `0.6` caused the model to behave as if the robot was 100 meters away.
-*   **Today (FIXED):** All manual inputs are now passed through `normalizer.normalize()` before the ODE integration begins.
+## 2. File 2: Plotter Audit
+**Comparison**: `old_traj_gen.py` $\rightarrow$ `traj_gen_script_for_v4.py`
 
-## 2. Confirmed Correct Logic (Verified via Git)
+| Change Component | Old Code Status | New Code Verdict | Reasonableness |
+| :--- | :--- | :--- | :--- |
+| **Dimension Slicing** | **WRONG** (`[:obs_dim]`) | **CORRECT** (`[action_dim:]`) | **MANDATORY**: Old code plotted Velocities as Positions. New code correctly isolates Physical State. |
+| **Start Verification** | **ESTIMATED** (`traj[0]`) | **GROUND TRUTH** (`cond_true`) | **CORRECT**: Uses `cond_true_start.npy` to prove the model actually snapped to the Yellow Star. |
+| **DGM Evolution** | Supported 3D only | Supports 4D (`datalog` mode) | **REASONABLE**: Allows auditing the frame-by-frame refinement of the entire plan. |
+| **Batch Support** | Batch=1 Assumption | `n_init_points` Support | **CORRECT**: Required to handle the new multi-point "Hybrid" benchmark data. |
 
-### A. Projective Conditioning (The Snap)
-*   **Audit Result (CORRECT):** Yesterday's code in both `diffusion.py` and the `p_sample_loop_v4_fair` benchmark function was **already correctly** snapping Step 0 at every ODE iteration.
-*   **Status:** No change to core model logic was required. We only updated legacy manual loops (Euler/RK4) in the benchmark script to match this already-correct behavior.
+## 3. Core Verdict: The "Safety Shield" Audit
+The audit of `diffusion.py` confirms the following ground-truth logic:
+*   **Step 0 (Observation)**: Snapped 10/10 times (Every ODE iteration). **VERDICT: CORRECT.**
+*   **Steps 1-7 (Actions/States)**: Floating and predicted by Vector Field. **VERDICT: CORRECT.**
+*   **Obstacle Projection**: Applied only in the "Last Half" for stability. **VERDICT: CORRECT.**
 
-## 3. New Features & Audit Capabilities
-
-### A. Real Coordinate Sampling
-*   Added the "Hybrid Method" to pull real start points from the training dataset. This allows auditing the model on "Hard" real-world cases instead of just random Gaussian points.
-
-### B. Multi-Initialization Support
-*   The plotter can now process a batch of trajectories at once, saving individual plots (`_init0.png`, `_init1.png`, etc.) for large-scale auditing.
-
-## 4. Workload Definitions
-*   **1 MPC Step** = **10 ODE "Brain" Iterations**.
-*   **Result** = **1 Full 8-step physical plan**.
-*   **Anchor**: Step 0 is snapped to reality 10 times during the Brain phase.
-
-(What are wrong, what are right?)
+**Conclusion**: The rebuild has transformed a "weird" and mathematically corrupted plotter into a precise audit tool. The "Jumps" seen in yesterday's plots were actually **corrupted unnormalization** caused by slicing the wrong dimensions.
