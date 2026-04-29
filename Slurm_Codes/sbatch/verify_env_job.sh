@@ -1,7 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=fmpcc_verify      # Job name
-#SBATCH --output=Slurm_Codes/logs/%x_%j.out  # Log: Slurm_Codes/logs/JOBNAME_ID.out
-#SBATCH --error=Slurm_Codes/logs/%x_%j.err   # Error: Slurm_Codes/logs/JOBNAME_ID.err
 #SBATCH --nodes=1                   # Run on a single node
 #SBATCH --ntasks=1                  # Run a single task
 #SBATCH --cpus-per-task=2           # Minimal CPUs for verification
@@ -9,9 +6,27 @@
 #SBATCH --gres=gpu:1                # Request 1 GPU to verify CUDA access
 #SBATCH --time=00:10:00             # 10 minute limit
 #SBATCH --partition=gpu-1-student   # Updated from sinfo output
-
 # Exit on error
 set -e
+
+# ------------------------------------------------------------------------------
+# PRO-LOGGING SETUP
+# ------------------------------------------------------------------------------
+# 1) Create a shortcut to the latest log for easy monitoring
+CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
+if [ -n "$CURRENT_LOG" ]; then
+    ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log
+fi
+
+echo "================================================================================"
+echo "JOB START: $(date)"
+echo "JOB NAME:  $SLURM_JOB_NAME"
+echo "JOB ID:    $SLURM_JOB_ID"
+echo "NODE:      $(hostname)"
+echo "GPU INFO:"
+nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "No GPU detected or nvidia-smi failed"
+echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'Not a git repo')"
+echo "================================================================================"
 
 # 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"

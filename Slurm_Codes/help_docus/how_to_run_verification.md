@@ -19,9 +19,13 @@ cd ~/FMPCC/FM-PCC
 ## 3. Submit the Job
 You **do not** need to activate the Conda environment manually on the login node. The `.sh` script handles the activation automatically inside the compute node.
 
-Submit the verification job using `sbatch`:
+Submit the verification job using the new **Pro-Logging Wrapper**:
 ```bash
-sbatch Slurm_Codes/sbatch/verify_env_job.sh
+# Make the wrapper executable (one time only)
+chmod +x Slurm_Codes/submit.sh
+
+# Submit the job
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/verify_env_job.sh
 ```
 
 ## 4. Monitor the Job Status
@@ -34,14 +38,19 @@ squeue -u llim
 *   `CG`: Completing
 
 ## 5. Check the Results
-Once the job is finished (it disappears from `squeue`), look for the log file in the **centralized logs directory**: `Slurm_Codes/logs/`.
+Your logs are now organized by **Date**. You can find them in `Slurm_Codes/logs/YYYY-MM-DD/`.
 
-The file will be named using the format `<JOB_NAME>_<JOB_ID>.out`. 
-For the verification job, it will look like `fmpcc_verify_<ID>.out`:
-
+### The Easy Way (Monitor Live)
+To see the results of your **most recent** job instantly without searching for the filename:
 ```bash
-# Example (replace <JOB_ID> with your actual ID)
-cat Slurm_Codes/logs/fmpcc_verify_19738.out
+tail -f Slurm_Codes/logs/latest.log
+```
+
+### The Organized Way
+To see the full history:
+```bash
+# Example (replace DATE with today's date)
+cat Slurm_Codes/logs/2026-04-29/fmpcc_verify_19739_133500.log
 ```
 
 ### What to look for:

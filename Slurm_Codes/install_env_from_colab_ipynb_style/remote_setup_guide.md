@@ -23,6 +23,22 @@ conda init
 >
 > **Outcome:** Your jobs will submit successfully but exit in 1 second with an empty output file and a "No such file" error in the `.err` log.
 
+### How to Fix the Path in your SLURM Scripts
+If you already installed Conda in a non-standard location, you must update your `.sh` scripts (e.g., `train_fmpcc_job.sh` and `verify_env_job.sh`):
+
+*   **Standard (Laptop/SLURM):**
+    ```bash
+    CONDA_DIR="$HOME/miniconda3"
+    ```
+*   **Colab-Style (Inside Workspace):**
+    ```bash
+    CONDA_DIR="$HOME/FMPCC/miniconda3"
+    ```
+*   **Custom Location:**
+    ```bash
+    CONDA_DIR="/your/custom/path/to/miniconda3"
+    ```
+
 ## 2. Git & Workspace Setup (SSH Mode)
 To push/pull without passwords, use SSH keys.
 
