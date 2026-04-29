@@ -299,4 +299,14 @@ Keywords: Tee logger, eval console logging, evaluation output persistence.
 3. **Execution Safety**: Wrapped the main evaluation variant loop in a `try...finally` block to ensure the console output is always restored even if an evaluation crashes.
 4. **Outcome**: Every evaluation run now automatically generates a text-based log file in the same `results/` folder as its images and `.npz` data, providing a permanent record of the console output.
 
+## Gen3v2: FMv3-ODE Configuration & Folder Naming Cleanup (29. April)
 
+Keywords: K-less training, folder naming logic, dead parameter safety, diffusion_loadpath.
+
+1. **Problem**: FMv3-ODE training folders were incorrectly labeled with `_K20` or `_K10` labels, which are mathematically irrelevant for continuous-time Flow Matching training and caused confusion in model loading.
+2. **Fix (Folder Naming)**: Commented out all step-related parameters (`n_diffusion_steps`, `flow_steps_v3`) in the `flow_matching_v3_ode_selectable` training block. This allows the `watch` logic to omit the `K` label entirely, resulting in cleaner `H8_D...` folders.
+3. **Fix (Load Path)**: Updated `diffusion_loadpath` in the planning block to remove the `_K{...}` segment. Evaluation scripts now correctly load models from the "K-less" training folders while still saving evaluation results into `_K10` folders (where step count matters).
+4. **Safety Audit (Dead Parameters)**: Verified that removing these parameters from the config is 100% safe:
+    - **Training**: `train_flow_matching_v3_ode_selectable.py` uses `getattr(args, '...', default)` for all step-related keys.
+    - **Model Math**: `GaussianDiffusion` (v3) uses floating-point time $t$ for training, which bypasses all discrete step-count calculations (verified in `_time_from_timestep`).
+5. **Outcome**: The codebase is now "penetrated" against naming bugs. Training is streamlined, and evaluation correctly handles its own ODE step configuration while finding models reliably.
