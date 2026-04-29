@@ -8,7 +8,7 @@
 #SBATCH --mem=32G                    # Total memory
 #SBATCH --gres=gpu:1                # Request 1 GPU
 #SBATCH --time=24:00:00             # Time limit hrs:min:sec
-#SBATCH --partition=gpu             # Partition name (change to your cluster's GPU partition)
+#SBATCH --partition=gpu-1-student   # Updated from sinfo output
 
 # Exit on error
 set -e
