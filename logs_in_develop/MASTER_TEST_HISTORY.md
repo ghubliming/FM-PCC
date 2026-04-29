@@ -290,4 +290,13 @@ Keywords: SLURM migration, vmknoll cluster, AttributeError hotfix, n_diffusion_s
     - **Status**: Verified that SLURM training and evaluation jobs are passing on the `vmknoll` cluster.
     - **W&B Integration**: Confirmed that Weights & Biases (W&B) logging is functional, syncing metrics from the remote nodes to the project dashboard.
 
+## Gen3v2: Eval Console Logging Upgrade (29. April)
+
+Keywords: Tee logger, eval console logging, evaluation output persistence.
+
+1. **Problem**: Evaluation outputs (Success rates, violation metrics, etc.) printed to the console were not being saved anywhere, making it difficult to review results after a job finished.
+2. **Fix**: Implemented a `Tee` logger class in `eval_flow_matching_v3_ode_selectable.py` that redirects `sys.stdout` to both the console and a variant-specific log file (`eval_{variant}.log`).
+3. **Execution Safety**: Wrapped the main evaluation variant loop in a `try...finally` block to ensure the console output is always restored even if an evaluation crashes.
+4. **Outcome**: Every evaluation run now automatically generates a text-based log file in the same `results/` folder as its images and `.npz` data, providing a permanent record of the console output.
+
 
