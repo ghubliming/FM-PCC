@@ -10,3 +10,6 @@ __pycache__/
 # Ignore Xournal++ files
 *.xopp
 *.autosave.xopp
+
+# remote vmknoll D3il Install redundant files
+d3il/environments/d3il/envs/gym_avoiding/gym_avoiding.egg-info/
