@@ -245,7 +245,7 @@ for seed in selected_seeds:
         observation_dim=observation_dim,
         action_dim=action_dim,
         goal_dim=dataset.goal_dim,
-        n_timesteps=args.n_diffusion_steps,
+        n_timesteps=getattr(args, 'n_diffusion_steps', 20),
         loss_type=args.loss_type,
         clip_denoised=args.clip_denoised,
         predict_epsilon=args.predict_epsilon,
@@ -255,8 +255,8 @@ for seed in selected_seeds:
         condition_guidance_w=args.condition_guidance_w,
         time_beta_alpha_v3=args.time_beta_alpha_v3,
         time_beta_beta_v3=args.time_beta_beta_v3,
-        flow_steps_v3=args.flow_steps_v3,
-        ode_inference_steps_v3=args.ode_inference_steps_v3,
+        flow_steps_v3=getattr(args, 'flow_steps_v3', 10),
+        ode_inference_steps_v3=getattr(args, 'ode_inference_steps_v3', 10),
         device=args.device,
     )
     trainer_config = utils.Config(

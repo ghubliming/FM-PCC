@@ -1,0 +1,21 @@
+Running FM-PCC Environment Verification...
+
+--- Package Import Check ---
+torch                2.2.2+cu121
+numpy                1.26.4
+scipy                1.13.1
+gym                  0.26.2
+gymnasium            0.29.1
+gymnasium_robotics   1.2.4
+minari               0.4.3
+wandb                0.17.5
+mujoco               2.3.7
+diffusers            0.31.0
+transformers         4.41.2
+
+--- System Check ---
+Numpy Version:   1.26.4
+CUDA Available:  True
+GPU Device:      NVIDIA RTX A5000
+
+✅ VERIFICATION SUCCESSFUL: Environment is ready for training.

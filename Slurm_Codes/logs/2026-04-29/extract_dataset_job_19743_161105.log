@@ -1,0 +1,23 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+DATASET EXTRACTION START: Wed Apr 29 14:11:06 UTC 2026
+TARGET FOLDER:           avoiding
+ZIP SOURCE:              /u/home/llim/FMPCC/d3il_data/dataset.zip
+DESTINATION:             /u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/avoiding
+================================================================================
+✅ Zip file found: 16G
+🚀 Extracting 'avoiding/' from ZIP (Python zipfile mode)...
+Opening /u/home/llim/FMPCC/d3il_data/dataset.zip...
+Extracting 99 files to /u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data...
+✅ Extraction complete!
+------------------------------------------------
+VERIFICATION
+------------------------------------------------
+✓ Folder found: /u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/avoiding/data
+✓ Files:        97
+✓ Sample:       env_000_00.pkl
+env_001_00.pkl
+env_002_00.pkl
+================================================================================
+FINISHED AT: Wed Apr 29 14:11:42 UTC 2026
+================================================================================

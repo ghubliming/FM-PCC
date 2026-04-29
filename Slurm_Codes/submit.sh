@@ -14,16 +14,15 @@ JOB_NAME="${SCRIPT_NAME%.*}"
 
 # 1. Generate Date and Time
 DATE=$(date +%Y-%m-%d)
-TIME=$(date +%H%M%S)
+TIME=$(date +%H_%M_%S)
 
 # 2. Create the Date-based Log Directory
 LOG_DIR="Slurm_Codes/logs/$DATE"
 mkdir -p "$LOG_DIR"
 
 # 3. Define the Log Path
-# We use %x (job name) and %j (job id) provided by SLURM
-# and the $TIME from our local clock.
-LOG_FILE="$LOG_DIR/%x_%j_$TIME.log"
+# Convention: HH_MM_SS_JOBNAME_JOBID.log
+LOG_FILE="$LOG_DIR/${TIME}_%x_%j.log"
 
 echo "------------------------------------------------"
 echo "🚀 Submitting Job: $JOB_NAME"

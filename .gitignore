@@ -1,6 +1,7 @@
 args.json
 .vscode/
 logs/*
+
 # Keep local downloaded d3il datasets out of git (Colab/local sync-safe).
 d3il/environments/dataset/data/
 d4rl-minari-dataset-generation_bkup/*
@@ -13,3 +14,9 @@ __pycache__/
 
 # remote vmknoll D3il Install redundant files
 d3il/environments/d3il/envs/gym_avoiding_env/gym_avoiding.egg-info
+
+# wandb local files
+wandb/*
+
+# Mujoco log
+MUJOCO_LOG.TXT
