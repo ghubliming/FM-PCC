@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=fmpcc_verify      # Job name
-#SBATCH --output=logs/verify_%j.out  # Standard output log (%j = job ID)
-#SBATCH --error=logs/verify_%j.err   # Standard error log
+#SBATCH --output=Slurm_Codes/logs/%x_%j.out  # Log: Slurm_Codes/logs/JOBNAME_ID.out
+#SBATCH --error=Slurm_Codes/logs/%x_%j.err   # Error: Slurm_Codes/logs/JOBNAME_ID.err
 #SBATCH --nodes=1                   # Run on a single node
 #SBATCH --ntasks=1                  # Run a single task
 #SBATCH --cpus-per-task=2           # Minimal CPUs for verification
