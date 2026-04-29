@@ -3,6 +3,20 @@ ipynbs/Dataset_Extraction/(D3IL_dataset_Extraction)CheckP_1_Colab_GPU_FMPCC_MuJo
 
 ---
 
+%%bash
+DATASET_DIR="/content/drive/MyDrive/DPCC/dpcc/d3il/environments/dataset/data" # Notice Here We use the ZIP from DPCC folder
+AVOIDING_DATA="/content/drive/MyDrive/FMPCC/FM-PCC/d3il/environments/dataset/data/avoiding/data"
+ZIP_FILE="$DATASET_DIR/dataset.zip"
+
+echo "========================================="
+echo " D3IL DATASET SETUP"
+echo " Source: ALRhub/d3il README.md"
+echo " Link: https://drive.google.com/file/d/1SQhbhzV85zf_ltnQ8Cbge2lsSWInxVa8"
+echo "========================================="
+echo ""
+
+---
+
 
 Example Code and output (Expected)
 
