@@ -5,8 +5,23 @@ This guide outlines the "Colab-style" robust installation process for setting up
 ---
 
 ## 1. Prerequisites: Install Miniconda
+On a standard remote cluster or laptop, install Miniconda in the **default home location**.
 
----
+```bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
+source ~/miniconda3/etc/profile.d/conda.sh
+conda init
+```
+
+> [!CAUTION]
+> **CRITICAL BUG WARNING (29 April 2026)**
+> The original Colab scripts used the path `~/FMPCC/miniconda3`. 
+> **DO NOT USE THAT PATH ON SLURM.** 
+> If you install it inside the `FMPCC` folder, the standard SLURM `.sh` scripts will fail with:
+> `line 24: .../FMPCC/miniconda3/...: No such file or directory`
+>
+> **Outcome:** Your jobs will submit successfully but exit in 1 second with an empty output file and a "No such file" error in the `.err` log.
 
 ## 2. Git & Workspace Setup (SSH Mode)
 To push/pull without passwords, use SSH keys.

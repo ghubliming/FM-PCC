@@ -16,7 +16,7 @@ set -e
 # 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
 REPO="$FMPCC_ROOT/FM-PCC"
-CONDA_DIR="$FMPCC_ROOT/miniconda3"
+CONDA_DIR="$HOME/miniconda3"
 CONDA_ENV_NAME="FMPCC"
 
 # 2) Initialize Conda
