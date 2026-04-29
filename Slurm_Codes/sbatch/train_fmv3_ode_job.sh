@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --job-name=fmv3_train        # Updated Job name
 #SBATCH --nodes=1                   # Run on a single node
 #SBATCH --ntasks=1                  # Run a single task
 #SBATCH --cpus-per-task=8           # Number of CPU cores per task
@@ -13,7 +14,6 @@ set -e
 # PRO-LOGGING SETUP
 # ------------------------------------------------------------------------------
 # 1) Create a shortcut to the latest log for easy monitoring
-# We use scontrol to find the path defined by the submit.sh wrapper
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then
     ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log
@@ -36,7 +36,6 @@ CONDA_DIR="$HOME/miniconda3"
 CONDA_ENV_NAME="FMPCC"
 
 # 2) Initialize Conda
-# Point to the conda.sh in your miniconda installation
 source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
 
@@ -51,19 +50,19 @@ export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
 
-# W&B optimization
-export WANDB_MODE="online"
+# W&B Login (Colab-style from key file)
+if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
+    export WANDB_API_KEY=$(cat $HOME/FMPCC/.wandb_api_key)
+    export WANDB_MODE="online"
+fi
 
-# 4) Run Training
+# 4) Run FM v3 ODE Training
 cd "$REPO"
 
-# Example training command (adjust arguments as needed)
-# Using 'python' here will use the one from the activated conda env
-python scripts/train.py \
+python FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py \
     --seeds 6 \
     --num-seeds 1 \
     --use-wandb \
-    --wandb-project FMPCC \
-    --auto-resume
+    --wandb-project FMPCC-knoll
 
 echo "Job completed successfully."
