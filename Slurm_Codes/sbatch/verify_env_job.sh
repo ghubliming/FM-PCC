@@ -8,7 +8,7 @@
 #SBATCH --mem=8G                    # Minimal memory
 #SBATCH --gres=gpu:1                # Request 1 GPU to verify CUDA access
 #SBATCH --time=00:10:00             # 10 minute limit
-#SBATCH --partition=gpu             # Change to your cluster's GPU partition
+#SBATCH --partition=gpu-1-student   # Updated from sinfo output
 
 # Exit on error
 set -e
