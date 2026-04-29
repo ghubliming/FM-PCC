@@ -34,12 +34,14 @@ squeue -u llim
 *   `CG`: Completing
 
 ## 5. Check the Results
-Once the job is finished (it disappears from `squeue`), look for the log file in the `Slurm_Codes/sbatch/logs/` directory.
+Once the job is finished (it disappears from `squeue`), look for the log file in the **centralized logs directory**: `Slurm_Codes/logs/`.
 
-The file will be named `verify_<JOB_ID>.out`. Open it to see the audit results:
+The file will be named using the format `<JOB_NAME>_<JOB_ID>.out`. 
+For the verification job, it will look like `fmpcc_verify_<ID>.out`:
+
 ```bash
 # Example (replace <JOB_ID> with your actual ID)
-cat Slurm_Codes/sbatch/logs/verify_12345.out
+cat Slurm_Codes/logs/fmpcc_verify_19738.out
 ```
 
 ### What to look for:
