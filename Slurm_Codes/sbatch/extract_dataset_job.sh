@@ -63,12 +63,21 @@ if [ -d "$FINAL_PATH" ] && [ "$(ls -A $FINAL_PATH)" ]; then
     exit 0
 fi
 
-# 4) Extract ONLY the specific task
-echo "🚀 Extracting '$TARGET_TASK/' from ZIP (Heavy CPU mode)..."
+# 4) Extract ONLY the specific task (using Python because 'unzip' is missing)
+echo "🚀 Extracting '$TARGET_TASK/' from ZIP (Python zipfile mode)..."
 mkdir -p "$TARGET_DATA_ROOT"
 
-# -q: quiet, -o: overwrite, -d: directory
-unzip -q -o "$ZIP_FILE" "$TARGET_TASK/*" -d "$TARGET_DATA_ROOT"
+python -c "
+import zipfile, os
+zip_path = '$ZIP_FILE'
+target_dir = '$TARGET_DATA_ROOT'
+prefix = '$TARGET_TASK/'
+print(f'Opening {zip_path}...')
+with zipfile.ZipFile(zip_path, 'r') as zf:
+    members = [m for m in zf.namelist() if m.startswith(prefix)]
+    print(f'Extracting {len(members)} files to {target_dir}...')
+    zf.extractall(target_dir, members)
+"
 
 echo "✅ Extraction complete!"
 
