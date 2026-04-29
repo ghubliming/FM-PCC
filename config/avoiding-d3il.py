@@ -541,7 +541,8 @@ base = {
         # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        # 'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_D{diffusion}',
         # 'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}', # DEAD code (Value functions not used in FMv3 sampling)
 
         'diffusion_epoch': 'best',      # 'latest'
