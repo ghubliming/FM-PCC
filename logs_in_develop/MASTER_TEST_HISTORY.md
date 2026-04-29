@@ -134,6 +134,22 @@ Keywords: production mode fairness, shared noise basis, per-batch audit, raw env
     *   **Drift Sensitivity**: In Math Mode (no pullback), the Euler solver often shows better alignment to Dopri5 at the "0,0" starting point, but in other random start positions, the results differ significantly; in some cases, RK4 clearly demonstrates superior precision.
     *   **Pending**: Full batch=20 audit in Math Mode to quantify the exact influence of different start-point noise on ODE solver error.
 
+#### V4.3: Gen3v2: Safety Shield Audit & Plotter Rebuild (28. April)
+
+Keywords: Safety Shield Audit, Corrupted Unnormalization fix, Rebuild in progress.
+
+**Objective**: 
+1. Audit the "Observation Snap" ($t=0$) logic to verify if the "Jumps" seen in plots were mathematical errors or visualization bugs.
+2. Verify the 10-step internal ODE "Conditioning" loop.
+
+**Findings (rom [06_audit_and_fixes_summary.md]**:
+1. **Snap Logic**: Confirmed the code correctly anchors the initial state ($t=0$) across all 10 internal thought steps.
+2. **The "Jump" Bug**: Discovered that the weird visual jumps were **NOT** in the model, but in the plotter's **corrupted unnormalization** (slicing the wrong dimensions of the 4D tensor).
+
+**Status**: **NOT FINISHED.** 
+*   The visualization code is currently being rebuilt to implement the "Corrected Dimensions" logic from the 06 audit document.
+*   The final Comparison Mission is on hold until the new plotter is verified.
+
 
 
 ### [Benchmarking Conclusion (V1-V4)]
@@ -253,5 +269,25 @@ Keywords: ODE steps (10 vs 20), action weight (aw1 vs aw10), DPCC diffusion floo
 
 train FMv3 midpoint 5 compare to ODE10 euler
 (after the benchmark_test, individual midpoint 5 compare to ODE10 euler, time, accuracy, traj.! (in v4 folder))
+
+---
+
+## Gen3v2: Remote SLURM Migration & Config-Code Alignment Hotfix (29. April)
+
+Keywords: SLURM migration, vmknoll cluster, AttributeError hotfix, n_diffusion_steps fallback, pro-logging.
+
+1. **Remote Migration**: Successfully migrated the development environment from Google Colab to a remote SLURM-managed Linux cluster (`vmknoll`).
+2. **Environment Setup**: Configured a dedicated Conda environment (`FMPCC`, Python 3.10) and established a "Headless Rendering Standard" using EGL (`MUJOCO_GL="egl"`, `PYOPENGL_PLATFORM="egl"`) for GPU-accelerated simulation on compute nodes.
+3. **Environment Stabilization**: Standardized Conda pathing and established unified `PYTHONPATH` logic across all job scripts to ensure zero-modification parity with the Colab baseline.
+4. **Log Infrastructure**: Implemented a "Pro-Logging" wrapper (`submit.sh`) with date-based subdirectories and a `latest.log` symlink for high-speed job monitoring.
+5. **Trainer Robustness Hotfix**: 
+    - **Problem**: Identified an `UnboundLocalError` in `utils/training.py` where the script crashed if a training epoch was too short to trigger a validation phase (common in "smoke tests").
+    - **Fix**: Updated the `Trainer` class to safely track and log the last known test loss, ensuring stability for short debug runs.
+6. **Evaluation Plotter IndexError Hotfix**: 
+    - **Problem**: Identified an `IndexError` in `eval_flow_matching_v3_ode_selectable.py` where the script crashed during 2D axes indexing if `n_trials` was set to 1 (matplotlib squeezes the array by default).
+    - **Fix**: Applied `squeeze=False` to `plt.subplots` calls for multi-trial grids, ensuring the axes object is always a 2D array regardless of trial count.
+7. **Validation Success**: 
+    - **Status**: Verified that SLURM training and evaluation jobs are passing on the `vmknoll` cluster.
+    - **W&B Integration**: Confirmed that Weights & Biases (W&B) logging is functional, syncing metrics from the remote nodes to the project dashboard.
 
 
