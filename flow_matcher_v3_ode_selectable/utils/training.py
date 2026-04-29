@@ -85,6 +85,8 @@ class Trainer(object):
         self.test_losses = []
         self.train_a0_losses = []
         self.test_a0_losses = []
+        self.current_test_loss = None
+        self.current_test_a0_loss = None
 
         self.optimizer = torch.optim.Adam(diffusion_model.parameters(), lr=train_lr)
         self.lr_scheduler = get_cosine_schedule_with_warmup(
@@ -145,6 +147,8 @@ class Trainer(object):
                     test_loss, test_a0_loss = self.test()
                     self.test_losses.append([self.step, test_loss])
                     self.test_a0_losses.append([self.step, test_a0_loss])
+                    self.current_test_loss = test_loss
+                    self.current_test_a0_loss = test_a0_loss
                     if test_loss < self.best_test_loss:
                         self.best_test_loss = test_loss
                         self.save_best()
@@ -170,10 +174,10 @@ class Trainer(object):
             for l in ["diffusion_loss", "dyn_loss", "a0_loss", ]:
                 if l in infos:
                     logs[l] = infos[l].item()
-            if self.train_test_split < 1:
-                logs["loss_test"] = test_loss
+            if self.train_test_split < 1 and self.current_test_loss is not None:
+                logs["loss_test"] = self.current_test_loss
                 if 'a0_loss' in infos:
-                    logs["a0_loss_test"] = test_a0_loss
+                    logs["a0_loss_test"] = self.current_test_a0_loss
             logs["lr"] = self.lr_scheduler.get_last_lr()[0]
             logs["step"] = self.step
 

@@ -155,7 +155,7 @@ for exp in exps:
                 constraint_list.append(constraint)
                 constraint_list_tightened.append(constraint)
             env_seeds = config['env_seeds'][exp] if 'pointmaze-umaze' in exp else np.arange(100)
-            fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)))
+            fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
             for variant_idx, variant in enumerate(projection_variants):
                 print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
                 gradient = True if 'gradient' in variant else False
@@ -183,7 +183,7 @@ for exp in exps:
                 if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
                 if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
                 policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
-                fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)))
+                fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
                 fig.suptitle(f'{exp} - {variant}')
                 save_samples_every = args.horizon // 2
                 sampled_trajectories_all = []
