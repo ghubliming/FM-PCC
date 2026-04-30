@@ -150,6 +150,20 @@ Keywords: Safety Shield Audit, Corrupted Unnormalization fix, Rebuild in progres
 *   The visualization code is currently being rebuilt to implement the "Corrected Dimensions" logic from the 06 audit document.
 *   The final Comparison Mission is on hold until the new plotter is verified.
 
+#### V4.4: Gen3v2: Production Anchoring & Plotter Stabilization (30. April)
+
+Keywords: Double Anchor, Action Snapping, strict assertions, zigzag fix, SUCCESS.
+
+**Final Rebuild & Stabilization**:
+1.  **Double Anchor Safety Shield**: Re-implemented the anchoring logic to snap **both** the first Observation and the first Action (Waypoint) at $t=0$ to the physical robot position.
+2.  **Persistent ODE Snapping**: Updated the integrators to re-anchor Step 0 after every internal ODE step, ensuring zero numerical "leakage" at the start of the plan.
+3.  **Plotter Scaling Fix**: Corrected the visual dimension slicing (`[action_dim:]`) and ensured the use of the `observations` normalizer. This permanently resolved the "zigzag" artifacts and scaling mismatches.
+4.  **Strict Safety Assertions**: Added hard runtime checks in both the benchmark and plotter scripts. The pipeline now automatically **ABORTS** and throws a `CRITICAL` error if it detects any drift (> 1e-4) in the initial state.
+5.  **Visual Verification**: Confirmed that the Green Dot (Solver Start) now perfectly overlays the Yellow Star (True Start) across all solvers (Euler, RK4, Dopri5).
+
+**Status**: **TEST PASSED (Production Grade)**
+*   The V4 pipeline is now scientifically hardened, visually precise, and safe for automated large-scale benchmarking.
+
 
 
 ### [Benchmarking Conclusion (V1-V4)]

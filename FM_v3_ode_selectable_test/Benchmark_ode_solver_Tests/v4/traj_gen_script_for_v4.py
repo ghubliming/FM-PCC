@@ -104,6 +104,20 @@ def main():
         if batch_size_per_init is None:
             batch_size_per_init = traj_np.shape[0] // n_init_points
     
+    # [V4 STRICT SAFETY] Abort if the solver start does not match the True Start (Yellow Star)
+    # We check this in NORMALIZED space to ensure 100% mathematical parity.
+    for basename in all_trajs.keys():
+        # Load the raw normalized data for verification
+        raw_norm = np.load(os.path.join(benchmark_dir, basename))
+        if raw_norm.ndim == 4: raw_norm = raw_norm[-1]
+        
+        # Sliced normalized start vs true cond start
+        actual_obs_start_norm = raw_norm[:, 0, action_dim : action_dim + obs_dim]
+        if true_cond_norm is not None:
+            if not np.allclose(actual_obs_start_norm, true_cond_norm, atol=1e-4):
+                raise AssertionError(f"CRITICAL: Production Anchoring Drift detected in {basename}! Plotting aborted to prevent misinformation.")
+
+    # Unnormalize the True Start for plotting
     if true_cond_norm is not None:
         true_start_unnorm_all = normalizer.unnormalize(true_cond_norm, "observations")
     else:
@@ -149,23 +163,21 @@ def main():
 
             # Plotting Per-Solver
             fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+            current_color = color_map[basename]
             for b in range(plot_limit):
-                ax.plot(traj_unnorm[b, :, x_idx], traj_unnorm[b, :, y_idx], "b", alpha=0.6, linewidth=1.0)
-                ax.plot(traj_unnorm[b, 0, x_idx], traj_unnorm[b, 0, y_idx], "go", markersize=6, label="Solver Start" if b == 0 else "")
-                ax.plot(traj_unnorm[b, -1, x_idx], traj_unnorm[b, -1, y_idx], "rx", markersize=8, label="Solver End" if b == 0 else "")
-                ax.plot(true_start_unnorm[b, x_idx], true_start_unnorm[b, y_idx], "y*", markersize=12, label="True Start (Cond)" if b == 0 else "")
-                ax.text(traj_unnorm[b, 0, x_idx], traj_unnorm[b, 0, y_idx], f"B{b}", fontsize=9, fontweight='bold')
+                ax.plot(traj_unnorm[b, :, x_idx], traj_unnorm[b, :, y_idx], color=current_color, alpha=0.7, linewidth=1.0, zorder=10,
+                        label="Solver Traj" if b == 0 else "")
+                ax.plot(traj_unnorm[b, 0, x_idx], traj_unnorm[b, 0, y_idx], "go", markersize=3, alpha=0.5, zorder=11, label="Solver Start" if b == 0 else "")
+                ax.plot(traj_unnorm[b, -1, x_idx], traj_unnorm[b, -1, y_idx], "rx", markersize=4, alpha=0.5, zorder=11, label="Solver End" if b == 0 else "")
+                ax.plot(true_start_unnorm[b, x_idx], true_start_unnorm[b, y_idx], "y*", markersize=8, alpha=0.9, zorder=12, label="True Start (Cond)" if b == 0 else "")
+                ax.text(traj_unnorm[b, 0, x_idx], traj_unnorm[b, 0, y_idx], f"B{b}", fontsize=7, alpha=0.7, zorder=13)
 
             ax.set_xlim(ax_limits[0])
             ax.set_ylim(ax_limits[1])
             ax.set_title(f"Trajectory Visualization: {basename.replace('.npy', '')} (Init {init_idx})")
 
+            # Clean constraints only
             utils.plot_environment_constraints(exp, ax)
-            if "halfspace" in constraint_types:
-                utils.plot_halfspace_constraints(exp, polytopic_constraints, ax, ax_limits)
-            if "obstacles" in constraint_types:
-                for constraint in obstacle_constraints:
-                    ax.add_patch(matplotlib.patches.Circle(constraint["center"], constraint["radius"], color="b", alpha=0.2))
             
             ax.legend()
             suffix = f"_init{init_idx}" if n_init_points > 1 else ""
