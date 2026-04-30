@@ -10,9 +10,9 @@ def clean_log(input_path):
     print(f"Reading: {input_path}")
     print(f"Writing: {output_path}")
 
-    # Pattern for tqdm progress bar: [########  ] 98%
-    # We look for the characteristic brackets and a percentage
-    pbar_pattern = re.compile(r'\[.*\]\s+\d{1,3}%')
+    # Pattern for tqdm progress bar: " 0%|          | 0/1000" or similar
+    # We look for the percentage followed by the | bar | or the time estimate [00:00<...]
+    pbar_pattern = re.compile(r'\d{1,3}%\||\|\s+\d+/\d+|\[\d+:\d+<\d+:\d+')
 
     lines_kept = 0
     lines_removed = 0
@@ -21,8 +21,9 @@ def clean_log(input_path):
         with open(output_path, 'w', encoding='utf-8') as f_out:
             for line in f_in:
                 # If it looks like a progress bar
-                if pbar_pattern.search(line):
-                    # Keep it ONLY if it is 100%
+                is_pbar = pbar_pattern.search(line)
+                if is_pbar:
+                    # Keep it ONLY if it is a completion line (100%)
                     if '100%' in line:
                         f_out.write(line)
                         lines_kept += 1
