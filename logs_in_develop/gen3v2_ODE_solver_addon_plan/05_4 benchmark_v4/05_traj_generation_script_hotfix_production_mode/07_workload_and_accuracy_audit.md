@@ -60,7 +60,7 @@ At every single ODE iteration (e.g., 10 times per plan), the "Safety Shield" per
 
 | Horizon Step | Data Type | Status | Source of Value |
 | :--- | :--- | :--- | :--- |
-| **Step 0 ($t=0$)** | **Actions** | **Floating** | **Predicted** by Neural Network |
+| **Step 0 ($t=0$)** | **Actions** | **FIXED** | **Snapped** to Robot Position (Double Anchor) |
 | **Step 0 ($t=0$)** | **Observation** | **FIXED** | **Snapped** to Real Robot Position |
 | **Steps 1-7** | **Actions** | **Floating** | **Predicted** by Neural Network |
 | **Steps 1-7** | **Observation** | **Floating** | **Predicted** by Neural Network |

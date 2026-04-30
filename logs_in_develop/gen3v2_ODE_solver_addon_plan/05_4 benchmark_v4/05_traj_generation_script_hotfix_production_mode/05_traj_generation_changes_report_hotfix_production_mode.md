@@ -11,7 +11,10 @@ This document details the code modifications made during the implementation of t
 - **Trial Determinism**: Updated the script so that all trials within a single run use the **identical noise basis** (`global_x_init`).
   - This removes mathematical variance between trials, making the `--n-trials` loop strictly about **timing statistics** (averaging system jitter).
 - **CLI Argument Addition**: Added `--datalog-for-traj` to control exhaustive logging of the final synthesized trajectories.
-- **Zero-Interference Logging**: Implemented trajectory saving strictly **after** the timing block is completed to ensure profiling accuracy.
+- **Production Safety Shield (Double Anchor)**: Implemented a mandatory Step 0 anchor that snaps both **Observations** and **Actions** (Waypoints) to the physical robot position (`cond[0]`).
+- **Persistent Snapping**: Updated the ODE loop to re-apply this anchor after every integration step to prevent numerical "leakage" at t=0.
+- **Strict Benchmarking Assertion**: Added a hard check that forces the script to `raise AssertionError` and abort if it detects any drift (> 1e-4) in the initial state during Production Mode.
+- **Zero-Parity Conditioning**: Ensured that the conditioning tensor is exactly `zeros` when no random initialization is active, maintaining perfect baseline parity.
 
 ---
 
@@ -30,7 +33,9 @@ This document details the code modifications made during the implementation of t
   - Added **SVG** output for infinite-zoom vector analysis.
   - Reduced trajectory line thickness (`linewidth=1.0`) for clearer auditing of tight gaps.
 - **Robust Model Loading**: Added `--loadbase`, `--diffusion-loadpath`, and `--diffusion-seed` to handle cross-environment model loading (e.g., Google Colab).
-- **Dimension Slicing**: Added logic to handle 6D outputs (observations + actions) by slicing to observation dimensions before unnormalization.
+- **Dimension Slicing (Success Fix)**: Corrected the slice to `[action_dim:]` and the normalizer key to `observations`. This correctly isolates the physical robot state and removes zigzag artifacts.
+- **Normalized-Space Assertion**: Added a redundant safety check in the plotter that verifies the solver's start point against the ground truth in normalized space before generating plots.
+- **Clean Environment Overlay**: Removed redundant manual obstacle drawing ("blue shitts") and switched to high-resolution `utils` based constraint plotting with corrected `zorder`.
 
 ---
 
