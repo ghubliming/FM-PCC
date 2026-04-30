@@ -20,10 +20,11 @@ In FM-PCC, the ODE solver does not move a single point; it moves an **entire 8-s
 *   **What you see**: The start point "drifts" or starts in a different place for every batch. This is an **Audit Feature**—it shows you the model's internal error.
 
 ### Production Mode (The "Safety Shield" Controller)
-*   **Starting State**: Random Noise, but with a **Forced Anchor**.
-*   **Anchoring**: Before we start, and after **every** ODE step, we manually overwrite $p_0$ with the Ground Truth sensor reading.
-*   **The Goal**: Ensure the robot's plan is always physically attached to the robot's current location.
-*   **What you see**: All batches and all solvers start at the **exact same coordinate**. The error is "hidden" for the sake of safety.
+*   **Starting State**: Random Noise, but with a **Double Anchor**.
+*   **Anchoring**: Before we start, and after **every** ODE step, we manually overwrite **both** the first observation and the first action (waypoint) with the Ground Truth robot position.
+*   **The Goal**: Ensure the robot's plan is always physically attached to the robot's current location with zero drift.
+*   **Safety Abort**: The V4 pipeline now includes a strict assertion check. If Step 0 drifts by more than `1e-4`, the script will **immediately abort** to prevent misleading data.
+*   **What you see**: All batches and all solvers start at the **exact same coordinate**.
 
 ---
 
@@ -51,7 +52,8 @@ Batch processing (B0-B3) is not done one-by-one. It is processed **simultaneousl
 ## Summary Table
 | Feature | Math Mode | Production Mode | Real Eval Script |
 | :--- | :--- | :--- | :--- |
-| **Start Point** | Drifts (Audit) | Fixed (Clamped) | Fixed (Clamped) |
+| **Start Point** | Drifts (Audit) | **Fixed** (Double Anchor) | Fixed (Clamped) |
+| **Safety Shield** | Disabled | **Active (Abort on Drift)** | Active (Projective) |
 | **Noise Basis** | Static (Deterministic) | Static (Deterministic) | Live (Random) |
 | **Batch Purpose** | Reproducibility audit | Distribution audit | Sample-based planning |
 | **Parallelism** | CPU/CUDA Parallel | CPU/CUDA Parallel | CPU/CUDA Parallel |

@@ -182,7 +182,11 @@ def p_sample_loop_v4_fair(fm_model, shape, cond, method, backend, steps, args, p
     else:
         x = 0.5 * torch.randn(shape, device=device)
     
+    # [V4 PROD FIX] Full anchoring: 1. standard obs anchoring + 2. manual action snap
     x = apply_conditioning(x, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
+    # For d3il: cond[0] is [x_des, y_des, x_rob, y_rob]. We snap waypoints to [x_rob, y_rob].
+    current_robot_pos = cond[0][:, fm_model.action_dim:fm_model.action_dim+fm_model.action_dim]
+    x[:, 0, :fm_model.action_dim] = current_robot_pos.clone()
     
     traj = [x.clone()]
     dt = 1.0 / max(steps, 1)
@@ -227,7 +231,21 @@ def p_sample_loop_v4_fair(fm_model, shape, cond, method, backend, steps, args, p
         # 3. Post-Velocity Boilerplate
         x = apply_conditioning(x, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
         x = apply_conditioning(x, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
+        
+        # [V4 PROD FIX] Persistently re-anchor the first waypoint at t=0 to the physical robot position
+        current_robot_pos = cond[0][:, fm_model.action_dim:fm_model.action_dim+fm_model.action_dim]
+        x[:, 0, :fm_model.action_dim] = current_robot_pos.clone()
+        
         if return_trajectory: traj.append(x.clone())
+        
+    # [V4 STRICT SAFETY] Abort if Step 0 is not perfectly anchored in Production Mode
+    if args.mode == "production":
+        # Check observations part (indices action_dim:action_dim+obs_dim)
+        obs_dim = cond[0].shape[-1]
+        actual_obs_start = x[:, 0, fm_model.action_dim : fm_model.action_dim + obs_dim]
+        if not torch.allclose(actual_obs_start, cond[0], atol=1e-4):
+            max_diff = (actual_obs_start - cond[0]).abs().max()
+            raise AssertionError(f"CRITICAL: Production Anchoring Failed! Step 0 Observations drift by {max_diff}. Aborting benchmark.")
         
     return torch.stack(traj) if return_trajectory else x
 
@@ -360,8 +378,11 @@ def main() -> None:
             
             from flow_matcher_v3_ode_selectable.models.helpers import apply_conditioning
             if args.mode == "production":
-                # Only anchor in production mode
+                # 1. Standard anchoring for observations (indices 2:6)
                 current_x_init = apply_conditioning(current_x_init, cond, fm_model.action_dim, goal_dim=fm_model.goal_dim)
+                # 2. Manual snap for waypoints (indices 0:2) to match physical robot position (indices 2:4 in the cond vector)
+                current_robot_pos = cond[0][:, fm_model.action_dim:fm_model.action_dim+fm_model.action_dim]
+                current_x_init[:, 0, :fm_model.action_dim] = current_robot_pos.clone()
 
             
             t_start = time.perf_counter()
