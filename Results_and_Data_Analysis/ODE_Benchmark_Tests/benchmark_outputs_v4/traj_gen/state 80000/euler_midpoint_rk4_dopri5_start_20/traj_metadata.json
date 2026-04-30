@@ -1,0 +1,4 @@
+{
+  "n_init_points": 20,
+  "batch_size_per_init": 1
+}
