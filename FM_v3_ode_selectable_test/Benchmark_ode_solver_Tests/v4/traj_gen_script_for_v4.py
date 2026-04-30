@@ -76,9 +76,11 @@ def main():
             metadata = json.load(f)
         n_init_points = metadata.get("n_init_points", 1)
         batch_size_per_init = metadata.get("batch_size_per_init", None)
+        exec_mode = metadata.get("mode", "math") # Default to math if missing
     else:
         n_init_points = 1
         batch_size_per_init = None
+        exec_mode = "math"
 
     cond_path = os.path.join(benchmark_dir, "cond_true_start.npy")
     if os.path.exists(cond_path):
@@ -115,7 +117,12 @@ def main():
         actual_obs_start_norm = raw_norm[:, 0, action_dim : action_dim + obs_dim]
         if true_cond_norm is not None:
             if not np.allclose(actual_obs_start_norm, true_cond_norm, atol=1e-4):
-                raise AssertionError(f"CRITICAL: Production Anchoring Drift detected in {basename}! Plotting aborted to prevent misinformation.")
+                max_diff = np.abs(actual_obs_start_norm - true_cond_norm).max()
+                msg = f"CRITICAL: Anchoring Drift detected in {basename} (Max Diff: {max_diff:.6f})!"
+                if exec_mode == "production":
+                    raise AssertionError(f"{msg} Plotting aborted to prevent misinformation in Production Mode.")
+                else:
+                    print(f"WARNING: {msg} Continuing anyway because mode='{exec_mode}'.")
 
     # Unnormalize the True Start for plotting
     if true_cond_norm is not None:

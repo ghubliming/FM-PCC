@@ -239,13 +239,15 @@ def p_sample_loop_v4_fair(fm_model, shape, cond, method, backend, steps, args, p
         if return_trajectory: traj.append(x.clone())
         
     # [V4 STRICT SAFETY] Abort if Step 0 is not perfectly anchored in Production Mode
-    if args.mode == "production":
-        # Check observations part (indices action_dim:action_dim+obs_dim)
-        obs_dim = cond[0].shape[-1]
-        actual_obs_start = x[:, 0, fm_model.action_dim : fm_model.action_dim + obs_dim]
-        if not torch.allclose(actual_obs_start, cond[0], atol=1e-4):
-            max_diff = (actual_obs_start - cond[0]).abs().max()
-            raise AssertionError(f"CRITICAL: Production Anchoring Failed! Step 0 Observations drift by {max_diff}. Aborting benchmark.")
+    obs_dim = cond[0].shape[-1]
+    actual_obs_start = x[:, 0, fm_model.action_dim : fm_model.action_dim + obs_dim]
+    if not torch.allclose(actual_obs_start, cond[0], atol=1e-4):
+        max_diff = (actual_obs_start - cond[0]).abs().max()
+        msg = f"CRITICAL: Step 0 Observations drift by {max_diff:.6f}!"
+        if args.mode == "production":
+            raise AssertionError(f"PRODUCTION FAILURE: {msg} Aborting benchmark.")
+        else:
+            print(f"WARNING: {msg} Continuing anyway because mode='{args.mode}'.")
         
     return torch.stack(traj) if return_trajectory else x
 
@@ -451,7 +453,11 @@ def main() -> None:
 
                 np.save(os.path.join(out_dir, f"traj_{backend}_{method}.npy"), out_tensor.cpu().numpy())
                 np.save(os.path.join(out_dir, "cond_true_start.npy"), cond_tensor.cpu().numpy())
-                _dump_json(os.path.join(out_dir, "traj_metadata.json"), {"n_init_points": args.n_init_points, "batch_size_per_init": batch_size_per_init})
+                _dump_json(os.path.join(out_dir, "traj_metadata.json"), {
+                    "n_init_points": args.n_init_points, 
+                    "batch_size_per_init": batch_size_per_init,
+                    "mode": args.mode
+                })
 
         stats = compute_stats(trial_times)
         all_summary.append({"backend": backend, "method": method, "n_trials": args.n_trials, **stats})
