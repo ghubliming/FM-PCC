@@ -103,6 +103,11 @@ The script will drop `.png` files directly into the specified `--benchmark-dir`,
 - **The Blue Lines (Model Intent)**: These represent the robotic path the model *intends* to take. The model follows its learned "Vector Field." 
 - **The Shaded Areas (Environmental Safety)**: These are the obstacles and halfspaces. They define the "forbidden zones."
 - **The Starting Point (Green Dot)**: The initial position in the robotic horizon ($t=0$).
+- **The True Start (Yellow Star)**: The physical robot position provided in the conditioning.
+
+> [!IMPORTANT]
+> **Mathematical Anchoring (The Double Anchor)**
+> In the V4 pipeline, the **Green Dot** and the **Yellow Star** are mathematically guaranteed to overlap. The script applies a "Double Anchor" that snaps both the Waypoints and the Observations to the physical robot coordinates at every step of the ODE integration. If they drift by more than `1e-4`, the script will automatically **ABORT** with an `AssertionError`.
 
 ### Does the "New Obstacle" Matter?
 **Yes, it is the ultimate test of solver precision.** 
@@ -210,6 +215,9 @@ python FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/traj_gen_script_f
     --diffusion-loadpath flow_matching_v3/H8_K20_Dmodels.diffusion.GaussianDiffusion \
     --diffusion-seed 6
 ```
+> [!CAUTION]
+> **The Plotter "Safety Abort"**
+> If the plotter detects that your trajectory data is corrupted or drifted (i.e., the Green Dot is not on the Yellow Star), it will refuse to generate the plot and throw a `CRITICAL: Production Anchoring Drift detected` error. This ensures you never present misleading or numerically unstable benchmark results.
 > [!WARNING]
 > **Plotting More Than 4 Batches:** By default, the plotting script will cap the output and only plot the first 4 trajectories in your batch to prevent flooding your folder with images. If you simulated a larger batch (e.g., `--batch-size 128`) and want to generate all the individual per-batch plots, you **must** explicitly pass the `--plot-batch-limit <NUMBER>` argument (e.g., `--plot-batch-limit 128`) to this script.
 
