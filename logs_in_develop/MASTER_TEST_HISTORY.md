@@ -310,3 +310,11 @@ Keywords: K-less training, folder naming logic, dead parameter safety, diffusion
     - **Training**: `train_flow_matching_v3_ode_selectable.py` uses `getattr(args, '...', default)` for all step-related keys.
     - **Model Math**: `GaussianDiffusion` (v3) uses floating-point time $t$ for training, which bypasses all discrete step-count calculations (verified in `_time_from_timestep`).
 5. **Outcome**: The codebase is now "penetrated" against naming bugs. Training is streamlined, and evaluation correctly handles its own ODE step configuration while finding models reliably.
+
+## Gen3v2: TQDM Log Pollution Hotfix (30. April)
+
+Keywords: tqdm log pollution, SLURM stdout fix, mininterval infinity, cleaner logs.
+
+1. **Problem**: In non-interactive SLURM logs,  progress bars generated thousands of lines of redundant output (one line per step refresh), making log files nearly impossible to audit.
+2. **Fix**: Modified `diffuser/utils/training.py` and `flow_matcher_v3_ode_selectable/utils/training.py` to set `mininterval=1e10` in the `tqdm` constructor. 
+3. **Outcome**: Progress bars now stay silent during the loop and only pop a single "100%" completion line at the end of each epoch. This eliminates thousands of lines of .sh log while ensuring all critical prints and errors remain visible.

@@ -116,7 +116,7 @@ class Trainer(object):
     #-----------------------------------------------------------------------------#
 
     def train_epoch(self, n_train_steps, epoch=0):        
-        progress_bar = tqdm(total=n_train_steps)
+        progress_bar = tqdm(total=n_train_steps, mininterval=1e10)
         progress_bar.set_description(f"Epoch {epoch}")
 
         for step in range(n_train_steps):
