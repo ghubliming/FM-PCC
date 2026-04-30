@@ -315,6 +315,14 @@ Keywords: K-less training, folder naming logic, dead parameter safety, diffusion
 
 Keywords: tqdm log pollution, SLURM stdout fix, mininterval infinity, cleaner logs.
 
-1. **Problem**: In non-interactive SLURM logs,  progress bars generated thousands of lines of redundant output (one line per step refresh), making log files nearly impossible to audit.
-2. **Fix**: Modified `diffuser/utils/training.py` and `flow_matcher_v3_ode_selectable/utils/training.py` to set `mininterval=1e10` in the `tqdm` constructor. 
-3. **Outcome**: Progress bars now stay silent during the loop and only pop a single "100%" completion line at the end of each epoch. This eliminates thousands of lines of .sh log while ensuring all critical prints and errors remain visible.
+1. **Problem**: In non-interactive SLURM logs, progress bars generated thousands of lines of redundant output (one line per step refresh), making log files nearly impossible to audit.
+2. **Fix**: Injected `mininterval=1e10` into the `tqdm` constructor across all training utility files to suppress intermediate updates.
+3. **Outcome**: Progress bars now stay silent during the loop and only pop a single "100%" completion line at the end of each epoch. This eliminates thousands of lines of log "shits" while ensuring all critical prints and errors remain visible.
+
+**Affected Files & Lines:**
+- `diffuser/utils/training.py`: Line 117
+- `flow_matcher_v3_ode_selectable/utils/training.py`: Line 119
+- `flow_matcher/utils/training.py`: Line 117
+- `flow_matcher_v2/utils/training.py`: Line 117
+- `flow_matcher_unet_v2/utils/training.py`: Line 117
+- `flow_matcher_v3/utils/training.py`: Line 117
