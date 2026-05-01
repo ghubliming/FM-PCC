@@ -340,3 +340,41 @@ Keywords: tqdm log pollution, SLURM stdout fix, mininterval infinity, cleaner lo
 - `flow_matcher_v2/utils/training.py`: Line 117
 - `flow_matcher_unet_v2/utils/training.py`: Line 117
 - `flow_matcher_v3/utils/training.py`: Line 117
+
+## Gen3v2: W&B Artifact Upload, TQDM Cleanup, & Root Leak Fix (1. May)
+
+Keywords: W&B crash, AttributeError, storage optimization, TQDM log pollution, metadata root leak, global setup fix.
+
+1. **Problem (W&B)**: Multi-seed training jobs crashed after the first seed due to an `AttributeError` (`run.Artifact` typo) and an `import wandb` scoping issue.
+2. **Fix (W&B)**: Corrected `run.Artifact` to `wandb.Artifact`, moved imports to global scope, and commented out large weight uploads (`state_best.pt`) to save cloud storage.
+3. **Problem (TQDM)**: Progress bars generated thousands of redundant lines in SLURM logs because `update(1)` was called every step on non-interactive terminals.
+4. **Fix (TQDM)**: Implemented a "Refined 1-Line-Per-1,000-Steps" logic. Progress bars now only update at the end of every 1,000 steps or at the epoch's end, ensuring clean logs.
+5. **Problem (Metadata Leak)**: Training scripts were "shitting" `args_resume_N.json` files into the project root instead of the experiment folder.
+6. **Fix (Metadata)**: Synchronized `self.savepath` in `Parser.mkdir()` across all setup utilities (including DPCC). Metadata is now correctly encapsulated in seed-specific log folders.
+7. **Outcome**: Training stability, log clarity, and filesystem hygiene are fully restored.
+
+**Affected Files (W&B Fix):**
+- `scripts/train.py`
+- `FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py`
+- `FM_Unet_v2_test/train_FM_Unet_v2.py`
+- `FM_v3_test/train_FM_v3.py`
+- `FM_v2_test/train_FM_v2.py`
+- `FM_test/train_FM.py`
+- `FM_hp_tune_test/train_FM_hp_tune.py`
+
+**Affected Files (TQDM Fix):**
+- `diffuser/utils/training.py`
+- `flow_matcher_v3_ode_selectable/utils/training.py`
+- `flow_matcher/utils/training.py`
+- `flow_matcher_v2/utils/training.py`
+- `flow_matcher_unet_v2/utils/training.py`
+- `flow_matcher_v3/utils/training.py`
+- `d3il/agents/models/bet/libraries/mingpt/trainer.py`
+
+**Affected Files (Metadata Fix):**
+- `diffuser/utils/setup.py` (DPCC)
+- `flow_matcher/utils/setup.py`
+- `flow_matcher_v2/utils/setup.py`
+- `flow_matcher_v3/utils/setup.py`
+- `flow_matcher_unet_v2/utils/setup.py`
+- `flow_matcher_v3_ode_selectable/utils/setup.py`
