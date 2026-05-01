@@ -1,6 +1,7 @@
 # Common Commands
 
 ## let submit.sh runable
+cd FMPCC/FM-PCC
 chmod +x Slurm_Codes/submit.sh
 
 ## Check the status

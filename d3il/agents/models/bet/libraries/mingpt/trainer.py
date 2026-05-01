@@ -67,7 +67,7 @@ class Trainer:
 
             losses = []
             pbar = (
-                tqdm(enumerate(loader), total=len(loader))
+                tqdm(enumerate(loader), total=len(loader), mininterval=1e10)
                 if is_train
                 else enumerate(loader)
             )
@@ -121,10 +121,11 @@ class Trainer:
                     else:
                         lr = config.learning_rate
 
-                    # report progress
-                    pbar.set_description(  # type: ignore
-                        f"epoch {epoch+1} iter {it}: train loss {loss.item():.5f}. lr {lr:e}"
-                    )
+                    if (it + 1) % 100 == 0 or it == len(loader) - 1:
+                        pbar.update(it - pbar.n + 1)
+                        pbar.set_description(  # type: ignore
+                            f"epoch {epoch+1} iter {it}: train loss {loss.item():.5f}. lr {lr:e}"
+                        )
 
             if not is_train:
                 test_loss = float(np.mean(losses))
