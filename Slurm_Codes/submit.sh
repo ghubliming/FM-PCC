@@ -32,10 +32,12 @@ echo "------------------------------------------------"
 
 # 4. Submit to SLURM
 # We use --parsable to easily capture the Job ID
+# We export SUBMIT_TIME and SUBMIT_DATE to unify logs for pipelines
 SBATCH_OUT=$(sbatch --parsable \
        --job-name="$JOB_NAME" \
        --output="$LOG_FILE" \
        --error="$LOG_FILE" \
+       --export=ALL,SUBMIT_TIME=$TIME,SUBMIT_DATE=$DATE \
        "$SCRIPT_PATH")
 
 if [ $? -eq 0 ]; then

@@ -387,3 +387,4 @@ Keywords: Job End logging, EXIT trap, submit.sh Job ID, evaluation time limit (8
 3. **Submission Wrapper Enhancement**: Updated `submit.sh` to capture the Job ID from the `sbatch --parsable` output and provide cleaner terminal feedback.
 4. **Template Standardization**: Updated `2026_04_30_job_template.sh` to include the new logging standards, ensuring future scripts inherit these improvements.
 5. **Pipeline Submission Fix**: Resolved a `sbatch: error: No partition specified` issue for the `fmv3_ode_pipeline.sh` script by adding mandatory SBATCH headers and standardizing it with the "Pro-Logging" architecture.
+6. **Smart Unified Logging Upgrade**: Implemented a session-based logging system. `submit.sh` now exports `SUBMIT_TIME/DATE` metadata, allowing pipeline managers and their sub-jobs to share the exact same timestamp prefix. This ensures all logs from a single pipeline run are perfectly grouped and searchable in the filesystem.
