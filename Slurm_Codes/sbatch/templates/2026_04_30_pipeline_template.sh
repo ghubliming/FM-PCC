@@ -19,20 +19,26 @@ set -e
 # ==============================================================================
 
 SBATCH_DIR="Slurm_Codes/sbatch"
-DATE=$(date +%Y-%m-%d)
+DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}
+TIME=${SUBMIT_TIME:-$(date +%H_%M_%S)}
+LOG_DIR="Slurm_Codes/logs/$DATE"
+mkdir -p "$LOG_DIR"
 
-echo "[${DATE}] Starting Pipeline Submission..."
+# Sub-jobs will share the SAME timestamp as the pipeline manager for perfect grouping
+LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log"
+
+echo "[${DATE} ${TIME}] Starting Smart Pipeline Submission..."
 
 # 1. Step One
-JOB1_ID=$(sbatch --parsable "${SBATCH_DIR}/your_job_1.sh")
+JOB1_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/your_job_1.sh")
 echo "Step 1 Submitted: Job ID $JOB1_ID"
 
 # 2. Step Two (Depends on Step One Success)
-JOB2_ID=$(sbatch --parsable --dependency=afterok:$JOB1_ID "${SBATCH_DIR}/your_job_2.sh")
+JOB2_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$JOB1_ID "${SBATCH_DIR}/your_job_2.sh")
 echo "Step 2 Scheduled: Job ID $JOB2_ID (Waiting for $JOB1_ID)"
 
 # 3. Step Three (Depends on Step Two Success)
-JOB3_ID=$(sbatch --parsable --dependency=afterok:$JOB2_ID "${SBATCH_DIR}/your_job_3.sh")
+JOB3_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$JOB2_ID "${SBATCH_DIR}/your_job_3.sh")
 echo "Step 3 Scheduled: Job ID $JOB3_ID (Waiting for $JOB2_ID)"
 
 echo "--------------------------------------------------------------------------------"
