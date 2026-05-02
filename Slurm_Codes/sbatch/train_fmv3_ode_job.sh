@@ -29,6 +29,14 @@ nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader ||
 echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'Not a git repo')"
 echo "================================================================================"
 
+# Trap for JOB END
+function on_exit {
+    echo "================================================================================"
+    echo "JOB END:   $(date)"
+    echo "================================================================================"
+}
+trap on_exit EXIT
+
 # 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
 REPO="$FMPCC_ROOT/FM-PCC"

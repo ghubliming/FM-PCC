@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8           # Number of CPU cores per task
 #SBATCH --mem=32G                    # Total memory
 #SBATCH --gres=gpu:1                # Request 1 GPU
-#SBATCH --time=02:00:00             # Time limit (Eval is usually shorter)
+#SBATCH --time=08:00:00             # Time limit (Eval is usually shorter)
 #SBATCH --partition=gpu-1-student   # Updated from sinfo output
 
 # Exit on error
@@ -29,6 +29,14 @@ echo "GPU INFO:"
 nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "No GPU detected or nvidia-smi failed"
 echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'Not a git repo')"
 echo "================================================================================"
+
+# Trap for JOB END
+function on_exit {
+    echo "================================================================================"
+    echo "JOB END:   $(date)"
+    echo "================================================================================"
+}
+trap on_exit EXIT
 
 # 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"

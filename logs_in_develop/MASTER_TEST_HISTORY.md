@@ -376,5 +376,13 @@ Keywords: W&B crash, AttributeError, storage optimization, TQDM log pollution, m
 - `flow_matcher/utils/setup.py`
 - `flow_matcher_v2/utils/setup.py`
 - `flow_matcher_v3/utils/setup.py`
-- `flow_matcher_unet_v2/utils/setup.py`
 - `flow_matcher_v3_ode_selectable/utils/setup.py`
+
+## Gen3v2: Slurm Job End Logging & Eval Time Limit Update (2. May)
+
+Keywords: Job End logging, EXIT trap, submit.sh Job ID, evaluation time limit (8h).
+
+1. **Job End Logging**: Standardized all sbatch scripts (`eval_dpcc`, `eval_fmv3`, `train_dpcc`, `train_fmv3`, `verify_env`, `load_results`) to use an `EXIT` trap for printing a `JOB END` timestamp. This ensures end-of-job visibility in logs even if the script aborts due to `set -e`.
+2. **Evaluation Time Limit**: Increased the `#SBATCH --time` limit from **2 hours to 8 hours** for all evaluation scripts to prevent timeouts during large benchmark sweeps.
+3. **Submission Wrapper Enhancement**: Updated `submit.sh` to capture the Job ID from the `sbatch --parsable` output and provide cleaner terminal feedback.
+4. **Template Standardization**: Updated `2026_04_30_job_template.sh` to include the new logging standards, ensuring future scripts inherit these improvements.

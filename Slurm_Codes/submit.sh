@@ -31,8 +31,19 @@ echo "📁 Log Directory:  $LOG_DIR"
 echo "------------------------------------------------"
 
 # 4. Submit to SLURM
-# We override the output and error paths to point to the same file
-sbatch --job-name="$JOB_NAME" \
+# We use --parsable to easily capture the Job ID
+SBATCH_OUT=$(sbatch --parsable \
+       --job-name="$JOB_NAME" \
        --output="$LOG_FILE" \
        --error="$LOG_FILE" \
-       "$SCRIPT_PATH"
+       "$SCRIPT_PATH")
+
+if [ $? -eq 0 ]; then
+    JOB_ID=$SBATCH_OUT
+    echo "✅ Submission Successful!"
+    echo "🆔 Job ID:         $JOB_ID"
+    echo "------------------------------------------------"
+else
+    echo "❌ Submission Failed!"
+    exit 1
+fi
