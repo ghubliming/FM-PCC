@@ -1,5 +1,14 @@
 #!/bin/bash
-set -e # Stop submission if any sbatch call fails
+#SBATCH --job-name=pipeline_template
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=00:10:00
+#SBATCH --partition=gpu-1-student
+
+# Exit on error
+set -e
 
 # ==============================================================================
 # PIPELINE TEMPLATE (CHAINED SUCCESS ONLY)
