@@ -386,3 +386,4 @@ Keywords: Job End logging, EXIT trap, submit.sh Job ID, evaluation time limit (8
 2. **Evaluation Time Limit**: Increased the `#SBATCH --time` limit from **2 hours to 8 hours** for all evaluation scripts to prevent timeouts during large benchmark sweeps.
 3. **Submission Wrapper Enhancement**: Updated `submit.sh` to capture the Job ID from the `sbatch --parsable` output and provide cleaner terminal feedback.
 4. **Template Standardization**: Updated `2026_04_30_job_template.sh` to include the new logging standards, ensuring future scripts inherit these improvements.
+5. **Pipeline Submission Fix**: Resolved a `sbatch: error: No partition specified` issue for the `fmv3_ode_pipeline.sh` script by adding mandatory SBATCH headers and standardizing it with the "Pro-Logging" architecture.
