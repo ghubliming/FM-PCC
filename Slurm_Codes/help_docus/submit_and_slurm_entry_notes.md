@@ -6,6 +6,7 @@ chmod +x Slurm_Codes/submit.sh
 
 ## Check the status
 squeue -u llim
+squeue -o "%.10i %.10P %.30j %.10u %.2t %.10M %.10D %R"
 
 ## shutdown sbatch
 scancel XXXXX
