@@ -10,6 +10,16 @@ import matplotlib.pyplot as plt
 import diffuser.utils as utils
 from diffuser.sampling import Policy, Projector
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
+import argparse
+import sys
+
+# --- Argument Parsing ---
+parser = argparse.ArgumentParser(description='Baseline Evaluation script with aggregation mode.')
+parser.add_argument('--seed', type=int, help='Run only this specific seed.')
+parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results into all_seeds plots.')
+args_cli, remaining_argv = parser.parse_known_args()
+# Pass remaining args to Parser if needed
+sys.argv = [sys.argv[0]] + remaining_argv
 
 # Load configuration
 with open('config/projection_eval.yaml', 'r') as file:
@@ -18,6 +28,10 @@ with open('config/projection_eval.yaml', 'r') as file:
 # General
 exps = config['exps']
 seeds = config['seeds']
+if args_cli.seed is not None:
+    seeds = [args_cli.seed]
+    print(f'[ eval ] Overriding seeds from config to: {seeds}')
+
 projection_variants = config['projection_variants']
 halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
 n_trials = config['n_trials']
@@ -55,75 +69,99 @@ for exp in exps:
         for seed in seeds:
             args = Parser().parse_args(experiment='plan', seed=seed)
 
-            # Get model
-            diffusion_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
-            diffusion = diffusion_experiment.diffusion
-            dataset = diffusion_experiment.dataset
-
-            if 'pointmaze' in exp or 'antmaze' in exp:
-                minari_dataset = minari.load_dataset(exp, download=True)
-                env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()    # Set render_mode='human' to visualize the environment
-            elif 'avoiding' in exp:
-                env = ObstacleAvoidanceEnv()
-                env.start()
-
-            if robot_name == 'pointmaze': env.env.env.env.point_env.frame_skip = 2
-            if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
-
+            diffusion = None
+            dataset = None
+            env = None
             obs_indices = config['observation_indices'][robot_name]
             act_indices = config['action_indices'][robot_name]
 
-            # Create projector
-            if diffusion.__class__.__name__ == 'GaussianDiffusion':
-                trajectory_dim = diffusion.transition_dim - diffusion.goal_dim
-                action_dim = diffusion.action_dim
-                diffuser_variant = 'states_actions'
-                obs_indices_updated = {key: val + action_dim for key, val in obs_indices.items()}
-                act_obs_indices = {**act_indices, **obs_indices_updated}
-            else:
-                trajectory_dim = diffusion.observation_dim - diffusion.goal_dim
-                action_dim = 0
-                diffuser_variant = 'states'
-                act_obs_indices = obs_indices
+            if not args_cli.aggregate_only:
+                # Get model
+                diffusion_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
+                diffusion = diffusion_experiment.diffusion
+                dataset = diffusion_experiment.dataset
 
-            # -------------------- Load constraints ------------------
-            constraint_list = []
-            constraint_list_tightened = []
-            # Halfspace constraints
-            constraint_list_polytopic_not_tightened = []
-            if 'halfspace' in constraint_types:
-                for constraint in polytopic_constraints:
-                    constraint_list.append(('ineq', utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)))
-                    constraint_list_tightened.append(('ineq', utils.formulate_halfspace_constraints(constraint, enlarge_constraints, trajectory_dim, act_obs_indices)))
-                    constraint_list_polytopic_not_tightened.append(('ineq', utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)))
+                if 'pointmaze' in exp or 'antmaze' in exp:
+                    minari_dataset = minari.load_dataset(exp, download=True)
+                    env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()    # Set render_mode='human' to visualize the environment
+                elif 'avoiding' in exp:
+                    env = ObstacleAvoidanceEnv()
+                    env.start()
 
-            # Bounds
-            if 'bounds' in constraint_types:
-                lower_bound, upper_bound = utils.formulate_bounds_constraints(constraint_types, bounds, trajectory_dim, act_obs_indices)
-                constraint_list.extend([['lb', lower_bound], ['ub', upper_bound]])
-                constraint_list_tightened.extend([['lb', lower_bound], ['ub', upper_bound]])
+                if robot_name == 'pointmaze': env.env.env.env.point_env.frame_skip = 2
+                if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
 
-            # Obstacle constraints
-            if 'obstacles' in constraint_types:
-                for constr in obstacle_constraints:
-                    constraint_list.append([constr['type'], [act_obs_indices[constr['dimensions'][0]], act_obs_indices[constr['dimensions'][1]]], constr['center'], constr['radius']])
-                    constraint_list_tightened.append([constr['type'], [act_obs_indices[constr['dimensions'][0]], act_obs_indices[constr['dimensions'][1]]], constr['center'], constr['radius'] + enlarge_constraints])
+                # Create projector
+                if diffusion.__class__.__name__ == 'GaussianDiffusion':
+                    trajectory_dim = diffusion.transition_dim - diffusion.goal_dim
+                    action_dim = diffusion.action_dim
+                    diffuser_variant = 'states_actions'
+                    obs_indices_updated = {key: val + action_dim for key, val in obs_indices.items()}
+                    act_obs_indices = {**act_indices, **obs_indices_updated}
+                else:
+                    trajectory_dim = diffusion.observation_dim - diffusion.goal_dim
+                    action_dim = 0
+                    diffuser_variant = 'states'
+                    act_obs_indices = obs_indices
 
-            # Dynamics constraints
-            constraint_list_without_prior = copy(constraint_list)
-            constraint_list_without_prior_tightened = copy(constraint_list_tightened)
-            dynamics_constraints = []
-            if 'dynamics' in constraint_types: dynamics_constraints = utils.formulate_dynamics_constraints(exp, act_obs_indices, action_dim)
+                # -------------------- Load constraints ------------------
+                constraint_list = []
+                constraint_list_tightened = []
+                # Halfspace constraints
+                constraint_list_polytopic_not_tightened = []
+                if 'halfspace' in constraint_types:
+                    for constraint in polytopic_constraints:
+                        constraint_list.append(('ineq', utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)))
+                        constraint_list_tightened.append(('ineq', utils.formulate_halfspace_constraints(constraint, enlarge_constraints, trajectory_dim, act_obs_indices)))
+                        constraint_list_polytopic_not_tightened.append(('ineq', utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)))
 
-            for constraint in dynamics_constraints:
-                constraint_list.append(constraint)
-                constraint_list_tightened.append(constraint)
+                # Bounds
+                if 'bounds' in constraint_types:
+                    lower_bound, upper_bound = utils.formulate_bounds_constraints(constraint_types, bounds, trajectory_dim, act_obs_indices)
+                    constraint_list.extend([['lb', lower_bound], ['ub', upper_bound]])
+                    constraint_list_tightened.extend([['lb', lower_bound], ['ub', upper_bound]])
 
-            # -------------------- Run experiments ------------------
-            env_seeds = config['env_seeds'][exp] if 'pointmaze-umaze' in exp else np.arange(100)       
-            fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)))
+                # Obstacle constraints
+                if 'obstacles' in constraint_types:
+                    for constr in obstacle_constraints:
+                        constraint_list.append([constr['type'], [act_obs_indices[constr['dimensions'][0]], act_obs_indices[constr['dimensions'][1]]], constr['center'], constr['radius']])
+                        constraint_list_tightened.append([constr['type'], [act_obs_indices[constr['dimensions'][0]], act_obs_indices[constr['dimensions'][1]]], constr['center'], constr['radius'] + enlarge_constraints])
+
+                # Dynamics constraints
+                constraint_list_without_prior = copy(constraint_list)
+                constraint_list_without_prior_tightened = copy(constraint_list_tightened)
+                dynamics_constraints = []
+                if 'dynamics' in constraint_types: dynamics_constraints = utils.formulate_dynamics_constraints(exp, act_obs_indices, action_dim)
+
+                for constraint in dynamics_constraints:
+                    constraint_list.append(constraint)
+                    constraint_list_tightened.append(constraint)
+
+                env_seeds = config['env_seeds'][exp] if 'pointmaze-umaze' in exp else np.arange(100)       
 
             for variant_idx, variant in enumerate(projection_variants):
+                save_path = f'{args.savepath}/results/halfspace_{halfspace_variant}' if 'avoiding' in exp else f'{args.savepath}/results'
+                os.makedirs(save_path, exist_ok=True)
+
+                if args_cli.aggregate_only:
+                    # LOAD DATA MODE
+                    npz_path = os.path.join(save_path, f'{variant}.npz')
+                    if not os.path.exists(npz_path):
+                        print(f'[ eval ] skipping {variant} for seed {seed}, no results found at {npz_path}')
+                        continue
+                    print(f'[ eval ] Aggregating existing results for {variant} - seed {seed}')
+                    data = np.load(npz_path, allow_pickle=True)
+                    # Use saved obs_all for aggregation plot
+                    if 'obs_all' in data:
+                        obs_all = data['obs_all']
+                        # Re-plot on aggregate axes
+                        for i in range(min(len(obs_all), plot_how_many)):
+                            obs_buffer = obs_all[i]
+                            colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                            axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
+                    continue
+
+                # INFERENCE MODE
                 print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
 
                 gradient = True if 'gradient' in variant else False
@@ -176,6 +214,12 @@ for exp in exps:
                 avg_time = np.zeros(n_trials)
                 collision_free_completed = np.ones(n_trials)
                 pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
+
+                obs_all = []
+                act_all = []
+                
+                fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)))
+
                 for i in range(n_trials):
                     torch.manual_seed(i)
                     env_seed = env_seeds[i] if ('pointmaze-umaze' in exp) else i
@@ -260,17 +304,18 @@ for exp in exps:
                         if success: n_success[i] = 1
                         if (terminated or _ == args.max_episode_length - 1) and (not success): collision_free_completed[i] = 0
 
-                        # if success or terminated or truncated or _ == n_timesteps - 1:
                         if success or terminated or _ == args.max_episode_length - 1:
                             n_steps[i] = _
                             avg_time[i] /= _
                             if success and collision_free_completed[i]: n_success_and_constraints[i] = 1
                             break
 
+                    obs_all.append(np.array(obs_buffer))
+                    act_all.append(np.array(action_buffer))
+
                     sampled_trajectories_all.append(sampled_trajectories)
                     if i >= plot_how_many:     # Plot only the first n trials
                         continue
-                    # plot_states = ['x', 'y', 'vx', 'vy'] if 'maze' in exp else ['x', 'y']
                     plot_states = ['x', 'y', 'x_des', 'y_des']
 
                     for j in range(len(plot_states)):
@@ -281,7 +326,6 @@ for exp in exps:
                     for curr_ax in axes:
                         curr_ax.plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], 'k')
                         curr_ax.plot(np.array(obs_buffer)[0, obs_indices['x']], np.array(obs_buffer)[0, obs_indices['y']], 'go', label='Start')            # Start
-                        # if 'maze' in exp: curr_ax.plot(np.array(obs_buffer)[0, obs_indices['goal_x']], np.array(obs_buffer)[0, obs_indices['goal_y']], 'ro', label='Goal')   # Goal
                         curr_ax.set_xlim(ax_limits[0])
                         curr_ax.set_ylim(ax_limits[1])
 
@@ -294,7 +338,6 @@ for exp in exps:
                             for curr_ax in axes:
                                 curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
                                 curr_ax.plot(sampled_trajectories_all[i][__][___, 0, obs_indices['x']], sampled_trajectories_all[i][__][___, 0, obs_indices['y']], 'go', label='Start')    # Current state
-                    # if 'maze' in exp: ax[i, 5].plot(np.array(obs_buffer)[0, obs_indices['goal_x']], np.array(obs_buffer)[0, obs_indices['goal_y']], 'ro', label='Goal')   # Goal
                     ax[i, 5].set_xlim(ax_limits[0])
                     ax[i, 5].set_ylim(ax_limits[1])
 
@@ -318,8 +361,6 @@ for exp in exps:
                 print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                 if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
 
-                save_path = f'{args.savepath}/results/halfspace_{halfspace_variant}' if 'avoiding' in exp else f'{args.savepath}/results'
-                os.makedirs(save_path, exist_ok=True)
                 if config['write_to_file']:
                     np.savez(f'{save_path}/{variant}.npz', 
                             n_success=n_success, 
@@ -329,21 +370,23 @@ for exp in exps:
                             total_violations=total_violations, 
                             avg_time=avg_time, 
                             collision_free_completed=collision_free_completed, 
-                            args=args)
+                            args=args,
+                            obs_all=np.array(obs_all, dtype=object),
+                            act_all=np.array(act_all, dtype=object))
 
                 fig.savefig(f'{save_path}/{variant}.png')   
                 plt.close(fig)
 
                 ax_all[0, variant_idx].set_title(variant)
+                
+            if not args_cli.aggregate_only:
+                fig_all.savefig(f'{save_path}/all.png')
                 env.close()
-
-            fig_all.savefig(f'{save_path}/all.png')
-            plt.show()
         
-        variant_idx = 0
+        # Save aggregate plots for all seeds
         path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
-        for fig, ax in zip(figs_all_seeds, axes_all_seeds):
+        for variant_idx, (fig, ax) in enumerate(zip(figs_all_seeds, axes_all_seeds)):
             ax.set_xlim(ax_limits[0])
             ax.set_ylim(ax_limits[1])
             ax.set_facecolor([1, 1, 0.9])
@@ -355,5 +398,8 @@ for exp in exps:
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'] + enlarge_constraints, color='b', alpha=0.1, linestyle='--'))
             fig.savefig(f'{path}/{projection_variants[variant_idx]}.png', bbox_inches='tight')
             fig.savefig(f'{path}/{projection_variants[variant_idx]}.pdf', bbox_inches='tight', format='pdf')
-            variant_idx += 1
+            plt.close(fig)
+        
+        if not args_cli.aggregate_only:
+            plt.show()
         
