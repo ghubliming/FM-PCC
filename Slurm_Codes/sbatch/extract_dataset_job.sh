@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1                  # Run a single task
 #SBATCH --cpus-per-task=16          # Heavy CPU for fast unzipping
 #SBATCH --mem=32G                    # Enough RAM for file caching
-#SBATCH --time=02:00:00             # 2 hour limit (usually takes 15-30 mins)
+#SBATCH --time=06:00:00             # (2) hour limit (usually takes 15-30 mins)
 #SBATCH --partition=gpu-1-student   # Use a powerful node
 
 # Exit on error
@@ -13,7 +13,7 @@ set -e
 # ------------------------------------------------------------------------------
 # CONFIGURATION
 # ------------------------------------------------------------------------------
-TARGET_TASK="avoiding"   # <-- CHANGE THIS: avoiding / aligning / stacking / etc.
+TARGET_TASK="aligning"   # <-- CHANGE THIS: avoiding / aligning / stacking / etc.
 
 # Paths
 FMPCC_ROOT="$HOME/FMPCC"

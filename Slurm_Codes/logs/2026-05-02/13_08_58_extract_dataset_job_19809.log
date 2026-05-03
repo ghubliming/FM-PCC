@@ -1,0 +1,37 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+DATASET EXTRACTION START: Sat May  2 12:19:39 UTC 2026
+TARGET FOLDER:           aligning
+ZIP SOURCE:              /u/home/llim/FMPCC/d3il_data/dataset.zip
+DESTINATION:             /u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/aligning
+================================================================================
+✅ Zip file found: 16G
+🚀 Extracting 'aligning/' from ZIP (Python zipfile mode)...
+Opening /u/home/llim/FMPCC/d3il_data/dataset.zip...
+Extracting 392768 files to /u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data...
+✅ Extraction complete!
+------------------------------------------------
+VERIFICATION
+------------------------------------------------
+✗ ERROR: Extraction failed or folder structure unexpected.
+Actual folders in target data root:
+/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data:
+aligning
+avoiding
+dataset.zip
+
+/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/aligning:
+all_data
+
+/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/aligning/all_data:
+images
+state
+
+/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/aligning/all_data/images:
+bp-cam
+inhand-cam
+
+/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/aligning/all_data/images/bp-cam:
+env_000_00
+env_000_01
+env_001_00
