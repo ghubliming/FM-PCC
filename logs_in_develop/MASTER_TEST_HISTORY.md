@@ -388,3 +388,13 @@ Keywords: Job End logging, EXIT trap, submit.sh Job ID, evaluation time limit (8
 4. **Template Standardization**: Updated `2026_04_30_job_template.sh` to include the new logging standards, ensuring future scripts inherit these improvements.
 5. **Pipeline Submission Fix**: Resolved a `sbatch: error: No partition specified` issue for the `fmv3_ode_pipeline.sh` script by adding mandatory SBATCH headers and standardizing it with the "Pro-Logging" architecture.
 6. **Smart Unified Logging Upgrade**: Implemented a session-based logging system. `submit.sh` now exports `SUBMIT_TIME/DATE` metadata, allowing pipeline managers and their sub-jobs to share the exact same timestamp prefix. This ensures all logs from a single pipeline run are perfectly grouped and searchable in the filesystem.
+
+## Gen3v2u3: Evaluation Persistence & Aggregation Hotfix (3. May)
+
+Keywords: gen3v2u3 critical, all_seeds aggregation, full data persistence, obs_all saving, modular evaluation.
+
+1.  **Full Data Persistence (CRITICAL)**: Resolved the "Ephemeral Result" bottleneck by modifying evaluation scripts to save raw trajectory coordinates (`obs_all`) and actions (`act_all`) for all trials into `.npz` files. 
+2.  **Aggregation Mode**: Implemented the `--aggregate-only` flag, allowing users to regenerate `all_seeds` summary plots instantly from disk data without re-running model inference or MuJoCo.
+3.  **Slurm Parallelization**: Added `--seed` command-line support to allow running individual seeds as separate Slurm jobs, which can then be retrospectively aggregated into a single summary plot.
+4.  **Baseline Parity**: Applied these upgrades to both `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` and the baseline `scripts/eval.py`.
+5.  **Audit Visibility**: Created a dedicated audit report at `logs_in_develop/gen3v2u3_hot_fix_eval_data_saving/hotfix_report.md` detailing the "Before vs. After" architectural shift.
