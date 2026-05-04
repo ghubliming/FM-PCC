@@ -19,23 +19,6 @@ args_to_watch_v3 = [
     ('diffusion', 'D'),
 ]
 
-args_to_watch_fmv3_ode_train = [
-    ('prefix', ''),
-    ('horizon', 'H'),
-    ('diffusion', 'D'),
-    ('time_beta_alpha_v3', 'a'),
-    ('time_beta_beta_v3', 'b'),
-    ('action_weight', 'aw'),
-]
-
-args_to_watch_fmv3_ode_plan = [
-    ('prefix', ''),
-    ('horizon', 'H'),
-    ('flow_steps_v3', 'K'),
-    ('ode_solver_method_v3', 'M'),
-    ('diffusion', 'D'),
-]
-
 logbase = 'logs'
 
 base = {
@@ -339,7 +322,7 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch_fmv3_ode_train),
+        'exp_name': watch(args_to_watch_v3),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -535,7 +518,7 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch(args_to_watch_v3),
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -559,7 +542,7 @@ base = {
 
         ## loading
         # 'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
-        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_D{diffusion}',
         # 'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}', # DEAD code (Value functions not used in FMv3 sampling)
 
         'diffusion_epoch': 'best',      # 'latest'

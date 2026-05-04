@@ -424,3 +424,16 @@ Keywords: gen3v2u4, plot path standardization, load_results cleanup, experiment 
 1.  **Standardized Plot Paths**: Redirected plot outputs from the script directory/CWD to a dedicated `plots/load_results_output_all_seeds` subfolder within the experiment log directory.
 2.  **Dynamic Resolution**: Implemented dynamic `plot_path` logic in `load_results.py` and its FMv3 variant to ensure plots are always saved relative to the loaded data.
 3.  **Audit Visibility**: Detailed the changes and rationale in `logs_in_develop/Gen3v2/gen3v2u4_load_results_path_fix/load_results_path_fix.md`.
+
+## Gen3v3u5: FMv3-ODE Standardized Naming & Snapshot Hotfix (4. May)
+
+Keywords: standardized naming, descriptive folder paths, Smart Config Snapshot, full traceability, hyperparameter auditing.
+
+1.  **Standardized Folder Naming**: Refactored the naming logic for FMv3-ODE to include crucial tuneable parameters. 
+    - **Training**: Paths now reflect Beta sampling (`a`, `b`) and action weights (`aw`) (e.g., `H8_D..._a1.5_b1.0_aw1`).
+    - **Planning**: Paths include the solver method (`M`) (e.g., `H8_K10_Meuler_D...`), keeping the paths clean of training-only metadata while ensuring uniqueness.
+2.  **Smart Config Snapshots**: Implemented an automated archiving system in `Parser.mkdir()`. Every training and evaluation run now captures a snapshot of the exact `.py` and `.yaml` configuration files used.
+    - **Archive Path**: `logs/.../seed_X/config_snapshot_{name}/`
+    - **Files Captured**: `avoiding-d3il.py`, `projection_eval.yaml`.
+3.  **Sync Logic**: Updated `diffusion_loadpath` to automatically resolve the new descriptive training folder names, ensuring zero-configuration loading for evaluation.
+4.  **Audit Visibility**: Created detailed reports at `logs_in_develop/Gen3v2/Gen3v3u5_log_output_path_config_update/`.
