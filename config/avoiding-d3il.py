@@ -540,6 +540,9 @@ base = {
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
+        'action_weight': 1,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
         # 'n_diffusion_steps': 20, # DEAD code (mathematically irrelevant for FM flow)
         'flow_steps_v3': 10,
         # 'ode_inference_steps_v3': 10, # DEAD code (compatibility alias for flow_steps_v3)
