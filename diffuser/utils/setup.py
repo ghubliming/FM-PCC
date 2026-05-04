@@ -197,6 +197,15 @@ class Parser(argparse.ArgumentParser):
 
         os.makedirs(snapshot_dir, exist_ok=True)
 
+        # Add a timestamp file to mark when the snapshot was taken
+        try:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            with open(os.path.join(snapshot_dir, f'snapshot_{timestamp}'), 'w') as f:
+                f.write(f'Snapshot taken at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
+        except Exception:
+            pass
+
         # 1. Copy the main python config module file
         try:
             import importlib.util
