@@ -76,7 +76,11 @@ class Parser(argparse.ArgumentParser):
         self.set_seed(args)
         self.set_loadbase(args)
         self.generate_exp_name(args)
-        self.mkdir(args)
+        
+        # Only save args if we are training. In evaluation, we want to avoid 
+        # creating redundant and confusing 'args_resume_X.json' files.
+        save = (experiment == 'train')
+        self.mkdir(args, save=save)
         return args
 
     def read_config(self, args, experiment):
@@ -164,7 +168,7 @@ class Parser(argparse.ArgumentParser):
             setattr(args, 'exp_name', exp_name_string)
             self._dict['exp_name'] = exp_name_string
 
-    def mkdir(self, args):
+    def mkdir(self, args, save=True):
         if 'logbase' in dir(args) and 'dataset' in dir(args) and 'exp_name' in dir(args):
             args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name, str(args.seed))
             self.savepath = args.savepath
@@ -173,4 +177,5 @@ class Parser(argparse.ArgumentParser):
             #     args.savepath = os.path.join(args.savepath, args.suffix)
             if mkdir(args.savepath):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
-            self.save(args)
+            if save:
+                self.save(args)
