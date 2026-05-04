@@ -1,5 +1,7 @@
 # Test History
 
+For SLURM jobs history, refer to [important_runs.md](file:///workspaces/FM-PCC/Slurm_Codes/logs/important_runs/important_runs.md)
+
 Purpose: concise record of what was tested across all generations/vresions. Master logging markdown.
 
 ## Gen1
@@ -396,7 +398,7 @@ Keywords: gen3v2u3 critical, all_seeds aggregation, full data persistence, obs_a
 1.  **Full Data Persistence (CRITICAL)**: Resolved the "Ephemeral Result" bottleneck by modifying evaluation scripts to save raw trajectory coordinates (`obs_all`) and actions (`act_all`) for all trials into `.npz` files. 
 2.  **Aggregation Mode**: Implemented the `--aggregate-only` flag, allowing users to regenerate `all_seeds` summary plots instantly from disk data without re-running model inference or MuJoCo.
 3.  **Slurm Parallelization**: Added `--seed` command-line support to allow running individual seeds as separate Slurm jobs, which can then be retrospectively aggregated into a single summary plot.
-4.  **Baseline Parity**: Applied these upgrades to both `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` and the baseline `scripts/eval.py`.
+4.  **Baseline Parity**: Applied these upgrades to both `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` and the baseline `scripts/eval.py` (Note: Tee logger fix for baseline injected on 4. May).
 5.  **Audit Visibility**: Created a dedicated audit report at `logs_in_develop/gen3v2u3_hot_fix_eval_data_saving/hotfix_report.md` detailing the "Before vs. After" architectural shift.
 
 ## Gen3v2  misc hotfix: Evaluation Configuration Metadata Cleanup (4. May)
@@ -437,3 +439,4 @@ Keywords: standardized naming, descriptive folder paths, Smart Config Snapshot, 
     - **Files Captured**: `avoiding-d3il.py`, `projection_eval.yaml`.
 3.  **Sync Logic**: Updated `diffusion_loadpath` to automatically resolve the new descriptive training folder names, ensuring zero-configuration loading for evaluation.
 4.  **Audit Visibility**: Created detailed reports at `logs_in_develop/Gen3v2/Gen3v3u5_log_output_path_config_update/`.
+
