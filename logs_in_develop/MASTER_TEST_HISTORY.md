@@ -416,3 +416,11 @@ Keywords: wandb naming logic, path-based identity, descriptive groups, experimen
 2.  **Fix**: Updated `scripts/train.py` and `FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py` to derive run names from the relative save path (e.g., `avoiding-d3il-diffusion-H8_K20-S5`).
 3.  **Grouping**: Implemented automatic W&B grouping by experiment folder, ensuring all seeds of a configuration are clustered together.
 4.  **Visibility**: Created a detailed hotfix report at `logs_in_develop/gen3v2_hotfix_wandb_naming_better/hotfix_report.md`.
+
+## Gen3v2 misc hotfix: Plot Output Path Standardization (4. May)
+
+Keywords: gen3v2u4, plot path standardization, load_results cleanup, experiment encapsulation.
+
+1.  **Standardized Plot Paths**: Redirected plot outputs from the script directory/CWD to a dedicated `plots/load_results_output_all_seeds` subfolder within the experiment log directory.
+2.  **Dynamic Resolution**: Implemented dynamic `plot_path` logic in `load_results.py` and its FMv3 variant to ensure plots are always saved relative to the loaded data.
+3.  **Audit Visibility**: Detailed the changes and rationale in `logs_in_develop/Gen3v2/gen3v2u4_load_results_path_fix/load_results_path_fix.md`.
