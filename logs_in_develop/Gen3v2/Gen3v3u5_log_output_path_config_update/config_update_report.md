@@ -27,7 +27,10 @@ Evaluation folders now prioritize planning-specific parameters (like the ODE sol
 - **Folder Example**: `logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_K10_Meuler_D.../`
 
 ### 3. Automated Model Loading
-The `diffusion_loadpath` in the planning block was updated to include the training-time parameters (`a`, `b`, `aw`). This allows the evaluation script to automatically resolve the correct model path based on the shared configuration values.
+The `diffusion_loadpath` in the planning block was updated to include the training-time parameters (`a`, `b`, `aw`). This allows the evaluation script to automatically resolve the correct model path based on the shared configuration values. 
+
+> [!IMPORTANT]
+> **Bugfix**: Explicitly added `action_weight`, `time_beta_alpha_v3`, and `time_beta_beta_v3` to the `plan_fm_v3_ode_selectable` block. This prevents an `AttributeError` during f-string expansion when the evaluation script tries to resolve the model's load path.
 
 ### 4. Smart Config Snapshots
 Every experiment now automatically archives its source configuration files (`.py` and `.yaml`) into a dedicated subfolder for full traceability.
