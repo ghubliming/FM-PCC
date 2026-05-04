@@ -437,6 +437,7 @@ Keywords: standardized naming, descriptive folder paths, Smart Config Snapshot, 
 2.  **Smart Config Snapshots**: Implemented an automated archiving system in `Parser.mkdir()`. Every training and evaluation run now captures a snapshot of the exact `.py` and `.yaml` configuration files used.
     - **Archive Path**: `logs/.../seed_X/config_snapshot_{name}/`
     - **Files Captured**: `avoiding-d3il.py`, `projection_eval.yaml`.
+    - **Force Overwrite (Updated 4. May)**: Snapshots now overwrite on every run (matching evaluation behavior) and include a trailing timestamp file to verify copy completion.
 3.  **Sync Logic**: Updated `diffusion_loadpath` to automatically resolve the new descriptive training folder names, ensuring zero-configuration loading for evaluation.
 4.  **Audit Visibility**: Created detailed reports at `logs_in_develop/Gen3v2/Gen3v3u5_log_output_path_config_update/`.
 
