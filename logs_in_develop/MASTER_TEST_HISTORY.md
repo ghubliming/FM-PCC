@@ -399,7 +399,7 @@ Keywords: gen3v2u3 critical, all_seeds aggregation, full data persistence, obs_a
 4.  **Baseline Parity**: Applied these upgrades to both `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` and the baseline `scripts/eval.py`.
 5.  **Audit Visibility**: Created a dedicated audit report at `logs_in_develop/gen3v2u3_hot_fix_eval_data_saving/hotfix_report.md` detailing the "Before vs. After" architectural shift.
 
-## Gen3v2u4: Evaluation Configuration Metadata Cleanup (4. May)
+## Gen3v2  misc hotfix: Evaluation Configuration Metadata Cleanup (4. May)
 
 Keywords: gen3v2u4, metadata cleanup, redundant args logging, Parser architecture, evaluation noise reduction.
 
@@ -407,3 +407,12 @@ Keywords: gen3v2u4, metadata cleanup, redundant args logging, Parser architectur
 2.  **Conditional Parser Save**: Re-architected the `Parser` class in `utils/setup.py` to only enable automatic configuration saving when the experiment type is explicitly set to `'train'`.
 3.  **Module Standardization**: Synchronized this fix across both the core `diffuser` module and the `flow_matcher_v3_ode_selectable` module to ensure consistent logging behavior.
 4.  **Audit Visibility**: Documented the problem and technical fix in `logs_in_develop/gen3v2_hotfix_arg_resume_eval/hotfix_report.md`.
+
+## Gen3v2 misc hotfix: W&B Run Naming & Grouping Stabilization (4. May)
+
+Keywords: wandb naming logic, path-based identity, descriptive groups, experiment tracking.
+
+1.  **Problem**: W&B runs were cryptically named `{dataset}-seed-{seed}`, making it impossible to identify the model type or hyperparameters without deep inspection.
+2.  **Fix**: Updated `scripts/train.py` and `FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py` to derive run names from the relative save path (e.g., `avoiding-d3il-diffusion-H8_K20-S5`).
+3.  **Grouping**: Implemented automatic W&B grouping by experiment folder, ensuring all seeds of a configuration are clustered together.
+4.  **Visibility**: Created a detailed hotfix report at `logs_in_develop/gen3v2_hotfix_wandb_naming_better/hotfix_report.md`.
