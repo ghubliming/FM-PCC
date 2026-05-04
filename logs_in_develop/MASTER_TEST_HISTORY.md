@@ -398,3 +398,12 @@ Keywords: gen3v2u3 critical, all_seeds aggregation, full data persistence, obs_a
 3.  **Slurm Parallelization**: Added `--seed` command-line support to allow running individual seeds as separate Slurm jobs, which can then be retrospectively aggregated into a single summary plot.
 4.  **Baseline Parity**: Applied these upgrades to both `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` and the baseline `scripts/eval.py`.
 5.  **Audit Visibility**: Created a dedicated audit report at `logs_in_develop/gen3v2u3_hot_fix_eval_data_saving/hotfix_report.md` detailing the "Before vs. After" architectural shift.
+
+## Gen3v2u4: Evaluation Configuration Metadata Cleanup (4. May)
+
+Keywords: gen3v2u4, metadata cleanup, redundant args logging, Parser architecture, evaluation noise reduction.
+
+1.  **Redundant Logging Fix**: Eliminated the generation of hundreds of confusing `args_resume_X.json` files during evaluation runs.
+2.  **Conditional Parser Save**: Re-architected the `Parser` class in `utils/setup.py` to only enable automatic configuration saving when the experiment type is explicitly set to `'train'`.
+3.  **Module Standardization**: Synchronized this fix across both the core `diffuser` module and the `flow_matcher_v3_ode_selectable` module to ensure consistent logging behavior.
+4.  **Audit Visibility**: Documented the problem and technical fix in `logs_in_develop/gen3v2_hotfix_arg_resume_eval/hotfix_report.md`.
