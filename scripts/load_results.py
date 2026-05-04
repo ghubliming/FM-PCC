@@ -21,6 +21,10 @@ sr_goal_all = {}
 sr_constraints_all = {}
 timesteps_avg_all = {}
 timesteps_std_all = {}
+import os
+
+# We will set the plot_path dynamically inside the loop
+plot_path = None
 
 for variant in projection_variants:
     n_success_all = np.array([])
@@ -32,6 +36,13 @@ for variant in projection_variants:
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             args = Parser().parse_args(experiment='plan', seed=seed)
+            if plot_path is None:
+                # The savepath is usually logbase/dataset/exp_name/seed
+                # We want the plots to be in logbase/dataset/exp_name/plots/load_results_output_all_seeds
+                load_path = os.path.dirname(args.savepath)
+                plot_path = os.path.join(load_path, 'plots', 'load_results_output_all_seeds')
+                os.makedirs(plot_path, exist_ok=True)
+                print(f'[ utils ] Set plot_path to: {plot_path}')
 
             # Get data
             data = np.load(f'{args.savepath}/results/halfspace_{halfspace_variant}/{variant}.npz', allow_pickle=True)
@@ -119,7 +130,8 @@ for variants in variants_to_plot:
 
     fig.tight_layout()
 
-    plt.savefig('success_rates_tightened.png') if 'tightened' in variants[0] else plt.savefig('success_rates.png')
+    save_name = 'success_rates_tightened.png' if 'tightened' in variants[0] else 'success_rates.png'
+    plt.savefig(os.path.join(plot_path, save_name))
     plt.show()
 
     # Create the second bar plot for timesteps
@@ -137,5 +149,6 @@ for variants in variants_to_plot:
     add_labels(bars)
 
     fig.tight_layout()
-    plt.savefig('timesteps_tightened.png') if 'tightened' in variants[0] else plt.savefig('timesteps.png')
+    save_name = 'timesteps_tightened.png' if 'tightened' in variants[0] else 'timesteps.png'
+    plt.savefig(os.path.join(plot_path, save_name))
     plt.show()

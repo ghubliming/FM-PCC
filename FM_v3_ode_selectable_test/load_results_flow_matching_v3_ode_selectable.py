@@ -10,11 +10,6 @@ with open('config/projection_eval.yaml', 'r') as file:
 
 projection_variants = config['projection_variants']
 
-# Set up plot output directory
-script_dir = os.path.dirname(os.path.abspath(__file__))
-plot_path = os.path.join(script_dir, 'plots')
-os.makedirs(plot_path, exist_ok=True)
-
 exp = 'avoiding-d3il'
 class Parser(utils.Parser):
     dataset: str = exp
@@ -28,6 +23,9 @@ sr_constraints_all = {}
 timesteps_avg_all = {}
 timesteps_std_all = {}
 
+# We will set the plot_path dynamically inside the loop
+plot_path = None
+
 for variant in projection_variants:
     n_success_all = np.array([])
     n_success_and_constraints_all = np.array([])
@@ -38,6 +36,14 @@ for variant in projection_variants:
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             args = Parser().parse_args(experiment='plan_fm_v3_ode_selectable', seed=seed)
+            if plot_path is None:
+                # The savepath is usually logbase/dataset/exp_name/seed
+                # We want the plots to be in logbase/dataset/exp_name/plots/load_results_output_all_seeds
+                load_path = os.path.dirname(args.savepath)
+                plot_path = os.path.join(load_path, 'plots', 'load_results_output_all_seeds')
+                os.makedirs(plot_path, exist_ok=True)
+                print(f'[ utils ] Set plot_path to: {plot_path}')
+
             flow_steps = getattr(args, 'flow_steps_v3', getattr(args, 'ode_inference_steps_v3', 'n/a'))
             ode_steps = getattr(args, 'ode_inference_steps_v3', flow_steps)
             beta_alpha = getattr(args, 'time_beta_alpha_v3', 'n/a')
