@@ -13,6 +13,17 @@ from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding imp
 import argparse
 import sys
 
+class Tee(object):
+    def __init__(self, *files):
+        self.files = files
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
 # --- Argument Parsing ---
 parser = argparse.ArgumentParser(description='Baseline Evaluation script with aggregation mode.')
 parser.add_argument('--seed', type=int, help='Run only this specific seed.')
@@ -162,222 +173,230 @@ for exp in exps:
                     continue
 
                 # INFERENCE MODE
-                print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
-
-                gradient = True if 'gradient' in variant else False
-
-                if 'model_free' in variant and 'tightened' in variant:
-                    constraints = constraint_list_without_prior_tightened
-                elif 'model_free' in variant and not 'tightened' in variant:
-                    constraints = constraint_list_without_prior
-                elif not 'model_free' in variant and 'tightened' in variant:
-                    constraints = constraint_list_tightened
-                else:
-                    constraints = constraint_list
-
-                delta_t = dt
-                if 'dt0p25' in variant:
-                    delta_t = 0.25 * dt
-                elif 'dt0p5' in variant:
-                    delta_t = 0.5 * dt
-                elif 'dt2p0' in variant:
-                    delta_t = 2.0 * dt
-                elif 'dt4p0' in variant:
-                    delta_t = 4.0 * dt
-
-                # Create projector
-                projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=diffusion.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, 
-                                        gradient=gradient, gradient_weights=[1, 0.5, 2], variant=diffuser_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy')
-                projector = None if variant == 'diffuser' else projector
-
-                trajectory_selection = 'random'
-                if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
-                if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
-
-                # Create policy
-                policy = Policy(model=diffusion, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, 
-                                test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)    
-
-                # Run policy
-                fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)))
-                fig.suptitle(f'{exp} - {variant}')
-
-                save_samples_every = args.horizon // 2
-
-                # Store a few sampled trajectories
-                sampled_trajectories_all = []        
-                n_success = np.zeros(n_trials)
-                n_success_and_constraints = np.zeros(n_trials)
-                n_steps = np.zeros(n_trials)
-                n_violations = np.zeros(n_trials)
-                total_violations = np.zeros(n_trials)
-                avg_time = np.zeros(n_trials)
-                collision_free_completed = np.ones(n_trials)
-                pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
-
-                obs_all = []
-                act_all = []
+                log_file = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+                original_stdout = sys.stdout
+                sys.stdout = Tee(sys.stdout, log_file)
                 
-                fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)))
+                try:
+                    print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
 
-                for i in range(n_trials):
-                    torch.manual_seed(i)
-                    env_seed = env_seeds[i] if ('pointmaze-umaze' in exp) else i
-                    
-                    # Reset environment
-                    if 'avoiding' in exp:
-                        obs = env.reset()
-                        action = env.robot_state()[:2]
-                        fixed_z = env.robot_state()[2:]
+                    gradient = True if 'gradient' in variant else False
+
+                    if 'model_free' in variant and 'tightened' in variant:
+                        constraints = constraint_list_without_prior_tightened
+                    elif 'model_free' in variant and not 'tightened' in variant:
+                        constraints = constraint_list_without_prior
+                    elif not 'model_free' in variant and 'tightened' in variant:
+                        constraints = constraint_list_tightened
                     else:
-                        obs, _ = env.reset(seed=env_seed)
+                        constraints = constraint_list
+
+                    delta_t = dt
+                    if 'dt0p25' in variant:
+                        delta_t = 0.25 * dt
+                    elif 'dt0p5' in variant:
+                        delta_t = 0.5 * dt
+                    elif 'dt2p0' in variant:
+                        delta_t = 2.0 * dt
+                    elif 'dt4p0' in variant:
+                        delta_t = 4.0 * dt
+
+                    # Create projector
+                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=diffusion.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, 
+                                            gradient=gradient, gradient_weights=[1, 0.5, 2], variant=diffuser_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy')
+                    projector = None if variant == 'diffuser' else projector
+
+                    trajectory_selection = 'random'
+                    if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
+                    if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+
+                    # Create policy
+                    policy = Policy(model=diffusion, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, 
+                                    test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)    
+
+                    # Run policy
+                    fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)))
+                    fig.suptitle(f'{exp} - {variant}')
+
+                    save_samples_every = args.horizon // 2
+
+                    # Store a few sampled trajectories
+                    sampled_trajectories_all = []        
+                    n_success = np.zeros(n_trials)
+                    n_success_and_constraints = np.zeros(n_trials)
+                    n_steps = np.zeros(n_trials)
+                    n_violations = np.zeros(n_trials)
+                    total_violations = np.zeros(n_trials)
+                    avg_time = np.zeros(n_trials)
+                    collision_free_completed = np.ones(n_trials)
+                    pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
+
+                    obs_all = []
+                    act_all = []
                     
-                    if 'pointmaze' in exp:
-                        obs = np.concatenate((obs['observation'], obs['desired_goal']))
-                    elif 'antmaze' in exp:
-                        obs = np.concatenate((obs['achieved_goal'], obs['observation'], obs['desired_goal']))
-                    elif 'avoiding' in exp:
-                        obs = np.concatenate((action[:2], obs))           
+                    fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)))
+
+                    for i in range(n_trials):
+                        torch.manual_seed(i)
+                        env_seed = env_seeds[i] if ('pointmaze-umaze' in exp) else i
                         
-                    obs_buffer = []
-                    action_buffer = []
-
-                    sampled_trajectories = []
-                    disable_projection = False
-                    for _ in range(args.max_episode_length):
-                        # Check if a safety constraint is violated
-                        violated_this_timestep = 0
-                        if 'halfspace' in constraint_types:
-                            for constraint in constraint_list_polytopic_not_tightened:
-                                if constraint[0] == 'ineq':
-                                    c, d = constraint[1]
-                                    obs_to_check = obs[:-diffusion.goal_dim] if diffusion.goal_dim > 0 else obs
-                                    if obs_to_check @ c[action_dim:] >= d:
-                                        violated_this_timestep = 1
-                                        total_violations[i] += obs_to_check @ c[action_dim:] - d
-                                        collision_free_completed[i] = 0
-
-                        if 'obstacles' in constraint_types:
-                            for constraint in obstacle_constraints:
-                                if np.linalg.norm(obs[[obs_indices['x'], obs_indices['y']]] - constraint['center']) < constraint['radius']:
-                                    violated_this_timestep = 1
-                                    total_violations[i] += constraint['radius'] - np.linalg.norm(obs[[obs_indices['x'], obs_indices['y']]] - constraint['center'])
-                                    collision_free_completed[i] = 0
-                        
-                        if _ > 0 and 'bounds' in constraint_types:
-                            act_obs = np.concatenate((action, obs)) if action_dim > 0 else obs
-                            total_violations[i] += np.sum(np.maximum(0, act_obs - upper_bound)) + np.sum(np.maximum(0, lower_bound - act_obs))
-
-                        n_violations[i] += violated_this_timestep
-                        
-                        # Calculate action
-                        start = time.time()
-                        action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
-                        avg_time[i] += time.time() - start
-
-                        # Step environment
+                        # Reset environment
                         if 'avoiding' in exp:
-                            next_pos_des = action + obs[:2] 
-                            obs, rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
-                            success = info[1]
+                            obs = env.reset()
+                            action = env.robot_state()[:2]
+                            fixed_z = env.robot_state()[2:]
                         else:
-                            obs, rew, terminated, truncated, info = env.step(action)
-                            success = info['success']
-
+                            obs, _ = env.reset(seed=env_seed)
+                        
                         if 'pointmaze' in exp:
                             obs = np.concatenate((obs['observation'], obs['desired_goal']))
                         elif 'antmaze' in exp:
                             obs = np.concatenate((obs['achieved_goal'], obs['observation'], obs['desired_goal']))
                         elif 'avoiding' in exp:
-                            obs = np.concatenate((next_pos_des[:2], obs))
+                            obs = np.concatenate((action[:2], obs))           
+                            
+                        obs_buffer = []
+                        action_buffer = []
 
-                        # Get tracking error
-                        if _ >= 1:
-                            pos_tracking_errors[i, _-1] = np.linalg.norm(obs[obs_indices['x']:obs_indices['y']+1] - desired_next_pos)
-                        desired_next_pos = samples.observations[0, 1, [obs_indices['x'], obs_indices['y']]]
+                        sampled_trajectories = []
+                        disable_projection = False
+                        for _ in range(args.max_episode_length):
+                            # Check if a safety constraint is violated
+                            violated_this_timestep = 0
+                            if 'halfspace' in constraint_types:
+                                for constraint in constraint_list_polytopic_not_tightened:
+                                    if constraint[0] == 'ineq':
+                                        c, d = constraint[1]
+                                        obs_to_check = obs[:-diffusion.goal_dim] if diffusion.goal_dim > 0 else obs
+                                        if obs_to_check @ c[action_dim:] >= d:
+                                            violated_this_timestep = 1
+                                            total_violations[i] += obs_to_check @ c[action_dim:] - d
+                                            collision_free_completed[i] = 0
+                            
+                            if 'obstacles' in constraint_types:
+                                for constraint in obstacle_constraints:
+                                    if np.linalg.norm(obs[[obs_indices['x'], obs_indices['y']]] - constraint['center']) < constraint['radius']:
+                                        violated_this_timestep = 1
+                                        total_violations[i] += constraint['radius'] - np.linalg.norm(obs[[obs_indices['x'], obs_indices['y']]] - constraint['center'])
+                                        collision_free_completed[i] = 0
 
-                        if _ % save_samples_every == 0:
-                            sampled_trajectories.append(samples.observations[:, :, :])
+                            if _ > 0 and 'bounds' in constraint_types:
+                                act_obs = np.concatenate((action, obs)) if action_dim > 0 else obs
+                                total_violations[i] += np.sum(np.maximum(0, act_obs - upper_bound)) + np.sum(np.maximum(0, lower_bound - act_obs))
 
-                        obs_buffer.append(obs)
-                        action_buffer.append(action)
-                        if success: n_success[i] = 1
-                        if (terminated or _ == args.max_episode_length - 1) and (not success): collision_free_completed[i] = 0
+                            n_violations[i] += violated_this_timestep
 
-                        if success or terminated or _ == args.max_episode_length - 1:
-                            n_steps[i] = _
-                            avg_time[i] /= _
-                            if success and collision_free_completed[i]: n_success_and_constraints[i] = 1
-                            break
+                            # Calculate action
+                            start = time.time()
+                            action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
+                            avg_time[i] += time.time() - start
 
-                    obs_all.append(np.array(obs_buffer))
-                    act_all.append(np.array(action_buffer))
+                            # Step environment
+                            if 'avoiding' in exp:
+                                next_pos_des = action + obs[:2] 
+                                obs, rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
+                                success = info[1]
+                            else:
+                                obs, rew, terminated, truncated, info = env.step(action)
+                                success = info['success']
 
-                    sampled_trajectories_all.append(sampled_trajectories)
-                    if i >= plot_how_many:     # Plot only the first n trials
-                        continue
-                    plot_states = ['x', 'y', 'x_des', 'y_des']
+                            if 'pointmaze' in exp:
+                                obs = np.concatenate((obs['observation'], obs['desired_goal']))
+                            elif 'antmaze' in exp:
+                                obs = np.concatenate((obs['achieved_goal'], obs['observation'], obs['desired_goal']))
+                            elif 'avoiding' in exp:
+                                obs = np.concatenate((next_pos_des[:2], obs))
 
-                    for j in range(len(plot_states)):
-                        ax[i, j].plot(np.array(obs_buffer)[:, obs_indices[plot_states[j]]])
-                        ax[i, j].set_title(plot_states[j])
-                    
-                    axes = [ax[i, 4], ax_all[i, variant_idx]]
-                    for curr_ax in axes:
-                        curr_ax.plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], 'k')
-                        curr_ax.plot(np.array(obs_buffer)[0, obs_indices['x']], np.array(obs_buffer)[0, obs_indices['y']], 'go', label='Start')            # Start
-                        curr_ax.set_xlim(ax_limits[0])
-                        curr_ax.set_ylim(ax_limits[1])
+                            # Get tracking error
+                            if _ >= 1:
+                                pos_tracking_errors[i, _-1] = np.linalg.norm(obs[obs_indices['x']:obs_indices['y']+1] - desired_next_pos)
+                            desired_next_pos = samples.observations[0, 1, [obs_indices['x'], obs_indices['y']]]
 
-                    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-                    axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
-                    
-                    axes = [ax[i, 5], ax_all[i, variant_idx]]
-                    for __ in range(len(sampled_trajectories_all[i])):          # Iterate over timesteps of sampled trajectories
-                        for ___ in range(min(args.batch_size, 4)):              # Iterate over batch
-                            for curr_ax in axes:
-                                curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
-                                curr_ax.plot(sampled_trajectories_all[i][__][___, 0, obs_indices['x']], sampled_trajectories_all[i][__][___, 0, obs_indices['y']], 'go', label='Start')    # Current state
-                    ax[i, 5].set_xlim(ax_limits[0])
-                    ax[i, 5].set_ylim(ax_limits[1])
+                            if _ % save_samples_every == 0:
+                                sampled_trajectories.append(samples.observations[:, :, :])
 
-                    # Plot constraints
-                    axes = [ax[i, 4], ax[i, 5], ax_all[i, variant_idx]]
-                    for curr_ax in axes: 
-                        utils.plot_environment_constraints(exp, curr_ax)
+                            obs_buffer.append(obs)
+                            action_buffer.append(action)
+                            if success: n_success[i] = 1
+                            if (terminated or _ == args.max_episode_length - 1) and (not success): collision_free_completed[i] = 0
 
-                        if 'halfspace' in constraint_types: utils.plot_halfspace_constraints(exp, polytopic_constraints, curr_ax, ax_limits)
+                            if success or terminated or _ == args.max_episode_length - 1:
+                                n_steps[i] = _
+                                avg_time[i] /= _
+                                if success and collision_free_completed[i]: n_success_and_constraints[i] = 1
+                                break
 
-                        if 'obstacles' in constraint_types:
-                            for constraint in obstacle_constraints:
-                                curr_ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
+                        obs_all.append(np.array(obs_buffer))
+                        act_all.append(np.array(action_buffer))
 
-                print(f'Success rate: {np.mean(n_success)}')
-                print(f'Constraints satisfied: {np.mean(collision_free_completed)}')
-                print(f'Success rate (goal and constraints): {np.mean(n_success_and_constraints)}')
-                print(f'Avg number of steps: {(np.mean(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f} +- {(np.std(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f}')
-                print(f'Avg number of constraint violations: {np.mean(n_violations):.2f} +- {np.std(n_violations):.2f}')
-                print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
-                print(f'Average computation time per step: {np.mean(avg_time):.3f}')
-                if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
+                        sampled_trajectories_all.append(sampled_trajectories)
+                        if i >= plot_how_many:     # Plot only the first n trials
+                            continue
+                        plot_states = ['x', 'y', 'x_des', 'y_des']
 
-                if config['write_to_file']:
-                    np.savez(f'{save_path}/{variant}.npz', 
-                            n_success=n_success, 
-                            n_success_and_constraints=n_success_and_constraints,
-                            n_steps=n_steps, 
-                            n_violations=n_violations, 
-                            total_violations=total_violations, 
-                            avg_time=avg_time, 
-                            collision_free_completed=collision_free_completed, 
-                            args=args,
-                            obs_all=np.array(obs_all, dtype=object),
-                            act_all=np.array(act_all, dtype=object))
+                        for j in range(len(plot_states)):
+                            ax[i, j].plot(np.array(obs_buffer)[:, obs_indices[plot_states[j]]])
+                            ax[i, j].set_title(plot_states[j])
+                        
+                        axes = [ax[i, 4], ax_all[i, variant_idx]]
+                        for curr_ax in axes:
+                            curr_ax.plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], 'k')
+                            curr_ax.plot(np.array(obs_buffer)[0, obs_indices['x']], np.array(obs_buffer)[0, obs_indices['y']], 'go', label='Start')            # Start
+                            curr_ax.set_xlim(ax_limits[0])
+                            curr_ax.set_ylim(ax_limits[1])
 
-                fig.savefig(f'{save_path}/{variant}.png')   
-                plt.close(fig)
+                        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                        axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
+                        
+                        axes = [ax[i, 5], ax_all[i, variant_idx]]
+                        for __ in range(len(sampled_trajectories_all[i])):          # Iterate over timesteps of sampled trajectories
+                            for ___ in range(min(args.batch_size, 4)):              # Iterate over batch
+                                for curr_ax in axes:
+                                    curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
+                                    curr_ax.plot(sampled_trajectories_all[i][__][___, 0, obs_indices['x']], sampled_trajectories_all[i][__][___, 0, obs_indices['y']], 'go', label='Start')    # Current state
+                        ax[i, 5].set_xlim(ax_limits[0])
+                        ax[i, 5].set_ylim(ax_limits[1])
 
-                ax_all[0, variant_idx].set_title(variant)
+                        # Plot constraints
+                        axes = [ax[i, 4], ax[i, 5], ax_all[i, variant_idx]]
+                        for curr_ax in axes: 
+                            utils.plot_environment_constraints(exp, curr_ax)
+
+                            if 'halfspace' in constraint_types: utils.plot_halfspace_constraints(exp, polytopic_constraints, curr_ax, ax_limits)
+
+                            if 'obstacles' in constraint_types:
+                                for constraint in obstacle_constraints:
+                                    curr_ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
+
+                    print(f'Success rate: {np.mean(n_success)}')
+                    print(f'Constraints satisfied: {np.mean(collision_free_completed)}')
+                    print(f'Success rate (goal and constraints): {np.mean(n_success_and_constraints)}')
+                    print(f'Avg number of steps: {(np.mean(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f} +- {(np.std(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f}')
+                    print(f'Avg number of constraint violations: {np.mean(n_violations):.2f} +- {np.std(n_violations):.2f}')
+                    print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
+                    print(f'Average computation time per step: {np.mean(avg_time):.3f}')
+                    if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
+
+                    if config['write_to_file']:
+                        np.savez(f'{save_path}/{variant}.npz', 
+                                n_success=n_success, 
+                                n_success_and_constraints=n_success_and_constraints,
+                                n_steps=n_steps, 
+                                n_violations=n_violations, 
+                                total_violations=total_violations, 
+                                avg_time=avg_time, 
+                                collision_free_completed=collision_free_completed, 
+                                args=args,
+                                obs_all=np.array(obs_all, dtype=object),
+                                act_all=np.array(act_all, dtype=object))
+
+                    fig.savefig(f'{save_path}/{variant}.png')   
+                    plt.close(fig)
+
+                    ax_all[0, variant_idx].set_title(variant)
+                finally:
+                    sys.stdout = original_stdout
+                    log_file.close()
                 
             if not args_cli.aggregate_only:
                 fig_all.savefig(f'{save_path}/all.png')
@@ -402,4 +421,3 @@ for exp in exps:
         
         if not args_cli.aggregate_only:
             plt.show()
-        
