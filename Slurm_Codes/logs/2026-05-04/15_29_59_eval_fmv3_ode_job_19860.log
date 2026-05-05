@@ -1,0 +1,32 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon May  4 13:30:00 UTC 2026
+JOB NAME:  eval_fmv3_ode_job
+JOB ID:    19860
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   73d658c
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py", line 76, in <module>
+    args = Parser().parse_args(experiment='plan_fm_v3_ode_selectable', seed=seed)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/setup.py", line 77, in parse_args
+    self.eval_fstrings(args)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/setup.py", line 146, in eval_fstrings
+    new = lazy_fstring(val, args)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/setup.py", line 40, in lazy_fstring
+    return eval(f"f'{template}'")
+  File "<string>", line 1, in <module>
+AttributeError: 'Namespace' object has no attribute 'time_beta_alpha_v3'
+================================================================================
+JOB END:   Mon May  4 13:30:05 UTC 2026
+================================================================================
