@@ -192,19 +192,7 @@ class Parser(argparse.ArgumentParser):
         config_name = args.config.split('.')[-1]
         snapshot_dir = os.path.join(args.savepath, f'config_snapshot_{config_name}')
         
-        if os.path.exists(snapshot_dir):
-            return # Already snapshotted (e.g. on resume)
-
         os.makedirs(snapshot_dir, exist_ok=True)
-
-        # Add a timestamp file to mark when the snapshot was taken
-        try:
-            from datetime import datetime
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            with open(os.path.join(snapshot_dir, f'snapshot_{timestamp}'), 'w') as f:
-                f.write(f'Snapshot taken at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
-        except Exception:
-            pass
 
         # 1. Copy the main python config module file
         try:
@@ -228,3 +216,12 @@ class Parser(argparse.ArgumentParser):
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:
                 pass
+
+        # 3. Create a timestamp file AFTER copying is finished
+        try:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            with open(os.path.join(snapshot_dir, f'snapshot_{timestamp}'), 'w') as f:
+                f.write(f'Snapshot taken at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
+        except Exception:
+            pass
