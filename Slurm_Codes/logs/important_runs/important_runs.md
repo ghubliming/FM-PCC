@@ -20,3 +20,11 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-04/14_45_27_load_results_fmv3_job_19859.lo
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-04/15_36_20_eval_fmv3_ode_job_19862.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/11_10_47_load_results_fmv3_job_19885.log
+
+- dpcc 10 steps
+run as pipeline
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_train_19888.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_eval_19889.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_load_results_19890.log
