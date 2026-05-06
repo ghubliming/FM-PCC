@@ -534,7 +534,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/flow_matching_v3_ode_selectable/',
+        'prefix': 'f:plans/flow_matching_v3_ode_selectable/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 model
