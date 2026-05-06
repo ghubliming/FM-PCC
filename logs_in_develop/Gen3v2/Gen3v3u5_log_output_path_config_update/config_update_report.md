@@ -51,3 +51,29 @@ logs/avoiding-d3il/
 - [x] Training path reflects Beta parameters.
 - [x] Plan path reflects Solver method.
 - [x] Evaluation correctly loads weights from the structured training folder.
+
+---
+
+## Update: Nested Evaluation Folders (6. May)
+
+**Status**: Implemented
+**Objective**: Eliminate directory clutter and prevent overwriting results when evaluating multiple models with identical planning parameters.
+
+### Changes
+1. **Nesting Logic**: Updated the `prefix` in `plan_fm_v3_ode_selectable` to dynamically include the training model's hyperparameter signature as a parent directory level.
+2. **Implementation**: Used Python string concatenation in `config/avoiding-d3il.py` to keep the base prefix clean while injecting the "Train Path" level.
+    - **Code**: `'prefix': 'f:plans/flow_matching_v3_ode_selectable/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/'`
+
+### Resulting Directory Structure
+Evaluation results are now perfectly isolated by their parent training model:
+```text
+logs/avoiding-d3il/
+└── plans/
+    └── flow_matching_v3_ode_selectable/
+        └── H8_D..._a1.5_b1.0_aw1/          <-- New Parent Level (Train Path)
+            └── H8_K10_Meuler_D.../         <-- Evaluation Results
+```
+
+### Audit Findings
+- **Dependency Safety**: Verified that the lazy f-string expansion succeeds because the hyperparameters it depends on are static values loaded onto the `args` object before evaluation.
+- **Legacy Integrity**: Confirmed that this change is localized ONLY to the FMv3-ODE block. All legacy diffusion and baseline configurations remain untouched.
