@@ -1,0 +1,110 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed May  6 12:46:43 UTC 2026
+JOB NAME:  fmv3_train
+JOB ID:    19917
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0aa1f66
+================================================================================
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260506_124646-hidcht0r
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run avoiding-d3il-flow_matching_v3_ode_selectable-H8_DGaussianDiffusion_a1.5_b1.0_aw10-S7
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll/runs/hidcht0r
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [7, 8, 9, 10]
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7
+[ train ] Saved seed manifest to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/seeds_config.json
+
+[utils/config ] Config: <class 'flow_matcher_v3_ode_selectable.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 150
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_ode_selectable.models.unet1d_temporal_cond.Flow_matcher_U_Net_v2'>
+    cond_dim: 4
+    condition_dropout: 0.25
+    dim: 32
+    dim_mults: (1, 2, 4, 8)
+    horizon: 8
+    returns_condition: False
+    transition_dim: 6
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_ode_selectable.models.diffusion.GaussianDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_type: l2
+    n_timesteps: 20
+    observation_dim: 4
+    ode_inference_steps_v3: 10
+    predict_epsilon: True
+    returns_condition: False
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/diffusion_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_ode_selectable.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000.0
+    results_folder: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7
+    train_batch_size: 8
+    train_lr: 0.0001
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/7/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   1.0314, a0 loss:   0.1836
+slurmstepd-i6-gpu-1: error: *** JOB 19917 ON i6-gpu-1 CANCELLED AT 2026-05-06T12:47:44 ***
+================================================================================
+JOB END:   Wed May  6 12:47:44 UTC 2026
+================================================================================

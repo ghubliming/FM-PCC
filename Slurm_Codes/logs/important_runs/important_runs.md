@@ -28,3 +28,12 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_train_19888.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_eval_19889.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_load_results_19890.log
+
+- fmv3_ode aw 10
+run as pipeline, with new plan sub folder struct
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_train_19921.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_eval_19922.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_load_results_19923.log
