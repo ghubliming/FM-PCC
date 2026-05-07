@@ -11,6 +11,9 @@ squeue -o "%.10i %.10P %.30j %.10u %.2t %.10M %.10D %R"
 ## shutdown sbatch
 scancel XXXXX
 
+scancel -u $(whoami)
+llim
+
 ## Verfication
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/verify_env_job.sh
 

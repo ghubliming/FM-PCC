@@ -68,7 +68,7 @@ fi
 cd "$REPO"
 
 python FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py \
-    --seeds 7 8 9 10 \
+    --seeds 6 7 8 9 10 \
     --use-wandb \
     --wandb-project FMPCC-knoll
 

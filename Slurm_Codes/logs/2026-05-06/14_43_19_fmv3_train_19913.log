@@ -1,0 +1,43 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed May  6 12:43:21 UTC 2026
+JOB NAME:  fmv3_train
+JOB ID:    19913
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0aa1f66
+================================================================================
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [7, 8, 9, 10]
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py", line 193, in <module>
+    args = Parser().parse_args(experiment='flow_matching_v3_ode_selectable', seed=seed)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/setup.py", line 72, in parse_args
+    args = self.read_config(args, experiment)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/setup.py", line 94, in read_config
+    module = importlib.import_module(args.config)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1017, in get_code
+  File "<frozen importlib._bootstrap_external>", line 947, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/u/home/llim/FMPCC/FM-PCC/config/avoiding-d3il.py", line 309
+    'action_weight': 10
+                     ^^
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+================================================================================
+JOB END:   Wed May  6 12:43:23 UTC 2026
+================================================================================
