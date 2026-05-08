@@ -1,4 +1,14 @@
 from diffuser.utils import watch
+import yaml
+
+# Read the threshold dynamically from the YAML config, abort if not found
+with open('config/projection_eval.yaml', 'r') as f:
+    _proj_config = yaml.safe_load(f)
+
+if 'diffusion_timestep_threshold' not in _proj_config:
+    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/projection_eval.yaml")
+
+_yaml_threshold = _proj_config['diffusion_timestep_threshold']
 
 #------------------------ base ------------------------#
 
@@ -33,6 +43,7 @@ args_to_watch_fmv3_ode_plan = [
     ('horizon', 'H'),
     ('flow_steps_v3', 'K'),
     ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
 ]
 
@@ -557,6 +568,7 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'returns_condition': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
         # 'predict_epsilon': True, # DEAD code (not used in inference velocity prediction)
         # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
 
