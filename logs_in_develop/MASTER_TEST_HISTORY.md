@@ -452,3 +452,11 @@ Keywords: nested paths, evaluation isolation, parent-model-attribution.
 
 > [!WARNING]
 > **Scope Constraint**: This path nesting is **ONLY** active for the `plan_fm_v3_ode_selectable` block. Legacy diffusion and DPCC baseline blocks remain in their original flat folder structure to prevent regressions in downstream analysis scripts.
+
+## Gen3v3u7: Strict YAML Threshold Parsing Hotfix (8. May)
+
+Keywords: strict config parsing, abort on missing, no silent defaults, diffusion_timestep_threshold.
+
+1. **Problem**: The evaluation threshold (`diffusion_timestep_threshold`) in `avoiding-d3il.py` used a `try/except` block with a silent fallback default of `0.5`. This was identified as catastrophic because missing or misconfigured YAML settings would silently run with the wrong threshold while labeling the folder as `T0.5`.
+2. **Fix**: Replaced the safe fallback with strict dictionary indexing. The code now dynamically reads `projection_eval.yaml` at import time and explicitly aborts the program (`ValueError`) if `diffusion_timestep_threshold` is missing.
+3. **Outcome**: The experiment pipeline now guarantees that the threshold stamped on the output folder exactly matches a deliberately defined configuration in the YAML file.
