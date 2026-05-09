@@ -441,7 +441,7 @@ Keywords: standardized naming, descriptive folder paths, Smart Config Snapshot, 
 3.  **Sync Logic**: Updated `diffusion_loadpath` to automatically resolve the new descriptive training folder names, ensuring zero-configuration loading for evaluation.
 4.  **Audit Visibility**: Created detailed reports at `logs_in_develop/Gen3v2/Gen3v3u5_log_output_path_config_update/`.
 
-## Gen3v3u6: Nested Evaluation Folder Structure (6. May)
+## Gen3v3 hotfix: Nested Evaluation Folder Structure (6. May)
 
 Keywords: nested paths, evaluation isolation, parent-model-attribution.
 
@@ -453,7 +453,7 @@ Keywords: nested paths, evaluation isolation, parent-model-attribution.
 > [!WARNING]
 > **Scope Constraint**: This path nesting is **ONLY** active for the `plan_fm_v3_ode_selectable` block. Legacy diffusion and DPCC baseline blocks remain in their original flat folder structure to prevent regressions in downstream analysis scripts.
 
-## Gen3v3u7: Strict YAML Threshold Parsing Hotfix (8. May)
+## Gen3v3 hotfix: Strict YAML Threshold Parsing Hotfix (8. May)
 
 Keywords: strict config parsing, abort on missing, no silent defaults, diffusion_timestep_threshold.
 
