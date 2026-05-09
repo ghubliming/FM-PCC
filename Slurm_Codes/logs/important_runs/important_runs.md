@@ -39,8 +39,13 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_eval_19922.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_load_results_19923.log
 
 - fmv3ode aw1 ode20
-eval, (load results scripts not auto scheduled)
+eval
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/13_11_03_eval_fmv3_ode_job_19965.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/20_52_35_load_results_fmv3_job_19981.log
+
+- fmv3ode full proj
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/11_35_01_eval_fmv3_ode_job_20010.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/21_44_30_load_results_fmv3_job_20031.log
