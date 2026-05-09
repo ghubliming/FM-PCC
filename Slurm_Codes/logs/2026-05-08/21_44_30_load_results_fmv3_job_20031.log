@@ -1,0 +1,439 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri May  8 19:44:31 UTC 2026
+JOB NAME:  load_results_fmv3_job
+JOB ID:    20031
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   d64d041
+================================================================================
+Running load_results_flow_matching_v3_ode_selectable.py...
+[ utils ] Set plot_path to: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion/plots/load_results_output_all_seeds
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-r ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.57
+Success rate (constraints): 0.57
+Average steps: 66.47 +- 5.68
+Average violations: 1.30 +- 1.75
+Average total violations: 0.008 +- 0.016
+Average time: 0.93 +- 0.08
+$66.5 \pm 5.7$ & $1.00$ & $0.57$ & $1.3 \pm 1.8$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-r-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 69.67 +- 8.13
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 1.04 +- 0.04
+$69.7 \pm 8.1$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.53
+Success rate (constraints): 0.53
+Average steps: 75.37 +- 25.67
+Average violations: 8.77 +- 20.27
+Average total violations: 0.101 +- 0.246
+Average time: 0.80 +- 0.22
+$75.4 \pm 25.7$ & $1.00$ & $0.53$ & $8.8 \pm 20.3$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 63.80 +- 8.96
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 1.15 +- 0.02
+$63.8 \pm 9.0$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-t ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.67
+Success rate (constraints): 0.67
+Average steps: 81.00 +- 31.42
+Average violations: 6.77 +- 16.65
+Average total violations: 0.060 +- 0.170
+Average time: 0.78 +- 0.18
+$81.0 \pm 31.4$ & $0.97$ & $0.67$ & $6.8 \pm 16.7$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-t-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 65.67 +- 6.81
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 1.09 +- 0.02
+$65.7 \pm 6.8$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: diffuser ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.10
+Success rate (constraints): 0.10
+Average steps: 73.30 +- 16.44
+Average violations: 17.87 +- 12.85
+Average total violations: 3.384 +- 4.060
+Average time: 0.09 +- 0.00
+$73.3 \pm 16.4$ & $1.00$ & $0.10$ & $17.9 \pm 12.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: gradient ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.10
+Success rate (constraints): 0.10
+Average steps: 71.03 +- 12.57
+Average violations: 15.30 +- 11.36
+Average total violations: 2.182 +- 2.776
+Average time: 0.10 +- 0.00
+$71.0 \pm 12.6$ & $1.00$ & $0.10$ & $15.3 \pm 11.4$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: gradient-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.23
+Success rate (constraints): 0.23
+Average steps: 71.53 +- 12.61
+Average violations: 16.33 +- 13.72
+Average total violations: 2.314 +- 2.793
+Average time: 0.10 +- 0.00
+$71.5 \pm 12.6$ & $1.00$ & $0.23$ & $16.3 \pm 13.7$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: post_processing ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.57
+Success rate (constraints): 0.57
+Average steps: 66.47 +- 5.68
+Average violations: 1.30 +- 1.75
+Average total violations: 0.008 +- 0.016
+Average time: 0.93 +- 0.08
+$66.5 \pm 5.7$ & $1.00$ & $0.57$ & $1.3 \pm 1.8$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: post_processing-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 69.67 +- 8.13
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 1.04 +- 0.04
+$69.7 \pm 8.1$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: model_free ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.10
+Success rate (constraints): 0.10
+Average steps: 75.10 +- 18.19
+Average violations: 16.83 +- 12.14
+Average total violations: 2.340 +- 2.815
+Average time: 0.16 +- 0.01
+$75.1 \pm 18.2$ & $1.00$ & $0.10$ & $16.8 \pm 12.1$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: model_free-tightened ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.20
+Success rate (constraints): 0.20
+Average steps: 78.79 +- 27.38
+Average violations: 17.73 +- 15.22
+Average total violations: 2.237 +- 2.762
+Average time: 0.17 +- 0.00
+$78.8 \pm 27.4$ & $0.97$ & $0.20$ & $17.7 \pm 15.2$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt0p25 ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.90
+Success rate (constraints): 0.90
+Average steps: 71.41 +- 5.33
+Average violations: 0.07 +- 0.25
+Average total violations: 0.001 +- 0.002
+Average time: 1.75 +- 0.10
+$71.4 \pm 5.3$ & $0.97$ & $0.90$ & $0.1 \pm 0.2$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt0p5 ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.97
+Success rate (constraints): 0.97
+Average steps: 66.63 +- 3.54
+Average violations: 0.03 +- 0.18
+Average total violations: 0.000 +- 0.000
+Average time: 1.49 +- 0.15
+$66.6 \pm 3.5$ & $1.00$ & $0.97$ & $0.0 \pm 0.2$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt2p0 ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.93
+Success rate (constraints): 0.93
+Average steps: 69.38 +- 8.66
+Average violations: 0.57 +- 3.05
+Average total violations: 0.126 +- 0.678
+Average time: 0.75 +- 0.03
+$69.4 \pm 8.7$ & $0.97$ & $0.93$ & $0.6 \pm 3.1$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt4p0 ------------------
+Success rate (goal): 0.93
+Success rate (goal + constraints): 0.67
+Success rate (constraints): 0.67
+Average steps: 102.86 +- 18.35
+Average violations: 3.37 +- 10.49
+Average total violations: 0.100 +- 0.218
+Average time: 0.42 +- 0.02
+$102.9 \pm 18.4$ & $0.93$ & $0.67$ & $3.4 \pm 10.5$ \\
+[1.0, 0.9666666666666667, 1.0]
+[0.5666666666666667, 0.6666666666666666, 0.5333333333333333]
+[66.46666666666667, 81.0, 75.36666666666666]
+[5.6846772604568825, 31.420397504015522, 25.66902586560092]
+[1.0, 1.0, 1.0]
+[1.0, 1.0, 1.0]
+[69.66666666666667, 65.66666666666667, 63.8]
+[8.129507296810115, 6.813385518391148, 8.960654737982784]
+Results loading completed successfully.
+================================================================================
+JOB END:   Fri May  8 19:44:34 UTC 2026
+================================================================================
