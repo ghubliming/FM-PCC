@@ -460,3 +460,15 @@ Keywords: strict config parsing, abort on missing, no silent defaults, diffusion
 1. **Problem**: The evaluation threshold (`diffusion_timestep_threshold`) in `avoiding-d3il.py` used a `try/except` block with a silent fallback default of `0.5`. This was identified as catastrophic because missing or misconfigured YAML settings would silently run with the wrong threshold while labeling the folder as `T0.5`.
 2. **Fix**: Replaced the safe fallback with strict dictionary indexing. The code now dynamically reads `projection_eval.yaml` at import time and explicitly aborts the program (`ValueError`) if `diffusion_timestep_threshold` is missing.
 3. **Outcome**: The experiment pipeline now guarantees that the threshold stamped on the output folder exactly matches a deliberately defined configuration in the YAML file.
+
+## Gen3v3 hotfix: DPCC Baseline Config Naming Parity (9. May)
+
+Keywords: DPCC folder naming, tracking parameters, aw in training, T in planning, loadpath backward compatibility.
+
+1. **Problem**: The legacy DPCC baseline (`diffusion` and `plan` blocks) did not expose critical hyperparameters in their folder names, making it hard to identify models trained with different Action Weights (`aw`) or evaluated with different Thresholds (`T`).
+2. **Fix (Train)**: Created a new tracking list (`args_to_watch_dpcc_train`) for the `diffusion` block to explicitly append the action weight to the training folder name (e.g., `diffusion/..._aw10`).
+3. **Fix (Plan)**: Created a new tracking list (`args_to_watch_dpcc_plan`) for the `plan` block to dynamically pull and append the `diffusion_timestep_threshold` from the YAML file to the evaluation folder name (e.g., `plans/diffusion/..._T0.5_...`).
+4. **Outcome**: The DPCC baseline now has parity with FMv3 regarding hyperparameter visibility in its file paths.
+
+> [!WARNING]
+> **Old DPCC Folder Compatibility**: The `diffusion_loadpath` for DPCC evaluations was updated to strictly look for `_aw{action_weight}`. As a result, **old DPCC models trained before this hotfix will fail to load** because their folder names lack the `_aw10` suffix. To evaluate older DPCC models, you must manually rename their output folders to append `_aw10` to the end.

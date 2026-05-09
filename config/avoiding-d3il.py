@@ -22,6 +22,22 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
+args_to_watch_dpcc_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_dpcc_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
+
 args_to_watch_v3 = [
     ('prefix', ''),
     ('horizon', 'H'),
@@ -84,7 +100,7 @@ base = {
         ## serialization
         'logbase': logbase,
         'prefix': 'diffusion/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_dpcc_train),
 
         ## training
         'n_steps_per_epoch': 1000,
@@ -377,7 +393,7 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/diffusion/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_dpcc_plan),
 
         ## diffusion model
         'diffusion': 'models.GaussianDiffusion',
@@ -386,9 +402,11 @@ base = {
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'action_weight': 10,
 
         ## loading
-        'diffusion_loadpath': 'f:diffusion/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'diffusion_loadpath': 'f:diffusion/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 
         'diffusion_epoch': 'best',      # 'latest'
