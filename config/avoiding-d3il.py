@@ -392,7 +392,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/diffusion/',
+        'prefix': 'f:plans/diffusion/' + 'H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}/',
         'exp_name': watch(args_to_watch_dpcc_plan),
 
         ## diffusion model
