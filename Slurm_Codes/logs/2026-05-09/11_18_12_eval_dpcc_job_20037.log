@@ -1,0 +1,32 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat May  9 09:18:13 UTC 2026
+JOB NAME:  eval_dpcc_job
+JOB ID:    20037
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   a3f5f57
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+
+[ utils/serialization ] Loading model from logs/avoiding-d3il/diffusion/H8_K20_Dmodels.GaussianDiffusion/6
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/scripts/eval.py", line 91, in <module>
+    diffusion_experiment = utils.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), epoch=args.diffusion_epoch, device=args.device)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/serialization.py", line 54, in load_diffusion
+    dataset_config = load_config(*loadpath, 'dataset_config.pkl')
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/serialization.py", line 36, in load_config
+    config = pickle.load(open(loadpath, 'rb'))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/avoiding-d3il/diffusion/H8_K20_Dmodels.GaussianDiffusion/6/dataset_config.pkl'
+================================================================================
+JOB END:   Sat May  9 09:18:18 UTC 2026
+================================================================================
