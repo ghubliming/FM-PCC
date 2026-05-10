@@ -464,7 +464,9 @@ Keywords: DPCC folder naming, tracking parameters, aw in training, T in planning
 
 1. **Problem**: The legacy DPCC baseline (`diffusion` and `plan` blocks) did not expose critical hyperparameters in their folder names, making it hard to identify models trained with different Action Weights (`aw`) or evaluated with different Thresholds (`T`).
 2. **Fix (Train)**: Created a new tracking list (`args_to_watch_dpcc_train`) for the `diffusion` block to explicitly append the action weight to the training folder name (e.g., `diffusion/..._aw10`).
-3. **Fix (Plan Nesting & Naming)**: Updated the `plan` block to nest evaluation results directly inside their parent training folder (using a lazy f-string prefix). Furthermore, created a new tracking list (`args_to_watch_dpcc_plan`) to dynamically pull and append the `diffusion_timestep_threshold` from the YAML file to the final folder name (e.g., `plans/diffusion/[TRAIN_FOLDER]/..._T0.5_...`).
+3. **Fix (Plan Nesting & Naming)**: 
+    - *Attempt 1 (Failed)*: Tried to nest evaluation results using a lazy f-string prefix (`f:plans/diffusion/...`). This failed silently because the custom `eval_fstrings` parser in `diffuser/utils/setup.py` failed to evaluate the string correctly for the DPCC baseline, resulting in un-nested flat folders.
+    - *Attempt 2 (Success)*: Completely bypassed the buggy f-string parser. Hardcoded the nested folder structure directly into the `exp_name` variable using a Python `lambda` function (`lambda args: f"plans/diffusion/H{args.horizon}.../" + watch(...)(args)`). This perfectly mirrors FMv3's nesting architecture with 100% certainty, without relying on unstable string evaluation black-magic.
 4. **Outcome**: The DPCC baseline now has parity with FMv3 regarding hyperparameter visibility in its file paths.
 
 > [!WARNING]

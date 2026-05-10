@@ -392,8 +392,13 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/diffusion/' + 'H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}/',
-        'exp_name': watch(args_to_watch_dpcc_plan),
+        'prefix': 'plans/diffusion/',
+        'exp_name': lambda args: f"plans/diffusion/H{args.horizon}_K{args.n_diffusion_steps}_D{args.diffusion}_aw{args.action_weight}/" + watch([
+            ('horizon', 'H'),
+            ('n_diffusion_steps', 'K'),
+            ('diffusion_timestep_threshold', 'T'),
+            ('diffusion', 'D')
+        ])(args),
 
         ## diffusion model
         'diffusion': 'models.GaussianDiffusion',
