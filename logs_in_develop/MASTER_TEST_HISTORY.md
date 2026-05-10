@@ -450,9 +450,6 @@ Keywords: nested paths, evaluation isolation, parent-model-attribution.
 2.  **Implementation**: Accomplished via a single-line concatenation in `config/avoiding-d3il.py` using lazy f-strings.
 3.  **Audit Visibility**: Updated documentation in `logs_in_develop/Gen3v2/Gen3v3u5_log_output_path_config_update/config_update_report.md`.
 
-> [!WARNING]
-> **Scope Constraint**: This path nesting is **ONLY** active for the `plan_fm_v3_ode_selectable` block. Legacy diffusion and DPCC baseline blocks remain in their original flat folder structure to prevent regressions in downstream analysis scripts.
-
 ## Gen3v3 hotfix: Strict YAML Threshold Parsing Hotfix (8. May)
 
 Keywords: strict config parsing, abort on missing, no silent defaults, diffusion_timestep_threshold.
@@ -467,7 +464,7 @@ Keywords: DPCC folder naming, tracking parameters, aw in training, T in planning
 
 1. **Problem**: The legacy DPCC baseline (`diffusion` and `plan` blocks) did not expose critical hyperparameters in their folder names, making it hard to identify models trained with different Action Weights (`aw`) or evaluated with different Thresholds (`T`).
 2. **Fix (Train)**: Created a new tracking list (`args_to_watch_dpcc_train`) for the `diffusion` block to explicitly append the action weight to the training folder name (e.g., `diffusion/..._aw10`).
-3. **Fix (Plan)**: Created a new tracking list (`args_to_watch_dpcc_plan`) for the `plan` block to dynamically pull and append the `diffusion_timestep_threshold` from the YAML file to the evaluation folder name (e.g., `plans/diffusion/..._T0.5_...`).
+3. **Fix (Plan Nesting & Naming)**: Updated the `plan` block to nest evaluation results directly inside their parent training folder (using a lazy f-string prefix). Furthermore, created a new tracking list (`args_to_watch_dpcc_plan`) to dynamically pull and append the `diffusion_timestep_threshold` from the YAML file to the final folder name (e.g., `plans/diffusion/[TRAIN_FOLDER]/..._T0.5_...`).
 4. **Outcome**: The DPCC baseline now has parity with FMv3 regarding hyperparameter visibility in its file paths.
 
 > [!WARNING]
