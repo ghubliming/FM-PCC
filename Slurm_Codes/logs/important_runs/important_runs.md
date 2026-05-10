@@ -49,3 +49,15 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/20_52_35_load_results_fmv3_job_19981.lo
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/11_35_01_eval_fmv3_ode_job_20010.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/21_44_30_load_results_fmv3_job_20031.log
+
+- dpcc full proj 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/11_25_06_eval_dpcc_job_20038.log
+
+(modify name into aw10 "FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T1_Dmodels.GaussianDiffusion")
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_32_35_load_results_dpcc_job_20048.log
+
+- dpcc aw1 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_train_20050.log
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_eval_20051.log
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_load_results_20052.log

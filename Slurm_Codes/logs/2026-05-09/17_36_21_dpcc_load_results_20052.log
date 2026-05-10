@@ -1,0 +1,175 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun May 10 10:24:49 UTC 2026
+JOB NAME:  dpcc_load_results
+JOB ID:    20052
+NODE:      i6-gpu-1
+GIT REV:   2c72b1c
+================================================================================
+Running scripts/load_results.py...
+[ utils ] Set plot_path to: logs/avoiding-d3il/plans/diffusion/H8_K20_T0.5_Dmodels.GaussianDiffusion/plots/load_results_output_all_seeds
+------------------ Variant: dpcc-r ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.23
+Success rate (constraints): 0.23
+Average steps: 71.69 +- 13.69
+Average violations: 4.03 +- 3.89
+Average total violations: 0.040 +- 0.050
+Average time: 0.55 +- 0.02
+$71.7 \pm 13.7$ & $0.97$ & $0.23$ & $4.0 \pm 3.9$ \\
+------------------ Variant: dpcc-r-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 78.67 +- 13.76
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 0.54 +- 0.05
+$78.7 \pm 13.8$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\
+------------------ Variant: dpcc-c ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.37
+Success rate (constraints): 0.37
+Average steps: 74.77 +- 20.33
+Average violations: 5.20 +- 9.18
+Average total violations: 0.064 +- 0.109
+Average time: 0.53 +- 0.04
+$74.8 \pm 20.3$ & $1.00$ & $0.37$ & $5.2 \pm 9.2$ \\
+------------------ Variant: dpcc-c-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.97
+Success rate (constraints): 0.97
+Average steps: 71.47 +- 10.34
+Average violations: 0.07 +- 0.36
+Average total violations: 0.000 +- 0.001
+Average time: 0.60 +- 0.04
+$71.5 \pm 10.3$ & $1.00$ & $0.97$ & $0.1 \pm 0.4$ \\
+------------------ Variant: dpcc-t ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.47
+Success rate (constraints): 0.47
+Average steps: 79.59 +- 27.04
+Average violations: 9.87 +- 19.59
+Average total violations: 0.140 +- 0.270
+Average time: 0.50 +- 0.04
+$79.6 \pm 27.0$ & $0.97$ & $0.47$ & $9.9 \pm 19.6$ \\
+------------------ Variant: dpcc-t-tightened ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.97
+Success rate (constraints): 0.97
+Average steps: 68.03 +- 10.63
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 0.66 +- 0.04
+$68.0 \pm 10.6$ & $0.97$ & $0.97$ & $0.0 \pm 0.0$ \\
+------------------ Variant: diffuser ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.03
+Success rate (constraints): 0.03
+Average steps: 60.48 +- 5.65
+Average violations: 19.33 +- 10.32
+Average total violations: 4.093 +- 4.116
+Average time: 0.18 +- 0.00
+$60.5 \pm 5.6$ & $0.97$ & $0.03$ & $19.3 \pm 10.3$ \\
+------------------ Variant: gradient ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.03
+Success rate (constraints): 0.03
+Average steps: 61.79 +- 9.97
+Average violations: 20.57 +- 12.97
+Average total violations: 3.744 +- 3.849
+Average time: 0.19 +- 0.00
+$61.8 \pm 10.0$ & $0.97$ & $0.03$ & $20.6 \pm 13.0$ \\
+------------------ Variant: gradient-tightened ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.03
+Success rate (constraints): 0.03
+Average steps: 61.31 +- 7.77
+Average violations: 20.17 +- 13.25
+Average total violations: 3.713 +- 3.903
+Average time: 0.19 +- 0.00
+$61.3 \pm 7.8$ & $0.97$ & $0.03$ & $20.2 \pm 13.3$ \\
+------------------ Variant: post_processing ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.23
+Success rate (constraints): 0.23
+Average steps: 71.69 +- 13.69
+Average violations: 4.03 +- 3.89
+Average total violations: 0.040 +- 0.050
+Average time: 0.54 +- 0.02
+$71.7 \pm 13.7$ & $0.97$ & $0.23$ & $4.0 \pm 3.9$ \\
+------------------ Variant: post_processing-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 78.67 +- 13.76
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 0.54 +- 0.05
+$78.7 \pm 13.8$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\
+------------------ Variant: model_free ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.03
+Success rate (constraints): 0.03
+Average steps: 64.10 +- 8.13
+Average violations: 19.60 +- 12.19
+Average total violations: 3.847 +- 4.266
+Average time: 0.26 +- 0.00
+$64.1 \pm 8.1$ & $1.00$ & $0.03$ & $19.6 \pm 12.2$ \\
+------------------ Variant: model_free-tightened ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.03
+Success rate (constraints): 0.03
+Average steps: 64.87 +- 9.05
+Average violations: 20.37 +- 11.84
+Average total violations: 3.761 +- 4.118
+Average time: 0.28 +- 0.00
+$64.9 \pm 9.1$ & $1.00$ & $0.03$ & $20.4 \pm 11.8$ \\
+------------------ Variant: dpcc-c-tightened-dt0p25 ------------------
+Success rate (goal): 0.90
+Success rate (goal + constraints): 0.83
+Success rate (constraints): 0.83
+Average steps: 83.33 +- 13.63
+Average violations: 0.07 +- 0.25
+Average total violations: 0.001 +- 0.001
+Average time: 0.84 +- 0.03
+$83.3 \pm 13.6$ & $0.90$ & $0.83$ & $0.1 \pm 0.2$ \\
+------------------ Variant: dpcc-c-tightened-dt0p5 ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.97
+Success rate (constraints): 0.97
+Average steps: 74.24 +- 10.04
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time: 0.74 +- 0.03
+$74.2 \pm 10.0$ & $0.97$ & $0.97$ & $0.0 \pm 0.0$ \\
+------------------ Variant: dpcc-c-tightened-dt2p0 ------------------
+Success rate (goal): 0.97
+Success rate (goal + constraints): 0.93
+Success rate (constraints): 0.93
+Average steps: 74.00 +- 12.26
+Average violations: 0.60 +- 3.23
+Average total violations: 0.085 +- 0.456
+Average time: 0.50 +- 0.01
+$74.0 \pm 12.3$ & $0.97$ & $0.93$ & $0.6 \pm 3.2$ \\
+------------------ Variant: dpcc-c-tightened-dt4p0 ------------------
+Success rate (goal): 0.73
+Success rate (goal + constraints): 0.57
+Success rate (constraints): 0.57
+Average steps: 136.50 +- 40.39
+Average violations: 2.40 +- 7.75
+Average total violations: 0.101 +- 0.294
+Average time: 0.43 +- 0.02
+$136.5 \pm 40.4$ & $0.73$ & $0.57$ & $2.4 \pm 7.8$ \\
+[0.9666666666666667, 0.9666666666666667, 1.0]
+[0.23333333333333334, 0.4666666666666667, 0.36666666666666664]
+[71.6896551724138, 79.58620689655173, 74.76666666666667]
+[13.691435652477118, 27.039584318090483, 20.328442034635994]
+[1.0, 0.9666666666666667, 1.0]
+[1.0, 0.9666666666666667, 0.9666666666666667]
+[78.66666666666667, 68.03448275862068, 71.46666666666667]
+[13.755806854642232, 10.62684550664573, 10.339997850848691]
+DPCC Results loading completed successfully.
+================================================================================
+JOB END:   Sun May 10 10:24:52 UTC 2026
+================================================================================
