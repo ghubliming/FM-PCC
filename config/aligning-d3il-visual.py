@@ -1,0 +1,855 @@
+from diffuser.utils import watch
+import yaml
+
+# Read the threshold dynamically from the YAML config, abort if not found
+with open('config/projection_eval.yaml', 'r') as f:
+    _proj_config = yaml.safe_load(f)
+
+if 'diffusion_timestep_threshold' not in _proj_config:
+    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/projection_eval.yaml")
+
+_yaml_threshold = _proj_config['diffusion_timestep_threshold']
+
+#------------------------ base ------------------------#
+
+## automatically make experiment names for planning
+## by labelling folders with these args
+
+args_to_watch = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+]
+
+args_to_watch_dpcc_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_dpcc_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
+
+args_to_watch_v3 = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('diffusion', 'D'),
+]
+
+args_to_watch_fmv3_ode_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_fmv3_ode_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
+
+logbase = 'logs'
+
+base = {
+    'ddpm_encdec_vision': {
+        'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
+        'diffusion': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
+        'horizon': 8,
+        'window_size': 8,
+        'obs_dim': 128,
+        'action_dim': 3,
+        'visual_input': True,
+        'obs_seq_len': 5,
+        'action_seq_size': 4,
+        'n_diffusion_steps': 16,
+        'loss_type': 'l2',
+        
+        # dataset
+        'loader': 'ignored',
+        'max_path_length': 150,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'ddpm_encdec_vision/',
+        'exp_name': watch([('prefix', ''), ('horizon', 'H')]),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'plan_ddpm_encdec_vision': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+        
+        # serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/ddpm_encdec_vision/',
+        'exp_name': watch([('prefix', ''), ('horizon', 'H')]),
+        
+        'diffusion': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
+        'horizon': 8,
+        'n_diffusion_steps': 16,
+        
+        'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}',
+        'value_loadpath': 'f:values/H{horizon}',
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'diffusion': {
+        ## model
+        'model': 'models.UNet1DTemporalCondModel',
+        'diffusion': 'models.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 10,            
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,        
+
+        ## dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,      # longest: 106
+        'include_returns': True,
+        'returns_scale': 400,   # Determined using rewards from the dataset
+        'discount': 0.99,
+
+        ## serialization
+        'logbase': logbase,
+        'prefix': 'diffusion/',
+        'exp_name': watch(args_to_watch_dpcc_train),
+
+        ## training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,            # Overwritten
+    },
+
+    'flow_matching': {
+        # FM version: same as 'diffusion' but uses FM implementation
+        'model': 'models.UNet1DTemporalCondModel',
+        'diffusion': 'models.diffusion.GaussianDiffusion',  # Here is full long path, it distinguishes from the diffusion model, name in folder is longer
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 10,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching/',
+        'exp_name': watch(args_to_watch),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'flow_matching_unet_v2': {
+        # FM_Unet_v2: uses Flow_matcher_U_Net_v2 backbone
+        # TODO: Update model parameters here when U-Net structure is modified
+        'model': 'models.Flow_matcher_U_Net_v2',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 10,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_unet_v2/',
+        'exp_name': watch(args_to_watch),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'flow_matching_v2': {
+        # Flow matcher v2 copied from flow_matching_unet_v2 with SafeFlowMPC-style time sampling
+        'model': 'models.Flow_matcher_U_Net_v2',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 1, # DPCC is 10
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,
+
+        # v2 SafeFlowMPC-style time sampling parameters (exactly two)
+        'time_beta_alpha_v2': 1.5,
+        'time_beta_beta_v2': 1.0,
+
+        # v2 ODE/VF decoupling parameters
+        'vf_time_bins_v2': 20,
+        'ode_inference_steps_v2': 10, # DPCC is 20
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v2/',
+        'exp_name': watch(args_to_watch),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'flow_matching_v3': {
+        # Flow matcher v3: SafeFlow-style continuous-time query semantics.
+        'model': 'models.Flow_matcher_U_Net_v2',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        # 'n_diffusion_steps': 20, # this old parameter is not used in v3
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 1,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,
+
+        # v3 SafeFlow-style time sampling parameters.
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+
+        # v3 rollout step control.
+        'flow_steps_v3': 10,
+        # Compatibility alias for existing code paths/tools.
+        'ode_inference_steps_v3': 10,
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3/',
+        'exp_name': watch(args_to_watch_v3),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'flow_matching_v3_ode_selectable': {
+        # Copied-folder FM-v3 variant with config-selectable ODE backend/method.
+        'model': 'models.Flow_matcher_U_Net_v2',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        # 'n_diffusion_steps': 20, # this old parameter is not used in v3
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 1,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        # 'test_ret': 0.9, # DEAD code (inference-only parameter)
+
+        # v3 SafeFlow-style time sampling parameters.
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+
+        # v3 rollout step control.
+        # 'flow_steps_v3': 10, # DEAD code (inference-only parameter)
+        # 'ode_inference_steps_v3': 10, # Dead code
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_ode_selectable/',
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'flow_matching_v3_drifting': {
+        # Drift-augmented Flow Matcher v3: combines FM ODE with drift loss guidance.
+        'model': 'models.Flow_matcher_U_Net_v2',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 1,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+
+        # v3 SafeFlow-style time sampling parameters.
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+
+        # FM-D Drift Augmentation Parameters (Locked 3 params)
+        'use_drift_augmentation': True,            # bool: enable FM-D mode
+        'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
+        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_drifting/',
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'plan': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/diffusion/',
+        'exp_name': lambda args: f"plans/diffusion/H{args.horizon}_K{args.n_diffusion_steps}_D{args.diffusion}_aw{args.action_weight}/" + watch([
+            ('horizon', 'H'),
+            ('n_diffusion_steps', 'K'),
+            ('diffusion_timestep_threshold', 'T'),
+            ('diffusion', 'D')
+        ])(args),
+
+        ## diffusion model
+        'diffusion': 'models.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'action_weight': 10,
+
+        ## loading
+        'diffusion_loadpath': 'f:diffusion/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+    
+    'plan_fm': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/flow_matching/',
+        'exp_name': watch(args_to_watch),
+
+        ## flow matching model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'plan_fm_unet_v2': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/flow_matching_unet_v2/',
+        'exp_name': watch(args_to_watch),
+
+        ## flow matching unet v2 model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_unet_v2/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'plan_fm_v2': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/flow_matching_v2/',
+        'exp_name': watch(args_to_watch),
+
+        ## flow matching v2 model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'vf_time_bins_v2': 20,
+        'ode_inference_steps_v2': 10,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_v2/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'plan_fm_v3': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/flow_matching_v3/',
+        'exp_name': watch(args_to_watch_v3),
+
+        ## flow matching v3 model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'flow_steps_v3': 10,
+        'ode_inference_steps_v3': 10,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'plan_fm_v3_ode_selectable': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_ode_selectable/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## flow matching v3 model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'action_weight': 1,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        # 'n_diffusion_steps': 20, # DEAD code (mathematically irrelevant for FM flow)
+        'flow_steps_v3': 10,
+        # 'ode_inference_steps_v3': 10, # DEAD code (compatibility alias for flow_steps_v3)
+        # Available backend options: legacy_euler, torchdiffeq.
+        'ode_solver_backend_v3': 'legacy_euler',
+        # Available method options (torchdiffeq backend):
+        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
+        # euler, midpoint, heun2, heun3, rk4,
+        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        'returns_condition': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        # 'predict_epsilon': True, # DEAD code (not used in inference velocity prediction)
+        # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
+
+        ## loading
+        # 'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+        # 'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}', # DEAD code (Value functions not used in FMv3 sampling)
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'plan_fm_v3_drifting': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_drifting/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## flow matching v3 drifting model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'action_weight': 1,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        'flow_steps_v3': 10,
+        # Available backend options: legacy_euler, torchdiffeq.
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        
+        # FM-D Drift Augmentation Parameters (Locked 3 params)
+        'use_drift_augmentation': True,            # bool: enable FM-D mode during inference
+        'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
+        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
+        
+        'returns_condition': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_v3_drifting/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    ## ── Hyperparameter Tuning Blocks ──────────────────────────────────
+    ## These use the ORIGINAL flow_matcher model (UNet1DTemporalCondModel).
+    ## Duplicate this pair (train + plan) for each tuning experiment.
+    ## CRITICAL: Always use a unique 'prefix' to avoid overwriting data.
+    ## See: logs_in_develop/guiding_hyperpara_tuning/hyperparameter_tuning_guide.md
+
+    'flow_matching_hp_tune': {
+        # HP Tune 1: example tuning run — same model, different hyperparams
+        'model': 'models.UNet1DTemporalCondModel',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 10,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization — UNIQUE PREFIX for this tuning run
+        'logbase': logbase,
+        'prefix': 'flow_matching_hp_tune1/',
+        'exp_name': watch(args_to_watch),
+
+        # training — MODIFY THESE for your tuning experiment
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'plan_fm_hp_tune': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization — MUST match the training prefix
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/flow_matching_hp_tune1/',
+        'exp_name': watch(args_to_watch),
+
+        ## flow matching model (same as base flow_matching)
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+
+        ## loading — points to the hp_tune training folder
+        'diffusion_loadpath': 'f:flow_matching_hp_tune1/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+}
