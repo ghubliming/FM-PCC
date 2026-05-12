@@ -11,6 +11,7 @@ d3il/environments/dataset/data/pushing/all_data
 d3il/environments/dataset/data/sorting/*_boxes
 d3il/environments/dataset/data/sorting/*.pkl
 d3il/environments/dataset/data/stacking/*_data
+d3il/environments/dataset/data/dataset.zip
 d4rl-minari-dataset-generation_bkup/*
 diffuser.egg-info/*
 __pycache__/
