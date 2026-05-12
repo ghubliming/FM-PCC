@@ -1,5 +1,7 @@
 absl-py==2.1.0
 accelerate==0.31.0
+hydra-core==1.1.1
+omegaconf==2.1.1
 cachetools==5.3.3
 casadi==3.6.5
 addict
