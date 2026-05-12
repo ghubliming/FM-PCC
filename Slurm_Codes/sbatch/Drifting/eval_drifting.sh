@@ -18,16 +18,23 @@ fi
 
 echo "JOB START: $(date)"
 
-# Setup Workspace Paths
+# 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
-DRIFTING="$FMPCC_ROOT/drifting"
+REPO="$FMPCC_ROOT/FM-PCC"
 CONDA_DIR="$HOME/miniconda3"
 CONDA_ENV_NAME="FMPCC"
 
+# 2) Initialize Conda
 source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
 
-# Headless rendering
+# 3) Set Environment Variables
+export FMPCC="$REPO"
+export D3IL_ROOT="$FMPCC/d3il"
+export GYM_AV="$D3IL_ROOT/environments/d3il/envs/gym_avoiding_env"
+export PYTHONPATH="$FMPCC:$D3IL_ROOT:$GYM_AV:$PYTHONPATH"
+
+# Rendering variables for MuJoCo on headless remote nodes
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
@@ -38,11 +45,9 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_MODE="online"
 fi
 
-cd "$DRIFTING"
+# 4) Run FM v3 Drifting Evaluation
+cd "$REPO"
 
-# Evaluate (FID only) on a trained generator model
-python inference.py \
-    --init-from "hf://latent_L_sota" \
-    --workdir "$FMPCC_ROOT/drifting_evals"
+python FM_v3_drifting_test/eval_flow_matching_v3_ode_selectable.py
 
 echo "Job completed successfully."

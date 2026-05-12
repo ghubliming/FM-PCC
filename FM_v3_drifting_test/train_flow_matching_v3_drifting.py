@@ -9,7 +9,7 @@ from datetime import datetime
 
 import torch
 import wandb
-import flow_matcher_v3_ode_selectable.utils as utils
+import flow_matcher_v3_drifting.utils as utils
 
 exp = 'avoiding-d3il'
 DEFAULT_SEEDS = [5, 6, 7, 8, 9]
@@ -190,7 +190,7 @@ original_argv = list(sys.argv)
 sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
 for seed in selected_seeds:
-    args = Parser().parse_args(experiment='flow_matching_v3_ode_selectable', seed=seed)
+    args = Parser().parse_args(experiment='flow_matching_v3_drifting', seed=seed)
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
