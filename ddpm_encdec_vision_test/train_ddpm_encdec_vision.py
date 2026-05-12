@@ -229,7 +229,7 @@ for seed in selected_seeds:
     from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
     dataset = Aligning_Img_Dataset(
         data_directory='environments/dataset/data/aligning/train_files.pkl',
-        device=args.device,
+        device='cpu',
         obs_dim=3,
         action_dim=3,
         window_size=args.horizon,

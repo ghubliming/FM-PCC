@@ -97,6 +97,11 @@ Execution rules:
 Non-negotiable guard:
 1. Vision mode must be real image-conditioned behavior and must not silently fall back to state-only behavior.
 
+### Visual Pipeline Bug Fixes (Gen5 Phase 1)
+1. **Hydra Setup**: Fixed Device Serialization (converted `torch.device` to primitive strings) and Recursion Logic (`_recursive_: False`) to properly interface nested parameters with D3IL's hardcoded manual instantiation.
+2. **CUDA Fork Crashes**: Initialized `Dataset` strictly on `cpu` RAM to prevent PyTorch `DataLoader` workers from crashing due to unshareable CUDA contexts.
+3. **Tuple Batching**: Rewrote `batch_to_device` in D3IL array tools to dynamically support standard PyTorch `list`/`tuple` batches alongside existing `namedtuples`.
+
 ## Gen3v2 ODE Solver Addon (U2/U3)
 
 ### [Part 1] Benchmark Evolution (Scientific Audit V1-V4)
@@ -666,3 +671,62 @@ Integrate the D3IL visual aligning pipeline (multi-camera images + state) into t
 
 ### Technical Note
 The implementation follows the **Copy-Modify Isolation** principle. The original state-only engines (`flow_matcher_v3_ode_selectable/`) and D3IL core files remain untouched, ensuring a safe rollback path and clear A/B comparison capability.
+
+---
+
+## Data Analysis Tool v2: Multi-Candidate Batch Analysis (12. May)
+
+Keywords: DA v2, batch analysis, cross-candidate comparison, Pareto frontier, thesis-ready results.
+
+### Problem Statement
+- **v1 limitation**: Analyzes ONE experimental folder at a time (e.g., single diffusion variant)
+- **Research need**: Compare 5+ experimental configurations side-by-side to identify best hyperparameter/method
+- **Challenge**: 834+ .npz files across 5 seeds × 18 variants × 4 constraints = impossible manual comparison
+
+### Solution: v2 Implementation
+Implemented comprehensive multi-candidate batch analysis pipeline with 6 new modules (~1,692 lines):
+
+1. **Phase 1 - Discovery**: `multi_candidate_discovery.py` - Auto-identifies candidate folders (A, B, C, D, E...)
+2. **Phase 2 - Loading**: `batch_data_loader.py` - Loads all candidates in parallel
+3. **Phase 3 - Aggregation**: `batch_aggregator.py` - Computes statistics & rankings per candidate
+4. **Phase 4 - Visualization**: `batch_visualizer.py` - Generates 5 cross-candidate comparison plots
+5. **Phase 5 - Reporting**: `batch_reporter.py` - Exports CSVs & human-readable summaries
+6. **CLI**: `main_da_batch.py` - Orchestrates full pipeline with flexible arguments
+
+### Key Features
+✅ **Auto-discovery**: Finds candidates containing seeds [6,7,8,9,10]  
+✅ **5 Comparison Plots**:
+   - Pareto frontier (accuracy vs time - MAIN THESIS FIGURE)
+   - Success rate comparison (bar chart)
+   - Computation time comparison
+   - Robustness/seed variability (boxplot)
+   - Constraint × Candidate heatmap
+
+✅ **Ranking Tables**: CSV export for thesis supplementary tables  
+✅ **Custom Naming**: Support for meaningful candidate names (e.g., "aw=1", "aw=10", "dpcc-baseline")  
+✅ **Flexible Filtering**: Select specific candidates, seeds, variants, constraints  
+✅ **Publication-Quality**: 300 DPI, color-coded, annotated plots
+
+### Usage (Quick Start)
+```bash
+python Data_Analysis/DA_Code/main_da_batch.py \
+    --parent-path logs/avoiding-d3il/plans \
+    --candidate-names "aw=1,aw=5,aw=10,dpcc" \
+    --output-path ./thesis_batch_results
+```
+
+### Documentation
+- **IMPLEMENTATION_ROADMAP.md**: Technical architecture & 5 phases
+- **MISSION_BRIEFING_v2.md**: Research context & thesis integration
+- **USAGE_v2.md**: 7 practical examples + troubleshooting guide
+
+All available in: `logs_in_develop/DA_Code/v2/`
+
+### Status
+**✅ COMPLETE**: v2 fully implemented, documented, and ready for thesis batch analysis.
+
+### Typical Use Cases
+- **Ablation studies**: Compare aw=1 vs aw=5 vs aw=10 across all variants
+- **Method comparison**: DPCC vs Diffuser vs FM-v3 head-to-head
+- **Solver benchmarking**: Euler vs RK4 vs Midpoint performance
+- **Constraint analysis**: Which method handles which constraint best
