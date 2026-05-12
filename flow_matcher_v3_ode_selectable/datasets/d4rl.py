@@ -1,7 +1,6 @@
 import os
 import collections
 import numpy as np
-import minari
 import pickle
 import pdb
 
@@ -14,6 +13,11 @@ from contextlib import (
 from d3il.agents.utils.sim_path import sim_framework_path
 
 MINARI_DATASETS = ['pointmaze-open-dense-v2', 'pointmaze-umaze-dense-v2', 'pointmaze-medium-dense-v2', 'pointmaze-large-dense-v2', 'antmaze-umaze-v1', 'antmaze-medium-diverse-v1', 'antmaze-large-diverse-v1']
+
+def _import_minari():
+    """Lazy import minari only when a Minari dataset is requested."""
+    import minari
+    return minari
 
 @contextmanager
 def suppress_output():
@@ -65,6 +69,7 @@ def convert_minari_to_d4rl(dataset_minari):
 
 def get_dataset(env):
     if type(env) == str:
+        minari = _import_minari()
         dataset_minari = minari.load_dataset(env, download=True)
 
         dataset = dataset_minari.iterate_episodes()
@@ -93,6 +98,7 @@ def sequence_dataset(env, preprocess_fn):
     """
 
     if env in MINARI_DATASETS:
+        minari = _import_minari()
         dataset = minari.load_dataset(env, download=True)
         episodes_generator = dataset.iterate_episodes()
 
