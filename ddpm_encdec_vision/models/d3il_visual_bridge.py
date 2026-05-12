@@ -50,7 +50,7 @@ class VisualDiffusionBridge(nn.Module):
             "loss_type": 'l2',
             "clip_denoised": True,
             "predict_epsilon": True,
-            "device": self.device,
+            "device": str(self.device),
             "diffusion_x": False,
             "diffusion_x_M": 10,
             "model": {
@@ -63,9 +63,9 @@ class VisualDiffusionBridge(nn.Module):
                 "action_seq_len": 4,
                 "embed_pdrob": 0,
                 "embed_dim": 64,
-                "device": self.device,
+                "device": str(self.device),
                 "linear_output": True,
-                "encoder": OmegaConf.create({
+                "encoder": {
                     "_target_": "agents.models.act.act_vae.TransformerEncoder",
                     "embed_dim": 64,
                     "n_heads": 4,
@@ -74,8 +74,8 @@ class VisualDiffusionBridge(nn.Module):
                     "resid_pdrop": 0.1,
                     "bias": False,
                     "block_size": self.window_size + 1
-                }),
-                "decoder": OmegaConf.create({
+                },
+                "decoder": {
                     "_target_": "agents.models.act.act_vae.TransformerDecoder",
                     "embed_dim": 64,
                     "cross_embed": 64,
@@ -85,7 +85,7 @@ class VisualDiffusionBridge(nn.Module):
                     "resid_pdrop": 0.1,
                     "bias": False,
                     "block_size": self.window_size + 1
-                })
+                }
             }
         })
         
