@@ -730,3 +730,19 @@ All available in: `logs_in_develop/DA_Code/v2/`
 - **Method comparison**: DPCC vs Diffuser vs FM-v3 head-to-head
 - **Solver benchmarking**: Euler vs RK4 vs Midpoint performance
 - **Constraint analysis**: Which method handles which constraint best
+
+---
+
+## Gen3v3: FM-D Drifting Engine Recovery & Wiring (12. May)
+
+Keywords: FM-D recovery, drifting engine, training wiring, batch_to_device polymorphism, Slurm pipeline fix.
+
+1.  **Pipeline Recovery**: Identified and fixed a catastrophic disconnect in the "Drifting" pipeline where the Slurm scripts were hallucinating non-existent repositories and the Python scripts were lazy copies of the standard FMv3 baseline.
+2.  **Training Logic Wiring**: 
+    - **Problem**: The `flow_matcher_v3_drifting` trainer was not actually performing drifting training; it was missing the `DriftTrainingWrapper` integration. 
+    - **Fix**: Rewired `utils/training.py` to instantiate the `DriftLoss` memory bank and scheduler. The trainer now correctly computes the hybrid FM + λ·Drift loss and updates the distribution buffer during each epoch.
+3.  **Polymorphic Batching Fix**:
+    - **Problem**: `batch_to_device` in `utils/arrays.py` was hardcoded to `namedtuples`, causing crashes when using standard PyTorch `list`/`tuple` datasets.
+    - **Fix**: Refactored the utility to be fully polymorphic, recursively handling all container types (matching the Gen5 standard).
+4.  **Slurm Standardization**: Fully rewrote `train_drifting.sh`, `eval_drifting.sh`, and `load_results_drifting.sh` to match the project's production `fmv3_ode` standards, ensuring correct `PYTHONPATH` and conda environment activation.
+5.  **Outcome**: **TRAIN WORKING**. The Drifting engine is now fully functional, wired to the `flow_matching_v3_drifting` config block, and producing drift-augmented trajectories.
