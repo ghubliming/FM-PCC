@@ -2,6 +2,13 @@ absl-py==2.1.0
 accelerate==0.31.0
 cachetools==5.3.3
 casadi==3.6.5
+addict
+pandas
+plyfile
+open3d
+termcolor
+ipython
+torchsde
 certifi==2024.6.2
 charset-normalizer==3.3.2
 chex==0.1.86
