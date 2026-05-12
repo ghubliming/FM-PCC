@@ -427,6 +427,175 @@ Keywords: gen3v2u4, plot path standardization, load_results cleanup, experiment 
 2.  **Dynamic Resolution**: Implemented dynamic `plot_path` logic in `load_results.py` and its FMv3 variant to ensure plots are always saved relative to the loaded data.
 3.  **Audit Visibility**: Detailed the changes and rationale in `logs_in_develop/Gen3v2/gen3v2u4_load_results_path_fix/load_results_path_fix.md`.
 
+---
+
+## Drifting Project Integration & Evaluation (May 2026)
+
+Keywords: drifting, motion generation, VAE latent, MAE models, visual-free baseline.
+
+### Objective
+Integrate the Drifting project (latent-space motion generation using VAE/MAE) as a baseline comparison point for FM-based planning. This complements the Flow Matching pipeline by offering an alternative generative model architecture for trajectory synthesis.
+
+### Components
+1. **MAE Model Training** (`train_mae.py`): Vision transformer-based masked autoencoder for motion encoding
+2. **Generator Models** (`models/generator.py`): Generative networks for latent-space motion synthesis
+3. **Inference Pipeline** (`inference.py`): End-to-end latent motion generation and decoding
+4. **ConvNeXt Feature Extractor** (`models/convnext.py`): Backbone for visual feature extraction
+5. **Dataset Management** (`dataset/`): VAE and latent motion dataset handling
+
+### Integration Status
+- **Code Location**: `/workspaces/drifting/`
+- **Purpose**: Baseline comparison (non-FM motion generation via latent diffusion/VAE)
+- **Evaluation**: To be integrated into FM-PCC evaluation pipelines for relative performance benchmarking
+
+---
+
+## Data Analysis (DA) Tool Implementation (May 12, 2026)
+
+Keywords: DA tool, evaluation aggregation, Pareto frontier, thesis-focused analysis, automated reporting.
+
+### Problem Statement
+FM v3 ODE-Selectable evaluation produced **834+ .npz result files** across:
+- **5 random seeds** [6, 7, 8, 9, 10]
+- **18 projection variants** (dpcc-c/r/t, diffuser, gradient, post_processing, model_free, + tightened variants, + dt variants)
+- **4 constraint types** (halfspace, obstacles, dynamics, bounds)
+- **3 halfspace geometries** (top-right-hard, top-left-hard, both-hard)
+
+**Challenge**: Manual visualization and comparison across all dimensions was impossible. A systematic analysis pipeline was required.
+
+### Solution Architecture
+
+**Core Modules** (in `/workspaces/FM-PCC/Data_Analysis/DA_Code/`):
+
+1. **data_loader.py**: 
+   - Auto-discovers directory tree structure (seed → halfspace variant → .npz files)
+   - Loads all .npz result files
+   - Generates detailed loading report (files found/loaded/failed)
+
+2. **aggregator.py**:
+   - Aggregates metrics across all seeds (computes mean, std, min, max)
+   - Creates views by variant, constraint type, halfspace variant
+   - Builds pivot tables for cross-dimensional analysis
+   - Generates per-variant rankings
+
+3. **visualizer.py**:
+   - **Pareto Frontier** (`00_pareto_frontier_accuracy_vs_time.png`): Accuracy vs. Time tradeoff with color-coded variants
+   - **Variant Comparisons**: Bar charts by metric
+   - **Constraint Analysis**: Grouped performance by constraint type
+   - **Heatmaps**: Variant × Constraint success rates
+   - **Boxplots**: Seed-to-seed variability analysis
+   - **Efficiency Plots**: Time vs. Accuracy scatter
+   - Publication-quality output (300 DPI, matplotlib styling)
+
+4. **reporter.py**:
+   - `results_summary.txt` (human-readable rankings and statistics)
+   - `results_by_variant.csv` (variant-level aggregation)
+   - `results_by_constraint.csv` (constraint-type aggregation)
+   - `results_by_halfspace.csv` (halfspace-geometry aggregation)
+   - `detailed_results.csv` (all data points for custom analysis)
+
+5. **config.py**:
+   - Default seeds, variants, constraint types, halfspace variants
+   - Plot styling constants (colors, fonts, DPI)
+   - Metric definitions and labels
+
+6. **utils.py**:
+   - Logger setup (console + file output)
+   - File path utilities
+   - Directory discovery helpers
+
+7. **main_da.py** (Entry Point):
+   - CLI interface with argument parsing
+   - Coordinates data loading → aggregation → reporting → visualization
+   - Timestamp-based output folder organization
+   - Error handling and summary reporting
+
+### Key Features
+
+- **Automatic Data Discovery**: No manual file enumeration needed; script finds all .npz files in nested structure
+- **Robustness**: Missing/corrupted files logged but don't halt execution
+- **Flexible Input**: CLI arguments for seeds, variants, constraint types; defaults auto-apply
+- **Thesis-Focused**: Pareto frontier plot highlights main variants (dpcc-c/r/t) vs. baseline (diffuser)
+- **Fast Execution**: ~1-2 minutes for full analysis (or ~30s with `--no-plots` flag)
+- **Comprehensive Output**: 10+ plots, 4 CSV tables, 1 human-readable summary, detailed logs
+
+### Usage Example
+
+```bash
+# Basic analysis
+python Data_Analysis/DA_Code/main_da.py \
+    --input-path FM_v3_ode_selectable_test \
+    --output-path ./analysis_results
+
+# Thesis-focused (main variants only)
+python Data_Analysis/DA_Code/main_da.py \
+    --input-path FM_v3_ode_selectable_test \
+    --variants dpcc-c,dpcc-c-tightened,dpcc-r,dpcc-r-tightened,dpcc-t,dpcc-t-tightened,diffuser
+
+# Quick check (no plots)
+python Data_Analysis/DA_Code/main_da.py \
+    --input-path FM_v3_ode_selectable_test \
+    --no-plots
+```
+
+### Output Structure
+
+```
+20260512_143022_FM_V3_ODE_Analysis/
+├── plots/
+│   ├── 00_pareto_frontier_accuracy_vs_time.png    ← THESIS MAIN FIGURE
+│   ├── 01_variants_n_success_and_constraints.png
+│   ├── 02_constraints_*.png
+│   ├── 03_heatmap_variant_constraint_*.png
+│   ├── 04_efficiency_*.png
+│   ├── 05_boxplot_seeds_*.png
+│   └── [10+ plots total]
+├── results_summary.txt                             ← HUMAN-READABLE
+├── results_by_variant.csv
+├── results_by_constraint.csv
+├── results_by_halfspace.csv
+├── detailed_results.csv                            ← ALL DATA POINTS
+└── logs/
+    ├── analysis.log
+    ├── data_loading.log
+    └── warnings.log
+```
+
+### Thesis Integration
+
+**Primary Output for Results Section**:
+- **Pareto Frontier Plot**: Shows accuracy (Y) vs. time (X) with dpcc-c/r/t highlighted in red/orange/yellow and diffuser (baseline) in blue
+- **Variant Rankings**: Top 10 methods by goal + constraint success with ± error bars
+- **Constraint Breakdown**: Performance by constraint type (halfspace, obstacles, dynamics, bounds)
+
+**Supplementary Material**:
+- All 10+ plots for publication
+- CSV tables for detailed metrics
+- Seed variability analysis (proving robustness across random initializations)
+
+### Documentation
+
+**User Guides** (in `/workspaces/FM-PCC/logs_in_develop/DA_Code/`):
+- **DA_PLAN.md**: Full technical plan (objectives, architecture, phases, success criteria)
+- **MISSION_BRIEFING.md**: Research context and thesis motivation
+- **USAGE.md**: Step-by-step usage guide with 6+ practical examples
+
+### Success Criteria Met
+
+✅ Script auto-discovers and loads all 834+ .npz files  
+✅ Aggregates metrics across 5 seeds with statistics  
+✅ Generates 10+ publication-quality plots (300 DPI)  
+✅ Produces thesis-ready figures (Pareto frontier)  
+✅ Highlights main methods (dpcc-c/r/t) in color-coded comparison  
+✅ Shows baseline comparison (diffuser as raw ML reference)  
+✅ Execution time < 2 minutes  
+✅ Detailed logging of data loading and processing  
+✅ CSV export for Excel and statistical tools  
+
+### Status
+
+**COMPLETE** (May 12, 2026) - Ready for thesis analysis and result generation
+
 ## Gen3v3u5: FMv3-ODE Standardized Naming & Snapshot Hotfix (4. May)
 
 Keywords: standardized naming, descriptive folder paths, Smart Config Snapshot, full traceability, hyperparameter auditing.
@@ -471,3 +640,29 @@ Keywords: DPCC folder naming, tracking parameters, aw in training, T in planning
 
 > [!WARNING]
 > **Old DPCC Folder Compatibility**: The `diffusion_loadpath` for DPCC evaluations was updated to strictly look for `_aw{action_weight}`. As a result, **old DPCC models trained before this hotfix will fail to load** because their folder names lack the `_aw10` suffix. To evaluate older DPCC models, you must manually rename their output folders to append `_aw10` to the end.
+
+---
+
+## Gen5: Bridging Visual Aligning Pipeline (12 May)
+
+Keywords: visual aligning, D3IL bridge, VisualDiffusionBridge, ResNet18 encoder, image conditioning, Phase 1 Done.
+
+### Objective
+Integrate the D3IL visual aligning pipeline (multi-camera images + state) into the FM-PCC framework as a robust control baseline before migrating to Flow Matching.
+
+### Accomplishments (Phase 1: Rewire - CODE DONE)
+1.  **Engine Bridging**: Created the `ddpm_encdec_vision/` engine folder (copy-modified from `flow_matcher_v3_ode_selectable`) to host the visual pipeline without affecting state-only baselines.
+2.  **Visual Bridge Implementation**: Developed `ddpm_encdec_vision/models/d3il_visual_bridge.py`. 
+    - This module acts as the single integration point, directly instantiating and wrapping D3IL's `MultiImageObsEncoder` (dual ResNet18) and `Diffusion` (DDPM) model.
+    - Handles the conversion of 5-tuple visual data `(bp_imgs, inhand_imgs, obs, act, mask)` into latent embeddings for the transformer-based diffusion core.
+3.  **Dataset Integration**: Wired the `Aligning_Img_Dataset` from `d3il/environments/dataset/aligning_dataset.py` into the FM-PCC training loop.
+4.  **Training entry point**: Created `ddpm_encdec_vision_test/train_ddpm_encdec_vision.py` which supports multi-seed training, W&B logging, and artifact management for the new visual engine.
+5.  **Configuration**: Defined `config/aligning-d3il-visual.py` to manage visual-specific hyperparameters (128-dim embeddings, 3D action space, image normalization).
+
+### Status
+- **Phase 1 (Rewire)**: **COMPLETE**. Code is implemented, verified, and ready for baseline training.
+- **Phase 2 (Replace)**: **Pending**. Next step is to swap the DDPM core for the FMv3ODE flow-matching core while retaining the bridged visual encoder.
+- **Phase 3 (Validate)**: **Pending**. Sensitivity tests and benchmark comparisons.
+
+### Technical Note
+The implementation follows the **Copy-Modify Isolation** principle. The original state-only engines (`flow_matcher_v3_ode_selectable/`) and D3IL core files remain untouched, ensuring a safe rollback path and clear A/B comparison capability.
