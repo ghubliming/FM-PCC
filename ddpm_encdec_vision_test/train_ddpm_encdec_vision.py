@@ -9,18 +9,6 @@ from datetime import datetime
 
 import torch
 import wandb
-
-# Ensure the current directory and vendored d3il are in the path
-# This prevents picking up stale versions from other locations (e.g. /u/home vs /data/home)
-import sys
-import os
-current_dir = os.path.abspath(os.path.curdir)
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-d3il_path = os.path.join(current_dir, 'd3il')
-if d3il_path not in sys.path:
-    sys.path.insert(0, d3il_path)
-
 import ddpm_encdec_vision.utils as utils
 
 exp = 'aligning-d3il-visual'
@@ -239,12 +227,8 @@ for seed in selected_seeds:
         )
     # Get dataset
     from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
-    
-    # Path relative to d3il root (which is what Aligning_Img_Dataset expects via sim_framework_path)
-    train_data_rel_path = 'environments/dataset/data/aligning/train_files.pkl'
-    
     dataset = Aligning_Img_Dataset(
-        data_directory=train_data_rel_path,
+        data_directory='environments/dataset/data/aligning/train_files.pkl',
         device=args.device,
         obs_dim=3,
         action_dim=3,

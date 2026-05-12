@@ -1,21 +1,13 @@
 import os
 import sys
-
-# Ensure the current directory and vendored d3il are in the path
-# This prevents picking up stale versions from other locations (e.g. /u/home vs /data/home)
-current_dir = os.path.abspath(os.path.curdir)
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-d3il_path = os.path.join(current_dir, 'd3il')
-if d3il_path not in sys.path:
-    sys.path.insert(0, d3il_path)
-
 import torch
 import numpy as np
 import argparse
 
 import ddpm_encdec_vision.utils as utils
 from ddpm_encdec_vision.models.d3il_visual_bridge import VisualDiffusionBridge
+
+sys.path.append(os.path.abspath('d3il'))
 from d3il.simulation.aligning_sim import Aligning_Sim
 
 class VisualAgentWrapper:
