@@ -65,7 +65,7 @@ class VisualDiffusionBridge(nn.Module):
                 "embed_dim": 64,
                 "device": self.device,
                 "linear_output": True,
-                "encoder": {
+                "encoder": OmegaConf.create({
                     "_target_": "agents.models.act.act_vae.TransformerEncoder",
                     "embed_dim": 64,
                     "n_heads": 4,
@@ -74,8 +74,8 @@ class VisualDiffusionBridge(nn.Module):
                     "resid_pdrop": 0.1,
                     "bias": False,
                     "block_size": self.window_size + 1
-                },
-                "decoder": {
+                }),
+                "decoder": OmegaConf.create({
                     "_target_": "agents.models.act.act_vae.TransformerDecoder",
                     "embed_dim": 64,
                     "cross_embed": 64,
@@ -85,7 +85,7 @@ class VisualDiffusionBridge(nn.Module):
                     "resid_pdrop": 0.1,
                     "bias": False,
                     "block_size": self.window_size + 1
-                }
+                })
             }
         })
         
