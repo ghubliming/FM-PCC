@@ -43,6 +43,7 @@ class VisualDiffusionBridge(nn.Module):
         # Diffusion core
         model_cfg = OmegaConf.create({
             "_target_": "agents.models.diffusion.diffusion_policy.Diffusion",
+            "_recursive_": False,
             "state_dim": 128,
             "action_dim": 3,
             "beta_schedule": 'cosine',
@@ -55,6 +56,7 @@ class VisualDiffusionBridge(nn.Module):
             "diffusion_x_M": 10,
             "model": {
                 "_target_": "agents.models.diffusion.diffusion_models.DiffusionEncDec",
+                "_recursive_": False,
                 "state_dim": 128,
                 "action_dim": 3,
                 "goal_conditioned": False,

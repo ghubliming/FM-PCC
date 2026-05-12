@@ -206,7 +206,7 @@ class Trainer(object):
         test_loss = 0
         test_a0_loss = 0
         with torch.no_grad():
-            for step in range(n_test):
+            for step in tqdm(range(n_test), desc='Evaluating', leave=False):
                 batch = next(self.test_dataloader)
                 batch = batch_to_device(batch, device=self.device)
                 loss, infos = self.model.loss(*batch)
