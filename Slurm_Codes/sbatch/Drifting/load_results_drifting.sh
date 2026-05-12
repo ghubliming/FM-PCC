@@ -19,21 +19,26 @@ echo "JOB START: $(date)"
 
 # Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
-REPO="$FMPCC_ROOT/FM-PCC"
+DRIFTING="$FMPCC_ROOT/drifting"
 CONDA_DIR="$HOME/miniconda3"
 CONDA_ENV_NAME="FMPCC"
 
 source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
 
-export FMPCC="$REPO"
-export D3IL_ROOT="$FMPCC/d3il"
-export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
-
 export MPLBACKEND="agg"
 
-cd "$REPO"
+# W&B Login
+if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
+    export WANDB_API_KEY=$(cat $HOME/FMPCC/.wandb_api_key)
+    export WANDB_MODE="online"
+fi
 
-python FM_v3_ode_selectable_test/load_results_flow_matching_v3_ode_selectable.py
+cd "$DRIFTING"
+
+# Post-process or load results from drifting training/evaluation
+# This may involve: aggregating metrics, generating plots, uploading artifacts, etc.
+# Add your results processing logic here
+echo "Results loading script placeholder - customize for your pipeline."
 
 echo "Job completed successfully."

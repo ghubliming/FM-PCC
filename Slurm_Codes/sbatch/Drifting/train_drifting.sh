@@ -20,16 +20,12 @@ echo "JOB START: $(date)"
 
 # Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
-REPO="$FMPCC_ROOT/FM-PCC"
+DRIFTING="$FMPCC_ROOT/drifting"
 CONDA_DIR="$HOME/miniconda3"
 CONDA_ENV_NAME="FMPCC"
 
 source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
-
-export FMPCC="$REPO"
-export D3IL_ROOT="$FMPCC/d3il"
-export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
 
 # W&B Login
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
@@ -37,12 +33,13 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_MODE="online"
 fi
 
-cd "$REPO"
+cd "$DRIFTING"
 
-# Drifting uses the same FMv3 training script but with drifting experiment config
-python FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py \
-    --seeds 5 6 7 8 9 \
-    --use-wandb \
-    --wandb-project FMPCC-drifting
+# Train Generator or MAE based on config
+# For generator: python main.py --config configs/gen/pixel_sota_L.yaml --workdir /path/to/runs
+# For MAE: python main.py --config configs/mae/pixel_640.yaml --workdir /path/to/runs
+python main.py \
+    --config configs/gen/pixel_sota_L.yaml \
+    --workdir "$FMPCC_ROOT/drifting_runs"
 
 echo "Job completed successfully."
