@@ -8,9 +8,9 @@ import minari
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import flow_matcher_v3_ode_selectable.utils as utils
-from flow_matcher_v3_ode_selectable.sampling.policies import Policy
-from flow_matcher_v3_ode_selectable.sampling.projection import Projector
+import flow_matcher_v3_drifting.utils as utils
+from flow_matcher_v3_drifting.sampling.policies import Policy
+from flow_matcher_v3_drifting.sampling.projection import Projector
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 import sys
 import argparse
@@ -73,7 +73,7 @@ for exp in exps:
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
         for seed in seeds:
-            args = Parser().parse_args(experiment='plan_fm_v3_ode_selectable', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm_v3_drifting', seed=seed)
             
             fm_model = None
             dataset = None

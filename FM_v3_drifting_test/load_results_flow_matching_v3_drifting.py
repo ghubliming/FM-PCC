@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-import flow_matcher_v3_ode_selectable.utils as utils
+import flow_matcher_v3_drifting.utils as utils
 
 # Load configuration
 with open('config/projection_eval.yaml', 'r') as file:
@@ -35,7 +35,7 @@ for variant in projection_variants:
     collision_free_completed_all = np.array([])
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
-            args = Parser().parse_args(experiment='plan_fm_v3_ode_selectable', seed=seed)
+            args = Parser().parse_args(experiment='plan_fm_v3_drifting', seed=seed)
             if plot_path is None:
                 # The savepath is usually logbase/dataset/exp_name/seed
                 # We want the plots to be in logbase/dataset/exp_name/plots/load_results_output_all_seeds

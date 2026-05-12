@@ -18,14 +18,26 @@ fi
 
 echo "JOB START: $(date)"
 
-# Setup Workspace Paths
+# 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
-DRIFTING="$FMPCC_ROOT/drifting"
+REPO="$FMPCC_ROOT/FM-PCC"
 CONDA_DIR="$HOME/miniconda3"
 CONDA_ENV_NAME="FMPCC"
 
+# 2) Initialize Conda
 source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
+
+# 3) Set Environment Variables
+export FMPCC="$REPO"
+export D3IL_ROOT="$FMPCC/d3il"
+export GYM_AV="$D3IL_ROOT/environments/d3il/envs/gym_avoiding_env"
+export PYTHONPATH="$FMPCC:$D3IL_ROOT:$GYM_AV:$PYTHONPATH"
+
+# Rendering variables for MuJoCo on headless remote nodes
+export MUJOCO_GL="egl"
+export PYOPENGL_PLATFORM="egl"
+export MPLBACKEND="agg"
 
 # W&B Login
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
@@ -33,13 +45,12 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_MODE="online"
 fi
 
-cd "$DRIFTING"
+# 4) Run FM v3 Drifting Training
+cd "$REPO"
 
-# Train Generator or MAE based on config
-# For generator: python main.py --config configs/gen/pixel_sota_L.yaml --workdir /path/to/runs
-# For MAE: python main.py --config configs/mae/pixel_640.yaml --workdir /path/to/runs
-python main.py \
-    --config configs/gen/pixel_sota_L.yaml \
-    --workdir "$FMPCC_ROOT/drifting_runs"
+python FM_v3_drifting_test/train_flow_matching_v3_drifting.py \
+    --seeds 6 7 8 9 10 \
+    --use-wandb \
+    --wandb-project FMPCC-knoll
 
 echo "Job completed successfully."
