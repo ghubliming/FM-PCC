@@ -113,141 +113,103 @@ class BatchVisualizer:
     def plot_candidate_success_comparison(self, output_dir, show=False):
         """
         Bar chart comparing success rates across candidates.
-        
-        Shows accuracy for each candidate side-by-side.
-        
-        Args:
-            output_dir: Directory to save plot
-            show: Display plot if True
         """
-        logger.info("Generating success rate comparison plot...")
-        
-        data = []
-        candidates_list = []
-        
-        for letter in sorted(self.candidate_stats.keys()):
-            stats = self.candidate_stats[letter]
-            if 'accuracy' in stats and 'error' not in stats:
-                data.append(stats['accuracy'] * 100)
-                candidates_list.append(letter)
-        
-        if not data:
-            logger.warning("No valid data for success rate plot")
-            return
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        colors = [self._get_candidate_color(c.split()[-1]) for c in candidates_list]
-        bars = ax.bar(range(len(data)), data, color=colors, alpha=0.8, edgecolor='black', linewidth=1.5)
-        
-        # Add value labels on bars
-        for bar, value in zip(bars, data):
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{value:.1f}%',
-                   ha='center', va='bottom', fontweight='bold')
-        
-        ax.set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
-        ax.set_title('Cross-Candidate Success Rate Comparison', fontsize=14, fontweight='bold')
-        ax.set_xticks(range(len(candidates_list)))
-        ax.set_xticklabels(candidates_list)
-        ax.set_ylim([0, 105])
-        ax.grid(True, alpha=0.3, axis='y')
-        
-        plt.tight_layout()
-        
-        output_path = f"{output_dir}/01_candidate_success_comparison.png"
-        plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
-        logger.info(f"Saved: {output_path}")
-        
-        if show:
-            plt.show()
-        
-        plt.close()
-    
+        # 1. Standard
+        self._generate_bar_comparison(
+            output_dir, "01a_candidate_success_standard",
+            "accuracy_std_group", "Success Rate (%)", 
+            "Success Comparison: Standard DPCC", show, is_percentage=True
+        )
+        # 2. Tightened
+        self._generate_bar_comparison(
+            output_dir, "01b_candidate_success_tightened",
+            "accuracy_tight_group", "Success Rate (%)", 
+            "Success Comparison: Tightened DPCC", show, is_percentage=True
+        )
+
     def plot_candidate_time_comparison(self, output_dir, show=False):
         """
         Bar chart comparing computation time across candidates.
-        
-        Shows time for each candidate - lower is better.
-        
-        Args:
-            output_dir: Directory to save plot
-            show: Display plot if True
         """
-        logger.info("Generating time comparison plot...")
-        
+        # 1. Standard
+        self._generate_bar_comparison(
+            output_dir, "02a_candidate_time_standard",
+            "time_ms_std_group", "Computation Time (ms)", 
+            "Time Comparison: Standard DPCC", show, is_percentage=False
+        )
+        # 2. Tightened
+        self._generate_bar_comparison(
+            output_dir, "02b_candidate_time_tightened",
+            "time_ms_tight_group", "Computation Time (ms)", 
+            "Time Comparison: Tightened DPCC", show, is_percentage=False
+        )
+
+    def _generate_bar_comparison(self, output_dir, filename, key, ylabel, title, show, is_percentage=False):
+        logger.info(f"Generating bar comparison plot: {filename}...")
         data = []
-        candidates_list = []
-        
+        labels = []
         for letter in sorted(self.candidate_stats.keys()):
-            stats = self.candidate_stats[letter]
-            if 'time_ms' in stats and 'error' not in stats:
-                data.append(stats['time_ms'])
-                candidates_list.append(letter)
+            val = self.candidate_stats[letter].get(key)
+            if val is not None:
+                data.append(val * 100 if is_percentage else val)
+                labels.append(letter)
         
-        if not data:
-            logger.warning("No valid data for time comparison plot")
-            return
+        if not data: return
         
         fig, ax = plt.subplots(figsize=(10, 6))
-        
-        colors = [self._get_candidate_color(c.split()[-1]) for c in candidates_list]
+        colors = [self._get_candidate_color(l) for l in labels]
         bars = ax.bar(range(len(data)), data, color=colors, alpha=0.8, edgecolor='black', linewidth=1.5)
         
-        # Add value labels
-        for bar, value in zip(bars, data):
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{value:.1f}ms',
-                   ha='center', va='bottom', fontweight='bold')
+        for bar, val in zip(bars, data):
+            ax.text(bar.get_x() + bar.get_width()/2., bar.get_height(), 
+                    f'{val:.1f}%' if is_percentage else f'{val:.1f}ms', ha='center', va='bottom', fontweight='bold')
         
-        ax.set_ylabel('Computation Time (ms)', fontsize=12, fontweight='bold')
-        ax.set_title('Cross-Candidate Computation Time Comparison', fontsize=14, fontweight='bold')
-        ax.set_xticks(range(len(candidates_list)))
-        ax.set_xticklabels(candidates_list)
+        ax.set_ylabel(ylabel, fontsize=12, fontweight='bold')
+        ax.set_title(title, fontsize=14, fontweight='bold')
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels)
+        if is_percentage: ax.set_ylim([0, 105])
         ax.grid(True, alpha=0.3, axis='y')
-        
         plt.tight_layout()
-        
-        output_path = f"{output_dir}/02_candidate_time_comparison.png"
-        plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
-        logger.info(f"Saved: {output_path}")
-        
-        if show:
-            plt.show()
-        
+        plt.savefig(f"{output_dir}/{filename}.png", dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
+        if show: plt.show()
         plt.close()
     
     def plot_candidate_robustness_boxplot(self, output_dir, show=False):
         """
         Boxplot showing seed variability per candidate.
-        
-        Tight boxes indicate reproducible results across seeds.
-        Wide boxes indicate sensitivity to seed variation.
-        
-        Args:
-            output_dir: Directory to save plot
-            show: Display plot if True
         """
-        logger.info("Generating robustness boxplot...")
-        
-        # Collect per-seed accuracies for each candidate
+        # 1. Standard
+        self._generate_robustness_subgroup(
+            output_dir, "03a_candidate_robustness_standard", 
+            ['dpcc-r', 'dpcc-c', 'dpcc-t'], 
+            "Robustness: Standard DPCC (Seed Variability)", show
+        )
+        # 2. Tightened
+        self._generate_robustness_subgroup(
+            output_dir, "03b_candidate_robustness_tightened", 
+            ['dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened'], 
+            "Robustness: Tightened DPCC (Seed Variability)", show
+        )
+
+    def _generate_robustness_subgroup(self, output_dir, filename, variants, title, show):
+        logger.info(f"Generating robustness plot: {filename}...")
         box_data = []
         labels = []
         colors_list = []
         
         for letter in sorted(self.candidate_aggregators.keys()):
             agg = self.candidate_aggregators[letter]
-            
             try:
-                # Extract per-seed accuracy data
                 detailed = agg.detailed_df
                 if detailed is not None and not detailed.empty:
-                    # Get accuracy by seed
+                    # Filter for specific variants
+                    subset = detailed[detailed['variant'].isin(variants)]
+                    if subset.empty: continue
+                    
                     seeds_accuracy = []
-                    for seed in detailed['seed'].unique():
-                        seed_data = detailed[detailed['seed'] == seed]
+                    for seed in subset['seed'].unique():
+                        seed_data = subset[subset['seed'] == seed]
                         acc = seed_data['value'].mean() if len(seed_data) > 0 else np.nan
                         if not np.isnan(acc):
                             seeds_accuracy.append(acc * 100)
@@ -256,102 +218,68 @@ class BatchVisualizer:
                         box_data.append(seeds_accuracy)
                         labels.append(letter)
                         colors_list.append(self._get_candidate_color(letter))
-            except Exception as e:
-                logger.warning(f"Could not extract robustness for {letter}: {str(e)}")
-        
-        if not box_data:
-            logger.warning("No valid data for robustness plot")
-            return
-        
+            except Exception: pass
+            
+        if not box_data: return
         fig, ax = plt.subplots(figsize=(10, 6))
-        
         bp = ax.boxplot(box_data, labels=labels, patch_artist=True, widths=0.6)
-        
-        # Color the boxes
         for patch, color in zip(bp['boxes'], colors_list):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
-        
-        ax.set_ylabel('Accuracy (%)', fontsize=12, fontweight='bold')
-        ax.set_title('Cross-Candidate Robustness: Seed Variability', fontsize=14, fontweight='bold')
+            patch.set_facecolor(color); patch.set_alpha(0.7)
+        ax.set_ylabel('Accuracy (%)', fontweight='bold')
+        ax.set_title(title, fontsize=14, fontweight='bold')
         ax.grid(True, alpha=0.3, axis='y')
-        
         plt.tight_layout()
-        
-        output_path = f"{output_dir}/03_candidate_robustness_boxplot.png"
-        plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
-        logger.info(f"Saved: {output_path}")
-        
-        if show:
-            plt.show()
-        
+        plt.savefig(f"{output_dir}/{filename}.png", dpi=PLOT_CONFIG.get('dpi', 300))
+        if show: plt.show()
         plt.close()
-    
+
     def plot_candidate_constraint_heatmap(self, output_dir, show=False):
         """
         Heatmap showing success rate per candidate × constraint type.
-        
-        Rows = candidates, Columns = constraint types
-        Cell color intensity = success rate
-        
-        Args:
-            output_dir: Directory to save plot
-            show: Display plot if True
         """
-        logger.info("Generating constraint heatmap...")
-        
-        # Build matrix: candidate × constraint
+        # 1. Standard
+        self._generate_heatmap_subgroup(
+            output_dir, "04a_candidate_heatmap_standard",
+            ['dpcc-r', 'dpcc-c', 'dpcc-t'],
+            "Constraint Performance: Standard DPCC", show
+        )
+        # 2. Tightened
+        self._generate_heatmap_subgroup(
+            output_dir, "04b_candidate_heatmap_tightened",
+            ['dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened'],
+            "Constraint Performance: Tightened DPCC", show
+        )
+
+    def _generate_heatmap_subgroup(self, output_dir, filename, variants, title, show):
+        logger.info(f"Generating heatmap: {filename}...")
         candidates_sorted = sorted(self.candidate_aggregators.keys())
         constraint_types = ['halfspace', 'obstacles', 'dynamics', 'bounds']
-        
         heatmap_data = np.zeros((len(candidates_sorted), len(constraint_types)))
         
         for i, letter in enumerate(candidates_sorted):
             agg = self.candidate_aggregators[letter]
-            
             try:
-                by_constraint = agg.aggregated_by_constraint
-                if by_constraint is not None and not by_constraint.empty:
+                detailed = agg.detailed_df
+                if detailed is not None and not detailed.empty:
+                    subset = detailed[detailed['variant'].isin(variants)]
                     for j, constraint in enumerate(constraint_types):
-                        # Filter by constraint_type column
-                        constraint_data = by_constraint[by_constraint['constraint_type'] == constraint]
-                        if not constraint_data.empty:
-                            # Average accuracy for this constraint
-                            heatmap_data[i, j] = constraint_data[constraint_data['metric'] == 'n_success_and_constraints']['mean'].mean()
-            except Exception as e:
-                logger.warning(f"Could not get constraint data for {letter}: {str(e)}")
-        
+                        c_data = subset[subset['constraint_type'] == constraint]
+                        if not c_data.empty:
+                            heatmap_data[i, j] = c_data['value'].mean()
+            except Exception: pass
+
         fig, ax = plt.subplots(figsize=(10, 6))
-        
         im = ax.imshow(heatmap_data, cmap='RdYlGn', aspect='auto', vmin=0, vmax=1)
-        
-        ax.set_xticks(range(len(constraint_types)))
-        ax.set_yticks(range(len(candidates_sorted)))
-        ax.set_xticklabels(constraint_types)
-        ax.set_yticklabels(candidates_sorted)
-        
-        # Add colorbar
-        cbar = plt.colorbar(im, ax=ax)
-        cbar.set_label('Success Rate', fontweight='bold')
-        
-        # Add text annotations
+        ax.set_xticks(range(len(constraint_types))); ax.set_yticks(range(len(candidates_sorted)))
+        ax.set_xticklabels(constraint_types); ax.set_yticklabels(candidates_sorted)
+        cbar = plt.colorbar(im, ax=ax); cbar.set_label('Success Rate', fontweight='bold')
         for i in range(len(candidates_sorted)):
             for j in range(len(constraint_types)):
-                text = ax.text(j, i, f'{heatmap_data[i, j]*100:.0f}%',
-                              ha="center", va="center", color="black", fontweight='bold')
-        
-        ax.set_title('Cross-Candidate Performance: Constraint Type Breakdown', 
-                    fontsize=14, fontweight='bold')
-        
+                ax.text(j, i, f'{heatmap_data[i, j]*100:.0f}%', ha="center", va="center", fontweight='bold')
+        ax.set_title(title, fontsize=14, fontweight='bold')
         plt.tight_layout()
-        
-        output_path = f"{output_dir}/04_candidate_constraint_heatmap.png"
-        plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
-        logger.info(f"Saved: {output_path}")
-        
-        if show:
-            plt.show()
-        
+        plt.savefig(f"{output_dir}/{filename}.png", dpi=PLOT_CONFIG.get('dpi', 300))
+        if show: plt.show()
         plt.close()
 
     def plot_matrix_analysis(self, output_dir, show=False):
