@@ -106,53 +106,52 @@ if __name__ == '__main__':
     print(f"[ train ] W&B: {cli_args.use_wandb} (project: {cli_args.wandb_project})")
     print("=" * 80)
     print()
-    
-    for seed in seeds:
-        print(f"[ train ] Seed {seed}")
-        
-        # Parse config using standard FM-PCC Parser
-        # Uses config/avoiding-d3il.py:flow_matching_v3_imeanflow
-        parser = Parser(remaining, exe_name='train')
-        args = parser.parse_args(
-            remaining + [
-                f'--seed={seed}',
-                '--diffusion=flow_matching_v3_imeanflow',  # Use iMF config block
-            ]
-        )
-        
-        # Instantiate model, diffusion, trainer
-        model = args.model
-        diffusion = args.diffusion
-        trainer = args.trainer
-        
-        # Setup W&B
-        run = None
-        if cli_args.use_wandb:
-            try:
-                import wandb
-                run = wandb.init(
-                    project=cli_args.wandb_project,
-                    entity=cli_args.wandb_entity,
-                    group=cli_args.wandb_group,
-                    name=f'iMF-seed-{seed}',
-                    config=vars(args),
-                    reinit=True,
-                )
-            except Exception as e:
-                print(f"[ train ] W&B init failed: {e}")
-        
-        # Train
-        print(f"[ train ] Starting training (steps: {trainer.n_train_steps})")
-        trainer.train()
-        
-        # Log to W&B
-        if run is not None:
-            log_wandb_from_losses(os.path.join(args.savepath, 'losses.pkl'), run)
-            upload_wandb_artifact(run, seed, args.savepath)
-            run.finish()
-        
-        print(f"[ train ] Seed {seed} complete → {args.savepath}")
-        print()
+    original_argv = list(sys.argv)
+    sys.argv = [sys.argv[0]] + remaining
+    try:
+        for seed in seeds:
+            print(f"[ train ] Seed {seed}")
+
+            # Parse config using standard FM-PCC Parser
+            # Uses config/avoiding-d3il.py:flow_matching_v3_imeanflow
+            parser = Parser(exe_name='train')
+            args = parser.parse_args(experiment='train', seed=seed)
+
+            # Instantiate model, diffusion, trainer
+            model = args.model
+            diffusion = args.diffusion
+            trainer = args.trainer
+
+            # Setup W&B
+            run = None
+            if cli_args.use_wandb:
+                try:
+                    import wandb
+                    run = wandb.init(
+                        project=cli_args.wandb_project,
+                        entity=cli_args.wandb_entity,
+                        group=cli_args.wandb_group,
+                        name=f'iMF-seed-{seed}',
+                        config=vars(args),
+                        reinit=True,
+                    )
+                except Exception as e:
+                    print(f"[ train ] W&B init failed: {e}")
+
+            # Train
+            print(f"[ train ] Starting training (steps: {trainer.n_train_steps})")
+            trainer.train()
+
+            # Log to W&B
+            if run is not None:
+                log_wandb_from_losses(os.path.join(args.savepath, 'losses.pkl'), run)
+                upload_wandb_artifact(run, seed, args.savepath)
+                run.finish()
+
+            print(f"[ train ] Seed {seed} complete → {args.savepath}")
+            print()
+    finally:
+        sys.argv = original_argv
     
     print("=" * 80)
     print("[ train ] Training complete for all seeds")

@@ -41,11 +41,8 @@ def lazy_fstring(template, args):
 
 class Parser(argparse.ArgumentParser):
 
-    def __init__(self, *args, savepath='', **kwargs):
-        # Remove custom arguments before passing to super().__init__
-        self.exe_name = kwargs.pop('exe_name', None)
-        self.dataset = kwargs.pop('dataset', None)
-        self.config = kwargs.pop('config', None)
+    def __init__(self, *args, savepath='', exe_name=None, **kwargs):
+        self.exe_name = exe_name
         super().__init__(*args, **kwargs)
         self.add_argument('--config', help='Path to config file')
         self.add_argument('--seed', type=int, help='Random seed')  # Add seed argument

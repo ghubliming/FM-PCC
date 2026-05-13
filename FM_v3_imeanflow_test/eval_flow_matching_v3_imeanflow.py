@@ -14,6 +14,7 @@ Usage:
 import argparse
 import json
 import os
+import sys
 
 import numpy as np
 import torch
@@ -36,12 +37,14 @@ def evaluate_seed(seed, results_dir='evaluation_results'):
     """
     print(f"[ eval ] Seed {seed}")
     
-    # Parse config to locate checkpoint
-    parser = Parser([], exe_name='eval')
-    args = parser.parse_args([
-        f'--seed={seed}',
-        '--diffusion=flow_matching_v3_imeanflow',  # Use iMF config
-    ])
+    # Parse config to locate checkpoint using the standard FM-PCC handoff.
+    original_argv = list(sys.argv)
+    sys.argv = [sys.argv[0]]
+    try:
+        parser = Parser(exe_name='eval')
+        args = parser.parse_args(experiment='eval', seed=seed)
+    finally:
+        sys.argv = original_argv
     
     print(f"[ eval ] Checkpoint: {args.savepath}")
     
@@ -148,29 +151,6 @@ def main():
     print(f"[ eval ] Evaluated {len(all_results)}/{len(seeds)} seeds successfully")
     print("=" * 80)
 
-
-def main():
-    parser = argparse.ArgumentParser(description='Evaluate iMF models')
-    parser.add_argument('--seeds', nargs='+', type=int, default=[6, 7, 8, 9, 10])
-    parser.add_argument('--logbase', type=str, default='logs')
-    parser.add_argument('--output-dir', type=str, default='evaluation_results/imeanflow')
-    parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
-    
-    args = parser.parse_args()
-    
-    evaluator = ImfEvaluator(device=args.device)
-    output_path = Path(args.output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-    
-    all_results = {}
-    for seed in args.seeds:
-        print(f"\n[ eval ] {'='*40}\n[ eval ] Seed {seed}\n[ eval ] {'='*40}")
-        res = evaluator.evaluate_seed(seed, args.logbase, args.output_dir)
-        if res:
-            all_results[seed] = res
-            np.savez(output_path / f'results_seed_{seed}.npz', **res)
-            
-    print("\n[ eval ] Evaluation complete.")
 
 if __name__ == '__main__':
     main()
