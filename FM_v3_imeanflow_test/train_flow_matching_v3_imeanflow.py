@@ -162,7 +162,6 @@ if __name__ == '__main__':
             diffusion_config = utils.Config(
                 args.diffusion,
                 savepath=(args.savepath, 'diffusion_config.pkl'),
-                model=model_config,
                 horizon=args.horizon,
                 observation_dim=observation_dim,
                 action_dim=action_dim,

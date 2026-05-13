@@ -188,6 +188,17 @@ class iMFDiffusion(nn.Module):
         )
         
         return sampled
+
+    def loss(
+        self,
+        x: torch.Tensor,
+        cond: Dict,
+        returns: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Trainer entrypoint matching FM-PCC's expected `model.loss(*batch)` contract."""
+        batch_size = x.shape[0]
+        t = torch.rand(batch_size, device=x.device)
+        return self.p_losses(x, t, returns=returns, conditions=cond)
     
     def p_losses(
         self,
