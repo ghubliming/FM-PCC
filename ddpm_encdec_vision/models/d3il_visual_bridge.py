@@ -8,6 +8,9 @@ import os
 # Ensure d3il is in path if not already
 sys.path.append(os.path.abspath('d3il'))
 
+from agents.utils.scaler import Scaler
+from environments.dataset.aligning_dataset import Aligning_Dataset
+
 class VisualDiffusionBridge(nn.Module):
     """Bridges D3IL's visual DDPM into FM-PCC's engine structure."""
     
@@ -93,6 +96,37 @@ class VisualDiffusionBridge(nn.Module):
         
         self.obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(self.device)
         self.diffusion_model = hydra.utils.instantiate(model_cfg).to(self.device)
+
+        self._set_action_bounds(config)
+
+    def _set_action_bounds(self, config):
+        """Initialize diffusion clamp bounds from the aligning training dataset."""
+        try:
+            train_data_path = getattr(config, "train_data_path", None)
+            if train_data_path is None:
+                raise ValueError("Missing train_data_path in visual config")
+
+            dataset = Aligning_Dataset(
+                data_directory=train_data_path,
+                device="cpu",
+                obs_dim=20,
+                action_dim=self.diffusion_model.action_dim,
+                max_len_data=getattr(config, "max_len_data", 512),
+                window_size=getattr(config, "window_size", 8),
+            )
+            scaler = Scaler(
+                dataset.get_all_observations(),
+                dataset.get_all_actions(),
+                getattr(config, "scale_data", True),
+                self.device,
+            )
+            self.diffusion_model.min_action = torch.from_numpy(scaler.y_bounds[0, :]).to(self.device)
+            self.diffusion_model.max_action = torch.from_numpy(scaler.y_bounds[1, :]).to(self.device)
+        except Exception:
+            # Keep inference alive if the dataset-derived bounds cannot be built.
+            default_bounds = torch.tensor([-0.01, -0.01, -0.01], device=self.device)
+            self.diffusion_model.min_action = default_bounds
+            self.diffusion_model.max_action = -default_bounds
         
     def encode_visual(self, bp_imgs, inhand_imgs, state=None):
         """[B,T,3,96,96] x 2 -> [B,T,128]"""
