@@ -160,7 +160,7 @@ class DataLoader:
                             metrics_dict[key] = float(value.item())
                         else:
                             metrics_dict[f'{key}_array'] = value
-                            metrics_dict[f'{key}_mean'] = float(np.mean(value))
+                            metrics_dict[key] = float(np.mean(value))
                             metrics_dict[f'{key}_std'] = float(np.std(value))
                     else:
                         try:

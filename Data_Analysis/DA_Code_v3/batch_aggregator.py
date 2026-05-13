@@ -101,6 +101,10 @@ class BatchAggregator:
                 
                 # Find rows for our metrics
                 accuracy_rows = variant_agg[variant_agg['metric'] == accuracy_metric]
+                if accuracy_rows.empty:
+                    # Fallback to pure goal success if constraints metric is missing
+                    accuracy_rows = variant_agg[variant_agg['metric'] == 'n_success']
+                    
                 time_rows = variant_agg[variant_agg['metric'] == time_metric]
                 
                 if not accuracy_rows.empty:

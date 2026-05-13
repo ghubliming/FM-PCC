@@ -28,3 +28,6 @@ wandb/*
 
 # Mujoco log
 MUJOCO_LOG.TXT
+
+# Temp
+temp/*
