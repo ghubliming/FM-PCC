@@ -13,6 +13,7 @@ This hotfix standardizes the iMeanFlow (iMF) training and evaluation infrastruct
 - **Real Data**: The training script now loads the actual `avoiding-d3il` dataset instead of generating synthetic trajectories.
 - **Dual Velocity Loss**: Integrated the `ImfTrainingWrapper` which handles the global ($u$) and local ($v$) velocity loss components with an automated curriculum scheduler.
 - **Logging Cleanup**: Removed verbose `tqdm` progress bars that were bloating SLURM logs. Replaced with clean `[ train ]` and `[ eval ]` status reports.
+- **CLI Argument Support**: Fixed the `Parser` to accept and process standard cluster-side arguments (`--batch-size`, `--learning-rate`, `--num-epochs`, `--device`). Implemented an automated mapping from `--num-epochs` to project-standard `n_train_steps`.
 
 ### 3. Checkpoint Management
 - **Deterministic Paths**: Paths are now derived from the config, ensuring consistency: `logs/avoiding-d3il/flow_matching_v3_imeanflow/.../seed_X`.

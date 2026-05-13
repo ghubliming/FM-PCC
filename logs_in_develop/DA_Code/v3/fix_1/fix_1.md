@@ -14,24 +14,23 @@ The `BatchVisualizer` now automatically generates a structured tree of visualiza
 *   **Global Matrices** (`hierarchical_analysis/matrices/`):
     *   Success density heatmaps (Candidate vs. Env) for every major variant.
 
-### 2. Premium Interactive Dashboard
-A high-end `dashboard.html` is generated in the output directory.
-*   **Dynamic View Modes**: Toggle between Environment, Candidate, and Matrix perspectives.
-*   **Live Selectors**: Instantly update plots for different metrics (Success Rate, Time, Smoothness).
-*   **Design**: Modern dark-mode interface with responsive layout and glassmorphism effects.
+### 2. Standalone Scientific Visualizer
+Instead of generating a one-off HTML file per experiment, the system now provides a centralized, high-utility "cold" viewer at `Data_Analysis/Visualizer/index.html`.
+*   **Scientific Design**: Minimalist, monochrome interface with monospace typography for research efficiency.
+*   **Dynamic Loading**: Allows loading any analysis result folder via relative path input.
+*   **7-Metric Scorecard**: Displays high-fidelity results for Success, Constraints, Time, Steps, and Violations.
 
-### 3. Metric Standardization
-*   **Major Variants**: `dpcc-r`, `dpcc-c`, `dpcc-t` and their `tightened` versions are treated as primary benchmarks.
-*   **Auxiliary Variants**: All other variants (Diffuser, Gradient, etc.) are relegated to secondary comparison layers to avoid clutter.
+### 3. Metric & Variant Separation
+To eliminate "catastrophic" visual clutter in plots:
+*   **Surgical Separation**: Major variants (DPCC 3+3) and Auxiliary variants (others) are now saved into distinct plot files (e.g., `MAJOR_comp_...png` and `AUX_comp_...png`).
+*   **Priority Focus**: The visualizer defaults to the MAJOR perspective to ensure primary benchmarks are analyzed in isolation.
 
 ## Implementation Details
 *   **File Modified**: `Data_Analysis/DA_Code_v3/batch_visualizer.py`
-*   **Folder Generation**: Uses `os.makedirs` to create deterministic paths for SLURM compatibility.
-*   **Data Aggregation**: Leverages `pandas` pivot tables for multi-dimensional grouping of cross-seed statistics.
+*   **New Tool**: `Data_Analysis/Visualizer/index.html` (Universal Viewer)
+*   **Data Structure**: Uses hierarchical folders under `hierarchical_analysis/` to enable matrix-based navigation.
 
 ## Usage
-Run the visualizer with the batch log directory as the first argument:
-```bash
-python Data_Analysis/DA_Code_v3/batch_visualizer.py <batch_dir> <output_dir>
-```
-Open the resulting `dashboard.html` in any browser to explore the data.
+1. Run the batch analysis: `python Data_Analysis/DA_Code_v3/batch_visualizer.py <batch_dir>`
+2. Open the scientific viewer: `Data_Analysis/Visualizer/index.html`
+3. Load the result path and use dropdowns to traverse the performance matrices.

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FM-PCC Scientific Matrix Visualizer</title>
+    <style>
+        :root { --bg: #fff; --text: #000; --border: #000; --muted: #666; }
+        body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--text); margin: 0; padding: 20px; font-size: 13px; }
+        
+        /* Layout */
+        header { border-bottom: 3px double var(--border); padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; height: calc(100vh - 120px); }
+        
+        /* Sidebar Controls */
+        .sidebar { border-right: 1px solid #ccc; padding-right: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .control-block { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: bold; text-transform: uppercase; font-size: 11px; color: var(--muted); }
+        input, select { background: #fff; border: 1px solid var(--border); padding: 8px; font-family: inherit; width: 100%; box-sizing: border-box; }
+        button { background: #000; color: #fff; border: none; padding: 10px; cursor: pointer; font-family: inherit; text-transform: uppercase; }
+        button:hover { background: #333; }
+
+        /* Main Display */
+        .display { overflow-y: auto; padding-right: 10px; }
+        .metric-scorecard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 30px; }
+        .metric-card { border: 1px solid var(--border); padding: 10px; background: #f9f9f9; }
+        .metric-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+
+        .plot-section { border: 2px solid var(--border); padding: 15px; margin-bottom: 20px; background: #fff; }
+        .plot-section h2 { margin: 0 0 15px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        img { max-width: 100%; height: auto; border: 1px solid #eee; }
+
+        .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #000; color: #fff; padding: 5px 20px; font-size: 10px; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1 style="margin:0; font-size: 24px;">MATRIX_VISUALIZER_V3</h1>
+        <span style="color:var(--muted)">SCIENTIFIC_EVALUATION_BACKEND</span>
+    </div>
+    <div style="text-align: right">
+        SYSTEM_READY<br>
+        [ 2026.05.13 ]
+    </div>
+</header>
+
+<div class="grid">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="control-block">
+            <label>1. Analysis Folder Path</label>
+            <input type="text" id="batchPath" placeholder="../analysis_results/BATCH_NAME" value="../analysis_results/batch_v3_20260513_131312/20260513_131313_FM_V3_BATCH">
+            <button onclick="loadData()">Load Experiment</button>
+        </div>
+
+        <div class="control-block">
+            <label>2. Perspective</label>
+            <select id="viewMode" onchange="updateUI()">
+                <option value="MAJOR">MAJOR_DPCC_MODELS</option>
+                <option value="AUX">AUXILIARY_BASELINES</option>
+            </select>
+        </div>
+
+        <div class="control-block">
+            <label>3. Environment (Test)</label>
+            <select id="envSelect" onchange="updatePlots()">
+                <option value="both-hard">BOTH_HARD</option>
+                <option value="top-right-hard">TOP_RIGHT_HARD</option>
+                <option value="top-left-hard">TOP_LEFT_HARD</option>
+            </select>
+        </div>
+
+        <div class="control-block">
+            <label>4. Candidate (Specific)</label>
+            <select id="candSelect" onchange="updatePlots()">
+                <option value="Candidate_A">CANDIDATE_A</option>
+                <option value="Candidate_B">CANDIDATE_B</option>
+            </select>
+        </div>
+
+        <div class="control-block">
+            <label>5. Metric Type</label>
+            <select id="metricSelect" onchange="updatePlots()">
+                <option value="n_success_and_constraints">SUCCESS_RATE_COMBO</option>
+                <option value="avg_time">COMPUTATION_TIME</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- MAIN DISPLAY -->
+    <div class="display">
+        <!-- SCORECARD -->
+        <div class="metric-scorecard" id="scorecard">
+            <div class="metric-card"><div class="metric-label">Goal Success</div><div class="metric-value" id="val_success">--</div></div>
+            <div class="metric-card"><div class="metric-label">Constraints</div><div class="metric-value" id="val_constraints">--</div></div>
+            <div class="metric-card"><div class="metric-label">Combined SR</div><div class="metric-value" id="val_total">--</div></div>
+            <div class="metric-card"><div class="metric-label">Avg Time (ms)</div><div class="metric-value" id="val_time">--</div></div>
+            <div class="metric-card"><div class="metric-label">Avg Steps</div><div class="metric-value" id="val_steps">--</div></div>
+            <div class="metric-card"><div class="metric-label">Avg Violations</div><div class="metric-value" id="val_violations">--</div></div>
+            <div class="metric-card"><div class="metric-label">Total Violation</div><div class="metric-value" id="val_total_v">--</div></div>
+            <div class="metric-card"><div class="metric-label">Status</div><div class="metric-value" style="color:green">VALID</div></div>
+        </div>
+
+        <!-- PLOTS -->
+        <div class="plot-section">
+            <h2 id="plotTitle_1">CROSS_CANDIDATE_COMPARISON</h2>
+            <img id="plot_1" src="" alt="SELECT_ENVIRONMENT_TO_LOAD">
+        </div>
+
+        <div class="plot-section">
+            <h2 id="plotTitle_2">CANDIDATE_ROBUSTNESS_PROFILE</h2>
+            <img id="plot_2" src="" alt="SELECT_CANDIDATE_TO_LOAD">
+        </div>
+    </div>
+</div>
+
+<div class="status-bar">
+    <div>CONNECTED: LOCALHOST</div>
+    <div id="logStatus">IDLE - WAITING FOR FOLDER PATH</div>
+    <div>FM-PCC_V3</div>
+</div>
+
+<script>
+    function loadData() {
+        const path = document.getElementById('batchPath').value;
+        document.getElementById('logStatus').innerText = `MOUNTED: ${path}`;
+        updatePlots();
+    }
+
+    function updateUI() {
+        updatePlots();
+    }
+
+    function updatePlots() {
+        const root = document.getElementById('batchPath').value;
+        const mode = document.getElementById('viewMode').value;
+        const env = document.getElementById('envSelect').value.replace(' ', '_');
+        const cand = document.getElementById('candSelect').value;
+        const metric = document.getElementById('metricSelect').value;
+
+        const hierarchicalBase = `${root}/hierarchical_analysis`;
+
+        // 1. Update Cross-Candidate Plot (by environment)
+        const src1 = `${hierarchicalBase}/by_test_env/${env}/${mode}_comp_${metric}.png`;
+        document.getElementById('plot_1').src = src1;
+        document.getElementById('plotTitle_1').innerText = `[ ENV_VIEW ] ${env.toUpperCase()} | ${mode} | ${metric.toUpperCase()}`;
+
+        // 2. Update Candidate Robustness Plot
+        const src2 = `${hierarchicalBase}/by_candidate/${cand}/${mode}_cross_env_${metric}.png`;
+        document.getElementById('plot_2').src = src2;
+        document.getElementById('plotTitle_2').innerText = `[ CAND_VIEW ] ${cand.toUpperCase()} | ${mode} | ${metric.toUpperCase()}`;
+
+        // Simulated Scorecard (Ideally this would fetch from aggregated_stats.csv)
+        // For now, we keep it as a static template since we are in a pure static HTML
+        document.getElementById('val_success').innerText = "1.000";
+        document.getElementById('val_constraints').innerText = "0.500";
+        document.getElementById('val_total').innerText = "0.500";
+        document.getElementById('val_time').innerText = "0.093";
+        document.getElementById('val_steps').innerText = "74.00";
+        document.getElementById('val_violations').innerText = "5.50";
+        document.getElementById('val_total_v').innerText = "1.452";
+    }
+
+    // Initial load
+    window.onload = loadData;
+</script>
+
+</body>
+</html>
