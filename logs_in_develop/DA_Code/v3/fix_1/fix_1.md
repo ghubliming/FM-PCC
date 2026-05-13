@@ -4,7 +4,7 @@
 While executing the v3 batch data analysis on standard text-based evaluation logs (`.log` or `.txt`), the generated summaries contained empty values (`NaN`) for crucial metrics such as `Accuracy`, `Time_ms`, and `Robustness_Score`. This data omission ultimately led to corrupted and incomplete comparison plots. 
 
 **Root Cause of Empty Metrics (Even for .npz files):**
-When parsing `.npz` files that contained arrays (e.g., multiple episodes), the v2 code automatically appended `_mean` and `_std` to the metric key (e.g., `n_success_and_constraints_mean`). However, the batch aggregator explicitly searched for the exact base string (`n_success_and_constraints`). This mismatch caused the aggregator to skip these metrics entirely, resulting in empty tables and broken plots even when the raw data existed.
+When parsing `.npz` files that contained arrays (e.g., multiple episodes), the v2 code automatically appended `_mean` and `_std` to the metric key (e.g., `n_success_and_constraints_mean`). However, the batch aggregator explicitly searched for the exact base string (`n_success_and_constraints`). This mismatch caused the aggregator to silently skip these metrics entirely, resulting in empty tables and broken plots even when the raw data existed.
 
 Furthermore, the existing v2/v3 plotting logic strictly averaged over all variants and test types to produce single candidate-level metrics. The thesis requirement demands a **complex multi-dimensional analysis**: slicing performance by Metric (e.g., Success rate) × Variant (e.g., `dpcc-c-tightened`) × Test Type (e.g., `Both hard`) × Candidate (`A`, `B`, `C`...).
 
@@ -34,13 +34,16 @@ def get_full_detailed_dataframe(self):
 ### D. Advanced Multi-Dimensional Plotting (`batch_visualizer.py`)
 A new method `plot_multidimensional_comparison` was integrated into the batch visualization suite. When executed, it generates grouped bar charts slicing the data exactly as requested:
 - **One discrete plot per Test Type** (e.g., `halfspace_both-hard`).
-- **X-axis**: Distinct Candidates (`A`, `B`, `C`...).
+- **X-axis**: Distinct Candidates (Updated to use shortened names: `A`, `B`, `C` instead of `Candidate A`).
 - **Grouped Bars**: Projection Variants representing discrete methodologies (e.g., `dpcc-c`, `dpcc-c-tightened`).
-- Contains standard deviation error bars for robust analysis.
+- Contains standard deviation error bars automatically calculated across all constituent random seeds.
 
 ### E. Advanced Table Exports (`batch_reporter.py`)
-The `BatchReporter` has been expanded to save `candidates_multidimensional.csv`. This CSV dumps the entire highly-dimensional `get_full_detailed_dataframe()` object to disk. This output is ideal for importing directly into Excel or external BI tools for pivot table formulation.
+The `BatchReporter` has been expanded to output two separate multi-dimensional files:
+1. **`candidates_multidimensional_raw.csv`**: Dumps the entire highly-dimensional `get_full_detailed_dataframe()` object to disk, including individual seed values.
+2. **`candidates_multidimensional_aggregated.csv`**: Automatically groups the raw data by `[Candidate, Variant, Constraint_Type, Test_Type, Metric]` and pre-calculates the `mean`, `std`, and `count` across all seeds. This provides a direct, pivot-free table ready for immediate consumption in Excel or other BI tools.
 
 ## 3. Impact
 - **No More Corrupted Plots or Missing Data**: Complete, non-null datasets actively feed into the plotting mechanisms regardless of whether the source was `.npz` arrays, `.npz` scalars, or raw `.log` text files.
 - **Accurate Granularity**: Candidates can now be objectively compared across specific variables (such as constrained vs. tightened configurations on specific hard obstacle layouts) rather than relying exclusively on vague aggregate scores.
+- **Improved UX & Exporting**: Plot X-axis titles are cleaner (just letters), and the multi-dimensional dataset is exported both raw and pre-aggregated, bypassing the need for manual aggregation in Excel.
