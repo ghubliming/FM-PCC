@@ -23,7 +23,7 @@ from matplotlib import rcParams
 logger = logging.getLogger(__name__)
 
 # Use config for styling
-from config import PLOT_CONFIG
+from config import PLOT_CONFIG, MAJOR_VARIANTS, AUXILIARY_VARIANTS
 
 # Color scheme for candidates: A=red, B=orange, C=yellow, D=blue, E=green...
 CANDIDATE_COLORS = {
@@ -387,14 +387,16 @@ class BatchVisualizer:
         
         plt.close()
     
-    def plot_multidimensional_comparison(self, output_dir, metric='n_success_and_constraints', show=False):
+    def plot_multidimensional_comparison(self, output_dir, metric='n_success_and_constraints', variants_to_plot=None, suffix='', show=False):
         """
-        Plot grouped bar charts for a specific metric across Candidates and Variants, separated by Test Type (Halfspace).
+        Plot grouped bar charts for a specific metric across Candidates and Variants, separated by Test Type.
         """
-        logger.info(f"Generating multidimensional comparison for {metric}...")
+        if variants_to_plot is None:
+            variants_to_plot = MAJOR_VARIANTS
+            
+        logger.info(f"Generating multidimensional comparison for {metric} (variants: {len(variants_to_plot)})...")
         
         # We need the full detailed dataframe
-        # Since Visualizer doesn't have direct access to aggregator, we can build it from candidate_aggregators
         all_dfs = []
         for letter, agg in self.candidate_aggregators.items():
             df = agg.detailed_df
@@ -408,17 +410,20 @@ class BatchVisualizer:
             return
             
         full_df = pd.concat(all_dfs, ignore_index=True)
+        
+        # Filter by variants
+        full_df = full_df[full_df['variant'].isin(variants_to_plot)]
+        
         metric_data = full_df[full_df['metric'] == metric]
         
         if metric_data.empty:
-            logger.warning(f"No data found for metric: {metric}")
+            logger.warning(f"No data found for metric: {metric} with selected variants")
             return
             
         # Group by Candidate, Variant, Halfspace (Test Type)
         grouped = metric_data.groupby(['Candidate', 'variant', 'halfspace_variant'])['value'].agg(['mean', 'std']).reset_index()
         
         halfspaces = grouped['halfspace_variant'].unique()
-        candidates = sorted(grouped['Candidate'].unique())
         
         for hs in halfspaces:
             hs_data = grouped[grouped['halfspace_variant'] == hs]
@@ -448,7 +453,7 @@ class BatchVisualizer:
                 
             ax.set_xlabel('Candidate', fontsize=12, fontweight='bold')
             ax.set_ylabel(metric, fontsize=12, fontweight='bold')
-            ax.set_title(f'Cross-Candidate Comparison - {metric} (Test Type: {hs})', fontsize=14, fontweight='bold')
+            ax.set_title(f'Cross-Candidate Comparison ({suffix}) - {metric} (Test: {hs})', fontsize=14, fontweight='bold')
             ax.set_xticks(x)
             ax.set_xticklabels(pivot_mean.index)
             ax.legend(title='Variant', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -458,7 +463,11 @@ class BatchVisualizer:
             
             safe_metric = metric.replace('/', '_').replace(' ', '_')
             safe_hs = hs.replace('/', '_').replace(' ', '_')
-            output_path = f"{output_dir}/05_multi_comp_{safe_metric}_{safe_hs}.png"
+            filename = f"05_multi_comp_{safe_metric}_{safe_hs}"
+            if suffix:
+                filename += f"_{suffix}"
+            output_path = f"{output_dir}/{filename}.png"
+            
             plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
             logger.info(f"Saved: {output_path}")
             
@@ -470,10 +479,6 @@ class BatchVisualizer:
     def plot_all(self, output_dir, show=False):
         """
         Generate all comparison plots.
-        
-        Args:
-            output_dir: Directory to save all plots
-            show: Display plots if True
         """
         logger.info("Generating all cross-candidate comparison plots...")
         
@@ -483,9 +488,15 @@ class BatchVisualizer:
         self.plot_candidate_robustness_boxplot(output_dir, show=show)
         self.plot_candidate_constraint_heatmap(output_dir, show=show)
         
-        # New Multidimensional plots
-        self.plot_multidimensional_comparison(output_dir, metric='n_success_and_constraints', show=show)
-        self.plot_multidimensional_comparison(output_dir, metric='avg_time', show=show)
+        # Major Multidimensional plots
+        self.plot_multidimensional_comparison(output_dir, metric='n_success_and_constraints', 
+                                             variants_to_plot=MAJOR_VARIANTS, suffix='MAJOR', show=show)
+        self.plot_multidimensional_comparison(output_dir, metric='avg_time', 
+                                             variants_to_plot=MAJOR_VARIANTS, suffix='MAJOR', show=show)
+        
+        # Auxiliary Multidimensional plots
+        self.plot_multidimensional_comparison(output_dir, metric='n_success_and_constraints', 
+                                             variants_to_plot=AUXILIARY_VARIANTS, suffix='AUX', show=show)
         
         logger.info("All plots generated successfully")
 

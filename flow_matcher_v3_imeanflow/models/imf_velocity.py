@@ -275,8 +275,8 @@ class TimeConditionedDualVelocity(DualVelocityField):
         t_embed = self.time_embedding(t.unsqueeze(-1))  # (B, time_dim)
         
         # Expand t_embed to match x shape if needed
-        if x.dim() == 3:  # (B, T, state_dim)
-            t_embed = t_embed.unsqueeze(1).expand(batch_size, x.shape[1], -1)
+        if x.dim() == 3 and t_embed.dim() == 2:  # x: (B, T, D), t_embed: (B, d)
+            t_embed = t_embed.unsqueeze(1).expand(-1, x.shape[1], -1)
         
         # Concatenate state with time embedding
         x_t_concat = torch.cat([x, t_embed], dim=-1)

@@ -28,3 +28,20 @@ self.model = TimeConditionedDualVelocity(
 
 ## 4. Impact
 The training script now correctly instantiates the model and proceeds to the training loop.
+
+## 5. Time Embedding Dimension Fix
+Resolved a `RuntimeError` during the forward pass:
+```
+RuntimeError: expand(torch.cuda.FloatTensor{[32, 1, 20, 128]}, size=[32, 20, -1]): the number of sizes provided (3) must be greater or equal to the number of dimensions in the tensor (4)
+```
+
+**Root Cause:**
+The model was unconditionally trying to `unsqueeze(1).expand(...)` the time embedding if the input state `x` was 3D. However, the training script passes a 2D time tensor `t` (B, T), which already produces a 3D time embedding `(B, T, d)`. Unsqueezing this made it 4D, causing the `expand` call to fail.
+
+**Solution:**
+Updated `flow_matcher_v3_imeanflow/models/imf_velocity.py` to only expand the time embedding if it is 2D and the state input is 3D.
+
+```python
+if x.dim() == 3 and t_embed.dim() == 2:
+    t_embed = t_embed.unsqueeze(1).expand(-1, x.shape[1], -1)
+```
