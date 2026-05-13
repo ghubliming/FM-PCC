@@ -32,7 +32,7 @@
         .score-card { border: 1px solid #000; padding: 10px; background: #fff; }
         .score-val { font-size: 20px; font-weight: bold; }
         .score-label { font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; }
-        #plot-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 500px; text-align: center; }
+        #plot-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 500px; text-align: center; overflow-x: auto; }
         .path-section { border-top: 2px solid #000; padding-top: 20px; margin-bottom: 50px; }
         table { border-collapse: collapse; width: 100%; font-size: 11px; table-layout: fixed; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; overflow-wrap: break-word; }
@@ -60,7 +60,22 @@
         </div>
         <div id="input-list"><select id="batch-select"></select></div>
         <div id="input-path" style="display:none"><input type="text" id="custom-path" placeholder="../analysis_results/batch_v3_.../candidates_multidimensional_aggregated.csv"></div>
-        <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
+    <div class="control-group">
+        <label>7. Visual Zoom (Magnify)</label>
+        <div style="display:flex; gap:5px;">
+            <button class="mode-btn" onclick="adjustZoom(-0.2)" style="flex:1">SMALLER</button>
+            <button class="mode-btn" onclick="adjustZoom(0.2)" style="flex:1">LARGER</button>
+        </div>
+        <div style="text-align:center; font-size:10px; font-weight:bold; margin-top:5px;">
+            Scale: <span id="zoom-val">1.0x</span>
+            <input type="hidden" id="width-zoom" value="1.0">
+        </div>
+    </div>
+    <div class="control-group">
+        <label>8. Matplotlib FigWidth</label>
+        <input type="number" id="fig-width" value="10.0" step="1.0" onchange="trigger_plot()">
+    </div>
+    <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
         <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">DOWNLOAD_PNG</button>
     </div>
     <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
@@ -168,7 +183,7 @@ def populate_dynamic_filters():
     cands_list = sorted(df['Candidate'].unique())
     document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
 
-async def trigger_plot(event):
+async def trigger_plot(event=None):
     global df, current_fig
     if df is None: return
     metric, mode, env = document.getElementById("metric-select").value, document.getElementById("mode-select").value, document.getElementById("env-select").value
@@ -185,23 +200,66 @@ async def trigger_plot(event):
     cols = [v for v in checked_vars if v in pivot_mean.columns]
     pivot_mean = pivot_mean[cols]
     if pivot_std is not None: pivot_std = pivot_std[cols]
+    # Use manual fixed width from the input box
+    try:
+        calc_width = float(document.getElementById("fig-width").value)
+    except:
+        calc_width = 10.0
+    
     plt.close('all')
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(calc_width, 6))
     pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=0.9, yerr=pivot_std, capsize=4)
     ax.set_title(f"Dynamic Analysis: {metric.upper()}", fontsize=12, fontweight='bold'); ax.set_ylabel(metric)
     ax.grid(True, alpha=0.2, axis='y'); ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
     plt.tight_layout()
     current_fig = fig
-    document.getElementById("plot-area").innerHTML = ""
+    area = document.getElementById("plot-area")
+    area.innerHTML = ""
     display(fig, target="plot-area")
+    
+    # Re-apply the Visual Zoom (CSS)
+    import asyncio
+    await asyncio.sleep(0.1)
+    window.applyZoom()
+    
     update_scorecard(checked_cands[0], checked_vars[0], env)
 
 def download_plot(event):
     global current_fig
     if current_fig is None: return
+    
+    from datetime import datetime
+    now = datetime.now().strftime("%Y%m%d_%H%M")
+    metric = document.getElementById('metric-select').value
+    env = document.getElementById('env-select').value
+    checked_vars = get_checked("var-check")
+    checked_cands = get_checked("cand-check")
+    
+    base_name = f"plot_{metric}_{env}_{len(checked_vars)}v_{len(checked_cands)}c_{now}"
+    
+    # 1. Download PNG
     buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
-    js_array = Uint8Array.new(buf.read()); file = File.new([js_array], "plot.png", { "type": "image/png" }); url = URL.createObjectURL(file)
-    link = document.createElement("a"); link.href = url; link.download = f"plot_{document.getElementById('metric-select').value}.png"; link.click(); URL.revokeObjectURL(url)
+    js_array = Uint8Array.new(buf.read()); file_png = File.new([js_array], f"{base_name}.png", { "type": "image/png" }); url_png = URL.createObjectURL(file_png)
+    link_png = document.createElement("a"); link_png.href = url_png; link_png.download = f"{base_name}.png"; link_png.click(); URL.revokeObjectURL(url_png)
+    
+    # 2. Download Metadata TXT
+    p_col = 'Full_Path' if 'Full_Path' in df.columns else 'Folder_Name'
+    path_map = df[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+    
+    metadata = f"AUDIT LOG: {base_name}\n"
+    metadata += "="*40 + "\n"
+    metadata += f"TIMESTAMP: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    metadata += f"METRIC:    {metric}\n"
+    metadata += f"ENV:       {env}\n\n"
+    metadata += f"SELECTED VARIANTS ({len(checked_vars)}):\n"
+    metadata += "\n".join([f" - {v}" for v in checked_vars]) + "\n\n"
+    metadata += f"SELECTED CANDIDATES ({len(checked_cands)}):\n"
+    for c in checked_cands:
+        path = path_map.get(c, "Path not found")
+        metadata += f" - CAND_{c} (Source: {path})\n"
+    
+    js_text = Uint8Array.new(metadata.encode()); file_txt = File.new([js_text], f"{base_name}.txt", { "type": "text/plain" }); url_txt = URL.createObjectURL(file_txt)
+    link_txt = document.createElement("a"); link_txt.href = url_txt; link_txt.download = f"{base_name}.txt"; link_txt.click(); URL.revokeObjectURL(url_txt)
 
 def get_checked(class_name):
     elements = document.getElementsByClassName(class_name)
@@ -240,6 +298,31 @@ asyncio.ensure_future(init_manifest())
         document.getElementById("btn-path").classList.toggle("active", mode === 'path');
         document.getElementById("input-list").style.display = mode === 'list' ? 'block' : 'none';
         document.getElementById("input-path").style.display = mode === 'path' ? 'block' : 'none';
+    }
+    function applyZoom() {
+        const val = parseFloat(document.getElementById("width-zoom").value);
+        const imgs = document.querySelectorAll("#plot-area img");
+        if (imgs.length > 0) {
+            const img = imgs[0];
+            if (!img.dataset.baseWidth) {
+                img.dataset.baseWidth = img.naturalWidth || img.width || 800;
+            }
+            const bw = parseFloat(img.dataset.baseWidth);
+            if (bw > 0) {
+                img.style.width = (bw * val) + "px";
+                img.style.height = "auto";
+                img.style.maxWidth = "none";
+            }
+        }
+    }
+    
+    function adjustZoom(delta) {
+        const el = document.getElementById("width-zoom");
+        let val = parseFloat(el.value) + delta;
+        if (val < 0.1) val = 0.1;
+        el.value = val.toFixed(1);
+        document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
+        applyZoom();
     }
     function trigger_plot() { if (window.document.trigger_plot) window.document.trigger_plot(); }
     function bulkSelect(className, state) {
