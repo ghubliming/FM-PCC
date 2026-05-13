@@ -1,0 +1,82 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Tue May 12 21:02:53 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260512_210256-mxe2xa74
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run avoiding-d3il-flow_matching_v3_ode_selectable-H8_DGaussianDiffusion_a1.5_b1.0_aw1-S5
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-drifting
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-drifting/runs/mxe2xa74
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [5, 6, 7, 8, 9]
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/5
+[ train ] Saved seed manifest to: logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/seeds_config.json
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py", line 229, in <module>
+    dataset_config = utils.Config(
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/config.py", line 24, in __init__
+    self._class = import_class(_class)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/config.py", line 15, in import_class
+    module = importlib.import_module(f'{repo_name}.{module_name}')
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/datasets/__init__.py", line 1, in <module>
+    from .sequence import *
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/datasets/sequence.py", line 5, in <module>
+    from .d4rl import sequence_dataset
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/datasets/d4rl.py", line 4, in <module>
+    import minari
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/minari/__init__.py", line 1, in <module>
+    from minari.data_collector import DataCollector
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/minari/data_collector/__init__.py", line 1, in <module>
+    from minari.data_collector.data_collector import DataCollector
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/minari/data_collector/data_collector.py", line 12, in <module>
+    import gymnasium as gym
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium/__init__.py", line 12, in <module>
+    from gymnasium.envs.registration import (
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium/envs/__init__.py", line 387, in <module>
+    load_plugin_envs()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium/envs/registration.py", line 592, in load_plugin_envs
+    fn = plugin.load()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/metadata/__init__.py", line 171, in load
+    module = import_module(match.group('module'))
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium_robotics/__init__.py", line 5, in <module>
+    from gymnasium_robotics.envs.maze import maps
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium_robotics/envs/maze/__init__.py", line 1, in <module>
+    from gymnasium_robotics.envs.maze.ant_maze import AntMazeEnv
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium_robotics/envs/maze/ant_maze.py", line 7, in <module>
+    from gymnasium.envs.mujoco.ant_v4 import AntEnv
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium/envs/mujoco/__init__.py", line 1, in <module>
+    from gymnasium.envs.mujoco.mujoco_env import MujocoEnv, MuJocoPyEnv  # isort:skip
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gymnasium/envs/mujoco/mujoco_env.py", line 20, in <module>
+    import mujoco
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/__init__.py", line 47, in <module>
+    from mujoco.gl_context import *
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/gl_context.py", line 38, in <module>
+    from mujoco.osmesa import GLContext as _GLContext
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/osmesa/__init__.py", line 31, in <module>
+    from OpenGL import GL
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/GL/__init__.py", line 4, in <module>
+    from OpenGL.GL.VERSION.GL_1_1 import *
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/GL/VERSION/GL_1_1.py", line 14, in <module>
+    from OpenGL.raw.GL.VERSION.GL_1_1 import *
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/raw/GL/VERSION/GL_1_1.py", line 7, in <module>
+    from OpenGL.raw.GL import _errors
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/raw/GL/_errors.py", line 4, in <module>
+    _error_checker = _ErrorChecker( _p, _p.GL.glGetError )
+AttributeError: 'NoneType' object has no attribute 'glGetError'
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.017 MB of 0.034 MB uploadedwandb: | 0.034 MB of 0.034 MB uploadedwandb: 🚀 View run avoiding-d3il-flow_matching_v3_ode_selectable-H8_DGaussianDiffusion_a1.5_b1.0_aw1-S5 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-drifting/runs/mxe2xa74
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-drifting
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260512_210256-mxe2xa74/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.

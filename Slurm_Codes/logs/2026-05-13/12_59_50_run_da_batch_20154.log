@@ -1,0 +1,88 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - FM v3 ODE-Selectable: Multi-Candidate Batch Analysis (v2)
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - Start time: 2026-05-13 11:00:24
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - Output directory: analysis_results/batch_analysis_20260513_110024/20260513_110024_FM_V3_BATCH
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - 
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - [PHASE 1/5] AUTO-DISCOVERING CANDIDATES
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - === Candidates Discovered ===
+Total: 9
+
+  A: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds: [6, 7, 8, 9, 10]
+
+  B: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds: [6, 7, 8, 9, 10]
+
+  C: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Seeds: [6, 7, 8, 9, 10]
+
+  D: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Seeds: [6, 7, 8, 9, 10]
+
+  E: H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  F: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  G: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  H: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  I: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - [PHASE 3/5] BATCH LOADING DATA
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+  ✗ Failed to load Candidate A: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate B: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate C: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate D: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate E: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate F: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate G: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate H: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+  ✗ Failed to load Candidate I: DataLoader.__init__() got an unexpected keyword argument 'verbose'
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - 
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - [PHASE 4/5] BATCH AGGREGATION
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - 
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - [PHASE 5A/5] GENERATING COMPARISON PLOTS
+[2026-05-13 11:00:24] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+No valid data for Pareto frontier plot
+No valid data for success rate plot
+No valid data for time comparison plot
+No valid data for robustness plot
+/data/home/llim/FMPCC/FM-PCC/Data_Analysis/DA_Code/batch_visualizer.py:358: UserWarning: Attempting to set identical low and high ylims makes transformation singular; automatically expanding.
+  im = ax.imshow(heatmap_data, cmap='RdYlGn', aspect='auto', vmin=0, vmax=1)
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - 
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - [PHASE 5B/5] GENERATING REPORTS
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - 
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - BATCH ANALYSIS COMPLETE
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - End time: 2026-05-13 11:00:25
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - Results saved to: analysis_results/batch_analysis_20260513_110024/20260513_110024_FM_V3_BATCH
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - 
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - Key outputs:
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO -   - Plots: analysis_results/batch_analysis_20260513_110024/20260513_110024_FM_V3_BATCH/plots
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO -   - Summary: analysis_results/batch_analysis_20260513_110024/20260513_110024_FM_V3_BATCH/candidates_summary.txt
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO -   - Rankings: analysis_results/batch_analysis_20260513_110024/20260513_110024_FM_V3_BATCH/candidates_ranking.csv
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO -   - Logs: analysis_results/batch_analysis_20260513_110024/20260513_110024_FM_V3_BATCH/logs
+[2026-05-13 11:00:25] DA_Batch_v2 - INFO - ======================================================================
+DA Batch Analysis job completed successfully.

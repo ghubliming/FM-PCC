@@ -1,0 +1,7 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/Data_Analysis/DA_Code/main_da_batch.py", line 271, in <module>
+    sys.exit(main())
+  File "/data/home/llim/FMPCC/FM-PCC/Data_Analysis/DA_Code/main_da_batch.py", line 118, in main
+    output_dir, output_timestamp = create_output_directory(output_base, 'FM_V3_BATCH')
+ValueError: too many values to unpack (expected 2)

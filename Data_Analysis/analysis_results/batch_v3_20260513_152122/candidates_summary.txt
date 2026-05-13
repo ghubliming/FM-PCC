@@ -1,0 +1,60 @@
+======================================================================
+CROSS-CANDIDATE COMPARISON SUMMARY
+======================================================================
+
+CANDIDATES DISCOVERED
+----------------------------------------------------------------------
+  A: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+  B: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+  C: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+  D: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+  E: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+  F: H8_K10_Dmodels.diffusion.GaussianDiffusion
+  G: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+  H: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+  I: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+  J: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+
+RANKINGS BY MAJOR VARIANT ACCURACY (DPCC average)
+----------------------------------------------------------------------
+  1. Candidate G: 79.44% (±17.38%), Avg Time: 0.9ms
+      Breakdown: dpcc-r: 56.7%, dpcc-r-tightened: 100.0%, dpcc-c: 53.3%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  2. Candidate B: 75.00% (±20.61%), Avg Time: 0.5ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  3. Candidate D: 75.00% (±20.61%), Avg Time: 0.5ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  4. Candidate E: 70.56% (±22.66%), Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 93.3%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 46.7%, dpcc-t-tightened: 100.0%
+  5. Candidate F: 70.56% (±21.63%), Avg Time: 0.2ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 90.0%, dpcc-c: 63.3%, dpcc-c-tightened: 100.0%, dpcc-t: 43.3%, dpcc-t-tightened: 100.0%
+  6. Candidate H: 69.44% (±22.64%), Avg Time: 0.5ms
+      Breakdown: dpcc-r: 30.0%, dpcc-r-tightened: 93.3%, dpcc-c: 36.7%, dpcc-c-tightened: 100.0%, dpcc-t: 56.7%, dpcc-t-tightened: 100.0%
+  7. Candidate J: 68.33% (±19.35%), Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 100.0%, dpcc-c: 46.7%, dpcc-c-tightened: 100.0%, dpcc-t: 40.0%, dpcc-t-tightened: 100.0%
+  8. Candidate I: 67.78% (±19.77%), Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 93.3%, dpcc-c: 53.3%, dpcc-c-tightened: 100.0%, dpcc-t: 36.7%, dpcc-t-tightened: 100.0%
+  9. Candidate C: 66.67% (±22.86%), Avg Time: 0.5ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 100.0%, dpcc-c: 36.7%, dpcc-c-tightened: 96.7%, dpcc-t: 46.7%, dpcc-t-tightened: 96.7%
+  10. Candidate A: 63.33% (±19.75%), Avg Time: 0.3ms
+      Breakdown: dpcc-r: 20.0%, dpcc-r-tightened: 90.0%, dpcc-c: 30.0%, dpcc-c-tightened: 100.0%, dpcc-t: 40.0%, dpcc-t-tightened: 100.0%
+
+AUXILIARY VARIANT PERFORMANCE
+----------------------------------------------------------------------
+  Candidate A: 42.73% (Auxiliary Avg)
+  Candidate B: 43.64% (Auxiliary Avg)
+  Candidate C: 42.73% (Auxiliary Avg)
+  Candidate D: 43.64% (Auxiliary Avg)
+  Candidate E: 48.48% (Auxiliary Avg)
+  Candidate F: 48.79% (Auxiliary Avg)
+  Candidate G: 52.42% (Auxiliary Avg)
+  Candidate H: 48.48% (Auxiliary Avg)
+  Candidate I: 49.39% (Auxiliary Avg)
+  Candidate J: 47.88% (Auxiliary Avg)
+
+RECOMMENDATIONS
+----------------------------------------------------------------------
+  Overall Best (Major): Candidate G
+  Major Accuracy: 79.44%
+  Fastest (Major): Candidate I (0.2ms)
+
+======================================================================

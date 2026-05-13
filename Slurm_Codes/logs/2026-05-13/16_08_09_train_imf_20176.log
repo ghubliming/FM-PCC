@@ -1,0 +1,25 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 14:08:12 UTC 2026
+================================================================================
+[ train ] iMeanFlow Training (Real Data: avoiding-d3il)
+[ train ] Seeds: [6, 7, 8, 9, 10] (manual_list)
+================================================================================
+wandb: ERROR api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 222, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 133, in main
+    run = wandb.init(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1195, in init
+    wandb._sentry.reraise(e)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/analytics/sentry.py", line 155, in reraise
+    raise exc.with_traceback(sys.exc_info()[2])
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1180, in init
+    wi.setup(kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 300, in setup
+    wandb_login._login(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_login.py", line 346, in _login
+    wlogin.prompt_api_key()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_login.py", line 280, in prompt_api_key
+    raise UsageError("api_key not configured (no-tty). call " + directive)
+wandb.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])

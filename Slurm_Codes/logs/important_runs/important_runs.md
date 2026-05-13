@@ -61,3 +61,24 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_32_35_load_results_dpcc_job_20048.lo
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_train_20050.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_eval_20051.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_load_results_20052.log
+
+- Drifting
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_20_train_drifting_20135.log
+
+Finished
+
+Eval 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/12_39_47_eval_drifting_20150.log
+
+
+- Visual 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
+
+Interrupt, the loss curve looks wrong in WandB
+
+Eval seed 6
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/12_49_01_eval_visual_aligning_20153.log
+
+Stop, stucked
+
+- iMF

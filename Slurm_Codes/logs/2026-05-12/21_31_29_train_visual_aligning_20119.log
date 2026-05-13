@@ -1,0 +1,27 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Tue May 12 19:31:30 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260512_193133-1uhoshwy
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-ddpm_encdec_vision-H8-S5
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/1uhoshwy
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [5, 6, 7, 8, 9]
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/seeds_config.json
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/train_ddpm_encdec_vision.py", line 246, in <module>
+    dataset = Aligning_Img_Dataset(
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/aligning_dataset.py", line 178, in __init__
+    state_files = np.load(sim_framework_path(data_directory), allow_pickle=True)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/lib/npyio.py", line 427, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/data/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/aligning/train_files.pkl'
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.015 MB of 0.025 MB uploaded (0.003 MB deduped)wandb: \ 0.025 MB of 0.025 MB uploaded (0.003 MB deduped)wandb: 🚀 View run aligning-d3il-visual-ddpm_encdec_vision-H8-S5 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/1uhoshwy
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260512_193133-1uhoshwy/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
