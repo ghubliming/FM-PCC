@@ -414,7 +414,6 @@ class BatchVisualizer:
         major_metrics = ['n_success_and_constraints', 'avg_time']
         
         # --- PHASE A: Analysis by Test Type ---
-        # "both hard folder then inside is dpcc C plots for all tests"
         for test in test_types:
             test_safe = str(test).replace(' ', '_').replace('/', '_')
             test_folder = os.path.join(env_dir, test_safe)
@@ -422,32 +421,32 @@ class BatchVisualizer:
             
             test_df = full_df[full_df['halfspace_variant'] == test]
             
-            # Plot Major metrics (comparing all candidates)
             for metric in major_metrics:
                 metric_data = test_df[test_df['metric'] == metric]
                 if metric_data.empty: continue
                 
-                fig, ax = plt.subplots(figsize=(14, 8))
-                
-                # Separate Major variants for clear comparison
-                for variant_group, variants_list in [('MAJOR', MAJOR_VARIANTS), ('AUX', AUXILIARY_VARIANTS)]:
-                    subset = metric_data[metric_data['variant'].isin(variants_list)]
+                # Separate Major vs Auxiliary into distinct plot files
+                for group_name, v_list in [('MAJOR', MAJOR_VARIANTS), ('AUX', AUXILIARY_VARIANTS)]:
+                    subset = metric_data[metric_data['variant'].isin(v_list)]
                     if subset.empty: continue
                     
+                    fig, ax = plt.subplots(figsize=(12, 7))
                     pivot = subset.groupby(['Candidate', 'variant'])['value'].mean().unstack()
-                    pivot.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', alpha=0.8 if variant_group == 'MAJOR' else 0.4)
-                
-                ax.set_title(f"Environment: {test} | Metric: {metric}", fontsize=14, fontweight='bold')
-                ax.set_ylabel(metric)
-                ax.grid(True, alpha=0.3, axis='y')
-                ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left')
-                
-                plt.tight_layout()
-                plt.savefig(os.path.join(test_folder, f"candidate_comp_{metric}.png"), bbox_inches='tight')
-                plt.close()
+                    
+                    # Ensure Major variants are plotted in a specific order if possible
+                    cols = [v for v in v_list if v in pivot.columns]
+                    pivot[cols].plot(kind='bar', ax=ax, width=0.8, edgecolor='black', alpha=0.9)
+                    
+                    ax.set_title(f"Env: {test} | {group_name} Variants | {metric}", fontsize=14, fontweight='bold')
+                    ax.set_ylabel(metric)
+                    ax.grid(True, alpha=0.3, axis='y')
+                    ax.legend(title=f"{group_name} Variant", bbox_to_anchor=(1.05, 1), loc='upper left')
+                    
+                    plt.tight_layout()
+                    plt.savefig(os.path.join(test_folder, f"{group_name}_comp_{metric}.png"), bbox_inches='tight')
+                    plt.close()
 
         # --- PHASE B: Analysis by Candidate ---
-        # "A tests what is its behaviors across diffrent env"
         for cand in candidate_letters:
             cand_folder = os.path.join(cand_dir, f"Candidate_{cand}")
             os.makedirs(cand_folder, exist_ok=True)
@@ -458,23 +457,25 @@ class BatchVisualizer:
                 metric_data = cand_df[cand_df['metric'] == metric]
                 if metric_data.empty: continue
                 
-                # Plot performance across ALL test types for this candidate
-                fig, ax = plt.subplots(figsize=(16, 9))
-                
-                pivot = metric_data.groupby(['halfspace_variant', 'variant'])['value'].mean().unstack()
-                # Focus on Major Variants first
-                major_pivot = pivot[[v for v in MAJOR_VARIANTS if v in pivot.columns]]
-                major_pivot.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', alpha=0.9)
-                
-                ax.set_title(f"Candidate {cand} Performance across Environments | {metric}", fontsize=16, fontweight='bold')
-                ax.set_ylabel(metric)
-                ax.set_xlabel("Test Environment")
-                ax.grid(True, alpha=0.3, axis='y')
-                ax.legend(title="Major Variants", bbox_to_anchor=(1.05, 1), loc='upper left')
-                
-                plt.tight_layout()
-                plt.savefig(os.path.join(cand_folder, f"cross_env_{metric}.png"), bbox_inches='tight')
-                plt.close()
+                for group_name, v_list in [('MAJOR', MAJOR_VARIANTS), ('AUX', AUXILIARY_VARIANTS)]:
+                    subset = metric_data[metric_data['variant'].isin(v_list)]
+                    if subset.empty: continue
+                    
+                    fig, ax = plt.subplots(figsize=(14, 8))
+                    pivot = subset.groupby(['halfspace_variant', 'variant'])['value'].mean().unstack()
+                    
+                    cols = [v for v in v_list if v in pivot.columns]
+                    pivot[cols].plot(kind='bar', ax=ax, width=0.8, edgecolor='black', alpha=0.9)
+                    
+                    ax.set_title(f"Candidate {cand} | {group_name} Behavior | {metric}", fontsize=14, fontweight='bold')
+                    ax.set_ylabel(metric)
+                    ax.set_xlabel("Test Environment")
+                    ax.grid(True, alpha=0.3, axis='y')
+                    ax.legend(title=f"{group_name} Variant", bbox_to_anchor=(1.05, 1), loc='upper left')
+                    
+                    plt.tight_layout()
+                    plt.savefig(os.path.join(cand_folder, f"{group_name}_cross_env_{metric}.png"), bbox_inches='tight')
+                    plt.close()
 
         # --- PHASE C: Metric Matrices ---
         # Global Heatmaps
@@ -506,15 +507,25 @@ class BatchVisualizer:
         self._generate_dashboard_html(output_dir, test_types, candidate_letters, major_metrics)
 
     def _generate_dashboard_html(self, output_dir, test_types, candidates, metrics):
-        """Generate a high-end interactive dashboard (Premium Design)."""
-        html_path = os.path.join(output_dir, "dashboard.html")
+        """Generate a scientific, clean, and minimal HTML dashboard (Cold Design)."""
+        # Centralized visualizer path
+        viz_root = os.path.join(os.path.dirname(os.path.dirname(output_dir)), "Visualizer")
+        os.makedirs(viz_root, exist_ok=True)
+        html_path = os.path.join(viz_root, "dashboard.html")
+        
+        # Calculate relative path from Visualizer/ to the output hierarchical analysis
+        # Viz is at Data_Analysis/Visualizer
+        # Plots are at Data_Analysis/analysis_results/batch_v3_.../hierarchical_analysis
+        rel_to_plots = os.path.relpath(os.path.join(output_dir, "hierarchical_analysis"), viz_root)
+        rel_to_base = os.path.relpath(output_dir, viz_root)
         
         config_data = {
             'tests': [str(t).replace(' ', '_').replace('/', '_') for t in test_types],
             'candidates': [f"Candidate_{c}" for c in candidates],
             'metrics': metrics,
             'major_variants': MAJOR_VARIANTS,
-            'base_path': "hierarchical_analysis/"
+            'base_path': rel_to_plots + "/",
+            'summary_path': rel_to_base + "/"
         }
         
         html_content = f"""
@@ -522,104 +533,82 @@ class BatchVisualizer:
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FM-PCC Premium Analysis Dashboard</title>
+    <title>Scientific DA Visualizer</title>
     <style>
-        :root {{
-            --bg: #0f172a; --card: #1e293b; --accent: #3b82f6; --text: #f8fafc;
-            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-        }}
-        body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }}
-        
-        /* Sidebar */
-        nav {{ width: 300px; background: #020617; padding: 2rem; border-right: 1px solid #1e293b; display: flex; flex-direction: column; gap: 1.5rem; }}
-        h1 {{ font-size: 1.25rem; font-weight: 800; color: var(--accent); margin-bottom: 1rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; }}
-        
-        .control-group {{ display: flex; flex-direction: column; gap: 0.5rem; }}
-        label {{ font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }}
-        select {{ background: var(--card); color: white; border: 1px solid #334155; padding: 0.75rem; border-radius: 0.5rem; outline: none; cursor: pointer; transition: all 0.2s; }}
-        select:hover {{ border-color: var(--accent); }}
-
-        /* Main Content */
-        main {{ flex: 1; padding: 3rem; overflow-y: auto; background: radial-gradient(circle at top right, #1e1b4b, transparent); }}
-        .header-meta {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }}
-        .badge {{ background: #1e293b; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; border: 1px solid #334155; }}
-
-        .plot-container {{ background: var(--card); border-radius: 1.5rem; padding: 2rem; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; }}
-        img {{ width: 100%; border-radius: 0.75rem; display: block; filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.1)); }}
-        
-        .loading-overlay {{ position: absolute; inset: 0; background: var(--card); display: flex; align-items: center; justify-content: center; border-radius: 1.5rem; opacity: 0; pointer-events: none; transition: 0.3s; }}
-        .loading-overlay.active {{ opacity: 0.8; }}
-
-        .footer-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem; }}
-        .stat-card {{ background: var(--card); padding: 1.25rem; border-radius: 1rem; border: 1px solid #334155; }}
-        .stat-val {{ font-size: 1.5rem; font-weight: 800; color: var(--accent); }}
-        .stat-label {{ font-size: 0.75rem; color: #94a3b8; }}
+        body {{ font-family: monospace; background: #ffffff; color: #000000; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; }}
+        header {{ border-bottom: 2px solid #000; padding: 5px 0; margin-bottom: 10px; }}
+        .container {{ display: flex; flex: 1; overflow: hidden; gap: 20px; }}
+        .sidebar {{ width: 250px; border-right: 1px solid #ccc; padding-right: 15px; display: flex; flex-direction: column; gap: 15px; }}
+        .viewer {{ flex: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; text-align: center; }}
+        .control {{ display: flex; flex-direction: column; gap: 5px; }}
+        label {{ font-weight: bold; font-size: 12px; color: #666; }}
+        select {{ font-family: monospace; padding: 5px; border: 1px solid #000; }}
+        img {{ max-width: 100%; border: 1px solid #000; }}
+        .meta {{ font-size: 11px; margin-top: auto; color: #999; border-top: 1px solid #eee; padding-top: 10px; }}
+        h3 {{ margin: 0 0 10px 0; font-size: 16px; text-decoration: underline; }}
     </style>
 </head>
 <body>
-    <nav>
-        <h1>FM-PCC ANALYTICS</h1>
-        
-        <div class="control-group">
-            <label>View Perspective</label>
-            <select id="mode" onchange="updateUI()">
-                <option value="env">Environment Comparison</option>
-                <option value="cand">Candidate Trajectories</option>
-                <option value="matrix">Global Performance Matrix</option>
-            </select>
-        </div>
+    <header>
+        [ FM-PCC DATA ANALYSIS ] | BATCH: {os.path.basename(output_dir)}
+    </header>
 
-        <div id="envControls" class="control-group">
-            <label>Target Environment</label>
-            <select id="testSelect" onchange="update()">
-                { "".join([f'<option value="{t}">{t.replace("_", " ")}</option>' for t in config_data['tests']]) }
-            </select>
-        </div>
-
-        <div id="candControls" class="control-group" style="display:none">
-            <label>Target Candidate</label>
-            <select id="candSelect" onchange="update()">
-                { "".join([f'<option value="{c}">{c.replace("_", " ")}</option>' for c in config_data['candidates']]) }
-            </select>
-        </div>
-
-        <div id="metricControls" class="control-group">
-            <label>Primary Metric</label>
-            <select id="metricSelect" onchange="update()">
-                <option value="n_success_and_constraints">Goal + Constraint Success</option>
-                <option value="avg_time">Computation Time (ms)</option>
-            </select>
-        </div>
-
-        <div id="variantControls" class="control-group" style="display:none">
-            <label>Target Variant</label>
-            <select id="variantSelect" onchange="update()">
-                { "".join([f'<option value="{v}">{v}</option>' for v in config_data['major_variants']]) }
-            </select>
-        </div>
-    </nav>
-
-    <main>
-        <div class="header-meta">
-            <div>
-                <h2 id="title" style="margin:0; font-size: 2rem;">Analysis Overview</h2>
-                <p id="subtitle" style="color: #94a3b8; margin: 0.5rem 0 0;">Aggregated metrics across multi-seed experiments</p>
+    <div class="container">
+        <div class="sidebar">
+            <h3>Controls</h3>
+            
+            <div class="control">
+                <label>VIEW_MODE</label>
+                <select id="mode" onchange="updateUI()">
+                    <option value="env">BY_ENVIRONMENT</option>
+                    <option value="cand">BY_CANDIDATE</option>
+                    <option value="matrix">GLOBAL_MATRIX</option>
+                </select>
             </div>
-            <div class="badge">Session: 2026.05.13</div>
+
+            <div id="envControls" class="control">
+                <label>ENVIRONMENT</label>
+                <select id="testSelect" onchange="update()">
+                    { "".join([f'<option value="{t}">{t}</option>' for t in config_data['tests']]) }
+                </select>
+            </div>
+
+            <div id="candControls" class="control" style="display:none">
+                <label>CANDIDATE</label>
+                <select id="candSelect" onchange="update()">
+                    { "".join([f'<option value="{c}">{c}</option>' for c in config_data['candidates']]) }
+                </select>
+            </div>
+
+            <div id="metricControls" class="control">
+                <label>METRIC</label>
+                <select id="metricSelect" onchange="update()">
+                    <option value="n_success_and_constraints">SUCCESS_RATE</option>
+                    <option value="avg_time">COMP_TIME</option>
+                </select>
+            </div>
+
+            <div id="variantControls" class="control" style="display:none">
+                <label>VARIANT</label>
+                <select id="variantSelect" onchange="update()">
+                    { "".join([f'<option value="{v}">{v}</option>' for v in config_data['major_variants']]) }
+                </select>
+            </div>
+
+            <div class="meta">
+                Status: ATTACHED<br>
+                Source: {output_dir}
+            </div>
         </div>
 
-        <div class="plot-container">
-            <div id="loader" class="loading-overlay"><span>Loading Visualization...</span></div>
-            <img id="display" src="" alt="Plot View">
+        <div class="viewer">
+            <h3 id="plotLabel">IMAGE_PREVIEW</h3>
+            <img id="display" src="" alt="NO_IMAGE_LOADED">
+            <br><br>
+            <label>PARETO_REFERENCE</label><br>
+            <img src="{config_data['summary_path']}00_candidate_pareto_frontier.png" style="max-width: 400px; opacity: 0.5;">
         </div>
-
-        <div class="footer-grid">
-            <div class="stat-card"><div class="stat-label">TOTAL SEEDS</div><div class="stat-val">5</div></div>
-            <div class="stat-card"><div class="stat-label">CANDIDATES</div><div class="stat-val">{len(candidates)}</div></div>
-            <div class="stat-card"><div class="stat-label">ENVIRONMENTS</div><div class="stat-val">{len(test_types)}</div></div>
-            <div class="stat-card"><div class="stat-label">STATUS</div><div class="stat-val" style="color: var(--success);">READY</div></div>
-        </div>
-    </main>
+    </div>
 
     <script>
         const base = "{config_data['base_path']}";
@@ -634,9 +623,6 @@ class BatchVisualizer:
         }}
 
         function update() {{
-            const loader = document.getElementById('loader');
-            loader.classList.add('active');
-            
             const mode = document.getElementById('mode').value;
             const test = document.getElementById('testSelect').value;
             const cand = document.getElementById('candSelect').value;
@@ -644,28 +630,16 @@ class BatchVisualizer:
             const variant = document.getElementById('variantSelect').value;
             
             let src = "";
-            let tText = "";
-            let sText = "";
-
             if (mode === 'env') {{
-                src = `${{base}}by_test_env/${{test}}/candidate_comp_${{metric}}.png`;
-                tText = `Environment Analysis: ${{test.replace('_', ' ')}}`;
-                sText = `Comparing all candidates on ${{metric.replace('_', ' ')}}`;
+                src = `${{base}}by_test_env/${{test}}/MAJOR_comp_${{metric}}.png`;
             }} else if (mode === 'cand') {{
-                src = `${{base}}by_candidate/${{cand}}/cross_env_${{metric}}.png`;
-                tText = `Performance Profile: ${{cand.replace('_', ' ')}}`;
-                sText = `Behavior across all environments on ${{metric.replace('_', ' ')}}`;
+                src = `${{base}}by_candidate/${{cand}}/MAJOR_cross_env_${{metric}}.png`;
             }} else if (mode === 'matrix') {{
                 src = `${{base}}matrices/matrix_success_${{variant}}.png`;
-                tText = `Global Success Matrix: ${{variant}}`;
-                sText = `Cross-environment vs Cross-candidate success density`;
             }}
 
-            const img = document.getElementById('display');
-            img.onload = () => loader.classList.remove('active');
-            img.src = src;
-            document.getElementById('title').innerText = tText;
-            document.getElementById('subtitle').innerText = sText;
+            document.getElementById('display').src = src;
+            document.getElementById('plotLabel').innerText = `PLOT: ${{mode.toUpperCase()}}_MAJOR_VIEW`;
         }}
 
         updateUI();
@@ -673,6 +647,9 @@ class BatchVisualizer:
 </body>
 </html>
 """
+        with open(html_path, 'w') as f:
+            f.write(html_content)
+        logger.info(f"Scientific Dashboard generated: {html_path}")
         with open(html_path, 'w') as f:
             f.write(html_content)
         logger.info(f"Interactive Dashboard generated: {html_path}")

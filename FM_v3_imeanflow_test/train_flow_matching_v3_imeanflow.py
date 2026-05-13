@@ -34,6 +34,20 @@ except ImportError:
 class Parser(utils.Parser):
     dataset: str = 'avoiding-d3il'
     config: str = 'config.avoiding-d3il'
+    
+    # Training Overrides
+    batch_size: int = 32
+    learning_rate: float = 5e-4
+    n_train_steps: int = 100000
+    device: str = 'cuda'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add support for the specific arguments found in the user's cluster scripts
+        self.add_argument('--batch-size', type=int, help='Batch size')
+        self.add_argument('--learning-rate', type=float, help='Learning rate')
+        self.add_argument('--num-epochs', type=int, help='Number of epochs (maps to n_train_steps)')
+        self.add_argument('--device', type=str, help='Device')
 
 def parse_top_level_args():
     parser = argparse.ArgumentParser(add_help=False)
@@ -92,7 +106,14 @@ def main():
     
     for seed in selected_seeds:
         # Each call to parse_args sets the seed and creates the savepath
-        args = Parser().parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
+        parser = Parser()
+        args = parser.parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
+        
+        # Handle the num-epochs -> n_train_steps mapping if provided
+        if hasattr(args, 'num_epochs') and args.num_epochs is not None:
+            # Simple heuristic: 1 epoch = n_steps_per_epoch
+            args.n_train_steps = args.num_epochs * args.n_steps_per_epoch
+            
         torch.manual_seed(args.seed)
         
         run = None
