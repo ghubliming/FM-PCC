@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Import v2 modules
-from multi_candidate_discovery import discover_candidates, filter_candidates, assign_custom_names, get_candidate_summary
+from multi_candidate_discovery import discover_candidates_recursive, filter_candidates, assign_custom_names, get_candidate_summary
 from batch_data_loader import BatchDataLoader
 from batch_aggregator import BatchAggregator
 from batch_visualizer import BatchVisualizer
@@ -145,7 +145,7 @@ def main():
         logger.info("[PHASE 1/5] AUTO-DISCOVERING CANDIDATES")
         logger.info("-" * 70)
         
-        candidates = discover_candidates(args.parent_path)
+        candidates = discover_candidates_recursive(args.parent_path, max_depth=10)
         
         if not candidates:
             logger.error("No candidates found. Exiting.")
