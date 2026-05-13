@@ -18,8 +18,10 @@
         .mode-btn.active { background: #000; color: #fff; }
         .bulk-actions { display: flex; gap: 10px; margin-bottom: 5px; }
         .bulk-link { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; color: #666; }
-        .checkbox-list { border: 1px solid #000; background: #fff; padding: 10px; max-height: 140px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
-        .checkbox-item { display: flex; align-items: center; gap: 8px; }
+        .checkbox-list { border: 1px solid #000; background: #fff; padding: 10px; max-height: 140px; overflow-y: auto; font-size: 12px; text-align: left !important; }
+        .checkbox-item { display: flex !important; align-items: flex-start !important; justify-content: flex-start !important; margin-bottom: 6px !important; text-align: left !important; }
+        .checkbox-item input[type="checkbox"] { margin: 2px 8px 0 0 !important; flex-shrink: 0 !important; display: inline-block !important; width: auto !important; }
+        .checkbox-item span { text-align: left !important; word-break: break-word !important; }
         .btn-main { padding: 12px; background: #000; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
         .btn-download { padding: 12px; background: #007bff; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; text-transform: uppercase; }
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
@@ -92,38 +94,46 @@ df = None
 current_fig = None
 
 async def init_manifest():
-    console.log("[ manifest ] Initializing discovery...")
-    # List of candidate paths to try
-    paths = ["./results_manifest.json", "../analysis_results/results_manifest.json", "Data_Analysis/analysis_results/results_manifest.json"]
-    
-    for path in paths:
-        try:
-            console.log(f"[ manifest ] Trying {path}...")
-            response = await fetch(path)
-            if response.ok:
-                data = await response.json()
+    import re
+    try:
+        # Fetch the directory listing directly (works with python -m http.server)
+        response = await fetch("../analysis_results/")
+        if response.ok:
+            html = await response.text()
+            # Find all links that look like batch_v3_ folders
+            batches = re.findall(r'href="(batch_v3_[^/"]+)/?"', html)
+            # Remove duplicates and sort descending
+            batches = sorted(list(set(batches)), reverse=True)
+            
+            if len(batches) > 0:
+                options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
+                document.getElementById("batch-select").innerHTML = options
+                document.getElementById("engine-status").innerHTML = "ENGINE_READY"
+                document.getElementById("engine-status").style.color = "#0f0"
+            else:
+                document.getElementById("engine-status").innerHTML = "NO_BATCHES_FOUND"
+                document.getElementById("engine-status").style.color = "orange"
+        else:
+            # Fallback to manifest if directory listing is forbidden
+            resp2 = await fetch("../analysis_results/results_manifest.json")
+            if resp2.ok:
+                data = await resp2.json()
                 batches = data.get("batches", [])
-                console.log(f"[ manifest ] Found {len(batches)} batches in {path}")
-                
                 if len(batches) > 0:
                     options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
                     document.getElementById("batch-select").innerHTML = options
                     document.getElementById("engine-status").innerHTML = "ENGINE_READY"
                     document.getElementById("engine-status").style.color = "#0f0"
-                    return # Success!
-        except Exception as e:
-            console.log(f"[ manifest ] Skip {path}: {e}")
-
-    document.getElementById("engine-status").innerHTML = "⚠ MANIFEST_NOT_FOUND"
-    document.getElementById("engine-status").style.color = "red"
+    except Exception as e:
+        console.log(f"[ manifest error ] {e}")
+        pass
 
 async def load_data(event=None):
     global df
     mode = window.currentMode
     if mode == "list":
         batch = document.getElementById("batch-select").value
-        # Try local bridge first (self-contained)
-        path = f"./visual_bridge/{batch}/results.csv"
+        path = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
     else:
         path = document.getElementById("custom-path").value
     
@@ -131,13 +141,6 @@ async def load_data(event=None):
         console.log(f"[ loader ] Fetching from {path}...")
         document.getElementById("engine-status").innerText = "FETCHING..."
         response = await fetch(path)
-        if not response.ok:
-            # Fallback for legacy / relative paths if served from root
-            if mode == "list":
-                path_alt = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
-                console.log(f"[ loader ] Retrying fallback: {path_alt}")
-                response = await fetch(path_alt)
-            
         if not response.ok:
             raise Exception(f"HTTP {response.status}")
             
