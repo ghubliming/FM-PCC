@@ -47,3 +47,6 @@ The `BatchReporter` has been expanded to output two separate multi-dimensional f
 - **No More Corrupted Plots or Missing Data**: Complete, non-null datasets actively feed into the plotting mechanisms regardless of whether the source was `.npz` arrays, `.npz` scalars, or raw `.log` text files.
 - **Accurate Granularity**: Candidates can now be objectively compared across specific variables (such as constrained vs. tightened configurations on specific hard obstacle layouts) rather than relying exclusively on vague aggregate scores.
 - **Improved UX & Exporting**: Plot X-axis titles are cleaner (just letters), and the multi-dimensional dataset is exported both raw and pre-aggregated, bypassing the need for manual aggregation in Excel.
+
+## 4. iMeanFlow Training Hotfix
+Resolved a `TypeError` in the iMeanFlow training and evaluation scripts (`train_flow_matching_v3_imeanflow.py` and `eval_flow_matching_v3_imeanflow.py`). The scripts were incorrectly passing `use_jvp=False` to the `TimeConditionedDualVelocity` model constructor, while the class definition expected `include_jvp`. This has been corrected to ensure training can proceed.

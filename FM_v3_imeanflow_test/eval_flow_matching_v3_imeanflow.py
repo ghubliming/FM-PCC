@@ -59,7 +59,7 @@ class ImfEvaluator:
             state_dim=self.state_dim,
             hidden_dim=256,
             time_dim=128,
-            use_jvp=False,
+            include_jvp=False,
         ).to(self.device)
         
         if ckpt_path.exists():
