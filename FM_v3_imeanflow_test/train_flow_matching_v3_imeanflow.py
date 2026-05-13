@@ -107,7 +107,7 @@ class ImfTrainer:
             state_dim=state_dim,
             hidden_dim=256,
             time_dim=128,
-            use_jvp=False,  # Can enable for safety-critical tasks
+            include_jvp=False,  # Can enable for safety-critical tasks
         ).to(device)
         
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)

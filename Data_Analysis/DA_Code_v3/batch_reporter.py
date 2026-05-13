@@ -8,6 +8,7 @@ for cross-candidate comparison results.
 import logging
 import os
 import pandas as pd
+import numpy as np
 from typing import Dict
 
 
