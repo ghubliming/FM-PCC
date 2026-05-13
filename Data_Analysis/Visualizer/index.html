@@ -92,29 +92,55 @@ df = None
 current_fig = None
 
 async def init_manifest():
-    try:
-        response = await fetch("../analysis_results/results_manifest.json")
-        if response.ok:
-            data = await response.json()
-            batches = data.get("batches", [])
-            options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
-            document.getElementById("batch-select").innerHTML = options
-    except: pass
+    console.log("[ manifest ] Initializing discovery...")
+    # List of candidate paths to try
+    paths = ["./results_manifest.json", "../analysis_results/results_manifest.json", "Data_Analysis/analysis_results/results_manifest.json"]
+    
+    for path in paths:
+        try:
+            console.log(f"[ manifest ] Trying {path}...")
+            response = await fetch(path)
+            if response.ok:
+                data = await response.json()
+                batches = data.get("batches", [])
+                console.log(f"[ manifest ] Found {len(batches)} batches in {path}")
+                
+                if len(batches) > 0:
+                    options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
+                    document.getElementById("batch-select").innerHTML = options
+                    document.getElementById("engine-status").innerHTML = "ENGINE_READY"
+                    document.getElementById("engine-status").style.color = "#0f0"
+                    return # Success!
+        except Exception as e:
+            console.log(f"[ manifest ] Skip {path}: {e}")
+
+    document.getElementById("engine-status").innerHTML = "⚠ MANIFEST_NOT_FOUND"
+    document.getElementById("engine-status").style.color = "red"
 
 async def load_data(event=None):
     global df
     mode = window.currentMode
     if mode == "list":
         batch = document.getElementById("batch-select").value
-        # Use concise path
-        path = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
+        # Try local bridge first (self-contained)
+        path = f"./visual_bridge/{batch}/results.csv"
     else:
         path = document.getElementById("custom-path").value
     
     try:
+        console.log(f"[ loader ] Fetching from {path}...")
         document.getElementById("engine-status").innerText = "FETCHING..."
         response = await fetch(path)
-        if not response.ok: raise Exception(f"FAILED: {path}")
+        if not response.ok:
+            # Fallback for legacy / relative paths if served from root
+            if mode == "list":
+                path_alt = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
+                console.log(f"[ loader ] Retrying fallback: {path_alt}")
+                response = await fetch(path_alt)
+            
+        if not response.ok:
+            raise Exception(f"HTTP {response.status}")
+            
         csv_text = await response.text()
         df = pd.read_csv(io.StringIO(csv_text))
         document.getElementById("controls-panel").style.display = "flex"
