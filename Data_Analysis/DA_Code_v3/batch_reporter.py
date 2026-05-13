@@ -229,11 +229,12 @@ class BatchReporter:
                 # Group by everything except Seed and calculate Mean, Std, Count
                 grouped = df.groupby(['Candidate', 'variant', 'constraint_type', 'halfspace_variant', 'metric'])['value'].agg(['mean', 'std', 'count']).reset_index()
                 
-                # Add folder info
+                # Add folder and path info
                 grouped['Folder_Name'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                grouped['Full_Path'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
                 
                 # Reorder columns
-                cols = ['Candidate', 'Folder_Name', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
+                cols = ['Candidate', 'Folder_Name', 'Full_Path', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
                 grouped = grouped[cols]
                 
                 grouped.to_csv(output_path, index=False)

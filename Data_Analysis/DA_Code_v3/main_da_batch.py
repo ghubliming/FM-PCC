@@ -114,12 +114,32 @@ def main():
     args = parse_arguments()
     
     # Setup output directory
-    output_base = args.output_path
-    output_dir, output_timestamp = create_output_directory(
-        output_base,
-        'FM_V3_BATCH',
-        return_timestamp=True,
-    )
+    output_dir = args.output_path
+    
+    # If using default or a parent dir, we create the timestamped folder
+    # but if specifically provided, we use it directly to avoid nesting
+    if output_dir == './fm_v3_batch_analysis_output':
+        from utils import create_output_directory
+        output_dir, output_timestamp = create_output_directory(
+            output_dir,
+            'FM_V3_BATCH',
+            return_timestamp=True,
+        )
+    else:
+        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(os.path.join(output_dir, 'plots'), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, 'logs'), exist_ok=True)
+
+    # 0) Generate Manifest for HTML Visualizer
+    try:
+        import json
+        parent_results = os.path.dirname(output_dir)
+        if os.path.exists(parent_results):
+            batches = [d for d in os.listdir(parent_results) if os.path.isdir(os.path.join(parent_results, d))]
+            manifest_path = os.path.join(parent_results, 'results_manifest.json')
+            with open(manifest_path, 'w') as f:
+                json.dump({"batches": sorted(batches, reverse=True)}, f)
+    except: pass
     
     # Setup logging
     log_file = os.path.join(output_dir, 'logs', 'batch_analysis.log')

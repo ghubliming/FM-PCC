@@ -2,207 +2,221 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FM-PCC Dynamic Matrix Viewer</title>
-    <!-- Include Chart.js for dynamic plotting -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>FM-PCC Matrix Explorer</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 20px; line-height: 1.4; }
-        h1 { border-bottom: 2px solid #000; padding-bottom: 5px; font-size: 22px; margin-bottom: 20px; }
-        
-        .section { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
-        .section-title { font-weight: bold; margin-bottom: 10px; text-transform: uppercase; font-size: 14px; background: #eee; padding: 5px; border-left: 5px solid #000; }
-        
-        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        input[type="text"] { flex: 1; padding: 10px; font-size: 14px; border: 1px solid #000; }
-        button { padding: 10px 20px; background: #000; color: #fff; border: none; cursor: pointer; font-size: 14px; font-weight: bold; }
-        button:hover { background: #333; }
-        
-        .table-wrap { max-height: 200px; overflow-y: auto; border: 1px solid #eee; margin-top: 10px; }
-        table { border-collapse: collapse; width: 100%; font-size: 11px; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-        th { background-color: #f9f9f9; position: sticky; top: 0; }
-
-        .controls { display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: #fdfdfd; border: 1px solid #eee; flex-wrap: wrap; }
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; }
-        select { padding: 8px; border: 1px solid #000; min-width: 180px; font-family: inherit; }
-
-        .chart-container { position: relative; height: 500px; width: 100%; background: #fff; padding: 10px; border: 1px solid #eee; }
-        
-        .error { color: #d00; font-weight: bold; margin-top: 10px; border: 1px solid #d00; padding: 10px; background: #fff8f8; display: none; }
-        .success { color: #080; font-weight: bold; margin-top: 10px; }
+        body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 360px; background: #f8f8f8; border-right: 2px solid #000; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        h1 { font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; margin: 0; text-transform: uppercase; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        label { font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input { padding: 10px; border: 1px solid #000; width: 100%; box-sizing: border-box; font-family: inherit; background: #fff; }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 10px; }
+        .mode-btn { font-size: 10px; padding: 5px 10px; border: 1px solid #000; cursor: pointer; background: #eee; text-transform: uppercase; font-weight: bold; }
+        .mode-btn.active { background: #000; color: #fff; }
+        .bulk-actions { display: flex; gap: 10px; margin-bottom: 5px; }
+        .bulk-link { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; color: #666; }
+        .checkbox-list { border: 1px solid #000; background: #fff; padding: 10px; max-height: 140px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; }
+        .btn-main { padding: 12px; background: #000; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
+        .btn-download { padding: 12px; background: #007bff; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; text-transform: uppercase; }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+        .toolbar { padding: 8px 20px; background: #000; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .status { font-size: 11px; font-weight: bold; color: #0f0; }
+        .content { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 30px; }
+        .scorecard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .score-card { border: 1px solid #000; padding: 10px; background: #fff; }
+        .score-val { font-size: 20px; font-weight: bold; }
+        .score-label { font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; }
+        #plot-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 500px; text-align: center; }
+        .path-section { border-top: 2px solid #000; padding-top: 20px; margin-bottom: 50px; }
+        table { border-collapse: collapse; width: 100%; font-size: 11px; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; overflow-wrap: break-word; }
+        .p-seg-0 { color: #c62828; font-weight: bold; }
+        .p-seg-1 { color: #1565c0; font-weight: bold; }
+        .p-seg-2 { color: #2e7d32; font-weight: bold; }
+        .p-seg-3 { color: #ef6c00; font-weight: bold; }
+        .p-seg-4 { color: #6a1b9a; font-weight: bold; }
+        .p-seg-5 { color: #00838f; font-weight: bold; }
     </style>
+
+    <py-config>
+        packages = ["pandas", "matplotlib"]
+    </py-config>
 </head>
 <body>
 
-<h1>FM-PCC DYNAMIC_DATA_VIEWER (v3)</h1>
-
-<!-- 1. DATA SOURCE -->
-<div class="section">
-    <div class="section-title">1. Data Source Selection</div>
-    <div class="input-group">
-        <input type="text" id="csvPath" placeholder="Enter path to aggregated_stats.csv..." value="../analysis_results/batch_v3_20260513_141822/20260513_131313_FM_V3_BATCH/aggregated_stats.csv">
-        <button onclick="loadData()">Load & Sync</button>
+<div class="sidebar">
+    <h1>FM-PCC EXPLORER</h1>
+    <div class="control-group">
+        <label>1. Experiment Batch Source</label>
+        <div class="mode-toggle">
+            <div id="btn-list" class="mode-btn active" onclick="switchMode('list')">QUICK_LIST</div>
+            <div id="btn-path" class="mode-btn" onclick="switchMode('path')">CUSTOM_PATH</div>
+        </div>
+        <div id="input-list"><select id="batch-select"></select></div>
+        <div id="input-path" style="display:none"><input type="text" id="custom-path" placeholder="../analysis_results/batch_v3_.../candidates_multidimensional_aggregated.csv"></div>
+        <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
+        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">DOWNLOAD_PNG</button>
     </div>
-    <div id="errorMsg" class="error"></div>
-    <div id="successMsg" class="success" style="display:none">CSV_SYNC_COMPLETE</div>
+    <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
+        <div class="control-group"><label>2. Analysis Mode</label><select id="mode-select" onchange="trigger_plot()"><option value="candidate">By Candidate</option><option value="env">By Environment</option></select></div>
+        <div class="control-group"><label>3. Metric</label><select id="metric-select" onchange="trigger_plot()"></select></div>
+        <div class="control-group"><label>4. Environment Focus</label><select id="env-select" onchange="trigger_plot()"></select></div>
+        <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-list" class="checkbox-list"></div></div>
+        <div class="control-group"><label>6. Candidates</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('cand-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('cand-check', false)">[NONE]</span></div><div id="candidate-list" class="checkbox-list"></div></div>
+        <button class="btn-main" style="background:#444;" py-click="trigger_plot">REFRESH_RE_DRAW</button>
+    </div>
 </div>
 
-<!-- 2. PLOT ENGINE -->
-<div class="section" id="plotSection" style="display:none">
-    <div class="section-title">2. Dynamic Visual Analysis</div>
+<div class="main">
+    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.7</div></div>
+    <div class="content">
+        <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
+        <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
+        <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map</label><div id="path-map-container"></div></div>
+    </div>
+</div>
+
+<script type="py">
+import pandas as pd
+import matplotlib.pyplot as plt
+import io, json
+from pyscript import display
+from js import document, console, fetch, window, Uint8Array, File, URL
+from pyodide.ffi import create_proxy
+
+df = None
+current_fig = None
+
+async def init_manifest():
+    try:
+        response = await fetch("../analysis_results/results_manifest.json")
+        if response.ok:
+            data = await response.json()
+            batches = data.get("batches", [])
+            options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
+            document.getElementById("batch-select").innerHTML = options
+    except: pass
+
+async def load_data(event=None):
+    global df
+    mode = window.currentMode
+    if mode == "list":
+        batch = document.getElementById("batch-select").value
+        # Use concise path
+        path = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
+    else:
+        path = document.getElementById("custom-path").value
     
-    <div class="controls">
-        <div class="control-group">
-            <label>Variant Group</label>
-            <select id="variantGroup" onchange="renderChart()">
-                <option value="MAJOR">Major Models (DPCC 3+3)</option>
-                <option value="AUX">Auxiliary Baselines</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>Environment</label>
-            <select id="envSelect" onchange="renderChart()"></select>
-        </div>
-        <div class="control-group">
-            <label>Primary Metric</label>
-            <select id="metricSelect" onchange="renderChart()">
-                <option value="n_success_and_constraints">Success Rate (Combined)</option>
-                <option value="avg_time">Computation Time (ms)</option>
-                <option value="avg_steps">Average Steps</option>
-                <option value="avg_violation">Constraint Violation (Total)</option>
-            </select>
-        </div>
-    </div>
+    try:
+        document.getElementById("engine-status").innerText = "FETCHING..."
+        response = await fetch(path)
+        if not response.ok: raise Exception(f"FAILED: {path}")
+        csv_text = await response.text()
+        df = pd.read_csv(io.StringIO(csv_text))
+        document.getElementById("controls-panel").style.display = "flex"
+        document.getElementById("download-btn").style.display = "block"
+        document.getElementById("path-section").style.display = "block"
+        document.getElementById("scorecard-area").style.display = "block"
+        populate_dynamic_filters()
+        render_path_map()
+        await trigger_plot(None)
+        document.getElementById("engine-status").innerText = "SYNC_COMPLETE"
+    except Exception as e:
+        document.getElementById("engine-status").innerText = "LOAD_ERROR"
+        console.log(str(e))
 
-    <div class="chart-container">
-        <canvas id="mainChart"></canvas>
-    </div>
-</div>
+def populate_dynamic_filters():
+    metrics = sorted(df['metric'].unique())
+    document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}">{m.upper()}</option>' for m in metrics])
+    envs = sorted(df['halfspace_variant'].unique())
+    document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
+    vars_list = sorted(df['variant'].unique())
+    document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
+    cands_list = sorted(df['Candidate'].unique())
+    document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
 
-<!-- 3. DATA TABLE -->
-<div class="section" id="dataSection" style="display:none">
-    <div class="section-title">3. Raw Statistics Ledger</div>
-    <div class="table-wrap" id="tableContainer"></div>
-</div>
+async def trigger_plot(event):
+    global df, current_fig
+    if df is None: return
+    metric, mode, env = document.getElementById("metric-select").value, document.getElementById("mode-select").value, document.getElementById("env-select").value
+    checked_vars, checked_cands = get_checked("var-check"), get_checked("cand-check")
+    if not checked_vars or not checked_cands or not metric: return
+    mask = (df['metric'] == metric) & (df['variant'].isin(checked_vars)) & (df['Candidate'].isin(checked_cands))
+    x_axis = 'Candidate' if mode == "candidate" else 'halfspace_variant'
+    if mode == "candidate": mask &= (df['halfspace_variant'] == env)
+    subset = df[mask]
+    if subset.empty: return
+    val_col = 'mean' if 'mean' in df.columns else 'value'
+    pivot_mean = subset.groupby([x_axis, 'variant'])[val_col].mean().unstack()
+    pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df.columns else None
+    cols = [v for v in checked_vars if v in pivot_mean.columns]
+    pivot_mean = pivot_mean[cols]
+    if pivot_std is not None: pivot_std = pivot_std[cols]
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=0.9, yerr=pivot_std, capsize=4)
+    ax.set_title(f"Dynamic Analysis: {metric.upper()}", fontsize=12, fontweight='bold'); ax.set_ylabel(metric)
+    ax.grid(True, alpha=0.2, axis='y'); ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    plt.tight_layout()
+    current_fig = fig
+    document.getElementById("plot-area").innerHTML = ""
+    display(fig, target="plot-area")
+    update_scorecard(checked_cands[0], checked_vars[0], env)
+
+def download_plot(event):
+    global current_fig
+    if current_fig is None: return
+    buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
+    js_array = Uint8Array.new(buf.read()); file = File.new([js_array], "plot.png", { "type": "image/png" }); url = URL.createObjectURL(file)
+    link = document.createElement("a"); link.href = url; link.download = f"plot_{document.getElementById('metric-select').value}.png"; link.click(); URL.revokeObjectURL(url)
+
+def get_checked(class_name):
+    elements = document.getElementsByClassName(class_name)
+    return [e.value for e in elements if e.checked]
+
+def update_scorecard(cand, var, env):
+    val_col = 'mean' if 'mean' in df.columns else 'value'
+    score_df = df[(df['Candidate'] == cand) & (df['variant'] == var) & (df['halfspace_variant'] == env)]
+    html = ""
+    for m_key in ["n_success_and_constraints", "avg_time", "avg_num_violations", "avg_steps"]:
+        row = score_df[score_df['metric'] == m_key]
+        val = f"{row[val_col].values[0]:.3f}" if not row.empty else "N/A"
+        html += f'<div class="score-card"><div class="score-label">{m_key.replace("avg_", "").upper()}</div><div class="score-val">{val}</div></div>'
+    document.getElementById("scorecard-container").innerHTML = html
+
+def render_path_map():
+    p_col = 'Full_Path' if 'Full_Path' in df.columns else 'Folder_Name'
+    mapping = df[['Candidate', p_col]].drop_duplicates().sort_values('Candidate')
+    html = '<table><thead><tr><th style="width:100px">ID</th><th>Source Path (Audit)</th></tr></thead><tbody>'
+    for _, row in mapping.iterrows():
+        segs = str(row[p_col]).split('/')
+        c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
+        html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td><td><code>{c_path}</code></td></tr>'
+    document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
+
+document.trigger_plot = create_proxy(trigger_plot)
+import asyncio
+asyncio.ensure_future(init_manifest())
+</script>
 
 <script>
-    let csvData = [];
-    let myChart = null;
-
-    const MAJOR_VARIANTS = ['dpcc-r', 'dpcc-c', 'dpcc-t', 'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened'];
-    const AUX_VARIANTS = ['diffuser', 'gradient', 'gradient-tightened'];
-
-    async function loadData() {
-        const path = document.getElementById('csvPath').value;
-        const err = document.getElementById('errorMsg');
-        const succ = document.getElementById('successMsg');
-        
-        err.style.display = 'none';
-        succ.style.display = 'none';
-
-        try {
-            const response = await fetch(path);
-            if (!response.ok) throw new Error("File not found. Verify server is running at project root and path is correct.");
-            
-            const text = await response.text();
-            parseCSV(text);
-            renderTable(text);
-            populateFilters();
-            
-            succ.style.display = 'block';
-            document.getElementById('plotSection').style.display = 'block';
-            document.getElementById('dataSection').style.display = 'block';
-            
-            renderChart();
-        } catch (e) {
-            err.innerText = "CRITICAL: " + e.message;
-            err.style.display = 'block';
-        }
+    window.currentMode = "list";
+    function switchMode(mode) {
+        window.currentMode = mode;
+        document.getElementById("btn-list").classList.toggle("active", mode === 'list');
+        document.getElementById("btn-path").classList.toggle("active", mode === 'path');
+        document.getElementById("input-list").style.display = mode === 'list' ? 'block' : 'none';
+        document.getElementById("input-path").style.display = mode === 'path' ? 'block' : 'none';
     }
-
-    function parseCSV(text) {
-        const lines = text.split('\n').filter(l => l.trim());
-        const headers = lines[0].split(',').map(h => h.trim());
-        csvData = lines.slice(1).map(line => {
-            const values = line.split(',');
-            const obj = {};
-            headers.forEach((h, i) => obj[h] = values[i].trim());
-            return obj;
-        });
-    }
-
-    function populateFilters() {
-        const envs = [...new Set(csvData.map(d => d.halfspace_variant))].sort();
-        const envSelect = document.getElementById('envSelect');
-        envSelect.innerHTML = envs.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
-    }
-
-    function renderChart() {
-        const env = document.getElementById('envSelect').value;
-        const group = document.getElementById('variantGroup').value;
-        const metric = document.getElementById('metricSelect').value;
-        const variants = (group === 'MAJOR') ? MAJOR_VARIANTS : AUX_VARIANTS;
-
-        // Group data by Candidate and Variant
-        const candidates = [...new Set(csvData.map(d => d.Candidate))].sort();
-        const datasets = [];
-
-        const colors = ['#000000', '#666666', '#999999', '#cccccc', '#333333', '#0000ff'];
-
-        variants.forEach((v, idx) => {
-            const data = candidates.map(c => {
-                const row = csvData.find(d => d.halfspace_variant === env && d.Candidate === c && d.variant === v && d.metric === metric);
-                return row ? parseFloat(row.value) : 0;
-            });
-
-            if (data.some(val => val > 0)) {
-                datasets.push({
-                    label: v.toUpperCase(),
-                    data: data,
-                    backgroundColor: colors[idx % colors.length],
-                    borderColor: '#000',
-                    borderWidth: 1
-                });
-            }
-        });
-
-        if (myChart) myChart.destroy();
-
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: candidates.map(c => `CANDIDATE_${c}`),
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: metric.toUpperCase(), font: { weight: 'bold' } } },
-                    x: { title: { display: true, text: 'CANDIDATE', font: { weight: 'bold' } } }
-                },
-                plugins: {
-                    legend: { position: 'top', labels: { font: { family: 'Arial' } } },
-                    title: { display: true, text: `DYNAMIC PERFORMANCE MATRIX: ${env.toUpperCase()} (${group})`, font: { size: 16 } }
-                }
-            }
-        });
-    }
-
-    function renderTable(csvText) {
-        const lines = csvText.split('\n').filter(l => l.trim());
-        let html = '<table><thead><tr>';
-        lines[0].split(',').forEach(h => html += `<th>${h}</th>`);
-        html += '</tr></thead><tbody>';
-        for (let i = 1; i < lines.length; i++) {
-            html += '<tr>';
-            lines[i].split(',').forEach(c => html += `<td>${c}</td>`);
-            html += '</tr>';
-        }
-        html += '</tbody></table>';
-        document.getElementById('tableContainer').innerHTML = html;
+    function trigger_plot() { if (window.document.trigger_plot) window.document.trigger_plot(); }
+    function bulkSelect(className, state) {
+        const elements = document.getElementsByClassName(className);
+        for (let e of elements) { e.checked = state; }
+        trigger_plot();
     }
 </script>
 
