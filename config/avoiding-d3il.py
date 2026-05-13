@@ -792,4 +792,66 @@ base = {
         'verbose': False,
         'suffix': '0',
     },
+
+    'flow_matching_v3_imeanflow': {
+        # Improved Mean Flows (iMeanFlow) trajectory generation
+        # Dual-velocity field: u (global) + v (local refinement)
+        
+        ## architecture
+        'model': 'flow_matcher_v3_imeanflow.models.TimeConditionedDualVelocity',
+        'state_dim': 28,
+        'hidden_dim': 256,
+        'time_dim': 128,
+        'use_jvp_guidance': True,
+        'jvp_hidden_dim': 128,
+        
+        ## dual-velocity training
+        'u_loss_weight': 0.5,           # LOCKED: balance with v_loss_weight
+        'v_loss_weight': 0.5,           # LOCKED: balance with u_loss_weight
+        'loss_schedule': 'u_first',     # LOCKED: curriculum learning for safety
+        'jvp_weight': 0.2,              # Constraint guidance (collision, smoothness)
+        
+        ## dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+        
+        ## ODE solver
+        'ode_solver_type': 'dopri5',    # dopri5, rk4, euler
+        'num_ode_steps': 10,
+        'ode_atol': 1e-6,
+        'ode_rtol': 1e-3,
+        
+        ## sampling
+        'nfe': 2,                        # 1 (fast) or 2 (quality)
+        'nfe_split': 0.5,               # Transition point from u→v
+        'goal_guidance_weight': 0.15,
+        'obstacle_avoidance_weight': 0.1,
+        
+        ## training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 32,
+        'learning_rate': 5e-4,
+        'warmup_steps': 2000,
+        'gradient_clip': 1.0,
+        'ema_decay': 0.995,
+        'train_test_split': 0.85,
+        'device': 'cuda',
+        'seed': 0,
+        
+        ## metrics
+        'track_smoothness': True,
+        'track_decomposition': True,
+        'track_collision': True,
+        
+        ## serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_imeanflow/',
+        'exp_name': watch(args_to_watch),
+    },
 }

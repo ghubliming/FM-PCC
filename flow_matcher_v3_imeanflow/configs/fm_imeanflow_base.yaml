@@ -1,0 +1,114 @@
+# Base configuration for Improved Mean Flows (iMeanFlow)
+# Shared defaults across all environments
+
+# Architecture
+architecture:
+  name: "imeanflow_dual_velocity"
+  type: "diffusion_flow_matcher"
+  state_dim: 28
+  
+  # Dual-velocity field configuration
+  dual_velocity:
+    use_dual_velocity: True
+    u_net_hidden_dim: 256
+    v_net_hidden_dim: 256
+    use_jvp_guidance: False
+    jvp_hidden_dim: 128
+  
+  # Time conditioning
+  time_conditioning:
+    enabled: True
+    time_dim: 128
+    time_embedding: "sinusoidal"
+  
+  # Optional DiT backbone (alternative to MLP)
+  transformer_backbone:
+    enabled: False
+    latent_dim: 256
+    num_blocks: 4
+    num_heads: 8
+
+# Training
+training:
+  max_epochs: 100
+  batch_size: 32
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-5
+  warmup_steps: 1000
+  
+  # Optimizer
+  optimizer: "adam"
+  gradient_clip: 1.0
+  
+  # Loss scheduler
+  loss_schedule:
+    mode: "u_first"  # Options: balanced, u_first, curriculum
+    weight_u_start: 0.8
+    weight_v_start: 0.0
+    weight_u_end: 0.5
+    weight_v_end: 0.5
+    weight_jvp: 0.0  # Set > 0 to enable constraint guidance
+  
+  # Checkpointing
+  checkpoint_interval: 5
+  save_best_model: True
+  validation_split: 0.2
+
+# ODE Solver Configuration
+ode_solver:
+  solver_type: "dopri5"  # Options: euler, rk4, dopri5
+  num_steps: 10
+  max_step_size: 0.1
+  atol: 1.0e-6
+  rtol: 1.0e-3
+
+# Sampling
+sampling:
+  nfe: 2  # Number of function evaluations: 1 (fast) or 2 (quality)
+  nfe_split: 0.5  # Where to transition from u to v phase (for NFE=2)
+  
+  # Guidance modes
+  goal_guidance:
+    enabled: False
+    weight: 0.1
+  
+  obstacle_avoidance:
+    enabled: False
+    weight: 0.05
+    
+  # Sampling methods
+  methods:
+    single_step:
+      nfe: 1
+      solver_type: "dopri5"
+    dual_step:
+      nfe: 2
+      split: 0.5
+      solver_type: "rk4"
+
+# Metrics
+metrics:
+  track_u_error: True
+  track_v_error: True
+  track_smoothness: True
+  track_decomposition: True
+  window_size: 100
+
+# Data
+data:
+  trajectory_length: 20
+  state_dim: 28
+  normalize: True
+  normalization_type: "standard"  # standard or minmax
+
+# Logging
+logging:
+  level: "INFO"
+  log_interval: 100
+  log_metrics: True
+  tensorboard: False
+  wandb: False
+
+# Reproducibility
+seed: 42
+use_deterministic_algo: False
