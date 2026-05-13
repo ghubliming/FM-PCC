@@ -60,8 +60,8 @@ Examples:
     
     parser.add_argument(
         '--output-path',
-        default='./fm_v3_batch_analysis_output',
-        help='Output directory for results (default: ./fm_v3_batch_analysis_output)'
+        default='Data_Analysis/analysis_results',
+        help='Output directory for results (default: Data_Analysis/analysis_results)'
     )
     
     parser.add_argument(
