@@ -1,0 +1,30 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Apr 29 14:52:50 UTC 2026
+JOB NAME:  eval_fmv3_ode_job
+JOB ID:    19748
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   8fcfeb6
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_K10_Dmodels.diffusion.GaussianDiffusion/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_K10_Dmodels.diffusion.GaussianDiffusion/6
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py", line 102, in <module>
+    fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py", line 57, in load_diffusion_with_override
+    dataset_config = utils.load_config(*loadpath, 'dataset_config.pkl')
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/serialization.py", line 36, in load_config
+    config = pickle.load(open(loadpath, 'rb'))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_K10_Dmodels.diffusion.GaussianDiffusion/6/dataset_config.pkl'

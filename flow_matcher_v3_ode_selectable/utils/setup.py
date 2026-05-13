@@ -1,5 +1,7 @@
 import os
 import importlib
+import importlib.util
+import shutil
 import random
 import numpy as np
 import torch
@@ -76,7 +78,11 @@ class Parser(argparse.ArgumentParser):
         self.set_seed(args)
         self.set_loadbase(args)
         self.generate_exp_name(args)
-        self.mkdir(args)
+        
+        # Only save args if we are training. In evaluation, we want to avoid 
+        # creating redundant and confusing 'args_resume_X.json' files.
+        save = (experiment == 'train')
+        self.mkdir(args, save=save)
         return args
 
     def read_config(self, args, experiment):
@@ -164,7 +170,7 @@ class Parser(argparse.ArgumentParser):
             setattr(args, 'exp_name', exp_name_string)
             self._dict['exp_name'] = exp_name_string
 
-    def mkdir(self, args):
+    def mkdir(self, args, save=True):
         if 'logbase' in dir(args) and 'dataset' in dir(args) and 'exp_name' in dir(args):
             args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name, str(args.seed))
             self.savepath = args.savepath
@@ -173,4 +179,49 @@ class Parser(argparse.ArgumentParser):
             #     args.savepath = os.path.join(args.savepath, args.suffix)
             if mkdir(args.savepath):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
-            self.save(args)
+
+            # Smart Config Snapshot
+            self.snapshot_configs(args)
+            if save:
+                self.save(args)
+    def snapshot_configs(self, args):
+        if not hasattr(args, 'config'):
+            return
+
+        # Create subfolder named after the config module
+        config_name = args.config.split('.')[-1]
+        snapshot_dir = os.path.join(args.savepath, f'config_snapshot_{config_name}')
+        
+        os.makedirs(snapshot_dir, exist_ok=True)
+
+        # 1. Copy the main python config module file
+        try:
+            import importlib.util
+            import shutil
+            spec = importlib.util.find_spec(args.config)
+            if spec and spec.origin:
+                dest = os.path.join(snapshot_dir, os.path.basename(spec.origin))
+                shutil.copy(spec.origin, dest)
+                # print(f'[ utils/setup ] Snapshotted config to {dest}')
+        except Exception:
+            pass
+
+        # 2. Copy associated yaml configs (e.g. projection_eval.yaml)
+        # We look in the 'config/' directory relative to the current working directory
+        yaml_path = 'config/projection_eval.yaml'
+        if os.path.exists(yaml_path):
+            try:
+                dest = os.path.join(snapshot_dir, 'projection_eval.yaml')
+                shutil.copy(yaml_path, dest)
+                # print(f'[ utils/setup ] Snapshotted config to {dest}')
+            except Exception:
+                pass
+
+        # 3. Create a timestamp file AFTER copying is finished
+        try:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            with open(os.path.join(snapshot_dir, f'snapshot_{timestamp}'), 'w') as f:
+                f.write(f'Snapshot taken at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
+        except Exception:
+            pass

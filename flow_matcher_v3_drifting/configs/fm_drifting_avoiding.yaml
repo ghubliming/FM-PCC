@@ -1,0 +1,56 @@
+# FM-D Configuration for Obstacle Avoidance Tasks
+# Inherits from fm_drifting_base.yaml
+# Specialization: Point-mass / vehicle control with spatial constraints
+
+# Override base settings for obstacle avoidance
+model:
+  input_dim: 28                  # 7-dim state * 4-step horizon (typical)
+  hidden_dim: 256
+  num_layers: 4
+
+flow_matching:
+  action_weight: 1.0
+  loss_type: "l2"
+
+sampling:
+  ode_solver: "dopri5"
+  num_steps: 10
+  t_span: [0.0, 1.0]
+
+# Avoiding-specific drift tuning
+drift:
+  enabled: true
+  loss_weight: 0.12              # Moderate guidance for collision-free paths
+  loss_type: "kl_divergence"     # Distribution matching works well for nav
+  memory_bank_size: 5000
+  encoder_dim: 128
+  warmup_epochs: 8
+
+training:
+  batch_size: 32
+  num_epochs: 75
+  learning_rate: 1.2e-4
+  ema_decay: 0.995
+
+validation:
+  eval_freq: 300
+  save_freq: 1000
+  best_metric: "success_rate"    # Track collision avoidance success
+
+# Constraint handling
+projection:
+  enable_projection: true        # Apply collision constraints during sampling
+  projection_freq: 2             # Project every N ODE steps
+  constraint_buffer: 0.1         # Safety margin (m)
+
+conditioning:
+  use_goal: true                 # Goal position
+  use_obstacles: true            # Obstacle positions/sizes in condition
+  condition_dropout: 0.3         # Slightly higher for uncertainty in obstacles
+  guidance_weight: 1.2
+
+# Avoiding-specific notes:
+# - Success heavily depends on constraint satisfaction
+# - Drift loss helps paths stay near expert distribution
+# - Memory bank should contain diverse obstacle configurations
+# - ODE step frequency: project→ODE→project→... pattern

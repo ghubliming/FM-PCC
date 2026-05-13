@@ -1,4 +1,14 @@
 from diffuser.utils import watch
+import yaml
+
+# Read the threshold dynamically from the YAML config, abort if not found
+with open('config/projection_eval.yaml', 'r') as f:
+    _proj_config = yaml.safe_load(f)
+
+if 'diffusion_timestep_threshold' not in _proj_config:
+    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/projection_eval.yaml")
+
+_yaml_threshold = _proj_config['diffusion_timestep_threshold']
 
 #------------------------ base ------------------------#
 
@@ -12,10 +22,44 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
+args_to_watch_dpcc_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_dpcc_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
+
 args_to_watch_v3 = [
     ('prefix', ''),
     ('horizon', 'H'),
     ('flow_steps_v3', 'K'),
+    ('diffusion', 'D'),
+]
+
+args_to_watch_fmv3_ode_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_fmv3_ode_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
 ]
 
@@ -56,7 +100,7 @@ base = {
         ## serialization
         'logbase': logbase,
         'prefix': 'diffusion/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_dpcc_train),
 
         ## training
         'n_steps_per_epoch': 1000,
@@ -322,7 +366,61 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch_v3),
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
+
+        # training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 8,
+        'learning_rate': 1e-4,
+        'gradient_accumulate_every': 2,
+        'ema_decay': 0.995,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'flow_matching_v3_drifting': {
+        # Drift-augmented Flow Matcher v3: combines FM ODE with drift loss guidance.
+        'model': 'models.Flow_matcher_U_Net_v2',
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 1,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+
+        # v3 SafeFlow-style time sampling parameters.
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+
+        # FM-D Drift Augmentation Parameters (Locked 3 params)
+        'use_drift_augmentation': True,            # bool: enable FM-D mode
+        'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
+        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
+
+        # dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+
+        # serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_drifting/',
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -349,7 +447,12 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/diffusion/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': lambda args: f"plans/diffusion/H{args.horizon}_K{args.n_diffusion_steps}_D{args.diffusion}_aw{args.action_weight}/" + watch([
+            ('horizon', 'H'),
+            ('n_diffusion_steps', 'K'),
+            ('diffusion_timestep_threshold', 'T'),
+            ('diffusion', 'D')
+        ])(args),
 
         ## diffusion model
         'diffusion': 'models.GaussianDiffusion',
@@ -358,9 +461,11 @@ base = {
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'action_weight': 10,
 
         ## loading
-        'diffusion_loadpath': 'f:diffusion/H{horizon}_K{n_diffusion_steps}_D{diffusion}',
+        'diffusion_loadpath': 'f:diffusion/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
 
         'diffusion_epoch': 'best',      # 'latest'
@@ -517,12 +622,15 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/flow_matching_v3_ode_selectable/',
-        'exp_name': watch(args_to_watch_v3),
+        'prefix': 'f:plans/flow_matching_v3_ode_selectable/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
         'horizon': 8,
+        'action_weight': 1,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
         # 'n_diffusion_steps': 20, # DEAD code (mathematically irrelevant for FM flow)
         'flow_steps_v3': 10,
         # 'ode_inference_steps_v3': 10, # DEAD code (compatibility alias for flow_steps_v3)
@@ -537,12 +645,60 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'returns_condition': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
         # 'predict_epsilon': True, # DEAD code (not used in inference velocity prediction)
         # 'dynamic_loss': False, # DEAD code (legacy DDPM relic, unused in FMv3)
 
         ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        # 'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
         # 'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}', # DEAD code (Value functions not used in FMv3 sampling)
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    'plan_fm_v3_drifting': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_drifting/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## flow matching v3 drifting model
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'action_weight': 1,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        'flow_steps_v3': 10,
+        # Available backend options: legacy_euler, torchdiffeq.
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        
+        # FM-D Drift Augmentation Parameters (Locked 3 params)
+        'use_drift_augmentation': True,            # bool: enable FM-D mode during inference
+        'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
+        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
+        
+        'returns_condition': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_v3_drifting/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
 
         'diffusion_epoch': 'best',      # 'latest'
 
@@ -635,5 +791,72 @@ base = {
 
         'verbose': False,
         'suffix': '0',
+    },
+
+    'flow_matching_v3_imeanflow': {
+        # Improved Mean Flows (iMeanFlow) trajectory generation
+        # Dual-velocity field: u (global) + v (local refinement)
+        
+        ## architecture
+        'model': 'flow_matcher_v3_imeanflow.models.TimeConditionedDualVelocity',
+        'diffusion': 'flow_matcher_v3_imeanflow.models.ImfDiffusion',
+        'state_dim': 28,
+        'hidden_dim': 256,
+        'time_dim': 128,
+        'use_jvp_guidance': True,
+        'jvp_hidden_dim': 128,
+        'horizon': 8,
+        
+        ## dual-velocity training
+        'u_loss_weight': 0.5,           # LOCKED: balance with v_loss_weight
+        'v_loss_weight': 0.5,           # LOCKED: balance with u_loss_weight
+        'loss_schedule': 'u_first',     # LOCKED: curriculum learning for safety
+        'jvp_weight': 0.2,              # Constraint guidance (collision, smoothness)
+        'loss_type': 'mse',
+        
+        ## dataset
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+        'use_padding': True,
+        
+        ## ODE solver
+        'ode_solver_type': 'dopri5',    # dopri5, rk4, euler
+        'num_ode_steps': 10,
+        'ode_atol': 1e-6,
+        'ode_rtol': 1e-3,
+        
+        ## sampling
+        'nfe': 2,                        # 1 (fast) or 2 (quality)
+        'nfe_split': 0.5,               # Transition point from u→v
+        'goal_guidance_weight': 0.15,
+        'obstacle_avoidance_weight': 0.1,
+        
+        ## training
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 1e5,
+        'batch_size': 32,
+        'learning_rate': 5e-4,
+        'warmup_steps': 2000,
+        'gradient_clip': 1.0,
+        'ema_decay': 0.995,
+        'train_test_split': 0.85,
+        'gradient_accumulate_every': 2,
+        'device': 'cuda',
+        'seed': 0,
+        
+        ## metrics
+        'track_smoothness': True,
+        'track_decomposition': True,
+        'track_collision': True,
+        
+        ## serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_imeanflow/',
+        'exp_name': watch(args_to_watch),
     },
 }

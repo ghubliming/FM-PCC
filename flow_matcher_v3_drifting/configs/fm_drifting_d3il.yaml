@@ -1,0 +1,49 @@
+# FM-D Configuration for D3IL Manipulation Tasks
+# Inherits from fm_drifting_base.yaml
+# Specialization: Robot arm control with position/velocity targets
+
+# Override base settings for D3IL environment
+model:
+  input_dim: 42                  # 7-DOF arm + gripper = 8 * 5 (pos, vel, ...)
+  hidden_dim: 256
+  num_layers: 4
+
+flow_matching:
+  action_weight: 2.0             # Higher weight on action prediction for robotics
+  loss_type: "l2"
+
+sampling:
+  ode_solver: "dopri5"
+  num_steps: 10
+  t_span: [0.0, 1.0]
+
+# D3IL-specific drift tuning
+drift:
+  enabled: true
+  loss_weight: 0.15              # Slightly higher for smoother arm trajectories
+  loss_type: "kl_divergence"
+  memory_bank_size: 2000         # Smaller bank for faster updates
+  encoder_dim: 128
+  warmup_epochs: 5               # Faster warmup on D3IL
+
+training:
+  batch_size: 16                 # Smaller batches due to trajectory length
+  num_epochs: 50
+  learning_rate: 1.5e-4
+  ema_decay: 0.99
+
+# Higher validation frequency for dexterous control
+validation:
+  eval_freq: 200
+  save_freq: 500
+
+conditioning:
+  use_goal: true                 # Goal position for arm
+  condition_dropout: 0.25
+  guidance_weight: 1.5           # Stronger guidance helps arm convergence
+
+# D3IL environment note:
+# - Trajectory horizon typically 8-15 steps
+# - High-dimensional state (arm pose + gripper)
+# - Requires smoother, more constrained solutions
+# - Drift guidance helps satisfy kinematic limits

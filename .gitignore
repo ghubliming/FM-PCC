@@ -1,8 +1,17 @@
 args.json
 .vscode/
 logs/*
-# Keep local downloaded d3il datasets out of git (Colab/local sync-safe).
-d3il/environments/dataset/data/
+
+# Specific D3IL data ignores (keeping .pkl index files)
+d3il/environments/dataset/data/aligning/all_data
+d3il/environments/dataset/data/avoiding/data
+d3il/environments/dataset/data/avoiding/check_data.py
+d3il/environments/dataset/data/inserting/data_3
+d3il/environments/dataset/data/pushing/all_data
+d3il/environments/dataset/data/sorting/*_boxes
+d3il/environments/dataset/data/sorting/*.pkl
+d3il/environments/dataset/data/stacking/*_data
+d3il/environments/dataset/data/dataset.zip
 d4rl-minari-dataset-generation_bkup/*
 diffuser.egg-info/*
 __pycache__/
@@ -10,3 +19,15 @@ __pycache__/
 # Ignore Xournal++ files
 *.xopp
 *.autosave.xopp
+
+# remote vmknoll D3il Install redundant files
+d3il/environments/d3il/envs/gym_avoiding_env/gym_avoiding.egg-info
+
+# wandb local files
+wandb/*
+
+# Mujoco log
+MUJOCO_LOG.TXT
+
+# Temp
+temp/*

@@ -1,0 +1,241 @@
+"""
+Data loader module: Discovers and loads .npz evaluation result files.
+"""
+import os
+import numpy as np
+import logging
+from pathlib import Path
+from collections import defaultdict
+from config import METRICS
+
+logger = logging.getLogger(__name__)
+
+
+class DataLoader:
+    """Load evaluation data from .npz files organized by seed/variant/constraint."""
+
+    def __init__(self, verbose: bool = False):
+        self.verbose = verbose
+        self.data = {}  # {seed: {variant: {constraint: {halfspace: metrics_dict}}}}
+        self.files_found = 0
+        self.files_loaded = 0
+        self.files_failed = 0
+        self.loading_log = []
+    
+    def load_results(self, root_path, seeds, variants, constraint_types, halfspace_variants):
+        """
+        Load all .npz result files from directory structure.
+        
+        Expected structure:
+        root_path/
+          {seed}/
+            results/
+              halfspace_{halfspace_variant}/
+                {variant}.npz
+        
+        Args:
+            root_path: Root directory containing results
+            seeds: List of seed numbers
+            variants: List of projection variant names
+            constraint_types: List of constraint types
+            halfspace_variants: List of halfspace variant names
+        
+        Returns:
+            Dict of loaded data: {seed: {variant: {constraint: {halfspace: data}}}}
+        """
+        if not os.path.exists(root_path):
+            logger.error(f'Root path does not exist: {root_path}')
+            return {}
+        
+        logger.info(f'Starting data loading from: {root_path}')
+        logger.info(f'Seeds: {seeds}')
+        logger.info(f'Variants: {len(variants)}')
+        logger.info(f'Constraint types: {constraint_types}')
+        
+        self.data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(dict))))
+        
+        for seed in seeds:
+            seed_path = os.path.join(root_path, str(seed), 'results')
+            
+            if not os.path.exists(seed_path):
+                msg = f'Seed {seed}: results directory not found at {seed_path}'
+                logger.warning(msg)
+                self.loading_log.append(('WARNING', msg))
+                continue
+            
+            for halfspace_variant in halfspace_variants:
+                halfspace_path = os.path.join(seed_path, f'halfspace_{halfspace_variant}')
+                
+                if not os.path.exists(halfspace_path):
+                    msg = f'Seed {seed}/{halfspace_variant}: directory not found'
+                    logger.debug(msg)
+                    self.loading_log.append(('DEBUG', msg))
+                    continue
+                
+                try:
+                    entries = os.listdir(halfspace_path)
+                except Exception:
+                    entries = []
+
+                for variant in variants:
+                    # Fix: Use more precise matching to avoid substring issues
+                    # Look for exact variant name with .npz or .log extension
+                    target_files = [f for f in entries if f == f'{variant}.npz' or f == f'{variant}.log' or f == f'{variant}.txt']
+                    
+                    # Fallback to substring matching only if no exact match found, but be more careful
+                    if not target_files:
+                        target_files = [f for f in entries if f.startswith(f'{variant}.') or f.startswith(f'{variant}_')]
+                    
+                    if not target_files:
+                        msg = f'Seed {seed}/{halfspace_variant}/{variant}: NOT FOUND'
+                        logger.debug(msg)
+                        self.loading_log.append(('MISSING', msg))
+                        self.files_failed += 1
+                        continue
+
+                    # If we found multiple files, prefer .npz
+                    if len(target_files) > 1:
+                        npz_files = [f for f in target_files if f.endswith('.npz')]
+                        if npz_files:
+                            target_files = [npz_files[0]]
+                        else:
+                            target_files = [target_files[0]] # Just take the first one
+
+                    match = target_files[0]
+                    file_path = os.path.join(halfspace_path, match)
+                    self.files_found += 1
+                    
+                    try:
+                        data_dict = self._load_result_file(file_path)
+
+                        # Store data. We use 'halfspace' as the constraint type since we loaded it from halfspace folder.
+                        # For other constraint types, we might need a different discovery logic.
+                        # For now, we store it under the specific constraint type found in the path.
+                        self.data[seed][variant]['halfspace'][halfspace_variant] = data_dict.copy()
+                        
+                        # If the user requested other constraint types, and we don't have specific data for them,
+                        # we DON'T replicate it anymore to avoid skewing counts.
+                        # Instead, we only fill 'halfspace'.
+
+                        self.files_loaded += 1
+                        logger.debug(f'Loaded: seed={seed}, variant={variant}, file={match}')
+
+                    except Exception as e:
+                        msg = f'Seed {seed}/{halfspace_variant}/{match}: FAILED - {str(e)}'
+                        logger.error(msg)
+                        self.loading_log.append(('ERROR', msg))
+                        self.files_failed += 1
+        
+        logger.info(f'Loading complete. Loaded: {self.files_loaded}, Failed: {self.files_failed}, Total: {self.files_found}')
+        return dict(self.data)
+    
+    def _load_npz_file(self, npz_file):
+        """
+        Load single .npz file and extract metrics.
+        
+        Args:
+            npz_file: Path to .npz file
+        
+        Returns:
+            Dict with extracted metrics
+        """
+        # Deprecated: keep for compatibility but not directly used anymore
+        return self._load_result_file(npz_file)
+
+    def _load_result_file(self, file_path):
+        """Load a result file which may be an .npz or a .log file.
+
+        - .npz: load and extract metrics as before
+        - .log/.txt: capture raw text under 'raw_log'
+        """
+        name = os.path.basename(file_path)
+        if name.endswith('.npz'):
+            data = np.load(file_path, allow_pickle=True)
+            metrics_dict = {}
+            for key in data.files:
+                try:
+                    value = data[key]
+                    if isinstance(value, np.ndarray):
+                        if value.size == 1:
+                            metrics_dict[key] = float(value.item())
+                        else:
+                            metrics_dict[f'{key}_array'] = value
+                            metrics_dict[key] = float(np.mean(value))
+                            metrics_dict[f'{key}_std'] = float(np.std(value))
+                    else:
+                        try:
+                            metrics_dict[key] = float(value)
+                        except Exception:
+                            metrics_dict[key] = value
+                except (ValueError, TypeError) as e:
+                    logger.debug(f'Could not convert key {key}: {str(e)}')
+            return metrics_dict
+        else:
+            # Fallback: read raw log content and parse with regex
+            import re
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text = f.read()
+                
+                metrics_dict = {m: np.nan for m in METRICS}
+                metrics_dict['raw_log'] = text
+                
+                # Parse metrics
+                patterns = {
+                    'n_success': r'Success rate:\s*([\d.]+)',
+                    'collision_free_completed': r'Constraints satisfied:\s*([\d.]+)',
+                    'n_success_and_constraints': r'Success rate \(goal and constraints\):\s*([\d.]+)',
+                    'n_steps': r'Avg number of steps:\s*([\d.]+)',
+                    'n_violations': r'Avg number of constraint violations:\s*([\d.]+)',
+                    'total_violations': r'Avg total violation:\s*([\d.]+)',
+                    'avg_time': r'Average computation time per step:\s*([\d.]+)'
+                }
+                
+                for metric, pattern in patterns.items():
+                    match = re.search(pattern, text)
+                    if match:
+                        val = float(match.group(1))
+                        if metric == 'avg_time':
+                            # Convert seconds to ms
+                            val = val * 1000.0
+                        metrics_dict[metric] = val
+                        
+                return metrics_dict
+            except Exception as e:
+                logger.error(f'Failed to read log file {file_path}: {str(e)}')
+                raise
+    
+    def get_loading_summary(self):
+        """
+        Get summary of loading process.
+        
+        Returns:
+            Dict with loading statistics
+        """
+        return {
+            'files_found': self.files_found,
+            'files_loaded': self.files_loaded,
+            'files_failed': self.files_failed,
+            'success_rate': self.files_loaded / max(self.files_found, 1),
+            'loading_log': self.loading_log,
+        }
+    
+    def save_loading_log(self, output_path):
+        """
+        Save detailed loading log to file.
+        
+        Args:
+            output_path: Path to output log file
+        """
+        with open(output_path, 'w') as f:
+            f.write('=== Data Loading Log ===\n\n')
+            f.write(f'Files Found: {self.files_found}\n')
+            f.write(f'Files Loaded: {self.files_loaded}\n')
+            f.write(f'Files Failed: {self.files_failed}\n')
+            f.write(f'Success Rate: {100 * self.files_loaded / max(self.files_found, 1):.1f}%\n\n')
+            f.write('=== Detailed Log ===\n')
+            
+            for level, msg in self.loading_log:
+                f.write(f'[{level:7s}] {msg}\n')
+        
+        logger.info(f'Loading log saved to: {output_path}')

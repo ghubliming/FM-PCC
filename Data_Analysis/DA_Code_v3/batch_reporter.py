@@ -1,0 +1,306 @@
+"""
+Batch Reporter Module (v2)
+
+Generates human-readable reports and machine-readable export files
+for cross-candidate comparison results.
+"""
+
+import logging
+import os
+import pandas as pd
+import numpy as np
+from typing import Dict
+
+
+logger = logging.getLogger(__name__)
+
+
+class BatchReporter:
+    """
+    Generate reports from batch aggregation results.
+    """
+    
+    def __init__(self, candidate_stats, ranked_candidates, candidates_info=None, aggregator=None):
+        """
+        Initialize batch reporter.
+        
+        Args:
+            candidate_stats: Dict from BatchAggregator
+            ranked_candidates: Ranked list from BatchAggregator
+            candidates_info: Original candidate info dict
+            aggregator: The BatchAggregator instance (for detailed multidimensional data)
+        """
+        self.candidate_stats = candidate_stats
+        self.ranked_candidates = ranked_candidates
+        self.candidates_info = candidates_info or {}
+        self.aggregator = aggregator
+    
+    def save_candidates_summary_txt(self, output_path):
+        """
+        Save human-readable summary of cross-candidate comparison.
+        
+        Args:
+            output_path: Path to save summary
+        """
+        lines = [
+            "=" * 70,
+            "CROSS-CANDIDATE COMPARISON SUMMARY",
+            "=" * 70,
+            ""
+        ]
+        
+        # Candidates discovered
+        lines.append("CANDIDATES DISCOVERED")
+        lines.append("-" * 70)
+        
+        for letter in sorted(self.candidates_info.keys()):
+            info = self.candidates_info[letter]
+            lines.append(f"  {letter}: {info.get('name', 'Unknown')}")
+        
+        lines.append("")
+        
+        # Rankings
+        lines.append("RANKINGS BY MAJOR VARIANT ACCURACY (DPCC average)")
+        lines.append("-" * 70)
+        
+        # Sort by major accuracy if available
+        candidates_to_rank = []
+        for letter in self.candidate_stats:
+            stats = self.candidate_stats[letter]
+            acc = stats.get('major_accuracy', stats.get('accuracy', 0))
+            candidates_to_rank.append((letter, acc))
+        
+        candidates_to_rank.sort(key=lambda x: x[1], reverse=True)
+        
+        for rank, (letter, accuracy) in enumerate(candidates_to_rank, 1):
+            stats = self.candidate_stats[letter]
+            time_ms = stats.get('major_time_ms', stats.get('time_ms', np.nan))
+            accuracy_std = stats.get('accuracy_std', np.nan)
+            
+            line = f"  {rank}. Candidate {letter}: {accuracy*100:.2f}%"
+            if not np.isnan(accuracy_std):
+                line += f" (±{accuracy_std*100:.2f}%)"
+            if not np.isnan(time_ms):
+                line += f", Avg Time: {time_ms:.1f}ms"
+            
+            lines.append(line)
+            
+            # Add major variant breakdown
+            major_metrics = stats.get('major_metrics', {})
+            if major_metrics:
+                breakdown = "      Breakdown: " + ", ".join([f"{k}: {v*100:.1f}%" for k, v in major_metrics.items()])
+                lines.append(breakdown)
+        
+        lines.append("")
+        
+        # Auxiliary
+        lines.append("AUXILIARY VARIANT PERFORMANCE")
+        lines.append("-" * 70)
+        for letter in sorted(self.candidate_stats.keys()):
+            stats = self.candidate_stats[letter]
+            aux_acc = stats.get('auxiliary_accuracy', np.nan)
+            if not np.isnan(aux_acc):
+                lines.append(f"  Candidate {letter}: {aux_acc*100:.2f}% (Auxiliary Avg)")
+        
+        lines.append("")
+        
+        # Best candidates
+        lines.append("RECOMMENDATIONS")
+        lines.append("-" * 70)
+        
+        if candidates_to_rank:
+            best_letter, best_accuracy = candidates_to_rank[0]
+            lines.append(f"  Overall Best (Major): Candidate {best_letter}")
+            lines.append(f"  Major Accuracy: {best_accuracy*100:.2f}%")
+            
+            # Find fastest major
+            fastest_major = min(
+                self.candidate_stats.items(),
+                key=lambda x: x[1].get('major_time_ms', float('inf'))
+            )
+            if fastest_major[1].get('major_time_ms', None):
+                lines.append(f"  Fastest (Major): Candidate {fastest_major[0]} ({fastest_major[1]['major_time_ms']:.1f}ms)")
+        
+        lines.append("")
+        lines.append("=" * 70)
+        
+        content = "\n".join(lines)
+        
+        with open(output_path, 'w') as f:
+            f.write(content)
+        
+        logger.info(f"Saved summary: {output_path}")
+        return content
+    
+    def save_candidates_ranking_csv(self, output_path):
+        """
+        Save candidate rankings as CSV for Excel import.
+        
+        Args:
+            output_path: Path to save CSV
+        """
+        rows = []
+        
+        for rank, (letter, accuracy) in enumerate(self.ranked_candidates, 1):
+            stats = self.candidate_stats[letter]
+            info = self.candidates_info.get(letter, {})
+            
+            row = {
+                'Rank': rank,
+                'Candidate': letter,
+                'Folder': info.get('name', 'Unknown'),
+                'Accuracy (%)': accuracy * 100,
+                'Accuracy Std (%)': stats.get('accuracy_std', '') * 100 if stats.get('accuracy_std') else '',
+                'Time (ms)': stats.get('time_ms', ''),
+                'Time Std (ms)': stats.get('time_std', ''),
+                'Robustness': stats.get('robustness', '')
+            }
+            rows.append(row)
+        
+        df = pd.DataFrame(rows)
+        df.to_csv(output_path, index=False)
+        
+        logger.info(f"Saved ranking CSV: {output_path}")
+    
+    def save_candidates_detailed_csv(self, output_path):
+        """
+        Save detailed comparison table as CSV.
+        
+        Args:
+            output_path: Path to save CSV
+        """
+        rows = []
+        
+        for letter in sorted(self.candidate_stats.keys()):
+            stats = self.candidate_stats[letter]
+            info = self.candidates_info.get(letter, {})
+            
+            if 'error' not in stats:
+                row = {
+                    'Candidate_Letter': letter,
+                    'Folder_Name': info.get('name', 'Unknown'),
+                    'Full_Path': info.get('path', 'Unknown'),
+                    'Accuracy': stats.get('accuracy', ''),
+                    'Accuracy_Std': stats.get('accuracy_std', ''),
+                    'Time_ms': stats.get('time_ms', ''),
+                    'Time_Std': stats.get('time_std', ''),
+                    'Robustness_Score': stats.get('robustness', '')
+                }
+                rows.append(row)
+        
+        df = pd.DataFrame(rows)
+        df.to_csv(output_path, index=False)
+        
+        logger.info(f"Saved detailed CSV: {output_path}")
+    
+    def save_candidates_multidimensional_csv(self, output_path):
+        """
+        Save the full unaggregated multidimensional data (Candidate x Variant x Constraint x Halfspace)
+        to a CSV for pivot tables and advanced analysis.
+        """
+        if not self.aggregator:
+            logger.warning("No aggregator provided. Cannot save multidimensional CSV.")
+            return
+            
+        try:
+            df = self.aggregator.get_full_detailed_dataframe()
+            if df is not None and not df.empty:
+                # Add folder info
+                df['Folder_Name'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                df.to_csv(output_path, index=False)
+                logger.info(f"Saved multidimensional CSV ({len(df)} rows): {output_path}")
+            else:
+                logger.warning("Multidimensional detailed dataframe is empty.")
+        except Exception as e:
+            logger.error(f"Failed to save multidimensional CSV: {e}")
+
+    def save_candidates_multidimensional_aggregated_csv(self, output_path):
+        """
+        Save the multidimensional data aggregated across seeds (Candidate x Variant x Constraint x Halfspace)
+        to a CSV for easy import into Excel or other BI tools.
+        """
+        if not self.aggregator:
+            logger.warning("No aggregator provided. Cannot save aggregated multidimensional CSV.")
+            return
+            
+        try:
+            df = self.aggregator.get_full_detailed_dataframe()
+            if df is not None and not df.empty:
+                # Group by everything except Seed and calculate Mean, Std, Count
+                grouped = df.groupby(['Candidate', 'variant', 'constraint_type', 'halfspace_variant', 'metric'])['value'].agg(['mean', 'std', 'count']).reset_index()
+                
+                # Add folder and path info
+                grouped['Folder_Name'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                grouped['Full_Path'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
+                
+                # Reorder columns
+                cols = ['Candidate', 'Folder_Name', 'Full_Path', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
+                grouped = grouped[cols]
+                
+                grouped.to_csv(output_path, index=False)
+                logger.info(f"Saved multidimensional aggregated CSV ({len(grouped)} rows): {output_path}")
+            else:
+                logger.warning("Multidimensional detailed dataframe is empty.")
+        except Exception as e:
+            logger.error(f"Failed to save multidimensional aggregated CSV: {e}")
+
+    def save_all_reports(self, output_dir):
+        """
+        Generate all reporting outputs.
+        
+        Args:
+            output_dir: Directory to save all reports
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Text summary
+        self.save_candidates_summary_txt(
+            os.path.join(output_dir, 'candidates_summary.txt')
+        )
+        
+        # CSV files
+        self.save_candidates_ranking_csv(
+            os.path.join(output_dir, 'candidates_ranking.csv')
+        )
+        
+        self.save_candidates_detailed_csv(
+            os.path.join(output_dir, 'candidates_detailed.csv')
+        )
+        
+        # Multidimensional CSV (raw seeds)
+        self.save_candidates_multidimensional_csv(
+            os.path.join(output_dir, 'candidates_multidimensional_raw.csv')
+        )
+        
+        # Multidimensional CSV (aggregated over seeds)
+        self.save_candidates_multidimensional_aggregated_csv(
+            os.path.join(output_dir, 'candidates_multidimensional_aggregated.csv')
+        )
+        
+        logger.info(f"All reports saved to: {output_dir}")
+
+
+if __name__ == "__main__":
+    import numpy as np
+    
+    logging.basicConfig(level=logging.INFO)
+    
+    # Example usage
+    candidate_stats = {
+        'A': {'accuracy': 0.873, 'accuracy_std': 0.021, 'time_ms': 42.1, 'time_std': 2.3, 'robustness': 0.015},
+        'B': {'accuracy': 0.842, 'accuracy_std': 0.028, 'time_ms': 38.2, 'time_std': 1.9, 'robustness': 0.020},
+        'C': {'accuracy': 0.895, 'accuracy_std': 0.019, 'time_ms': 45.2, 'time_std': 3.1, 'robustness': 0.018},
+    }
+    
+    ranked = [('C', 0.895), ('A', 0.873), ('B', 0.842)]
+    
+    candidates_info = {
+        'A': {'name': 'diffusion_H8_K20_aw10', 'path': '/path/to/A'},
+        'B': {'name': 'diffusion_H8_K10_aw10', 'path': '/path/to/B'},
+        'C': {'name': 'diffusion_H8_K20_T1', 'path': '/path/to/C'},
+    }
+    
+    reporter = BatchReporter(candidate_stats, ranked, candidates_info)
+    reporter.save_all_reports('./test_reports')
+    
+    print("\nTest reports generated in ./test_reports")

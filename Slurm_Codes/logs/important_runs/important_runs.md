@@ -1,0 +1,84 @@
+
+- DPCC full train, default para
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-01/15_39_45_train_dpcc_job_19784.log
+
+- DPCC full eval, default para
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-04/18_00_14_eval_dpcc_job_19869.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/11_09_57_load_results_dpcc_job_19884.log
+
+- FMv3ODE full train, default para
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-02/18_09_44_fmv3_train_19819.log
+
+- FMv3ODE full eval, default para
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-03/20_49_27_eval_fmv3_ode_job_19840.log
+
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-04/14_45_27_load_results_fmv3_job_19859.log
+
+- FMv3ODE full eval, midpoint ODE5
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-04/15_36_20_eval_fmv3_ode_job_19862.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/11_10_47_load_results_fmv3_job_19885.log
+
+- dpcc 10 steps
+run as pipeline
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_train_19888.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_eval_19889.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/14_18_01_dpcc_load_results_19890.log
+
+- fmv3_ode aw 10
+run as pipeline, with new plan sub folder struct
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_train_19921.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_eval_19922.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_load_results_19923.log
+
+- fmv3ode aw1 ode20
+eval
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/13_11_03_eval_fmv3_ode_job_19965.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/20_52_35_load_results_fmv3_job_19981.log
+
+- fmv3ode full proj
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/11_35_01_eval_fmv3_ode_job_20010.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/21_44_30_load_results_fmv3_job_20031.log
+
+- dpcc full proj 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/11_25_06_eval_dpcc_job_20038.log
+
+(modify name into aw10 "FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T1_Dmodels.GaussianDiffusion")
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_32_35_load_results_dpcc_job_20048.log
+
+- dpcc aw1 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_train_20050.log
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_eval_20051.log
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_load_results_20052.log
+
+- Drifting
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_20_train_drifting_20135.log
+
+Finished
+
+Eval 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/12_39_47_eval_drifting_20150.log
+
+
+- Visual 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
+
+Interrupt, the loss curve looks wrong in WandB
+
+Eval seed 6
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/12_49_01_eval_visual_aligning_20153.log
+
+Stop, stucked
+
+- iMF

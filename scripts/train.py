@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 
 import torch
+import wandb
 import diffuser.utils as utils
 
 exp = 'avoiding-d3il'
@@ -164,7 +165,7 @@ def log_wandb_curves_from_losses(losses_path, run):
 
 
 def upload_wandb_artifact(run, seed, args):
-    artifact = run.Artifact(
+    artifact = wandb.Artifact(
         name=f'{args.dataset}-seed-{seed}-model',
         type='model',
         metadata={
@@ -175,11 +176,16 @@ def upload_wandb_artifact(run, seed, args):
         },
     )
 
-    files_to_add = ['state_best.pt', 'losses.pkl', 'args.json']
+    files_to_add = ['losses.pkl', 'args.json'] # 'state_best.pt' commented out to save space
     for filename in files_to_add:
         filepath = os.path.join(args.savepath, filename)
         if os.path.exists(filepath):
             artifact.add_file(filepath)
+
+    # Keep but not using it as requested:
+    # state_best_path = os.path.join(args.savepath, 'state_best.pt')
+    # if os.path.exists(state_best_path):
+    #     artifact.add_file(state_best_path)
 
     run.log_artifact(artifact)
 
@@ -216,14 +222,26 @@ for seed in selected_seeds:
     run = None
     if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
         sanitize_wandb_env()
-        import wandb
 
-        wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else f'{args.dataset}-{args.exp_name}'
+        # Update wandb log naming logic to be more clear
+        savepath_rel = os.path.relpath(args.savepath, args.logbase)
+        wandb_name = savepath_rel.replace('/', '-').replace('models.diffusion.', '').replace('models.', '')
+
+        # Label seed part clearly as S<seed>
+        name_parts = wandb_name.split('-')
+        if name_parts[-1].isdigit():
+            name_parts[-1] = f'S{name_parts[-1]}'
+        wandb_name = '-'.join(name_parts)
+
+        # Group name clusters seeds of the same experiment together
+        default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
+        wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
+
         run = wandb.init(
             project=cli_args.wandb_project,
             entity=cli_args.wandb_entity,
             group=wandb_group,
-            name=f'{args.dataset}-seed-{seed}',
+            name=wandb_name,
             mode=cli_args.wandb_mode,
             config={
                 **vars(args),

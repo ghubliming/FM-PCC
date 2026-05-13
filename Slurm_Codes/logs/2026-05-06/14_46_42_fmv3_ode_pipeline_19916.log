@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Wed May  6 12:46:43 UTC 2026
+JOB ID:    19916
+================================================================================
+Launching FMv3 ODE Pipeline...
+Step 1: Training submitted. Job ID: 19917
+Step 2: Evaluation scheduled (afterok:19917). Job ID: 19918
+Step 3: Load Results scheduled (afterok:19918). Job ID: 19919
+--------------------------------------------------------------------------------
+Pipeline submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+If any step fails, the subsequent steps will be cancelled automatically by Slurm.
+================================================================================
+================================================================================
+PIPELINE END:   Wed May  6 12:46:43 UTC 2026
+================================================================================

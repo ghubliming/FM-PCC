@@ -1,0 +1,83 @@
+# FM-D (Flow Matcher-Drifting) Engine: Base Configuration
+# Default parameters for training and inference
+# Default model: UNet1DTemporalCondModel
+# Default loss: FM regression + drift loss (KL divergence)
+
+model:
+  name: "flow_matcher_v3_drifting"
+  input_dim: 28                  # 7 action dims * 4 steps (example)
+  hidden_dim: 256
+  num_layers: 4
+  
+# Flow Matching core
+flow_matching:
+  name: "flow_matching"
+  time_beta_alpha: 1.5           # SafeFlow-style time scheduling alpha
+  time_beta_beta: 1.0            # SafeFlow-style time scheduling beta
+  action_weight: 1.0             # Relative weight for action loss
+  loss_type: "l2"                # Mean squared error on velocity prediction
+
+# ODE integration
+sampling:
+  ode_solver: "dopri5"           # "euler" | "rk4" | "dopri5" | "adams"
+  ode_backend: "legacy_euler"    # "legacy_euler" | "torchdiffeq"
+  t_span: [0.0, 1.0]             # Reverse-time integration interval
+  num_steps: 10                  # If using fixed-step solver (euler, rk4)
+  method: "flow_matching"        # Integration paradigm
+  rtol: 1.0e-5                   # Relative tolerance (adaptive solvers)
+  atol: 1.0e-6                   # Absolute tolerance (adaptive solvers)
+
+# Drift augmentation
+drift:
+  enabled: true                  # Enable drift-guided ODE integration
+  loss_weight: 0.1               # λ: weight of drift guidance in velocity field
+  loss_type: "kl_divergence"     # "kl_divergence" | "mmd" | "adversarial"
+  memory_bank_size: 5000         # Max reference trajectories for distribution
+  encoder_dim: 128               # Hidden dimension for trajectory encoder
+  temperature: 0.1               # Softmax temperature for probability scaling
+  drift_clip: 1.0                # Gradient clipping norm to prevent instability
+  warmup_epochs: 10              # Epochs before activating drift loss during training
+
+# Training
+training:
+  batch_size: 32
+  num_epochs: 100
+  learning_rate: 1.0e-4
+  ema_decay: 0.995               # Exponential moving average for model
+  gradient_accumulate: 2
+  optimizer: "adamw"
+  weight_decay: 1.0e-4
+  
+# Validation & checkpoint saving
+validation:
+  eval_freq: 500                 # Steps between evaluations
+  save_freq: 1000                # Steps between checkpoint saves
+  best_metric: "loss_val"        # Metric to track for best model
+
+# Logging & metrics
+logging:
+  log_drift_metrics: true        # Log drift loss, divergence, etc.
+  save_drift_visualizations: true # Save trajectory overlays
+  log_every_n_steps: 100
+  tensorboard: true
+  
+# Data
+dataset:
+  loader: "datasets.SequenceDataset"
+  normalizer: "LimitsNormalizer"
+  max_path_length: 150
+  include_returns: true
+  returns_scale: 400.0
+  discount: 0.99
+  train_test_split: 0.9
+
+# Conditioning
+conditioning:
+  use_goal: true                 # Condition on goal state
+  condition_dropout: 0.25        # Dropout for classifier-free guidance
+  guidance_weight: 1.2           # Strength of conditional guidance
+
+# Device & reproducibility
+device: "cuda"
+seed: 0
+mixed_precision: false           # Use FP16 if true

@@ -1,0 +1,18 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun May  3 10:58:34 UTC 2026
+JOB NAME:  load_results_dpcc_job
+JOB ID:    19826
+NODE:      i6-gpu-1
+GIT REV:   51557bd
+================================================================================
+Running scripts/load_results.py...
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/scripts/load_results.py", line 37, in <module>
+    data = np.load(f'{args.savepath}/results/halfspace_{halfspace_variant}/{variant}.npz', allow_pickle=True)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/lib/npyio.py", line 427, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion/7/results/halfspace_top-left-hard/dpcc-r.npz'
+================================================================================
+JOB END:   Sun May  3 10:58:37 UTC 2026
+================================================================================

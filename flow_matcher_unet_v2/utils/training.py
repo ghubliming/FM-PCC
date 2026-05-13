@@ -114,7 +114,7 @@ class Trainer(object):
     #-----------------------------------------------------------------------------#
 
     def train_epoch(self, n_train_steps, epoch=0):        
-        progress_bar = tqdm(total=n_train_steps)
+        progress_bar = tqdm(total=n_train_steps, mininterval=1e10)
         progress_bar.set_description(f"Epoch {epoch}")
 
         for step in range(n_train_steps):
@@ -177,8 +177,9 @@ class Trainer(object):
             logs["lr"] = self.lr_scheduler.get_last_lr()[0]
             logs["step"] = self.step
 
-            progress_bar.update(1)
-            progress_bar.set_postfix(**logs)
+            if (self.step + 1) % self.log_freq == 0 or step == n_train_steps - 1:
+                progress_bar.update(step - progress_bar.n + 1)
+                progress_bar.set_postfix(**logs)
 
             self.step += 1
 

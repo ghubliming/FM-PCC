@@ -1,0 +1,24 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun May  3 11:01:48 UTC 2026
+JOB NAME:  eval_dpcc_job
+JOB ID:    19827
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   51557bd
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_7dba4fd2-46df-11f1-8771-d85ed34e311e.xml' with default provider at slot 1
+
+slurmstepd-i6-gpu-1: error: *** JOB 19827 ON i6-gpu-1 CANCELLED AT 2026-05-03T11:03:46 ***
+================================================================================
+JOB END:   Sun May  3 11:03:46 UTC 2026
+================================================================================

@@ -1,0 +1,11 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - FM v3 ODE-Selectable: Multi-Candidate Batch Analysis (v2)
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - Start time: 2026-05-13 10:40:33
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - Output directory: analysis_results/batch_analysis_20260513_104032/20260513_104033_FM_V3_BATCH
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - 
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - [PHASE 1/5] AUTO-DISCOVERING CANDIDATES
+[2026-05-13 10:40:33] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+No candidates found in logs/avoiding-d3il/plans
+[2026-05-13 10:40:33] DA_Batch_v2 - ERROR - No candidates found. Exiting.

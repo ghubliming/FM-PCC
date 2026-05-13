@@ -1,0 +1,77 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - FM v3 ODE-Selectable: Multi-Candidate Batch Analysis (v2)
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - Start time: 2026-05-13 13:18:47
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - Output directory: Data_Analysis/analysis_results/batch_v3_20260513_131847/20260513_131847_FM_V3_BATCH
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - 
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - [PHASE 1/5] AUTO-DISCOVERING CANDIDATES
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - === Candidates Discovered ===
+Total: 10
+
+  A: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds: [6, 7, 8, 9, 10]
+
+  B: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds: [6, 7, 8, 9, 10]
+
+  C: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Seeds: [6, 7, 8, 9, 10]
+
+  D: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Seeds: [6, 7, 8, 9, 10]
+
+  E: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  F: H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  G: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  H: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  I: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  J: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - [PHASE 3/5] BATCH LOADING DATA
+[2026-05-13 13:18:47] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 13:18:51] DA_Batch_v2 - INFO - 
+[2026-05-13 13:18:51] DA_Batch_v2 - INFO - [PHASE 4/5] BATCH AGGREGATION
+[2026-05-13 13:18:51] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 13:18:51] DA_Batch_v2 - INFO - 
+[2026-05-13 13:18:51] DA_Batch_v2 - INFO - [PHASE 5A/5] GENERATING COMPARISON PLOTS
+[2026-05-13 13:18:51] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - 
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - [PHASE 5B/5] GENERATING REPORTS
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - 
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - BATCH ANALYSIS COMPLETE
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - ======================================================================
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - End time: 2026-05-13 13:18:59
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - Results saved to: Data_Analysis/analysis_results/batch_v3_20260513_131847/20260513_131847_FM_V3_BATCH
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - 
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - Key outputs:
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO -   - Plots: Data_Analysis/analysis_results/batch_v3_20260513_131847/20260513_131847_FM_V3_BATCH/plots
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO -   - Summary: Data_Analysis/analysis_results/batch_v3_20260513_131847/20260513_131847_FM_V3_BATCH/candidates_summary.txt
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO -   - Rankings: Data_Analysis/analysis_results/batch_v3_20260513_131847/20260513_131847_FM_V3_BATCH/candidates_ranking.csv
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO -   - Logs: Data_Analysis/analysis_results/batch_v3_20260513_131847/20260513_131847_FM_V3_BATCH/logs
+[2026-05-13 13:18:59] DA_Batch_v2 - INFO - ======================================================================
+DA Batch Analysis v3 job completed successfully.
