@@ -55,6 +55,7 @@ class iMeanFlowEngine(nn.Module):
         
         self.model = iMFTrajectoryModel(
             state_dim=state_dim,
+            seq_len=seq_len,
             freq_dim=freq_dim,
             depth=depth,
             num_heads=num_heads,
