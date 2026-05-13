@@ -60,21 +60,47 @@ class BatchReporter:
         lines.append("")
         
         # Rankings
-        lines.append("RANKINGS BY ACCURACY (Goal + Constraint Success)")
+        lines.append("RANKINGS BY MAJOR VARIANT ACCURACY (DPCC average)")
         lines.append("-" * 70)
         
-        for rank, (letter, accuracy) in enumerate(self.ranked_candidates, 1):
+        # Sort by major accuracy if available
+        candidates_to_rank = []
+        for letter in self.candidate_stats:
             stats = self.candidate_stats[letter]
-            time_ms = stats.get('time_ms', np.nan)
+            acc = stats.get('major_accuracy', stats.get('accuracy', 0))
+            candidates_to_rank.append((letter, acc))
+        
+        candidates_to_rank.sort(key=lambda x: x[1], reverse=True)
+        
+        for rank, (letter, accuracy) in enumerate(candidates_to_rank, 1):
+            stats = self.candidate_stats[letter]
+            time_ms = stats.get('major_time_ms', stats.get('time_ms', np.nan))
             accuracy_std = stats.get('accuracy_std', np.nan)
             
             line = f"  {rank}. Candidate {letter}: {accuracy*100:.2f}%"
             if not np.isnan(accuracy_std):
                 line += f" (±{accuracy_std*100:.2f}%)"
             if not np.isnan(time_ms):
-                line += f", Time: {time_ms:.1f}ms"
+                line += f", Avg Time: {time_ms:.1f}ms"
             
             lines.append(line)
+            
+            # Add major variant breakdown
+            major_metrics = stats.get('major_metrics', {})
+            if major_metrics:
+                breakdown = "      Breakdown: " + ", ".join([f"{k}: {v*100:.1f}%" for k, v in major_metrics.items()])
+                lines.append(breakdown)
+        
+        lines.append("")
+        
+        # Auxiliary
+        lines.append("AUXILIARY VARIANT PERFORMANCE")
+        lines.append("-" * 70)
+        for letter in sorted(self.candidate_stats.keys()):
+            stats = self.candidate_stats[letter]
+            aux_acc = stats.get('auxiliary_accuracy', np.nan)
+            if not np.isnan(aux_acc):
+                lines.append(f"  Candidate {letter}: {aux_acc*100:.2f}% (Auxiliary Avg)")
         
         lines.append("")
         
@@ -82,18 +108,18 @@ class BatchReporter:
         lines.append("RECOMMENDATIONS")
         lines.append("-" * 70)
         
-        if self.ranked_candidates:
-            best_letter, best_accuracy = self.ranked_candidates[0]
-            lines.append(f"  Overall Best: Candidate {best_letter}")
-            lines.append(f"  Accuracy: {best_accuracy*100:.2f}%")
+        if candidates_to_rank:
+            best_letter, best_accuracy = candidates_to_rank[0]
+            lines.append(f"  Overall Best (Major): Candidate {best_letter}")
+            lines.append(f"  Major Accuracy: {best_accuracy*100:.2f}%")
             
-            # Find fastest
-            fastest = min(
+            # Find fastest major
+            fastest_major = min(
                 self.candidate_stats.items(),
-                key=lambda x: x[1].get('time_ms', float('inf'))
+                key=lambda x: x[1].get('major_time_ms', float('inf'))
             )
-            if fastest[1].get('time_ms', None):
-                lines.append(f"  Fastest: Candidate {fastest[0]} ({fastest[1]['time_ms']:.1f}ms)")
+            if fastest_major[1].get('major_time_ms', None):
+                lines.append(f"  Fastest (Major): Candidate {fastest_major[0]} ({fastest_major[1]['major_time_ms']:.1f}ms)")
         
         lines.append("")
         lines.append("=" * 70)

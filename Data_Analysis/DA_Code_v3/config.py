@@ -27,6 +27,14 @@ DEFAULT_PROJECTION_VARIANTS = [
     'dpcc-c-tightened-dt4p0',
 ]
 
+MAJOR_VARIANTS = [
+    'dpcc-r', 'dpcc-r-tightened',
+    'dpcc-c', 'dpcc-c-tightened',
+    'dpcc-t', 'dpcc-t-tightened',
+]
+
+AUXILIARY_VARIANTS = [v for v in DEFAULT_PROJECTION_VARIANTS if v not in MAJOR_VARIANTS]
+
 DEFAULT_CONSTRAINT_TYPES = [
     'halfspace',
     'obstacles',

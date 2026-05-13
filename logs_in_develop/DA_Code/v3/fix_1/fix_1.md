@@ -48,5 +48,16 @@ The `BatchReporter` has been expanded to output two separate multi-dimensional f
 - **Accurate Granularity**: Candidates can now be objectively compared across specific variables (such as constrained vs. tightened configurations on specific hard obstacle layouts) rather than relying exclusively on vague aggregate scores.
 - **Improved UX & Exporting**: Plot X-axis titles are cleaner (just letters), and the multi-dimensional dataset is exported both raw and pre-aggregated, bypassing the need for manual aggregation in Excel.
 
-## 4. iMeanFlow Training Hotfix
-Resolved a `TypeError` in the iMeanFlow training and evaluation scripts (`train_flow_matching_v3_imeanflow.py` and `eval_flow_matching_v3_imeanflow.py`). The scripts were incorrectly passing `use_jvp=False` to the `TimeConditionedDualVelocity` model constructor, while the class definition expected `include_jvp`. This has been corrected to ensure training can proceed.
+## 5. Prioritized Analysis: Major vs. Auxiliary Metrics
+The analysis pipeline has been refactored to prioritize core research results over parameter studies and baseline variations.
+
+**Classification:**
+- **Major Variants**: Includes the 3 core DPCC variants (`dpcc-r`, `dpcc-c`, `dpcc-t`) and their respective `tightened` versions. These represent the primary focus of the performance analysis.
+- **Auxiliary Variants**: All other variants (e.g., `diffuser`, `gradient`, `post_processing`, `model_free`, and `dt` sensitivity studies).
+
+**Key Improvements:**
+- **Refined Aggregation**: Candidate-level rankings and scores are now calculated specifically from the **Major Variants**, preventing noisy auxiliary baselines from skewing the high-level comparison.
+- **Separated Visualization**: The multidimensional grouped bar charts are now generated in two distinct sets:
+    - `05_multi_comp_..._MAJOR.png`: Focuses exclusively on comparing core DPCC methodologies.
+    - `05_multi_comp_..._AUX.png`: Captures auxiliary and baseline performance for comprehensive reporting.
+- **Enhanced Summary Report**: The `candidates_summary.txt` now features a "Major Variant Accuracy" ranking and includes a detailed per-variant breakdown for each candidate, showing individual success rates for `dpcc-r`, `dpcc-c`, etc., side-by-side.

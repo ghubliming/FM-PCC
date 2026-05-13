@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Tuple, List
 from aggregator import DataAggregator
+from config import MAJOR_VARIANTS, AUXILIARY_VARIANTS
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +88,9 @@ class BatchAggregator:
         """
         stats = {
             'letter': letter,
-            'raw_aggregator': aggregator
+            'raw_aggregator': aggregator,
+            'major_metrics': {},
+            'auxiliary_metrics': {}
         }
         
         try:
@@ -95,34 +98,63 @@ class BatchAggregator:
             variant_agg = aggregator.aggregated_by_variant
             
             if variant_agg is not None and not variant_agg.empty:
-                # Calculate global metrics (average across all variants)
+                # Calculate metrics for major variants
+                major_rows = variant_agg[variant_agg['variant'].isin(MAJOR_VARIANTS)]
+                aux_rows = variant_agg[variant_agg['variant'].isin(AUXILIARY_VARIANTS)]
+                
                 accuracy_metric = 'n_success_and_constraints'
                 time_metric = 'avg_time'
                 
-                # Find rows for our metrics
-                accuracy_rows = variant_agg[variant_agg['metric'] == accuracy_metric]
-                if accuracy_rows.empty:
-                    # Fallback to pure goal success if constraints metric is missing
-                    accuracy_rows = variant_agg[variant_agg['metric'] == 'n_success']
+                # Major Statistics
+                if not major_rows.empty:
+                    m_acc = major_rows[major_rows['metric'] == accuracy_metric]
+                    if m_acc.empty:
+                        m_acc = major_rows[major_rows['metric'] == 'n_success']
                     
-                time_rows = variant_agg[variant_agg['metric'] == time_metric]
-                
-                if not accuracy_rows.empty:
-                    # Average accuracy across variants
-                    accuracy = accuracy_rows['mean'].mean()
-                    accuracy_std = accuracy_rows['std'].mean()
-                    stats['accuracy'] = accuracy
-                    stats['accuracy_std'] = accuracy_std
-                
-                if not time_rows.empty:
-                    # Average time across variants
-                    time_ms = time_rows['mean'].mean()
-                    time_std = time_rows['std'].mean()
-                    stats['time_ms'] = time_ms
-                    stats['time_std'] = time_std
+                    if not m_acc.empty:
+                        stats['accuracy'] = m_acc['mean'].mean()
+                        stats['accuracy_std'] = m_acc['std'].mean()
+                        stats['major_accuracy'] = stats['accuracy']
+                    
+                    m_time = major_rows[major_rows['metric'] == time_metric]
+                    if not m_time.empty:
+                        stats['time_ms'] = m_time['mean'].mean()
+                        stats['time_std'] = m_time['std'].mean()
+                        stats['major_time_ms'] = stats['time_ms']
+
+                # Auxiliary Statistics
+                if not aux_rows.empty:
+                    a_acc = aux_rows[aux_rows['metric'] == accuracy_metric]
+                    if a_acc.empty:
+                        a_acc = aux_rows[aux_rows['metric'] == 'n_success']
+                    
+                    if not a_acc.empty:
+                        stats['auxiliary_accuracy'] = a_acc['mean'].mean()
+                    
+                    a_time = aux_rows[aux_rows['metric'] == time_metric]
+                    if not a_time.empty:
+                        stats['auxiliary_time_ms'] = a_time['mean'].mean()
+
+                # Extract each major variant individually for the summary table
+                for v in MAJOR_VARIANTS:
+                    v_data = variant_agg[variant_agg['variant'] == v]
+                    if not v_data.empty:
+                        v_acc = v_data[v_data['metric'] == accuracy_metric]
+                        if v_acc.empty:
+                            v_acc = v_data[v_data['metric'] == 'n_success']
+                        
+                        if not v_acc.empty:
+                            stats['major_metrics'][v] = v_acc['mean'].iloc[0]
             
-            # Robustness: overall std across seeds
-            stats['robustness'] = variant_agg['std'].mean() if variant_agg is not None and not variant_agg.empty else 0
+            # Robustness: overall std across seeds for major variants
+            if variant_agg is not None and not variant_agg.empty:
+                major_rows = variant_agg[variant_agg['variant'].isin(MAJOR_VARIANTS)]
+                if not major_rows.empty:
+                    stats['robustness'] = major_rows['std'].mean()
+                else:
+                    stats['robustness'] = variant_agg['std'].mean()
+            else:
+                stats['robustness'] = 0
             
         except Exception as e:
             logger.warning(f"Could not extract full stats for {letter}: {str(e)}")
