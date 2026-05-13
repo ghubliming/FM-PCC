@@ -127,7 +127,7 @@ class iMFDiffusion(nn.Module):
         """
         # Apply conditioning if provided
         if cond is not None:
-            x = apply_conditioning(x, conditions=cond)
+            x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
         
         # iMF forward: get (u, v) predictions
         u_pred, v_pred = self.model.forward_train(x, t, cond)
