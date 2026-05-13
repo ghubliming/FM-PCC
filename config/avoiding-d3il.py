@@ -818,6 +818,7 @@ base = {
         'warmup_epochs': 30,                # Epochs of u-only training
         'transition_epochs': 30,            # Epochs to blend from u to u+v
         'loss_type': 'l2',
+        'predict_epsilon': True,
         
         ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
