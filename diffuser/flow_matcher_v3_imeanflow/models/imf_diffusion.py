@@ -1,0 +1,1 @@
+from flow_matcher_v3_imeanflow.models.imf_diffusion import iMFDiffusion
