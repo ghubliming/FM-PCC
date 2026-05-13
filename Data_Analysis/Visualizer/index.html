@@ -2,169 +2,159 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FM-PCC Scientific Matrix Visualizer</title>
+    <title>FM-PCC Naive Matrix Viewer</title>
     <style>
-        :root { --bg: #fff; --text: #000; --border: #000; --muted: #666; }
-        body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--text); margin: 0; padding: 20px; font-size: 13px; }
+        body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 20px; line-height: 1.4; }
+        h1 { border-bottom: 1px solid #000; padding-bottom: 5px; font-size: 20px; }
         
-        /* Layout */
-        header { border-bottom: 3px double var(--border); padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; height: calc(100vh - 120px); }
+        .section { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
+        .section-title { font-weight: bold; margin-bottom: 10px; text-transform: uppercase; font-size: 14px; background: #eee; padding: 5px; }
         
-        /* Sidebar Controls */
-        .sidebar { border-right: 1px solid #ccc; padding-right: 20px; display: flex; flex-direction: column; gap: 20px; }
-        .control-block { display: flex; flex-direction: column; gap: 8px; }
-        label { font-weight: bold; text-transform: uppercase; font-size: 11px; color: var(--muted); }
-        input, select { background: #fff; border: 1px solid var(--border); padding: 8px; font-family: inherit; width: 100%; box-sizing: border-box; }
-        button { background: #000; color: #fff; border: none; padding: 10px; cursor: pointer; font-family: inherit; text-transform: uppercase; }
-        button:hover { background: #333; }
+        input[type="text"] { width: 80%; padding: 8px; font-size: 14px; border: 1px solid #000; }
+        button { padding: 8px 15px; background: #000; color: #fff; border: none; cursor: pointer; font-size: 14px; }
+        
+        table { border-collapse: collapse; width: 100%; font-size: 12px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #fafafa; }
 
-        /* Main Display */
-        .display { overflow-y: auto; padding-right: 10px; }
-        .metric-scorecard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 30px; }
-        .metric-card { border: 1px solid var(--border); padding: 10px; background: #f9f9f9; }
-        .metric-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
-        .metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+        .controls { display: flex; gap: 20px; margin-top: 10px; flex-wrap: wrap; }
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        select { padding: 5px; border: 1px solid #000; }
 
-        .plot-section { border: 2px solid var(--border); padding: 15px; margin-bottom: 20px; background: #fff; }
-        .plot-section h2 { margin: 0 0 15px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        img { max-width: 100%; height: auto; border: 1px solid #eee; }
-
-        .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #000; color: #fff; padding: 5px 20px; font-size: 10px; display: flex; justify-content: space-between; }
+        .plot-container { margin-top: 20px; text-align: center; }
+        img { max-width: 90%; border: 1px solid #ccc; background: #fff; }
+        
+        .error { color: red; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<header>
-    <div>
-        <h1 style="margin:0; font-size: 24px;">MATRIX_VISUALIZER_V3</h1>
-        <span style="color:var(--muted)">SCIENTIFIC_EVALUATION_BACKEND</span>
-    </div>
-    <div style="text-align: right">
-        SYSTEM_READY<br>
-        [ 2026.05.13 ]
-    </div>
-</header>
+<h1>FM-PCC NAIVE_DATA_VIEWER</h1>
 
-<div class="grid">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="control-block">
-            <label>1. Analysis Folder Path</label>
-            <input type="text" id="batchPath" placeholder="../analysis_results/BATCH_NAME" value="../analysis_results/batch_v3_20260513_131312/20260513_131313_FM_V3_BATCH">
-            <button onclick="loadData()">Load Experiment</button>
-        </div>
+<!-- 1. DATA SOURCE -->
+<div class="section">
+    <div class="section-title">1. Load Data Source</div>
+    <p>Paste the path to your <strong>aggregated_stats.csv</strong> file:</p>
+    <input type="text" id="csvPath" placeholder="../analysis_results/batch_v3_.../aggregated_stats.csv" value="../analysis_results/batch_v3_20260513_131312/20260513_131313_FM_V3_BATCH/aggregated_stats.csv">
+    <button onclick="loadCSV()">Load and View</button>
+    <div id="errorMsg" class="error"></div>
+</div>
 
-        <div class="control-block">
-            <label>2. Perspective</label>
-            <select id="viewMode" onchange="updateUI()">
-                <option value="MAJOR">MAJOR_DPCC_MODELS</option>
-                <option value="AUX">AUXILIARY_BASELINES</option>
-            </select>
-        </div>
-
-        <div class="control-block">
-            <label>3. Environment (Test)</label>
-            <select id="envSelect" onchange="updatePlots()">
-                <option value="both-hard">BOTH_HARD</option>
-                <option value="top-right-hard">TOP_RIGHT_HARD</option>
-                <option value="top-left-hard">TOP_LEFT_HARD</option>
-            </select>
-        </div>
-
-        <div class="control-block">
-            <label>4. Candidate (Specific)</label>
-            <select id="candSelect" onchange="updatePlots()">
-                <option value="Candidate_A">CANDIDATE_A</option>
-                <option value="Candidate_B">CANDIDATE_B</option>
-            </select>
-        </div>
-
-        <div class="control-block">
-            <label>5. Metric Type</label>
-            <select id="metricSelect" onchange="updatePlots()">
-                <option value="n_success_and_constraints">SUCCESS_RATE_COMBO</option>
-                <option value="avg_time">COMPUTATION_TIME</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- MAIN DISPLAY -->
-    <div class="display">
-        <!-- SCORECARD -->
-        <div class="metric-scorecard" id="scorecard">
-            <div class="metric-card"><div class="metric-label">Goal Success</div><div class="metric-value" id="val_success">--</div></div>
-            <div class="metric-card"><div class="metric-label">Constraints</div><div class="metric-value" id="val_constraints">--</div></div>
-            <div class="metric-card"><div class="metric-label">Combined SR</div><div class="metric-value" id="val_total">--</div></div>
-            <div class="metric-card"><div class="metric-label">Avg Time (ms)</div><div class="metric-value" id="val_time">--</div></div>
-            <div class="metric-card"><div class="metric-label">Avg Steps</div><div class="metric-value" id="val_steps">--</div></div>
-            <div class="metric-card"><div class="metric-label">Avg Violations</div><div class="metric-value" id="val_violations">--</div></div>
-            <div class="metric-card"><div class="metric-label">Total Violation</div><div class="metric-value" id="val_total_v">--</div></div>
-            <div class="metric-card"><div class="metric-label">Status</div><div class="metric-value" style="color:green">VALID</div></div>
-        </div>
-
-        <!-- PLOTS -->
-        <div class="plot-section">
-            <h2 id="plotTitle_1">CROSS_CANDIDATE_COMPARISON</h2>
-            <img id="plot_1" src="" alt="SELECT_ENVIRONMENT_TO_LOAD">
-        </div>
-
-        <div class="plot-section">
-            <h2 id="plotTitle_2">CANDIDATE_ROBUSTNESS_PROFILE</h2>
-            <img id="plot_2" src="" alt="SELECT_CANDIDATE_TO_LOAD">
-        </div>
+<!-- 2. DATA TABLE -->
+<div class="section" id="dataSection" style="display:none">
+    <div class="section-title">2. Aggregated Statistics (Raw CSV)</div>
+    <div id="tableContainer" style="max-height: 300px; overflow-y: auto;">
+        <!-- CSV Table goes here -->
     </div>
 </div>
 
-<div class="status-bar">
-    <div>CONNECTED: LOCALHOST</div>
-    <div id="logStatus">IDLE - WAITING FOR FOLDER PATH</div>
-    <div>FM-PCC_V3</div>
+<!-- 3. PLOT VIEW -->
+<div class="section" id="plotSection" style="display:none">
+    <div class="section-title">3. Visual Analysis (Hierarchical Plots)</div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>View Mode</label>
+            <select id="viewMode" onchange="updatePlot()">
+                <option value="MAJOR">Major Variants (DPCC)</option>
+                <option value="AUX">Auxiliary Variants</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Environment</label>
+            <select id="envSelect" onchange="updatePlot()">
+                <option value="both-hard">Both Hard</option>
+                <option value="top-right-hard">Top Right Hard</option>
+                <option value="top-left-hard">Top Left Hard</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Candidate</label>
+            <select id="candSelect" onchange="updatePlot()">
+                <option value="Candidate_A">Candidate A</option>
+                <option value="Candidate_B">Candidate B</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Metric</label>
+            <select id="metricSelect" onchange="updatePlot()">
+                <option value="n_success_and_constraints">Success Rate</option>
+                <option value="avg_time">Comp Time</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="plot-container">
+        <p><strong id="plotLabel">Loading Plot...</strong></p>
+        <img id="mainPlot" src="" alt="Plot not found">
+    </div>
 </div>
 
 <script>
-    function loadData() {
-        const path = document.getElementById('batchPath').value;
-        document.getElementById('logStatus').innerText = `MOUNTED: ${path}`;
-        updatePlots();
+    async function loadCSV() {
+        const csvPath = document.getElementById('csvPath').value;
+        const errorMsg = document.getElementById('errorMsg');
+        errorMsg.innerText = "";
+        
+        try {
+            const response = await fetch(csvPath);
+            if (!response.ok) throw new Error("Could not load CSV file. Ensure the path is correct and the server is running from the root.");
+            
+            const text = await response.text();
+            renderTable(text);
+            document.getElementById('dataSection').style.display = 'block';
+            document.getElementById('plotSection').style.display = 'block';
+            updatePlot();
+        } catch (e) {
+            errorMsg.innerText = e.message;
+            document.getElementById('dataSection').style.display = 'none';
+            document.getElementById('plotSection').style.display = 'none';
+        }
     }
 
-    function updateUI() {
-        updatePlots();
+    function renderTable(csvText) {
+        const lines = csvText.split('\n');
+        let html = '<table><thead><tr>';
+        
+        const headers = lines[0].split(',');
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            html += '<tr>';
+            const cells = lines[i].split(',');
+            cells.forEach(c => html += `<td>${c}</td>`);
+            html += '</tr>';
+        }
+        
+        html += '</tbody></table>';
+        document.getElementById('tableContainer').innerHTML = html;
     }
 
-    function updatePlots() {
-        const root = document.getElementById('batchPath').value;
+    function updatePlot() {
+        const csvPath = document.getElementById('csvPath').value;
+        // Derived path: folder/aggregated_stats.csv -> folder/hierarchical_analysis/
+        const folderPath = csvPath.substring(0, csvPath.lastIndexOf('/'));
+        const hierarchicalBase = `${folderPath}/hierarchical_analysis`;
+        
         const mode = document.getElementById('viewMode').value;
-        const env = document.getElementById('envSelect').value.replace(' ', '_');
+        const env = document.getElementById('envSelect').value;
         const cand = document.getElementById('candSelect').value;
         const metric = document.getElementById('metricSelect').value;
 
-        const hierarchicalBase = `${root}/hierarchical_analysis`;
-
-        // 1. Update Cross-Candidate Plot (by environment)
-        const src1 = `${hierarchicalBase}/by_test_env/${env}/${mode}_comp_${metric}.png`;
-        document.getElementById('plot_1').src = src1;
-        document.getElementById('plotTitle_1').innerText = `[ ENV_VIEW ] ${env.toUpperCase()} | ${mode} | ${metric.toUpperCase()}`;
-
-        // 2. Update Candidate Robustness Plot
-        const src2 = `${hierarchicalBase}/by_candidate/${cand}/${mode}_cross_env_${metric}.png`;
-        document.getElementById('plot_2').src = src2;
-        document.getElementById('plotTitle_2').innerText = `[ CAND_VIEW ] ${cand.toUpperCase()} | ${mode} | ${metric.toUpperCase()}`;
-
-        // Simulated Scorecard (Ideally this would fetch from aggregated_stats.csv)
-        // For now, we keep it as a static template since we are in a pure static HTML
-        document.getElementById('val_success').innerText = "1.000";
-        document.getElementById('val_constraints').innerText = "0.500";
-        document.getElementById('val_total').innerText = "0.500";
-        document.getElementById('val_time').innerText = "0.093";
-        document.getElementById('val_steps').innerText = "74.00";
-        document.getElementById('val_violations').innerText = "5.50";
-        document.getElementById('val_total_v').innerText = "1.452";
+        // Current UI defaults to showing the "By Environment" plot as the main one
+        const src = `${hierarchicalBase}/by_test_env/${env}/${mode}_comp_${metric}.png`;
+        
+        document.getElementById('mainPlot').src = src;
+        document.getElementById('plotLabel').innerText = `PLOT: ${env} | ${mode} | ${metric}`;
     }
 
-    // Initial load
-    window.onload = loadData;
+    // Initial check
+    if (document.getElementById('csvPath').value) {
+        // We don't auto-load because it might trigger error immediately
+    }
 </script>
 
 </body>
