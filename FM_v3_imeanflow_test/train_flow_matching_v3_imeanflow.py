@@ -123,6 +123,7 @@ if __name__ == '__main__':
             parser = Parser(exe_name='train')
             args = parser.parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
             device = getattr(args, 'device', 'cuda' if torch.cuda.is_available() else 'cpu')
+            predict_epsilon = getattr(args, 'predict_epsilon', True)
 
             # Build dataset, model, diffusion, trainer using the standard FM-PCC pattern.
             dataset_config = utils.Config(
@@ -168,7 +169,7 @@ if __name__ == '__main__':
                 goal_dim=goal_dim,
                 loss_type=args.loss_type,
                 clip_denoised=args.clip_denoised,
-                predict_epsilon=args.predict_epsilon,
+                predict_epsilon=predict_epsilon,
                 action_weight=args.action_weight,
                 loss_discount=args.discount,
                 returns_condition=args.include_returns,
