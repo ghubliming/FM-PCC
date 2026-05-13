@@ -93,6 +93,12 @@ The trajectory model wrapper was updated to match the real `Flow_matcher_U_Net_v
 
 This removes the next API-layer failure in the iMF stack and keeps the wrapper consistent with both the engine and diffusion adapter.
 
+### 7. Engine now forwards `seq_len` into the trajectory model
+
+`iMeanFlowEngine` now passes its own `seq_len` argument into `iMFTrajectoryModel`.
+
+This was required because the trajectory model constructor makes `seq_len` mandatory, and the wrapper had been instantiating it without that value. The engine/model pair now agrees on the same shape contract.
+
 ---
 
 ## Why This Fix Makes Sense
@@ -119,6 +125,7 @@ That means the failure is handled at the right layer:
 - The iMF train loop now proceeds through seed parsing, config instantiation, and runtime device setup.
 - The iMF config loader can now import the model and diffusion classes through the expected `diffuser.*` namespace.
 - The iMF wrapper API now matches the real U-Net and the diffusion adapter expectations.
+- The iMF engine now forwards `seq_len` into the trajectory model, satisfying the wrapper's shape contract.
 - Remaining tool warnings about `wandb`, `torch`, and `numpy` are environment import-resolution warnings, not parser errors.
 
 ---
