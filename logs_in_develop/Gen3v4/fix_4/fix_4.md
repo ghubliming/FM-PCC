@@ -48,6 +48,8 @@ Root cause:
 - Replaces it with the remaining FM-PCC config arguments only
 - Uses a local `Parser(utils.Parser)` subclass with `dataset='avoiding-d3il'` and `config='config.avoiding-d3il'`
 - Calls `Parser(exe_name='train')` and `parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)`
+- Builds dataset, model, diffusion, and trainer explicitly via `utils.Config(...)`
+- Replaces the invalid `args.trainer` access with the standard FM-PCC instantiation flow
 - Restores `sys.argv` after the loop
 
 This matches the established FM-PCC pattern and prevents top-level CLI options from leaking into `argparse`.

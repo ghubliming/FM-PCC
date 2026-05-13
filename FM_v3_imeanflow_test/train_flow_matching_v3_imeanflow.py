@@ -121,10 +121,80 @@ if __name__ == '__main__':
             parser = Parser(exe_name='train')
             args = parser.parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
 
-            # Instantiate model, diffusion, trainer
-            model = args.model
-            diffusion = args.diffusion
-            trainer = args.trainer
+            # Build dataset, model, diffusion, trainer using the standard FM-PCC pattern.
+            dataset_config = utils.Config(
+                args.loader,
+                savepath=(args.savepath, 'dataset_config.pkl'),
+                env=args.dataset,
+                horizon=args.horizon,
+                normalizer=args.normalizer,
+                preprocess_fns=args.preprocess_fns,
+                use_padding=args.use_padding,
+                max_path_length=args.max_path_length,
+                include_returns=args.include_returns,
+                returns_scale=args.returns_scale,
+                discount=args.discount,
+            )
+            dataset = dataset_config()
+            observation_dim = dataset.observation_dim
+            action_dim = dataset.action_dim
+            goal_dim = getattr(dataset, 'goal_dim', 0)
+            transition_dim = observation_dim + action_dim
+
+            model_config = utils.Config(
+                args.model,
+                savepath=(args.savepath, 'model_config.pkl'),
+                state_dim=transition_dim,
+                seq_len=args.horizon,
+                freq_dim=args.freq_dim,
+                depth=args.depth,
+                num_heads=args.num_heads,
+                mlp_dim=args.mlp_dim,
+                time_dim=args.time_dim,
+                dropout_rate=args.dropout_rate,
+                device=args.device,
+            )
+
+            diffusion_config = utils.Config(
+                args.diffusion,
+                savepath=(args.savepath, 'diffusion_config.pkl'),
+                model=model_config,
+                horizon=args.horizon,
+                observation_dim=observation_dim,
+                action_dim=action_dim,
+                goal_dim=goal_dim,
+                loss_type=args.loss_type,
+                clip_denoised=args.clip_denoised,
+                predict_epsilon=args.predict_epsilon,
+                action_weight=args.action_weight,
+                loss_discount=args.discount,
+                returns_condition=args.include_returns,
+                condition_guidance_w=args.condition_guidance_w,
+                u_loss_weight=args.u_loss_weight,
+                v_loss_weight=args.v_loss_weight,
+                loss_schedule=args.loss_schedule,
+                warmup_epochs=args.warmup_epochs,
+                transition_epochs=args.transition_epochs,
+                ode_inference_steps_v3=args.ode_inference_steps_v3,
+            )
+
+            trainer_config = utils.Config(
+                utils.Trainer,
+                savepath=(args.savepath, 'trainer_config.pkl'),
+                train_test_split=getattr(args, 'train_test_split', 0.9),
+                ema_decay=args.ema_decay,
+                train_batch_size=args.batch_size,
+                train_lr=args.learning_rate,
+                gradient_accumulate_every=getattr(args, 'gradient_accumulate_every', 1),
+                n_train_steps=args.n_train_steps,
+                n_steps_per_epoch=getattr(args, 'n_steps_per_epoch', 1000),
+                results_folder=args.savepath,
+                train_device=args.device,
+            )
+
+            model = model_config()
+            diffusion = diffusion_config(model)
+            trainer = trainer_config(diffusion, dataset)
 
             # Setup W&B
             run = None
