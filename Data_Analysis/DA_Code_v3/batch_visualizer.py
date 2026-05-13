@@ -110,7 +110,7 @@ class BatchVisualizer:
                 color=self._get_candidate_color(letter),
                 edgecolors='black',
                 linewidth=2,
-                label=f'Candidate {letter}'
+                label=letter
             )
             
             # Annotate with letter
@@ -162,7 +162,7 @@ class BatchVisualizer:
             stats = self.candidate_stats[letter]
             if 'accuracy' in stats and 'error' not in stats:
                 data.append(stats['accuracy'] * 100)
-                candidates_list.append(f"Candidate {letter}")
+                candidates_list.append(letter)
         
         if not data:
             logger.warning("No valid data for success rate plot")
@@ -217,7 +217,7 @@ class BatchVisualizer:
             stats = self.candidate_stats[letter]
             if 'time_ms' in stats and 'error' not in stats:
                 data.append(stats['time_ms'])
-                candidates_list.append(f"Candidate {letter}")
+                candidates_list.append(letter)
         
         if not data:
             logger.warning("No valid data for time comparison plot")
@@ -287,7 +287,7 @@ class BatchVisualizer:
                     
                     if seeds_accuracy:
                         box_data.append(seeds_accuracy)
-                        labels.append(f"Candidate {letter}")
+                        labels.append(letter)
                         colors_list.append(self._get_candidate_color(letter))
             except Exception as e:
                 logger.warning(f"Could not extract robustness for {letter}: {str(e)}")
@@ -361,7 +361,7 @@ class BatchVisualizer:
         ax.set_xticks(range(len(constraint_types)))
         ax.set_yticks(range(len(candidates_sorted)))
         ax.set_xticklabels(constraint_types)
-        ax.set_yticklabels([f"Candidate {l}" for l in candidates_sorted])
+        ax.set_yticklabels(candidates_sorted)
         
         # Add colorbar
         cbar = plt.colorbar(im, ax=ax)
@@ -450,7 +450,7 @@ class BatchVisualizer:
             ax.set_ylabel(metric, fontsize=12, fontweight='bold')
             ax.set_title(f'Cross-Candidate Comparison - {metric} (Test Type: {hs})', fontsize=14, fontweight='bold')
             ax.set_xticks(x)
-            ax.set_xticklabels([f'Candidate {c}' for c in pivot_mean.index])
+            ax.set_xticklabels(pivot_mean.index)
             ax.legend(title='Variant', bbox_to_anchor=(1.05, 1), loc='upper left')
             ax.grid(True, alpha=0.3, axis='y')
             

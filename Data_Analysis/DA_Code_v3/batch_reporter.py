@@ -187,6 +187,35 @@ class BatchReporter:
         except Exception as e:
             logger.error(f"Failed to save multidimensional CSV: {e}")
 
+    def save_candidates_multidimensional_aggregated_csv(self, output_path):
+        """
+        Save the multidimensional data aggregated across seeds (Candidate x Variant x Constraint x Halfspace)
+        to a CSV for easy import into Excel or other BI tools.
+        """
+        if not self.aggregator:
+            logger.warning("No aggregator provided. Cannot save aggregated multidimensional CSV.")
+            return
+            
+        try:
+            df = self.aggregator.get_full_detailed_dataframe()
+            if df is not None and not df.empty:
+                # Group by everything except Seed and calculate Mean, Std, Count
+                grouped = df.groupby(['Candidate', 'variant', 'constraint_type', 'halfspace_variant', 'metric'])['value'].agg(['mean', 'std', 'count']).reset_index()
+                
+                # Add folder info
+                grouped['Folder_Name'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                
+                # Reorder columns
+                cols = ['Candidate', 'Folder_Name', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
+                grouped = grouped[cols]
+                
+                grouped.to_csv(output_path, index=False)
+                logger.info(f"Saved multidimensional aggregated CSV ({len(grouped)} rows): {output_path}")
+            else:
+                logger.warning("Multidimensional detailed dataframe is empty.")
+        except Exception as e:
+            logger.error(f"Failed to save multidimensional aggregated CSV: {e}")
+
     def save_all_reports(self, output_dir):
         """
         Generate all reporting outputs.
@@ -210,9 +239,14 @@ class BatchReporter:
             os.path.join(output_dir, 'candidates_detailed.csv')
         )
         
-        # Multidimensional CSV
+        # Multidimensional CSV (raw seeds)
         self.save_candidates_multidimensional_csv(
-            os.path.join(output_dir, 'candidates_multidimensional.csv')
+            os.path.join(output_dir, 'candidates_multidimensional_raw.csv')
+        )
+        
+        # Multidimensional CSV (aggregated over seeds)
+        self.save_candidates_multidimensional_aggregated_csv(
+            os.path.join(output_dir, 'candidates_multidimensional_aggregated.csv')
         )
         
         logger.info(f"All reports saved to: {output_dir}")
