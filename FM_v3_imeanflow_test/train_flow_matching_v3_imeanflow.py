@@ -18,6 +18,8 @@ import sys
 import argparse
 import pickle
 
+import torch
+
 # Standard FM-PCC imports
 import diffuser.utils as utils
 
@@ -120,6 +122,7 @@ if __name__ == '__main__':
             # Uses config/avoiding-d3il.py:flow_matching_v3_imeanflow
             parser = Parser(exe_name='train')
             args = parser.parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
+            device = getattr(args, 'device', 'cuda' if torch.cuda.is_available() else 'cpu')
 
             # Build dataset, model, diffusion, trainer using the standard FM-PCC pattern.
             dataset_config = utils.Config(
@@ -152,7 +155,7 @@ if __name__ == '__main__':
                 mlp_dim=args.mlp_dim,
                 time_dim=args.time_dim,
                 dropout_rate=args.dropout_rate,
-                device=args.device,
+                device=device,
             )
 
             diffusion_config = utils.Config(
@@ -189,7 +192,7 @@ if __name__ == '__main__':
                 n_train_steps=args.n_train_steps,
                 n_steps_per_epoch=getattr(args, 'n_steps_per_epoch', 1000),
                 results_folder=args.savepath,
-                train_device=args.device,
+                train_device=device,
             )
 
             model = model_config()

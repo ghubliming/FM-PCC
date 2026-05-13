@@ -60,6 +60,16 @@ This matches the established FM-PCC pattern and prevents top-level CLI options f
 
 It also uses the same local parser subclass and loads the `plan` config block for evaluation.
 
+### 4. Runtime device fallback added
+
+`FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py` now derives a safe runtime `device` locally instead of assuming the config provides one.
+
+- Uses `args.device` when available
+- Falls back to `'cuda'` if CUDA is available
+- Otherwise falls back to `'cpu'`
+
+This prevents the training loop from crashing on `args.device` and keeps model/trainer construction consistent with the runtime environment.
+
 ---
 
 ## Why This Fix Makes Sense
@@ -83,6 +93,7 @@ That means the failure is handled at the right layer:
 
 - The parser crash path is removed.
 - The iMF train loop now proceeds through seed parsing and config instantiation.
+- The iMF train loop now proceeds through seed parsing, config instantiation, and runtime device setup.
 - Remaining tool warnings about `wandb`, `torch`, and `numpy` are environment import-resolution warnings, not parser errors.
 
 ---
