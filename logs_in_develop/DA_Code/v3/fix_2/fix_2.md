@@ -1,29 +1,38 @@
-# FIX LOG: DA_v3_PATH_CONCISENESS_AND_MANIFEST_DISCOVERY
+# FIX LOG: DA_v3_PATH_STABILIZATION_AND_UI_ALIGNMENT
 
 ## 1. Problem Statement
-The Data Analysis (DA) v3 pipeline exhibited two critical UX flaws:
-1.  **Path Nesting Redundancy**: When a custom `--output-path` was specified, the script created a redundant timestamped subfolder inside it, leading to confusing paths like `.../batch_name/TIMESTAMP_FM_V3_BATCH/`.
-2.  **Discovery Failure**: The browser-based Scientific Explorer (`index.html`) was unable to list available experiments due to browser security restrictions, forcing users to manually type long, complex CSV paths.
+The Data Analysis (DA) v3 pipeline and Matrix Explorer had several operational and UI issues:
+1.  **Path Clutter**: Redundant timestamped folders were being created on remote environments.
+2.  **Discovery Failure**: The "QUICK_LIST" was empty because the browser could not "list" directories or find the manifest due to server root restrictions.
+3.  **UI Layout**: Sidebar checkboxes were centered instead of left-aligned due to PyScript core CSS interference.
 
 ## 2. Solutions Implemented
 
-### A. Backend Path Flattening (`main_da_batch.py`)
-- **Logic Overhaul**: Modified the output directory logic to use the user-specified `--output-path` directly as the final destination.
-- **Conditional Timestamping**: Timestamped folders are now only generated if the user relies on the default `./fm_v3_batch_analysis_output` location.
-- **Result**: Concise, predictable results folders that match the user's research structure.
+### A. Slurm Script Cleanup (`eval_imf.sh`)
+- **Neutralized Rogue Folders**: Identified that `Slurm_Codes/sbatch/iMF/eval_imf.sh` was passing a legacy `--checkpoint-dir` flag.
+- **Action**: Removed the flag to prevent unintended `checkpoints/` directory creation on remote nodes.
 
-### B. Automated Manifest Generation (`main_da_batch.py`)
-- **Bridge Mechanism**: Integrated a manifest generator that scans the parent results directory after each batch run.
-- **`results_manifest.json`**: This file now acts as a central registry of all available experiment batches, enabling cross-process communication between the CLI and the Browser.
+### B. DA Code Reversion (`main_da_batch.py`)
+- **Architectural Cleanliness**: Per user request, the DA backend was reverted to its **original, minimal state** to avoid "bridge" logic or file copying.
+- **Status**: The DA code remains a pure analysis script without web-interface dependencies.
 
-### C. Explorer "QUICK_LIST" Integration (`index.html`)
-- **Manifest Loading**: The PyScript-powered visualizer now loads the `results_manifest.json` on startup.
-- **Auto-Populated Dropdown**: Users can now select experiments from a "QUICK_LIST" dropdown instead of typing paths.
-- **Dual-Mode Loading**: Preserved a "PATH" mode for manual overrides while prioritizing the automated "LIST" mode.
+### C. Robust "Zero-Manifest" Discovery (`index.html`)
+- **Direct HTML Parsing**: Since the user serves files via `python -m http.server`, the Visualizer now directly fetches `../analysis_results/`.
+- **Regex Extraction**: Implemented a PyScript regex logic (`re.findall`) to parse the server's HTML directory listing and extract `batch_v3_...` folder names.
+- **Outcome**: The QUICK_LIST now "just works" automatically without needing a manifest file, as long as the server is started from the repo root.
 
-## 3. Visual Verification
-- **Segmented Path Audit**: Implemented a color-coded path segmenting logic (split by `/`) in the Reference Map to provide immediate visual confirmation of absolute system paths.
-- **Export Success**: Verified the high-resolution `SAVE_PLOT_PNG` feature for documenting results.
+### D. UI Alignment Fixes (`index.html`)
+- **CSS Overrides**: Applied strict `!important` CSS resets to `.checkbox-item` to fight back against PyScript's global centering of inputs.
+- **Layout Consistency**: Switched to `align-items: flex-start` to handle long variant names (like `dpcc-c-tightened-...`) correctly.
+
+## 3. Deployment Instructions
+To use the Matrix Explorer correctly on a remote VM:
+1. Start the server from the **Repo Root**:
+   ```bash
+   cd FM-PCC/
+   python3 -m http.server 8000
+   ```
+2. Navigate to: `http://<IP>:8000/Data_Analysis/Visualizer/index.html`
 
 ## 4. Status
-**STABLE**. The scientific audit workflow is now concise, automated, and traceable.
+**RESOLVED**. The pipeline is clean, the folders are concise, and the UI is now production-ready and automated.
