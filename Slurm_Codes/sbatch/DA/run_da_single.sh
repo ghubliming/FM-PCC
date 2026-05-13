@@ -22,7 +22,8 @@ conda activate "$CONDA_ENV_NAME"
 # 3) Set Environment Variables
 export FMPCC="$REPO"
 export D3IL_ROOT="$FMPCC/d3il"
-export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
+export D3IL_ENV_ROOT="$D3IL_ROOT/environments/d3il"
+export PYTHONPATH="$FMPCC:$D3IL_ROOT:$D3IL_ENV_ROOT:$PYTHONPATH"
 
 # Headless plotting setup
 export MPLBACKEND="agg"
@@ -36,6 +37,6 @@ INPUT_PATH=${1:-"logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable"}
 
 python Data_Analysis/DA_Code/main_da.py \
     --input-path "$INPUT_PATH" \
-    --output-path "analysis_results/single_analysis_$(basename $INPUT_PATH)_$(date +%Y%m%d_%H%M%S)"
+    --output-path "Data_Analysis/analysis_results/single_analysis_$(basename $INPUT_PATH)_$(date +%Y%m%d_%H%M%S)"
 
 echo "DA Single Analysis job completed successfully."

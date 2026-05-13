@@ -22,7 +22,8 @@ conda activate "$CONDA_ENV_NAME"
 # 3) Set Environment Variables
 export FMPCC="$REPO"
 export D3IL_ROOT="$FMPCC/d3il"
-export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
+export D3IL_ENV_ROOT="$D3IL_ROOT/environments/d3il"
+export PYTHONPATH="$FMPCC:$D3IL_ROOT:$D3IL_ENV_ROOT:$PYTHONPATH"
 
 # Headless plotting setup
 export MPLBACKEND="agg"
@@ -34,6 +35,6 @@ cd "$REPO"
 
 python Data_Analysis/DA_Code/main_da_batch.py \
     --parent-path logs/avoiding-d3il/plans \
-    --output-path analysis_results/batch_analysis_$(date +%Y%m%d_%H%M%S)
+    --output-path Data_Analysis/analysis_results/batch_analysis_$(date +%Y%m%d_%H%M%S)
 
 echo "DA Batch Analysis job completed successfully."

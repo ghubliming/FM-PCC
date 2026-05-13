@@ -6,14 +6,16 @@ import numpy as np
 import logging
 from pathlib import Path
 from collections import defaultdict
+from config import METRICS
 
 logger = logging.getLogger(__name__)
 
 
 class DataLoader:
     """Load evaluation data from .npz files organized by seed/variant/constraint."""
-    
-    def __init__(self):
+
+    def __init__(self, verbose: bool = False):
+        self.verbose = verbose
         self.data = {}  # {seed: {variant: {constraint: {halfspace: metrics_dict}}}}
         self.files_found = 0
         self.files_loaded = 0
@@ -159,7 +161,10 @@ class DataLoader:
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     text = f.read()
-                return {'raw_log': text}
+                # Return raw_log plus numeric NaN placeholders for expected metrics
+                metrics_dict = {m: np.nan for m in METRICS}
+                metrics_dict['raw_log'] = text
+                return metrics_dict
             except Exception as e:
                 logger.error(f'Failed to read log file {file_path}: {str(e)}')
                 raise
