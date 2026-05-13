@@ -21,7 +21,11 @@ import torch
 
 # Standard FM-PCC imports
 import diffuser.utils as utils
-from diffuser.utils import Parser
+
+
+class Parser(utils.Parser):
+    dataset: str = 'avoiding-d3il'
+    config: str = 'config.avoiding-d3il'
 
 
 def evaluate_seed(seed, results_dir='evaluation_results'):
@@ -42,7 +46,7 @@ def evaluate_seed(seed, results_dir='evaluation_results'):
     sys.argv = [sys.argv[0]]
     try:
         parser = Parser(exe_name='eval')
-        args = parser.parse_args(experiment='eval', seed=seed)
+        args = parser.parse_args(experiment='plan', seed=seed)
     finally:
         sys.argv = original_argv
     

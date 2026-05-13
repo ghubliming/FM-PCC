@@ -20,7 +20,11 @@ import pickle
 
 # Standard FM-PCC imports
 import diffuser.utils as utils
-from diffuser.utils import Parser
+
+
+class Parser(utils.Parser):
+    dataset: str = 'avoiding-d3il'
+    config: str = 'config.avoiding-d3il'
 
 DEFAULT_SEEDS = [6, 7, 8, 9, 10]
 
@@ -115,7 +119,7 @@ if __name__ == '__main__':
             # Parse config using standard FM-PCC Parser
             # Uses config/avoiding-d3il.py:flow_matching_v3_imeanflow
             parser = Parser(exe_name='train')
-            args = parser.parse_args(experiment='train', seed=seed)
+            args = parser.parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
 
             # Instantiate model, diffusion, trainer
             model = args.model

@@ -10,7 +10,7 @@
 
 This fix restores the standard FM-PCC parser contract for the iMeanFlow entrypoints.
 
-The run failed because the iMF train script passed top-level CLI flags such as `--seeds`, `--use-wandb`, and `--wandb-project` into the shared `Parser`, which only accepts the config flags it defines internally. That caused `argparse` to reject the run before the iMF config block could load.
+The run failed because the iMF train script passed top-level CLI flags such as `--seeds`, `--use-wandb`, and `--wandb-project` into the shared `Parser`, which only accepts the config flags it defines internally. The parser instance also lacked the FM-PCC `dataset` / `config` metadata that `parse_args()` expects. That combination caused `argparse` to reject the run before the iMF config block could load.
 
 ---
 
@@ -25,8 +25,9 @@ usage: [] [-h] [--config CONFIG] [--seed SEED]
 
 Root cause:
 - The iMF train path was not isolating its own seed/W&B CLI arguments before invoking the shared FM-PCC `Parser`.
+- The parser instance was created without the required `dataset` / `config` metadata, so `parse_args()` could not resolve the FM-PCC config module.
 - The shared parser saw the outer command-line flags and aborted.
-- A previous compatibility assumption around `exe_name` was also present, but the real failure was the argv handoff pattern.
+- A previous compatibility assumption around `exe_name` was also present, but the real failure was the argv handoff pattern plus missing parser metadata.
 
 ---
 
@@ -45,7 +46,8 @@ Root cause:
 
 - Saves the original `sys.argv`
 - Replaces it with the remaining FM-PCC config arguments only
-- Calls `Parser(exe_name='train')` and `parse_args(experiment='train', seed=seed)`
+- Uses a local `Parser(utils.Parser)` subclass with `dataset='avoiding-d3il'` and `config='config.avoiding-d3il'`
+- Calls `Parser(exe_name='train')` and `parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)`
 - Restores `sys.argv` after the loop
 
 This matches the established FM-PCC pattern and prevents top-level CLI options from leaking into `argparse`.
@@ -53,6 +55,8 @@ This matches the established FM-PCC pattern and prevents top-level CLI options f
 ### 3. Eval entrypoint normalized
 
 `FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py` was aligned to the same parser isolation pattern and the stale duplicate `main()` block was removed.
+
+It also uses the same local parser subclass and loads the `plan` config block for evaluation.
 
 ---
 
