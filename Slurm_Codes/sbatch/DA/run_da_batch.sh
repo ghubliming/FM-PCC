@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
-#SBATCH --partition=student
+#SBATCH --partition=gpu-1-student
 
 set -e
 
