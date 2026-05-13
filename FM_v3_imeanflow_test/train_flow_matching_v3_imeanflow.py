@@ -75,9 +75,15 @@ def resolve_seed_list(cli_args):
     return base_seeds[:cli_args.num_seeds], "default_subset"
 
 def sanitize_wandb_env():
-    for key in list(os.environ.keys()):
-        if key.startswith('WANDB_'):
-            del os.environ[key]
+    """Clear malformed W&B service tokens that can crash wandb.init in Colab."""
+    service_env_keys = ('WANDB_SERVICE', 'WANDB__SERVICE')
+    for env_key in service_env_keys:
+        token = os.environ.get(env_key)
+        if token is None:
+            continue
+        # W&B expects exactly 5 '-' separated token parts.
+        if len(token.split('-')) != 5:
+            os.environ.pop(env_key, None)
 
 def find_latest_checkpoint_step(results_dir):
     pattern = os.path.join(results_dir, 'state_*.pt')
