@@ -1,5 +1,10 @@
 # Common Commands
 
+## Open in broswer
+cd FMPCC/FM-PCC
+conda activate FMPCC
+python3 -m http.server 8000
+
 ## let submit.sh runable
 cd FMPCC/FM-PCC
 chmod +x Slurm_Codes/submit.sh
@@ -12,6 +17,7 @@ squeue -o "%.10i %.10P %.30j %.10u %.2t %.10M %.10D %R"
 scancel XXXXX
 
 scancel -u $(whoami)
+
 llim
 
 ## Verfication

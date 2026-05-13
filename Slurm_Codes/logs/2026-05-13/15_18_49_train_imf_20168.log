@@ -1,0 +1,45 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 13:18:50 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260513_131857-4h6m5zoj
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/4h6m5zoj
+================================================================================
+iMeanFlow Training
+================================================================================
+Device: cuda
+Seeds: [6, 7, 8, 9, 10]
+Use W&B: True
+
+
+================================================================================
+Training Seed 6
+================================================================================
+
+Generating synthetic trajectory data...
+Training:   0%|          | 0/13 [00:00<?, ?it/s]                                                Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 345, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 332, in main
+    best_val_loss = trainer.train(train_loader, val_loader)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 229, in train
+    train_stats = self.train_epoch(train_loader)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 151, in train_epoch
+    u_pred, v_pred = self.model(traj_batch, t)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_imeanflow/models/imf_velocity.py", line 279, in forward
+    t_embed = t_embed.unsqueeze(1).expand(batch_size, x.shape[1], -1)
+RuntimeError: expand(torch.cuda.FloatTensor{[32, 1, 20, 128]}, size=[32, 20, -1]): the number of sizes provided (3) must be greater or equal to the number of dimensions in the tensor (4)
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.013 MB of 0.014 MB uploadedwandb: - 0.025 MB of 0.025 MB uploadedwandb: 🚀 View run iMF-seed6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/4h6m5zoj
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260513_131857-4h6m5zoj/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
