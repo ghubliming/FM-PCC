@@ -29,7 +29,8 @@ conda activate "$CONDA_ENV_NAME"
 
 export FMPCC="$REPO"
 export D3IL_ROOT="$FMPCC/d3il"
-export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
+export D3IL_ENV_ROOT="$D3IL_ROOT/environments/d3il"
+export PYTHONPATH="$FMPCC:$D3IL_ROOT:$D3IL_ENV_ROOT:$PYTHONPATH"
 
 # Headless rendering
 export MUJOCO_GL="egl"

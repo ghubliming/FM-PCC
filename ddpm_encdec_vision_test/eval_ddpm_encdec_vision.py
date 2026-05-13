@@ -8,6 +8,7 @@ import ddpm_encdec_vision.utils as utils
 from ddpm_encdec_vision.models.d3il_visual_bridge import VisualDiffusionBridge
 
 sys.path.append(os.path.abspath('d3il'))
+sys.path.append(os.path.abspath('d3il/environments/d3il'))
 from d3il.simulation.aligning_sim import Aligning_Sim
 
 class VisualAgentWrapper:

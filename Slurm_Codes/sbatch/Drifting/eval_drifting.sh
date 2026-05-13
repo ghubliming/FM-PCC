@@ -48,6 +48,6 @@ fi
 # 4) Run FM v3 Drifting Evaluation
 cd "$REPO"
 
-python FM_v3_drifting_test/eval_flow_matching_v3_ode_selectable.py
+python FM_v3_drifting_test/eval_flow_matching_v3_drifting.py
 
 echo "Job completed successfully."

@@ -46,7 +46,7 @@ def setup_logger(name, log_file=None, level=logging.INFO):
     return logger
 
 
-def create_output_directory(base_path, prefix='FM_V3_ODE_Analysis'):
+def create_output_directory(base_path, prefix='FM_V3_ODE_Analysis', return_timestamp=False):
     """
     Create output directory with timestamp.
     
@@ -55,7 +55,7 @@ def create_output_directory(base_path, prefix='FM_V3_ODE_Analysis'):
         prefix: Prefix for folder name
     
     Returns:
-        Path to created directory
+        Path to created directory, or (path, timestamp) when return_timestamp is True
     """
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     output_dir = os.path.join(base_path, f'{timestamp}_{prefix}')
@@ -65,6 +65,9 @@ def create_output_directory(base_path, prefix='FM_V3_ODE_Analysis'):
     os.makedirs(os.path.join(output_dir, 'plots'), exist_ok=True)
     os.makedirs(os.path.join(output_dir, 'logs'), exist_ok=True)
     
+    if return_timestamp:
+        return output_dir, timestamp
+
     return output_dir
 
 
