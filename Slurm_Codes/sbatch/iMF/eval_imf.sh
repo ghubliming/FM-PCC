@@ -51,10 +51,8 @@ cd "$REPO"
 # Multi-seed evaluation with comprehensive metrics
 python FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py \
     --seeds 6 7 8 9 10 \
-    --checkpoint-dir checkpoints \
-    --output-dir evaluation_results \
-    --device cuda \
-    --solvers euler rk4 dopri5 \
-    --nfe-values 1 2
+    --logbase logs \
+    --output-dir evaluation_results/imeanflow \
+    --device cuda
 
 echo "✓ Evaluation completed successfully."
