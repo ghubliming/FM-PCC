@@ -787,27 +787,41 @@ Keywords: Phase 2 complete, real training/eval/load scripts, multi-seed, W&B log
    - Synthetic data pipeline (easily swappable for real d3il avoiding-d3il data)
    - Config-driven hyperparameter control (batch_size, LR, epochs, device)
 
-2. **Real Evaluation Script** (`FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py`, 386 lines):
+2. **Real Evaluation Script** (`FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py`):
    - Multi-variant testing: 3 solvers (Euler, RK4, Dopri5) × 2 NFE values (1, 2) = 6 variants
    - Per-seed evaluation with metrics tracking (trajectory error, path length, smoothness)
    - Per-variant .npz result saving + aggregate JSON reporting
    - Compatible with d3il environment integration (structure ready, data synthetic)
 
-3. **Real Results Loader** (`FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py`, 386 lines):
+3. **Real Results Loader** (`FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py`):
    - Loads all evaluation .npz files across seeds
    - Computes aggregate statistics (mean, std, min, max per variant)
    - Generates 3 comparison plots (trajectory error, path length, smoothness)
    - Exports CSV + JSON summary reports
-   - Matplotlib-based visualization with graceful fallback for headless systems
 
-4. **SLURM Scripts Updated** (matching production pattern):
-   - `train_imf.sh`: Calls real `train_flow_matching_v3_imeanflow.py --seeds 6 7 8 9 10 --use-wandb` (24h job)
-   - `eval_imf.sh`: Calls real `eval_flow_matching_v3_imeanflow.py --seeds 6 7 8 9 10` (4h job)
-   - `load_results_imf.sh`: Calls real `load_results_flow_matching_v3_imeanflow.py` (30min job)
-   - All scripts include proper environment setup, W&B integration, EGL headless rendering
+---
 
-5. **Documentation Delivered**:
-   - `logs_in_develop/Gen3v4/MISSION_BRIEFING.md`: Technical vision, architecture details, system comparison
-   - `logs_in_develop/Gen3v4/HOW_TO_USE.md`: Complete step-by-step guide with full code examples for all 3 scenarios (local, SLURM, debug)
+## DA v3 & iMF Phase 3 Integration (May 13, 2026)
+**Keywords**: Zero-Manifest, audit-logging, iMF-PCC real-data integration.
 
-6. **Outcome**: **PHASE 2 COMPLETE**. Production-ready training infrastructure parity with Drifting system. Ready for real multi-seed training on vmknoll cluster with W&B tracking.
+1. **Matrix Explorer v3**: Stabilized with Zero-Manifest HTML discovery and hybrid zoom (FigWidth + Magnify). Implemented automated `.txt` audit logs including absolute source paths for every PNG download.
+   - *Ref*: [`logs_in_develop/DA_Code/v3/fix_3/fix_3.md`](file:///workspaces/FM-PCC/logs_in_develop/DA_Code/v3/fix_3/fix_3.md)
+2. **iMeanFlow (iMF) Phase 3**: Migrated to official `iMeanFlowEngine` (dual-velocity field). Wired `iMFDiffusion` wrapper and `u_first` curriculum training for real `avoiding-d3il` dataset. Standardized multi-seed Slurm scripts and W&B logging.
+   - *Ref*: [`logs_in_develop/Gen3v4/fix_3/REAL_IMF_IMPLEMENTATION.md`](file:///workspaces/FM-PCC/logs_in_develop/Gen3v4/fix_3/REAL_IMF_IMPLEMENTATION.md)
+
+**Status**: **VERIFIED STABLE**. Visualizer and iMF-PCC core are production-ready for final thesis analysis.
+
+## Gen5 Phase 1 Addendum (13. May 2026) — Today's Fixes
+
+Keywords: Hydra instantiation, device serialization, DataLoader CUDA fork, PYTHONPATH, diffusion bounds, batch_to_device
+
+Summary of fixes applied today (engineering integration, not algorithmic changes):
+
+1. **Hydra instantiation & device handling**: Cast `torch.device` to primitive strings and set `"_recursive_": False` in bridge configs to prevent eager Hydra instantiation conflicts.
+2. **DataLoader / CUDA fork crash**: Ensured visual datasets are initialized on CPU and moved to GPU only at batch time (`batch_to_device`) to avoid CUDA context corruption in worker forks.
+3. **PYTHONPATH / simulator imports**: Added `d3il/environments/d3il` to `PYTHONPATH` and updated evaluation entrypoints to ensure `envs.*` imports resolve in SLURM jobs.
+4. **Diffusion action bounds**: Initialized `min_action` / `max_action` inside `VisualDiffusionBridge` so diffusion sampling clamps do not raise AttributeError during eval.
+5. **Polymorphic batch handling**: Made `batch_to_device` robust to `list`/`tuple` batches (and namedtuples) to support D3IL dataset outputs.
+6. **Logging & stability**: Additional small fixes to logging and checkpoint path resolution in the visual test scripts to make baseline runs reproducible.
+
+Outcome: The `ddpm_encdec_vision` baseline is runnable inside FM-PCC; training/eval failures observed earlier were due to integration gaps listed above and are now addressed. Next step: run full baseline training and collect W&B traces to validate learning curves.

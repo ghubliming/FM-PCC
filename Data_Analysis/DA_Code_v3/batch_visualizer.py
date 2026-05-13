@@ -62,73 +62,52 @@ class BatchVisualizer:
     
     def plot_candidate_pareto_frontier(self, output_dir, show=False):
         """
-        Plot Pareto frontier: accuracy vs time for all candidates.
-        
-        X-axis: Computation time (ms) - lower is better
-        Y-axis: Accuracy (%) - higher is better
-        Each point = one candidate, colored and annotated
-        
-        Args:
-            output_dir: Directory to save plot
-            show: Display plot if True
+        Plot two Pareto frontiers: Standard and Tightened.
         """
-        logger.info("Generating Pareto frontier plot...")
+        # 1. Standard Plot
+        self._generate_pareto_subgroup(
+            output_dir, "00a_candidate_pareto_frontier_standard", 
+            "accuracy_std_group", "time_ms_std_group", 
+            "Standard DPCC (Avg: r, c, t)", show
+        )
+        
+        # 2. Tightened Plot
+        self._generate_pareto_subgroup(
+            output_dir, "00b_candidate_pareto_frontier_tightened", 
+            "accuracy_tight_group", "time_ms_tight_group", 
+            "Tightened DPCC (Avg: r-t, c-t, t-t)", show
+        )
+
+    def _generate_pareto_subgroup(self, output_dir, filename, acc_key, time_key, title_suffix, show):
+        logger.info(f"Generating Pareto frontier plot: {filename}...")
         
         points = {}
         for letter, stats in self.candidate_stats.items():
-            if 'accuracy' in stats and 'time_ms' in stats and 'error' not in stats:
-                points[letter] = {
-                    'accuracy': stats['accuracy'] * 100,
-                    'time': stats['time_ms']
-                }
+            acc = stats.get(acc_key)
+            time = stats.get(time_key)
+            if acc is not None and time is not None:
+                points[letter] = {'accuracy': acc * 100, 'time': time}
         
         if not points:
-            logger.warning("No valid data for Pareto frontier plot")
+            logger.warning(f"No valid data for {filename}")
             return
         
         fig, ax = plt.subplots(figsize=(12, 8))
-        
-        # Plot points
         for letter, point in sorted(points.items()):
-            ax.scatter(
-                point['time'],
-                point['accuracy'],
-                s=500,
-                alpha=0.7,
-                color=self._get_candidate_color(letter),
-                edgecolors='black',
-                linewidth=2,
-                label=letter
-            )
-            
-            # Annotate with letter
-            ax.annotate(
-                letter,
-                (point['time'], point['accuracy']),
-                fontsize=14,
-                fontweight='bold',
-                ha='center',
-                va='center',
-                color='white'
-            )
+            ax.scatter(point['time'], point['accuracy'], s=500, alpha=0.7, 
+                      color=self._get_candidate_color(letter), edgecolors='black', linewidth=2, label=letter)
+            ax.annotate(letter, (point['time'], point['accuracy']), fontsize=14, fontweight='bold', ha='center', va='center', color='white')
         
         ax.set_xlabel('Computation Time (ms)', fontsize=12, fontweight='bold')
         ax.set_ylabel('Accuracy (%)', fontsize=12, fontweight='bold')
-        ax.set_title('Cross-Candidate Pareto Frontier: Accuracy vs Time', 
-                    fontsize=14, fontweight='bold')
-        
+        ax.set_title(f'Cross-Candidate Pareto Frontier: {title_suffix}', fontsize=14, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.legend(loc='best', fontsize=10)
-        
         plt.tight_layout()
         
-        output_path = f"{output_dir}/00_candidate_pareto_frontier.png"
+        output_path = f"{output_dir}/{filename}.png"
         plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
-        logger.info(f"Saved: {output_path}")
-        
-        if show:
-            plt.show()
-        
+        if show: plt.show()
         plt.close()
     
     def plot_candidate_success_comparison(self, output_dir, show=False):
