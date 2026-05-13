@@ -48,14 +48,10 @@ fi
 # 4) Run iMF Training
 cd "$REPO"
 
-# Multi-seed training with real D3IL data and W&B logging
+# Multi-seed training (exactly like Drifting)
 python FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py \
     --seeds 6 7 8 9 10 \
     --use-wandb \
-    --wandb-project FMPCC-iMF \
-    --batch-size 32 \
-    --learning-rate 5e-4 \
-    --num-epochs 100 \
-    --device cuda
+    --wandb-project FMPCC-iMF
 
 echo "✓ Training completed successfully."

@@ -794,69 +794,60 @@ base = {
     },
 
     'flow_matching_v3_imeanflow': {
-        # Improved Mean Flows (iMeanFlow) trajectory generation
-        # Dual-velocity field: u (global) + v (local refinement)
+        # iMeanFlow: Improved Mean Flows for trajectory generation
+        # Dual-velocity: u (mean field) + v (instantaneous deviation)
+        # Reuses official iMF repo logic: github.com/Lyy-iiis/imeanflow
         
-        ## architecture
-        'model': 'flow_matcher_v3_imeanflow.models.TimeConditionedDualVelocity',
-        'diffusion': 'flow_matcher_v3_imeanflow.models.ImfDiffusion',
-        'state_dim': 28,
-        'hidden_dim': 256,
-        'time_dim': 128,
-        'use_jvp_guidance': True,
-        'jvp_hidden_dim': 128,
+        ## model & engine (REAL iMF from official repo)
+        'model': 'flow_matcher_v3_imeanflow.models.iMeanFlowEngine',
+        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
         'horizon': 8,
         
-        ## dual-velocity training
-        'u_loss_weight': 0.5,           # LOCKED: balance with v_loss_weight
-        'v_loss_weight': 0.5,           # LOCKED: balance with u_loss_weight
-        'loss_schedule': 'u_first',     # LOCKED: curriculum learning for safety
-        'jvp_weight': 0.2,              # Constraint guidance (collision, smoothness)
-        'loss_type': 'mse',
+        ## iMF architecture (matches official repo)
+        'freq_dim': 256,
+        'depth': 8,
+        'num_heads': 4,
+        'mlp_dim': 256,
+        'time_dim': 256,
+        'dropout_rate': 0.1,
         
-        ## dataset
+        ## dual-velocity training (core iMF innovation)
+        'u_loss_weight': 0.5,               # Mean velocity weight
+        'v_loss_weight': 0.5,               # Instantaneous deviation weight
+        'loss_schedule': 'u_first',         # Curriculum: u only → blend → u+v
+        'warmup_epochs': 30,                # Epochs of u-only training
+        'transition_epochs': 30,            # Epochs to blend from u to u+v
+        'loss_type': 'l2',
+        
+        ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',
         'preprocess_fns': [],
+        'clip_denoised': False,
         'max_path_length': 150,
         'include_returns': True,
         'returns_scale': 400,
         'discount': 0.99,
         'use_padding': True,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
         
-        ## ODE solver
-        'ode_solver_type': 'dopri5',    # dopri5, rk4, euler
-        'num_ode_steps': 10,
-        'ode_atol': 1e-6,
-        'ode_rtol': 1e-3,
-        
-        ## sampling
-        'nfe': 2,                        # 1 (fast) or 2 (quality)
-        'nfe_split': 0.5,               # Transition point from u→v
-        'goal_guidance_weight': 0.15,
-        'obstacle_avoidance_weight': 0.1,
-        
-        ## training
-        'n_steps_per_epoch': 1000,
-        'n_train_steps': 1e5,
+        ## training (from FMv3ODE baseline)
+        'n_train_steps': 100000,
         'batch_size': 32,
         'learning_rate': 5e-4,
-        'warmup_steps': 2000,
         'gradient_clip': 1.0,
         'ema_decay': 0.995,
-        'train_test_split': 0.85,
-        'gradient_accumulate_every': 2,
-        'device': 'cuda',
-        'seed': 0,
+        'action_weight': 10,
         
-        ## metrics
-        'track_smoothness': True,
-        'track_decomposition': True,
-        'track_collision': True,
+        ## ODE inference (iMF uses fast single-step NFE)
+        'ode_inference_steps_v3': 1,        # Fast: single step with u+v
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
         
         ## serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_imeanflow/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
     },
 }
