@@ -70,6 +70,19 @@ It also uses the same local parser subclass and loads the `plan` config block fo
 
 This prevents the training loop from crashing on `args.device` and keeps model/trainer construction consistent with the runtime environment.
 
+### 5. Namespace alias added for iMF imports
+
+FM-PCC's `diffuser.utils.config.import_class()` always resolves class strings under the `diffuser.*` namespace. The real iMF implementation lives at the repository root (`flow_matcher_v3_imeanflow/`), so the config loader could not import it directly.
+
+To fix that, a compatibility namespace was added:
+
+- `diffuser/flow_matcher_v3_imeanflow/__init__.py`
+- `diffuser/flow_matcher_v3_imeanflow/models/__init__.py`
+- `diffuser/flow_matcher_v3_imeanflow/models/imf_engine.py`
+- `diffuser/flow_matcher_v3_imeanflow/models/imf_diffusion.py`
+
+These modules forward the iMF classes from the real root package into the namespace expected by the FM-PCC config loader. This resolves the `ModuleNotFoundError: No module named 'diffuser.flow_matcher_v3_imeanflow'` crash without changing the existing config loader behavior.
+
 ---
 
 ## Why This Fix Makes Sense
@@ -94,6 +107,7 @@ That means the failure is handled at the right layer:
 - The parser crash path is removed.
 - The iMF train loop now proceeds through seed parsing and config instantiation.
 - The iMF train loop now proceeds through seed parsing, config instantiation, and runtime device setup.
+- The iMF config loader can now import the model and diffusion classes through the expected `diffuser.*` namespace.
 - Remaining tool warnings about `wandb`, `torch`, and `numpy` are environment import-resolution warnings, not parser errors.
 
 ---
