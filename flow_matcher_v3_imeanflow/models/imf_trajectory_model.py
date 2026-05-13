@@ -27,6 +27,7 @@ class iMFTrajectoryModel(nn.Module):
     def __init__(
         self,
         state_dim: int,
+        seq_len: int,
         freq_dim: int = 256,
         depth: int = 8,
         num_heads: int = 4,
@@ -38,6 +39,7 @@ class iMFTrajectoryModel(nn.Module):
         """
         Args:
             state_dim: Dimension of trajectory states
+            seq_len: Trajectory horizon
             freq_dim: Feature dimension (from FMv3ODE)
             depth: Number of U-Net blocks
             num_heads: Attention heads
@@ -48,20 +50,20 @@ class iMFTrajectoryModel(nn.Module):
         """
         super().__init__()
         self.state_dim = state_dim
+        self.seq_len = seq_len
         self.freq_dim = freq_dim
         self.depth = depth
         self.device = device
         
         # Reuse FMv3ODE U-Net backbone for u prediction
         self.u_net = Flow_matcher_U_Net_v2(
-            input_dim=state_dim,
-            output_dim=state_dim,
-            freq_dim=freq_dim,
-            depth=depth,
-            num_heads=num_heads,
-            mlp_dim=mlp_dim,
-            time_dim=time_dim,
-            dropout_rate=dropout_rate,
+            horizon=seq_len,
+            transition_dim=state_dim,
+            cond_dim=state_dim,
+            dim=freq_dim,
+            dim_mults=(1, 2, 4, 8),
+            returns_condition=False,
+            condition_dropout=dropout_rate,
         )
         
         # Auxiliary v-head: instantaneous velocity (from official iMF)
@@ -81,8 +83,8 @@ class iMFTrajectoryModel(nn.Module):
         """
         Predict dual velocity components (u, v).
         
-        Args:
-            x: Noisy trajectory [batch, seq_len, state_dim]
+        # u prediction via backbone
+        u = self.u_net(x, cond, t)
             t: Timestep [batch] or [batch, 1]
             cond: Optional conditioning [batch, cond_dim]
             
@@ -100,6 +102,15 @@ class iMFTrajectoryModel(nn.Module):
         v = self.v_head(u)  # Simple additive decomposition
         
         return u, v
+
+    def forward_train(
+        self,
+        x_noisy: torch.Tensor,
+        t: torch.Tensor,
+        cond: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Training entrypoint expected by iMFDiffusion."""
+        return self.forward(x_noisy, t, cond)
     
     def sample_trajectory(
         self,
@@ -157,3 +168,26 @@ class iMFTrajectoryModel(nn.Module):
             z_t = z_t - h[:, None, None] * velocity
         
         return z_t
+
+    def sample(
+        self,
+        batch_size: int,
+        num_steps: int = 1,
+        t_schedule: str = "linear",
+        u_weight: float = 0.5,
+        v_weight: float = 0.5,
+        schedule: str = "u_first",
+        seed: int = 0,
+    ) -> torch.Tensor:
+        """Sampling entrypoint expected by iMFDiffusion."""
+        t_steps = torch.linspace(1.0, 0.0, num_steps + 1, device=self.device)
+        return self.sample_trajectory(
+            batch_size=batch_size,
+            seq_len=self.seq_len,
+            num_steps=num_steps,
+            t_steps=t_steps,
+            schedule=schedule,
+            u_weight=u_weight,
+            v_weight=v_weight,
+            device=self.device,
+        )

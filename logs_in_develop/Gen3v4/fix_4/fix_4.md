@@ -83,6 +83,16 @@ To fix that, a compatibility namespace was added:
 
 These modules forward the iMF classes from the real root package into the namespace expected by the FM-PCC config loader. This resolves the `ModuleNotFoundError: No module named 'diffuser.flow_matcher_v3_imeanflow'` crash without changing the existing config loader behavior.
 
+### 6. iMF wrapper API aligned with the real U-Net
+
+The trajectory model wrapper was updated to match the real `Flow_matcher_U_Net_v2` constructor and call signature.
+
+- The wrapper now passes `horizon`, `transition_dim`, and `cond_dim` instead of the nonexistent `input_dim` / `output_dim` arguments.
+- The `forward()` call now uses the correct `self.u_net(x, cond, t)` ordering.
+- The wrapper now exposes the `forward_train()` and `sample()` methods expected by `iMFDiffusion`.
+
+This removes the next API-layer failure in the iMF stack and keeps the wrapper consistent with both the engine and diffusion adapter.
+
 ---
 
 ## Why This Fix Makes Sense
@@ -108,6 +118,7 @@ That means the failure is handled at the right layer:
 - The iMF train loop now proceeds through seed parsing and config instantiation.
 - The iMF train loop now proceeds through seed parsing, config instantiation, and runtime device setup.
 - The iMF config loader can now import the model and diffusion classes through the expected `diffuser.*` namespace.
+- The iMF wrapper API now matches the real U-Net and the diffusion adapter expectations.
 - Remaining tool warnings about `wandb`, `torch`, and `numpy` are environment import-resolution warnings, not parser errors.
 
 ---
