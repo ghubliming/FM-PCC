@@ -185,6 +185,24 @@ class BatchAggregator:
         
         return pd.DataFrame(rows)
     
+    def get_full_detailed_dataframe(self):
+        """
+        Get a full, unaggregated multidimensional DataFrame combining all candidates.
+        Dimensions: Candidate, Variant, Constraint, Halfspace, Metric, Seed, Value
+        """
+        all_dfs = []
+        for letter, agg in self.candidate_aggregators.items():
+            df = agg.detailed_df
+            if df is not None and not df.empty:
+                df = df.copy()
+                df['Candidate'] = letter
+                # The candidate name (folder) can also be added if needed, but letter is fine
+                all_dfs.append(df)
+        
+        if all_dfs:
+            return pd.concat(all_dfs, ignore_index=True)
+        return pd.DataFrame()
+    
     def get_candidate_aggregator(self, letter):
         """
         Get the v1 aggregator for a specific candidate.
