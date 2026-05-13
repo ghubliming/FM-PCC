@@ -44,6 +44,6 @@ fi
 # 4) Run FM v3 Drifting Results Loading
 cd "$REPO"
 
-python FM_v3_drifting_test/load_results_flow_matching_v3_ode_selectable.py
+python FM_v3_drifting_test/load_results_flow_matching_v3_drifting.py
 
 echo "Job completed successfully."

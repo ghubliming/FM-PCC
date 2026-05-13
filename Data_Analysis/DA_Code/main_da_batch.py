@@ -115,7 +115,11 @@ def main():
     
     # Setup output directory
     output_base = args.output_path
-    output_dir, output_timestamp = create_output_directory(output_base, 'FM_V3_BATCH')
+    output_dir, output_timestamp = create_output_directory(
+        output_base,
+        'FM_V3_BATCH',
+        return_timestamp=True,
+    )
     
     # Setup logging
     log_file = os.path.join(output_dir, 'logs', 'batch_analysis.log')
