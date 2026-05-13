@@ -64,8 +64,7 @@ class Parser(argparse.ArgumentParser):
         # print(f'[ utils/setup ] Saved args to {fullpath}')
 
     def parse_args(self, experiment=None, seed=None):
-        args, extras = super().parse_known_args()
-        args.extra_args = extras
+        args = super().parse_args()
         args.dataset = self.dataset
         args.config = self.config
         ## if not loading from a config script, skip the result of the setup
@@ -74,7 +73,7 @@ class Parser(argparse.ArgumentParser):
 
         args.seed = seed if seed is not None else args.seed
 
-        self.add_extras(args)
+        # self.add_extras(args)
         self.eval_fstrings(args)
         self.set_seed(args)
         self.set_loadbase(args)

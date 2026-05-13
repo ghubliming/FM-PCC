@@ -44,8 +44,8 @@ fi
 # 4) Run iMF Results Analysis and Metrics Tracking
 cd "$REPO"
 
-# Load, aggregate, and visualize evaluation results
+# Load and display results (exactly like Drifting)
 python FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py \
-    --results-dir evaluation_results
+    --results-dir evaluation_results/imf
 
 echo "✓ Results analysis completed successfully."

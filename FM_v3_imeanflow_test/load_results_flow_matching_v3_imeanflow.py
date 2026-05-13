@@ -1,95 +1,86 @@
 #!/usr/bin/env python3
 """
-iMeanFlow Results Loader and Aggregator
+Load and display iMeanFlow evaluation results.
 
-Loads evaluation results, aggregates across seeds, and generates reports.
+Simple results aggregation + formatting (standard FM-PCC pattern).
 
 Usage:
-    python load_results_flow_matching_v3_imeanflow.py
+    python FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py --results-dir evaluation_results/imf
 """
 
-import os
-import sys
-import numpy as np
-import json
-import pandas as pd
-from pathlib import Path
 import argparse
-from datetime import datetime
-
-# Try to import plotting libraries
-try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    HAS_MATPLOTLIB = True
-except ImportError:
-    HAS_MATPLOTLIB = False
+import json
+import os
+from pathlib import Path
 
 
-class ImfResultsLoader:
-    """Load and aggregate iMF evaluation results."""
+def load_and_display_results(results_dir='evaluation_results'):
+    """Load and display evaluation results in table format."""
+    results_file = os.path.join(results_dir, 'eval_results.json')
     
-    def __init__(self, results_dir: Path = None):
-        self.results_dir = results_dir or Path('evaluation_results')
-        self.all_results = {}
-        self.summary = {}
+    if not os.path.exists(results_file):
+        print(f"[ load ] ERROR: No results file found: {results_file}")
+        return False
     
-    def load_results(self):
-        """Load all .npz result files."""
-        print(f"Loading results from {self.results_dir}...")
-        
-        if not self.results_dir.exists():
-            print(f"⚠ Results directory not found: {self.results_dir}")
-            return False
-        
-        npz_files = list(self.results_dir.glob('results_seed_*.npz'))
-        
-        if not npz_files:
-            print("⚠ No result files found!")
-            return False
-        
-        for npz_file in sorted(npz_files):
-            data = np.load(npz_file, allow_pickle=True)
-            seed = int(npz_file.stem.split('_')[-1])
-            self.all_results[seed] = dict(data)
-            print(f"  ✓ Loaded seed {seed}")
-        
-        return True
+    with open(results_file, 'r') as f:
+        results = json.load(f)
     
-    def aggregate_results(self) -> dict:
-        """Aggregate results across all seeds."""
-        print("\nAggregating results across seeds...")
+    print()
+    print("=" * 80)
+    print("iMeanFlow (iMF-PCC) Evaluation Results")
+    print("=" * 80)
+    print()
+    print("Per-Seed Results:")
+    print("-" * 80)
+    print(f"{'Seed':>6s} {'MSE Error':>14s} {'Std Dev':>14s} {'Num Samples':>12s}")
+    print("-" * 80)
+    
+    mse_errors = []
+    
+    # Sort by seed number
+    sorted_keys = sorted(results.keys(), key=lambda x: int(x) if x.isdigit() else 999)
+    
+    for seed_key in sorted_keys:
+        result = results[seed_key]
+        seed = result.get('seed', seed_key)
+        mse = result.get('mse_error', 0.0)
+        std = result.get('mse_std', 0.0)
+        num_samples = result.get('num_samples', 0)
         
-        if not self.all_results:
-            print("⚠ No results to aggregate!")
-            return {}
+        print(f"{int(seed):6d} {mse:14.6f} {std:14.6f} {num_samples:12d}")
+        mse_errors.append(mse)
+    
+    print("-" * 80)
+    
+    # Summary statistics
+    if mse_errors:
+        mean_mse = sum(mse_errors) / len(mse_errors)
+        var_mse = sum((x - mean_mse) ** 2 for x in mse_errors) / len(mse_errors)
+        std_mse = var_mse ** 0.5
         
-        # Extract all metrics
-        all_variants = set()
-        all_metrics = set()
-        
-        for seed, data in self.all_results.items():
-            for key in data.keys():
-                if key == 'seed':
-                    continue
-                # Extract variant and metric names
-                parts = key.split('_')
-                if len(parts) >= 2:
-                    all_variants.add('_'.join(parts[:-1]))
-                    all_metrics.add(parts[-1])
-        
-        # Aggregate per variant
-        self.summary = {}
-        
-        for variant in sorted(all_variants):
-            variant_data = {
-                'seeds': [],
-                'trajectory_error': [],
-                'path_length': [],
-                'smoothness': [],
-            }
-            
-            for seed, data in self.all_results.items():
+        print(f"{'MEAN':>6s} {mean_mse:14.6f} {std_mse:14.6f} {len(mse_errors):12d}")
+    
+    print("-" * 80)
+    print()
+    print("=" * 80)
+    return True
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description='Load iMF evaluation results')
+    parser.add_argument('--results-dir', type=str, default='evaluation_results', help='Results directory.')
+    args = parser.parse_args()
+    
+    print(f"[ load ] iMeanFlow Results Loader")
+    print(f"[ load ] Loading from: {args.results_dir}")
+    
+    success = load_and_display_results(args.results_dir)
+    
+    if success:
+        print("[ load ] ✓ Complete")
+    else:
+        print("[ load ] ✗ Failed to load results")
                 # Collect metric values
                 error_key = f'{variant}_trajectory_error'
                 length_key = f'{variant}_trajectory_length_list'

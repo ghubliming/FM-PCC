@@ -45,14 +45,12 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_MODE="online"
 fi
 
-# 4) Run iMF Evaluation/Inference
+# 4) Run iMF Evaluation
 cd "$REPO"
 
-# Multi-seed evaluation with comprehensive metrics
+# Evaluation (exactly like Drifting)
 python FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py \
     --seeds 6 7 8 9 10 \
-    --logbase logs \
-    --output-dir evaluation_results/imeanflow \
-    --device cuda
+    --results-dir evaluation_results/imf
 
 echo "✓ Evaluation completed successfully."
