@@ -133,13 +133,19 @@ def main():
     # 0) Generate Manifest for HTML Visualizer
     try:
         import json
-        parent_results = os.path.dirname(output_dir)
+        # Use absolute path to be sure
+        abs_output = os.path.abspath(output_dir)
+        parent_results = os.path.dirname(abs_output)
+        
+        # We want to list all folders in the parent results directory
         if os.path.exists(parent_results):
-            batches = [d for d in os.listdir(parent_results) if os.path.isdir(os.path.join(parent_results, d))]
+            batches = [d for d in os.listdir(parent_results) if os.path.isdir(os.path.join(parent_results, d)) and d != 'plots' and d != 'logs']
             manifest_path = os.path.join(parent_results, 'results_manifest.json')
             with open(manifest_path, 'w') as f:
-                json.dump({"batches": sorted(batches, reverse=True)}, f)
-    except: pass
+                json.dump({"batches": sorted(batches, reverse=True)}, f, indent=2)
+            print(f"[ DA ] Updated manifest at: {manifest_path}")
+    except Exception as e:
+        print(f"[ DA ] ⚠ Failed to update manifest: {e}")
     
     # Setup logging
     log_file = os.path.join(output_dir, 'logs', 'batch_analysis.log')
