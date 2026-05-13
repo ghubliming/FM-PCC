@@ -71,31 +71,44 @@ class DataLoader:
                     continue
                 
                 for variant in variants:
-                    npz_file = os.path.join(halfspace_path, f'{variant}.npz')
-                    self.files_found += 1
-                    
-                    if not os.path.exists(npz_file):
-                        msg = f'Seed {seed}/{halfspace_variant}/{variant}.npz: NOT FOUND'
+                    # Look for any file under halfspace_path that contains the variant name
+                    try:
+                        entries = os.listdir(halfspace_path)
+                    except Exception:
+                        entries = []
+
+                    matches = [f for f in entries if variant in f]
+                    if not matches:
+                        msg = f'Seed {seed}/{halfspace_variant}/{variant}: NOT FOUND'
                         logger.debug(msg)
                         self.loading_log.append(('MISSING', msg))
                         self.files_failed += 1
                         continue
-                    
-                    try:
-                        data_dict = self._load_npz_file(npz_file)
-                        
-                        # Store under 'halfspace' and other constraint types
-                        for constraint in constraint_types:
-                            self.data[seed][variant][constraint][halfspace_variant] = data_dict.copy()
-                        
-                        self.files_loaded += 1
-                        logger.debug(f'Loaded: seed={seed}, variant={variant}, halfspace={halfspace_variant}')
-                        
-                    except Exception as e:
-                        msg = f'Seed {seed}/{halfspace_variant}/{variant}.npz: FAILED - {str(e)}'
-                        logger.error(msg)
-                        self.loading_log.append(('ERROR', msg))
-                        self.files_failed += 1
+
+                    for match in matches:
+                        file_path = os.path.join(halfspace_path, match)
+                        self.files_found += 1
+                        try:
+                            data_dict = self._load_result_file(file_path)
+
+                            # Store under 'halfspace' and other constraint types
+                            for constraint in constraint_types:
+                                # If multiple files match, store a dict keyed by filename
+                                if len(matches) == 1:
+                                    self.data[seed][variant][constraint][halfspace_variant] = data_dict.copy()
+                                else:
+                                    if not isinstance(self.data[seed][variant][constraint].get(halfspace_variant), dict):
+                                        self.data[seed][variant][constraint][halfspace_variant] = {}
+                                    self.data[seed][variant][constraint][halfspace_variant][match] = data_dict.copy()
+
+                            self.files_loaded += 1
+                            logger.debug(f'Loaded: seed={seed}, variant={variant}, file={match}')
+
+                        except Exception as e:
+                            msg = f'Seed {seed}/{halfspace_variant}/{match}: FAILED - {str(e)}'
+                            logger.error(msg)
+                            self.loading_log.append(('ERROR', msg))
+                            self.files_failed += 1
         
         logger.info(f'Loading complete. Loaded: {self.files_loaded}, Failed: {self.files_failed}, Total: {self.files_found}')
         return dict(self.data)
@@ -110,34 +123,46 @@ class DataLoader:
         Returns:
             Dict with extracted metrics
         """
-        try:
-            data = np.load(npz_file, allow_pickle=True)
-            
+        # Deprecated: keep for compatibility but not directly used anymore
+        return self._load_result_file(npz_file)
+
+    def _load_result_file(self, file_path):
+        """Load a result file which may be an .npz or a .log file.
+
+        - .npz: load and extract metrics as before
+        - .log/.txt: capture raw text under 'raw_log'
+        """
+        name = os.path.basename(file_path)
+        if name.endswith('.npz'):
+            data = np.load(file_path, allow_pickle=True)
             metrics_dict = {}
-            
-            # Extract all available metrics
             for key in data.files:
                 try:
                     value = data[key]
-                    # Handle numpy arrays and scalars
                     if isinstance(value, np.ndarray):
                         if value.size == 1:
                             metrics_dict[key] = float(value.item())
                         else:
-                            # For arrays, store mean/std
                             metrics_dict[f'{key}_array'] = value
                             metrics_dict[f'{key}_mean'] = float(np.mean(value))
                             metrics_dict[f'{key}_std'] = float(np.std(value))
                     else:
-                        metrics_dict[key] = float(value)
+                        try:
+                            metrics_dict[key] = float(value)
+                        except Exception:
+                            metrics_dict[key] = value
                 except (ValueError, TypeError) as e:
                     logger.debug(f'Could not convert key {key}: {str(e)}')
-            
             return metrics_dict
-        
-        except Exception as e:
-            logger.error(f'Failed to load {npz_file}: {str(e)}')
-            raise
+        else:
+            # Fallback: read raw log content
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text = f.read()
+                return {'raw_log': text}
+            except Exception as e:
+                logger.error(f'Failed to read log file {file_path}: {str(e)}')
+                raise
     
     def get_loading_summary(self):
         """
