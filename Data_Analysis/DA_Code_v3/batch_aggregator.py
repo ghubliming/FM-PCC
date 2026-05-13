@@ -160,14 +160,19 @@ class BatchAggregator:
                         if not v_acc.empty:
                             stats['major_metrics'][v] = v_acc['mean'].iloc[0]
             
-            # Robustness: overall std across seeds for major variants
+            # Robustness: overall std across seeds for the two groups
             if variant_agg is not None and not variant_agg.empty:
-                major_rows = variant_agg[variant_agg['variant'].isin(MAJOR_VARIANTS)]
-                if not major_rows.empty:
-                    stats['robustness'] = major_rows['std'].mean()
-                else:
-                    stats['robustness'] = variant_agg['std'].mean()
+                std_rows = variant_agg[variant_agg['variant'].isin(std_variants)]
+                tight_rows = variant_agg[variant_agg['variant'].isin(tight_variants)]
+                
+                stats['robustness_std_group'] = std_rows['std'].mean() if not std_rows.empty else 0
+                stats['robustness_tight_group'] = tight_rows['std'].mean() if not tight_rows.empty else 0
+                
+                # Legacy fallback
+                stats['robustness'] = variant_agg['std'].mean()
             else:
+                stats['robustness_std_group'] = 0
+                stats['robustness_tight_group'] = 0
                 stats['robustness'] = 0
             
         except Exception as e:
