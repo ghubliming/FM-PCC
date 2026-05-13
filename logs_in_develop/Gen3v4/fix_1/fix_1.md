@@ -1,47 +1,35 @@
-# iMeanFlow Training Fix 1: Keyword Argument Correction
+# iMeanFlow (iMF) Pipeline Alignment Hotfix
 
-## 1. Context & Problem
-During the initialization of the iMeanFlow (Improved Mean Flows) training pipeline, the script crashed immediately after data generation.
+This hotfix standardizes the iMeanFlow (iMF) training and evaluation infrastructure to match the established **FMv3-ODE** project standards. It transitions the iMF engine from a standalone synthetic test script to a production-ready pipeline integrated with the core D3IL dataset.
 
-**Error Message:**
-```
-TypeError: TimeConditionedDualVelocity.__init__() got an unexpected keyword argument 'use_jvp'
-```
+## Changes
 
-## 2. Root Cause
-The `TimeConditionedDualVelocity` model class (defined in `flow_matcher_v3_imeanflow/models/imf_velocity.py`) defined its optional Jacobian-Vector Product (JVP) guidance parameter as `include_jvp`. However, the training and evaluation entry points were passing it as `use_jvp`.
+### 1. Structural Alignment
+- **New Wrapper**: Created `flow_matcher_v3_imeanflow.models.ImfDiffusion`, a `nn.Module` wrapper that provides a `.loss()` method compatible with the project's standard `Trainer` class.
+- **Config Integration**: Updated `config/avoiding-d3il.py` to define the `flow_matching_v3_imeanflow` experiment block, including model, diffusion wrapper, and training hyperparameters.
+- **Boilerplate Standardization**: Refactored `train_flow_matching_v3_imeanflow.py` and `eval_flow_matching_v3_imeanflow.py` to use the standard `utils.Parser`, `utils.Config`, and `utils.load_diffusion` patterns.
 
-## 3. Solution
-Corrected the keyword argument name in the following files:
+### 2. Training Improvements
+- **Real Data**: The training script now loads the actual `avoiding-d3il` dataset instead of generating synthetic trajectories.
+- **Dual Velocity Loss**: Integrated the `ImfTrainingWrapper` which handles the global ($u$) and local ($v$) velocity loss components with an automated curriculum scheduler.
+- **Logging Cleanup**: Removed verbose `tqdm` progress bars that were bloating SLURM logs. Replaced with clean `[ train ]` and `[ eval ]` status reports.
+
+### 3. Checkpoint Management
+- **Deterministic Paths**: Paths are now derived from the config, ensuring consistency: `logs/avoiding-d3il/flow_matching_v3_imeanflow/.../seed_X`.
+- **Standard Naming**: Models are saved as `state_best.pt` and periodic `state_<epoch>.pt` files.
+
+## Files Modified
+- `flow_matcher_v3_imeanflow/models/imf_diffusion.py` (New)
+- `config/avoiding-d3il.py`
 - `FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py`
 - `FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py`
 
-Modified call:
-```python
-self.model = TimeConditionedDualVelocity(
-    state_dim=state_dim,
-    hidden_dim=256,
-    time_dim=128,
-    include_jvp=False,  # Renamed from use_jvp
-).to(device)
+## Verification
+To run the standardized training:
+```bash
+python FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py --seeds 6 7 8 9 10 --use-wandb
 ```
-
-## 4. Impact
-The training script now correctly instantiates the model and proceeds to the training loop.
-
-## 5. Time Embedding Dimension Fix
-Resolved a `RuntimeError` during the forward pass:
-```
-RuntimeError: expand(torch.cuda.FloatTensor{[32, 1, 20, 128]}, size=[32, 20, -1]): the number of sizes provided (3) must be greater or equal to the number of dimensions in the tensor (4)
-```
-
-**Root Cause:**
-The model was unconditionally trying to `unsqueeze(1).expand(...)` the time embedding if the input state `x` was 3D. However, the training script passes a 2D time tensor `t` (B, T), which already produces a 3D time embedding `(B, T, d)`. Unsqueezing this made it 4D, causing the `expand` call to fail.
-
-**Solution:**
-Updated `flow_matcher_v3_imeanflow/models/imf_velocity.py` to only expand the time embedding if it is 2D and the state input is 3D.
-
-```python
-if x.dim() == 3 and t_embed.dim() == 2:
-    t_embed = t_embed.unsqueeze(1).expand(-1, x.shape[1], -1)
+To run the evaluation:
+```bash
+python FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py --seeds 6 7 8 9 10
 ```
