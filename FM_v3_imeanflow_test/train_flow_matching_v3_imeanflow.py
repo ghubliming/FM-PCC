@@ -2,8 +2,8 @@
 """
 iMeanFlow (Improved Mean Flows) Training Script
 
-Trains dual-velocity trajectory models on D3IL demonstration data.
-Supports multi-seed training with Weights & Biases logging.
+Standardized training script for Improved Mean Flows models.
+Aligned with the FMv3-ODE pipeline ground truth.
 
 Usage:
     python train_flow_matching_v3_imeanflow.py --seeds 6 7 8 9 10 --use-wandb
@@ -11,30 +11,18 @@ Usage:
 
 import os
 import sys
-import yaml
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-from pathlib import Path
-import numpy as np
-import argparse
+import glob
 import json
+import torch
+import argparse
+from pathlib import Path
 from datetime import datetime
-from tqdm import tqdm
 
 # Setup paths
 REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from flow_matcher_v3_imeanflow.models.imf_velocity import TimeConditionedDualVelocity
-from flow_matcher_v3_imeanflow.utils.imf_training import (
-    ImfTrainingWrapper,
-    DualVelocityScheduler,
-    compute_trajectory_targets,
-)
-from flow_matcher_v3_imeanflow.utils.imf_metrics import ImfMetricsTracker
-
+import flow_matcher_v3_imeanflow.utils as utils
 
 # Try to import W&B
 try:
@@ -43,303 +31,171 @@ try:
 except ImportError:
     HAS_WANDB = False
 
+class Parser(utils.Parser):
+    dataset: str = 'avoiding-d3il'
+    config: str = 'config.avoiding-d3il'
 
-class TrajectorySynthesizer:
-    """Generate synthetic trajectory data (placeholder for real D3IL data)."""
-    
-    @staticmethod
-    def create_synthetic_trajectories(
-        num_trajectories: int = 500,
-        seq_length: int = 20,
-        state_dim: int = 28,
-        device: str = 'cpu',
-    ) -> torch.Tensor:
-        """Create smooth synthetic trajectories."""
-        trajectories = []
-        
-        for _ in range(num_trajectories):
-            pos = torch.randn(state_dim, device=device) * 0.5
-            traj = [pos.clone()]
-            vel = torch.randn(state_dim, device=device) * 0.1
-            
-            for t in range(seq_length - 1):
-                vel = 0.8 * vel + torch.randn(state_dim, device=device) * 0.05
-                pos = pos + vel * 0.1
-                traj.append(pos.clone())
-            
-            traj = torch.stack(traj)
-            trajectories.append(traj)
-        
-        return torch.stack(trajectories)
+def parse_top_level_args():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--seeds', nargs='+', type=int, default=None)
+    parser.add_argument('--num-seeds', type=int, default=1)
+    parser.add_argument('--use-wandb', action='store_true')
+    parser.add_argument('--wandb-project', default='FMPCC-iMF')
+    parser.add_argument('--wandb-entity', default=None)
+    parser.add_argument('--wandb-group', default=None)
+    parser.add_argument('--wandb-mode', default='online', choices=['online', 'offline', 'disabled'])
+    parser.add_argument('--resume-seed', type=int, default=None)
+    parser.add_argument('--resume-step', type=int, default=None)
+    parser.add_argument('--auto-resume', action='store_true')
+    return parser.parse_known_args()
 
+def resolve_seed_list(cli_args):
+    if cli_args.seeds is not None:
+        return cli_args.seeds, "manual_list"
+    
+    base_seeds = [6, 7, 8, 9, 10]
+    if cli_args.num_seeds > len(base_seeds):
+        selected = base_seeds + list(range(11, 11 + cli_args.num_seeds - len(base_seeds)))
+        return selected, "extended_range"
+    
+    return base_seeds[:cli_args.num_seeds], "default_subset"
 
-class ImfTrainer:
-    """End-to-end trainer for Improved Mean Flows."""
-    
-    def __init__(
-        self,
-        device: str = 'cuda',
-        state_dim: int = 28,
-        batch_size: int = 32,
-        learning_rate: float = 5e-4,
-        num_epochs: int = 100,
-        use_wandb: bool = False,
-        wandb_project: str = 'FMPCC-iMF',
-        run_name: str = None,
-        seed: int = 42,
-    ):
-        self.device = device
-        self.state_dim = state_dim
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.num_epochs = num_epochs
-        self.use_wandb = use_wandb and HAS_WANDB
-        self.wandb_project = wandb_project
-        self.run_name = run_name or f'iMF-seed{seed}'
-        self.seed = seed
-        
-        # Set seed for reproducibility
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        
-        # Initialize model
-        self.model = TimeConditionedDualVelocity(
-            state_dim=state_dim,
-            hidden_dim=256,
-            time_dim=128,
-            include_jvp=False,  # Can enable for safety-critical tasks
-        ).to(device)
-        
-        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
-        self.scheduler = DualVelocityScheduler(
-            mode='u_first',
-            total_steps=num_epochs * 1000,  # Assuming ~1000 steps per epoch
-        )
-        self.trainer = ImfTrainingWrapper(scheduler=self.scheduler)
-        self.metrics = ImfMetricsTracker()
-        
-        # W&B logging
-        if self.use_wandb:
-            wandb.init(
-                project=wandb_project,
-                name=self.run_name,
-                config={
-                    'state_dim': state_dim,
-                    'batch_size': batch_size,
-                    'learning_rate': learning_rate,
-                    'num_epochs': num_epochs,
-                    'seed': seed,
-                },
-            )
-    
-    def train_epoch(self, train_loader: DataLoader) -> dict:
-        """Train for one epoch."""
-        self.model.train()
-        epoch_losses = []
-        
-        for batch_idx, (traj_batch,) in enumerate(tqdm(train_loader, desc='Training', leave=False)):
-            traj_batch = traj_batch.to(self.device)
-            B, T, D = traj_batch.shape
-            
-            # Compute targets
-            u_target, v_target = compute_trajectory_targets(traj_batch)
-            
-            # Time samples
-            t = torch.linspace(0, 1, T, device=self.device).unsqueeze(0).expand(B, T)
-            
-            # Forward pass
-            u_pred, v_pred = self.model(traj_batch, t)
-            
-            # Loss
-            loss, loss_dict = self.trainer.compute_training_loss(
-                u_pred=u_pred,
-                u_target=u_target,
-                v_pred=v_pred,
-                v_target=v_target,
-            )
-            
-            # Backward
-            self.optimizer.zero_grad()
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
-            self.optimizer.step()
-            
-            # Metrics
-            self.metrics.compute_u_error(u_pred.detach(), u_target)
-            self.metrics.compute_v_error(v_pred.detach(), v_target)
-            
-            epoch_losses.append(loss.item())
-            self.trainer.step()
-        
-        avg_loss = np.mean(epoch_losses)
-        metrics_dict = self.metrics.get_summary()
-        
-        return {
-            'train_loss': avg_loss,
-            'metrics': metrics_dict,
-        }
-    
-    def validate(self, val_loader: DataLoader) -> float:
-        """Validate model."""
-        self.model.eval()
-        val_losses = []
-        
-        with torch.no_grad():
-            for traj_batch, in val_loader:
-                traj_batch = traj_batch.to(self.device)
-                B, T, D = traj_batch.shape
-                
-                u_target, v_target = compute_trajectory_targets(traj_batch)
-                t = torch.linspace(0, 1, T, device=self.device).unsqueeze(0).expand(B, T)
-                
-                u_pred, v_pred = self.model(traj_batch, t)
-                loss, _ = self.trainer.compute_training_loss(
-                    u_pred, u_target, v_pred, v_target
-                )
-                val_losses.append(loss.item())
-        
-        return np.mean(val_losses)
-    
-    def save_checkpoint(self, path: Path, is_best: bool = False):
-        """Save model checkpoint."""
-        path.parent.mkdir(parents=True, exist_ok=True)
-        
-        checkpoint = {
-            'state_dict': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'seed': self.seed,
-            'epoch': getattr(self, 'current_epoch', 0),
-        }
-        
-        torch.save(checkpoint, path)
-        
-        if is_best:
-            best_path = path.parent / 'state_best.pt'
-            torch.save(checkpoint, best_path)
-    
-    def train(self, train_loader: DataLoader, val_loader: DataLoader):
-        """Run full training loop."""
-        best_val_loss = float('inf')
-        
-        for epoch in range(self.num_epochs):
-            self.current_epoch = epoch
-            
-            # Train
-            self.metrics.reset()
-            train_stats = self.train_epoch(train_loader)
-            
-            # Validate
-            val_loss = self.validate(val_loader)
-            
-            # Logging
-            print(f"Epoch {epoch+1}/{self.num_epochs}")
-            print(f"  Train loss: {train_stats['train_loss']:.4f}, Val loss: {val_loss:.4f}")
-            
-            if self.use_wandb:
-                wandb.log({
-                    'epoch': epoch,
-                    'train_loss': train_stats['train_loss'],
-                    'val_loss': val_loss,
-                })
-            
-            # Save checkpoint
-            if (epoch + 1) % 5 == 0:
-                ckpt_path = Path(f'checkpoints/epoch_{epoch+1}.pt')
-                self.save_checkpoint(ckpt_path)
-            
-            # Save best
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                self.save_checkpoint(Path('checkpoints/state_best.pt'), is_best=True)
-                print(f"  ✓ New best model (val_loss={val_loss:.4f})")
-        
-        print("Training complete!")
-        return best_val_loss
-    
-    def finalize(self):
-        """Finalize training and close W&B."""
-        if self.use_wandb:
-            wandb.finish()
+def sanitize_wandb_env():
+    for key in list(os.environ.keys()):
+        if key.startswith('WANDB_'):
+            del os.environ[key]
 
+def find_latest_checkpoint_step(results_dir):
+    pattern = os.path.join(results_dir, 'state_*.pt')
+    steps = []
+    for checkpoint_path in glob.glob(pattern):
+        filename = os.path.basename(checkpoint_path)
+        step_token = filename.replace('state_', '').replace('.pt', '')
+        try:
+            steps.append(int(step_token))
+        except ValueError:
+            continue
+    return max(steps) if len(steps) > 0 else None
 
 def main():
-    """Main training script."""
-    parser = argparse.ArgumentParser(description='Train iMF models')
-    parser.add_argument('--seeds', nargs='+', type=int, default=[42],
-                       help='Random seeds for reproducibility')
-    parser.add_argument('--use-wandb', action='store_true',
-                       help='Use Weights & Biases for logging')
-    parser.add_argument('--wandb-project', default='FMPCC-iMF',
-                       help='W&B project name')
-    parser.add_argument('--batch-size', type=int, default=32)
-    parser.add_argument('--learning-rate', type=float, default=5e-4)
-    parser.add_argument('--num-epochs', type=int, default=100)
-    parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
-    
-    args = parser.parse_args()
+    cli_args, parser_remaining = parse_top_level_args()
+    selected_seeds, seed_source = resolve_seed_list(cli_args)
     
     print("=" * 80)
-    print("iMeanFlow Training")
+    print(f"[ train ] iMeanFlow Training (Real Data: {Parser.dataset})")
+    print(f"[ train ] Seeds: {selected_seeds} ({seed_source})")
     print("=" * 80)
-    print(f"Device: {args.device}")
-    print(f"Seeds: {args.seeds}")
-    print(f"Use W&B: {args.use_wandb}")
-    print()
     
-    # Training loop for each seed
-    for seed in args.seeds:
-        print(f"\n{'='*80}")
-        print(f"Training Seed {seed}")
-        print(f"{'='*80}\n")
+    # Save original argv to restore for each seed's Parser
+    original_argv = list(sys.argv)
+    sys.argv = [sys.argv[0], *parser_remaining]
+    
+    for seed in selected_seeds:
+        # Each call to parse_args sets the seed and creates the savepath
+        args = Parser().parse_args(experiment='flow_matching_v3_imeanflow', seed=seed)
+        torch.manual_seed(args.seed)
         
-        # Create synthetic data (placeholder)
-        print("Generating synthetic trajectory data...")
-        trajectories = TrajectorySynthesizer.create_synthetic_trajectories(
-            num_trajectories=500,
-            seq_length=20,
-            state_dim=28,
+        run = None
+        if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
+            sanitize_wandb_env()
+            savepath_rel = os.path.relpath(args.savepath, args.logbase)
+            wandb_name = savepath_rel.replace('/', '-').replace('flow_matcher_v3_imeanflow.models.', '').replace('models.', '')
+            
+            # Group seeds
+            name_parts = wandb_name.split('-')
+            if name_parts[-1].isdigit():
+                name_parts[-1] = f'S{name_parts[-1]}'
+            wandb_name = '-'.join(name_parts)
+            default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
+            wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
+            
+            run = wandb.init(
+                project=cli_args.wandb_project,
+                entity=cli_args.wandb_entity,
+                group=wandb_group,
+                name=wandb_name,
+                mode=cli_args.wandb_mode,
+                config={**vars(args), 'seed': seed}
+            )
+            
+        # Get dataset
+        dataset_config = utils.Config(
+            args.loader,
+            savepath=(args.savepath, 'dataset_config.pkl'),
+            env=args.dataset,
+            horizon=args.horizon,
+            normalizer=args.normalizer,
+            preprocess_fns=args.preprocess_fns,
+            use_padding=args.use_padding,
+            max_path_length=args.max_path_length,
+            include_returns=args.include_returns,
+            returns_scale=args.returns_scale,
+            discount=args.discount,
+        )
+        dataset = dataset_config()
+        observation_dim = dataset.observation_dim
+        action_dim = dataset.action_dim
+        
+        # Model & Trainer
+        model_config = utils.Config(
+            args.model,
+            savepath=(args.savepath, 'model_config.pkl'),
+            state_dim=observation_dim + action_dim,
+            time_dim=args.time_dim,
+            hidden_dim=args.hidden_dim,
+            include_jvp=False, # Standard training usually doesn't need JVP in forward
+        )
+        
+        diffusion_config = utils.Config(
+            args.diffusion,
+            savepath=(args.savepath, 'diffusion_config.pkl'),
+            horizon=args.horizon,
+            observation_dim=observation_dim,
+            action_dim=action_dim,
+            goal_dim=dataset.goal_dim,
+            u_loss_weight=args.u_loss_weight,
+            v_loss_weight=args.v_loss_weight,
+            jvp_weight=args.jvp_weight,
+            loss_type=args.loss_type,
+            loss_schedule=args.loss_schedule,
+            n_train_steps=args.n_train_steps,
             device=args.device,
         )
         
-        split_idx = int(0.8 * len(trajectories))
-        train_traj = trajectories[:split_idx]
-        val_traj = trajectories[split_idx:]
-        
-        train_loader = DataLoader(
-            TensorDataset(train_traj),
-            batch_size=args.batch_size,
-            shuffle=True,
-        )
-        val_loader = DataLoader(
-            TensorDataset(val_traj),
-            batch_size=args.batch_size,
-            shuffle=False,
+        trainer_config = utils.Config(
+            utils.Trainer,
+            savepath=(args.savepath, 'trainer_config.pkl'),
+            train_test_split=args.train_test_split,
+            ema_decay=args.ema_decay,
+            n_train_steps=args.n_train_steps,
+            n_steps_per_epoch=args.n_steps_per_epoch,
+            train_batch_size=args.batch_size,
+            train_lr=args.learning_rate,
+            gradient_accumulate_every=args.gradient_accumulate_every,
+            results_folder=args.savepath,
         )
         
-        # Initialize trainer
-        trainer = ImfTrainer(
-            device=args.device,
-            batch_size=args.batch_size,
-            learning_rate=args.learning_rate,
-            num_epochs=args.num_epochs,
-            use_wandb=args.use_wandb,
-            wandb_project=args.wandb_project,
-            run_name=f'iMF-seed{seed}',
-            seed=seed,
-        )
+        model = model_config()
+        diffusion = diffusion_config(model)
+        trainer = trainer_config(diffusion, dataset)
         
-        # Train
-        best_val_loss = trainer.train(train_loader, val_loader)
+        # Resume logic
+        resume_step = None
+        if cli_args.auto_resume:
+            resume_step = find_latest_checkpoint_step(args.savepath)
+        if cli_args.resume_seed == seed and cli_args.resume_step is not None:
+            resume_step = cli_args.resume_step
+            
+        if resume_step is not None:
+            print(f'[ train ] Resuming seed {seed} from step {resume_step}')
+            trainer.load(resume_step)
+            
+        trainer.train()
         
-        # Cleanup
-        trainer.finalize()
-        
-        print(f"✓ Seed {seed} complete (best_val_loss={best_val_loss:.4f})")
-    
-    print("\n" + "=" * 80)
-    print("All training jobs complete!")
-    print("=" * 80)
-
+        if run:
+            run.finish()
+            
+    print("\n[ train ] All training jobs complete.")
 
 if __name__ == '__main__':
     main()

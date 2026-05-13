@@ -799,17 +799,20 @@ base = {
         
         ## architecture
         'model': 'flow_matcher_v3_imeanflow.models.TimeConditionedDualVelocity',
+        'diffusion': 'flow_matcher_v3_imeanflow.models.ImfDiffusion',
         'state_dim': 28,
         'hidden_dim': 256,
         'time_dim': 128,
         'use_jvp_guidance': True,
         'jvp_hidden_dim': 128,
+        'horizon': 8,
         
         ## dual-velocity training
         'u_loss_weight': 0.5,           # LOCKED: balance with v_loss_weight
         'v_loss_weight': 0.5,           # LOCKED: balance with u_loss_weight
         'loss_schedule': 'u_first',     # LOCKED: curriculum learning for safety
         'jvp_weight': 0.2,              # Constraint guidance (collision, smoothness)
+        'loss_type': 'mse',
         
         ## dataset
         'loader': 'datasets.SequenceDataset',
@@ -819,6 +822,7 @@ base = {
         'include_returns': True,
         'returns_scale': 400,
         'discount': 0.99,
+        'use_padding': True,
         
         ## ODE solver
         'ode_solver_type': 'dopri5',    # dopri5, rk4, euler
@@ -841,6 +845,7 @@ base = {
         'gradient_clip': 1.0,
         'ema_decay': 0.995,
         'train_test_split': 0.85,
+        'gradient_accumulate_every': 2,
         'device': 'cuda',
         'seed': 0,
         
