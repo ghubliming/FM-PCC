@@ -242,7 +242,8 @@ def main():
         reporter = BatchReporter(
             candidate_stats,
             aggregator.ranked_candidates,
-            candidates_info=candidates
+            candidates_info=candidates,
+            aggregator=aggregator
         )
         reporter.save_all_reports(output_dir)
         

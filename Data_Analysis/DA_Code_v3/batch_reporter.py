@@ -19,7 +19,7 @@ class BatchReporter:
     Generate reports from batch aggregation results.
     """
     
-    def __init__(self, candidate_stats, ranked_candidates, candidates_info=None):
+    def __init__(self, candidate_stats, ranked_candidates, candidates_info=None, aggregator=None):
         """
         Initialize batch reporter.
         
@@ -27,10 +27,12 @@ class BatchReporter:
             candidate_stats: Dict from BatchAggregator
             ranked_candidates: Ranked list from BatchAggregator
             candidates_info: Original candidate info dict
+            aggregator: The BatchAggregator instance (for detailed multidimensional data)
         """
         self.candidate_stats = candidate_stats
         self.ranked_candidates = ranked_candidates
         self.candidates_info = candidates_info or {}
+        self.aggregator = aggregator
     
     def save_candidates_summary_txt(self, output_path):
         """
@@ -164,6 +166,27 @@ class BatchReporter:
         
         logger.info(f"Saved detailed CSV: {output_path}")
     
+    def save_candidates_multidimensional_csv(self, output_path):
+        """
+        Save the full unaggregated multidimensional data (Candidate x Variant x Constraint x Halfspace)
+        to a CSV for pivot tables and advanced analysis.
+        """
+        if not self.aggregator:
+            logger.warning("No aggregator provided. Cannot save multidimensional CSV.")
+            return
+            
+        try:
+            df = self.aggregator.get_full_detailed_dataframe()
+            if df is not None and not df.empty:
+                # Add folder info
+                df['Folder_Name'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                df.to_csv(output_path, index=False)
+                logger.info(f"Saved multidimensional CSV ({len(df)} rows): {output_path}")
+            else:
+                logger.warning("Multidimensional detailed dataframe is empty.")
+        except Exception as e:
+            logger.error(f"Failed to save multidimensional CSV: {e}")
+
     def save_all_reports(self, output_dir):
         """
         Generate all reporting outputs.
@@ -185,6 +208,11 @@ class BatchReporter:
         
         self.save_candidates_detailed_csv(
             os.path.join(output_dir, 'candidates_detailed.csv')
+        )
+        
+        # Multidimensional CSV
+        self.save_candidates_multidimensional_csv(
+            os.path.join(output_dir, 'candidates_multidimensional.csv')
         )
         
         logger.info(f"All reports saved to: {output_dir}")

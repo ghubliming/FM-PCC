@@ -171,13 +171,35 @@ class DataLoader:
                     logger.debug(f'Could not convert key {key}: {str(e)}')
             return metrics_dict
         else:
-            # Fallback: read raw log content
+            # Fallback: read raw log content and parse with regex
+            import re
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     text = f.read()
-                # Return raw_log plus numeric NaN placeholders for expected metrics
+                
                 metrics_dict = {m: np.nan for m in METRICS}
                 metrics_dict['raw_log'] = text
+                
+                # Parse metrics
+                patterns = {
+                    'n_success': r'Success rate:\s*([\d.]+)',
+                    'collision_free_completed': r'Constraints satisfied:\s*([\d.]+)',
+                    'n_success_and_constraints': r'Success rate \(goal and constraints\):\s*([\d.]+)',
+                    'n_steps': r'Avg number of steps:\s*([\d.]+)',
+                    'n_violations': r'Avg number of constraint violations:\s*([\d.]+)',
+                    'total_violations': r'Avg total violation:\s*([\d.]+)',
+                    'avg_time': r'Average computation time per step:\s*([\d.]+)'
+                }
+                
+                for metric, pattern in patterns.items():
+                    match = re.search(pattern, text)
+                    if match:
+                        val = float(match.group(1))
+                        if metric == 'avg_time':
+                            # Convert seconds to ms
+                            val = val * 1000.0
+                        metrics_dict[metric] = val
+                        
                 return metrics_dict
             except Exception as e:
                 logger.error(f'Failed to read log file {file_path}: {str(e)}')

@@ -387,6 +387,86 @@ class BatchVisualizer:
         
         plt.close()
     
+    def plot_multidimensional_comparison(self, output_dir, metric='n_success_and_constraints', show=False):
+        """
+        Plot grouped bar charts for a specific metric across Candidates and Variants, separated by Test Type (Halfspace).
+        """
+        logger.info(f"Generating multidimensional comparison for {metric}...")
+        
+        # We need the full detailed dataframe
+        # Since Visualizer doesn't have direct access to aggregator, we can build it from candidate_aggregators
+        all_dfs = []
+        for letter, agg in self.candidate_aggregators.items():
+            df = agg.detailed_df
+            if df is not None and not df.empty:
+                df = df.copy()
+                df['Candidate'] = letter
+                all_dfs.append(df)
+                
+        if not all_dfs:
+            logger.warning("No detailed data for multidimensional plot")
+            return
+            
+        full_df = pd.concat(all_dfs, ignore_index=True)
+        metric_data = full_df[full_df['metric'] == metric]
+        
+        if metric_data.empty:
+            logger.warning(f"No data found for metric: {metric}")
+            return
+            
+        # Group by Candidate, Variant, Halfspace (Test Type)
+        grouped = metric_data.groupby(['Candidate', 'variant', 'halfspace_variant'])['value'].agg(['mean', 'std']).reset_index()
+        
+        halfspaces = grouped['halfspace_variant'].unique()
+        candidates = sorted(grouped['Candidate'].unique())
+        
+        for hs in halfspaces:
+            hs_data = grouped[grouped['halfspace_variant'] == hs]
+            
+            # Pivot table: Index=Candidate, Columns=Variant, Values=mean
+            pivot_mean = hs_data.pivot(index='Candidate', columns='variant', values='mean')
+            pivot_std = hs_data.pivot(index='Candidate', columns='variant', values='std')
+            
+            if pivot_mean.empty:
+                continue
+                
+            fig, ax = plt.subplots(figsize=(14, 7))
+            
+            x = np.arange(len(pivot_mean.index))
+            n_variants = len(pivot_mean.columns)
+            width = 0.8 / max(1, n_variants)
+            
+            for i, variant in enumerate(pivot_mean.columns):
+                means = pivot_mean[variant].values
+                stds = pivot_std[variant].values
+                
+                # Filter out NaNs for plotting
+                stds = np.nan_to_num(stds, 0)
+                
+                pos = x - 0.4 + (i + 0.5) * width
+                ax.bar(pos, means, width, yerr=stds, label=variant, capsize=4, alpha=0.8, edgecolor='black')
+                
+            ax.set_xlabel('Candidate', fontsize=12, fontweight='bold')
+            ax.set_ylabel(metric, fontsize=12, fontweight='bold')
+            ax.set_title(f'Cross-Candidate Comparison - {metric} (Test Type: {hs})', fontsize=14, fontweight='bold')
+            ax.set_xticks(x)
+            ax.set_xticklabels([f'Candidate {c}' for c in pivot_mean.index])
+            ax.legend(title='Variant', bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.grid(True, alpha=0.3, axis='y')
+            
+            plt.tight_layout()
+            
+            safe_metric = metric.replace('/', '_').replace(' ', '_')
+            safe_hs = hs.replace('/', '_').replace(' ', '_')
+            output_path = f"{output_dir}/05_multi_comp_{safe_metric}_{safe_hs}.png"
+            plt.savefig(output_path, dpi=PLOT_CONFIG.get('dpi', 300), bbox_inches='tight')
+            logger.info(f"Saved: {output_path}")
+            
+            if show:
+                plt.show()
+                
+            plt.close()
+
     def plot_all(self, output_dir, show=False):
         """
         Generate all comparison plots.
@@ -402,6 +482,10 @@ class BatchVisualizer:
         self.plot_candidate_time_comparison(output_dir, show=show)
         self.plot_candidate_robustness_boxplot(output_dir, show=show)
         self.plot_candidate_constraint_heatmap(output_dir, show=show)
+        
+        # New Multidimensional plots
+        self.plot_multidimensional_comparison(output_dir, metric='n_success_and_constraints', show=show)
+        self.plot_multidimensional_comparison(output_dir, metric='avg_time', show=show)
         
         logger.info("All plots generated successfully")
 
