@@ -10,15 +10,23 @@
 
 set -e
 
-# Logging setup
+# ─── Job Metadata ───────────────────────────────────────────────────────
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then
     ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log
 fi
 
+echo "================================================================================"
 echo "JOB START: $(date)"
+echo "JOB NAME:  $SLURM_JOB_NAME"
+echo "JOB ID:    $SLURM_JOB_ID"
+echo "NODE:      $(hostname)"
+echo "GPU INFO:"
+nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>/dev/null || echo "  (no GPU info available)"
+echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'N/A')"
+echo "================================================================================"
 
-# Setup Workspace Paths
+# ─── Environment Setup ──────────────────────────────────────────────────
 FMPCC_ROOT="$HOME/FMPCC"
 REPO="$FMPCC_ROOT/FM-PCC"
 CONDA_DIR="$HOME/miniconda3"
@@ -39,26 +47,17 @@ export MPLBACKEND="agg"
 
 cd "$REPO"
 
-# ─────────────────────────────────────────────────────────────────────
-# Configuration: Set the path to your trained D3IL checkpoint directory
-# This should contain eval_best_ddpm.pth (or last_ddpm.pth)
-# ─────────────────────────────────────────────────────────────────────
-WEIGHTS_DIR="${1:-$REPO/d3il/logs/aligning/runs/ddpm_encdec_vision}"
-SEED="${2:-42}"
-N_CONTEXTS="${3:-30}"
-N_TRAJECTORIES="${4:-1}"
+# ─── Run Evaluation ─────────────────────────────────────────────────────
+# Uses config/visual_aligning_eval.yaml for seed/variant configuration.
+# Model is loaded from the FM-PCC pickle config system (same as training).
+# Results are saved to: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/<seed>/results/
 
-echo "[ eval ] Weights dir: $WEIGHTS_DIR"
-echo "[ eval ] Seed: $SEED"
-echo "[ eval ] Contexts: $N_CONTEXTS | Trajectories/ctx: $N_TRAJECTORIES"
-
-# Run evaluation using D3IL's native agent infrastructure
-python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py \
-    --weights-dir "$WEIGHTS_DIR" \
-    --seed "$SEED" \
-    --n-contexts "$N_CONTEXTS" \
-    --n-trajectories "$N_TRAJECTORIES" \
-    --n-cores 1 \
-    --device cuda
+# Optional: override seed via command line argument
+if [ -n "$1" ]; then
+    echo "[ eval ] Overriding seed to: $1"
+    python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py --seed "$1"
+else
+    python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py
+fi
 
 echo "Job completed successfully."

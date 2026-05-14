@@ -1,4 +1,4 @@
-# Gen3v4 Midterm Checkpoint Audit: iMF-PCC Fix #5 (Current Code Snapshot)
+# Gen3v4 Midterm Checkpoint Audit: iMF-PCC Fix #6 (Current Code Snapshot)
 
 **Status**: Updated to current code paths in `flow_matcher_v3_imeanflow` (document refresh)
 **Verification**: Not executed in this document pass

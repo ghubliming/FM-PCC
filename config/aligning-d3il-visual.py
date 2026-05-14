@@ -102,8 +102,8 @@ base = {
 
     'plan_ddpm_encdec_vision': {
         'policy': 'sampling.Policy',
-        'max_episode_length': 200,
-        'batch_size': 4,
+        'max_episode_length': 400,
+        'batch_size': 1,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -115,7 +115,8 @@ base = {
         'prefix': 'plans/ddpm_encdec_vision/',
         'exp_name': watch([('prefix', ''), ('horizon', 'H')]),
         
-        'diffusion': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
+        # Must match the class used in training (train_ddpm_encdec_vision.py)
+        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'horizon': 8,
         'n_diffusion_steps': 16,
         
