@@ -94,10 +94,11 @@ def parse_top_level_args():
     parser.add_argument('--resume-step', type=int, help='Checkpoint step to resume from, e.g. 80000.')
     parser.add_argument('--auto-resume', action='store_true', help='Auto-resume each seed from latest local checkpoint if present.')
     parser.add_argument('--use-wandb', action='store_true', help='Enable W&B runs per seed.')
-    parser.add_argument('--wandb-project', type=str, default='fm-pcc-vision', help='W&B project name.')
+    parser.add_argument('--wandb-project', type=str, default='fm-pcc-flow-matching', help='W&B project name.')
     parser.add_argument('--wandb-entity', type=str, default=None, help='W&B entity/team name.')
     parser.add_argument('--wandb-group', type=str, default=None, help='W&B group name for per-seed runs.')
     parser.add_argument('--wandb-mode', type=str, default='online', choices=['online', 'offline', 'disabled'], help='W&B mode.')
+    parser.add_argument('--log-freq', type=int, default=100, help='How often to log progress to console/disk.')
     args, remaining = parser.parse_known_args()
     if args.seed is not None and args.seeds is not None:
         raise ValueError('Use either --seed or --seeds, not both.')
@@ -196,11 +197,8 @@ for seed in selected_seeds:
     run = None
     if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
         sanitize_wandb_env()
-        savepath_rel = os.path.relpath(args.savepath, args.logbase)
-        wandb_name = savepath_rel.replace('/', '-').replace('models.diffusion.', '').replace('models.', '')
-        name_parts = wandb_name.split('-')
-        if name_parts[-1].isdigit():
-            name_parts[-1] = f'S{name_parts[-1]}'
+        # Build run name exactly like FMv3ODE
+        name_parts = [exp, args.exp_name, f'S{seed}']
         wandb_name = '-'.join(name_parts)
         default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
@@ -248,7 +246,6 @@ for seed in selected_seeds:
     diffusion_config = utils.Config(
         VisualGaussianDiffusion,
         savepath=(args.savepath, 'diffusion_config.pkl'),
-        model=model,
         horizon=args.horizon,
         observation_dim=3,
         action_dim=3,
@@ -276,6 +273,7 @@ for seed in selected_seeds:
         gradient_accumulate_every=args.gradient_accumulate_every,
         results_folder=args.savepath,
         train_device=args.device,
+        log_freq=cli_args.log_freq,
     )
     trainer = trainer_config(diffusion, dataset)
     
