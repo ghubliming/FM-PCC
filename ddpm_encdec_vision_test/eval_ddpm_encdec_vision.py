@@ -298,6 +298,22 @@ if __name__ == '__main__':
                     n_trajectories_per_context=n_trajectories,
                     if_vision=True
                 )
+
+                # ── Visual Diagnostic: Save first frame ─────────────────────
+                print(f"[ eval ] Saving diagnostic observation to logs/visual_diagnostic_seed_{seed}.png")
+                os.makedirs('logs', exist_ok=True)
+                diag_obs = sim.reset() # Returns (bp, inhand, state)
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+                ax[0].imshow(diag_obs[0])
+                ax[0].set_title("Agentview")
+                ax[1].imshow(diag_obs[1])
+                ax[1].set_title("In-hand")
+                plt.savefig(f"logs/visual_diagnostic_seed_{seed}.png")
+                plt.close()
+                print(f"[ eval ] Diagnostic saved.")
+                # ────────────────────────────────────────────────────────────
+
                 
                 # Run evaluation through D3IL's native test_agent
                 t0 = time.time()
