@@ -41,21 +41,11 @@ class VisualUNet(nn.Module):
         })
         self.obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(self.device)
         
-        # 2. Instantiate Backbone (e.g., UNet)
-        from ddpm_encdec_vision.utils.config import import_class
-        try:
-            backbone_class = import_class(config.model)
-            # If the config still points to the bridge, we fallback to the default backbone
-            if 'VisualDiffusionBridge' in str(backbone_class):
-                 from flow_matcher_v3_ode_selectable.models.unet1d_temporal_cond import Flow_matcher_U_Net_v2
-                 backbone_class = Flow_matcher_U_Net_v2
-        except Exception:
-            from flow_matcher_v3_ode_selectable.models.unet1d_temporal_cond import Flow_matcher_U_Net_v2
-            backbone_class = Flow_matcher_U_Net_v2
+        # 2. Instantiate Backbone (Standard DDPM UNet)
+        from diffuser.models.unet1d_temporal_cond import UNet1DTemporalCondModel
+        backbone_class = UNet1DTemporalCondModel
         
         # Calculate latent dim: encoder outputs 64*2 = 128 (default)
-        # Plus any state if provided. In Aligning_Img_Dataset, 'obs' is passed.
-        # Aligning_Img_Dataset 'obs' is robot_des_pos (3 dim).
         latent_dim = 128
         
         self.backbone = backbone_class(
