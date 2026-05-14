@@ -873,8 +873,17 @@ base = {
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 0.1,
-        'ode_inference_steps_v3': 1,
+        'flow_steps_v3': 1,
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_u{u_loss_weight}_v{v_loss_weight}_aw{action_weight}',
+        'diffusion_epoch': 'best',
     },
 }
