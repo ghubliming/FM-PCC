@@ -193,12 +193,21 @@ def evaluate_seed(seed, results_dir='evaluation_results', experiment='flow_match
     return results
 
 
+def resolve_results_dir(explicit_results_dir, checkpoint_dir):
+    """Resolve the evaluation output directory next to the experiment logs."""
+    if explicit_results_dir is not None:
+        return str(Path(explicit_results_dir).expanduser())
+
+    checkpoint_path = Path(checkpoint_dir)
+    return str(checkpoint_path.parent / 'evaluation_results' / 'imf')
+
+
 def main():
     """Main evaluation loop."""
     parser = argparse.ArgumentParser(description='Evaluate iMF')
     parser.add_argument('--seed', type=int, help='Single seed.')
     parser.add_argument('--seeds', type=int, nargs='+', help='List of seeds.')
-    parser.add_argument('--results-dir', type=str, default='evaluation_results/imf', help='Output directory.')
+    parser.add_argument('--results-dir', type=str, default=None, help='Output directory. Defaults to <experiment-root>/evaluation_results/imf.')
     parser.add_argument(
         '--experiment',
         type=str,
@@ -229,15 +238,23 @@ def main():
     print(f"[ eval ] Seeds: {seeds}")
     print("=" * 80)
     print()
-    
-    os.makedirs(args.results_dir, exist_ok=True)
+
+    if args.checkpoint_root is not None:
+        base_checkpoint_dir = Path(args.checkpoint_root).expanduser()
+        if args.seed is not None:
+            base_checkpoint_dir = base_checkpoint_dir / str(args.seed)
+    else:
+        base_checkpoint_dir = Path(resolve_checkpoint_dir(seeds[0], experiment=args.experiment))
+
+    results_dir = resolve_results_dir(args.results_dir, base_checkpoint_dir)
+    os.makedirs(results_dir, exist_ok=True)
     all_results = {}
     
     # Evaluate each seed
     for seed in seeds:
         result = evaluate_seed(
             seed,
-            args.results_dir,
+            results_dir,
             experiment=args.experiment,
             checkpoint_root=args.checkpoint_root,
         )
@@ -246,7 +263,7 @@ def main():
         print()
     
     # Save results to JSON
-    results_file = os.path.join(args.results_dir, 'eval_results.json')
+    results_file = os.path.join(results_dir, 'eval_results.json')
     with open(results_file, 'w') as f:
         json.dump(all_results, f, indent=2)
     

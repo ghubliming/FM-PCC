@@ -10,6 +10,7 @@ Replace the unstable iMF glue code with a stable FMv3ODE-aligned implementation 
 - training uses a normal flow-matching loss curve instead of the earlier catastrophic dual-target behavior
 - eval loads checkpoints and runs with the same control flow style as FMv3ODE
 - the iMF engine remains an actual wrapper around the FM-PCC stack, not a parallel ad hoc pipeline
+- the FMv3ODE PCC backbone is fully replicated inside iMF so the live iMF path is the FMv3ODE-compatible implementation
 
 ## What Was Rebuilt
 
@@ -73,7 +74,16 @@ Changes:
 - Restored a simple per-seed table for `evaluation_results/imf/eval_results.json`
 - Removed stray appended code that had introduced syntax errors
 
-### 7. Runtime device alignment
+### 7. Evaluation path relocation
+File:
+- [FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py)
+
+Changes:
+- Changed the default evaluation output directory to live under the IMF experiment root
+- Default path now resolves to `<experiment-root>/evaluation_results/imf` instead of a repo-root scratch folder
+- Keeps multi-seed eval outputs colocated with the checkpoint tree
+
+### 8. Runtime device alignment
 File:
 - [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
 
@@ -82,14 +92,27 @@ Changes:
 - Ensured `loss_fn.weights`, `betas`, `alphas_cumprod`, and model parameters share the same device
 - Fixed the CUDA vs CPU mismatch that caused the first training step to crash
 
+### 9. FMv3ODE PCC backbone replication
+Files:
+- [flow_matcher_v3_imeanflow/models/imf_trajectory_model.py](../../../flow_matcher_v3_imeanflow/models/imf_trajectory_model.py)
+- [flow_matcher_v3_imeanflow/models/imf_engine.py](../../../flow_matcher_v3_imeanflow/models/imf_engine.py)
+- [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
+
+Changes:
+- Preserved the FMv3ODE-style PCC training and inference contract across the full iMF stack
+- Kept the iMF wrappers as the live implementation layer while matching the FMv3ODE module shape and loading behavior
+- Ensured the only active FMv3ODE-compatible implementation in this branch is the iMF path
+
 ## Behavioral Result
 
 Expected behavior after rebuild:
 - training loss should track the FM-style objective, with the auxiliary branch staying small
 - eval should load the same checkpoint layout as the train job writes
 - the runtime should look like FMv3ODE with iMF as the underlying engine, not like a separate experimental pipeline
+- the FMv3ODE PCC bone should be fully represented by the iMF stack in this branch
 - legacy checkpoints from existing seeds should continue to load through the compatibility remap
 - training should no longer crash on the initial loss step because of CPU/CUDA tensor placement
+- eval artifacts should no longer be dumped into a repo-root `evaluation_results/imf` folder by default
 
 ## Files Touched In This Rebuild
 
@@ -98,7 +121,7 @@ Expected behavior after rebuild:
 - [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
 - [config/avoiding-d3il.py](../../../config/avoiding-d3il.py)
 - [FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py)
-- [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
+- [FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py)
 
 ## Notes
 
