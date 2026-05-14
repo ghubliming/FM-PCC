@@ -56,6 +56,7 @@ class VisualUNet(nn.Module):
             dim_mults=getattr(config, "dim_mults", (1, 2, 4, 8)),
             returns_condition=getattr(config, "returns_condition", False),
             condition_dropout=getattr(config, "condition_dropout", 0.1),
+            use_cond_projection=True,  # Enable FiLM conditioning for visual embeddings
         ).to(self.device)
 
     def encode_visual(self, bp_imgs, inhand_imgs, state=None):
