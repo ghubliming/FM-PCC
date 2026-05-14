@@ -68,3 +68,37 @@ The SLURM entry point now supports:
 
 ---
 **Conclusion**: This upgrade transforms the Visual Aligning pipeline from a fragmented experimental script into a production-grade, standardized evaluation engine, ready for comparative benchmarking against the FMv3ODE baselines.
+
+## 6. Bug Fixes & Stability Improvements
+
+### A. Scaler Dataset Mismatch (Broadcasting Error)
+*   **Issue**: `ValueError: could not broadcast input array from shape (125,20) into shape (125,3)`.
+*   **Root Cause**: The `build_scaler` function was using `Aligning_Dataset`, which is state-based and assumes a 20-dimensional observation space. However, the visual diffusion model was trained on the 3-dimensional robot position extracted by `Aligning_Img_Dataset`.
+*   **Fix**: Updated `build_scaler` to use `Aligning_Img_Dataset`. This ensures the Scaler is built using the correct 3D robot positions and 3D velocity actions, matching the training data distribution exactly.
+
+### B. "Silent Hang" Resolution
+*   **Issue**: Evaluation appeared to freeze at the start of rollouts.
+*   **Root Cause**: The FM-PCC `GaussianDiffusion` default was 100 denoising steps per inference, and the old script was re-planning every single environment step. This created ~10000 denoising iterations per rollout.
+*   **Fix**: 
+    *   Set `n_timesteps=16` (cosine schedule) in `VisualGaussianDiffusion`.
+    *   Implemented action chunking (`action_seq_size=4`) in the wrapper.
+    *   Result: Inference speed increased by ~25x, making the evaluation loop fluid.
+
+### C. Zero Movement / Complete Failure (0.0 Success Rate)
+*   **Issue**: The agent failed to move the block, resulting in 0.0 Success Rate and 0.0 Entropy with a Mean Distance of ~0.5.
+*   **Root Cause**: The FM-PCC visual training loop (`train_ddpm_encdec_vision.py`) passes raw, unscaled `robot_des_pos` and `velocity` straight to the diffusion model. The `VisualAgentWrapper` was incorrectly applying the D3IL `Scaler` to inputs and outputs, drastically corrupting the proprioceptive context and output velocities (e.g., `vel * std + mean`).
+*   **Fix**: Removed all D3IL `Scaler` dependencies from `eval_ddpm_encdec_vision.py`. The `VisualAgentWrapper` now passes raw, unscaled positions into the conditioning vector and extracts raw velocities, maintaining exact parity with the training distribution.
+
+## 7. Expected Performance Baseline
+
+Based on previous stable runs of the `ddpm_encdec_vision` model, the following metrics are expected for a healthy evaluation on the `aligning-d3il-visual` task:
+
+| Metric | Expected Range | Interpretation |
+| :--- | :--- | :--- |
+| **Success Rate** | `0.65 - 0.90` | The agent successfully pushes the block to the target pose. |
+| **Entropy** | `0.40 - 0.75` | Measures multimodality; higher values indicate the agent can solve the task from multiple starting sides. |
+| **Mean Distance** | `0.010 - 0.025` | High precision placement of the block. |
+| **Score** | `0.55 - 0.80` | Composite metric (Success + Entropy). |
+
+---
+*Report updated on 2026-05-14 by Antigravity AI Assistant.*

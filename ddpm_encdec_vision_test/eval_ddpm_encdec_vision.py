@@ -54,9 +54,8 @@ class VisualAgentWrapper:
       3. Runs the D3IL DiffusionPolicy (obs_encoder + diffusion_model)
       4. Returns action chunks (action_seq_size=4 steps per inference call)
     """
-    def __init__(self, diffusion_model, scaler, device, window_size=8, obs_seq_len=5, action_seq_size=4):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4):
         self.model = diffusion_model
-        self.scaler = scaler
         self.device = device
         self.window_size = window_size
         self.obs_seq_len = obs_seq_len
@@ -91,13 +90,10 @@ class VisualAgentWrapper:
             inhand_image = torch.from_numpy(inhand_image).to(self.device).float().unsqueeze(0)
             des_robot_pos = torch.from_numpy(des_robot_pos).to(self.device).float().unsqueeze(0)
             
-            # Apply training-time normalization
-            des_robot_pos_scaled = self.scaler.scale_input(des_robot_pos)
-            
-            # Append to sliding window
+            # Append to sliding window (unscaled, matching training)
             self.bp_image_context.append(bp_image)
             self.inhand_image_context.append(inhand_image)
-            self.des_robot_pos_context.append(des_robot_pos_scaled)
+            self.des_robot_pos_context.append(des_robot_pos)
             
             # Stack context window → [1, T, C, H, W] and [1, T, 3]
             bp_image_seq = torch.stack(tuple(self.bp_image_context), dim=1)
@@ -123,8 +119,7 @@ class VisualAgentWrapper:
             action_dim = 3
             actions = trajectory[:, :self.action_seq_size, :action_dim]
             
-            # Inverse-scale the output
-            actions = self.scaler.inverse_scale_output(actions)
+            # Use raw actions (model was trained on raw unscaled velocities)
             self.curr_action_seq = actions
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
@@ -195,30 +190,7 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
 
 
 # ─── Scaler Construction ───────────────────────────────────────────────────
-def build_scaler(device='cuda'):
-    """
-    Build the D3IL Scaler from the aligning training dataset.
-    This is the SAME scaler used during training — critical for correct normalization.
-    Uses Aligning_Img_Dataset (vision variant) which extracts obs_dim=3 (robot_des_pos).
-    """
-    from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
-    from d3il.agents.utils.scaler import Scaler
-    
-    dataset = Aligning_Img_Dataset(
-        data_directory='environments/dataset/data/aligning/train_files.pkl',
-        device='cpu',
-        obs_dim=3,
-        action_dim=3,
-        max_len_data=512,
-        window_size=8,
-    )
-    scaler = Scaler(
-        dataset.get_all_observations(),
-        dataset.get_all_actions(),
-        True,  # scale_data=True (matches training)
-        device,
-    )
-    return scaler
+
 
 
 # ─── Parser ─────────────────────────────────────────────────────────────────
@@ -262,7 +234,7 @@ if __name__ == '__main__':
         args = Parser().parse_args(experiment='plan_ddpm_encdec_vision', seed=seed)
         
         diffusion_model = None
-        scaler = None
+
         
         if not args_cli.aggregate_only:
             # ── Model Loading (FM-PCC Pickle Config System) ──────────────
@@ -271,18 +243,6 @@ if __name__ == '__main__':
                 target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device
             )
             diffusion_model = fm_experiment.diffusion
-            
-            # ── Build Scaler ─────────────────────────────────────────────
-            scaler = build_scaler(device=args.device)
-            
-            # Set action bounds on the diffusion model's inner sampler
-            try:
-                if hasattr(diffusion_model, 'model') and hasattr(diffusion_model.model, 'backbone'):
-                    pass  # VisualUNet doesn't need action bounds directly
-                diffusion_model.min_action = torch.from_numpy(scaler.y_bounds[0, :]).to(args.device)
-                diffusion_model.max_action = torch.from_numpy(scaler.y_bounds[1, :]).to(args.device)
-            except Exception as e:
-                print(f"[ eval ] Warning: Could not set action bounds: {e}")
             
             # ── Initialize Simulation ────────────────────────────────────
             # Disable wandb to prevent crashes
@@ -321,7 +281,6 @@ if __name__ == '__main__':
                 # Build the D3IL-native agent wrapper
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model,
-                    scaler=scaler,
                     device=args.device,
                     window_size=getattr(args, 'horizon', 8),
                     obs_seq_len=5,
