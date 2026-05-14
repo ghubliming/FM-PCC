@@ -39,7 +39,26 @@ export MPLBACKEND="agg"
 
 cd "$REPO"
 
-# Run evaluation (Python script now handles seed looping via config/projection_eval.yaml)
-python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py
+# ─────────────────────────────────────────────────────────────────────
+# Configuration: Set the path to your trained D3IL checkpoint directory
+# This should contain eval_best_ddpm.pth (or last_ddpm.pth)
+# ─────────────────────────────────────────────────────────────────────
+WEIGHTS_DIR="${1:-$REPO/d3il/logs/aligning/runs/ddpm_encdec_vision}"
+SEED="${2:-42}"
+N_CONTEXTS="${3:-30}"
+N_TRAJECTORIES="${4:-1}"
+
+echo "[ eval ] Weights dir: $WEIGHTS_DIR"
+echo "[ eval ] Seed: $SEED"
+echo "[ eval ] Contexts: $N_CONTEXTS | Trajectories/ctx: $N_TRAJECTORIES"
+
+# Run evaluation using D3IL's native agent infrastructure
+python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py \
+    --weights-dir "$WEIGHTS_DIR" \
+    --seed "$SEED" \
+    --n-contexts "$N_CONTEXTS" \
+    --n-trajectories "$N_TRAJECTORIES" \
+    --n-cores 1 \
+    --device cuda
 
 echo "Job completed successfully."

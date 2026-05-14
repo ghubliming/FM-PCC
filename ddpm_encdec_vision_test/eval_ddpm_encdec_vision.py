@@ -1,62 +1,41 @@
-# FM_v3 ODE-selectable version of eval_ddpm_encdec_vision.py
+# Visual Aligning Evaluation Script
+# Uses D3IL's native DiffusionAgent directly — no FM-PCC Policy wrapper needed.
+# This is a MANIPULATION task (push block to target), NOT a trajectory-planning avoiding task.
+#
+# D3IL Aligning Output Metrics:
+#   - Success Rate: fraction of rollouts where the block reached the target
+#   - Entropy: multimodality measure (push from inside vs outside)
+#   - Mean Distance: average distance from block to target at end of rollout
+#   - Score: 0.5 * (success_rate + entropy)
+#
+# These are the STANDARD D3IL metrics, identical to what the original codebase produces.
+
+import os
+import sys
 import time
 import yaml
-import os
 import torch
 import numpy as np
 import argparse
 import pickle
 import json
+import logging
 from datetime import datetime
-import sys
-
-import ddpm_encdec_vision.utils as utils
-from flow_matcher_v3_ode_selectable.sampling.policies import Policy
+from omegaconf import OmegaConf
+import hydra
 
 # Ensure d3il is in path
 sys.path.append(os.path.abspath('d3il'))
 sys.path.append(os.path.abspath('d3il/environments/d3il'))
+
 from d3il.simulation.aligning_sim import Aligning_Sim
+from d3il.agents.ddpm_encdec_vision_agent import DiffusionAgent
+from d3il.agents.utils.scaler import Scaler
 
-class IdentityNormalizer:
-    """Pass-through normalizer for vision pipeline."""
-    def normalize(self, x, *args, **kwargs): return x
-    def unnormalize(self, x, *args, **kwargs): return x
-
-class VisualAgentWrapper:
-    """Bridges FM-PCC Policy into Aligning_Sim."""
-    def __init__(self, policy, device):
-        self.policy = policy
-        self.device = device
-    
-    def reset(self):
-        pass
-        
-    def predict(self, obs, if_vision=True):
-        bp_image, inhand_image, des_robot_pos = obs
-        
-        # Format inputs [1, 1, C, H, W]
-        bp_tensor = torch.tensor(bp_image).unsqueeze(0).unsqueeze(0).to(self.device).float()
-        inhand_tensor = torch.tensor(inhand_image).unsqueeze(0).unsqueeze(0).to(self.device).float()
-        pos_tensor = torch.tensor(des_robot_pos).unsqueeze(0).unsqueeze(0).to(self.device).float()
-        
-        # Condition matches VisualModel input
-        cond = (bp_tensor, inhand_tensor, pos_tensor)
-        
-        # Temporarily bypass Policy._format_conditions which crashes when trying to apply to_torch/einops to tuples
-        original_format = self.policy._format_conditions
-        self.policy._format_conditions = lambda conditions, batch_size: conditions
-        
-        # Policy call
-        action, samples = self.policy(conditions={0: cond}, batch_size=1)
-        
-        # Restore formatting function
-        self.policy._format_conditions = original_format
-        
-        # action is [batch, action_dim], e.g., [1, 3]
-        return action.detach().cpu().numpy()
+log = logging.getLogger(__name__)
 
 class Tee(object):
+    """Mirrors stdout to a log file."""
     def __init__(self, *files):
         self.files = [f if hasattr(f, 'write') else open(f, 'a') for f in files]
     def write(self, obj):
@@ -67,146 +46,361 @@ class Tee(object):
         for f in self.files:
             f.flush()
 
-def load_diffusion_with_override(loadbase, dataset, diffusion_loadpath, seed, target_class=None, epoch='best', device='cuda'):
-    """Replicated from FMv3ODE: Loads vision model with full metadata support."""
-    # If the path is relative, resolve it using the standard hierarchy
-    if diffusion_loadpath.startswith('f:'):
-        diffusion_loadpath = diffusion_loadpath[2:]
-        loadpath = os.path.join(loadbase, dataset, diffusion_loadpath, seed)
-    elif not os.path.isabs(diffusion_loadpath):
-        loadpath = os.path.join(loadbase, dataset, diffusion_loadpath, seed)
+
+def build_agent_from_config(weights_dir, device='cuda'):
+    """
+    Reconstruct the D3IL DiffusionAgent from the Hydra config files
+    saved during training, then load the best checkpoint weights.
+    
+    This mirrors exactly what D3IL does natively:
+      1. hydra.utils.instantiate(cfg.agents) -> DiffusionAgent
+      2. agent.load_pretrained_model(weights_dir)
+    """
+    # Load the saved Hydra config
+    config_path = os.path.join(weights_dir, '.hydra', 'config.yaml')
+    if not os.path.exists(config_path):
+        # Fallback: try the overrides approach
+        config_path = os.path.join(weights_dir, 'config.yaml')
+    
+    if os.path.exists(config_path):
+        cfg = OmegaConf.load(config_path)
+        print(f"[ eval ] Loaded Hydra config from: {config_path}")
     else:
-        loadpath = diffusion_loadpath
-
-    print(f'[ eval ] Loading Vision Diffusion model: {loadpath} | Epoch: {epoch}')
+        # Manual config construction from aligning_vision_config defaults
+        print(f"[ eval ] No saved config found at {weights_dir}, using default aligning_vision_config")
+        cfg = OmegaConf.load('d3il/configs/aligning_vision_config.yaml')
     
-    # Load configs
-    dataset_config = utils.load_config(loadpath, 'dataset_config.pkl')
-    model_config = utils.load_config(loadpath, 'model_config.pkl')
-    diffusion_config = utils.load_config(loadpath, 'diffusion_config.pkl')
-    trainer_config = utils.load_config(loadpath, 'trainer_config.pkl')
+    # Override device
+    OmegaConf.update(cfg, "device", device, force_add=True)
     
-    dataset_obj = dataset_config()
-    model_obj = model_config()
-    diffusion_config._dict.pop('model', None) # Prevent duplicate positional/kwarg
+    # Instantiate the agent
+    agent = hydra.utils.instantiate(cfg.agents)
     
-    # Safely filter _dict to only include arguments the class accepts
-    import inspect
-    sig = inspect.signature(diffusion_config._class.__init__)
-    valid_kwargs = set(sig.parameters.keys())
-    keys_to_remove = [k for k in diffusion_config._dict if k not in valid_kwargs]
-    for k in keys_to_remove:
-        print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
-        del diffusion_config._dict[k]
-        
-    diffusion_obj = diffusion_config(model_obj).to(device)
-    trainer_obj = trainer_config(diffusion_model=diffusion_obj, dataset=dataset_obj)
+    # Load the best checkpoint
+    sv_name = "eval_best_ddpm.pth"
+    if not os.path.exists(os.path.join(weights_dir, sv_name)):
+        sv_name = "last_ddpm.pth"
+        print(f"[ eval ] Best checkpoint not found, falling back to: {sv_name}")
     
-    if epoch == 'latest':
-        epoch = utils.get_latest_epoch([loadpath])
+    agent.load_pretrained_model(weights_dir, sv_name=sv_name)
+    agent.model.eval()
+    print(f"[ eval ] Loaded weights from: {os.path.join(weights_dir, sv_name)}")
     
-    trainer_obj.load(epoch)
-    return diffusion_obj
+    return agent
 
-class Parser(utils.Parser):
-    dataset: str = 'aligning-d3il-visual'
-    config: str = 'config.aligning-d3il-visual'
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Full PCC-Bone Evaluation for Visual Aligning.')
-    parser.add_argument('--seed', type=int, help='Run only this specific seed.')
-    parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results.')
-    args_cli, remaining = parser.parse_known_args()
-    sys.argv = [sys.argv[0]] + remaining
-
-    # --- YAML Config Loading (FMv3ODE Standard) ---
-    with open('config/projection_eval.yaml', 'r') as file:
-        config_yaml = yaml.safe_load(file)
-
-    seeds = config_yaml['seeds']
-    if args_cli.seed is not None:
-        seeds = [args_cli.seed]
-        print(f'[ eval ] Overriding seeds from config to: {seeds}')
-
-    # For Visual Aligning, we usually only have one 'exp' and no projection variants
-    # but we follow the loop structure for parity.
-    for seed in seeds:
-        print(f"\nEvaluating seed {seed}...")
-        
-        args = Parser().parse_args(experiment='plan_ddpm_encdec_vision', seed=seed)
-        
-        # 1. Logging setup (PCC Bone Replication)
-        if args.diffusion_loadpath.startswith('f:'):
-            formatted_path = args.diffusion_loadpath[2:].format(**vars(args))
-            load_dir = os.path.join(args.loadbase, args.dataset, formatted_path, str(args.seed))
-        elif not os.path.isabs(args.diffusion_loadpath):
-            load_dir = os.path.join(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed))
-        else:
-            load_dir = args.diffusion_loadpath
-
-        # Standard nested result directory
-        res_path = os.path.join(load_dir, args.exp_name)
-        os.makedirs(res_path, exist_ok=True)
-        
-        # Tee logger
-        log_file_path = os.path.join(res_path, f'eval_seed_{args.seed}.log')
-        log_file = open(log_file_path, 'w')
-        original_stdout = sys.stdout
-        sys.stdout = Tee(sys.stdout, log_file)
-        
-        try:
-            print(f'[ eval ] Log saved to: {log_file_path}')
-
-            # 2. Model Loading
-            diffusion = load_diffusion_with_override(
-                args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), 
-                target_class=args.diffusion, epoch='best', device=args.device
-            )
+def build_agent_manual(weights_dir, device='cuda'):
+    """
+    Manual agent construction when Hydra config is not available.
+    Uses the standard aligning_vision_config.yaml parameters.
+    """
+    from agents.models.diffusion.ema import ExponentialMovingAverage
+    
+    # Standard D3IL aligning vision parameters
+    window_size = 8
+    obs_dim = 3
+    action_dim = 3
+    obs_seq_len = 5
+    action_seq_size = 4
+    
+    # Build the obs_encoder
+    shape_meta = {
+        "obs": {
+            "agentview_image": {"shape": [3, 96, 96], "type": "rgb"},
+            "in_hand_image": {"shape": [3, 96, 96], "type": "rgb"}
+        }
+    }
+    
+    obs_encoder_cfg = OmegaConf.create({
+        "_target_": "agents.models.vision.multi_image_obs_encoder.MultiImageObsEncoder",
+        "shape_meta": shape_meta,
+        "rgb_model": {
+            "_target_": "agents.models.vision.model_getter.get_resnet",
+            "input_shape": [3, 96, 96],
+            "output_size": 64
+        },
+        "resize_shape": None,
+        "random_crop": False,
+        "use_group_norm": True,
+        "share_rgb_model": False,
+        "imagenet_norm": True
+    })
+    
+    # Build the diffusion inner model (DiffusionEncDec)
+    inner_model_cfg = OmegaConf.create({
+        "_target_": "agents.models.diffusion.diffusion_models.DiffusionEncDec",
+        "_recursive_": False,
+        "state_dim": 128,
+        "action_dim": action_dim,
+        "goal_conditioned": False,
+        "goal_seq_len": 10,
+        "obs_seq_len": obs_seq_len,
+        "action_seq_len": action_seq_size,
+        "embed_pdrob": 0,
+        "embed_dim": 64,
+        "device": device,
+        "linear_output": True,
+        "encoder": {
+            "_target_": "agents.models.act.act_vae.TransformerEncoder",
+            "embed_dim": 64,
+            "n_heads": 4,
+            "n_layers": 2,
+            "attn_pdrop": 0.1,
+            "resid_pdrop": 0.1,
+            "bias": False,
+            "block_size": window_size + 1
+        },
+        "decoder": {
+            "_target_": "agents.models.act.act_vae.TransformerDecoder",
+            "embed_dim": 64,
+            "cross_embed": 64,
+            "n_heads": 4,
+            "n_layers": 4,
+            "attn_pdrop": 0.1,
+            "resid_pdrop": 0.1,
+            "bias": False,
+            "block_size": window_size + 1
+        }
+    })
+    
+    # Build the Diffusion wrapper
+    diffusion_cfg = OmegaConf.create({
+        "_target_": "agents.models.diffusion.diffusion_policy.Diffusion",
+        "_recursive_": False,
+        "state_dim": 128,
+        "action_dim": action_dim,
+        "beta_schedule": "cosine",
+        "n_timesteps": 16,
+        "loss_type": "l2",
+        "clip_denoised": True,
+        "predict_epsilon": True,
+        "device": device,
+        "diffusion_x": False,
+        "diffusion_x_M": 10,
+        "model": inner_model_cfg
+    })
+    
+    # Build the DiffusionPolicy
+    from agents.ddpm_encdec_vision_agent import DiffusionPolicy
+    
+    obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(device)
+    diffusion_model = hydra.utils.instantiate(diffusion_cfg).to(device)
+    
+    policy = DiffusionPolicy.__new__(DiffusionPolicy)
+    torch.nn.Module.__init__(policy)
+    policy.visual_input = True
+    policy.obs_encoder = obs_encoder
+    policy.model = diffusion_model
+    policy = policy.to(device)
+    
+    # Build a minimal scaler from training dataset
+    from environments.dataset.aligning_dataset import Aligning_Dataset
+    from agents.utils.sim_path import sim_framework_path
+    
+    train_data_path = "environments/dataset/data/aligning/train_files.pkl"
+    dataset = Aligning_Dataset(
+        data_directory=train_data_path,
+        device="cpu",
+        obs_dim=obs_dim,
+        action_dim=action_dim,
+        max_len_data=512,
+        window_size=window_size,
+    )
+    scaler = Scaler(
+        dataset.get_all_observations(),
+        dataset.get_all_actions(),
+        True,  # scale_data
+        device,
+    )
+    
+    # Set action bounds for the diffusion sampler
+    policy.model.min_action = torch.from_numpy(scaler.y_bounds[0, :]).to(device)
+    policy.model.max_action = torch.from_numpy(scaler.y_bounds[1, :]).to(device)
+    
+    # Build a minimal DiffusionAgent-like wrapper
+    class MinimalAgent:
+        """Mimics DiffusionAgent's predict() interface for Aligning_Sim."""
+        def __init__(self, policy, scaler, device, window_size, obs_seq_len, action_seq_size):
+            from collections import deque
+            self.policy = policy
+            self.scaler = scaler
+            self.device = device
+            self.window_size = window_size
+            self.obs_seq_len = obs_seq_len
+            self.action_seq_size = action_seq_size
+            self.action_counter = self.action_seq_size
+            self.curr_action_seq = None
             
-            # Policy instantiation
-            policy = Policy(
-                model=diffusion,
-                normalizer=IdentityNormalizer(), # Vision uses pass-through
-                preprocess_fns=[],
-                test_ret=0
-            )
-
-            # 3. Simulation Environment
-            print("[ eval ] Initializing Aligning_Sim (Vision=True)")
-            sim = Aligning_Sim(
-                seed=args.seed,
-                device=args.device,
-                render=False,
-                n_cores=1,
-                n_contexts=30,
-                n_trajectories_per_context=1,
-                if_vision=True
-            )
+            self.bp_image_context = deque(maxlen=self.window_size)
+            self.inhand_image_context = deque(maxlen=self.window_size)
+            self.des_robot_pos_context = deque(maxlen=self.window_size)
             
-            agent = VisualAgentWrapper(policy, args.device)
-            
-            # 4. Run Evaluation
-            if not args_cli.aggregate_only:
-                print(f"[ eval ] Starting simulation for seed {args.seed}...")
-                success_rate, mode_encoding = sim.test_agent(agent)
+            # EMA support
+            from agents.models.diffusion.ema import ExponentialMovingAverage
+            self.use_ema = True
+            self.ema_helper = ExponentialMovingAverage(self.policy.parameters(), 0.995, self.device)
+        
+        def reset(self):
+            self.bp_image_context.clear()
+            self.inhand_image_context.clear()
+            self.des_robot_pos_context.clear()
+            self.action_counter = self.action_seq_size
+        
+        @torch.no_grad()
+        def predict(self, state, goal=None, extra_args=None, if_vision=False):
+            if if_vision:
+                bp_image, inhand_image, des_robot_pos = state
                 
-                # Save results (PCC Bone)
-                res = {
-                    'success_rate': success_rate,
-                    'mode_encoding': mode_encoding,
-                    'timestamp': datetime.now().isoformat(),
-                    'args': vars(args)
-                }
-                res_file = os.path.join(res_path, f'results_seed_{args.seed}.pkl')
-                with open(res_file, 'wb') as f:
-                    pickle.dump(res, f)
-                print(f"[ eval ] Results saved to: {res_file}")
-                print(f"[ eval ] Success Rate: {success_rate:.4f}")
+                bp_image = torch.from_numpy(bp_image).to(self.device).float().unsqueeze(0)
+                inhand_image = torch.from_numpy(inhand_image).to(self.device).float().unsqueeze(0)
+                des_robot_pos = torch.from_numpy(des_robot_pos).to(self.device).float().unsqueeze(0)
+                
+                des_robot_pos = self.scaler.scale_input(des_robot_pos)
+                
+                self.bp_image_context.append(bp_image)
+                self.inhand_image_context.append(inhand_image)
+                self.des_robot_pos_context.append(des_robot_pos)
+                
+                bp_image_seq = torch.stack(tuple(self.bp_image_context), dim=1)
+                inhand_image_seq = torch.stack(tuple(self.inhand_image_context), dim=1)
+                des_robot_pos_seq = torch.stack(tuple(self.des_robot_pos_context), dim=1)
+                
+                input_state = (bp_image_seq, inhand_image_seq, des_robot_pos_seq)
             else:
-                print("[ eval ] Aggregate-only mode active. Skipping simulation.")
+                obs = torch.from_numpy(state).float().to(self.device).unsqueeze(0)
+                obs = self.scaler.scale_input(obs)
+                input_state = obs.unsqueeze(1)
+            
+            if self.action_counter == self.action_seq_size:
+                self.action_counter = 0
+                
+                self.policy.eval()
+                model_pred = self.policy(input_state, goal)
+                model_pred = self.scaler.inverse_scale_output(model_pred)
+                self.curr_action_seq = model_pred
+            
+            next_action = self.curr_action_seq[:, self.action_counter, :]
+            self.action_counter += 1
+            return next_action.detach().cpu().numpy()
+        
+        def load_pretrained_model(self, weights_path, sv_name):
+            state_dict = torch.load(os.path.join(weights_path, sv_name), map_location=self.device)
+            self.policy.load_state_dict(state_dict)
+            # Reinitialize EMA with loaded weights
+            from agents.models.diffusion.ema import ExponentialMovingAverage
+            self.ema_helper = ExponentialMovingAverage(self.policy.parameters(), 0.995, self.device)
+            print(f"[ eval ] Loaded weights: {os.path.join(weights_path, sv_name)}")
+    
+    agent = MinimalAgent(policy, scaler, device, window_size, obs_seq_len, action_seq_size)
+    
+    # Load weights
+    sv_name = "eval_best_ddpm.pth"
+    if not os.path.exists(os.path.join(weights_dir, sv_name)):
+        sv_name = "last_ddpm.pth"
+        print(f"[ eval ] Best checkpoint not found, falling back to: {sv_name}")
+    
+    agent.load_pretrained_model(weights_dir, sv_name=sv_name)
+    
+    return agent
 
-        finally:
-            sys.stdout = original_stdout
-            log_file.close()
 
-    print("\n[ eval ] All seeds completed.")
+# ─────────────────────────────────────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────────────────────────────────────
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='D3IL Visual Aligning Evaluation.')
+    parser.add_argument('--weights-dir', type=str, required=True,
+                        help='Path to the D3IL training run directory containing eval_best_ddpm.pth')
+    parser.add_argument('--seed', type=int, default=42, help='Evaluation seed.')
+    parser.add_argument('--device', type=str, default='cuda', help='Device for inference.')
+    parser.add_argument('--n-contexts', type=int, default=30, help='Number of test contexts.')
+    parser.add_argument('--n-trajectories', type=int, default=1, help='Trajectories per context.')
+    parser.add_argument('--n-cores', type=int, default=1, help='Number of parallel workers.')
+    parser.add_argument('--output-dir', type=str, default=None, 
+                        help='Where to save results. Defaults to <weights-dir>/eval_results/')
+    args = parser.parse_args()
+    
+    # Output directory
+    output_dir = args.output_dir or os.path.join(args.weights_dir, 'eval_results')
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Tee logger
+    log_file_path = os.path.join(output_dir, f'eval_seed_{args.seed}.log')
+    log_file = open(log_file_path, 'w')
+    original_stdout = sys.stdout
+    sys.stdout = Tee(sys.stdout, log_file)
+    
+    try:
+        print(f"[ eval ] Visual Aligning Evaluation")
+        print(f"[ eval ] Weights: {args.weights_dir}")
+        print(f"[ eval ] Seed: {args.seed}")
+        print(f"[ eval ] Output: {output_dir}")
+        print(f"[ eval ] Log: {log_file_path}")
+        print(f"[ eval ] Contexts: {args.n_contexts} | Trajectories/ctx: {args.n_trajectories}")
+        print()
+        
+        # ── 1. Build Agent ──────────────────────────────────────────────────
+        t0 = time.time()
+        
+        # Try Hydra config first, fall back to manual construction
+        try:
+            agent = build_agent_from_config(args.weights_dir, device=args.device)
+        except Exception as e:
+            print(f"[ eval ] Hydra instantiation failed: {e}")
+            print(f"[ eval ] Falling back to manual agent construction...")
+            agent = build_agent_manual(args.weights_dir, device=args.device)
+        
+        print(f"[ eval ] Agent loaded in {time.time() - t0:.1f}s")
+        
+        # ── 2. Setup Simulation ──────────────────────────────────────────────
+        # Use a dummy wandb to prevent crashes if wandb is not configured
+        import wandb
+        try:
+            wandb.init(mode="disabled")
+        except Exception:
+            pass
+        
+        print(f"[ eval ] Initializing Aligning_Sim (vision=True)")
+        sim = Aligning_Sim(
+            seed=args.seed,
+            device=args.device,
+            render=False,
+            n_cores=args.n_cores,
+            n_contexts=args.n_contexts,
+            n_trajectories_per_context=args.n_trajectories,
+            if_vision=True
+        )
+        
+        # ── 3. Run Evaluation ────────────────────────────────────────────────
+        t1 = time.time()
+        print(f"[ eval ] Starting rollouts...")
+        success_rate, mode_encoding = sim.test_agent(agent)
+        elapsed = time.time() - t1
+        
+        # ── 4. Save Results ──────────────────────────────────────────────────
+        # The Aligning_Sim.test_agent already prints success_rate, entropy, and
+        # mean_distance to stdout (which our Tee captures). We also save a 
+        # structured result file for the Performance Scorecard.
+        results = {
+            'success_rate': success_rate,
+            'mode_encoding': mode_encoding.numpy(),
+            'seed': args.seed,
+            'weights_dir': args.weights_dir,
+            'n_contexts': args.n_contexts,
+            'n_trajectories_per_context': args.n_trajectories,
+            'elapsed_seconds': elapsed,
+            'timestamp': datetime.now().isoformat(),
+        }
+        
+        res_file = os.path.join(output_dir, f'results_seed_{args.seed}.pkl')
+        with open(res_file, 'wb') as f:
+            pickle.dump(results, f)
+        
+        print(f"\n[ eval ] ═══════════════════════════════════════════════")
+        print(f"[ eval ] Results saved to: {res_file}")
+        print(f"[ eval ] Evaluation completed in {elapsed:.1f}s")
+        print(f"[ eval ] ═══════════════════════════════════════════════")
+        
+    finally:
+        sys.stdout = original_stdout
+        log_file.close()
