@@ -35,6 +35,27 @@ These are engineering/training-setup hypotheses (not proof of a principled failu
 
 ---
 
+## PCC Bone Consistency Check
+
+### Training Infrastructure (`train_ddpm_encdec_vision.py`)
+- **Status**: **Partially Consistent (Scaffolding only)**
+- **Findings**:
+  - **Match**: Scaffolding (W&B, Seed Management, Manifesting, Checkpointing) is perfectly replicated from `FMv3ODE`.
+  - **Gap**: The **Config Modularity** is broken. While `FMv3ODE` uses a multi-stage `utils.Config` setup for Dataset/Model/Diffusion, the vision script uses a monolithic `VisualDiffusionBridge`. This prevents the "PCC Bone" feature of swapping ML engines (e.g., swapping DDPM for FMv3) via command-line arguments without modifying code.
+
+### Evaluation Infrastructure (`eval_ddpm_encdec_vision.py`)
+- **Status**: **Inconsistent (Legacy/Standalone)**
+- **Findings**:
+  - **Major Gap**: The vision eval is "weird" because it is a standalone script that lacks almost all FMv3ODE "PCC Bone" features:
+    - No `load_diffusion_with_override` (manual checkpoint loading).
+    - No `aggregate_only` mode for result processing.
+    - No `Policy` or `Projector` abstraction (uses a custom `VisualAgentWrapper`).
+    - No `Tee` logging or standardized result directory nesting.
+  - **Verdict**: The evaluation pipeline is significantly lagging behind the FMv3ODE standard and needs to be refactored to use the unified `sampling.Policy` and `load_diffusion` patterns.
+
+
+---
+
 ## First-Principle Assessment
 
 1. Data/encoder separation: Solid. `Aligning_Img_Dataset` and `MultiImageObsEncoder` can be reused without changing generative core.

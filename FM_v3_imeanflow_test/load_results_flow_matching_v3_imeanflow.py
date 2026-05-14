@@ -3,7 +3,7 @@
 Load and display iMeanFlow evaluation results.
 
 Usage:
-    python FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py --results-dir evaluation_results/imf
+    python FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py --results-dir logs/avoiding-d3il/flow_matching_v3_imeanflow/evaluation_results/imf
 """
 
 import argparse
@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 
-def load_and_display_results(results_dir='evaluation_results/imf'):
+def load_and_display_results(results_dir='logs/avoiding-d3il/flow_matching_v3_imeanflow/evaluation_results/imf'):
     """Load evaluation results from eval_results.json and print a summary table."""
     results_file = os.path.join(results_dir, 'eval_results.json')
 
@@ -62,7 +62,7 @@ def load_and_display_results(results_dir='evaluation_results/imf'):
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description='Load iMF evaluation results')
-    parser.add_argument('--results-dir', type=str, default='evaluation_results/imf', help='Results directory.')
+    parser.add_argument('--results-dir', type=str, default='logs/avoiding-d3il/flow_matching_v3_imeanflow/evaluation_results/imf', help='Results directory.')
     args = parser.parse_args()
 
     print('[ load ] iMeanFlow Results Loader')
