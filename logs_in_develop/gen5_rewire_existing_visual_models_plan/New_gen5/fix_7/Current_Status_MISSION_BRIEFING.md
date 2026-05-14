@@ -70,6 +70,43 @@ The model successfully learned: "given my current robot position, what velocity 
 | **State Conditioning** | Transformer tokens embed state sequence | Trajectory inpainting (snapping `x[:, 0]`) |
 | **Action Output** | `self.action_pred(decoder_output)` | Extracted from denoised trajectory `x[:, :, :3]` |
 
+### 2.5 Mathematical Foundation: Visual Model vs. Standard FMv3ODE
+
+The "Blindness Fix" (Fix 7) fundamentally changes how the model processes information compared to the standard state-based FMv3ODE.
+
+#### A. TRAINING PHASE: The Gradient Path
+In standard FMv3ODE, the model learns from proprioceptive states. In the Visual Model, we introduce a high-dimensional image processing pipeline.
+
+| Feature | FMv3ODE (Standard) | Visual Aligning Model |
+| :--- | :--- | :--- |
+| **Input Source** | Robot States (proprioception) | **Camera Pixels** + Robot States |
+| **Conditioning** | State vector or inpainting | **ResNet Visual Embedding** |
+| **Gradient Flow** | UNet $\rightarrow$ States | UNet $\rightarrow$ `cond_mlp` $\rightarrow$ **ResNet Encoder** |
+
+**Visual Training Proof (`visual_unet.py`):**
+```python
+# Pixels are encoded and the result is fed to the backbone
+visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state)
+return self.backbone(x_noisy, visual_emb, t) # Gadients flow back to ResNet!
+```
+
+#### B. INFERENCE PHASE: Conditioning & Guidance
+Standard models rely on "snapping" (inpainting) to know where the robot is. The Visual Model combines this with **environment awareness**.
+
+| Feature | FMv3ODE (Standard) | Visual Aligning Model |
+| :--- | :--- | :--- |
+| **Awareness** | Only knows robot position | Knows robot **AND** block/obstacle positions |
+| **Modulation** | Time-embedding only | **FiLM Modulation** (Vision + Time) |
+| **Constraint** | Trajectory Inpainting ($x[:, 0]$) | Trajectory Inpainting + Visual Guidance |
+
+**Visual Inference Proof (`unet1d_temporal_cond.py`):**
+```python
+# The UNet blocks are now modulated by visual features
+cond_pooled = cond.mean(dim=1)
+cond_emb = self.cond_mlp(cond_pooled)
+t = torch.cat([t, cond_emb], dim=-1) # Time is now vision-aware!
+```
+
 ---
 
 ## 3. The Fix: FiLM-Style Conditioning Projection
