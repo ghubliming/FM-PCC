@@ -42,7 +42,10 @@ class VisualGaussianDiffusion(GaussianDiffusion):
             # Create a clean 'visual' cond for VisualUNet
             visual_cond = (bp_imgs, inhand_imgs, pos)
             # Create a clean 'state' cond for apply_conditioning (snapping t=0)
-            snapping_cond = {0: pos[:, 0]} 
+            # pos is the context window [B, window_size, 3]. 
+            # In training, obs[:, 0] was the current state. 
+            # In eval, pos[:, -1] is the current state.
+            snapping_cond = {0: pos[:, -1]} 
             
             new_cond = snapping_cond.copy()
             new_cond['visual'] = visual_cond
