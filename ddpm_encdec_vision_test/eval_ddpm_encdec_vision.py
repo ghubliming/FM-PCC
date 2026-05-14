@@ -55,7 +55,7 @@ def load_diffusion_with_override(loadbase, dataset, diffusion_loadpath, seed, ta
         diffusion_loadpath = diffusion_loadpath[2:]
         # Note: We assume the user has the 'horizon' etc. in the path string to be formatted
         # But for the vision refactor, we simplify to the standard path
-        loadpath = os.path.join(loadbase, diffusion_loadpath, seed)
+        loadpath = os.path.join(loadbase, dataset, diffusion_loadpath, seed)
     else:
         loadpath = diffusion_loadpath
 
