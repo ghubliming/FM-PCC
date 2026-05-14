@@ -92,6 +92,10 @@ class iMFDiffusion(nn.Module):
         self.register_buffer('betas', torch.linspace(1.0, 0.0, n_timesteps, dtype=torch.float32))
         self.register_buffer('alphas_cumprod', torch.ones(n_timesteps, dtype=torch.float32))
 
+        # Keep the wrapper, buffers, and loss weights on the same device as the backbone.
+        model_device = next(self.model.parameters()).device
+        self.to(model_device)
+
     def get_loss_weights(self, action_weight, discount, weights_dict):
         dim_weights = torch.ones(self.transition_dim, dtype=torch.float32)
         if weights_dict is None:

@@ -73,6 +73,15 @@ Changes:
 - Restored a simple per-seed table for `evaluation_results/imf/eval_results.json`
 - Removed stray appended code that had introduced syntax errors
 
+### 7. Runtime device alignment
+File:
+- [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
+
+Changes:
+- Moved the full diffusion wrapper onto the backbone device during initialization
+- Ensured `loss_fn.weights`, `betas`, `alphas_cumprod`, and model parameters share the same device
+- Fixed the CUDA vs CPU mismatch that caused the first training step to crash
+
 ## Behavioral Result
 
 Expected behavior after rebuild:
@@ -80,6 +89,7 @@ Expected behavior after rebuild:
 - eval should load the same checkpoint layout as the train job writes
 - the runtime should look like FMv3ODE with iMF as the underlying engine, not like a separate experimental pipeline
 - legacy checkpoints from existing seeds should continue to load through the compatibility remap
+- training should no longer crash on the initial loss step because of CPU/CUDA tensor placement
 
 ## Files Touched In This Rebuild
 
@@ -88,6 +98,7 @@ Expected behavior after rebuild:
 - [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
 - [config/avoiding-d3il.py](../../../config/avoiding-d3il.py)
 - [FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py)
+- [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
 
 ## Notes
 
