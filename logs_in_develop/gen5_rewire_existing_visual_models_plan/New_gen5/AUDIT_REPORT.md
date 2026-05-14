@@ -38,20 +38,20 @@ These are engineering/training-setup hypotheses (not proof of a principled failu
 ## PCC Bone Consistency Check
 
 ### Training Infrastructure (`train_ddpm_encdec_vision.py`)
-- **Status**: **Partially Consistent (Scaffolding only)**
+- **Status**: **FULLY CONSISTENT**
 - **Findings**:
-  - **Match**: Scaffolding (W&B, Seed Management, Manifesting, Checkpointing) is perfectly replicated from `FMv3ODE`.
-  - **Gap**: The **Config Modularity** is broken. While `FMv3ODE` uses a multi-stage `utils.Config` setup for Dataset/Model/Diffusion, the vision script uses a monolithic `VisualDiffusionBridge`. This prevents the "PCC Bone" feature of swapping ML engines (e.g., swapping DDPM for FMv3) via command-line arguments without modifying code.
+  - **Match**: Scaffolding (W&B, Seed Management, Manifesting, Checkpointing) is now a 1:1 replication of `FMv3ODE`.
+  - **Match**: **Config Modularity** is restored. Uses the multi-stage `utils.Config` setup for Dataset/Model/Diffusion. The `VisualUNet` and `VisualGaussianDiffusion` classes now allow swapping ML engines via command-line arguments.
 
 ### Evaluation Infrastructure (`eval_ddpm_encdec_vision.py`)
-- **Status**: **Inconsistent (Legacy/Standalone)**
+- **Status**: **FULLY CONSISTENT**
 - **Findings**:
-  - **Major Gap**: The vision eval is "weird" because it is a standalone script that lacks almost all FMv3ODE "PCC Bone" features:
-    - No `load_diffusion_with_override` (manual checkpoint loading).
-    - No `aggregate_only` mode for result processing.
-    - No `Policy` or `Projector` abstraction (uses a custom `VisualAgentWrapper`).
-    - No `Tee` logging or standardized result directory nesting.
-  - **Verdict**: The evaluation pipeline is significantly lagging behind the FMv3ODE standard and needs to be refactored to use the unified `sampling.Policy` and `load_diffusion` patterns.
+  - **Match**: The vision eval now replicates the full `FMv3ODE` "PCC Bone" suite:
+    - Standard `load_diffusion_with_override` logic (loading from pickles).
+    - `aggregate_only` mode support.
+    - Unified `sampling.Policy` abstraction.
+    - `utils.Tee` logging and standardized nested result directory naming.
+  - **Verdict**: The evaluation pipeline is now a mirror of the `FMv3ODE` standard, enabling unified cross-modality benchmarking.
 
 
 ---

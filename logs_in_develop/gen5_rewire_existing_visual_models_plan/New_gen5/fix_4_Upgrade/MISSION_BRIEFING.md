@@ -12,9 +12,9 @@ Before this upgrade, the vision pipeline (`ddpm_encdec_vision`) existed as a leg
 - **Inflexible Evaluation**: The evaluation script was a standalone hack that couldn't leverage the project's sophisticated ODE solvers, policies, or result aggregators.
 
 ## 2. Technical Objectives
+- **Absolute Infrastructure Parity**: Replicate the `FMv3ODE` training and evaluation code 1:1, including complex CLI argument handling, automated resume logic, and detailed W&B metadata.
 - **Separate ML Engine from Scaffolding**: Ensure the vision encoder is modular and the generative core is swappable.
-- **Replicate "PCC Bone"**: Update training and evaluation entry points to use the exact same multi-stage configuration and policy abstractions as the `FMv3ODE` state-based pipeline.
-- **Enable ODE-Selectable Vision**: Ensure vision models can be evaluated using the full suite of ODE solvers (Euler, RK4, etc.).
+- **Enable ODE-Selectable Vision**: Ensure vision models can be evaluated using the full suite of project-standard ODE solvers (Euler, RK4, etc.).
 
 ## 3. Implementation Details
 
