@@ -33,8 +33,19 @@ Changes:
 - Auxiliary residual is only a small regularizer
 - Fixed checkpoint loading so the wrapper loads through the normal `nn.Module` path instead of dropping wrapper state
 - Sampling now applies conditioning and uses the same ODE-style rollout structure
+- Added backward-compatible state_dict remapping so legacy checkpoints saved from the inner engine namespace still load cleanly
+- Restored wrapper-level `state_dict()` output so future checkpoints are self-describing and loader-friendly
 
-### 3. Config alignment
+### 3. Checkpoint compatibility repair
+File:
+- [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
+
+Changes:
+- Translates legacy checkpoint keys like `model.velocity_net.*` into wrapper keys like `model.model.velocity_net.*`
+- Allows older checkpoints to omit wrapper buffers such as `betas`, `alphas_cumprod`, and `loss_fn.weights`
+- Keeps strict loading behavior for genuinely mismatched modern checkpoints
+
+### 4. Config alignment
 File:
 - [config/avoiding-d3il.py](../../../config/avoiding-d3il.py)
 
@@ -43,7 +54,7 @@ Changes:
 - Disabled the old curriculum schedule that was contributing to instability
 - Kept the FMv3ODE-derived inference contract intact
 
-### 4. Eval path
+### 5. Eval path
 File:
 - [FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py)
 
@@ -53,12 +64,22 @@ Changes already present before this rebuild and kept in place:
 - Legacy checkpoint configs with duplicate `model` keys are handled
 - Evaluation uses dataset conditioning instead of unconditional sampling
 
+### 6. Results loader repair
+File:
+- [FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py)
+
+Changes:
+- Rewrote the corrupted support script into a clean JSON summary printer
+- Restored a simple per-seed table for `evaluation_results/imf/eval_results.json`
+- Removed stray appended code that had introduced syntax errors
+
 ## Behavioral Result
 
 Expected behavior after rebuild:
 - training loss should track the FM-style objective, with the auxiliary branch staying small
 - eval should load the same checkpoint layout as the train job writes
 - the runtime should look like FMv3ODE with iMF as the underlying engine, not like a separate experimental pipeline
+- legacy checkpoints from existing seeds should continue to load through the compatibility remap
 
 ## Files Touched In This Rebuild
 
@@ -66,6 +87,7 @@ Expected behavior after rebuild:
 - [flow_matcher_v3_imeanflow/models/imf_engine.py](../../../flow_matcher_v3_imeanflow/models/imf_engine.py)
 - [flow_matcher_v3_imeanflow/models/imf_diffusion.py](../../../flow_matcher_v3_imeanflow/models/imf_diffusion.py)
 - [config/avoiding-d3il.py](../../../config/avoiding-d3il.py)
+- [FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py](../../../FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py)
 
 ## Notes
 
