@@ -1,0 +1,23 @@
+# Visual Aligning Evaluation Config
+# Mirrors config/projection_eval.yaml structure for the Aligning (Visual) task.
+#
+# Key difference from Avoiding:
+#   - No halfspace/obstacle constraints (aligning is unconstrained manipulation)
+#   - Uses D3IL's Aligning_Sim with vision=True
+#   - Metrics: Success Rate, Entropy, Mean Distance (D3IL standard)
+
+write_to_file: True
+
+# Seeds to evaluate (same as avoiding for consistency)
+seeds: [6, 7, 8, 9, 10]
+
+# D3IL simulation parameters
+n_contexts: 30
+n_trajectories_per_context: 1
+
+# Projection variants
+# Currently only 'diffuser' (baseline, no projection).
+# Future: Add DPCC variants when visual projection is implemented.
+projection_variants: [
+  'diffuser',
+]
