@@ -1,16 +1,14 @@
-"""
-Trajectory iMeanFlow Model: dual-velocity decomposition for robotics.
+"""Trajectory iMeanFlow model built on the FMv3-style U-Net.
 
-This is a minimal, consistent wrapper around the existing FMv3-style U-Net.
-It exposes the API expected by iMFDiffusion:
-- forward_train(x, t, cond)
-- sample(batch_size, ...)
-- forward(x, t, cond)
+The backbone predicts the FM-style flow velocity. A small auxiliary residual
+head remains to preserve the iMF split, but it is intentionally kept near zero
+so it cannot destabilize training or sampling.
 """
+
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-from typing import Optional, Tuple
 
 from .unet1d_temporal_cond import Flow_matcher_U_Net_v2
 
@@ -35,7 +33,7 @@ class iMFTrajectoryModel(nn.Module):
         self.depth = depth
         self.device = device
 
-        self.u_net = Flow_matcher_U_Net_v2(
+        self.velocity_net = Flow_matcher_U_Net_v2(
             horizon=seq_len,
             transition_dim=state_dim,
             cond_dim=state_dim,
@@ -45,11 +43,14 @@ class iMFTrajectoryModel(nn.Module):
             condition_dropout=dropout_rate,
         )
 
-        self.v_head = nn.Sequential(
+        self.aux_head = nn.Sequential(
             nn.Linear(state_dim, state_dim),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.Linear(state_dim, state_dim),
         )
+
+        nn.init.zeros_(self.aux_head[-1].weight)
+        nn.init.zeros_(self.aux_head[-1].bias)
 
     def forward(
         self,
@@ -57,10 +58,10 @@ class iMFTrajectoryModel(nn.Module):
         t: torch.Tensor,
         cond: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Predict dual velocity components (u, v)."""
-        u = self.u_net(x, cond, t)
-        v = self.v_head(u)
-        return u, v
+        """Predict the main flow velocity and a small auxiliary residual."""
+        velocity = self.velocity_net(x, cond, t)
+        aux = self.aux_head(velocity)
+        return velocity, aux
 
     def forward_train(
         self,
@@ -76,12 +77,13 @@ class iMFTrajectoryModel(nn.Module):
         seq_len: int,
         num_steps: int,
         t_steps: torch.Tensor,
-        schedule: str = "u_first",
-        u_weight: float = 0.5,
-        v_weight: float = 0.5,
+        schedule: str = "balanced",
+        u_weight: float = 1.0,
+        v_weight: float = 0.1,
+        cond: Optional[torch.Tensor] = None,
         device: Optional[str] = None,
     ) -> torch.Tensor:
-        """Sample a trajectory with a simple Euler ODE loop."""
+        """Sample a trajectory using explicit Euler integration."""
         device = device or self.device
         z_t = torch.randn(batch_size, seq_len, self.state_dim, device=device)
         t_steps = t_steps.to(device)
@@ -90,16 +92,16 @@ class iMFTrajectoryModel(nn.Module):
             t = t_steps[i]
             r = t_steps[i + 1]
             h = t - r
-            u, v = self.forward(z_t, t.expand(batch_size))
+            velocity, aux = self.forward(z_t, t.expand(batch_size), cond)
 
             if schedule == "u_first":
-                velocity = u_weight * u + v_weight * v
+                combined = u_weight * velocity + 0.1 * v_weight * aux
             elif schedule == "balanced":
-                velocity = 0.5 * u + 0.5 * v
+                combined = velocity + 0.1 * v_weight * aux
             else:
-                velocity = u
+                combined = velocity
 
-            z_t = z_t - h * velocity
+            z_t = z_t - h * combined
 
         return z_t
 
@@ -108,10 +110,11 @@ class iMFTrajectoryModel(nn.Module):
         batch_size: int,
         num_steps: int = 1,
         t_schedule: str = "linear",
-        u_weight: float = 0.5,
-        v_weight: float = 0.5,
-        schedule: str = "u_first",
+        u_weight: float = 1.0,
+        v_weight: float = 0.1,
+        schedule: str = "balanced",
         seed: int = 0,
+        cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """Sampling entrypoint expected by iMFDiffusion."""
         torch.manual_seed(seed)
@@ -129,5 +132,6 @@ class iMFTrajectoryModel(nn.Module):
             schedule=schedule,
             u_weight=u_weight,
             v_weight=v_weight,
+            cond=cond,
             device=self.device,
         )

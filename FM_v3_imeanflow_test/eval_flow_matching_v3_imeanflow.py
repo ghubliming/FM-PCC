@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -28,7 +29,61 @@ class Parser(utils.Parser):
     config: str = 'config.avoiding-d3il'
 
 
-def evaluate_seed(seed, results_dir='evaluation_results'):
+def load_diffusion_robust(checkpoint_dir, epoch='best', device='cuda'):
+    """Load diffusion checkpoint with legacy-config compatibility in a single pass."""
+    print(f'\n[ utils/serialization ] Loading model from {checkpoint_dir}\n')
+
+    dataset_config = utils.load_config(checkpoint_dir, 'dataset_config.pkl')
+    model_config = utils.load_config(checkpoint_dir, 'model_config.pkl')
+    diffusion_config = utils.load_config(checkpoint_dir, 'diffusion_config.pkl')
+    trainer_config = utils.load_config(checkpoint_dir, 'trainer_config.pkl')
+    trainer_config._dict['results_folder'] = checkpoint_dir
+
+    # Some old checkpoints serialized `model` inside diffusion kwargs,
+    # which collides with the positional `model` argument at instantiation.
+    if isinstance(getattr(diffusion_config, '_dict', None), dict) and 'model' in diffusion_config._dict:
+        print('[ eval ] INFO: Removing legacy diffusion_config["model"] compatibility key.')
+        diffusion_config._dict.pop('model', None)
+
+    dataset = dataset_config()
+    model = model_config().to(device)
+    diffusion = diffusion_config(model).to(device)
+    trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
+
+    if epoch == 'latest':
+        epoch = utils.get_latest_epoch((checkpoint_dir,))
+
+    trainer.load(epoch)
+    losses = utils.load_losses(checkpoint_dir, 'losses.pkl')
+
+    return utils.DiffusionExperiment(
+        dataset,
+        trainer.model.model,
+        trainer.model,
+        trainer,
+        epoch,
+        losses,
+    )
+
+
+def resolve_checkpoint_dir(seed, experiment='flow_matching_v3_imeanflow', checkpoint_root=None):
+    """Resolve a seed checkpoint directory from config experiment or explicit root."""
+    if checkpoint_root:
+        return os.path.join(checkpoint_root, str(seed))
+
+    # Parse config to locate checkpoint using the standard FM-PCC handoff.
+    original_argv = list(sys.argv)
+    sys.argv = [sys.argv[0]]
+    try:
+        parser = Parser(exe_name='eval')
+        args = parser.parse_args(experiment=experiment, seed=seed)
+    finally:
+        sys.argv = original_argv
+
+    return args.savepath
+
+
+def evaluate_seed(seed, results_dir='evaluation_results', experiment='flow_matching_v3_imeanflow', checkpoint_root=None):
     """
     Evaluate a single seed using standard FM-PCC pattern.
     
@@ -41,29 +96,34 @@ def evaluate_seed(seed, results_dir='evaluation_results'):
     """
     print(f"[ eval ] Seed {seed}")
     
-    # Parse config to locate checkpoint using the standard FM-PCC handoff.
-    original_argv = list(sys.argv)
-    sys.argv = [sys.argv[0]]
-    try:
-        parser = Parser(exe_name='eval')
-        args = parser.parse_args(experiment='plan', seed=seed)
-    finally:
-        sys.argv = original_argv
-    
-    print(f"[ eval ] Checkpoint: {args.savepath}")
-    
-    # Load trained diffusion model (standard FM-PCC function)
-    try:
-        diffusion_experiment = utils.load_diffusion(
-            args.savepath,
-            epoch='best',
-            device=args.device,
+    checkpoint_dir = resolve_checkpoint_dir(
+        seed=seed,
+        experiment=experiment,
+        checkpoint_root=checkpoint_root,
+    )
+    print(f"[ eval ] Checkpoint: {checkpoint_dir}")
+
+    missing = [
+        name
+        for name in ('dataset_config.pkl', 'model_config.pkl', 'diffusion_config.pkl', 'trainer_config.pkl')
+        if not os.path.exists(os.path.join(checkpoint_dir, name))
+    ]
+    if missing:
+        print(
+            f"[ eval ] ERROR: Missing checkpoint files for seed {seed}: {missing} | "
+            f"path={checkpoint_dir}"
         )
+        return None
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    # Load trained diffusion model (with legacy pickle compatibility)
+    try:
+        diffusion_experiment = load_diffusion_robust(checkpoint_dir, epoch='best', device=device)
     except Exception as e:
         print(f"[ eval ] ERROR: Failed to load seed {seed}: {e}")
         return None
     
-    model = diffusion_experiment.model
     diffusion = diffusion_experiment.diffusion
     dataset = diffusion_experiment.dataset
     
@@ -79,19 +139,39 @@ def evaluate_seed(seed, results_dir='evaluation_results'):
     for idx in val_indices:
         try:
             sample = dataset[idx]
-            
-            # Unpack trajectory (state, action, cond, mask)
-            trajectory = sample[0]  # Full trajectory
+
+            # Namedtuple from SequenceDataset: trajectories, conditions, (optional) returns
+            trajectory = sample.trajectories
+            conditions = sample.conditions
+            returns = getattr(sample, 'returns', None)
             
             # Run inference: sample prediction
             with torch.no_grad():
-                trajectory_tensor = torch.from_numpy(trajectory).float().unsqueeze(0).to(args.device)
+                trajectory_tensor = torch.from_numpy(trajectory).float().unsqueeze(0).to(device)
                 
-                # iMF sample: single forward pass
-                sampled = diffusion.sample(batch_size=1)
+                # Convert conditions to batched tensors for sampler compatibility
+                cond_tensors = {}
+                for t, val in conditions.items():
+                    cond_tensor = torch.as_tensor(val, dtype=torch.float32, device=device)
+                    if cond_tensor.ndim == 1:
+                        cond_tensor = cond_tensor.unsqueeze(0)
+                    cond_tensors[t] = cond_tensor
+
+                returns_tensor = None
+                if returns is not None:
+                    returns_tensor = torch.as_tensor(returns, dtype=torch.float32, device=device)
+                    if returns_tensor.ndim == 1:
+                        returns_tensor = returns_tensor.unsqueeze(0)
+
+                # iMF sample conditioned on current observation (and optional return)
+                sampled = diffusion.sample(
+                    batch_size=1,
+                    conditions=cond_tensors,
+                    returns=returns_tensor,
+                )
                 
                 # Compute MSE error
-                error = torch.nn.functional.mse_loss(sampled, trajectory_tensor).item()
+                error = torch.nn.functional.mse_loss(sampled.to(device), trajectory_tensor).item()
                 errors.append(error)
         except Exception as e:
             print(f"[ eval ] Warning: Failed to evaluate sample {idx}: {e}")
@@ -118,8 +198,23 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluate iMF')
     parser.add_argument('--seed', type=int, help='Single seed.')
     parser.add_argument('--seeds', type=int, nargs='+', help='List of seeds.')
-    parser.add_argument('--results-dir', type=str, default='evaluation_results', help='Output directory.')
+    parser.add_argument('--results-dir', type=str, default='evaluation_results/imf', help='Output directory.')
+    parser.add_argument(
+        '--experiment',
+        type=str,
+        default='flow_matching_v3_imeanflow',
+        help='Config experiment key used to resolve checkpoint savepath.',
+    )
+    parser.add_argument(
+        '--checkpoint-root',
+        type=str,
+        default=None,
+        help='Optional explicit checkpoint root. If set, eval loads <checkpoint-root>/<seed>.',
+    )
     args, _ = parser.parse_known_args()
+
+    if args.checkpoint_root is not None:
+        args.checkpoint_root = str(Path(args.checkpoint_root).expanduser())
     
     # Resolve seeds
     if args.seed is not None:
@@ -140,7 +235,12 @@ def main():
     
     # Evaluate each seed
     for seed in seeds:
-        result = evaluate_seed(seed, args.results_dir)
+        result = evaluate_seed(
+            seed,
+            args.results_dir,
+            experiment=args.experiment,
+            checkpoint_root=args.checkpoint_root,
+        )
         if result:
             all_results[seed] = result
         print()

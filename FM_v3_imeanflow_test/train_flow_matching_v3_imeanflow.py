@@ -170,7 +170,7 @@ if __name__ == '__main__':
                 clip_denoised=args.clip_denoised,
                 predict_epsilon=predict_epsilon,
                 action_weight=args.action_weight,
-                loss_discount=args.discount,
+                loss_discount=getattr(args, 'loss_discount', args.discount),
                 returns_condition=args.include_returns,
                 condition_guidance_w=args.condition_guidance_w,
                 u_loss_weight=args.u_loss_weight,
@@ -178,6 +178,9 @@ if __name__ == '__main__':
                 loss_schedule=args.loss_schedule,
                 warmup_epochs=args.warmup_epochs,
                 transition_epochs=args.transition_epochs,
+                time_beta_alpha_v3=getattr(args, 'time_beta_alpha_v3', 1.5),
+                time_beta_beta_v3=getattr(args, 'time_beta_beta_v3', 1.0),
+                flow_steps_v3=getattr(args, 'flow_steps_v3', getattr(args, 'ode_inference_steps_v3', 10)),
                 ode_inference_steps_v3=args.ode_inference_steps_v3,
             )
 

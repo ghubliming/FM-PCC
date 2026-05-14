@@ -1,32 +1,16 @@
-"""
-iMeanFlow Diffusion: Integration wrapper for iMF engine into FM-PCC training pipeline.
-
-Adapts the iMeanFlowEngine to work with existing FM-PCC Trainer/Config system.
-Key differences from FMv3ODE:
-- Dual velocity outputs (u, v) instead of single velocity
-- Curriculum loss scheduling (u_first)
-- Reuses FMv3ODE's data loading and trainer loop
-"""
+"""iMeanFlow diffusion adapter with FMv3ODE-compatible training and sampling APIs."""
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 from typing import Dict, Tuple, Optional
-import numpy as np
 
 from .imf_engine import iMeanFlowEngine
-from .imf_losses import iMFTrainingLoss
-from .helpers import apply_conditioning
+from .helpers import apply_conditioning, Losses
 
 
 class iMFDiffusion(nn.Module):
-    """
-    iMeanFlow Diffusion wrapper for FM-PCC integration.
-    
-    Wraps iMeanFlowEngine to provide:
-    - Loss computation with dual u/v losses
-    - Sampling interface matching FMv3ODE
-    - Config-driven training (u_weight, v_weight, loss_schedule)
-    """
+    """iMeanFlow wrapper that preserves FM-PCC/FMv3ODE diffusion interfaces."""
     
     def __init__(
         self,
@@ -44,38 +28,21 @@ class iMFDiffusion(nn.Module):
         loss_weights: Optional[Dict] = None,
         returns_condition: bool = False,
         condition_guidance_w: float = 0.1,
-        # iMF-specific parameters
-        u_loss_weight: float = 0.5,
-        v_loss_weight: float = 0.5,
-        loss_schedule: str = "u_first",
-        warmup_epochs: int = 30,
-        transition_epochs: int = 30,
+        u_loss_weight: float = 1.0,
+        v_loss_weight: float = 0.1,
+        loss_schedule: str = "balanced",
+        warmup_epochs: int = 0,
+        transition_epochs: int = 0,
+        time_beta_alpha_v3: float = 1.5,
+        time_beta_beta_v3: float = 1.0,
+        flow_steps_v3: Optional[int] = None,
         ode_inference_steps_v3: int = 50,
+        ode_solver_backend_v3: str = 'legacy_euler',
+        ode_solver_method_v3: str = 'euler',
+        ode_solver_rtol_v3: Optional[float] = None,
+        ode_solver_atol_v3: Optional[float] = None,
+        ode_solver_step_size_v3: Optional[float] = None,
     ):
-        """
-        Args:
-            model: iMeanFlowEngine instance
-            horizon: Trajectory horizon
-            observation_dim: State dimension
-            action_dim: Action dimension
-            goal_dim: Goal dimension (optional)
-            n_timesteps: Number of training timesteps
-            loss_type: Loss function type ('l1' or 'l2')
-            clip_denoised: Whether to clip predictions
-            predict_epsilon: Compatibility flag
-            action_weight: Weight for action component in loss
-            loss_discount: Discount factor for loss
-            loss_weights: Custom loss weights
-            returns_condition: Whether to use returns conditioning
-            condition_guidance_w: Conditioning guidance weight
-            # iMF-specific
-            u_loss_weight: Weight for u (mean velocity) loss
-            v_loss_weight: Weight for v (deviation) loss
-            loss_schedule: 'u_first' (curriculum) or 'balanced'
-            warmup_epochs: Epochs for warmup phase
-            transition_epochs: Epochs for transition phase
-            ode_inference_steps_v3: ODE steps for inference
-        """
         super().__init__()
         self.model = model
         self.horizon = horizon
@@ -85,68 +52,139 @@ class iMFDiffusion(nn.Module):
         self.transition_dim = observation_dim + action_dim
         self.returns_condition = returns_condition
         self.condition_guidance_w = condition_guidance_w
-        
+
         self.n_timesteps = int(n_timesteps)
         self.clip_denoised = clip_denoised
         self.predict_epsilon = predict_epsilon
         self.loss_type = loss_type
-        self.ode_inference_steps_v3 = int(ode_inference_steps_v3)
-        
-        # iMF loss handler
-        self.imf_loss = iMFTrainingLoss(
-            state_dim=self.transition_dim,
-            u_loss_weight=u_loss_weight,
-            v_loss_weight=v_loss_weight,
-            loss_schedule=loss_schedule,
-            warmup_epochs=warmup_epochs,
-            transition_epochs=transition_epochs,
-        )
-        
-        # Dummy buffers for interface compatibility with FMv3ODE
+
+        self.time_beta_alpha_v3 = float(time_beta_alpha_v3)
+        self.time_beta_beta_v3 = float(time_beta_beta_v3)
+        resolved_flow_steps = flow_steps_v3 if flow_steps_v3 is not None else ode_inference_steps_v3
+        self.flow_steps_v3 = int(resolved_flow_steps)
+        self.ode_inference_steps_v3 = int(self.flow_steps_v3)
+        self.ode_solver_backend_v3 = str(ode_solver_backend_v3)
+        self.ode_solver_method_v3 = str(ode_solver_method_v3)
+        self.ode_solver_rtol_v3 = ode_solver_rtol_v3
+        self.ode_solver_atol_v3 = ode_solver_atol_v3
+        self.ode_solver_step_size_v3 = ode_solver_step_size_v3
+
+        # Keep parameters for backward compatibility with existing configs.
+        self.loss_schedule = loss_schedule
+        self.warmup_epochs = int(warmup_epochs)
+        self.transition_epochs = int(transition_epochs)
+        total_w = float(u_loss_weight) + float(v_loss_weight)
+        if total_w <= 0:
+            self.u_mix = 1.0
+            self.v_mix = 0.1
+        else:
+            self.u_mix = float(u_loss_weight) / total_w
+            self.v_mix = float(v_loss_weight) / total_w
+        self.sample_aux_weight = 0.1 * self.v_mix
+        self.aux_loss_weight = max(0.01, 0.1 * float(v_loss_weight))
+
+        loss_weights = self.get_loss_weights(action_weight, loss_discount, loss_weights)
+        self.loss_fn = Losses[loss_type](loss_weights, self.action_dim)
+
+        # Buffers retained for FM-PCC compatibility.
         self.register_buffer('betas', torch.linspace(1.0, 0.0, n_timesteps, dtype=torch.float32))
         self.register_buffer('alphas_cumprod', torch.ones(n_timesteps, dtype=torch.float32))
-        
-    def forward_train(
+
+    def get_loss_weights(self, action_weight, discount, weights_dict):
+        dim_weights = torch.ones(self.transition_dim, dtype=torch.float32)
+        if weights_dict is None:
+            weights_dict = {}
+        for ind, w in weights_dict.items():
+            dim_weights[self.action_dim + ind] *= w
+
+        discounts = discount ** torch.arange(self.horizon, dtype=torch.float)
+        discounts = discounts / discounts.mean()
+        loss_weights = torch.einsum('h,t->ht', discounts, dim_weights)
+        loss_weights[0, :self.action_dim] = action_weight
+        return loss_weights
+
+    def _predict_uv(self, x, cond, t, returns=None):
+        # Returns-conditioning is intentionally ignored here because
+        # iMeanFlowEngine does not model classifier-free guidance.
+        return self.model.forward_train(x, t, cond)
+
+    def _predict_velocity(self, x, cond, t, returns=None):
+        velocity, aux = self._predict_uv(x, cond, t, returns=returns)
+        return velocity + self.sample_aux_weight * aux
+
+    def q_sample(self, x_start, t, noise=None):
+        if noise is None:
+            noise = torch.randn_like(x_start)
+        t_cont = t
+        while t_cont.ndim < x_start.ndim:
+            t_cont = t_cont.unsqueeze(-1)
+        return (1.0 - t_cont) * noise + t_cont * x_start
+
+    @torch.no_grad()
+    def p_sample_loop(
         self,
-        x: torch.Tensor,
-        t: torch.Tensor,
-        cond: Optional[Dict] = None,
-        epoch: int = 0,
-    ) -> Dict[str, torch.Tensor]:
-        """
-        Training forward pass: compute iMF dual losses.
-        
-        Args:
-            x: Noisy trajectory [batch, horizon, transition_dim]
-            t: Timestep [batch]
-            cond: Conditioning dict (optional)
-            epoch: Current training epoch (for curriculum scheduling)
-            
-        Returns:
-            dict with keys: 'loss', 'u_loss', 'v_loss', 'u_weight', 'v_weight'
-        """
-        # Apply conditioning if provided
-        if cond is not None:
+        shape,
+        cond,
+        returns=None,
+        return_diffusion=False,
+        projector=None,
+        constraints=None,
+        repeat_last=0,
+    ):
+        device = self.betas.device
+        batch_size = shape[0]
+        x = 0.5 * torch.randn(shape, device=device)
+        x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
+
+        diffusion = [x] if return_diffusion else None
+
+        total_steps = self.flow_steps_v3 + int(repeat_last)
+        for i in range(total_steps):
+            loop_idx = min(i, self.flow_steps_v3 - 1)
+            t_cont = torch.full(
+                (batch_size,),
+                loop_idx / max(self.flow_steps_v3, 1),
+                device=device,
+                dtype=torch.float32,
+            )
+            velocity = self._predict_velocity(x, cond, t_cont, returns=returns)
+            dt = 1.0 / max(self.flow_steps_v3, 1)
+            x = x + velocity * dt
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
-        
-        # iMF forward: get (u, v) predictions
-        u_pred, v_pred = self.model.forward_train(x, t, cond)
-        
-        # Compute iMF dual losses with curriculum
-        loss, metrics = self.imf_loss.forward(
-            u_pred, v_pred,
-            target_trajectory=x,  # Simplified: predict on full trajectory
-            current_epoch=epoch,
-        )
-        
-        # Return loss + logging metrics
-        return {
-            'loss': loss,
-            'u_loss': metrics['u_loss'],
-            'v_loss': metrics['v_loss'],
-            'u_weight': metrics['u_scale'],
-            'v_weight': metrics['v_scale'],
-        }
+
+            if projector is not None:
+                snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3)
+                near_end = (loop_idx >= snapping_start_idx) or (loop_idx == self.flow_steps_v3 - 1)
+                if near_end and projector.gradient:
+                    if self.goal_dim > 0:
+                        grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints)
+                    else:
+                        grad = projector.compute_gradient(x, constraints)
+                    x = x + grad
+
+                if near_end and not projector.gradient:
+                    if self.goal_dim > 0:
+                        x[:, :, :-self.goal_dim], _ = projector.project(x[:, :, :-self.goal_dim], constraints)
+                    else:
+                        x, _ = projector.project(x, constraints)
+
+                x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
+
+            if return_diffusion:
+                diffusion.append(x)
+
+        infos = {}
+        if return_diffusion:
+            infos['diffusion'] = torch.stack(diffusion, dim=1)
+        infos['projection_costs'] = {}
+        return x, infos
+
+    @torch.no_grad()
+    def conditional_sample(self, cond, returns=None, horizon=None, *args, **kwargs):
+        batch_size = len(cond[0])
+        horizon = horizon or self.horizon
+        shape = (batch_size, horizon, self.transition_dim)
+        return self.p_sample_loop(shape, cond, returns=returns, *args, **kwargs)
     
     def sample(
         self,
@@ -157,36 +195,17 @@ class iMFDiffusion(nn.Module):
         guidance_weight: Optional[float] = None,
         num_steps: Optional[int] = None,
     ) -> torch.Tensor:
-        """
-        Sample trajectories using iMF's mean flow algorithm.
-        
-        API compatibility with FMv3ODE's sample method.
-        
-        Args:
-            batch_size: Number of trajectories
-            returns: Optional returns for conditioning
-            conditions: Optional conditioning dict
-            returns_condition: Override for returns conditioning
-            guidance_weight: Classifier-free guidance weight (unused for iMF)
-            num_steps: Number of ODE steps (default: ode_inference_steps_v3)
-            
-        Returns:
-            sampled trajectory [batch_size, horizon, transition_dim]
-        """
-        num_steps = num_steps or self.ode_inference_steps_v3
-        
-        # iMF sampling: use dual velocity with balanced weights
-        # (In inference, use u+v equally, unlike training's curriculum)
-        sampled = self.model.sample(
-            batch_size=batch_size,
-            num_steps=num_steps,
-            t_schedule="linear",
-            u_weight=0.5,  # Balanced for inference
-            v_weight=0.5,
-            schedule="balanced",
-            seed=0,
-        )
-        
+        # Keep compatibility with the existing eval script API.
+        if num_steps is not None:
+            self.flow_steps_v3 = int(num_steps)
+            self.ode_inference_steps_v3 = int(num_steps)
+
+        if conditions is None:
+            cond = {0: torch.zeros(batch_size, self.observation_dim, device=self.betas.device)}
+        else:
+            cond = conditions
+
+        sampled, _ = self.conditional_sample(cond=cond, returns=returns, horizon=self.horizon)
         return sampled
 
     def loss(
@@ -197,44 +216,56 @@ class iMFDiffusion(nn.Module):
     ) -> Tuple[torch.Tensor, Dict]:
         """Trainer entrypoint matching FM-PCC's expected `model.loss(*batch)` contract."""
         batch_size = x.shape[0]
-        t = torch.rand(batch_size, device=x.device)
-        return self.p_losses(x, t, returns=returns, conditions=cond)
+        alpha = torch.tensor(self.time_beta_alpha_v3, device=x.device)
+        beta = torch.tensor(self.time_beta_beta_v3, device=x.device)
+        beta_dist = torch.distributions.Beta(alpha, beta)
+        t = 1.0 - beta_dist.sample((batch_size,))
+        return self.p_losses(x, cond, t, returns=returns)
     
     def p_losses(
         self,
         x_start: torch.Tensor,
+        cond: Dict,
         t: torch.Tensor,
         returns: Optional[torch.Tensor] = None,
-        conditions: Optional[Dict] = None,
-        epoch: int = 0,
     ) -> Tuple[torch.Tensor, Dict]:
-        """
-        Compute losses (matches FMv3ODE signature).
-        
-        Args:
-            x_start: Clean trajectory [batch, horizon, transition_dim]
-            t: Timestep [batch]
-            returns: Optional returns
-            conditions: Conditioning dict
-            epoch: Training epoch
-            
-        Returns:
-            (loss_tensor, metrics_dict)
-        """
-        # Add noise (iMF uses Flow Matching continuous time)
-        # For simplicity, scale x_start by t
-        noise = torch.randn_like(x_start)
-        x_noisy = (1 - t[:, None, None]) * x_start + t[:, None, None] * noise
-        
-        # Compute iMF loss
-        loss_dict = self.forward_train(x_noisy, t, conditions, epoch)
-        
-        return loss_dict['loss'], loss_dict
+        x_base = torch.randn_like(x_start)
+        x_base = apply_conditioning(x_base, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+
+        x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)
+        x_t = apply_conditioning(x_t, cond, self.action_dim, goal_dim=self.goal_dim)
+
+        v_target = x_start - x_base
+        v_target = apply_conditioning(v_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+
+        velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, returns=returns)
+        if not self.predict_epsilon:
+            velocity_pred = apply_conditioning(velocity_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+
+        main_loss, info = self.loss_fn(velocity_pred, v_target)
+        aux_loss = F.mse_loss(aux_pred, torch.zeros_like(aux_pred))
+        total_loss = main_loss + self.aux_loss_weight * aux_loss
+
+        info['diffusion_loss'] = main_loss
+        info['a0_loss'] = info.get('a0_loss', torch.tensor(0.0, device=x_start.device))
+        info['aux_loss'] = aux_loss
+        info['u_weight'] = torch.tensor(self.u_mix, device=x_start.device)
+        info['v_weight'] = torch.tensor(self.v_mix, device=x_start.device)
+        info['total_loss'] = total_loss
+
+        return total_loss, info
+
+    def forward(self, cond, *args, **kwargs):
+        return self.conditional_sample(cond=cond, *args, **kwargs)
     
     def load_state_dict(self, state_dict, strict=True):
         """Load state dict (compatibility)."""
-        return self.model.load_state_dict(state_dict, strict=strict)
+        return super().load_state_dict(state_dict, strict=strict)
     
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         """Get state dict (compatibility)."""
-        return self.model.state_dict(destination, prefix, keep_vars)
+        return self.model.state_dict(
+            destination=destination,
+            prefix=prefix,
+            keep_vars=keep_vars,
+        )

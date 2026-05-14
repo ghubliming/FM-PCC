@@ -1,15 +1,14 @@
-"""
-iMeanFlow Engine: Wrapper around dual-velocity model.
+"""iMeanFlow engine wrapper for trajectory prediction.
 
-Reuses official iMF repo's conceptual pattern:
-- u_fn: predict mean velocity
-- v_fn: predict instantaneous velocity (auxiliary)
-- Sampling: weighted combination of (u, v)
+The engine preserves the iMF naming surface while delegating the actual
+learning signal to the FMv3-style velocity backbone.
 """
+
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-from typing import Tuple, Optional
+
 from .imf_trajectory_model import iMFTrajectoryModel
 
 
@@ -73,23 +72,17 @@ class iMeanFlowEngine(nn.Module):
         h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Predict dual velocity: (u, v).
-        
-        API matches official iMF repo's u_fn signature (adapted for trajectories).
-        
-        Args:
-            x: Noisy trajectory [batch, seq_len, state_dim]
-            t: Timestep [batch]
-            h: Time difference (unused in inference, kept for API compatibility)
-            cond: Conditioning [batch, cond_dim] (optional)
-            
-        Returns:
-            u [batch, seq_len, state_dim], v [batch, seq_len, state_dim]
-        """
-        with torch.no_grad():
-            u, v = self.model(x, t, cond)
-        return u, v
+        """Predict flow velocity and auxiliary residual."""
+        return self.model(x, t, cond)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        t: torch.Tensor,
+        cond: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Standard nn.Module forward alias for velocity prediction."""
+        return self.model(x, t, cond)
     
     @torch.no_grad()
     def sample(
@@ -98,9 +91,10 @@ class iMeanFlowEngine(nn.Module):
         num_steps: int = 1,
         t_schedule: str = "linear",
         u_weight: float = 1.0,
-        v_weight: float = 0.0,
+        v_weight: float = 0.1,
         schedule: str = "balanced",
         seed: int = 0,
+        cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Generate trajectories via iMF sampling (matches official repo pattern).
@@ -109,9 +103,9 @@ class iMeanFlowEngine(nn.Module):
             batch_size: Number of trajectories
             num_steps: Number of ODE steps (NFE)
             t_schedule: Time schedule ('linear', 'quadratic')
-            u_weight: Weight for u component
-            v_weight: Weight for v component
-            schedule: 'u_first' (curriculum) or 'balanced'
+            u_weight: Weight for the main velocity component
+            v_weight: Weight for the auxiliary residual component
+            schedule: 'u_first' or 'balanced'
             seed: Random seed
             
         Returns:
@@ -135,11 +129,8 @@ class iMeanFlowEngine(nn.Module):
             r = t_steps[i + 1]
             h = t - r
             
-            # Predict (u, v)
-            u, v = self.model(z_t, t.expand(batch_size).to(self.dtype))
-            
-            # Weighted combination (from official iMF)
-            velocity = u_weight * u + v_weight * v
+            velocity, aux = self.model(z_t, t.expand(batch_size).to(self.dtype), cond)
+            velocity = u_weight * velocity + 0.1 * v_weight * aux
             
             # ODE step
             z_t = z_t - h * velocity
@@ -163,5 +154,4 @@ class iMeanFlowEngine(nn.Module):
         Returns:
             (u, v): Dual velocity predictions for loss computation
         """
-        u, v = self.model(x_noisy, t, cond)
-        return u, v
+        return self.model(x_noisy, t, cond)
