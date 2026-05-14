@@ -98,7 +98,7 @@ def parse_top_level_args():
     parser.add_argument('--wandb-entity', type=str, default=None, help='W&B entity/team name.')
     parser.add_argument('--wandb-group', type=str, default=None, help='W&B group name for per-seed runs.')
     parser.add_argument('--wandb-mode', type=str, default='online', choices=['online', 'offline', 'disabled'], help='W&B mode.')
-    parser.add_argument('--log-freq', type=int, default=100, help='How often to log progress to console/disk.')
+    parser.add_argument('--log-freq', type=int, default=1000, help='How often to log progress to console/disk.')
     args, remaining = parser.parse_known_args()
     if args.seed is not None and args.seeds is not None:
         raise ValueError('Use either --seed or --seeds, not both.')
@@ -242,6 +242,7 @@ for seed in selected_seeds:
     model = model_config()
     
     # 3. Diffusion (Engine)
+    # 3. Diffusion (Engine: Reverted to standard DDPM)
     from ddpm_encdec_vision.models.visual_gaussian_diffusion import VisualGaussianDiffusion
     diffusion_config = utils.Config(
         VisualGaussianDiffusion,
@@ -250,12 +251,11 @@ for seed in selected_seeds:
         observation_dim=3,
         action_dim=3,
         goal_dim=0,
-        n_timesteps=getattr(args, 'n_diffusion_steps', 20),
+        n_timesteps=getattr(args, 'n_diffusion_steps', 100),
         loss_type=args.loss_type,
-        action_weight=getattr(args, 'action_weight', 1.0),
-        time_beta_alpha_v3=getattr(args, 'time_beta_alpha_v3', 1.5),
-        time_beta_beta_v3=getattr(args, 'time_beta_beta_v3', 1.0),
-        flow_steps_v3=getattr(args, 'flow_steps_v3', 10),
+        clip_denoised=True,
+        predict_epsilon=True,
+        action_weight=getattr(args, 'action_weight', 10.0),
         device=args.device,
     )
     diffusion = diffusion_config(model)
