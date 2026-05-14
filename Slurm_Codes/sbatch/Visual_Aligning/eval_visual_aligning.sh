@@ -39,10 +39,7 @@ export MPLBACKEND="agg"
 
 cd "$REPO"
 
-# Run evaluation for seeds
-for SEED in 6 7 8 9 10; do
-    echo "Evaluating seed $SEED..."
-    python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py --seed $SEED
-done
+# Run evaluation (Python script now handles seed looping via config/projection_eval.yaml)
+python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py
 
 echo "Job completed successfully."
