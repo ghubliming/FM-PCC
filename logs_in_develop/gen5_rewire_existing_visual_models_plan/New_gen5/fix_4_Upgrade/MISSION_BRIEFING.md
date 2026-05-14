@@ -44,6 +44,12 @@ Ported the `sampling.Policy` and `load_diffusion_with_override` patterns.
 2. **Loss Consistency**: Verify that training logs reflect `diffusion_loss` and `a0_loss` matching the FMv3 standard.
 3. **Solver Flexibility**: Run `eval_ddpm_encdec_vision.py` with `--ode_solver_method_v3 euler` vs `rk4` to confirm the ODE integration is functional for vision.
 
+## 5. Post-Deployment Stability (May 14, 2026)
+Following the initial port, several critical integration bugs were identified and resolved to ensure production readiness:
+- **Conditioning Dictionary Fix**: Migrated from tuple-based to dict-based conditioning to prevent crashes in the core `apply_conditioning` module. This allows the vision pipeline to "snap" the robot state while simultaneously processing high-dimensional visual latents.
+- **Normalization Bypass**: Implemented an `IdentityNormalizer` to protect the pre-scaled vision data from accidental re-normalization by the `sampling.Policy` class.
+- **Responsiveness Upgrade**: Reduced the default `log_freq` from 1,000 to 100 steps to provide immediate visual feedback during training, matching the intuitive feel of other FM-PCC models.
+
 ---
 **Auditor Signature**: Antigravity AI
 **Date**: May 14, 2026

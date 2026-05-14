@@ -43,15 +43,16 @@ These are engineering/training-setup hypotheses (not proof of a principled failu
   - **Match**: Scaffolding (W&B, Seed Management, Manifesting, Checkpointing) is now a 1:1 replication of `FMv3ODE`.
   - **Match**: **Config Modularity** is restored. Uses the multi-stage `utils.Config` setup for Dataset/Model/Diffusion. The `VisualUNet` and `VisualGaussianDiffusion` classes now allow swapping ML engines via command-line arguments.
 
-### Evaluation Infrastructure (`eval_ddpm_encdec_vision.py`)
-- **Status**: **FULLY CONSISTENT**
-- **Findings**:
-  - **Match**: The vision eval now replicates the full `FMv3ODE` "PCC Bone" suite:
-    - Standard `load_diffusion_with_override` logic (loading from pickles).
-    - `aggregate_only` mode support.
-    - Unified `sampling.Policy` abstraction.
-    - `utils.Tee` logging and standardized nested result directory naming.
   - **Verdict**: The evaluation pipeline is now a mirror of the `FMv3ODE` standard, enabling unified cross-modality benchmarking.
+55: 
+56: ### Deployment & Integration Fixes (May 14, 2026)
+57: - **Status**: **STABLE**
+58: - **Bug Fixes**:
+59:   - **Multiple Values for 'model'**: Resolved `TypeError` by removing duplicate model passing in `diffusion_config` instantiation.
+60:   - **Visual Conditioning Protocol**: Implemented a dict-based conditioning pass in `VisualGaussianDiffusion` to decouple visual latents from state-snapping logic, preventing crashes in the core `apply_conditioning` utility.
+61:   - **Identity Normalization**: Integrated `IdentityNormalizer` into the `Policy` suite for vision, preventing `AttributeError` and preserving pre-scaled image pixel ranges.
+62:   - **Responsive Feedback**: Implemented `--log-freq` (default 100) to eliminate CLI "stalls" during heavy visual training steps.
+63: - **Final Verdict**: The system is now successfully training with visible, real-time loss reporting and full infrastructure parity.
 
 
 ---
