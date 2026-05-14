@@ -54,7 +54,7 @@ class VisualAgentWrapper:
       3. Runs the D3IL DiffusionPolicy (obs_encoder + diffusion_model)
       4. Returns action chunks (action_seq_size=4 steps per inference call)
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4, save_path=None):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
@@ -62,6 +62,11 @@ class VisualAgentWrapper:
         self.action_seq_size = action_seq_size
         self.action_counter = self.action_seq_size  # Force re-plan on first call
         self.curr_action_seq = None
+        self.save_path = save_path
+        
+        # Diagnostics
+        self.rollout_counter = -1
+        self.step_counter = 0
         
         # Context windows — match D3IL's DiffusionAgent exactly
         self.bp_image_context = deque(maxlen=self.window_size)
@@ -74,6 +79,8 @@ class VisualAgentWrapper:
         self.inhand_image_context.clear()
         self.des_robot_pos_context.clear()
         self.action_counter = self.action_seq_size
+        self.rollout_counter += 1
+        self.step_counter = 0
     
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
@@ -83,12 +90,27 @@ class VisualAgentWrapper:
         Returns: np.array of shape [1, 3] (velocity delta for the end-effector)
         """
         if if_vision:
-            bp_image, inhand_image, des_robot_pos = state
+            bp_image_np, inhand_image_np, des_robot_pos_np = state
             
+            # ── Visual Diagnostic: Save key frames ───────────────────────
+            # Save every 10th rollout to avoid disk bloat
+            if self.save_path and (self.rollout_counter % 10 == 0) and (self.step_counter in [0, 50, 100, 150]):
+                diag_dir = os.path.join(self.save_path, 'diagnostics')
+                os.makedirs(diag_dir, exist_ok=True)
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+                ax[0].imshow(bp_image_np)
+                ax[0].set_title(f"Agentview (Step {self.step_counter})")
+                ax[1].imshow(inhand_image_np)
+                ax[1].set_title(f"In-hand (Step {self.step_counter})")
+                plt.savefig(os.path.join(diag_dir, f"rollout_{self.rollout_counter}_step_{self.step_counter}.png"))
+                plt.close()
+            # ────────────────────────────────────────────────────────────
+
             # Convert numpy → tensor
-            bp_image = torch.from_numpy(bp_image).to(self.device).float().unsqueeze(0)
-            inhand_image = torch.from_numpy(inhand_image).to(self.device).float().unsqueeze(0)
-            des_robot_pos = torch.from_numpy(des_robot_pos).to(self.device).float().unsqueeze(0)
+            bp_image = torch.from_numpy(bp_image_np).to(self.device).float().unsqueeze(0)
+            inhand_image = torch.from_numpy(inhand_image_np).to(self.device).float().unsqueeze(0)
+            des_robot_pos = torch.from_numpy(des_robot_pos_np).to(self.device).float().unsqueeze(0)
             
             # Append to sliding window (unscaled, matching training)
             self.bp_image_context.append(bp_image)
@@ -124,6 +146,7 @@ class VisualAgentWrapper:
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
         self.action_counter += 1
+        self.step_counter += 1
         return next_action.detach().cpu().numpy()
 
 
@@ -285,6 +308,7 @@ if __name__ == '__main__':
                     window_size=getattr(args, 'horizon', 8),
                     obs_seq_len=5,
                     action_seq_size=4,
+                    save_path=save_path
                 )
                 
                 # Initialize Simulation
@@ -298,21 +322,6 @@ if __name__ == '__main__':
                     n_trajectories_per_context=n_trajectories,
                     if_vision=True
                 )
-
-                # ── Visual Diagnostic: Save first frame ─────────────────────
-                print(f"[ eval ] Saving diagnostic observation to logs/visual_diagnostic_seed_{seed}.png")
-                os.makedirs('logs', exist_ok=True)
-                diag_obs = sim.reset() # Returns (bp, inhand, state)
-                import matplotlib.pyplot as plt
-                fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-                ax[0].imshow(diag_obs[0])
-                ax[0].set_title("Agentview")
-                ax[1].imshow(diag_obs[1])
-                ax[1].set_title("In-hand")
-                plt.savefig(f"logs/visual_diagnostic_seed_{seed}.png")
-                plt.close()
-                print(f"[ eval ] Diagnostic saved.")
-                # ────────────────────────────────────────────────────────────
 
                 
                 # Run evaluation through D3IL's native test_agent
