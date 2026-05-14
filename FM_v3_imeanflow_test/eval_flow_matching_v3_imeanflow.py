@@ -123,6 +123,7 @@ for exp in exps:
 
                     dataset = dataset_config()
                     model = model_config().to(device)
+                    diffusion_config._dict.pop('model', None) # Prevent duplicate positional/kwarg
                     diffusion = diffusion_config(model).to(device)
                     trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
 
