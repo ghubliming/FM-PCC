@@ -799,8 +799,8 @@ base = {
         # Reuses official iMF repo logic: github.com/Lyy-iiis/imeanflow
         
         ## model & engine (REAL iMF from official repo)
-        'model': 'flow_matcher_v3_imeanflow.models.iMeanFlowEngine',
-        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'model': 'models.iMeanFlowEngine',
+        'diffusion': 'models.iMFDiffusion',
         'horizon': 8,
         
         ## iMF architecture (matches official repo)
@@ -868,7 +868,7 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 imeanflow model
-        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'diffusion': 'models.iMFDiffusion',
         'horizon': 8,
         'action_weight': 10,
         'u_loss_weight': 1.0,
