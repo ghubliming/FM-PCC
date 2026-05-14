@@ -12,6 +12,11 @@ from datetime import datetime
 import ddpm_encdec_vision.utils as utils
 from flow_matcher_v3_ode_selectable.sampling.policies import Policy
 
+class IdentityNormalizer:
+    """Pass-through normalizer for vision pipeline."""
+    def normalize(self, x, *args, **kwargs): return x
+    def unnormalize(self, x, *args, **kwargs): return x
+
 # Ensure d3il is in path
 sys.path.append(os.path.abspath('d3il'))
 sys.path.append(os.path.abspath('d3il/environments/d3il'))
@@ -40,7 +45,8 @@ class VisualAgentWrapper:
         # Policy call
         action, samples = self.policy(conditions={0: cond}, batch_size=1)
         
-        return action.detach().cpu().numpy()[0]
+        # action is [batch, action_dim], e.g., [1, 3]
+        return action.detach().cpu().numpy()
 
 def load_diffusion_with_override(loadbase, dataset, diffusion_loadpath, seed, target_class=None, epoch='best', device='cuda'):
     """Replicated from FMv3ODE: Loads vision model with full metadata support."""
@@ -110,7 +116,7 @@ if __name__ == '__main__':
     )
     
     # 3. Policy Construction
-    policy = Policy(model=diffusion, normalizer=None) 
+    policy = Policy(model=diffusion, normalizer=IdentityNormalizer()) 
     
     # 4. Simulation Environment
     print("[ eval ] Initializing Aligning_Sim (Vision=True)")

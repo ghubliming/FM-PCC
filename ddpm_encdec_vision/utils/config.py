@@ -5,17 +5,23 @@ import pickle
 
 def import_class(_class):
     if type(_class) is not str: return _class
-    ## 'diffusion' on standard installs
     repo_name = __name__.split('.')[0]
-    ## eg, 'utils'
-    module_name = '.'.join(_class.split('.')[:-1])
-    ## eg, 'Renderer'
-    class_name = _class.split('.')[-1]
-    ## eg, 'diffusion.utils'
-    module = importlib.import_module(f'{repo_name}.{module_name}')
-    ## eg, diffusion.utils.Renderer
+    parts = _class.split('.')
+    module_name = '.'.join(parts[:-1])
+    class_name = parts[-1]
+    
+    if module_name.startswith(repo_name):
+        full_module_path = module_name
+    else:
+        full_module_path = f'{repo_name}.{module_name}'
+    
+    try:
+        module = importlib.import_module(full_module_path)
+    except ModuleNotFoundError:
+        # Fallback to absolute import if the relative-to-repo one fails
+        module = importlib.import_module(module_name)
+        
     _class = getattr(module, class_name)
-    # print(f'[ utils/config ] Imported {repo_name}.{module_name}:{class_name}')
     return _class
 
 class Config(Mapping):
@@ -91,6 +97,6 @@ class Config(Mapping):
 
     def __call__(self, *args, **kwargs):
         instance = self._class(*args, **kwargs, **self._dict)
-        if self._device:
+        if self._device and hasattr(instance, 'to'):
             instance = instance.to(self._device)
         return instance

@@ -42,9 +42,16 @@ class VisualUNet(nn.Module):
         self.obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(self.device)
         
         # 2. Instantiate Backbone (e.g., UNet)
-        # We use the provided 'model' class string from config
-        from flow_matcher_v3_ode_selectable.utils.config import import_class
-        backbone_class = import_class(config.model)
+        from ddpm_encdec_vision.utils.config import import_class
+        try:
+            backbone_class = import_class(config.model)
+            # If the config still points to the bridge, we fallback to the default backbone
+            if 'VisualDiffusionBridge' in str(backbone_class):
+                 from flow_matcher_v3_ode_selectable.models.unet1d_temporal_cond import Flow_matcher_U_Net_v2
+                 backbone_class = Flow_matcher_U_Net_v2
+        except Exception:
+            from flow_matcher_v3_ode_selectable.models.unet1d_temporal_cond import Flow_matcher_U_Net_v2
+            backbone_class = Flow_matcher_U_Net_v2
         
         # Calculate latent dim: encoder outputs 64*2 = 128 (default)
         # Plus any state if provided. In Aligning_Img_Dataset, 'obs' is passed.
@@ -81,15 +88,14 @@ class VisualUNet(nn.Module):
     def forward(self, x, cond, t, returns=None, use_dropout=True, force_dropout=False):
         """
         x: [B, T, action_dim + state_dim]
-        cond: tuple (bp_imgs, inhand_imgs, state)
+        cond: dict containing 'visual' -> (bp_imgs, inhand_imgs, state)
         """
-        bp_imgs, inhand_imgs, state = cond
+        if isinstance(cond, dict) and 'visual' in cond:
+            bp_imgs, inhand_imgs, state = cond['visual']
+        else:
+            # Fallback for old code paths or if cond is already the tuple
+            bp_imgs, inhand_imgs, state = cond
+            
         visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state=state)
-        
-        # visual_emb is [B, T, 128]
-        # For temporal UNet, we usually use the first frame's latent or 
-        # pass the whole sequence if the backbone supports it.
-        # Standard FM-PCC UNet expects cond: [B, cond_dim] or [B, T, cond_dim]
-        # depending on implementation.
         
         return self.backbone(x, visual_emb, t, returns=returns, use_dropout=use_dropout, force_dropout=force_dropout)
