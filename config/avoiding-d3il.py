@@ -842,7 +842,7 @@ base = {
         'action_weight': 10,
         
         ## ODE inference (match FMv3ODE-style deterministic rollout)
-        'ode_inference_steps_v3': 1,
+        'ode_inference_steps_v3': 10,
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         
@@ -873,7 +873,7 @@ base = {
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 0.1,
-        'flow_steps_v3': 1,
+        'flow_steps_v3': 10,
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         'ode_solver_backend_v3': 'legacy_euler',
