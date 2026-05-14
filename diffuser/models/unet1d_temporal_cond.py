@@ -94,6 +94,7 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
         condition_dropout=0.1,
         calc_energy=False,
         kernel_size=5,
+        use_cond_projection=False,
     ):
         super().__init__()
 
@@ -103,6 +104,7 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
 
         self.time_dim = dim
         self.returns_dim = dim
+        self.cond_dim = cond_dim
 
         self.time_mlp = nn.Sequential(
             SinusoidalPosEmb(dim),
@@ -111,10 +113,30 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
             nn.Linear(dim * 4, dim),
         )
 
+        # ── Conditioning Projection (FiLM-style) ──────────────────────────
+        # Projects the external conditioning vector (e.g. visual embeddings)
+        # into the same space as the time embedding, so it can modulate
+        # the ResidualTemporalBlocks via concatenation with t.
+        # Only enabled when use_cond_projection=True (visual pipelines).
+        # The state-based pipeline passes cond as a dict for inpainting,
+        # not as a tensor, so it must NOT enable this.
+        if use_cond_projection and cond_dim > 0:
+            self.cond_mlp = nn.Sequential(
+                nn.Linear(cond_dim, dim),
+                nn.Mish(),
+                nn.Linear(dim, dim),
+            )
+            cond_embed_dim = dim  # will be concatenated with time_dim
+        else:
+            self.cond_mlp = None
+            cond_embed_dim = 0
+
         self.returns_condition = returns_condition
         self.condition_dropout = condition_dropout
         self.calc_energy = calc_energy
 
+        # embed_dim = time_dim + (optional cond_dim) + (optional returns_dim)
+        embed_dim = dim + cond_embed_dim
         if self.returns_condition:
             self.returns_mlp = nn.Sequential(
                         nn.Linear(1, dim),
@@ -124,9 +146,7 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
                         nn.Linear(dim * 4, dim),
                     )
             self.mask_dist = Bernoulli(probs=1-self.condition_dropout)
-            embed_dim = 2*dim
-        else:
-            embed_dim = dim
+            embed_dim += dim
 
         self.downs = nn.ModuleList([])
         self.ups = nn.ModuleList([])
@@ -169,6 +189,11 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
     def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False):
         '''
             x : [ batch x horizon x transition ]
+            cond : [ batch x cond_seq_len x cond_dim ] or None
+                   External conditioning (e.g. visual embeddings from ResNet).
+                   Pooled over the temporal axis and projected via cond_mlp,
+                   then concatenated with the time embedding to modulate
+                   all ResidualTemporalBlocks (FiLM-style conditioning).
             returns : [batch x horizon]
         '''
         if self.calc_energy:
@@ -186,6 +211,21 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
 
         # t = self.time_mlp(time)
         t = self.time_mlp(timesteps)
+
+        # ── Integrate external conditioning ───────────────────────────────
+        # Pool over temporal axis and project to dim, then concat with t.
+        # NOTE: In the state-based pipeline, `cond` is a dict {0: state},
+        # not a tensor. The cond_mlp path only fires for tensor conditioning
+        # (e.g. visual embeddings from VisualUNet).
+        if self.cond_mlp is not None and cond is not None and isinstance(cond, torch.Tensor):
+            if len(cond.shape) == 3:
+                # cond: [B, T, cond_dim] → pool → [B, cond_dim]
+                cond_pooled = cond.mean(dim=1)
+            else:
+                # cond: [B, cond_dim] — already pooled
+                cond_pooled = cond
+            cond_emb = self.cond_mlp(cond_pooled)  # [B, dim]
+            t = torch.cat([t, cond_emb], dim=-1)
 
         if self.returns_condition:
             assert returns is not None
@@ -207,8 +247,6 @@ class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
 
         x = self.mid_block1(x, t)
         x = self.mid_block2(x, t)
-
-        # import pdb; pdb.set_trace()
 
         for resnet, resnet2, upsample in self.ups:
             x = torch.cat((x, h.pop()), dim=1)
