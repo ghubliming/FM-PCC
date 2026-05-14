@@ -222,7 +222,7 @@ async def trigger_plot(event=None):
     await asyncio.sleep(0.1)
     window.applyZoom()
     
-    update_scorecard(checked_cands[0], checked_vars[0], env)
+    update_scorecard(subset, metric)
 
 def download_plot(event):
     global current_fig
@@ -265,14 +265,31 @@ def get_checked(class_name):
     elements = document.getElementsByClassName(class_name)
     return [e.value for e in elements if e.checked]
 
-def update_scorecard(cand, var, env):
-    val_col = 'mean' if 'mean' in df.columns else 'value'
-    score_df = df[(df['Candidate'] == cand) & (df['variant'] == var) & (df['halfspace_variant'] == env)]
-    html = ""
-    for m_key in ["n_success_and_constraints", "avg_time", "avg_num_violations", "avg_steps"]:
-        row = score_df[score_df['metric'] == m_key]
-        val = f"{row[val_col].values[0]:.3f}" if not row.empty else "N/A"
-        html += f'<div class="score-card"><div class="score-label">{m_key.replace("avg_", "").upper()}</div><div class="score-val">{val}</div></div>'
+def update_scorecard(subset, metric):
+    if subset is None or subset.empty: return
+    val_col = 'mean' if 'mean' in subset.columns else 'value'
+    subset_clean = subset.dropna(subset=[val_col])
+    if subset_clean.empty:
+        document.getElementById("scorecard-container").innerHTML = '<div class="score-card" style="grid-column: span 4;">No valid data</div>'
+        return
+        
+    if 'success' in metric.lower() or 'reward' in metric.lower():
+        best_idx = subset_clean[val_col].idxmax()
+    else:
+        best_idx = subset_clean[val_col].idxmin()
+        
+    best_row = subset_clean.loc[best_idx]
+    best_cand = best_row['Candidate']
+    best_var = best_row['variant']
+    best_env = best_row['halfspace_variant'] if 'halfspace_variant' in best_row else 'N/A'
+    best_val = best_row[val_col]
+    
+    html = f'<div class="score-card" style="grid-column: span 4; background: #e8f5e9; border: 2px solid #2e7d32; text-align: center; padding: 15px;">'
+    html += f'<div class="score-label" style="color: #2e7d32; font-size: 14px;">🏆 OVERALL BEST FOR: {metric.upper()}</div>'
+    html += f'<div class="score-val" style="margin-top: 10px; font-size: 16px;">Candidate <strong>{best_cand}</strong> in <strong>{best_var}</strong> ({best_env})<br>'
+    html += f'<span style="font-size: 32px; color: #000; font-weight: 900; display: inline-block; margin-top: 8px;">{best_val:.4f}</span></div>'
+    html += f'</div>'
+    
     document.getElementById("scorecard-container").innerHTML = html
 
 def render_path_map():

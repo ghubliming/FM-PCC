@@ -43,8 +43,15 @@ class VisualAgentWrapper:
         # Condition matches VisualModel input
         cond = (bp_tensor, inhand_tensor, pos_tensor)
         
+        # Temporarily bypass Policy._format_conditions which crashes when trying to apply to_torch/einops to tuples
+        original_format = self.policy._format_conditions
+        self.policy._format_conditions = lambda conditions, batch_size: conditions
+        
         # Policy call
         action, samples = self.policy(conditions={0: cond}, batch_size=1)
+        
+        # Restore formatting function
+        self.policy._format_conditions = original_format
         
         # action is [batch, action_dim], e.g., [1, 3]
         return action.detach().cpu().numpy()
