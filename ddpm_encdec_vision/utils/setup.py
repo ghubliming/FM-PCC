@@ -12,6 +12,17 @@ import pdb
 
 from .serialization import mkdir
 
+class Tee(object):
+    def __init__(self, *files):
+        self.files = [f if hasattr(f, 'write') else open(f, 'a') for f in files]
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
