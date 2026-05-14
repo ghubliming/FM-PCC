@@ -851,4 +851,30 @@ base = {
         'prefix': 'flow_matching_v3_imeanflow/',
         'exp_name': watch(args_to_watch_fmv3_ode_train),
     },
+
+    'plan_fm_v3_imeanflow': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_u{u_loss_weight}_v{v_loss_weight}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## flow matching v3 imeanflow model
+        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'horizon': 8,
+        'action_weight': 10,
+        'u_loss_weight': 1.0,
+        'v_loss_weight': 0.1,
+        'ode_inference_steps_v3': 1,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+    },
 }

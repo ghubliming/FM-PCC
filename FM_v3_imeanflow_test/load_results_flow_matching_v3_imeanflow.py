@@ -1,80 +1,173 @@
-#!/usr/bin/env python3
-"""
-Load and display iMeanFlow evaluation results.
-
-Usage:
-    python FM_v3_imeanflow_test/load_results_flow_matching_v3_imeanflow.py --results-dir logs/avoiding-d3il/flow_matching_v3_imeanflow/evaluation_results/imf
-"""
-
-import argparse
-import json
+import yaml
+import numpy as np
+import matplotlib.pyplot as plt
 import os
-from pathlib import Path
+import flow_matcher_v3_imeanflow.utils as utils
 
+# Load configuration
+with open('config/projection_eval.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
-def load_and_display_results(results_dir='logs/avoiding-d3il/flow_matching_v3_imeanflow/evaluation_results/imf'):
-    """Load evaluation results from eval_results.json and print a summary table."""
-    results_file = os.path.join(results_dir, 'eval_results.json')
+projection_variants = config['projection_variants']
 
-    if not os.path.exists(results_file):
-        print(f'[ load ] ERROR: No results file found: {results_file}')
-        return False
+exp = 'avoiding-d3il'
+class Parser(utils.Parser):
+    dataset: str = exp
+    config: str = 'config.' + exp
 
-    with open(results_file, 'r') as f:
-        results = json.load(f)
+seeds = config['seeds']
+avoiding_halfspace_variants = config['avoiding_halfspace_variants']
 
-    print()
-    print('=' * 80)
-    print('iMeanFlow (iMF-PCC) Evaluation Results')
-    print('=' * 80)
-    print()
-    print('Per-Seed Results:')
-    print('-' * 80)
-    print(f"{'Seed':>6s} {'MSE Error':>14s} {'Std Dev':>14s} {'Num Samples':>12s}")
-    print('-' * 80)
+sr_goal_all = {}
+sr_constraints_all = {}
+timesteps_avg_all = {}
+timesteps_std_all = {}
 
-    mse_errors = []
-    sorted_keys = sorted(results.keys(), key=lambda value: int(value) if str(value).isdigit() else 999)
+# We will set the plot_path dynamically inside the loop
+plot_path = None
 
-    for seed_key in sorted_keys:
-        result = results[seed_key]
-        seed = result.get('seed', seed_key)
-        mse_error = float(result.get('mse_error', 0.0))
-        mse_std = float(result.get('mse_std', 0.0))
-        num_samples = int(result.get('num_samples', 0))
+for variant in projection_variants:
+    n_success_all = np.array([])
+    n_success_and_constraints_all = np.array([])
+    n_steps_all = np.array([])
+    n_violations_all = np.array([])
+    total_violations_all = np.array([])
+    collision_free_completed_all = np.array([])
+    for halfspace_variant in avoiding_halfspace_variants:
+        for i, seed in enumerate(seeds):
+            args = Parser().parse_args(experiment='plan_fm_v3_imeanflow', seed=seed)
+            if plot_path is None:
+                # The savepath is usually logbase/dataset/exp_name/seed
+                # We want the plots to be in logbase/dataset/exp_name/plots/load_results_output_all_seeds
+                load_path = os.path.dirname(args.savepath)
+                plot_path = os.path.join(load_path, 'plots', 'load_results_output_all_seeds')
+                os.makedirs(plot_path, exist_ok=True)
+                print(f'[ utils ] Set plot_path to: {plot_path}')
 
-        print(f'{int(seed):6d} {mse_error:14.6f} {mse_std:14.6f} {num_samples:12d}')
-        mse_errors.append(mse_error)
+            flow_steps = getattr(args, 'flow_steps_v3', getattr(args, 'ode_inference_steps_v3', 'n/a'))
+            ode_steps = getattr(args, 'ode_inference_steps_v3', flow_steps)
+            beta_alpha = getattr(args, 'time_beta_alpha_v3', 'n/a')
+            beta_beta = getattr(args, 'time_beta_beta_v3', 'n/a')
+            print(f'Eval ODE={ode_steps}, FlowSteps={flow_steps}, Beta=({beta_alpha},{beta_beta})')
 
-    print('-' * 80)
+            # Get data
+            try:
+                data = np.load(f'{args.savepath}/results/halfspace_{halfspace_variant}/{variant}.npz', allow_pickle=True)
+                n_success = data["n_success"]
+                n_success_and_constraints = data["n_success_and_constraints"]
+                n_steps = data["n_steps"]
+                n_violations = data["n_violations"]
+                total_violations = data["total_violations"]
+                avg_time = data["avg_time"]
+                collision_free_completed = data["collision_free_completed"]
 
-    if mse_errors:
-        mean_mse = sum(mse_errors) / len(mse_errors)
-        variance = sum((value - mean_mse) ** 2 for value in mse_errors) / len(mse_errors)
-        print(f"{'MEAN':>6s} {mean_mse:14.6f} {variance ** 0.5:14.6f} {len(mse_errors):12d}")
+                n_success_all = np.append(n_success_all, n_success)
+                n_success_and_constraints_all = np.append(n_success_and_constraints_all, n_success_and_constraints)
+                n_steps_all = np.append(n_steps_all, n_steps[n_success > 0])
+                n_violations_all = np.append(n_violations_all, n_violations)
+                total_violations_all = np.append(total_violations_all, total_violations)
+                collision_free_completed_all = np.append(collision_free_completed_all, collision_free_completed)
+            except FileNotFoundError:
+                print(f"[ Error ] Could not find results at: {args.savepath}/results/halfspace_{halfspace_variant}/{variant}.npz")
+                continue
 
-    print('-' * 80)
-    print()
-    print('=' * 80)
-    return True
+    if len(n_success_all) == 0:
+        print(f"Skipping variant {variant} due to no data found.")
+        continue
 
+    success_rate_goal = n_success_all.mean()
+    success_rate_goal_constraints = n_success_and_constraints_all.mean()
+    success_rate_constraints = collision_free_completed_all.mean()
+    steps_avg = n_steps_all.mean() if len(n_steps_all) > 0 else 0
+    steps_std = n_steps_all.std() if len(n_steps_all) > 0 else 0
+    n_violations_avg = n_violations_all.mean()
+    n_violations_std = n_violations_all.std()
+    total_violations_avg = total_violations_all.mean()
+    total_violations_std = total_violations_all.std()
 
-def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser(description='Load iMF evaluation results')
-    parser.add_argument('--results-dir', type=str, default='logs/avoiding-d3il/flow_matching_v3_imeanflow/evaluation_results/imf', help='Results directory.')
-    args = parser.parse_args()
+    print(f'------------------ Variant: {variant} ------------------')
+    print(f'Success rate (goal): {success_rate_goal:.2f}')
+    print(f'Success rate (goal + constraints): {success_rate_goal_constraints:.2f}')
+    print(f'Success rate (constraints): {success_rate_constraints:.2f}')
+    print(f'Average steps: {steps_avg:.2f} +- {steps_std:.2f}')
+    print(f'Average violations: {n_violations_avg:.2f} +- {n_violations_std:.2f}')
+    print(f'Average total violations: {total_violations_avg:.3f} +- {total_violations_std:.3f}')
+    print(f'Average time: {avg_time.mean():.2f} +- {avg_time.std():.2f}')
+    print(f'${steps_avg:.1f} \pm {steps_std:.1f}$ & ${success_rate_goal:.2f}$ & ${success_rate_constraints:.2f}$ & ${n_violations_avg:.1f} \pm {n_violations_std:.1f}$ \\\\')
 
-    print('[ load ] iMeanFlow Results Loader')
-    print(f'[ load ] Loading from: {args.results_dir}')
+    sr_goal_all[variant] = success_rate_goal
+    sr_constraints_all[variant] = success_rate_constraints
+    timesteps_avg_all[variant] = steps_avg
+    timesteps_std_all[variant] = steps_std
 
-    success = load_and_display_results(args.results_dir)
+# Plot results
+variants_to_plot = [['dpcc-r', 'dpcc-t', 'dpcc-c'], ['dpcc-r-tightened', 'dpcc-t-tightened', 'dpcc-c-tightened']]
+variants_labels = ['DPCC-R', 'DPCC-T', 'DPCC-C']
 
-    if success:
-        print('[ load ] ✓ Complete')
-    else:
-        print('[ load ] ✗ Failed to load results')
+for variants in variants_to_plot:
+    # Check if all variants in the group have data
+    if not all(variant in sr_goal_all for variant in variants):
+        print(f"Skipping plot for {variants} as some data is missing.")
+        continue
 
+    # Extract success rates for each variant
+    sr_goal = [sr_goal_all[variant] for variant in variants]
+    sr_constraints = [sr_constraints_all[variant] for variant in variants]
+    timesteps_avg = [timesteps_avg_all[variant] for variant in variants]
+    timesteps_std = [timesteps_std_all[variant] for variant in variants]
+    print(sr_goal)
+    print(sr_constraints)
+    print(timesteps_avg)
+    print(timesteps_std)
 
-if __name__ == '__main__':
-    main()
+    # Create a bar plot
+    x = np.arange(len(variants))  # the label locations
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    bars1 = ax.bar(x - width/2, sr_goal, width, label='Goal reached', color='green')
+    bars2 = ax.bar(x + width/2, sr_constraints, width, label='Constraints satisfied', color='red')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Success Rate', fontsize=12)
+    ax.set_xticks(x)
+    ax.set_xticklabels(variants_labels, fontsize=12)
+    plt.setp(ax.get_yticklabels(), fontsize=12)
+    ax.legend(loc='lower left', fontsize=12) 
+
+    # Add labels to the bars
+    def add_labels(bars):
+        for bar in bars:
+            height = bar.get_height()
+            ax.annotate(f'{height:.2f}',
+                        xy=(bar.get_x() + bar.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+    add_labels(bars1)
+    add_labels(bars2)
+
+    fig.tight_layout()
+
+    save_name = 'success_rates_tightened_fm.png' if 'tightened' in variants[0] else 'success_rates_fm.png'
+    plt.savefig(os.path.join(plot_path, save_name))
+    plt.show()
+
+    # Create the second bar plot for timesteps
+    fig, ax = plt.subplots(figsize=(10, 10))
+    bars = ax.bar(x, timesteps_avg, width, yerr=timesteps_std, label='Timesteps', color=[0.5, 0.5, 1], capsize=5)
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_xticks(x)
+    ax.set_xticklabels(variants_labels, fontsize=12)
+    plt.setp(ax.get_yticklabels(), fontsize=12)
+    ax.set_ylim([0, 100])
+    ax.legend(loc='lower left', fontsize=12) 
+
+    # Add labels to the bars
+    add_labels(bars)
+
+    fig.tight_layout()
+    save_name = 'timesteps_tightened_fm.png' if 'tightened' in variants[0] else 'timesteps_fm.png'
+    plt.savefig(os.path.join(plot_path, save_name))
+    plt.show()

@@ -1,277 +1,417 @@
-#!/usr/bin/env python3
-"""
-Evaluate iMeanFlow (iMF) models on D3IL avoiding-d3il validation dataset.
-
-Standard FM-PCC evaluation pattern (inherited from FMv3ODE):
-1. Load trained checkpoint
-2. Run inference on validation split
-3. Compute MSE error + visualize results
-
-Usage:
-    python FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py --seeds 6 7 8 9 10
-"""
-
-import argparse
-import json
+# FM_v3 ODE-selectable version of eval_FM.py
+import time
+import yaml
 import os
-import sys
-from pathlib import Path
-
-import numpy as np
 import torch
+from copy import copy
+import minari
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import flow_matcher_v3_imeanflow.utils as utils
+from flow_matcher_v3_imeanflow.sampling.policies import Policy
+from flow_matcher_v3_imeanflow.sampling.projection import Projector
+from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
+import sys
+import argparse
 
-# Standard FM-PCC imports
-import diffuser.utils as utils
+class Tee(object):
+    def __init__(self, *files):
+        self.files = files
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+    def flush(self):
+        for f in self.files:
+            f.flush()
 
+# --- Argument Parsing ---
+parser = argparse.ArgumentParser(description='Evaluation script with aggregation mode.')
+parser.add_argument('--seed', type=int, help='Run only this specific seed.')
+parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results into all_seeds plots.')
+args_cli, remaining_argv = parser.parse_known_args()
+# Pass remaining args to Parser if needed
+sys.argv = [sys.argv[0]] + remaining_argv
 
-class Parser(utils.Parser):
-    dataset: str = 'avoiding-d3il'
-    config: str = 'config.avoiding-d3il'
+with open('config/projection_eval.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
+exps = config['exps']
+seeds = config['seeds']
+if args_cli.seed is not None:
+    seeds = [args_cli.seed]
+    print(f'[ eval ] Overriding seeds from config to: {seeds}')
 
-def load_diffusion_robust(checkpoint_dir, epoch='best', device='cuda'):
-    """Load diffusion checkpoint with legacy-config compatibility in a single pass."""
-    print(f'\n[ utils/serialization ] Loading model from {checkpoint_dir}\n')
+projection_variants = config['projection_variants']
+halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
+n_trials = config['n_trials']
+plot_how_many = config['plot_how_many']
+constraint_types = config['constraint_types']
+diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
 
-    dataset_config = utils.load_config(checkpoint_dir, 'dataset_config.pkl')
-    model_config = utils.load_config(checkpoint_dir, 'model_config.pkl')
-    diffusion_config = utils.load_config(checkpoint_dir, 'diffusion_config.pkl')
-    trainer_config = utils.load_config(checkpoint_dir, 'trainer_config.pkl')
-    trainer_config._dict['results_folder'] = checkpoint_dir
-
-    # Some old checkpoints serialized `model` inside diffusion kwargs,
-    # which collides with the positional `model` argument at instantiation.
-    if isinstance(getattr(diffusion_config, '_dict', None), dict) and 'model' in diffusion_config._dict:
-        print('[ eval ] INFO: Removing legacy diffusion_config["model"] compatibility key.')
-        diffusion_config._dict.pop('model', None)
-
-    dataset = dataset_config()
-    model = model_config().to(device)
-    diffusion = diffusion_config(model).to(device)
-    trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
-
-    if epoch == 'latest':
-        epoch = utils.get_latest_epoch((checkpoint_dir,))
-
-    trainer.load(epoch)
-    losses = utils.load_losses(checkpoint_dir, 'losses.pkl')
-
-    return utils.DiffusionExperiment(
-        dataset,
-        trainer.model.model,
-        trainer.model,
-        trainer,
-        epoch,
-        losses,
-    )
-
-
-def resolve_checkpoint_dir(seed, experiment='flow_matching_v3_imeanflow', checkpoint_root=None):
-    """Resolve a seed checkpoint directory from config experiment or explicit root."""
-    if checkpoint_root:
-        return os.path.join(checkpoint_root, str(seed))
-
-    # Parse config to locate checkpoint using the standard FM-PCC handoff.
-    original_argv = list(sys.argv)
-    sys.argv = [sys.argv[0]]
-    try:
-        parser = Parser(exe_name='eval')
-        args = parser.parse_args(experiment=experiment, seed=seed)
-    finally:
-        sys.argv = original_argv
-
-    return args.savepath
-
-
-def evaluate_seed(seed, results_dir='evaluation_results', experiment='flow_matching_v3_imeanflow', checkpoint_root=None):
-    """
-    Evaluate a single seed using standard FM-PCC pattern.
-    
-    Args:
-        seed: Random seed
-        results_dir: Output directory
-        
-    Returns:
-        dict with evaluation metrics or None if failed
-    """
-    print(f"[ eval ] Seed {seed}")
-    
-    checkpoint_dir = resolve_checkpoint_dir(
-        seed=seed,
-        experiment=experiment,
-        checkpoint_root=checkpoint_root,
-    )
-    print(f"[ eval ] Checkpoint: {checkpoint_dir}")
-
-    missing = [
-        name
-        for name in ('dataset_config.pkl', 'model_config.pkl', 'diffusion_config.pkl', 'trainer_config.pkl')
-        if not os.path.exists(os.path.join(checkpoint_dir, name))
-    ]
-    if missing:
-        print(
-            f"[ eval ] ERROR: Missing checkpoint files for seed {seed}: {missing} | "
-            f"path={checkpoint_dir}"
-        )
-        return None
-
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    
-    # Load trained diffusion model (with legacy pickle compatibility)
-    try:
-        diffusion_experiment = load_diffusion_robust(checkpoint_dir, epoch='best', device=device)
-    except Exception as e:
-        print(f"[ eval ] ERROR: Failed to load seed {seed}: {e}")
-        return None
-    
-    diffusion = diffusion_experiment.diffusion
-    dataset = diffusion_experiment.dataset
-    
-    # Get validation split indices
-    split_idx = int(len(dataset) * 0.85)  # 85% train, 15% val
-    val_indices = list(range(split_idx, len(dataset)))[:50]  # Up to 50 validation samples
-    
-    errors = []
-    
-    # Evaluate on validation split
-    print(f"[ eval ] Evaluating on {len(val_indices)} validation samples...")
-    
-    for idx in val_indices:
-        try:
-            sample = dataset[idx]
-
-            # Namedtuple from SequenceDataset: trajectories, conditions, (optional) returns
-            trajectory = sample.trajectories
-            conditions = sample.conditions
-            returns = getattr(sample, 'returns', None)
+for exp in exps:
+    for halfspace_variant in halfspace_variants:
+        robot_name = exp.split('-')[0]
+        if halfspace_variant == 'top-left-hard':
+            polytopic_constraints = [config['halfspace_constraints'][exp][0]]
+            obstacle_constraints = [config['obstacle_constraints'][exp][3]]
+        elif halfspace_variant == 'top-right-hard':
+            polytopic_constraints = [config['halfspace_constraints'][exp][1]]
+            obstacle_constraints = [config['obstacle_constraints'][exp][4]]
+        elif halfspace_variant == 'both-hard':
+            polytopic_constraints = [config['halfspace_constraints'][exp][2], config['halfspace_constraints'][exp][3]]
+            obstacle_constraints = [config['obstacle_constraints'][exp][5]]
+        bounds = config['bounds'][exp]
+        ax_limits = config['ax_limits'][exp]
+        enlarge_constraints = config['enlarge_constraints'][robot_name]
+        dt = config['dt'][robot_name]
+        class Parser(utils.Parser):
+            dataset: str = exp
+            config: str = 'config.' + exp
+        figs_all_seeds, axes_all_seeds = zip(*[plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
+        figs_all_seeds = list(figs_all_seeds)
+        axes_all_seeds = list(axes_all_seeds)
+        for seed in seeds:
+            args = Parser().parse_args(experiment='plan_fm_v3_imeanflow', seed=seed)
             
-            # Run inference: sample prediction
-            with torch.no_grad():
-                trajectory_tensor = torch.from_numpy(trajectory).float().unsqueeze(0).to(device)
+            fm_model = None
+            dataset = None
+            env = None
+            obs_indices = config['observation_indices'][robot_name]
+            act_indices = config['action_indices'][robot_name]
+            
+            if not args_cli.aggregate_only:
+                # Get model
+                def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', seed=None):
+                    import os
+                    import sys
+                    print(f'\n[ eval loading ] Intercepting load from {os.path.join(*loadpath)}\n')
+                    dataset_config = utils.load_config(*loadpath, 'dataset_config.pkl')
+                    model_config = utils.load_config(*loadpath, 'model_config.pkl')
+                    diffusion_config = utils.load_config(*loadpath, 'diffusion_config.pkl')
+                    trainer_config = utils.load_config(*loadpath, 'trainer_config.pkl')
+                    trainer_config._dict['results_folder'] = os.path.join(*loadpath)
+
+                    if target_class is not None:
+                        # Resolve target class using the current module's import logic
+                        target_class_resolved = utils.config.import_class(target_class)
+                        target_class_str = target_class_resolved.__module__ + '.' + target_class_resolved.__name__
+                        pickled_class_str = diffusion_config._class.__module__ + '.' + diffusion_config._class.__name__
+                        
+                        if pickled_class_str != target_class_str:
+                            print(f"\n=======================================================", file=sys.stderr)
+                            print(f"[WARNING] Pickled diffusion class does not match existing d3il.py config!", file=sys.stderr)
+                            print(f"Pickled config class: {pickled_class_str}", file=sys.stderr)
+                            print(f"Existing d3il.py class: {target_class_str}", file=sys.stderr)
+                            print(f"Overriding picked config with existing d3il.py config!", file=sys.stderr)
+                            print(f"=======================================================\n", file=sys.stderr)
+                            diffusion_config._class = target_class_resolved
+
+                            # Safely filter _dict to only include arguments the new class accepts
+                            import inspect
+                            sig = inspect.signature(target_class_resolved.__init__)
+                            valid_kwargs = set(sig.parameters.keys())
+                            keys_to_remove = [k for k in diffusion_config._dict if k not in valid_kwargs]
+                            for k in keys_to_remove:
+                                print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
+                                del diffusion_config._dict[k]
+
+                    import inspect
+                    print(f"\n[INFO] Instantiating Diffusion Model from:", file=sys.stderr)
+                    print(f"       -> {inspect.getfile(diffusion_config._class)}\n", file=sys.stderr)
+
+                    dataset = dataset_config()
+                    model = model_config().to(device)
+                    diffusion = diffusion_config(model).to(device)
+                    trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
+
+                    if epoch == 'latest':
+                        epoch = utils.get_latest_epoch(loadpath)
+                    trainer.load(epoch)
+                    losses = utils.load_losses(*loadpath, 'losses.pkl')
+                    return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
+
+                fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+                fm_model = fm_experiment.diffusion
+                # Apply plan-time solver selection after loading checkpoint config.
+                fm_model.flow_steps_v3 = int(getattr(args, 'flow_steps_v3', getattr(fm_model, 'flow_steps_v3', 10)))
+                fm_model.ode_inference_steps_v3 = int(getattr(args, 'ode_inference_steps_v3', getattr(fm_model, 'ode_inference_steps_v3', fm_model.flow_steps_v3)))
+                fm_model.ode_solver_backend_v3 = getattr(args, 'ode_solver_backend_v3', getattr(fm_model, 'ode_solver_backend_v3', 'legacy_euler'))
+                fm_model.ode_solver_method_v3 = getattr(args, 'ode_solver_method_v3', getattr(fm_model, 'ode_solver_method_v3', 'euler'))
+                fm_model.ode_solver_rtol_v3 = getattr(args, 'ode_solver_rtol_v3', getattr(fm_model, 'ode_solver_rtol_v3', None))
+                fm_model.ode_solver_atol_v3 = getattr(args, 'ode_solver_atol_v3', getattr(fm_model, 'ode_solver_atol_v3', None))
+                fm_model.ode_solver_step_size_v3 = getattr(args, 'ode_solver_step_size_v3', getattr(fm_model, 'ode_solver_step_size_v3', None))
+                dataset = fm_experiment.dataset
+                if 'pointmaze' in exp or 'antmaze' in exp:
+                    minari_dataset = minari.load_dataset(exp, download=True)
+                    env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()
+                elif 'avoiding' in exp:
+                    env = ObstacleAvoidanceEnv()
+                    env.start()
+                if robot_name == 'pointmaze': env.env.env.env.point_env.frame_skip = 2
+                if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
                 
-                # Convert conditions to batched tensors for sampler compatibility
-                cond_tensors = {}
-                for t, val in conditions.items():
-                    cond_tensor = torch.as_tensor(val, dtype=torch.float32, device=device)
-                    if cond_tensor.ndim == 1:
-                        cond_tensor = cond_tensor.unsqueeze(0)
-                    cond_tensors[t] = cond_tensor
+                if fm_model.__class__.__name__ == 'GaussianDiffusion':
+                    trajectory_dim = fm_model.transition_dim - fm_model.goal_dim
+                    action_dim = fm_model.action_dim
+                    fm_variant = 'states_actions'
+                    obs_indices_updated = {key: val + action_dim for key, val in obs_indices.items()}
+                    act_obs_indices = {**act_indices, **obs_indices_updated}
+                else:
+                    trajectory_dim = fm_model.observation_dim - fm_model.goal_dim
+                    action_dim = 0
+                    fm_variant = 'states'
+                    act_obs_indices = obs_indices
+                constraint_list = []
+                constraint_list_tightened = []
+                constraint_list_polytopic_not_tightened = []
+                if 'halfspace' in constraint_types:
+                    for constraint in polytopic_constraints:
+                        constraint_list.append(('ineq', utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)))
+                        constraint_list_tightened.append(('ineq', utils.formulate_halfspace_constraints(constraint, enlarge_constraints, trajectory_dim, act_obs_indices)))
+                        constraint_list_polytopic_not_tightened.append(('ineq', utils.formulate_halfspace_constraints(constraint, 0, trajectory_dim, act_obs_indices)))
+                if 'bounds' in constraint_types:
+                    lower_bound, upper_bound = utils.formulate_bounds_constraints(constraint_types, bounds, trajectory_dim, act_obs_indices)
+                    constraint_list.extend([['lb', lower_bound], ['ub', upper_bound]])
+                    constraint_list_tightened.extend([['lb', lower_bound], ['ub', upper_bound]])
+                if 'obstacles' in constraint_types:
+                    for constr in obstacle_constraints:
+                        constraint_list.append([constr['type'], [act_obs_indices[constr['dimensions'][0]], act_obs_indices[constr['dimensions'][1]]], constr['center'], constr['radius']])
+                        constraint_list_tightened.append([constr['type'], [act_obs_indices[constr['dimensions'][0]], act_obs_indices[constr['dimensions'][1]]], constr['center'], constr['radius'] + enlarge_constraints])
+                constraint_list_without_prior = copy(constraint_list)
+                constraint_list_without_prior_tightened = copy(constraint_list_tightened)
+                dynamics_constraints = []
+                if 'dynamics' in constraint_types: dynamics_constraints = utils.formulate_dynamics_constraints(exp, act_obs_indices, action_dim)
+                for constraint in dynamics_constraints:
+                    constraint_list.append(constraint)
+                    constraint_list_tightened.append(constraint)
+                env_seeds = config['env_seeds'][exp] if 'pointmaze-umaze' in exp else np.arange(100)
 
-                returns_tensor = None
-                if returns is not None:
-                    returns_tensor = torch.as_tensor(returns, dtype=torch.float32, device=device)
-                    if returns_tensor.ndim == 1:
-                        returns_tensor = returns_tensor.unsqueeze(0)
-
-                # iMF sample conditioned on current observation (and optional return)
-                sampled = diffusion.sample(
-                    batch_size=1,
-                    conditions=cond_tensors,
-                    returns=returns_tensor,
-                )
+            for variant_idx, variant in enumerate(projection_variants):
+                save_path = f'{args.savepath}/results/halfspace_{halfspace_variant}' if 'avoiding' in exp else f'{args.savepath}/results'
+                os.makedirs(save_path, exist_ok=True)
                 
-                # Compute MSE error
-                error = torch.nn.functional.mse_loss(sampled.to(device), trajectory_tensor).item()
-                errors.append(error)
-        except Exception as e:
-            print(f"[ eval ] Warning: Failed to evaluate sample {idx}: {e}")
-    
-    # Compute statistics
-    if errors:
-        results = {
-            'seed': seed,
-            'mse_error': float(np.mean(errors)),
-            'mse_std': float(np.std(errors)),
-            'num_samples': len(errors),
-        }
-    else:
-        results = None
-    
-    if results:
-        print(f"[ eval ] Seed {seed} | MSE: {results['mse_error']:.6f} ± {results['mse_std']:.6f}")
-    
-    return results
+                if args_cli.aggregate_only:
+                    # LOAD DATA MODE
+                    npz_path = os.path.join(save_path, f'{variant}.npz')
+                    if not os.path.exists(npz_path):
+                        print(f'[ eval ] skipping {variant} for seed {seed}, no results found at {npz_path}')
+                        continue
+                    print(f'[ eval ] Aggregating existing results for {variant} - seed {seed}')
+                    data = np.load(npz_path, allow_pickle=True)
+                    # Use saved obs_all for aggregation plot
+                    if 'obs_all' in data:
+                        obs_all = data['obs_all']
+                        # Re-plot on aggregate axes
+                        for i in range(min(len(obs_all), plot_how_many)):
+                            obs_buffer = obs_all[i]
+                            colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                            axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
+                    continue
 
+                # INFERENCE MODE
+                log_file = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+                original_stdout = sys.stdout
+                sys.stdout = Tee(sys.stdout, log_file)
+                
+                try:
+                    print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
+                    gradient = True if 'gradient' in variant else False
+                    if 'model_free' in variant and 'tightened' in variant:
+                        constraints = constraint_list_without_prior_tightened
+                    elif 'model_free' in variant and not 'tightened' in variant:
+                        constraints = constraint_list_without_prior
+                    elif not 'model_free' in variant and 'tightened' in variant:
+                        constraints = constraint_list_tightened
+                    else:
+                        constraints = constraint_list
+                    delta_t = dt
+                    if 'dt0p25' in variant:
+                        delta_t = 0.25 * dt
+                    elif 'dt0p5' in variant:
+                        delta_t = 0.5 * dt
+                    elif 'dt2p0' in variant:
+                        delta_t = 2.0 * dt
+                    elif 'dt4p0' in variant:
+                        delta_t = 4.0 * dt
+                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
+                                            diffusion_timestep_threshold=diffusion_timestep_threshold)
+                    projector = None if variant == 'diffuser' else projector
+                    trajectory_selection = 'random'
+                    if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
+                    if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+                    policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
+                    fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
+                    fig.suptitle(f'{exp} - {variant}')
+                    save_samples_every = args.horizon // 2
+                    sampled_trajectories_all = []
+                    n_success = np.zeros(n_trials)
+                    n_success_and_constraints = np.zeros(n_trials)
+                    n_steps = np.zeros(n_trials)
+                    n_violations = np.zeros(n_trials)
+                    total_violations = np.zeros(n_trials)
+                    avg_time = np.zeros(n_trials)
+                    collision_free_completed = np.ones(n_trials)
+                    pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
+                    
+                    obs_all = []
+                    act_all = []
 
-def resolve_results_dir(explicit_results_dir, checkpoint_dir):
-    """Resolve the evaluation output directory next to the experiment logs."""
-    if explicit_results_dir is not None:
-        return str(Path(explicit_results_dir).expanduser())
+                    fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
 
-    checkpoint_path = Path(checkpoint_dir)
-    return str(checkpoint_path.parent / 'evaluation_results' / 'imf')
-
-
-def main():
-    """Main evaluation loop."""
-    parser = argparse.ArgumentParser(description='Evaluate iMF')
-    parser.add_argument('--seed', type=int, help='Single seed.')
-    parser.add_argument('--seeds', type=int, nargs='+', help='List of seeds.')
-    parser.add_argument('--results-dir', type=str, default=None, help='Output directory. Defaults to <experiment-root>/evaluation_results/imf.')
-    parser.add_argument(
-        '--experiment',
-        type=str,
-        default='flow_matching_v3_imeanflow',
-        help='Config experiment key used to resolve checkpoint savepath.',
-    )
-    parser.add_argument(
-        '--checkpoint-root',
-        type=str,
-        default=None,
-        help='Optional explicit checkpoint root. If set, eval loads <checkpoint-root>/<seed>.',
-    )
-    args, _ = parser.parse_known_args()
-
-    if args.checkpoint_root is not None:
-        args.checkpoint_root = str(Path(args.checkpoint_root).expanduser())
-    
-    # Resolve seeds
-    if args.seed is not None:
-        seeds = [args.seed]
-    elif args.seeds is not None:
-        seeds = args.seeds
-    else:
-        seeds = [6, 7, 8, 9, 10]  # Default
-    
-    print("=" * 80)
-    print("[ eval ] iMeanFlow Evaluation (iMF-PCC)")
-    print(f"[ eval ] Seeds: {seeds}")
-    print("=" * 80)
-    print()
-
-    if args.checkpoint_root is not None:
-        base_checkpoint_dir = Path(args.checkpoint_root).expanduser()
-        if args.seed is not None:
-            base_checkpoint_dir = base_checkpoint_dir / str(args.seed)
-    else:
-        base_checkpoint_dir = Path(resolve_checkpoint_dir(seeds[0], experiment=args.experiment))
-
-    results_dir = resolve_results_dir(args.results_dir, base_checkpoint_dir)
-    os.makedirs(results_dir, exist_ok=True)
-    all_results = {}
-    
-    # Evaluate each seed
-    for seed in seeds:
-        result = evaluate_seed(
-            seed,
-            results_dir,
-            experiment=args.experiment,
-            checkpoint_root=args.checkpoint_root,
-        )
-        if result:
-            all_results[seed] = result
-        print()
-    
-    # Save results to JSON
-    results_file = os.path.join(results_dir, 'eval_results.json')
-    with open(results_file, 'w') as f:
-        json.dump(all_results, f, indent=2)
-    
-    print("=" * 80)
-    print(f"[ eval ] Results saved to: {results_file}")
-    print(f"[ eval ] Evaluated {len(all_results)}/{len(seeds)} seeds successfully")
-    print("=" * 80)
-
-
-if __name__ == '__main__':
-    main()
+                    for i in range(n_trials):
+                        torch.manual_seed(i)
+                        env_seed = env_seeds[i] if ('pointmaze-umaze' in exp) else i
+                        if 'avoiding' in exp:
+                            obs = env.reset()
+                            action = env.robot_state()[:2]
+                            fixed_z = env.robot_state()[2:]
+                        else:
+                            obs, _ = env.reset(seed=env_seed)
+                        if 'pointmaze' in exp:
+                            obs = np.concatenate((obs['observation'], obs['desired_goal']))
+                        elif 'antmaze' in exp:
+                            obs = np.concatenate((obs['achieved_goal'], obs['observation'], obs['desired_goal']))
+                        elif 'avoiding' in exp:
+                            obs = np.concatenate((action[:2], obs))
+                        obs_buffer = []
+                        action_buffer = []
+                        sampled_trajectories = []
+                        disable_projection = False
+                        for _ in range(args.max_episode_length):
+                            violated_this_timestep = 0
+                            if 'halfspace' in constraint_types:
+                                for constraint in constraint_list_polytopic_not_tightened:
+                                    if constraint[0] == 'ineq':
+                                        c, d = constraint[1]
+                                        obs_to_check = obs[:-fm_model.goal_dim] if fm_model.goal_dim > 0 else obs
+                                        if obs_to_check @ c[action_dim:] >= d:
+                                            violated_this_timestep = 1
+                                            total_violations[i] += obs_to_check @ c[action_dim:] - d
+                                            collision_free_completed[i] = 0
+                            if 'obstacles' in constraint_types:
+                                for constraint in obstacle_constraints:
+                                    if np.linalg.norm(obs[[obs_indices['x'], obs_indices['y']]] - constraint['center']) < constraint['radius']:
+                                        violated_this_timestep = 1
+                                        total_violations[i] += constraint['radius'] - np.linalg.norm(obs[[obs_indices['x'], obs_indices['y']]] - constraint['center'])
+                                        collision_free_completed[i] = 0
+                            if _ > 0 and 'bounds' in constraint_types:
+                                act_obs = np.concatenate((action, obs)) if action_dim > 0 else obs
+                                total_violations[i] += np.sum(np.maximum(0, act_obs - upper_bound)) + np.sum(np.maximum(0, lower_bound - act_obs))
+                            n_violations[i] += violated_this_timestep
+                            start = time.time()
+                            action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
+                            avg_time[i] += time.time() - start
+                            if 'avoiding' in exp:
+                                next_pos_des = action + obs[:2]
+                                obs, rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
+                                success = info[1]
+                            else:
+                                obs, rew, terminated, truncated, info = env.step(action)
+                                success = info['success']
+                            if 'pointmaze' in exp:
+                                obs = np.concatenate((obs['observation'], obs['desired_goal']))
+                            elif 'antmaze' in exp:
+                                obs = np.concatenate((obs['achieved_goal'], obs['observation'], obs['desired_goal']))
+                            elif 'avoiding' in exp:
+                                obs = np.concatenate((next_pos_des[:2], obs))
+                            if _ >= 1:
+                                pos_tracking_errors[i, _-1] = np.linalg.norm(obs[obs_indices['x']:obs_indices['y']+1] - desired_next_pos)
+                            desired_next_pos = samples.observations[0, 1, [obs_indices['x'], obs_indices['y']]]
+                            if _ % save_samples_every == 0:
+                                sampled_trajectories.append(samples.observations[:, :, :])
+                            obs_buffer.append(obs)
+                            action_buffer.append(action)
+                            if success: n_success[i] = 1
+                            if (terminated or _ == args.max_episode_length - 1) and (not success): collision_free_completed[i] = 0
+                            if success or terminated or _ == args.max_episode_length - 1:
+                                n_steps[i] = _
+                                avg_time[i] /= _
+                                if success and collision_free_completed[i]: n_success_and_constraints[i] = 1
+                                break
+                        
+                        obs_all.append(np.array(obs_buffer))
+                        act_all.append(np.array(action_buffer))
+                        
+                        sampled_trajectories_all.append(sampled_trajectories)
+                        if i >= plot_how_many: continue
+                        plot_states = ['x', 'y', 'x_des', 'y_des']
+                        for j in range(len(plot_states)):
+                            ax[i, j].plot(np.array(obs_buffer)[:, obs_indices[plot_states[j]]])
+                            ax[i, j].set_title(plot_states[j])
+                        axes = [ax[i, 4], ax_all[i, variant_idx]]
+                        for curr_ax in axes:
+                            curr_ax.plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], 'k')
+                            curr_ax.plot(np.array(obs_buffer)[0, obs_indices['x']], np.array(obs_buffer)[0, obs_indices['y']], 'go', label='Start')
+                            curr_ax.set_xlim(ax_limits[0])
+                            curr_ax.set_ylim(ax_limits[1])
+                        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                        axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
+                        axes = [ax[i, 5], ax_all[i, variant_idx]]
+                        for __ in range(len(sampled_trajectories_all[i])):
+                            for ___ in range(min(args.batch_size, 4)):
+                                for curr_ax in axes:
+                                    curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
+                                    curr_ax.plot(sampled_trajectories_all[i][__][___, 0, obs_indices['x']], sampled_trajectories_all[i][__][___, 0, obs_indices['y']], 'go', label='Start')
+                        ax[i, 5].set_xlim(ax_limits[0])
+                        ax[i, 5].set_ylim(ax_limits[1])
+                        axes = [ax[i, 4], ax[i, 5], ax_all[i, variant_idx]]
+                        for curr_ax in axes:
+                            utils.plot_environment_constraints(exp, curr_ax)
+                            if 'halfspace' in constraint_types: utils.plot_halfspace_constraints(exp, polytopic_constraints, curr_ax, ax_limits)
+                            if 'obstacles' in constraint_types:
+                                for constraint in obstacle_constraints:
+                                    curr_ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
+                    print(f'Success rate: {np.mean(n_success)}')
+                    print(f'Constraints satisfied: {np.mean(collision_free_completed)}')
+                    print(f'Success rate (goal and constraints): {np.mean(n_success_and_constraints)}')
+                    print(f'Avg number of steps: {(np.mean(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f} +- {(np.std(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f}')
+                    print(f'Avg number of constraint violations: {np.mean(n_violations):.2f} +- {np.std(n_violations):.2f}')
+                    print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
+                    print(f'Average computation time per step: {np.mean(avg_time):.3f}')
+                    if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
+                    
+                    if config['write_to_file']:
+                        np.savez(f'{save_path}/{variant}.npz', 
+                                 n_success=n_success, 
+                                 n_success_and_constraints=n_success_and_constraints, 
+                                 n_steps=n_steps, 
+                                 n_violations=n_violations, 
+                                 total_violations=total_violations, 
+                                 avg_time=avg_time, 
+                                 collision_free_completed=collision_free_completed, 
+                                 args=args,
+                                 obs_all=np.array(obs_all, dtype=object),
+                                 act_all=np.array(act_all, dtype=object))
+                    fig.savefig(f'{save_path}/{variant}.png')
+                    plt.close(fig)
+                    ax_all[0, variant_idx].set_title(variant)
+                    
+                finally:
+                    sys.stdout = original_stdout
+                    log_file.close()
+            
+            if not args_cli.aggregate_only:
+                fig_all.savefig(f'{save_path}/all.png')
+                env.close()
+        
+        # Save aggregate plots for all seeds
+        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
+        os.makedirs(path, exist_ok=True)
+        for variant_idx, (fig, ax) in enumerate(zip(figs_all_seeds, axes_all_seeds)):
+            ax.set_xlim(ax_limits[0])
+            ax.set_ylim(ax_limits[1])
+            ax.set_facecolor([1, 1, 0.9])
+            utils.plot_environment_constraints(exp, ax)
+            if 'halfspace' in constraint_types: utils.plot_halfspace_constraints(exp, polytopic_constraints, ax, ax_limits, enlarge_constraints=enlarge_constraints)
+            if 'obstacles' in constraint_types:
+                for constraint in obstacle_constraints:
+                    ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
+                    ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'] + enlarge_constraints, color='b', alpha=0.1, linestyle='--'))
+            fig.savefig(f'{path}/{projection_variants[variant_idx]}.png', bbox_inches='tight')
+            fig.savefig(f'{path}/{projection_variants[variant_idx]}.pdf', bbox_inches='tight', format='pdf')
+            plt.close(fig)
+        
+        if not args_cli.aggregate_only:
+            plt.show()
