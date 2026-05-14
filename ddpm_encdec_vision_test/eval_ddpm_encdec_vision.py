@@ -199,11 +199,12 @@ def build_scaler(device='cuda'):
     """
     Build the D3IL Scaler from the aligning training dataset.
     This is the SAME scaler used during training — critical for correct normalization.
+    Uses Aligning_Img_Dataset (vision variant) which extracts obs_dim=3 (robot_des_pos).
     """
-    from d3il.environments.dataset.aligning_dataset import Aligning_Dataset
+    from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
     from d3il.agents.utils.scaler import Scaler
     
-    dataset = Aligning_Dataset(
+    dataset = Aligning_Img_Dataset(
         data_directory='environments/dataset/data/aligning/train_files.pkl',
         device='cpu',
         obs_dim=3,
