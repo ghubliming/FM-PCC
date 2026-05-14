@@ -1,9 +1,11 @@
 """iMeanFlow diffusion adapter with FMv3ODE-compatible training and sampling APIs."""
 
+from collections import OrderedDict
+from typing import Dict, Optional, Tuple
+
 import torch
 import torch.nn.functional as F
 from torch import nn
-from typing import Dict, Tuple, Optional
 
 from .imf_engine import iMeanFlowEngine
 from .helpers import apply_conditioning, Losses
@@ -259,13 +261,47 @@ class iMFDiffusion(nn.Module):
         return self.conditional_sample(cond=cond, *args, **kwargs)
     
     def load_state_dict(self, state_dict, strict=True):
-        """Load state dict (compatibility)."""
-        return super().load_state_dict(state_dict, strict=strict)
+        """Load state dict with compatibility for legacy inner-engine checkpoints."""
+        remapped_state_dict, was_legacy = self._remap_state_dict_for_compatibility(state_dict)
+
+        if was_legacy:
+            incompatible_keys = super().load_state_dict(remapped_state_dict, strict=False)
+            allowed_missing = {'betas', 'alphas_cumprod', 'loss_fn.weights'}
+            missing_keys = [key for key in incompatible_keys.missing_keys if key not in allowed_missing]
+            unexpected_keys = list(incompatible_keys.unexpected_keys)
+
+            if strict and (missing_keys or unexpected_keys):
+                raise RuntimeError(
+                    'Error(s) in loading state_dict for iMFDiffusion:\n'
+                    f'\tMissing key(s) in state_dict: {missing_keys}\n'
+                    f'\tUnexpected key(s) in state_dict: {unexpected_keys}'
+                )
+
+            return incompatible_keys
+
+        return super().load_state_dict(remapped_state_dict, strict=strict)
     
     def state_dict(self, destination=None, prefix='', keep_vars=False):
-        """Get state dict (compatibility)."""
-        return self.model.state_dict(
+        """Return the full wrapper state so future checkpoints stay self-describing."""
+        return super().state_dict(
             destination=destination,
             prefix=prefix,
             keep_vars=keep_vars,
         )
+
+    @staticmethod
+    def _remap_state_dict_for_compatibility(state_dict):
+        """Translate legacy checkpoint keys saved from the inner engine."""
+        if not isinstance(state_dict, dict):
+            return state_dict, False
+
+        if any(key.startswith('model.velocity_net.') or key.startswith('model.aux_head.') for key in state_dict):
+            remapped = OrderedDict()
+            for key, value in state_dict.items():
+                if key.startswith('model.') and not key.startswith('model.model.'):
+                    remapped[f'model.{key}'] = value
+                else:
+                    remapped[key] = value
+            return remapped, True
+
+        return state_dict, False
