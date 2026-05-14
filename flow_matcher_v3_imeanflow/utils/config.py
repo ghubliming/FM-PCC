@@ -12,7 +12,8 @@ def import_class(_class):
     ## eg, 'Renderer'
     class_name = _class.split('.')[-1]
     ## eg, 'diffusion.utils'
-    module = importlib.import_module(f'{repo_name}.{module_name}')
+    module_path = module_name if module_name.startswith(repo_name) else f'{repo_name}.{module_name}'
+    module = importlib.import_module(module_path)
     ## eg, diffusion.utils.Renderer
     _class = getattr(module, class_name)
     # print(f'[ utils/config ] Imported {repo_name}.{module_name}:{class_name}')
