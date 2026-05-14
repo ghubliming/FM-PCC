@@ -811,12 +811,12 @@ base = {
         'time_dim': 256,
         'dropout_rate': 0.1,
         
-        ## dual-velocity training (core iMF innovation)
-        'u_loss_weight': 0.5,               # Mean velocity weight
-        'v_loss_weight': 0.5,               # Instantaneous deviation weight
-        'loss_schedule': 'u_first',         # Curriculum: u only → blend → u+v
-        'warmup_epochs': 30,                # Epochs of u-only training
-        'transition_epochs': 30,            # Epochs to blend from u to u+v
+        ## stable iMF training (FMv3ODE-style main loss + small aux residual)
+        'u_loss_weight': 1.0,               # Main flow velocity weight
+        'v_loss_weight': 0.1,               # Auxiliary residual weight
+        'loss_schedule': 'balanced',        # Keep training stable from step 1
+        'warmup_epochs': 0,
+        'transition_epochs': 0,
         'loss_type': 'l2',
         'predict_epsilon': True,
         
@@ -841,8 +841,8 @@ base = {
         'ema_decay': 0.995,
         'action_weight': 10,
         
-        ## ODE inference (iMF uses fast single-step NFE)
-        'ode_inference_steps_v3': 1,        # Fast: single step with u+v
+        ## ODE inference (match FMv3ODE-style deterministic rollout)
+        'ode_inference_steps_v3': 1,
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         
