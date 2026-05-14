@@ -50,11 +50,11 @@ class VisualAgentWrapper:
 
 def load_diffusion_with_override(loadbase, dataset, diffusion_loadpath, seed, target_class=None, epoch='best', device='cuda'):
     """Replicated from FMv3ODE: Loads vision model with full metadata support."""
+    # If the path is relative, resolve it using the standard hierarchy
     if diffusion_loadpath.startswith('f:'):
-        # Resolve 'f:' prefix using dataset and seed
         diffusion_loadpath = diffusion_loadpath[2:]
-        # Note: We assume the user has the 'horizon' etc. in the path string to be formatted
-        # But for the vision refactor, we simplify to the standard path
+        loadpath = os.path.join(loadbase, dataset, diffusion_loadpath, seed)
+    elif not os.path.isabs(diffusion_loadpath):
         loadpath = os.path.join(loadbase, dataset, diffusion_loadpath, seed)
     else:
         loadpath = diffusion_loadpath
