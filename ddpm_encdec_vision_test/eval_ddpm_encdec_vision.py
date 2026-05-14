@@ -82,6 +82,7 @@ def load_diffusion_with_override(loadbase, dataset, diffusion_loadpath, seed, ta
     # Instantiate components
     dataset_obj = dataset_config()
     model_obj = model_config()
+    diffusion_config._dict.pop('model', None) # Prevent duplicate positional/kwarg
     diffusion_obj = diffusion_config(model_obj).to(device)
     trainer_obj = trainer_config(diffusion_model=diffusion_obj, dataset=dataset_obj)
     
