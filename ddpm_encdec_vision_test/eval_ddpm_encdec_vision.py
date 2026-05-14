@@ -79,10 +79,19 @@ def load_diffusion_with_override(loadbase, dataset, diffusion_loadpath, seed, ta
     diffusion_config = utils.load_config(loadpath, 'diffusion_config.pkl')
     trainer_config = utils.load_config(loadpath, 'trainer_config.pkl')
     
-    # Instantiate components
     dataset_obj = dataset_config()
     model_obj = model_config()
     diffusion_config._dict.pop('model', None) # Prevent duplicate positional/kwarg
+    
+    # Safely filter _dict to only include arguments the class accepts
+    import inspect
+    sig = inspect.signature(diffusion_config._class.__init__)
+    valid_kwargs = set(sig.parameters.keys())
+    keys_to_remove = [k for k in diffusion_config._dict if k not in valid_kwargs]
+    for k in keys_to_remove:
+        print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
+        del diffusion_config._dict[k]
+        
     diffusion_obj = diffusion_config(model_obj).to(device)
     trainer_obj = trainer_config(diffusion_model=diffusion_obj, dataset=dataset_obj)
     

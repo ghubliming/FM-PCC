@@ -153,8 +153,8 @@ for exp in exps:
                 if robot_name == 'pointmaze': env.env.env.env.point_env.frame_skip = 2
                 if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
                 
-                if fm_model.__class__.__name__ == 'GaussianDiffusion':
-                    trajectory_dim = fm_model.transition_dim - fm_model.goal_dim
+                if fm_model.__class__.__name__ in ['GaussianDiffusion', 'iMFDiffusion']:
+                    trajectory_dim = fm_model.observation_dim + fm_model.action_dim - fm_model.goal_dim if hasattr(fm_model, 'observation_dim') else fm_model.transition_dim - fm_model.goal_dim
                     action_dim = fm_model.action_dim
                     fm_variant = 'states_actions'
                     obs_indices_updated = {key: val + action_dim for key, val in obs_indices.items()}
