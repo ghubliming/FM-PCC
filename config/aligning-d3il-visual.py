@@ -18,15 +18,14 @@ logbase = 'logs'
 base = {
     'ddpm_encdec_vision': {
         'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
-        'diffusion': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
-        'horizon': 8,
-        'window_size': 8,
+        'horizon': 8, # 'horizon': 10 # ddpm act
+        'window_size': 8, # 'window_size': 16 # ddpm act
         'obs_dim': 128,
         'action_dim': 3,
         'visual_input': True,
-        'obs_seq_len': 5,
-        'action_seq_size': 4,
-        'n_diffusion_steps': 16,
+        'obs_seq_len': 5, # 'obs_seq_len': 1 # ddpm act
+        'action_seq_size': 4, # 'action_seq_size': 10 # ddpm act
+        'n_diffusion_steps': 16, # 'n_diffusion_steps': 100 # ddpm act
         'loss_type': 'l2',
         
         # dataset
@@ -65,10 +64,9 @@ base = {
         'prefix': 'plans/ddpm_encdec_vision/',
         'exp_name': watch([('prefix', ''), ('horizon', 'H')]),
         
-        # Must match the class used in training (train_ddpm_encdec_vision.py)
         'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
-        'horizon': 8,
-        'n_diffusion_steps': 16,
+        'horizon': 8, # 'horizon': 10 # ddpm act
+        'n_diffusion_steps': 16, # 'n_diffusion_steps': 100 # ddpm act
         
         'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}',
         'value_loadpath': 'f:values/H{horizon}',
