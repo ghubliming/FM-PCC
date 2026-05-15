@@ -48,8 +48,15 @@ class VisualUNet(nn.Module):
         # Calculate latent dim: encoder outputs 64*2 = 128 (default)
         latent_dim = 128
         
+        # --- ARCHITECTURAL FIX: Auto-Padding ---
+        # The 3-layer UNet requires a temporal size that is a multiple of 8 (2^3).
+        # We calculate a 'Safe Horizon' here and pad/crop during forward.
+        self.target_horizon = config.horizon
+        self.padded_horizon = ((self.target_horizon + 7) // 8) * 8
+        # ----------------------------------------
+
         self.backbone = backbone_class(
-            horizon=config.horizon,
+            horizon=self.padded_horizon,
             transition_dim=config.action_dim + 3, # action + robot_pos
             cond_dim=latent_dim,
             dim=getattr(config, "dim", 128),
@@ -88,5 +95,18 @@ class VisualUNet(nn.Module):
             bp_imgs, inhand_imgs, state = cond
             
         visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state=state)
+
+        # --- ARCHITECTURAL FIX: Apply Temporal Padding ---
+        B, T, D = x.shape
+        if T < self.padded_horizon:
+            pad_len = self.padded_horizon - T
+            # Pad trajectory: [B, T, D] -> [B, T+pad, D]
+            x = torch.cat([x, torch.zeros(B, pad_len, D, device=x.device)], dim=1)
+            # Pad conditioning: [B, T, D_emb] -> [B, T+pad, D_emb]
+            visual_emb = torch.cat([visual_emb, torch.zeros(B, pad_len, visual_emb.shape[-1], device=visual_emb.device)], dim=1)
         
-        return self.backbone(x, visual_emb, t, returns=returns, use_dropout=use_dropout, force_dropout=force_dropout)
+        # Run backbone on padded trajectory
+        out = self.backbone(x, visual_emb, t, returns=returns, use_dropout=use_dropout, force_dropout=force_dropout)
+
+        # Crop back to original horizon
+        return out[:, :T, :]
