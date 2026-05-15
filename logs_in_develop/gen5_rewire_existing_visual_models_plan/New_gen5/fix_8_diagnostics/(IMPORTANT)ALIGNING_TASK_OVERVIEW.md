@@ -44,36 +44,6 @@ As of the current Gen5 implementation, we have opted for a **Hybrid Approach**:
 
 **Rationale:** The 1D U-Net is retained because of its superior performance in generating smooth, temporally-consistent trajectories that are compatible with the DPCC geometric projection operators.
 
-### **The Gen5 Full Pipeline: From Pixels to Projection**
-
-The Gen5 pipeline is a visual evolution of the state-based FMv3ODE pipeline.
-
-| Stage | FMv3ODE (State-based) | **Gen5 (Visual-based)** |
-| :--- | :--- | :--- |
-| **1. Input** | Robot Pos, Obstacle Pos (Vectors) | **Raw Images** from 2 Cameras (Pixels) |
-| **2. Encoder** | None (Direct Input) | **ResNet-18 (D3IL native)** |
-| **3. Feature** | N/A | **128-dim Latent Vector** |
-| **4. Condition** | "Don't hit the vector (x,y)" | "Move box to match pixels in target image" |
-| **5. Backbone** | 1D U-Net | **1D U-Net (DPCC native)** |
-| **6. Projection** | Safety Shield (Active) | **Inactive (Aligning task has no obstacles)** |
-| **7. Result** | Safe path around obstacle | Path that pushes box to target |
-
-#### **Technical Deep Dive: The Vision Encoder**
-The "ResNet-18" and "128-dim feature" components are directly derived from the D3IL codebase:
-- **Origin:** We instantiate `agents.models.vision.model_getter.get_resnet` (D3IL).
-- **Structure:**
-    - **Camera 1 (Cage):** ResNet-18 → 64-dim latent.
-    - **Camera 2 (In-hand):** ResNet-18 → 64-dim latent.
-- **Total Latent:** 64 + 64 = **128-dim conditioning vector**.
-
-### **Input/Output Strategy: Sequence-to-Sequence**
-
-| Model Type | Input | Output | Strategy |
-| :--- | :--- | :--- | :--- |
-| **D3IL MLP** | Image (Current) | Action (Next) | **Reactive** (Step-by-step) |
-| **D3IL Transformer (ACT)** | Images (History Window) | Actions (Chunk) | **Sequence-to-Sequence** |
-| **Gen5 (FMPCC/DPCC)** | **Images (History Window)** | **Trajectory (Full Plan)** | **Sequence-to-Sequence** |
-
 ---
 
 ## 4. Minimal Architectural Change: The Power of Conditioning
@@ -232,39 +202,57 @@ A single image from our cameras is $128 \times 128 \times 3 = 49,152$ pixels.
 *   **If we used raw pixels:** The U-Net's "Conditioning" input would be nearly 50,000 dimensions. This would require billions of parameters to train and would likely never converge.
 *   **The Solution:** We need a **Visual Encoder** to compress this massive amount of data into a small, information-dense **Latent Vector**.
 
-### B. The Encoder: ResNet-18
-We use a **ResNet-18** (Residual Network) as our backbone. The process works as follows:
-1.  **Input:** The raw RGB tensor $[3, 128, 128]$.
-2.  **Feature Extraction:** The ResNet's convolutional layers scan the image. 
-    *   Early layers find simple **Edges**.
-    *   Middle layers find **Shapes** (the box corners).
-    *   Deep layers find **Semantic Meaning** (the relative distance between the box and the target ghost).
-3.  **Global Pooling:** The final layer of the ResNet collapses the spatial dimensions into a single vector.
-4.  **Projection:** A small Multi-Layer Perceptron (MLP) maps this vector to our desired **64-dimensional latent**.
-
-### C. Multi-View Fusion
-Because we have two cameras, we perform this process twice:
-*   **Cage Cam Encoder:** Produces a 64-dim "Global Intelligence" vector.
-*   **In-hand Cam Encoder:** Produces a 64-dim "Precision Intelligence" vector.
-*   **Fusion:** We **concatenate** these two vectors into a single **128-dimensional Conditioning Vector**.
-
 ---
 
 ## 17. End-to-End Training Philosophy
 
 A final clarification for the Gen5 architecture: The ResNet Encoder and the U-Net Backbone are **NOT trained as separate blocks**.
 
-### A. The Unified "Brain"
-In the Gen5 pipeline, the entire network is trained **End-to-End**. 
-*   **Simultaneous Optimization:** During the training phase, the ResNet and the U-Net are optimized together in the same loop. 
-*   **Gradient Flow:** If the U-Net predicts an incorrect trajectory, the mathematical "error" signal (the gradient) travels all the way back through the U-Net, through the FiLM conditioning layers, and directly into the ResNet weights.
+---
 
-### B. Task-Specific Vision
-Because of this end-to-end training, the ResNet does not just learn to "see everything." It learns **Task-Specific Vision**. It ignores irrelevant background details (like the table texture) and learns to emphasize only the specific pixels that are most useful for generating a successful trajectory plan. 
+## 18. Parameter Provenance: The Origin of Defaults
 
-### C. Unified Evaluation
-When we evaluate the model, we are testing the **collective intelligence** of the combined vision-planning loop. We do not evaluate them in isolation because their strength lies in their integration.
+| Parameter | Default Value | Source / Ancestry | Scientific Rationale |
+| :--- | :--- | :--- | :--- |
+| **`horizon`** | 8 | **FMv3ODE (Legacy DPCC)** | Maintains parity with state-based planning benchmarks. |
+| **`window_size`** | 8 | **FMv3ODE (Legacy DPCC)** | Power-of-2 architectural constraint for U-Net downsampling. |
+| **`obs_seq_len`** | 5 | **D3IL Benchmark** | Standard history length for visual manipulation tasks in D3IL. |
+| **`n_contexts`** | 30 | **D3IL Benchmark** | Official benchmark scale for the Aligning task. |
+| **`action_seq_size`** | 4 | **Experimental (Heuristic)** | Balanced re-planning frequency (exactly half of the horizon). |
+| **`n_diff_steps`** | 16-20 | **D3IL / ACT** | Optimal quality vs. speed trade-off for visual diffusion models. |
+| **`obs_dim`** | 128 | **ResNet-18 (D3IL)** | Feature vector size generated by the dual-ResNet visual backbone. |
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 9.**
+## 19. Total Horizon Flexibility: The Auto-Padding Fix
+
+In previous versions of the Gen5 pipeline, the model was rigid and would crash if the `horizon` was set to a small value (like 2 or 4). This was due to the "Downsampling Bottom-out" error in the U-Net.
+
+### A. The FMPCC Standard Restored
+As of Fix #10, the Visual Gen5 pipeline now matches the **Flexibility of FMv3ODE**. 
+*   **The Mechanism:** The `VisualUNet` wrapper now implements **Automatic Temporal Padding**.
+*   **How it Works:** Regardless of the `horizon` you choose in the config, the model automatically pads the trajectory to a "Safe Size" (multiple of 8) inside the forward pass, processes it, and crops the result back to your desired length.
+
+### B. Updated Tuning Strategy
+You can now freely set the `horizon` to any value (1, 2, 4, 8, 16) without changing any other architectural parameters.
+
+| Goal | Horizon ($H$) | `action_seq_size` | Behavior |
+| :--- | :--- | :--- | :--- |
+| **Precision** | 2 | 1 | High-frequency reactive corrections. |
+| **Foresight** | 8 | 4 | Long-range planning with receding horizon. |
+| **Hybrid** | 4 | 2 | Balance of foresight and reactivity. |
+
+---
+
+## 20. Visual History (obs_seq_len): Understanding Motion
+
+In vision-based control, a single image is only a "snapshot." The `obs_seq_len: 5` parameter provides the robot with a short-term memory.
+
+### A. From Static to Dynamic
+*   **1 Image:** The robot knows the **Position** of the box.
+*   **5 Images:** The robot knows the **Velocity and Inertia** of the box. 
+    *   By looking at the "delta" between five consecutive images, the vision encoder can mathematically perceive if the box is sliding quickly, spinning, or coming to a stop.
+
+---
+
+**Document updated for FM-PCC Diagnostic Phase 10 (Flexibility Restored).**
