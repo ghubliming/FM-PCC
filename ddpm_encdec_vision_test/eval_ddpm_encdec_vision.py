@@ -70,6 +70,21 @@ class VisualAgentWrapper:
         self.rollout_counter = -1
         self.step_counter = 0
         
+        # History buffers for rollout extraction
+        self.history_real_pos = []
+        self.history_desired_actions = []
+        self.history_full_plans = []
+        self.history_n_steps = []
+        self.history_avg_time = []
+        self.history_pos_tracking_errors = []
+        
+        self.master_rollout_history = {}
+        
+        # Temp step tracking
+        self.curr_rollout_time = 0
+        self.last_predicted_pos = None
+        self.curr_rollout_tracking_errors = []
+        
         # Context windows
         self.bp_image_context = deque(maxlen=self.window_size)
         self.inhand_image_context = deque(maxlen=self.window_size)
@@ -78,6 +93,24 @@ class VisualAgentWrapper:
     
     def reset(self):
         """Called by Aligning_Sim at the start of each rollout."""
+        # Flush previous rollout data
+        if self.rollout_counter >= 0:
+            self.master_rollout_history[f"rollout_{self.rollout_counter}"] = {
+                "real_robot_pos": np.array(self.history_real_pos),
+                "desired_actions": np.array(self.history_desired_actions),
+                "full_plans": np.array(self.history_full_plans)
+            }
+            self.history_n_steps.append(self.step_counter)
+            self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
+            self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
+            
+        self.history_real_pos.clear()
+        self.history_desired_actions.clear()
+        self.history_full_plans.clear()
+        self.curr_rollout_time = 0
+        self.last_predicted_pos = None
+        self.curr_rollout_tracking_errors.clear()
+        
         self.bp_image_context.clear()
         self.inhand_image_context.clear()
         self.des_robot_pos_context.clear()
@@ -144,6 +177,14 @@ class VisualAgentWrapper:
             inhand_image = torch.from_numpy(inhand_image_np).to(self.device).float().unsqueeze(0)
             des_robot_pos = torch.from_numpy(des_robot_pos_np).to(self.device).float().unsqueeze(0)
             
+            # Record real pos
+            self.history_real_pos.append(des_robot_pos_np.copy())
+            
+            # Record tracking error from PREVIOUS step prediction
+            if self.last_predicted_pos is not None:
+                err = np.linalg.norm(des_robot_pos_np[:2] - self.last_predicted_pos[:2])
+                self.curr_rollout_tracking_errors.append(err)
+            
             self.bp_image_context.append(bp_image)
             self.inhand_image_context.append(inhand_image)
             self.des_robot_pos_context.append(des_robot_pos)
@@ -159,17 +200,27 @@ class VisualAgentWrapper:
         else:
             raise NotImplementedError()
         
+        t_start = time.time()
         if self.action_counter == self.action_seq_size:
             self.action_counter = 0
             self.model.eval()
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
             trajectory, _ = self.model(cond)
             self.curr_action_seq = trajectory[:, :self.action_seq_size, :3]
+            # Record full plan
+            self.history_full_plans.append(trajectory.detach().cpu().numpy().squeeze(0))
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
+        next_action_np = next_action.detach().cpu().numpy()
+        self.history_desired_actions.append(next_action_np.copy().squeeze(0))
+        
+        # Calculate predicted next pos for tracking error in NEXT step
+        self.last_predicted_pos = next_action_np.squeeze(0) + des_robot_pos_np
+        
+        self.curr_rollout_time += (time.time() - t_start)
         self.action_counter += 1
         self.step_counter += 1
-        return next_action.detach().cpu().numpy()
+        return next_action_np
 
 # ─── Model Loading ──────────────────────────────────────────────────────────
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', seed=None):
@@ -249,12 +300,22 @@ if __name__ == '__main__':
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True)
                 
                 t0 = time.time()
-                success_rate, mode_encoding = sim.test_agent(agent)
+                success_rate, mode_encoding, successes, mean_distance_tensor = sim.test_agent(agent)
                 elapsed = time.time() - t0
                 
                 # Flush last rollout
                 if agent.record_mode != 'none' and len(agent.video_frames) > 0:
                     agent._save_diagnostics(agent.rollout_counter)
+                
+                if agent.rollout_counter >= 0:
+                    agent.master_rollout_history[f"rollout_{agent.rollout_counter}"] = {
+                        "real_robot_pos": np.array(agent.history_real_pos),
+                        "desired_actions": np.array(agent.history_desired_actions),
+                        "full_plans": np.array(agent.history_full_plans)
+                    }
+                    agent.history_n_steps.append(agent.step_counter)
+                    agent.history_avg_time.append(agent.curr_rollout_time / max(1, agent.step_counter))
+                    agent.history_pos_tracking_errors.append(np.array(agent.curr_rollout_tracking_errors))
 
                 # Metrics calculation
                 n_modes = 2
@@ -267,9 +328,46 @@ if __name__ == '__main__':
                 m_norm = mode_probs / (mode_probs.sum(1).reshape(-1, 1) + 1e-12)
                 entropy = -(m_norm * torch.log(m_norm + 1e-12) / torch.log(torch.tensor(float(n_modes)))).sum(1).mean().item()
                 
+                # Format data to match legacy FMv3ODE npz output
+                obs_all = []
+                act_all = []
+                sampled_trajectories_all = []
+                
+                for r in range(agent.rollout_counter + 1):
+                    rollout_key = f"rollout_{r}"
+                    if rollout_key in agent.master_rollout_history:
+                        data = agent.master_rollout_history[rollout_key]
+                        obs_all.append(data['real_robot_pos'])
+                        act_all.append(data['desired_actions'])
+                        sampled_trajectories_all.append(data['full_plans'])
+
                 if config.get('write_to_file', True):
-                    np.savez(f'{save_path}/{variant}.npz', success_rate=success_rate, entropy=entropy,
-                             mode_encoding=mode_encoding.numpy(), elapsed_seconds=elapsed, seed=seed)
+                    # Align with legacy naming conventions for Matrix Analysis compatibility
+                    np.savez(f'{save_path}/{variant}.npz', 
+                             # Primary Metrics
+                             success_rate=success_rate, 
+                             entropy=entropy,
+                             mode_encoding=mode_encoding.numpy(), 
+                             elapsed_seconds=elapsed, 
+                             seed=seed,
+                             
+                             # Legacy Vector Metrics (for Matrix Explorer)
+                             n_success=successes.flatten().numpy(),
+                             n_steps=np.array(agent.history_n_steps),
+                             avg_time=np.array(agent.history_avg_time),
+                             n_violations=np.zeros(len(agent.history_n_steps)), # No obstacles in Aligning
+                             total_violations=np.zeros(len(agent.history_n_steps)),
+                             collision_free_completed=successes.flatten().numpy(), # Success = Safe for Aligning
+                             
+                             # Detailed Trajectory Data
+                             obs_all=np.array(obs_all, dtype=object),
+                             act_all=np.array(act_all, dtype=object),
+                             sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object),
+                             pos_tracking_errors=np.array(agent.history_pos_tracking_errors, dtype=object),
+                             
+                             # Task Specific
+                             mean_distance=mean_distance_tensor.flatten().numpy(),
+                             args=vars(args))
                 
                 with open(os.path.join(save_path, f'results_seed_{seed}.pkl'), 'wb') as f:
                     pickle.dump({'success_rate': success_rate, 'entropy': entropy, 'elapsed': elapsed}, f)
