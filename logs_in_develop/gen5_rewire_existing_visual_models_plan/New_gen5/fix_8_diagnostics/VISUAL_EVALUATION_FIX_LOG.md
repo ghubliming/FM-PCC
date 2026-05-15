@@ -59,5 +59,24 @@ To support various compute environments (cluster vs. local), recording behavior 
 - `d3il/environments/d3il/d3il_sim/sims/mj_beta/MjRobot.py`
 - `Slurm_Codes/sbatch/Visual_Aligning/eval_visual_aligning.sh`
 
+### G. Fix 9: Legacy Parity & Expert Reference Integration
+**Status: COMPLETED (Verified by USER)**
+
+*   **Metric Parity:** The `{variant}.npz` file now contains all legacy fields (`obs_all`, `act_all`, `n_steps`, etc.) required by the Matrix Analysis suite.
+*   **Visual Parity:** Restored the 6-column Matplotlib grid plots for "Real vs. Desired" trajectory analysis.
+*   **Expert Benchmarking:** 
+    *   Embedded an automated **Expert Reference Generator** into the evaluation script.
+    *   Generates "Gold Standard" videos/GIFs from training data at the start of each run.
+    *   Implemented robust **GIF Fallback** for environments lacking MP4 codecs.
+*   **Stabilization:** Resolved `ImportError` (sim_framework_path), `TypeError` (dataset index structure), and `ValueError` (environment context unpacking).
+
 ---
-**Report updated by Antigravity AI.**
+
+## 3. Final Project Status
+The Gen5 Visual-Aligning diagnostic pipeline is now **Audit-Ready**. 
+1.  **Architecture:** Verified hybrid D3IL (Vision) + DPCC (U-Net) connectivity.
+2.  **Diagnostics:** Full parity with FMv3ODE state-based baselines.
+3.  **Traceability:** Expert reference capability allows for direct "Model vs. Human" performance comparisons.
+
+---
+**Documentation finalized for FM-PCC Gen5 Stabilization Phase.**

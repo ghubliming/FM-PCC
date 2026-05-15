@@ -26,6 +26,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg') # Non-interactive backend
 import imageio
+import cv2
 
 import ddpm_encdec_vision.utils as utils
 
@@ -144,76 +145,15 @@ class VisualAgentWrapper:
         except Exception as e:
             print(f"[ WARNING ] Video/GIF saving failed: {e}. Skipping.")
 
-def generate_expert_reference(save_path, n_rollouts=3):
-    """Generates ground-truth expert videos from the dataset for reference."""
-    print(f"[ expert ] Generating {n_rollouts} reference videos from dataset...")
-    expert_dir = os.path.join(save_path, 'expert_references')
-    os.makedirs(expert_dir, exist_ok=True)
-    
-    from d3il.simulation.base_sim import sim_framework_path
-    from envs.gym_aligning_env.gym_aligning.envs.aligning import Robot_Push_Env
-    
-    # Load test context list
-    context_list_path = sim_framework_path("environments/dataset/data/aligning/test_contexts.pkl")
-    with open(context_list_path, 'rb') as f:
-        state_files = pickle.load(f)
-    
-    state_data_dir = sim_framework_path("environments/dataset/data/aligning/all_data/state")
-    env = Robot_Push_Env(render=False, if_vision=True)
-    env.start()
-    
-    for idx in range(min(n_rollouts, len(state_files))):
-        file_name = state_files[idx]
-        with open(os.path.join(state_data_dir, file_name), 'rb') as f:
-            expert_data = pickle.load(f)
-            
-        expert_path = expert_data['robot']['des_c_pos']
-        box_pos = expert_data['push-box']['pos'][0]
-        box_quat = expert_data['push-box']['quat'][0]
-        target_pos = expert_data['target-box']['pos'][0]
-        target_quat = expert_data['target-box']['quat'][0]
-        
-        context = {
-            'push-box': {'pos': box_pos, 'quat': box_quat},
-            'target-box': {'pos': target_pos, 'quat': target_quat}
-        }
-        
-        env.reset(random=False, context=context)
-        frames = []
-        
-        for step in range(len(expert_path)):
-            sim_action = np.concatenate((expert_path[step], [0, 1, 0, 0]), axis=0)
-            obs, _, _, _ = env.step(sim_action)
-            _, bp_image, inhand_image = obs
-            bp_vis = cv2.cvtColor(bp_image, cv2.COLOR_BGR2RGB)
-            inhand_vis = cv2.cvtColor(inhand_image, cv2.COLOR_BGR2RGB)
-            frames.append(np.concatenate([bp_vis, inhand_vis], axis=1))
-            
-        save_file = os.path.join(expert_dir, f"expert_rollout_{idx}.mp4")
-        try:
-            import imageio
-            imageio.mimsave(save_file, frames, fps=20)
-            print(f"  [ expert ] Saved {save_file}")
-        except Exception as e:
-            print(f"  [ expert ] MP4 failed, trying GIF... Error: {e}")
-            try:
-                save_file_gif = save_file.replace('.mp4', '.gif')
-                imageio.mimsave(save_file_gif, frames, fps=10)
-                print(f"  [ expert ] Saved {save_file_gif}")
-            except:
-                print(f"  [ expert ] Failed to save any reference for {idx}")
-    
-    env.close()
-
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
+        """Standard D3IL predict signature."""
         if if_vision:
             bp_image_np, inhand_image_np, des_robot_pos_np = state
             
             # Diagnostic capture (every 10th rollout)
             if self.record_mode != 'none' and (self.rollout_counter % 10 == 0):
                 try:
-                    import cv2
                     bp_vis = (bp_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
                     inhand_vis = (inhand_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
                     bp_vis = cv2.cvtColor(bp_vis, cv2.COLOR_BGR2RGB)
@@ -223,6 +163,7 @@ def generate_expert_reference(save_path, n_rollouts=3):
                 except Exception:
                     pass
 
+            # Preprocess images to [C, H, W] and normalize
             bp_image = torch.from_numpy(bp_image_np).to(self.device).float().unsqueeze(0)
             inhand_image = torch.from_numpy(inhand_image_np).to(self.device).float().unsqueeze(0)
             des_robot_pos = torch.from_numpy(des_robot_pos_np).to(self.device).float().unsqueeze(0)
@@ -271,6 +212,66 @@ def generate_expert_reference(save_path, n_rollouts=3):
         self.action_counter += 1
         self.step_counter += 1
         return next_action_np
+
+def generate_expert_reference(save_path, n_rollouts=3):
+    """Generates ground-truth expert videos from the dataset for reference."""
+    print(f"[ expert ] Generating {n_rollouts} reference videos from dataset...")
+    expert_dir = os.path.join(save_path, 'expert_references')
+    os.makedirs(expert_dir, exist_ok=True)
+    
+    from agents.utils.sim_path import sim_framework_path
+    from envs.gym_aligning_env.gym_aligning.envs.aligning import Robot_Push_Env
+    
+    state_data_dir = sim_framework_path("environments/dataset/data/aligning/all_data/state")
+    env = Robot_Push_Env(render=False, if_vision=True)
+    env.start()
+    
+    # In this environment, state files are usually named env_0.pkl, env_1.pkl, etc.
+    for idx in range(n_rollouts):
+        file_name = f"env_{idx}.pkl"
+        try:
+            with open(os.path.join(state_data_dir, file_name), 'rb') as f:
+                expert_data = pickle.load(f)
+        except Exception:
+            # Fallback to sorting all files
+            all_files = sorted(os.listdir(state_data_dir))
+            if idx < len(all_files):
+                file_name = all_files[idx]
+                with open(os.path.join(state_data_dir, file_name), 'rb') as f:
+                    expert_data = pickle.load(f)
+            else:
+                continue
+            
+        expert_path = expert_data['robot']['des_c_pos']
+        box_pos = expert_data['push-box']['pos'][0]
+        box_quat = expert_data['push-box']['quat'][0]
+        target_pos = expert_data['target-box']['pos'][0]
+        target_quat = expert_data['target-box']['quat'][0]
+        context = (box_pos, box_quat, target_pos, target_quat)
+        
+        env.reset(random=False, context=context)
+        frames = []
+        for step in range(len(expert_path)):
+            sim_action = np.concatenate((expert_path[step], [0, 1, 0, 0]), axis=0)
+            obs, _, _, _ = env.step(sim_action)
+            _, bp_image, inhand_image = obs
+            bp_vis = cv2.cvtColor(bp_image, cv2.COLOR_BGR2RGB)
+            inhand_vis = cv2.cvtColor(inhand_image, cv2.COLOR_BGR2RGB)
+            frames.append(np.concatenate([bp_vis, inhand_vis], axis=1))
+            
+        save_file = os.path.join(expert_dir, f"expert_rollout_{idx}.mp4")
+        try:
+            imageio.mimsave(save_file, frames, fps=20)
+            print(f"  [ expert ] Saved {save_file}")
+        except Exception as e:
+            # GIF Fallback
+            try:
+                save_file_gif = save_file.replace('.mp4', '.gif')
+                imageio.mimsave(save_file_gif, frames, fps=10)
+                print(f"  [ expert ] Saved {save_file_gif}")
+            except:
+                pass
+    env.close()
 
 # ─── Model Loading ──────────────────────────────────────────────────────────
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', seed=None):
