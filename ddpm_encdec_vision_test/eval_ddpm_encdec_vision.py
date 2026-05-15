@@ -25,9 +25,16 @@ from collections import deque
 
 import ddpm_encdec_vision.utils as utils
 
-# Ensure d3il is in path
-sys.path.append(os.path.abspath('d3il'))
-sys.path.append(os.path.abspath('d3il/environments/d3il'))
+# Ensure local d3il is prioritized in path
+sys.path.insert(0, os.path.abspath('d3il'))
+sys.path.insert(0, os.path.abspath('d3il/environments/d3il'))
+
+# Fix MuJoCo resource loading: Force D3IL_DIR to local path
+os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
+
+import d3il
+print(f"[ eval ] Using d3il from: {d3il.__file__}")
+print(f"[ eval ] D3IL_DIR set to: {os.environ['D3IL_DIR']}")
 
 from d3il.simulation.aligning_sim import Aligning_Sim
 
@@ -81,6 +88,8 @@ class VisualAgentWrapper:
         self.action_counter = self.action_seq_size
         self.rollout_counter += 1
         self.step_counter = 0
+        
+        # We'll handle context padding inside predict()
     
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
@@ -99,9 +108,10 @@ class VisualAgentWrapper:
                 os.makedirs(diag_dir, exist_ok=True)
                 import matplotlib.pyplot as plt
                 fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-                ax[0].imshow(bp_image_np)
+                # Transpose from (C, H, W) to (H, W, C) for matplotlib
+                ax[0].imshow(bp_image_np.transpose(1, 2, 0))
                 ax[0].set_title(f"Agentview (Step {self.step_counter})")
-                ax[1].imshow(inhand_image_np)
+                ax[1].imshow(inhand_image_np.transpose(1, 2, 0))
                 ax[1].set_title(f"In-hand (Step {self.step_counter})")
                 plt.savefig(os.path.join(diag_dir, f"rollout_{self.rollout_counter}_step_{self.step_counter}.png"))
                 plt.close()
@@ -112,10 +122,18 @@ class VisualAgentWrapper:
             inhand_image = torch.from_numpy(inhand_image_np).to(self.device).float().unsqueeze(0)
             des_robot_pos = torch.from_numpy(des_robot_pos_np).to(self.device).float().unsqueeze(0)
             
-            # Append to sliding window (unscaled, matching training)
+            # Append to sliding window
             self.bp_image_context.append(bp_image)
             self.inhand_image_context.append(inhand_image)
             self.des_robot_pos_context.append(des_robot_pos)
+            
+            # ── Context Padding ──────────────────────────────────────────
+            # Repeat first frame to fill window if needed (standard D3IL behavior)
+            while len(self.bp_image_context) < self.window_size:
+                self.bp_image_context.appendleft(bp_image)
+                self.inhand_image_context.appendleft(inhand_image)
+                self.des_robot_pos_context.appendleft(des_robot_pos)
+            # ────────────────────────────────────────────────────────────
             
             # Stack context window → [1, T, C, H, W] and [1, T, 3]
             bp_image_seq = torch.stack(tuple(self.bp_image_context), dim=1)
