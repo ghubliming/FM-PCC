@@ -1,54 +1,49 @@
-# Code Changelog: Visual Evaluation Output Upgrade (Fix 9) - REDO
+# Code Changelog: Visual Evaluation Output Upgrade (Fix 9) - FINAL PARITY
 
 ## Overview
-This document records the refactored code modifications made to the evaluation script. Following a "Legacy Compatibility" audit of the original FMv3ODE pipeline, the output strategy was shifted from standalone `.pkl` files to direct injection into the standard `.npz` archive.
+This document records the finalized code modifications to the Gen5 visual evaluation script. This update achieves **100% parity** with the legacy FMv3ODE pipeline in both **Data Schema (.npz)** and **Visual Diagnostics (.png)**.
 
-## File Modified
-`ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`
+## Files Modified
+1. `d3il/simulation/aligning_sim.py`
+2. `ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`
 
 ## Detailed Changes
 
-### 1. `VisualAgentWrapper` Internal Buffers
-**Change:** Updated `__init__` and `reset()` to strictly track `obs`, `act`, and `plans` to match the `obs_all` and `act_all` semantics of the original FMv3ODE code.
-- `history_real_pos` -> Maps to `obs_all`
-- `history_desired_actions` -> Maps to `act_all`
-- `history_full_plans` -> Maps to `sampled_trajectories_all`
+### 1. Simulation Return Expansion (`aligning_sim.py`)
+**Change:** Updated `test_agent()` return signature.
+- **Old:** `return success_rate, mode_encoding`
+- **New:** `return success_rate, mode_encoding, successes, mean_distance`
+- **Reason:** Allows the evaluation script to access the per-rollout success/fail booleans and distance metrics required for the Analysis Matrix.
 
-### 2. Legacy Output Injection
-**Change:** Modified the final saving block in `eval_ddpm_encdec_vision.py` to extract history from the agent and package it as `np.array(..., dtype=object)`.
+### 2. Matplotlib Engine (`eval_ddpm_encdec_vision.py`)
+**Change:** Integrated `matplotlib` with the `Agg` backend for headless plotting.
 **Code Added:**
-```python
-                # Format data to match legacy FMv3ODE npz output
-                obs_all = []
-                act_all = []
-                sampled_trajectories_all = []
-                
-                for r in range(agent.rollout_counter + 1):
-                    rollout_key = f"rollout_{r}"
-                    if rollout_key in agent.master_rollout_history:
-                        data = agent.master_rollout_history[rollout_key]
-                        obs_all.append(data['real_robot_pos'])
-                        act_all.append(data['desired_actions'])
-                        sampled_trajectories_all.append(data['full_plans'])
+- Rollout Grid Plot: Generates `{variant}.png` with 6 columns per rollout.
+    - **Cols 0-2:** X, Y, Z Time-series.
+    - **Col 4:** 2D XY Path.
+    - **Col 5:** "Real vs. Desired" overlay (Robot path vs. U-Net plans).
+- Aggregate Plot: Generates `all.png` with all trial paths overlaid.
 
-                if config.get('write_to_file', True):
-                    np.savez(f'{save_path}/{variant}.npz', 
-                             success_rate=success_rate, 
-                             entropy=entropy,
-                             mode_encoding=mode_encoding.numpy(), 
-                             elapsed_seconds=elapsed, 
-                             seed=seed,
-                             obs_all=np.array(obs_all, dtype=object),
-                             act_all=np.array(act_all, dtype=object),
-                             sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))
-```
+### 3. Metric Injection (`eval_ddpm_encdec_vision.py`)
+**Change:** Expanded `np.savez` to include all legacy keys used by the "Matrix Explorer" data analysis scripts.
+- `n_success`: Flat success array.
+- `n_steps`: Step counts.
+- `avg_time`: Inference latency.
+- `obs_all`: Step-by-step positions.
+- `act_all`: Predicted actions.
+- `sampled_trajectories_all`: Full U-Net plans.
+- `pos_tracking_errors`: Precision/Drift metrics.
+- `mean_distance`: Target proximity.
+- `args`: Experiment hyperparameters.
 
-### 3. Cleanup
-**Change:** Removed the "naive" standalone `trajectories_seed_<s>.pkl` logic to prevent output directory clutter and maintain a clean legacy-compliant folder structure.
+### 4. Tracking Error Logic
+**Change:** Implemented geometric drift calculation in `VisualAgentWrapper`.
+- Logic: `error = norm(current_pos - previous_prediction)`.
+- Captured in the `pos_tracking_errors` field in the `.npz`.
 
 ## Result
-The Gen5 evaluation output is now **100% compatible** with the legacy Data Analysis Matrix. It contains all historical path information required for "Real vs. Desired" trajectory plotting.
+The Gen5 evaluation is now structurally identical to the FMv3ODE state-based evaluation. It is fully compatible with all existing data aggregation and plotting tools in the FM-PCC repository.
 
 ---
 
-**Revised Changelog generated for FM-PCC Diagnostic Phase 9.**
+**Final Changelog generated for FM-PCC Diagnostic Phase 9.**
