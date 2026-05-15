@@ -255,4 +255,67 @@ In vision-based control, a single image is only a "snapshot." The `obs_seq_len: 
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 10 (Flexibility Restored).**
+## 21. Native D3IL DDPM-ACT Baseline (The Original Version)
+
+For scientific comparison, it is important to understand the original D3IL version of this task before our Gen5 "U-Net Upgrade."
+
+### A. The ML Architecture: DiffusionEncDec (ACT)
+*   **Backbone:** Transformer Encoder-Decoder (Self-Attention).
+*   **Temporal Logic:** Operates on discrete "Action Chunks." It does not have a convolutional U-Net for trajectory smoothing.
+*   **Latent Dimension:** Typically 512 (Standard D3IL) vs. our 128 (Gen5).
+
+### B. Standard D3IL Hyperparameters
+| Parameter | Value | Rationale |
+| :--- | :--- | :--- |
+| **`horizon`** | 10 | Standard "Action Chunk" size in ACT research. |
+| **`n_diffusion_steps`** | 100 | Uses a longer denoising chain than our high-speed Gen5. |
+| **`obs_seq_len`** | 1 | Typically reactive (no visual history) unless explicitly configured. |
+| **`model_type`** | `act` | Activates the Transformer-based policy. |
+
+### C. One-Click Training (Native D3IL)
+To train the original baseline for comparison, use the native D3IL entry point:
+```bash
+python d3il/agents/train_diffusion.py --task aligning --model act
+```
+
+### D. Evaluation System
+The native D3IL code includes an internal evaluation loop that calls `Aligning_Sim.test_agent()`.
+*   **Metrics:** It only reports the **Success Rate** and **Mean Goal Distance**.
+*   **Gap:** It lacks the 7-metric report (Violations, Entropy, Steps) that our Gen5 script provides.
+
+---
+
+## 22. Replicating DDPM-ACT within Gen5 (The "Parity Setup")
+
+To conduct a scientifically valid comparison, you can configure Gen5 to mimic the behavior of the native DDPM-ACT baseline as closely as possible.
+
+### A. The "ACT-Style" Gen5 Config
+To match the ACT baseline, update your `config/aligning-d3il-visual.py` with these values:
+
+| Parameter | ACT-Parity Value | Rationale |
+| :--- | :--- | :--- |
+| **`horizon`** | 10 | Matches the standard ACT chunk size. |
+| **`window_size`** | 16 | (Next multiple of 8 for U-Net stability). |
+| **`action_seq_size`** | 10 | Executes the full chunk without re-planning (Open-Loop). |
+| **`obs_seq_len`** | 1 | Makes the model reactive (no historical context). |
+| **`n_diffusion_steps`** | 100 | Matches the baseline denoising quality. |
+
+### B. Fundamental Differences (Irreconcilable)
+Even with the parity config, these **Core Architectural Differences** cannot be replicated in Gen5:
+
+1.  **Backbone Mechanism:**
+    *   **ACT:** Uses **Self-Attention** (Transformers). It learns global dependencies across the chunk using attention weights.
+    *   **Gen5:** Uses **1D Convolutions** (U-Net). It treats the trajectory as a temporal signal, enforcing local smoothness through kernel overlaps.
+2.  **Trajectory Topology:**
+    *   **ACT:** Produces a sequence of discrete actions. It is often "jittery" at high frequencies.
+    *   **Gen5:** Produces a continuous geometric curve. This is required for **Projection Operators** (Safety) which ACT cannot natively support.
+3.  **Inference Logic:**
+    *   **ACT:** Designed for "Action Chunking" (Open-loop execution of 10 steps).
+    *   **Gen5:** Designed for "Generative MPC" (Receding horizon re-planning).
+
+### C. Scientific Recommendation
+For your thesis, use the **ACT-Parity Setup** in Gen5 to prove that even with identical hyperparameters ($H=10$), the **U-Net Backbone** provides superior path smoothness and safety over the Transformer baseline.
+
+---
+
+**Document updated for FM-PCC Diagnostic Phase 12 (Parity & Benchmark Guide).**
