@@ -1,0 +1,138 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri May 15 08:10:05 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20304
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   e84fcfb
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_gaussian_diffusion.py
+
+
+============================================================
+Evaluating seed 6...
+============================================================
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 14.49it/s]100%|██████████| 3/3 [00:00<00:00, 13.32it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+─── Running aligning-d3il-visual - diffuser (seed 6) ───
+[ eval ] Save path: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/6/results
+[ eval ] Initializing Aligning_Sim (vision=True)
+there are cpus:  64
+2228469 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_7fa5cd44-5035-11f1-85de-d85ed34e311e.xml' with default provider at slot 1
+
+Context 1 Rollout 0
+Context 2 Rollout 0
+Context 3 Rollout 0
+Context 4 Rollout 0
+Context 5 Rollout 0
+Context 6 Rollout 0
+Context 7 Rollout 0
+Context 8 Rollout 0
+Context 9 Rollout 0
+Context 10 Rollout 0
+Context 11 Rollout 0
+Context 12 Rollout 0
+Context 13 Rollout 0
+Context 14 Rollout 0
+Context 15 Rollout 0
+Context 16 Rollout 0
+Context 17 Rollout 0
+Context 18 Rollout 0
+Context 19 Rollout 0
+Context 20 Rollout 0
+Context 21 Rollout 0
+Context 22 Rollout 0
+Context 23 Rollout 0
+Context 24 Rollout 0
+Context 25 Rollout 0
+Context 26 Rollout 0
+Context 27 Rollout 0
+Context 28 Rollout 0
+Context 29 Rollout 0
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.3806525766849518
+Successrate 0.0
+entropy -0.0
+
+[ eval ] ═══════════════════════════════════════════════
+[ eval ] Variant: diffuser
+[ eval ] Success Rate: 0.0000
+[ eval ] Entropy:      -0.0000
+[ eval ] Score:         0.0000
+[ eval ] Elapsed:       1287.8s
+[ eval ] Results:       logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/6/results/results_seed_6.pkl
+[ eval ] ═══════════════════════════════════════════════
+
+============================================================
+Evaluating seed 7...
+============================================================
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H8/7
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 265, in <module>
+    fm_experiment = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 165, in load_diffusion_with_override
+    dataset_config = utils.load_config(*loadpath, 'dataset_config.pkl')
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/serialization.py", line 36, in load_config
+    config = pickle.load(open(loadpath, 'rb'))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/aligning-d3il-visual/ddpm_encdec_vision/H8/7/dataset_config.pkl'

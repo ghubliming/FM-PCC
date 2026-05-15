@@ -1,0 +1,26 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 14 13:16:14 UTC 2026
+JOB NAME:  eval_imf
+JOB ID:    20247
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   ae3c624
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_u1.0_v0.1_aw10/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion/6
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py", line 135, in <module>
+    fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+AttributeError: 'Namespace' object has no attribute 'diffusion_loadpath'
+================================================================================
+JOB END:   Thu May 14 13:16:19 UTC 2026
+================================================================================

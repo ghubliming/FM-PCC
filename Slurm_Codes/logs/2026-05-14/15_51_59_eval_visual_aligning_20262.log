@@ -1,0 +1,25 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 13:52:00 UTC 2026
+pybullet build time: Nov 28 2023 23:45:17
+
+Evaluating seed 6...
+[ eval ] Log saved to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/plans/ddpm_encdec_vision/H8/eval_seed_6.log
+[ eval ] Loading Vision Diffusion model: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6 | Epoch: best
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.45it/s]100%|██████████| 3/3 [00:00<00:00, 18.19it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 145, in <module>
+    diffusion = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 86, in load_diffusion_with_override
+    diffusion_obj = diffusion_config(model_obj).to(device)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/config.py", line 99, in __call__
+    instance = self._class(*args, **kwargs, **self._dict)
+TypeError: GaussianDiffusion.__init__() got an unexpected keyword argument 'time_beta_alpha_v3'

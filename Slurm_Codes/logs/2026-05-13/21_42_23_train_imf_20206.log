@@ -1,0 +1,38 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 19:42:24 UTC 2026
+================================================================================
+[ train ] iMeanFlow Training (iMF-PCC)
+[ train ] Engine: Improved Mean Flows (dual-velocity decomposition)
+[ train ] Repo: github.com/Lyy-iiis/imeanflow
+[ train ] Seeds: [6, 7, 8, 9, 10] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-iMF)
+================================================================================
+
+[ train ] Seed 6
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 155, in <module>
+    device=args.device,
+AttributeError: 'Namespace' object has no attribute 'device'

@@ -1,0 +1,49 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 19:45:30 UTC 2026
+================================================================================
+[ train ] iMeanFlow Training (iMF-PCC)
+[ train ] Engine: Improved Mean Flows (dual-velocity decomposition)
+[ train ] Repo: github.com/Lyy-iiis/imeanflow
+[ train ] Seeds: [6, 7, 8, 9, 10] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-iMF)
+================================================================================
+
+[ train ] Seed 6
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/dataset_config_resume_1.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 147, in <module>
+    model_config = utils.Config(
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/config.py", line 24, in __init__
+    self._class = import_class(_class)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/config.py", line 15, in import_class
+    module = importlib.import_module(f'{repo_name}.{module_name}')
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 992, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'diffuser.flow_matcher_v3_imeanflow'

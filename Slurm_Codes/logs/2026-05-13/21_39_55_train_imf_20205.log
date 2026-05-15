@@ -1,0 +1,16 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 19:39:56 UTC 2026
+================================================================================
+[ train ] iMeanFlow Training (iMF-PCC)
+[ train ] Engine: Improved Mean Flows (dual-velocity decomposition)
+[ train ] Repo: github.com/Lyy-iiis/imeanflow
+[ train ] Seeds: [6, 7, 8, 9, 10] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-iMF)
+================================================================================
+
+[ train ] Seed 6
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 127, in <module>
+    trainer = args.trainer
+AttributeError: 'Namespace' object has no attribute 'trainer'

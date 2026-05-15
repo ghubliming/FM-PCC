@@ -1,0 +1,1055 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 20:24:55 UTC 2026
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py:1877: UserWarning: Positional args are being deprecated, use kwargs instead. Refer to https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict for details.
+  warnings.warn(
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260513_202505-rslldb61
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed-6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/rslldb61
+================================================================================
+[ train ] iMeanFlow Training (iMF-PCC)
+[ train ] Engine: Improved Mean Flows (dual-velocity decomposition)
+[ train ] Repo: github.com/Lyy-iiis/imeanflow
+[ train ] Seeds: [6, 7, 8, 9, 10] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-iMF)
+================================================================================
+
+[ train ] Seed 6
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/dataset_config_resume_10.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/model_config_resume_8.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMFDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 0.99
+    loss_schedule: u_first
+    loss_type: l2
+    observation_dim: 4
+    ode_inference_steps_v3: 1
+    predict_epsilon: True
+    returns_condition: True
+    transition_epochs: 30
+    u_loss_weight: 0.5
+    v_loss_weight: 0.5
+    warmup_epochs: 30
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/diffusion_config_resume_7.json
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 1
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/trainer_config_resume_7.json
+
+[ train ] Starting training (steps: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py:1877: UserWarning: Positional args are being deprecated, use kwargs instead. Refer to https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict for details.
+  warnings.warn(
+Initial test loss:   0.5367, a0 loss:   0.0000
+Epoch 0: 100%|██████████| 1000/1000 [01:13<00:00, 13.64it/s, loss=0.00257, loss_test=0.537, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:13<00:00, 13.64it/s, loss=0.00257, loss_test=0.537, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:09<00:00, 14.42it/s, loss=0.00175, loss_test=0.00267, lr=0.0005, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:09<00:00, 14.42it/s, loss=0.00175, loss_test=0.00267, lr=0.0005, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.00227, loss_test=0.00292, lr=0.000499, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.00227, loss_test=0.00292, lr=0.000499, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.000729, loss_test=0.00149, lr=0.000499, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.000729, loss_test=0.00149, lr=0.000499, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:10<00:00, 14.11it/s, loss=0.000643, loss_test=0.0012, lr=0.000498, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:10<00:00, 14.11it/s, loss=0.000643, loss_test=0.0012, lr=0.000498, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:11<00:00, 14.06it/s, loss=0.000589, loss_test=0.000516, lr=0.000497, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:11<00:00, 14.06it/s, loss=0.000589, loss_test=0.000516, lr=0.000497, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:10<00:00, 14.14it/s, loss=0.00104, loss_test=0.000482, lr=0.000495, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:10<00:00, 14.14it/s, loss=0.00104, loss_test=0.000482, lr=0.000495, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.000187, loss_test=0.000736, lr=0.000494, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.000187, loss_test=0.000736, lr=0.000494, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:09<00:00, 14.31it/s, loss=0.000238, loss_test=0.000218, lr=0.000492, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:09<00:00, 14.31it/s, loss=0.000238, loss_test=0.000218, lr=0.000492, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.000341, loss_test=0.000284, lr=0.00049, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.000341, loss_test=0.000284, lr=0.00049, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.000452, loss_test=0.000251, lr=0.000488, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.000452, loss_test=0.000251, lr=0.000488, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.000132, loss_test=0.000372, lr=0.000485, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.000132, loss_test=0.000372, lr=0.000485, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:10<00:00, 14.16it/s, loss=0.000189, loss_test=0.000152, lr=0.000482, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:10<00:00, 14.16it/s, loss=0.000189, loss_test=0.000152, lr=0.000482, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:09<00:00, 14.39it/s, loss=0.437, loss_test=0.000132, lr=0.000479, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:09<00:00, 14.39it/s, loss=0.437, loss_test=0.000132, lr=0.000479, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.421, loss_test=0.422, lr=0.000476, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.421, loss_test=0.422, lr=0.000476, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:03<00:00, 15.66it/s, loss=0.446, loss_test=0.416, lr=0.000472, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:03<00:00, 15.66it/s, loss=0.446, loss_test=0.416, lr=0.000472, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.415, loss_test=0.419, lr=0.000468, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.415, loss_test=0.419, lr=0.000468, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.358, loss_test=0.424, lr=0.000464, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.358, loss_test=0.424, lr=0.000464, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.423, loss_test=0.418, lr=0.00046, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.423, loss_test=0.418, lr=0.00046, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.356, loss_test=0.423, lr=0.000456, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.356, loss_test=0.423, lr=0.000456, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:10<00:00, 14.17it/s, loss=0.389, loss_test=0.424, lr=0.000451, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:10<00:00, 14.17it/s, loss=0.389, loss_test=0.424, lr=0.000451, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:05<00:00, 15.27it/s, loss=0.386, loss_test=0.42, lr=0.000447, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:05<00:00, 15.27it/s, loss=0.386, loss_test=0.42, lr=0.000447, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.338, loss_test=0.41, lr=0.000442, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.338, loss_test=0.41, lr=0.000442, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.43, loss_test=0.42, lr=0.000436, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.43, loss_test=0.42, lr=0.000436, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:07<00:00, 14.82it/s, loss=0.392, loss_test=0.414, lr=0.000431, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:07<00:00, 14.82it/s, loss=0.392, loss_test=0.414, lr=0.000431, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.464, loss_test=0.421, lr=0.000425, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.464, loss_test=0.421, lr=0.000425, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.403, loss_test=0.425, lr=0.00042, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.403, loss_test=0.425, lr=0.00042, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:04<00:00, 15.59it/s, loss=0.334, loss_test=0.422, lr=0.000414, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:04<00:00, 15.59it/s, loss=0.334, loss_test=0.422, lr=0.000414, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.386, loss_test=0.416, lr=0.000408, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.386, loss_test=0.416, lr=0.000408, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [01:07<00:00, 14.81it/s, loss=0.418, loss_test=0.417, lr=0.000401, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [01:07<00:00, 14.81it/s, loss=0.418, loss_test=0.417, lr=0.000401, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.463, loss_test=0.421, lr=0.000395, step=30999]Epoch 30: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.463, loss_test=0.421, lr=0.000395, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.376, loss_test=0.415, lr=0.000388, step=31999]Epoch 31: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.376, loss_test=0.415, lr=0.000388, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.402, loss_test=0.413, lr=0.000382, step=32999]Epoch 32: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.402, loss_test=0.413, lr=0.000382, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.414, loss_test=0.419, lr=0.000375, step=33999]Epoch 33: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.414, loss_test=0.419, lr=0.000375, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [01:06<00:00, 14.97it/s, loss=0.454, loss_test=0.41, lr=0.000368, step=34999]Epoch 34: 100%|██████████| 1000/1000 [01:06<00:00, 14.97it/s, loss=0.454, loss_test=0.41, lr=0.000368, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.453, loss_test=0.416, lr=0.000361, step=35999]Epoch 35: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.453, loss_test=0.416, lr=0.000361, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.364, loss_test=0.417, lr=0.000354, step=36999]Epoch 36: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.364, loss_test=0.417, lr=0.000354, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.443, loss_test=0.42, lr=0.000347, step=37999]Epoch 37: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.443, loss_test=0.42, lr=0.000347, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.468, loss_test=0.421, lr=0.000339, step=38999]Epoch 38: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.468, loss_test=0.421, lr=0.000339, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [01:05<00:00, 15.19it/s, loss=0.468, loss_test=0.411, lr=0.000332, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [01:05<00:00, 15.19it/s, loss=0.468, loss_test=0.411, lr=0.000332, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [01:09<00:00, 14.31it/s, loss=0.438, loss_test=0.412, lr=0.000324, step=40999]Epoch 40: 100%|██████████| 1000/1000 [01:09<00:00, 14.31it/s, loss=0.438, loss_test=0.412, lr=0.000324, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.507, loss_test=0.415, lr=0.000317, step=41999]Epoch 41: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.507, loss_test=0.415, lr=0.000317, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.432, loss_test=0.417, lr=0.000309, step=42999]Epoch 42: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.432, loss_test=0.417, lr=0.000309, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.419, loss_test=0.421, lr=0.000301, step=43999]Epoch 43: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.419, loss_test=0.421, lr=0.000301, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.394, loss_test=0.421, lr=0.000293, step=44999]Epoch 44: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.394, loss_test=0.421, lr=0.000293, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.466, loss_test=0.412, lr=0.000286, step=45999]Epoch 45: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.466, loss_test=0.412, lr=0.000286, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.421, loss_test=0.418, lr=0.000278, step=46999]Epoch 46: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.421, loss_test=0.418, lr=0.000278, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.432, loss_test=0.422, lr=0.00027, step=47999]Epoch 47: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.432, loss_test=0.422, lr=0.00027, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.352, loss_test=0.415, lr=0.000262, step=48999]Epoch 48: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.352, loss_test=0.415, lr=0.000262, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.385, loss_test=0.417, lr=0.000254, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.385, loss_test=0.417, lr=0.000254, step=5e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.395, loss_test=0.418, lr=0.000246, step=50999]Epoch 50: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.395, loss_test=0.418, lr=0.000246, step=50999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.406, loss_test=0.422, lr=0.000238, step=51999]Epoch 51: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.406, loss_test=0.422, lr=0.000238, step=51999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52: 100%|██████████| 1000/1000 [01:05<00:00, 15.20it/s, loss=0.427, loss_test=0.406, lr=0.00023, step=52999]Epoch 52: 100%|██████████| 1000/1000 [01:05<00:00, 15.20it/s, loss=0.427, loss_test=0.406, lr=0.00023, step=52999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53: 100%|██████████| 1000/1000 [01:05<00:00, 15.33it/s, loss=0.344, loss_test=0.426, lr=0.000222, step=53999]Epoch 53: 100%|██████████| 1000/1000 [01:05<00:00, 15.33it/s, loss=0.344, loss_test=0.426, lr=0.000222, step=53999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.422, loss_test=0.417, lr=0.000214, step=54999]Epoch 54: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.422, loss_test=0.417, lr=0.000214, step=54999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.406, loss_test=0.418, lr=0.000207, step=55999]Epoch 55: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.406, loss_test=0.418, lr=0.000207, step=55999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.376, loss_test=0.418, lr=0.000199, step=56999]Epoch 56: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.376, loss_test=0.418, lr=0.000199, step=56999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.416, loss_test=0.411, lr=0.000191, step=57999]Epoch 57: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.416, loss_test=0.411, lr=0.000191, step=57999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.49, loss_test=0.412, lr=0.000183, step=58999]Epoch 58: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.49, loss_test=0.412, lr=0.000183, step=58999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.447, loss_test=0.426, lr=0.000176, step=6e+4]Epoch 59: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.447, loss_test=0.426, lr=0.000176, step=6e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60: 100%|██████████| 1000/1000 [01:10<00:00, 14.22it/s, loss=0.397, loss_test=0.425, lr=0.000168, step=60999]Epoch 60: 100%|██████████| 1000/1000 [01:10<00:00, 14.22it/s, loss=0.397, loss_test=0.425, lr=0.000168, step=60999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.485, loss_test=0.418, lr=0.000161, step=61999]Epoch 61: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.485, loss_test=0.418, lr=0.000161, step=61999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.387, loss_test=0.423, lr=0.000153, step=62999]Epoch 62: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.387, loss_test=0.423, lr=0.000153, step=62999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.44, loss_test=0.418, lr=0.000146, step=63999]Epoch 63: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.44, loss_test=0.418, lr=0.000146, step=63999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.318, loss_test=0.415, lr=0.000139, step=64999]Epoch 64: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.318, loss_test=0.415, lr=0.000139, step=64999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.429, loss_test=0.414, lr=0.000132, step=65999]Epoch 65: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.429, loss_test=0.414, lr=0.000132, step=65999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.453, loss_test=0.419, lr=0.000125, step=66999]Epoch 66: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.453, loss_test=0.419, lr=0.000125, step=66999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.4, loss_test=0.414, lr=0.000118, step=67999]Epoch 67: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.4, loss_test=0.414, lr=0.000118, step=67999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.446, loss_test=0.415, lr=0.000112, step=68999]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.446, loss_test=0.415, lr=0.000112, step=68999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.435, loss_test=0.426, lr=0.000105, step=7e+4]Epoch 69: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.435, loss_test=0.426, lr=0.000105, step=7e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70: 100%|██████████| 1000/1000 [01:04<00:00, 15.58it/s, loss=0.428, loss_test=0.418, lr=9.86e-5, step=70999]Epoch 70: 100%|██████████| 1000/1000 [01:04<00:00, 15.58it/s, loss=0.428, loss_test=0.418, lr=9.86e-5, step=70999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.366, loss_test=0.42, lr=9.24e-5, step=71999]Epoch 71: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.366, loss_test=0.42, lr=9.24e-5, step=71999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.532, loss_test=0.42, lr=8.63e-5, step=72999]Epoch 72: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.532, loss_test=0.42, lr=8.63e-5, step=72999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.376, loss_test=0.411, lr=8.04e-5, step=73999]Epoch 73: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.376, loss_test=0.411, lr=8.04e-5, step=73999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.325, loss_test=0.367, lr=7.46e-5, step=74999]Epoch 74: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.325, loss_test=0.367, lr=7.46e-5, step=74999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.395, loss_test=0.37, lr=6.91e-5, step=75999]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.395, loss_test=0.37, lr=6.91e-5, step=75999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.339, loss_test=0.362, lr=6.37e-5, step=76999]Epoch 76: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.339, loss_test=0.362, lr=6.37e-5, step=76999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.393, loss_test=0.338, lr=5.85e-5, step=77999]Epoch 77: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.393, loss_test=0.338, lr=5.85e-5, step=77999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.367, loss_test=0.342, lr=5.35e-5, step=78999]Epoch 78: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.367, loss_test=0.342, lr=5.35e-5, step=78999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.293, loss_test=0.342, lr=4.87e-5, step=8e+4]Epoch 79: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.293, loss_test=0.342, lr=4.87e-5, step=8e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.38it/s, loss=0.376, loss_test=0.333, lr=4.41e-5, step=80999]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.38it/s, loss=0.376, loss_test=0.333, lr=4.41e-5, step=80999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.287, loss_test=0.32, lr=3.97e-5, step=81999]Epoch 81: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.287, loss_test=0.32, lr=3.97e-5, step=81999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.364, loss_test=0.327, lr=3.55e-5, step=82999]Epoch 82: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.364, loss_test=0.327, lr=3.55e-5, step=82999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.327, loss_test=0.326, lr=3.15e-5, step=83999]Epoch 83: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.327, loss_test=0.326, lr=3.15e-5, step=83999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84: 100%|██████████| 1000/1000 [01:07<00:00, 14.73it/s, loss=0.315, loss_test=0.319, lr=2.78e-5, step=84999]Epoch 84: 100%|██████████| 1000/1000 [01:07<00:00, 14.73it/s, loss=0.315, loss_test=0.319, lr=2.78e-5, step=84999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85: 100%|██████████| 1000/1000 [01:04<00:00, 15.50it/s, loss=0.343, loss_test=0.318, lr=2.43e-5, step=85999]Epoch 85: 100%|██████████| 1000/1000 [01:04<00:00, 15.50it/s, loss=0.343, loss_test=0.318, lr=2.43e-5, step=85999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86: 100%|██████████| 1000/1000 [01:04<00:00, 15.51it/s, loss=0.297, loss_test=0.323, lr=2.1e-5, step=86999]Epoch 86: 100%|██████████| 1000/1000 [01:04<00:00, 15.51it/s, loss=0.297, loss_test=0.323, lr=2.1e-5, step=86999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87: 100%|██████████| 1000/1000 [01:07<00:00, 14.85it/s, loss=0.402, loss_test=0.312, lr=1.79e-5, step=87999]Epoch 87: 100%|██████████| 1000/1000 [01:07<00:00, 14.85it/s, loss=0.402, loss_test=0.312, lr=1.79e-5, step=87999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.297, loss_test=0.314, lr=1.51e-5, step=88999]Epoch 88: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.297, loss_test=0.314, lr=1.51e-5, step=88999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.296, loss_test=0.319, lr=1.25e-5, step=9e+4]Epoch 89: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.296, loss_test=0.319, lr=1.25e-5, step=9e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90: 100%|██████████| 1000/1000 [01:04<00:00, 15.48it/s, loss=0.312, loss_test=0.317, lr=1.01e-5, step=90999]Epoch 90: 100%|██████████| 1000/1000 [01:04<00:00, 15.48it/s, loss=0.312, loss_test=0.317, lr=1.01e-5, step=90999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.402, loss_test=0.314, lr=8.01e-6, step=91999]Epoch 91: 100%|██████████| 1000/1000 [01:06<00:00, 14.94it/s, loss=0.402, loss_test=0.314, lr=8.01e-6, step=91999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92: 100%|██████████| 1000/1000 [01:05<00:00, 15.34it/s, loss=0.313, loss_test=0.315, lr=6.14e-6, step=92999]Epoch 92: 100%|██████████| 1000/1000 [01:05<00:00, 15.34it/s, loss=0.313, loss_test=0.315, lr=6.14e-6, step=92999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [01:05<00:00, 15.36it/s, loss=0.29, loss_test=0.306, lr=4.52e-6, step=93999]Epoch 93: 100%|██████████| 1000/1000 [01:05<00:00, 15.36it/s, loss=0.29, loss_test=0.306, lr=4.52e-6, step=93999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [01:06<00:00, 15.06it/s, loss=0.324, loss_test=0.325, lr=3.14e-6, step=94999]Epoch 94: 100%|██████████| 1000/1000 [01:06<00:00, 15.05it/s, loss=0.324, loss_test=0.325, lr=3.14e-6, step=94999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.285, loss_test=0.316, lr=2.01e-6, step=95999]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.285, loss_test=0.316, lr=2.01e-6, step=95999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.352, loss_test=0.32, lr=1.13e-6, step=96999]Epoch 96: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.352, loss_test=0.32, lr=1.13e-6, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.256, loss_test=0.322, lr=5.03e-7, step=97999]Epoch 97: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.256, loss_test=0.322, lr=5.03e-7, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.313, loss_test=0.317, lr=1.26e-7, step=98999]Epoch 98: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.313, loss_test=0.317, lr=1.26e-7, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.302, loss_test=0.32, lr=0, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.302, loss_test=0.32, lr=0, step=1e+5]
+wandb: - 0.013 MB of 0.013 MB uploadedwandb: \ 0.013 MB of 0.013 MB uploadedwandb: | 0.013 MB of 0.013 MB uploadedwandb: / 0.022 MB of 0.022 MB uploaded (0.004 MB deduped)wandb: - 0.022 MB of 0.022 MB uploaded (0.004 MB deduped)wandb: \ 0.048 MB of 0.048 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 7.5%
+wandb: 
+wandb: Run history:
+wandb:  test/loss █▁▁▁▁▁▆▇▇▆▆▇▆▆▆▆▆▆▆▆▆▇▆▆▇▆▆▆▆▆▆▅▅▅▅▅▅▅▅▅
+wandb: train/loss █▁▁▁▁▁▇▅▆▆▆▇▇▆█▆▇▆▆▆▆▆▆▅▆▇▇▆▆▆▆▆▄▄▄▅▅▆▅▄
+wandb: 
+wandb: Run summary:
+wandb:  test/loss 0.32038
+wandb: train/loss 0.25516
+wandb: 
+wandb: 🚀 View run iMF-seed-6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/rslldb61
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260513_202505-rslldb61/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260513_221812-iub0hs5e
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed-7
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/iub0hs5e
+[ train ] Seed 6 complete → logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6
+
+[ train ] Seed 7
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMFDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 0.99
+    loss_schedule: u_first
+    loss_type: l2
+    observation_dim: 4
+    ode_inference_steps_v3: 1
+    predict_epsilon: True
+    returns_condition: True
+    transition_epochs: 30
+    u_loss_weight: 0.5
+    v_loss_weight: 0.5
+    warmup_epochs: 30
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/diffusion_config.json
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 1
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7/trainer_config.json
+
+[ train ] Starting training (steps: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py:1877: UserWarning: Positional args are being deprecated, use kwargs instead. Refer to https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict for details.
+  warnings.warn(
+Initial test loss:   0.5703, a0 loss:   0.0000
+Epoch 0: 100%|██████████| 1000/1000 [01:10<00:00, 14.13it/s, loss=0.00512, loss_test=0.57, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:10<00:00, 14.13it/s, loss=0.00512, loss_test=0.57, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.000969, loss_test=0.00471, lr=0.0005, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.000969, loss_test=0.00471, lr=0.0005, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.000483, loss_test=0.00075, lr=0.000499, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.000483, loss_test=0.00075, lr=0.000499, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.000556, loss_test=0.000415, lr=0.000499, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.000556, loss_test=0.000415, lr=0.000499, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:05<00:00, 15.22it/s, loss=0.000637, loss_test=0.000445, lr=0.000498, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:05<00:00, 15.22it/s, loss=0.000637, loss_test=0.000445, lr=0.000498, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:04<00:00, 15.54it/s, loss=0.000733, loss_test=0.00115, lr=0.000497, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:04<00:00, 15.54it/s, loss=0.000733, loss_test=0.00115, lr=0.000497, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.000373, loss_test=0.000674, lr=0.000495, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.000373, loss_test=0.000674, lr=0.000495, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:09<00:00, 14.36it/s, loss=0.000339, loss_test=0.000217, lr=0.000494, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:09<00:00, 14.36it/s, loss=0.000339, loss_test=0.000217, lr=0.000494, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.000132, loss_test=0.000291, lr=0.000492, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.000132, loss_test=0.000291, lr=0.000492, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:09<00:00, 14.36it/s, loss=0.00026, loss_test=0.00018, lr=0.00049, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:09<00:00, 14.36it/s, loss=0.00026, loss_test=0.00018, lr=0.00049, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.471, loss_test=0.00022, lr=0.000488, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.471, loss_test=0.00022, lr=0.000488, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.491, loss_test=0.432, lr=0.000485, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.491, loss_test=0.432, lr=0.000485, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:05<00:00, 15.26it/s, loss=0.368, loss_test=0.428, lr=0.000482, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:05<00:00, 15.26it/s, loss=0.368, loss_test=0.428, lr=0.000482, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.415, loss_test=0.428, lr=0.000479, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.415, loss_test=0.428, lr=0.000479, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.407, loss_test=0.424, lr=0.000476, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.407, loss_test=0.424, lr=0.000476, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.325, loss_test=0.42, lr=0.000472, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.325, loss_test=0.42, lr=0.000472, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:04<00:00, 15.40it/s, loss=0.462, loss_test=0.43, lr=0.000468, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:04<00:00, 15.40it/s, loss=0.462, loss_test=0.43, lr=0.000468, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.395, loss_test=0.429, lr=0.000464, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.395, loss_test=0.429, lr=0.000464, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.376, loss_test=0.425, lr=0.00046, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.376, loss_test=0.425, lr=0.00046, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:04<00:00, 15.44it/s, loss=0.406, loss_test=0.424, lr=0.000456, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:04<00:00, 15.44it/s, loss=0.406, loss_test=0.424, lr=0.000456, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:09<00:00, 14.29it/s, loss=0.392, loss_test=0.43, lr=0.000451, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:09<00:00, 14.29it/s, loss=0.392, loss_test=0.43, lr=0.000451, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:05<00:00, 15.31it/s, loss=0.384, loss_test=0.427, lr=0.000447, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:05<00:00, 15.31it/s, loss=0.384, loss_test=0.427, lr=0.000447, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.434, loss_test=0.433, lr=0.000442, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.434, loss_test=0.433, lr=0.000442, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.36, loss_test=0.424, lr=0.000436, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.36, loss_test=0.424, lr=0.000436, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.407, loss_test=0.43, lr=0.000431, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.407, loss_test=0.43, lr=0.000431, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.423, loss_test=0.426, lr=0.000425, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.423, loss_test=0.426, lr=0.000425, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.441, loss_test=0.419, lr=0.00042, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.441, loss_test=0.419, lr=0.00042, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.491, loss_test=0.428, lr=0.000414, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.491, loss_test=0.428, lr=0.000414, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.403, loss_test=0.428, lr=0.000408, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.403, loss_test=0.428, lr=0.000408, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.347, loss_test=0.369, lr=0.000401, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.347, loss_test=0.369, lr=0.000401, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.382, loss_test=0.364, lr=0.000395, step=30999]Epoch 30: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.382, loss_test=0.364, lr=0.000395, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [01:09<00:00, 14.41it/s, loss=0.36, loss_test=0.362, lr=0.000388, step=31999]Epoch 31: 100%|██████████| 1000/1000 [01:09<00:00, 14.41it/s, loss=0.36, loss_test=0.362, lr=0.000388, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.292, loss_test=0.356, lr=0.000382, step=32999]Epoch 32: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.292, loss_test=0.356, lr=0.000382, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.264, loss_test=0.348, lr=0.000375, step=33999]Epoch 33: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.264, loss_test=0.348, lr=0.000375, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.342, loss_test=0.352, lr=0.000368, step=34999]Epoch 34: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.342, loss_test=0.352, lr=0.000368, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.324, loss_test=0.345, lr=0.000361, step=35999]Epoch 35: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.324, loss_test=0.345, lr=0.000361, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.388, loss_test=0.336, lr=0.000354, step=36999]Epoch 36: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.388, loss_test=0.336, lr=0.000354, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.431, loss_test=0.341, lr=0.000347, step=37999]Epoch 37: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.431, loss_test=0.341, lr=0.000347, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.404, loss_test=0.312, lr=0.000339, step=38999]Epoch 38: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.404, loss_test=0.312, lr=0.000339, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [01:08<00:00, 14.63it/s, loss=0.31, loss_test=0.324, lr=0.000332, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [01:08<00:00, 14.63it/s, loss=0.31, loss_test=0.324, lr=0.000332, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [01:11<00:00, 14.08it/s, loss=0.312, loss_test=0.321, lr=0.000324, step=40999]Epoch 40: 100%|██████████| 1000/1000 [01:11<00:00, 14.08it/s, loss=0.312, loss_test=0.321, lr=0.000324, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.313, loss_test=0.323, lr=0.000317, step=41999]Epoch 41: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.313, loss_test=0.323, lr=0.000317, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.353, loss_test=0.317, lr=0.000309, step=42999]Epoch 42: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.353, loss_test=0.317, lr=0.000309, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.348, loss_test=0.326, lr=0.000301, step=43999]Epoch 43: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.348, loss_test=0.326, lr=0.000301, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.349, loss_test=0.323, lr=0.000293, step=44999]Epoch 44: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.349, loss_test=0.323, lr=0.000293, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.336, loss_test=0.311, lr=0.000286, step=45999]Epoch 45: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.336, loss_test=0.311, lr=0.000286, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.353, loss_test=0.313, lr=0.000278, step=46999]Epoch 46: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.353, loss_test=0.313, lr=0.000278, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [01:05<00:00, 15.32it/s, loss=0.274, loss_test=0.307, lr=0.00027, step=47999]Epoch 47: 100%|██████████| 1000/1000 [01:05<00:00, 15.32it/s, loss=0.274, loss_test=0.307, lr=0.00027, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [01:06<00:00, 15.13it/s, loss=0.25, loss_test=0.317, lr=0.000262, step=48999]Epoch 48: 100%|██████████| 1000/1000 [01:06<00:00, 15.13it/s, loss=0.25, loss_test=0.317, lr=0.000262, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.315, loss_test=0.311, lr=0.000254, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.315, loss_test=0.311, lr=0.000254, step=5e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.3, loss_test=0.315, lr=0.000246, step=50999]Epoch 50: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.3, loss_test=0.315, lr=0.000246, step=50999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.272, loss_test=0.312, lr=0.000238, step=51999]Epoch 51: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.272, loss_test=0.312, lr=0.000238, step=51999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.302, loss_test=0.311, lr=0.00023, step=52999]Epoch 52: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.302, loss_test=0.311, lr=0.00023, step=52999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.298, loss_test=0.307, lr=0.000222, step=53999]Epoch 53: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.298, loss_test=0.307, lr=0.000222, step=53999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.209, loss_test=0.305, lr=0.000214, step=54999]Epoch 54: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.209, loss_test=0.305, lr=0.000214, step=54999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.286, loss_test=0.309, lr=0.000207, step=55999]Epoch 55: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.286, loss_test=0.309, lr=0.000207, step=55999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56: 100%|██████████| 1000/1000 [01:06<00:00, 15.08it/s, loss=0.244, loss_test=0.304, lr=0.000199, step=56999]Epoch 56: 100%|██████████| 1000/1000 [01:06<00:00, 15.08it/s, loss=0.244, loss_test=0.304, lr=0.000199, step=56999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.28, loss_test=0.31, lr=0.000191, step=57999]Epoch 57: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.28, loss_test=0.31, lr=0.000191, step=57999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58: 100%|██████████| 1000/1000 [01:05<00:00, 15.23it/s, loss=0.327, loss_test=0.312, lr=0.000183, step=58999]Epoch 58: 100%|██████████| 1000/1000 [01:05<00:00, 15.23it/s, loss=0.327, loss_test=0.312, lr=0.000183, step=58999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.327, loss_test=0.314, lr=0.000176, step=6e+4]Epoch 59: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.327, loss_test=0.314, lr=0.000176, step=6e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60: 100%|██████████| 1000/1000 [01:10<00:00, 14.10it/s, loss=0.305, loss_test=0.299, lr=0.000168, step=60999]Epoch 60: 100%|██████████| 1000/1000 [01:10<00:00, 14.10it/s, loss=0.305, loss_test=0.299, lr=0.000168, step=60999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.389, loss_test=0.307, lr=0.000161, step=61999]Epoch 61: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.389, loss_test=0.307, lr=0.000161, step=61999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62: 100%|██████████| 1000/1000 [01:05<00:00, 15.30it/s, loss=0.295, loss_test=0.308, lr=0.000153, step=62999]Epoch 62: 100%|██████████| 1000/1000 [01:05<00:00, 15.30it/s, loss=0.295, loss_test=0.308, lr=0.000153, step=62999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.364, loss_test=0.302, lr=0.000146, step=63999]Epoch 63: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.364, loss_test=0.302, lr=0.000146, step=63999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.285, loss_test=0.309, lr=0.000139, step=64999]Epoch 64: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.285, loss_test=0.309, lr=0.000139, step=64999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.384, loss_test=0.312, lr=0.000132, step=65999]Epoch 65: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.384, loss_test=0.312, lr=0.000132, step=65999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66: 100%|██████████| 1000/1000 [01:09<00:00, 14.46it/s, loss=0.31, loss_test=0.31, lr=0.000125, step=66999]Epoch 66: 100%|██████████| 1000/1000 [01:09<00:00, 14.46it/s, loss=0.31, loss_test=0.31, lr=0.000125, step=66999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67: 100%|██████████| 1000/1000 [01:07<00:00, 14.81it/s, loss=0.351, loss_test=0.309, lr=0.000118, step=67999]Epoch 67: 100%|██████████| 1000/1000 [01:07<00:00, 14.81it/s, loss=0.351, loss_test=0.309, lr=0.000118, step=67999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.328, loss_test=0.304, lr=0.000112, step=68999]Epoch 68: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.328, loss_test=0.304, lr=0.000112, step=68999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.245, loss_test=0.301, lr=0.000105, step=7e+4]Epoch 69: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.245, loss_test=0.301, lr=0.000105, step=7e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.338, loss_test=0.308, lr=9.86e-5, step=70999]Epoch 70: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.338, loss_test=0.308, lr=9.86e-5, step=70999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71: 100%|██████████| 1000/1000 [01:06<00:00, 14.97it/s, loss=0.342, loss_test=0.3, lr=9.24e-5, step=71999]Epoch 71: 100%|██████████| 1000/1000 [01:06<00:00, 14.97it/s, loss=0.342, loss_test=0.3, lr=9.24e-5, step=71999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.236, loss_test=0.304, lr=8.63e-5, step=72999]Epoch 72: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.236, loss_test=0.304, lr=8.63e-5, step=72999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73: 100%|██████████| 1000/1000 [01:05<00:00, 15.17it/s, loss=0.368, loss_test=0.311, lr=8.04e-5, step=73999]Epoch 73: 100%|██████████| 1000/1000 [01:05<00:00, 15.17it/s, loss=0.368, loss_test=0.311, lr=8.04e-5, step=73999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.323, loss_test=0.307, lr=7.46e-5, step=74999]Epoch 74: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.323, loss_test=0.307, lr=7.46e-5, step=74999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.318, loss_test=0.302, lr=6.91e-5, step=75999]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.318, loss_test=0.302, lr=6.91e-5, step=75999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.332, loss_test=0.306, lr=6.37e-5, step=76999]Epoch 76: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.332, loss_test=0.306, lr=6.37e-5, step=76999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77: 100%|██████████| 1000/1000 [01:06<00:00, 15.15it/s, loss=0.289, loss_test=0.3, lr=5.85e-5, step=77999]Epoch 77: 100%|██████████| 1000/1000 [01:06<00:00, 15.15it/s, loss=0.289, loss_test=0.3, lr=5.85e-5, step=77999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.304, loss_test=0.311, lr=5.35e-5, step=78999]Epoch 78: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.304, loss_test=0.311, lr=5.35e-5, step=78999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.294, loss_test=0.301, lr=4.87e-5, step=8e+4]Epoch 79: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.294, loss_test=0.301, lr=4.87e-5, step=8e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.256, loss_test=0.305, lr=4.41e-5, step=80999]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.256, loss_test=0.305, lr=4.41e-5, step=80999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.261, loss_test=0.306, lr=3.97e-5, step=81999]Epoch 81: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.261, loss_test=0.306, lr=3.97e-5, step=81999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.276, loss_test=0.299, lr=3.55e-5, step=82999]Epoch 82: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.276, loss_test=0.299, lr=3.55e-5, step=82999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.36, loss_test=0.3, lr=3.15e-5, step=83999]Epoch 83: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.36, loss_test=0.3, lr=3.15e-5, step=83999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.281, loss_test=0.302, lr=2.78e-5, step=84999]Epoch 84: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.281, loss_test=0.302, lr=2.78e-5, step=84999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.384, loss_test=0.306, lr=2.43e-5, step=85999]Epoch 85: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.384, loss_test=0.306, lr=2.43e-5, step=85999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.268, loss_test=0.295, lr=2.1e-5, step=86999]Epoch 86: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.268, loss_test=0.295, lr=2.1e-5, step=86999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.231, loss_test=0.309, lr=1.79e-5, step=87999]Epoch 87: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.231, loss_test=0.309, lr=1.79e-5, step=87999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.307, loss_test=0.303, lr=1.51e-5, step=88999]Epoch 88: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.307, loss_test=0.303, lr=1.51e-5, step=88999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.2, loss_test=0.305, lr=1.25e-5, step=9e+4]Epoch 89: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.2, loss_test=0.305, lr=1.25e-5, step=9e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.354, loss_test=0.301, lr=1.01e-5, step=90999]Epoch 90: 100%|██████████| 1000/1000 [01:08<00:00, 14.49it/s, loss=0.354, loss_test=0.301, lr=1.01e-5, step=90999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.32, loss_test=0.307, lr=8.01e-6, step=91999]Epoch 91: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.32, loss_test=0.307, lr=8.01e-6, step=91999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.312, loss_test=0.315, lr=6.14e-6, step=92999]Epoch 92: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.312, loss_test=0.315, lr=6.14e-6, step=92999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.35, loss_test=0.301, lr=4.52e-6, step=93999]Epoch 93: 100%|██████████| 1000/1000 [01:08<00:00, 14.71it/s, loss=0.35, loss_test=0.301, lr=4.52e-6, step=93999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.208, loss_test=0.311, lr=3.14e-6, step=94999]Epoch 94: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.208, loss_test=0.311, lr=3.14e-6, step=94999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.304, loss_test=0.304, lr=2.01e-6, step=95999]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.304, loss_test=0.304, lr=2.01e-6, step=95999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [01:07<00:00, 14.82it/s, loss=0.326, loss_test=0.301, lr=1.13e-6, step=96999]Epoch 96: 100%|██████████| 1000/1000 [01:07<00:00, 14.82it/s, loss=0.326, loss_test=0.301, lr=1.13e-6, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.365, loss_test=0.315, lr=5.03e-7, step=97999]Epoch 97: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.365, loss_test=0.315, lr=5.03e-7, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.281, loss_test=0.302, lr=1.26e-7, step=98999]Epoch 98: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.281, loss_test=0.302, lr=1.26e-7, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.234, loss_test=0.301, lr=0, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.234, loss_test=0.301, lr=0, step=1e+5]
+wandb: - 0.013 MB of 0.013 MB uploadedwandb: \ 0.013 MB of 0.013 MB uploadedwandb: | 0.013 MB of 0.013 MB uploadedwandb: / 0.013 MB of 0.013 MB uploadedwandb: - 0.022 MB of 0.047 MB uploaded (0.004 MB deduped)wandb: \ 0.022 MB of 0.047 MB uploaded (0.004 MB deduped)wandb: | 0.048 MB of 0.048 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 7.5%
+wandb: 
+wandb: Run history:
+wandb:  test/loss █▁▁▁▁▆▆▆▆▆▆▆▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅
+wandb: train/loss █▁▁▁▁▆▆▇▇▇▆▆▅▅▅▄▅▅▄▅▅▆▅▅▅▆▄▅▆▅▅▅▅▅▅▅▅▄▄▅
+wandb: 
+wandb: Run summary:
+wandb:  test/loss 0.30096
+wandb: train/loss 0.31948
+wandb: 
+wandb: 🚀 View run iMF-seed-7 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/iub0hs5e
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260513_221812-iub0hs5e/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260514_001130-4utxpwtu
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed-8
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/4utxpwtu
+[ train ] Seed 7 complete → logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/7
+
+[ train ] Seed 8
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMFDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 0.99
+    loss_schedule: u_first
+    loss_type: l2
+    observation_dim: 4
+    ode_inference_steps_v3: 1
+    predict_epsilon: True
+    returns_condition: True
+    transition_epochs: 30
+    u_loss_weight: 0.5
+    v_loss_weight: 0.5
+    warmup_epochs: 30
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/diffusion_config.json
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 1
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8/trainer_config.json
+
+[ train ] Starting training (steps: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py:1877: UserWarning: Positional args are being deprecated, use kwargs instead. Refer to https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict for details.
+  warnings.warn(
+Initial test loss:   0.5527, a0 loss:   0.0000
+Epoch 0: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.00352, loss_test=0.553, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.00352, loss_test=0.553, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:06<00:00, 15.09it/s, loss=0.0011, loss_test=0.00311, lr=0.0005, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:06<00:00, 15.09it/s, loss=0.0011, loss_test=0.00311, lr=0.0005, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:10<00:00, 14.11it/s, loss=0.000395, loss_test=0.000741, lr=0.000499, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:10<00:00, 14.11it/s, loss=0.000395, loss_test=0.000741, lr=0.000499, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:09<00:00, 14.33it/s, loss=0.000579, loss_test=0.000404, lr=0.000499, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:09<00:00, 14.33it/s, loss=0.000579, loss_test=0.000404, lr=0.000499, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:06<00:00, 15.15it/s, loss=0.000809, loss_test=0.000606, lr=0.000498, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:06<00:00, 15.15it/s, loss=0.000809, loss_test=0.000606, lr=0.000498, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:05<00:00, 15.27it/s, loss=0.00042, loss_test=0.000701, lr=0.000497, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:05<00:00, 15.27it/s, loss=0.00042, loss_test=0.000701, lr=0.000497, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:05<00:00, 15.23it/s, loss=0.000129, loss_test=0.000505, lr=0.000495, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:05<00:00, 15.23it/s, loss=0.000129, loss_test=0.000505, lr=0.000495, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.000512, loss_test=0.000145, lr=0.000494, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.000512, loss_test=0.000145, lr=0.000494, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.000151, loss_test=0.00038, lr=0.000492, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.000151, loss_test=0.00038, lr=0.000492, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.00034, loss_test=0.000184, lr=0.00049, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.00034, loss_test=0.000184, lr=0.00049, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.000131, loss_test=0.00034, lr=0.000488, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.000131, loss_test=0.00034, lr=0.000488, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.000336, loss_test=0.000142, lr=0.000485, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.000336, loss_test=0.000142, lr=0.000485, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.000327, loss_test=0.000283, lr=0.000482, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.000327, loss_test=0.000283, lr=0.000482, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.000575, loss_test=0.000345, lr=0.000479, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.000575, loss_test=0.000345, lr=0.000479, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.362, loss_test=0.000444, lr=0.000476, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.362, loss_test=0.000444, lr=0.000476, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.442, loss_test=0.427, lr=0.000472, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.442, loss_test=0.427, lr=0.000472, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:07<00:00, 14.73it/s, loss=0.45, loss_test=0.424, lr=0.000468, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:07<00:00, 14.73it/s, loss=0.45, loss_test=0.424, lr=0.000468, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.366, loss_test=0.424, lr=0.000464, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.366, loss_test=0.424, lr=0.000464, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.464, loss_test=0.43, lr=0.00046, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.464, loss_test=0.43, lr=0.00046, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.384, loss_test=0.425, lr=0.000456, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.384, loss_test=0.425, lr=0.000456, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.393, loss_test=0.425, lr=0.000451, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.393, loss_test=0.425, lr=0.000451, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.475, loss_test=0.421, lr=0.000447, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.475, loss_test=0.421, lr=0.000447, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.449, loss_test=0.424, lr=0.000442, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.449, loss_test=0.424, lr=0.000442, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:05<00:00, 15.25it/s, loss=0.463, loss_test=0.422, lr=0.000436, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:05<00:00, 15.25it/s, loss=0.463, loss_test=0.422, lr=0.000436, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.395, loss_test=0.425, lr=0.000431, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.395, loss_test=0.425, lr=0.000431, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.369, loss_test=0.425, lr=0.000425, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.369, loss_test=0.425, lr=0.000425, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.431, loss_test=0.415, lr=0.00042, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.431, loss_test=0.415, lr=0.00042, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.388, loss_test=0.425, lr=0.000414, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.388, loss_test=0.425, lr=0.000414, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.476, loss_test=0.42, lr=0.000408, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.476, loss_test=0.42, lr=0.000408, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.352, loss_test=0.423, lr=0.000401, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.352, loss_test=0.423, lr=0.000401, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.429, loss_test=0.424, lr=0.000395, step=30999]Epoch 30: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.429, loss_test=0.424, lr=0.000395, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.39, loss_test=0.428, lr=0.000388, step=31999]Epoch 31: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.39, loss_test=0.428, lr=0.000388, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.391, loss_test=0.429, lr=0.000382, step=32999]Epoch 32: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.391, loss_test=0.429, lr=0.000382, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.449, loss_test=0.427, lr=0.000375, step=33999]Epoch 33: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.449, loss_test=0.427, lr=0.000375, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.446, loss_test=0.415, lr=0.000368, step=34999]Epoch 34: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.446, loss_test=0.415, lr=0.000368, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.395, loss_test=0.425, lr=0.000361, step=35999]Epoch 35: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.395, loss_test=0.425, lr=0.000361, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.458, loss_test=0.426, lr=0.000354, step=36999]Epoch 36: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.458, loss_test=0.426, lr=0.000354, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.435, loss_test=0.421, lr=0.000347, step=37999]Epoch 37: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.435, loss_test=0.421, lr=0.000347, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.524, loss_test=0.428, lr=0.000339, step=38999]Epoch 38: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.524, loss_test=0.428, lr=0.000339, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [01:06<00:00, 15.12it/s, loss=0.57, loss_test=0.417, lr=0.000332, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [01:06<00:00, 15.12it/s, loss=0.57, loss_test=0.417, lr=0.000332, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [01:10<00:00, 14.10it/s, loss=0.494, loss_test=0.428, lr=0.000324, step=40999]Epoch 40: 100%|██████████| 1000/1000 [01:10<00:00, 14.10it/s, loss=0.494, loss_test=0.428, lr=0.000324, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [01:04<00:00, 15.40it/s, loss=0.391, loss_test=0.426, lr=0.000317, step=41999]Epoch 41: 100%|██████████| 1000/1000 [01:04<00:00, 15.40it/s, loss=0.391, loss_test=0.426, lr=0.000317, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [01:06<00:00, 15.10it/s, loss=0.369, loss_test=0.356, lr=0.000309, step=42999]Epoch 42: 100%|██████████| 1000/1000 [01:06<00:00, 15.10it/s, loss=0.369, loss_test=0.356, lr=0.000309, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.383, loss_test=0.365, lr=0.000301, step=43999]Epoch 43: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.383, loss_test=0.365, lr=0.000301, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.327, loss_test=0.362, lr=0.000293, step=44999]Epoch 44: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.327, loss_test=0.362, lr=0.000293, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.242, loss_test=0.36, lr=0.000286, step=45999]Epoch 45: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.242, loss_test=0.36, lr=0.000286, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [01:04<00:00, 15.51it/s, loss=0.5, loss_test=0.353, lr=0.000278, step=46999]Epoch 46: 100%|██████████| 1000/1000 [01:04<00:00, 15.51it/s, loss=0.5, loss_test=0.353, lr=0.000278, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [01:05<00:00, 15.38it/s, loss=0.333, loss_test=0.348, lr=0.00027, step=47999]Epoch 47: 100%|██████████| 1000/1000 [01:05<00:00, 15.38it/s, loss=0.333, loss_test=0.348, lr=0.00027, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.355, loss_test=0.346, lr=0.000262, step=48999]Epoch 48: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.355, loss_test=0.346, lr=0.000262, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.321, loss_test=0.364, lr=0.000254, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.321, loss_test=0.364, lr=0.000254, step=5e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.367, loss_test=0.35, lr=0.000246, step=50999]Epoch 50: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.367, loss_test=0.35, lr=0.000246, step=50999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.353, loss_test=0.341, lr=0.000238, step=51999]Epoch 51: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.353, loss_test=0.341, lr=0.000238, step=51999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.458, loss_test=0.348, lr=0.00023, step=52999]Epoch 52: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.458, loss_test=0.348, lr=0.00023, step=52999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53: 100%|██████████| 1000/1000 [01:07<00:00, 14.82it/s, loss=0.33, loss_test=0.384, lr=0.000222, step=53999]Epoch 53: 100%|██████████| 1000/1000 [01:07<00:00, 14.82it/s, loss=0.33, loss_test=0.384, lr=0.000222, step=53999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.397, loss_test=0.342, lr=0.000214, step=54999]Epoch 54: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.397, loss_test=0.342, lr=0.000214, step=54999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.383, loss_test=0.338, lr=0.000207, step=55999]Epoch 55: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.383, loss_test=0.338, lr=0.000207, step=55999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.353, loss_test=0.358, lr=0.000199, step=56999]Epoch 56: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.353, loss_test=0.358, lr=0.000199, step=56999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57: 100%|██████████| 1000/1000 [01:04<00:00, 15.57it/s, loss=0.291, loss_test=0.347, lr=0.000191, step=57999]Epoch 57: 100%|██████████| 1000/1000 [01:04<00:00, 15.57it/s, loss=0.291, loss_test=0.347, lr=0.000191, step=57999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58: 100%|██████████| 1000/1000 [01:06<00:00, 15.09it/s, loss=0.33, loss_test=0.359, lr=0.000183, step=58999]Epoch 58: 100%|██████████| 1000/1000 [01:06<00:00, 15.09it/s, loss=0.33, loss_test=0.359, lr=0.000183, step=58999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.265, loss_test=0.356, lr=0.000176, step=6e+4]Epoch 59: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.265, loss_test=0.356, lr=0.000176, step=6e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60: 100%|██████████| 1000/1000 [01:10<00:00, 14.16it/s, loss=0.325, loss_test=0.346, lr=0.000168, step=60999]Epoch 60: 100%|██████████| 1000/1000 [01:10<00:00, 14.16it/s, loss=0.325, loss_test=0.346, lr=0.000168, step=60999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.362, loss_test=0.347, lr=0.000161, step=61999]Epoch 61: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.362, loss_test=0.347, lr=0.000161, step=61999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62: 100%|██████████| 1000/1000 [01:04<00:00, 15.42it/s, loss=0.372, loss_test=0.336, lr=0.000153, step=62999]Epoch 62: 100%|██████████| 1000/1000 [01:04<00:00, 15.42it/s, loss=0.372, loss_test=0.336, lr=0.000153, step=62999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63: 100%|██████████| 1000/1000 [01:06<00:00, 15.06it/s, loss=0.34, loss_test=0.338, lr=0.000146, step=63999]Epoch 63: 100%|██████████| 1000/1000 [01:06<00:00, 15.06it/s, loss=0.34, loss_test=0.338, lr=0.000146, step=63999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.362, loss_test=0.34, lr=0.000139, step=64999]Epoch 64: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.362, loss_test=0.34, lr=0.000139, step=64999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65: 100%|██████████| 1000/1000 [01:05<00:00, 15.17it/s, loss=0.304, loss_test=0.33, lr=0.000132, step=65999]Epoch 65: 100%|██████████| 1000/1000 [01:05<00:00, 15.17it/s, loss=0.304, loss_test=0.33, lr=0.000132, step=65999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66: 100%|██████████| 1000/1000 [01:05<00:00, 15.25it/s, loss=0.353, loss_test=0.327, lr=0.000125, step=66999]Epoch 66: 100%|██████████| 1000/1000 [01:05<00:00, 15.25it/s, loss=0.353, loss_test=0.327, lr=0.000125, step=66999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.369, loss_test=0.33, lr=0.000118, step=67999]Epoch 67: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.369, loss_test=0.33, lr=0.000118, step=67999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.273, loss_test=0.32, lr=0.000112, step=68999]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.273, loss_test=0.32, lr=0.000112, step=68999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69: 100%|██████████| 1000/1000 [01:05<00:00, 15.33it/s, loss=0.336, loss_test=0.319, lr=0.000105, step=7e+4]Epoch 69: 100%|██████████| 1000/1000 [01:05<00:00, 15.33it/s, loss=0.336, loss_test=0.319, lr=0.000105, step=7e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.359, loss_test=0.318, lr=9.86e-5, step=70999]Epoch 70: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.359, loss_test=0.318, lr=9.86e-5, step=70999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.388, loss_test=0.316, lr=9.24e-5, step=71999]Epoch 71: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.388, loss_test=0.316, lr=9.24e-5, step=71999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.318, loss_test=0.317, lr=8.63e-5, step=72999]Epoch 72: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.318, loss_test=0.317, lr=8.63e-5, step=72999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.322, loss_test=0.311, lr=8.04e-5, step=73999]Epoch 73: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.322, loss_test=0.311, lr=8.04e-5, step=73999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.317, loss_test=0.314, lr=7.46e-5, step=74999]Epoch 74: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.317, loss_test=0.314, lr=7.46e-5, step=74999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75: 100%|██████████| 1000/1000 [01:07<00:00, 14.78it/s, loss=0.296, loss_test=0.307, lr=6.91e-5, step=75999]Epoch 75: 100%|██████████| 1000/1000 [01:07<00:00, 14.78it/s, loss=0.296, loss_test=0.307, lr=6.91e-5, step=75999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.288, loss_test=0.317, lr=6.37e-5, step=76999]Epoch 76: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.288, loss_test=0.317, lr=6.37e-5, step=76999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.309, loss_test=0.311, lr=5.85e-5, step=77999]Epoch 77: 100%|██████████| 1000/1000 [01:05<00:00, 15.18it/s, loss=0.309, loss_test=0.311, lr=5.85e-5, step=77999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.326, loss_test=0.315, lr=5.35e-5, step=78999]Epoch 78: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.326, loss_test=0.315, lr=5.35e-5, step=78999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.268, loss_test=0.312, lr=4.87e-5, step=8e+4]Epoch 79: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.268, loss_test=0.312, lr=4.87e-5, step=8e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.35it/s, loss=0.298, loss_test=0.309, lr=4.41e-5, step=80999]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.34it/s, loss=0.298, loss_test=0.309, lr=4.41e-5, step=80999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.296, loss_test=0.309, lr=3.97e-5, step=81999]Epoch 81: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.296, loss_test=0.309, lr=3.97e-5, step=81999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.338, loss_test=0.318, lr=3.55e-5, step=82999]Epoch 82: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.338, loss_test=0.318, lr=3.55e-5, step=82999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.284, loss_test=0.325, lr=3.15e-5, step=83999]Epoch 83: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.284, loss_test=0.325, lr=3.15e-5, step=83999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.308, loss_test=0.314, lr=2.78e-5, step=84999]Epoch 84: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.308, loss_test=0.314, lr=2.78e-5, step=84999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.344, loss_test=0.309, lr=2.43e-5, step=85999]Epoch 85: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.344, loss_test=0.309, lr=2.43e-5, step=85999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.386, loss_test=0.317, lr=2.1e-5, step=86999]Epoch 86: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.386, loss_test=0.317, lr=2.1e-5, step=86999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.323, loss_test=0.309, lr=1.79e-5, step=87999]Epoch 87: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.323, loss_test=0.309, lr=1.79e-5, step=87999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.36, loss_test=0.309, lr=1.51e-5, step=88999]Epoch 88: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.36, loss_test=0.309, lr=1.51e-5, step=88999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.284, loss_test=0.312, lr=1.25e-5, step=9e+4]Epoch 89: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.284, loss_test=0.312, lr=1.25e-5, step=9e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.317, loss_test=0.311, lr=1.01e-5, step=90999]Epoch 90: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.317, loss_test=0.311, lr=1.01e-5, step=90999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.341, loss_test=0.312, lr=8.01e-6, step=91999]Epoch 91: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.341, loss_test=0.312, lr=8.01e-6, step=91999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92: 100%|██████████| 1000/1000 [01:03<00:00, 15.65it/s, loss=0.304, loss_test=0.31, lr=6.14e-6, step=92999]Epoch 92: 100%|██████████| 1000/1000 [01:03<00:00, 15.65it/s, loss=0.304, loss_test=0.31, lr=6.14e-6, step=92999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.265, loss_test=0.314, lr=4.52e-6, step=93999]Epoch 93: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.265, loss_test=0.314, lr=4.52e-6, step=93999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [01:05<00:00, 15.22it/s, loss=0.367, loss_test=0.308, lr=3.14e-6, step=94999]Epoch 94: 100%|██████████| 1000/1000 [01:05<00:00, 15.22it/s, loss=0.367, loss_test=0.308, lr=3.14e-6, step=94999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.339, loss_test=0.309, lr=2.01e-6, step=95999]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.339, loss_test=0.309, lr=2.01e-6, step=95999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.272, loss_test=0.303, lr=1.13e-6, step=96999]Epoch 96: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.272, loss_test=0.303, lr=1.13e-6, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.258, loss_test=0.317, lr=5.03e-7, step=97999]Epoch 97: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.258, loss_test=0.317, lr=5.03e-7, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.274, loss_test=0.305, lr=1.26e-7, step=98999]Epoch 98: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.274, loss_test=0.305, lr=1.26e-7, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.35, loss_test=0.317, lr=0, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.35, loss_test=0.317, lr=0, step=1e+5]
+wandb: - 0.013 MB of 0.013 MB uploadedwandb: \ 0.013 MB of 0.016 MB uploadedwandb: | 0.037 MB of 0.039 MB uploadedwandb: / 0.037 MB of 0.039 MB uploadedwandb: - 0.039 MB of 0.039 MB uploadedwandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:  test/loss █▁▁▁▁▁▆▆▆▆▆▆▆▆▆▆▆▆▆▅▅▆▅▆▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅
+wandb: train/loss █▁▁▁▁▁▇▆▅▆▆▆▆▇▆▆▆▆▅▄▄▆▅▅▆▅▅▄▅▆▅▄▅▅▅▅▅▅▅▄
+wandb: 
+wandb: Run summary:
+wandb:  test/loss 0.31725
+wandb: train/loss 0.27967
+wandb: 
+wandb: 🚀 View run iMF-seed-8 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/4utxpwtu
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 1 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260514_001130-4utxpwtu/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+wandb: wandb version 0.26.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260514_020417-9ogwmih9
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed-9
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/9ogwmih9
+[ train ] Seed 8 complete → logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/8
+
+[ train ] Seed 9
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMFDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 0.99
+    loss_schedule: u_first
+    loss_type: l2
+    observation_dim: 4
+    ode_inference_steps_v3: 1
+    predict_epsilon: True
+    returns_condition: True
+    transition_epochs: 30
+    u_loss_weight: 0.5
+    v_loss_weight: 0.5
+    warmup_epochs: 30
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/diffusion_config.json
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 1
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9/trainer_config.json
+
+[ train ] Starting training (steps: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py:1877: UserWarning: Positional args are being deprecated, use kwargs instead. Refer to https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict for details.
+  warnings.warn(
+Initial test loss:   0.5948, a0 loss:   0.0000
+Epoch 0: 100%|██████████| 1000/1000 [01:10<00:00, 14.27it/s, loss=0.00299, loss_test=0.595, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:10<00:00, 14.27it/s, loss=0.00299, loss_test=0.595, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:09<00:00, 14.36it/s, loss=0.00223, loss_test=0.00314, lr=0.0005, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:09<00:00, 14.36it/s, loss=0.00223, loss_test=0.00314, lr=0.0005, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:11<00:00, 13.98it/s, loss=0.000928, loss_test=0.00187, lr=0.000499, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:11<00:00, 13.98it/s, loss=0.000928, loss_test=0.00187, lr=0.000499, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:10<00:00, 14.20it/s, loss=0.000372, loss_test=0.00119, lr=0.000499, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:10<00:00, 14.20it/s, loss=0.000372, loss_test=0.00119, lr=0.000499, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:11<00:00, 14.01it/s, loss=0.000271, loss_test=0.0003, lr=0.000498, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:11<00:00, 14.01it/s, loss=0.000271, loss_test=0.0003, lr=0.000498, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.000247, loss_test=0.000385, lr=0.000497, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.000247, loss_test=0.000385, lr=0.000497, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.000637, loss_test=0.000466, lr=0.000495, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.000637, loss_test=0.000466, lr=0.000495, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.00134, loss_test=0.000757, lr=0.000494, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.00134, loss_test=0.000757, lr=0.000494, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.0002, loss_test=0.000907, lr=0.000492, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.0002, loss_test=0.000907, lr=0.000492, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:10<00:00, 14.19it/s, loss=0.000258, loss_test=0.000188, lr=0.00049, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:10<00:00, 14.19it/s, loss=0.000258, loss_test=0.000188, lr=0.00049, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:07<00:00, 14.78it/s, loss=0.000662, loss_test=0.000241, lr=0.000488, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:07<00:00, 14.78it/s, loss=0.000662, loss_test=0.000241, lr=0.000488, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.000148, loss_test=0.000757, lr=0.000485, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.000148, loss_test=0.000757, lr=0.000485, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:11<00:00, 14.06it/s, loss=0.000358, loss_test=0.000186, lr=0.000482, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:11<00:00, 14.06it/s, loss=0.000358, loss_test=0.000186, lr=0.000482, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.000498, loss_test=0.000359, lr=0.000479, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.000498, loss_test=0.000359, lr=0.000479, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.421, loss_test=0.000573, lr=0.000476, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.421, loss_test=0.000573, lr=0.000476, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.378, loss_test=0.425, lr=0.000472, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:06<00:00, 14.95it/s, loss=0.378, loss_test=0.425, lr=0.000472, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.326, loss_test=0.433, lr=0.000468, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.326, loss_test=0.433, lr=0.000468, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.471, loss_test=0.428, lr=0.000464, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.471, loss_test=0.428, lr=0.000464, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.44, loss_test=0.433, lr=0.00046, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.44, loss_test=0.433, lr=0.00046, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.357, loss_test=0.434, lr=0.000456, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.357, loss_test=0.434, lr=0.000456, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:09<00:00, 14.38it/s, loss=0.274, loss_test=0.393, lr=0.000451, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:09<00:00, 14.38it/s, loss=0.274, loss_test=0.393, lr=0.000451, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.308, loss_test=0.364, lr=0.000447, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.308, loss_test=0.364, lr=0.000447, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:04<00:00, 15.62it/s, loss=0.325, loss_test=0.351, lr=0.000442, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:04<00:00, 15.62it/s, loss=0.325, loss_test=0.351, lr=0.000442, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.286, loss_test=0.344, lr=0.000436, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:06<00:00, 14.96it/s, loss=0.286, loss_test=0.344, lr=0.000436, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.381, loss_test=0.358, lr=0.000431, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.381, loss_test=0.358, lr=0.000431, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.298, loss_test=0.333, lr=0.000425, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.298, loss_test=0.333, lr=0.000425, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.344, loss_test=0.357, lr=0.00042, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.344, loss_test=0.357, lr=0.00042, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.42, loss_test=0.352, lr=0.000414, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.42, loss_test=0.352, lr=0.000414, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.383, loss_test=0.344, lr=0.000408, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.383, loss_test=0.344, lr=0.000408, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.372, loss_test=0.35, lr=0.000401, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.372, loss_test=0.35, lr=0.000401, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.414, loss_test=0.35, lr=0.000395, step=30999]Epoch 30: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.414, loss_test=0.35, lr=0.000395, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.358, loss_test=0.34, lr=0.000388, step=31999]Epoch 31: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.358, loss_test=0.34, lr=0.000388, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.398, loss_test=0.347, lr=0.000382, step=32999]Epoch 32: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.398, loss_test=0.347, lr=0.000382, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.253, loss_test=0.346, lr=0.000375, step=33999]Epoch 33: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.253, loss_test=0.346, lr=0.000375, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [01:06<00:00, 14.94it/s, loss=0.265, loss_test=0.349, lr=0.000368, step=34999]Epoch 34: 100%|██████████| 1000/1000 [01:06<00:00, 14.94it/s, loss=0.265, loss_test=0.349, lr=0.000368, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.487, loss_test=0.346, lr=0.000361, step=35999]Epoch 35: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.487, loss_test=0.346, lr=0.000361, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [01:06<00:00, 15.05it/s, loss=0.338, loss_test=0.375, lr=0.000354, step=36999]Epoch 36: 100%|██████████| 1000/1000 [01:06<00:00, 15.05it/s, loss=0.338, loss_test=0.375, lr=0.000354, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.393, loss_test=0.361, lr=0.000347, step=37999]Epoch 37: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.393, loss_test=0.361, lr=0.000347, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [01:08<00:00, 14.49it/s, loss=0.324, loss_test=0.368, lr=0.000339, step=38999]Epoch 38: 100%|██████████| 1000/1000 [01:08<00:00, 14.49it/s, loss=0.324, loss_test=0.368, lr=0.000339, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.418, loss_test=0.356, lr=0.000332, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.418, loss_test=0.356, lr=0.000332, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [01:11<00:00, 14.08it/s, loss=0.321, loss_test=0.38, lr=0.000324, step=40999]Epoch 40: 100%|██████████| 1000/1000 [01:11<00:00, 14.08it/s, loss=0.321, loss_test=0.38, lr=0.000324, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.331, loss_test=0.351, lr=0.000317, step=41999]Epoch 41: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.331, loss_test=0.351, lr=0.000317, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.338, loss_test=0.346, lr=0.000309, step=42999]Epoch 42: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.338, loss_test=0.346, lr=0.000309, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [01:08<00:00, 14.49it/s, loss=0.294, loss_test=0.348, lr=0.000301, step=43999]Epoch 43: 100%|██████████| 1000/1000 [01:08<00:00, 14.49it/s, loss=0.294, loss_test=0.348, lr=0.000301, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.317, loss_test=0.342, lr=0.000293, step=44999]Epoch 44: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.317, loss_test=0.342, lr=0.000293, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.434, loss_test=0.349, lr=0.000286, step=45999]Epoch 45: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.434, loss_test=0.349, lr=0.000286, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.399, loss_test=0.357, lr=0.000278, step=46999]Epoch 46: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.399, loss_test=0.357, lr=0.000278, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.31, loss_test=0.348, lr=0.00027, step=47999]Epoch 47: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.31, loss_test=0.348, lr=0.00027, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.363, loss_test=0.349, lr=0.000262, step=48999]Epoch 48: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.363, loss_test=0.349, lr=0.000262, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [01:05<00:00, 15.38it/s, loss=0.295, loss_test=0.356, lr=0.000254, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [01:05<00:00, 15.38it/s, loss=0.295, loss_test=0.356, lr=0.000254, step=5e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50: 100%|██████████| 1000/1000 [01:05<00:00, 15.29it/s, loss=0.436, loss_test=0.347, lr=0.000246, step=50999]Epoch 50: 100%|██████████| 1000/1000 [01:05<00:00, 15.29it/s, loss=0.436, loss_test=0.347, lr=0.000246, step=50999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51: 100%|██████████| 1000/1000 [01:07<00:00, 14.78it/s, loss=0.275, loss_test=0.355, lr=0.000238, step=51999]Epoch 51: 100%|██████████| 1000/1000 [01:07<00:00, 14.78it/s, loss=0.275, loss_test=0.355, lr=0.000238, step=51999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.369, loss_test=0.344, lr=0.00023, step=52999]Epoch 52: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.369, loss_test=0.344, lr=0.00023, step=52999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53: 100%|██████████| 1000/1000 [01:07<00:00, 14.90it/s, loss=0.339, loss_test=0.353, lr=0.000222, step=53999]Epoch 53: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.339, loss_test=0.353, lr=0.000222, step=53999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.398, loss_test=0.339, lr=0.000214, step=54999]Epoch 54: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.398, loss_test=0.339, lr=0.000214, step=54999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.369, loss_test=0.34, lr=0.000207, step=55999]Epoch 55: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.369, loss_test=0.34, lr=0.000207, step=55999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.327, loss_test=0.341, lr=0.000199, step=56999]Epoch 56: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.327, loss_test=0.341, lr=0.000199, step=56999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.277, loss_test=0.34, lr=0.000191, step=57999]Epoch 57: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.277, loss_test=0.34, lr=0.000191, step=57999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.327, loss_test=0.331, lr=0.000183, step=58999]Epoch 58: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.327, loss_test=0.331, lr=0.000183, step=58999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.313, loss_test=0.332, lr=0.000176, step=6e+4]Epoch 59: 100%|██████████| 1000/1000 [01:07<00:00, 14.77it/s, loss=0.313, loss_test=0.332, lr=0.000176, step=6e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60: 100%|██████████| 1000/1000 [01:09<00:00, 14.42it/s, loss=0.255, loss_test=0.321, lr=0.000168, step=60999]Epoch 60: 100%|██████████| 1000/1000 [01:09<00:00, 14.42it/s, loss=0.255, loss_test=0.321, lr=0.000168, step=60999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.388, loss_test=0.32, lr=0.000161, step=61999]Epoch 61: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.388, loss_test=0.32, lr=0.000161, step=61999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.381, loss_test=0.334, lr=0.000153, step=62999]Epoch 62: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.381, loss_test=0.334, lr=0.000153, step=62999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.273, loss_test=0.316, lr=0.000146, step=63999]Epoch 63: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.273, loss_test=0.316, lr=0.000146, step=63999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.345, loss_test=0.327, lr=0.000139, step=64999]Epoch 64: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.345, loss_test=0.327, lr=0.000139, step=64999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65: 100%|██████████| 1000/1000 [01:08<00:00, 14.64it/s, loss=0.351, loss_test=0.343, lr=0.000132, step=65999]Epoch 65: 100%|██████████| 1000/1000 [01:08<00:00, 14.64it/s, loss=0.351, loss_test=0.343, lr=0.000132, step=65999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.287, loss_test=0.327, lr=0.000125, step=66999]Epoch 66: 100%|██████████| 1000/1000 [01:08<00:00, 14.68it/s, loss=0.287, loss_test=0.327, lr=0.000125, step=66999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67: 100%|██████████| 1000/1000 [01:07<00:00, 14.85it/s, loss=0.326, loss_test=0.332, lr=0.000118, step=67999]Epoch 67: 100%|██████████| 1000/1000 [01:07<00:00, 14.85it/s, loss=0.326, loss_test=0.332, lr=0.000118, step=67999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.357, loss_test=0.324, lr=0.000112, step=68999]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.357, loss_test=0.324, lr=0.000112, step=68999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.318, loss_test=0.322, lr=0.000105, step=7e+4]Epoch 69: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.318, loss_test=0.322, lr=0.000105, step=7e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70: 100%|██████████| 1000/1000 [01:04<00:00, 15.41it/s, loss=0.312, loss_test=0.315, lr=9.86e-5, step=70999]Epoch 70: 100%|██████████| 1000/1000 [01:04<00:00, 15.41it/s, loss=0.312, loss_test=0.315, lr=9.86e-5, step=70999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71: 100%|██████████| 1000/1000 [01:04<00:00, 15.56it/s, loss=0.357, loss_test=0.314, lr=9.24e-5, step=71999]Epoch 71: 100%|██████████| 1000/1000 [01:04<00:00, 15.56it/s, loss=0.357, loss_test=0.314, lr=9.24e-5, step=71999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.32, loss_test=0.317, lr=8.63e-5, step=72999]Epoch 72: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.32, loss_test=0.317, lr=8.63e-5, step=72999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.25, loss_test=0.318, lr=8.04e-5, step=73999]Epoch 73: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.25, loss_test=0.318, lr=8.04e-5, step=73999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74: 100%|██████████| 1000/1000 [01:08<00:00, 14.64it/s, loss=0.27, loss_test=0.32, lr=7.46e-5, step=74999]Epoch 74: 100%|██████████| 1000/1000 [01:08<00:00, 14.64it/s, loss=0.27, loss_test=0.32, lr=7.46e-5, step=74999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.33, loss_test=0.318, lr=6.91e-5, step=75999]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.33, loss_test=0.318, lr=6.91e-5, step=75999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.308, loss_test=0.317, lr=6.37e-5, step=76999]Epoch 76: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.308, loss_test=0.317, lr=6.37e-5, step=76999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.335, loss_test=0.309, lr=5.85e-5, step=77999]Epoch 77: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.335, loss_test=0.309, lr=5.85e-5, step=77999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78: 100%|██████████| 1000/1000 [01:05<00:00, 15.17it/s, loss=0.337, loss_test=0.31, lr=5.35e-5, step=78999]Epoch 78: 100%|██████████| 1000/1000 [01:05<00:00, 15.17it/s, loss=0.337, loss_test=0.31, lr=5.35e-5, step=78999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.35, loss_test=0.319, lr=4.87e-5, step=8e+4]Epoch 79: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.35, loss_test=0.319, lr=4.87e-5, step=8e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80: 100%|██████████| 1000/1000 [01:11<00:00, 14.07it/s, loss=0.287, loss_test=0.309, lr=4.41e-5, step=80999]Epoch 80: 100%|██████████| 1000/1000 [01:11<00:00, 14.07it/s, loss=0.287, loss_test=0.309, lr=4.41e-5, step=80999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.333, loss_test=0.316, lr=3.97e-5, step=81999]Epoch 81: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.333, loss_test=0.316, lr=3.97e-5, step=81999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.249, loss_test=0.311, lr=3.55e-5, step=82999]Epoch 82: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.249, loss_test=0.311, lr=3.55e-5, step=82999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.3, loss_test=0.316, lr=3.15e-5, step=83999]Epoch 83: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.3, loss_test=0.316, lr=3.15e-5, step=83999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.283, loss_test=0.308, lr=2.78e-5, step=84999]Epoch 84: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.283, loss_test=0.308, lr=2.78e-5, step=84999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.332, loss_test=0.305, lr=2.43e-5, step=85999]Epoch 85: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.332, loss_test=0.305, lr=2.43e-5, step=85999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.382, loss_test=0.309, lr=2.1e-5, step=86999]Epoch 86: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.382, loss_test=0.309, lr=2.1e-5, step=86999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.303, loss_test=0.313, lr=1.79e-5, step=87999]Epoch 87: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.303, loss_test=0.313, lr=1.79e-5, step=87999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.367, loss_test=0.302, lr=1.51e-5, step=88999]Epoch 88: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.367, loss_test=0.302, lr=1.51e-5, step=88999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.31, loss_test=0.301, lr=1.25e-5, step=9e+4]Epoch 89: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.31, loss_test=0.301, lr=1.25e-5, step=9e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.361, loss_test=0.311, lr=1.01e-5, step=90999]Epoch 90: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.361, loss_test=0.311, lr=1.01e-5, step=90999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.325, loss_test=0.322, lr=8.01e-6, step=91999]Epoch 91: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.325, loss_test=0.322, lr=8.01e-6, step=91999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.273, loss_test=0.315, lr=6.14e-6, step=92999]Epoch 92: 100%|██████████| 1000/1000 [01:07<00:00, 14.88it/s, loss=0.273, loss_test=0.315, lr=6.14e-6, step=92999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.326, loss_test=0.311, lr=4.52e-6, step=93999]Epoch 93: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.326, loss_test=0.311, lr=4.52e-6, step=93999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.309, loss_test=0.316, lr=3.14e-6, step=94999]Epoch 94: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.309, loss_test=0.316, lr=3.14e-6, step=94999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [01:04<00:00, 15.43it/s, loss=0.328, loss_test=0.314, lr=2.01e-6, step=95999]Epoch 95: 100%|██████████| 1000/1000 [01:04<00:00, 15.43it/s, loss=0.328, loss_test=0.314, lr=2.01e-6, step=95999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [01:07<00:00, 14.80it/s, loss=0.385, loss_test=0.314, lr=1.13e-6, step=96999]Epoch 96: 100%|██████████| 1000/1000 [01:07<00:00, 14.80it/s, loss=0.385, loss_test=0.314, lr=1.13e-6, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [01:07<00:00, 14.73it/s, loss=0.381, loss_test=0.31, lr=5.03e-7, step=97999]Epoch 97: 100%|██████████| 1000/1000 [01:07<00:00, 14.73it/s, loss=0.381, loss_test=0.31, lr=5.03e-7, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [01:05<00:00, 15.37it/s, loss=0.31, loss_test=0.311, lr=1.26e-7, step=98999]Epoch 98: 100%|██████████| 1000/1000 [01:05<00:00, 15.36it/s, loss=0.31, loss_test=0.311, lr=1.26e-7, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.364, loss_test=0.312, lr=0, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.364, loss_test=0.312, lr=0, step=1e+5]
+wandb: - 0.013 MB of 0.013 MB uploadedwandb: \ 0.013 MB of 0.013 MB uploadedwandb: | 0.013 MB of 0.039 MB uploadedwandb: / 0.013 MB of 0.039 MB uploadedwandb: - 0.039 MB of 0.039 MB uploadedwandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:  test/loss █▁▁▁▁▁▆▆▆▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅
+wandb: train/loss █▁▁▁▁▁▆▆▅▆▅▅▆▅▄▅▆▅▆▅▆▅▅▆▅▆▅▅▄▅▄▅▄▄▄▄▅▄▅▅
+wandb: 
+wandb: Run summary:
+wandb:  test/loss 0.31229
+wandb: train/loss 0.33263
+wandb: 
+wandb: 🚀 View run iMF-seed-9 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/9ogwmih9
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 1 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260514_020417-9ogwmih9/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260514_035758-csfml537
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed-10
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/csfml537
+[ train ] Seed 9 complete → logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/9
+
+[ train ] Seed 10
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMFDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 0.99
+    loss_schedule: u_first
+    loss_type: l2
+    observation_dim: 4
+    ode_inference_steps_v3: 1
+    predict_epsilon: True
+    returns_condition: True
+    transition_epochs: 30
+    u_loss_weight: 0.5
+    v_loss_weight: 0.5
+    warmup_epochs: 30
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/diffusion_config.json
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 1
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10/trainer_config.json
+
+[ train ] Starting training (steps: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py:1877: UserWarning: Positional args are being deprecated, use kwargs instead. Refer to https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module.state_dict for details.
+  warnings.warn(
+Initial test loss:   0.6032, a0 loss:   0.0000
+Epoch 0: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.00438, loss_test=0.603, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.00438, loss_test=0.603, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.00141, loss_test=0.00326, lr=0.0005, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:08<00:00, 14.51it/s, loss=0.00141, loss_test=0.00326, lr=0.0005, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:11<00:00, 14.05it/s, loss=0.000794, loss_test=0.00101, lr=0.000499, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:11<00:00, 14.05it/s, loss=0.000794, loss_test=0.00101, lr=0.000499, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:10<00:00, 14.23it/s, loss=0.00073, loss_test=0.000738, lr=0.000499, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:10<00:00, 14.23it/s, loss=0.00073, loss_test=0.000738, lr=0.000499, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.000334, loss_test=0.001, lr=0.000498, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.000334, loss_test=0.001, lr=0.000498, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:11<00:00, 13.96it/s, loss=0.000423, loss_test=0.000512, lr=0.000497, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:11<00:00, 13.96it/s, loss=0.000423, loss_test=0.000512, lr=0.000497, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:11<00:00, 13.98it/s, loss=0.000236, loss_test=0.000368, lr=0.000495, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:11<00:00, 13.97it/s, loss=0.000236, loss_test=0.000368, lr=0.000495, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:10<00:00, 14.13it/s, loss=0.000413, loss_test=0.000262, lr=0.000494, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:10<00:00, 14.13it/s, loss=0.000413, loss_test=0.000262, lr=0.000494, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.000372, loss_test=0.00043, lr=0.000492, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:07<00:00, 14.79it/s, loss=0.000372, loss_test=0.00043, lr=0.000492, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.000639, loss_test=0.000354, lr=0.00049, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.000639, loss_test=0.000354, lr=0.00049, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.000135, loss_test=0.000601, lr=0.000488, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.000135, loss_test=0.000601, lr=0.000488, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:10<00:00, 14.13it/s, loss=0.000158, loss_test=0.000115, lr=0.000485, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:10<00:00, 14.13it/s, loss=0.000158, loss_test=0.000115, lr=0.000485, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:06<00:00, 15.10it/s, loss=0.000272, loss_test=0.000241, lr=0.000482, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:06<00:00, 15.10it/s, loss=0.000272, loss_test=0.000241, lr=0.000482, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.000258, loss_test=0.000176, lr=0.000479, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:08<00:00, 14.58it/s, loss=0.000258, loss_test=0.000176, lr=0.000479, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.424, loss_test=0.000221, lr=0.000476, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.424, loss_test=0.000221, lr=0.000476, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.465, loss_test=0.42, lr=0.000472, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:05<00:00, 15.24it/s, loss=0.465, loss_test=0.42, lr=0.000472, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.45, loss_test=0.419, lr=0.000468, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.45, loss_test=0.419, lr=0.000468, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.387, loss_test=0.413, lr=0.000464, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.387, loss_test=0.413, lr=0.000464, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.46, loss_test=0.427, lr=0.00046, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:07<00:00, 14.91it/s, loss=0.46, loss_test=0.427, lr=0.00046, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.352, loss_test=0.423, lr=0.000456, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.352, loss_test=0.423, lr=0.000456, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:10<00:00, 14.11it/s, loss=0.383, loss_test=0.42, lr=0.000451, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:10<00:00, 14.11it/s, loss=0.383, loss_test=0.42, lr=0.000451, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.414, loss_test=0.417, lr=0.000447, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.414, loss_test=0.417, lr=0.000447, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.431, loss_test=0.417, lr=0.000442, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:08<00:00, 14.50it/s, loss=0.431, loss_test=0.417, lr=0.000442, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.469, loss_test=0.42, lr=0.000436, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.469, loss_test=0.42, lr=0.000436, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.373, loss_test=0.421, lr=0.000431, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.373, loss_test=0.421, lr=0.000431, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.385, loss_test=0.418, lr=0.000425, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.385, loss_test=0.418, lr=0.000425, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.423, loss_test=0.426, lr=0.00042, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.423, loss_test=0.426, lr=0.00042, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.397, loss_test=0.413, lr=0.000414, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:07<00:00, 14.89it/s, loss=0.397, loss_test=0.413, lr=0.000414, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.431, loss_test=0.419, lr=0.000408, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:08<00:00, 14.67it/s, loss=0.431, loss_test=0.419, lr=0.000408, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.44, loss_test=0.416, lr=0.000401, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [01:07<00:00, 14.74it/s, loss=0.44, loss_test=0.416, lr=0.000401, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.393, loss_test=0.416, lr=0.000395, step=30999]Epoch 30: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.393, loss_test=0.416, lr=0.000395, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [01:05<00:00, 15.28it/s, loss=0.33, loss_test=0.419, lr=0.000388, step=31999]Epoch 31: 100%|██████████| 1000/1000 [01:05<00:00, 15.28it/s, loss=0.33, loss_test=0.419, lr=0.000388, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.329, loss_test=0.349, lr=0.000382, step=32999]Epoch 32: 100%|██████████| 1000/1000 [01:07<00:00, 14.76it/s, loss=0.329, loss_test=0.349, lr=0.000382, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.414, loss_test=0.353, lr=0.000375, step=33999]Epoch 33: 100%|██████████| 1000/1000 [01:07<00:00, 14.87it/s, loss=0.414, loss_test=0.353, lr=0.000375, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.345, loss_test=0.341, lr=0.000368, step=34999]Epoch 34: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.345, loss_test=0.341, lr=0.000368, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.367, loss_test=0.337, lr=0.000361, step=35999]Epoch 35: 100%|██████████| 1000/1000 [01:06<00:00, 15.02it/s, loss=0.367, loss_test=0.337, lr=0.000361, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.353, loss_test=0.324, lr=0.000354, step=36999]Epoch 36: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.353, loss_test=0.324, lr=0.000354, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.301, loss_test=0.335, lr=0.000347, step=37999]Epoch 37: 100%|██████████| 1000/1000 [01:06<00:00, 15.01it/s, loss=0.301, loss_test=0.335, lr=0.000347, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.32, loss_test=0.319, lr=0.000339, step=38999]Epoch 38: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.32, loss_test=0.319, lr=0.000339, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.246, loss_test=0.318, lr=0.000332, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [01:08<00:00, 14.57it/s, loss=0.246, loss_test=0.318, lr=0.000332, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [01:09<00:00, 14.44it/s, loss=0.316, loss_test=0.307, lr=0.000324, step=40999]Epoch 40: 100%|██████████| 1000/1000 [01:09<00:00, 14.44it/s, loss=0.316, loss_test=0.307, lr=0.000324, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.321, loss_test=0.309, lr=0.000317, step=41999]Epoch 41: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.321, loss_test=0.309, lr=0.000317, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.318, loss_test=0.316, lr=0.000309, step=42999]Epoch 42: 100%|██████████| 1000/1000 [01:07<00:00, 14.83it/s, loss=0.318, loss_test=0.316, lr=0.000309, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.287, loss_test=0.308, lr=0.000301, step=43999]Epoch 43: 100%|██████████| 1000/1000 [01:08<00:00, 14.59it/s, loss=0.287, loss_test=0.308, lr=0.000301, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.275, loss_test=0.31, lr=0.000293, step=44999]Epoch 44: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.275, loss_test=0.31, lr=0.000293, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.298, loss_test=0.322, lr=0.000286, step=45999]Epoch 45: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.298, loss_test=0.322, lr=0.000286, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.335, loss_test=0.319, lr=0.000278, step=46999]Epoch 46: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.335, loss_test=0.319, lr=0.000278, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [01:06<00:00, 15.08it/s, loss=0.344, loss_test=0.322, lr=0.00027, step=47999]Epoch 47: 100%|██████████| 1000/1000 [01:06<00:00, 15.08it/s, loss=0.344, loss_test=0.322, lr=0.00027, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.267, loss_test=0.31, lr=0.000262, step=48999]Epoch 48: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.267, loss_test=0.31, lr=0.000262, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.233, loss_test=0.318, lr=0.000254, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.233, loss_test=0.318, lr=0.000254, step=5e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.358, loss_test=0.318, lr=0.000246, step=50999]Epoch 50: 100%|██████████| 1000/1000 [01:08<00:00, 14.69it/s, loss=0.358, loss_test=0.318, lr=0.000246, step=50999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.268, loss_test=0.313, lr=0.000238, step=51999]Epoch 51: 100%|██████████| 1000/1000 [01:07<00:00, 14.84it/s, loss=0.268, loss_test=0.313, lr=0.000238, step=51999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52: 100%|██████████| 1000/1000 [01:05<00:00, 15.30it/s, loss=0.256, loss_test=0.312, lr=0.00023, step=52999]Epoch 52: 100%|██████████| 1000/1000 [01:05<00:00, 15.30it/s, loss=0.256, loss_test=0.312, lr=0.00023, step=52999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53: 100%|██████████| 1000/1000 [01:04<00:00, 15.39it/s, loss=0.309, loss_test=0.31, lr=0.000222, step=53999]Epoch 53: 100%|██████████| 1000/1000 [01:04<00:00, 15.39it/s, loss=0.309, loss_test=0.31, lr=0.000222, step=53999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.238, loss_test=0.305, lr=0.000214, step=54999]Epoch 54: 100%|██████████| 1000/1000 [01:08<00:00, 14.60it/s, loss=0.238, loss_test=0.305, lr=0.000214, step=54999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.245, loss_test=0.307, lr=0.000207, step=55999]Epoch 55: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.245, loss_test=0.307, lr=0.000207, step=55999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56: 100%|██████████| 1000/1000 [01:05<00:00, 15.21it/s, loss=0.287, loss_test=0.318, lr=0.000199, step=56999]Epoch 56: 100%|██████████| 1000/1000 [01:05<00:00, 15.21it/s, loss=0.287, loss_test=0.318, lr=0.000199, step=56999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.243, loss_test=0.302, lr=0.000191, step=57999]Epoch 57: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.243, loss_test=0.302, lr=0.000191, step=57999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.303, loss_test=0.318, lr=0.000183, step=58999]Epoch 58: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.303, loss_test=0.318, lr=0.000183, step=58999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59: 100%|██████████| 1000/1000 [01:05<00:00, 15.31it/s, loss=0.331, loss_test=0.307, lr=0.000176, step=6e+4]Epoch 59: 100%|██████████| 1000/1000 [01:05<00:00, 15.31it/s, loss=0.331, loss_test=0.307, lr=0.000176, step=6e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60: 100%|██████████| 1000/1000 [01:09<00:00, 14.37it/s, loss=0.28, loss_test=0.305, lr=0.000168, step=60999]Epoch 60: 100%|██████████| 1000/1000 [01:09<00:00, 14.37it/s, loss=0.28, loss_test=0.305, lr=0.000168, step=60999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.202, loss_test=0.313, lr=0.000161, step=61999]Epoch 61: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.202, loss_test=0.313, lr=0.000161, step=61999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62: 100%|██████████| 1000/1000 [01:05<00:00, 15.23it/s, loss=0.217, loss_test=0.313, lr=0.000153, step=62999]Epoch 62: 100%|██████████| 1000/1000 [01:05<00:00, 15.23it/s, loss=0.217, loss_test=0.313, lr=0.000153, step=62999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.279, loss_test=0.314, lr=0.000146, step=63999]Epoch 63: 100%|██████████| 1000/1000 [01:09<00:00, 14.49it/s, loss=0.279, loss_test=0.314, lr=0.000146, step=63999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.324, loss_test=0.315, lr=0.000139, step=64999]Epoch 64: 100%|██████████| 1000/1000 [01:06<00:00, 14.99it/s, loss=0.324, loss_test=0.315, lr=0.000139, step=64999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.294, loss_test=0.311, lr=0.000132, step=65999]Epoch 65: 100%|██████████| 1000/1000 [01:05<00:00, 15.35it/s, loss=0.294, loss_test=0.311, lr=0.000132, step=65999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.341, loss_test=0.298, lr=0.000125, step=66999]Epoch 66: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.341, loss_test=0.298, lr=0.000125, step=66999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.229, loss_test=0.312, lr=0.000118, step=67999]Epoch 67: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.229, loss_test=0.312, lr=0.000118, step=67999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.344, loss_test=0.311, lr=0.000112, step=68999]Epoch 68: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.344, loss_test=0.311, lr=0.000112, step=68999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.228, loss_test=0.314, lr=0.000105, step=7e+4]Epoch 69: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.228, loss_test=0.314, lr=0.000105, step=7e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.361, loss_test=0.299, lr=9.86e-5, step=70999]Epoch 70: 100%|██████████| 1000/1000 [01:06<00:00, 14.98it/s, loss=0.361, loss_test=0.299, lr=9.86e-5, step=70999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.277, loss_test=0.3, lr=9.24e-5, step=71999]Epoch 71: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.277, loss_test=0.3, lr=9.24e-5, step=71999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72: 100%|██████████| 1000/1000 [01:06<00:00, 15.10it/s, loss=0.25, loss_test=0.3, lr=8.63e-5, step=72999]Epoch 72: 100%|██████████| 1000/1000 [01:06<00:00, 15.10it/s, loss=0.25, loss_test=0.3, lr=8.63e-5, step=72999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.29, loss_test=0.301, lr=8.04e-5, step=73999]Epoch 73: 100%|██████████| 1000/1000 [01:06<00:00, 15.00it/s, loss=0.29, loss_test=0.301, lr=8.04e-5, step=73999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.258, loss_test=0.298, lr=7.46e-5, step=74999]Epoch 74: 100%|██████████| 1000/1000 [01:06<00:00, 14.93it/s, loss=0.258, loss_test=0.298, lr=7.46e-5, step=74999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.245, loss_test=0.306, lr=6.91e-5, step=75999]Epoch 75: 100%|██████████| 1000/1000 [01:08<00:00, 14.62it/s, loss=0.245, loss_test=0.306, lr=6.91e-5, step=75999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.287, loss_test=0.29, lr=6.37e-5, step=76999]Epoch 76: 100%|██████████| 1000/1000 [01:08<00:00, 14.66it/s, loss=0.287, loss_test=0.29, lr=6.37e-5, step=76999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.344, loss_test=0.292, lr=5.85e-5, step=77999]Epoch 77: 100%|██████████| 1000/1000 [01:09<00:00, 14.48it/s, loss=0.344, loss_test=0.292, lr=5.85e-5, step=77999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.282, loss_test=0.297, lr=5.35e-5, step=78999]Epoch 78: 100%|██████████| 1000/1000 [01:08<00:00, 14.56it/s, loss=0.282, loss_test=0.297, lr=5.35e-5, step=78999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.318, loss_test=0.294, lr=4.87e-5, step=8e+4]Epoch 79: 100%|██████████| 1000/1000 [01:08<00:00, 14.70it/s, loss=0.318, loss_test=0.294, lr=4.87e-5, step=8e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.253, loss_test=0.297, lr=4.41e-5, step=80999]Epoch 80: 100%|██████████| 1000/1000 [01:09<00:00, 14.47it/s, loss=0.253, loss_test=0.297, lr=4.41e-5, step=80999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.247, loss_test=0.3, lr=3.97e-5, step=81999]Epoch 81: 100%|██████████| 1000/1000 [01:07<00:00, 14.71it/s, loss=0.247, loss_test=0.3, lr=3.97e-5, step=81999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.235, loss_test=0.295, lr=3.55e-5, step=82999]Epoch 82: 100%|██████████| 1000/1000 [01:06<00:00, 15.03it/s, loss=0.235, loss_test=0.295, lr=3.55e-5, step=82999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.262, loss_test=0.294, lr=3.15e-5, step=83999]Epoch 83: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.262, loss_test=0.294, lr=3.15e-5, step=83999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84: 100%|██████████| 1000/1000 [01:05<00:00, 15.25it/s, loss=0.262, loss_test=0.296, lr=2.78e-5, step=84999]Epoch 84: 100%|██████████| 1000/1000 [01:05<00:00, 15.25it/s, loss=0.262, loss_test=0.296, lr=2.78e-5, step=84999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.272, loss_test=0.287, lr=2.43e-5, step=85999]Epoch 85: 100%|██████████| 1000/1000 [01:06<00:00, 15.11it/s, loss=0.272, loss_test=0.287, lr=2.43e-5, step=85999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.292, loss_test=0.3, lr=2.1e-5, step=86999]Epoch 86: 100%|██████████| 1000/1000 [01:07<00:00, 14.75it/s, loss=0.292, loss_test=0.3, lr=2.1e-5, step=86999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.324, loss_test=0.291, lr=1.79e-5, step=87999]Epoch 87: 100%|██████████| 1000/1000 [01:08<00:00, 14.61it/s, loss=0.324, loss_test=0.291, lr=1.79e-5, step=87999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88: 100%|██████████| 1000/1000 [01:05<00:00, 15.38it/s, loss=0.374, loss_test=0.291, lr=1.51e-5, step=88999]Epoch 88: 100%|██████████| 1000/1000 [01:05<00:00, 15.38it/s, loss=0.374, loss_test=0.291, lr=1.51e-5, step=88999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89: 100%|██████████| 1000/1000 [01:04<00:00, 15.45it/s, loss=0.284, loss_test=0.291, lr=1.25e-5, step=9e+4]Epoch 89: 100%|██████████| 1000/1000 [01:04<00:00, 15.45it/s, loss=0.284, loss_test=0.291, lr=1.25e-5, step=9e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.268, loss_test=0.298, lr=1.01e-5, step=90999]Epoch 90: 100%|██████████| 1000/1000 [01:06<00:00, 15.04it/s, loss=0.268, loss_test=0.298, lr=1.01e-5, step=90999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.261, loss_test=0.292, lr=8.01e-6, step=91999]Epoch 91: 100%|██████████| 1000/1000 [01:05<00:00, 15.16it/s, loss=0.261, loss_test=0.292, lr=8.01e-6, step=91999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.192, loss_test=0.289, lr=6.14e-6, step=92999]Epoch 92: 100%|██████████| 1000/1000 [01:06<00:00, 15.07it/s, loss=0.192, loss_test=0.289, lr=6.14e-6, step=92999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [01:04<00:00, 15.39it/s, loss=0.335, loss_test=0.292, lr=4.52e-6, step=93999]Epoch 93: 100%|██████████| 1000/1000 [01:04<00:00, 15.39it/s, loss=0.335, loss_test=0.292, lr=4.52e-6, step=93999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.231, loss_test=0.286, lr=3.14e-6, step=94999]Epoch 94: 100%|██████████| 1000/1000 [01:08<00:00, 14.65it/s, loss=0.231, loss_test=0.286, lr=3.14e-6, step=94999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.254, loss_test=0.298, lr=2.01e-6, step=95999]Epoch 95: 100%|██████████| 1000/1000 [01:08<00:00, 14.55it/s, loss=0.254, loss_test=0.298, lr=2.01e-6, step=95999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.29, loss_test=0.299, lr=1.13e-6, step=96999]Epoch 96: 100%|██████████| 1000/1000 [01:08<00:00, 14.54it/s, loss=0.29, loss_test=0.299, lr=1.13e-6, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.391, loss_test=0.298, lr=5.03e-7, step=97999]Epoch 97: 100%|██████████| 1000/1000 [01:07<00:00, 14.72it/s, loss=0.391, loss_test=0.298, lr=5.03e-7, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.364, loss_test=0.294, lr=1.26e-7, step=98999]Epoch 98: 100%|██████████| 1000/1000 [01:07<00:00, 14.86it/s, loss=0.364, loss_test=0.294, lr=1.26e-7, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [01:08<00:00, 14.53it/s, loss=0.272, loss_test=0.29, lr=0, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [01:08<00:00, 14.52it/s, loss=0.272, loss_test=0.29, lr=0, step=1e+5]
+wandb: - 0.013 MB of 0.013 MB uploadedwandb: \ 0.013 MB of 0.022 MB uploadedwandb: | 0.013 MB of 0.022 MB uploadedwandb: / 0.039 MB of 0.039 MB uploadedwandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:  test/loss █▁▁▁▁▁▆▆▆▆▆▆▆▅▅▅▅▅▅▅▅▅▅▅▅▅▄▅▄▄▄▄▄▄▄▄▄▄▄▄
+wandb: train/loss █▁▁▁▁▁▆▇▆▆▆▆▆▅▆▄▄▄▅▄▅▄▄▄▄▄▄▅▃▄▄▄▄▅▄▃▄▄▅▄
+wandb: 
+wandb: Run summary:
+wandb:  test/loss 0.28991
+wandb: train/loss 0.30246
+wandb: 
+wandb: 🚀 View run iMF-seed-10 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/csfml537
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 1 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260514_035758-csfml537/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+[ train ] Seed 10 complete → logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/10
+
+================================================================================
+[ train ] Training complete for all seeds
+================================================================================
+✓ Training completed successfully.

@@ -1,0 +1,42 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 14 13:28:35 UTC 2026
+JOB NAME:  eval_imf
+JOB ID:    20253
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   e36fa55
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/H8_K1_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py", line 135, in <module>
+    fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py", line 98, in load_diffusion_with_override
+    target_class_resolved = utils.config.import_class(target_class)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_imeanflow/utils/config.py", line 15, in import_class
+    module = importlib.import_module(f'{repo_name}.{module_name}')
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 992, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'flow_matcher_v3_imeanflow.flow_matcher_v3_imeanflow'
+================================================================================
+JOB END:   Thu May 14 13:28:40 UTC 2026
+================================================================================

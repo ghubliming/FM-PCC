@@ -1,0 +1,51 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 14 15:05:37 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20278
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   e72a456
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_gaussian_diffusion.py
+
+
+============================================================
+Evaluating seed 6...
+============================================================
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.42it/s]100%|██████████| 3/3 [00:00<00:00, 18.44it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[WARNING] Dropping unexpected kwarg from pickle: 'time_beta_alpha_v3'
+[WARNING] Dropping unexpected kwarg from pickle: 'time_beta_beta_v3'
+[WARNING] Dropping unexpected kwarg from pickle: 'flow_steps_v3'
+[ utils/training ] Restored loss history from checkpoint at step 44000
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 275, in <module>
+    scaler = build_scaler(device=args.device)
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 206, in build_scaler
+    dataset = Aligning_Dataset(
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/aligning_dataset.py", line 83, in __init__
+    zero_obs[0, :valid_len, :] = input_state[:-1]
+ValueError: could not broadcast input array from shape (125,20) into shape (125,3)

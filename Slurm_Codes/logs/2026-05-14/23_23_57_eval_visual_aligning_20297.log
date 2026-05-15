@@ -1,0 +1,53 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 14 21:23:58 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20297
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   09426aa
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_gaussian_diffusion.py
+
+
+============================================================
+Evaluating seed 6...
+============================================================
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 13.71it/s]100%|██████████| 3/3 [00:00<00:00, 13.37it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ utils/training ] Restored loss history from checkpoint at step 28000
+─── Running aligning-d3il-visual - diffuser (seed 6) ───
+[ eval ] Save path: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/6/results
+[ eval ] Initializing Aligning_Sim (vision=True)
+there are cpus:  64
+2182311 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_3d161dd0-4fdb-11f1-830e-d85ed34e311e.xml' with default provider at slot 1
+
+slurmstepd-i6-gpu-1: error: *** JOB 20297 ON i6-gpu-1 CANCELLED AT 2026-05-14T21:24:21 ***
