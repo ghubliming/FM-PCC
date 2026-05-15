@@ -54,14 +54,8 @@ class Tee(object):
 class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
-    
-    Replicates D3IL's DiffusionAgent.predict() exactly:
-      1. Maintains a sliding-window context of past frames (deque, maxlen=window_size)
-      2. Applies the training-time Scaler for input normalization
-      3. Runs the D3IL DiffusionPolicy (obs_encoder + diffusion_model)
-      4. Returns action chunks (action_seq_size=4 steps per inference call)
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4, save_path=None):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4, save_path=None, record_mode='all'):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
@@ -70,15 +64,17 @@ class VisualAgentWrapper:
         self.action_counter = self.action_seq_size  # Force re-plan on first call
         self.curr_action_seq = None
         self.save_path = save_path
+        self.record_mode = record_mode
         
         # Diagnostics
         self.rollout_counter = -1
         self.step_counter = 0
         
-        # Context windows — match D3IL's DiffusionAgent exactly
+        # Context windows
         self.bp_image_context = deque(maxlen=self.window_size)
         self.inhand_image_context = deque(maxlen=self.window_size)
         self.des_robot_pos_context = deque(maxlen=self.window_size)
+        self.video_frames = []
     
     def reset(self):
         """Called by Aligning_Sim at the start of each rollout."""
@@ -89,110 +85,96 @@ class VisualAgentWrapper:
         self.rollout_counter += 1
         self.step_counter = 0
         
-        # Save video from previous rollout if we have frames
-        if hasattr(self, 'video_frames') and len(self.video_frames) > 0:
+        # Save diagnostics from previous rollout
+        if self.record_mode != 'none' and len(self.video_frames) > 0:
+            self._save_diagnostics(self.rollout_counter - 1)
+        self.video_frames = []
+    
+    def _save_diagnostics(self, rollout_idx):
+        try:
             import imageio
             diag_dir = os.path.join(self.save_path, 'diagnostics')
             os.makedirs(diag_dir, exist_ok=True)
-            video_path = os.path.join(diag_dir, f"rollout_{self.rollout_counter - 1}.mp4")
-            imageio.mimsave(video_path, self.video_frames, fps=20)
-            self.video_frames = []
-        
-        # We'll handle context padding inside predict()
-    
+            
+            try:
+                if self.record_mode in ['all', 'video']:
+                    path = os.path.join(diag_dir, f"rollout_{rollout_idx}.mp4")
+                    imageio.mimsave(path, self.video_frames, fps=20)
+                elif self.record_mode == 'gif':
+                    raise ValueError("Force GIF")
+            except Exception as e:
+                if self.record_mode in ['all', 'gif']:
+                    try:
+                        path = os.path.join(diag_dir, f"rollout_{rollout_idx}.gif")
+                        imageio.mimsave(path, self.video_frames, fps=20)
+                    except Exception as e2:
+                        if self.record_mode in ['all', 'png']:
+                            self._save_png_sequence(diag_dir, rollout_idx)
+                elif self.record_mode == 'png':
+                    self._save_png_sequence(diag_dir, rollout_idx)
+        except Exception as e:
+            print(f"[ WARNING ] Diagnostic recording failed: {e}. Moving on.")
+
+    def _save_png_sequence(self, diag_dir, rollout_idx):
+        import cv2
+        frame_dir = os.path.join(diag_dir, f"rollout_{rollout_idx}_frames")
+        os.makedirs(frame_dir, exist_ok=True)
+        for i, frame in enumerate(self.video_frames):
+            cv2.imwrite(os.path.join(frame_dir, f"f_{i:04d}.png"), cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
-        """
-        Aligning_Sim calls:  agent.predict((bp_image, inhand_image, des_robot_pos), if_vision=True)
-        
-        Returns: np.array of shape [1, 3] (velocity delta for the end-effector)
-        """
         if if_vision:
             bp_image_np, inhand_image_np, des_robot_pos_np = state
             
-            # ── Visual Diagnostic: Accumulate frames for video ───────────
-            # We will accumulate frames and save a video at the end of the rollout
-            if not hasattr(self, 'video_frames'):
-                self.video_frames = []
-            
-            if self.save_path and (self.rollout_counter % 10 == 0):
-                # bp_image_np is (C, H, W) and in BGR format (0-1 range).
-                # Convert to (H, W, C) and scale to 0-255
-                bp_vis = (bp_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
-                inhand_vis = (inhand_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
-                
-                import cv2
-                # Convert BGR to RGB for correct video colors
-                bp_vis = cv2.cvtColor(bp_vis, cv2.COLOR_BGR2RGB)
-                inhand_vis = cv2.cvtColor(inhand_vis, cv2.COLOR_BGR2RGB)
-                
-                # Concatenate side-by-side
-                combined = np.concatenate([bp_vis, inhand_vis], axis=1)
-                self.video_frames.append(combined)
-            # ────────────────────────────────────────────────────────────
+            # Diagnostic capture (every 10th rollout)
+            if self.record_mode != 'none' and (self.rollout_counter % 10 == 0):
+                try:
+                    import cv2
+                    bp_vis = (bp_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
+                    inhand_vis = (inhand_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
+                    bp_vis = cv2.cvtColor(bp_vis, cv2.COLOR_BGR2RGB)
+                    inhand_vis = cv2.cvtColor(inhand_vis, cv2.COLOR_BGR2RGB)
+                    combined = np.concatenate([bp_vis, inhand_vis], axis=1)
+                    self.video_frames.append(combined)
+                except Exception:
+                    pass
 
-            # Convert numpy → tensor
             bp_image = torch.from_numpy(bp_image_np).to(self.device).float().unsqueeze(0)
             inhand_image = torch.from_numpy(inhand_image_np).to(self.device).float().unsqueeze(0)
             des_robot_pos = torch.from_numpy(des_robot_pos_np).to(self.device).float().unsqueeze(0)
             
-            # Append to sliding window
             self.bp_image_context.append(bp_image)
             self.inhand_image_context.append(inhand_image)
             self.des_robot_pos_context.append(des_robot_pos)
             
-            # ── Context Padding ──────────────────────────────────────────
-            # Repeat first frame to fill window if needed (standard D3IL behavior)
             while len(self.bp_image_context) < self.window_size:
                 self.bp_image_context.appendleft(bp_image)
                 self.inhand_image_context.appendleft(inhand_image)
                 self.des_robot_pos_context.appendleft(des_robot_pos)
-            # ────────────────────────────────────────────────────────────
             
-            # Stack context window → [1, T, C, H, W] and [1, T, 3]
             bp_image_seq = torch.stack(tuple(self.bp_image_context), dim=1)
             inhand_image_seq = torch.stack(tuple(self.inhand_image_context), dim=1)
             des_robot_pos_seq = torch.stack(tuple(self.des_robot_pos_context), dim=1)
         else:
-            raise NotImplementedError("Non-vision mode not supported for VisualAgentWrapper")
+            raise NotImplementedError()
         
-        # Action chunking: only re-plan every action_seq_size steps
         if self.action_counter == self.action_seq_size:
             self.action_counter = 0
             self.model.eval()
-            
-            # VisualGaussianDiffusion.forward() expects:
-            #   cond = {0: (bp_imgs, inhand_imgs, pos)}
-            # It internally encodes the visual features via VisualUNet
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
-            
-            # Returns: ([batch, horizon, transition_dim], infos)
-            trajectory, infos = self.model(cond)
-            
-            # Extract actions from trajectory: first action_dim=3 columns
-            action_dim = 3
-            actions = trajectory[:, :self.action_seq_size, :action_dim]
-            
-            # Use raw actions (model was trained on raw unscaled velocities)
-            self.curr_action_seq = actions
+            trajectory, _ = self.model(cond)
+            self.curr_action_seq = trajectory[:, :self.action_seq_size, :3]
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
         self.action_counter += 1
         self.step_counter += 1
         return next_action.detach().cpu().numpy()
 
-
-# ─── Model Loading (FM-PCC Config Pickle System) ───────────────────────────
+# ─── Model Loading ──────────────────────────────────────────────────────────
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', seed=None):
-    """
-    Replicated from FMv3ODE eval: loads model from FM-PCC pickle configs.
-    Returns the loaded diffusion model and dataset.
-    """
-    import inspect
-    
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Intercepting load from {lp}\n')
-    
     dataset_config = utils.load_config(*loadpath, 'dataset_config.pkl')
     model_config = utils.load_config(*loadpath, 'model_config.pkl')
     diffusion_config = utils.load_config(*loadpath, 'diffusion_config.pkl')
@@ -200,229 +182,100 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     trainer_config._dict['results_folder'] = lp
     
     if target_class is not None:
-        target_class_resolved = utils.config.import_class(target_class)
-        target_class_str = target_class_resolved.__module__ + '.' + target_class_resolved.__name__
-        pickled_class_str = diffusion_config._class.__module__ + '.' + diffusion_config._class.__name__
-        
-        if pickled_class_str != target_class_str:
-            print(f"\n=======================================================", file=sys.stderr)
-            print(f"[WARNING] Pickled diffusion class does not match config!", file=sys.stderr)
-            print(f"Pickled config class: {pickled_class_str}", file=sys.stderr)
-            print(f"Existing config class: {target_class_str}", file=sys.stderr)
-            print(f"Overriding pickled config with existing config!", file=sys.stderr)
-            print(f"=======================================================\n", file=sys.stderr)
-            diffusion_config._class = target_class_resolved
-            
-            sig = inspect.signature(target_class_resolved.__init__)
-            valid_kwargs = set(sig.parameters.keys())
-            keys_to_remove = [k for k in diffusion_config._dict if k not in valid_kwargs]
-            for k in keys_to_remove:
-                print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
-                del diffusion_config._dict[k]
-    
-    print(f"\n[INFO] Instantiating Diffusion Model from:", file=sys.stderr)
-    print(f"       -> {inspect.getfile(diffusion_config._class)}\n", file=sys.stderr)
+        diffusion_config._class = utils.config.import_class(target_class)
     
     dataset = dataset_config()
     model = model_config()
-    diffusion_config._dict.pop('model', None)
-    
-    sig = inspect.signature(diffusion_config._class.__init__)
-    valid_kwargs = set(sig.parameters.keys())
-    keys_to_remove = [k for k in diffusion_config._dict if k not in valid_kwargs]
-    for k in keys_to_remove:
-        print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
-        del diffusion_config._dict[k]
-    
     diffusion = diffusion_config(model).to(device)
     trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
-    
-    if epoch == 'latest':
-        epoch = utils.get_latest_epoch(loadpath)
-    
+    if epoch == 'latest': epoch = utils.get_latest_epoch(loadpath)
     trainer.load(epoch)
     return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, None)
 
-
-# ─── Scaler Construction ───────────────────────────────────────────────────
-
-
-
-# ─── Parser ─────────────────────────────────────────────────────────────────
 class Parser(utils.Parser):
     dataset: str = 'aligning-d3il-visual'
     config: str = 'config.aligning-d3il-visual'
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# Main — mirrors eval_flow_matching_v3_ode_selectable.py structure exactly
-# ═════════════════════════════════════════════════════════════════════════════
+# ─── Main ───────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    # --- Argument Parsing ---
-    parser = argparse.ArgumentParser(description='DPCC Visual Aligning Evaluation.')
-    parser.add_argument('--seed', type=int, help='Run only this specific seed.')
-    parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results.')
+    parser = argparse.ArgumentParser(description='DPCC Visual Evaluation.')
+    parser.add_argument('--seed', type=int)
+    parser.add_argument('--aggregate-only', action='store_true')
+    parser.add_argument('--record', type=str, choices=['none', 'video', 'gif', 'png', 'all'], default='all')
     args_cli, remaining_argv = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining_argv
     
-    # --- YAML Config Loading (FMv3ODE Standard) ---
-    with open('config/visual_aligning_eval.yaml', 'r') as file:
-        config = yaml.safe_load(file)
+    with open('config/visual_aligning_eval.yaml', 'r') as f:
+        config = yaml.safe_load(f)
     
-    exp = 'aligning-d3il-visual'
-    seeds = config['seeds']
-    if args_cli.seed is not None:
-        seeds = [args_cli.seed]
-        print(f'[ eval ] Overriding seeds from config to: {seeds}')
-    
-    # Visual Aligning uses a single "diffuser" variant (no projection yet)
-    # but the loop structure supports adding projection variants later
+    seeds = [args_cli.seed] if args_cli.seed else config['seeds']
     projection_variants = config.get('projection_variants', ['diffuser'])
     n_contexts = config.get('n_contexts', 30)
     n_trajectories = config.get('n_trajectories_per_context', 1)
     
     for seed in seeds:
-        print(f"\n{'='*60}")
-        print(f"Evaluating seed {seed}...")
-        print(f"{'='*60}")
-        
+        print(f"\nEvaluating seed {seed}...")
         args = Parser().parse_args(experiment='plan_ddpm_encdec_vision', seed=seed)
         
         diffusion_model = None
-
-        
         if not args_cli.aggregate_only:
-            # ── Model Loading (FM-PCC Pickle Config System) ──────────────
-            fm_experiment = load_diffusion_with_override(
+            fm_exp = load_diffusion_with_override(
                 args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
                 target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device
             )
-            diffusion_model = fm_experiment.diffusion
-            
-            # ── Initialize Simulation ────────────────────────────────────
-            # Disable wandb to prevent crashes
+            diffusion_model = fm_exp.diffusion
             import wandb
-            try:
-                wandb.init(mode="disabled")
-            except Exception:
-                pass
+            try: wandb.init(mode="disabled")
+            except: pass
         
-        for variant_idx, variant in enumerate(projection_variants):
-            # ── Save Path (FM-PCC standard: nested under model dir) ──────
+        for variant in projection_variants:
             save_path = f'{args.savepath}/results'
             os.makedirs(save_path, exist_ok=True)
             
             if args_cli.aggregate_only:
-                npz_path = os.path.join(save_path, f'{variant}.npz')
-                if not os.path.exists(npz_path):
-                    print(f'[ eval ] Skipping {variant} for seed {seed}, no results found at {npz_path}')
-                    continue
-                print(f'[ eval ] Aggregating existing results for {variant} - seed {seed}')
-                data = np.load(npz_path, allow_pickle=True)
-                print(f"         Success Rate: {data['success_rate']:.4f}")
-                print(f"         Entropy:      {data['entropy']:.4f}")
-                print(f"         Mean Distance:{data['mean_distance']:.4f}")
                 continue
             
-            # ── Inference Mode ───────────────────────────────────────────
-            log_file = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
-            original_stdout = sys.stdout
-            sys.stdout = Tee(sys.stdout, log_file)
+            log_f = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+            old_stdout = sys.stdout
+            sys.stdout = Tee(sys.stdout, log_f)
             
             try:
-                print(f'─── Running {exp} - {variant} (seed {seed}) ───')
-                print(f'[ eval ] Save path: {save_path}')
-                
-                # Build the D3IL-native agent wrapper
                 agent = VisualAgentWrapper(
-                    diffusion_model=diffusion_model,
-                    device=args.device,
-                    window_size=getattr(args, 'horizon', 8),
-                    obs_seq_len=5,
-                    action_seq_size=4,
-                    save_path=save_path
+                    diffusion_model=diffusion_model, device=args.device,
+                    window_size=getattr(args, 'horizon', 8), save_path=save_path,
+                    record_mode=args_cli.record
                 )
+                sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
+                                  n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True)
                 
-                # Initialize Simulation
-                print(f"[ eval ] Initializing Aligning_Sim (vision=True)")
-                sim = Aligning_Sim(
-                    seed=seed,
-                    device=args.device,
-                    render=False,
-                    n_cores=1,
-                    n_contexts=n_contexts,
-                    n_trajectories_per_context=n_trajectories,
-                    if_vision=True
-                )
-
-                
-                # Run evaluation through D3IL's native test_agent
                 t0 = time.time()
                 success_rate, mode_encoding = sim.test_agent(agent)
                 elapsed = time.time() - t0
                 
-                # Flush the last video
-                if hasattr(agent, 'video_frames') and len(agent.video_frames) > 0:
-                    import imageio
-                    diag_dir = os.path.join(agent.save_path, 'diagnostics')
-                    os.makedirs(diag_dir, exist_ok=True)
-                    video_path = os.path.join(diag_dir, f"rollout_{agent.rollout_counter}.mp4")
-                    imageio.mimsave(video_path, agent.video_frames, fps=20)
-                    agent.video_frames = []
-                
-                # Compute entropy (replicating Aligning_Sim's internal calculation)
+                # Flush last rollout
+                if agent.record_mode != 'none' and len(agent.video_frames) > 0:
+                    agent._save_diagnostics(agent.rollout_counter)
+
+                # Metrics calculation
                 n_modes = 2
-                successes = (mode_encoding >= 0).float()  # approximate
                 mode_probs = torch.zeros([n_contexts, n_modes])
                 for c in range(n_contexts):
                     mode_probs[c, :] = torch.tensor([
                         (mode_encoding[c] == 0).sum().item() / n_trajectories,
                         (mode_encoding[c] == 1).sum().item() / n_trajectories
                     ])
-                mode_probs_norm = mode_probs / (mode_probs.sum(1).reshape(-1, 1) + 1e-12)
-                entropy = -(mode_probs_norm * torch.log(mode_probs_norm + 1e-12) / 
-                           torch.log(torch.tensor(float(n_modes)))).sum(1).mean().item()
+                m_norm = mode_probs / (mode_probs.sum(1).reshape(-1, 1) + 1e-12)
+                entropy = -(m_norm * torch.log(m_norm + 1e-12) / torch.log(torch.tensor(float(n_modes)))).sum(1).mean().item()
                 
-                # Save results as .npz (FMv3ODE standard)
                 if config.get('write_to_file', True):
-                    np.savez(
-                        f'{save_path}/{variant}.npz',
-                        success_rate=success_rate,
-                        entropy=entropy,
-                        mode_encoding=mode_encoding.numpy(),
-                        mean_distance=0.0,  # captured by Aligning_Sim's stdout
-                        elapsed_seconds=elapsed,
-                        n_contexts=n_contexts,
-                        n_trajectories_per_context=n_trajectories,
-                        seed=seed,
-                        variant=variant,
-                    )
+                    np.savez(f'{save_path}/{variant}.npz', success_rate=success_rate, entropy=entropy,
+                             mode_encoding=mode_encoding.numpy(), elapsed_seconds=elapsed, seed=seed)
                 
-                # Also save structured .pkl (for Performance Scorecard)
-                results = {
-                    'success_rate': success_rate,
-                    'entropy': entropy,
-                    'mode_encoding': mode_encoding.numpy(),
-                    'score': 0.5 * (success_rate + entropy),
-                    'elapsed_seconds': elapsed,
-                    'timestamp': datetime.now().isoformat(),
-                    'args': vars(args),
-                }
-                res_file = os.path.join(save_path, f'results_seed_{seed}.pkl')
-                with open(res_file, 'wb') as f:
-                    pickle.dump(results, f)
+                with open(os.path.join(save_path, f'results_seed_{seed}.pkl'), 'wb') as f:
+                    pickle.dump({'success_rate': success_rate, 'entropy': entropy, 'elapsed': elapsed}, f)
                 
-                print(f'\n[ eval ] ═══════════════════════════════════════════════')
-                print(f'[ eval ] Variant: {variant}')
-                print(f'[ eval ] Success Rate: {success_rate:.4f}')
-                print(f'[ eval ] Entropy:      {entropy:.4f}')
-                print(f'[ eval ] Score:         {0.5 * (success_rate + entropy):.4f}')
-                print(f'[ eval ] Elapsed:       {elapsed:.1f}s')
-                print(f'[ eval ] Results:       {res_file}')
-                print(f'[ eval ] ═══════════════════════════════════════════════')
-            
+                print(f'[ eval ] Success Rate: {success_rate:.4f} | Entropy: {entropy:.4f}')
             finally:
-                sys.stdout = original_stdout
-                log_file.close()
-    
-    print(f"\n[ eval ] All seeds completed.")
+                sys.stdout = old_stdout
+                log_f.close()
+    print("Done.")

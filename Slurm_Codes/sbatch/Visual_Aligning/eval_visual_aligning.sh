@@ -53,11 +53,17 @@ cd "$REPO"
 # Results are saved to: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/<seed>/results/
 
 # Optional: override seed via command line argument
+# Run evaluation
+# Args: $1=seed (optional), $2=record_mode (optional, default=all)
+SEED_ARG=""
 if [ -n "$1" ]; then
+    SEED_ARG="--seed $1"
     echo "[ eval ] Overriding seed to: $1"
-    python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py --seed "$1"
-else
-    python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py
 fi
+
+RECORD_MODE="${2:-all}"
+echo "[ eval ] Recording mode set to: $RECORD_MODE"
+
+python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py $SEED_ARG --record "$RECORD_MODE"
 
 echo "Job completed successfully."

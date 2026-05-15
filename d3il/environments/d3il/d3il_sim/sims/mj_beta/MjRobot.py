@@ -330,5 +330,12 @@ class MjRobot(RobotBase, MjIncludeTemplate):
         new_path = sim_path.d3il_path(
             f"./models/mj/robot/panda_tmp_rb{self._mj_robot_id}_{uuid.uuid1()}.xml"
         )
-        et.write(new_path)
+        
+        # Ensure directory exists and write with flush/sync
+        os.makedirs(os.path.dirname(new_path), exist_ok=True)
+        with open(new_path, "wb") as f:
+            et.write(f)
+            f.flush()
+            os.fsync(f.fileno())
+            
         return new_path
