@@ -65,7 +65,14 @@ class VisualAgentWrapper:
         self.device = device
         self.window_size = window_size
         self.obs_seq_len = obs_seq_len
-        self.action_seq_size = action_seq_size
+        
+        # --- HORIZON SAFETY CLAMP ---
+        # Ensure we never try to execute more steps than the model planned.
+        # This prevents IndexError when horizon < action_seq_size (e.g. H=2, Chunk=4)
+        model_horizon = getattr(self.model, 'horizon', window_size)
+        self.action_seq_size = min(action_seq_size, model_horizon)
+        # -----------------------------
+
         self.action_counter = self.action_seq_size  # Force re-plan on first call
         self.curr_action_seq = None
         self.save_path = save_path
@@ -136,14 +143,20 @@ class VisualAgentWrapper:
         try:
             import imageio
             if self.record_mode in ['video', 'all']:
-                save_path = os.path.join(path, f'rollout_{rollout_idx}.mp4')
-                imageio.mimsave(save_path, frames, fps=20)
+                try:
+                    save_path_mp4 = os.path.join(path, f'rollout_{rollout_idx}.mp4')
+                    imageio.mimsave(save_path_mp4, frames, fps=20)
+                except Exception as e:
+                    print(f"[ WARNING ] MP4 saving failed: {e}. Attempting GIF fallback...")
             
             if self.record_mode in ['gif', 'all']:
-                save_path = os.path.join(path, f'rollout_{rollout_idx}.gif')
-                imageio.mimsave(save_path, frames, fps=10)
+                try:
+                    save_path_gif = os.path.join(path, f'rollout_{rollout_idx}.gif')
+                    imageio.mimsave(save_path_gif, frames, fps=10)
+                except Exception as e:
+                    print(f"[ WARNING ] GIF saving failed: {e}.")
         except Exception as e:
-            print(f"[ WARNING ] Video/GIF saving failed: {e}. Skipping.")
+            print(f"[ WARNING ] Diagnostics engine failed: {e}. Skipping.")
 
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
@@ -347,7 +360,10 @@ if __name__ == '__main__':
             try:
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model, device=args.device,
-                    window_size=getattr(args, 'horizon', 8), save_path=save_path,
+                    window_size=getattr(args, 'window_size', 8), 
+                    obs_seq_len=getattr(args, 'obs_seq_len', 5),
+                    action_seq_size=getattr(args, 'action_seq_size', 1),
+                    save_path=save_path,
                     record_mode=args_cli.record
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
