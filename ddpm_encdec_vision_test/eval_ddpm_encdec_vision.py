@@ -89,6 +89,15 @@ class VisualAgentWrapper:
         self.rollout_counter += 1
         self.step_counter = 0
         
+        # Save video from previous rollout if we have frames
+        if hasattr(self, 'video_frames') and len(self.video_frames) > 0:
+            import imageio
+            diag_dir = os.path.join(self.save_path, 'diagnostics')
+            os.makedirs(diag_dir, exist_ok=True)
+            video_path = os.path.join(diag_dir, f"rollout_{self.rollout_counter - 1}.mp4")
+            imageio.mimsave(video_path, self.video_frames, fps=20)
+            self.video_frames = []
+        
         # We'll handle context padding inside predict()
     
     @torch.no_grad()
@@ -101,20 +110,25 @@ class VisualAgentWrapper:
         if if_vision:
             bp_image_np, inhand_image_np, des_robot_pos_np = state
             
-            # ── Visual Diagnostic: Save key frames ───────────────────────
-            # Save every 10th rollout to avoid disk bloat
-            if self.save_path and (self.rollout_counter % 10 == 0) and (self.step_counter in [0, 50, 100, 150]):
-                diag_dir = os.path.join(self.save_path, 'diagnostics')
-                os.makedirs(diag_dir, exist_ok=True)
-                import matplotlib.pyplot as plt
-                fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-                # Transpose from (C, H, W) to (H, W, C) for matplotlib
-                ax[0].imshow(bp_image_np.transpose(1, 2, 0))
-                ax[0].set_title(f"Agentview (Step {self.step_counter})")
-                ax[1].imshow(inhand_image_np.transpose(1, 2, 0))
-                ax[1].set_title(f"In-hand (Step {self.step_counter})")
-                plt.savefig(os.path.join(diag_dir, f"rollout_{self.rollout_counter}_step_{self.step_counter}.png"))
-                plt.close()
+            # ── Visual Diagnostic: Accumulate frames for video ───────────
+            # We will accumulate frames and save a video at the end of the rollout
+            if not hasattr(self, 'video_frames'):
+                self.video_frames = []
+            
+            if self.save_path and (self.rollout_counter % 10 == 0):
+                # bp_image_np is (C, H, W) and in BGR format (0-1 range).
+                # Convert to (H, W, C) and scale to 0-255
+                bp_vis = (bp_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
+                inhand_vis = (inhand_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
+                
+                import cv2
+                # Convert BGR to RGB for correct video colors
+                bp_vis = cv2.cvtColor(bp_vis, cv2.COLOR_BGR2RGB)
+                inhand_vis = cv2.cvtColor(inhand_vis, cv2.COLOR_BGR2RGB)
+                
+                # Concatenate side-by-side
+                combined = np.concatenate([bp_vis, inhand_vis], axis=1)
+                self.video_frames.append(combined)
             # ────────────────────────────────────────────────────────────
 
             # Convert numpy → tensor
@@ -346,6 +360,15 @@ if __name__ == '__main__':
                 t0 = time.time()
                 success_rate, mode_encoding = sim.test_agent(agent)
                 elapsed = time.time() - t0
+                
+                # Flush the last video
+                if hasattr(agent, 'video_frames') and len(agent.video_frames) > 0:
+                    import imageio
+                    diag_dir = os.path.join(agent.save_path, 'diagnostics')
+                    os.makedirs(diag_dir, exist_ok=True)
+                    video_path = os.path.join(diag_dir, f"rollout_{agent.rollout_counter}.mp4")
+                    imageio.mimsave(video_path, agent.video_frames, fps=20)
+                    agent.video_frames = []
                 
                 # Compute entropy (replicating Aligning_Sim's internal calculation)
                 n_modes = 2
