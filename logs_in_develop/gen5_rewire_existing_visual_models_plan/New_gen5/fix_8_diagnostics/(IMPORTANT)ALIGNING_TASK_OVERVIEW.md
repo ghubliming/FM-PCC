@@ -271,6 +271,9 @@ For scientific comparison, it is important to understand the original D3IL versi
 | **`n_diffusion_steps`** | 100 | Uses a longer denoising chain than our high-speed Gen5. |
 | **`obs_seq_len`** | 1 | Typically reactive (no visual history) unless explicitly configured. |
 | **`model_type`** | `act` | Activates the Transformer-based policy. |
+| **`n_train_steps`** | 500,000 | Official benchmark scale (500 Epochs x 1000 steps). |
+| **`batch_size`** | 64 | Standard vision batch size in D3IL. |
+| **`learning_rate`** | 5e-4 | Official Adam LR for ACT Transformer. |
 
 ### C. One-Click Training (Native D3IL)
 To train the original baseline for comparison, use the native D3IL entry point:
@@ -299,6 +302,8 @@ To match the ACT baseline, update your `config/aligning-d3il-visual.py` with the
 | **`action_seq_size`** | 10 | Executes the full chunk without re-planning (Open-Loop). |
 | **`obs_seq_len`** | 1 | Makes the model reactive (no historical context). |
 | **`n_diffusion_steps`** | 100 | Matches the baseline denoising quality. |
+| **`batch_size`** | 64 | Match benchmark training density. |
+| **`learning_rate`** | 5e-4 | Match benchmark optimizer setup. |
 
 ### B. Fundamental Differences (Irreconcilable)
 Even with the parity config, these **Core Architectural Differences** cannot be replicated in Gen5:

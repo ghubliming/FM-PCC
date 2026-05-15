@@ -39,9 +39,9 @@ base = {
 
         # training
         'n_steps_per_epoch': 1000,
-        'n_train_steps': 1e5,
-        'batch_size': 8,
-        'learning_rate': 1e-4,
+        'n_train_steps': 1e5, # 'n_train_steps': 5e5 # ddpm act
+        'batch_size': 8, # 'batch_size': 64 # ddpm act
+        'learning_rate': 1e-4, # 'learning_rate': 5e-4 # ddpm act
         'gradient_accumulate_every': 2,
         'ema_decay': 0.995,
         'train_test_split': 0.9,
