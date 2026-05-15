@@ -116,13 +116,28 @@ To maintain parity with the FMv3ODE diagnostics, we track two distinct paths dur
 
 ---
 
-## 7. Why Modularize?
+## 7. Evaluation Structure & Console Logging
+
+When running the evaluation, the console provides real-time progress updates. Here is a guide to interpreting them:
+
+### A. Context vs. Rollout
+- **`Context X`**: This refers to a **Unique Problem Setup**. In the Aligning task, a "Context" defines the starting (x,y) position of the box and the rotation of the target. The evaluation set typically evaluates **30 unique contexts**.
+- **`Rollout Y`**: This refers to a **Single Attempt** at a context. Because Diffusion models are probabilistic, we often run multiple attempts (e.g., 5 rollouts) for the same context to ensure the model's success is not a "fluke."
+
+### B. Summary Metrics
+- **`Successrate`**: The percentage of contexts solved. (1.0 = 100% success).
+- **`Entropy`**: Measures the diversity of the model's solutions across different rollouts of the same context. High entropy means the model finds many different ways to solve the same problem.
+- **`Mean Distance`**: The average distance between the box and the target at the end of the episode.
+
+---
+
+## 8. Why Modularize?
 
 By utilizing the **D3IL native code for vision**, we ensure that our visual features are 1:1 with benchmark baselines. By keeping the **DPCC U-Net**, we preserve the framework's core ability to handle safety and control constraints. This modularization allows us to swap the perception backbone without losing the planning stability.
 
 ---
 
-## 8. Technical Audit: Legacy DPCC vs. D3IL Semantics
+## 9. Technical Audit: Legacy DPCC vs. D3IL Semantics
 
 | Component | D3IL Semantic Category | Implementation Module |
 | :--- | :--- | :--- |
@@ -132,7 +147,7 @@ By utilizing the **D3IL native code for vision**, we ensure that our visual feat
 
 ---
 
-## 9. Summary: The DPCC-D3IL Relationship
+## 10. Summary: The DPCC-D3IL Relationship
 
 To be mathematically precise for the thesis/documentation:
 
