@@ -22,6 +22,9 @@ import argparse
 import pickle
 from datetime import datetime
 from collections import deque
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('Agg') # Non-interactive backend
 
 import ddpm_encdec_vision.utils as utils
 
@@ -372,6 +375,55 @@ if __name__ == '__main__':
                 with open(os.path.join(save_path, f'results_seed_{seed}.pkl'), 'wb') as f:
                     pickle.dump({'success_rate': success_rate, 'entropy': entropy, 'elapsed': elapsed}, f)
                 
+                # ─── Legacy Visualization Engine ────────────────────────────────
+                print(f"[ eval ] Generating legacy PNG plots for {variant}...")
+                plot_limit = 5 # Plot first 5 trials
+                n_plot = min(len(obs_all), plot_limit)
+                
+                # Main Plot: rollout grid
+                fig, axes = plt.subplots(n_plot, 6, figsize=(30, 5 * n_plot), squeeze=False)
+                fig.suptitle(f'Visual Aligning - {variant} (Seed {seed})')
+                
+                # Aggregate Plot: all paths overlaid
+                fig_all, ax_all = plt.subplots(figsize=(10, 10))
+                ax_all.set_title(f'Aggregate Paths - {variant}')
+                
+                for i in range(n_plot):
+                    obs_traj = obs_all[i] # [T, 3]
+                    plans_list = sampled_trajectories_all[i] # List of [8, 3]
+                    
+                    # Col 0-2: X, Y, Z traces
+                    for dim in range(3):
+                        axes[i, dim].plot(obs_traj[:, dim], label='Real')
+                        axes[i, dim].set_title(f"Dim {dim} (Rollout {i})")
+                        axes[i, dim].legend()
+                    
+                    # Col 4: XY Path (Real)
+                    axes[i, 4].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', label='Real Path')
+                    axes[i, 4].plot(obs_traj[0, 0], obs_traj[0, 1], 'go', label='Start')
+                    axes[i, 4].plot(obs_traj[-1, 0], obs_traj[-1, 1], 'ro', label='End')
+                    axes[i, 4].set_title("XY Path")
+                    axes[i, 4].legend()
+                    
+                    # Col 5: XY Path + Sampled Plans
+                    axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.5)
+                    # Plot plans (blue lines)
+                    for p_idx, plan in enumerate(plans_list):
+                        # Only plot a few plans to avoid clutter
+                        if p_idx % 2 == 0:
+                            axes[i, 5].plot(plan[:, 0], plan[:, 1], 'b-', alpha=0.3)
+                    axes[i, 5].set_title("Real vs Desired (Plans)")
+                    
+                    # Add to aggregate
+                    ax_all.plot(obs_traj[:, 0], obs_traj[:, 1], alpha=0.6)
+
+                fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+                fig.savefig(f'{save_path}/{variant}.png')
+                plt.close(fig)
+                
+                fig_all.savefig(f'{save_path}/all.png')
+                plt.close(fig_all)
+
                 print(f'[ eval ] Success Rate: {success_rate:.4f} | Entropy: {entropy:.4f}')
             finally:
                 sys.stdout = old_stdout
