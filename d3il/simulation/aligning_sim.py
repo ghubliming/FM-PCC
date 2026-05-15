@@ -202,4 +202,4 @@ class Aligning_Sim(BaseSim):
         print(f'Successrate {success_rate}')
         print(f'entropy {entropy}')
 
-        return success_rate, mode_encoding#, mean_distance
+        return success_rate, mode_encoding, successes, mean_distance
