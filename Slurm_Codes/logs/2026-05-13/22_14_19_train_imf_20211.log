@@ -1,0 +1,102 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Wed May 13 20:14:19 UTC 2026
+================================================================================
+[ train ] iMeanFlow Training (iMF-PCC)
+[ train ] Engine: Improved Mean Flows (dual-velocity decomposition)
+[ train ] Repo: github.com/Lyy-iiis/imeanflow
+[ train ] Seeds: [6, 7, 8, 9, 10] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-iMF)
+================================================================================
+
+[ train ] Seed 6
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/dataset_config_resume_5.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/model_config_resume_3.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMFDiffusion'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 0.99
+    loss_schedule: u_first
+    loss_type: l2
+    model: 
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dropout_rate: 0.1
+    freq_dim: 256
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+    observation_dim: 4
+    ode_inference_steps_v3: 1
+    predict_epsilon: True
+    returns_condition: True
+    transition_epochs: 30
+    u_loss_weight: 0.5
+    v_loss_weight: 0.5
+    warmup_epochs: 30
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/diffusion_config_resume_2.json
+
+
+[utils/config ] Config: <class 'diffuser.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 1
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/6/trainer_config_resume_2.json
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py", line 199, in <module>
+    model = model_config()
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/config.py", line 93, in __call__
+    instance = self._class(*args, **kwargs, **self._dict)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_imeanflow/models/imf_engine.py", line 56, in __init__
+    self.model = iMFTrajectoryModel(
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_imeanflow/models/imf_trajectory_model.py", line 56, in __init__
+    self.u_net = Flow_matcher_U_Net_v2(
+TypeError: Flow_matcher_U_Net_v2.__init__() got an unexpected keyword argument 'input_dim'

@@ -110,7 +110,8 @@ class VisualAgentWrapper:
             self.master_rollout_history[f"rollout_{self.rollout_counter}"] = {
                 "real_robot_pos": np.array(self.history_real_pos),
                 "desired_actions": np.array(self.history_desired_actions),
-                "full_plans": np.array(self.history_full_plans)
+                "full_plans": np.array(self.history_full_plans),
+                "plan_start_positions": np.array(self.history_real_pos)[::self.action_seq_size, :]
             }
             self.history_n_steps.append(self.step_counter)
             self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
@@ -164,8 +165,8 @@ class VisualAgentWrapper:
         if if_vision:
             bp_image_np, inhand_image_np, des_robot_pos_np = state
             
-            # Diagnostic capture (every 10th rollout)
-            if self.record_mode != 'none' and (self.rollout_counter % 10 == 0):
+            # Diagnostic capture (All rollouts)
+            if self.record_mode != 'none':
                 try:
                     bp_vis = (bp_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
                     inhand_vis = (inhand_image_np.transpose(1, 2, 0) * 255).astype(np.uint8)
@@ -459,12 +460,10 @@ if __name__ == '__main__':
                     obs_traj = obs_all[i] # [T, 3]
                     plans_list = sampled_trajectories_all[i] # List of [8, 3]
                     
-                    # Col 0-2: X, Y, Z traces
-                    for dim in range(3):
-                        axes[i, dim].plot(obs_traj[:, dim], label='Real')
-                        axes[i, dim].set_title(f"Dim {dim} (Rollout {i})")
-                        axes[i, dim].legend()
-                    
+                    # Col 3: Plan Delta Stats (Magnitude)
+                    axes[i, 3].plot(np.linalg.norm(obs_traj[1:] - obs_traj[:-1], axis=1), color='gray', alpha=0.5)
+                    axes[i, 3].set_title(f"Step Magnitude")
+
                     # Col 4: XY Path (Real)
                     axes[i, 4].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', label='Real Path')
                     axes[i, 4].plot(obs_traj[0, 0], obs_traj[0, 1], 'go', label='Start')
@@ -472,17 +471,17 @@ if __name__ == '__main__':
                     axes[i, 4].set_title("XY Path")
                     axes[i, 4].legend()
                     
-                    # Col 5: XY Path + Sampled Plans
-                    axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.5)
+                    # Col 5: XY Path + Sampled Plans (FIXED: Absolute conversion)
+                    axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.5, label='Real')
                     # Plot plans (blue lines)
-                    for p_idx, plan in enumerate(plans_list):
-                        # Only plot a few plans to avoid clutter
-                        if p_idx % 2 == 0:
-                            axes[i, 5].plot(plan[:, 0], plan[:, 1], 'b-', alpha=0.3)
-                    axes[i, 5].set_title("Real vs Desired (Plans)")
-                    
-                    # Add to aggregate
-                    ax_all.plot(obs_traj[:, 0], obs_traj[:, 1], alpha=0.6)
+                    plan_starts = agent.master_rollout_history[f"rollout_{i}"]['plan_start_positions']
+                    for p_idx, plan_deltas in enumerate(plans_list):
+                        if p_idx % 4 == 0: # Sparse plotting for clarity
+                            start_pos = plan_starts[min(p_idx, len(plan_starts)-1)]
+                            # Convert relative deltas to absolute trajectory
+                            abs_plan = start_pos + np.cumsum(plan_deltas[:, :3], axis=0)
+                            axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1], 'b-', alpha=0.4)
+                    axes[i, 5].set_title("Foresight (Blue) vs Real (Black)")
 
                 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
                 fig.savefig(f'{save_path}/{variant}.png')

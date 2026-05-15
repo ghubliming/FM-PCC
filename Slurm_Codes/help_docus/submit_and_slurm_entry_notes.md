@@ -1,6 +1,6 @@
 # Common Commands
 
-## Open in broswer
+## Open in broswer & DA
 cd FMPCC/FM-PCC
 conda activate FMPCC
 python3 -m http.server 8000

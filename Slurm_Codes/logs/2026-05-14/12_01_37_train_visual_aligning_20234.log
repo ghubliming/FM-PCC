@@ -1,0 +1,70 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 10:01:37 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260514_100140-2y9y4btq
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-ddpm_encdec_vision-H8-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/2y9y4btq
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/seeds_config.json
+
+[utils/config ] Config: <class 'd3il.environments.dataset.aligning_dataset.Aligning_Img_Dataset'>
+    action_dim: 3
+    data_directory: environments/dataset/data/aligning/train_files.pkl
+    max_len_data: 256
+    obs_dim: 3
+    window_size: 8
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/dataset_config_resume_1.json
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 14.57it/s]100%|██████████| 3/3 [00:00<00:00, 13.82it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', diffusion='ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', horizon=8, window_size=8, obs_dim=128, action_dim=3, visual_input=True, obs_seq_len=5, action_seq_size=4, n_diffusion_steps=16, loss_type='l2', loader='ignored', max_path_length=150, logbase='logs', prefix='ddpm_encdec_vision/', exp_name='ddpm_encdec_vision/H8', n_steps_per_epoch=1000, n_train_steps=100000.0, batch_size=8, learning_rate=0.0001, gradient_accumulate_every=2, ema_decay=0.995, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/train_ddpm_encdec_vision.py", line 244, in <module>
+    model = model_config()
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/config.py", line 93, in __call__
+    instance = self._class(*args, **kwargs, **self._dict)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_unet.py", line 47, in __init__
+    backbone_class = import_class(config.model)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/utils/config.py", line 15, in import_class
+    module = importlib.import_module(f'{repo_name}.{module_name}')
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 992, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 992, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'flow_matcher_v3_ode_selectable.ddpm_encdec_vision'
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.010 MB uploadedwandb: | 0.024 MB of 0.024 MB uploadedwandb: 🚀 View run aligning-d3il-visual-ddpm_encdec_vision-H8-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/2y9y4btq
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260514_100140-2y9y4btq/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
