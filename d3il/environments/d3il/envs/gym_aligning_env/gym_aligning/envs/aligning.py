@@ -36,9 +36,9 @@ class BPCageCam(MjCamera):
     Cage camera. Extends the camera base class.
     """
 
-    def __init__(self, width: int = 96, height: int = 96, *args, **kwargs):
+    def __init__(self, name: str, width: int = 96, height: int = 96, *args, **kwargs):
         super().__init__(
-            "bp_cam",
+            name,
             width,
             height,
             init_pos=[1.05, 0, 1.2],
@@ -171,7 +171,7 @@ class Robot_Push_Env(GymEnvWrapper):
         self.random_env = random_env
         self.manager = BlockContextManager(scene, index=1)
 
-        self.bp_cam = BPCageCam()
+        self.bp_cam = BPCageCam(robot.add_id2model_key("bp_cam"))
         self.inhand_cam = robot.inhand_cam
 
         self.push_box = obj_list[0]

@@ -77,7 +77,7 @@
                                                 <body name="rod">
                                                       <geom type="cylinder" size="0.01 0.15" pos="0 0 0.075" name="rod:geom"/>
                                                       <body name="rod:tip">
-                                                            <geom type="sphere" size="0.01" pos="0 0 0.225" rgba="1 0 0 1" contype="0" conaffinity="0" name="rod:tip"/>
+                                                            <geom type="sphere" size="0.01" pos="0 0 0.225" rgba="1 0 0 1" contype="1" conaffinity="1" name="rod:tip"/>
                                                       </body>
                                                 </body>
 

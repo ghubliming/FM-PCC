@@ -825,3 +825,15 @@ Summary of fixes applied today (engineering integration, not algorithmic changes
 6. **Logging & stability**: Additional small fixes to logging and checkpoint path resolution in the visual test scripts to make baseline runs reproducible.
 
 Outcome: The `ddpm_encdec_vision` baseline is runnable inside FM-PCC; training/eval failures observed earlier were due to integration gaps listed above and are now addressed. Next step: run full baseline training and collect W&B traces to validate learning curves.
+## Gen5: Visual Aligning Diagnostic & Baseline Stabilization (May 15, 2026)
+
+Keywords: U-Net H=2 support, diagnostic fidelity, 7-metric report, ACT-parity, capacity analysis.
+
+1.  **Architectural Fix (U-Net H=2)**: Implemented "Auto-Padding" in `VisualUNet.py` to support small horizons. The model now dynamically pads short trajectories to a multiple of 8, resolving the 3-stage downsampling crash.
+2.  **Diagnostic Fidelity Restoration**:
+    - **Frozen View Fix**: Implemented deep memory copying (`.copy()`) for simulator frames to prevent pointer-shadowing.
+    - **Color Fix**: Added floating-point clipping (`.clip(0, 255)`) to prevent color-inversion/overflow artifacts in GIF generation.
+3.  **Scientific Reporting**: Standardized the evaluation output to match the FMv3ODE **7-metric report** (Success Rate, Constraints, Steps, Violations, and Inference Time $\pm$ std).
+4.  **Baseline Synchronization**: Verified and documented the **ICLR 2024 DDPM-ACT** official hyperparameters (500 Epochs, $5\cdot10^5$ steps, $5\cdot10^{-4}$ LR, Batch 64).
+5.  **Backbone Capacity Analysis**: Documented the **20x capacity difference** between Gen5 U-Net (18M+ params) and Native ACT Transformer (~0.9M params) for thesis justification.
+6.  **Status**: **VIsual Pipeline Stable**. High-fidelity training and evaluation are now scientifically aligned with the FMPCC standards.
