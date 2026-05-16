@@ -607,19 +607,30 @@ if __name__ == '__main__':
                 fig_all.savefig(f'{save_path}/all.png')
                 plt.close(fig_all)
 
-                # --- THE SCIENTIFIC 7-METRIC REPORT (FMv3ODE Standard) ---
-                print("\n" + "-"*80)
-                print(f" FINAL SCIENTIFIC REPORT: {variant} (Seed {seed})")
-                print("-"*80)
-                print(f" Success rate:                         {success_rate:>6.2f}")
-                print(f" Constraints satisfied:                {1.0:>6.2f} (No obstacles)")
-                print(f" Success rate (goal and constraints):   {success_rate:>6.2f}")
-                print(f" Avg number of steps:                  {np.mean(agent.history_n_steps):>6.2f} +- 0.00")
-                print(f" Avg number of constraint violations:   {0.0:>6.2f} +- 0.00")
-                print(f" Avg total violation:                  {0.000:>6.3f} +- 0.000")
-                print(f" Average computation time per step:    {np.mean(agent.history_avg_time):>6.3f}")
+                # --- THE SCIENTIFIC 7-METRIC REPORT (FMv3ODE Standard Replication) ---
+                print(f'------------------------Running aligning-d3il-visual - default - {variant} ({seed})----------------------------')
+                
+                n_success = np.array(successes)
+                n_steps = np.array(agent.history_n_steps)
+                
+                # Tracking error calculation (max error across all trials)
+                tracking_error = 0.0
+                if len(agent.history_pos_tracking_errors) > 0:
+                    # Flatten the nested tracking error history
+                    all_errors = [err for trial_errs in agent.history_pos_tracking_errors for err in trial_errs]
+                    if len(all_errors) > 0:
+                        tracking_error = np.max(all_errors)
+
+                print(f'Success rate: {np.mean(n_success)}')
+                print(f'Constraints satisfied: {1.0}') # No obstacles in Aligning
+                print(f'Success rate (goal and constraints): {np.mean(n_success)}')
+                print(f'Avg number of steps: {(np.mean(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f} +- {(np.std(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f}')
+                print(f'Avg number of constraint violations: {0.00:.2f} +- {0.00:.2f}')
+                print(f'Avg total violation: {0.000:.3f} +- {0.000:.3f}')
+                print(f'Average computation time per step: {np.mean(agent.history_avg_time):.3f}')
+                print(f'Tracking error: {tracking_error:.3f}')
                 print("-"*80 + "\n")
-                # ------------------------------------------------------
+                # ----------------------------------------------------------------------
             finally:
                 sys.stdout = old_stdout
                 log_f.close()
