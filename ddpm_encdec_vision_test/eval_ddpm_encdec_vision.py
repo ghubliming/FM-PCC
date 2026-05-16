@@ -301,16 +301,15 @@ class VisualAgentWrapper:
         if self.action_counter == self.action_seq_size:
             self.action_counter = 0
             self.model.eval()
-            # --- Gen5 Visual Inference Fix ---
-            # Call the model's forward method (or predict if applicable)
-            # The model returns actions directly [B, T, 3]
+            # --- Gen5 Visual Inference Fix (Restored Slice) ---
+            # Model returns [State(3) + Action(3)] = 6D
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
             trajectory, _ = self.model(cond)
             
-            # 3D ACTION ONLY (No slicing! Index 3: would return empty)
-            action_trajectory = trajectory
+            # Slice the Action Part (indices 3-6)
+            action_trajectory = trajectory[:, :, 3:]
             
-            # Inverse Scale only if the scaler is active
+            # Inverse Scale (Now safe with Fix #29)
             if self.scaler is not None:
                 action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
             
