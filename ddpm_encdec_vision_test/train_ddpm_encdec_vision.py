@@ -232,6 +232,15 @@ for seed in selected_seeds:
     )
     dataset = dataset_config()
     
+    # --- FIX_17: Scaler Initialization ---
+    from ddpm_encdec_vision.utils.scaler import Scaler
+    scaler = Scaler(dataset.observations, dataset.actions, scale_data=True, device=args.device)
+    import pickle
+    scaler_path = os.path.join(args.savepath, 'scaler.pkl')
+    with open(scaler_path, 'wb') as f:
+        pickle.dump(scaler, f)
+    print(f'[ train ] Saved scaler to {scaler_path}')
+    
     # 2. Model (Backbone + Vision Encoder)
     from ddpm_encdec_vision.models.visual_unet import VisualUNet
     model_config = utils.Config(
@@ -264,6 +273,7 @@ for seed in selected_seeds:
     trainer_config = utils.Config(
         utils.Trainer,
         savepath=(args.savepath, 'trainer_config.pkl'),
+        scaler=scaler,
         train_test_split=args.train_test_split,
         ema_decay=args.ema_decay,
         n_train_steps=args.n_train_steps,

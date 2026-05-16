@@ -60,11 +60,15 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4, save_path=None, record_mode='all'):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4, save_path=None, record_mode='all', scaler=None):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
         self.obs_seq_len = obs_seq_len
+        self.scaler = scaler
+        
+        # Open-Loop State (The "Mental Map")
+        self.mental_robot_pos = None 
         
         # --- HORIZON SAFETY CLAMP ---
         # Ensure we never try to execute more steps than the model planned.
@@ -100,7 +104,7 @@ class VisualAgentWrapper:
         # Context windows
         self.bp_image_context = deque(maxlen=self.window_size)
         self.inhand_image_context = deque(maxlen=self.window_size)
-        self.des_robot_pos_context = deque(maxlen=self.window_size)
+        self.des_robot_pos_context = deque(maxlen=self.obs_seq_len)
         self.video_frames = []
     
     def reset(self):
@@ -128,6 +132,8 @@ class VisualAgentWrapper:
         self.curr_rollout_time = 0
         self.last_predicted_pos = None
         self.curr_rollout_tracking_errors.clear()
+        
+        self.mental_robot_pos = None # Reset mental map (FIX #17)
         
         self.bp_image_context.clear()
         self.inhand_image_context.clear()
@@ -253,12 +259,20 @@ class VisualAgentWrapper:
                     # print(f"DIAG ERROR: {e}")
                     pass
 
+            # Open-Loop State Update (Mental Map - FIX #17)
+            if self.mental_robot_pos is None:
+                self.mental_robot_pos = des_robot_pos_np.copy()
+            
             # Preprocess images to [C, H, W] and normalize
             bp_image = torch.from_numpy(bp_image_np).to(self.device).float().unsqueeze(0)
             inhand_image = torch.from_numpy(inhand_image_np).to(self.device).float().unsqueeze(0)
-            des_robot_pos = torch.from_numpy(des_robot_pos_np).to(self.device).float().unsqueeze(0)
             
-            # Record real pos
+            # Use Mental Pos for conditioning, but SCALE it first
+            mental_pos_torch = torch.from_numpy(self.mental_robot_pos).to(self.device).float().unsqueeze(0)
+            if self.scaler is not None:
+                mental_pos_torch = self.scaler.scale_input(mental_pos_torch)
+            
+            # Record real pos for diagnostics
             self.history_real_pos.append(des_robot_pos_np.copy())
             
             # Record tracking error from PREVIOUS step prediction
@@ -268,12 +282,12 @@ class VisualAgentWrapper:
             
             self.bp_image_context.append(bp_image)
             self.inhand_image_context.append(inhand_image)
-            self.des_robot_pos_context.append(des_robot_pos)
+            self.des_robot_pos_context.append(mental_pos_torch)
             
             while len(self.bp_image_context) < self.window_size:
                 self.bp_image_context.appendleft(bp_image)
                 self.inhand_image_context.appendleft(inhand_image)
-                self.des_robot_pos_context.appendleft(des_robot_pos)
+                self.des_robot_pos_context.appendleft(mental_pos_torch)
             
             bp_image_seq = torch.stack(tuple(self.bp_image_context), dim=1)
             inhand_image_seq = torch.stack(tuple(self.inhand_image_context), dim=1)
@@ -287,16 +301,26 @@ class VisualAgentWrapper:
             self.model.eval()
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
             trajectory, _ = self.model(cond)
+            
+            # Inverse Scale Output Trajectory (FIX #17)
+            if self.scaler is not None:
+                trajectory = self.scaler.inverse_scale_output(trajectory)
+            
             self.curr_action_seq = trajectory[:, :self.action_seq_size, :3]
             # Record full plan
             self.history_full_plans.append(trajectory.detach().cpu().numpy().squeeze(0))
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy()
+        
+        # Update Mental Map (Open-Loop accumulation - FIX #17)
+        self.mental_robot_pos += next_action_np.squeeze(0)
+        
         self.history_desired_actions.append(next_action_np.copy().squeeze(0))
         
         # Calculate predicted next pos for tracking error in NEXT step
-        self.last_predicted_pos = next_action_np.squeeze(0) + des_robot_pos_np
+        # Note: In Open-Loop, last_predicted_pos will be same as mental_robot_pos
+        self.last_predicted_pos = self.mental_robot_pos.copy()
         
         self.curr_rollout_time += (time.time() - t_start)
         self.action_counter += 1
@@ -435,13 +459,24 @@ if __name__ == '__main__':
             sys.stdout = Tee(sys.stdout, log_f)
             
             try:
+                # Load Scaler (FIX #17)
+                scaler = None
+                scaler_path = os.path.join(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), 'scaler.pkl')
+                if os.path.exists(scaler_path):
+                    with open(scaler_path, 'rb') as f:
+                        scaler = pickle.load(f)
+                    print(f"[ eval ] Loaded scaler from: {scaler_path}")
+                else:
+                    print(f"[ eval ] WARNING: No scaler.pkl found at {scaler_path}. Operating in RAW mode.")
+
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model, device=args.device,
                     window_size=getattr(args, 'window_size', 8), 
                     obs_seq_len=getattr(args, 'obs_seq_len', 5),
                     action_seq_size=getattr(args, 'action_seq_size', 1),
                     save_path=save_path,
-                    record_mode=args_cli.record
+                    record_mode=args_cli.record,
+                    scaler=scaler
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True)
