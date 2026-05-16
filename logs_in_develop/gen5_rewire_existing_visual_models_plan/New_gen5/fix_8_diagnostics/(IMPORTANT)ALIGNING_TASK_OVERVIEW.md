@@ -11,7 +11,7 @@ The **Aligning** task (defined in `gym_aligning`) is a vision-based robotic mani
 
 ### Observation Space (Vision-Centric)
 The agent receives high-dimensional pixel input from two distinct viewpoints:
-1.  **Cage Camera (`BPCageCam`):** A fixed, top-down "bird's-eye" view of the workspace. This provides global context for the box and target positions.
+1.  **Cage Camera (`BPCageCam`):** A fixed, top-down "bird's-eye" view  the workspace. This provides global contexoft for the box and target positions.
 2.  **In-hand Camera:** A camera mounted on the robot's end-effector. This provides fine-grained visual feedback as the robot approaches the box.
 3.  **Proprioception:** The current 3D position of the robot's end-effector.
 
@@ -512,4 +512,40 @@ The use of a 10-step horizon (chunking) instead of 1 step or 400 steps is a desi
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 16 (Scientific Replication Logic Added).**
+## 31. The Stabilization Breakthrough: Gen5 "Visual Transplant" Finalized (FIX_12 P2)
+
+As of FIX_12 Phase 2, the Gen5 Visual-Aligning pipeline has reached its final stabilized form. This section serves as the incremental update for the "Scientific Replication" milestone.
+
+### A. The Evolution of Feedback Logic
+*   **Previous Approach (Section 27)**: Early attempts used "Closed-Loop State" feedback (Measured Position). This was found to be **Catastrophic** for Visual Aligning because simulation drift ($8e-06$) acted as OOD noise that "distracted" the U-Net from its visual goals.
+*   **Stabilized Approach (Section 28)**: We have officially transitioned to **Mixed-Loop Control**. Proprioception is now **Open-Loop** (trusting the Mental Map), while Vision remains **Closed-Loop** (watching the camera). This ensures the robot stays on the "Expert Manifold."
+
+### B. The Numerical Foundation (Scaling)
+*   The implementation of the **Scaling Bridge** (Section 29) solved the numerical signal-to-noise crisis. By normalizing actions to the $[-1, 1]$ range, we enabled the U-Net to distinguish between expert intent and diffusion noise.
+*   **Crucial Note**: All checkpoints prior to this update are **DEPRECATED**. Evaluation requires a `scaler.pkl` generated during the new standardized training phase.
+
+### C. Detailed Evidence & Summary
+For the full technical breakdown, refer to the incremental report:
+*   [FIX_12_P2_STRICT_PARITY_SUMMARY.md](file:///workspaces/FM-PCC/logs_in_develop/gen5_rewire_existing_visual_models_plan/New_gen5/fix_12/FIX_12_P2_STRICT_PARITY_SUMMARY.md)
+
+---
+
+## 32. The Symmetry Lock: Resolving Temporal Window Mismatches
+
+During the first validation run of FIX_12 P2, a critical runtime error was encountered:
+`RuntimeError: shape '[8, -1]' is invalid for input of size 15`
+
+### A. The Cause: Temporal Asymmetry
+*   **The Mismatch**: The D3IL body was providing a history of **5 steps** for robot coordinates, but the Gen5 U-Net Brain was expecting a history of **8 steps** (matching the 8 frames of video).
+*   **The Conflict**: The U-Net's internal temporal layers are hardcoded for the `window_size`. If one input modality (State) is shorter than the others (Vision), the tensor concatenation fails during the forward pass.
+
+### B. The Fix: Synchronized Windows
+*   **Action**: In `eval_ddpm_encdec_vision.py`, the `obs_seq_len` was forced to match the `window_size` (8).
+*   **Scientific Result**: This ensures **Temporal Symmetry**. Every modality (Vision + State) now provides an identical 8-step history to the U-Net, allowing for correct latent feature fusion.
+
+### C. Lesson Learned
+For Diffusion-based planners (U-Net/Transformer), **Temporal Alignment is Mandatory**. You cannot "mix and match" history lengths across different sensors without explicit adaptive padding in the backbone.
+
+---
+
+**Document updated for FM-PCC Diagnostic Phase 18 (Temporal Symmetry Lock Added).**
