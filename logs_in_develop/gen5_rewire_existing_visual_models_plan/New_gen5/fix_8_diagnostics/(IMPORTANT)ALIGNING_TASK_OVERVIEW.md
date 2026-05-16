@@ -464,4 +464,52 @@ If the robot fails context #5, you can immediately open `rollout_5_report.png` t
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 14 (Real-Time Diagnostics Active).**
+## 27. Dimensionality: 2D Task vs 3D Model
+
+A common point of confusion is whether the Aligning task is 2D or 3D.
+
+### A. The Reality
+*   **The Physical Task**: The box moves on a 2D table surface.
+*   **The Robot Control**: The Gen5 model uses **3D Actions (XYZ)**.
+*   **The Rationale**: While the task is planar, the robot end-effector must maintain a precise **Z-height** to stay in contact with the object. By using 3D actions, the U-Net learns the optimal "Interaction Height" directly from the Expert Dataset, rather than relying on a hardcoded Z-value which might be brittle across different simulation seeds.
+
+### B. Guiding Capacity
+The Gen5 trajectory (Horizon 8) provides sufficient guidance because it encodes both the **Spatial Path** and the **Temporal Velocity**. This "Foresight" allows the robot to anticipate corners and contact points more smoothly than legacy point-prediction models.
+
+---
+
+## 28. Mixed-Loop Control: The Vision vs. State Divergence
+
+A critical scientific finding in the D3IL replication is the "Mixed-Loop" nature of the evaluation.
+
+### A. Vision (Closed-Loop)
+*   **Mechanism**: The model processes a fresh camera image every $N$ steps (the re-planning interval).
+*   **Function**: Vision provides the **Ground Truth** for the box position and any environmental changes. It is the primary "Error Correction" signal.
+
+### B. Proprioception/State (Open-Loop)
+*   **Mechanism**: The model is conditioned on its **intended** (mental) position, not the **measured** (physical) simulation position.
+*   **Function**: This prevents "Jitter Feedthrough." By ignoring simulation drift ($8e-06$ IK errors), the model stays on the "Expert Manifold" it learned during training.
+
+---
+
+## 29. The SNR Barrier: Why Normalization is Mandatory
+
+Diffusion models (U-Net) operate by denoising Gaussian noise $\mathcal{N}(0, 1)$.
+
+*   **The Problem**: Raw robot actions are in meters (e.g., $0.005$m). If the signal is $0.005$ and the noise is $1.0$, the **Signal-to-Noise Ratio (SNR)** is effectively zero.
+*   **The Fix**: Data Normalization (Scaling) maps actions to the $[-1, 1]$ range. This brings the signal into the same "numerical power" as the noise, allowing the U-Net to "see" the trajectory it is trying to denoise.
+*   **Catastrophic Failure**: Without scaling, the model learns to output pure noise, resulting in the robot "jittering" or moving randomly.
+
+---
+
+## 30. Temporal Chunking: Why Horizon 10?
+
+The use of a 10-step horizon (chunking) instead of 1 step or 400 steps is a design trade-off for complex visual tasks.
+
+1.  **Why not 1 step?**: Single-step predictions lack temporal smoothness. The robot's motion would be jerky and "reactive" rather than "planned."
+2.  **Why not 400 steps?**: Predicting the entire task at once makes the model **Blind**. If the box slips at step 50, a 400-step plan made at step 1 cannot adjust.
+3.  **The "Goldilocks Zone" (Horizon 10)**: 10 steps are long enough to ensure **Smooth Velocity** (re-using the temporal backbone) but short enough to allow **Reactive Vision** (re-planning allows the model to "open its eyes" and correct for box movement).
+
+---
+
+**Document updated for FM-PCC Diagnostic Phase 16 (Scientific Replication Logic Added).**

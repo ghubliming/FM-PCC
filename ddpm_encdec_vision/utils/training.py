@@ -7,6 +7,8 @@ from diffusers.optimization import get_cosine_schedule_with_warmup
 
 from .arrays import batch_to_device
 
+from .scaler import Scaler
+
 def cycle(dl):
     while True:
         for data in dl:
@@ -35,6 +37,7 @@ class Trainer(object):
         self,
         diffusion_model,
         dataset,
+        scaler=None,
         train_test_split=1.0,
         ema_decay=0.995,
         train_batch_size=32,
@@ -54,6 +57,8 @@ class Trainer(object):
         self.ema = EMA(ema_decay)
         self.ema_model = copy.deepcopy(self.model)
         self.update_ema_every = update_ema_every
+
+        self.scaler = scaler
 
         self.step_start_ema = step_start_ema
         self.log_freq = log_freq
@@ -122,7 +127,14 @@ class Trainer(object):
         for step in range(n_train_steps):
             for _ in range(self.gradient_accumulate_every):
                 batch = next(self.train_dataloader)
-                batch = batch_to_device(batch, device=self.device)
+                batch = list(batch_to_device(batch, device=self.device))
+                
+                # Apply scaling if scaler is provided
+                if self.scaler is not None:
+                    # Index 2: robot_pos (input), Index 3: action (output)
+                    batch[2] = self.scaler.scale_input(batch[2])
+                    batch[3] = self.scaler.scale_output(batch[3])
+                
                 loss, infos = self.model.loss(*batch)
                 loss = loss / self.gradient_accumulate_every
                 loss.backward()
@@ -209,7 +221,13 @@ class Trainer(object):
         with torch.no_grad():
             for step in range(n_test):
                 batch = next(self.test_dataloader)
-                batch = batch_to_device(batch, device=self.device)
+                batch = list(batch_to_device(batch, device=self.device))
+                
+                # Apply scaling if scaler is provided
+                if self.scaler is not None:
+                    batch[2] = self.scaler.scale_input(batch[2])
+                    batch[3] = self.scaler.scale_output(batch[3])
+                
                 loss, infos = self.model.loss(*batch)
                 loss /= self.gradient_accumulate_every
             
