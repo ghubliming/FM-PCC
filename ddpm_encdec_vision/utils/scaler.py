@@ -33,8 +33,13 @@ class Scaler:
         
         # --- ZERO VARIANCE SAFETY (FIX #29) ---
         # If a dimension is constant, std is 0. Dividing by 0 causes 10^10 drift.
-        self.x_std[self.x_std < 1e-4] = 1.0
-        self.y_std[self.y_std < 1e-4] = 1.0
+        x_const = self.x_std < 1e-4
+        y_const = self.y_std < 1e-4
+        if x_const.any() or y_const.any():
+            log.warning(f'[ Scaler ] Detected constant dimensions! Fixing std=1.0 for indices: X:{torch.where(x_const)[0].cpu().numpy()}, Y:{torch.where(y_const)[0].cpu().numpy()}')
+        
+        self.x_std[x_const] = 1.0
+        self.y_std[y_const] = 1.0
         # --------------------------------------
         
         # Bounds for clipping
@@ -44,6 +49,8 @@ class Scaler:
         log.info(f'[ Scaler ] Initialized with scale_data={scale_data}')
         log.info(f'[ Scaler ] x_mean: {self.x_mean.cpu().numpy()}')
         log.info(f'[ Scaler ] y_mean: {self.y_mean.cpu().numpy()}')
+        log.info(f'[ Scaler ] x_std: {self.x_std.cpu().numpy()}')
+        log.info(f'[ Scaler ] y_std: {self.y_std.cpu().numpy()}')
 
     @torch.no_grad()
     def scale_input(self, x):
