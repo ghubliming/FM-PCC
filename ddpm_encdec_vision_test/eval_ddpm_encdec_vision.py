@@ -60,11 +60,11 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=5, action_seq_size=4, save_path=None, record_mode='all', scaler=None):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
-        self.obs_seq_len = obs_seq_len
+        self.obs_seq_len = window_size  # Force symmetry for U-Net (FIX #17)
         self.scaler = scaler
         
         # Open-Loop State (The "Mental Map")
