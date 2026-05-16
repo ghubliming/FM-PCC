@@ -76,8 +76,14 @@ class VisualUNet(nn.Module):
             "in_hand_image": inhand_imgs,
         }
         if state is not None:
-            # state is [B, T, 3]
-            obs_dict["robot_ee_pos"] = state.view(B * T, -1)
+            # Handle Asymmetric State Length (FIX #12)
+            # If state is [B, S, 3] and images are [B, T, 3, H, W] where S != T
+            if state.size(1) != T:
+                # Repeat the state to match the image sequence length
+                # We repeat the latest state or spread it across the window
+                state = state.repeat(1, T // state.size(1) + 1, 1)[:, :T, :]
+            
+            obs_dict["robot_ee_pos"] = state.reshape(B * T, -1)
             
         features = self.obs_encoder(obs_dict)
         features = features.view(B, T, -1)
