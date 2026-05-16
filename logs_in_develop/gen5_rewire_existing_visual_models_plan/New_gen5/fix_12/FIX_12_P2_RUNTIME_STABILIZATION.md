@@ -1,21 +1,33 @@
-# FIX_12_P2: Runtime Stabilization & Tensor Alignment
+# FIX_12: Phase 2 - Runtime Stabilization & Scientific Parity
 
-This document records the critical runtime fixes required to bridge the Gen5 U-Net Brain into the D3IL evaluation environment. These fixes ensure that temporal and dimensional expectations between the model and the simulator are perfectly aligned.
+## 1. The "Asymmetric Temporal" Solution
+**Problem**: The Gen5 U-Net (Temporal Brain) expects Symmetric inputs (e.g., 16 images + 16 robot positions). However, the training config used `obs_seq_len: 1`. This caused a shape mismatch in the `encode_visual` flattening logic (`B * T`), leading to "Total Wrong" predictions or runtime crashes.
 
-## 1. The Symmetry Lock (Temporal Synchronization)
-*   **Problem**: `RuntimeError: shape '[8, -1]' is invalid for input of size 15`
-*   **Technical Cause**: The D3IL body was providing a history of **5 steps** for robot coordinates (`obs_seq_len`), while the Gen5 U-Net was configured for a **8-step** window (`window_size`).
-*   **Fix**: Forced `self.obs_seq_len = window_size` in the `VisualAgentWrapper`. 
-*   **Scientific Result**: All input modalities (Vision + Proprioception) now provide a symmetric 8-step history to the U-Net, allowing for correct temporal feature fusion.
+**The Fix**:
+- **Temporal Auto-Sync**: Updated `VisualUNet.py` to handle `T_state != T_images`. If the state history is shorter than the image window, the latest state is **automatically repeated** to fill the temporal tensor.
+- **Architectural Parity**: Updated `eval_ddpm_encdec_vision.py` to strictly respect the model's `obs_seq_len` from its saved `diffusion_config.pkl`, preventing "information leakage" during testing.
 
-## 2. The Dimension Bridge (6D to 3D Slicing)
-*   **Problem**: `RuntimeError: The size of tensor a (6) must match the size of tensor b (3) at non-singleton dimension 2`
-*   **Technical Cause**: 
-    *   **Gen5 Output**: The Diffusion model predicts a 6D vector containing both the denoised **Robot State (3D)** and the **Action (3D)**.
-    *   **Scaler Knowledge**: The Scaler was trained only on the **3D Actions**.
-    *   **Conflict**: Attempting to inverse-scale the raw 6D output failed because the Scaler only had 3D statistics.
-*   **Fix**: Implemented explicit slicing `action_trajectory = trajectory[:, :, 3:]` before calling the inverse scaler.
-*   **Scientific Result**: We correctly isolate the action plan from the predicted state, ensuring numerical stability while respecting the model's multi-modality output.
+## 2. The "Rollout 0" Recovery
+**Problem**: `realtime_diagnostics` folders were empty because the `rollout_counter` initialized at `-1` and the reset logic was failing to capture the very first attempt (Seed 6, Trial 0).
+
+**The Fix**:
+- **Counter Shift**: Shifted the increment logic in `VisualAgentWrapper.reset()`. The counter now correctly transitions from `-1` to `0` at the start of the evaluation, and `_save_diagnostics` is triggered at the end of every valid rollout.
+- **Persistent Persistence**: Ensured `master_rollout_history` is only flushed if `step_counter > 0`, preventing ghost/empty files from cluttering the logs.
+
+## 3. Scientific Parity (FMv3ODE Standard)
+**Problem**: Evaluation reports were in an old format, making side-by-side comparison with the thesis ODE benchmarks difficult.
+
+**The Fix**:
+- **Replicated 7-Metric Report**: Standardized the output header and metrics:
+  - `------------------------Running [Task] - [Variant] ([Seed])----------------------------`
+  - Success Rate / Constraints / Steps / Violations / Time.
+- **Tracking Error**: Added the **Max MPC Tracking Error** calculation to the report to validate "Mental Map" fidelity.
+
+## 4. Final Numerical Grounding
+- **Verified**: The user has cleared the disk and **retrained**.
+- **Status**: The `scaler.pkl` is now clean (generated via `get_all_actions()` masked fix).
+- **Result**: "Speed of Light" errors ($10^{10}m/step$) are eliminated. The robot is now physically "grounded" in the workspace.
 
 ---
-**Status**: Runtime Environment Stabilized. Mathematical alignment confirmed.
+**Status**: STABILIZED
+**Action**: Proceed to full evaluation suite (Seed 6-10).
