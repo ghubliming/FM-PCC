@@ -156,6 +156,13 @@ class VisualDiffusionBridge(nn.Module):
         # Return loss and an empty info dict (Trainer expects loss, info)
         return loss_val, {}
 
+    def forward(self, cond):
+        """Standard forward pass for training/inference compatibility."""
+        # Unpack cond dictionary (Trainer/Evaluator standard)
+        bp_imgs, inhand_imgs, state = cond[0]
+        visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state=state)
+        return self.diffusion_model(visual_emb, None), None
+
     def predict(self, visual_emb):
         """Inference using D3IL's DDPM."""
         return self.diffusion_model(visual_emb, None)

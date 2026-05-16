@@ -301,19 +301,21 @@ class VisualAgentWrapper:
         if self.action_counter == self.action_seq_size:
             self.action_counter = 0
             self.model.eval()
+            # --- Gen5 Visual Inference Fix ---
+            # Call the model's forward method (or predict if applicable)
+            # The model returns actions directly [B, T, 3]
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
             trajectory, _ = self.model(cond)
             
-            # Slice the Action Part (indices 3-6) from the 6D Diffusion Output (FIX #17)
-            # Gen5 Diffusion predicts [State(3) + Action(3)] = 6D
-            action_trajectory = trajectory[:, :, 3:]
+            # 3D ACTION ONLY (No slicing! Index 3: would return empty)
+            action_trajectory = trajectory
             
-            # Inverse Scale only the Action trajectory
+            # Inverse Scale only if the scaler is active
             if self.scaler is not None:
                 action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
             
             self.curr_action_seq = action_trajectory[:, :self.action_seq_size, :]
-            # Record full plan (Actions only for diagnostics)
+            # Record for diagnostics
             self.history_full_plans.append(action_trajectory.detach().cpu().numpy().squeeze(0))
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
