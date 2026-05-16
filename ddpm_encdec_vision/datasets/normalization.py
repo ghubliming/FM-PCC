@@ -133,6 +133,13 @@ class GaussianNormalizer(Normalizer):
         super().__init__(*args, **kwargs)
         self.means = self.X.mean(axis=0)
         self.stds = self.X.std(axis=0)
+        
+        # --- ZERO VARIANCE SAFETY (FIX #25) ---
+        # If a dimension is constant (e.g. Z-height), std is 0.
+        # Dividing by 0 causes the 10^10 hypersonic drift.
+        self.stds[self.stds < 1e-4] = 1.0 
+        # --------------------------------------
+        
         self.z = 1
 
     def __repr__(self):

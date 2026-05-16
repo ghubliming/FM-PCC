@@ -588,6 +588,27 @@ The training initialization was updated to use **Masked Data** only:
 *   `all_act = dataset.get_all_actions()`
 *   **Result**: This forces the Scaler to compute its Mean and Std using only the **Real Human Demonstrations**, ignoring the padding. This restores the "Numerical Grounding" of the model.
 
+
+## 35. The Symmetry Lock & Rollout Recovery: Final Stability
+
+The final stabilization phase resolved the discrepancies between the Gen5 U-Net's "Temporal Brain" and the D3IL configuration settings.
+
+### A. Temporal Auto-Sync (The "Confused AI" Fix)
+*   **The Problem**: The Gen5 U-Net expects a symmetric temporal window (e.g., 16 images + 16 positions). Training with `obs_seq_len: 1` caused a shape mismatch that corrupted the Hand-Eye spatial alignment.
+*   **The Fix**: Implemented **Dynamic Temporal Repeating** in `VisualUNet.py`. The code now automatically detects the length of the robot's history. If only 1 position is provided, it is "stretched" across all 16 video frames.
+*   **Result**: The AI's "brain" is no longer confused by mismatched tensors, restoring purposeful movement in the workspace.
+
+### B. Rollout 0 Recovery (Empty Diagnostics Fix)
+*   **The Problem**: Real-time diagnostics were missing because the rollout counter was misaligned (starting at `-1`).
+*   **The Fix**: Updated the `VisualAgentWrapper.reset()` logic to synchronize the counter before saving.
+*   **Result**: `realtime_diagnostics` folders now correctly populate with `rollout_0.png` and `rollout_0_data.pkl` from the very first step of the evaluation.
+
+### C. Scientific Parity (FMv3ODE Replication)
+*   **Standardization**: The evaluation log format has been perfectly replicated from the FMv3ODE `eval_flow_matching_v3_drifting.py` script.
+*   **Metric**: Added **Tracking Error** to the final report, allowing for a quantitative measure of the "Mental Map" fidelity against the simulation reality.
+
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 20 (Numerical Grounding Finalized).**
+**Status: STABILIZED (Gen5 Visual Pipeline ready for full scientific benchmarking).**
+**Date**: 2026-05-16
+**Revision**: FIX_12_P2

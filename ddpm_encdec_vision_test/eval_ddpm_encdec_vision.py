@@ -571,43 +571,46 @@ if __name__ == '__main__':
                 fig, axes = plt.subplots(n_plot, 6, figsize=(30, 5 * n_plot), squeeze=False)
                 fig.suptitle(f'Visual Aligning - {variant} (Seed {seed})')
                 
-                # Aggregate Plot: all paths overlaid
-                fig_all, ax_all = plt.subplots(figsize=(10, 10))
-                ax_all.set_title(f'Aggregate Paths - {variant}')
-                
                 for i in range(n_plot):
                     obs_traj = obs_all[i] # [T, 3]
                     plans_list = sampled_trajectories_all[i] # List of [8, 3]
                     
-                    # Col 3: Plan Delta Stats (Magnitude)
-                    axes[i, 3].plot(np.linalg.norm(obs_traj[1:] - obs_traj[:-1], axis=1), color='gray', alpha=0.5)
+                    # Panel 0: X Position
+                    axes[i, 0].plot(obs_traj[:, 0], 'r-', label='Real X')
+                    axes[i, 0].set_title("X Position")
+                    
+                    # Panel 1: Y Position
+                    axes[i, 1].plot(obs_traj[:, 1], 'g-', label='Real Y')
+                    axes[i, 1].set_title("Y Position")
+                    
+                    # Panel 2: Z Position (Height)
+                    axes[i, 2].plot(obs_traj[:, 2], 'b-', label='Real Z')
+                    axes[i, 2].set_title("Z Height")
+
+                    # Panel 3: Step Magnitude (Drift Check)
+                    vels = np.linalg.norm(obs_traj[1:] - obs_traj[:-1], axis=1)
+                    axes[i, 3].plot(vels, color='gray', alpha=0.5)
                     axes[i, 3].set_title(f"Step Magnitude")
 
-                    # Col 4: XY Path (Real)
-                    axes[i, 4].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', label='Real Path')
-                    axes[i, 4].plot(obs_traj[0, 0], obs_traj[0, 1], 'go', label='Start')
-                    axes[i, 4].plot(obs_traj[-1, 0], obs_traj[-1, 1], 'ro', label='End')
-                    axes[i, 4].set_title("XY Path")
-                    axes[i, 4].legend()
+                    # Panel 4: XY Path (Real)
+                    axes[i, 4].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', linewidth=2)
+                    axes[i, 4].plot(obs_traj[0, 0], obs_traj[0, 1], 'go', markersize=10) # Start
+                    axes[i, 4].plot(obs_traj[-1, 0], obs_traj[-1, 1], 'ro', markersize=10) # End
+                    axes[i, 4].set_title("XY Trajectory")
                     
-                    # Col 5: XY Path + Sampled Plans (FIXED: Absolute conversion)
-                    axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.5, label='Real')
-                    # Plot plans (blue lines)
+                    # Panel 5: MPC Foresight (Blue)
+                    axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.3)
                     plan_starts = agent.master_rollout_history[f"rollout_{i}"]['plan_start_positions']
                     for p_idx, plan_deltas in enumerate(plans_list):
-                        if p_idx % 4 == 0: # Sparse plotting for clarity
+                        if p_idx % 4 == 0: 
                             start_pos = plan_starts[min(p_idx, len(plan_starts)-1)]
-                            # Convert relative deltas to absolute trajectory
                             abs_plan = start_pos + np.cumsum(plan_deltas[:, :3], axis=0)
-                            axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1], 'b-', alpha=0.4)
-                    axes[i, 5].set_title("Foresight (Blue) vs Real (Black)")
+                            axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1], 'b-', alpha=0.6)
+                    axes[i, 5].set_title("MPC Foresight (Blue)")
 
                 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
                 fig.savefig(f'{save_path}/{variant}.png')
                 plt.close(fig)
-                
-                fig_all.savefig(f'{save_path}/all.png')
-                plt.close(fig_all)
 
                 # --- THE SCIENTIFIC 7-METRIC REPORT (FMv3ODE Standard Replication) ---
                 print(f'------------------------Running aligning-d3il-visual - default - {variant} ({seed})----------------------------')
