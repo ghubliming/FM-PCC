@@ -530,22 +530,22 @@ For the full technical breakdown, refer to the incremental report:
 
 ---
 
-## 32. The Symmetry Lock: Resolving Temporal Window Mismatches
+## 32. The Dimension Bridge: 6D vs. 3D Latent Alignment
 
-During the first validation run of FIX_12 P2, a critical runtime error was encountered:
-`RuntimeError: shape '[8, -1]' is invalid for input of size 15`
+A second critical runtime barrier was the disagreement between the **Brain (Gen5)** and the **Body (D3IL)** regarding tensor dimensions.
 
-### A. The Cause: Temporal Asymmetry
-*   **The Mismatch**: The D3IL body was providing a history of **5 steps** for robot coordinates, but the Gen5 U-Net Brain was expecting a history of **8 steps** (matching the 8 frames of video).
-*   **The Conflict**: The U-Net's internal temporal layers are hardcoded for the `window_size`. If one input modality (State) is shorter than the others (Vision), the tensor concatenation fails during the forward pass.
+### A. The Diagnosis
+*   **The Gen5 Brain (U-Net Output)**: In the FM-PCC framework, the Diffusion model predicts a **6D vector** ($3 \times$ State $+ 3 \times$ Action). This is because the U-Net denoises the entire trajectory including the robot's proprioception to ensure global smoothness.
+*   **The D3IL Body (The Scaler)**: Our implementation of the D3IL Scaler was trained strictly on the **3D Action** (the deltas) to match the baseline's behavior.
+*   **The Conflict**: When calling `inverse_scale_output(trajectory)`, the scaler attempted to apply 3D statistics to a 6D tensor, causing a `RuntimeError`.
 
-### B. The Fix: Synchronized Windows
-*   **Action**: In `eval_ddpm_encdec_vision.py`, the `obs_seq_len` was forced to match the `window_size` (8).
-*   **Scientific Result**: This ensures **Temporal Symmetry**. Every modality (Vision + State) now provides an identical 8-step history to the U-Net, allowing for correct latent feature fusion.
+### B. The Fix: Slicing Logic
+To bridge this gap, the `eval_ddpm_encdec_vision.py` script was updated to slice the action component out of the 6D diffusion output **BEFORE** applying the inverse scaler.
 
-### C. Lesson Learned
-For Diffusion-based planners (U-Net/Transformer), **Temporal Alignment is Mandatory**. You cannot "mix and match" history lengths across different sensors without explicit adaptive padding in the backbone.
+**Slicing Logic:**
+1.  **`Trajectory[:, :, :3]` (Denoised State)**: We ignore this component because we have a "Mental Map" for proprioception.
+2.  **`Trajectory[:, :, 3:6]` (Denoised Action)**: This is the component we scale and execute.
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 18 (Temporal Symmetry Lock Added).**
+**Document updated for FM-PCC Diagnostic Phase 18 (Dimension Bridge Logic Added).**

@@ -302,13 +302,17 @@ class VisualAgentWrapper:
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
             trajectory, _ = self.model(cond)
             
-            # Inverse Scale Output Trajectory (FIX #17)
-            if self.scaler is not None:
-                trajectory = self.scaler.inverse_scale_output(trajectory)
+            # Slice the Action Part (indices 3-6) from the 6D Diffusion Output (FIX #17)
+            # Gen5 Diffusion predicts [State(3) + Action(3)] = 6D
+            action_trajectory = trajectory[:, :, 3:]
             
-            self.curr_action_seq = trajectory[:, :self.action_seq_size, :3]
-            # Record full plan
-            self.history_full_plans.append(trajectory.detach().cpu().numpy().squeeze(0))
+            # Inverse Scale only the Action trajectory
+            if self.scaler is not None:
+                action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
+            
+            self.curr_action_seq = action_trajectory[:, :self.action_seq_size, :]
+            # Record full plan (Actions only for diagnostics)
+            self.history_full_plans.append(action_trajectory.detach().cpu().numpy().squeeze(0))
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy()
