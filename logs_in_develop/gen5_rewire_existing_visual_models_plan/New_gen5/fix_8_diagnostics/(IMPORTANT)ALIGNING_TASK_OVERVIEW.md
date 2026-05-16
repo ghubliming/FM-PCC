@@ -588,6 +588,24 @@ The training initialization was updated to use **Masked Data** only:
 *   `all_act = dataset.get_all_actions()`
 *   **Result**: This forces the Scaler to compute its Mean and Std using only the **Real Human Demonstrations**, ignoring the padding. This restores the "Numerical Grounding" of the model.
 
+### Section 36: The Stabilization Finish (2026-05-16)
+**Primary Resolution**: Eliminated the $10^{10}$ Hypersonic Drift and restored full diagnostic visibility.
+
+1.  **Zero-Variance Safety Lock**:
+    - Modified `GaussianNormalizer` in `normalization.py`.
+    - Enforced `std >= 1e-4` to prevent division-by-zero on constant dimensions (Z-height).
+    - **Result**: Trajectories are now numerically grounded in physical units.
+
+2.  **6-Panel Scientific Suite**:
+    - Upgraded `eval_ddpm_encdec_vision.py` plotting logic.
+    - Added X/Y/Z time-series and Blue "Ghost" Foresight overlay.
+    - **Result**: Full transparency into MPC planning vs Real execution.
+
+3.  **The Symmetry Lock**:
+    - Finalized **`obs_seq_len: 16`** as the standard for Gen5 Visual Alignment.
+    - Ensured Hand-Eye synchronization across the 16-frame window.
+
+**Current Pipeline Status**: **BATTLE-READY**. Ready for full 500k-step benchmark suite.
 
 ## 35. The Symmetry Lock & Rollout Recovery: Final Stability
 
