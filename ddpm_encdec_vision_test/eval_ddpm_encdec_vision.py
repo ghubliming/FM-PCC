@@ -64,7 +64,7 @@ class VisualAgentWrapper:
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
-        self.obs_seq_len = window_size  # Force symmetry for U-Net (FIX #17)
+        self.obs_seq_len = obs_seq_len  # Respect trained config (FIX #12)
         self.scaler = scaler
         
         # Open-Loop State (The "Mental Map")
@@ -109,8 +109,8 @@ class VisualAgentWrapper:
     
     def reset(self):
         """Called by Aligning_Sim at the start of each rollout."""
-        # Flush previous rollout data
-        if self.rollout_counter >= 0:
+        # Flush previous rollout data (Only if we actually ran one)
+        if self.rollout_counter >= 0 and self.step_counter > 0:
             self.master_rollout_history[f"rollout_{self.rollout_counter}"] = {
                 "real_robot_pos": np.array(self.history_real_pos),
                 "desired_actions": np.array(self.history_desired_actions),
@@ -118,13 +118,17 @@ class VisualAgentWrapper:
                 "plan_start_positions": np.array(self.history_real_pos)[::self.action_seq_size, :]
             }
         
-        # Real-time Export (FIX #12)
-        if hasattr(self, 'save_path') and self.save_path is not None:
-            self._export_rollout_realtime(self.rollout_counter)
+            # Real-time Export (FIX #12)
+            if hasattr(self, 'save_path') and self.save_path is not None:
+                self._export_rollout_realtime(self.rollout_counter)
+                
+            self.history_n_steps.append(self.step_counter)
+            self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
+            self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
             
-        self.history_n_steps.append(self.step_counter)
-        self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
-        self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
+            # Save diagnostics from previous rollout
+            if self.record_mode != 'none' and len(self.video_frames) > 0:
+                self._save_diagnostics(self.rollout_counter)
             
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
@@ -139,12 +143,10 @@ class VisualAgentWrapper:
         self.inhand_image_context.clear()
         self.des_robot_pos_context.clear()
         self.action_counter = self.action_seq_size
+        
+        # Prepare for the NEXT rollout
         self.rollout_counter += 1
         self.step_counter = 0
-        
-        # Save diagnostics from previous rollout
-        if self.record_mode != 'none' and len(self.video_frames) > 0:
-            self._save_diagnostics(self.rollout_counter - 1)
         self.video_frames = []
     
     def _save_diagnostics(self, rollout_idx, custom_path=None, custom_frames=None):
