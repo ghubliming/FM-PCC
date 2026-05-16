@@ -135,13 +135,24 @@ class Trainer(object):
                     batch[2] = self.scaler.scale_input(batch[2])
                     batch[3] = self.scaler.scale_output(batch[3])
 
-                # --- D3IL Temporal Parity Fix ---
-                # Match D3IL's DiffusionAgent.train_step (temporal shift)
-                # state: [B, T, 3] -> [B, obs_seq_len, 3]
-                # act:   [B, T, 3] -> [B, pred_horizon, 3]
+                # --- Smart Temporal Parity Fix ---
+                # Match D3IL temporal shift ONLY for action-only models.
+                # State-Action models (6D) require matched lengths.
                 obs_seq_len = getattr(self.model, 'obs_seq_len', 1)
-                batch[2] = batch[2][:, :obs_seq_len, :]
-                batch[3] = batch[3][:, obs_seq_len-1:, :]
+                
+                # We check if the model is the 3D D3IL Bridge or the 6D State-Action model
+                is_d3il_bridge = 'd3il_visual_bridge' in str(type(self.model)).lower()
+                
+                if is_d3il_bridge:
+                    # D3IL Parity: Predict future actions from past obs
+                    batch[2] = batch[2][:, :obs_seq_len, :]
+                    batch[3] = batch[3][:, obs_seq_len-1:, :]
+                else:
+                    # Gen5/Avoiding Parity: Predict matched [State, Action] sequence
+                    # Usually windowed at the dataset level, so we just clip to horizon
+                    horizon = getattr(self.model, 'horizon', batch[2].shape[1])
+                    batch[2] = batch[2][:, :horizon, :]
+                    batch[3] = batch[3][:, :horizon, :]
                 # -------------------------------
 
                 loss, infos = self.model.loss(*batch)
