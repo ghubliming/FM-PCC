@@ -8,7 +8,7 @@ import os
 # Ensure d3il is in path if not already
 sys.path.append(os.path.abspath('d3il'))
 
-from agents.utils.scaler import Scaler
+from ..utils.scaler import Scaler
 from environments.dataset.aligning_dataset import Aligning_Dataset
 
 class VisualDiffusionBridge(nn.Module):
