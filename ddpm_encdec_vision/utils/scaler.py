@@ -31,6 +31,12 @@ class Scaler:
         self.y_mean = torch.from_numpy(y_data.mean(0)).float().to(device)
         self.y_std = torch.from_numpy(y_data.std(0)).float().to(device)
         
+        # --- ZERO VARIANCE SAFETY (FIX #29) ---
+        # If a dimension is constant, std is 0. Dividing by 0 causes 10^10 drift.
+        self.x_std[self.x_std < 1e-4] = 1.0
+        self.y_std[self.y_std < 1e-4] = 1.0
+        # --------------------------------------
+        
         # Bounds for clipping
         self.y_min = torch.from_numpy(y_data.min(0)).float().to(device)
         self.y_max = torch.from_numpy(y_data.max(0)).float().to(device)
