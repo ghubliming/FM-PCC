@@ -31,21 +31,37 @@ class Scaler:
         self.y_mean = torch.from_numpy(y_data.mean(0)).float().to(device)
         self.y_std = torch.from_numpy(y_data.std(0)).float().to(device)
         
-        # --- ZERO VARIANCE SAFETY (FIX #29) ---
-        # If a dimension is constant, std is 0. Dividing by 0 causes 10^10 drift.
-        x_const = self.x_std < 1e-4
-        y_const = self.y_std < 1e-4
-        if x_const.any() or y_const.any():
-            log.warning(f'[ Scaler ] Detected constant dimensions! Fixing std=1.0 for indices: X:{torch.where(x_const)[0].cpu().numpy()}, Y:{torch.where(y_const)[0].cpu().numpy()}')
+        # --- NUMERICAL STABILITY SHIELD (FIX #33) ---
+        # We use a floor of 1e-2 for the standard deviation to prevent the 10^12 singularity.
+        # Constant dimensions will have std=0, but we use 1.0 for the divisor to treat them as raw offsets.
+        self.x_std_safe = torch.clamp(self.x_std, min=1e-2)
+        self.y_std_safe = torch.clamp(self.y_std, min=1e-2)
         
-        self.x_std[x_const] = 1.0
-        self.y_std[y_const] = 1.0
-        # --------------------------------------
+        # Log the stabilization
+        log.info(f'[ Scaler ] Stabilized X-Std min: {self.x_std_safe.min().item():.4f}')
+        log.info(f'[ Scaler ] Stabilized Y-Std min: {self.y_std_safe.min().item():.4f}')
         
-        # Bounds for clipping
+        # Bounds for clipping (Raw)
         self.y_min = torch.from_numpy(y_data.min(0)).float().to(device)
         self.y_max = torch.from_numpy(y_data.max(0)).float().to(device)
         
+        # --- API COMPATIBILITY LAYER (D3IL Parity) ---
+        # D3IL models expect self.y_bounds to be the [min, max] of the SCALED data.
+        self.y_bounds = np.zeros((2, y_data.shape[-1]))
+        if self.scale_data:
+            # We use the raw min/max but scale them using our Safe Std
+            y_min_np = y_data.min(0)
+            y_max_np = y_data.max(0)
+            y_mean_np = self.y_mean.cpu().numpy()
+            y_std_safe_np = self.y_std_safe.cpu().numpy()
+            
+            self.y_bounds[0, :] = (y_min_np - y_mean_np) / y_std_safe_np
+            self.y_bounds[1, :] = (y_max_np - y_mean_np) / y_std_safe_np
+        else:
+            self.y_bounds[0, :] = y_data.min(0)
+            self.y_bounds[1, :] = y_data.max(0)
+        # ---------------------------------------------
+
         log.info(f'[ Scaler ] Initialized with scale_data={scale_data}')
         log.info(f'[ Scaler ] x_mean: {self.x_mean.cpu().numpy()}')
         log.info(f'[ Scaler ] y_mean: {self.y_mean.cpu().numpy()}')
@@ -56,29 +72,25 @@ class Scaler:
     def scale_input(self, x):
         if not self.scale_data:
             return x.to(self.device).float()
-        
-        x = x.to(self.device).float()
-        # Handle sequence padding or varying shapes by broadcasting mean/std
-        out = (x - self.x_mean) / (self.x_std + 1e-12)
-        return out
+        return (x.to(self.device).float() - self.x_mean) / self.x_std_safe
 
     @torch.no_grad()
     def scale_output(self, y):
         if not self.scale_data:
             return y.to(self.device).float()
-            
-        y = y.to(self.device).float()
-        out = (y - self.y_mean) / (self.y_std + 1e-12)
-        return out
+        return (y.to(self.device).float() - self.y_mean) / self.y_std_safe
+
+    @torch.no_grad()
+    def inverse_scale_input(self, x):
+        if not self.scale_data:
+            return x.to(self.device).float()
+        return x.to(self.device).float() * self.x_std_safe + self.x_mean
 
     @torch.no_grad()
     def inverse_scale_output(self, y):
         if not self.scale_data:
             return y.to(self.device).float()
-            
-        y = y.to(self.device).float()
-        out = y * (self.y_std + 1e-12) + self.y_mean
-        return out
+        return y.to(self.device).float() * self.y_std_safe + self.y_mean
 
     @torch.no_grad()
     def clip_action(self, y):

@@ -301,13 +301,17 @@ class VisualAgentWrapper:
         if self.action_counter == self.action_seq_size:
             self.action_counter = 0
             self.model.eval()
-            # --- Gen5 Visual Inference Fix (Restored Slice) ---
-            # Model returns [State(3) + Action(3)] = 6D
+            # --- Gen5 Architectural Parity Fix ---
+            # Detect if model is 3D (Action-Only) or 6D (State-Action)
             cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
             trajectory, _ = self.model(cond)
             
-            # Slice the Action Part (indices 3-6)
-            action_trajectory = trajectory[:, :, 3:]
+            if trajectory.shape[-1] == 3:
+                # 3D Model (D3IL style): Use all 3 dims as actions
+                action_trajectory = trajectory
+            else:
+                # 6D Model (Avoiding style): Actions are the FIRST 3 dims [act, obs]
+                action_trajectory = trajectory[:, :, :3]
             
             # Inverse Scale (Now safe with Fix #29)
             if self.scaler is not None:
