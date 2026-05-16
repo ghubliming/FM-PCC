@@ -38,13 +38,13 @@
 *   **Solution**: Shifted `rollout_counter` logic. Added safety checks to ensure `master_rollout_history` only exports when data actually exists.
 *   **Impact**: Full scientific report generated from trial #1.
 
-### ✅ Fix 31: Scalar Parity Lock (The "Hypersonic" Killer)
-*   **File**: `scripts/train.py`
-*   **Issue**: Hypersonic Drift ($10^{10}$) caused by a Trainer/Evaluator mismatch. The Trainer was ignoring the scaler (training on Raw data), while the Evaluator was using it (running on Scaled data).
-*   **Solution**: Explicitly instantiated the `Scaler` in the training script and passed it to the `Trainer` object. 
-*   **Impact**: Both scripts now speak the same mathematical language (Normalized Units). The model no longer panics when receiving scaled inputs, breaking the feedback loop.
+### ✅ Fix 32: Global Import Synchronization
+*   **File**: `ddpm_encdec_vision/models/d3il_visual_bridge.py`
+*   **Issue**: The model was importing an unpatched version of the `Scaler` from a submodule, bypassing the local numerical fixes.
+*   **Solution**: Redirected the import to use the local, patched `ddpm_encdec_vision.utils.scaler`.
+*   **Impact**: Model-internal clamping and action bounds are now numerically stable.
 
 ---
 
 ### 🏁 FINAL SYSTEM STATUS: STABILIZED
-The Gen5 Visual Pipeline is now mathematically consistent, numerically safe, and diagnostically transparent.
+The Gen5 Visual Pipeline is now mathematically consistent, numerically safe, and diagnostically transparent across all submodules.

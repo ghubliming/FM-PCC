@@ -27,14 +27,19 @@ The failure was not due to a bug in the simulator or the U-Net architecture, but
     - The evaluator then **Inverse-Scaled** this action (multiplying it by the dataset's standard deviation).
     - This created a **Positive Feedback Loop**: Error -> Huge Action -> Even Larger Error -> $10^{10}$ Drift.
 
+4.  **The "Dual-Scaler" Ghost (Final Discovery)**:
+    - **Issue**: Even after patching the local `scaler.py`, the model continued to drift.
+    - **Discovery**: The `VisualDiffusionBridge` was importing `Scaler` from `d3il/agents/utils/scaler.py` instead of the local project folder.
+    - **Result**: The model's internal `min_action` and `max_action` bounds were being calculated using the **Unpatched** (unsafe) logic, causing internal numerical instability during inference.
+
 ---
 
 ### 🛠️ Resolution
-The fix achieved **Full Pipeline Parity**:
+The fix achieved **Triple-Lock Pipeline Parity**:
 
-1.  **Trainer Update**: Modified `scripts/train.py` to explicitly create a `Scaler` from a dataset sample and pass it to the `Trainer`.
-2.  **Normalization Lock**: The model now trains on normalized data $[-1, 1]$, matching the evaluator's signal processing.
-3.  **Zero-Variance Protection**: Added a safety check in `scaler.py` to force `std = 1.0` for constant dimensions (like Z-height), preventing division-by-zero during the scaling process.
+1.  **Trainer Update**: Modified `scripts/train.py` to explicitly create a `Scaler` and pass it to the `Trainer`.
+2.  **Import Redirection**: Pointed `VisualDiffusionBridge` to the patched `ddpm_encdec_vision.utils.scaler.Scaler`.
+3.  **Zero-Variance Protection**: The "Safe Normalizer" logic is now active in Training, Model Internal Bounds, and Evaluation.
 
 ---
 
