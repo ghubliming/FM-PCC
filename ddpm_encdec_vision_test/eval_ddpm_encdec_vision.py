@@ -113,9 +113,14 @@ class VisualAgentWrapper:
                 "full_plans": np.array(self.history_full_plans),
                 "plan_start_positions": np.array(self.history_real_pos)[::self.action_seq_size, :]
             }
-            self.history_n_steps.append(self.step_counter)
-            self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
-            self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
+        
+        # Real-time Export (FIX #12)
+        if hasattr(self, 'save_path') and self.save_path is not None:
+            self._export_rollout_realtime(self.rollout_counter)
+            
+        self.history_n_steps.append(self.step_counter)
+        self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
+        self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
             
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
@@ -158,6 +163,68 @@ class VisualAgentWrapper:
                     print(f"[ WARNING ] GIF saving failed: {e}.")
         except Exception as e:
             print(f"[ WARNING ] Diagnostics engine failed: {e}. Skipping.")
+
+    def _export_rollout_realtime(self, rollout_idx):
+        """Generates scientific PNG and PKL for the rollout immediately."""
+        try:
+            diag_path = os.path.join(self.save_path, "realtime_diagnostics")
+            os.makedirs(diag_path, exist_ok=True)
+            
+            # 1. Save data pickle
+            data = self.master_rollout_history[f"rollout_{rollout_idx}"]
+            with open(os.path.join(diag_path, f"rollout_{rollout_idx}_data.pkl"), "wb") as f:
+                pickle.dump(data, f)
+                
+            # 2. Generate PNG Plot (Scientific)
+            import matplotlib.pyplot as plt
+            fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+            fig.suptitle(f"Rollout {rollout_idx} - MPC vs Real vs Expert")
+            
+            real_pos = data['real_robot_pos']
+            plans = data['full_plans']
+            plan_starts = data['plan_start_positions']
+            
+            # Panel 1: XY Trajectory
+            axes[0, 0].plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=2, label='Real Path')
+            for p_idx, plan in enumerate(plans):
+                if p_idx % 4 == 0:
+                    start = plan_starts[min(p_idx, len(plan_starts)-1)]
+                    abs_plan = start + np.cumsum(plan[:, :3], axis=0)
+                    axes[0, 0].plot(abs_plan[:, 0], abs_plan[:, 1], 'b-', alpha=0.3)
+            axes[0, 0].set_title("XY Projection (MPC Foresight in Blue)")
+            axes[0, 0].set_xlabel("X (m)")
+            axes[0, 0].set_ylabel("Y (m)")
+            axes[0, 0].legend()
+            
+            # Panel 2: X over Time
+            axes[0, 1].plot(real_pos[:, 0], 'k-', label='Real X')
+            axes[0, 1].set_title("X Position over Steps")
+            axes[0, 1].set_ylabel("Meters")
+            
+            # Panel 3: Y over Time
+            axes[0, 2].plot(real_pos[:, 1], 'k-', label='Real Y')
+            axes[0, 2].set_title("Y Position over Steps")
+            
+            # Panel 4: Z over Time (Force/Contact check)
+            axes[1, 0].plot(real_pos[:, 2], 'r-', label='Real Z')
+            axes[1, 0].set_title("Z Height (Contact Stability)")
+            
+            # Panel 5: Tracking Error
+            if len(self.curr_rollout_tracking_errors) > 0:
+                axes[1, 1].plot(self.curr_rollout_tracking_errors, 'g-')
+                axes[1, 1].set_title("MPC Tracking Error (m)")
+            
+            # Panel 6: Velocities
+            vels = np.linalg.norm(real_pos[1:] - real_pos[:-1], axis=1)
+            axes[1, 2].plot(vels, 'm-')
+            axes[1, 2].set_title("End-Effector Velocity")
+            
+            plt.tight_layout()
+            fig.savefig(os.path.join(diag_path, f"rollout_{rollout_idx}_report.png"))
+            plt.close(fig)
+            
+        except Exception as e:
+            print(f"[ diag ] Real-time export failed for rollout {rollout_idx}: {e}")
 
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
@@ -388,6 +455,7 @@ if __name__ == '__main__':
                     agent._save_diagnostics(agent.rollout_counter)
                 
                 if agent.rollout_counter >= 0:
+                    agent.save_path = save_path # Enable real-time logs (FIX #12)
                     agent.master_rollout_history[f"rollout_{agent.rollout_counter}"] = {
                         "real_robot_pos": np.array(agent.history_real_pos),
                         "desired_actions": np.array(agent.history_desired_actions),
