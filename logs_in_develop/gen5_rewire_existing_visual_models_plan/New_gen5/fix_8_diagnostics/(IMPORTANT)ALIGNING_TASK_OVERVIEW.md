@@ -231,7 +231,42 @@ Training is typically performed once for **100,000 to 500,000 steps** on a GPU. 
 
 ## 17. End-to-End Training Philosophy
 
-A final clarification for the Gen5 architecture: The ResNet Encoder and the U-Net Backbone are **NOT trained as separate blocks**.
+A common point of confusion is whether the ResNet and U-Net are trained in two separate stages. In the Gen5 architecture, the answer is **No**. There is only **one training process**.
+
+### A. How it is achieved in Code (PyTorch Logic)
+The "Glue" that binds the two models together is the **`VisualUNet`** class (found in `ddpm_encdec_vision/models/visual_unet.py`).
+
+1.  **Single Container:** The `VisualUNet` class contains both `self.obs_encoder` (ResNet) and `self.backbone` (U-Net) as its children.
+2.  **The Optimizer's View:** When the training script starts, it tells the Optimizer (Adam) to watch `model.parameters()`. Because the ResNet is inside the model, the Optimizer "sees" the ResNet weights and the U-Net weights as **one big list of numbers** to improve.
+3.  **Differentiable Bridge:** In the `forward()` pass:
+    *   Step 1: Raw images $\to$ ResNet $\to$ **Visual Embedding**.
+    *   Step 2: **Visual Embedding** $\to$ U-Net $\to$ **Trajectory**.
+    *   Because the Visual Embedding is a direct output of the ResNet and a direct input to the U-Net, PyTorch builds a **single computational graph**. 
+
+### B. The "Two-Stage" vs. "End-to-End" Difference
+*   **Two-Stage (NOT used here):** You train a ResNet to classify objects, lock it, and then use its fixed features to train a robot. (The ResNet never learns about the robot's needs).
+*   **End-to-End (Gen5 Method):** The ResNet is wide open. If the U-Net realizes it needs to see the *corners* of the box better to make a better plan, it sends a signal back to the ResNet to adjust its convolutional filters to highlight corners.
+
+**Summary:** The ResNet and U-Net are "partners" in a single optimization loop. They learn to communicate with each other from scratch.
+
+### C. Parity with D3IL (ACT) Principle
+You may wonder if this "End-to-End" approach is an experimental choice for Gen5. It is not. It is a strict adherence to the **D3IL Golden Standard**.
+
+1.  **D3IL Implementation:** If you inspect `d3il/agents/act_vision_agent.py`, you will see the `ActPolicy` class. It bundles the **ACT Transformer** and the **ResNet Encoder** into one object, exactly like our `VisualUNet`.
+2.  **Shared Principle:** Both D3IL and Gen5 follow the same philosophy: **Vision should not be a "witness"; it must be an "active participant."**
+    *   By training together, the ResNet learns what the U-Net/Transformer needs to see to succeed.
+    *   If we used a fixed, pre-trained ImageNet ResNet without training it further, the robot would likely be "clumsy" because it would be looking for "cats and dogs" (ImageNet features) instead of "box corners and rod tips" (Aligning features).
+
+**Conclusion:** Gen5's training philosophy is 100% consistent with the D3IL benchmarks. We have swapped the "Backbone" (U-Net instead of Transformer), but we kept the "Neural Connectivity" (End-to-End) identical.
+
+### D. Final Technical Confirmation
+To answer your question directly: **Yes.** 
+
+*   We do **not** have a "ResNet training phase."
+*   We do **not** have a "U-Net training phase."
+*   We have a **Joint Training Phase** where the Optimizer calculates one single loss and updates **all weights in the ResNet and all weights in the U-Net at the exact same time.**
+
+**One Model, One Gradient, One Goal.**
 
 ---
 
@@ -379,4 +414,54 @@ For your thesis, this is the most critical scientific distinction. Even if both 
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 13 (Backbone Comparison Complete).**
+## 25. Evaluation Log Guide: Expert References & System Resources
+
+When initiating an evaluation rollout, you will encounter specific console logs. This section explains their technical meaning for your experiment records.
+
+### A. Training Continuity
+> `[ utils/training ] Restored loss history from checkpoint at step 48000`
+*   **Source Code:** `ddpm_encdec_vision/utils/training.py:L335`
+*   **Meaning:** The script has successfully located a saved model checkpoint at **48,000 training steps**.
+*   **Significance:** It is loading the "learned intelligence" of the robot from this specific point in its training history. All performance metrics reported in the evaluation are tied to this 48k-step maturity level.
+
+### B. The "Expert" Visual Baseline
+> `[ expert ] Generating 3 reference videos from dataset...`
+*   **Source Code:** `ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py:L241`
+*   **Meaning:** Before testing the AI model, the script reads the original **Human/Expert Dataset** and records 3 "perfect" rollouts.
+*   **Significance:** These GIFs (saved in `expert_references/`) serve as a **Scientific Control**. If the AI fails, you can look at these expert videos to see how a "perfect" push should look. This helps distinguish between "Impossible Scene Setups" and "Model Failures."
+
+### C. Inverse Kinematics (IK) Initialization
+> `Final IK error (74 iterations): 8.113e-06`
+*   **Source Code:** `environments/d3il/d3il_sim/controllers/TrajectoryTracking.py`
+*   **Meaning:** To play back an expert demo, the simulated robot must first move its hand to the exact $(x,y,z)$ starting point of that demo.
+*   **Significance:** The simulator uses an **IK Solver** to calculate the joint angles required to reach that point. The "error" (e.g., $10^{-6}$) confirms that the robot's hand is physically positioned with sub-millimeter precision before the test begins.
+
+### D. System Resource Detection
+> `there are cpus: 64`
+*   **Source Code:** `d3il/simulation/aligning_sim.py:L147`
+*   **Meaning:** The environment has detected 64 logical CPU cores on the host machine.
+*   **Significance:** This is utilized by MuJoCo and PyTorch for **Parallel Physics Processing**. A higher core count ensures that image rendering and collision detection (the most expensive parts of the visual pipeline) do not bottleneck the evaluation speed.
+
+---
+
+## 26. Real-Time Scientific Diagnostics (FIX_12)
+
+As of the Gen5 Diagnostic Phase 14, the evaluation script (`eval_ddpm_encdec_vision.py`) has been upgraded to support **Real-Time Data Streaming**.
+
+### A. Instant PNG Reports
+The system no longer waits for all 50+ contexts to finish. Instead:
+1.  **After every rollout**, a high-fidelity **6-panel PNG report** is generated in `realtime_diagnostics/`.
+2.  This report overlays the **MPC Foresight (the Blue Fan)** with the **Real Execution (the Black Path)**.
+3.  It includes temporal plots for $x$, $y$, and $z$ to visualize control stability.
+
+### B. Why this matters for Debugging
+If the robot fails context #5, you can immediately open `rollout_5_report.png` to see if:
+*   The **U-Net** predicted a bad path (Visual/Planning failure).
+*   The **Robot** drifted away from the predicted path (IK/Control failure).
+*   The **Z-height** oscillated (Physics/Contact failure).
+
+**Data Persistence:** A corresponding `.pkl` file is also saved for each rollout, ensuring that if the simulation is interrupted, no scientific data is lost.
+
+---
+
+**Document updated for FM-PCC Diagnostic Phase 14 (Real-Time Diagnostics Active).**
