@@ -134,7 +134,16 @@ class Trainer(object):
                     # Index 2: robot_pos (input), Index 3: action (output)
                     batch[2] = self.scaler.scale_input(batch[2])
                     batch[3] = self.scaler.scale_output(batch[3])
-                
+
+                # --- D3IL Temporal Parity Fix ---
+                # Match D3IL's DiffusionAgent.train_step (temporal shift)
+                # state: [B, T, 3] -> [B, obs_seq_len, 3]
+                # act:   [B, T, 3] -> [B, pred_horizon, 3]
+                obs_seq_len = getattr(self.model, 'obs_seq_len', 1)
+                batch[2] = batch[2][:, :obs_seq_len, :]
+                batch[3] = batch[3][:, obs_seq_len-1:, :]
+                # -------------------------------
+
                 loss, infos = self.model.loss(*batch)
                 loss = loss / self.gradient_accumulate_every
                 loss.backward()
