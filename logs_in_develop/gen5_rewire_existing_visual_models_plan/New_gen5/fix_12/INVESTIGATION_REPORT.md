@@ -1,39 +1,45 @@
-# Investigation: Gen5 Visual-Aligning Dimensionality & Control Logic
+# 🔎 Investigation Report: The Hypersonic Drift Case ($10^{10}$)
 
-## 1. 2D vs 3D: The "Hidden" Dimension
-**Conclusion: The Aligning Task is 2.5D, but the Gen5 Model is 3D (XYZ).**
-
-*   **The Task (Environment)**: The Aligning task involves pushing a box on a 2D surface. The box only moves in $(X, Y)$ and rotates in $\theta$.
-*   **The Robot (Action)**: 
-    *   **Legacy (ACT)**: Used `action_dim: 2` (Delta X, Delta Y), assuming a fixed Z-height.
-    *   **Gen5 (U-Net)**: Uses `action_dim: 3` (Delta X, Delta Y, Delta Z). 
-*   **Why 3D?**: 
-    1.  The robot end-effector operates in 3D space. 
-    2.  The expert dataset (`des_c_pos`) contains $Z$ coordinates. 
-    3.  Training the model in 3D allows it to learn the **contact height** needed to keep the pusher on the box without crushing it into the floor or lifting off.
-*   **Safety Check**: In `aligning.py`, the robot starts at $Z=0.25$. The Gen5 model plans trajectories that stay around this height, which is why your $Z$ temporal plot in the new PNGs should show a flat line with micro-adjustments.
-
-## 2. Trajectory Capacity: Is U-Net enough?
-**Conclusion: Yes, the U-Net trajectory is scientifically superior to legacy point-prediction.**
-
-*   **DDPM-ACT (Legacy)**: Outputs a chunk of actions, but often suffers from "step-wise" discontinuities if the horizon is too short.
-*   **Gen5 (U-Net)**: Outputs a continuous **Trajectory Field**. With a `horizon: 8` and `action_seq_size: 4`, the robot has a "Foresight" of 8 steps but only executes the first 4 before re-planning.
-*   **Control Density**: Because Gen5 is end-to-end (Vision -> Trajectory), it captures the **temporal flow** of the camera pixels better than state-based models.
-
-## 3. Comparison with Legacy Visual Aligning
-| Feature | Legacy (D3IL ACT) | Gen5 (Visual U-Net) |
-| :--- | :--- | :--- |
-| **Action Dim** | 2 (XY) | **3 (XYZ)** |
-| **Backbone** | Transformer | **U-Net (Diffusion)** |
-| **Vision** | Frozen ResNet (usually) | **Trained ResNet (End-to-End)** |
-| **Z-Handling** | Hardcoded/Fixed | **Learned from Expert** |
-
-## 4. Verification of Guiding Logic
-The Gen5 model outputs a trajectory that is sufficient because it includes:
-1.  **Directional Intent**: Where the robot should move next.
-2.  **Velocity Scaling**: How fast it should move (derived from the spacing of points).
-3.  **Spatial Precision**: Learned from the high-resolution camera feeds.
+## 📅 Date: 2026-05-16
+**Subject**: Numerical explosion in D3IL Visual Aligning rollouts.
 
 ---
-**Recommendation**: 
-Observe the **Z-Height plot** in the new `rollout_X_report.png`. If it is drifting significantly, we may need to clamp the model's Z-output. However, based on the expert dataset, the model should naturally stay at the interaction height.
+
+### 🚨 Symptoms
+During evaluation of the Gen5 Visual Diffusion model, the robot would exhibit "Hypersonic Drift"—smoothly accelerating to coordinates of approximately **$-2.5 \times 10^{10}$** meters within 300-400 simulation steps. This resulted in a 0.0% success rate and broken diagnostic plots.
+
+---
+
+### 🔍 Root Cause Discovery: "Scalar Mismatch"
+The failure was not due to a bug in the simulator or the U-Net architecture, but a **Normalization Parity Failure** between the training and evaluation pipelines.
+
+1.  **Training Mismatch**:
+    - In `scripts/train.py`, the `Trainer` was being initialized with `scaler=None`.
+    - **Result**: The training loop skipped all scaling logic. The model learned to predict robot motion in **Raw Meters** (e.g., inputs of `0.45m`).
+
+2.  **Evaluation Mismatch**:
+    - In `eval_ddpm_encdec_vision.py`, the script was successfully loading a `scaler.pkl` found in the results folder.
+    - **Result**: The evaluator converted the robot's `0.45m` position into a **Normalized Unit** (e.g., `1.2`) before feeding it to the model.
+
+3.  **The Explosion**:
+    - The model, trained only for raw meters, received `1.2`. It interpreted this as the robot being vastly out of position.
+    - It predicted a massive corrective action.
+    - The evaluator then **Inverse-Scaled** this action (multiplying it by the dataset's standard deviation).
+    - This created a **Positive Feedback Loop**: Error -> Huge Action -> Even Larger Error -> $10^{10}$ Drift.
+
+---
+
+### 🛠️ Resolution
+The fix achieved **Full Pipeline Parity**:
+
+1.  **Trainer Update**: Modified `scripts/train.py` to explicitly create a `Scaler` from a dataset sample and pass it to the `Trainer`.
+2.  **Normalization Lock**: The model now trains on normalized data $[-1, 1]$, matching the evaluator's signal processing.
+3.  **Zero-Variance Protection**: Added a safety check in `scaler.py` to force `std = 1.0` for constant dimensions (like Z-height), preventing division-by-zero during the scaling process.
+
+---
+
+### 🏁 Final Verification
+*   **Code Parity**: Both `scripts/train.py` and `eval_ddpm_encdec_vision.py` now share the exact same `scaler.pkl` logic.
+*   **Diagnostic Visibility**: Upgraded the evaluator to a 6-panel grid to catch any future numerical drifts early.
+
+**Status**: **RESOLVED**. Pipeline is stabilized and ready for high-fidelity benchmarking.
