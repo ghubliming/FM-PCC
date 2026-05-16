@@ -234,7 +234,13 @@ for seed in selected_seeds:
     
     # --- FIX_17: Scaler Initialization ---
     from ddpm_encdec_vision.utils.scaler import Scaler
-    scaler = Scaler(dataset.observations, dataset.actions, scale_data=True, device=args.device)
+    # Initialize Scaler with MASKED data (FIX #17 - Prevent zero-padding corruption)
+    print(f"[ train ] Calculating dataset statistics (ignoring zero-padding)...")
+    all_obs = dataset.get_all_observations()
+    all_act = dataset.get_all_actions()
+    
+    scaler = Scaler(all_obs, all_act, scale_data=True, device=args.device)
+    print(f"[ train ] Dataset Stats: Obs Mean {scaler.x_mean.mean().item():.4f}, Act Std {scaler.y_std.mean().item():.4f}")
     import pickle
     scaler_path = os.path.join(args.savepath, 'scaler.pkl')
     with open(scaler_path, 'wb') as f:

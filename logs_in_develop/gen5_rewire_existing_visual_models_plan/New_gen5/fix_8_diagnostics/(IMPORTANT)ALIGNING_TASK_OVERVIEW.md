@@ -548,4 +548,46 @@ To bridge this gap, the `eval_ddpm_encdec_vision.py` script was updated to slice
 
 ---
 
-**Document updated for FM-PCC Diagnostic Phase 18 (Dimension Bridge Logic Added).**
+---
+
+## 33. The Expert Baseline Engine: Ground Truth Documentation
+
+To ensure scientific validity, the Gen5 evaluation pipeline automatically generates a "Golden Standard" from the human expert dataset before testing the AI.
+
+### A. Data Provenance (Where is it loaded from?)
+The expert trajectories are loaded from the D3IL serialized dataset:
+*   **Path**: `d3il/environments/dataset/data/aligning/test_contexts.pkl`
+*   **Source Code**: `d3il/simulation/aligning_sim.py:L22`
+*   **Content**: These files contain the exact $(x, y, z)$ coordinates and camera images recorded during successful human trials.
+
+### B. The Reference GIFs: Meaning and Purpose
+*   **What it means**: When you see `[ expert ] Saved ... expert_rollout_0.gif`, the script has successfully "replayed" a human demonstration in the simulator.
+*   **Scientific Significance**: These GIFs provide a **Visual Control**. If your model reaches a success rate of 0%, you can check these GIFs to confirm that the environment itself is working. If the expert can finish the task in the GIF but the AI cannot in the rollout, the failure is purely in the AI's "intelligence," not the simulation physics.
+
+### C. Visual Logic (Computation vs. Action)
+*   **Playback Speed**: GIFs are recorded at a constant **10 FPS**.
+*   **Calculation Time**: The GIFs **skip the calculation steps**. They do not show the "thinking time" (the 1.4s U-Net inference delay). They only show the **Actions** (the physical results).
+*   **Result**: This allows you to compare the **Path Quality** of the AI vs. the Human Expert without being distracted by computational latency.
+
+---
+
+---
+
+## 34. The Zero-Padding Trap: Resolving the Numerical Explosion
+
+A "severe problem" was observed during validation: the robot end-effector was flying out of bounds at hypersonic speeds (e.g., $1750$ meters in a $1$ meter workspace).
+
+### A. The Cause: Statistics Corruption
+*   **Mechanism**: The dataset uses **Zero-Padding** to reach a fixed length of 256 steps. Because the Scaler was calculated on the raw padded tensors, the thousands of "padding zeros" caused the **Standard Deviation** to collapse.
+*   **The Math Failure**: When the model's scaled output was multiplied by this corrupted, near-zero standard deviation, the resulting "meters" value exploded into massive, unrealistic numbers.
+*   **The Feedback Loop**: Because we use a **Mental Map (Open-Loop)**, these huge erroneous actions were accumulated every step, causing the robot to accelerate into space exponentially.
+
+### B. The Fix: Masked Statistics (Numerical Grounding)
+The training initialization was updated to use **Masked Data** only:
+*   `all_obs = dataset.get_all_observations()`
+*   `all_act = dataset.get_all_actions()`
+*   **Result**: This forces the Scaler to compute its Mean and Std using only the **Real Human Demonstrations**, ignoring the padding. This restores the "Numerical Grounding" of the model.
+
+---
+
+**Document updated for FM-PCC Diagnostic Phase 20 (Numerical Grounding Finalized).**
