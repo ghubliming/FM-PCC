@@ -10,9 +10,9 @@ Master Overview See [logs_in_develop/MASTER_TEST_HISTORY.md](logs_in_develop/MAS
 
 ### Results and Data Analysis
 
-See [Results_and_Data_Analysis](Results_and_Data_Analysis/).
+See [Results_and_Data_Analysis_Colab_T4](Results_and_Data_Analysis_Colab_T4/).
 
-And all the Jupyter notebooks used for Colab training/evaluation/data analysis are in [ipynbs](ipynbs/).
+And all the Jupyter notebooks used for Colab training/evaluation/data analysis are in [ipynbs_Colab](ipynbs_Colab/).
 
 ---
 

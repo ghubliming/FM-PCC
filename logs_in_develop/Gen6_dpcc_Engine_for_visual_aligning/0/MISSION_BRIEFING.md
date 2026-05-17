@@ -49,12 +49,12 @@ By integrating a compatibility normalizer adapter and setting up the polytopic c
 
 ## 🗂️ Detailed File-by-File Changes
 
-### 1. [config/visual_aligning_eval.yaml](file:///workspaces/FM-PCC/config/visual_aligning_eval.yaml)
+### 1. [config/visual_aligning_eval.yaml](../../../config/visual_aligning_eval.yaml)
 * Added the new Gen6 projection variants: `fmpcc_safe` and `fmpcc_safe_tightened`.
 * Added physical workspace limit parameters: `workspace_bounds` (Franka Cartesian Cage).
 * Configured key DPCC parameters: `diffusion_timestep_threshold` ($50\%$), `enlarge_constraints` ($1$ cm contracting border), and `constraint_types: ['bounds', 'dynamics']`.
 
-### 2. [ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py](file:///workspaces/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py)
+### 2. [ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py](../../../ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py)
 * **Imports**: Added `from diffuser.sampling import Projector`.
 * **VisualNormalizerAdapter & Dict**: Introduced a lightweight adapter wrapper that maps D3IL's standard-deviation `Scaler` properties (`self.y_min` and `self.y_max`) to the Projector's expected Min/Max `mins` and `maxs` properties at runtime.
 * **setup_gen6_projector**: Defined the setup helper that constructs:

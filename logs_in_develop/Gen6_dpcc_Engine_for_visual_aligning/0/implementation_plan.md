@@ -108,14 +108,14 @@ $$-s_t^T I s_t + 2 c_j^T s_t \leq \| c_j \|^2 - R_j^2$$
 The core philosophy of the Gen6 upgrade is **pure code reuse** without writing any new modules or redundant classes. 
 
 ### Why No New Code is Needed:
-1.  **Direct Inheritance:** The visual diffusion model loaded in `eval_ddpm_encdec_vision.py` is [`VisualGaussianDiffusion`](file:///workspaces/FM-PCC/ddpm_encdec_vision/models/visual_gaussian_diffusion.py), which inherits directly from `diffuser.models.diffusion.GaussianDiffusion`.
-2.  **Built-In DPCC Engine:** The base `GaussianDiffusion` class [`diffuser/models/diffusion.py`](file:///workspaces/FM-PCC/diffuser/models/diffusion.py#L164-L202) already has **100% complete support for in-denoising projection** built into its native reverse diffusion loop (`p_sample_loop`).
+1.  **Direct Inheritance:** The visual diffusion model loaded in `eval_ddpm_encdec_vision.py` is [`VisualGaussianDiffusion`](../../../ddpm_encdec_vision/models/visual_gaussian_diffusion.py), which inherits directly from `diffuser.models.diffusion.GaussianDiffusion`.
+2.  **Built-In DPCC Engine:** The base `GaussianDiffusion` class [`diffuser/models/diffusion.py`](../../../diffuser/models/diffusion.py#L164-L202) already has **100% complete support for in-denoising projection** built into its native reverse diffusion loop (`p_sample_loop`).
 3.  **Active Snapping/Gradients:** It already accepts a `projector` parameter and dynamically snaps (`projector.project`) or guides (`projector.compute_gradient`) the trajectory in the intermediate reverse-diffusion steps!
 
 ---
 
 ### Step 1: Instantiating the Projector in the Evaluation Config
-We load the constraint list from the YAML configuration. In [`config/visual_aligning_eval.yaml`](file:///workspaces/FM-PCC/config/visual_aligning_eval.yaml), we define our projection variants:
+We load the constraint list from the YAML configuration. In [`config/visual_aligning_eval.yaml`](../../../config/visual_aligning_eval.yaml), we define our projection variants:
 
 ```yaml
 projection_variants:
@@ -132,7 +132,7 @@ workspace_bounds:
 ---
 
 ### Step 2: Activating the In-Denoising Projection Loop
-We modify the `VisualAgentWrapper`'s constructor and `predict()` method in [`ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`](file:///workspaces/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py) to accept the existing `Projector` class and pass it directly into the active forward pass:
+We modify the `VisualAgentWrapper`'s constructor and `predict()` method in [`ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`](../../../ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py) to accept the existing `Projector` class and pass it directly into the active forward pass:
 
 ```python
 # Inside VisualAgentWrapper.__init__:
@@ -164,7 +164,7 @@ Below is the proposed integration snippet for adding the **Gen6 Projector** init
 
 ## 5. Architectural Implementation Blueprint
 
-To enable 100% code reuse from the FMv3ODE/diffuser DPCC solver, we make purely additive additions to [`ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`](file:///workspaces/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py).
+To enable 100% code reuse from the FMv3ODE/diffuser DPCC solver, we make purely additive additions to [`ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`](../../../ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py).
 
 ### Part A: Define the Normalizer Compatibility Adapter
 Since D3IL's visual pipeline uses a standard-deviation-based normalizer (`Scaler`) while the DPCC `Projector` expects min/max bounds (`.mins` and `.maxs`), we place this tiny adapter directly at the top of the evaluation script:

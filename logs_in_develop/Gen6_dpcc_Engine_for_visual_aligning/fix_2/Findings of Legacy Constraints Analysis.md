@@ -59,7 +59,7 @@ As defined in `diffuser/utils/constraints_helpers.py` (L47-53):
 
 ## 📊 4. Structural Parity & Rationale Summary
 
-The following table summarizes the scientific rationale for why the old state-based parameters are mathematically represented as **commented out** documentation blocks in our new [visual_aligning_eval.yaml](file:///workspaces/FM-PCC/config/visual_aligning_eval.yaml):
+The following table summarizes the scientific rationale for why the old state-based parameters are mathematically represented as **commented out** documentation blocks in our new [visual_aligning_eval.yaml](../../../../config/visual_aligning_eval.yaml):
 
 | State Parameter (`projection_eval.yaml`) | Rationale for Commenting Out / Bypassing in Visual Aligning |
 | :--- | :--- |
