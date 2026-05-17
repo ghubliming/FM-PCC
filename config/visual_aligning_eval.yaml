@@ -1,25 +1,78 @@
-# Visual Aligning Evaluation Config
-# Mirrors config/projection_eval.yaml structure for the Aligning (Visual) task.
-#
-# Key difference from Avoiding:
-#   - No halfspace/obstacle constraints (aligning is unconstrained manipulation)
-#   - Uses D3IL's Aligning_Sim with vision=True
-#   - Metrics: Success Rate, Entropy, Mean Distance (D3IL standard)
-
+# General
 write_to_file: True
-
-# Seeds to evaluate (same as avoiding for consistency)
+exps: [
+  'aligning-d3il-visual',
+]
 seeds: [6, 7, 8, 9, 10]
+
+# --- STATE-ONLY PARAMETERS (COMMENTED OUT: NOT NEEDED FOR VISUAL ALIGNING) ---
+# avoiding_halfspace_variants: [
+#   'top-right-hard',
+#   'top-left-hard',
+#   'both-hard',
+# ] # NOT NEEDED: Aligning task represents open-table manipulation and has no vertical halfspace walls.
+#
+# n_trials: 2 # NOT NEEDED: Visual aligning uses 'n_contexts: 30' context rollouts for robust statistical evaluation.
+#
+# dt: {
+#   'avoiding': 1,
+# } # NOT NEEDED: Aligning operates on a physical robot controller with a base integration step dt of 0.1s.
+#
+# observation_indices: {
+#   'avoiding': {'x_des': 0, 'y_des': 1, 'x': 2, 'y': 3},
+# } # NOT NEEDED: Mapped directly in python wrapper since visual proprioception is always located at dims [3, 4, 5].
+#
+# action_indices: {
+#   'avoiding': {'vx': 0, 'vy': 1},
+# } # NOT NEEDED: Cartesian control actions are always hardcoded to the first 3 trajectory dimensions [0, 1, 2].
+# -----------------------------------------------------------------------------
 
 # D3IL simulation parameters
 n_contexts: 30
 n_trajectories_per_context: 1
 
+# Policy
+diffusion_timestep_threshold: 0.5
+
+# Projection 
 projection_variants: [
+  # Table 1:
   'diffuser',
-  'fmpcc_safe',
-  'fmpcc_safe_tightened',
+  'gradient',
+  'gradient-tightened',
+  'post_processing',
+  'post_processing-tightened',
+  'model_free',
+  'model_free-tightened',
 ]
+
+# --- STATE-ONLY PROJECTION BASES (COMMENTED OUT: NOT NEEDED FOR VISUAL ALIGNING) ---
+# projection_cost: 'pos_vel' # NOT NEEDED: Visual aligning cost is optimized directly on the 6D states and actions.
+#
+# halfspace_constraints: {
+#   'avoiding-d3il': [
+#     [[0.8, -0.5], [0.4, 0.5], 'below'],
+#     [[0.2, -0.5], [0.6, 0.5], 'below'],
+#   ],
+# } # NOT NEEDED: Aligning workspace has no simulated halfspace obstacles.
+#
+# obstacle_constraints: {
+#   'avoiding-d3il': [
+#     {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.4, 0.08], 'radius': 0.06},
+#   ]
+# } # NOT NEEDED: Aligning workspace has no simulated spherical obstacles.
+#
+# bounds: {
+#   'avoiding-d3il': [
+#     {'type': 'lower', 'dimensions': ['vx', 'vy'], 'values': [-0.01, 0]},
+#   ],
+# } # NOT NEEDED: Replaced by 'workspace_bounds' below, which enforces safe physical Cartesian ranges.
+#
+# plot_how_many: 10
+# ax_limits: {
+#   'avoiding-d3il': [[0.2, 0.8], [-0.3, 0.4]]
+# } # NOT NEEDED: Handled visually via 3D MuJoCo rendering and Tee log interceptors instead of 2D matplotlib axes.
+# ---------------------------------------------------------------------------------
 
 # Physical Franka Workspace bounds in meters (x, y, z)
 workspace_bounds:
@@ -27,7 +80,5 @@ workspace_bounds:
   ub: [0.7, 0.35, 0.40]
 
 # DPCC Projection parameters
-diffusion_timestep_threshold: 0.5
 enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
 constraint_types: ['bounds', 'dynamics']
-

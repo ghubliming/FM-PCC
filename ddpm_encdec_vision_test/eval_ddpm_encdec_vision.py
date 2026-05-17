@@ -87,7 +87,7 @@ def setup_gen6_projector(args, config, scaler, variant):
     # x_idx = 3 (proprioception X), dx_idx = 0 (action vx)
     # y_idx = 4 (proprioception Y), dx_idx = 1 (action vy)
     # z_idx = 5 (proprioception Z), dx_idx = 2 (action vz)
-    if 'dynamics' in config.get('constraint_types', []):
+    if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
         constraint_list.append(('deriv', [3, 0]))
         constraint_list.append(('deriv', [4, 1]))
         constraint_list.append(('deriv', [5, 2]))
@@ -95,7 +95,21 @@ def setup_gen6_projector(args, config, scaler, variant):
     # 4. Construct compatibility normalizer dict
     adapter_normalizer = VisualNormalizerDict(scaler)
     
-    # 5. Initialize the DPCC Projector
+    # 5. Handle time scaling (dt scaling) and gradient/post-processing thresholds
+    dt = config.get('dt', 0.1)  # D3IL default dt
+    if 'dt0p25' in variant:
+        dt = 0.25 * dt
+    elif 'dt0p5' in variant:
+        dt = 0.5 * dt
+    elif 'dt2p0' in variant:
+        dt = 2.0 * dt
+    elif 'dt4p0' in variant:
+        dt = 4.0 * dt
+
+    threshold = 0.0 if 'post_processing' in variant else config.get('diffusion_timestep_threshold', 0.5)
+    gradient = 'gradient' in variant
+
+    # 6. Initialize the DPCC Projector
     projector = Projector(
         horizon=getattr(args, 'horizon', 8),
         transition_dim=6,                # Combined Action + State dimension (6D)
@@ -103,8 +117,11 @@ def setup_gen6_projector(args, config, scaler, variant):
         goal_dim=0,                      # Non-goal conditioned VAE
         constraint_list=constraint_list,
         normalizer=adapter_normalizer,
-        diffusion_timestep_threshold=config.get('diffusion_timestep_threshold', 0.5),
+        diffusion_timestep_threshold=threshold,
         variant='states_actions',        # Must be states_actions for 6D trajectory
+        dt=dt,
+        gradient=gradient,
+        gradient_weights=[1, 0.5, 2] if gradient else None,
         solver='scipy',                  # Robust SLSQP QP optimizer
         device=args.device
     )
@@ -127,7 +144,7 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1, projector=None):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1, projector=None, trajectory_selection='random'):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
@@ -136,6 +153,8 @@ class VisualAgentWrapper:
         self.eval_on_train = eval_on_train
         self.batch_size = batch_size
         self.projector = projector
+        self.trajectory_selection = trajectory_selection
+        self.prev_observations = None
         
         # Open-Loop State (The "Mental Map")
         self.mental_robot_pos = None 
@@ -187,6 +206,7 @@ class VisualAgentWrapper:
         self.curr_rollout_tracking_errors.clear()
         
         self.mental_robot_pos = None # Reset mental map (FIX #17)
+        self.prev_observations = None # Reset prev observations for trajectory selection
         
         self.bp_image_context.clear()
         self.inhand_image_context.clear()
@@ -430,26 +450,43 @@ class VisualAgentWrapper:
             bp_image_batch = bp_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
             inhand_image_batch = inhand_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
             des_robot_pos_batch = des_robot_pos_seq.repeat(self.batch_size, 1, 1)
-            
             cond = {0: (bp_image_batch, inhand_image_batch, des_robot_pos_batch)}
             if self.projector is not None:
-                trajectory, _ = self.model(cond, projector=self.projector)
+                trajectory, infos = self.model(cond, projector=self.projector)
             else:
-                trajectory, _ = self.model(cond)
+                trajectory, infos = self.model(cond)
+            
+            # Trajectory selection logic (minimum_projection_cost, temporal_consistency, random)
+            trajectories_np = trajectory.detach().cpu().numpy()
+            which_trajectory = 0
+            if self.batch_size > 1:
+                if self.trajectory_selection == 'temporal_consistency' and self.prev_observations is not None:
+                    diffs = trajectories_np - np.expand_dims(self.prev_observations, axis=0)
+                    order = np.argsort(np.linalg.norm(diffs, axis=(1, 2)))
+                    which_trajectory = order[0]
+                elif self.trajectory_selection == 'minimum_projection_cost' and self.projector is not None and infos is not None and 'projection_costs' in infos:
+                    costs_total = np.zeros(self.batch_size)
+                    for timestep, cost in infos['projection_costs'].items():
+                        costs_total += cost
+                    if len(costs_total) == self.batch_size:
+                        which_trajectory = np.argmin(costs_total)
+            
+            # Store selected trajectory for future temporal consistency steps
+            self.prev_observations = trajectories_np[which_trajectory].copy()
             
             if trajectory.shape[-1] == 3:
                 # 3D Model (D3IL style): Use all 3 dims as actions
-                action_trajectory = trajectory
+                action_trajectory = trajectory[[which_trajectory]]
             else:
                 # 6D Model (Avoiding style): Actions are the FIRST 3 dims [act, obs]
-                action_trajectory = trajectory[:, :, :3]
+                action_trajectory = trajectory[[which_trajectory], :, :3]
             
             # Inverse Scale (Now safe with Fix #29)
             if self.scaler is not None:
                 action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
             
-            # Select the first candidate trajectory for online execution
-            self.curr_action_seq = action_trajectory[[0], :self.action_seq_size, :]
+            # Select the sorted candidate trajectory for online execution
+            self.curr_action_seq = action_trajectory[:, :self.action_seq_size, :]
             # Record for diagnostics
             self.history_full_plans.append(action_trajectory[0].detach().cpu().numpy())
         
@@ -625,6 +662,17 @@ if __name__ == '__main__':
                     projector = setup_gen6_projector(args, config, scaler, variant)
                     print(f"[ eval ] DPCC Projector active for variant '{variant}'")
 
+                # Trajectory Selection & Candidate Generation size overrides
+                trajectory_selection = 'random'
+                if 'dpcc-t' in variant:
+                    trajectory_selection = 'temporal_consistency'
+                elif 'dpcc-c' in variant:
+                    trajectory_selection = 'minimum_projection_cost'
+
+                batch_size = getattr(args, 'batch_size', 1)
+                if 'diffuser' not in variant:
+                    batch_size = 6  # D3IL default of 6 candidates for DPCC selection
+
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model, device=args.device,
                     window_size=getattr(args, 'window_size', 8), 
@@ -634,8 +682,9 @@ if __name__ == '__main__':
                     record_mode=args_cli.record,
                     scaler=scaler,
                     eval_on_train=args_cli.eval_on_train,
-                    batch_size=getattr(args, 'batch_size', 1),
-                    projector=projector
+                    batch_size=batch_size,
+                    projector=projector,
+                    trajectory_selection=trajectory_selection
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,
