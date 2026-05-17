@@ -202,6 +202,9 @@ for seed in selected_seeds:
         wandb_name = '-'.join(name_parts)
         default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
+        
+        # W&B Safety Lock: Truncate group name to 128 chars to avoid Error 400 bad request
+        wandb_group = wandb_group[:128]
 
         run = wandb.init(
             project=cli_args.wandb_project,
