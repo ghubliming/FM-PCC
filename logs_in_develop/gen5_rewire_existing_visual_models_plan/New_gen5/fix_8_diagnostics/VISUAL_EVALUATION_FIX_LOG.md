@@ -81,5 +81,13 @@
 
 ---
 
+### ✅ Fix 38: Enforce Configured Max Episode Length (Prevent Silent Config Ignorance)
+*   **File**: `d3il/simulation/aligning_sim.py` & `ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`
+*   **Issue**: The configuration file `config/aligning-d3il-visual.py` specifies `'max_episode_length': 400`, but this value was never actually passed to `Robot_Push_Env` or `Aligning_Sim` during evaluation. The environment silently defaulted to its internal constructor value of `400`. If a researcher changed the config to a custom value (e.g. `150`), the change would be silently ignored and evaluation would continue running up to 400 steps.
+*   **Solution**: Dynamically extracted `max_episode_length` from the configuration `args` object inside `eval_ddpm_encdec_vision.py`, routed it into the `Aligning_Sim` constructor, and passed it to the `Robot_Push_Env` constructor as `max_steps_per_episode`.
+*   **Impact**: Resolves the config-environment discrepancy. Custom rollout limits defined in the configuration are now fully respected.
+
+---
+
 ### 🏁 FINAL SYSTEM STATUS: STABILIZED
 The Gen5 Visual Pipeline is now mathematically consistent, numerically safe, and diagnostically transparent across all submodules.

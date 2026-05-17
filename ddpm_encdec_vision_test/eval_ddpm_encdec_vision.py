@@ -553,7 +553,8 @@ if __name__ == '__main__':
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,
-                                  eval_on_train=args_cli.eval_on_train)
+                                  eval_on_train=args_cli.eval_on_train,
+                                  max_episode_length=getattr(args, 'max_episode_length', 400))
                 
                 t0 = time.time()
                 success_rate, mode_encoding, successes, mean_distance_tensor = sim.test_agent(agent)
