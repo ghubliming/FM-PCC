@@ -31,15 +31,9 @@ class Scaler:
         self.y_mean = torch.from_numpy(y_data.mean(0)).float().to(device)
         self.y_std = torch.from_numpy(y_data.std(0)).float().to(device)
         
-        # --- NUMERICAL STABILITY SHIELD (FIX #33) ---
-        # We use a floor of 1e-2 for the standard deviation to prevent the 10^12 singularity.
-        # Constant dimensions will have std=0, but we use 1.0 for the divisor to treat them as raw offsets.
-        self.x_std_safe = torch.clamp(self.x_std, min=1e-2)
-        self.y_std_safe = torch.clamp(self.y_std, min=1e-2)
-        
-        # Log the stabilization
-        log.info(f'[ Scaler ] Stabilized X-Std min: {self.x_std_safe.min().item():.4f}')
-        log.info(f'[ Scaler ] Stabilized Y-Std min: {self.y_std_safe.min().item():.4f}')
+        # Define safe standard deviations using D3IL-native epsilon scaling
+        self.x_std_safe = self.x_std + 1e-12
+        self.y_std_safe = self.y_std + 1e-12
         
         # Bounds for clipping (Raw)
         self.y_min = torch.from_numpy(y_data.min(0)).float().to(device)

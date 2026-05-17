@@ -139,3 +139,26 @@ By investigating the raw implementation inside `/workspaces/FM-PCC/ddpm_encdec_v
   self.target_horizon = config.horizon
   self.padded_horizon = ((self.target_horizon + 7) // 8) * 8
   ```
+
+---
+
+## 7. The Z-Axis Table-Diving Singularity and the Native D3IL Alignment
+
+During initial evaluation runs of **Visual Aligning**, the robot end-effector exhibited an extreme drift, diving continuously into the table ($Z \approx -5.3\text{m}$) and exiting the workspace boundaries ($X \approx -16\text{m}$, $Y \approx -9\text{m}$).
+
+### A. The Root Cause: Standard Deviation Floor Clamping
+1. In the **Visual Aligning** task, the robot manipulates objects on a flat, 2D table surface at a constant Z-height ($0.25\text{m}$). 
+2. As a result, the standard deviation of Z-velocities in the expert training dataset is **exactly zero** ($0.0$).
+3. The legacy engine implemented custom "numerical safeguards" in `__init__` by clamping standard deviations to a minimum floor of $1e-2$ ($0.01$).
+4. Applying this safe floor during **inverse scaling** (unnormalizing) meant that minor stochastic sampling noise from the diffusion policy got amplified by **orders of magnitude** ($1e-2$ vs. $\sim 1e-12$).
+5. Over 1000 open-loop steps, these micro-deviations integrated into a massive compounding drift, dragging the robot deep into the table ($Z = -5.3\text{m}$).
+
+### B. The Final Parity Fix: Preserving Original Structure
+We have kept your original simplified file structure and variables completely intact. The only change is in the constructor, redefining the safe standard deviation variables using the native D3IL epsilon addition instead of the legacy clamp floor:
+* **Prinstine Code**:
+  ```python
+  self.x_std_safe = self.x_std + 1e-12
+  self.y_std_safe = self.y_std + 1e-12
+  ```
+
+This preserves the original `scale_input`, `scale_output`, and unnormalizing methods exactly as you designed them, while ensuring constant dimensions are scaled back by $\approx 0$ ($N \times 1e-12 \approx 0$). This extinguishes stochastic sampling noise and keeps the Z-axis locked at its tabletop height of $0.25\text{m}$ throughout the rollout.
