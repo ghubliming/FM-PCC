@@ -28,6 +28,38 @@ class VisualGaussianDiffusion(GaussianDiffusion):
         t = torch.randint(0, self.n_timesteps, (batch_size,), device=x.device).long()
         return self.p_losses(x, cond, t)
 
+    def p_mean_variance(self, x, cond, t, returns=None, projector=None, constraints=None):
+        """
+        Overridden to support safe z-score action clamping and eliminate RuntimeError crashes.
+        """
+        if self.returns_condition:
+            epsilon_cond = self.model(x, cond, t, returns, use_dropout=False)
+            epsilon_uncond = self.model(x, cond, t, returns, force_dropout=True)
+            epsilon = epsilon_uncond + self.condition_guidance_w*(epsilon_cond - epsilon_uncond)
+        else:
+            epsilon = self.model(x, cond, t)
+
+        t = t.detach().to(torch.int64)
+        x_recon = self.predict_start_from_noise(x, t=t, noise=epsilon)
+
+        if self.clip_denoised:
+            # --- D3IL DDPM-ACT COMPATIBILITY CLAMP ---
+            # We ONLY clamp the predicted action dimensions (first self.action_dim columns)
+            # to a safe wide range, and NEVER clamp the observation/proprioceptive channels.
+            x_recon[..., :self.action_dim].clamp_(-5.0, 5.0)
+
+        model_mean, posterior_variance, posterior_log_variance = self.q_posterior(
+                x_start=x_recon, x_t=x, t=t)
+
+        if projector is not None and projector.gradient:
+            if self.goal_dim > 0:
+                grad = projector.compute_gradient(x_recon[:,:,:-self.goal_dim], constraints)
+            else:
+                grad = projector.compute_gradient(x_recon, constraints)
+            model_mean = model_mean + grad
+
+        return model_mean, posterior_variance, posterior_log_variance
+
     def forward(self, cond, *args, **kwargs):
         """
         Inference: Triggers the stochastic DDPM denoising loop (p_sample_loop).
