@@ -60,13 +60,14 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
         self.obs_seq_len = obs_seq_len  # Respect trained config (FIX #12)
         self.scaler = scaler
         self.eval_on_train = eval_on_train
+        self.batch_size = batch_size
         
         # Open-Loop State (The "Mental Map")
         self.mental_robot_pos = None 
@@ -357,7 +358,12 @@ class VisualAgentWrapper:
             self.model.eval()
             # --- Gen5 Architectural Parity Fix ---
             # Detect if model is 3D (Action-Only) or 6D (State-Action)
-            cond = {0: (bp_image_seq, inhand_image_seq, des_robot_pos_seq)}
+            # Repeat conditioning tensors for batch inference
+            bp_image_batch = bp_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
+            inhand_image_batch = inhand_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
+            des_robot_pos_batch = des_robot_pos_seq.repeat(self.batch_size, 1, 1)
+            
+            cond = {0: (bp_image_batch, inhand_image_batch, des_robot_pos_batch)}
             trajectory, _ = self.model(cond)
             
             if trajectory.shape[-1] == 3:
@@ -371,9 +377,10 @@ class VisualAgentWrapper:
             if self.scaler is not None:
                 action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
             
-            self.curr_action_seq = action_trajectory[:, :self.action_seq_size, :]
+            # Select the first candidate trajectory for online execution
+            self.curr_action_seq = action_trajectory[[0], :self.action_seq_size, :]
             # Record for diagnostics
-            self.history_full_plans.append(action_trajectory.detach().cpu().numpy().squeeze(0))
+            self.history_full_plans.append(action_trajectory[0].detach().cpu().numpy())
         
         next_action = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy()
@@ -549,7 +556,8 @@ if __name__ == '__main__':
                     save_path=save_path,
                     record_mode=args_cli.record,
                     scaler=scaler,
-                    eval_on_train=args_cli.eval_on_train
+                    eval_on_train=args_cli.eval_on_train,
+                    batch_size=getattr(args, 'batch_size', 1)
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,

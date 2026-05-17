@@ -89,5 +89,13 @@
 
 ---
 
+### ✅ Fix 39: Dynamic Planning Batch Size & Batched Candidate Trajectory Sampling
+*   **File**: `ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py`
+*   **Issue**: Visual evaluations were restricted to a hardcoded planning batch size of `1`. There was no support for generating multiple candidate paths (like `batch_size: 4` used in state-only controllers) because the agent wrapper did not repeat input conditioning sequences before passing them to the generative model.
+*   **Solution**: Added full `batch_size` support to `VisualAgentWrapper`. The wrapper dynamically reads `'batch_size'` from the loaded planning configuration. If configured to a value > 1, the wrapper automatically duplicates the visual and proprioceptive context sequences along the batch dimension in PyTorch, queries the model to generate parallel trajectory paths in a single fast GPU pass, and executes the primary selected candidate path.
+*   **Impact**: Enables researchers to dynamically experiment with generating and selecting from multiple MPC trajectory candidates during visual closed-loop evaluations, without any computational bottleneck.
+
+---
+
 ### 🏁 FINAL SYSTEM STATUS: STABILIZED
 The Gen5 Visual Pipeline is now mathematically consistent, numerically safe, and diagnostically transparent across all submodules.
