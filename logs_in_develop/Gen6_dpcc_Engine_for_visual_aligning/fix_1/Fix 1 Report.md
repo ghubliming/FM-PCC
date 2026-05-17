@@ -35,6 +35,7 @@ args_to_watch_dpcc_train = [
     ('n_diffusion_steps', 'K'),
     ('diffusion', 'D'),
     ('action_weight', 'aw'),
+    ('max_path_length', 'steps'),
 ]
 
 args_to_watch_dpcc_plan = [
@@ -43,6 +44,7 @@ args_to_watch_dpcc_plan = [
     ('n_diffusion_steps', 'K'),
     ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
+    ('max_episode_length', 'steps'),
 ]
 ```
 
@@ -58,7 +60,7 @@ Recovered all missing model and dataset tuning parameters inside both dictionary
   - Restored: `returns_condition: False`, `predict_epsilon: True`, `dynamic_loss: False`, `action_weight: 10`.
   - Recovered the **Nested Path Serialization** using the `'f:'` dynamic formatting utility for `prefix` to match the exact model training name:
     ```python
-    'prefix': 'f:plans/ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}/',
+    'prefix': 'f:plans/ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
     'exp_name': watch(args_to_watch_dpcc_plan),
     ```
 
@@ -77,7 +79,7 @@ Previously, even though newly trained models were saved to parameter-labeled dir
 We aligned it to be **perfectly symmetric** with the training save path:
 ```python
 # Symmetric High-Fidelity Path
-'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}'
+'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}'
 'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}'
 ```
 *Note: For backward-compatibility with historical pre-trained models saved under raw `H8` folders, researchers can simply pass `--diffusion_loadpath ddpm_encdec_vision/H8` on the command line.*
@@ -91,11 +93,11 @@ The following table compares the dynamically resolved output paths between the s
 | Task & Phase | Resolved Directory Path |
 | :--- | :--- |
 | **Avoiding Training** | `logs/avoiding-d3il/diffusion/H8_K20_DGaussianDiffusion_aw10/seed_0/` |
-| **Gen6 Visual Training** | `logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K16_DVisualGaussianDiffusion_aw10/seed_0/` |
+| **Gen6 Visual Training** | `logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K16_DVisualGaussianDiffusion_aw10_steps512/seed_0/` |
 | **Avoiding Planning** | `logs/avoiding-d3il/plans/diffusion/H8_K20_DGaussianDiffusion_aw10/H8_K20_T0.5_DGaussianDiffusion/seed_0/` |
-| **Gen6 Visual Planning** | `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_DVisualGaussianDiffusion_aw10/H8_K16_T0.5_DVisualGaussianDiffusion/seed_6/` |
+| **Gen6 Visual Planning** | `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_DVisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_DVisualGaussianDiffusion_steps1000/seed_6/` |
 
 ### Key Properties Achieved:
-1. **Identical Model Parent Directory**: Both tasks organize plans and rollouts inside a parent folder whose name (`H8_K16_DVisualGaussianDiffusion_aw10`) is **exactly matched** to the trained model's parameters.
-2. **Dynamic Segregation**: The planning subfolder name encodes the active rollout parameters (`H8_K16_T0.5_DVisualGaussianDiffusion`), guaranteeing $T=0.5$ (DPCC) and $T=0.0$ (parity baseline) never collide or overwrite.
+1. **Identical Model Parent Directory**: Both tasks organize plans and rollouts inside a parent folder whose name (`H8_K16_DVisualGaussianDiffusion_aw10_steps512`) is **exactly matched** to the trained model's parameters.
+2. **Dynamic Segregation**: The planning subfolder name encodes the active rollout parameters (`H8_K16_T0.5_DVisualGaussianDiffusion_steps1000`), guaranteeing $T=0.5$ (DPCC) and $T=0.0$ (parity baseline) never collide or overwrite.
 3. **No environment run execution was triggered during this optimization process.**
