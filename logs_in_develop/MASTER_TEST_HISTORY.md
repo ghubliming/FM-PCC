@@ -879,3 +879,16 @@ Keywords: Tee-Stderr redirection, MuJoCo mju_openResource fix, deferred XML dele
     - **Dynamics Integrator binding**: Configured dynamic Euler step transitions binding proprioceptive coordinates (indices 3, 4, 5) directly to action coordinate deltas (indices 0, 1, 2) in the SLSQP solver.
 4.  **100% Parity Safety Lock**: Implemented a bypass guard in the evaluation script (`projector = None` if `variant == 'diffuser'`). This guarantees that when running the baseline diffuser mode, the model completely bypasses all projection checks, ensuring 100% numerical and computational parity with Gen5.
 5.  **Status**: **IMPLEMENTATION SUCCESSFUL**. The Gen6 vision-conditioned differentiable MPC safety engine is fully configured and ready for production benchmarking.
+
+## Gen6v2: Dual-Backbone Calibration & Pipeline Orchestration (May 17, 2026)
+
+Keywords: Hyperparameter Calibration Blueprint, W&B GroupName Safety Lock, visual_aligning_pipeline, Chained Slurm Dependencies, K-less parity.
+
+1.  **Dual-Backbone Hyperparameter Blueprint**: Authored a comprehensive blueprint comparing the 1D Temporal CNN U-Net vs. Transformer VAE parameters:
+    - **MUST Change**: `learning_rate` (2e-4 vs 5e-4 to prevent CNN gradient explosions), `condition_dropout` (0.25 for CFG prior vs 0.10 for direct visual context), and Sequence Lengths (`horizon = 8` vs `5+4-1=8`).
+    - **Invariant**: `n_diffusion_steps`, `action_dim`, `loss_type` ('l2'), `batch_size`, `ema_decay` (0.995), and scaling normalizers must remain unchanged to ensure experimental comparison parity.
+2.  **W&B GroupName 128-Character Safety Lock**: Patched `train_ddpm_encdec_vision.py` to enforce a hard maximum length of 128 characters (`wandb_group = wandb_group[:128]`) right before `wandb.init()`. This permanently resolves the `CommError 400 Bad Request` where long model class names inside generated experiment log folders exceeded Weights & Biases API server limits.
+3.  **Slurm Pipeline Orchestration Master**: Developed the `visual_aligning_pipeline.sh` orchestrator under `Slurm_Codes/sbatch/Visual_Aligning/` that mirrors the structure and pro-logging conventions of `fmv3_ode_pipeline.sh`.
+    - **Implementation**: Sequentially dispatches training (`train_visual_aligning.sh`), extracts the Slurm `TRAIN_ID`, and schedules the evaluation (`eval_visual_aligning.sh`) with `--dependency=afterok:$TRAIN_ID` under a unified timestamp log directory for zero-friction run tracking.
+4.  **Status**: **PIPELINE COMPLETED**. Dual-backbone parameter strategies, API safety measures, and chained job managers are fully standardized.
+
