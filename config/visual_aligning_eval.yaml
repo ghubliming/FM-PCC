@@ -15,9 +15,19 @@ seeds: [6, 7, 8, 9, 10]
 n_contexts: 30
 n_trajectories_per_context: 1
 
-# Projection variants
-# Currently only 'diffuser' (baseline, no projection).
-# Future: Add DPCC variants when visual projection is implemented.
 projection_variants: [
   'diffuser',
+  'fmpcc_safe',
+  'fmpcc_safe_tightened',
 ]
+
+# Physical Franka Workspace bounds in meters (x, y, z)
+workspace_bounds:
+  lb: [0.3, -0.35, 0.05]
+  ub: [0.7, 0.35, 0.40]
+
+# DPCC Projection parameters
+diffusion_timestep_threshold: 0.5
+enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
+constraint_types: ['bounds', 'dynamics']
+

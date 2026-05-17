@@ -29,6 +29,7 @@ import imageio
 import cv2
 
 import ddpm_encdec_vision.utils as utils
+from diffuser.sampling import Projector
 
 # Ensure local d3il is prioritized in path
 sys.path.insert(0, os.path.abspath('d3il'))
@@ -42,6 +43,72 @@ print(f"[ eval ] Using d3il from: {d3il.__file__}")
 print(f"[ eval ] D3IL_DIR set to: {os.environ['D3IL_DIR']}")
 
 from d3il.simulation.aligning_sim import Aligning_Sim
+
+# ─── Compatibility Normalizer Adapter ───────────────────────────────────────
+class VisualNormalizerAdapter:
+    """Bridges D3IL's Scaler class with the Projector's normalizer expectations."""
+    def __init__(self, scaler):
+        # Extract physical limits from the scaled dataset bounds
+        self.mins = scaler.y_min.detach().cpu().numpy()
+        self.maxs = scaler.y_max.detach().cpu().numpy()
+
+class VisualNormalizerDict:
+    """Wraps observations and actions to match the dataset normalizers dictionary."""
+    def __init__(self, scaler):
+        self.normalizers = {
+            'observations': VisualNormalizerAdapter(scaler),
+            'actions': VisualNormalizerAdapter(scaler)
+        }
+
+def setup_gen6_projector(args, config, scaler, variant):
+    """Instantiates the DPCC projection engine for the visual workspace."""
+    # 1. Determine constraint tightening (contract limits by 'enlarge_constraints' meters)
+    enlarge_constraints = config.get('enlarge_constraints', 0.0)
+    
+    workspace_lb = np.array(config['workspace_bounds']['lb'])
+    workspace_ub = np.array(config['workspace_bounds']['ub'])
+    
+    if 'tightened' in variant and enlarge_constraints > 0.0:
+        workspace_lb += enlarge_constraints
+        workspace_ub -= enlarge_constraints
+
+    # 2. Formulate Safety Bounds Constraints (applied to absolute position dims 3, 4, 5)
+    # Dims 0, 1, 2 are actions (deltas), Dims 3, 4, 5 are robot proprioception (absolute position)
+    lb = np.array([-np.inf, -np.inf, -np.inf, workspace_lb[0], workspace_lb[1], workspace_lb[2]])
+    ub = np.array([np.inf, np.inf, np.inf, workspace_ub[0], workspace_ub[1], workspace_ub[2]])
+    
+    constraint_list = [
+        ['lb', lb],
+        ['ub', ub]
+    ]
+    
+    # 3. Formulate Kinematics/Dynamics Constraints (Euler derivative bounds)
+    # Explicit Euler derivative step binding coordinate dimensions to actions
+    # x_idx = 3 (proprioception X), dx_idx = 0 (action vx)
+    # y_idx = 4 (proprioception Y), dx_idx = 1 (action vy)
+    # z_idx = 5 (proprioception Z), dx_idx = 2 (action vz)
+    if 'dynamics' in config.get('constraint_types', []):
+        constraint_list.append(('deriv', [3, 0]))
+        constraint_list.append(('deriv', [4, 1]))
+        constraint_list.append(('deriv', [5, 2]))
+    
+    # 4. Construct compatibility normalizer dict
+    adapter_normalizer = VisualNormalizerDict(scaler)
+    
+    # 5. Initialize the DPCC Projector
+    projector = Projector(
+        horizon=getattr(args, 'horizon', 8),
+        transition_dim=6,                # Combined Action + State dimension (6D)
+        action_dim=3,                    # XYZ Cartesian actions
+        goal_dim=0,                      # Non-goal conditioned VAE
+        constraint_list=constraint_list,
+        normalizer=adapter_normalizer,
+        diffusion_timestep_threshold=config.get('diffusion_timestep_threshold', 0.5),
+        variant='states_actions',        # Must be states_actions for 6D trajectory
+        solver='scipy',                  # Robust SLSQP QP optimizer
+        device=args.device
+    )
+    return projector
 
 # ─── Logging ────────────────────────────────────────────────────────────────
 class Tee(object):
@@ -60,7 +127,7 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1, projector=None):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
@@ -68,6 +135,7 @@ class VisualAgentWrapper:
         self.scaler = scaler
         self.eval_on_train = eval_on_train
         self.batch_size = batch_size
+        self.projector = projector
         
         # Open-Loop State (The "Mental Map")
         self.mental_robot_pos = None 
@@ -364,7 +432,10 @@ class VisualAgentWrapper:
             des_robot_pos_batch = des_robot_pos_seq.repeat(self.batch_size, 1, 1)
             
             cond = {0: (bp_image_batch, inhand_image_batch, des_robot_pos_batch)}
-            trajectory, _ = self.model(cond)
+            if self.projector is not None:
+                trajectory, _ = self.model(cond, projector=self.projector)
+            else:
+                trajectory, _ = self.model(cond)
             
             if trajectory.shape[-1] == 3:
                 # 3D Model (D3IL style): Use all 3 dims as actions
@@ -548,6 +619,12 @@ if __name__ == '__main__':
                 else:
                     print(f"[ eval ] WARNING: No scaler.pkl found at {scaler_path}. Operating in RAW mode.")
 
+                # Initialize Projector for DPCC variants
+                projector = None
+                if 'diffuser' not in variant and scaler is not None:
+                    projector = setup_gen6_projector(args, config, scaler, variant)
+                    print(f"[ eval ] DPCC Projector active for variant '{variant}'")
+
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model, device=args.device,
                     window_size=getattr(args, 'window_size', 8), 
@@ -557,7 +634,8 @@ if __name__ == '__main__':
                     record_mode=args_cli.record,
                     scaler=scaler,
                     eval_on_train=args_cli.eval_on_train,
-                    batch_size=getattr(args, 'batch_size', 1)
+                    batch_size=getattr(args, 'batch_size', 1),
+                    projector=projector
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,
