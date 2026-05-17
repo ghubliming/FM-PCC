@@ -64,8 +64,14 @@ class VisualDiffusionBridge(nn.Module):
                 "action_dim": 3,
                 "goal_conditioned": False,
                 "goal_seq_len": 10,
+                
+                # --- VAE Sequence Parameters (Active for Transformer VAE, Ignored by U-Net) ---
+                # obs_seq_len (5): Historical observation context length.
+                # action_seq_len (4): Number of future predicted action steps.
+                # Mathematically tied to window_size: obs_seq_len + action_seq_len - 1 = window_size (8).
                 "obs_seq_len": getattr(config, "obs_seq_len", 5),
                 "action_seq_len": getattr(config, "action_seq_size", 4),
+                
                 "embed_pdrob": 0,
                 "embed_dim": 64,
                 "device": str(self.device),

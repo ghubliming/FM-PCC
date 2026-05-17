@@ -33,82 +33,146 @@ logbase = 'logs'
 
 base = {
     'ddpm_encdec_vision': {
-        ## model
-        'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
-        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion', # DUMMY: Imported directly in train script.
-        'horizon': 8, # KEY: Must be a multiple of 8 (e.g. 8). Controls the UNet temporal padding block size. (D3IL default: 8)
-        'window_size': 8, # KEY: Must match horizon. Sets VAE temporal context boundaries. (D3IL default: 8)
-        'obs_dim': 128, # DUMMY: Ignored; visual features are encoded to 128 under the hood.
-        'action_dim': 3,
-        'visual_input': True, # DUMMY: Always True for the visual training backbone.
-        'obs_seq_len': 5, # KEY: Length of sequential observation history frames (D3IL default: 5).
-        'action_seq_size': 4, # KEY: Sequential chunk size of decoded action predictions (D3IL default: 4).
-        'n_diffusion_steps': 16, # DANGER: If changed, training and eval step counts must match. Mismatches lead to out-of-distribution noise scaling and frozen robot rollouts. (D3IL default: 16)
-        'loss_type': 'l2', # KEY: Reconstruction loss type. Must remain 'l2' (MSE) or 'l1' (MAE) to avoid training crashes.
-        'loss_discount': 1.0, # DUMMY: Gaussian diffusion loss is not discounted temporally.
-        'returns_condition': False, # DANGER: Must remain False! Setting to True expects external reward conditioning which visual tasks lack, leading to runtime failures.
-        'action_weight': 10, # KEY: Prioritizes immediate next physical action loss over state prediction loss (default: 10).
-        'dim': 32, # KEY: Sets core channel depth of UNet layers. Must match pre-trained checkpoint configuration.
-        'dim_mults': (1, 2, 4, 8), # KEY: Downsampling/upsampling block multiplier. Must match pre-trained checkpoint configuration.
-        'predict_epsilon': True, # DUMMY: Hardcoded True in VisualGaussianDiffusion.
-        'dynamic_loss': False, # DUMMY: Unused; L2 loss function is used instead.
-        'hidden_dim': 256, # DUMMY: CNN backbone (UNet) used instead of MLP.
-        'attention': False, # DUMMY: CNN kernels handle spatial filtering instead.
-        'condition_dropout': 0.25,
-        'condition_guidance_w': 1.2, # DUMMY: Guidance scale is evaluated dynamically.
-        'test_ret': 0.9, # DUMMY: Returns conditioning is disabled (returns_condition=False).
+        # ======================================================================================
+        # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
+        # ======================================================================================
+        'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', # Bridge container model
+        'action_dim': 3,            # Dimension of spatial actions (D3IL default: 3)
         
-        # dataset
-        'loader': 'ignored', # DUMMY: Ignored; custom Aligning_Img_Dataset is imported directly.
-        'normalizer': 'LimitsNormalizer', # DUMMY: Scaler stats (scaler.pkl) computed and saved dynamically instead.
+        # --- Temporal Sequence Dimensions ---
+        # NOTE FOR RESEARCHERS:
+        # - VAE Transformer Path: These are ACTIVE. Tied to window_size via: 5 + 4 - 1 = 8.
+        # - U-Net Path: These are IGNORED during training/planning. U-Net loads contiguous
+        #   state & action sequences at the full 'horizon' length (8) from the dataset.
+        #   If mismatched during rollout (e.g. state context of 5 frames vs image context of 8),
+        #   VisualUNet's internal safety lock (FIX #12) automatically stretches/repeats state history to 8.
+        #   For absolute U-Net parity, set obs_seq_len = 8 and action_seq_size = 8.
+        'obs_seq_len': 5,           # Length of historical observation frames (D3IL default: 5)
+        'action_seq_size': 4,       # Sequential chunk size of decoded action predictions (D3IL default: 4)
+        
+        # --- Backbone-Specific Sequence Lengths ---
+        # 1. U-Net Horizon: Only active for the U-Net Backbone. Must be a multiple of 8 (e.g. 8)
+        #    to satisfy the 3-stage downsampling block divisions inside UNet1DTemporalCondModel.
+        'horizon': 8,               # Target sequence length. [Active for U-Net / Ignored by VAE Transformer] (D3IL baseline default: N/A)
+        
+        # 2. VAE Window Size: Only active for VAE Transformer. Mathematically locked to:
+        #    window_size = obs_seq_len + action_seq_size - 1 = 8.
+        #    If window_size does not match (5 + 4 - 1 = 8), the Transformer positional embedding table
+        #    size (seq_size) will mismatch the token sequence length, causing a runtime tensor crash.
+        'window_size': 8,           # Context window size. [Active for VAE Transformer / Ignored by U-Net] (D3IL VAE default: 8)
+        
+        # --- Denoising & Optimization parameters ---
+        'n_diffusion_steps': 16,    # Number of denoising timesteps. Must match exactly in training and eval. (D3IL baseline default: 16)
+        'action_weight': 10,        # Prioritizes immediate next physical action loss over state prediction. (D3IL baseline default: N/A)
+        'loss_type': 'l2',          # L2 (MSE) reconstruction loss type. Must remain 'l2' for DDPM scheduling. (D3IL baseline default: 'l2')
+        
+        # --- Architectural Channel Widths ---
+        # For U-Net: 'dim' controls convolutional block size. Set 'dim: 32' for smaller GPU footprints, 
+        #            'dim: 128' or '256' for deep feature extraction.
+        # For Transformer: 'embed_dim' controls token size. Set 'hidden_dim: 256' inside 
+        #                  the transformer adapter for stable attention learning.
+        'dim': 32,                  # Core channel depth of U-Net convolutional layers. (D3IL baseline default: N/A)
+        'dim_mults': (1, 2, 4, 8),  # Down/up temporal block multiplier for U-Net. (D3IL baseline default: N/A)
+        'hidden_dim': 256,          # Token embedding size for VAE Transformer. (D3IL VAE default: 64)
+        
+        # --- Training Dropout and Regularization ---
+        # - PCC/DPCC CFG: Set to 0.25 (vs D3IL 0.1). 25% dropout trains a strong unconditional prior
+        #   needed for stable Classifier-Free Guidance (CFG, w=1.2) to prevent rollout drift.
+        #   D3IL uses 0.1 because it bypasses guided planning to maximize conditional exposure.
+        'condition_dropout': 0.25,  # Dropout on conditional image embeddings. (D3IL baseline default: 0.1)
+        
+        
+        # ======================================================================================
+        # 🪆 DUMMY / UNUSED CONFIGURATION PARAMETERS (Kept for compatibility with legacy parser)
+        # ======================================================================================
+        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'obs_dim': 128,             # Ignored; visual features are encoded to 128D under the hood (D3IL baseline default: 128)
+        'visual_input': True,       # Always True for visual encoders (D3IL baseline default: True)
+        'loss_discount': 1.0,       # Gaussian diffusion is not temporally discounted (D3IL baseline default: N/A)
+        'returns_condition': False, # Must remain False; visual tasks lack return-reward tokens (D3IL baseline default: False)
+        'predict_epsilon': True,    # Hardcoded True in the diffusion engine (D3IL baseline default: True)
+        'dynamic_loss': False,      # Unused; standard MSE loss operates (D3IL baseline default: False)
+        'attention': False,         # Ignored; CNN kernels handle spatial filtering for U-Net (D3IL baseline default: N/A)
+        'condition_guidance_w': 1.2,# Guidance scale is evaluated dynamically during rollout (D3IL baseline default: N/A)
+        'test_ret': 0.9,            # Unused (returns_condition=False) (D3IL baseline default: N/A)
+        
+        
+        # ======================================================================================
+        # 📊 DATASET LOADERS & PATH CONSTRAINTS
+        # ======================================================================================
+        'max_path_length': 512,     # Max training path length (D3IL default: 512)
+        
+        # --- Unused Legacy Dataset Keys ---
+        'loader': 'ignored',        # Ignored; custom Aligning_Img_Dataset is imported directly
+        'normalizer': 'LimitsNormalizer', # Scaler stats are computed and saved dynamically (D3IL baseline default: LimitsNormalizer)
         'preprocess_fns': [],
-        'clip_denoised': False, # DUMMY: The engine explicitly forces clip_denoised=True.
-        'use_padding': True, # DUMMY: The dataset loader padding is hardcoded to True.
-        'max_path_length': 512, # KEY: Max training sequence trajectory step length (D3IL default: 512).
-        'include_returns': True, # DUMMY: Dataset loading handles returns internally.
-        'returns_scale': 400, # DUMMY: Unused.
-        'discount': 0.99, # DUMMY: Unused.
- 
-        # serialization
+        'clip_denoised': False,     # The engine explicitly forces clip_denoised=True (D3IL baseline default: True)
+        'use_padding': True,        # The dataset loader padding is hardcoded to True
+        'include_returns': True,    # Dataset loading handles returns internally
+        'returns_scale': 400,       # Unused
+        'discount': 0.99,           # Unused (D3IL baseline default: 0.99)
+        
+        
+        # ======================================================================================
+        # 💾 SERIALIZATION & EXPERIMENT LOGS
+        # ======================================================================================
         'logbase': logbase,
         'prefix': 'ddpm_encdec_vision/',
         'exp_name': watch(args_to_watch_dpcc_train),
- 
-        # training
-        'n_steps_per_epoch': 1000,
-        'n_train_steps': 1e5, # Original active setting (D3IL baseline trains for epoch: 4)
-        'batch_size': 64, # DANGER: Exceeding 64 runs extremely high risk of GPU OOM memory limits due to parallel camera ResNet passes. (D3IL default: 64)
-        'learning_rate': 5e-4, # DANGER: Tuned at 5e-4. Setting above 1e-3 causes ResNet gradient explosion and NaN loss generation. (D3IL default: 5e-4)
-        'gradient_accumulate_every': 2,
-        'ema_decay': 0.995,
+        
+        
+        # ======================================================================================
+        # 🏋️‍♂️ ACTIVE TRAINING HYPERPARAMETERS (Tuning bounds for optimal convergence)
+        # ======================================================================================
+        # Batch Size: Keep at 64. Higher batch sizes risk GPU OOM due to parallel camera ResNet passes.
+        'batch_size': 64,           # Training batch size. (D3IL baseline default: 64)
+        
+        # Learning Rate (lr) Tuning Bounds:
+        # - For U-Net: Set lr to 2e-4. Setting above 5e-4 causes convolutional gradient explosion.
+        # - For Transformer: Set lr to 5e-4 (D3IL default). Stable attention allows higher base rates.
+        'learning_rate': 5e-4,      # Target base learning rate. (D3IL baseline default: 5e-4)
+        
+        # Parameter Smoothing (EMA):
+        # - For U-Net: Highly crucial for physical path continuity. Keep ema_decay at 0.995.
+        # - For Transformer VAE: Standard parameters work without EMA, but decay = 0.995 stabilizes.
+        'ema_decay': 0.995,         # Exponential Moving Average parameter decay. (D3IL baseline default: 0.995)
+        
+        # Training Steps:
+        'n_steps_per_epoch': 1000,  # Epoch steps limit
+        'n_train_steps': 1e5,       # Total training steps (D3IL baseline trains for epoch: 4)
+        'gradient_accumulate_every': 2, # Gradient accumulation steps
         'train_test_split': 0.9,
         'device': 'cuda',
         'seed': 0,
     },
 
     'plan_ddpm_encdec_vision': {
+        # ======================================================================================
+        # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
+        # ======================================================================================
+        'horizon': 8,               # Target planning horizon (D3IL default: 8)
+        'window_size': 8,           # Explicitly define for evaluation rollout buffer (D3IL default: 8)
+        'n_diffusion_steps': 16,    # Denoising inference steps (D3IL default: 16)
+        'max_episode_length': 1000, # Allowed rollout steps (more than learned steps to allow recovery)
+        'max_path_length': 512,     # Physical rollout execution threshold (D3IL default: 512)
+        'action_weight': 10,
+        
         'policy': 'sampling.Policy',
-        'max_episode_length': 1000, # More than learned steps (512) to allow closed-loop recovery
-        'max_path_length': 512, # D3IL default: 512
         'batch_size': 1,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
         'test_ret': 0,
-        # serialization
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
         'exp_name': watch(args_to_watch_dpcc_plan),
         
         'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
-        'horizon': 8, # D3IL default: 8
-        'n_diffusion_steps': 16, # D3IL default: 16
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'action_weight': 10,
         
         'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
