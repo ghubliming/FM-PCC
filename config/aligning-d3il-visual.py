@@ -30,7 +30,7 @@ base = {
         
         # dataset
         'loader': 'ignored',
-        'max_path_length': 150,
+        'max_path_length': 256,
 
         # serialization
         'logbase': logbase,
