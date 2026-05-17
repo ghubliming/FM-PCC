@@ -1,6 +1,6 @@
 # Test History
 
-For SLURM jobs history, refer to [important_runs.md](file:///workspaces/FM-PCC/Slurm_Codes/logs/important_runs/important_runs.md)
+For SLURM jobs history, refer to [important_runs.md](../Slurm_Codes/logs/important_runs/important_runs.md)
 
 Purpose: concise record of what was tested across all generations/vresions. Master logging markdown.
 
@@ -805,9 +805,9 @@ Keywords: Phase 2 complete, real training/eval/load scripts, multi-seed, W&B log
 **Keywords**: Zero-Manifest, audit-logging, iMF-PCC real-data integration.
 
 1. **Matrix Explorer v3**: Stabilized with Zero-Manifest HTML discovery and hybrid zoom (FigWidth + Magnify). Implemented automated `.txt` audit logs including absolute source paths for every PNG download.
-   - *Ref*: [`logs_in_develop/DA_Code/v3/fix_3/fix_3.md`](file:///workspaces/FM-PCC/logs_in_develop/DA_Code/v3/fix_3/fix_3.md)
+   - *Ref*: [`logs_in_develop/DA_Code/v3/fix_3/fix_3.md`](./DA_Code/v3/fix_3/fix_3.md)
 2. **iMeanFlow (iMF) Phase 3**: Migrated to official `iMeanFlowEngine` (dual-velocity field). Wired `iMFDiffusion` wrapper and `u_first` curriculum training for real `avoiding-d3il` dataset. Standardized multi-seed Slurm scripts and W&B logging.
-   - *Ref*: [`logs_in_develop/Gen3v4/fix_3/REAL_IMF_IMPLEMENTATION.md`](file:///workspaces/FM-PCC/logs_in_develop/Gen3v4/fix_3/REAL_IMF_IMPLEMENTATION.md)
+   - *Ref*: [`logs_in_develop/Gen3v4/fix_3/REAL_IMF_IMPLEMENTATION.md`](./Gen3v4/fix_3/REAL_IMF_IMPLEMENTATION.md)
 
 **Status**: **VERIFIED STABLE**. Visualizer and iMF-PCC core are production-ready for final thesis analysis.
 

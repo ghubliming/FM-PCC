@@ -144,7 +144,7 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1, projector=None, trajectory_selection='random'):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False, batch_size=1, projector=None, trajectory_selection='random', variant='unspecified'):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
@@ -155,6 +155,7 @@ class VisualAgentWrapper:
         self.projector = projector
         self.trajectory_selection = trajectory_selection
         self.prev_observations = None
+        self.variant = variant
         
         # Open-Loop State (The "Mental Map")
         self.mental_robot_pos = None 
@@ -223,12 +224,13 @@ class VisualAgentWrapper:
         success = info.get('success', False)
         mean_dist = info.get('mean_distance', 0.0)
         mode = info.get('mode', 0)
+        rollout_idx = info.get('context', self.rollout_counter)
         
         max_err = float(np.max(self.curr_rollout_tracking_errors) if len(self.curr_rollout_tracking_errors) > 0 else 0.0)
         avg_time = float(self.curr_rollout_time / max(1, self.step_counter))
         
         # Store rollout statistics in history dictionary
-        self.master_rollout_history[f"rollout_{self.rollout_counter}"] = {
+        self.master_rollout_history[f"rollout_{rollout_idx}"] = {
             "real_robot_pos": np.array(self.history_real_pos),
             "desired_actions": np.array(self.history_desired_actions),
             "full_plans": np.array(self.history_full_plans),
@@ -247,7 +249,7 @@ class VisualAgentWrapper:
         
         # Print real-time diagnostic summary to console/log
         context_type = "Seen Training Context" if self.eval_on_train else "Unseen Test Context"
-        print(f"[ {context_type} {self.rollout_counter} - Rollout 0 Finished ]")
+        print(f"[ {context_type} {rollout_idx} Finished ]")
         print(f"  - Total Steps: {self.step_counter}")
         print(f"  - Success status: {success}")
         print(f"  - Final Mean Distance: {mean_dist:.6f} m")
@@ -258,15 +260,15 @@ class VisualAgentWrapper:
         
         # Real-time Export (Scientific JSON and PNG Report)
         if hasattr(self, 'save_path') and self.save_path is not None:
-            self._export_rollout_realtime(self.rollout_counter)
+            self._export_rollout_realtime(rollout_idx)
             
         # Save video/gif diagnostics
         if self.record_mode != 'none' and len(self.video_frames) > 0:
-            self._save_diagnostics(self.rollout_counter)
+            self._save_diagnostics(rollout_idx)
     
     def _save_diagnostics(self, rollout_idx, custom_path=None, custom_frames=None):
         frames = custom_frames if custom_frames is not None else self.video_frames
-        path = custom_path if custom_path is not None else os.path.join(self.save_path, 'diagnostics')
+        path = custom_path if custom_path is not None else os.path.join(self.save_path, 'diagnostics', self.variant)
         os.makedirs(path, exist_ok=True)
         
         try:
@@ -303,7 +305,7 @@ class VisualAgentWrapper:
     def _export_rollout_realtime(self, rollout_idx):
         """Generates scientific PNG and PKL for the rollout immediately."""
         try:
-            diag_path = os.path.join(self.save_path, "realtime_diagnostics")
+            diag_path = os.path.join(self.save_path, "realtime_diagnostics", self.variant)
             os.makedirs(diag_path, exist_ok=True)
             
             # 1. Save data pickle
@@ -684,7 +686,8 @@ if __name__ == '__main__':
                     eval_on_train=args_cli.eval_on_train,
                     batch_size=batch_size,
                     projector=projector,
-                    trajectory_selection=trajectory_selection
+                    trajectory_selection=trajectory_selection,
+                    variant=variant
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
                                   n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,

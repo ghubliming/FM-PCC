@@ -32,7 +32,7 @@ We successfully resolved all architectural gaps by implementing the following:
 
 ## 💻 3. Line-by-Line Changes and Code Snippets
 
-### A. [`eval_ddpm_encdec_vision.py`](file:///workspaces/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py)
+### A. [`eval_ddpm_encdec_vision.py`](../../../../ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py)
 
 #### 1. Constructor and Reset Updates
 We added support for the `trajectory_selection` parameter and tracked `self.prev_observations` in the history state buffer:
@@ -181,7 +181,7 @@ Modified the main variant loop to automatically pass `trajectory_selection` crit
 
 ---
 
-### B. [`visual_aligning_eval.yaml`](file:///workspaces/FM-PCC/config/visual_aligning_eval.yaml)
+### B. [`visual_aligning_eval.yaml`](../../../../config/visual_aligning_eval.yaml)
 We reformatted the yaml file to use the exact same key structures, comment categories, and only the 7 requested variants, ignoring all `dpcc-X` variants:
 
 ```yaml

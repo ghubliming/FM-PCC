@@ -117,6 +117,7 @@ class Aligning_Sim(BaseSim):
 
                         obs, reward, done, info = env.step(pred_action)
 
+                info['context'] = context
                 if hasattr(agent, 'update_rollout_info'):
                     agent.update_rollout_info(info)
 
