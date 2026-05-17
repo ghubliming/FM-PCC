@@ -81,4 +81,5 @@ workspace_bounds:
 
 # DPCC Projection parameters
 enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
-constraint_types: ['bounds', 'dynamics']
+# constraint_types: ['bounds', 'dynamics']  # Original (with constraints)
+constraint_types: []               # OPTION A: No constraints (Turned Off)

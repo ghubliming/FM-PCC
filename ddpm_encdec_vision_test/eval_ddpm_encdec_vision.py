@@ -72,15 +72,15 @@ def setup_gen6_projector(args, config, scaler, variant):
         workspace_lb += enlarge_constraints
         workspace_ub -= enlarge_constraints
 
+    constraint_list = []
+    
     # 2. Formulate Safety Bounds Constraints (applied to absolute position dims 3, 4, 5)
     # Dims 0, 1, 2 are actions (deltas), Dims 3, 4, 5 are robot proprioception (absolute position)
-    lb = np.array([-np.inf, -np.inf, -np.inf, workspace_lb[0], workspace_lb[1], workspace_lb[2]])
-    ub = np.array([np.inf, np.inf, np.inf, workspace_ub[0], workspace_ub[1], workspace_ub[2]])
-    
-    constraint_list = [
-        ['lb', lb],
-        ['ub', ub]
-    ]
+    if 'bounds' in config.get('constraint_types', []):
+        lb = np.array([-np.inf, -np.inf, -np.inf, workspace_lb[0], workspace_lb[1], workspace_lb[2]])
+        ub = np.array([np.inf, np.inf, np.inf, workspace_ub[0], workspace_ub[1], workspace_ub[2]])
+        constraint_list.append(['lb', lb])
+        constraint_list.append(['ub', ub])
     
     # 3. Formulate Kinematics/Dynamics Constraints (Euler derivative bounds)
     # Explicit Euler derivative step binding coordinate dimensions to actions
