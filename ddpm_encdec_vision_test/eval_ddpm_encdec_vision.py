@@ -224,7 +224,7 @@ class VisualAgentWrapper:
         success = info.get('success', False)
         mean_dist = info.get('mean_distance', 0.0)
         mode = info.get('mode', 0)
-        rollout_idx = info.get('context', self.rollout_counter)
+        rollout_idx = int(info.get('context', self.rollout_counter))
         
         max_err = float(np.max(self.curr_rollout_tracking_errors) if len(self.curr_rollout_tracking_errors) > 0 else 0.0)
         avg_time = float(self.curr_rollout_time / max(1, self.step_counter))
@@ -316,7 +316,7 @@ class VisualAgentWrapper:
             # NEW: Save human-readable JSON stats file for easy debugging
             import json
             stats = {
-                "rollout_index": rollout_idx,
+                "rollout_index": int(rollout_idx),
                 "success": bool(data.get("success", False)),
                 "steps": int(data.get("steps", 0)),
                 "mean_distance": float(data.get("mean_distance", 0.0)),
