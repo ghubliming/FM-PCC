@@ -836,4 +836,32 @@ Keywords: U-Net H=2 support, diagnostic fidelity, 7-metric report, ACT-parity, c
 3.  **Scientific Reporting**: Standardized the evaluation output to match the FMv3ODE **7-metric report** (Success Rate, Constraints, Steps, Violations, and Inference Time $\pm$ std).
 4.  **Baseline Synchronization**: Verified and documented the **ICLR 2024 DDPM-ACT** official hyperparameters (500 Epochs, $5\cdot10^5$ steps, $5\cdot10^{-4}$ LR, Batch 64).
 5.  **Backbone Capacity Analysis**: Documented the **20x capacity difference** between Gen5 U-Net (18M+ params) and Native ACT Transformer (~0.9M params) for thesis justification.
-6.  **Status**: **VIsual Pipeline Stable**. High-fidelity training and evaluation are now scientifically aligned with the FMPCC standards.
+6.  **Status**: **Visual Pipeline Stable**. High-fidelity training and evaluation are now scientifically aligned with the FMPCC standards.
+---
+
+## Gen5: Visual-Aligning Stabilization & Diagnostic Finalization (May 16, 2026)
+
+Keywords: Masked Statistics, Zero-Variance Lock, Mixed-Loop control, Battle-Ready.
+
+1.  **Masked Statistics Optimization**: Implemented masked mean/std calculation in the `GaussianNormalizer` to ignore zero-padding in expert trajectories, effectively eliminating the "Hypersonic Drift" caused by numerical scaling artifacts.
+2.  **Zero-Variance Safety Lock**: Enforced a `1e-4` standard deviation floor in the normalizer to prevent division-by-zero crashes on constant dimensions (e.g., end-effector Z-height).
+3.  **Mixed-Loop Control Logic**: Finalized the "Mixed-Loop" paradigm (Open-Loop Mental Map for proprioception + Closed-Loop Visual Correction), ensuring temporal auto-sync and hand-eye coordination.
+4.  **Verification**: Successfully validated the end-to-end pipeline on a 3k-step stable model.
+    - **Log**: `FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-16/23_26_39_eval_visual_aligning_20403.log` (**WORKED!** 3k train)
+5.  **Status**: **BATTLE-READY**. The Gen5 visual pipeline is fully stabilized and prepared for the 500k-step benchmark suite.
+
+## Gen5: Visual-Aligning Diagnostic & Logging Robustness (May 17, 2026)
+
+Keywords: Tee-Stderr redirection, MuJoCo mju_openResource fix, deferred XML deletion, atexit.
+
+1.  **Redirection Robustness (Tee-Stderr)**: Modified `eval_ddpm_encdec_vision.py` to intercept and Tee `sys.stderr` in addition to `sys.stdout` to the `eval_diffuser.log` file. This prevents tracebacks, standard library/framework warnings, and critical error messages from being lost when runs fail or end abruptly (e.g. at Context 7).
+2.  **MuJoCo Resource Loading Stabilization**: Resolved the persistent `WARNING: mju_openResource: could not open resource 'panda_tmp_rb*.xml'` warnings that occurred during simulator rollouts.
+    - **Root Cause**: The generated temporary robot XML assets were deleted immediately after compilation by the `cleanup()` method inside `MjSceneParser.create_scene()`, but before MuJoCo's offscreen renderer lazily initialized and loaded resources on the first camera frame.
+    - **Technical Fix**: Overrode `cleanup()` in `MjIncludeTemplate` inside the active `mj_beta/MjLoadable.py` (explicitly keeping legacy `mujoco/MujocoLoadable.py` untouched and unmodified) to defer physical XML file deletion to the Python interpreter's exit using `atexit.register()`.
+    - **Impact**: Completely eliminated all MuJoCo C++ resource provider warnings in the active simulator backend, ensuring flawless offscreen camera rendering and solid visual-controller stability.
+3.  **Real-Time Per-Rollout Debug Statistics**: Integrated an instant audit callback `update_rollout_info(info)` inside the simulator loop.
+    - **Impact**: Rollout statistics are printed to the console in real time (containing success, total steps, mean distance, env mode, max tracking error, and average inference time).
+    - **Artifacts**: For every trial run, a human-readable summary file `rollout_{idx}_stats.txt` is automatically written to the `diagnostics/` directory alongside the corresponding rollout MP4/GIF file, and `rollout_{idx}_stats.json` is exported to `realtime_diagnostics/` for zero-friction debugging.
+4.  **Scientific Step Reporting Decoupling**: Updated final metric averages to calculate and print both `Avg number of steps (successful trials)` and `Avg number of steps (all trials)`. This provides complete transparency into step performance regardless of the success rate, resolving misleading legacy `0.00` printouts when success is `0.0%`.
+5.  **Dynamic Train vs. Test Context Toggle & Isolated Outputs**: Introduced a `--eval-on-train` flag to the evaluation script. This dynamically switches the robot and block initial positions to use those from the seen expert dataset (`train_contexts.pkl`) rather than unseen validation data (`test_contexts.pkl`). To prevent overwriting the standard generalization results, all logs, `.npz`, `.pkl`, and `.png` outputs are automatically routed to a distinct `results_train_set/` directory with `_train_set` labels, while console logs print explicit `Seen Training Context` labels in real time.
+6.  **Status**: **PRODUCTION STABLE**. The entire diagnostic, logging, and audit pipeline is robustly secured and fully operational.
