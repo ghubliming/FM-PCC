@@ -217,12 +217,17 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-        # 2. Copy associated yaml configs (e.g. projection_eval.yaml)
+        # 2. Copy associated yaml configs (e.g. projection_eval.yaml or visual_aligning_eval.yaml)
         # We look in the 'config/' directory relative to the current working directory
-        yaml_path = 'config/projection_eval.yaml'
+        if 'visual' in getattr(args, 'dataset', '') or 'visual' in getattr(args, 'config', '') or 'aligning' in getattr(args, 'dataset', ''):
+            yaml_name = 'visual_aligning_eval.yaml'
+        else:
+            yaml_name = 'projection_eval.yaml'
+            
+        yaml_path = os.path.join('config', yaml_name)
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'projection_eval.yaml')
+                dest = os.path.join(snapshot_dir, yaml_name)
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:
