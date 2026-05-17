@@ -35,14 +35,16 @@ The following architectures are implemented in `d3il/agents/models/diffusion/dif
 
 ---
 
-## 3. Implementation Workflow (Gen5 Current Status)
+## 3. Implementation Architecture (Gen5 Stabilized)
 
-### **Current Backbone: U-Net (Hybrid Architecture)**
-As of the current Gen5 implementation, we have opted for a **Hybrid Approach**:
-- **Vision Model:** `MultiImageObsEncoder` (from D3IL).
-- **Backbone Model:** `UNet1DTemporalCondModel` (from DPCC/Diffuser).
+### **Core Backbone: The `VisualUNet` Wrapper**
+The Gen5 implementation has moved from a loose hybrid setup to a specialized **Integrated Wrapper** architecture:
+- **Wrapper Model:** `VisualUNet` (`ddpm_encdec_vision.models.visual_unet.py`).
+- **Vision Engine:** `MultiImageObsEncoder` (D3IL ResNet-18 stack).
+- **Temporal Denoising:** `UNet1DTemporalCondModel` (DPCC/Diffuser).
+- **Diffusion Engine:** `VisualGaussianDiffusion` (Standardized DDPM).
 
-**Rationale:** The 1D U-Net is retained because of its superior performance in generating smooth, temporally-consistent trajectories that are compatible with the DPCC geometric projection operators.
+**Rationale:** The `VisualUNet` acts as a unified container that synchronizes the high-dimensional visual embeddings with the temporal trajectory denoising. It handles the internal FiLM conditioning and provides the "Auto-Padding" safety required for U-Net downsampling.
 
 ---
 
@@ -50,9 +52,9 @@ As of the current Gen5 implementation, we have opted for a **Hybrid Approach**:
 
 The core architectural innovation in Gen5 is the **Conditioning Swap**. 
 
-The **U-Net** and the **Diffusion Engine** remain 100% identical to the state-based version. By simply encoding raw pixels into the same latent space where obstacle coordinates previously lived, we can repurpose the entire DPCC planning infrastructure for visual manipulation.
+The **U-Net** and the **Diffusion Engine** remain architecturally identical to the state-based version. By encoding raw pixels into a 128-dim latent space via the `VisualUNet` bridge, we repurpose the entire DPCC planning infrastructure for visual manipulation.
 
-- **Internal Mechanism:** The 128-dim visual embedding is injected into the U-Net via **FiLM** (Feature-wise Linear Modulation) layers, which bias the convolutional features to generate a trajectory that achieves the visual goal.
+- **Internal Mechanism:** Visual embeddings are injected via **FiLM** (Feature-wise Linear Modulation) layers. This biases the convolutional features to generate a trajectory that achieves the visual goal captured in the camera frames.
 
 ---
 
@@ -91,7 +93,7 @@ By utilizing the **D3IL native code for vision**, we ensure that our visual feat
 
 ---
 
-## 11. Data Transmission - What is Learned?
+## 9. Data Transmission - What is Learned?
 
 A key question for architectural analysis is exactly what is being learned and transmitted to the robot's hardware.
 
@@ -115,7 +117,7 @@ While both models output $(x, y, z)$ points, the **form** of that data differs s
 
 ---
 
-## 12. Mathematical Distinction: Action Sequences vs. Trajectory Planning
+## 10. Mathematical Distinction: Action Sequences vs. Trajectory Planning
 
 To understand why the DPCC framework is unique, we must distinguish between the mathematical representation of **Actions** and **Trajectories**.
 
@@ -135,7 +137,7 @@ $$\tau = \{x_1, x_2, \dots, x_H\} \in \mathbb{R}^{H \times 3}$$
 
 ---
 
-## 13. Control Paradigm: MPC vs. Action Chunking
+## 11. Control Paradigm: MPC vs. Action Chunking
 
 A final conceptual distinction for thesis documentation is the control loop philosophy.
 
@@ -152,7 +154,7 @@ The ACT architecture uses a different philosophy:
 
 ---
 
-## 14. Failure Analysis: The Impact of MPC Step Size
+## 12. Failure Analysis: The Impact of MPC Step Size
 
 In high-precision tasks like Aligning, the **Step Size** (the number of planned steps executed before re-planning) is a critical performance bottleneck.
 
@@ -166,7 +168,7 @@ To maximize accuracy, we aim for a **High-Frequency Receding Horizon** (e.g., ex
 
 ---
 
-## 15. Parameter Tuning Guide
+## 13. Parameter Tuning Guide
 
 To optimize the Gen5 Visual-Aligning pipeline, you should focus on the following parameters across two configuration files.
 
@@ -186,14 +188,14 @@ These parameters live in the `ddpm_encdec_vision` block and affect both training
     *   *Expected Change:* Significant increase in success rate at the cost of slower real-world execution (more compute).
 *   **`horizon` (Planning Horizon)**: Total length of the planned trajectory (Default: 8).
     *   *Expected Change:* Longer horizons give the model better "foresight," but make the denoising task harder for the U-Net.
-*   **`obs_seq_len` (Visual History)**: Number of historical image frames provided to the ResNet encoder (Default: 5).
+*   **`obs_seq_len` (Visual History)**: Number of historical image frames provided to the ResNet encoder (Default: 16).
     *   *Expected Change:* Increasing this helps the model understand the **momentum** of the box, but may introduce lag if the history window is too long.
 *   **`n_diffusion_steps`**: Number of denoising iterations (Default: 16-20).
     *   *Expected Change:* Higher values improve trajectory quality (less noise) but significantly slow down the inference speed.
 
 ---
 
-## 16. The Visual Encoder: Dimensionality Reduction via ResNet
+## 14. The Visual Encoder: Dimensionality Reduction via ResNet
 
 A common question in robotic vision is why we cannot feed raw images directly into the U-Net. This section explains the encoding process.
 
@@ -229,7 +231,7 @@ Training is typically performed once for **100,000 to 500,000 steps** on a GPU. 
 
 ---
 
-## 17. End-to-End Training Philosophy
+## 15. End-to-End Training Philosophy
 
 A common point of confusion is whether the ResNet and U-Net are trained in two separate stages. In the Gen5 architecture, the answer is **No**. There is only **one training process**.
 
@@ -270,13 +272,13 @@ To answer your question directly: **Yes.**
 
 ---
 
-## 18. Parameter Provenance: The Origin of Defaults
+## 16. Parameter Provenance: The Origin of Defaults
 
 | Parameter | Default Value | Source / Ancestry | Scientific Rationale |
 | :--- | :--- | :--- | :--- |
 | **`horizon`** | 8 | **FMv3ODE (Legacy DPCC)** | Maintains parity with state-based planning benchmarks. |
 | **`window_size`** | 8 | **FMv3ODE (Legacy DPCC)** | Power-of-2 architectural constraint for U-Net downsampling. |
-| **`obs_seq_len`** | 5 | **D3IL Benchmark** | Standard history length for visual manipulation tasks in D3IL. |
+| **`obs_seq_len`** | 16 | **Gen5 Standardized** | Optimized history length for hand-eye coordination. |
 | **`n_contexts`** | 30 | **D3IL Benchmark** | Official benchmark scale for the Aligning task. |
 | **`action_seq_size`** | 4 | **Experimental (Heuristic)** | Balanced re-planning frequency (exactly half of the horizon). |
 | **`n_diff_steps`** | 16-20 | **D3IL / ACT** | Optimal quality vs. speed trade-off for visual diffusion models. |
@@ -284,7 +286,7 @@ To answer your question directly: **Yes.**
 
 ---
 
-## 19. Total Horizon Flexibility: The Auto-Padding Fix
+## 17. Total Horizon Flexibility: The Auto-Padding Fix
 
 In previous versions of the Gen5 pipeline, the model was rigid and would crash if the `horizon` was set to a small value (like 2 or 4). This was due to the "Downsampling Bottom-out" error in the U-Net.
 
@@ -304,7 +306,7 @@ You can now freely set the `horizon` to any value (1, 2, 4, 8, 16) without chang
 
 ---
 
-## 20. Visual History (obs_seq_len): Understanding Motion
+## 18. Visual History (obs_seq_len): Understanding Motion
 
 In vision-based control, a single image is only a "snapshot." The `obs_seq_len: 5` parameter provides the robot with a short-term memory.
 
@@ -315,7 +317,7 @@ In vision-based control, a single image is only a "snapshot." The `obs_seq_len: 
 
 ---
 
-## 21. Native D3IL DDPM-ACT Baseline (The Original Version)
+## 19. Native D3IL DDPM-ACT Baseline (The Original Version)
 
 For scientific comparison, it is important to understand the original D3IL version of this task before our Gen5 "U-Net Upgrade."
 
@@ -348,12 +350,12 @@ The native D3IL code includes an internal evaluation loop that calls `Aligning_S
 
 ---
 
-## 22. Replicating DDPM-ACT within Gen5 (The "Parity Setup")
+## 20. Replicating DDPM-ACT within Gen5 (The "Parity Setup")
 
-To conduct a scientifically valid comparison, you can configure Gen5 to mimic the behavior of the native DDPM-ACT baseline as closely as possible.
+To conduct a scientifically valid comparison, you can configure Gen5 to mimic the behavior of the native DDPM-ACT baseline using the `VisualDiffusionBridge` (`ddpm_encdec_vision/models/d3il_visual_bridge.py`).
 
 ### A. The "ACT-Style" Gen5 Config
-To match the ACT baseline, update your `config/aligning-d3il-visual.py` with these values:
+To match the ACT baseline, the bridge can be instantiated with these values:
 
 | Parameter | ACT-Parity Value | Rationale |
 | :--- | :--- | :--- |
@@ -383,7 +385,7 @@ For your thesis, use the **ACT-Parity Setup** in Gen5 to prove that even with id
 
 ---
 
-## 23. Head-to-Head Comparison: U-Net vs. Transformer (ACT)
+## 21. Head-to-Head Comparison: U-Net vs. Transformer (ACT)
 
 For your thesis, this is the most critical scientific distinction. Even if both models use the same vision and parameters, the "Backbone" changes the physics of the robot's motion.
 
@@ -397,7 +399,7 @@ For your thesis, this is the most critical scientific distinction. Even if both 
 | **Capacity** | **High (20M+ Params)** | **Low (~1M Params)** |
 | **Best For** | **High-precision manipulation & Safety.** | Complex, multi-stage semantic tasks. |
 
-### 24. Quantitative Capacity Analysis: Why Gen5 is "Smarter"
+## 22. Quantitative Capacity Analysis: Why Gen5 is "Smarter"
 
 | Metric | Gen5 (U-Net) | Native D3IL (ACT) | Ratio |
 | :--- | :--- | :--- | :--- |
@@ -414,7 +416,7 @@ For your thesis, this is the most critical scientific distinction. Even if both 
 
 ---
 
-## 25. Evaluation Log Guide: Expert References & System Resources
+## 23. Evaluation Log Guide: Expert References & System Resources
 
 When initiating an evaluation rollout, you will encounter specific console logs. This section explains their technical meaning for your experiment records.
 
@@ -444,7 +446,7 @@ When initiating an evaluation rollout, you will encounter specific console logs.
 
 ---
 
-## 26. Real-Time Scientific Diagnostics (FIX_12)
+## 24. Real-Time Scientific Diagnostics
 
 As of the Gen5 Diagnostic Phase 14, the evaluation script (`eval_ddpm_encdec_vision.py`) has been upgraded to support **Real-Time Data Streaming**.
 
@@ -464,7 +466,7 @@ If the robot fails context #5, you can immediately open `rollout_5_report.png` t
 
 ---
 
-## 27. Dimensionality: 2D Task vs 3D Model
+## 25. Dimensionality: 2D Task vs 3D Model
 
 A common point of confusion is whether the Aligning task is 2D or 3D.
 
@@ -478,7 +480,7 @@ The Gen5 trajectory (Horizon 8) provides sufficient guidance because it encodes 
 
 ---
 
-## 28. Mixed-Loop Control: The Vision vs. State Divergence
+## 26. Mixed-Loop Control: The Vision vs. State Divergence
 
 A critical scientific finding in the D3IL replication is the "Mixed-Loop" nature of the evaluation.
 
@@ -492,7 +494,7 @@ A critical scientific finding in the D3IL replication is the "Mixed-Loop" nature
 
 ---
 
-## 29. The SNR Barrier: Why Normalization is Mandatory
+## 27. The SNR Barrier: Why Normalization is Mandatory
 
 Diffusion models (U-Net) operate by denoising Gaussian noise $\mathcal{N}(0, 1)$.
 
@@ -502,7 +504,7 @@ Diffusion models (U-Net) operate by denoising Gaussian noise $\mathcal{N}(0, 1)$
 
 ---
 
-## 30. Temporal Chunking: Why Horizon 10?
+## 28. Temporal Chunking: Why Horizon 10?
 
 The use of a 10-step horizon (chunking) instead of 1 step or 400 steps is a design trade-off for complex visual tasks.
 
@@ -512,35 +514,13 @@ The use of a 10-step horizon (chunking) instead of 1 step or 400 steps is a desi
 
 ---
 
-## 31. The Stabilization Breakthrough: Gen5 "Visual Transplant" Finalized (FIX_12 P2)
+## 29. Stabilization & Numerical Grounds
 
-As of FIX_12 Phase 2, the Gen5 Visual-Aligning pipeline has reached its final stabilized form. This section serves as the incremental update for the "Scientific Replication" milestone.
+### A. The Stabilization Breakthrough
+The Gen5 Visual-Aligning pipeline has reached its final stabilized form, resolving numerical and architectural discrepancies.
 
-### A. The Evolution of Feedback Logic
-*   **Previous Approach (Section 27)**: Early attempts used "Closed-Loop State" feedback (Measured Position). This was found to be **Catastrophic** for Visual Aligning because simulation drift ($8e-06$) acted as OOD noise that "distracted" the U-Net from its visual goals.
-*   **Stabilized Approach (Section 28)**: We have officially transitioned to **Mixed-Loop Control**. Proprioception is now **Open-Loop** (trusting the Mental Map), while Vision remains **Closed-Loop** (watching the camera). This ensures the robot stays on the "Expert Manifold."
-
-### B. The Numerical Foundation (Scaling)
-*   The implementation of the **Scaling Bridge** (Section 29) solved the numerical signal-to-noise crisis. By normalizing actions to the $[-1, 1]$ range, we enabled the U-Net to distinguish between expert intent and diffusion noise.
-*   **Crucial Note**: All checkpoints prior to this update are **DEPRECATED**. Evaluation requires a `scaler.pkl` generated during the new standardized training phase.
-
-### C. Detailed Evidence & Summary
-For the full technical breakdown, refer to the incremental report:
-*   [FIX_12_P2_STRICT_PARITY_SUMMARY.md](file:///workspaces/FM-PCC/logs_in_develop/gen5_rewire_existing_visual_models_plan/New_gen5/fix_12/FIX_12_P2_STRICT_PARITY_SUMMARY.md)
-
----
-
-## 32. The Dimension Bridge: 6D vs. 3D Latent Alignment
-
-A second critical runtime barrier was the disagreement between the **Brain (Gen5)** and the **Body (D3IL)** regarding tensor dimensions.
-
-### A. The Diagnosis
-*   **The Gen5 Brain (U-Net Output)**: In the FM-PCC framework, the Diffusion model predicts a **6D vector** ($3 \times$ State $+ 3 \times$ Action). This is because the U-Net denoises the entire trajectory including the robot's proprioception to ensure global smoothness.
-*   **The D3IL Body (The Scaler)**: Our implementation of the D3IL Scaler was trained strictly on the **3D Action** (the deltas) to match the baseline's behavior.
-*   **The Conflict**: When calling `inverse_scale_output(trajectory)`, the scaler attempted to apply 3D statistics to a 6D tensor, causing a `RuntimeError`.
-
-### B. The Fix: Slicing Logic
-To bridge this gap, the `eval_ddpm_encdec_vision.py` script was updated to slice the action component out of the 6D diffusion output **BEFORE** applying the inverse scaler.
+### B. The Dimension Bridge: 6D vs. 3D Latent Alignment
+A critical runtime barrier was the disagreement between the **Brain (Gen5)** and the **Body (D3IL)** regarding tensor dimensions. The `eval_ddpm_encdec_vision.py` script now slices the action component out of the 6D diffusion output **BEFORE** applying the inverse scaler.
 
 **Slicing Logic:**
 1.  **`Trajectory[:, :, :3]` (Denoised State)**: We ignore this component because we have a "Mental Map" for proprioception.
@@ -550,83 +530,41 @@ To bridge this gap, the `eval_ddpm_encdec_vision.py` script was updated to slice
 
 ---
 
-## 33. The Expert Baseline Engine: Ground Truth Documentation
+## 30. Final Safety Locks (The Stabilization Finish)
 
-To ensure scientific validity, the Gen5 evaluation pipeline automatically generates a "Golden Standard" from the human expert dataset before testing the AI.
+### A. The Zero-Padding Trap & Masked Statistics
+The dataset uses **Zero-Padding** to reach a fixed length of 256 steps. Gen5 now uses **Masked Data** for statistic calculation:
+*   **The Fix:** Scaler Mean/Std are computed using only real human demonstrations, ignoring padding zeros. This prevents the "Numerical Explosion" (hypersonic drift).
 
-### A. Data Provenance (Where is it loaded from?)
-The expert trajectories are loaded from the D3IL serialized dataset:
-*   **Path**: `d3il/environments/dataset/data/aligning/test_contexts.pkl`
-*   **Source Code**: `d3il/simulation/aligning_sim.py:L22`
-*   **Content**: These files contain the exact $(x, y, z)$ coordinates and camera images recorded during successful human trials.
+### B. Zero-Variance Safety Lock
+*   **Mechanism:** Enforced `std >= 1e-4` in `GaussianNormalizer`.
+*   **Result:** Prevents division-by-zero on constant dimensions like Z-height, ensuring trajectories stay numerically grounded.
 
-### B. The Reference GIFs: Meaning and Purpose
-*   **What it means**: When you see `[ expert ] Saved ... expert_rollout_0.gif`, the script has successfully "replayed" a human demonstration in the simulator.
-*   **Scientific Significance**: These GIFs provide a **Visual Control**. If your model reaches a success rate of 0%, you can check these GIFs to confirm that the environment itself is working. If the expert can finish the task in the GIF but the AI cannot in the rollout, the failure is purely in the AI's "intelligence," not the simulation physics.
-
-### C. Visual Logic (Computation vs. Action)
-*   **Playback Speed**: GIFs are recorded at a constant **10 FPS**.
-*   **Calculation Time**: The GIFs **skip the calculation steps**. They do not show the "thinking time" (the 1.4s U-Net inference delay). They only show the **Actions** (the physical results).
-*   **Result**: This allows you to compare the **Path Quality** of the AI vs. the Human Expert without being distracted by computational latency.
-
----
-
----
-
-## 34. The Zero-Padding Trap: Resolving the Numerical Explosion
-
-A "severe problem" was observed during validation: the robot end-effector was flying out of bounds at hypersonic speeds (e.g., $1750$ meters in a $1$ meter workspace).
-
-### A. The Cause: Statistics Corruption
-*   **Mechanism**: The dataset uses **Zero-Padding** to reach a fixed length of 256 steps. Because the Scaler was calculated on the raw padded tensors, the thousands of "padding zeros" caused the **Standard Deviation** to collapse.
-*   **The Math Failure**: When the model's scaled output was multiplied by this corrupted, near-zero standard deviation, the resulting "meters" value exploded into massive, unrealistic numbers.
-*   **The Feedback Loop**: Because we use a **Mental Map (Open-Loop)**, these huge erroneous actions were accumulated every step, causing the robot to accelerate into space exponentially.
-
-### B. The Fix: Masked Statistics (Numerical Grounding)
-The training initialization was updated to use **Masked Data** only:
-*   `all_obs = dataset.get_all_observations()`
-*   `all_act = dataset.get_all_actions()`
-*   **Result**: This forces the Scaler to compute its Mean and Std using only the **Real Human Demonstrations**, ignoring the padding. This restores the "Numerical Grounding" of the model.
-
-### Section 36: The Stabilization Finish (2026-05-16)
-**Primary Resolution**: Eliminated the $10^{10}$ Hypersonic Drift and restored full diagnostic visibility.
-
-1.  **Zero-Variance Safety Lock**:
-    - Modified `GaussianNormalizer` in `normalization.py`.
-    - Enforced `std >= 1e-4` to prevent division-by-zero on constant dimensions (Z-height).
-    - **Result**: Trajectories are now numerically grounded in physical units.
-
-2.  **6-Panel Scientific Suite**:
-    - Upgraded `eval_ddpm_encdec_vision.py` plotting logic.
-    - Added X/Y/Z time-series and Blue "Ghost" Foresight overlay.
-    - **Result**: Full transparency into MPC planning vs Real execution.
-
-3.  **The Symmetry Lock**:
-    - Finalized **`obs_seq_len: 16`** as the standard for Gen5 Visual Alignment.
-    - Ensured Hand-Eye synchronization across the 16-frame window.
-
-**Current Pipeline Status**: **BATTLE-READY**. Ready for full 500k-step benchmark suite.
-
-## 35. The Symmetry Lock & Rollout Recovery: Final Stability
-
-The final stabilization phase resolved the discrepancies between the Gen5 U-Net's "Temporal Brain" and the D3IL configuration settings.
-
-### A. Temporal Auto-Sync (The "Confused AI" Fix)
-*   **The Problem**: The Gen5 U-Net expects a symmetric temporal window (e.g., 16 images + 16 positions). Training with `obs_seq_len: 1` caused a shape mismatch that corrupted the Hand-Eye spatial alignment.
-*   **The Fix**: Implemented **Dynamic Temporal Repeating** in `VisualUNet.py`. The code now automatically detects the length of the robot's history. If only 1 position is provided, it is "stretched" across all 16 video frames.
-*   **Result**: The AI's "brain" is no longer confused by mismatched tensors, restoring purposeful movement in the workspace.
-
-### B. Rollout 0 Recovery (Empty Diagnostics Fix)
-*   **The Problem**: Real-time diagnostics were missing because the rollout counter was misaligned (starting at `-1`).
-*   **The Fix**: Updated the `VisualAgentWrapper.reset()` logic to synchronize the counter before saving.
-*   **Result**: `realtime_diagnostics` folders now correctly populate with `rollout_0.png` and `rollout_0_data.pkl` from the very first step of the evaluation.
-
-### C. Scientific Parity (FMv3ODE Replication)
-*   **Standardization**: The evaluation log format has been perfectly replicated from the FMv3ODE `eval_flow_matching_v3_drifting.py` script.
-*   **Metric**: Added **Tracking Error** to the final report, allowing for a quantitative measure of the "Mental Map" fidelity against the simulation reality.
+### C. The Symmetry Lock (Temporal Auto-Sync)
+*   **Mechanism:** `VisualUNet` implements **Dynamic Temporal Repeating**.
+*   **Function:** If the model receives 1 robot position but 16 video frames, it automatically "stretches" the position across the window to maintain hand-eye synchronization.
 
 ---
 
 **Status: STABILIZED (Gen5 Visual Pipeline ready for full scientific benchmarking).**
-**Date**: 2026-05-16
-**Revision**: FIX_12_P2
+**Revision**: FIX_12_P2 (Final)
+
+---
+
+## 31. Vision-Blind Evaluation: The "Proprioception-Only" Fallback
+
+For scientific rigor, the Gen5 pipeline supports **Ablation Studies** to measure the importance of continuous visual feedback versus internal state tracking.
+
+### A. The "Blind Mode" (Frozen Vision)
+In this configuration, the robot utilizes visual feedback only for the **initial setup** and then executes the task "blind."
+*   **Mechanism**: The `VisualAgentWrapper` captures the first $N$ frames to populate the `obs_seq` and then **stops updating** the visual buffers. 
+*   **Logic**: The model continues to re-plan at every step, but it is conditioned on a **static "Mental Memory"** of the box's initial position.
+*   **Scientific Goal**: This validates the **Mental Map (Open-Loop)** stability. If the robot succeeds in Blind Mode, it proves that the U-Net has learned a robust internal representation of the physics, allowing it to "hallucinate" the box movement correctly without needing a fresh camera frame at every tick.
+
+### B. Turning Off Vision (Current Limitation)
+**CRITICAL:** For the current Gen5 Visual models, you **cannot** simply turn off the visual input during evaluation.
+*   **The Reason**: The model is architecturally bound to the ResNet encoder. If vision is disabled, the `VisualAgentWrapper` will currently trigger a `NotImplementedError`, as it lacks a secondary state-based conditioning path.
+*   **The Solution**: To run a "Position-Only" experiment, you must use a **State-Based Gen5 Model** (trained without the `VisualUNet` wrapper) and the corresponding `config/aligning-d3il.py` configuration.
+*   **Summary**: You cannot "unplug" the cameras from a visual model and expect it to function on coordinates alone; the neural connectivity is end-to-end.
+
+**Note**: "Blind Mode" (Section A) is the only current way to simulate visual loss, as it allows the model to keep its "initial sight" while losing subsequent updates.

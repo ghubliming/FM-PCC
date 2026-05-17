@@ -60,12 +60,13 @@ class VisualAgentWrapper:
     """
     Bridges FM-PCC's loaded diffusion model into Aligning_Sim's expected agent interface.
     """
-    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None):
+    def __init__(self, diffusion_model, device, window_size=8, obs_seq_len=8, action_seq_size=4, save_path=None, record_mode='all', scaler=None, eval_on_train=False):
         self.model = diffusion_model
         self.device = device
         self.window_size = window_size
         self.obs_seq_len = obs_seq_len  # Respect trained config (FIX #12)
         self.scaler = scaler
+        self.eval_on_train = eval_on_train
         
         # Open-Loop State (The "Mental Map")
         self.mental_robot_pos = None 
@@ -109,27 +110,6 @@ class VisualAgentWrapper:
     
     def reset(self):
         """Called by Aligning_Sim at the start of each rollout."""
-        # Flush previous rollout data (Only if we actually ran one)
-        if self.rollout_counter >= 0 and self.step_counter > 0:
-            self.master_rollout_history[f"rollout_{self.rollout_counter}"] = {
-                "real_robot_pos": np.array(self.history_real_pos),
-                "desired_actions": np.array(self.history_desired_actions),
-                "full_plans": np.array(self.history_full_plans),
-                "plan_start_positions": np.array(self.history_real_pos)[::self.action_seq_size, :]
-            }
-        
-            # Real-time Export (FIX #12)
-            if hasattr(self, 'save_path') and self.save_path is not None:
-                self._export_rollout_realtime(self.rollout_counter)
-                
-            self.history_n_steps.append(self.step_counter)
-            self.history_avg_time.append(self.curr_rollout_time / max(1, self.step_counter))
-            self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
-            
-            # Save diagnostics from previous rollout
-            if self.record_mode != 'none' and len(self.video_frames) > 0:
-                self._save_diagnostics(self.rollout_counter)
-            
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
         self.history_full_plans.clear()
@@ -148,6 +128,52 @@ class VisualAgentWrapper:
         self.rollout_counter += 1
         self.step_counter = 0
         self.video_frames = []
+        
+    def update_rollout_info(self, info):
+        """Called by Aligning_Sim at the end of each rollout to log stats and diagnostics immediately."""
+        success = info.get('success', False)
+        mean_dist = info.get('mean_distance', 0.0)
+        mode = info.get('mode', 0)
+        
+        max_err = float(np.max(self.curr_rollout_tracking_errors) if len(self.curr_rollout_tracking_errors) > 0 else 0.0)
+        avg_time = float(self.curr_rollout_time / max(1, self.step_counter))
+        
+        # Store rollout statistics in history dictionary
+        self.master_rollout_history[f"rollout_{self.rollout_counter}"] = {
+            "real_robot_pos": np.array(self.history_real_pos),
+            "desired_actions": np.array(self.history_desired_actions),
+            "full_plans": np.array(self.history_full_plans),
+            "plan_start_positions": np.array(self.history_real_pos)[::self.action_seq_size, :],
+            "success": bool(success),
+            "mean_distance": float(mean_dist),
+            "mode": int(mode),
+            "steps": int(self.step_counter),
+            "avg_time": avg_time,
+            "max_tracking_error": max_err
+        }
+        
+        self.history_n_steps.append(self.step_counter)
+        self.history_avg_time.append(avg_time)
+        self.history_pos_tracking_errors.append(np.array(self.curr_rollout_tracking_errors))
+        
+        # Print real-time diagnostic summary to console/log
+        context_type = "Seen Training Context" if self.eval_on_train else "Unseen Test Context"
+        print(f"[ {context_type} {self.rollout_counter} - Rollout 0 Finished ]")
+        print(f"  - Total Steps: {self.step_counter}")
+        print(f"  - Success status: {success}")
+        print(f"  - Final Mean Distance: {mean_dist:.6f} m")
+        print(f"  - Environment Mode: {mode}")
+        print(f"  - Maximum Tracking Error: {max_err:.6f} m")
+        print(f"  - Avg Inference Time: {avg_time:.4f} seconds/step")
+        print("-" * 80 + "\n")
+        
+        # Real-time Export (Scientific JSON and PNG Report)
+        if hasattr(self, 'save_path') and self.save_path is not None:
+            self._export_rollout_realtime(self.rollout_counter)
+            
+        # Save video/gif diagnostics
+        if self.record_mode != 'none' and len(self.video_frames) > 0:
+            self._save_diagnostics(self.rollout_counter)
     
     def _save_diagnostics(self, rollout_idx, custom_path=None, custom_frames=None):
         frames = custom_frames if custom_frames is not None else self.video_frames
@@ -169,6 +195,19 @@ class VisualAgentWrapper:
                     imageio.mimsave(save_path_gif, frames, fps=10)
                 except Exception as e:
                     print(f"[ WARNING ] GIF saving failed: {e}.")
+            
+            # NEW: Save human-readable text stats file right next to the gif/mp4 for easy debugging
+            data = self.master_rollout_history.get(f"rollout_{rollout_idx}", {})
+            diag_stats_path = os.path.join(path, f'rollout_{rollout_idx}_stats.txt')
+            with open(diag_stats_path, 'w') as sf:
+                sf.write(f"Rollout {rollout_idx} Execution Summary\n")
+                sf.write("=" * 40 + "\n")
+                sf.write(f"Success: {data.get('success', False)}\n")
+                sf.write(f"Total Steps: {data.get('steps', 0)}\n")
+                sf.write(f"Mean Distance to Target: {data.get('mean_distance', 0.0):.6f} m\n")
+                sf.write(f"Environment Mode: {data.get('mode', 0)}\n")
+                sf.write(f"Average Inference Time: {data.get('avg_time', 0.0):.4f} seconds/step\n")
+                sf.write(f"Max Tracking Error: {data.get('max_tracking_error', 0.0):.6f} m\n")
         except Exception as e:
             print(f"[ WARNING ] Diagnostics engine failed: {e}. Skipping.")
 
@@ -182,6 +221,21 @@ class VisualAgentWrapper:
             data = self.master_rollout_history[f"rollout_{rollout_idx}"]
             with open(os.path.join(diag_path, f"rollout_{rollout_idx}_data.pkl"), "wb") as f:
                 pickle.dump(data, f)
+                
+            # NEW: Save human-readable JSON stats file for easy debugging
+            import json
+            stats = {
+                "rollout_index": rollout_idx,
+                "success": bool(data.get("success", False)),
+                "steps": int(data.get("steps", 0)),
+                "mean_distance": float(data.get("mean_distance", 0.0)),
+                "mode": int(data.get("mode", 0)),
+                "avg_inference_time_per_step": float(data.get("avg_time", 0.0)),
+                "max_tracking_error": float(data.get("max_tracking_error", 0.0))
+            }
+            stats_path = os.path.join(diag_path, f"rollout_{rollout_idx}_stats.json")
+            with open(stats_path, 'w') as sf:
+                json.dump(stats, sf, indent=4)
                 
             # 2. Generate PNG Plot (Scientific)
             import matplotlib.pyplot as plt
@@ -429,6 +483,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int)
     parser.add_argument('--aggregate-only', action='store_true')
     parser.add_argument('--record', type=str, choices=['none', 'video', 'gif', 'png', 'all'], default='all')
+    parser.add_argument('--eval-on-train', action='store_true', help='Evaluate on the seen expert training contexts instead of unseen test contexts.')
     args_cli, remaining_argv = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining_argv
     
@@ -456,7 +511,11 @@ if __name__ == '__main__':
             except: pass
         
         for variant in projection_variants:
-            save_path = f'{args.savepath}/results'
+            if args_cli.eval_on_train:
+                variant = f"{variant}_train_set"
+                save_path = f'{args.savepath}/results_train_set'
+            else:
+                save_path = f'{args.savepath}/results'
             os.makedirs(save_path, exist_ok=True)
             
             if args_cli.aggregate_only:
@@ -467,7 +526,9 @@ if __name__ == '__main__':
             
             log_f = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
             old_stdout = sys.stdout
+            old_stderr = sys.stderr
             sys.stdout = Tee(sys.stdout, log_f)
+            sys.stderr = Tee(sys.stderr, log_f)
             
             try:
                 # Load Scaler (FIX #17)
@@ -487,30 +548,16 @@ if __name__ == '__main__':
                     action_seq_size=getattr(args, 'action_seq_size', 1),
                     save_path=save_path,
                     record_mode=args_cli.record,
-                    scaler=scaler
+                    scaler=scaler,
+                    eval_on_train=args_cli.eval_on_train
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
-                                  n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True)
+                                  n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,
+                                  eval_on_train=args_cli.eval_on_train)
                 
                 t0 = time.time()
                 success_rate, mode_encoding, successes, mean_distance_tensor = sim.test_agent(agent)
                 elapsed = time.time() - t0
-                
-                # Flush last rollout
-                if agent.record_mode != 'none' and len(agent.video_frames) > 0:
-                    agent._save_diagnostics(agent.rollout_counter)
-                
-                if agent.rollout_counter >= 0:
-                    agent.save_path = save_path # Enable real-time logs (FIX #12)
-                    agent.master_rollout_history[f"rollout_{agent.rollout_counter}"] = {
-                        "real_robot_pos": np.array(agent.history_real_pos),
-                        "desired_actions": np.array(agent.history_desired_actions),
-                        "full_plans": np.array(agent.history_full_plans),
-                        "plan_start_positions": np.array(agent.history_real_pos)[::agent.action_seq_size, :]
-                    }
-                    agent.history_n_steps.append(agent.step_counter)
-                    agent.history_avg_time.append(agent.curr_rollout_time / max(1, agent.step_counter))
-                    agent.history_pos_tracking_errors.append(np.array(agent.curr_rollout_tracking_errors))
 
                 # Metrics calculation
                 n_modes = 2
@@ -564,7 +611,8 @@ if __name__ == '__main__':
                              mean_distance=mean_distance_tensor.flatten().numpy(),
                              args=vars(args))
                 
-                with open(os.path.join(save_path, f'results_seed_{seed}.pkl'), 'wb') as f:
+                pkl_name = f'results_seed_{seed}_train_set.pkl' if args_cli.eval_on_train else f'results_seed_{seed}.pkl'
+                with open(os.path.join(save_path, pkl_name), 'wb') as f:
                     pickle.dump({'success_rate': success_rate, 'entropy': entropy, 'elapsed': elapsed}, f)
                 
                 # ─── Legacy Visualization Engine ────────────────────────────────
@@ -618,7 +666,8 @@ if __name__ == '__main__':
                 plt.close(fig)
 
                 # --- THE SCIENTIFIC 7-METRIC REPORT (FMv3ODE Standard Replication) ---
-                print(f'------------------------Running aligning-d3il-visual - default - {variant} ({seed})----------------------------')
+                run_mode = "seen training set" if args_cli.eval_on_train else "default"
+                print(f'------------------------Running aligning-d3il-visual - {run_mode} - {variant} ({seed})----------------------------')
                 
                 n_success = np.array(successes)
                 n_steps = np.array(agent.history_n_steps)
@@ -634,7 +683,8 @@ if __name__ == '__main__':
                 print(f'Success rate: {np.mean(n_success)}')
                 print(f'Constraints satisfied: {1.0}') # No obstacles in Aligning
                 print(f'Success rate (goal and constraints): {np.mean(n_success)}')
-                print(f'Avg number of steps: {(np.mean(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f} +- {(np.std(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f}')
+                print(f'Avg number of steps (successful trials): {(np.mean(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f} +- {(np.std(n_steps[n_success > 0]) if np.sum(n_success) > 0 else 0):.2f}')
+                print(f'Avg number of steps (all trials): {np.mean(n_steps):.2f} +- {np.std(n_steps):.2f}')
                 print(f'Avg number of constraint violations: {0.00:.2f} +- {0.00:.2f}')
                 print(f'Avg total violation: {0.000:.3f} +- {0.000:.3f}')
                 print(f'Average computation time per step: {np.mean(agent.history_avg_time):.3f}')
@@ -643,5 +693,6 @@ if __name__ == '__main__':
                 # ----------------------------------------------------------------------
             finally:
                 sys.stdout = old_stdout
+                sys.stderr = old_stderr
                 log_f.close()
     print("Done.")
