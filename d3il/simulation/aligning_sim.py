@@ -37,20 +37,22 @@ class Aligning_Sim(BaseSim):
             n_contexts: int = 30,
             n_trajectories_per_context: int = 1,
             if_vision: bool = False,
-            eval_on_train: bool = False
+            eval_on_train: bool = False,
+            max_episode_length: int = 400
     ):
         super().__init__(seed, device, render, n_cores, if_vision)
 
         self.n_contexts = n_contexts
         self.n_trajectories_per_context = n_trajectories_per_context
         self.eval_on_train = eval_on_train
+        self.max_episode_length = max_episode_length
 
     def eval_agent(self, agent, contexts, n_trajectories, mode_encoding, successes, mean_distance, pid, cpu_set):
 
         print(os.getpid(), cpu_set)
         assign_process_to_cpu(os.getpid(), cpu_set)
 
-        env = Robot_Push_Env(render=self.render, if_vision=self.if_vision)
+        env = Robot_Push_Env(render=self.render, if_vision=self.if_vision, max_steps_per_episode=self.max_episode_length)
         env.start()
 
         random.seed(pid)
