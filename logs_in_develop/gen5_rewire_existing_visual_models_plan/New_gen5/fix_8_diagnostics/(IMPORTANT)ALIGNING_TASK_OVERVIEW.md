@@ -188,7 +188,7 @@ These parameters live in the `ddpm_encdec_vision` block and affect both training
     *   *Expected Change:* Significant increase in success rate at the cost of slower real-world execution (more compute).
 *   **`horizon` (Planning Horizon)**: Total length of the planned trajectory (Default: 8).
     *   *Expected Change:* Longer horizons give the model better "foresight," but make the denoising task harder for the U-Net.
-*   **`obs_seq_len` (Visual History)**: Number of historical image frames provided to the ResNet encoder (Default: 16).
+*   **`obs_seq_len` (Visual History)**: Number of historical image frames provided to the ResNet encoder (Default: 5).
     *   *Expected Change:* Increasing this helps the model understand the **momentum** of the box, but may introduce lag if the history window is too long.
 *   **`n_diffusion_steps`**: Number of denoising iterations (Default: 16-20).
     *   *Expected Change:* Higher values improve trajectory quality (less noise) but significantly slow down the inference speed.
@@ -278,7 +278,7 @@ To answer your question directly: **Yes.**
 | :--- | :--- | :--- | :--- |
 | **`horizon`** | 8 | **FMv3ODE (Legacy DPCC)** | Maintains parity with state-based planning benchmarks. |
 | **`window_size`** | 8 | **FMv3ODE (Legacy DPCC)** | Power-of-2 architectural constraint for U-Net downsampling. |
-| **`obs_seq_len`** | 16 | **Gen5 Standardized** | Optimized history length for hand-eye coordination. |
+| **`obs_seq_len`** | 5 | **D3IL Default** | Native history length optimized for robust trajectory planning. |
 | **`n_contexts`** | 30 | **D3IL Benchmark** | Official benchmark scale for the Aligning task. |
 | **`action_seq_size`** | 4 | **Experimental (Heuristic)** | Balanced re-planning frequency (exactly half of the horizon). |
 | **`n_diff_steps`** | 16-20 | **D3IL / ACT** | Optimal quality vs. speed trade-off for visual diffusion models. |
@@ -620,9 +620,9 @@ graph TD
 
 The time dimensions of training and evaluation are decoupled to optimize both **sample efficiency** and **online recovery capability**:
 
-*   **📂 Training Trajectory Slicing (`max_len_data: 256` / `512`)**: In the actual visual aligning training pipeline (`train_ddpm_encdec_vision.py`), the dataset loader (`Aligning_Img_Dataset`) is initialized with `max_len_data=256` (and the original D3IL vision config sets it to `512`). This ensures that the model learns from and reconstructs the full, uncropped expert trajectories (which are significantly longer than the avoiding task).
-*   **⚠️ The `max_path_length: 150` Remnant**: The key `'max_path_length': 150` present in `config/aligning-d3il-visual.py` is a *copy-paste artifact* inherited from the state-based obstacle-avoidance config (`avoiding-d3il.py`), where the longest trajectory was indeed `106` steps. Because the training script `train_ddpm_encdec_vision.py` explicitly overrides this parameter with `max_len_data=256` during dataset instantiation, the `150` value is silently ignored.
-*   **🎮 Evaluation Safety Cap (`max_episode_length: 400`)**: The maximum step limit allowed inside the simulator environment (`Robot_Push_Env(max_steps_per_episode=400)`) before a rollout is forcefully timed out. Since the model acts as a **closed-loop reactive policy** (re-planning at every step based on what it sees in the camera), it has the capacity to self-correct. Setting the limit to `400` gives the robot a generous temporal budget to recover and complete the task, even if its path is less direct than the perfect expert demonstration.
+*   **📂 Training Trajectory Slicing (`max_path_length: 512`)**: In the visual aligning training pipeline (`train_ddpm_encdec_vision.py`), the dataset loader (`Aligning_Img_Dataset`) is dynamically initialized with `max_len_data=args.max_path_length`. By setting `'max_path_length': 512` in `config/aligning-d3il-visual.py`, we match the native D3IL default trajectory lengths and ensure complete, uncropped learning.
+*   **⚠️ Decoupled Training Script**: We successfully resolved the old hardcoding where `max_len_data` was hardcoded to `256`. Now, the pipeline reads `max_path_length` dynamically from the config file, ensuring complete alignment.
+*   **🎮 Evaluation Safety Cap (`max_episode_length: 1000`)**: The maximum step limit allowed inside the simulator environment before a rollout is forcefully timed out. Set to `1000` to satisfy the **Axiom of Recovery Headroom** (greater than the learned steps of 512), giving the closed-loop policy enough temporal budget to recover and stabilize from perturbations.
 
 ### C. MPC Candidates & Denoising Batch Sizes
 

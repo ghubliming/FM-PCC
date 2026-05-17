@@ -3,21 +3,37 @@ import yaml
 import os
 
 # Read the threshold dynamically from the YAML config, abort if not found
-with open('config/projection_eval.yaml', 'r') as f:
+with open('config/visual_aligning_eval.yaml', 'r') as f:
     _proj_config = yaml.safe_load(f)
 
 if 'diffusion_timestep_threshold' not in _proj_config:
-    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/projection_eval.yaml")
+    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/visual_aligning_eval.yaml")
 
 _yaml_threshold = _proj_config['diffusion_timestep_threshold']
 
-#------------------------ base ------------------------#
+args_to_watch_dpcc_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_dpcc_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
 
 logbase = 'logs'
 
 base = {
     'ddpm_encdec_vision': {
+        ## model
         'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge',
+        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'horizon': 8, # D3IL default: 8
         'window_size': 8, # D3IL default: 8
         'obs_dim': 128,
@@ -27,15 +43,34 @@ base = {
         'action_seq_size': 4, # D3IL default: 4
         'n_diffusion_steps': 16, # D3IL default: 16
         'loss_type': 'l2',
+        'loss_discount': 1.0,
+        'returns_condition': False,
+        'action_weight': 10,
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        'test_ret': 0.9,
         
         # dataset
         'loader': 'ignored',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'use_padding': True,
         'max_path_length': 512, # D3IL default: 512
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
 
         # serialization
         'logbase': logbase,
         'prefix': 'ddpm_encdec_vision/',
-        'exp_name': watch([('prefix', ''), ('horizon', 'H')]),
+        'exp_name': watch(args_to_watch_dpcc_train),
 
         # training
         'n_steps_per_epoch': 1000,
@@ -60,15 +95,20 @@ base = {
         # serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'plans/ddpm_encdec_vision/',
-        'exp_name': watch([('prefix', ''), ('horizon', 'H')]),
+        'prefix': 'f:plans/ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_dpcc_plan),
         
         'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'horizon': 8, # D3IL default: 8
         'n_diffusion_steps': 16, # D3IL default: 16
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'action_weight': 10,
         
-        'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}',
-        'value_loadpath': 'f:values/H{horizon}',
+        'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
         'diffusion_epoch': 'best',
         'verbose': False,
         'suffix': '0',
