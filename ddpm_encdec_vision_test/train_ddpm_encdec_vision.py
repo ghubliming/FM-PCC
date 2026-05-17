@@ -226,9 +226,9 @@ for seed in selected_seeds:
         data_directory='environments/dataset/data/aligning/train_files.pkl',
         device='cpu',
         obs_dim=3,
-        action_dim=3,
+        action_dim=args.action_dim,
         window_size=args.horizon,
-        max_len_data=256
+        max_len_data=args.max_path_length
     )
     dataset = dataset_config()
     
@@ -264,7 +264,7 @@ for seed in selected_seeds:
         savepath=(args.savepath, 'diffusion_config.pkl'),
         horizon=args.horizon,
         observation_dim=3,
-        action_dim=3,
+        action_dim=args.action_dim,
         goal_dim=0,
         n_timesteps=getattr(args, 'n_diffusion_steps', 100),
         loss_type=args.loss_type,

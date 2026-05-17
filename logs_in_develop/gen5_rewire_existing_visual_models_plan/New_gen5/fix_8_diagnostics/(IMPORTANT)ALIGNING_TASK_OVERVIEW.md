@@ -568,3 +568,68 @@ In this configuration, the robot utilizes visual feedback only for the **initial
 *   **Summary**: You cannot "unplug" the cameras from a visual model and expect it to function on coordinates alone; the neural connectivity is end-to-end.
 
 **Note**: "Blind Mode" (Section A) is the only current way to simulate visual loss, as it allows the model to keep its "initial sight" while losing subsequent updates.
+
+---
+
+## 32. Comparative Analysis: State-Based (Non-Visual) vs. Visual Pipelines
+
+This section provides a scientifically rigorous and developmentally traceable comparison of the **State-Based (Non-Visual)** and **Visual-Based** pipelines for the Aligning task, focusing on observation signals, temporal horizons, and online planning dynamics.
+
+### A. Input Signal Comparison & Target Localization
+
+The two paradigms process environment observations differently to locate target positions:
+
+```mermaid
+graph TD
+    subgraph Physics Engine (MuJoCo Environment)
+        Robot["Robot Panda (Proprioception)"]
+        Block["Target Block (X, Y, Z, Quat)"]
+        Target["Goal Target (X, Y, Z, Quat)"]
+        Camera["Workspace Cameras (bp_cam, inhand_cam)"]
+    end
+
+    subgraph State-Based (Non-Visual) Controller
+        Robot --> StateConcat["20-Dim Vector Concatenation"]
+        Block --> StateConcat
+        Target --> StateConcat
+        StateConcat -->|Raw State Vector| StatePolicy["State-Only Policy (Diffusion / FM)"]
+    end
+
+    subgraph Visual-Based Controller
+        Robot --> ProprioConcat["3-Dim Vector"]
+        Camera -->|Raw BGR Pixels| VisionEnc["Vision Encoder (CNN / ResNet)"]
+        ProprioConcat -->|Proprioceptive State| VisualPolicy["Visual Policy (DDPM / FMv3ODE)"]
+        VisionEnc -->|Encoded Latent Embeddings| VisualPolicy
+    end
+
+    StatePolicy -->|Velocity Action| Robot
+    VisualPolicy -->|Velocity Action| Robot
+```
+
+| Attribute | State-Based (Non-Visual) Pipeline | Visual-Based Pipeline |
+| :--- | :--- | :--- |
+| **Observation Space** | **20-Dimensional Vector** | **Camera Images + Robot Position** |
+| **Input Signals** | Exact physical coordinates of: <br> • Robot Desired & Current Position (6D) <br> • Target Block Position & Quaternion (7D) <br> • Goal Target Position & Quaternion (7D) | Raw pixel streams from: <br> • `bp_cam` (Wide Shot camera) <br> • `inhand_cam` (Gripper camera) <br> • Robot Proprioceptive Cartesian Position (3D) |
+| **Target Localization** | **Direct/Cheat-Code**: The precise 3D coordinates of the target are handed to the model directly. | **Implicit/Learned**: The model must use a Convolutional Neural Network (CNN) to "see" the pixels and localize the target. |
+| **Noise Vulnerability** | Low (Exact mathematical coordinate states). | High (Pixel noise, changes in lighting, or dynamic camera rotation). |
+
+> [!NOTE]
+> **Thesis Insight**: The State-Based pipeline acts as an *upper-bound performance baseline* because it bypasses the perceptual bottleneck (estimating positions from pixels), operating with perfect ground-truth coordinates.
+
+### B. Decoupled Temporal Horizons
+
+The time dimensions of training and evaluation are decoupled to optimize both **sample efficiency** and **online recovery capability**:
+
+*   **📂 Training Trajectory Slicing (`max_len_data: 256` / `512`)**: In the actual visual aligning training pipeline (`train_ddpm_encdec_vision.py`), the dataset loader (`Aligning_Img_Dataset`) is initialized with `max_len_data=256` (and the original D3IL vision config sets it to `512`). This ensures that the model learns from and reconstructs the full, uncropped expert trajectories (which are significantly longer than the avoiding task).
+*   **⚠️ The `max_path_length: 150` Remnant**: The key `'max_path_length': 150` present in `config/aligning-d3il-visual.py` is a *copy-paste artifact* inherited from the state-based obstacle-avoidance config (`avoiding-d3il.py`), where the longest trajectory was indeed `106` steps. Because the training script `train_ddpm_encdec_vision.py` explicitly overrides this parameter with `max_len_data=256` during dataset instantiation, the `150` value is silently ignored.
+*   **🎮 Evaluation Safety Cap (`max_episode_length: 400`)**: The maximum step limit allowed inside the simulator environment (`Robot_Push_Env(max_steps_per_episode=400)`) before a rollout is forcefully timed out. Since the model acts as a **closed-loop reactive policy** (re-planning at every step based on what it sees in the camera), it has the capacity to self-correct. Setting the limit to `400` gives the robot a generous temporal budget to recover and complete the task, even if its path is less direct than the perfect expert demonstration.
+
+### C. MPC Candidates & Denoising Batch Sizes
+
+Generative models (Diffusion / Flow Matching) plan ahead by drawing trajectory samples from a learned distribution:
+
+*   **🚗 State-Based Controllers (`batch_size: 4`)**: Generates **4 parallel candidate trajectories** at each step, using a selection filter (`temporal_consistency` or `minimum_projection_cost`) to execute the single best candidate.
+*   **📷 Visual-Based Controllers (`batch_size: 1` default)**: Generates **1 single candidate trajectory** at each step to maintain real-time speed. However, with your new dynamic upgrade, setting `'batch_size': 4` in the visual config will automatically duplicate the image sequence along the batch dimension in PyTorch, sampling **4 parallel candidate trajectories in a single fast parallel GPU pass** without any computational bottlenecks.
+
+> [!TIP]
+> **Thesis Optimization**: Sampling multiple MPC candidates (`batch_size > 1`) and filtering them via `temporal_consistency` acts as a strong stabilizer, reducing jitter and visual noise in closed-loop robotic execution.
