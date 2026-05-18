@@ -192,7 +192,7 @@ base = {
         'dynamic_loss': False,
         'diffusion_timestep_threshold': _yaml_threshold,
         
-        'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}',
+        'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
         'diffusion_epoch': 'best',
         'verbose': False,
@@ -255,7 +255,7 @@ base = {
         'predict_epsilon': True,
         'dynamic_loss': False,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'diffusion_loadpath': 'f:visual_aligning_dpcc/H{horizon}',
+        'diffusion_loadpath': 'f:visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
         'diffusion_epoch': 'best',
         'verbose': False,
@@ -439,5 +439,5 @@ base['ddpm_encdec_vision_nonvisual'] = {
 base['plan_ddpm_encdec_vision_nonvisual'] = {
     **base['plan_ddpm_encdec_vision'],
     'prefix': 'f:plans/ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
-    'diffusion_loadpath': 'f:ddpm_encdec_vision_nonvisual/H{horizon}',
-}
+    'diffusion_loadpath': 'f:ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
+}
