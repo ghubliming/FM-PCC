@@ -2,7 +2,43 @@
 
 For SLURM jobs history, refer to [important_runs.md](../Slurm_Codes/logs/important_runs/important_runs.md)
 
-Purpose: concise record of what was tested across all generations/vresions. Master logging markdown.
+Purpose: Concise record of what was tested across all generations/versions. Master logging markdown.
+
+## 🗺️ Master Trace Map: Workspace Architecture (Gen1 - Gen7)
+
+Below is the definitive index mapping every research generation (internal index) to its corresponding isolated sibling folders inside the workspace. This maps out how the codebase transitioned from **State-Only** models to the state-of-the-art **Visual Flow Matching** models:
+
+| Internal Index | Model/Code Folder | Test/Eval Folder | Key Period | What is it / Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Gen1** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Early April 2026 | Early Flow Matching baseline (State-Only). Crucial math bug: reversed ODE trajectory during rollout. |
+| **Gen2** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Mid April 2026 | Basic Flow Matching engine with uniform time sampling in $[0, 1]$ (State-Only). |
+| **Gen2 (U-Net v2)** | [flow_matcher_unet_v2/](../flow_matcher_unet_v2) | [FM_Unet_v2_test/](../FM_Unet_v2_test) | Mid April 2026 | Built U-Net v2 backbone shell/path structure, but no material changes to net behavior (structural upgrades remained TODO). |
+| **Gen3 Upgrade 1** | [flow_matcher/](../flow_matcher) | [FM_hp_tune_test/](../FM_hp_tune_test) | Mid April 2026 | Action loss weight ($a_0$) hyperparameter tuning sweep. |
+| **Gen3 Upgrade 2** | [flow_matcher_v2/](../flow_matcher_v2) | [FM_v2_test/](../FM_v2_test) | Mid-to-Late April 2026 | **FM-v2**: Introduced continuous Beta distribution time prior sampling ($1 - \text{Beta}(\alpha=1.5, \beta=1.0)$) (State-Only). |
+| **Gen3 Upgrade 3** | [flow_matcher_v3/](../flow_matcher_v3) | [FM_v3_test/](../FM_v3_test) | Late April 2026 (up to Apr 20) | **FM-v3**: Introduced SafeFlow-style continuous-time model query semantics (State-Only). |
+| **Gen3v2 (ODE Solver Addon)** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) | [FM_v3_ode_selectable_test/](../FM_v3_ode_selectable_test) | April 21 – May 4, 2026 | Added advanced ODE solvers (`torchdiffeq`, RK4, Euler, Dopri5) with a dynamic override mechanism (State-Only). |
+| **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). |
+| **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). |
+| **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. |
+| **Gen5 (Visual Aligning)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Real vision-conditioned pipeline** (U-Net & VAE Transformer) for D3IL visual aligning task. |
+| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | Dynamic projection controller (Differentiable MPC / DPCC) on top of the visual DDPM model. |
+| **Gen7 (Visual Flow Matching)** | [fm_encdec_vision/](../fm_encdec_vision) | [fm_encdec_vision_test/](../fm_encdec_vision_test) | May 18, 2026 (Ongoing) | **Continuous-time visual Flow Matching (FMv3ODE)** decoupled sibling migration with advanced solvers.
+
+***
+
+## 🛠️ Auxiliary Infrastructure & Benchmark Suites
+
+In addition to the main model training/evaluation pipelines, the repository hosts specialized auxiliary systems for ODE precision benchmarking, result aggregation (Data Analysis), and cluster deployment (SLURM orchestrators):
+
+| Infrastructure Component | Folder / Script Path | Key Purpose | Relevant Phase / Period |
+| :--- | :--- | :--- | :--- |
+| **ODE Solver Benchmarks** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) (and scripts inside) | Comparative precision analysis of Euler, RK4, and Oracle (Dopri5) solvers on a locked noise basis (`global_x_init`). | Gen3v2 (Late April 2026) |
+| **Trajectory Quality Visualizer** | `traj_gen_script_for_v4.py` (inside [flow_matcher_v3_ode_selectable_test/](../FM_v3_ode_selectable_test)) | Overlays unnormalized latent robotic plans on environmental half-space/obstacle constraints for visual precision-drift auditing. | Gen3v2 U4.1 (April 22, 2026) |
+| **Data Analysis & Plotting** | [Data_Analysis/](../Data_Analysis) | Dynamic plotting scripts for generating thesis-ready success rate heatmaps and latency charts. | Ongoing (April - May 2026) |
+| **Colab Plotting Suites** | [Results_and_Data_Analysis_Colab_T4/](../Results_and_Data_Analysis_Colab_T4) & [ipynbs_Colab/](../ipynbs_Colab) | Plotting pipelines and Google Colab T4 GPU integration scripts. | Ongoing (April - May 2026) |
+| **Cluster Job Orchestrators** | [Slurm_Codes/](../Slurm_Codes) | Pipeline runner scripts (SBATCH shell scripts) for GPU cluster node dispatch (e.g. `Visual_Aligning/` pipeline). | Gen3v2 Remote Migration & Gen5/Gen7 Visual Aligning (Ongoing) |
+
+***
 
 ## Gen1
 
