@@ -187,7 +187,7 @@ sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
 
 for seed in selected_seeds:
-    args = Parser().parse_args(experiment='visual_aligning_dpcc', seed=seed)
+    args = Parser().parse_args(experiment='ddpm_encdec_vision', seed=seed)
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
@@ -202,9 +202,6 @@ for seed in selected_seeds:
         wandb_name = '-'.join(name_parts)
         default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
-        
-        # W&B Safety Lock: Truncate group name to 128 chars to avoid Error 400 bad request
-        wandb_group = wandb_group[:128]
 
         run = wandb.init(
             project=cli_args.wandb_project,
@@ -222,25 +219,16 @@ for seed in selected_seeds:
     # --- FM-PCC Bone: Multi-stage Config Instantiation ---
     
     # 1. Dataset
-    if_vision = getattr(args, 'if_vision', True)
-    obs_dim = 3 if if_vision else getattr(args, 'obs_dim', 20)
-    
-    if if_vision:
-        from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
-        dataset_cls = Aligning_Img_Dataset
-    else:
-        from d3il.environments.dataset.aligning_dataset import Aligning_Dataset
-        dataset_cls = Aligning_Dataset
-        
+    from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
     dataset_config = utils.Config(
-        dataset_cls,
+        Aligning_Img_Dataset,
         savepath=(args.savepath, 'dataset_config.pkl'),
         data_directory='environments/dataset/data/aligning/train_files.pkl',
         device='cpu',
-        obs_dim=obs_dim,
-        action_dim=args.action_dim,
+        obs_dim=3,
+        action_dim=3,
         window_size=args.horizon,
-        max_len_data=args.max_path_length
+        max_len_data=256
     )
     dataset = dataset_config()
     
@@ -260,7 +248,7 @@ for seed in selected_seeds:
     print(f'[ train ] Saved scaler to {scaler_path}')
     
     # 2. Model (Backbone + Vision Encoder)
-    from diffuser_visual_aligning.models.visual_unet import VisualUNet
+    from ddpm_encdec_vision.models.visual_unet import VisualUNet
     model_config = utils.Config(
         VisualUNet,
         savepath=(args.savepath, 'model_config.pkl'),
@@ -270,13 +258,13 @@ for seed in selected_seeds:
     
     # 3. Diffusion (Engine)
     # 3. Diffusion (Engine: Reverted to standard DDPM)
-    from diffuser_visual_aligning.models.visual_gaussian_diffusion import VisualGaussianDiffusion
+    from ddpm_encdec_vision.models.visual_gaussian_diffusion import VisualGaussianDiffusion
     diffusion_config = utils.Config(
         VisualGaussianDiffusion,
         savepath=(args.savepath, 'diffusion_config.pkl'),
         horizon=args.horizon,
-        observation_dim=obs_dim,
-        action_dim=args.action_dim,
+        observation_dim=3,
+        action_dim=3,
         goal_dim=0,
         n_timesteps=getattr(args, 'n_diffusion_steps', 100),
         loss_type=args.loss_type,

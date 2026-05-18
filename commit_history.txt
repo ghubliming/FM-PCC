@@ -1,0 +1,397 @@
+06e91f4e7048600190d17d9d554a997407329190 | ghubliming | 2026-05-18 15:31:56 | (Key Update Gen6V4) Add comprehensive documentation and migration plans for Visual-DPCC model
+60a8f38b513f08746831781c67c6dae242463683 | ghubliming | 2026-05-18 14:34:43 | feat (Key Update Gen6v3) : Implement non-visual aligning pipeline for Gen6 framework
+b16a1d00526c36b5cc8d941ed28659e80065eabd | ghubliming | 2026-05-18 12:56:35 | feat: gate diagnostic trajectory selection logs behind verbosity checks and update ODE solver documentation in config
+4694b8c8402b2bad1600e85220cd4e1b6b29ea95 | ghubliming | 2026-05-18 12:45:37 | Add comprehensive fixes and documentation for Gen6 and Gen7 DPCC engines (Fix 4/2)
+07c2ad4611edd737a1f0247bf7799217a412e744 | ghubliming | 2026-05-18 09:47:35 | feat (Gen7): implement core encoder-decoder vision framework with dataset utilities, model architectures, and training pipelines
+8bfc0e0103651bff058e18abda41a69cc9666315 | ghubliming | 2026-05-17 21:48:21 | feat: implement W&B GroupName 128-character safety lock and add visual aligning pipeline orchestration script
+61696a6292596f46ce505ca26c7c13d408045735 | ghubliming | 2026-05-17 21:40:20 | Add detailed documentation for D3IL Aligning Task and DPCC/DDPM implementation
+866c7dfda818f1bc49596d2f32f17c2c59f91f7e | ghubliming | 2026-05-17 20:35:35 | fix: update yaml config handling in Parser to support visual and state-only modes
+6a587ba23d8137d95401047cff6563742a8862f0 | ghubliming | 2026-05-17 20:18:54 | feat: enhance p_mean_variance method to support safe z-score action clamping and prevent RuntimeError crashes
+19d97bc90df80f7ccacb81e25621b1e311c0994e | ghubliming | 2026-05-17 20:00:01 | fix: ensure rollout index is consistently converted to integer for accurate tracking and debugging
+d159f53f207adecd168d3c4d5efd836db0f025bd | ghubliming | 2026-05-17 19:42:46 | fix: update constraint handling in visual aligning evaluation to support dynamic configuration
+38e519d8c68b51903059e26c4b4adfbadd7daa9f | ghubliming | 2026-05-17 17:39:42 | fix: update file links and enhance context tracking in evaluation scripts for improved clarity and organization
+e3bfcae257b920fa0d403ccb665717846d0bf744 | ghubliming | 2026-05-17 15:40:07 | fix: restore dynamic path serialization and parameter tracking in visual aligning configuration
+97c9b05a7bbf8e77bf9b2f9bd6dfdf03157b2043 | ghubliming | 2026-05-17 15:32:25 | feat(gen6 fix2): enhance visual aligning evaluation with dynamic trajectory selection and improved projector configuration
+eefec19603cd519ad6d1f22c95913e2ce1bb5044 | ghubliming | 2026-05-17 15:16:15 | feat(IMPORTANT UPDATE Gen6): Implement Gen6 Visual Differentiable MPC (DPCC Upgrade)
+ec9de870261fa57a5b2f9c69deb3175f8a51f5ef | ghubliming | 2026-05-17 11:50:42 | fix: update default configuration values in aligning-d3il-visual.py and d3il_visual_bridge.py for consistency with D3IL standards
+96ad20ec85bf26eb00e2a25b86a73ddd63d1c823 | ghubliming | 2026-05-17 11:34:58 | fix: update max_path_length in config and train script for consistency in trajectory handling
+e61c573a7e5c969cb7d9650559bd706f35ee133f | ghubliming | 2026-05-17 11:16:06 | feat: add dynamic planning batch size support in VisualAgentWrapper for improved candidate trajectory sampling
+3bb1752aca3c57938ba3233d41198b8fc9c62b0f | ghubliming | 2026-05-17 10:15:00 | fix: enforce configured max episode length in Aligning_Sim and evaluation script to prevent silent config ignorance
+df490d660ad56606aae9238485e33ed26b6c2669 | ghubliming | 2026-05-17 09:51:11 | feat: Enhance Gen5 Visual Pipeline with Diagnostic Improvements and State-Only Control
+1d594f64d35b52ad9d82e7c2b000c39fa49a0379 | ghubliming | 2026-05-16 20:44:54 | fix: implement smart temporal parity handling in Trainer for D3IL models; differentiate between action-only and state-action models
+6f42a73427cb0197377e3ed5556f9a5cfb5d6f5e | ghubliming | 2026-05-16 20:41:14 | fix: enhance image processing in Aligning_Img_Dataset for RGB conversion; improve numerical stability in Scaler and adjust batch handling in Trainer for D3IL compatibility
+6f719bc584c2a3958ab31151e2129c29e059a78f | ghubliming | 2026-05-16 20:18:31 | fix: enhance zero-variance safety in Scaler and improve logging for constant dimensions; update action trajectory slicing in VisualAgentWrapper
+37875edeef48684b3b0f90d290992c6731d1d6d3 | ghubliming | 2026-05-16 19:54:38 | feat: implement forward method in VisualDiffusionBridge for training/inference compatibility
+ba57b4e3d1cf25951e71f8add3c2868a10ea7adf | ghubliming | 2026-05-16 17:33:42 | fix: correct import path for Scaler in d3il_visual_bridge.py to ensure proper module access
+deb31f61ef6d7f22ee847519adcd966824e3d83a | ghubliming | 2026-05-16 16:53:23 | fix: implement zero-variance safety in Scaler to prevent division-by-zero errors and enhance diagnostic stability
+912b4bb748e1fcf734202be57c799906f8a4821f | ghubliming | 2026-05-16 16:15:27 | fix: implement zero variance safety in GaussianNormalizer and enhance diagnostic reporting in eval_ddpm_encdec_vision.py
+b0e853c6db47670a74a9ee103f5a66588a433f24 | ghubliming | 2026-05-16 15:01:44 | fix: handle asymmetric state length in VisualUNet and update observation sequence length in VisualAgentWrapper
+3fd88e768384f156e9f393e7b3a44553f581a533 | ghubliming | 2026-05-16 14:37:53 | feat: enhance scientific report in eval_ddpm_encdec_vision.py to include tracking error and improve metrics presentation
+c913531835892bb8500f4d870d60c3aea7db5453 | ghubliming | 2026-05-16 13:53:05 | feat: enhance scaler initialization in train_ddpm_encdec_vision.py to prevent zero-padding corruption and log dataset statistics
+508022de0d5884b1cae477bd47559f508b64f773 | ghubliming | 2026-05-16 13:25:08 | feat: update eval_ddpm_encdec_vision.py to slice action trajectory from 6D output and apply inverse scaling for improved diagnostics
+65c6c1f09ed4b45f4e55ad02282eb307b9eb1596 | ghubliming | 2026-05-16 13:17:37 | fix: synchronize observation sequence length with window size for temporal symmetry in visual agent wrapper
+3e0da6aac9d0deb8229be2550a9549353f1184d9 | ghubliming | 2026-05-16 11:44:40 | feat: Integrate scaler for input/output normalization and implement EMA for smoother evaluation in training and evaluation scripts
+aceaf7d22c4112756b737c04287d98545e5d40ab | ghubliming | 2026-05-16 10:35:04 | feat: Implement real-time diagnostics and export functionality in eval_ddpm_encdec_vision.py
+0918e1d3a00cd7037f4d1ed0127048df11f57b84 | ghubliming | 2026-05-16 10:02:43 | feat: Restore physical interaction and diagnostic visuals in Gen5 pipeline
+4014643a9db988815c605342682fa0cc71b66064 | ghubliming | 2026-05-15 20:46:14 | chore: update D3IL visual alignment configuration with benchmark training parameters
+7059b51c8e3dc007dd40af769fb0f184943ae3f6 | ghubliming | 2026-05-15 20:37:28 | feat: Enhance visual diagnostics and fix GIF generation issues in eval_ddpm_encdec_vision.py
+02410ed20675e4d13eeb321a44eb89929139ea57 | Liming_vmknoll | 2026-05-15 21:52:06 | org files; upload rencent slurm runs, notes
+54e084fbd7f5554976edce611e3a93dfbdcd7ffa | ghubliming | 2026-05-15 15:18:23 | feat: Implement horizon safety clamp and enhance video/GIF saving diagnostics
+b4c10cbbabd4cafec49705729e70fe14e58e89c7 | ghubliming | 2026-05-15 14:56:35 | feat: Implement auto-padding in VisualUNet for flexible horizon handling
+4fa69523211ecd41ae0c5c61020bf5637b354224 | ghubliming | 2026-05-15 14:29:03 | Removed redundant argument tracking lists from `aligning-d3il-visual.py`.
+bf9a78724f5a38fe258bb7d6bb80225d0fa53022 | ghubliming | 2026-05-15 13:58:44 | feat: Refactor expert reference generation for improved video output and error handling
+f07b4631e2c9f50ee46f842c0ce1c3ce2d04e9a0 | ghubliming | 2026-05-15 13:41:44 | feat: Integrate automated expert reference generation into evaluation pipeline and enhance diagnostic documentation
+b050c9374bec630feeafa490772a29e9f70210ab | ghubliming | 2026-05-15 13:16:42 | feat: Enhance visual evaluation output with legacy compatibility and plotting capabilities
+00c2fd4b6803c423b0d930cff3c779641c9a9d8f | ghubliming | 2026-05-15 12:52:01 | Visual Aligning Fix 9 eval outptut upgrading; reorg docus
+bae5a83947570a35aa6148293cacf01243882263 | ghubliming | 2026-05-15 09:26:53 | feat: Add recording mode options and enhance diagnostic saving in evaluation scripts
+b6d74fdeecc1890907c8a269edd518e97f2bdd51 | ghubliming | 2026-05-15 09:17:21 | feat: Implement video diagnostics and frame accumulation in VisualAgentWrapper
+46ac4bfeac5c1467932941a56e0b3463521d060c | ghubliming | 2026-05-15 08:55:37 | fix: Update D3IL_DIR handling and improve path prioritization in evaluation script
+e84fcfbdf64411eecf2c0c73451546afbfe9815f | ghubliming | 2026-05-14 21:39:04 | feat: Enhance VisualAgentWrapper with embedded diagnostic logging for evaluation
+0fb24ebd8dc88745e37e2ad583e37a3453a1f174 | ghubliming | 2026-05-14 21:34:45 | feat: Add visual diagnostic saving functionality to evaluation script
+09426aa6541e73d3dfe6e2f8c0ed84b717edd343 | ghubliming | 2026-05-14 21:23:24 | org docu & parameters & misc fix
+7069b77ffe40a8375b52ad6f3eb86b4325891271 | ghubliming | 2026-05-14 20:05:50 | feat: Integrate FiLM conditioning into UNet1DTemporalCondModel and VisualUNet for enhanced visual embedding utilization
+2b52cac7e62914860158dd5298606a94c2bd97e7 | ghubliming | 2026-05-14 17:51:31 | fix: Correct snapping point in VisualGaussianDiffusion to use current state for evaluation
+a52dcba04e3c0d3a35c22b1773ebfd364544e8c5 | ghubliming | 2026-05-14 15:56:17 | fix: Remove D3IL scaler dependencies in VisualAgentWrapper to ensure raw input/output consistency with training data
+7518d1ec6935aa1010ce0c2c7e3ba97f1727e5c8 | ghubliming | 2026-05-14 15:07:27 | fix: Update scaler construction to use Aligning_Img_Dataset for correct normalization
+e72a456e7bb97e5b8f5b6f50cc6a832837a43cfe | ghubliming | 2026-05-14 15:05:12 | feat (fix6;Gen5): Upgrade Visual Aligning Evaluation Pipeline to FMv3ODE Standards
+9a8edc3d45568430163eac351e24bf6ef646a3b3 | ghubliming | 2026-05-14 14:58:08 | org docus; visual aligning fix ongoing, checkpoint. train work, eval not finished.
+54fad76db4c9262f674cb526cdd7eb7e4bddd751 | ghubliming | 2026-05-14 14:14:38 | fix: Update scorecard logic to handle subsets and metrics dynamically; resolve dimension mismatch in iMFDiffusion model instantiation
+66e3ac2116c22f9dbd80fbaebf7f56aae1b5a507 | ghubliming | 2026-05-14 13:55:14 | fix: Support multiple diffusion models and filter unexpected kwargs in configuration loading
+c4d6be0ab00bf65dd6985ea0ecf75501c9d0beb4 | ghubliming | 2026-05-14 13:51:21 | fix: Prevent duplicate positional/keyword arguments in diffusion configuration for eval_flow_matching and eval_ddpm_encdec scripts
+96a7df85f039475687c73693da59e4d54339068a | ghubliming | 2026-05-14 13:44:23 | refactor: Simplify seed evaluation in eval_visual_aligning.sh and enhance logging in eval_ddpm_encdec_vision.py
+94c3399b614048a6180639749327531111c1fbbf | ghubliming | 2026-05-14 13:36:46 | fix: Update seed range in eval_visual_aligning.sh and adjust model paths in avoiding-d3il.py and config.py for consistency
+dad694e47115a5cff0322a0ab1f332ad3883e6a0 | ghubliming | 2026-05-14 13:30:09 | fix: Update model and diffusion paths for consistency in avoiding-d3il.py and eval_ddpm_encdec_vision.py
+e36fa55595b4a9a778a7e5a0486a827a3598c42b | ghubliming | 2026-05-14 13:27:46 | fix: Update diffusion load path in eval_ddpm_encdec_vision.py for consistency with new structure
+3346e38d47475efe5627906cb61054da80c18caa | ghubliming | 2026-05-14 13:22:13 | feat: Add new ODE solver parameters and update diffusion load path in avoiding-d3il.py refactor: Implement Tee class for multi-file output handling in setup.py
+ae3c624f00aa4df9c422d54d5690a5dc7ee1f1e6 | ghubliming | 2026-05-14 11:59:37 | Refactor iMF Pipeline for Standardization and Logging Enhancements
+2eafd0c00ce66cc350dad1e4099cecee42679b97 | ghubliming | 2026-05-14 11:38:41 | feat(gen5, fix5): Implement rollback and rewire existing visual models
+4f66740f718667cd8591d0115717720a459b748a | ghubliming | 2026-05-14 10:56:12 | reorg colab ipynb; update docs for imf and visual aligning
+f2402e302ab7f6aa741ae2ee6dd9a9fb466bfaa4 | ghubliming | 2026-05-14 10:45:10 | fix: Update W&B project name and add log frequency argument for better tracking
+96d91c3ea1b5361eadbc83aa6300271f92050850 | ghubliming | 2026-05-14 10:12:17 | refactor: Enhance VisualGaussianDiffusion and VisualUNet for improved conditioning handling
+d5d008601f96e341558df7cb7a81f422c92541aa | ghubliming | 2026-05-14 09:58:43 | refactor: Align vision training and evaluation scripts with FMv3ODE standards
+481c0140b5de213280d34ca5093b9d9dfc49a456 | ghubliming | 2026-05-14 09:49:31 | Refactor Vision Pipeline for FM-PCC Alignment
+8ffbbc386506fa06abc29669eb9ddc9f59887a8f | ghubliming | 2026-05-14 09:44:51 | fix: Ensure model and buffers are on the same device in iMFDiffusion
+ccdc7f343fb9da03639964bfb83414a2d25a0ff4 | ghubliming | 2026-05-14 09:36:45 | fix: Improve results loading script and restore JSON summary functionality
+a47c88e41767594fd8c2285f2ba7860737cac4ca | ghubliming | 2026-05-14 09:26:51 | Refactor iMeanFlow for FM-PCC Alignment
+6a4a930088205c9e2553adbcb0e3f167d1e1145d | ghubliming | 2026-05-13 20:25:31 | fix: Update apply_conditioning call in iMFDiffusion to include action_dim and goal_dim parameters
+fcb215b24f033e3f3c4b7452dac85a53b6a77c00 | ghubliming | 2026-05-13 20:22:30 | feat: Implement loss method in iMFDiffusion to match FM-PCC model contract
+732984b198386d570c6f59cb0e02cb7082ae5f39 | ghubliming | 2026-05-13 20:18:16 | feat: Pass seq_len argument from iMeanFlowEngine to iMFTrajectoryModel for consistency
+1a3fcb585412ce64082610430d8d559f12cdc081 | ghubliming | 2026-05-13 20:16:10 | feat: Update iMFTrajectoryModel to align with Flow_matcher_U_Net_v2 API and add forward_train and sample methods
+dc339e05fe2ce400e5a0dffa8ce4a01555f1ed62 | ghubliming | 2026-05-13 20:13:54 | feat: Add predict_epsilon parameter to training script and configuration for iMeanFlow
+39a39d930e57fb7ca052dc889b81fcea6cd00ee1 | ghubliming | 2026-05-13 20:11:05 | feat: Add compatibility namespace for iMeanFlow imports to resolve ModuleNotFoundError
+f1744d67a5eefd6a005c57bb4744de31aec72daf | ghubliming | 2026-05-13 19:45:16 | feat: Add runtime device fallback in iMeanFlow training script and create remote log export utility
+2e4870020528f13ec31159cfec0bbf76e5d2b389 | ghubliming | 2026-05-13 19:41:38 | feat: Implement standard FM-PCC instantiation flow for dataset, model, diffusion, and trainer in iMeanFlow training script
+2374717e7dc380e8d59916839f2e26a44b9ce571 | ghubliming | 2026-05-13 19:36:34 | fix: Restore FM-PCC parser compatibility for iMeanFlow entrypoints and update argument parsing
+e3f2b058ebb1cfb4e606c31e65c831495da6357b | ghubliming | 2026-05-13 19:34:04 | fix4_phaser for imf; reorg docus
+e97dadc9225811cfb7edb35eeb8f1670d5d62101 | Liming_vmknoll | 2026-05-13 21:28:37 | update the DA data uptodate newst DA code
+0d72d9e2f174b42dd78b0682fdb5f037aa9357c3 | ghubliming | 2026-05-13 19:22:01 | feat: Update Batch Aggregator and Visualizer for enhanced robustness metrics and streamlined plotting functions
+8d499a308119140d2590e68d00a2b039bb1db970 | ghubliming | 2026-05-13 18:54:41 | feat: Enhance Batch Aggregator and Visualizer with new metrics and plots for dual-velocity architecture
+d0eff110ec88662c091dcf169b4546841f5ac846 | ghubliming | 2026-05-13 16:35:28 | feat(iMF fix3): Implement iMeanFlow with dual-velocity architecture and curriculum training
+662eb1a42bbaa43ef4a062225b8026d986ea5c6e | ghubliming | 2026-05-13 16:09:54 | upload some manual saved DA plots
+34b1905bea7b70cafcae5f9c21ef9b87374ec4e2 | ghubliming | 2026-05-13 16:05:58 | feat: Add visual zoom controls and figure width adjustment in Data Analysis Visualizer
+e218eb1ad95cd7b7b6ad3a2f66f9e67df49306b1 | Liming_vmknoll | 2026-05-13 17:37:08 | Finished DA Visual, LOCAL plots files; & misc SLURM logs update
+8ce079ff15576c2968d0ccbb430d1f543e428995 | ghubliming | 2026-05-13 15:35:56 | DA Visual READY; feat: Improve UI alignment and enhance manifest discovery in Data Analysis pipeline
+5ec5340445ef67b0bf1e13b02d51c121dd53d06c | ghubliming | 2026-05-13 15:19:31 | feat: Enhance manifest initialization and data loading with improved error handling and fallback mechanisms
+2d9370037cf8540638db065e54a5a17010da2b44 | ghubliming | 2026-05-13 15:14:45 | feat: Update main_da_batch and eval_imf scripts for improved manifest generation and evaluation logging
+3c1771d302f742d333ffc93143479d8d345ad9f6 | ghubliming | 2026-05-13 15:08:05 | feat: Enhance BatchReporter and main_da_batch for improved output handling and integrate dynamic visualization in index.html
+8f3f281f76d64f86a6edeee098148c995329c136 | ghubliming | 2026-05-13 14:28:19 | feat: Update index.html for enhanced dynamic data visualization and user interaction
+c0ac9384bc744331b9fa73e130b42a00a00654a6 | ghubliming | 2026-05-13 14:17:48 | feat: Refactor BatchVisualizer and update index.html for improved data visualization and user interaction
+8c465d73a72e0c580469ebc2792dca7c54cbf82d | ghubliming | 2026-05-13 14:04:29 | feat: Enhance BatchVisualizer for improved metric comparison and update HTML dashboard design
+2188a1fc4298552e227f7e77550134fcb29e52e4 | ghubliming | 2026-05-13 13:49:11 | feat: Standardize iMeanFlow training pipeline and integrate with FMv3-ODE
+63f2e891f810a5c90fb49c556b32b92ad1525498 | ghubliming | 2026-05-13 13:27:02 | feat: Refactor BatchAggregator and BatchReporter to prioritize major and auxiliary metrics, enhance visualization, and improve data analysis capabilities
+d9e94d9b2344d8a8d97aa1d5349fc57322759977 | ghubliming | 2026-05-13 13:18:29 | fix: Correct keyword argument in iMeanFlow training and evaluation scripts to ensure proper model instantiation
+93353eb13f0e749d8ff741bbd9d61f1d5aca798d | ghubliming | 2026-05-13 13:09:42 | feat: Add multidimensional CSV export to BatchReporter and enhance visualizer labels for clarity
+63b2d010b4285a131d9625c893176d0b994d3401 | ghubliming | 2026-05-13 13:03:51 | fix: Improve metric key alignment in DataLoader and add fallback in BatchAggregator for missing metrics
+a54d5c1900d6a974fd04c2b15f761e78720dc738 | ghubliming | 2026-05-13 12:55:10 | feat: Enhance data analysis with robust log parsing, multi-dimensional DataFrame exposure, and advanced plotting capabilities
+7727c681dd786b92357cd1ab1b4915a8a19c0b8d | ghubliming | 2026-05-13 12:17:09 | feat: Introduce v3 Data Analysis Module with Reporting, Visualization, and Utility Functions
+7bc2c2c7b82709a9a3d93cb02bc07197d0dfbac7 | ghubliming | 2026-05-13 11:10:27 | fix: Update DataLoader to support verbose mode and enhance log file handling; adjust output paths in batch scripts
+fd53ff475c7fc343fcaed6d70d27e3d5b2eee9c8 | ghubliming | 2026-05-13 10:59:32 | fix: Enhance data loader to support .log files and nested variant names
+560df859157b2837fab05cbcbe5c8c1c8d92e9c8 | ghubliming | 2026-05-13 10:48:24 | fix: Implement recursive candidate discovery in DA Tool v2 and initialize action bounds in visual bridge
+9dce336ed7c845d05577bc46b30ef86089ed234b | Liming_vmknoll | 2026-05-13 12:41:03 | correct partittion
+b2a216ed2176dbdf47ff65efbe84e6aa4622e4bd | ghubliming | 2026-05-13 10:38:37 | fix: Update DA Tool v2 batch output directory handling
+993cf336ad94e7fae43ad75972083ba17bbe6a98 | ghubliming | 2026-05-13 10:23:41 | Add comprehensive documentation for Gen3v4: iMeanFlow
+e9bc289a2c724bbd7082b685316f3da43ce888af | ghubliming | 2026-05-12 21:41:01 | Add scripts for DA batch and single analysis; set up environment and output paths
+8500b14b3a8172c6ffb093545782c716dfc5a8ae | ghubliming | 2026-05-12 21:24:49 | update logging
+7a072ed74c7dc167c4cd63230e74d618c5dec5db | ghubliming | 2026-05-12 21:18:25 | fix bugs (drifting); docs pending
+3c486e19f2fee643ea7b64b353d64c959dc686b8 | ghubliming | 2026-05-12 21:10:48 | Refactor drifting scripts to use DRIFTING path; add W&B API key handling; update evaluation and training commands for clarity and organization.
+62bdd21be9eab04312ec5fe7517e6d036e996946 | ghubliming | 2026-05-12 20:57:54 | Fix device serialization and recursion logic in VisualDiffusionBridge; update batch_to_device for list/tuple support; initialize dataset on CPU to prevent CUDA fork crashes.
+05f06bcb12dea52ccfb2cdc37fa4a51e60725dfc | ghubliming | 2026-05-12 20:42:04 | Fix device assignment in VisualDiffusionBridge to ensure string type for configuration
+8a1a397ea26bf7bc3ada6247338461c492b8ed04 | ghubliming | 2026-05-12 20:40:13 | Refactor encoder and decoder configurations to use OmegaConf.create for improved clarity
+050b6b120c8c079dc4edfa7188a1ddab8b5e892c | ghubliming | 2026-05-12 20:37:30 | org the req txt
+9f0b43cf533fe47aa4109937c7341f3b21698a72 | ghubliming | 2026-05-12 20:31:12 | misc hotfix
+93d81e5189a2d56e7db41a5b8aa8b5a45cc1bf7e | ghubliming | 2026-05-12 20:25:38 | Add dataset.zip to .gitignore for D3IL environment data
+94ee386934dd4ad71b7e2f93344957a1314d7323 | ghubliming | 2026-05-12 20:23:36 | update help doc
+7d6f9d6a8ecef881fb77e4f73bb6f9a50f0c5a3c | ghubliming | 2026-05-12 20:20:40 | Update requirements and add installation hotfix for D3IL visual dependencies
+c527114f716e91994212e6f3ca2a5c1fb18715b2 | ghubliming | 2026-05-12 20:15:15 | Add implementation roadmap for DA Tool v2: multi-folder analysis
+0f76c8843565c93f6edd5b909db9732162ad86bd | ghubliming | 2026-05-12 19:55:04 | correct d3il folder gitignore, re add the env useful codes, only data ignored; rollback last time bad change
+a0a4ca0aa440a010c8949dabd3f50c4903fe3117 | ghubliming | 2026-05-12 19:53:26 | add correct d3il env files, update git ignore, rollback wrong fix
+8bf5de8513812aa4e920aff9fc16a3e1d009535e | ghubliming | 2026-05-12 19:29:52 | refactor: improve path handling for D3IL imports and update visual aligning task documentation structure
+1185397b2d761bc6708c0beb06edf26252e9145a | ghubliming | 2026-05-12 19:15:36 | Add Slurm batch scripts for drifting and visual aligning tasks
+a70893db751c7c87624aab00e872066cef0d4f31 | ghubliming | 2026-05-12 18:28:11 | rename into Colab Folder
+353be54b6e01f7486f85739a047da53ab8328ef6 | ghubliming | 2026-05-12 18:21:35 | Gen5 Phase 1 initialize ddpm_encdec_vision framework with utilities, models, and minari dataset generation scripts
+b1d3328a8f6fac2c2560fd5b1b10891d8285fe7f | ghubliming | 2026-05-12 18:07:24 | Drifting Blue Print Ready for test; Viusal Plan ready
+4f265638111fcc31137afab0204cdc26a801d9d7 | ghubliming | 2026-05-10 15:45:50 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+0994fc20af9411f53bbcb8b78ba159ddf52e02e7 | ghubliming | 2026-05-10 15:45:12 | refactor: replace unstable f-string prefix with explicit lambda for reliable DPCC plan nesting and folder naming
+f4501236b59d3cd25ffb75686adcd608d4100f5c | Liming_vmknoll | 2026-05-10 17:36:44 | Merge branch 'update_into_FM' of github.com:ghubliming/FM-PCC into update_into_FM
+d05f9a213cd97655d47b8b38a8daa85dcf9440e8 | Liming_vmknoll | 2026-05-10 17:36:41 | dpcc aw1  slurm logs
+a52a854e08385d692616de7d555e37916c8cf5e3 | ghubliming | 2026-05-09 09:29:52 | feat: enable dynamic path nesting and hyperparameter inclusion in plan evaluation logs
+2c72b1c78163bb1e0dde3c263d7ecf0dc2ca8ed1 | ghubliming | 2026-05-09 09:24:08 | feat: update DPCC baseline configs to include action weight and timestep threshold in folder naming for improved hyperparameter visibility
+a3f5f578178a2bff8ad3bd2e9dd6c32540beb095 | ghubliming | 2026-05-09 09:14:27 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+029f3c8d49da415f4714ed42e894bc7c107171de | ghubliming | 2026-05-09 09:14:05 | update
+419c7ba87ed6846b15757a67b778688bc9665cec | Liming_vmknoll | 2026-05-09 11:12:44 | add fmv3ode prjection threshold1 test
+d64d041d4eadae6903fe7bf974707dddebfb6670 | ghubliming | 2026-05-08 09:34:01 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+66b9023027e059798afc2d95ce5e2969e4071a85 | ghubliming | 2026-05-08 09:32:14 | feat: inject diffusion_timestep_threshold from yaml configuration into inference parameters
+50bca2aef1daeaf041061e085425092265885f1b | Liming_vmknoll | 2026-05-07 21:00:22 | slurm_log: fmv3ode aw1 ode20
+ddf38da491f0eef63c6b1783904d21c7924e1b9e | Liming_vmknoll | 2026-05-07 11:41:10 | fmv3ode aw10 test finished
+0aa1f66cc3f11e649d2c61fda3c5b7e975df3f43 | ghubliming | 2026-05-06 12:31:38 | feat: update prefix path to include dynamic hyperparameter string formatting
+fcb206e4ed3d18f4fe2c866b44efda42ede0aca1 | Liming_vmknoll | 2026-05-06 11:44:44 | dpcc10 steps train,eval done
+c0966e542c13734026a753d14ac6e7ef6d6f789e | ghubliming | 2026-05-05 12:15:12 | feat: add automated DPCC pipeline orchestrator script for Slurm job chaining
+8d87222d628802ed493f97cb4365845317e1a6e3 | Liming_vmknoll | 2026-05-05 11:15:08 | Merge branch 'update_into_FM' of github.com:ghubliming/FM-PCC into update_into_FM
+509853b687b9a320b4d7074b5f159d90a0de3e3f | Liming_vmknoll | 2026-05-05 11:15:05 | update runs logging md
+7f878e40c25a15b59d1d52c9e2ca2bf8d69e27d0 | Liming_vmknoll | 2026-05-05 11:14:00 | dpcc deault eval/train fmv3ode default train/eval (and load results) and ode5-midpoint; and Important Runs Log
+c5fcbc18fbafdae0ced54e725539c863ca0f562b | ghubliming | 2026-05-04 16:09:10 | fixbug: remove resume-check for config snapshots and shift timestamp generation to post-copy completion
+57c3a3d8f2101d0f384315844b882e8268d671e1 | ghubliming | 2026-05-04 14:00:03 | update the logging
+6b4b3be11e2465f547d3279ca011d807392bc7f7 | ghubliming | 2026-05-04 13:55:49 | DPCC baseline: implement Tee class to stream evaluation logs to both console and file
+037fa6b447e1a5d7bb06efb5fd2982353ac21d3f | ghubliming | 2026-05-04 13:47:28 | feat: add timestamp files to experiment snapshots
+63f9a30a6618c27aab5d79eaaa3c4fcd2fb57ea1 | ghubliming | 2026-05-04 13:31:47 | fix: add missing hyperparameters to Gen3v3 model config to resolve path resolution errors
+73d658cd3a6f0d43e691ad2ef20e0c721310195b | ghubliming | 2026-05-04 13:28:47 | Gen3v3 U5 train,eval ouput path better naming & bkp logic
+b256d124570bb84d0e4b08b32ffeb6f0c0ddb22e | ghubliming | 2026-05-04 12:44:45 | reorg docs; fix the load results output path for fmv3ode and diffuser
+0fa6383f28736b733dbbb8629d4917c0a5d51b95 | ghubliming | 2026-05-04 12:33:09 | feat: implement path-based W&B run naming and automated experiment grouping for improved traceability
+7b1e424140bb8fa4fa17f0b368028398636a5bca | ghubliming | 2026-05-04 12:24:50 | refactor: restrict metadata saving to training only to eliminate redundant argument files during evaluation
+960bb2d616700cc12e9b70531c3e7694b88d620c | Liming_vmknoll | 2026-05-03 14:38:51 | Slurm logs upload; note: train dpcc baseline and fmv3ode default is finished; 678910 seeds; eval not, data missing and not full (eval py gen3v2u3 fixed), (pending full eval datas for 2 Tests)
+fae5f36571e4d2a2fe6739916e65e91e11bbfdca | ghubliming | 2026-05-03 12:34:08 | eval py data saving & all seed option output fix,upgrade; gen3v2u3
+51557bd90212282ae7ea56859fd392bba5b4af47 | ghubliming | 2026-05-02 13:06:03 | feat: implement session-based unified logging by exporting metadata to Slurm sub-jobs for consistent directory grouping
+502852e8b0827c7a8c8ef7bb85219ed09e34b482 | ghubliming | 2026-05-02 12:53:48 | feat: add standardized SBATCH headers and pipeline logging to workflow scripts
+e20abda163af167dcce3393162999a60ffe662e7 | ghubliming | 2026-05-02 11:07:17 | refactor: implement exit traps and standardized logging across Slurm scripts, increase evaluation time limits, and improve submit.sh reporting.
+e94cbaf6cf980345f400221b6dd62c650ce586cc | ghubliming | 2026-05-01 13:39:27 | slurm tqdm fix and arg resume fix for old codes
+cb4eeb09a50d33ce810e200196f505f6307880b3 | ghubliming | 2026-05-01 13:22:46 | fix: resolve wandb artifact initialization errors and disable state_best.pt uploads across training scripts
+41a87623ffb044835728d9842ab8018646d7e0d5 | Liming_vmknoll | 2026-04-30 18:24:34 | dpcc 5 seed train on slurm failed, need debug, seed6 success
+5be5cd1e10cd22e737782c7867c15371020a557f | ghubliming | 2026-04-30 18:23:17 | correct into State 8000, add best 90000 files
+ec418827e331fd6d504cdca30950ae311dc20946 | ghubliming | 2026-04-30 16:22:31 | fix math mode error for Traj Gen ODE
+8e13166564653b8f5c5a38240b2ea39ced3e18ed | ghubliming | 2026-04-30 17:43:39 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+b57dd090c53a97290d696d4256fd1bb9e314ad65 | ghubliming | 2026-04-30 17:43:26 | add traj gen ODE; test files
+3a112dc2ce63d2aa01dbf959db29f6e3bed9d6ac | ghubliming | 2026-04-30 15:43:00 | Traj GEN. ODE Passed; Double Anchor, Action Snapping, strict assertions, zigzag fix, SUCCESS.
+48d6ec0ee62ecd9ba17a74d87fe417d64957b389 | ghubliming | 2026-04-30 13:47:36 | dd Slurm pipeline and job templates and update log cleaning regex to better match tqdm progress bars
+c9b355710e69c0af7ab44139a1dd4f44dbd68e4f | ghubliming | 2026-04-30 13:38:46 | feat: add automation pipeline for FMv3 ODE training, evaluation, and result loading via Slurm job dependencies
+eee255345c8e5d6e59340ee4c44564df9c9908f3 | ghubliming | 2026-04-30 13:10:36 | diable all old codes tqdm continue logging into only 100%
+ae9f974bea263d06f801f3713a7580e47954279e | ghubliming | 2026-04-30 13:03:15 | add utility script to filter redundant tqdm progress bars from Slurm log files
+5fc52303755d48f6ea0a9dc142ee4a3533f29836 | ghubliming | 2026-04-30 12:59:15 | fix: suppress tqdm progress bar log pollution in SLURM by setting mininterval to infinity
+a86079f32a9afc8df76d6c7d9f7f8497a993e183 | ghubliming | 2026-04-30 12:19:57 | add DPCC trainig code
+84a6e87129306190bcac941f719725703635c5b5 | ghubliming | 2026-04-29 15:50:29 | update correct load path of FM train model
+454e9fd228e103b1f158b352a1f6ec9d5a5bb069 | ghubliming | 2026-04-29 15:40:22 | feat: add stdout logging to evaluation scripts and update test history documentation.
+8204cbbc76bb17cda5fa9444ff53ceecde90e529 | Liming_vmknoll | 2026-04-29 17:19:28 | Merge branch 'update_into_FM' of github.com:ghubliming/FM-PCC into update_into_FM
+ffc693f3bbc9e54bc43cab1da63b3e203a50c984 | Liming_vmknoll | 2026-04-29 17:19:25 | Stop tracking MUJOCO_LOG.TXT
+6986ea5dbb684d1965a32371476aef4218fa9cb9 | ghubliming | 2026-04-29 15:17:23 | update master test log
+5cf625960e140d2519a9f60d9e90ae06e546b7d4 | Liming_vmknoll | 2026-04-29 17:16:48 | SLURM TEST PASSED; READY TO WORK; change submit log into date first in naming; other FMPCC hotfix inline for smoking test; update gitignore
+8fcfeb6ccdf28676aad4426c7e38e9b06d8c72f9 | ghubliming | 2026-04-29 14:12:31 |  update dataset extraction documentation and replace missing unzip dependency with Python zipfile utility in batch script
+765015f401a6ce949fdd0ad7f287323f56976d1e | ghubliming | 2026-04-29 14:01:21 | add d3il dataset extract .sh job
+9bc411253a2af8a5ca2a9150a7555e713e811cc9 | ghubliming | 2026-04-29 13:51:42 | set smoking test sh
+630dd1307dc1d0635f81e5fa6bb2d05e72130dd3 | ghubliming | 2026-04-29 13:37:30 | new Slurm job logs logic and entry sh
+fc2a9e16039ec33f6c2cce8502907b1749aad9b4 | ghubliming | 2026-04-29 13:28:04 | fix: update conda directory path to $HOME/miniconda3 in sbatch scripts and add warning to setup guide
+c1c8c7dd02ab66efc6f8916dcbdd3cfdd4d059ba | ghubliming | 2026-04-29 13:20:00 | refactor: centralize sbatch log paths and update documentation naming convention
+f042dd318eb50cea77ef5724d2d7401adbc78e13 | ghubliming | 2026-04-29 13:13:36 | chore: update Slurm partition to gpu-1-student in job scripts
+e09cfdb07530658207ccd95372b1ceef5b94d772 | ghubliming | 2026-04-29 13:10:47 | add and reorganize Slurm and Colab installation scripts into consistent reference and sbatch directories
+e847f249027cbccb9d8f4b0265ec62c4e63ce015 | ghubliming | 2026-04-29 12:48:05 | fix typo
+79c24a59ec8d8f1e923e63044d7e96270d1bc351 | ghubliming | 2026-04-29 12:46:49 | update .gitignore to include gym_avoiding.egg-info and ensure autosave files are ignored
+f75576d7ddf587ab84b8de13c0645948b8954825 | ghubliming | 2026-04-28 19:57:39 | add debug ntoes for future continue work
+50459c2a51c248cec5b73afbf124470639b96144 | ghubliming | 2026-04-28 19:47:59 | add example training sh for SLURM
+b1c7b21df5c540c2c3b6a3e358a20c51e1f7e779 | ghubliming | 2026-04-28 17:03:42 | Slurm Working Flow Install Ipynb Prepare; not finished, but could use as reference now
+599314a73ee10cbc6a0d89d6ddcf4d1dd57a7132 | ghubliming | 2026-04-28 16:41:34 | NOT WORKING CURRENTLY; BUG - feat: implement multi-initialization point system, add real-state coordinate sampling with normalization, and fix dimension slicing in trajectory generation.
+20790344158a9da80dbc3065b85b78bf1f2878b9 | ghubliming | 2026-04-28 16:18:02 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+d627071113e1e77f5e0e9ca305b96c48ddfb850b | ghubliming | 2026-04-28 16:18:01 | add the Batch20 tests
+3f5a39563c633a3ed8f8984fc518c1b5b11bf16d | ghubliming | 2026-04-27 15:40:21 | docs: update MASTER_TEST_HISTORY.md
+d16f4956634c820a757725c0e0a9c43edafbaea9 | ghubliming | 2026-04-27 17:30:58 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+8fa1afa501d2d766516546a5fbfdd3717a5accbd | ghubliming | 2026-04-27 15:30:46 | docs: update MASTER_TEST_HISTORY with  ODE sensitivity and DPCC step floor;aw; analysis findings
+e05dce103fb423d11d0d05806e3088de70fe8982 | ghubliming | 2026-04-27 17:29:05 | add data of FMv3 aw1 ODE 20. DA FMv3 aw1 ODE10 vs 20; ODE20 aw1 vs 10
+c5a2486879e97f51bfe7275c62c71da8bf96f2d3 | ghubliming | 2026-04-27 16:40:56 | org misplaced file path
+4f0fd97cdcdaa158c1333fe03a0d8db9aa2a9ca4 | ghubliming | 2026-04-27 14:40:41 | update docs
+a7db816c86fbccd0c68bb42eb926b5ffb83f9a93 | ghubliming | 2026-04-27 14:26:23 | refactor: simplify constraint loading and remove redundant manual plot rendering in trajectory generation script
+2b984ed8f6b1b6265b0c984b59b39180afabe8ac | ghubliming | 2026-04-27 16:25:36 | add the Ben_V4 traj gen on different ODE methods
+2e5c33633f512cb1f0e8410493a6601a92b322c7 | ghubliming | 2026-04-27 14:15:38 | debug ben_v4_traj py; success run; hotfix_production_mode
+933d3f7d2b1d38a071226d7dac8720814ce37d62 | ghubliming | 2026-04-26 13:19:07 | add datas for DPCC 10 Steps and DA, finished
+46b856f8972f3c44a9317135716ec98ac30a73be | ghubliming | 2026-04-25 20:33:26 | add Slurm initial entry codes & misc doc
+7c3e3a92af161d159226de59de4b52fd0e566829 | ghubliming | 2026-04-25 19:51:53 | Create seed6_FMv3_aw1_ODE20_full_training_Proxy2_Colab_GPU_FMPCC_MuJoCo_boosted(after_gen4).ipynb
+af80fcb76edf74c46e7549ec57f0476c7ddcf66a | ghubliming | 2026-04-24 22:37:26 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+b108a74b813bad13ee61307dfc05292a82f5a09c | ghubliming | 2026-04-25 00:33:09 | massive mark for old FMv2 test. Prove to be wrong. ODE20 is actually 10, so compare 10 vs 10 in FMv2
+ff9a9fe9a5c4282cd3983baa32b4719e7a39788d | ghubliming | 2026-04-24 22:32:49 | docs: document the FMv2 pickle lock vulnerability and the Gen3v2u2 dynamic override hotfix
+12bdee739a46c7deab7b0f4ee6586ac7d0c3fa8a | ghubliming | 2026-04-24 22:12:13 | docs: add warning documentation regarding FMv2 ODE configuration pickle lock limitations
+ae4bd7804a15d3d3e7b9490807077330e246cb1d | ghubliming | 2026-04-24 23:51:44 | add DA
+2f2cef2c474d1df4f3ab897c42e3ec77a6863f31 | ghubliming | 2026-04-24 23:35:56 | add pending DA datas
+21253c8354ac19235ef53d318979124543b06c7e | ghubliming | 2026-04-24 23:25:42 | upload seed_6_FMv3_aw10_ode20 datas
+51ea27318bbda6ff4300d84871c7e864841d5864 | ghubliming | 2026-04-24 21:20:44 | update RK4 IV DA
+3ebf8c8e3b0690a1ebe5c374d5de622541b9cd13 | ghubliming | 2026-04-24 17:10:43 | fix: resolve metadata root directory leakage by synchronizing Parser.savepath with experiment directories and update documentation.
+40a80555a09c2c2a428462eb5fa91a68a3181cf7 | ghubliming | 2026-04-24 14:21:11 | org: migrate V4 benchmark documentation and trajectory generation scripts to the new benchmark_v4 directory structure;
+1d45d4941d22e1868dbbdd136ceb04fc23ca9cf4 | ghubliming | 2026-04-24 16:06:37 | upload the RK4 FMv3 IV tests data (DA pending)
+914d9acf71a42e7f8f0f87655c1ed9ad6c98fad2 | ghubliming | 2026-04-24 14:05:24 | update the log
+21abdfe3fd398f0754adea2c0f804c0492cd0a76 | ghubliming | 2026-04-24 14:04:25 | docs: update test history with IV results and automate plot directory creation in evaluation script (minor updates)
+7c8c68ee59e4ad91c2d062e6d63b1e77ca654d27 | ghubliming | 2026-04-23 16:44:31 | upload 2 colab ipynbs
+c3d60bc1266defadd1115ac7504017eadbb6ff9b | ghubliming | 2026-04-23 15:59:35 | add RK4 II, III tests data Full IV pending; Close the RK4 Problem, FIXED
+ede0a4068acc3d8636e4eab086687a99d84edcaf | ghubliming | 2026-04-23 13:58:47 | Gen3v2u2 (last u2 rename into u1.5, that one for the K20 fix); this time fix the ODE RK4 bug. And enhance the loading logic from old training data from eval py. IV test for RK is run;
+1e70a927040a0bfb0aa6a2a7bd60a72a8f1dc547 | ghubliming | 2026-04-23 14:24:19 | add the II log, III pending (III with logging, II no console output)
+5e4a4882dcf8986106e037a7b4dd8752f8b86201 | ghubliming | 2026-04-23 12:16:01 | add the log to check if really use rk4 (both_hard_III run)
+595b9ffbe0f37eeada99bcb5dad9405afcd7a891 | ghubliming | 2026-04-22 20:36:10 | fix space in end folder name
+6a37063bf0d9f6d29c6afca323b6c585c6180d5b | ghubliming | 2026-04-22 20:29:09 | traj_generation_script Created for ODE visual, traj. under FM_v3_ode_selectable_test/Benchmark_ode_solver_Tests/v4/traj_gen_script_for_v4.py (no test made, pending) & hot fix dead code inside avoiding d3il py & org mds
+b1b86eddb6ee69de1e808ec6636aab1bbcf08c98 | ghubliming | 2026-04-22 19:45:09 | hotfix the folder K naming issue, K20 is into K(X) X is ODE steps
+1cc54e57ac43a5f4b5829c1a8042c9b4ee1fddc0 | ghubliming | 2026-04-21 16:00:48 | upload FMv3_thr1vs0p5_projection_per_step DA and files
+26ef26e5e3daa2e6928901e87c702bce3c8ced82 | ghubliming | 2026-04-21 11:13:54 | gen3v2u1: fix the diffusion_timestep_threshold parameter passing/override from config-yaml
+f5e70cf219af6c112034bff0459e1b0b0dbd3dec | ghubliming | 2026-04-21 09:19:06 | comment out some legacy parameter is avoding d3il
+bb5a9c5a762f281f6cacb44cc695602e7019dbdd | ghubliming | 2026-04-20 11:02:26 | update the md for logging what we have done so far
+07532147a5aeb105e372446624e862c69c03a792 | ghubliming | 2026-04-20 12:38:44 | add the Eval Output by uploading
+c13477ba1348204c3e65edaaeace8cbfdc929423 | ghubliming | 2026-04-20 12:18:29 | add the RK4 ODE for FMv3 results & DA & both hard ipynb
+1d71252f20f91635ffac492ddc20bd9b3d36be77 | ghubliming | 2026-04-19 16:24:15 | add ipynbs, rest data, DA pending
+54dd4c54e770983223fc4f5d7b79c3931a4bfccf | ghubliming | 2026-04-19 11:27:43 | delete redundant files
+f4bd227617226e4b6d6ba39269703848b96fbd2f | ghubliming | 2026-04-19 13:11:32 | add new ODE_Benchmark v4 and all v3 results. Ipynbs Pending
+8f0037b88ee4733cefe17a69c70fe64e7bb037e8 | ghubliming | 2026-04-19 10:54:17 | fix minor bugs
+78538f670a0ba4e8f724d2fc8f59bf20ce1324bd | ghubliming | 2026-04-19 10:19:11 | update Benchmark v4, solving the batch randomness
+351d4636f4020fb125052fa648377ada0acddaeb | ghubliming | 2026-04-18 13:34:32 | update current status and pending jobs
+6fe48887f62a3a9a544084fc5a00e006a2956614 | ghubliming | 2026-04-18 11:53:48 | idnetified the benmarch_v3 problem
+d697a4e417e137ae2cddf68161655a86ba901245 | ghubliming | 2026-04-18 11:00:04 | fix minor bugs, add docu
+c9c23dde6276b14f6d867c8b6b5186de1252f988 | ghubliming | 2026-04-18 09:55:35 | orgnize benmark ode folder into versions
+eb7ec03232081144442b50ed05145b312306b097 | ghubliming | 2026-04-18 09:53:48 | add the ODE accuracy test scripts
+8abe009999a50b035cd808063f1db93659e43c0e | ghubliming | 2026-04-17 14:10:41 | add misc notes for FMv3
+2185ce03519114e15a513d8c414414fa301e2d84 | ghubliming | 2026-04-17 13:17:05 | add ODE benchmark v3 test results and ipynb
+bfa5937afe57395722601c98f7b2a35067a8ea2b | ghubliming | 2026-04-17 11:05:30 | fix ODE benchmark v3 bugs. Colab Test Passed.
+7610599932ffce18cc4f5043c33c962f5c7383d1 | ghubliming | 2026-04-16 14:35:34 | org the gen3v2 - 05 benmark v123X files
+7284004cbd46ba7521b254599dd40ff25e635b58 | ghubliming | 2026-04-16 14:23:34 | add ODE benchmarkv3 test with grid search for v3; investigated suspocious v2 results & confirm v1 is correct + v2 may be wrong + try to fix in v3
+100909a2e4978eee3317efe700ae99a4aa2a4835 | ghubliming | 2026-04-16 12:55:52 | docs: update Gen3v2 ODE solver plan with U2 benchmarking results and U3 accuracy audit focus
+145c35a468c5ca811e9a9b761da2c81dea066f49 | ghubliming | 2026-04-16 11:17:16 | add ODE methods Accuracy test plan
+a268d64f88feafc3aa0ed39822f98b92d8a05f0d | ghubliming | 2026-04-16 13:11:38 | add BatichSizeTest and native_vs_touchdiffeq Test; End of Test
+cca93115305abaeb2fa733570a65ca0b678706e8 | ghubliming | 2026-04-16 11:06:00 | end the time/speed tests on ODE benchmark
+19855d8c3e5fc4ef59a53cdce8c8b2bbabd3de90 | ghubliming | 2026-04-16 10:25:46 | update Benchmarkv2 into (add) the native algo, to test the torchdiffeq performance loss
+db118b3694ff6854fd0967624603f0d92d882b30 | ghubliming | 2026-04-15 14:18:24 | update the test history; add torchdiffeq into requirement
+af50c697addc2911072d15f2483f04cb690b129b | ghubliming | 2026-04-15 15:57:02 | Create FMgen3v2_ode_Benchmark_test_v2_and_Grid_Colab_GPU_FMPCC_MuJoCo_boosted.ipynb
+f39b7bbc5bb63f8a2f0c3c3d923ba264186ccfc5 | ghubliming | 2026-04-15 15:54:17 | add and org the ODE tests, v1, v2, and v2grid
+56867e64601e43e853337702d1bdf154a975074f | ghubliming | 2026-04-15 13:51:52 | fix the redundant FMv3 avodingd3il plan beta hyperpara
+2c5f4cf21a52d03c7c3bd6a65c59a3c240248f2f | ghubliming | 2026-04-15 13:48:50 | feat: add automated grid search benchmark runner and update the v2 version of ODE benchmark test
+d7268ca3273973b7ae65e8ba4eda0c3e9693ad98 | ghubliming | 2026-04-15 12:15:41 | fix bugs
+08c6238d8b29e7787cbc72bdcc51434733a782a7 | ghubliming | 2026-04-15 13:05:38 | add the test results for ODE solver benchmark test v1
+39328b78c160c896ea48e48dc918d407bafb847c | ghubliming | 2026-04-15 11:05:04 | same as last commit, residual changes
+4f4321c17925b7a9d12b40ca916dd7a656123206 | ghubliming | 2026-04-15 11:04:22 | update benchmark test scripts for ODE_solver in FMv3 Gen3v2
+b01d74e6c118a73c919ee7dc77681daf41f7e2d9 | ghubliming | 2026-04-14 13:13:05 | add memo and plan for ODE remote benchmark test/one full iteration
+b2cd52940988271a9d92445fbff73897677b60f3 | ghubliming | 2026-04-14 12:52:57 | local WSL test passed
+4c886f767edfedd3ba08a39d577e27e884091a02 | ghubliming | 2026-04-14 11:46:15 | simplify the ODE solver performance test
+0bd75e292c836b15d0ff196d7dcf41c60691d9ac | ghubliming | 2026-04-14 11:06:17 | clean ODE benchmark code
+c4d0e86225eb9671309f92f553a589ff33499420 | ghubliming | 2026-04-14 10:56:43 | fix bugs, make Benhmark test better
+30458dfd1029f5f63e7afae5c0b292cc6146fe6d | ghubliming | 2026-04-14 10:34:13 | add benchmark ODE test before running
+6ffe4d7846d1726208c1557c4af0178f8a163220 | ghubliming | 2026-04-14 10:23:41 | Org the codes, focus on eval only, remove redundant entries for training, add ODE solver ensuracne approch  (ODE solver update)
+e5fa45ab3b63eb8715df34557af841d05166fa56 | ghubliming | 2026-04-14 10:03:21 | Key Update Gen3v2 (FMv3_ode_selectable)
+30d82c6e573068d15849d01e8a5570deb935e7ce | ghubliming | 2026-04-13 20:35:19 | Init Gen3v2 ODE solver plan
+8b2a6de93d97803e1421f0d77e68aab32b87d815 | ghubliming | 2026-04-13 10:21:24 | add notes on SafeFlowMPC FM ODE
+11916b970034a9c2dc3c14cd657723863cdcb318 | ghubliming | 2026-04-12 16:18:04 | org & add DPCC - turn off  MPC (initial exploration, no such thing)
+053f78ca5e3599388f691b2c1922b76a1ab7d750 | ghubliming | 2026-04-12 15:57:30 | org dev specific codes & adding notes
+0e7e21f86492debcd0a8248a1a988f1e0eb7b08a | ghubliming | 2026-04-11 16:04:09 | Create (D3IL_dataset_Extraction)CheckP_1_Colab_GPU_FMPCC_MuJoCo.ipynb
+ae0adf7a9956c1f1886b1dc9cbcce2b7a27ba5da | ghubliming | 2026-04-11 13:44:27 | Update .gitignore
+1831826ae917f254620c40501d423937f611ac5b | ghubliming | 2026-04-11 11:42:56 | add notes
+8d621ec6f5feabbe8a086e186608c811ea0207b8 | ghubliming | 2026-04-10 10:26:41 | Enhance Gen5 Implementation Plans with mandatory execution order and safety warnings for Visual-Action model integration
+748ba5f553f7eea79740f66a3c0ff8f754141f88 | ghubliming | 2026-04-09 22:47:32 | update logs
+c04a18977fc9c625cb64f8c193a87ba791bd29b1 | ghubliming | 2026-04-09 22:41:40 | Add Gen5 Visual-Camera Aligning Implementation Plan ; add misc file naming bugs, minors fix
+d0ece54c60c30b120d21182568111dd80e984a0f | ghubliming | 2026-04-09 22:15:21 | roll back the gen4 files, mark as abandoned
+7ae83d51ff5a7fb096202dc956411106c720728f | ghubliming | 2026-04-09 22:09:13 | roll back the gen4 files
+66e9ac0b41636c305db5023b63eca502f91c6bd9 | ghubliming | 2026-04-09 22:08:02 | Gen5: Part1 Roll Back to Original D3IL avoiding files
+327aabacb9052594a78355726bf66bbc5d6aa385 | ghubliming | 2026-04-09 21:38:38 | Initial Explore for Gen5: Use existing Visual D3IL & Abandon Plan Gen4U2
+9df098582ab1537fc8a57550515d18781dabec76 | ghubliming | 2026-04-09 10:40:18 | add plan docu for visual
+d0093fb5f2c95ccf600915e23d6f99775461015d | ghubliming | 2026-04-09 10:35:16 | feat: add docu and fix Pipeline Error after local validation test (pass smoking test)
+b46fa1f7d3beed026fe32ddaeb9fa2c2c4c4ead3 | ghubliming | 2026-04-08 15:05:27 | fix naming Issue
+e5d0291b245bfe7a7f100a2c73aa9e70fdc7598b | ghubliming | 2026-04-08 14:52:20 | Key Update Gen4, Upgrade into Visual Avoiding. D3IL folder added into FMPCC
+6c697f474a65ec1cf55669ddf7c20900afb326cc | ghubliming | 2026-04-07 20:27:00 | minor README note
+2609b623e5b7bdb2baf9863b2d6dde221be217f0 | ghubliming | 2026-04-07 20:24:42 | docu: reorganize documentation and remove outdated training usage guide
+b14eeb4bf32dc0f7856b802e0cdbaf15a7e21bec | ghubliming | 2026-04-07 20:10:07 | update test history documentation and rename file for consistency
+db509352bc213fcfd952014d9f76f5ebebe022f0 | ghubliming | 2026-04-07 08:34:04 | org the test history
+49e8ed7a3f6f0656488ae7db50f12762b93f6c92 | ghubliming | 2026-04-06 22:13:37 | add DA for FMv2, FMv3
+c9ad0f2048fc42443e58ec19ea0e6a593e197e89 | ghubliming | 2026-04-06 21:42:05 | add Training Curves DA
+a3d45609f0a1e50383d6b5c2f0c73ad2d57d0644 | ghubliming | 2026-04-06 18:55:50 | add FMv3 test files, DAs pending
+150f8f4ec7ee9fc9625611821744d86de43e3a2d | ghubliming | 2026-04-06 11:12:18 | add,update auxiliary mds
+37d7e7345968df60791be8fc58c40e0116ad4767 | Liming L. | 2026-04-06 12:49:19 | Correct the versions
+f4fe85e64ee49896517a2e61db772da06e6e158f | ghubliming | 2026-04-06 10:44:58 | add note
+e2c886d0ba8eb2a9abeed2bb22531f1babd4ab3d | ghubliming | 2026-04-06 12:42:27 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+71ae62ae182d03f34bdddfc844aeb080b149f01e | ghubliming | 2026-04-06 12:42:16 | add FMv2 ODE10 & fix Fmv2 Beta Time Errors. add/update Test Files/DA is Pending
+cbb08a4a94913feaa90f0cba5c858ccd50caf58c | ghubliming | 2026-04-06 10:38:54 | Add Master Tested History documentation
+7ab352a90e642a93df0c11647970171b88b7df6d | ghubliming | 2026-04-06 10:31:42 | Gen3U3; feat: Introduce flow_matcher_v3 with SafeFlowMPC alignment
+bd5ac77abb71ae79f6fd995582e67c56ff4a03f7 | ghubliming | 2026-04-06 10:19:21 | CheckPoint Before Upgrade 3
+b460654236b87a081cd1367a0372d27008eaaaf2 | ghubliming | 2026-04-06 09:28:46 | Merge remote-tracking branch 'origin/update_into_FM' into update_into_FM
+74ade4666b5923747a3de460ccfa9ae21e1c5566 | ghubliming | 2026-04-06 09:27:47 | fix wrong ODE inference setup in Gen3U2
+b5b06f669b56146ff78400d94cb35b733db7e2a5 | ghubliming | 2026-04-05 10:59:40 | add DA
+46a968f5f32363685bcbf05a533e49ea7264f4a5 | ghubliming | 2026-04-04 22:28:53 | add the FMv2 logs, files (DA pending)
+fac49fa586f2101d8e00a7e616ed5d6e192eb476 | ghubliming | 2026-04-04 14:49:37 | fix Win Folder Path bug (in Linux there is space at end of the name for a folder)
+de6fbff5bf11236f914876f6ac8f3c8b2a4cab26 | ghubliming | 2026-04-04 14:46:55 | rename the md logs
+ca5da05ae6cd4b609f217f2ea7b97082ea03c715 | ghubliming | 2026-04-04 14:38:46 | fix naming issue, better naming
+96f94e06f2ea13ea2ddd4acb69b731b58331dc52 | ghubliming | 2026-04-04 14:31:07 | update default aviodingd3il.py paras for FM_v2
+81bd4a162577912b46bb960a83966f348b8d3633 | ghubliming | 2026-04-04 14:06:43 | Upgrade v2 FM Architecture -- ODE steps;
+6a3b275fdeee36cf1c1fd8ea4355521c58e013cb | ghubliming | 2026-04-04 13:49:23 | feat: Implement SafeFlowMPC-style time sampling in FM-PCC
+61b8f64c676a423b7fbab8c7db900790f0823559 | ghubliming | 2026-04-03 17:39:14 | remove error file
+c6249bd9497198bd11fb96c8d99d5a2988738173 | ghubliming | 2026-04-03 17:36:45 | Org the Results&DA files with more clear Path; Add HP2 ipynb and train,eval DA
+37abd51a3d0b7c0c08edf992068bbc617d292a3d | ghubliming | 2026-04-03 11:53:52 | refactor: simplify hyperparameter tuning workflow by standardizing experiment block names to flow_matching_hp_tune and plan_fm_hp_tune
+fee941d59a22ec1fb0596caf203f6b82f3b9b217 | ghubliming | 2026-04-03 08:43:56 | update hyperparameter tuning log, add HP2
+2df9c6acbc723c25d2272c42d5db0d45b5f8c9af | ghubliming | 2026-04-02 23:05:35 | add training curve analysis files for hyperpara_1 and correspond ipynb used
+9ce546415c9852cc33bfa185e865030986ee18f8 | ghubliming | 2026-04-02 19:22:18 | add eval data analysis for hyperPara_1
+27ff4edc4e5238f76da54f4f730e575ced44c9f9 | ghubliming | 2026-04-02 17:08:01 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+6ea49ad46b73f9e12c81f812056f3d2289f1d8d8 | ghubliming | 2026-04-02 17:07:58 | add new test results from hyperPara 1 test
+2968beba2f173d957fa9b4677ba61dda33affb5f | ghubliming | 2026-04-02 10:12:24 | add hyperparameter tuning test log for
+3f255295bea63555bd06a18f9ba828e6d604a504 | ghubliming | 2026-04-02 10:09:02 | docs: add quick workflow guide for hyperparameter tuning to hyperparameter_tuning_guide.md
+d69c49e8b0353d08013615a37f35aecb6a1b7882 | ghubliming | 2026-04-01 13:14:14 | feat: implement hyperparameter tuning framework ENTRY with new training, evaluation, and result loading scripts and remove deprecated test files.
+401f611a7297eac18ab10d3ab7afc66058693bb2 | ghubliming | 2026-04-01 12:58:14 | feat: add hyperparameter tuning configuration blocks and documentation guide
+372cbfd2ccf390633f7ce39aeec73655fd384e17 | ghubliming | 2026-03-31 17:11:23 | add new seed 7 FM test
+35e07320748911c985bc7da8263a06a96ad292e4 | ghubliming | 2026-03-31 13:50:15 | chore: add structural modification TODOs to Flow_matcher_U_Net_v2 for future architectural updates
+0433a37ec4f577398d03223510652e050cffcf30 | ghubliming | 2026-03-31 10:50:45 | chore: update experiment output prefixes for diffusion and flow matching models
+d3de8ad5f65e1647cb0b0838c5b4851bf847d541 | ghubliming | 2026-03-31 10:30:44 | refactor: rename UNet1DTemporalCondModel to Flow_matcher_U_Net_v2 to resolve dynamic import errors
+3e72c0786ab73b6860c626d8a1edb937633c79a1 | ghubliming | 2026-03-31 10:03:59 | Warning: Path in Plans is Changed, add sub folder
+f5ad951ac689c91db74eb16e3553efbfa1e83752 | ghubliming | 2026-03-31 10:01:49 | Key Update Gen3: Flow Matching U-Net V2
+87047a11d1ddb19696b27f479e7c16adba0b8318 | ghubliming | 2026-03-31 11:21:50 | org, add FM seed7 train ipynb
+39ff7853468078ef8fec6a1cb647dd2e589eb152 | ghubliming | 2026-03-30 13:11:44 | docs: add detailed audit report on training loss logging consistency and verification
+90a5bd26cb32e422fc56380f1460d470514e5e81 | ghubliming | 2026-03-30 12:43:51 | docs: update README with usage documentation
+1b44c0dbb85c7d39a85a9bbeacad3e3321ce2e18 | ghubliming | 2026-03-30 12:38:55 | misc: add memo
+b130dc933c03e5db8d0f0eb1b666200e8e3da1c2 | ghubliming | 2026-03-30 11:16:41 | feat: implement robust loss persistence with exhaustive JSON logging and versioned metadata backups for training resumes
+5df5ac3ba65298c7af3c966554c347a5df0c26d8 | ghubliming | 2026-03-30 13:06:59 | fix file
+699af5fed89932627c2f47b30763871d78feb373 | ghubliming | 2026-03-30 13:02:20 | Merge branch 'update_into_FM' of https://github.com/ghubliming/FM-PCC into update_into_FM
+17905686c4174066dbe83247bc068c9396572fec | ghubliming | 2026-03-30 13:02:17 | org results, add loss curves ipynb
+7e2383d8852271dd0f47c9c1eb001311a1f62f45 | ghubliming | 2026-03-30 10:21:52 | feat: add JSON config exports and improve loss history persistence during training checkpoints
+cfa2cf8e7cd4b1ed81f7b52df8378ee9b604854d | ghubliming | 2026-03-29 14:12:53 | add new seed 5 test result, analysis and org files
+5f9d808e5544bd749c31558185536d180a60b21a | ghubliming | 2026-03-29 12:35:58 | org files
+77e25b0c7074ec6a3cbc440ae6fed9ef538a7b2c | ghubliming | 2026-03-28 23:20:16 | org files, add test results
+6a476e31e74d0b829a7b2e11e49860e4af0ddc3a | ghubliming | 2026-03-28 12:07:57 | add a initial DA pdf
+6f8e55e535247d85633b6eb1967778b830063629 | ghubliming | 2026-03-26 23:07:14 | add ipynb log from proxy2 training as backup
+1bf4737f33ca92650577ea3a3888f198de0645d6 | ghubliming | 2026-03-26 23:04:43 | add the output pngs from load_ressults seed5,6 of DPCC and Seed 6 of FM
+6b7b3b06c6d9fa57c509cee3987ade3a38a72745 | ghubliming | 2026-03-26 17:58:16 | Create Seed5DPCC_Gen2_Seed6FM_Eval_Resutls_Colab_GPU_FMPCC_MuJoCo_boosted.ipynb
+f639710bd52d751a00916afa19aa66fe16fb8729 | ghubliming | 2026-03-26 16:53:28 | add load results sript for FM
+4018af0c83ebc613edde20751363b3f107db1eec | ghubliming | 2026-03-26 14:27:18 | add a comment on path, name of folder
+b6543820ca4f4b42af681eace5fef155f9752970 | ghubliming | 2026-03-26 13:58:05 | ipynb_name_fix
+448c4d6475aafec6dfa40835e5d2698d6e27e8d0 | ghubliming | 2026-03-26 11:49:23 | fix Flow Matching sampling (Gen2)
+947edeba859429a863dc5c39b3e8e810c1c6c968 | ghubliming | 2026-03-25 16:34:23 | org notes
+ea44f45a8883c806eb3b149f36c5416ec7c6230e | ghubliming | 2026-03-25 16:22:04 | add Gen.1 Test Debugging note
+a1b4b767e845604c5d7b564aca116ad75742da4f | ghubliming | 2026-03-25 13:01:06 | Create Gen.1_Result_Colab_GPU_FMPCC_MuJoCo_boosted.ipynb
+c2fac0cb096f329a346df34beeb6429e5f031356 | ghubliming | 2026-03-24 17:54:31 | update train_FM, add  the full wandb logic, loss curve, bkp old version
+9b7bb92c3e7d13766adb5a25b0b1539f65f10bcc | ghubliming | 2026-03-24 16:29:59 | docs: Add detailed mathematical explanations for logging outputs in training, evaluation, and data visualization phases.
+0901be543b411775ebbc4c5edb58347f788ad380 | ghubliming | 2026-03-24 15:43:54 | docs: Add `log_explanation.md` to document training, evaluation, and data visualization log outputs
+5d61da184b7473579251910d850569f70a5934ec | ghubliming | 2026-03-23 23:29:44 | add eval logic, paras
+b1daf519c358121b57c6f290b6db6a76e8ffc3e1 | ghubliming | 2026-03-23 22:19:12 | add comment on non used parameters
+890fa8784fd9c1762e2f92e7c2df99b095357041 | ghubliming | 2026-03-23 21:59:45 | update, correction
+fa6a0e9d66c842ee0c72ddca0821c18083d8137d | ghubliming | 2026-03-23 16:36:37 | add a para changing guide
+cffb023f3760492464b459ed66cb8b51bd377223 | ghubliming | 2026-03-23 16:08:20 | org_files
+59fc9546fee3744bd3977cf6d943bdfe52c430f4 | ghubliming | 2026-03-22 21:38:47 | typo, path and module name wrong, fixed
+834296ef79657338b50f3833c5850b4aa45f733a | ghubliming | 2026-03-22 21:36:21 | add flow matching para in avoiding-d3il.py
+90ce3d6667e8e0d66e828d3a05dc44d94a4211d2 | ghubliming | 2026-03-22 18:02:29 | add the log
+103c676c7eb5899cda6b5758cc805dcf0591478d | ghubliming | 2026-03-22 18:01:28 | add the exe srcipt for testing
+f40dfc1ba35915be8ea9c0be03ac6f9b811ea96e | ghubliming | 2026-03-22 17:42:35 | implement FM Logic
+b0a68d0e261ba27342933e34a08013d9ecfe7563 | ghubliming | 2026-03-22 17:12:05 | initial try_keep_dependency_drop_Diffusion
+c1bf4f29b499780ac9531b7ed77c943429d881ef | ghubliming | 2026-03-22 15:31:29 | update into docker workflow
+707617441a2c928dc4f9ca7432929f8c2b068f62 | ghubliming | 2026-03-21 17:35:15 | add note
+f9d3134c5744026443aa536fdf24427d9219a051 | ghubliming | 2026-03-20 23:32:58 | clear naming
+1f8f0145b59cae9571cca983f66caae3a42217e9 | ghubliming | 2026-03-20 23:24:00 | fix typos
+c223f1c3bed4ad421613e0b972c480dcef7457ee | ghubliming | 2026-03-20 23:04:31 | fix_bugs&achieve_cache_in_gdrive
+ff999f5427dc209ee215c84f63f8f60a66ed0df4 | ghubliming | 2026-03-20 18:09:14 | patch colab pip install issue
+6c1f2c116d5cb4483e566b8d1d0b9963c72098cb | ghubliming | 2026-03-20 17:37:55 | fix conda env Gdrive Issue
+6d3046e8f728edf4ee526dadb836db682a38113a | ghubliming | 2026-03-20 17:10:49 | optimize git logic
+42a485a8669cd248b4ae0036985bc6f23189531b | ghubliming | 2026-03-20 17:04:31 | minor typos  fix
+393e2542258b63b0701380cba6e875ba764ecfab | ghubliming | 2026-03-20 17:01:54 | update default yaml and update ipynb rerun logic
+10332ac278bd1a4549c0cac435e10ea603f65562 | ghubliming | 2026-03-20 16:56:55 | update_colab_boosting
+0b045950c6618a7a5996ce20683ba1d389701441 | ghubliming | 2026-03-20 15:59:55 | org the ipynb
+f20cf6b2a9ef6b338743f84a2361967733f5b13f | ghubliming | 2026-03-19 17:25:41 | Add function to sanitize W&B environment variables to prevent crashes in Colab
+ca2e08f9d42cf2527bfdae7aa75f058c5730093f | Liming L. | 2026-03-19 16:35:05 | Merge pull request #1 from ghubliming/Colab_Wandb_update
+34ca3d18ae851ac75d7c2e92dc01bbf43bb5a8e0 | ghubliming | 2026-03-19 15:47:24 | Add training section to README and create usage guide for training commands
+07c03afb977d46b520f490f0f6db748e386a5111 | ghubliming | 2026-03-19 15:43:52 | update to Seed based training & Wandb update
+36796dda15e916929a213750680376274f9e078c | Liming L. | 2026-03-19 12:05:37 | Clean Typos
+5a03e2d9efc4fa5ded74a5f2e6cbe40b37742cf6 | Liming L. | 2026-03-18 18:33:03 | Expand README
+1ce17b226e0f23663b112e7314b14f4851f028e1 | ghubliming | 2026-03-18 18:13:00 | Create Simple_Flow_Matching_MPC.ipynb
+eba3d68575a3f2f7f2383e2f143ac97183477691 | Liming L. | 2026-03-17 17:23:23 | methodologies
+c8c58b180acb95c72cbeb453cd37ab9499db055d | ghubliming | 2026-03-17 14:40:13 | Add DPCC Code
+8c56eccd8908063c20c98e5d50f49e44c04636dc | ghubliming | 2026-03-17 14:36:09 | Initial commit
