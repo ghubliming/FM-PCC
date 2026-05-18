@@ -892,3 +892,19 @@ Keywords: Hyperparameter Calibration Blueprint, W&B GroupName Safety Lock, visua
     - **Implementation**: Sequentially dispatches training (`train_visual_aligning.sh`), extracts the Slurm `TRAIN_ID`, and schedules the evaluation (`eval_visual_aligning.sh`) with `--dependency=afterok:$TRAIN_ID` under a unified timestamp log directory for zero-friction run tracking.
 4.  **Status**: **PIPELINE COMPLETED**. Dual-backbone parameter strategies, API safety measures, and chained job managers are fully standardized.
 
+## Gen7: Visual Flow Matching (FMv3ODE) Migration (May 18, 2026)
+
+Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise schedule, unified Slurm suite, registry config parity.
+
+1. **Sibling Package Decoupling**: Created a fully independent sibling package `fm_encdec_vision/` and `fm_encdec_vision_test/` by duplicating the legacy DDPM codebases. Decoupled and renamed all training, evaluation, and loading scripts to guarantee 100% parallel workspace parity without modifying original DDPM code.
+2. **U-Net FiLM Parity Guard**: Swapped the temporal backbone inside [fm_encdec_vision/models/visual_unet.py](file:///workspaces/FM-PCC/fm_encdec_vision/models/visual_unet.py) to use `UNet1DTemporalCondModel` (instead of state-only `Flow_matcher_U_Net_v2`), preserving the critical FiLM projection mechanism (`use_cond_projection=True`) for spatial visual token conditioning.
+3. **Continuous-Time ODE Solver Integration**: Overwrote the core diffusion engine in [fm_encdec_vision/models/visual_gaussian_diffusion.py](file:///workspaces/FM-PCC/fm_encdec_vision/models/visual_gaussian_diffusion.py) to inherit from the continuous-time `GaussianDiffusion` base class. Configured linear interpolation path training, continuous time sampling $t \sim \text{Beta}(\alpha=1.5, \beta=1.0)$, and iterative Euler integration solvers for simulator rollouts.
+4. **Registry Config Parity & Comment Restoration**: Appended the new `'fm_encdec_vision'` and `'plan_fm_encdec_vision'` dictionaries directly inside [config/aligning-d3il-visual.py](file:///workspaces/FM-PCC/config/aligning-d3il-visual.py). Replicated all legacy inline comments and developer notes, while integrating the new continuous-time parameters (e.g. `time_beta_alpha_v3`, `flow_steps_v3`, `ode_solver_backend_v3`) and watch lists.
+5. **Unified Slurm Manager**: Built and authorized (`chmod +x`) a complete suite of Slurm submit templates in `Slurm_Codes/sbatch/Visual_Aligning/`:
+   * `train_visual_aligning_fm.sh`: Launches U-Net training.
+   * `eval_visual_aligning_fm.sh`: Executes MuJoCo rollout evaluations.
+   * `load_results_visual_aligning_fm.sh`: Compiles and plots success metrics.
+   * `visual_aligning_pipeline_fm.sh`: Chains training and evaluation sequentially.
+6. **Config Alignment (Offtopic)**: Reorganized [config/avoiding-d3il.py](file:///workspaces/FM-PCC/config/avoiding-d3il.py) to move the iMeanFlow (iMF) training and planning configurations into their correct logical sections (training under models, planning under inference).
+7. **Status**: **COMPLETE & VERIFIED**. Visual Flow Matching architecture, configs, and Slurm managers are fully standardized and ready for production GPU runs.
+
