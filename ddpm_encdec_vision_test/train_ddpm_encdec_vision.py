@@ -222,13 +222,22 @@ for seed in selected_seeds:
     # --- FM-PCC Bone: Multi-stage Config Instantiation ---
     
     # 1. Dataset
-    from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
+    if_vision = getattr(args, 'if_vision', True)
+    obs_dim = 3 if if_vision else getattr(args, 'obs_dim', 20)
+    
+    if if_vision:
+        from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
+        dataset_cls = Aligning_Img_Dataset
+    else:
+        from d3il.environments.dataset.aligning_dataset import Aligning_Dataset
+        dataset_cls = Aligning_Dataset
+        
     dataset_config = utils.Config(
-        Aligning_Img_Dataset,
+        dataset_cls,
         savepath=(args.savepath, 'dataset_config.pkl'),
         data_directory='environments/dataset/data/aligning/train_files.pkl',
         device='cpu',
-        obs_dim=3,
+        obs_dim=obs_dim,
         action_dim=args.action_dim,
         window_size=args.horizon,
         max_len_data=args.max_path_length
@@ -266,7 +275,7 @@ for seed in selected_seeds:
         VisualGaussianDiffusion,
         savepath=(args.savepath, 'diffusion_config.pkl'),
         horizon=args.horizon,
-        observation_dim=3,
+        observation_dim=obs_dim,
         action_dim=args.action_dim,
         goal_dim=0,
         n_timesteps=getattr(args, 'n_diffusion_steps', 100),

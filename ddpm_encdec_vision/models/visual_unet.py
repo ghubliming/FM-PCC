@@ -16,37 +16,40 @@ class VisualUNet(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.device = getattr(config, "device", "cuda" if torch.cuda.is_available() else "cpu")
+        self.if_vision = getattr(config, "if_vision", True)
         
         # 1. Instantiate Vision Encoder
-        shape_meta = {
-            "obs": {
-                "agentview_image": {"shape": [3, 96, 96], "type": "rgb"},
-                "in_hand_image": {"shape": [3, 96, 96], "type": "rgb"}
+        if self.if_vision:
+            shape_meta = {
+                "obs": {
+                    "agentview_image": {"shape": [3, 96, 96], "type": "rgb"},
+                    "in_hand_image": {"shape": [3, 96, 96], "type": "rgb"}
+                }
             }
-        }
-        
-        obs_encoder_cfg = OmegaConf.create({
-            "_target_": "agents.models.vision.multi_image_obs_encoder.MultiImageObsEncoder",
-            "shape_meta": shape_meta,
-            "rgb_model": {
-                "_target_": "agents.models.vision.model_getter.get_resnet",
-                "input_shape": [3, 96, 96],
-                "output_size": 64
-            },
-            "resize_shape": None,
-            "random_crop": False,
-            "use_group_norm": True,
-            "share_rgb_model": False,
-            "imagenet_norm": True
-        })
-        self.obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(self.device)
+            
+            obs_encoder_cfg = OmegaConf.create({
+                "_target_": "agents.models.vision.multi_image_obs_encoder.MultiImageObsEncoder",
+                "shape_meta": shape_meta,
+                "rgb_model": {
+                    "_target_": "agents.models.vision.model_getter.get_resnet",
+                    "input_shape": [3, 96, 96],
+                    "output_size": 64
+                },
+                "resize_shape": None,
+                "random_crop": False,
+                "use_group_norm": True,
+                "share_rgb_model": False,
+                "imagenet_norm": True
+            })
+            self.obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(self.device)
+            latent_dim = 128
+        else:
+            self.obs_encoder = None
+            latent_dim = 0
         
         # 2. Instantiate Backbone (Standard DDPM UNet)
         from diffuser.models.unet1d_temporal_cond import UNet1DTemporalCondModel
         backbone_class = UNet1DTemporalCondModel
-        
-        # Calculate latent dim: encoder outputs 64*2 = 128 (default)
-        latent_dim = 128
         
         # --- ARCHITECTURAL FIX: Auto-Padding ---
         # The 3-layer UNet requires a temporal size that is a multiple of 8 (2^3).
@@ -55,18 +58,25 @@ class VisualUNet(nn.Module):
         self.padded_horizon = ((self.target_horizon + 7) // 8) * 8
         # ----------------------------------------
 
+        # Dynamic transition dimension supporting both visual proprioception (3D) and non-visual state (20D)
+        obs_dim = getattr(config, 'obs_dim', 3 if self.if_vision else 20)
+        transition_dim = config.action_dim + obs_dim
+
         self.backbone = backbone_class(
             horizon=self.padded_horizon,
-            transition_dim=config.action_dim + 3, # action + robot_pos
+            transition_dim=transition_dim,
             cond_dim=latent_dim,
             dim=getattr(config, "dim", 128),
             dim_mults=getattr(config, "dim_mults", (1, 2, 4, 8)),
             returns_condition=getattr(config, "returns_condition", False),
             condition_dropout=getattr(config, "condition_dropout", 0.1),
-            use_cond_projection=True,  # Enable FiLM conditioning for visual embeddings
+            use_cond_projection=self.if_vision,  # Enable FiLM conditioning only for visual embeddings
         ).to(self.device)
 
     def encode_visual(self, bp_imgs, inhand_imgs, state=None):
+        if not self.if_vision:
+            return None
+            
         B, T, C, H, W = bp_imgs.size()
         bp_imgs = bp_imgs.view(B * T, C, H, W)
         inhand_imgs = inhand_imgs.view(B * T, C, H, W)
@@ -92,15 +102,18 @@ class VisualUNet(nn.Module):
     def forward(self, x, cond, t, returns=None, use_dropout=True, force_dropout=False):
         """
         x: [B, T, action_dim + state_dim]
-        cond: dict containing 'visual' -> (bp_imgs, inhand_imgs, state)
+        cond: dict containing 'visual' -> (bp_imgs, inhand_imgs, state) or state-only dict
         """
-        if isinstance(cond, dict) and 'visual' in cond:
-            bp_imgs, inhand_imgs, state = cond['visual']
+        if self.if_vision:
+            if isinstance(cond, dict) and 'visual' in cond:
+                bp_imgs, inhand_imgs, state = cond['visual']
+            else:
+                # Fallback for old code paths or if cond is already the tuple
+                bp_imgs, inhand_imgs, state = cond
+                
+            visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state=state)
         else:
-            # Fallback for old code paths or if cond is already the tuple
-            bp_imgs, inhand_imgs, state = cond
-            
-        visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state=state)
+            visual_emb = None
 
         # --- ARCHITECTURAL FIX: Apply Temporal Padding ---
         B, T, D = x.shape
@@ -109,7 +122,8 @@ class VisualUNet(nn.Module):
             # Pad trajectory: [B, T, D] -> [B, T+pad, D]
             x = torch.cat([x, torch.zeros(B, pad_len, D, device=x.device)], dim=1)
             # Pad conditioning: [B, T, D_emb] -> [B, T+pad, D_emb]
-            visual_emb = torch.cat([visual_emb, torch.zeros(B, pad_len, visual_emb.shape[-1], device=visual_emb.device)], dim=1)
+            if self.if_vision and visual_emb is not None:
+                visual_emb = torch.cat([visual_emb, torch.zeros(B, pad_len, visual_emb.shape[-1], device=visual_emb.device)], dim=1)
         
         # Run backbone on padded trajectory
         out = self.backbone(x, visual_emb, t, returns=returns, use_dropout=use_dropout, force_dropout=force_dropout)

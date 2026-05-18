@@ -440,19 +440,49 @@ class VisualAgentWrapper:
             inhand_image_seq = torch.stack(tuple(self.inhand_image_context), dim=1)
             des_robot_pos_seq = torch.stack(tuple(self.des_robot_pos_context), dim=1)
         else:
-            raise NotImplementedError()
+            # ─── STATE-ONLY INFERENCE PATH ───
+            # 1. 17D to 20D Mismatch Adapter: Prepend desired pos
+            if self.mental_robot_pos is None:
+                self.mental_robot_pos = state[:3].copy()  # Starts at actual TCP pos
+            
+            # Prepend 3D desired position to 17D state -> 20D
+            obs_20d = np.concatenate((self.mental_robot_pos, state))
+            
+            # Record real position for diagnostics (first 3 elements are robot_c_pos in 17D state)
+            self.history_real_pos.append(state[:3].copy())
+            if self.last_predicted_pos is not None:
+                err = np.linalg.norm(state[:2] - self.last_predicted_pos[:2])
+                self.curr_rollout_tracking_errors.append(err)
+                
+            # 2. Sequence conditioning assembly
+            obs_torch = torch.from_numpy(obs_20d).to(self.device).float().unsqueeze(0)
+            if self.scaler is not None:
+                obs_torch = self.scaler.scale_input(obs_torch)
+                
+            self.des_robot_pos_context.append(obs_torch)
+            while len(self.des_robot_pos_context) < self.window_size:
+                self.des_robot_pos_context.appendleft(obs_torch)
+                
+            obs_seq = torch.stack(tuple(self.des_robot_pos_context), dim=1)
         
         t_start = time.time()
         if self.action_counter == self.action_seq_size:
             self.action_counter = 0
             self.model.eval()
-            # --- Gen5 Architectural Parity Fix ---
-            # Detect if model is 3D (Action-Only) or 6D (State-Action)
-            # Repeat conditioning tensors for batch inference
-            bp_image_batch = bp_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
-            inhand_image_batch = inhand_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
-            des_robot_pos_batch = des_robot_pos_seq.repeat(self.batch_size, 1, 1)
-            cond = {0: (bp_image_batch, inhand_image_batch, des_robot_pos_batch)}
+            
+            if if_vision:
+                # --- Gen5 Architectural Parity Fix ---
+                # Detect if model is 3D (Action-Only) or 6D (State-Action)
+                # Repeat conditioning tensors for batch inference
+                bp_image_batch = bp_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
+                inhand_image_batch = inhand_image_seq.repeat(self.batch_size, 1, 1, 1, 1)
+                des_robot_pos_batch = des_robot_pos_seq.repeat(self.batch_size, 1, 1)
+                cond = {0: (bp_image_batch, inhand_image_batch, des_robot_pos_batch)}
+            else:
+                # Repeat state conditioning for batch inference
+                obs_batch = obs_seq.repeat(self.batch_size, 1, 1)
+                cond = {0: obs_batch}
+
             if self.projector is not None:
                 trajectory, infos = self.model(cond, projector=self.projector)
             else:
@@ -507,14 +537,11 @@ class VisualAgentWrapper:
             # Store selected trajectory for future temporal consistency steps
             self.prev_observations = trajectories_np[which_trajectory].copy()
             
-            if trajectory.shape[-1] == 3:
-                # 3D Model (D3IL style): Use all 3 dims as actions
-                action_trajectory = trajectory[[which_trajectory]]
-            else:
-                # 6D Model (Avoiding style): Actions are the FIRST 3 dims [act, obs]
-                action_trajectory = trajectory[[which_trajectory], :, :3]
+            # Dynamic action dimension slice supporting both visual proprioceptive (3D) and non-visual (2D) actions
+            action_dim = getattr(self.model, 'action_dim', 3 if if_vision else 2)
+            action_trajectory = trajectory[[which_trajectory], :, :action_dim]
             
-            # Inverse Scale (Now safe with Fix #29)
+            # Inverse Scale
             if self.scaler is not None:
                 action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
             
@@ -526,13 +553,15 @@ class VisualAgentWrapper:
         next_action = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy()
         
-        # Update Mental Map (Open-Loop accumulation - FIX #17)
-        self.mental_robot_pos += next_action_np.squeeze(0)
+        # Update Mental Map (Open-Loop accumulation)
+        if if_vision:
+            self.mental_robot_pos += next_action_np.squeeze(0)
+        else:
+            self.mental_robot_pos[:2] += next_action_np.squeeze(0)
         
         self.history_desired_actions.append(next_action_np.copy().squeeze(0))
         
         # Calculate predicted next pos for tracking error in NEXT step
-        # Note: In Open-Loop, last_predicted_pos will be same as mental_robot_pos
         self.last_predicted_pos = self.mental_robot_pos.copy()
         
         self.curr_rollout_time += (time.time() - t_start)
@@ -542,8 +571,21 @@ class VisualAgentWrapper:
 
 def generate_expert_reference(save_path, n_rollouts=3):
     """Generates ground-truth expert videos from the dataset for reference."""
-    print(f"[ expert ] Generating {n_rollouts} reference videos from dataset...")
     expert_dir = os.path.join(save_path, 'expert_references')
+    
+    # Skip generation if files already exist to avoid redundant CPU/GPU/IK computations
+    all_exist = True
+    for idx in range(n_rollouts):
+        mp4_path = os.path.join(expert_dir, f"expert_rollout_{idx}.mp4")
+        gif_path = os.path.join(expert_dir, f"expert_rollout_{idx}.gif")
+        if not (os.path.exists(mp4_path) or os.path.exists(gif_path)):
+            all_exist = False
+            break
+    if all_exist:
+        print(f"[ expert ] Reference videos already exist in {expert_dir}. Skipping generation.")
+        return
+
+    print(f"[ expert ] Generating {n_rollouts} reference videos from dataset...")
     os.makedirs(expert_dir, exist_ok=True)
     
     from agents.utils.sim_path import sim_framework_path
@@ -658,6 +700,8 @@ if __name__ == '__main__':
             try: wandb.init(mode="disabled")
             except: pass
         
+        sim_vision = getattr(diffusion_model.model, 'if_vision', True) if diffusion_model is not None else True
+        
         for variant in projection_variants:
             if args_cli.eval_on_train:
                 variant = f"{variant}_train_set"
@@ -670,7 +714,8 @@ if __name__ == '__main__':
                 continue
             
             # Generate Expert Reference Videos once per variant
-            generate_expert_reference(save_path, n_rollouts=3)
+            if sim_vision:
+                generate_expert_reference(save_path, n_rollouts=3)
             
             log_f = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
             old_stdout = sys.stdout
@@ -691,7 +736,7 @@ if __name__ == '__main__':
 
                 # Initialize Projector for DPCC variants
                 projector = None
-                if 'diffuser' not in variant and scaler is not None:
+                if 'diffuser' not in variant and scaler is not None and sim_vision:
                     projector = setup_gen6_projector(args, config, scaler, variant)
                     print(f"[ eval ] DPCC Projector active for variant '{variant}'")
 
@@ -721,7 +766,7 @@ if __name__ == '__main__':
                     variant=variant
                 )
                 sim = Aligning_Sim(seed=seed, device=args.device, render=False, n_cores=1,
-                                  n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=True,
+                                  n_contexts=n_contexts, n_trajectories_per_context=n_trajectories, if_vision=sim_vision,
                                   eval_on_train=args_cli.eval_on_train,
                                   max_episode_length=getattr(args, 'max_episode_length', 400))
                 
