@@ -501,7 +501,8 @@ class VisualAgentWrapper:
                     sel_details = {'random_idx': which_trajectory}
             
             # Print/Log candidate selection decision
-            print(f"[ Trajectory Selection ] Method: {selection_method} | Selected candidate: {which_trajectory}/{self.batch_size} | Details: {sel_details}")
+            if self.batch_size > 1 and getattr(self, 'verbose', False):
+                print(f"[ Trajectory Selection ] Method: {selection_method} | Selected candidate: {which_trajectory}/{self.batch_size} | Details: {sel_details}")
             
             # Store selected trajectory for future temporal consistency steps
             self.prev_observations = trajectories_np[which_trajectory].copy()

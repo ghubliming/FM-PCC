@@ -19,7 +19,8 @@ This report documents the resolution of the issues identified in `PROBLEMS_LIST.
   - For `'minimum_projection_cost'`, we implemented a dual-stage fallback:
     - **Stage 1 (Pre-computed)**: Try to load pre-computed step-wise projection costs from `infos['projection_costs']` (used in post-processing QP projection).
     - **Stage 2 (Online-calculated)**: If `infos['projection_costs']` is empty or not available (used in gradient-guided projection), compute the actual projection costs for all 6 generated candidate trajectories on-the-fly by executing `self.projector.project(trajectory)`. This robustly determines the candidate trajectory with the absolute minimum constraint violation cost!
-  - We introduced detailed diagnostic logging at each selection step, outputting the chosen index, selection method, and metric details (e.g. tracking/projection cost values) to the stdout and log files.
+  - We introduced detailed diagnostic logging at each selection step, outputting the chosen index, selection method, and metric details.
+  - **Console Output Optimization**: To prevent massive console spam (which would flood the stdout with 60,000+ lines across large benchmark rollouts), the diagnostic selection details are surgically gated: they only print when `self.batch_size > 1` and `self.verbose` is explicitly set to `True`.
 
 ---
 

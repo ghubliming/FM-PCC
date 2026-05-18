@@ -233,8 +233,13 @@ base = {
         'time_beta_beta_v3': 1.0,   # Beta parameter for continuous-time Beta distribution sampling (Gen7 default: 1.0)
         'flow_steps_v3': 16,        # Number of integration steps during continuous path generation (Gen7 default: 16)
         'ode_inference_steps_v3': 16, # Compatibility alias matching flow_steps_v3
-        'ode_solver_backend_v3': 'legacy_euler', # Backend for ODE integration ('legacy_euler' | 'torchdiffeq')
-        'ode_solver_method_v3': 'euler', # ODE integration solver method ('euler' | 'dopri5' | etc.)
+        # Available backend options: legacy_euler, torchdiffeq.
+        'ode_solver_backend_v3': 'legacy_euler',
+        # Available method options (torchdiffeq backend):
+        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
+        # euler, midpoint, heun2, heun3, rk4,
+        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
+        'ode_solver_method_v3': 'euler',
         
         # --- Denoising & Optimization parameters ---
         'n_diffusion_steps': 16,    # Number of legacy timesteps. Must match exactly in training and eval. (D3IL baseline default: 16)
@@ -331,8 +336,13 @@ base = {
         'time_beta_alpha_v3': 1.5,  # Alpha parameter for Beta prior continuous-time integration
         'time_beta_beta_v3': 1.0,   # Beta parameter for Beta prior continuous-time integration
         'flow_steps_v3': 16,        # Continuous time ODE solver path steps (Gen7 default: 16)
-        'ode_solver_backend_v3': 'legacy_euler', # Backend integration method for visual ODE rollout
-        'ode_solver_method_v3': 'euler', # ODE integration solver method ('euler' | 'dopri5')
+        # Available backend options: legacy_euler, torchdiffeq.
+        'ode_solver_backend_v3': 'legacy_euler',
+        # Available method options (torchdiffeq backend):
+        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
+        # euler, midpoint, heun2, heun3, rk4,
+        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
+        'ode_solver_method_v3': 'euler',
         'ode_solver_rtol_v3': None,
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
@@ -360,5 +370,4 @@ base = {
         'verbose': False,
         'suffix': '0',
     },
-}
 }
