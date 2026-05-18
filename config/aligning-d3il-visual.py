@@ -199,6 +199,73 @@ base = {
         'suffix': '0',
     },
 
+    'visual_aligning_dpcc': {
+        # ======================================================================================
+        # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
+        # ======================================================================================
+        'model': 'ddpm_encdec_vision.models.visual_unet.VisualUNet',
+        'action_dim': 3,
+        'obs_seq_len': 8,
+        'action_seq_size': 8,
+        'horizon': 8,
+        'window_size': 8,
+        'n_diffusion_steps': 100,
+        'action_weight': 10,
+        'loss_type': 'l2',
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'hidden_dim': 256,
+        'if_vision': True,
+        'obs_dim': 3,
+        
+        # --- Regularization ---
+        'condition_dropout': 0.1,
+        'returns_condition': False,
+        
+        # --- Optimizer Hyperparameters ---
+        'batch_size': 32,
+        'learning_rate': 2e-4,
+        'ema_decay': 0.995,
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 5e5,
+        'gradient_accumulate_every': 2,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'plan_visual_aligning_dpcc': {
+        # ======================================================================================
+        # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
+        # ======================================================================================
+        'horizon': 8,
+        'window_size': 8,
+        'n_diffusion_steps': 100,
+        'max_episode_length': 1000,
+        'max_path_length': 512,
+        'action_weight': 10,
+        'policy': 'sampling.Policy',
+        'batch_size': 1,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
+        'exp_name': watch(args_to_watch_dpcc_plan),
+        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'diffusion_loadpath': 'f:visual_aligning_dpcc/H{horizon}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+
     'fm_encdec_vision': {
         # ======================================================================================
         # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
