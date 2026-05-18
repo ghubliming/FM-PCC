@@ -6,31 +6,36 @@ This document provides a highly detailed, academically rigorous end-to-end trace
 
 ## 🗺️ Master Architectural Comparison
 
-```
-==================================================================================================
-NATIVE D3IL BASELINE (d3il/ folder)
-==================================================================================================
-[Dataset & Prep]    --> [D3IL Scaler]    --> [Obs Encoder]         --> [Transformer Diffusion Core]
-aligning_dataset.py     d3il/agents/         multi_image_obs_      diffusion_models.py (EncDec)
-                        utils/scaler.py      encoder.py            act_vae.py (Transformer VAE)
-                                                                                  |
-                                                                                  v
-[MuJoCo Control]    <-- [EE Integration] <-- [Epsilon Scale]       <-- [Reverse p-Sampling Loop]
-IKControllers.py        aligning_sim.py      std + 1e-12           diffusion_policy.py (16 steps)
+```mermaid
+flowchart TD
+    subgraph D3IL["NATIVE D3IL BASELINE (d3il/ folder)"]
+        direction LR
+        A1["Dataset & Prep<br/><b>aligning_dataset.py</b>"] --> A2["D3IL Scaler<br/><b>d3il/agents/utils/scaler.py</b>"]
+        A2 --> A3["Obs Encoder<br/><b>multi_image_obs_encoder.py</b>"]
+        A3 --> A4["Transformer Diffusion Core<br/><b>diffusion_models.py (EncDec)<br/>act_vae.py (Transformer VAE)</b>"]
+        A4 --> A5["Reverse p-Sampling Loop<br/><b>diffusion_policy.py (16 steps)</b>"]
+        A5 --> A6["Epsilon Scale<br/><b>std + 1e-12</b>"]
+        A6 --> A7["EE Integration<br/><b>aligning_sim.py</b>"]
+        A7 --> A8["MuJoCo Control<br/><b>IKControllers.py</b>"]
+    end
 
+    subgraph Gen6["GEN6 VISUAL ENGINE (ddpm_encdec_vision/ folder)"]
+        direction LR
+        B1["Dataset & Prep<br/><b>aligning_dataset.py</b>"] --> B2["Gen6 Scaler<br/><b>ddpm_encdec_vision/utils/scaler.py</b>"]
+        B2 --> B3["Model Backbone<br/><b>visual_unet.py (1D Temporal U-Net)</b>"]
+        B3 --> B4["Visual Gaussian Diffusion<br/><b>visual_gaussian_diffusion.py (Stochastic DDPM Engine)</b>"]
+        B4 --> B5["Denoising Loop<br/><b>p_sample_loop (16 steps)</b>"]
+        B5 --> B6["Epsilon Safe std<br/><b>std_safe = std + 1e-12</b>"]
+        B6 --> B7["EE Integration<br/><b>eval_ddpm_encdec_vision.py</b>"]
+        B7 --> B8["MuJoCo Control<br/><b>IKControllers.py</b>"]
+    end
 
-==================================================================================================
-GEN6 VISUAL ENGINE (ddpm_encdec_vision/ folder)
-==================================================================================================
-[Dataset & Prep]    --> [Gen6 Scaler]    --> [Model Backbone]      --> [Visual Gaussian Diffusion]
-aligning_dataset.py     ddpm_encdec_         visual_unet.py        visual_gaussian_diffusion.py
-                        vision/utils/        (1D Temporal U-Net)   (Stochastic DDPM Engine)
-                        scaler.py                                                 |
-                                                                                  v
-[MuJoCo Control]    <-- [EE Integration] <-- [Epsilon Safe std]    <-- [Denoising Loop]
-IKControllers.py        eval_ddpm_           std_safe = std + 1e-12  p_sample_loop (16 steps)
-                        encdec_vision.py
-==================================================================================================
+    style D3IL fill:#f9f9f9,stroke:#333,stroke-width:2px,color:#333
+    style Gen6 fill:#f5f7fa,stroke:#4a90e2,stroke-width:2px,color:#333
+    classDef d3il_node fill:#fff,stroke:#333,stroke-width:1px,color:#333;
+    classDef gen6_node fill:#fff,stroke:#4a90e2,stroke-width:1px,color:#333;
+    class A1,A2,A3,A4,A5,A6,A7,A8 d3il_node;
+    class B1,B2,B3,B4,B5,B6,B7,B8 gen6_node;
 ```
 
 ---
@@ -333,4 +338,129 @@ During inference inside [eval_ddpm_encdec_vision.py](file:///workspaces/FM-PCC/d
       self.action_counter = 0
       # ... query VisualUNet / solve trajectory ...
   ```
+
+---
+
+## 🌁 The Role of the Model Bridge (`d3il_visual_bridge.py`)
+
+A common architectural question is whether [d3il_visual_bridge.py](file:///workspaces/FM-PCC/ddpm_encdec_vision/models/d3il_visual_bridge.py) represents dead code. 
+
+### 🚫 Verification: It is NOT Dead Code!
+The file is an **active and critical entry point** within the Gen6 framework. It implements `VisualDiffusionBridge` (and similarly, `fm_encdec_vision/models/d3il_visual_bridge.py` for the Flow Matching suite) which acts as the outer container module loaded by the workspace configs.
+
+### 📐 Structural Hierarchy
+The workspace configs target `VisualDiffusionBridge` as the primary `'model'` entry point:
+* **Config Hook:** [aligning-d3il-visual.py](file:///workspaces/FM-PCC/config/aligning-d3il-visual.py#L57)
+  ```python
+  'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge'
+  ```
+The structural delegation flows as follows:
+```
+  ┌────────────────────────────────────────────────────────┐
+  │                 VisualDiffusionBridge                  │
+  │     ddpm_encdec_vision/models/d3il_visual_bridge.py    │
+  │   (Serves as the high-level PyTorch wrapper module)    │
+  └───────────────────────────┬────────────────────────────┘
+                              │ instantiates & delegates to
+                              ▼
+  ┌────────────────────────────────────────────────────────┐
+  │                VisualGaussianDiffusion                 │
+  │  ddpm_encdec_vision/models/visual_gaussian_diffusion.py│
+  │      (Stochastic DDPM Noise/Loss Scheduling Engine)    │
+  └───────────────────────────┬────────────────────────────┘
+                              │ instantiates & delegates to
+                              ▼
+  ┌────────────────────────────────────────────────────────┐
+  │                       VisualUNet                       │
+  │        ddpm_encdec_vision/models/visual_unet.py        │
+  │        (1D Temporal Conv U-Net Backbone Model)         │
+  └────────────────────────────────────────────────────────┘
+```
+
+### ⚙️ Operational Responsibilities
+During both training (`train_ddpm_encdec_vision.py`) and online rollout evaluation (`eval_ddpm_encdec_vision.py`), `VisualDiffusionBridge` coordinates:
+1. **Model Parameter Initialization:** Automatically constructs downstream diffusion schedulers and temporal convolution networks.
+2. **Forward Predictions:** Receives multi-modal observations, unnormalizes action vectors using proper safe standards, and handles formatting requirements before sending inputs to the U-Net.
+
+---
+
+## 🔬 Deep Architectural Insight: Why Do We Have Two Different Paradigms?
+
+A deep-dive investigation into this repository reveals a fascinating structural clash between two completely different reinforcement learning/imitation learning paradigms: the **Transformer VAE (ACT) Paradigm** and the **1D Temporal U-Net (Diffusion Policy) Paradigm**.
+
+### 1. The Legacy Origin of Split Parameters (`obs_seq_len` and `action_seq_size`)
+
+These parameters were **originally designed for the Transformer VAE (ACT) architecture**, not the U-Net. 
+
+* **Transformer VAE (ACT):** Requires a strict split during training because the Transformer Encoder and Decoder expect separate, distinct token sequences for history (context) and future (actions).
+* **1D Temporal U-Net:** Treats the entire window as a single continuous spatio-temporal grid ($H$). It has no native concept of "splitting" history and future tokens inside its convolutional layers.
+
+> [!NOTE]
+> The split configuration is a **pure Transformer-VAE artifact** carried over into the U-Net codebase solely via the bridge adapter to maintain data-loading parity.
+
+### 2. Why U-Net is Forced to Inherit the Split Parameters in this Repository
+
+| Axis | Rationale & Impact |
+|:---|:---|
+| **Dataset Compatibility** | The expert demonstration files (`train_files.pkl`) are pre-processed specifically for the D3IL benchmarks. The dataset loaders ([aligning_dataset.py](file:///workspaces/FM-PCC/d3il/environments/dataset/aligning_dataset.py)) are hardcoded to load sequences of a fixed `window_size = 8`. Without the bridge, you would have to completely re-process and rewrite the dataset loaders. |
+| **Scientific Parity** | To ensure a scientifically valid comparison, both models must be trained and evaluated under *identical information capacities* (e.g., matching historical observation context and target future prediction horizons). |
+| **Evaluation Loop** | The low-level simulator ([aligning_sim.py](file:///workspaces/FM-PCC/d3il/simulation/aligning_sim.py)) and receding horizon control wrappers rely on `action_seq_size` to manage temporal block execution. |
+
+### 3. Contrast with the Avoiding Task (Pure Trajectory Paradigm)
+
+In contrast, the **Avoiding** task ([avoiding-d3il.py](file:///workspaces/FM-PCC/config/avoiding-d3il.py)) is configured as a standard **receding-horizon control** framework:
+
+* **Simple Horizon:** Uses standard `SequenceDataset` and only requires a single parameter: **`horizon = 8`**. There is no VAE-style split.
+* **Closed-Loop Planning:** During rollout, the policy runs denoising over the full $8$ steps, executes **only the very first step ($a_0$)**, and replans immediately on the next timestep.
+
+This comparison highlights why the Aligning task's double parameters are an adapter requirement for baseline comparison, while standard U-Nets operate on a clean, single-horizon trajectory.
+
+---
+
+## 🧮 Mathematical Configuration Rules (Temporal Parameter Relationships)
+
+The relationship between **Horizon (`horizon` / `H`)**, **Observation Sequence Length (`obs_seq_len`)**, and **Action Sequence Size (`action_seq_size`)** is strictly coupled. These parameters cannot be set randomly.
+
+### 1. The Dataset Overlap Equation
+Because the observation context and the predicted action plan overlap at the "current" frame (shared index `obs_seq_len - 1`), the sequence length loaded by the dataloader must satisfy:
+
+$$\text{window\_size} = \text{obs\_seq\_len} + \text{action\_seq\_size} - 1$$
+
+In the D3IL benchmark settings:
+* `obs_seq_len = 5` (History window capacity)
+* `action_seq_size = 4` (Future action trajectory)
+* $\Rightarrow \text{window\_size} = 5 + 4 - 1 = \mathbf{8}$
+
+> [!IMPORTANT]
+> The configuration parameter `horizon` inside the Gen6 config files **MUST** be set exactly equal to `window_size` (8). If mismatched, the training loss function will crash on spatial-temporal dimension checks.
+
+### 2. The U-Net Downsampling Grid Constraint
+The 1D Temporal CNN U-Net backbone ([visual_unet.py](file:///workspaces/FM-PCC/ddpm_encdec_vision/models/visual_unet.py)) consists of **3 downsampling / upsampling stages**, which scale the sequence sequence timeline by a factor of $2^3 = 8$.
+* The sequence size processed by the U-Net **must be a multiple of 8**.
+* For horizons that are not multiples of 8, the U-Net automatically applies temporal padding and crops the sequence back during the forward pass:
+  ```python
+  self.padded_horizon = ((self.target_horizon + 7) // 8) * 8
+  ```
+
+---
+
+## 🗃️ Deep Discovery: The Custom D3IL Log Scraper
+
+A key architectural finding is that the DPCC developers did not have a ready-made D4RL dataset for the Avoiding task. Instead, they wrote a **custom scraper/parser adapter** directly inside the diffuser dataset loader.
+
+### 🔍 Code Analysis: [diffuser/datasets/d4rl.py](file:///workspaces/FM-PCC/diffuser/datasets/d4rl.py#L136-L160)
+When loading the `avoiding-d3il` task, the loader does not load a clean, pre-bundled HDF5 database. Instead, it iterates over raw D3IL simulator `.pkl` log dumps:
+1. **Raw Log Extraction:** Scrapes raw dictionary fields (`robot['des_c_pos']` and `robot['c_pos']`).
+2. **Proprioceptive Concatenation:** Merges targets and current poses into a 4D coordinate observation space:
+   ```python
+   input_state = np.concatenate((robot_des_pos, robot_c_pos), axis=-1)
+   ```
+3. **Delta Velocity Formulation:** Calculates the delta displacements on the fly to yield physical joint action velocities:
+   ```python
+   vel_state = robot_des_pos[1:] - robot_des_pos[:-1]
+   ```
+4. **Adapter Interface:** Wraps the scraped steps into the standard `observations`, `actions`, `rewards`, and `terminals` sequence dictionary, allowing standard `SequenceDataset` to load them cleanly.
+
+
+
 
