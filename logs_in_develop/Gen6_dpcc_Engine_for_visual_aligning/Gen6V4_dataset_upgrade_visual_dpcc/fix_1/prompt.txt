@@ -1,0 +1,20 @@
+no BS! we fukced. in that table any mistmath is a error.  give me a plan md under path "logs_in_develop/Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/fix_1" record how will you fix all misamtch. refer tbale "Feature / Dimension	State-Only DPCC (avoiding-d3il)	Visual-Aligning DPCC (visual_aligning_dpcc)
+Observation Channels	4D joint vector: [des_x, des_y, x, y] (Desired target pos + robot pos)	3D proprioception: [x, y, z] (Robot end-effector Cartesian coordinates)
+Camera Streams	None (Blind state-based control)	Dual RGB: Agentview camera [3, 96, 96] & Wrist camera [3, 96, 96]
+Action Dimensions	2D Cartesian delta actions: [dx, dy]	3D Cartesian delta actions: [dx, dy, dz]
+Trajectory Grid	Continuous 6D space: Action (2D) + Obs (4D) = 6D	Continuous 6D space: Action (3D) + Obs (3D) = 6D
+Temporal Horizon (
+H
+H)	horizon = 8 (Plans 8 steps forward)	horizon = 8 (Plans 8 steps forward)
+Denoising Steps (
+K
+K)	n_diffusion_steps = 20	n_diffusion_steps = 100 (Increased for visual embedding resolution)
+Boundary Snap (
+t
+=
+0
+t=0)	{0: [des_x, des_y, x, y]} (Snaps to state)	{0: [x, y, z]} (Snaps proprioception) + Image-guided conditioning
+Visual Encoder	None	ResNet-based MultiImageObsEncoder producing 128D spatial-temporal latents
+Safety Projection Engine	SLSQP convex optimization solver maps constraints	Identical SLSQP QP solver maps physical workspace, floor, and table constraints
+Planning Paradigm	Closed-loop Receding Horizon Control (RHC)	Closed-loop Receding Horizon Control (RHC)
+"

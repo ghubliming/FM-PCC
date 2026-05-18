@@ -58,8 +58,8 @@ class VisualUNet(nn.Module):
         self.padded_horizon = ((self.target_horizon + 7) // 8) * 8
         # ----------------------------------------
 
-        # Dynamic transition dimension supporting both visual proprioception (3D) and non-visual state (20D)
-        obs_dim = getattr(config, 'obs_dim', 3 if self.if_vision else 20)
+        # Match the legacy visual contract: vision uses 3D robot pose, non-vision can use config obs_dim.
+        obs_dim = 3 if self.if_vision else getattr(config, 'obs_dim', 20)
         transition_dim = config.action_dim + obs_dim
 
         self.backbone = backbone_class(

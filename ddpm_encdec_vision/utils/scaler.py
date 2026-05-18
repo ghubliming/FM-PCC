@@ -31,9 +31,9 @@ class Scaler:
         self.y_mean = torch.from_numpy(y_data.mean(0)).float().to(device)
         self.y_std = torch.from_numpy(y_data.std(0)).float().to(device)
         
-        # Define safe standard deviations using D3IL-native epsilon scaling
-        self.x_std_safe = self.x_std + 1e-12
-        self.y_std_safe = self.y_std + 1e-12
+        # Define safe standard deviations using the legacy stability floor
+        self.x_std_safe = torch.clamp(self.x_std, min=1e-2)
+        self.y_std_safe = torch.clamp(self.y_std, min=1e-2)
         
         # Bounds for clipping (Raw)
         self.y_min = torch.from_numpy(y_data.min(0)).float().to(device)
@@ -61,6 +61,8 @@ class Scaler:
         log.info(f'[ Scaler ] y_mean: {self.y_mean.cpu().numpy()}')
         log.info(f'[ Scaler ] x_std: {self.x_std.cpu().numpy()}')
         log.info(f'[ Scaler ] y_std: {self.y_std.cpu().numpy()}')
+        log.info(f'[ Scaler ] x_std_safe min: {self.x_std_safe.min().item():.4f}')
+        log.info(f'[ Scaler ] y_std_safe min: {self.y_std_safe.min().item():.4f}')
 
     @torch.no_grad()
     def scale_input(self, x):
