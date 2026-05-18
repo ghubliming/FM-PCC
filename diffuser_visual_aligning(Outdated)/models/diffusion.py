@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-import diffuser_visual_aligning.utils as utils
+import diffuser.utils as utils
 from .helpers import (
     cosine_beta_schedule,
     extract,
