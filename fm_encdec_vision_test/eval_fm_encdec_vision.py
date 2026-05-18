@@ -96,7 +96,7 @@ def setup_gen6_projector(args, config, scaler, variant):
     adapter_normalizer = VisualNormalizerDict(scaler)
     
     # 5. Handle time scaling (dt scaling) and gradient/post-processing thresholds
-    dt = config.get('dt', 0.1)  # D3IL default dt
+    dt = config.get('dt', 1.0)  # Correct base integration step (dt = 1.0) since actions represent spatial delta displacements
     if 'dt0p25' in variant:
         dt = 0.25 * dt
     elif 'dt0p5' in variant:

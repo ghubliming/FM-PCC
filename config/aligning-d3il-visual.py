@@ -203,12 +203,9 @@ base = {
         # ======================================================================================
         # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
         # ======================================================================================
-        'model': 'ddpm_encdec_vision.models.visual_unet.VisualUNet',
+        'model': 'diffuser_visual_aligning.models.visual_unet.VisualUNet',
         'action_dim': 3,
-        'obs_seq_len': 8,
-        'action_seq_size': 8,
         'horizon': 8,
-        'window_size': 8,
         'n_diffusion_steps': 100,
         'action_weight': 10,
         'loss_type': 'l2',
@@ -239,7 +236,6 @@ base = {
         # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
         # ======================================================================================
         'horizon': 8,
-        'window_size': 8,
         'n_diffusion_steps': 100,
         'max_episode_length': 1000,
         'max_path_length': 512,
@@ -254,7 +250,7 @@ base = {
         'logbase': logbase,
         'prefix': 'f:plans/visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
         'exp_name': watch(args_to_watch_dpcc_plan),
-        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,

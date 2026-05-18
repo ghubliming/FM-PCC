@@ -71,25 +71,24 @@ class AligningImgSequenceDataset(torch.utils.data.Dataset):
         super().__init__()
         self.horizon = horizon
         
-        # 1. Instantiate the pre-existing multi-modal visual dataset loader
+        # 1. Instantiate D3IL pre-existing multi-modal visual loader with corrected signature
         self.base_dataset = Aligning_Img_Dataset(
-            dataset_path=dataset_path,
-            obs_seq_len=horizon,
-            action_seq_size=horizon
+            data_directory=dataset_path,
+            obs_dim=3,
+            action_dim=3,
+            window_size=horizon
         )
         
-        # 2. Extract states, actions, and dual RGB image vectors
+        # 2. Extract states, actions, and camera frames
         self.observations = self.base_dataset.observations[:max_n_episodes]
         self.actions = self.base_dataset.actions[:max_n_episodes]
-        self.primary_images = self.base_dataset.primary_rgb[:max_n_episodes]
-        self.wrist_images = self.base_dataset.wrist_rgb[:max_n_episodes]
         
         self.n_episodes = len(self.observations)
         self.max_path_length = self.observations.shape[1]
         
-        # 3. Fit standard LimitsNormalizer to scale values to z-scores
-        self.obs_normalizer = LimitsNormalizer(self.observations.reshape(-1, 20))
-        self.act_normalizer = LimitsNormalizer(self.actions.reshape(-1, 2))
+        # 3. Fit standard LimitsNormalizer to scale proprioception & actions
+        self.obs_normalizer = LimitsNormalizer(self.observations.reshape(-1, 3))
+        self.act_normalizer = LimitsNormalizer(self.actions.reshape(-1, 3))
         
         # 4. Generate sliding indices
         self.indices = []
@@ -108,17 +107,18 @@ class AligningImgSequenceDataset(torch.utils.data.Dataset):
         obs_seq = self.obs_normalizer.normalize(self.observations[episode_idx, start:end])
         act_seq = self.act_normalizer.normalize(self.actions[episode_idx, start:end])
         
-        # Concatenate actions and observations: Shape (8, 22)
+        # Concatenate actions and observations: Shape (8, 6)
         trajectories = np.concatenate([act_seq, obs_seq], axis=-1)
         
         # Extract dual camera frames at the starting frame (t=0 condition)
-        primary_img = self.primary_images[episode_idx, start]
-        wrist_img = self.wrist_images[episode_idx, start]
+        # Directly extract the float tensors already pre-formatted by Aligning_Img_Dataset
+        primary_tensor = self.base_dataset.bp_cam_imgs[episode_idx][start]
+        wrist_tensor = self.base_dataset.inhand_cam_imgs[episode_idx][start]
         
         conditions = {
             0: obs_seq[0], # Anchor proprioceptive state boundary
-            'primary_img': torch.tensor(primary_img, dtype=torch.float32) / 255.0,
-            'wrist_img': torch.tensor(wrist_img, dtype=torch.float32) / 255.0
+            'primary_img': primary_tensor,
+            'wrist_img': wrist_tensor
         }
         
         return Batch(trajectories, conditions)
@@ -243,12 +243,10 @@ We will add a new visual DPCC key under the `base` dictionary:
 ```python
 base['visual_aligning_dpcc'] = {
     **base['ddpm_encdec_vision'],
-    'model': 'diffuser_visual_aligning.models.temporal.VisualTemporalUNet',
+    'model': 'diffuser_visual_aligning.models.visual_unet.VisualUNet',
     'diffusion': 'diffuser_visual_aligning.models.diffusion.GaussianDiffusion',
     'loader': 'diffuser_visual_aligning.datasets.sequence.AligningImgSequenceDataset',
     'horizon': 8,
-    'obs_seq_len': 8,      # Force parity: unified H=8 grid
-    'action_seq_size': 8,  # Force parity: unified H=8 grid
     'if_vision': True,
     'obs_dim': 20,
     'action_dim': 2,       # Cartesian control dimensions
