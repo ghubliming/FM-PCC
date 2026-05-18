@@ -291,3 +291,46 @@ $$x_t \gets \text{apply\_conditioning}(x_t, \text{scaled\_obs})$$
 * **Pros & Cons**:
   * *Pros*: Complete elimination of tabletop drift; highly coherent trajectories starting exactly at the robot's physical end-effector location.
   * *Cons*: CNN downsampling requires sequence horizons to be aligned to multiples of 8 (`Safe Horizon` padding).
+
+---
+
+## 🕒 Deep-Dive: Temporal Sequence Parameters (`obs_seq_len` & `action_seq_size`)
+
+Inside the model configuration [aligning-d3il-visual.py](file:///workspaces/FM-PCC/config/aligning-d3il-visual.py#L68-L69), the parameters `obs_seq_len` (default: 5) and `action_seq_size` (default: 4) play a critical role in framing the temporal trajectory representations during both training and evaluation rollouts.
+
+### 1. The Mathematical Binding (`window_size`)
+Both parameters are structurally locked to the total context `window_size` (default: 8) through the following temporal equation:
+$$\text{window\_size} = \text{obs\_seq\_len} + \text{action\_seq\_size} - 1$$
+For the default setup, this resolves to:
+$$8 = 5 + 4 - 1$$
+This overlapping boundary ensures that the last step of the observation history aligns precisely with the start of the predicted action trajectory.
+
+### 2. Usage during Training Loop (`training.py`)
+In the dataset processing phase inside [training.py](file:///workspaces/FM-PCC/ddpm_encdec_vision/utils/training.py#L141-L149), the full window sequence is split into observation history and action predictions:
+* **Observation Sequence Slicing:**
+  ```python
+  batch[2] = batch[2][:, :obs_seq_len, :] # Extracts frames 0 to 4 (length 5)
+  ```
+  This is passed as the conditioning context for the model.
+* **Action Sequence Slicing:**
+  ```python
+  batch[3] = batch[3][:, obs_seq_len-1:, :] # Extracts frames 4 to 7 (length 4)
+  ```
+  The loss calculations only evaluate action errors across this sliced action future chunk.
+
+### 3. Usage during Online Rollout Evaluation (`eval_ddpm_encdec_vision.py`)
+During inference inside [eval_ddpm_encdec_vision.py](file:///workspaces/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py#L151-L197):
+* **Observation Context Buffer:**
+  The agent uses a sliding `deque` buffer to gather visual/proprioceptive observations. Its maximum capacity is locked to `obs_seq_len`:
+  ```python
+  self.des_robot_pos_context = deque(maxlen=self.obs_seq_len) # Fixed size of 5
+  ```
+* **Receding Horizon Chunk Execution:**
+  The agent predicts actions in chunks. It executes actions open-loop for `action_seq_size` (4) timesteps. 
+  When the `action_counter` reaches `action_seq_size`, it queries the model for a fresh plan, resets the counter, and continues:
+  ```python
+  if self.action_counter == self.action_seq_size:
+      self.action_counter = 0
+      # ... query VisualUNet / solve trajectory ...
+  ```
+

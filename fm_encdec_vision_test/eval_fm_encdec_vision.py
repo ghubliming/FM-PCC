@@ -542,8 +542,21 @@ class VisualAgentWrapper:
 
 def generate_expert_reference(save_path, n_rollouts=3):
     """Generates ground-truth expert videos from the dataset for reference."""
-    print(f"[ expert ] Generating {n_rollouts} reference videos from dataset...")
     expert_dir = os.path.join(save_path, 'expert_references')
+    
+    # Skip generation if files already exist to avoid redundant CPU/GPU/IK computations
+    all_exist = True
+    for idx in range(n_rollouts):
+        mp4_path = os.path.join(expert_dir, f"expert_rollout_{idx}.mp4")
+        gif_path = os.path.join(expert_dir, f"expert_rollout_{idx}.gif")
+        if not (os.path.exists(mp4_path) or os.path.exists(gif_path)):
+            all_exist = False
+            break
+    if all_exist:
+        print(f"[ expert ] Reference videos already exist in {expert_dir}. Skipping generation.")
+        return
+
+    print(f"[ expert ] Generating {n_rollouts} reference videos from dataset...")
     os.makedirs(expert_dir, exist_ok=True)
     
     from agents.utils.sim_path import sim_framework_path

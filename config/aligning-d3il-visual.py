@@ -229,17 +229,9 @@ base = {
         'window_size': 8,           # Context window size. [Active for VAE Transformer / Ignored by U-Net] (D3IL VAE default: 8)
         
         # --- Continuous Time Flow Matching (FMv3ODE) Parameters ---
+        # Note: ODE integration steps and solver options are planning-only parameters and are omitted here.
         'time_beta_alpha_v3': 1.5,  # Alpha parameter for continuous-time Beta distribution sampling (Gen7 default: 1.5)
         'time_beta_beta_v3': 1.0,   # Beta parameter for continuous-time Beta distribution sampling (Gen7 default: 1.0)
-        'flow_steps_v3': 16,        # Number of integration steps during continuous path generation (Gen7 default: 16)
-        'ode_inference_steps_v3': 16, # Compatibility alias matching flow_steps_v3
-        # Available backend options: legacy_euler, torchdiffeq.
-        'ode_solver_backend_v3': 'legacy_euler',
-        # Available method options (torchdiffeq backend):
-        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
-        # euler, midpoint, heun2, heun3, rk4,
-        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
-        'ode_solver_method_v3': 'euler',
         
         # --- Denoising & Optimization parameters ---
         'n_diffusion_steps': 16,    # Number of legacy timesteps. Must match exactly in training and eval. (D3IL baseline default: 16)
@@ -371,3 +363,18 @@ base = {
         'suffix': '0',
     },
 }
+
+# ─── Gen6 State-Only Non-Visual Configuration Appends ────────────────────────
+base['ddpm_encdec_vision_nonvisual'] = {
+    **base['ddpm_encdec_vision'],
+    'action_dim': 2,
+    'obs_dim': 20,
+    'if_vision': False,
+    'prefix': 'ddpm_encdec_vision_nonvisual/',
+}
+
+base['plan_ddpm_encdec_vision_nonvisual'] = {
+    **base['plan_ddpm_encdec_vision'],
+    'prefix': 'f:plans/ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
+    'diffusion_loadpath': 'f:ddpm_encdec_vision_nonvisual/H{horizon}',
+}
