@@ -1,255 +1,185 @@
 from collections import namedtuple
+import glob
+import os
 import numpy as np
 import torch
+from tqdm import tqdm
+import cv2
 
-from .d4rl import sequence_dataset
-from .normalization import DatasetNormalizer
-from .buffer import ReplayBuffer
-from .preprocessing import get_preprocess_fn
+from .normalization import LimitsNormalizer
 
-RewardBatch = namedtuple('RewardBatch', 'trajectories conditions returns')
 Batch = namedtuple('Batch', 'trajectories conditions')
-ValueBatch = namedtuple('ValueBatch', 'trajectories conditions values')
 
 
-class SequenceDataset(torch.utils.data.Dataset):
+# ─── 9D Visual-DPCC Dataset ───────────────────────────────────────────────────
 
-    def __init__(self, env='hopper-medium-replay', horizon=64, normalizer='LimitsNormalizer', 
-                 max_path_length=100, max_n_episodes=100000, termination_penalty=0, preprocess_fns=[],
-                 use_padding=False, discount=0.99, returns_scale=100, include_returns=False):
-        self.preprocess_fn = get_preprocess_fn(preprocess_fns, env)
-        self.horizon = horizon
-        self.max_path_length = max_path_length
-        self.use_padding = use_padding
+class ParityAligningDataset(torch.utils.data.Dataset):
+    """
+    9D trajectory dataset for Visual-DPCC (Gen6V4).
 
-        # Rewards
-        self.returns_scale = returns_scale
-        self.discount = discount
-        self.discounts = self.discount ** np.arange(self.max_path_length)[:, None]
-        self.include_returns = include_returns
+    Trajectory layout:
+        x[t] = [ dx   dy   dz | des_x des_y des_z | x    y    z  ]
+                  act(3D)       des_c_pos(3D)         c_pos(3D)
+                 indices 0-2   indices 3-5            indices 6-8
 
-        itr = sequence_dataset(env, self.preprocess_fn)
+    Why 9D: DPCC projector enforces Euler dynamics on the *actual* robot position
+    (c_pos, indices 6-8).  des_c_pos alone (6D) would project on command targets
+    instead of real end-effector positions, violating the DPCC physical contract.
 
-        fields = ReplayBuffer(max_n_episodes, max_path_length, termination_penalty)
-        for i, episode in enumerate(itr):
-            if i >= max_n_episodes:
-                break
-            fields.add_path(episode)
-            # Don't pad with zeros, instead use the last observation
-            if use_padding:
-                path_length = fields['path_lengths'][i]
-                fields['observations'][i, path_length:] = fields['observations'][i, path_length-1]
-                fields['actions'][i, path_length:] = fields['actions'][i, path_length-1]
+    Data source:
+        - State (des_c_pos, c_pos, actions, masks): Aligning_Dataset (20D obs).
+          Aligning_Dataset loads ALL episodes; Aligning_Img_Dataset only loads
+          the first 3 (hardcoded [:3] stub) and is therefore unusable for training.
+        - Images: loaded directly from the image directory, same as Aligning_Img_Dataset
+          but without the [:3] cap.
 
-        fields.finalize()
+    Aligning_Dataset.observations layout (20D, per timestep t in [0, T-2]):
+        obs[..., 0:3]  = des_c_pos   (commanded EE position)
+        obs[..., 3:6]  = c_pos       (actual EE position)
+        obs[..., 6:9]  = push_box_pos
+        obs[..., 9:13] = push_box_quat
+        obs[..., 13:16]= target_box_pos
+        obs[..., 16:20]= target_box_quat
 
-        self.normalizer = DatasetNormalizer(fields, normalizer, path_lengths=fields['path_lengths'])
-        self.indices = self.make_indices(fields.path_lengths, horizon)
+    Returns:
+        Batch(trajectories: np.float32 (H,9),
+              conditions:   {0: np.float32 (6,),      <- 6D obs anchor for apply_conditioning
+                             'primary_img': Tensor(C,H,W),
+                             'wrist_img':   Tensor(C,H,W)})
+    """
 
-        self.observation_dim = fields.observations.shape[-1]
-        self.action_dim = fields.actions.shape[-1]
-        self.fields = fields
-        self.n_episodes = fields.n_episodes
-        self.path_lengths = fields.path_lengths
-        self.get_goal_dim()
-        self.pad_goals()
-        self.normalize()
+    ACTION_DIM = 3
+    OBS_DIM    = 6   # [des_c_pos(3), c_pos(3)]
+    TRAJ_DIM   = 9   # ACTION_DIM + OBS_DIM
 
-        print(fields)
-        # shapes = {key: val.shape for key, val in self.fields.items()}
-        # print(f'[ datasets/mujoco ] Dataset fields: {shapes}')
-
-    def normalize(self, keys=['observations', 'actions']):
-        '''
-            normalize fields that will be predicted by the diffusion model
-        '''
-        for key in keys:
-            array = self.fields[key].reshape(self.n_episodes*self.max_path_length, -1)
-            normed = self.normalizer(array, key)
-            self.fields[f'normed_{key}'] = normed.reshape(self.n_episodes, self.max_path_length, -1)
-
-    def make_indices(self, path_lengths, horizon):
-        '''
-            makes indices for sampling from dataset;
-            each index maps to a datapoint
-        '''
-        indices = []
-        for i, path_length in enumerate(path_lengths):
-            max_start = min(path_length - 1, self.max_path_length - horizon)
-            if not self.use_padding:
-                max_start = min(max_start, path_length - horizon)
-            for start in range(max_start):
-                end = start + horizon
-                indices.append((i, start, end))
-        indices = np.array(indices)
-        return indices
-
-    def get_conditions(self, observations):
-        '''
-            condition on current observation for planning
-        '''
-        # return {0: observations[0], 'goal': observations}
-        return {0: observations[0]}
-        # return {}
-    
-    def get_goal_dim(self):
-        '''
-            Get the number of dimensions in the observations that are constant across the entire plan
-        '''
-        idx = np.argmax(self.fields.path_lengths > 1)
-
-        # self.goal_dim = (self.fields.observations[idx, 0] == self.fields.observations[idx, 1]).sum()
-        self.goal_dim = (self.fields.observations[idx].std(axis=0) == 0).sum()
-
-    def pad_goals(self):
-        '''
-            Pad goals to be the same in the padded interval as during the episode
-        '''
-        for i in range(self.n_episodes):
-            self.fields.observations[i, self.path_lengths[i]:, -self.goal_dim:] = self.fields.observations[i, self.path_lengths[i]-1, -self.goal_dim:]
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, idx, eps=1e-4):
-        path_ind, start, end = self.indices[idx]
-
-        # if self.fields.path_lengths[path_ind] < end:
-        #     print(f'Warning: path length {self.fields.path_lengths[path_ind]} is less than horizon {end}')
-
-        observations = self.fields.normed_observations[path_ind, start:end]
-        actions = self.fields.normed_actions[path_ind, start:end]
-
-        trajectories = np.concatenate([actions, observations], axis=-1)
-        conditions = self.get_conditions(observations)
-
-        if self.include_returns:
-            rewards = self.fields.rewards[path_ind, start:]
-            # rewards = self.fields.rewards[path_ind, start:end]
-            discounts = self.discounts[:len(rewards)]
-            returns = (discounts * rewards).sum()
-            returns = np.array([returns/self.returns_scale], dtype=np.float32)      # Maybe better self.returns_scale = self.discounts.sum()?
-            batch = RewardBatch(trajectories, conditions, returns)
-            # batch = Batch(trajectories, conditions)
-        else:
-            batch = Batch(trajectories, conditions)
-        return batch
-
-
-class GoalDataset(SequenceDataset):
-
-    def get_conditions(self, observations):
-        '''
-            condition on both the current observation and the last observation in the plan
-        '''
-        return {
-            0: observations[0],
-            self.horizon - 1: observations[-1],
-        }
-
-
-class ValueDataset(SequenceDataset):
-    '''
-        adds a value field to the datapoints for training the value function
-    '''
-
-    def __init__(self, *args, discount=0.99, normed=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.discount = discount
-        self.discounts = self.discount ** np.arange(self.max_path_length)[:,None]
-        self.normed = False
-        if normed:
-            self.vmin, self.vmax = self._get_bounds()
-            self.normed = True
-
-    def _get_bounds(self):
-        # print('[ datasets/sequence ] Getting value dataset bounds...', end=' ', flush=True)
-        vmin = np.inf
-        vmax = -np.inf
-        for i in range(len(self.indices)):
-            value = self.__getitem__(i).values.item()
-            vmin = min(value, vmin)
-            vmax = max(value, vmax)
-        # print('✓')
-        return vmin, vmax
-
-    def normalize_value(self, value):
-        ## [0, 1]
-        normed = (value - self.vmin) / (self.vmax - self.vmin)
-        ## [-1, 1]
-        normed = normed * 2 - 1
-        return normed
-
-    def __getitem__(self, idx):
-        batch = super().__getitem__(idx)
-        path_ind, start, end = self.indices[idx]
-        rewards = self.fields['rewards'][path_ind, start:]
-        discounts = self.discounts[:len(rewards)]
-        value = (discounts * rewards).sum()
-        if self.normed:
-            value = self.normalize_value(value)
-        value = np.array([value], dtype=np.float32)
-        value_batch = ValueBatch(*batch, value)
-        return value_batch
-
-# ─── Multi-Modal Visual sequence dataset loader for DPCC ──────────────────────────
-from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
-from diffuser.datasets.normalization import LimitsNormalizer
-
-class AligningImgSequenceDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset_path, horizon=8, normalizer='LimitsNormalizer', max_n_episodes=1000):
+    def __init__(self, dataset_path, horizon=8, max_n_episodes=1000):
         super().__init__()
         self.horizon = horizon
-        
-        # 1. Instantiate D3IL pre-existing multi-modal visual loader with corrected signature
-        self.base_dataset = Aligning_Img_Dataset(
+
+        # ── 1. Load state data via Aligning_Dataset (loads all episodes) ──────
+        # Aligning_Dataset.observations is (N, max_len_data, 20).
+        # First 6 dims: [des_c_pos(3) | c_pos(3)] — exactly our 6D obs.
+        # Actions: velocity = des_c_pos[t+1] - des_c_pos[t], shape (N, max_len_data, 3).
+        from d3il.environments.dataset.aligning_dataset import Aligning_Dataset
+
+        base = Aligning_Dataset(
             data_directory=dataset_path,
-            obs_dim=3,
-            action_dim=3,
-            window_size=horizon
+            obs_dim=20,        # full 20D obs: [des_c_pos(3)|c_pos(3)|box(14)]
+            action_dim=3,      # velocity = des_c_pos[t+1] - des_c_pos[t]
+            window_size=1,     # raw episode storage; slicing done here
+            device='cpu',
         )
-        
-        # 2. Extract states, actions, and camera frames
-        self.observations = self.base_dataset.observations[:max_n_episodes]
-        self.actions = self.base_dataset.actions[:max_n_episodes]
-        
-        self.n_episodes = len(self.observations)
-        self.max_path_length = self.observations.shape[1]
-        
-        # 3. Fit standard LimitsNormalizer to scale proprioception & actions
-        self.obs_normalizer = LimitsNormalizer(self.observations.reshape(-1, 3))
-        self.act_normalizer = LimitsNormalizer(self.actions.reshape(-1, 3))
-        
-        # 4. Generate sliding indices
-        self.indices = []
-        for i in range(self.n_episodes):
-            for start in range(self.max_path_length - self.horizon):
-                self.indices.append((i, start, start + self.horizon))
-        self.indices = np.array(self.indices)
+
+        n_eps  = min(len(base.observations), max_n_episodes)
+        max_len = base.observations.shape[1]  # max_len_data (padded episode length)
+
+        obs_full_np = base.observations[:n_eps].cpu().numpy()   # (N, T, 20)
+        obs_6d_np   = obs_full_np[..., :6]                      # (N, T, 6) [des+c_pos]
+        actions_np  = base.actions[:n_eps].cpu().numpy()        # (N, T, 3)
+        masks_np    = base.masks[:n_eps].cpu().numpy()          # (N, T)
+
+        # ── 2. Fit LimitsNormalizer on valid (non-padded) timesteps only ──────
+        # Fitting on padded zeros would collapse per-dim min to 0 and distort ±1 range.
+        valid_mask = masks_np > 0                                           # (N,T) bool
+        valid_obs  = obs_6d_np[valid_mask].reshape(-1, self.OBS_DIM)        # (M, 6)
+        valid_act  = actions_np[valid_mask].reshape(-1, self.ACTION_DIM)    # (M, 3)
+
+        self.obs_normalizer = LimitsNormalizer(valid_obs)
+        self.act_normalizer = LimitsNormalizer(valid_act)
+
+        # ── 3. Store raw state data ───────────────────────────────────────────
+        self._obs_6d   = obs_6d_np    # (N, T, 6)
+        self._actions  = actions_np   # (N, T, 3)
+        self._masks    = masks_np     # (N, T)
+        self.n_episodes = n_eps
+        self.max_path_length = max_len
+
+        # ── 4. Load images directly (avoids Aligning_Img_Dataset[:3] stub) ───
+        # Aligning_Img_Dataset hardcodes [:3] in its episode loop — training on
+        # only 3 episodes. We replicate its per-image loading over all n_eps files.
+        from agents.utils.sim_path import sim_framework_path
+
+        state_files = np.load(sim_framework_path(dataset_path), allow_pickle=True)
+        data_dir    = sim_framework_path("environments/dataset/data/aligning/all_data")
+
+        self.bp_cam_imgs     = []   # list of (T_img, C, H, W) tensors
+        self.inhand_cam_imgs = []
+
+        for file in tqdm(state_files[:n_eps], desc='Loading images'):
+            file_name = os.path.basename(file).split('.')[0]
+
+            bp_imgs_tensor    = self._load_images(data_dir, 'bp-cam',     file_name)
+            inhand_imgs_tensor = self._load_images(data_dir, 'inhand-cam', file_name)
+
+            self.bp_cam_imgs.append(bp_imgs_tensor)
+            self.inhand_cam_imgs.append(inhand_imgs_tensor)
+
+        # ── 5. Build sliding window indices ──────────────────────────────────
+        # Only windows fully within the valid (unpadded) episode range,
+        # and within the image count for that episode.
+        self.indices = self._make_indices()
+        print(f'[ ParityAligningDataset ] {n_eps} episodes, {len(self.indices)} windows '
+              f'(horizon={horizon}, traj_dim={self.TRAJ_DIM})')
+
+    # ── dataset protocol ──────────────────────────────────────────────────────
 
     def __len__(self):
         return len(self.indices)
 
     def __getitem__(self, idx):
-        episode_idx, start, end = self.indices[idx]
-        
-        # Normalize actions & observations individually
-        obs_seq = self.obs_normalizer.normalize(self.observations[episode_idx, start:end])
-        act_seq = self.act_normalizer.normalize(self.actions[episode_idx, start:end])
-        
-        # Concatenate actions and observations: Shape (8, 6)
-        trajectories = np.concatenate([act_seq, obs_seq], axis=-1)
-        
-        # Extract dual camera frames at the starting frame (t=0 condition)
-        # Directly extract the float tensors already pre-formatted by Aligning_Img_Dataset
-        primary_tensor = self.base_dataset.bp_cam_imgs[episode_idx][start]
-        wrist_tensor = self.base_dataset.inhand_cam_imgs[episode_idx][start]
-        
+        ep, start, end = self.indices[idx]
+
+        obs_raw = self._obs_6d[ep, start:end]    # (H, 6) float32
+        act_raw = self._actions[ep, start:end]   # (H, 3) float32
+
+        obs_norm = self.obs_normalizer.normalize(obs_raw).astype(np.float32)  # (H, 6)
+        act_norm = self.act_normalizer.normalize(act_raw).astype(np.float32)  # (H, 3)
+
+        # [act(3) | obs(6)] → (H, 9)
+        trajectories = np.concatenate([act_norm, obs_norm], axis=-1)
+
+        # conditions:
+        #   0             → 6D obs anchor at t=0 for apply_conditioning snap
+        #   'primary_img' → agentview camera frame at timestep `start`
+        #   'wrist_img'   → wrist camera frame at timestep `start`
         conditions = {
-            0: obs_seq[0], # Anchor proprioceptive state boundary
-            'primary_img': primary_tensor,
-            'wrist_img': wrist_tensor
+            0:             obs_norm[0],                       # (6,) float32 numpy
+            'primary_img': self.bp_cam_imgs[ep][start],      # (C, H, W) tensor
+            'wrist_img':   self.inhand_cam_imgs[ep][start],  # (C, H, W) tensor
         }
-        
         return Batch(trajectories, conditions)
 
+    # ── internal helpers ──────────────────────────────────────────────────────
+
+    def _make_indices(self):
+        """Build (ep, start, end) tuples where the full window is within valid data
+        and within the image tensor length for that episode."""
+        indices = []
+        for ep in range(self.n_episodes):
+            valid_len = int(self._masks[ep].sum())
+            n_imgs    = len(self.bp_cam_imgs[ep])
+            # window end must not exceed either state-valid length or image count
+            usable = min(valid_len, n_imgs)
+            for start in range(usable - self.horizon + 1):
+                indices.append((ep, start, start + self.horizon))
+        return np.array(indices, dtype=np.int64)
+
+    @staticmethod
+    def _load_images(data_dir, cam_name, file_name):
+        """
+        Load all frames for one camera / one episode, sorted by frame index.
+        Returns a CPU float32 tensor of shape (T_img, C, H, W) in [0,1].
+        """
+        pattern = os.path.join(data_dir, 'images', cam_name, file_name, '*')
+        paths   = sorted(
+            glob.glob(pattern),
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )
+        frames = []
+        for p in paths:
+            img = cv2.imread(p)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+            frames.append(torch.from_numpy(img.transpose(2, 0, 1)).float().unsqueeze(0))
+        if frames:
+            return torch.cat(frames, dim=0)   # (T_img, C, H, W)
+        return torch.zeros(0, 3, 96, 96)

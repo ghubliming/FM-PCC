@@ -201,25 +201,41 @@ base = {
 
     'visual_aligning_dpcc': {
         # ======================================================================================
-        # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
+        # 🔑 KEY MODEL BACKBONE PARAMETERS
+        # Gen6V4 — Visual-DPCC: 9D trajectory [act(3) | des_c_pos(3) | c_pos(3)]
+        # DPCC SLSQP projector enforces workspace bounds on c_pos (indices 6-8).
         # ======================================================================================
         'model': 'diffuser_visual_aligning.models.visual_unet.VisualUNet',
-        'action_dim': 3,
-        'horizon': 8,
+        'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'action_dim': 3,            # 3D velocity: [dx, dy, dz]
+        'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)] — MUST be 6, never 3 or 128
+        'if_vision': True,
+        'horizon': 8,               # Must be divisible by 8 for U-Net stride-2 downsampling (padded internally)
         'n_diffusion_steps': 100,
         'action_weight': 10,
         'loss_type': 'l2',
         'dim': 32,
         'dim_mults': (1, 2, 4, 8),
-        'hidden_dim': 256,
-        'if_vision': True,
-        'obs_dim': 3,
-        
-        # --- Regularization ---
         'condition_dropout': 0.1,
         'returns_condition': False,
-        
-        # --- Optimizer Hyperparameters ---
+
+        # ======================================================================================
+        # 📊 DATASET
+        # ParityAligningDataset loads 9D trajectories from raw pkl files.
+        # max_path_length is reused as max_n_episodes for ParityAligningDataset.
+        # ======================================================================================
+        'max_path_length': 1000,    # max_n_episodes passed to ParityAligningDataset
+
+        # ======================================================================================
+        # 💾 SERIALIZATION & EXPERIMENT LOGS
+        # ======================================================================================
+        'logbase': logbase,
+        'prefix': 'visual_aligning_dpcc/',
+        'exp_name': watch(args_to_watch_dpcc_train),
+
+        # ======================================================================================
+        # 🏋️‍♂️ TRAINING HYPERPARAMETERS
+        # ======================================================================================
         'batch_size': 32,
         'learning_rate': 2e-4,
         'ema_decay': 0.995,
@@ -240,6 +256,12 @@ base = {
         'max_episode_length': 1000,
         'max_path_length': 512,
         'action_weight': 10,
+        # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
+        # provides single-frame images per sample, so the model is trained on T_win=1.
+        # Using window_size>1 at eval would mean-pool multiple frames and shift the
+        # FiLM conditioning distribution away from what the model learned.
+        'window_size': 1,
+        'obs_seq_len': 1,
         'policy': 'sampling.Policy',
         'batch_size': 1,
         'preprocess_fns': [],

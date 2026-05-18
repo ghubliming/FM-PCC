@@ -1,20 +1,20 @@
-# Head-to-Head Architectural Comparison: Gen6 (D3IL Bridge) vs. The DPCC Way
+# Head-to-Head Architectural Comparison: Gen6 (D3IL Bridge) vs. The DPCC Way (3D Cartesian Edition)
 
-This document provides a concrete, code-level comparison between the two primary learning paradigms in this workspace: **Gen6 (D3IL Visual/Non-Visual Bridge)** and the **DPCC Way (Standard Trajectory Diffuser)**. It outlines the core architectural contrasts, control flows, dataset strategies, and exact code references.
+This document provides a concrete, code-level comparison between the two primary learning paradigms in this workspace: **Gen6 (D3IL Visual/Non-Visual Bridge)** and the **DPCC Way (Standard Trajectory Diffuser)**. It outlines the core architectural contrasts, control flows, dataset strategies, and exact code references, adapted for full 3D coordinates.
 
 ---
 
 ## 📊 Summary Matrix
 
 | Comparative Dimension | **Gen6 Paradigm (D3IL Bridge)** | **The DPCC Way (Standard Diffuser)** |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | **Primary Architecture** | Hybrid VAE-ACT Compatibility Adapter wrapping a 1D U-Net | Pure Receding-Horizon 1D Convolutional Trajectory Model |
 | **Temporal Parameterization** | Split: `obs_seq_len` (5), `action_seq_size` (4) | Unified: Single **`horizon = 8`** parameter |
 | **Temporal Relationship** | $\text{window\_size} = \text{obs\_seq\_len} + \text{action\_seq\_size} - 1 = \mathbf{8}$ | $H = \mathbf{8}$ (No subdivisions) |
 | **Inference Control Flow** | **Chunked Receding-Horizon:** Executes block of 4 actions before replanning | **Step-by-Step Receding-Horizon:** Executes $a_0$, replans every step |
 | **Evaluation Script** | [eval_ddpm_encdec_vision.py](file:///workspaces/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py) | [diffuser/sampling/policies.py](file:///workspaces/FM-PCC/diffuser/sampling/policies.py) |
 | **Safety Integration** | Post-hoc adapter execution (QP boundary limits applied on evaluation) | Continuous **DPCC projection** inside reverse denoising loop |
-| **Dataset Ingestion** | Pre-processed D3IL pickles (`train_files.pkl` via complex loaders) | Custom on-the-fly log parser scraping raw simulator logs |
+| **Dataset Ingestion** | Pre-processed D3IL pickles (`train_files.pkl` via complex loaders) | Custom in-memory sequence wrapper parsing raw log pickle lists |
 
 ---
 
@@ -25,8 +25,11 @@ The two paradigms diverge fundamentally in how they formulate the joint probabil
 ### 1. The DPCC Way: Joint Trajectory Diffusion & Step-by-Step Execution
 The DPCC framework treats trajectory generation as the estimation of a joint distribution over state-action spaces. 
 
-Let the trajectory vector $x \in \mathbb{R}^{H \times (d_a + d_o)}$ represent the sequence of joint actions and observations over the horizon $H$:
+In our **3D Cartesian Edition**, the trajectory vector $x \in \mathbb{R}^{H \times (d_a + d_o)} = \mathbb{R}^{8 \times 9}$ represents the sequence of joint actions and observations over the horizon $H=8$:
 $$x = \begin{bmatrix} (a_0, o_0), & (a_1, o_1), & \dots, & (a_{H-1}, o_{H-1}) \end{bmatrix}$$
+where:
+* $a_t = [dx_t, dy_t, dz_t] \in \mathbb{R}^3$ (3D delta commands)
+* $o_t = [des\_x_t, des\_y_t, des\_z_t, x_t, y_t, z_t] \in \mathbb{R}^6$ (6D stacked proprioception)
 
 The diffusion model learns to estimate the probability density of the joint trajectory $p_\theta(x)$ by optimizing the standard variational lower bound (ELBO) over forward-noised trajectories $x_t$:
 
@@ -42,10 +45,10 @@ During rollout, the DPCC policy generates the plan over the entire `horizon`, bu
         
         else:
             ## 1. Extract action trajectory [ batch_size x horizon x action_dim ]
-            actions = trajectories[:, :, :self.action_dim]
+            actions = trajectories[:, :, :self.action_dim] # self.action_dim = 3
             actions = self.normalizer.unnormalize(actions, 'actions')
 
-            ## 2. Mathematically extract ONLY the first action step (index 0)
+            ## 2. Mathematically extract ONLY the first action step (index 0, which is 3D XYZ)
             action = actions[which_trajectory, 0]
 
         trajectories = Trajectories(actions, observations)
@@ -75,13 +78,13 @@ During online rollouts, Gen6 caches the predicted action plan and executes it ov
     def step(self, obs_state, cond):
         # ...
         
-        # 1. Check if the active action chunk (size = action_seq_size) has been fully executed
+        # 1. Check if the active action chunk (size = action_seq_size = 4) has been fully executed
         if self.action_counter == self.action_seq_size:
             # Plan! Call inverse diffusion model to get action trajectories
             trajectory, infos = self.model(cond, projector=self.projector)
             
             # Slice and normalize generated actions
-            action_trajectory = trajectory[:, :, :self.action_dim]
+            action_trajectory = trajectory[:, :, :self.action_dim] # action_dim = 3
             action_trajectory = self.scaler.inverse_scale_output(action_trajectory)
 
             # Store the action plan block (chunk size = 4)
@@ -102,22 +105,22 @@ During online rollouts, Gen6 caches the predicted action plan and executes it ov
 The structural execution loops in the simulator highlight the difference in execution frequency and closed-loop responsiveness:
 
 ### 1. The DPCC Step-by-Step Execution Loop
-Operates at high closed-loop frequency, replanning on every single tick:
+Operates at high closed-loop frequency, replanning on every single tick in full 3D:
 
 ```
-[Get Simulator State s_t]
+[Get Simulator Poses des_pos, c_pos (3D)]
          │
          ▼
-[Format Joint Trajectory x]
+[Format 6D State Vector [des_pos, c_pos]]
          │
          ▼
-[Denoise Horizon H=8] ◄───[Apply DPCC QP Projector on intermediate steps]
-         │ (Code: diffuser/sampling/policies.py)
+[Denoise Horizon H=8 (9D)] ◄───[Apply 3D SLSQP QP Projector on intermediate steps]
+         │ (Code: diffuser_visual_aligning/sampling/policies.py)
          ▼
-[Extract only first action a_0]
+[Extract only first 3D action a_0]
          │ (Code: action = actions[which_trajectory, 0])
          ▼
-[Execute a_0 in MuJoCo]
+[Execute 3D a_0 directly in MuJoCo]
          │
          ▼
      [t = t + 1] ──► (Loop back to start)
@@ -153,5 +156,5 @@ Executes actions in open-loop blocks of size `action_seq_size = 4`, reducing com
 * **Gen6 Paradigm:** Computations are cut by $4\times$ because inference only runs every $4$ steps (guarding model calls behind `if self.action_counter == self.action_seq_size:` in `eval_ddpm_encdec_vision.py`). However, because it runs open-loop within the block, the robot cannot react to collision forces or dynamic obstacles until the execution block finishes.
 
 ### 2. Dataset Scrapers vs. Processed Datasets
-* **DPCC Way:** Uses raw `.pkl` simulation dictionary dumps directly parsed by [diffuser/datasets/d4rl.py](file:///workspaces/FM-PCC/diffuser/datasets/d4rl.py#L136-160), extracting coordinates and delta velocities on the fly.
+* **DPCC Way:** Uses raw `.pkl` simulation dictionary dumps parsed in-memory, extracting 3D desired position and 3D physical feedback pose, and stacking them into a unified 6D observation vector.
 * **Gen6 Paradigm:** Loads from pre-compiled D3IL alignments databases ([d3il/environments/dataset/aligning_dataset.py](file:///workspaces/FM-PCC/d3il/environments/dataset/aligning_dataset.py)) specifically prepared for ACT benchmarks.

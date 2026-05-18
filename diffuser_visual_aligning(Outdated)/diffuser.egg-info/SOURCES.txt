@@ -9,17 +9,11 @@ diffuser.egg-info/PKG-INFO
 diffuser.egg-info/SOURCES.txt
 diffuser.egg-info/dependency_links.txt
 diffuser.egg-info/top_level.txt
-flow_matcher_v3_imeanflow/__init__.py
-flow_matcher_v3_imeanflow/models/__init__.py
-flow_matcher_v3_imeanflow/models/imf_diffusion.py
-flow_matcher_v3_imeanflow/models/imf_engine.py
 models/__init__.py
 models/diffusion.py
 models/helpers.py
 models/mlp.py
 models/unet1d_temporal_cond.py
-models/visual_gaussian_diffusion.py
-models/visual_unet.py
 sampling/__init__.py
 sampling/policies.py
 sampling/projection.py

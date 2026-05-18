@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=visual_dpcc_train
+#SBATCH --job-name=dpcc_train
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -45,8 +45,7 @@ fi
 
 cd "$REPO"
 
-# Run visual DPCC joint model training script
-python ddpm_encdec_vision_test_visual_dpcc/train_visual_aligning_dpcc.py \
+python diffuser_visual_aligning_test/train_visual_aligning_dpcc.py \
     --seeds 5 6 7 8 9 \
     --use-wandb \
     --wandb-project FMPCC-visual-aligning-dpcc

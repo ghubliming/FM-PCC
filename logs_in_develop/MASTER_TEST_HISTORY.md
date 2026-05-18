@@ -21,7 +21,9 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). |
 | **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. |
 | **Gen5 (Visual Aligning)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Real vision-conditioned pipeline** (U-Net & VAE Transformer) for D3IL visual aligning task. |
-| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | Dynamic projection controller (Differentiable MPC / DPCC) on top of the visual DDPM model. |
+| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Legacy baseline**. Based on the `ddpmact d3il base` (imitation model). Succeeded only once (saved in the outdated legacy folders) and never returned good results since. |
+| **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | State-only non-visual aligning pipeline for Gen6. Fixed 17D vs 20D proprioceptive mismatch. |
+| **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. |
 | **Gen7 (Visual Flow Matching)** | [fm_encdec_vision/](../fm_encdec_vision) | [fm_encdec_vision_test/](../fm_encdec_vision_test) | May 18, 2026 (Ongoing) | **Continuous-time visual Flow Matching (FMv3ODE)** decoupled sibling migration with advanced solvers.
 
 ***
@@ -943,4 +945,39 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
    * `visual_aligning_pipeline_fm.sh`: Chains training and evaluation sequentially.
 6. **Config Alignment (Offtopic)**: Reorganized [config/avoiding-d3il.py](file:///workspaces/FM-PCC/config/avoiding-d3il.py) to move the iMeanFlow (iMF) training and planning configurations into their correct logical sections (training under models, planning under inference).
 7. **Status**: **COMPLETE & VERIFIED**. Visual Flow Matching architecture, configs, and Slurm managers are fully standardized and ready for production GPU runs.
+
+***
+
+## Gen6v3: Non-Visual Aligning Pipeline (May 18, 2026)
+
+**Keywords**: 17D vs 20D compatibility, U-Net transition-dim scaling, state-only multi-seed evaluation.
+
+1. **State Dimension Parity**: Resolved the $17\text{D} \text{ vs. } 20\text{D}$ proprioceptive state mismatch between baseline datasets and visual-aligned configurations. Rewrote preprocessing pipelines to support conditional state-only load operations.
+2. **Backbone Generalization**: Updated the U-Net spatial layers to dynamically scale `transition_dim` based on evaluation targets, preventing shape crashes when loading visual-trained weights in state-only runs.
+3. **Training & Evaluation**: Stabilized training workflows to bypass visual encoding matrices when running in non-visual mode, aligning standard metrics sweeps.
+
+## Gen6v4: Unified 9D Visual-DPCC Safety Engine (May 18, 2026)
+
+**Keywords**: 9D Joint Trajectory representation, SLSQP Euler Projection, actual proprioceptive boundaries, DPCC Base Pivot, DDPM-ACT Failure.
+
+1. **Strategic Pivot: No more `ddpmact d3il base`**:
+   Historically, the visual encoder-decoder baseline (`ddpm_encdec_vision` from Gen6, and Gen7 which was based on it) utilized the `ddpmact d3il base` (ACT imitation framework). However, this architecture proved highly unstable, **only succeeding once** (archived inside the outdated legacy folders) and failing to return any reproducible good results thereafter. 
+   
+   To resolve this structural deadlock, Gen6v4 introduces a **fundamental new principle**: **migrating entirely to the `dpcc base`** as the core foundation for visual-conditioned trajectory alignment.
+2. **9D Trajectory Paradigm ($x_t \in \mathbb{R}^{H \times 9}$)**:
+   Designed a unified state-action-observation planning representation on top of the DPCC base:
+   $$x_t = \left[ \text{act}(3\text{D}) \;\mid\; \text{des\_c\_pos}(3\text{D}) \;\mid\; \text{c\_pos}(3\text{D}) \right]$$
+   This shifts boundary constraints directly onto the physical, actual end-effector position ($c\_pos$) rather than the commanded position ($des\_c\_pos$), guaranteeing real-world safety cage violations are blocked by the controller.
+3. **Dataset Preprocessing Alignment**:
+   Implemented the `ParityAligningDataset` parser. The normalizer restricts limits fitting strictly to `valid_mask` data points to prevent zero-padded tails from pulling normalizer bounds toward $0$.
+4. **Denoising Clamping Hooks**:
+   Modified `p_mean_variance` inside `VisualGaussianDiffusion` to selectively clamp only the active control slots ($[..., :3]$) to $[-5.0, 5.0]$ while leaving physical $c\_pos$ dimensions unclamped. This ensures physical coordinate integrity is maintained during step integrations.
+
+## Gen5: DDPM EncDec Legacy Restoration & Safety Auditing (May 18, 2026)
+
+**Keywords**: Legacy code protection, Scaler normalization restoration, hyperparameter sanity locks.
+
+1. **Legacy Recovery**: Re-added `add_Legacy_working_Good_Codes (Gen5_DDPM_EncDec)` inside the source tree to preserve baseline training stability.
+2. **Scaler Stabilization**: Restored legacy normalization scale mapping inside `VisualUNet` and `Scaler` objects. This prevents statistical regression and secures reproducible baselines for the $500\text{k}$ training checkpoints.
+3. **Path Fix**: Resolved file loading references in `config/aligning-d3il-visual.py` to ensure proper dataset routing inside cluster configurations.
 
