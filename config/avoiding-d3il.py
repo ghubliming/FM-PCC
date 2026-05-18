@@ -434,6 +434,65 @@ base = {
         'seed': 0,
     },
 
+    'flow_matching_v3_imeanflow': {
+        # iMeanFlow: Improved Mean Flows for trajectory generation
+        # Dual-velocity: u (mean field) + v (instantaneous deviation)
+        # Reuses official iMF repo logic: github.com/Lyy-iiis/imeanflow
+        
+        ## model & engine (REAL iMF from official repo)
+        'model': 'flow_matcher_v3_imeanflow.models.iMeanFlowEngine',
+        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'horizon': 8,
+        
+        ## iMF architecture (matches official repo)
+        'freq_dim': 256,
+        'depth': 8,
+        'num_heads': 4,
+        'mlp_dim': 256,
+        'time_dim': 256,
+        'dropout_rate': 0.1,
+        
+        ## stable iMF training (FMv3ODE-style main loss + small aux residual)
+        'u_loss_weight': 1.0,               # Main flow velocity weight
+        'v_loss_weight': 0.1,               # Auxiliary residual weight
+        'loss_schedule': 'balanced',        # Keep training stable from step 1
+        'warmup_epochs': 0,
+        'transition_epochs': 0,
+        'loss_type': 'l2',
+        'predict_epsilon': True,
+        
+        ## dataset (inherited from FMv3ODE)
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+        'use_padding': True,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+        
+        ## training (from FMv3ODE baseline)
+        'n_train_steps': 100000,
+        'batch_size': 32,
+        'learning_rate': 5e-4,
+        'gradient_clip': 1.0,
+        'ema_decay': 0.995,
+        'action_weight': 10,
+        
+        ## ODE inference (match FMv3ODE-style deterministic rollout)
+        'ode_inference_steps_v3': 10,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        
+        ## serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_imeanflow/',
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
+    },
+
     'plan': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
@@ -706,6 +765,41 @@ base = {
         'suffix': '0',
     },
 
+    'plan_fm_v3_imeanflow': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## flow matching v3 imeanflow model
+        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'horizon': 8,
+        'action_weight': 10,
+        'u_loss_weight': 1.0,
+        'v_loss_weight': 0.1,
+        'flow_steps_v3': 10,
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+
+        ## loading
+        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+        'diffusion_epoch': 'best',
+    },
+
     ## ── Hyperparameter Tuning Blocks ──────────────────────────────────
     ## These use the ORIGINAL flow_matcher model (UNet1DTemporalCondModel).
     ## Duplicate this pair (train + plan) for each tuning experiment.
@@ -791,72 +885,5 @@ base = {
 
         'verbose': False,
         'suffix': '0',
-    },
-
-    'flow_matching_v3_imeanflow': {
-        # Improved Mean Flows (iMeanFlow) trajectory generation
-        # Dual-velocity field: u (global) + v (local refinement)
-        
-        ## architecture
-        'model': 'flow_matcher_v3_imeanflow.models.TimeConditionedDualVelocity',
-        'diffusion': 'flow_matcher_v3_imeanflow.models.ImfDiffusion',
-        'state_dim': 28,
-        'hidden_dim': 256,
-        'time_dim': 128,
-        'use_jvp_guidance': True,
-        'jvp_hidden_dim': 128,
-        'horizon': 8,
-        
-        ## dual-velocity training
-        'u_loss_weight': 0.5,           # LOCKED: balance with v_loss_weight
-        'v_loss_weight': 0.5,           # LOCKED: balance with u_loss_weight
-        'loss_schedule': 'u_first',     # LOCKED: curriculum learning for safety
-        'jvp_weight': 0.2,              # Constraint guidance (collision, smoothness)
-        'loss_type': 'mse',
-        
-        ## dataset
-        'loader': 'datasets.SequenceDataset',
-        'normalizer': 'LimitsNormalizer',
-        'preprocess_fns': [],
-        'max_path_length': 150,
-        'include_returns': True,
-        'returns_scale': 400,
-        'discount': 0.99,
-        'use_padding': True,
-        
-        ## ODE solver
-        'ode_solver_type': 'dopri5',    # dopri5, rk4, euler
-        'num_ode_steps': 10,
-        'ode_atol': 1e-6,
-        'ode_rtol': 1e-3,
-        
-        ## sampling
-        'nfe': 2,                        # 1 (fast) or 2 (quality)
-        'nfe_split': 0.5,               # Transition point from u→v
-        'goal_guidance_weight': 0.15,
-        'obstacle_avoidance_weight': 0.1,
-        
-        ## training
-        'n_steps_per_epoch': 1000,
-        'n_train_steps': 1e5,
-        'batch_size': 32,
-        'learning_rate': 5e-4,
-        'warmup_steps': 2000,
-        'gradient_clip': 1.0,
-        'ema_decay': 0.995,
-        'train_test_split': 0.85,
-        'gradient_accumulate_every': 2,
-        'device': 'cuda',
-        'seed': 0,
-        
-        ## metrics
-        'track_smoothness': True,
-        'track_decomposition': True,
-        'track_collision': True,
-        
-        ## serialization
-        'logbase': logbase,
-        'prefix': 'flow_matching_v3_imeanflow/',
-        'exp_name': watch(args_to_watch),
     },
 }

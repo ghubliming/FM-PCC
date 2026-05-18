@@ -1,0 +1,52 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 14:06:13 UTC 2026
+pybullet build time: Nov 28 2023 23:45:17
+
+Evaluating seed 6...
+[ eval ] Log saved to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/plans/ddpm_encdec_vision/H8/eval_seed_6.log
+[ eval ] Loading Vision Diffusion model: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6 | Epoch: best
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 19.33it/s]100%|██████████| 3/3 [00:00<00:00, 18.93it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[WARNING] Dropping unexpected kwarg from pickle: 'time_beta_alpha_v3'
+[WARNING] Dropping unexpected kwarg from pickle: 'time_beta_beta_v3'
+[WARNING] Dropping unexpected kwarg from pickle: 'flow_steps_v3'
+[ utils/training ] Restored loss history from checkpoint at step 44000
+[ eval ] Initializing Aligning_Sim (Vision=True)
+[ eval ] Starting simulation for seed 6...
+there are cpus:  64
+2124588 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_15dc8692-4f9e-11f1-aa68-d85ed34e311e.xml' with default provider at slot 1
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 184, in <module>
+    success_rate, mode_encoding = sim.test_agent(agent)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 173, in test_agent
+    self.eval_agent(agent, contexts, self.n_trajectories_per_context, mode_encoding, successes, mean_distance, 0, cpu_set=set([0]))
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 84, in eval_agent
+    pred_action = agent.predict((bp_image, inhand_image, des_robot_pos), if_vision=self.if_vision)
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 47, in predict
+    action, samples = self.policy(conditions={0: cond}, batch_size=1)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/sampling/policies.py", line 45, in __call__
+    conditions = self._format_conditions(conditions, batch_size)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/sampling/policies.py", line 109, in _format_conditions
+    conditions = utils.to_torch(conditions, dtype=torch.float32, device='cpu')
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/arrays.py", line 22, in to_torch
+    return {k: to_torch(v, dtype, device) for k, v in x.items()}
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/arrays.py", line 22, in <dictcomp>
+    return {k: to_torch(v, dtype, device) for k, v in x.items()}
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/utils/arrays.py", line 25, in to_torch
+    return torch.tensor(x, dtype=dtype, device=device)
+ValueError: only one element tensors can be converted to Python scalars

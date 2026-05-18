@@ -1,0 +1,134 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 14:37:58 UTC 2026
+pybullet build time: Nov 28 2023 23:45:17
+
+Evaluating seed 6...
+[ eval ] Log saved to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/plans/ddpm_encdec_vision/H8/eval_seed_6.log
+[ eval ] Loading Vision Diffusion model: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6 | Epoch: best
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.31it/s]100%|██████████| 3/3 [00:00<00:00, 18.05it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[WARNING] Dropping unexpected kwarg from pickle: 'time_beta_alpha_v3'
+[WARNING] Dropping unexpected kwarg from pickle: 'time_beta_beta_v3'
+[WARNING] Dropping unexpected kwarg from pickle: 'flow_steps_v3'
+[ utils/training ] Restored loss history from checkpoint at step 44000
+[ eval ] Initializing Aligning_Sim (Vision=True)
+[ eval ] Starting simulation for seed 6...
+there are cpus:  64
+2129814 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_85fb0f1c-4fa2-11f1-8fcf-d85ed34e311e.xml' with default provider at slot 1
+
+[ DEBUG ] Action predicted: [-0.01499366  0.01098575 -0.01085668]
+[ DEBUG ] Action predicted: [-0.0150024   0.01272767 -0.01039242]
+[ DEBUG ] Action predicted: [-0.01405292  0.01285866 -0.01252084]
+[ DEBUG ] Action predicted: [-0.01483421  0.01177874 -0.00727457]
+[ DEBUG ] Action predicted: [-0.00825306  0.02470871 -0.00465473]
+[ DEBUG ] Action predicted: [-0.00768607  0.01963118 -0.0009315 ]
+[ DEBUG ] Action predicted: [-0.01383438  0.00489515 -0.01961922]
+[ DEBUG ] Action predicted: [-0.01049085  0.00866049 -0.01372468]
+[ DEBUG ] Action predicted: [-0.01577988  0.0064325  -0.01629026]
+[ DEBUG ] Action predicted: [-0.02029348  0.01951764 -0.00678319]
+[ DEBUG ] Action predicted: [-0.01892456  0.00931661 -0.01297541]
+[ DEBUG ] Action predicted: [-0.01446151  0.02003129 -0.00687925]
+[ DEBUG ] Action predicted: [-0.01525538  0.0025817  -0.01413932]
+[ DEBUG ] Action predicted: [-0.01195306  0.01666627 -0.00813946]
+[ DEBUG ] Action predicted: [-0.01415187 -0.00299085 -0.02364249]
+[ DEBUG ] Action predicted: [-1.7205917  -0.8366309  -0.06653484]
+[ DEBUG ] Action predicted: [-8.95688    2.529415  -3.8894784]
+[ DEBUG ] Action predicted: [-49.94606    33.87091     5.0557556]
+[ DEBUG ] Action predicted: [-16.25286  50.78393 -86.29743]
+[ DEBUG ] Action predicted: [-156.31094  194.4895  -115.22466]
+[ DEBUG ] Action predicted: [-144.84941  231.49754 -208.03441]
+[ DEBUG ] Action predicted: [-253.91759 -141.17323 -138.28192]
+[ DEBUG ] Action predicted: [-136.12172  188.06168 -269.13724]
+[ DEBUG ] Action predicted: [-164.30981  -79.11568  263.6142 ]
+[ DEBUG ] Action predicted: [-358.3569   140.00578  -69.76217]
+[ DEBUG ] Action predicted: [-289.0376   194.2662   304.39462]
+[ DEBUG ] Action predicted: [-162.5075  -172.42622  288.9383 ]
+[ DEBUG ] Action predicted: [-484.2651   333.07324  179.80225]
+[ DEBUG ] Action predicted: [-183.87355  227.66702  137.05626]
+[ DEBUG ] Action predicted: [-143.93617   -49.011726   10.107029]
+[ DEBUG ] Action predicted: [-409.052    226.8453   -44.68316]
+[ DEBUG ] Action predicted: [-401.7641    283.97058   -40.523167]
+[ DEBUG ] Action predicted: [-197.11566    58.065083   87.755714]
+[ DEBUG ] Action predicted: [-177.82866   53.82535 -179.03912]
+[ DEBUG ] Action predicted: [-213.69434   467.6709    -67.078224]
+[ DEBUG ] Action predicted: [-206.21353   294.9581     23.595882]
+[ DEBUG ] Action predicted: [ -9.694801 108.734985 309.96597 ]
+[ DEBUG ] Action predicted: [-267.7329   304.74377  212.09776]
+[ DEBUG ] Action predicted: [-115.82716  332.52597   84.65067]
+[ DEBUG ] Action predicted: [-249.03198  -171.84117    12.808623]
+[ DEBUG ] Action predicted: [  38.83159 -131.95946  134.53143]
+[ DEBUG ] Action predicted: [-36.901512  10.76629   57.97439 ]
+[ DEBUG ] Action predicted: [-454.19302   13.97183 -346.73022]
+[ DEBUG ] Action predicted: [-150.15543  243.64783  175.49432]
+[ DEBUG ] Action predicted: [-78.55726  165.15402   45.167164]
+[ DEBUG ] Action predicted: [ -71.27256   39.79439 -285.21768]
+[ DEBUG ] Action predicted: [-370.98203   176.45284   -18.346216]
+[ DEBUG ] Action predicted: [-60.052975 380.39108  296.14273 ]
+[ DEBUG ] Action predicted: [-122.490364  -52.902115  117.84058 ]
+[ DEBUG ] Action predicted: [-178.4539    171.06873   -46.060066]
+[ DEBUG ] Action predicted: [-227.79474  355.41327  201.89795]
+[ DEBUG ] Action predicted: [-403.689    157.91713  -76.35929]
+[ DEBUG ] Action predicted: [-274.84677    335.3648      -1.3703198]
+[ DEBUG ] Action predicted: [ -47.739162  349.1919   -138.80519 ]
+[ DEBUG ] Action predicted: [-434.43192   159.40114    31.881954]
+[ DEBUG ] Action predicted: [ 249.05374 -153.83528  139.39406]
+[ DEBUG ] Action predicted: [-164.61215  344.72153   56.00879]
+[ DEBUG ] Action predicted: [-227.39578   360.88144    -8.145408]
+[ DEBUG ] Action predicted: [-50.644825   8.413537 -95.340645]
+[ DEBUG ] Action predicted: [-51.07909 365.30362  89.00756]
+[ DEBUG ] Action predicted: [-82.417336 125.53342   92.2487  ]
+[ DEBUG ] Action predicted: [-95.77796  -47.723465  49.61384 ]
+[ DEBUG ] Action predicted: [-69.032364 287.24304  207.97133 ]
+[ DEBUG ] Action predicted: [-329.1314   239.24112  125.49238]
+[ DEBUG ] Action predicted: [  51.747383  223.28696  -160.1471  ]
+[ DEBUG ] Action predicted: [ 36.707275 184.1626   137.59642 ]
+[ DEBUG ] Action predicted: [-174.98024 -304.97043  216.40665]
+[ DEBUG ] Action predicted: [-258.66867   369.13138    56.267258]
+[ DEBUG ] Action predicted: [  15.712766  223.15962  -145.42513 ]
+[ DEBUG ] Action predicted: [-55.05443   37.554855 -39.066994]
+[ DEBUG ] Action predicted: [-126.24442  247.077    140.23479]
+[ DEBUG ] Action predicted: [-292.8437    287.76172   119.674545]
+[ DEBUG ] Action predicted: [-296.07788  122.42004  299.4207 ]
+[ DEBUG ] Action predicted: [-205.5861   115.72433  275.85724]
+[ DEBUG ] Action predicted: [ 46.12742 158.46217 134.70882]
+[ DEBUG ] Action predicted: [-225.4791     -58.595654    -5.2517395]
+[ DEBUG ] Action predicted: [ 33.28194 -44.47843  87.87587]
+[ DEBUG ] Action predicted: [208.52744  54.24863 -23.04205]
+[ DEBUG ] Action predicted: [-170.72089  121.93401  114.70975]
+[ DEBUG ] Action predicted: [-159.9442     49.303566  129.14914 ]
+[ DEBUG ] Action predicted: [-164.55937   -55.064514  123.55981 ]
+[ DEBUG ] Action predicted: [-280.6067  128.223  -339.7357]
+[ DEBUG ] Action predicted: [-112.35684  170.4148   107.85323]
+[ DEBUG ] Action predicted: [-32.463444 230.13458  -19.039612]
+[ DEBUG ] Action predicted: [-118.41203   650.5085      4.258979]
+[ DEBUG ] Action predicted: [-366.84036  220.43355   52.97257]
+[ DEBUG ] Action predicted: [-187.01437  397.81     284.827  ]
+[ DEBUG ] Action predicted: [-10.255581 192.38287  249.45335 ]
+[ DEBUG ] Action predicted: [-43.46613  86.81623  53.4099 ]
+[ DEBUG ] Action predicted: [-93.26182  -56.671673 -77.199066]
+[ DEBUG ] Action predicted: [-236.84512   176.46635   -41.778046]
+[ DEBUG ] Action predicted: [-111.63884 -105.7858   355.87347]
+[ DEBUG ] Action predicted: [-276.29968  249.69513  142.65007]
+[ DEBUG ] Action predicted: [-41.434074 263.10352    6.789306]
+[ DEBUG ] Action predicted: [-186.67139    14.808626  -71.32256 ]
+[ DEBUG ] Action predicted: [-143.3768    434.5864     94.056946]
+[ DEBUG ] Action predicted: [-108.83703   115.71914    85.168945]
+[ DEBUG ] Action predicted: [ 34.367634 171.39664   28.173374]
+[ DEBUG ] Action predicted: [ -12.318207 -119.22416   -37.219864]
+[ DEBUG ] Action predicted: [-149.92174    80.611015   47.984303]
+[ DEBUG ] Action predicted: [ 41.047844 318.2386   151.74681 ]
+slurmstepd-i6-gpu-1: error: *** JOB 20277 ON i6-gpu-1 CANCELLED AT 2026-05-14T14:43:51 ***

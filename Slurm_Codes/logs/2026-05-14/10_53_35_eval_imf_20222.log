@@ -1,0 +1,52 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 08:53:37 UTC 2026
+================================================================================
+[ eval ] iMeanFlow Evaluation (iMF-PCC)
+[ eval ] Seeds: [6, 7, 8, 9, 10]
+================================================================================
+
+[ eval ] Seed 6
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/6
+[ eval ] Checkpoint: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/6
+
+[ utils/serialization ] Loading model from logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/6
+
+[ eval ] ERROR: Failed to load seed 6: [Errno 2] No such file or directory: 'logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/6/dataset_config.pkl'
+
+[ eval ] Seed 7
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/7
+[ eval ] Checkpoint: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/7
+
+[ utils/serialization ] Loading model from logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/7
+
+[ eval ] ERROR: Failed to load seed 7: [Errno 2] No such file or directory: 'logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/7/dataset_config.pkl'
+
+[ eval ] Seed 8
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/8
+[ eval ] Checkpoint: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/8
+
+[ utils/serialization ] Loading model from logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/8
+
+[ eval ] ERROR: Failed to load seed 8: [Errno 2] No such file or directory: 'logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/8/dataset_config.pkl'
+
+[ eval ] Seed 9
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/9
+[ eval ] Checkpoint: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/9
+
+[ utils/serialization ] Loading model from logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/9
+
+[ eval ] ERROR: Failed to load seed 9: [Errno 2] No such file or directory: 'logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/9/dataset_config.pkl'
+
+[ eval ] Seed 10
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/10
+[ eval ] Checkpoint: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/10
+
+[ utils/serialization ] Loading model from logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/10
+
+[ eval ] ERROR: Failed to load seed 10: [Errno 2] No such file or directory: 'logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion/10/dataset_config.pkl'
+
+================================================================================
+[ eval ] Results saved to: evaluation_results/imf/eval_results.json
+[ eval ] Evaluated 0/5 seeds successfully
+================================================================================
+✓ Evaluation completed successfully.

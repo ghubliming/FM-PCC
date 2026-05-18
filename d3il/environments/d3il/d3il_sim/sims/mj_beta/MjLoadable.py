@@ -102,7 +102,14 @@ class MjIncludeTemplate(MjXmlLoadable):
 
     def cleanup(self):
         if self._tmp_filled_xml is not None:
-            os.remove(self._tmp_filled_xml)
+            import atexit
+            def remove_file(path):
+                try:
+                    if os.path.exists(path):
+                        os.remove(path)
+                except Exception:
+                    pass
+            atexit.register(remove_file, self._tmp_filled_xml)
 
 
 class MjFreezable:

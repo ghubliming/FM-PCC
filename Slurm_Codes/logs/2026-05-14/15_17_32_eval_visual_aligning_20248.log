@@ -1,0 +1,9 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 13:17:32 UTC 2026
+Evaluating seed 5...
+pybullet build time: Nov 28 2023 23:45:17
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/5
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 109, in <module>
+    sys.stdout = utils.Tee(sys.stdout, log_file)
+AttributeError: module 'ddpm_encdec_vision.utils' has no attribute 'Tee'

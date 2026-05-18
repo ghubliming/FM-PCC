@@ -359,9 +359,22 @@ for seed in selected_seeds:
     # -----------------------------------------------------------------------------#
     # -------------------------------- instantiate --------------------------------#
     # -----------------------------------------------------------------------------#
+    # -----------------------------------------------------------------------------#
+    # -------------------------------- instantiate --------------------------------#
+    # -----------------------------------------------------------------------------#
     model = model_config()
     diffusion = diffusion_config(model)
-    trainer = trainer_config(diffusion, dataset)
+
+    # ─── Scaler Parity Fix ───────────────────────────────────────────────
+    scaler = None
+    if args.normalizer in ['GaussianNormalizer', 'LimitsNormalizer']:
+        batch = next(iter(torch.utils.data.DataLoader(dataset, batch_size=1024)))
+        scaler = Scaler(batch[2], batch[3], scale_data=True, device=args.device)
+        # Persistent scaler for evaluator parity
+        with open(os.path.join(args.savepath, 'scaler.pkl'), 'wb') as f:
+            pickle.dump(scaler, f)
+
+    trainer = trainer_config(diffusion, dataset, scaler=scaler)
 
     resume_step = None
     if cli_args.auto_resume:

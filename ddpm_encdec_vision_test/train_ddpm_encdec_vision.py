@@ -1,4 +1,4 @@
-# FM_v3 ODE-selectable version of train_FM.py
+# FM_v3 ODE-selectable version of train_FM.py for Vision
 import argparse
 import glob
 import json
@@ -71,16 +71,11 @@ def upload_wandb_artifact(run, seed, args):
         },
     )
 
-    files_to_add = ['losses.pkl', 'args.json'] # 'state_best.pt' commented out to save space
+    files_to_add = ['losses.pkl', 'args.json']
     for filename in files_to_add:
         filepath = os.path.join(args.savepath, filename)
         if os.path.exists(filepath):
             artifact.add_file(filepath)
-
-    # Keep but not using it as requested:
-    # state_best_path = os.path.join(args.savepath, 'state_best.pt')
-    # if os.path.exists(state_best_path):
-    #     artifact.add_file(state_best_path)
 
     run.log_artifact(artifact)
 
@@ -90,7 +85,7 @@ class Parser(utils.Parser):
     config: str = 'config.' + exp
 
 def parse_top_level_args():
-    parser = argparse.ArgumentParser(description='Train FM model with configurable seeds.')
+    parser = argparse.ArgumentParser(description='Train FM Vision model with configurable seeds.')
     parser.add_argument('--seed', type=int, help='Train a single seed.')
     parser.add_argument('--seeds', type=int, nargs='+', help='Train an explicit list of seeds, e.g. --seeds 5 6 7.')
     parser.add_argument('--seeds-from-config', type=str, help='Path to JSON file with `seed_list` or `seeds`.')
@@ -103,6 +98,7 @@ def parse_top_level_args():
     parser.add_argument('--wandb-entity', type=str, default=None, help='W&B entity/team name.')
     parser.add_argument('--wandb-group', type=str, default=None, help='W&B group name for per-seed runs.')
     parser.add_argument('--wandb-mode', type=str, default='online', choices=['online', 'offline', 'disabled'], help='W&B mode.')
+    parser.add_argument('--log-freq', type=int, default=1000, help='How often to log progress to console/disk.')
     args, remaining = parser.parse_known_args()
     if args.seed is not None and args.seeds is not None:
         raise ValueError('Use either --seed or --seeds, not both.')
@@ -189,6 +185,7 @@ print(f'[ train ] Training seeds: {selected_seeds}')
 original_argv = list(sys.argv)
 sys.argv = [sys.argv[0], *parser_remaining]
 manifest_written = False
+
 for seed in selected_seeds:
     args = Parser().parse_args(experiment='ddpm_encdec_vision', seed=seed)
     torch.manual_seed(args.seed)
@@ -196,22 +193,18 @@ for seed in selected_seeds:
         run_root = os.path.dirname(args.savepath)
         write_seed_manifest(run_root, selected_seeds, seed_source, cli_args)
         manifest_written = True
+    
     run = None
     if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
         sanitize_wandb_env()
-        # Update wandb log naming logic to be more clear
-        savepath_rel = os.path.relpath(args.savepath, args.logbase)
-        wandb_name = savepath_rel.replace('/', '-').replace('models.diffusion.', '').replace('models.', '')
-
-        # Label seed part clearly as S<seed>
-        name_parts = wandb_name.split('-')
-        if name_parts[-1].isdigit():
-            name_parts[-1] = f'S{name_parts[-1]}'
+        # Build run name exactly like FMv3ODE
+        name_parts = [exp, args.exp_name, f'S{seed}']
         wandb_name = '-'.join(name_parts)
-
-        # Group name clusters seeds of the same experiment together
         default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
+        
+        # W&B Safety Lock: Truncate group name to 128 chars to avoid Error 400 bad request
+        wandb_group = wandb_group[:128]
 
         run = wandb.init(
             project=cli_args.wandb_project,
@@ -225,24 +218,71 @@ for seed in selected_seeds:
                 'seed_source': seed_source,
             },
         )
-    # Get dataset
+        
+    # --- FM-PCC Bone: Multi-stage Config Instantiation ---
+    
+    # 1. Dataset
     from d3il.environments.dataset.aligning_dataset import Aligning_Img_Dataset
-    dataset = Aligning_Img_Dataset(
+    dataset_config = utils.Config(
+        Aligning_Img_Dataset,
+        savepath=(args.savepath, 'dataset_config.pkl'),
         data_directory='environments/dataset/data/aligning/train_files.pkl',
         device='cpu',
         obs_dim=3,
-        action_dim=3,
+        action_dim=args.action_dim,
         window_size=args.horizon,
-        max_len_data=256
+        max_len_data=args.max_path_length
     )
+    dataset = dataset_config()
     
-    # Initialize VisualDiffusionBridge
-    from ddpm_encdec_vision.models.d3il_visual_bridge import VisualDiffusionBridge
-    diffusion = VisualDiffusionBridge(args).to(args.device)
+    # --- FIX_17: Scaler Initialization ---
+    from ddpm_encdec_vision.utils.scaler import Scaler
+    # Initialize Scaler with MASKED data (FIX #17 - Prevent zero-padding corruption)
+    print(f"[ train ] Calculating dataset statistics (ignoring zero-padding)...")
+    all_obs = dataset.get_all_observations()
+    all_act = dataset.get_all_actions()
     
+    scaler = Scaler(all_obs, all_act, scale_data=True, device=args.device)
+    print(f"[ train ] Dataset Stats: Obs Mean {scaler.x_mean.mean().item():.4f}, Act Std {scaler.y_std.mean().item():.4f}")
+    import pickle
+    scaler_path = os.path.join(args.savepath, 'scaler.pkl')
+    with open(scaler_path, 'wb') as f:
+        pickle.dump(scaler, f)
+    print(f'[ train ] Saved scaler to {scaler_path}')
+    
+    # 2. Model (Backbone + Vision Encoder)
+    from ddpm_encdec_vision.models.visual_unet import VisualUNet
+    model_config = utils.Config(
+        VisualUNet,
+        savepath=(args.savepath, 'model_config.pkl'),
+        config=args,
+    )
+    model = model_config()
+    
+    # 3. Diffusion (Engine)
+    # 3. Diffusion (Engine: Reverted to standard DDPM)
+    from ddpm_encdec_vision.models.visual_gaussian_diffusion import VisualGaussianDiffusion
+    diffusion_config = utils.Config(
+        VisualGaussianDiffusion,
+        savepath=(args.savepath, 'diffusion_config.pkl'),
+        horizon=args.horizon,
+        observation_dim=3,
+        action_dim=args.action_dim,
+        goal_dim=0,
+        n_timesteps=getattr(args, 'n_diffusion_steps', 100),
+        loss_type=args.loss_type,
+        clip_denoised=True,
+        predict_epsilon=True,
+        action_weight=getattr(args, 'action_weight', 10.0),
+        device=args.device,
+    )
+    diffusion = diffusion_config(model)
+    
+    # 4. Trainer
     trainer_config = utils.Config(
         utils.Trainer,
         savepath=(args.savepath, 'trainer_config.pkl'),
+        scaler=scaler,
         train_test_split=args.train_test_split,
         ema_decay=args.ema_decay,
         n_train_steps=args.n_train_steps,
@@ -251,10 +291,12 @@ for seed in selected_seeds:
         train_lr=args.learning_rate,
         gradient_accumulate_every=args.gradient_accumulate_every,
         results_folder=args.savepath,
+        train_device=args.device,
+        log_freq=cli_args.log_freq,
     )
-    
-    # We pass None for dataset, because we'll just pass the dataset manually
     trainer = trainer_config(diffusion, dataset)
+    
+    # --- Resume Logic (Replicated from FMv3ODE) ---
     resume_step = None
     if cli_args.auto_resume:
         resume_step = find_latest_checkpoint_step(args.savepath)
@@ -267,7 +309,9 @@ for seed in selected_seeds:
             trainer.load(resume_step)
         else:
             print(f'[ train ] Resume requested but checkpoint not found: {checkpoint_path}')
+            
     trainer.train()
+    
     if run is not None:
         losses_path = os.path.join(args.savepath, 'losses.pkl')
         log_wandb_curves_from_losses(losses_path, run)
@@ -275,4 +319,5 @@ for seed in selected_seeds:
         run.summary['status'] = 'completed'
         run.summary['seed'] = seed
         run.finish()
-print('FM_v3 training completed.')
+
+print('Vision FM_v3 training completed.')

@@ -1,22 +1,42 @@
 #!/bin/bash
 #SBATCH --job-name=imf_eval
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --gres=gpu:1
-#SBATCH --time=04:00:00
-#SBATCH --partition=gpu-1-student
+#SBATCH --nodes=1                   # Run on a single node
+#SBATCH --ntasks=1                  # Run a single task
+#SBATCH --cpus-per-task=8           # Number of CPU cores per task
+#SBATCH --mem=32G                    # Total memory
+#SBATCH --gres=gpu:1                # Request 1 GPU
+#SBATCH --time=08:00:00             # Time limit
+#SBATCH --partition=gpu-1-student   # Updated from sinfo output
 
+# Exit on error
 set -e
 
-# Logging setup
+# ------------------------------------------------------------------------------
+# PRO-LOGGING SETUP
+# ------------------------------------------------------------------------------
+# 1) Create a shortcut to the latest log for easy monitoring
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then
     ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log
 fi
 
+echo "================================================================================"
 echo "JOB START: $(date)"
+echo "JOB NAME:  $SLURM_JOB_NAME"
+echo "JOB ID:    $SLURM_JOB_ID"
+echo "NODE:      $(hostname)"
+echo "GPU INFO:"
+nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "No GPU detected or nvidia-smi failed"
+echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'Not a git repo')"
+echo "================================================================================"
+
+# Trap for JOB END
+function on_exit {
+    echo "================================================================================"
+    echo "JOB END:   $(date)"
+    echo "================================================================================"
+}
+trap on_exit EXIT
 
 # 1) Setup Workspace Paths
 FMPCC_ROOT="$HOME/FMPCC"
@@ -39,20 +59,16 @@ export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
 
-# W&B Login
+# W&B Login (Colab-style from key file)
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_API_KEY=$(cat $HOME/FMPCC/.wandb_api_key)
     export WANDB_MODE="online"
 fi
 
-# 4) Run iMF Evaluation/Inference
+# 4) Run iMF Evaluation
 cd "$REPO"
 
-# Multi-seed evaluation with comprehensive metrics
-python FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py \
-    --seeds 6 7 8 9 10 \
-    --logbase logs \
-    --output-dir evaluation_results/imeanflow \
-    --device cuda
+# Evaluation reads seeds and variants from config/projection_eval.yaml
+python FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py
 
-echo "✓ Evaluation completed successfully."
+echo "Evaluation completed successfully."

@@ -98,31 +98,45 @@ class BatchAggregator:
             variant_agg = aggregator.aggregated_by_variant
             
             if variant_agg is not None and not variant_agg.empty:
-                # Calculate metrics for major variants
-                major_rows = variant_agg[variant_agg['variant'].isin(MAJOR_VARIANTS)]
-                aux_rows = variant_agg[variant_agg['variant'].isin(AUXILIARY_VARIANTS)]
+                # Define the two sub-groups
+                std_variants = ['dpcc-r', 'dpcc-c', 'dpcc-t']
+                tight_variants = ['dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened']
                 
                 accuracy_metric = 'n_success_and_constraints'
                 time_metric = 'avg_time'
                 
-                # Major Statistics
+                # Helper to calculate group stats
+                def get_group_stats(variants):
+                    rows = variant_agg[variant_agg['variant'].isin(variants)]
+                    if rows.empty: return None, None
+                    
+                    acc_rows = rows[rows['metric'] == accuracy_metric]
+                    if acc_rows.empty: acc_rows = rows[rows['metric'] == 'n_success']
+                    
+                    time_rows = rows[rows['metric'] == time_metric]
+                    
+                    acc = acc_rows['mean'].mean() if not acc_rows.empty else None
+                    time = time_rows['mean'].mean() if not time_rows.empty else None
+                    return acc, time
+
+                # Calculate Standard Group (3 variants)
+                stats['accuracy_std_group'], stats['time_ms_std_group'] = get_group_stats(std_variants)
+                
+                # Calculate Tightened Group (3 variants)
+                stats['accuracy_tight_group'], stats['time_ms_tight_group'] = get_group_stats(tight_variants)
+
+                # Legacy fallback for single point (average of all available major variants)
+                major_rows = variant_agg[variant_agg['variant'].isin(MAJOR_VARIANTS)]
                 if not major_rows.empty:
                     m_acc = major_rows[major_rows['metric'] == accuracy_metric]
-                    if m_acc.empty:
-                        m_acc = major_rows[major_rows['metric'] == 'n_success']
-                    
-                    if not m_acc.empty:
-                        stats['accuracy'] = m_acc['mean'].mean()
-                        stats['accuracy_std'] = m_acc['std'].mean()
-                        stats['major_accuracy'] = stats['accuracy']
+                    if m_acc.empty: m_acc = major_rows[major_rows['metric'] == 'n_success']
+                    if not m_acc.empty: stats['accuracy'] = m_acc['mean'].mean()
                     
                     m_time = major_rows[major_rows['metric'] == time_metric]
-                    if not m_time.empty:
-                        stats['time_ms'] = m_time['mean'].mean()
-                        stats['time_std'] = m_time['std'].mean()
-                        stats['major_time_ms'] = stats['time_ms']
-
+                    if not m_time.empty: stats['time_ms'] = m_time['mean'].mean()
+                
                 # Auxiliary Statistics
+                aux_rows = variant_agg[variant_agg['variant'].isin(AUXILIARY_VARIANTS)]
                 if not aux_rows.empty:
                     a_acc = aux_rows[aux_rows['metric'] == accuracy_metric]
                     if a_acc.empty:
@@ -146,14 +160,19 @@ class BatchAggregator:
                         if not v_acc.empty:
                             stats['major_metrics'][v] = v_acc['mean'].iloc[0]
             
-            # Robustness: overall std across seeds for major variants
+            # Robustness: overall std across seeds for the two groups
             if variant_agg is not None and not variant_agg.empty:
-                major_rows = variant_agg[variant_agg['variant'].isin(MAJOR_VARIANTS)]
-                if not major_rows.empty:
-                    stats['robustness'] = major_rows['std'].mean()
-                else:
-                    stats['robustness'] = variant_agg['std'].mean()
+                std_rows = variant_agg[variant_agg['variant'].isin(std_variants)]
+                tight_rows = variant_agg[variant_agg['variant'].isin(tight_variants)]
+                
+                stats['robustness_std_group'] = std_rows['std'].mean() if not std_rows.empty else 0
+                stats['robustness_tight_group'] = tight_rows['std'].mean() if not tight_rows.empty else 0
+                
+                # Legacy fallback
+                stats['robustness'] = variant_agg['std'].mean()
             else:
+                stats['robustness_std_group'] = 0
+                stats['robustness_tight_group'] = 0
                 stats['robustness'] = 0
             
         except Exception as e:

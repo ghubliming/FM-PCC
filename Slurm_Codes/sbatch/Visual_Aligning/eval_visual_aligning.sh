@@ -10,15 +10,23 @@
 
 set -e
 
-# Logging setup
+# ─── Job Metadata ───────────────────────────────────────────────────────
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then
     ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log
 fi
 
+echo "================================================================================"
 echo "JOB START: $(date)"
+echo "JOB NAME:  $SLURM_JOB_NAME"
+echo "JOB ID:    $SLURM_JOB_ID"
+echo "NODE:      $(hostname)"
+echo "GPU INFO:"
+nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>/dev/null || echo "  (no GPU info available)"
+echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'N/A')"
+echo "================================================================================"
 
-# Setup Workspace Paths
+# ─── Environment Setup ──────────────────────────────────────────────────
 FMPCC_ROOT="$HOME/FMPCC"
 REPO="$FMPCC_ROOT/FM-PCC"
 CONDA_DIR="$HOME/miniconda3"
@@ -39,10 +47,23 @@ export MPLBACKEND="agg"
 
 cd "$REPO"
 
-# Run evaluation for seeds
-for SEED in 5 6 7 8 9; do
-    echo "Evaluating seed $SEED..."
-    python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py --seed $SEED
-done
+# ─── Run Evaluation ─────────────────────────────────────────────────────
+# Uses config/visual_aligning_eval.yaml for seed/variant configuration.
+# Model is loaded from the FM-PCC pickle config system (same as training).
+# Results are saved to: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8/<seed>/results/
+
+# Optional: override seed via command line argument
+# Run evaluation
+# Args: $1=seed (optional), $2=record_mode (optional, default=all)
+SEED_ARG=""
+if [ -n "$1" ]; then
+    SEED_ARG="--seed $1"
+    echo "[ eval ] Overriding seed to: $1"
+fi
+
+RECORD_MODE="${2:-all}"
+echo "[ eval ] Recording mode set to: $RECORD_MODE"
+
+python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py $SEED_ARG --record "$RECORD_MODE"
 
 echo "Job completed successfully."

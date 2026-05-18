@@ -79,6 +79,64 @@ Interrupt, the loss curve looks wrong in WandB
 Eval seed 6
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/12_49_01_eval_visual_aligning_20153.log
 
-Stop, stucked
+Stop, stucked, no error warning
+
+---
+
+Again
+Visual Seed 6 train
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/13_39_19_train_visual_aligning_20242.log
+
+4 epoch seems loss curve good enough for eval test (remember to change the setting when train rest seeds)
+
+Seed 6 Eval 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/17_08_06_eval_visual_aligning_20279.log (BAD results)
+(Archived)
+
+Fix 7
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/22_08_29_train_visual_aligning_20291.log
+
+and rest seeds 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/10_58_33_train_visual_aligning_20308.log
+
++ Diagnositic Eval
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/10_10_04_eval_visual_aligning_20304.log
+
++ Video 
+(Fix 9)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
+
+eval(6,7,8(half))
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
+
+- reudce H to 2
+(and change trainign steps)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/16_58_00_train_visual_aligning_20333.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/17_18_45_eval_visual_aligning_20336.log
+
+---
 
 - iMF
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
+
+finished, by loss curve is bad
+abandoned
+
+update, re train
+seed 6
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/11_42_47_train_imf_20229.log
+
++ seed 789 10
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/13_45_58_train_imf_20245.log
+
+killed at Epoch 38, seed 8
+
+eval
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/15_55_29_eval_imf_20263.log
+
+look the `diffusor` metric, it is very bad, very bad
+
+reset parameter correctly in d3il.py
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/23_26_00_eval_imf_20298.log

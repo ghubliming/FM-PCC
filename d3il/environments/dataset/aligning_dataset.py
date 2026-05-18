@@ -203,7 +203,8 @@ class Aligning_Img_Dataset(TrajectoryDataset):
             bp_imgs.sort(key=lambda x: int(os.path.basename(x).split('.')[0]))
 
             for img in bp_imgs:
-                image = cv2.imread(img).astype(np.float32)
+                image = cv2.imread(img)
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
                 image = image.transpose((2, 0, 1)) / 255.
 
                 image = torch.from_numpy(image).to(self.device).float().unsqueeze(0)
@@ -216,7 +217,8 @@ class Aligning_Img_Dataset(TrajectoryDataset):
             inhand_imgs.sort(key=lambda x: int(os.path.basename(x).split('.')[0]))
             inhand_images = []
             for img in inhand_imgs:
-                image = cv2.imread(img).astype(np.float32)
+                image = cv2.imread(img)
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
                 image = image.transpose((2, 0, 1)) / 255.
 
                 image = torch.from_numpy(image).to(self.device).float().unsqueeze(0)

@@ -1,0 +1,14 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 14 13:24:08 UTC 2026
+Evaluating seed 5...
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Log saved to: ddpm_encdec_vision/H8/plans/ddpm_encdec_vision/H8/eval_seed_5.log
+[ eval ] Loading Vision Diffusion model: ddpm_encdec_vision/H8 | Epoch: best
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 113, in <module>
+    diffusion = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 65, in load_diffusion_with_override
+    dataset_config = utils.load_config(loadpath, 'dataset_config.pkl')
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/serialization.py", line 36, in load_config
+    config = pickle.load(open(loadpath, 'rb'))
+FileNotFoundError: [Errno 2] No such file or directory: 'ddpm_encdec_vision/H8/dataset_config.pkl'
