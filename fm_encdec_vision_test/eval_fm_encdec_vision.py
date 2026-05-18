@@ -62,15 +62,15 @@ class VisualNormalizerDict:
 
 def setup_gen6_projector(args, config, scaler, variant):
     """Instantiates the DPCC projection engine for the visual workspace."""
-    # 1. Determine constraint tightening (contract limits by 'enlarge_constraints' meters)
-    enlarge_constraints = config.get('enlarge_constraints', 0.0)
+    # 1. Determine constraint tightening margin (supports both legacy 'enlarge_constraints' and 'constraint_tightening_margin')
+    tightening_margin = config.get('constraint_tightening_margin', config.get('enlarge_constraints', 0.0))
     
     workspace_lb = np.array(config['workspace_bounds']['lb'])
     workspace_ub = np.array(config['workspace_bounds']['ub'])
     
-    if 'tightened' in variant and enlarge_constraints > 0.0:
-        workspace_lb += enlarge_constraints
-        workspace_ub -= enlarge_constraints
+    if 'tightened' in variant and tightening_margin > 0.0:
+        workspace_lb += tightening_margin
+        workspace_ub -= tightening_margin
 
     constraint_list = []
     
@@ -461,17 +461,47 @@ class VisualAgentWrapper:
             # Trajectory selection logic (minimum_projection_cost, temporal_consistency, random)
             trajectories_np = trajectory.detach().cpu().numpy()
             which_trajectory = 0
+            selection_method = 'default (first)'
+            sel_details = {}
+            
             if self.batch_size > 1:
                 if self.trajectory_selection == 'temporal_consistency' and self.prev_observations is not None:
                     diffs = trajectories_np - np.expand_dims(self.prev_observations, axis=0)
                     order = np.argsort(np.linalg.norm(diffs, axis=(1, 2)))
                     which_trajectory = order[0]
-                elif self.trajectory_selection == 'minimum_projection_cost' and self.projector is not None and infos is not None and 'projection_costs' in infos:
-                    costs_total = np.zeros(self.batch_size)
-                    for timestep, cost in infos['projection_costs'].items():
-                        costs_total += cost
-                    if len(costs_total) == self.batch_size:
-                        which_trajectory = np.argmin(costs_total)
+                    selection_method = 'temporal_consistency'
+                    sel_details = {'distance_to_prev': float(np.linalg.norm(diffs[which_trajectory]))}
+                
+                elif self.trajectory_selection == 'minimum_projection_cost' and self.projector is not None:
+                    # Case A: Try to load pre-computed costs from post-processing projection
+                    has_precomputed = False
+                    if infos is not None and 'projection_costs' in infos and len(infos['projection_costs']) > 0:
+                        costs_total = np.zeros(self.batch_size)
+                        for timestep, cost in infos['projection_costs'].items():
+                            costs_total += cost
+                        if len(costs_total) == self.batch_size:
+                            which_trajectory = np.argmin(costs_total)
+                            selection_method = 'minimum_projection_cost (precomputed)'
+                            sel_details = {'projection_cost': float(costs_total[which_trajectory])}
+                            has_precomputed = True
+                    
+                    # Case B: If costs are empty (e.g. gradient-based projection), compute actual projection costs on the spot
+                    if not has_precomputed:
+                        _, projection_costs = self.projector.project(trajectory)
+                        which_trajectory = np.argmin(projection_costs)
+                        selection_method = 'minimum_projection_cost (calculated)'
+                        sel_details = {
+                            'projection_cost': float(projection_costs[which_trajectory]),
+                            'all_costs': [float(c) for c in projection_costs]
+                        }
+                
+                elif self.trajectory_selection == 'random':
+                    which_trajectory = np.random.randint(self.batch_size)
+                    selection_method = 'random'
+                    sel_details = {'random_idx': which_trajectory}
+            
+            # Print/Log candidate selection decision
+            print(f"[ Trajectory Selection ] Method: {selection_method} | Selected candidate: {which_trajectory}/{self.batch_size} | Details: {sel_details}")
             
             # Store selected trajectory for future temporal consistency steps
             self.prev_observations = trajectories_np[which_trajectory].copy()

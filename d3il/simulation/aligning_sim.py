@@ -50,7 +50,13 @@ class Aligning_Sim(BaseSim):
     def eval_agent(self, agent, contexts, n_trajectories, mode_encoding, successes, mean_distance, pid, cpu_set):
 
         print(os.getpid(), cpu_set)
-        assign_process_to_cpu(os.getpid(), cpu_set)
+        # For visual aligning, we MUST NOT pin the process to a single CPU core.
+        # Visual rollouts utilize heavy GPU PyTorch workers, OpenMP threads, and MuJoCo rendering.
+        # Pinning everything to a single CPU core causes thread starvation, OpenMP deadlocks, and GPU freezes.
+        if not self.if_vision:
+            assign_process_to_cpu(os.getpid(), cpu_set)
+        else:
+            print(f"Process {os.getpid()} is running unpinned to utilize all available CPU threads safely!")
 
         env = Robot_Push_Env(render=self.render, if_vision=self.if_vision, max_steps_per_episode=self.max_episode_length)
         env.start()

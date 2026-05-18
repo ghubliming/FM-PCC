@@ -3,6 +3,26 @@ import torch
 from scipy.optimize import minimize, Bounds
 
 class Projector:
+    """
+    DPCC Projection Engine.
+    
+    Coordinate and Normalization Contract:
+    --------------------------------------
+    In modern high-fidelity diffusion pipelines (e.g., DDPM and Flow Matching), denoising, score matching,
+    and vector fields operate in a standard scaled/normalized coordinate space (typically z-score normalized 
+    or scaled to [-1, 1]) to prevent gradient explosion and maintain numerical stability.
+    
+    To maintain structural consistency:
+    1. The Projector operates and computes analytical gradients and QP projections entirely within the
+       SCALED/NORMALIZED coordinate frame.
+    2. Any physical workspace bounds (e.g., cartesian limits in meters) or dynamic deriv-steps passed
+       during initialization must be transformed into the scaled frame. This is accomplished automatically
+       by passing a compatibility normalizer (`VisualNormalizerDict` adapter wrapping dataset statistics).
+    3. Input trajectories to `project()` and `compute_gradient()` are expected to be in standard normalized
+       format: (batch_size, horizon, transition_dim).
+    4. Outputs are returned in the exact same normalized coordinate frame, which allows seamless insertion
+       into intermediate diffusion denoising/integration steps.
+    """
 
     def __init__(self, horizon, transition_dim, action_dim=0, goal_dim=0, constraint_list=[], normalizer=None, variant='states', 
                  dt=0.1, cost_dims=None, skip_initial_state=True, diffusion_timestep_threshold=0.5, gradient=False, gradient_weights=None,
