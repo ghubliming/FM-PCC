@@ -20,9 +20,9 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). |
 | **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). |
 | **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. |
-| **Gen5 (Visual Aligning)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Real vision-conditioned pipeline** (U-Net & VAE Transformer) for D3IL visual aligning task. |
-| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Legacy baseline**. Based on the `ddpmact d3il base` (imitation model). Succeeded only once (saved in the outdated legacy folders) and never returned good results since. |
-| **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | State-only non-visual aligning pipeline for Gen6. Fixed 17D vs 20D proprioceptive mismatch. |
+| **Gen5 (Visual Aligning)** | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision) | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Legacy baseline** (archived). Based on the `ddpmact d3il base` (imitation framework). Succeeded only once and never returned good results since. |
+| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Visual-Aligning Differentiable MPC (DPCC Upgrade)**. Reused FMv3ODE's DPCC projection logic on top of the visual baseline, enforcing 6D absolute workspace constraints. |
+| **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. |
 | **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. |
 | **Gen7 (Visual Flow Matching)** | [fm_encdec_vision/](../fm_encdec_vision) | [fm_encdec_vision_test/](../fm_encdec_vision_test) | May 18, 2026 (Ongoing) | **Continuous-time visual Flow Matching (FMv3ODE)** decoupled sibling migration with advanced solvers.
 
@@ -980,4 +980,39 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Legacy Recovery**: Re-added `add_Legacy_working_Good_Codes (Gen5_DDPM_EncDec)` inside the source tree to preserve baseline training stability.
 2. **Scaler Stabilization**: Restored legacy normalization scale mapping inside `VisualUNet` and `Scaler` objects. This prevents statistical regression and secures reproducible baselines for the $500\text{k}$ training checkpoints.
 3. **Path Fix**: Resolved file loading references in `config/aligning-d3il-visual.py` to ensure proper dataset routing inside cluster configurations.
+
+
+## Gen6v4 / Gen7: Robustness Fixes, Pipeline Standardization & Evaluation Upgrades (May 19, 2026)
+
+**Keywords**: clip_denoised=False, eval-on-train launcher, Slurm pipeline naming alignment, double-prefix importer fix, dataset buffer overflow bypass, actual simulation state tracking.
+
+### 1. Denoising Chain Protection (`clip_denoised=False`)
+* **Problem**: Setting `clip_denoised=True` in training scripts caused the ±5 action clamping to trigger at every early denoising step. Combined with the cosine noise schedule, this amplified bounds mathematically and permanently corrupted the actions by pinning them to thresholds, leading to 100% rollout failures.
+* **Resolution**: Disabled denoising clipping by setting `clip_denoised=False` by default in training and forced it to `False` in evaluation routines. This allows the denoising chain to generate smooth, natural action velocity plans.
+
+### 2. Default Visual Evaluation on Training Set (`--eval-on-train`)
+* **Feature**: Enabled the `--eval-on-train` flag by default inside all three visual evaluation Slurm launcher scripts:
+  * `Slurm_Codes/sbatch/diffuser_visual_aligning/eval_visual_aligning_dpcc.sh`
+  * `Slurm_Codes/sbatch/Visual_Aligning/eval_visual_aligning_fm.sh`
+  * `Slurm_Codes/sbatch/Visual_Aligning/eval_visual_aligning.sh`
+* **Impact**: Ensures that visual evaluations run on seen expert training contexts by default to establish robust diagnostic baselines.
+
+### 3. Slurm Pipeline & Job Naming Consistency
+* **Action**: Renamed `visual_aligning_dpcc_pipeline.sh` to `visual_aligning_pipeline_dpcc.sh` to match the naming convention of other pipelines (`visual_aligning_pipeline.sh` and `visual_aligning_pipeline_fm.sh`).
+* **Alignment**: Standardized the `#SBATCH --job-name` directives of all 12 visual sbatch scripts (including train, eval, load, and pipeline runners) to exactly match their `.sh` filenames, eliminating job name mismatches.
+
+### 4. Double Prefix Class Importer Guard
+* **Problem**: During evaluation weight loading, `import_class()` prepended a double `diffuser_visual_aligning.` prefix to classes already containing it, triggering a catastrophic `ModuleNotFoundError`.
+* **Resolution**: Added a strict guard in class resolution to skip prefix injection if the import string already begins with the correct package prefix.
+
+### 5. Path Length Alignment & Dataset Buffer Overflow Bypass
+* **Fix**: Standardized `max_path_length: 1000` in both training and evaluation configs to prevent `FileNotFoundError` during model loading.
+* **Bypass**: Solved a buffer overflow limit in D3IL dataset loaders by bypassing `Aligning_Dataset` and loading expert trajectory state data directly from raw pickle files, opening the full dataset for visual-DPCC training.
+
+### 6. Closed-Loop Simulation State Tracking
+* **Fix**: Corrected the observation construction in `VisualAgentWrapper`. The observation vectors now concatenate actual simulator commanded positions (`des_robot_pos_np`) instead of dead-reckoning initial coordinate estimates, eliminating trajectory drift under execution.
+
+### 7. Evaluation Logging and Safety Safeguards
+* **WandB Crash Fix**: Disabled WandB logging during D3IL closed-loop evaluation runs to avoid PyTorch/MuJoCo segmentation faults, and cleanly redirected run reports to offline diagnostic dumps (`diag_first_replan.txt`).
+* **Visual Validation**: Implemented strict console logging of scaling normalizer parameters and added sequence length validation locks to prevent silent failures.
 
