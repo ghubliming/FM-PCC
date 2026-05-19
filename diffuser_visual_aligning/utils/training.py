@@ -176,7 +176,6 @@ class Trainer(object):
                     logs["a0_loss_test"] = test_a0_loss
             logs["lr"] = self.lr_scheduler.get_last_lr()[0]
             logs["step"] = self.step
-
             if (self.step + 1) % self.log_freq == 0 or step == n_train_steps - 1:
                 progress_bar.update(step - progress_bar.n + 1)
                 progress_bar.set_postfix(**logs)

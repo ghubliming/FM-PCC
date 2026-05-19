@@ -69,7 +69,7 @@ class ParityAligningDataset(torch.utils.data.Dataset):
         all_obs_6d  = []   # list of (T_i, 6) float32 arrays — variable length per episode
         all_actions = []   # list of (T_i, 3) float32 arrays
 
-        for file in tqdm(state_files[:n_eps], desc='Loading states'):
+        for file in tqdm(state_files[:n_eps], desc='Loading states', mininterval=10.0):
             with open(os.path.join(rp_data_dir, file), 'rb') as f:
                 env_state = pickle.load(f)
 
@@ -102,7 +102,7 @@ class ParityAligningDataset(torch.utils.data.Dataset):
         self.bp_cam_imgs     = []   # list of (T_img_i, C, H, W) tensors
         self.inhand_cam_imgs = []
 
-        for file in tqdm(state_files[:n_eps], desc='Loading images'):
+        for file in tqdm(state_files[:n_eps], desc='Loading images', mininterval=10.0):
             file_name = os.path.basename(file).split('.')[0]
             self.bp_cam_imgs.append(self._load_images(data_dir, 'bp-cam',     file_name))
             self.inhand_cam_imgs.append(self._load_images(data_dir, 'inhand-cam', file_name))
