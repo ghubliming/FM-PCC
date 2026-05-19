@@ -1,6 +1,7 @@
 from collections import namedtuple
 import glob
 import os
+import pickle
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -27,19 +28,16 @@ class ParityAligningDataset(torch.utils.data.Dataset):
     instead of real end-effector positions, violating the DPCC physical contract.
 
     Data source:
-        - State (des_c_pos, c_pos, actions, masks): Aligning_Dataset (20D obs).
-          Aligning_Dataset loads ALL episodes; Aligning_Img_Dataset only loads
-          the first 3 (hardcoded [:3] stub) and is therefore unusable for training.
-        - Images: loaded directly from the image directory, same as Aligning_Img_Dataset
-          but without the [:3] cap.
+        - State (des_c_pos, c_pos, actions): loaded directly from state pickle files.
+          NOTE: Aligning_Dataset has max_len_data=256 (hardcoded) and crashes on
+          episodes longer than 256 steps (fix_1 lesson). We bypass it entirely.
+        - Images: loaded directly from the image directory without the [:3] cap
+          that Aligning_Img_Dataset hardcodes.
 
-    Aligning_Dataset.observations layout (20D, per timestep t in [0, T-2]):
-        obs[..., 0:3]  = des_c_pos   (commanded EE position)
-        obs[..., 3:6]  = c_pos       (actual EE position)
-        obs[..., 6:9]  = push_box_pos
-        obs[..., 9:13] = push_box_quat
-        obs[..., 13:16]= target_box_pos
-        obs[..., 16:20]= target_box_quat
+    State pickle layout (per timestep t in [0, T-1]):
+        robot_des_pos   → des_c_pos  (commanded EE position)
+        robot_c_pos     → c_pos      (actual EE position)
+        actions         = des_c_pos[t+1] - des_c_pos[t]  (velocity)
 
     Returns:
         Batch(trajectories: np.float32 (H,9),
@@ -56,67 +54,60 @@ class ParityAligningDataset(torch.utils.data.Dataset):
         super().__init__()
         self.horizon = horizon
 
-        # ── 1. Load state data via Aligning_Dataset (loads all episodes) ──────
-        # Aligning_Dataset.observations is (N, max_len_data, 20).
-        # First 6 dims: [des_c_pos(3) | c_pos(3)] — exactly our 6D obs.
-        # Actions: velocity = des_c_pos[t+1] - des_c_pos[t], shape (N, max_len_data, 3).
-        from d3il.environments.dataset.aligning_dataset import Aligning_Dataset
+        # ── 1. Load state data directly from pickle files ──────────────────────
+        # Bypass Aligning_Dataset: its max_len_data=256 buffer crashes for episodes
+        # longer than 256 steps (ValueError in __init__, fix_1). Loading pickles
+        # directly yields variable-length arrays with no truncation.
+        from agents.utils.sim_path import sim_framework_path
 
-        base = Aligning_Dataset(
-            data_directory=dataset_path,
-            obs_dim=20,        # full 20D obs: [des_c_pos(3)|c_pos(3)|box(14)]
-            action_dim=3,      # velocity = des_c_pos[t+1] - des_c_pos[t]
-            window_size=1,     # raw episode storage; slicing done here
-            device='cpu',
-        )
+        state_files = np.load(sim_framework_path(dataset_path), allow_pickle=True)
+        rp_data_dir = sim_framework_path("environments/dataset/data/aligning/all_data/state")
+        data_dir    = sim_framework_path("environments/dataset/data/aligning/all_data")
 
-        n_eps  = min(len(base.observations), max_n_episodes)
-        max_len = base.observations.shape[1]  # max_len_data (padded episode length)
+        n_eps = min(len(state_files), max_n_episodes)
 
-        obs_full_np = base.observations[:n_eps].cpu().numpy()   # (N, T, 20)
-        obs_6d_np   = obs_full_np[..., :6]                      # (N, T, 6) [des+c_pos]
-        actions_np  = base.actions[:n_eps].cpu().numpy()        # (N, T, 3)
-        masks_np    = base.masks[:n_eps].cpu().numpy()          # (N, T)
+        all_obs_6d  = []   # list of (T_i, 6) float32 arrays — variable length per episode
+        all_actions = []   # list of (T_i, 3) float32 arrays
 
-        # ── 2. Fit LimitsNormalizer on valid (non-padded) timesteps only ──────
-        # Fitting on padded zeros would collapse per-dim min to 0 and distort ±1 range.
-        valid_mask = masks_np > 0                                           # (N,T) bool
-        valid_obs  = obs_6d_np[valid_mask].reshape(-1, self.OBS_DIM)        # (M, 6)
-        valid_act  = actions_np[valid_mask].reshape(-1, self.ACTION_DIM)    # (M, 3)
+        for file in tqdm(state_files[:n_eps], desc='Loading states'):
+            with open(os.path.join(rp_data_dir, file), 'rb') as f:
+                env_state = pickle.load(f)
+
+            robot_des_pos = env_state['robot']['des_c_pos']   # (T+1, 3)
+            robot_c_pos   = env_state['robot']['c_pos']       # (T+1, 3)
+
+            T = len(robot_des_pos) - 1
+            obs_6d  = np.concatenate(
+                [robot_des_pos[:T], robot_c_pos[:T]], axis=-1
+            ).astype(np.float32)                                     # (T, 6)
+            actions = (robot_des_pos[1:] - robot_des_pos[:-1]).astype(np.float32)  # (T, 3)
+
+            all_obs_6d.append(obs_6d)
+            all_actions.append(actions)
+
+        self.n_episodes = n_eps
+
+        # ── 2. Fit LimitsNormalizer on all valid timesteps ──────────────────────
+        valid_obs = np.concatenate(all_obs_6d,  axis=0)   # (sum(T_i), 6)
+        valid_act = np.concatenate(all_actions, axis=0)   # (sum(T_i), 3)
 
         self.obs_normalizer = LimitsNormalizer(valid_obs)
         self.act_normalizer = LimitsNormalizer(valid_act)
 
-        # ── 3. Store raw state data ───────────────────────────────────────────
-        self._obs_6d   = obs_6d_np    # (N, T, 6)
-        self._actions  = actions_np   # (N, T, 3)
-        self._masks    = masks_np     # (N, T)
-        self.n_episodes = n_eps
-        self.max_path_length = max_len
+        # ── 3. Store raw state data (variable-length lists, not padded arrays) ──
+        self._obs_6d  = all_obs_6d    # list of (T_i, 6) arrays
+        self._actions = all_actions   # list of (T_i, 3) arrays
 
         # ── 4. Load images directly (avoids Aligning_Img_Dataset[:3] stub) ───
-        # Aligning_Img_Dataset hardcodes [:3] in its episode loop — training on
-        # only 3 episodes. We replicate its per-image loading over all n_eps files.
-        from agents.utils.sim_path import sim_framework_path
-
-        state_files = np.load(sim_framework_path(dataset_path), allow_pickle=True)
-        data_dir    = sim_framework_path("environments/dataset/data/aligning/all_data")
-
-        self.bp_cam_imgs     = []   # list of (T_img, C, H, W) tensors
+        self.bp_cam_imgs     = []   # list of (T_img_i, C, H, W) tensors
         self.inhand_cam_imgs = []
 
         for file in tqdm(state_files[:n_eps], desc='Loading images'):
             file_name = os.path.basename(file).split('.')[0]
-
-            bp_imgs_tensor    = self._load_images(data_dir, 'bp-cam',     file_name)
-            inhand_imgs_tensor = self._load_images(data_dir, 'inhand-cam', file_name)
-
-            self.bp_cam_imgs.append(bp_imgs_tensor)
-            self.inhand_cam_imgs.append(inhand_imgs_tensor)
+            self.bp_cam_imgs.append(self._load_images(data_dir, 'bp-cam',     file_name))
+            self.inhand_cam_imgs.append(self._load_images(data_dir, 'inhand-cam', file_name))
 
         # ── 5. Build sliding window indices ──────────────────────────────────
-        # Only windows fully within the valid (unpadded) episode range,
-        # and within the image count for that episode.
         self.indices = self._make_indices()
         print(f'[ ParityAligningDataset ] {n_eps} episodes, {len(self.indices)} windows '
               f'(horizon={horizon}, traj_dim={self.TRAJ_DIM})')
@@ -129,8 +120,8 @@ class ParityAligningDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         ep, start, end = self.indices[idx]
 
-        obs_raw = self._obs_6d[ep, start:end]    # (H, 6) float32
-        act_raw = self._actions[ep, start:end]   # (H, 3) float32
+        obs_raw = self._obs_6d[ep][start:end]    # (H, 6) — list index then slice
+        act_raw = self._actions[ep][start:end]   # (H, 3)
 
         obs_norm = self.obs_normalizer.normalize(obs_raw).astype(np.float32)  # (H, 6)
         act_norm = self.act_normalizer.normalize(act_raw).astype(np.float32)  # (H, 3)
@@ -138,10 +129,6 @@ class ParityAligningDataset(torch.utils.data.Dataset):
         # [act(3) | obs(6)] → (H, 9)
         trajectories = np.concatenate([act_norm, obs_norm], axis=-1)
 
-        # conditions:
-        #   0             → 6D obs anchor at t=0 for apply_conditioning snap
-        #   'primary_img' → agentview camera frame at timestep `start`
-        #   'wrist_img'   → wrist camera frame at timestep `start`
         conditions = {
             0:             obs_norm[0],                       # (6,) float32 numpy
             'primary_img': self.bp_cam_imgs[ep][start],      # (C, H, W) tensor
@@ -152,14 +139,13 @@ class ParityAligningDataset(torch.utils.data.Dataset):
     # ── internal helpers ──────────────────────────────────────────────────────
 
     def _make_indices(self):
-        """Build (ep, start, end) tuples where the full window is within valid data
-        and within the image tensor length for that episode."""
+        """Build (ep, start, end) tuples where the full window fits within both
+        the state trajectory length and the image tensor length."""
         indices = []
         for ep in range(self.n_episodes):
-            valid_len = int(self._masks[ep].sum())
-            n_imgs    = len(self.bp_cam_imgs[ep])
-            # window end must not exceed either state-valid length or image count
-            usable = min(valid_len, n_imgs)
+            T     = len(self._obs_6d[ep])
+            n_img = len(self.bp_cam_imgs[ep])
+            usable = min(T, n_img)
             for start in range(usable - self.horizon + 1):
                 indices.append((ep, start, start + self.horizon))
         return np.array(indices, dtype=np.int64)
