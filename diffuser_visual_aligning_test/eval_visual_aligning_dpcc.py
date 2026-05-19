@@ -762,6 +762,8 @@ if __name__ == '__main__':
                 trajectory_selection = 'random'
                 if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
                 elif 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+                elif 'post_processing' in variant or 'model_free' in variant:
+                    trajectory_selection = 'minimum_projection_cost'  # Fix 9.4: cost-based over random from batch=6
 
                 batch_size = getattr(args, 'batch_size', 1)
                 if 'diffuser' not in variant:
