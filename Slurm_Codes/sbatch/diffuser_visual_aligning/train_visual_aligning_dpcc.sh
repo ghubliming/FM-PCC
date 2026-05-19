@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dpcc_train
+#SBATCH --job-name=train_visual_aligning_dpcc
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

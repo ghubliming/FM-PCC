@@ -17,6 +17,7 @@ args_to_watch_dpcc_train = [
     ('n_diffusion_steps', 'K'),
     ('diffusion', 'D'),
     ('action_weight', 'aw'),
+    # NOTE: In visual_aligning_dpcc, max_path_length is max_n_episodes (not rollout steps).
     ('max_path_length', 'steps'),
 ]
 
@@ -26,6 +27,7 @@ args_to_watch_dpcc_plan = [
     ('n_diffusion_steps', 'K'),
     ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
+    # NOTE: max_episode_length controls rollout steps; max_path_length is only a loadpath key.
     ('max_episode_length', 'steps'),
 ]
 
@@ -211,6 +213,11 @@ base = {
         'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)] — MUST be 6, never 3 or 128
         'if_vision': True,
         'horizon': 8,               # Must be divisible by 8 for U-Net stride-2 downsampling (padded internally)
+        # n_diffusion_steps = denoising chain length T (d3il vision baseline: 4; encdec baseline: 16; state-only: 50).
+        # 100 gives high sample quality but 25× inference cost vs d3il vision default.
+        # MUST stay identical in visual_aligning_dpcc and plan_visual_aligning_dpcc —
+        # it is embedded in the checkpoint directory name (K{n_diffusion_steps}) via args_to_watch_dpcc_train.
+        # If you retrain with a different K, update both blocks together.
         'n_diffusion_steps': 100,
         'action_weight': 10,
         'loss_type': 'l2',
@@ -224,6 +231,9 @@ base = {
         # ParityAligningDataset loads 9D trajectories from raw pkl files.
         # max_path_length is reused as max_n_episodes for ParityAligningDataset.
         # ======================================================================================
+        # d3il uses max_len_data=512 to truncate individual trajectories per episode.
+        # Here max_path_length is re-purposed as max_n_episodes for ParityAligningDataset
+        # (how many episodes to load), not a per-trajectory step cap.
         'max_path_length': 1000,    # max_n_episodes passed to ParityAligningDataset
 
         # ======================================================================================
@@ -236,10 +246,12 @@ base = {
         # ======================================================================================
         # 🏋️‍♂️ TRAINING HYPERPARAMETERS
         # ======================================================================================
-        'batch_size': 32,
+        'batch_size': 32,             # d3il vision baseline: 64
         'learning_rate': 2e-4,
         'ema_decay': 0.995,
         'n_steps_per_epoch': 1000,
+        # d3il trains for epoch=4 (epoch-based). We use steps-based training.
+        # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
         'n_train_steps': 5e5,
         'gradient_accumulate_every': 2,
         'train_test_split': 0.9,
@@ -252,9 +264,11 @@ base = {
         # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
         # ======================================================================================
         'horizon': 8,
+        # MUST equal visual_aligning_dpcc.n_diffusion_steps — both are embedded as K{n_diffusion_steps} in the
+        # checkpoint directory name. A mismatch here produces a FileNotFoundError (wrong K in loadpath).
         'n_diffusion_steps': 100,
         'max_episode_length': 1000,
-        'max_path_length': 1000,   # MUST match visual_aligning_dpcc.max_path_length (fix_1.3): used in diffusion_loadpath template
+        'max_path_length': 1000,   # MUST match visual_aligning_dpcc.max_path_length (fix_1.3): loadpath key only
         'action_weight': 10,
         # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
         # provides single-frame images per sample, so the model is trained on T_win=1.

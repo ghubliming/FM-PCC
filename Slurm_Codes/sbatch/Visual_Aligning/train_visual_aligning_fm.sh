@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=visual_train_fm
+#SBATCH --job-name=train_visual_aligning_fm
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
