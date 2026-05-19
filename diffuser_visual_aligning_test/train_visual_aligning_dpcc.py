@@ -210,7 +210,7 @@ for seed in selected_seeds:
         goal_dim=0,
         n_timesteps=_n_diff_steps,
         loss_type=args.loss_type,
-        clip_denoised=True,
+        clip_denoised=False,
         predict_epsilon=True,
         action_weight=getattr(args, 'action_weight', 10.0),
         device=args.device,
