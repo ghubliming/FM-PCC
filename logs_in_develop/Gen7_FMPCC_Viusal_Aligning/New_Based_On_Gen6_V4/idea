@@ -1,0 +1,7 @@
+- General Principle: Should based on the Gen6V4, newst version. Copy - Modify the Core `diffuser_visual_aligning` and the Entry `diffuser_visual_aligning_test`. Add to the /config/avoiding-d3il.py the new config blocks for training and eval, foloow the `diffuser_visual_aligning`pattern.
+
+
+Other Materials for principle learning:
+- (Proofed work, can point the wrong part if spotted)Learn from FMv3ODE (which build upon dpcc-diffsor), how is the FM impmented, to replace the diffuson engine in the DPCC framework.
+
+- (Bad code, but principle can learn, and the codes is at least runnnig good, just Math/Arch is bad/wrong)Learn from Abandoned Existing Gen7 fm_encdec code (which was based on Abandoned Existing Gen6V1/3 Code ddpm_encdec), how is the FM impmented, to replace the diffuson engine in the DPCC framework.
