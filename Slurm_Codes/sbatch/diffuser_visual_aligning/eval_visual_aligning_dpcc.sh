@@ -62,6 +62,6 @@ fi
 RECORD_MODE="${2:-all}"
 echo "[ eval ] Recording mode set to: $RECORD_MODE"
 
-python diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py $SEED_ARG --record "$RECORD_MODE"
+python diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py $SEED_ARG --record "$RECORD_MODE" --eval-on-train
 
 echo "Job completed successfully."

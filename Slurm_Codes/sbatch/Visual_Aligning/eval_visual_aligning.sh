@@ -64,6 +64,6 @@ fi
 RECORD_MODE="${2:-all}"
 echo "[ eval ] Recording mode set to: $RECORD_MODE"
 
-python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py $SEED_ARG --record "$RECORD_MODE"
+python ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py $SEED_ARG --record "$RECORD_MODE" --eval-on-train
 
 echo "Job completed successfully."
