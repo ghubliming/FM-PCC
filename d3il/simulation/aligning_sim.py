@@ -36,12 +36,14 @@ class Aligning_Sim(BaseSim):
             n_cores: int = 1,
             n_contexts: int = 30,
             n_trajectories_per_context: int = 1,
-            if_vision: bool = False
+            if_vision: bool = False,
+            eval_on_train: bool = False
     ):
         super().__init__(seed, device, render, n_cores, if_vision)
 
         self.n_contexts = n_contexts
         self.n_trajectories_per_context = n_trajectories_per_context
+        self.eval_on_train = eval_on_train
 
     def eval_agent(self, agent, contexts, n_trajectories, mode_encoding, successes, mean_distance, pid, cpu_set):
 
@@ -66,7 +68,8 @@ class Aligning_Sim(BaseSim):
                 # obs = env.reset(random=False, context=test_contexts[context])
 
                 # obs = env.reset()
-                obs = env.reset(random=False, context=test_contexts[context])
+                ctx_pool = train_contexts if self.eval_on_train else test_contexts
+                obs = env.reset(random=False, context=ctx_pool[context])
 
                 # test contexts
                 # test_context = env.manager.sample()

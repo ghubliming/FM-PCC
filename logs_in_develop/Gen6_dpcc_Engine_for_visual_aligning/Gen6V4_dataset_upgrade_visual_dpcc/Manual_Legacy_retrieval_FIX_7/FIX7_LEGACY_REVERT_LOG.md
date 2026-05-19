@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-19
 
-## FIX_7 — Revert Fix 38 (max_episode_length plumbing)
+## FIX_7.1 — Revert Fix 38 (max_episode_length plumbing)
 
 ### What was reverted
 Fix 38 introduced `max_episode_length` plumbing into `Aligning_Sim` and forwarded it to
@@ -48,7 +48,7 @@ This was reverted because it caused server problems in the reported commit.
 
 ---
 
-## FIX_8 — Revert D3IL Aligning_Img_Dataset RGB Conversion
+## FIX_7.2 — Revert D3IL Aligning_Img_Dataset RGB Conversion
 
 ### What was reverted
 Commit `6f42a73427cb0197377e3ed5556f9a5cfb5d6f5e` introduced BGR→RGB conversion when loading
@@ -88,7 +88,7 @@ If RGB conversion is desired for new training, reintroduce it explicitly and ret
 
 ---
 
-## FIX_9 — Revert Material D3IL Behavior Drift (Aligning Sim + Camera + Rod Collision)
+## FIX_7.3 — Revert Material D3IL Behavior Drift (Aligning Sim + Camera + Rod Collision)
 
 ### Commit reference
 Commit ID not provided in repo history; revert applied to restore parity with /workspaces/d3il.

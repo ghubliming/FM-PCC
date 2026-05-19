@@ -1,115 +1,110 @@
-# Fix 6 — clip_denoised=True → False: Root Cause of Total Eval Failure (2026-05-19)
+# Fix 6 & Mathematical Audit: Denoising Clamping (`clip_denoised`) in Visual-DPCC
 
-## Context
-
-After Fix 5 (wandb crash + DIAG file), the first real visual eval was diagnosed via
-DIAG output from the K16/steps256 checkpoint (well-converged: a0 loss 0.107→0.007,
-total 0.73→0.05 over 4 epochs × ~11k-step dataset). All rollouts failed with the
-robot oscillating at max velocity.
+**Subject:** Technical Root Cause and Comparative Codebase Audit for Fix 6  
+**Verdict:** **NO REVERSION REQUIRED.** The change to `clip_denoised = False` is a hyperparameter configuration correction that restores the correct mathematical behavior of the original DPCC framework, leaving all core DPCC equations, solvers, and projection logic completely untouched and intact.
 
 ---
 
-## Root Cause
+## 1. Context & Root Cause Analysis
 
-**`clip_denoised=True` in `train_visual_aligning_dpcc.py` (line 213)**
+Following initial visual evaluation runs of the K16/steps256 checkpoint (which exhibited excellent training convergence: $a_0$ loss $0.107 \to 0.007$, total loss $0.73 \to 0.05$ over 4 epochs), all rollouts failed with the robot immediately entering extreme high-frequency oscillations at maximum boundary velocity.
 
-Original DPCC (`/workspaces/dpcc/config/avoiding-d3il.py`) uses:
-```python
-'clip_denoised': False
-```
-
-Our visual train script hardcoded:
-```python
-clip_denoised=True,   # ← WRONG
-```
-
-`VisualGaussianDiffusion.p_mean_variance` contains:
+### Root Cause
+`clip_denoised=True` was hardcoded in `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` (Line 213).
+Under vanilla Gaussian Diffusion, `p_mean_variance` reads this attribute and clamps the intermediate reconstructed state predictions:
 ```python
 if self.clip_denoised:
     x_recon[..., :self.action_dim].clamp_(-5.0, 5.0)
 ```
 
-### Why this catastrophically corrupts inference
+---
 
-With cosine schedule at K=16, the noise amplification factor at the first denoising
-step (t=T-1=15) is:
+## 2. codebase Comparison & Ground Truth Verification
 
-```
-sqrt_recip_alphas_cumprod[15] ≈ 9.4
-```
+We performed a strict line-by-line file comparison between the original `dpcc` repository (`/workspaces/dpcc`) and our ported visual DPCC package (`/workspaces/FM-PCC/diffuser_visual_aligning`). 
 
-Inference starts from `x = 0.5 * torch.randn(shape)` (original DPCC behaviour).
-At t=15:
+### Core Solver Code Parity
+The core mathematical integration blocks are **100% identical**:
+* **Core Diffusion Solver (`models/diffusion.py`):** Comparing `/workspaces/dpcc/diffuser/models/diffusion.py` and `/workspaces/FM-PCC/diffuser_visual_aligning/models/diffusion.py` shows only a package import change:
+  ```diff
+  7c7
+  < import diffuser.utils as utils
+  ---
+  > import diffuser_visual_aligning.utils as utils
+  ```
+* **QP Projection Engine (`sampling/projection.py`):** The functional SciPy SLSQP projection loop is **100% identical**. Only a standard coordinate-contract docstring was added.
+* **Denoising Helpers (`models/helpers.py`):** Functional code is **100% identical** (with utility import package name adjusted).
 
-```
-x_recon = sqrt_recip_alphas_cumprod[15] * x_t
-        − sqrt_recipm1_alphas_cumprod[15] * ε_θ(x_t, t)
-```
-
-Both terms have std ≈ 9.4 × 0.5 = 4.7, combined std ≈ **10.5**.
-
-The ±5 clamp fires on virtually every element of x_recon at this step.
-This corrupts `model_mean` → x_{t-1} is out-of-distribution → the model
-receives inputs it was NEVER trained on → the denoising chain never recovers.
-The final trajectory is pinned entirely at ±5 (normalizer boundary).
-
-DIAG evidence:
-```
-[ DIAG first-replan ] horizon act (normalized) range: [-5.0000, 5.0000]
-```
-Every step of the H=8 horizon hit the clamp simultaneously — characteristic
-of this failure mode.
-
-### Why training was unaffected
-
-`clip_denoised` is only read inside `p_mean_variance` (inference path).
-Training uses `p_losses`, which computes MSE on the noise prediction directly
-without ever calling `p_mean_variance`. The checkpoint is valid.
+### Configuration Parity
+* **Original Parent Repository:** `/workspaces/dpcc/config/avoiding-d3il.py` (Line 42) explicitly disables clamping:
+  ```python
+  'clip_denoised': False,
+  ```
+* **Active State-Only Configurations:** `/workspaces/FM-PCC/config/avoiding-d3il.py` (Lines 93, 141, 190, 246, 303, 359, 413, 468, 833) also enforce:
+  ```python
+  'clip_denoised': False,
+  ```
+* **The Baseline Exception:** The non-MPC imitation baseline (`ddpm_encdec_vision`) historically used `clip_denoised=True` as an imitation constraint. This was accidentally carried over into the visual DPCC planning scripts during baseline porting.
 
 ---
 
-## Fix
+## 3. Mathematical Breakdown: Clamping vs. Guided Planning
 
-### 1. Train script — prevent future checkpoints from inheriting the bug
+Under the standard reverse diffusion process, the predicted clean trajectory $x_0$ (`x_recon`) is reconstructed at step $t$ using the model's noise prediction $\epsilon_\theta(x_t, t)$:
 
-`diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` line 213:
+$$x_0 = \frac{1}{\sqrt{\bar{\alpha}_t}} x_t - \sqrt{\frac{1}{\bar{\alpha}_t} - 1} \epsilon_\theta(x_t, t)$$
+
+1. **Noise Amplification:** Under a cosine schedule with $K=16$ steps, the amplification factor at the first reverse step ($t = 15$) is extremely large:
+   $$\frac{1}{\sqrt{\bar{\alpha}_{15}}} \approx 9.4$$
+2. **High Standard Deviation:** Because the starting latent $x_{15} \sim \mathcal{N}(0, 0.5^2)$, the unconstrained clean prediction $x_0$ has an expected standard deviation of:
+   $$\text{std}(x_0) \approx 9.4 \times 0.5 \approx 4.7 \quad (\text{combined std} \approx 10.5)$$
+3. **Catastrophic Clamping Distortion (`clip_denoised=True`):** Hard-clamping $x_0$ to standard bounds (e.g. $[-1, 1]$ or $[-5, 5]$) at early steps clips virtually every coordinate of the trajectory. This severely distorts the calculated posterior mean $q(x_{t-1} | x_t, x_0)$, pushing subsequent states completely out of the trained data distribution. The denoising chain fails to recover, pinning the output actions to the boundaries and causing the observed high-frequency maximum-velocity oscillations during simulator rollout.
+4. **Natural Denoising (`clip_denoised=False`):** By setting `clip_denoised=False`, intermediate states denoise naturally along their learned distributions. The SLSQP QP-Projector is then able to cleanly enforce physical tabletop and safety cage bounds on the final trajectories as originally intended in DPCC.
+
+---
+
+## 4. Code Modifications Applied in Fix 6
+
+The fix was applied in two parts to correct the training configuration and protect existing checkpoints from this failure mode without requiring retraining.
+
+### 1. Training Launcher Script
+In `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` (Line 213), the parameter was corrected to match the original DPCC standard:
 ```python
-# Before
-clip_denoised=True,
-
-# After
-clip_denoised=False,
+    diffusion_config = utils.Config(
+        VisualGaussianDiffusion,
+        savepath=(args.savepath, 'diffusion_config.pkl'),
+        horizon=args.horizon,
+        observation_dim=6,
+        action_dim=args.action_dim,
+        goal_dim=0,
+        n_timesteps=_n_diff_steps,
+        loss_type=args.loss_type,
+        clip_denoised=False,        # corrected from True
+        predict_epsilon=True,
+        action_weight=getattr(args, 'action_weight', 10.0),
+        device=args.device,
+    )
 ```
 
-### 2. Eval script — fix existing checkpoints without retraining
-
-The saved `diffusion_config.pkl` stores `clip_denoised=True` for the K16/steps256
-checkpoint. Overriding the attribute at eval time bypasses the serialized value:
-
-`diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (after `diffusion_model = exp.diffusion`):
+### 2. Evaluation Launcher Script (Retroactive Checkpoint Protection)
+To support older checkpoints (where `clip_denoised=True` was already serialized into `diffusion_config.pkl`), we retroactively override the attribute in memory immediately after loading the model in `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`:
 ```python
-diffusion_model.clip_denoised = False
-print('[ eval ] clip_denoised forced → False (matches original DPCC)')
+            # Force clip_denoised to False so all checkpoints use 
+            # the mathematically correct DPCC inference behaviour.
+            diffusion_model.clip_denoised = False
+            print('[ eval ] clip_denoised forced → False (matches original DPCC)')
 ```
 
-This is safe because `clip_denoised` is a plain Python attribute on
-`VisualGaussianDiffusion`; overriding it at runtime does not affect any
-tensors or model weights.
-
 ---
 
-## Verification Plan
+## 5. Verification Plan & Verdict
 
-1. Run eval on existing K16/steps256 checkpoint → DIAG should show
-   `range: [<val> < 5.0, ...]` instead of `[-5.0000, 5.0000]`
-2. Denormalized a0 magnitude should be << 0.014434 m (not clamped)
-3. At least some rollouts should reach the goal (non-zero success rate)
+### Verification Metrics
+1. Run evaluation on existing K16 checkpoints ➔ Diagnostics should show action ranges within expected bounds (e.g. $[ < 5.0 ]$) instead of pinned at $[-5.0000, 5.0000]$.
+2. Denormalized $a_0$ physical command magnitude should remain within stable limits.
+3. Closed-loop simulator rollouts should recover, yielding non-zero task success rates.
 
----
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` | line 213: `clip_denoised=True` → `clip_denoised=False` |
-| `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | force `diffusion_model.clip_denoised = False` after model load + print confirmation |
+### Final Verdict
+* Fix 6 **does not alter a single line of DPCC mathematics, solver integrations, or code logic**.
+* It strictly corrects a hyperparameter configuration value.
+* Keeping `clip_denoised = False` is mathematically sound, restores 100% parity with the original DPCC parent repository, and is essential for closed-loop evaluation stability.

@@ -1016,3 +1016,10 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 * **WandB Crash Fix**: Disabled WandB logging during D3IL closed-loop evaluation runs to avoid PyTorch/MuJoCo segmentation faults, and cleanly redirected run reports to offline diagnostic dumps (`diag_first_replan.txt`).
 * **Visual Validation**: Implemented strict console logging of scaling normalizer parameters and added sequence length validation locks to prevent silent failures.
 
+### 8. Manual Legacy Retrieval & D3IL Revert Parity (FIX_7.1, FIX_7.2, FIX_7.3)
+* **Revert Fix 38 (FIX_7.1)**: Removed experimental `max_episode_length` plumbing in `Aligning_Sim` environment initialization to restore physics-based default steps.
+* **BGR-to-RGB Image Parity (FIX_7.2)**: Reverted the color-space conversion in D3IL's image loaders to preserve byte-for-byte image alignment with the original dataset, preventing visual distribution shifts.
+* **Material Simulator & Robot Parity (FIX_7.3)**: Reverted custom simulator control loops, named camera registrations, and rod-tip collisions to restore 100% behavioral parity with original D3IL benchmarks.
+* **Traceability Matrix**: Created [D3IL_DIFF_AUDIT.md](Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Manual_Legacy_retrieval_FIX_7/D3IL_DIFF_AUDIT.md) and [FIX7_LEGACY_REVERT_LOG.md](Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Manual_Legacy_retrieval_FIX_7/FIX7_LEGACY_REVERT_LOG.md) to log all changes and verify parity.
+
+
