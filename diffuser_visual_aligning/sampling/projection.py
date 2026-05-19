@@ -90,14 +90,19 @@ class Projector:
     def project(self, trajectory, constraints=None):
         """
             trajectory: np.ndarray of shape (batch_size, horizon, transition_dim)
-            Solve an optimization problem of the form 
+            Solve an optimization problem of the form
                 \hat z =   argmin_z 1/2 z^T Q z + r^T z
                         subject to  Az  = b
                                     Cz <= d
             where z = (o_0, o_1, ..., o_{H-1}) is the trajectory in vector form. The matrices A, b, C, and d are defined by the dynamic and safety constraints.
-                                    
+
         """
-        
+        # Fix 9.1: skip SLSQP entirely when no constraints are active — running SLSQP with
+        # empty constraint matrices and bounds [-5,5] corrupts healthy trajectories via the QP cost.
+        if self.A.shape[0] == 0 and self.C.shape[0] == 0 and len(self.obstacle_constraints.P_list) == 0:
+            batch_size = trajectory.shape[0]
+            return trajectory, np.zeros(batch_size, dtype=np.float32)
+
         dims = trajectory.shape
 
         # Reshape the trajectory to a batch of vectors (from B x H x T to B x (HT)
@@ -165,10 +170,11 @@ class Projector:
             sol_np[i] = res.x
             projection_costs[i] = 0.5 * sol_np[i] @ Q @ sol_np[i] + r_np[i] @ sol_np[i] + 0.5 * trajectory_np[i] @ Q @ trajectory_np[i]
 
-            # if np.linalg.norm(A_double @ res.x - b_double) > 1e-3:
-            #     print('Equality constraints not satisfied!')
-            # if np.any(C_double @ res.x > d_double + 1e-3):
-            #     print('Inequality constraints not satisfied!')
+            # Fix 9.3: log when SLSQP meaningfully modifies the trajectory
+            delta = np.linalg.norm(sol_np[i] - trajectory_np[i])
+            if delta > 1e-4:
+                print(f'[ projector ] sample {i}: SLSQP delta={delta:.6f} '
+                      f'success={res.success} nit={res.nit} status={res.status}')
 
         sol = torch.tensor(sol_np, device=self.device).reshape(dims)
 
@@ -179,11 +185,15 @@ class Projector:
         """
             trajectory: np.ndarray of shape (batch_size, horizon, transition_dim) or (horizon, transition_dim)
             Calculate the (weighted) gradients for the following cost functions:
+            Fix 9.2: returns zero gradient when no constraints are active.
             c_1 = ||A * tau - b||^2                             --> grad_1 = 2 * A^T (A * tau - b)
             c_2 = max(0, C * tau - d)^2                         --> grad_2 = 2 * C^T max(0, C * tau - d)
-            c_3 = sum_{t=1}^{H-1} (s_t^T P s_t + q^T s_t - v)^2 --> grad_3 = 2 * (2 * P s_t + q) * (s_t^T P s_t + q^T s_t - v)                 
+            c_3 = sum_{t=1}^{H-1} (s_t^T P s_t + q^T s_t - v)^2 --> grad_3 = 2 * (2 * P s_t + q) * (s_t^T P s_t + q^T s_t - v)
         """
-        
+        # Fix 9.2: skip gradient computation entirely when no constraints are active.
+        if self.A.shape[0] == 0 and self.C.shape[0] == 0 and len(self.obstacle_constraints.P_list) == 0:
+            return torch.zeros_like(trajectory)
+
         trajectory_reshaped = trajectory.reshape(trajectory.shape[0], -1)
         trajectory_np = trajectory_reshaped.cpu().numpy()
 
