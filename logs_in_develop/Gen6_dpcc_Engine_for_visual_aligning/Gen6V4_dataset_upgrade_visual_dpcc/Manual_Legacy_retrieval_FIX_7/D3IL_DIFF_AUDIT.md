@@ -38,8 +38,8 @@ Cache folders and git metadata are listed separately.
   - Model asset change can alter collision/geometry behavior.
 
 ## Material Behavior Changes (confirmed by diff)
-- d3il/simulation/aligning_sim.py (reverted FIX_7.3)
-  - Adds `eval_on_train`, changes CPU pinning behavior for vision, alters return values, and adds rollout info hooks.
+- d3il/simulation/aligning_sim.py (reverted FIX_7.3 + patched FIX_7.4)
+  - CPU pinning restored to all modes; return signature parity restored. `eval_on_train` re-added as optional flag (default False = test contexts); intentional FM-PCC extension.
 - d3il/environments/d3il/envs/gym_aligning_env/gym_aligning/envs/aligning.py (reverted FIX_7.3)
   - `BPCageCam` now takes a named model key; camera instantiation behavior changes.
 - d3il/environments/d3il/models/mj/robot/panda_rod_invisible.xml (reverted FIX_7.3)
@@ -59,7 +59,7 @@ Below is the definitive status mapping for every file identified in the diff aud
 
 | File / Directory | Current Status | Revert Reason / Technical Difference (vs. Original D3IL) |
 | :--- | :--- | :--- |
-| `d3il/simulation/aligning_sim.py` | **Reverted (FIX_7.3)** | Restored strict CPU process affinity pinning, original 30 test-context seeding limits, and reverted the return signature to omit the experimental `mean_distance` tuple value, ensuring absolute evaluation interface parity. |
+| `d3il/simulation/aligning_sim.py` | **Reverted (FIX_7.3) + Patched (FIX_7.4, FIX_7.5)** | FIX_7.3: Restored CPU pinning and return signature parity. FIX_7.4: Re-added `eval_on_train: bool = False`. FIX_7.5: CPU pinning gated on `not self.if_vision` — visual eval runs unpinned to avoid single-core starvation (K=100 SLSQP + CUDA + OpenMP cannot share one core). Intentional FM-PCC extension; D3IL never runs visual rollouts. |
 | `d3il/environments/d3il/envs/gym_aligning_env/gym_aligning/envs/aligning.py` | **Reverted (FIX_7.3)** | Restored the original `BPCageCam` camera constructor instantiation signature, removing custom string keys which caused rendering pipeline initialization crashes. |
 | `d3il/environments/d3il/models/mj/robot/panda_rod_invisible.xml` | **Reverted (FIX_7.3)** | Restored the contact parameters of `rod:tip` sphere geometry (`contype="0" conaffinity="0"`), making it non-colliding to align with original D3IL physics bounds and prevent solver warnings. |
 | `d3il/agents/models/bet/libraries/mingpt/trainer.py` | **Still Active (Optimized)** | **Logging Optimization:** Limits the terminal progress bar refresh interval (`mininterval=1e10` and only updates `pbar` every 100 iterations or at epoch end) to prevent Slurm stdout buffer overflow crashes. |

@@ -48,7 +48,10 @@ class Aligning_Sim(BaseSim):
     def eval_agent(self, agent, contexts, n_trajectories, mode_encoding, successes, mean_distance, pid, cpu_set):
 
         print(os.getpid(), cpu_set)
-        assign_process_to_cpu(os.getpid(), cpu_set)
+        if not self.if_vision:
+            assign_process_to_cpu(os.getpid(), cpu_set)
+        else:
+            print(f"Process {os.getpid()} unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).")
 
         env = Robot_Push_Env(render=self.render, if_vision=self.if_vision)
         env.start()
@@ -121,6 +124,9 @@ class Aligning_Sim(BaseSim):
                 mode_encoding[context, i] = torch.tensor(info['mode'])
                 successes[context, i] = torch.tensor(info['success'])
                 mean_distance[context, i] = torch.tensor(info['mean_distance'])
+
+                if hasattr(agent, 'update_rollout_info'):
+                    agent.update_rollout_info({**info, 'context': context})
 
     ################################
     # we use multi-process for the simulation
@@ -205,4 +211,4 @@ class Aligning_Sim(BaseSim):
         print(f'Successrate {success_rate}')
         print(f'entropy {entropy}')
 
-        return success_rate, mode_encoding#, mean_distance
+        return success_rate, mode_encoding, successes, mean_distance

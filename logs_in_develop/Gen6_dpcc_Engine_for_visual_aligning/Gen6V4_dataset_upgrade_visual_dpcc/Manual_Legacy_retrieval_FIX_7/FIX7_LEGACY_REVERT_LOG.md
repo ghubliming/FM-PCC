@@ -2,6 +2,68 @@
 
 **Date:** 2026-05-19
 
+## FIX_7.5 — Restore CPU Affinity Bypass for Visual Mode (2026-05-19)
+
+### Reason
+FIX_7.3 restored `assign_process_to_cpu` unconditionally to match original D3IL.
+However, original D3IL has no visual mode — the pinning was designed for lightweight
+state-only rollouts. With `if_vision=True` and K=100, forcing MuJoCo OpenGL rendering,
+ResNet inference, CUDA polling, and SciPy SLSQP projection onto a single CPU core ({0})
+causes thread starvation and a permanent hang at Context 0 Rollout 0 (observed: 15+ min
+with no progress). This was previously diagnosed and documented in
+`logs_in_develop/Gen7_FMPCC_Viusal_Aligning/d3il_modification/CPU_AFFINITY_BYPASS.md`.
+
+### File changed
+**File:** d3il/simulation/aligning_sim.py
+
+**Before (FIX_7.3 unconditional pinning):**
+```python
+print(os.getpid(), cpu_set)
+assign_process_to_cpu(os.getpid(), cpu_set)
+```
+
+**After (FIX_7.5 — gates pinning on non-visual mode):**
+```python
+print(os.getpid(), cpu_set)
+if not self.if_vision:
+    assign_process_to_cpu(os.getpid(), cpu_set)
+else:
+    print(f"Process {os.getpid()} unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).")
+```
+
+### Impact
+- State-only eval (`if_vision=False`): pinning unchanged — exact D3IL parity preserved.
+- Visual eval (`if_vision=True`): process runs unpinned, allowing all 64 cores to serve
+  PyTorch workers, OpenMP threads, OpenGL drivers, and SLSQP optimizer without starvation.
+- Resolves the 15+ min hang at Context 0 Rollout 0 introduced by FIX_7.3.
+- This is an intentional FM-PCC extension; original D3IL never runs visual rollouts.
+
+### Also fixed in this patch (same file)
+
+**Bug A — Video/GIF never saved:**
+`eval_agent` called `agent.reset()` at rollout start (which clears `video_frames`) but never
+called `agent.update_rollout_info()` after rollout end — the only path to `_save_diagnostics()`.
+Every rollout's frames were silently discarded by the next `reset()`.
+
+```python
+# Added after info tensors are recorded:
+if hasattr(agent, 'update_rollout_info'):
+    agent.update_rollout_info({**info, 'context': context})
+```
+
+**Bug B — Return value unpack crash:**
+`test_agent` returned 2 values `(success_rate, mode_encoding)` but eval script unpacked 4.
+Would crash immediately after all rollouts finished.
+
+```python
+# Before:
+return success_rate, mode_encoding#, mean_distance
+# After:
+return success_rate, mode_encoding, successes, mean_distance
+```
+
+---
+
 ## FIX_7.1 — Revert Fix 38 (max_episode_length plumbing)
 
 ### What was reverted
@@ -45,6 +107,76 @@ This was reverted because it caused server problems in the reported commit.
 - `Aligning_Sim` no longer tracks `max_episode_length`.
 - `Robot_Push_Env` runs with its internal default episode length.
 - Eval no longer tries to override episode length from config.
+
+---
+
+## FIX_7.4 — Restore eval_on_train to Aligning_Sim (2026-05-19)
+
+### Reason
+FIX_7.3 removed `eval_on_train` from `Aligning_Sim.__init__` to restore D3IL parity.
+However `eval_visual_aligning_dpcc.py` still passes `eval_on_train=args_cli.eval_on_train`,
+causing a `TypeError` crash at eval launch. The feature is required for evaluating on
+training contexts (in-distribution check during development).
+
+### Files changed
+
+#### 1) Restore eval_on_train parameter and context selection
+**File:** d3il/simulation/aligning_sim.py
+
+**Restored __init__ signature:**
+```python
+        n_contexts: int = 30,
+        n_trajectories_per_context: int = 1,
+        if_vision: bool = False,
+        eval_on_train: bool = False       # ← restored
+```
+
+**Restored stored field:**
+```python
+        self.eval_on_train = eval_on_train
+```
+
+**Restored context selection in eval_agent (replaces hardcoded test_contexts):**
+```python
+# Before (FIX_7.3 hardcoded):
+obs = env.reset(random=False, context=test_contexts[context])
+
+# After (FIX_7.4 restored):
+ctx_pool = train_contexts if self.eval_on_train else test_contexts
+obs = env.reset(random=False, context=ctx_pool[context])
+```
+
+#### 2) Restore eval_on_train arg in visual-aligning eval script
+**File:** diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py
+
+**Restored in Aligning_Sim call (also removed max_episode_length which is not in constructor):**
+```python
+# Before (broken after FIX_7.3):
+sim = Aligning_Sim(
+    seed=seed, device=args.device,
+    render=False, n_cores=1,
+    n_contexts=n_contexts,
+    n_trajectories_per_context=n_trajectories,
+    if_vision=getattr(args, 'if_vision', True),
+    eval_on_train=args_cli.eval_on_train,
+    max_episode_length=getattr(args, 'max_episode_length', 400),  # ← not in constructor
+)
+
+# After (fixed):
+sim = Aligning_Sim(
+    seed=seed, device=args.device,
+    render=False, n_cores=1,
+    n_contexts=n_contexts,
+    n_trajectories_per_context=n_trajectories,
+    if_vision=getattr(args, 'if_vision', True),
+    eval_on_train=args_cli.eval_on_train,
+)
+```
+
+### Impact
+- `TypeError: Aligning_Sim.__init__() got an unexpected keyword argument 'eval_on_train'` crash resolved.
+- `--eval_on_train` flag works as expected: True → train contexts, False → test contexts (default).
+- `max_episode_length` kwarg removed from visual eval call (was never in the reverted constructor).
 
 ---
 
