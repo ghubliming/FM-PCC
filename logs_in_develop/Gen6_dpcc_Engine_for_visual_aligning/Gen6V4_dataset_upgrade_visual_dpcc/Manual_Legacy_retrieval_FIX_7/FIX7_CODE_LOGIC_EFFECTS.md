@@ -195,6 +195,89 @@ Without Fix 7, even a perfect K=100 model could silently fail due to channel swa
 camera crash.
 
 ### Priority order for reaching nonzero success:
-1. Fix 7 + 7.4 (infrastructure) — **done**
+1. Fix 7 + 7.4 + 7.5 (infrastructure) — **done**
 2. K=100 retrain with `clip_denoised=False` — **in progress** (step 50k/100k seen in Run 4)
 3. Eval K=100 checkpoint with corrected infrastructure — **pending**
+
+---
+
+## FIX_7.5 — CPU Affinity Bypass + Video Wiring + Return Signature
+
+### Root cause of the circling
+
+FIX_7.3 targeted "D3IL parity" but was too aggressive. It correctly reverted three real drifts
+(BPCageCam key, rod:tip collision, eval_on_train hardcoding), but also removed the CPU affinity
+bypass — which was **never a drift from D3IL** because original D3IL has no visual mode.
+There was no parity target to restore to. FIX_7.3 introduced a new bug while fixing real ones,
+causing the revert→re-revert cycle.
+
+### 7.5-A: CPU Affinity Bypass (re-applied from Gen7)
+
+```python
+# Before (FIX_7.3 unconditional pinning):
+assign_process_to_cpu(os.getpid(), cpu_set)
+
+# After (FIX_7.5 gated):
+if not self.if_vision:
+    assign_process_to_cpu(os.getpid(), cpu_set)
+else:
+    print(f"Process {os.getpid()} unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).")
+```
+
+**Logic effect:** With `if_vision=True` and K=100, forcing MuJoCo OpenGL rendering, ResNet
+inference, PyTorch multi-threading, and SciPy SLSQP projection onto a single CPU core
+(`cpu_set={0}`) causes thread starvation → OpenMP spin-lock deadlock → permanent hang at
+Context 0 Rollout 0 (observed: 15+ min with no progress). Unpinning restores all 64 cores.
+State-only eval (`if_vision=False`) is byte-for-byte identical to original D3IL.
+
+### 7.5-B: Video/GIF save wiring
+
+```python
+# Added after rollout info tensors are recorded:
+if hasattr(agent, 'update_rollout_info'):
+    agent.update_rollout_info({**info, 'context': context})
+```
+
+**Logic effect:** `eval_agent` was calling `agent.reset()` at the start of each rollout (which
+clears `video_frames`) but never calling `agent.update_rollout_info()` after rollout end — the
+only path to `_save_diagnostics()`. Every rollout's frames were collected into `video_frames`
+then silently wiped by the next `reset()`. The `hasattr` guard means D3IL agents without this
+method are completely unaffected.
+
+### 7.5-C: Return signature fix
+
+```python
+# Before (2 values — original D3IL):
+return success_rate, mode_encoding
+
+# After (4 values — FM-PCC eval script expects):
+return success_rate, mode_encoding, successes, mean_distance
+```
+
+**Logic effect:** The eval script unpacks `success_rate, mode_encoding, successes, mean_dist =
+sim.test_agent(agent)`. With 2 returned values this would raise `ValueError: not enough values
+to unpack` immediately after all rollouts completed — crashing before any metrics were recorded.
+The `successes` and `mean_distance` shared tensors are already computed inside `test_agent`;
+this change simply returns them.
+
+---
+
+## Delta Safety Verdict (current `aligning_sim.py` state vs original D3IL)
+
+This section addresses the question: *after all the Fix 7 reverts and re-applications, is the
+current file safe to rely on?*
+
+| Delta from original D3IL | Risk to state-only eval | Risk to visual eval | Verdict |
+|---|---|---|---|
+| `eval_on_train: bool = False` param | None — default False = test contexts = D3IL behavior | Required for in-distribution sanity checks | **Safe. Intentional FM-PCC extension.** |
+| CPU pinning gated on `not self.if_vision` | None — state-only path is byte-for-byte identical to D3IL | Required — unpinned for 64-core use | **Safe. D3IL never defined vision behavior.** |
+| `hasattr(agent, 'update_rollout_info')` hook | None — D3IL agents lack this method; guard skips | Required — enables video/gif save | **Safe. Guard is hermetic.** |
+| Return 4 values instead of 2 | Affects only callers of this file. Other D3IL sims (stacking, sorting) have their own files and are unaffected. | Required — eval script expects 4 | **Safe. FM-PCC-scoped.** |
+
+**Conclusion:** Every change is either gated behind a condition that falls back to original D3IL
+behavior, protected by a `hasattr` guard, or scoped entirely to FM-PCC callers. The state-only
+rollout path is untouched. No further reversals are needed.
+
+**Rule for future reverts:** If D3IL parity work is ever re-run, the CPU bypass (`not self.if_vision`)
+and `update_rollout_info` hook must be explicitly preserved — they cover behavior D3IL never
+defined and have no "original" to restore to.

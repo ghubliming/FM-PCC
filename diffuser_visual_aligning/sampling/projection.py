@@ -116,17 +116,6 @@ class Projector:
         C = self.C_np.astype('double')
         d = self.d_np.astype('double')
 
-        if self.skip_initial_state:
-            s_0 = trajectory_reshaped[0, :self.transition_dim]
-            if self.solver == 'proxsuite' or self.solver == 'gurobi':
-                s_0 = s_0.cpu().numpy()
-            counter = 0
-            for constraint in self.dynamic_constraints.constraint_list:
-                if constraint[0] == 'deriv':
-                    x_idx = int(constraint[1][0])
-                    b[counter * self.horizon] = s_0[x_idx]
-                    counter += 1
-
         r_np_double = r_np.astype('double')
         trajectory_np_double = trajectory_np.astype('double')
         # Constraints
@@ -144,11 +133,23 @@ class Projector:
         if C.size > 0:
             constraints += ({'type': 'ineq', 'fun': lambda x: -C @ x + d, 'jac': lambda x: -C},)
         if A.size > 0:
-            constraints += ({'type': 'eq', 'fun': lambda x: A @ x - b, 'jac': lambda x: A},)   
-        
+            constraints += ({'type': 'eq', 'fun': lambda x: A @ x - b, 'jac': lambda x: A},)
+
         projection_costs = np.ones(batch_size, dtype=np.float32)
         sol_np = np.zeros((batch_size, self.horizon * self.transition_dim), dtype=np.float32)
         for i in range(batch_size):
+            # A4: per-sample initial state anchor (was batch[0] for all)
+            if self.skip_initial_state:
+                s_0 = trajectory_reshaped[i, :self.transition_dim]
+                if self.solver == 'proxsuite' or self.solver == 'gurobi':
+                    s_0 = s_0.cpu().numpy()
+                counter = 0
+                for constraint in self.dynamic_constraints.constraint_list:
+                    if constraint[0] == 'deriv':
+                        x_idx = int(constraint[1][0])
+                        x_diff = self.dynamic_constraints._initial_state_x_diffs[counter]  # B1
+                        b[counter * self.horizon] = x_diff * s_0[x_idx]  # B1: scaled to match A matrix row
+                        counter += 1
             # Cost
             cost_fun = lambda x: 0.5 * x @ Q @ x + r_np_double[i] @ x # + (A_double @ x - b_double) @ (A_double @ x - b_double)
             jac_cost_fun = lambda x: Q @ x + r_np_double[i]
@@ -189,19 +190,20 @@ class Projector:
         # Constraints
         A, b, C, d = self.A, self.b, self.C, self.d
 
-        if self.skip_initial_state:
-            s_0 = trajectory_reshaped[0, :self.transition_dim]
-            counter = 0
-            for constraint in self.dynamic_constraints.constraint_list:
-                if constraint[0] == 'deriv':
-                    x_idx = int(constraint[1][0])
-                    b[counter * self.horizon] = s_0[x_idx]
-                    counter += 1
-
         # Equality and polytopic constraints
         grad1 = torch.zeros_like(trajectory_reshaped)
         grad2 = torch.zeros_like(trajectory_reshaped)
         for i in range(trajectory.shape[0]):
+            # A4: per-sample initial state anchor (was batch[0] for all)
+            if self.skip_initial_state:
+                s_0 = trajectory_reshaped[i, :self.transition_dim]
+                counter = 0
+                for constraint in self.dynamic_constraints.constraint_list:
+                    if constraint[0] == 'deriv':
+                        x_idx = int(constraint[1][0])
+                        x_diff = self.dynamic_constraints._initial_state_x_diffs[counter]  # B1
+                        b[counter * self.horizon] = x_diff * s_0[x_idx]  # B1: scaled to match A matrix row
+                        counter += 1
             grad1[i] = - A.T @ (A @ trajectory_reshaped[i] - b)
             grad2[i] = - C.T @ torch.max(torch.zeros_like(C @ trajectory_reshaped[i] - d), C @ trajectory_reshaped[i] - d)
         grad1 = grad1.reshape(trajectory.shape)
@@ -360,6 +362,7 @@ class DynamicConstraints(Constraints):
         self.skip_initial_state = skip_initial_state
         self.dt = dt
         self.constraint_list = []
+        self._initial_state_x_diffs = []  # B1: stores x_diff per deriv constraint for scaled initial-state rows
         
     def build_matrices(self, constraint_list=None):
         """
@@ -413,9 +416,10 @@ class DynamicConstraints(Constraints):
 
                 if self.skip_initial_state:     # --> Do that in the projection method because it needs the current state. For that, record the relevant rows
                     mat_fix_initial = torch.zeros(1, self.transition_dim * self.horizon, device=self.device)    # Fix the initial state
-                    mat_fix_initial[0, x_idx] = 1
+                    mat_fix_initial[0, x_idx] = x_diff  # B1: match scale of dynamics rows (was 1)
                     mat_append = torch.cat((mat_fix_initial, mat_append), dim=0)
                     vec_append = torch.cat((torch.tensor([0], device=self.device), vec_append), dim=0)          # Must be changed to current state in each iteration!
+                    self._initial_state_x_diffs.append(float(x_diff))  # B1: store for use in project()/compute_gradient()
 
                 self.A = torch.cat((self.A, mat_append), dim=0)
                 self.b = torch.cat((self.b, vec_append), dim=0)
