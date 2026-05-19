@@ -137,7 +137,7 @@ class GaussianDiffusion(nn.Module):
         if self.clip_denoised:
             x_recon.clamp_(-1., 1.)
         else:
-            assert RuntimeError()
+            raise RuntimeError("clip_denoised=False not supported in base GaussianDiffusion")
 
         model_mean, posterior_variance, posterior_log_variance = self.q_posterior(
                 x_start=x_recon, x_t=x, t=t)

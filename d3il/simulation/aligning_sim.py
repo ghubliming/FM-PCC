@@ -80,14 +80,15 @@ class Aligning_Sim(BaseSim):
 
                 if self.if_vision:
                     env_state, bp_image, inhand_image = obs
-                    bp_image = bp_image.transpose((2, 0, 1)) / 255.
-                    inhand_image = inhand_image.transpose((2, 0, 1)) / 255.
+                    bp_image = bp_image.transpose((2, 0, 1))[::-1].copy() / 255.       # BGR→RGB (A1)
+                    inhand_image = inhand_image.transpose((2, 0, 1))[::-1].copy() / 255.  # BGR→RGB (A1)
 
                     des_robot_pos = env_state[:3]
+                    robot_pos = env_state[:3].copy()  # actual == commanded at t=0 (C4)
                     done = False
 
                     while not done:
-                        pred_action = agent.predict((bp_image, inhand_image, des_robot_pos), if_vision=self.if_vision)
+                        pred_action = agent.predict((bp_image, inhand_image, des_robot_pos, robot_pos), if_vision=self.if_vision)
                         pred_action = pred_action[0] + des_robot_pos
 
                         pred_action = np.concatenate((pred_action, [0, 1, 0, 0]), axis=0)
@@ -103,8 +104,8 @@ class Aligning_Sim(BaseSim):
                         # cv2.imshow('1', inhand_image)
                         # cv2.waitKey(1)
 
-                        bp_image = bp_image.transpose((2, 0, 1)) / 255.
-                        inhand_image = inhand_image.transpose((2, 0, 1)) / 255.
+                        bp_image = bp_image.transpose((2, 0, 1))[::-1].copy() / 255.       # BGR→RGB (A1)
+                        inhand_image = inhand_image.transpose((2, 0, 1))[::-1].copy() / 255.  # BGR→RGB (A1)
 
                 else:
 

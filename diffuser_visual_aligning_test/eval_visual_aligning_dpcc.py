@@ -448,15 +448,14 @@ class VisualAgentWrapper:
         """
         cond = None
         if if_vision:
-            bp_np, inhand_np, des_robot_pos_np = state
+            bp_np, inhand_np, des_robot_pos_np, robot_pos_np = state  # C4: unpack actual robot_pos
 
             # ── Video capture ──────────────────────────────────────────────
+            # bp_np is already RGB (A1 fix in aligning_sim.py); no cvtColor needed.
             if self.record_mode != 'none':
                 try:
                     bp_vis     = (bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8)
                     inhand_vis = (inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8)
-                    bp_vis     = cv2.cvtColor(bp_vis,     cv2.COLOR_BGR2RGB)
-                    inhand_vis = cv2.cvtColor(inhand_vis, cv2.COLOR_BGR2RGB)
                     self.video_frames.append(np.concatenate([bp_vis, inhand_vis], axis=1))
                 except Exception:
                     pass
@@ -470,11 +469,9 @@ class VisualAgentWrapper:
                 self.curr_rollout_tracking_errors.append(err)
 
             # ── Build 6D obs = [des_c_pos | c_pos] ───────────────────────
-            # D3IL only exposes des_robot_pos; c_pos not observable.
-            # Both halves use des_robot_pos_np (the current sim state).
-            # mental_robot_pos accumulates dead-reckoning and is kept only
-            # for tracking-error prediction (last_predicted_pos), not for obs.
-            obs_6d_np = np.concatenate([des_robot_pos_np, des_robot_pos_np])  # (6,)
+            # C4 fix: use actual robot_pos from sim for the c_pos slot.
+            # des_robot_pos_np = commanded position; robot_pos_np = actual sim state.
+            obs_6d_np = np.concatenate([des_robot_pos_np, robot_pos_np])  # (6,) [des_c_pos | c_pos]
 
             if self.obs_normalizer is not None:
                 obs_6d_norm = self.obs_normalizer.normalize(
@@ -486,14 +483,14 @@ class VisualAgentWrapper:
             inhand_t = torch.from_numpy(inhand_np.astype(np.float32)).to(self.device).unsqueeze(0)
             obs_t    = torch.from_numpy(obs_6d_norm).to(self.device).unsqueeze(0)  # (1, 6)
 
-            self.bp_image_context.appendleft(bp_t)
-            self.inhand_image_context.appendleft(inhand_t)
-            self.obs_context.appendleft(obs_t)
+            self.bp_image_context.append(bp_t)
+            self.inhand_image_context.append(inhand_t)
+            self.obs_context.append(obs_t)
 
             while len(self.bp_image_context) < self.window_size:
-                self.bp_image_context.appendleft(bp_t)
-                self.inhand_image_context.appendleft(inhand_t)
-                self.obs_context.appendleft(obs_t)
+                self.bp_image_context.append(bp_t)
+                self.inhand_image_context.append(inhand_t)
+                self.obs_context.append(obs_t)
 
             bp_seq     = torch.cat(list(self.bp_image_context), dim=0)      # (W, C, H, W)
             inhand_seq = torch.cat(list(self.inhand_image_context), dim=0)  # (W, C, H, W)
@@ -525,9 +522,9 @@ class VisualAgentWrapper:
             else:
                 obs_6d_norm = obs_6d_np.astype(np.float32)
             obs_t = torch.from_numpy(obs_6d_norm).to(self.device).unsqueeze(0)  # (1, 6)
-            self.obs_context.appendleft(obs_t)
+            self.obs_context.append(obs_t)
             while len(self.obs_context) < self.obs_seq_len:
-                self.obs_context.appendleft(obs_t)
+                self.obs_context.append(obs_t)
             # obs anchor for apply_conditioning: {0: (B,6)} — no 'visual' key
             obs_anchor = obs_t.repeat(self.batch_size, 1)   # (B, 6)
             cond = {0: obs_anchor}
