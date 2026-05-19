@@ -554,6 +554,22 @@ class VisualAgentWrapper:
                 act_np = self.act_normalizer.unnormalize(act_np.reshape(-1, D)).reshape(B, H, D)
                 action_traj = torch.from_numpy(act_np).to(self.device)
 
+            # One-time diagnostic on first replan of first rollout.
+            # Prints pre/post-denorm action magnitudes so we can immediately spot:
+            #   - actions stuck near zero  → denormalization failed
+            #   - actions in [-1, 1] at "denorm" stage → act_normalizer was None
+            #   - horizon range outside [-1, 1] at normalized stage → model diverged
+            if self.rollout_counter == 0 and self.step_counter == 0:
+                norm_a0   = trajectory[[which], 0, :3].detach().cpu().numpy().squeeze()
+                denorm_a0 = action_traj[0, 0].detach().cpu().numpy()
+                full_norm = trajectory[which, :, :3].detach().cpu().numpy()
+                print(f'[ DIAG first-replan ] normalized   a0 = {np.round(norm_a0, 4)}'
+                      f'  |mag| = {np.linalg.norm(norm_a0):.4f}')
+                print(f'[ DIAG first-replan ] denormalized a0 = {np.round(denorm_a0, 5)}'
+                      f'  |mag| = {np.linalg.norm(denorm_a0):.6f} m')
+                print(f'[ DIAG first-replan ] horizon act (normalized) range: '
+                      f'[{full_norm.min():.4f}, {full_norm.max():.4f}]')
+
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
 
@@ -630,6 +646,16 @@ if __name__ == '__main__':
                 device=args.device,
             )
             diffusion_model = exp.diffusion
+            _model_n_ts  = getattr(diffusion_model, 'n_timesteps', '?')
+            _config_n_ts = getattr(args, 'n_diffusion_steps', '?')
+            print(f'[ eval ] Model n_timesteps = {_model_n_ts}  '
+                  f'(config n_diffusion_steps = {_config_n_ts})')
+            if isinstance(_model_n_ts, int) and isinstance(_config_n_ts, int):
+                if _model_n_ts != _config_n_ts:
+                    print(f'[ eval ] WARNING: n_timesteps mismatch — '
+                          f'checkpoint trained with {_model_n_ts} steps, '
+                          f'config says {_config_n_ts}. '
+                          f'Denoising chain will use checkpoint value ({_model_n_ts}).')
 
         for variant in projection_variants:
             if args_cli.eval_on_train:
@@ -656,13 +682,27 @@ if __name__ == '__main__':
                                              args.diffusion_loadpath, str(args.seed))
                 obs_norm_path = os.path.join(model_dir, 'obs_normalizer.pkl')
                 act_norm_path = os.path.join(model_dir, 'act_normalizer.pkl')
-                obs_normalizer, act_normalizer = None, None
-                if os.path.exists(obs_norm_path) and os.path.exists(act_norm_path):
-                    with open(obs_norm_path, 'rb') as f: obs_normalizer = pickle.load(f)
-                    with open(act_norm_path, 'rb') as f: act_normalizer = pickle.load(f)
-                    print(f'[ eval ] Loaded normalizers from {model_dir}')
-                else:
-                    print(f'[ eval ] WARNING: normalizer pkl not found — RAW mode')
+                if not os.path.exists(obs_norm_path) or not os.path.exists(act_norm_path):
+                    raise FileNotFoundError(
+                        f'[ eval ] FATAL: normalizer pkl missing in {model_dir}\n'
+                        f'  Expected: obs_normalizer.pkl + act_normalizer.pkl\n'
+                        f'  Without them, sampled actions stay in [-1, 1] space and\n'
+                        f'  produce wrong robot commands. Re-run training to regenerate.'
+                    )
+                with open(obs_norm_path, 'rb') as f: obs_normalizer = pickle.load(f)
+                with open(act_norm_path, 'rb') as f: act_normalizer = pickle.load(f)
+                print(f'[ eval ] Loaded normalizers from {model_dir}')
+                # Sanity-check: near-zero range in any dim means zero-padded episodes
+                # corrupted the scaler at training time — actions would denorm incorrectly.
+                act_range = act_normalizer.maxs - act_normalizer.mins
+                if np.any(act_range < 1e-4):
+                    print(f'[ eval ] WARNING: act_normalizer near-zero range in dims '
+                          f'{np.where(act_range < 1e-4)[0].tolist()} — '
+                          f'possible zero-pad scaler corruption at train time')
+                print(f'[ eval ] obs_normalizer  mins={np.round(obs_normalizer.mins, 4)}  '
+                      f'maxs={np.round(obs_normalizer.maxs, 4)}')
+                print(f'[ eval ] act_normalizer  mins={np.round(act_normalizer.mins, 4)}  '
+                      f'maxs={np.round(act_normalizer.maxs, 4)}')
 
                 # ── Setup DPCC projector ─────────────────────────────────────
                 projector = None

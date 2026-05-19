@@ -51,6 +51,8 @@ class VisualUNet(nn.Module):
             })
             self.obs_encoder = hydra.utils.instantiate(obs_encoder_cfg).to(self.device)
             latent_dim = self.LATENT_DIM
+            print(f'[ VisualUNet ] MultiImageObsEncoder initialized — '
+                  f'LATENT_DIM={self.LATENT_DIM}, imagenet_norm=True, share_rgb_model=False')
         else:
             self.obs_encoder = None
             latent_dim = 0

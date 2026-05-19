@@ -180,6 +180,10 @@ for seed in selected_seeds:
         pickle.dump(dataset.act_normalizer, f)
     print(f'[ train ] Saved obs_normalizer → {obs_norm_path}')
     print(f'[ train ] Saved act_normalizer → {act_norm_path}')
+    # Log normalizer statistics so training logs can be cross-checked against eval logs.
+    # Near-zero range in any action dim indicates zero-padded frames corrupted the scaler.
+    print(f'[ train ] obs_normalizer {dataset.obs_normalizer}')
+    print(f'[ train ] act_normalizer {dataset.act_normalizer}')
 
     # ── 2. Model — VisualUNet with hardcoded transition_dim=9 ─────────────────
     from diffuser_visual_aligning.models.visual_unet import VisualUNet
@@ -194,6 +198,9 @@ for seed in selected_seeds:
     # ── 3. Diffusion engine — VisualGaussianDiffusion ─────────────────────────
     from diffuser_visual_aligning.models.visual_gaussian_diffusion import VisualGaussianDiffusion
 
+    _n_diff_steps = getattr(args, 'n_diffusion_steps', 100)
+    print(f'[ train ] n_diffusion_steps = {_n_diff_steps}  '
+          f'(must match eval config to avoid denoising-chain mismatch)')
     diffusion_config = utils.Config(
         VisualGaussianDiffusion,
         savepath=(args.savepath, 'diffusion_config.pkl'),
@@ -201,7 +208,7 @@ for seed in selected_seeds:
         observation_dim=6,         # 6D obs: [des_c_pos(3), c_pos(3)]
         action_dim=args.action_dim, # 3D act: [dx, dy, dz]
         goal_dim=0,
-        n_timesteps=getattr(args, 'n_diffusion_steps', 100),
+        n_timesteps=_n_diff_steps,
         loss_type=args.loss_type,
         clip_denoised=True,
         predict_epsilon=True,
