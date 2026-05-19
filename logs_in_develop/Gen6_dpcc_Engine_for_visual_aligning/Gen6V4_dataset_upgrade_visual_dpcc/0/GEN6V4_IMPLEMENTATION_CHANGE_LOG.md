@@ -400,7 +400,7 @@ sbatch Slurm_Codes/sbatch/diffuser_visual_aligning/visual_aligning_dpcc_pipeline
 - `pickle.load(obs_normalizer.pkl)`, `pickle.load(act_normalizer.pkl)`
 - `setup_dpcc_projector()` → `Projector(horizon=8, transition_dim=9, action_dim=3, variant='states_actions')` with lb/ub on indices 6-8 and deriv `[6←0,7←1,8←2]`
 - `VisualAgentWrapper(diffusion_model, window_size=1, obs_seq_len=1, …)`
-- `Aligning_Sim(seed, n_contexts=30, n_trajectories=1, if_vision=True)`
+- `Aligning_Sim(seed, n_contexts=30, n_trajectories=1, if_vision=getattr(args,'if_vision',True))`  ← Fix 4
 
 **2.4 `sim.test_agent(agent)` — D3IL closed-loop**
 
@@ -468,6 +468,20 @@ logs/aligning-d3il-visual/visual_aligning_dpcc/<exp>/<seed>/
     └── realtime_diagnostics/<variant>/
         rollout_<r>_data.pkl / _stats.json / _report.png
 ```
+
+---
+
+## Fixes Applied (Post-Initial-Implementation)
+
+> Detailed fix notes in `fix_1/` through `fix_5/`. Summary table below.
+
+| Fix | Date | File(s) | Problem | Resolution |
+|-----|------|---------|---------|------------|
+| Fix 1 | 2026-05-19 | `datasets/sequence.py`, `train_visual_aligning_dpcc.py`, `config/aligning-d3il-visual.py` | Dataset buffer overflow from zero-padded episodes corrupting LimitsNormalizer; `max_path_length` misused as per-trajectory cap | Strip zero-padded frames before normalizer fit; reuse `max_path_length` as `max_n_episodes`; fix eval loadpath to match train path (fix_1.3) |
+| Fix 2 | 2026-05-19 | `diffuser_visual_aligning/utils/config.py` | `import_class()` prepended `diffuser_visual_aligning.` prefix even when class string already contained it → `ModuleNotFoundError` at eval load | Guard: skip prefix injection when string already starts with `diffuser_visual_aligning.` |
+| Fix 3 | 2026-05-19 | `eval_visual_aligning_dpcc.py`, `train_visual_aligning_dpcc.py`, `models/visual_unet.py` | Training converged but eval GIFs showed catastrophic behavior; no diagnostics to distinguish 5 possible failure modes (missing normalizer, zero-range scaler, n_steps mismatch, encoder silent fail, obs anchor mismatch) | Crash on missing normalizers (was: silent RAW mode); log normalizer stats + zero-range warning; n_timesteps mismatch warning; first-replan action magnitude DIAG; encoder init confirmation log |
+| Fix 4 | 2026-05-19 | `eval_visual_aligning_dpcc.py`, `config/aligning-d3il-visual.py` | `Aligning_Sim(if_vision=True)` hardcoded → non-visual checkpoints always ran with image pipeline; non-visual `predict()` path left `cond=None` → `apply_conditioning` crash; `mental_robot_pos.copy()` unconditional crash; plan config had no `if_vision` key | `if_vision=getattr(args,'if_vision',True)` in Aligning_Sim; non-visual `else:` branch builds `cond={0: obs_anchor}`; unconditional `mental_robot_pos` update; add `if_vision: True` to plan config + `V{if_vision}` path tags |
+| Fix 5 | 2026-05-19 | `eval_visual_aligning_dpcc.py` | `aligning_sim.test_agent()` calls `wandb.log()` unconditionally at end → crash before NPZ/PNG/7-metric report saved; DIAG lines buried in full eval log, no per-step breakdown | Graceful `wandb` import + `wandb.init(mode='disabled')` before `sim.test_agent()`; DIAG per-step breakdown added; write `diag_first_replan.txt` to save_path |
 
 ---
 
