@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=visual_pipeline
+#SBATCH --job-name=visual_aligning_pipeline
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1

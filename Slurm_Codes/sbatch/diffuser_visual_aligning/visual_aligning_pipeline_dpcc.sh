@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dpcc_pipeline
+#SBATCH --job-name=visual_aligning_pipeline_dpcc
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1

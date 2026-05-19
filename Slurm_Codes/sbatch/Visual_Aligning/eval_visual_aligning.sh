@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=visual_eval
+#SBATCH --job-name=eval_visual_aligning
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

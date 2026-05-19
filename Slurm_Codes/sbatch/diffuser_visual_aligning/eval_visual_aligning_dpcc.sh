@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dpcc_eval
+#SBATCH --job-name=eval_visual_aligning_dpcc
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
