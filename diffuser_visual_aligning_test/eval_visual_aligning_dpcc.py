@@ -36,6 +36,11 @@ matplotlib.use('Agg')
 import imageio
 import cv2
 
+try:
+    import wandb as _wandb
+except ImportError:
+    _wandb = None
+
 sys.path.insert(0, os.path.abspath('d3il'))
 sys.path.insert(0, os.path.abspath('d3il/environments/d3il'))
 os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
@@ -438,11 +443,10 @@ class VisualAgentWrapper:
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
         """
         D3IL agent.predict() interface.
-        state = (bp_image_np, inhand_image_np, des_robot_pos_np)
-            bp_image_np, inhand_image_np : (C, H, W) float32 [0,1]
-            des_robot_pos_np             : (3,) float64 — accumulated commanded EE pos
+        Visual:     state = (bp_image_np, inhand_image_np, des_robot_pos_np)
+        Non-visual: state = obs_np  — D3IL concatenated obs with robot_pos at [:3]
         """
-        cond = None   # set inside if if_vision; guard against non-vision path
+        cond = None
         if if_vision:
             bp_np, inhand_np, des_robot_pos_np = state
 
@@ -500,6 +504,33 @@ class VisualAgentWrapper:
             obs_batch    = obs_seq.unsqueeze(0).repeat(self.batch_size, 1, 1)
 
             cond = {0: (bp_batch, inhand_batch, obs_batch)}
+
+        else:
+            # Non-visual path: D3IL provides obs_np with robot_pos at [:3]
+            obs_np = np.asarray(state, dtype=np.float64)
+            des_robot_pos_np = obs_np[:3]
+
+            if self.mental_robot_pos is None:
+                self.mental_robot_pos = des_robot_pos_np.copy()
+
+            self.history_real_pos.append(des_robot_pos_np.copy())
+            if self.last_predicted_pos is not None:
+                err = np.linalg.norm(des_robot_pos_np[:2] - self.last_predicted_pos[:2])
+                self.curr_rollout_tracking_errors.append(err)
+
+            obs_6d_np = np.concatenate([des_robot_pos_np, des_robot_pos_np])  # (6,)
+            if self.obs_normalizer is not None:
+                obs_6d_norm = self.obs_normalizer.normalize(
+                    obs_6d_np.reshape(1, -1)).astype(np.float32).squeeze(0)
+            else:
+                obs_6d_norm = obs_6d_np.astype(np.float32)
+            obs_t = torch.from_numpy(obs_6d_norm).to(self.device).unsqueeze(0)  # (1, 6)
+            self.obs_context.appendleft(obs_t)
+            while len(self.obs_context) < self.obs_seq_len:
+                self.obs_context.appendleft(obs_t)
+            # obs anchor for apply_conditioning: {0: (B,6)} — no 'visual' key
+            obs_anchor = obs_t.repeat(self.batch_size, 1)   # (B, 6)
+            cond = {0: obs_anchor}
 
         # ── Plan (or execute from cached action chunk) ─────────────────────
         t_start = time.time()
@@ -559,16 +590,30 @@ class VisualAgentWrapper:
             #   - actions stuck near zero  → denormalization failed
             #   - actions in [-1, 1] at "denorm" stage → act_normalizer was None
             #   - horizon range outside [-1, 1] at normalized stage → model diverged
+            # Also writes a dedicated diag_first_replan.txt to save_path for easy
+            # grep / cross-run comparison (not buried in the full eval log).
             if self.rollout_counter == 0 and self.step_counter == 0:
                 norm_a0   = trajectory[[which], 0, :3].detach().cpu().numpy().squeeze()
                 denorm_a0 = action_traj[0, 0].detach().cpu().numpy()
                 full_norm = trajectory[which, :, :3].detach().cpu().numpy()
-                print(f'[ DIAG first-replan ] normalized   a0 = {np.round(norm_a0, 4)}'
-                      f'  |mag| = {np.linalg.norm(norm_a0):.4f}')
-                print(f'[ DIAG first-replan ] denormalized a0 = {np.round(denorm_a0, 5)}'
-                      f'  |mag| = {np.linalg.norm(denorm_a0):.6f} m')
-                print(f'[ DIAG first-replan ] horizon act (normalized) range: '
-                      f'[{full_norm.min():.4f}, {full_norm.max():.4f}]')
+                diag_lines = [
+                    f'[ DIAG first-replan ] normalized   a0 = {np.round(norm_a0, 4)}'
+                    f'  |mag| = {np.linalg.norm(norm_a0):.4f}',
+                    f'[ DIAG first-replan ] denormalized a0 = {np.round(denorm_a0, 5)}'
+                    f'  |mag| = {np.linalg.norm(denorm_a0):.6f} m',
+                    f'[ DIAG first-replan ] horizon act (normalized) range: '
+                    f'[{full_norm.min():.4f}, {full_norm.max():.4f}]',
+                    f'[ DIAG first-replan ] per-step normalized acts (H={full_norm.shape[0]}):',
+                ]
+                for h_i, row in enumerate(full_norm):
+                    diag_lines.append(f'  step {h_i:2d}: {np.round(row, 4)}')
+                for line in diag_lines:
+                    print(line)
+                if self.save_path is not None:
+                    diag_file = os.path.join(self.save_path, 'diag_first_replan.txt')
+                    with open(diag_file, 'w') as _df:
+                        _df.write('\n'.join(diag_lines) + '\n')
+                    print(f'[ DIAG ] saved → {diag_file}')
 
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
@@ -576,8 +621,7 @@ class VisualAgentWrapper:
         next_action    = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy().squeeze(0)   # (3,)
 
-        if if_vision:
-            self.mental_robot_pos += next_action_np
+        self.mental_robot_pos += next_action_np
 
         self.history_desired_actions.append(next_action_np.copy())
         self.last_predicted_pos = self.mental_robot_pos.copy()
@@ -741,10 +785,15 @@ if __name__ == '__main__':
                     render=False, n_cores=1,
                     n_contexts=n_contexts,
                     n_trajectories_per_context=n_trajectories,
-                    if_vision=True,
+                    if_vision=getattr(args, 'if_vision', True),
                     eval_on_train=args_cli.eval_on_train,
                     max_episode_length=getattr(args, 'max_episode_length', 400),
                 )
+
+                # aligning_sim.test_agent() calls wandb.log() unconditionally at the end;
+                # initialize in disabled mode so it doesn't crash when no wandb run is active.
+                if _wandb is not None:
+                    _wandb.init(mode='disabled')
 
                 t0 = time.time()
                 success_rate, mode_encoding, successes, mean_dist = sim.test_agent(agent)

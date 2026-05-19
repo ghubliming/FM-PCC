@@ -17,6 +17,7 @@ args_to_watch_dpcc_train = [
     ('n_diffusion_steps', 'K'),
     ('diffusion', 'D'),
     ('action_weight', 'aw'),
+    ('if_vision', 'V'),
     # NOTE: In visual_aligning_dpcc, max_path_length is max_n_episodes (not rollout steps).
     ('max_path_length', 'steps'),
 ]
@@ -27,6 +28,7 @@ args_to_watch_dpcc_plan = [
     ('n_diffusion_steps', 'K'),
     ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
+    ('if_vision', 'V'),
     # NOTE: max_episode_length controls rollout steps; max_path_length is only a loadpath key.
     ('max_episode_length', 'steps'),
 ]
@@ -276,6 +278,7 @@ base = {
         # FiLM conditioning distribution away from what the model learned.
         'window_size': 1,
         'obs_seq_len': 1,
+        'if_vision': True,
         'policy': 'sampling.Policy',
         'batch_size': 1,
         'preprocess_fns': [],
@@ -284,14 +287,14 @@ base = {
         'test_ret': 0,
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
+        'prefix': 'f:plans/visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_V{if_vision}_steps{max_path_length}/',
         'exp_name': watch(args_to_watch_dpcc_plan),
         'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'diffusion_loadpath': 'f:visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
+        'diffusion_loadpath': 'f:visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_V{if_vision}_steps{max_path_length}',
         'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
         'diffusion_epoch': 'best',
         'verbose': False,
