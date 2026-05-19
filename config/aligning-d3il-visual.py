@@ -254,7 +254,7 @@ base = {
         'horizon': 8,
         'n_diffusion_steps': 100,
         'max_episode_length': 1000,
-        'max_path_length': 512,
+        'max_path_length': 1000,   # MUST match visual_aligning_dpcc.max_path_length (fix_1.3): used in diffusion_loadpath template
         'action_weight': 10,
         # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
         # provides single-frame images per sample, so the model is trained on T_win=1.
