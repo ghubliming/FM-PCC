@@ -473,7 +473,7 @@ logs/aligning-d3il-visual/visual_aligning_dpcc/<exp>/<seed>/
 
 ## Fixes Applied (Post-Initial-Implementation)
 
-> Detailed fix notes in `fix_1/` through `fix_5/`. Summary table below.
+> Detailed fix notes in `fix_1/` through `fix_6/`. Summary table below.
 
 | Fix | Date | File(s) | Problem | Resolution |
 |-----|------|---------|---------|------------|
@@ -482,6 +482,7 @@ logs/aligning-d3il-visual/visual_aligning_dpcc/<exp>/<seed>/
 | Fix 3 | 2026-05-19 | `eval_visual_aligning_dpcc.py`, `train_visual_aligning_dpcc.py`, `models/visual_unet.py` | Training converged but eval GIFs showed catastrophic behavior; no diagnostics to distinguish 5 possible failure modes (missing normalizer, zero-range scaler, n_steps mismatch, encoder silent fail, obs anchor mismatch) | Crash on missing normalizers (was: silent RAW mode); log normalizer stats + zero-range warning; n_timesteps mismatch warning; first-replan action magnitude DIAG; encoder init confirmation log |
 | Fix 4 | 2026-05-19 | `eval_visual_aligning_dpcc.py`, `config/aligning-d3il-visual.py` | `Aligning_Sim(if_vision=True)` hardcoded → non-visual checkpoints always ran with image pipeline; non-visual `predict()` path left `cond=None` → `apply_conditioning` crash; `mental_robot_pos.copy()` unconditional crash; plan config had no `if_vision` key | `if_vision=getattr(args,'if_vision',True)` in Aligning_Sim; non-visual `else:` branch builds `cond={0: obs_anchor}`; unconditional `mental_robot_pos` update; add `if_vision: True` to plan config + `V{if_vision}` path tags |
 | Fix 5 | 2026-05-19 | `eval_visual_aligning_dpcc.py` | `aligning_sim.test_agent()` calls `wandb.log()` unconditionally at end → crash before NPZ/PNG/7-metric report saved; DIAG lines buried in full eval log, no per-step breakdown | Graceful `wandb` import + `wandb.init(mode='disabled')` before `sim.test_agent()`; DIAG per-step breakdown added; write `diag_first_replan.txt` to save_path |
+| Fix 6 | 2026-05-19 | `train_visual_aligning_dpcc.py`, `eval_visual_aligning_dpcc.py` | `clip_denoised=True` in train script caused ±5 clamp to fire at every early denoising step (cosine schedule amplification ~9.4× at t=T-1); denoising chain permanently corrupted → all actions pinned at ±5 → all rollouts fail | `clip_denoised=False` in train script (matches original DPCC); force `diffusion_model.clip_denoised = False` at eval time to fix existing checkpoints without retraining |
 
 ---
 

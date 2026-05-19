@@ -690,6 +690,13 @@ if __name__ == '__main__':
                 device=args.device,
             )
             diffusion_model = exp.diffusion
+            # Original DPCC uses clip_denoised=False. Older checkpoints may have
+            # been saved with clip_denoised=True, which causes the ±5 clamp to fire
+            # at the first denoising step (cosine schedule amplification ~9.4× at
+            # t=T-1), permanently corrupting the denoising chain. Force False here
+            # so all checkpoints use the correct inference behaviour.
+            diffusion_model.clip_denoised = False
+            print('[ eval ] clip_denoised forced → False (matches original DPCC)')
             _model_n_ts  = getattr(diffusion_model, 'n_timesteps', '?')
             _config_n_ts = getattr(args, 'n_diffusion_steps', '?')
             print(f'[ eval ] Model n_timesteps = {_model_n_ts}  '
