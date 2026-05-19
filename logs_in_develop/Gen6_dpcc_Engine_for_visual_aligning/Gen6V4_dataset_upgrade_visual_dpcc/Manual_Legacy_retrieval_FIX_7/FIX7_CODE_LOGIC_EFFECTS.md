@@ -2,8 +2,8 @@
 
 ## Overview
 
-Fix 7 is a series of three manual reverts to restore D3IL parity. This document traces
-the **runtime logic path** each change affects and whether it resolves active failures.
+Fix 7 is a series of reverts to restore D3IL parity, plus one corrective patch (FIX_7.4).
+This document traces the **runtime logic path** each change affects and whether it resolves active failures.
 
 ---
 
@@ -86,21 +86,18 @@ no channel mismatch possible.
 
 Three sub-changes:
 
-#### a) eval_on_train removed
+#### a) eval_on_train — reverted then partially restored (see FIX_7.4)
+FIX_7.3 hardcoded `test_contexts`. FIX_7.4 restored `eval_on_train` as an optional flag
+(default `False`) so test-context eval is the default but train-context eval is available on demand.
+
 ```python
-# Drift version allowed:
-obs = env.reset(random=False, context=train_contexts[context])  # eval on TRAIN contexts
-
-# Restored original:
-obs = env.reset(random=False, context=test_contexts[context])   # eval on TEST contexts
+# FIX_7.4 final state:
+ctx_pool = train_contexts if self.eval_on_train else test_contexts
+obs = env.reset(random=False, context=ctx_pool[context])
 ```
-**Logic effect:** The drift version would silently evaluate on training contexts (in-distribution),
-inflating apparent success rate and masking true generalization. Restored original evaluates
-on held-out test contexts. **This is the correct behavior for measuring generalization.**
-
-If success was 0% even on train contexts → the model is definitively broken (not just overfitting).
-If success was nonzero on train contexts but 0% on test contexts → model overfits.
-Either way, restoring test-context eval gives the honest number.
+**Logic effect:** Default (`eval_on_train=False`) evaluates on held-out test contexts — correct
+for measuring generalization. Pass `--eval_on_train` to evaluate on training contexts as an
+in-distribution sanity check (useful during development to confirm the model learned anything).
 
 #### b) CPU pinning restored
 ```python
@@ -174,9 +171,10 @@ env dynamics.
 |-----|-------|------------------------|-----------------|
 | 7.1 | Env construction | Server crash on `max_steps_per_episode` kwarg | Unblocks eval from crashing |
 | 7.2 | Visual preprocessing | BGR/RGB channel swap → corrupted ResNet features | Yes — critical for visual correctness |
-| 7.3-A | Sim rollout | eval_on_train (in-distribution leak); CPU desync | Eval result is now honest |
+| 7.3-A | Sim rollout | CPU desync (pinning restored); context pool selectable via 7.4 | Eval result is now honest |
 | 7.3-B | Camera rendering | Named key crash → blank frames → bad visual obs | Yes — camera was broken |
 | 7.3-C | Physics | Phantom rod:tip contacts → wrong dynamics | Reduces trajectory drift |
+| 7.4 | Sim constructor | `TypeError` crash — `eval_on_train` kwarg missing after 7.3 | Yes — unblocks eval launch; restores `--eval_on_train` flag |
 
 ---
 
@@ -197,6 +195,6 @@ Without Fix 7, even a perfect K=100 model could silently fail due to channel swa
 camera crash.
 
 ### Priority order for reaching nonzero success:
-1. Fix 7 (infrastructure) — **done**
-2. K=100 retrain with `clip_denoised=False` — **pending**
+1. Fix 7 + 7.4 (infrastructure) — **done**
+2. K=100 retrain with `clip_denoised=False` — **in progress** (step 50k/100k seen in Run 4)
 3. Eval K=100 checkpoint with corrected infrastructure — **pending**
