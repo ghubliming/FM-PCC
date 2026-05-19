@@ -172,6 +172,146 @@ Only `visual_aligning_dpcc` and `plan_visual_aligning_dpcc` blocks touched. All 
 
 ---
 
+## First-Principles Code Audit (2026-05-19)
+
+> Read every call in the pseudo-run trace against the proven references
+> (FM v3 ODE selectable, ddpm_encdec_vision). Questions answered:
+> (1) Is DPCC principle correctly achieved? (2) Did we adopt FMv3ODE functional upgrades?
+> (3) Did we learn from ddpm_encdec's failure? (4) Is the D3IL API handled correctly?
+
+---
+
+### (1) DPCC Principle — CORRECT ✅ (with one limitation)
+
+**Math trace through `SafetyConstraints` and `DynamicConstraints`:**
+
+`ProjectionNormalizer` (variant=`states_actions`) assembles 9D normalizer stats:
+```
+mins[0:3] = act_normalizer.mins    maxs[0:3] = act_normalizer.maxs
+mins[3:6] = obs_normalizer.mins[0:3]  (des_c_pos range)
+mins[6:9] = obs_normalizer.mins[3:6]  (c_pos range)
+```
+
+**Bounds** (`lb`/`ub` on indices 6-8): `SafetyConstraints.build_matrices()` iterates `dim` over the raw bound vector. For `dim=6` with raw bound `ws_lb[0]`:
+```
+constraint (ub): s_n[6] * (x_max-x_min)/2 ≤ ws_ub[0] - (x_min+x_max)/2
+```
+where `x_min = obs_normalizer.mins[3]`, `x_max = obs_normalizer.maxs[3]`. Verified algebraically: this is exactly the LimitsNormalizer mapping of `ws_ub[0]` into `[-1,1]`. ✅
+
+**Euler dynamics** (`deriv [6,0]`): `DynamicConstraints.build_matrices()` constructs the equality `c_pos_x[t+1] = c_pos_x[t] + dt·act_x[t]` in normalized space using per-dimension scale factors `x_diff = obs_normalizer.maxs[3]-mins[3]`, `dx_diff = act_normalizer.maxs[0]-mins[0]`. Algebra verified correct. ✅
+
+**DPCC is more principled than ddpm_encdec's 6D**: ddpm_encdec enforced bounds on `des_c_pos` (commanded position, indices 3-5 of 6D). Gen6V4 enforces on `c_pos` (actual EE, indices 6-8 of 9D). Constraining the commanded signal violates DPCC's physical contract — the robot can overshoot. Constraining real position is correct. ✅
+
+**Known limitation (D3IL API):** At inference, `c_pos` is not observable via `agent.predict()`. Both halves of `obs_6d` approximate as `des_robot_pos_np` from the sim. The DPCC projection still enforces bounds on the planned trajectory; the approximation only affects the obs conditioning signal, not the SLSQP constraint enforcement itself.
+
+---
+
+### (2) FMv3ODE Functional Upgrades — ALL ADOPTED ✅
+
+Cross-checked against `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py`:
+
+| FMv3ODE feature | Gen6V4 status |
+|---|---|
+| Variant strings: `diffuser`, `dpcc-t`, `dpcc-c`, `model_free`, `tightened`, `gradient`, `post_processing`, `dt0p25/0p5/2p0/4p0` | ✅ All handled in `setup_dpcc_projector()` + `predict()` |
+| `trajectory_selection`: random / temporal_consistency / minimum_projection_cost | ✅ All three in `predict()` |
+| `diffusion_timestep_threshold` gate | ✅ Passed to `Projector` |
+| Gradient-based projection | ✅ `projector.gradient` + `gradient_weights` |
+| `--seed` CLI override | ✅ `argparse --seed` → single-seed run |
+| `--aggregate-only` skip-inference mode | ✅ Present (skips sim loop) |
+| Tightened constraint margin | ✅ `constraint_tightening_margin` in config |
+| `write_to_file` NPZ gate | ✅ `config.get('write_to_file', True)` |
+
+D3IL wrapping: FMv3ODE uses `ObstacleAvoidanceEnv` with manual step loop. Aligning uses `Aligning_Sim.test_agent(agent)` with an agent wrapper. We use `VisualAgentWrapper` exactly as ddpm_encdec proved for this API. ✅
+
+---
+
+### (3) Lessons from ddpm_encdec Failure — ALL APPLIED ✅
+
+ddpm_encdec had these structural errors, each fixed in Gen6V4:
+
+| ddpm_encdec mistake | Gen6V4 fix |
+|---|---|
+| `config.obs_dim=128` stale placeholder poisoned backbone input size | `VisualUNet` hardcodes `TRANSITION_DIM=9`, never reads `obs_dim` |
+| Same `Scaler` used for both obs and actions in `VisualNormalizerDict` → action bounds used wrong scale | Separate `obs_normalizer` and `act_normalizer` (`LimitsNormalizer`), each fitted on its own data |
+| Normalizer fitted on zero-padded tails → collapsed min → distorted ±1 range | Fitted only on `masks_np > 0` valid timesteps |
+| FiLM signal diluted 8× (pooled over zero-padded temporal window) | `encode_visual()` pools over real frames only, returns `(B,128)` before padding |
+| DPCC on `des_c_pos` (commanded pos, indices 3-5) — physically wrong | DPCC on `c_pos` (actual EE, indices 6-8) — physically correct |
+| `window_size=8` at eval vs single-frame training → distribution shift | `window_size=1` / `obs_seq_len=1` explicitly set in `plan_visual_aligning_dpcc` |
+| Eval logging invented, not proven | Logging ported verbatim from ddpm_encdec (the pattern itself is good; its weights/math were the failure, not the logging) |
+
+---
+
+### (4) D3IL API Handling — CORRECT ✅
+
+D3IL `Aligning_Sim.test_agent(agent)` calls:
+- `agent.reset()` — start of each rollout
+- `agent.predict(state=(bp_img, inhand_img, des_robot_pos), if_vision=True)` — every sim step; returns `(1,3)` action
+- `agent.update_rollout_info(info)` — end of each rollout
+
+`VisualAgentWrapper` implements all three. The `predict()` return `next_action_np.reshape(1, -1)` matches D3IL's expected `(1, act_dim)` shape. ✅
+
+---
+
+### Bug Fixed in This Audit
+
+**`obs_6d` used dead-reckoning position for `des_c_pos` half (eval_visual_aligning_dpcc.py:470)**
+
+Old:
+```python
+obs_6d_np = np.concatenate([self.mental_robot_pos, self.mental_robot_pos])
+```
+`mental_robot_pos` = initial_pos + Σ(past planned actions). After step 1 it diverges from the actual sim commanded position `des_robot_pos_np`. Using it as `des_c_pos` feeds the wrong obs into the model — training always received the ground-truth `des_c_pos` from the dataset.
+
+Fixed:
+```python
+obs_6d_np = np.concatenate([des_robot_pos_np, des_robot_pos_np])
+```
+Both halves now use the actual sim state. `mental_robot_pos` is retained solely for tracking-error dead-reckoning (`last_predicted_pos`), not for obs.
+
+---
+
+### (5) Training + Serialization Infrastructure — VERIFIED ✅ (2026-05-19, second pass)
+
+Files read: `diffuser_visual_aligning/utils/training.py`, `serialization.py`, `models/visual_gaussian_diffusion.py`, `models/visual_unet.py`, `models/helpers.py`.
+
+**Trainer call chain (training.py:124)**  
+`Trainer.train_epoch()` calls `self.model.loss(*batch)` where `batch = Batch(trajectories, conditions)`.  
+Star-unpack → `VisualGaussianDiffusion.loss(trajectories, conditions)`. No `scaler` arg, no mismatch. ✅
+
+**`VisualGaussianDiffusion.loss()` cond assembly (visual_gaussian_diffusion.py:22)**
+```python
+cond = {0: obs_0, 'visual': (primary_img, wrist_img, obs_seq)}
+```
+- Key `0` is integer → `apply_conditioning` snaps `x[:, 0, 3:]` = `obs_0` ✅  
+- Key `'visual'` is string → `apply_conditioning` skips it (helpers.py:160: `isinstance(t, str): continue`) ✅  
+- `VisualUNet.forward()` reads `cond['visual']` → FiLM encoding ✅
+
+**`VisualGaussianDiffusion.forward()` inference transform (visual_gaussian_diffusion.py:91)**  
+Input: `{0: (bp_imgs, inhand_imgs, obs_seq)}` (tuple-at-integer-key from `VisualAgentWrapper`)  
+→ Transformed to `{0: obs_seq[:, -1], 'visual': (bp_imgs, inhand_imgs, obs_seq)}` before `super().forward()`. ✅  
+The two cond formats (train vs. inference) are unified at this transform point.
+
+**`p_mean_variance` override (visual_gaussian_diffusion.py:52)**  
+Clamps only action dims (`:3`) to `±5.0`, leaves obs dims unclamped. Parent `GaussianDiffusion.p_mean_variance` clamps all 9 dims to `±1` — that would over-clip velocity actions early in denoising. Override is correct. ✅
+
+**`DiffusionExperiment` namedtuple (serialization.py:10)**  
+```python
+DiffusionExperiment = namedtuple('Diffusion', 'dataset model diffusion trainer epoch losses')
+```
+`load_diffusion_with_override` returns:  
+`DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, None)`  
+Eval uses `exp.diffusion` → `VisualGaussianDiffusion` (the outer model). `exp.model` → inner UNet (not used in eval directly). ✅
+
+**No new bugs found in this pass.** Audit complete.
+
+---
+
+### Remaining Limitation (Not Fixable Without d3il Modification)
+
+Violation metrics (`Constraints satisfied`, `Avg constraint violations`, `Avg total violation`) are hardcoded to `1.0000` / `0.00` because `c_pos` is not accessible during `agent.predict()`. The DPCC projection enforces bounds on the planned trajectory, but runtime c_pos cannot be checked to verify closed-loop satisfaction. FMv3ODE checks violations by directly reading `env.robot_state()` — that API doesn't exist for `Aligning_Sim`. Documented as a known gap, not a silent bug.
+
+---
+
 ## Full Pipeline Pseudo-Run Trace
 
 > Trigger → final human-readable log output. Every code/function call in order.

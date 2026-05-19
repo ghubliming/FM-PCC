@@ -465,9 +465,12 @@ class VisualAgentWrapper:
                 err = np.linalg.norm(des_robot_pos_np[:2] - self.last_predicted_pos[:2])
                 self.curr_rollout_tracking_errors.append(err)
 
-            # ── Build 6D obs = [des_robot_pos, des_robot_pos] ─────────────
-            # c_pos not accessible via D3IL predict() — approximated as des_robot_pos
-            obs_6d_np = np.concatenate([self.mental_robot_pos, self.mental_robot_pos])  # (6,)
+            # ── Build 6D obs = [des_c_pos | c_pos] ───────────────────────
+            # D3IL only exposes des_robot_pos; c_pos not observable.
+            # Both halves use des_robot_pos_np (the current sim state).
+            # mental_robot_pos accumulates dead-reckoning and is kept only
+            # for tracking-error prediction (last_predicted_pos), not for obs.
+            obs_6d_np = np.concatenate([des_robot_pos_np, des_robot_pos_np])  # (6,)
 
             if self.obs_normalizer is not None:
                 obs_6d_norm = self.obs_normalizer.normalize(
