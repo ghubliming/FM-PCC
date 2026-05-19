@@ -5,17 +5,16 @@ import pickle
 
 def import_class(_class):
     if type(_class) is not str: return _class
-    ## 'diffusion' on standard installs
-    repo_name = __name__.split('.')[0]
-    ## eg, 'utils'
+    repo_name   = __name__.split('.')[0]
     module_name = '.'.join(_class.split('.')[:-1])
-    ## eg, 'Renderer'
-    class_name = _class.split('.')[-1]
-    ## eg, 'diffusion.utils'
+    class_name  = _class.split('.')[-1]
+    # Strip repo_name prefix if the caller passed a fully-qualified path
+    # (e.g. 'diffuser_visual_aligning.models.X') — avoids double-prefix
+    # 'diffuser_visual_aligning.diffuser_visual_aligning.models.X'.
+    if module_name == repo_name or module_name.startswith(repo_name + '.'):
+        module_name = module_name[len(repo_name):].lstrip('.')
     module = importlib.import_module(f'{repo_name}.{module_name}')
-    ## eg, diffusion.utils.Renderer
     _class = getattr(module, class_name)
-    # print(f'[ utils/config ] Imported {repo_name}.{module_name}:{class_name}')
     return _class
 
 class Config(Mapping):
