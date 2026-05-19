@@ -1,0 +1,97 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Sat May 16 20:43:27 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260516_204330-n54gjhhn
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-ddpm_encdec_vision/H10-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/n54gjhhn
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/seeds_config.json
+
+[utils/config ] Config: <class 'd3il.environments.dataset.aligning_dataset.Aligning_Img_Dataset'>
+    action_dim: 3
+    data_directory: environments/dataset/data/aligning/train_files.pkl
+    max_len_data: 256
+    obs_dim: 3
+    window_size: 10
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/dataset_config.json
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 12.47it/s]100%|██████████| 3/3 [00:00<00:00, 12.00it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] Calculating dataset statistics (ignoring zero-padding)...
+[ train ] Dataset Stats: Obs Mean 0.2609, Act Std 0.0034
+[ train ] Saved scaler to logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/scaler.pkl
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', horizon=10, window_size=16, obs_dim=128, action_dim=3, visual_input=True, obs_seq_len=16, action_seq_size=10, n_diffusion_steps=100, loss_type='l2', loader='ignored', max_path_length=400, logbase='logs', prefix='ddpm_encdec_vision/', exp_name='ddpm_encdec_vision/H10', n_steps_per_epoch=1000, n_train_steps=50000.0, batch_size=64, learning_rate=0.0005, gradient_accumulate_every=2, ema_decay=0.995, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion'>
+    action_dim: 3
+    action_weight: 10.0
+    clip_denoised: True
+    goal_dim: 0
+    horizon: 10
+    loss_type: l2
+    n_timesteps: 100
+    observation_dim: 3
+    predict_epsilon: True
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 50000.0
+    results_folder: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6
+    scaler: <ddpm_encdec_vision.utils.scaler.Scaler object at 0x7fd3b67633d0>
+    train_batch_size: 64
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/train_ddpm_encdec_vision.py", line 310, in <module>
+    trainer.train()
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/training.py", line 221, in train
+    self.train_epoch(steps_this_epoch, epoch)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/training.py", line 147, in train_epoch
+    loss, infos = self.model.loss(*batch)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_gaussian_diffusion.py", line 18, in loss
+    x = torch.cat([act, obs], dim=-1)
+RuntimeError: Sizes of tensors must match except in dimension 2. Expected size 10 but got size 1 for tensor number 1 in the list.
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.015 MB of 0.023 MB uploaded (0.004 MB deduped)wandb: \ 0.031 MB of 0.031 MB uploaded (0.004 MB deduped)wandb: 🚀 View run aligning-d3il-visual-ddpm_encdec_vision/H10-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/n54gjhhn
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260516_204330-n54gjhhn/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.

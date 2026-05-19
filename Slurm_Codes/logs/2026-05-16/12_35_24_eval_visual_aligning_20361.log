@@ -1,0 +1,84 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat May 16 10:35:24 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20361
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0918e1d
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+Evaluating seed 6...
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 12.88it/s]100%|██████████| 3/3 [00:00<00:00, 12.61it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ utils/training ] Restored loss history from checkpoint at step 48000
+[ expert ] Generating 3 reference videos from dataset...
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+  [ expert ] Saved logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/expert_references/expert_rollout_0.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/expert_references/expert_rollout_1.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/expert_references/expert_rollout_2.gif
+there are cpus:  64
+2950434 {0}
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f72fb4dc-5112-11f1-ba07-d85ed34e311e.xml' with default provider at slot 1
+
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_077ecfa8-5113-11f1-ba07-d85ed34e311e.xml' with default provider at slot 1
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 1 Rollout 0
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+[ eval ] Generating legacy PNG plots for diffuser...
+
+--------------------------------------------------------------------------------
+ FINAL SCIENTIFIC REPORT: diffuser (Seed 6)
+--------------------------------------------------------------------------------
+ Success rate:                           0.00
+ Constraints satisfied:                  1.00 (No obstacles)
+ Success rate (goal and constraints):     0.00
+ Avg number of steps:                  400.00 +- 0.00
+ Avg number of constraint violations:     0.00 +- 0.00
+ Avg total violation:                   0.000 +- 0.000
+ Average computation time per step:     1.489
+--------------------------------------------------------------------------------
+
+Done.
+Job completed successfully.

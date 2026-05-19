@@ -1,0 +1,349 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon May 18 17:37:22 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20495
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   62103c9
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+Evaluating seed 6...
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 12.48it/s]100%|██████████| 3/3 [00:00<00:00, 12.49it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ utils/training ] Restored loss history from checkpoint at step 8000
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/expert_references. Skipping generation.
+[ eval ] Loaded scaler from: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/scaler.pkl
+
+🚀 [ EVALUATION ] Evaluating on SEEN EXPERT TRAINING CONTEXTS (for memorization audit)!
+there are cpus:  64
+1019181 {0}
+Process 1019181 is running unpinned to utilize all available CPU threads safely!
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_3e85f67e-52e0-11f1-93f8-d85ed34e311e.xml' with default provider at slot 1
+
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.751202 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2353 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/diffuser_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.434198 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2345 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/diffuser_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.462226 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2346 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/diffuser_train_set/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 3 Rollout 0
+[ Seen Training Context 3 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.647700 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2353 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/diffuser_train_set/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 4 Rollout 0
+[ Seen Training Context 4 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.232936 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2357 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/diffuser_train_set/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.5056523680686951
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating legacy PNG plots for diffuser_train_set...
+------------------------Running aligning-d3il-visual - seen training set - diffuser_train_set (6)----------------------------
+Success rate: 0.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 0.0
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 1000.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.235
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/expert_references. Skipping generation.
+[ eval ] Loaded scaler from: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/scaler.pkl
+[ eval ] DPCC Projector active for variant 'gradient_train_set'
+
+🚀 [ EVALUATION ] Evaluating on SEEN EXPERT TRAINING CONTEXTS (for memorization audit)!
+there are cpus:  64
+1019181 {0}
+Process 1019181 is running unpinned to utilize all available CPU threads safely!
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_a98aafac-52e3-11f1-93f8-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.222893 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2466 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/gradient_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.217632 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2469 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/gradient_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.413706 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2472 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/gradient_train_set/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 3 Rollout 0
+[ Seen Training Context 3 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.667708 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2467 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/gradient_train_set/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 4 Rollout 0
+[ Seen Training Context 4 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.278094 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2476 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/gradient_train_set/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.36000627279281616
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating legacy PNG plots for gradient_train_set...
+------------------------Running aligning-d3il-visual - seen training set - gradient_train_set (6)----------------------------
+Success rate: 0.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 0.0
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 1000.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.247
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/expert_references. Skipping generation.
+[ eval ] Loaded scaler from: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/scaler.pkl
+[ eval ] DPCC Projector active for variant 'post_processing_train_set'
+
+🚀 [ EVALUATION ] Evaluating on SEEN EXPERT TRAINING CONTEXTS (for memorization audit)!
+there are cpus:  64
+1019181 {0}
+Process 1019181 is running unpinned to utilize all available CPU threads safely!
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_38af02e8-52e7-11f1-93f8-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.272891 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2478 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/post_processing_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 1.126348 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2475 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/post_processing_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.425882 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2463 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/post_processing_train_set/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 3 Rollout 0
+[ Seen Training Context 3 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.668716 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2488 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/post_processing_train_set/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+Context 4 Rollout 0
+[ Seen Training Context 4 Finished ]
+  - Total Steps: 1000
+  - Success status: False
+  - Final Mean Distance: 0.300562 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2480 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 saving failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H8_K16_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/H8_K16_T0.5_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/6/results_train_set/diagnostics/post_processing_train_set/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]. Attempting GIF fallback...
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.5588797926902771
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating legacy PNG plots for post_processing_train_set...
+------------------------Running aligning-d3il-visual - seen training set - post_processing_train_set (6)----------------------------
+Success rate: 0.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 0.0
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 1000.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.248
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+Done.
+Job completed successfully.

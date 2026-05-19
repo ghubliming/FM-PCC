@@ -1,0 +1,36 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun May 17 15:44:10 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20436
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   e3bfcae
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+Evaluating seed 6...
+[93m[ WARNING ] TEMPORAL OVERRIDE ACTIVE in config/aligning-d3il-visual.py!
+[ WARNING ] diffusion_loadpath is set to: 'logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6'[0m
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 619, in <module>
+    fm_exp = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 574, in load_diffusion_with_override
+    dataset_config = utils.load_config(*loadpath, 'dataset_config.pkl')
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/utils/serialization.py", line 36, in load_config
+    config = pickle.load(open(loadpath, 'rb'))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/aligning-d3il-visual/logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/dataset_config.pkl'

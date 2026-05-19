@@ -110,10 +110,49 @@ eval(6,7,8(half))
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
 
 - reudce H to 2
-(and change trainign steps)
+(and change trainign steps to 1k)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/16_58_00_train_visual_aligning_20333.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/17_18_45_eval_visual_aligning_20336.log
+
+(to 10k, overwrite 1k)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/21_32_38_train_visual_aligning_20346.log
+
+total failure eval
+
+- H10 (use the ddpm act styple setup)
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/22_49_20_train_visual_aligning_20352.log
+
+idinetify the physical interation error (fix11)
+
+-> fix12 fix the physical and robot. Add the max episode length to 1e5
+... misc fix, rebuild
+
+*train + eval*
+    FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-16/22_45_18_train_visual_aligning_20397.log
+
+    FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-16/23_26_39_eval_visual_aligning_20403.log
+    （**worked!** 3k train）(FMPCC/FM-PCC/logs/archive/aligning-d3il-visual_256_length/plans/ddpm_encdec_vision_3k_train/H10/6/results/diagnostics/rollout_0.gif)
+
+    parameters "FMPCC/FM-PCC/logs/archive/aligning-d3il-visual_256_length/plans/ddpm_encdec_vision_3k_train/H10/6/config_snapshot_aligning-d3il-visual/aligning-d3il-visual.py"
+
+rerun the 100 diffusion steps trian
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-17/23_41_46_train_visual_aligning_20455.log
+
+...
+
+- Gen7 FM Visual Aligning
+(10k train)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-18/12_02_46_train_visual_aligning_fm_20473.log
+
+---
+
+... ALL Failed Gen6/7v1
+
+- to Gen6V4 Rebuild to visual algining dpcc
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-19/10_49_21_train_visual_aligning_dpcc_20508.log
 
 ---
 
