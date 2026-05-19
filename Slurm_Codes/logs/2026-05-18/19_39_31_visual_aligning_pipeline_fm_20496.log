@@ -1,0 +1,15 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Mon May 18 17:39:31 UTC 2026
+JOB ID:    20496
+================================================================================
+Launching Visual Aligning Flow Matching Pipeline...
+Step 1: Flow Matching Training submitted. Job ID: 20497
+Step 2: Flow Matching Evaluation scheduled (afterok:20497). Job ID: 20498
+--------------------------------------------------------------------------------
+Visual Aligning Flow Matching Pipeline submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+================================================================================
+================================================================================
+PIPELINE END:   Mon May 18 17:39:31 UTC 2026
+================================================================================

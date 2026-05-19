@@ -1,0 +1,21 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Sun May 17 21:41:47 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: ERROR Error while calling W&B API: invalid parameters: 128 limit exceeded for GroupName (<Response [400]>)
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K100_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K100_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/seeds_config.json
+wandb: ERROR invalid parameters: 128 limit exceeded for GroupName (Error 400: Bad Request)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/train_ddpm_encdec_vision.py", line 206, in <module>
+    run = wandb.init(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1195, in init
+    wandb._sentry.reraise(e)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/analytics/sentry.py", line 155, in reraise
+    raise exc.with_traceback(sys.exc_info()[2])
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1181, in init
+    return wi.init()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 785, in init
+    raise error
+wandb.errors.CommError: invalid parameters: 128 limit exceeded for GroupName (Error 400: Bad Request)

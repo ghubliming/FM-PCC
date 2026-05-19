@@ -75,4 +75,32 @@ ROBOMIMIC WARNING(
   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [02:39<00:00,  6.29it/s, a0_loss=0.000353, a0_loss_test=0.00023, diffusion_loss=0.0122, loss=0.0061, loss_test=0.00389, lr=5.87e-5, step=4999]Epoch 4: 100%|██████████| 1000/1000 [02:39<00:00,  6.29it/s, a0_loss=0.000353, a0_loss_test=0.00023, diffusion_loss=0.0122, loss=0.0061, loss_test=0.00389, lr=5.87e-5, step=4999]Epoch 4: 100%|██████████| 1000/1000 [02:39<00:00,  6.29it/s, a0_loss=0.000353, a0_loss_test=0.00023, diffusion_loss=0.0122, loss=0.0061, loss_test=0.00389, lr=5.87e-5, step=4999]
   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [02:25<00:00,  6.86it/s, a0_loss=7e-5, a0_loss_test=0.000248, diffusion_loss=0.00327, loss=0.00164, loss_test=0.00399, lr=4.13e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [02:25<00:00,  6.86it/s, a0_loss=7e-5, a0_loss_test=0.000248, diffusion_loss=0.00327, loss=0.00164, loss_test=0.00399, lr=4.13e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [02:25<00:00,  6.86it/s, a0_loss=7e-5, a0_loss_test=0.000248, diffusion_loss=0.00327, loss=0.00164, loss_test=0.00399, lr=4.13e-5, step=5999]
   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [02:29<00:00,  6.69it/s, a0_loss=8.97e-5, a0_loss_test=0.000129, diffusion_loss=0.00309, loss=0.00154, loss_test=0.00242, lr=2.5e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [02:29<00:00,  6.69it/s, a0_loss=8.97e-5, a0_loss_test=0.000129, diffusion_loss=0.00309, loss=0.00154, loss_test=0.00242, lr=2.5e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [02:29<00:00,  6.69it/s, a0_loss=8.97e-5, a0_loss_test=0.000129, diffusion_loss=0.00309, loss=0.00154, loss_test=0.00242, lr=2.5e-5, step=6999]
-  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [02:32<00:00,  6.54it/s, a0_loss=5.44e-5, a0_loss_test=7.64e-5, diffusion_loss=0.00201, loss=0.00101, loss_test=0.00145, lr=1.17e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [02:32<00:00,  6.54it/s, a0_loss=5.44e-5, a0_loss_test=7.64e-5, diffusion_loss=0.00201, loss=0.00101, loss_test=0.00145, lr=1.17e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [02:32<00:00,  6.54it/s, a0_loss=5.44e-5, a0_loss_test=7.64e-5, diffusion_loss=0.00201, loss=0.00101, loss_test=0.00145, lr=1.17e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [02:28<00:00,  6.72it/s, a0_loss=6.01e-5, a0_loss_test=3.92e-5, diffusion_loss=0.00191, loss=0.000956, loss_test=0.000806, lr=3.02e-6, step=8999]Epoch 8: 100%|██████████| 1000/1000 [02:28<00:00,  6.72it/s, a0_loss=6.01e-5, a0_loss_test=3.92e-5, diffusion_loss=0.00191, loss=0.000956, loss_test=0.000806, lr=3.02e-6, step=8999]Epoch 8: 100%|██████████| 1000/1000 [02:28<00:00,  6.72it/s, a0_loss=6.01e-5, a0_loss_test=3.92e-5, diffusion_loss=0.00191, loss=0.000956, loss_test=0.000806, lr=3.02e-6, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [02:25<00:00,  6.88it/s, a0_loss=2.95e-5, a0_loss_test=2.6e-5, diffusion_loss=0.00162, loss=0.000809, loss_test=0.000573, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [02:25<00:00,  6.88it/s, a0_loss=2.95e-5, a0_loss_test=2.6e-5, diffusion_loss=0.00162, loss=0.000809, loss_test=0.000573, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [02:25<00:00,  6.88it/s, a0_loss=2.95e-5, a0_loss_test=2.6e-5, diffusion_loss=0.00162, loss=0.000809, loss_test=0.000573, lr=0, step=9999]
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.017 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: \ 0.029 MB of 0.034 MB uploaded (0.004 MB deduped)wandb: | 0.029 MB of 0.034 MB uploaded (0.004 MB deduped)wandb: / 0.034 MB of 0.034 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 10.6%
+wandb: 
+wandb: Run history:
+wandb:  test/a0_loss █▁▁▁▁▁▁▁▁▁
+wandb:     test/loss █▁▁▁▁▁▁▁▁▁
+wandb: train/a0_loss █▁▁▁▁▁▁▁▁▁
+wandb:    train/loss █▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:  final_test_loss 0.00057
+wandb: final_train_loss 0.00032
+wandb:             seed 6
+wandb:           status completed
+wandb:     test/a0_loss 3e-05
+wandb:        test/loss 0.00057
+wandb:    train/a0_loss 2e-05
+wandb:       train/loss 0.00032
+wandb: 
+wandb: 🚀 View run aligning-d3il-visual-ddpm_encdec_vision/H2-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/s3k74we8
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260515_193242-s3k74we8/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Vision FM_v3 training completed.
+Job completed successfully.

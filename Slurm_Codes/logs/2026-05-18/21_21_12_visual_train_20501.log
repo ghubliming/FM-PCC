@@ -1,0 +1,119 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Mon May 18 19:21:13 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260518_192116-tmgd6elc
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/tmgd6elc
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/seeds_config.json
+
+[utils/config ] Config: <class 'd3il.environments.dataset.aligning_dataset.Aligning_Img_Dataset'>
+    action_dim: 3
+    data_directory: environments/dataset/data/aligning/train_files.pkl
+    max_len_data: 512
+    obs_dim: 3
+    window_size: 8
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/dataset_config.json
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 12.23it/s]100%|██████████| 3/3 [00:00<00:00, 11.93it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] Calculating dataset statistics (ignoring zero-padding)...
+[ train ] Dataset Stats: Obs Mean 0.2609, Act Std 0.0034
+[ train ] Saved scaler to logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/scaler.pkl
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', action_dim=3, obs_seq_len=5, action_seq_size=4, horizon=8, window_size=8, n_diffusion_steps=48, action_weight=10, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), hidden_dim=256, condition_dropout=0.25, diffusion='ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion', obs_dim=128, visual_input=True, loss_discount=1.0, returns_condition=False, predict_epsilon=True, dynamic_loss=False, attention=False, condition_guidance_w=1.2, test_ret=0.9, max_path_length=512, loader='ignored', normalizer='LimitsNormalizer', preprocess_fns=[], clip_denoised=False, use_padding=True, include_returns=True, returns_scale=400, discount=0.99, logbase='logs', prefix='ddpm_encdec_vision/', exp_name='ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512', batch_size=64, learning_rate=0.0005, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=10000.0, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion'>
+    action_dim: 3
+    action_weight: 10
+    clip_denoised: True
+    goal_dim: 0
+    horizon: 8
+    loss_type: l2
+    n_timesteps: 48
+    observation_dim: 3
+    predict_epsilon: True
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 10000.0
+    results_folder: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6
+    scaler: <ddpm_encdec_vision.utils.scaler.Scaler object at 0x7f820399f040>
+    train_batch_size: 64
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.8639, a0 loss:   0.1053
+Epoch 0: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.052, a0_loss_test=0.105, diffusion_loss=0.844, loss=0.422, loss_test=0.864, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.052, a0_loss_test=0.105, diffusion_loss=0.844, loss=0.422, loss_test=0.864, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.052, a0_loss_test=0.105, diffusion_loss=0.844, loss=0.422, loss_test=0.864, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [06:39<00:00,  2.51it/s, a0_loss=0.0138, a0_loss_test=0.0265, diffusion_loss=0.386, loss=0.193, loss_test=0.231, lr=0.000485, step=1999]Epoch 1: 100%|██████████| 1000/1000 [06:39<00:00,  2.51it/s, a0_loss=0.0138, a0_loss_test=0.0265, diffusion_loss=0.386, loss=0.193, loss_test=0.231, lr=0.000485, step=1999]Epoch 1: 100%|██████████| 1000/1000 [06:39<00:00,  2.51it/s, a0_loss=0.0138, a0_loss_test=0.0265, diffusion_loss=0.386, loss=0.193, loss_test=0.231, lr=0.000485, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [06:42<00:00,  2.49it/s, a0_loss=0.0123, a0_loss_test=0.0179, diffusion_loss=0.268, loss=0.134, loss_test=0.126, lr=0.000442, step=2999]Epoch 2: 100%|██████████| 1000/1000 [06:42<00:00,  2.49it/s, a0_loss=0.0123, a0_loss_test=0.0179, diffusion_loss=0.268, loss=0.134, loss_test=0.126, lr=0.000442, step=2999]Epoch 2: 100%|██████████| 1000/1000 [06:42<00:00,  2.49it/s, a0_loss=0.0123, a0_loss_test=0.0179, diffusion_loss=0.268, loss=0.134, loss_test=0.126, lr=0.000442, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [06:41<00:00,  2.49it/s, a0_loss=0.0135, a0_loss_test=0.0118, diffusion_loss=0.199, loss=0.0996, loss_test=0.0843, lr=0.000375, step=3999]Epoch 3: 100%|██████████| 1000/1000 [06:41<00:00,  2.49it/s, a0_loss=0.0135, a0_loss_test=0.0118, diffusion_loss=0.199, loss=0.0996, loss_test=0.0843, lr=0.000375, step=3999]Epoch 3: 100%|██████████| 1000/1000 [06:41<00:00,  2.49it/s, a0_loss=0.0135, a0_loss_test=0.0118, diffusion_loss=0.199, loss=0.0996, loss_test=0.0843, lr=0.000375, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.0014, a0_loss_test=0.0137, diffusion_loss=0.0552, loss=0.0276, loss_test=0.0865, lr=0.000293, step=4999]Epoch 4: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.0014, a0_loss_test=0.0137, diffusion_loss=0.0552, loss=0.0276, loss_test=0.0865, lr=0.000293, step=4999]Epoch 4: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.0014, a0_loss_test=0.0137, diffusion_loss=0.0552, loss=0.0276, loss_test=0.0865, lr=0.000293, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.00658, a0_loss_test=0.0102, diffusion_loss=0.132, loss=0.0662, loss_test=0.0691, lr=0.000207, step=5999]Epoch 5: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.00658, a0_loss_test=0.0102, diffusion_loss=0.132, loss=0.0662, loss_test=0.0691, lr=0.000207, step=5999]Epoch 5: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.00658, a0_loss_test=0.0102, diffusion_loss=0.132, loss=0.0662, loss_test=0.0691, lr=0.000207, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.000795, a0_loss_test=0.00897, diffusion_loss=0.035, loss=0.0175, loss_test=0.0594, lr=0.000125, step=6999]Epoch 6: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.000795, a0_loss_test=0.00897, diffusion_loss=0.035, loss=0.0175, loss_test=0.0594, lr=0.000125, step=6999]Epoch 6: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.000795, a0_loss_test=0.00897, diffusion_loss=0.035, loss=0.0175, loss_test=0.0594, lr=0.000125, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.008, a0_loss_test=0.0105, diffusion_loss=0.117, loss=0.0583, loss_test=0.0655, lr=5.85e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.008, a0_loss_test=0.0105, diffusion_loss=0.117, loss=0.0583, loss_test=0.0655, lr=5.85e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [06:39<00:00,  2.50it/s, a0_loss=0.008, a0_loss_test=0.0105, diffusion_loss=0.117, loss=0.0583, loss_test=0.0655, lr=5.85e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.00416, a0_loss_test=0.00754, diffusion_loss=0.0913, loss=0.0456, loss_test=0.0506, lr=1.51e-5, step=8999]Epoch 8: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.00416, a0_loss_test=0.00754, diffusion_loss=0.0913, loss=0.0456, loss_test=0.0506, lr=1.51e-5, step=8999]Epoch 8: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.00416, a0_loss_test=0.00754, diffusion_loss=0.0913, loss=0.0456, loss_test=0.0506, lr=1.51e-5, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=4.37e-5, a0_loss_test=0.00878, diffusion_loss=0.024, loss=0.012, loss_test=0.0546, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=4.37e-5, a0_loss_test=0.00878, diffusion_loss=0.024, loss=0.012, loss_test=0.0546, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=4.37e-5, a0_loss_test=0.00878, diffusion_loss=0.024, loss=0.012, loss_test=0.0546, lr=0, step=9999]
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.019 MB of 0.028 MB uploaded (0.004 MB deduped)wandb: - 0.019 MB of 0.028 MB uploaded (0.004 MB deduped)wandb: \ 0.039 MB of 0.039 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 9.2%
+wandb: 
+wandb: Run history:
+wandb:  test/a0_loss █▂▂▁▁▁▁▁▁▁
+wandb:     test/loss █▃▂▁▁▁▁▁▁▁
+wandb: train/a0_loss █▂▂▂▁▂▁▁▁▁
+wandb:    train/loss █▂▂▂▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:  final_test_loss 0.05459
+wandb: final_train_loss 0.03981
+wandb:             seed 6
+wandb:           status completed
+wandb:     test/a0_loss 0.00878
+wandb:        test/loss 0.05459
+wandb:    train/a0_loss 0.00555
+wandb:       train/loss 0.03981
+wandb: 
+wandb: 🚀 View run aligning-d3il-visual-ddpm_encdec_vision/H8_K48_Dddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps512-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/tmgd6elc
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260518_192116-tmgd6elc/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Vision FM_v3 training completed.
+Job completed successfully.

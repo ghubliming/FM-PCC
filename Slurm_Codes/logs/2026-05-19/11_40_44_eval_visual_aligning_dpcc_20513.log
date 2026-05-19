@@ -1,0 +1,48 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue May 19 09:40:44 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    20513
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   bb7e429
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 5 ===
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K32_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps1000/H8_K32_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_steps1000/5
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K32_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps1000/5
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py", line 627, in <module>
+    exp = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py", line 586, in load_diffusion_with_override
+    diffusion_config._class = utils.config.import_class(target_class)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning/utils/config.py", line 15, in import_class
+    module = importlib.import_module(f'{repo_name}.{module_name}')
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 992, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 992, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'diffuser_visual_aligning.diffuser_visual_aligning'
