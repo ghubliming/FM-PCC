@@ -206,11 +206,38 @@ print(f'[ train ] n_timesteps (legacy buffer size) = {_n_diff_steps}  '
 
 ---
 
+## Change 8 — `config/aligning-d3il-visual.py`: re-order `base` dict (all train → all plan)
+
+**File:** `config/aligning-d3il-visual.py`
+
+Previous ordering interleaved each training block immediately with its plan sibling
+(`ddpm_encdec_vision` / `plan_ddpm_encdec_vision` / `visual_aligning_dpcc` / …).
+Reordered so all four training configs come first, then all four plan configs.
+
+```
+Before                          After (Train 1234, Plan 1234)
+──────────────────────────      ──────────────────────────────
+ddpm_encdec_vision              ══ TRAINING CONFIGS ══
+plan_ddpm_encdec_vision         1. ddpm_encdec_vision
+visual_aligning_dpcc            2. fm_encdec_vision
+plan_visual_aligning_dpcc       3. visual_aligning_dpcc
+fm_encdec_vision                4. fm_visual_aligning
+plan_fm_encdec_vision           ══ PLANNING CONFIGS (EVAL) ══
+fm_visual_aligning              1. plan_ddpm_encdec_vision
+plan_fm_visual_aligning         2. plan_fm_encdec_vision
+                                3. plan_visual_aligning_dpcc
+                                4. plan_fm_visual_aligning
+```
+
+No values, code, parameters, or comments within any of the active config blocks were changed or deleted. Typographical spelling errors in the outer banner comments and section headers (e.g. `ddpmencdec` $\rightarrow$ `DDPM ENCDEC`, `fmencdec` $\rightarrow$ `FM ENCDEC`, `diffusor` $\rightarrow$ `DIFFUSER`, `alining`/`alinging` $\rightarrow$ `ALIGNING`) have been corrected for professional accuracy.
+
+---
+
 ## Files Changed
 
 | File | Changes |
 |---|---|
-| `config/aligning-d3il-visual.py` | Issues 1, 2, 3, 4a, 4b, 5 |
+| `config/aligning-d3il-visual.py` | Issues 1, 2, 3, 4a, 4b, 5; Change 8 (reorder to Train 1234, Plan 1234) |
 | `fm_visual_aligning/models/visual_gaussian_diffusion.py` | Issue 6 |
 | `fm_visual_aligning_test/train_fm_visual_aligning.py` | Issue 7 |
 
@@ -220,3 +247,5 @@ print(f'[ train ] n_timesteps (legacy buffer size) = {_n_diff_steps}  '
 
 None. Gen7 has not been trained. No existing checkpoints use the old K-naming.
 Gen6V4 (`diffuser_visual_aligning`) is not affected by any of these changes.
+A comprehensive `git diff` has verified 100% logic and comment integrity inside the individual blocks.
+

@@ -100,6 +100,8 @@ class Aligning_Sim(BaseSim):
 
                         pred_action = np.concatenate((pred_action, [0, 1, 0, 0]), axis=0)
                         obs, reward, done, info = env.step(pred_action)
+                        if hasattr(agent, 'record_step_info'):
+                            agent.record_step_info(info)
 
                         des_robot_pos = pred_action[:3]
 
@@ -128,6 +130,8 @@ class Aligning_Sim(BaseSim):
                         pred_action = np.concatenate((pred_action, [0, 1, 0, 0]), axis=0)
 
                         obs, reward, done, info = env.step(pred_action)
+                        if hasattr(agent, 'record_step_info'):
+                            agent.record_step_info(info)
 
                 mode_encoding[context, i] = torch.tensor(info['mode'])
                 successes[context, i] = torch.tensor(info['success'])
