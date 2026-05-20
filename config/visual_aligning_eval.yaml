@@ -17,15 +17,21 @@ seeds: [6, 7, 8, 9, 10]
 #
 # dt: {
 #   'avoiding': 1,
-# } # NOT NEEDED: Aligning operates on a physical robot controller with a base integration step dt of 0.1s.
+# } # NOT IN USE: setup_dpcc_projector() defaults to dt=1.0 (config.get('dt', 1.0)).
+#   # dt=1.0 IS CORRECT for this task: actions are position deltas [dx,dy,dz], not
+#   # velocity × dt. The Euler dynamics constraint is c_pos[t+1] = c_pos[t] + 1.0 * act[t].
+#   # DO NOT set dt=0.1 (the robot controller integration step) — that value belongs to
+#   # the physical controller, not to the DPCC trajectory constraint scaling.
 #
 # observation_indices: {
 #   'avoiding': {'x_des': 0, 'y_des': 1, 'x': 2, 'y': 3},
-# } # NOT NEEDED: Mapped directly in python wrapper since visual proprioception is always located at dims [3, 4, 5].
+# } # NOT IN USE: Our eval script hardcodes trajectory indices directly in setup_dpcc_projector()
+#   # as ('deriv', [6,0]), ('deriv', [7,1]), ('deriv', [8,2]). No YAML lookup needed.
 #
 # action_indices: {
 #   'avoiding': {'vx': 0, 'vy': 1},
-# } # NOT NEEDED: Cartesian control actions are always hardcoded to the first 3 trajectory dimensions [0, 1, 2].
+# } # NOT IN USE: Same reason — action dims 0-2 are hardcoded in setup_dpcc_projector().
+#   # workspace_bounds (below) replaces the old 'bounds' dict for Cartesian safety limits.
 # -----------------------------------------------------------------------------
 
 # D3IL simulation parameters

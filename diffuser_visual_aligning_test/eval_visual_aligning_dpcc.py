@@ -451,11 +451,12 @@ class VisualAgentWrapper:
             bp_np, inhand_np, des_robot_pos_np, robot_pos_np = state  # C4: unpack actual robot_pos
 
             # ── Video capture ──────────────────────────────────────────────
-            # bp_np is already RGB (A1 fix in aligning_sim.py); no cvtColor needed.
+            # bp_np is (C,H,W) float32 in BGR order (fix11: no [::-1] flip, env returns BGR).
+            # imageio.mimsave() expects RGB, so convert at capture time — same as expert GIF.
             if self.record_mode != 'none':
                 try:
-                    bp_vis     = (bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8)
-                    inhand_vis = (inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8)
+                    bp_vis     = cv2.cvtColor((bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+                    inhand_vis = cv2.cvtColor((inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
                     self.video_frames.append(np.concatenate([bp_vis, inhand_vis], axis=1))
                 except Exception:
                     pass
