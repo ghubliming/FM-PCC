@@ -791,13 +791,23 @@ if __name__ == '__main__':
             # so all checkpoints use the correct inference behaviour.
             diffusion_model.clip_denoised = False
             print('[ eval ] clip_denoised forced → False (FM ODE does not clamp)')
+
+            # Fix 5: override flow_steps_v3 from args so Slurm --flow_steps_v3 N
+            # actually changes ODE integration steps, not just the output directory name.
+            # Without this, the checkpoint's baked-in value (e.g. 100) is always used.
+            _args_flow = getattr(args, 'flow_steps_v3', None)
+            if _args_flow is not None:
+                diffusion_model.flow_steps_v3 = int(_args_flow)
+                diffusion_model.ode_inference_steps_v3 = int(_args_flow)
+
             _model_n_ts  = getattr(diffusion_model, 'n_timesteps', '?')
             _config_n_ts = getattr(args, 'n_diffusion_steps', '?')
             _flow_steps  = getattr(diffusion_model, 'flow_steps_v3', '?')
             print(f'[ eval ] Model n_timesteps = {_model_n_ts}  '
                   f'(config n_diffusion_steps = {_config_n_ts})')
             print(f'[ eval ] FM flow_steps_v3 = {_flow_steps}  '
-                  f'(Euler ODE integration steps 0→1)')
+                  f'(Euler ODE integration steps 0→1)'
+                  f'{" [overridden from args]" if _args_flow is not None else " [checkpoint default]"}')
             if isinstance(_model_n_ts, int) and isinstance(_config_n_ts, int):
                 if _model_n_ts != _config_n_ts:
                     print(f'[ eval ] WARNING: n_timesteps mismatch — '
