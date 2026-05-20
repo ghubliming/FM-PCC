@@ -52,6 +52,27 @@ args_to_watch_fmv3_ode_plan = [
     ('diffusion', 'D'),
 ]
 
+# Gen7 Visual-FM (fm_visual_aligning) — mirrors dpcc_train/plan but adds if_vision
+args_to_watch_fm_visual_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+    ('if_vision', 'V'),
+    ('max_path_length', 'steps'),
+]
+
+args_to_watch_fm_visual_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+    ('if_vision', 'V'),
+    ('max_episode_length', 'steps'),
+]
+
 logbase = 'logs'
 
 base = {
@@ -471,6 +492,85 @@ base = {
         
         'diffusion_loadpath': 'f:fm_encdec_vision/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
         'value_loadpath': 'f:values/H{horizon}',
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    # ─── Gen7 Visual-FM (fm_visual_aligning) ─────────────────────────────────
+    'fm_visual_aligning': {
+        # 9D trajectory [act(3) | des_c_pos(3) | c_pos(3)]
+        # FM ODE engine (continuous time Beta sampling, Euler forward ODE).
+        'model': 'fm_visual_aligning.models.visual_unet.VisualUNet',
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'action_dim': 3,
+        'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)]
+        'if_vision': True,
+        'horizon': 8,               # must be divisible by 8 (U-Net stride-2 padding)
+        # n_diffusion_steps is kept for checkpoint dir naming consistency with dpcc.
+        # Flow Matching does not use discrete timesteps; actual integration steps = flow_steps_v3.
+        'n_diffusion_steps': 100,
+        'time_beta_alpha_v3': 1.5,  # Beta distribution α for continuous-time sampling
+        'time_beta_beta_v3': 1.0,   # Beta distribution β for continuous-time sampling
+        'flow_steps_v3': 100,       # Euler ODE integration steps 0→1 (must match plan block)
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'action_weight': 10,
+        'loss_type': 'l2',
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'condition_dropout': 0.1,
+        'returns_condition': False,
+        'max_path_length': 1000,    # max_n_episodes for ParityAligningDataset; also loadpath key
+        'logbase': logbase,
+        'prefix': 'fm_visual_aligning/',
+        'exp_name': watch(args_to_watch_fm_visual_train),
+        'batch_size': 32,
+        'learning_rate': 2e-4,
+        'ema_decay': 0.995,
+        'n_steps_per_epoch': 1000,
+        'n_train_steps': 5e5,
+        'gradient_accumulate_every': 2,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    'plan_fm_visual_aligning': {
+        'horizon': 8,
+        'n_diffusion_steps': 100,   # loadpath key — MUST match fm_visual_aligning.n_diffusion_steps
+        'flow_steps_v3': 100,       # Euler ODE integration steps at eval (must match train)
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        'max_episode_length': 400,  # Robot_Push_Env step budget
+        'max_path_length': 1000,    # MUST match fm_visual_aligning.max_path_length (loadpath key)
+        'action_weight': 10,
+        'window_size': 1,           # must match ParityAligningDataset single-frame training
+        'obs_seq_len': 1,
+        'if_vision': True,
+        'batch_size': 1,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': (
+            'f:plans/fm_visual_aligning/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
+        ),
+        'exp_name': watch(args_to_watch_fm_visual_plan),
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'diffusion_loadpath': (
+            'f:fm_visual_aligning/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}'
+        ),
         'diffusion_epoch': 'best',
         'verbose': False,
         'suffix': '0',

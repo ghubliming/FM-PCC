@@ -3,6 +3,7 @@ write_to_file: True
 exps: [
   'aligning-d3il-visual',
   'visual_aligning_dpcc',
+  'fm_visual_aligning',
 ]
 seeds: [6, 7, 8, 9, 10]
 
