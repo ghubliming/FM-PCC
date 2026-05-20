@@ -9,14 +9,15 @@
 
 ## Phase 0 — Pre-Requisite Fixes (applied to shared codebase)
 
-### 0.1  BGR/RGB pipeline fix
-**File:** `d3il/environments/d3il/envs/gym_aligning_env/gym_aligning/envs/aligning.py` (lines ~205-217)  
-**Change:** Removed both `cv2.cvtColor(bp_image, cv2.COLOR_RGB2BGR)` and
-`cv2.cvtColor(inhand_image, cv2.COLOR_RGB2BGR)` from `get_observation()`.  
-**Why:** MuJoCo renderer returns RGB natively. Training pipeline (`_load_images()`) also uses
-`cv2.COLOR_BGR2RGB` to produce RGB. The env's conversion inverted colors unnecessarily.
-Removing it makes train/eval colour spaces consistent.  
-**Benefit:** Applies to both Gen6V4 and Gen7.
+### 0.1  BGR/RGB pipeline — NO CHANGE ~~(reverted by Fix 1)~~
+**File:** `d3il/environments/d3il/envs/gym_aligning_env/gym_aligning/envs/aligning.py`  
+**Phase 0 attempted:** Remove `cvtColor(RGB2BGR)` under the false assumption training produces RGB.  
+**Reverted (Fix 1):** FIX11_CHANGELOG.md is authoritative — `cv2.imread(RGB-on-disk) +
+cvtColor(BGR2RGB)` accidentally produces **BGR** (see fix_11 investigation). The env's two
+`cvtColor(RGB2BGR)` calls are correct: MuJoCo→RGB → env→BGR → matches BGR training.
+Removing them would create inference-RGB vs training-BGR mismatch → divergence.
+Fix11 certified state is preserved; `aligning.py` is unchanged from fix11.  
+**See:** `../fix_1/FIX1_CHANGELOG.md`
 
 ### 0.2  Eval seeding diversity fix
 **File:** `d3il/simulation/aligning_sim.py` (lines 62-64)  
@@ -37,12 +38,15 @@ aliasing if env_state array is mutated downstream.
 **Why:** LimitsNormalizer maps constant dims to the `-1` endpoint of `[-1,1]`, not to `0`.
 The wrong comment would mislead anyone reading the normalization code during debugging.
 
-### 0.5  Fix11 comment inversion fix
+### 0.5  Fix11 comment — RESTORED TO CORRECT STATE ~~(Phase 0 rewrite was wrong, reverted by Fix 1)~~
 **File:** `d3il/simulation/aligning_sim.py` (lines 86-89)  
-**Change:** Rewrote the comment block that incorrectly stated `_load_images()` "accidentally
-produces BGR" — corrected to accurately describe the RGB training pipeline and the empirical
-evidence from Fix7 that the model was robustly handling the colour space.  
-**Why:** Inverted comment would mislead future debugging of image-space issues.
+**Phase 0 attempted:** Rewrote fix11 comment claiming "model trains on RGB" and describing a
+train/inference channel mismatch as "empirically OK."  
+**Reverted (Fix 1):** The fix11 comment saying `_load_images()` "accidentally produces BGR" was
+CORRECT. Phase 0 rewrite introduced two errors: (a) falsely claimed training=RGB, (b) referenced
+`aligning.py:212 cvtColor` that Phase 0.1 had already removed — internally inconsistent.
+Restored to the authoritative fix11 text: "model trains on BGR. Env also returns BGR (aligning.py:212)."  
+**See:** `../fix_1/FIX1_CHANGELOG.md`
 
 ---
 
