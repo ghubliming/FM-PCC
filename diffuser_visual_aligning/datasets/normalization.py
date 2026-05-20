@@ -157,7 +157,7 @@ class LimitsNormalizer(Normalizer):
     def normalize(self, x):
         ## [ 0, 1 ]
         range_ = self.maxs - self.mins
-        range_[range_ < 1e-8] = 1.0  # constant dims map to 0 in normalized space (A3)
+        range_[range_ < 1e-8] = 1.0  # constant dims map to -1 (normalized minimum) in normalized space (A3)
         x = (x - self.mins) / range_
         ## [ -1, 1 ]
         x = 2 * x - 1

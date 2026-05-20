@@ -209,10 +209,10 @@ class Robot_Push_Env(GymEnvWrapper):
         if self.if_vision:
 
             bp_image = self.bp_cam.get_image(depth=False)
-            bp_image = cv2.cvtColor(bp_image, cv2.COLOR_RGB2BGR)
-
+            # Phase 0 Gen7 fix: MuJoCo get_image() returns RGB natively.
+            # Training pipeline (_load_images) also produces RGB (cv2.imread→cvtColor(BGR2RGB)).
+            # Return RGB directly — no cvtColor needed, eliminates train/inference channel mismatch.
             inhand_image = self.inhand_cam.get_image(depth=False)
-            inhand_image = cv2.cvtColor(inhand_image, cv2.COLOR_RGB2BGR)
 
             return robot_pos, bp_image, inhand_image
 

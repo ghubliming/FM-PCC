@@ -59,9 +59,9 @@ class Aligning_Sim(BaseSim):
                              max_steps_per_episode=self.max_episode_length)
         env.start()
 
-        random.seed(pid)
-        torch.manual_seed(pid)
-        np.random.seed(pid)
+        random.seed(self.seed + pid)
+        torch.manual_seed(self.seed + pid)
+        np.random.seed(self.seed + pid)
 
         for context in contexts:
             for i in range(n_trajectories):
@@ -92,7 +92,7 @@ class Aligning_Sim(BaseSim):
                     bp_image = bp_image.transpose((2, 0, 1)).copy() / 255.
                     inhand_image = inhand_image.transpose((2, 0, 1)).copy() / 255.
 
-                    des_robot_pos = env_state[:3]
+                    des_robot_pos = env_state[:3].copy()
                     robot_pos = env_state[:3].copy()  # actual == commanded at t=0 (C4)
                     done = False
 
