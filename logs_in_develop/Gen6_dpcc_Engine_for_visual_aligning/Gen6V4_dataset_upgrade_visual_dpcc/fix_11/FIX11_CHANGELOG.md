@@ -6,6 +6,13 @@
 
 ---
 
+## TLDR
+- **Reverted `[::-1]` Channel Flip:** Restored `aligning_sim.py` to use BGR frames directly, matching the training pipeline.
+- **Restored GIF Colors:** Re-added `cv2.cvtColor` to the visualization capture block to fix the blue/red swapped colors in output videos.
+- **Outcome:** Fixes deployed successfully. The evaluation pipeline is now fully certified and functionally correct.
+
+---
+
 ## Root Cause (from FIX11_INVESTIGATION.md)
 
 Fix8 (commit `7ba1f07`) introduced a `[::-1]` channel flip in `aligning_sim.py`
