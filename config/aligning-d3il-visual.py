@@ -569,7 +569,7 @@ base = {
         'logbase': logbase,
         'prefix': (
             'f:plans/visual_aligning_dpcc/'
-            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            'H{horizon}_b{batch_size}_K{n_diffusion_steps}_D{diffusion}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
         ),
         'exp_name': watch(args_to_watch_dpcc_plan),
@@ -640,7 +640,7 @@ base = {
         'logbase': logbase,
         'prefix': (
             'f:plans/fm_visual_aligning/'
-            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+            'H{horizon}_b{batch_size}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
         ),
         'exp_name': watch(args_to_watch_fm_visual_plan),
