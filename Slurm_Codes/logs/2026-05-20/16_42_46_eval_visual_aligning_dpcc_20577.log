@@ -1,0 +1,182 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed May 20 15:07:19 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    20577
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   e227a27
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 9911.24it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  15%|█▍        | 131/900 [00:10<00:59, 13.03it/s]Loading images:  29%|██▉       | 265/900 [00:20<00:48, 13.23it/s]Loading images:  45%|████▍     | 401/900 [00:30<00:37, 13.38it/s]Loading images:  60%|█████▉    | 537/900 [00:40<00:27, 13.06it/s]Loading images:  74%|███████▍  | 664/900 [00:51<00:18, 12.60it/s]Loading images:  87%|████████▋ | 783/900 [01:01<00:09, 12.35it/s]Loading images: 100%|██████████| 900/900 [01:11<00:00, 12.65it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ utils/training ] Restored loss history from checkpoint at step 9000
+[ eval ] clip_denoised forced → False (matches original DPCC)
+[ eval ] Model n_timesteps = 5  (config n_diffusion_steps = 5)
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/expert_references. Skipping.
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+2657899 {0}
+Process 2657899 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_c7256360-545d-11f1-b5a2-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [-1.3208 -0.0461  1.1143]  |mag| = 1.7286
+[ DIAG first-replan ] denormalized a0 = [-0.00833 -0.00038  0.0134 ]  |mag| = 0.015786 m
+[ DIAG first-replan ] horizon act (normalized) range: [-5.6905, 6.5317]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-1.3208 -0.0461  1.1143]
+  step  1: [-3.2401  4.6413 -1.7318]
+  step  2: [-1.9045  2.8142  1.8889]
+  step  3: [-5.6905  6.0179  1.7249]
+  step  4: [-1.8307  3.3327  0.0306]
+  step  5: [-4.8056  6.5317 -0.4844]
+  step  6: [-0.0712  1.657   0.929 ]
+  step  7: [-1.9071  4.8754  0.3981]
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.269481 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0813 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.413659 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0755 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.462226 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0759 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 3 Rollout 0
+[ Seen Training Context 3 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.669308 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0760 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 4 Rollout 0
+[ Seen Training Context 4 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.281349 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0755 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 5 Rollout 0
+[ Seen Training Context 5 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.273534 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0758 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_5.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 6 Rollout 0
+[ Seen Training Context 6 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.287384 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0761 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_6.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 7 Rollout 0
+[ Seen Training Context 7 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.252582 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0760 seconds/step
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results_train_set/diagnostics/diffuser_train_set/rollout_7.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 8 Rollout 0
+slurmstepd-i6-gpu-1: error: *** JOB 20577 ON i6-gpu-1 CANCELLED AT 2026-05-20T15:16:10 ***

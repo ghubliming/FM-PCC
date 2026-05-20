@@ -150,9 +150,70 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-18/12_02_46_train_visual_aligning_fm_20473
 
 ... ALL Failed Gen6/7v1
 
+- try last time with max_len_data=256     
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-19/14_48_06_train_visual_aligning_20523.log
+
 - to Gen6V4 Rebuild to visual algining dpcc
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-19/10_49_21_train_visual_aligning_dpcc_20508.log
+
+Eval Terrible
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-19/11_50_36_eval_visual_aligning_dpcc_20514.log
+
+-> Move to Archive as Name Initail Run
+
+KEY FIX7 Revert some D3IL changes 
+Train
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-19/19_01_04_train_visual_aligning_dpcc_20543.log
+
+Eval
+Part succcess ! 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-19/22_41_46_eval_visual_aligning_dpcc_20551.log
+
+- FIX 8 + 9
+...
+- FIX11
+1e4 train + multi evals 
+20 May Afernoon
+
+-> try the post-processing etc. 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/20_27_15_eval_visual_aligning_dpcc_20599.log
+
+---
+*offtopic* tests to check d3il integrity
+ODE=1 + RK4
+(d3il looks fine)
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/21_59_15_eval_fmv3_ode_job_20604.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_09_43_load_results_fmv3_job_20606.log
+
+---
+
+- FM Gen7 New fm_visual_alinging
+
+First FM Gen7 New fm_visual_alinging run
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/17_41_20_train_fm_visual_aligning_20585.log
+
+eval
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/17_41_20_eval_fm_visual_aligning_20586.log 
+
+not on train eval
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/18_39_01_eval_fm_visual_aligning_20592.log
+
+BOTH wrong crushed eval for `diffuser` 
+BUT some success on `post processing`!!! others fail
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/19_41_48_eval_fm_visual_aligning_20595.log
+
+-> Fix Gen7F4 done
+(
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b4_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000
+)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/22_43_53_eval_fm_visual_aligning_20605.log
+
 
 ---
 
