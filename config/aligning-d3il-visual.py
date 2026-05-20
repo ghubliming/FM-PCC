@@ -29,7 +29,8 @@ args_to_watch_dpcc_plan = [
     ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
     ('if_vision', 'V'),
-    # NOTE: max_episode_length controls rollout steps; max_path_length is only a loadpath key.
+    # NOTE: max_episode_length is forwarded to Robot_Push_Env(max_steps_per_episode=...).
+    #       max_path_length is a loadpath key only (checkpoint directory name fragment).
     ('max_episode_length', 'steps'),
 ]
 
@@ -231,12 +232,15 @@ base = {
         # ======================================================================================
         # 📊 DATASET
         # ParityAligningDataset loads 9D trajectories from raw pkl files.
-        # max_path_length is reused as max_n_episodes for ParityAligningDataset.
+        # max_path_length serves TWO roles here (not a per-trajectory step cap):
+        #   1. Passed as max_n_episodes to ParityAligningDataset — a soft ceiling.
+        #      The aligning dataset has 900 episodes, so min(900, 1000)=900: all episodes
+        #      load and the cap is never hit. Raise if you add more demos; lower to subsample.
+        #   2. Embedded in the checkpoint directory name via args_to_watch_dpcc_train
+        #      (as 'steps1000'). plan_visual_aligning_dpcc.max_path_length MUST match
+        #      exactly, or diffusion_loadpath resolves to a non-existent directory.
         # ======================================================================================
-        # d3il uses max_len_data=512 to truncate individual trajectories per episode.
-        # Here max_path_length is re-purposed as max_n_episodes for ParityAligningDataset
-        # (how many episodes to load), not a per-trajectory step cap.
-        'max_path_length': 1000,    # max_n_episodes passed to ParityAligningDataset
+        'max_path_length': 1000,
 
         # ======================================================================================
         # 💾 SERIALIZATION & EXPERIMENT LOGS
@@ -269,7 +273,10 @@ base = {
         # MUST equal visual_aligning_dpcc.n_diffusion_steps — both are embedded as K{n_diffusion_steps} in the
         # checkpoint directory name. A mismatch here produces a FileNotFoundError (wrong K in loadpath).
         'n_diffusion_steps': 100,
-        'max_episode_length': 1000,
+        # D3IL Robot_Push_Env default is 400 (hardcoded, proven stable for the aligning task).
+        # Fix 10 wired this field so it now actually reaches the env. Start at 400 (proven baseline).
+        # Increase only after confirming the model benefits from a longer rollout budget.
+        'max_episode_length': 400,
         'max_path_length': 1000,   # MUST match visual_aligning_dpcc.max_path_length (fix_1.3): loadpath key only
         'action_weight': 10,
         # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
@@ -279,23 +286,27 @@ base = {
         'window_size': 1,
         'obs_seq_len': 1,
         'if_vision': True,
-        'policy': 'sampling.Policy',
         'batch_size': 1,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
-        'test_ret': 0,
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_V{if_vision}_steps{max_path_length}/',
+        'prefix': (
+            'f:plans/visual_aligning_dpcc/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
+        ),
         'exp_name': watch(args_to_watch_dpcc_plan),
         'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
         'predict_epsilon': True,
-        'dynamic_loss': False,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'diffusion_loadpath': 'f:visual_aligning_dpcc/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_V{if_vision}_steps{max_path_length}',
-        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+        'diffusion_loadpath': (
+            'f:visual_aligning_dpcc/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}'
+        ),
         'diffusion_epoch': 'best',
         'verbose': False,
         'suffix': '0',

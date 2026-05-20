@@ -793,6 +793,7 @@ if __name__ == '__main__':
                     n_trajectories_per_context=n_trajectories,
                     if_vision=getattr(args, 'if_vision', True),
                     eval_on_train=args_cli.eval_on_train,
+                    max_episode_length=getattr(args, 'max_episode_length', 400),
                 )
 
                 # aligning_sim.test_agent() calls wandb.log() unconditionally at the end;

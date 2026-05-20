@@ -37,13 +37,15 @@ class Aligning_Sim(BaseSim):
             n_contexts: int = 30,
             n_trajectories_per_context: int = 1,
             if_vision: bool = False,
-            eval_on_train: bool = False
+            eval_on_train: bool = False,
+            max_episode_length: int = 400,
     ):
         super().__init__(seed, device, render, n_cores, if_vision)
 
         self.n_contexts = n_contexts
         self.n_trajectories_per_context = n_trajectories_per_context
         self.eval_on_train = eval_on_train
+        self.max_episode_length = max_episode_length
 
     def eval_agent(self, agent, contexts, n_trajectories, mode_encoding, successes, mean_distance, pid, cpu_set):
 
@@ -53,7 +55,8 @@ class Aligning_Sim(BaseSim):
         else:
             print(f"Process {os.getpid()} unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).")
 
-        env = Robot_Push_Env(render=self.render, if_vision=self.if_vision)
+        env = Robot_Push_Env(render=self.render, if_vision=self.if_vision,
+                             max_steps_per_episode=self.max_episode_length)
         env.start()
 
         random.seed(pid)
@@ -80,8 +83,12 @@ class Aligning_Sim(BaseSim):
 
                 if self.if_vision:
                     env_state, bp_image, inhand_image = obs
-                    bp_image = bp_image.transpose((2, 0, 1))[::-1].copy() / 255.       # BGR→RGB (A1)
-                    inhand_image = inhand_image.transpose((2, 0, 1))[::-1].copy() / 255.  # BGR→RGB (A1)
+                    # Fix 11: no channel flip. Dataset images are stored RGB-on-disk;
+                    # cv2.imread+cvtColor(BGR2RGB) in _load_images() accidentally produces BGR.
+                    # The model is trained on BGR. The env also returns BGR (aligning.py:212).
+                    # [::-1] introduced in fix8 incorrectly flipped to RGB → mismatch → divergence.
+                    bp_image = bp_image.transpose((2, 0, 1)).copy() / 255.
+                    inhand_image = inhand_image.transpose((2, 0, 1)).copy() / 255.
 
                     des_robot_pos = env_state[:3]
                     robot_pos = env_state[:3].copy()  # actual == commanded at t=0 (C4)
@@ -104,8 +111,8 @@ class Aligning_Sim(BaseSim):
                         # cv2.imshow('1', inhand_image)
                         # cv2.waitKey(1)
 
-                        bp_image = bp_image.transpose((2, 0, 1))[::-1].copy() / 255.       # BGR→RGB (A1)
-                        inhand_image = inhand_image.transpose((2, 0, 1))[::-1].copy() / 255.  # BGR→RGB (A1)
+                        bp_image = bp_image.transpose((2, 0, 1)).copy() / 255.
+                        inhand_image = inhand_image.transpose((2, 0, 1)).copy() / 255.
 
                 else:
 
