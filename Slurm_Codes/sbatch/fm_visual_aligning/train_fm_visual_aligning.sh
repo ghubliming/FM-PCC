@@ -54,8 +54,8 @@ fi
 cd "$REPO"
 
 python fm_visual_aligning_test/train_fm_visual_aligning.py \
-    --seeds 5 6 7 8 9 \
+    --seeds 6 \
     --use-wandb \
-    --wandb-project FM-PCC-visual-aligning-gen7
+    --wandb-project FM-PCC-visual-aligning-FM
 
 echo "Job completed successfully."

@@ -52,12 +52,13 @@ args_to_watch_fmv3_ode_plan = [
     ('diffusion', 'D'),
 ]
 
-# Gen7 Visual-FM (fm_visual_aligning) — mirrors dpcc_train/plan but adds if_vision
+# Gen7 Visual-FM (fm_visual_aligning) — FM-style naming (Beta params, not DDPM K)
 args_to_watch_fm_visual_train = [
     ('prefix', ''),
     ('horizon', 'H'),
-    ('n_diffusion_steps', 'K'),
     ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),     # Beta distribution α — FM training dist identity key
+    ('time_beta_beta_v3', 'b'),      # Beta distribution β — FM training dist identity key
     ('action_weight', 'aw'),
     ('if_vision', 'V'),
     ('max_path_length', 'steps'),
@@ -67,10 +68,10 @@ args_to_watch_fm_visual_plan = [
     ('prefix', ''),
     ('horizon', 'H'),
     ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),   # identifies solver variant (euler/rk4/dopri5)
     ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
     ('if_vision', 'V'),
-    ('max_episode_length', 'steps'),
 ]
 
 logbase = 'logs'
@@ -507,14 +508,14 @@ base = {
         'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)]
         'if_vision': True,
         'horizon': 8,               # must be divisible by 8 (U-Net stride-2 padding)
-        # n_diffusion_steps is kept for checkpoint dir naming consistency with dpcc.
-        # Flow Matching does not use discrete timesteps; actual integration steps = flow_steps_v3.
-        'n_diffusion_steps': 100,
-        'time_beta_alpha_v3': 1.5,  # Beta distribution α for continuous-time sampling
-        'time_beta_beta_v3': 1.0,   # Beta distribution β for continuous-time sampling
-        'flow_steps_v3': 100,       # Euler ODE integration steps 0→1 (must match plan block)
-        'ode_solver_backend_v3': 'legacy_euler',
-        'ode_solver_method_v3': 'euler',
+        # 'n_diffusion_steps': 100, # DEAD for FM — no discrete denoising chain.
+        #                           # Legacy buffer-size hint only; does not affect training.
+        'time_beta_alpha_v3': 1.5,  # Beta distribution α — training dist identity key (checkpoint name)
+        'time_beta_beta_v3': 1.0,   # Beta distribution β — training dist identity key (checkpoint name)
+        # Inference-only params live in plan_fm_visual_aligning, not here:
+        # 'flow_steps_v3': 100,
+        # 'ode_solver_backend_v3': 'legacy_euler',
+        # 'ode_solver_method_v3': 'euler',
         'action_weight': 10,
         'loss_type': 'l2',
         'dim': 32,
@@ -538,12 +539,18 @@ base = {
 
     'plan_fm_visual_aligning': {
         'horizon': 8,
-        'n_diffusion_steps': 100,   # loadpath key — MUST match fm_visual_aligning.n_diffusion_steps
-        'flow_steps_v3': 100,       # Euler ODE integration steps at eval (must match train)
+        # 'n_diffusion_steps': 100, # DEAD for FM — removed from loadpath key.
+        'flow_steps_v3': 100,       # Euler ODE integration steps 0→1
         'ode_solver_backend_v3': 'legacy_euler',
         'ode_solver_method_v3': 'euler',
-        'time_beta_alpha_v3': 1.5,
-        'time_beta_beta_v3': 1.0,
+        # ODE tolerance params — None for legacy_euler backend.
+        # Required to prevent AttributeError if eval code reads them,
+        # and to prevent constructor TypeError (intercepted by VisualGaussianDiffusion).
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        'time_beta_alpha_v3': 1.5,  # MUST match fm_visual_aligning training block (loadpath key)
+        'time_beta_beta_v3': 1.0,   # MUST match fm_visual_aligning training block (loadpath key)
         'max_episode_length': 400,  # Robot_Push_Env step budget
         'max_path_length': 1000,    # MUST match fm_visual_aligning.max_path_length (loadpath key)
         'action_weight': 10,
@@ -558,7 +565,7 @@ base = {
         'logbase': logbase,
         'prefix': (
             'f:plans/fm_visual_aligning/'
-            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
         ),
         'exp_name': watch(args_to_watch_fm_visual_plan),
@@ -568,7 +575,7 @@ base = {
         'diffusion_timestep_threshold': _yaml_threshold,
         'diffusion_loadpath': (
             'f:fm_visual_aligning/'
-            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}'
         ),
         'diffusion_epoch': 'best',

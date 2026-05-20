@@ -19,9 +19,15 @@ class VisualGaussianDiffusion(GaussianDiffusion):
 
     # ── initialization ────────────────────────────────────────────────────────
 
-    def __init__(self, *args, ode_solver_backend_v3='legacy_euler', ode_solver_method_v3='euler', **kwargs):
-        # Intercept ode_solver parameters from the config so they don't cause 
-        # TypeError when passed to the base GaussianDiffusion class.
+    def __init__(self, *args,
+                 ode_solver_backend_v3='legacy_euler',
+                 ode_solver_method_v3='euler',
+                 ode_solver_rtol_v3=None,
+                 ode_solver_atol_v3=None,
+                 ode_solver_step_size_v3=None,
+                 **kwargs):
+        # Intercept all ODE solver params so they don't cause TypeError in the
+        # base GaussianDiffusion.__init__ (which has no **kwargs).
         super().__init__(*args, **kwargs)
 
     # ── training ──────────────────────────────────────────────────────────────
