@@ -91,3 +91,8 @@ workspace_bounds:
 enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
 # constraint_types: ['bounds', 'dynamics']  # Ready to enable — A4+B1+C4 fixes applied (Fix 8)
 constraint_types: []               # OPTION A: No constraints (kept disabled per user decision — Fix 8)
+
+# Safety clamp — max physical delta per step (metres). null = disabled.
+# 0.01 m ≈ 45× the healthy Gen6V4 step size; stops ODE explosions while
+# allowing normal fast-approach actions. Adjust per experiment.
+max_action_delta: 0.01

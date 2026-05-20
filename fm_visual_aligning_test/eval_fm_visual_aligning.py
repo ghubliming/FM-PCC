@@ -231,7 +231,8 @@ class VisualAgentWrapper:
                  obs_normalizer=None, act_normalizer=None,
                  batch_size=1, projector=None,
                  trajectory_selection='random',
-                 eval_on_train=False, variant='unspecified'):
+                 eval_on_train=False, variant='unspecified',
+                 max_action_delta=None):
 
         self.model              = diffusion_model
         self.device             = device
@@ -272,6 +273,14 @@ class VisualAgentWrapper:
         self.curr_rollout_time           = 0
         self.master_rollout_history      = {}
         self.video_frames                = []
+        self.max_action_delta            = max_action_delta
+        self.curr_rollout_act_magnitudes = []
+        self.curr_rollout_dist_to_target = []
+        self.curr_rollout_clamp_events   = []
+        self.history_act_magnitudes      = []
+        self.history_dist_to_target      = []
+        self.history_clamp_events        = []
+        self._replan_count               = 0
 
     def reset(self):
         self.mental_robot_pos   = None
@@ -290,6 +299,10 @@ class VisualAgentWrapper:
         self.inhand_image_context.clear()
         self.obs_context.clear()
         self.video_frames.clear()
+        self.curr_rollout_act_magnitudes.clear()
+        self.curr_rollout_dist_to_target.clear()
+        self.curr_rollout_clamp_events.clear()
+        self._replan_count = 0
 
     def update_rollout_info(self, info):
         """Called by Aligning_Sim at rollout end. Mirrors ddpm_encdec verbose format."""
@@ -313,11 +326,17 @@ class VisualAgentWrapper:
             'steps':     int(self.step_counter),
             'avg_time':  avg_time,
             'max_tracking_error': max_err,
+            'act_magnitudes':     list(self.curr_rollout_act_magnitudes),
+            'dist_to_target':     list(self.curr_rollout_dist_to_target),
+            'clamp_events':       list(self.curr_rollout_clamp_events),
         }
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
         self.history_pos_tracking_errors.append(
             np.array(self.curr_rollout_tracking_errors))
+        self.history_act_magnitudes.append(list(self.curr_rollout_act_magnitudes))
+        self.history_dist_to_target.append(list(self.curr_rollout_dist_to_target))
+        self.history_clamp_events.append(list(self.curr_rollout_clamp_events))
 
         ctx_type = 'Seen Training Context' if self.eval_on_train else 'Unseen Test Context'
         print(f'[ {ctx_type} {ridx} Finished ]')
@@ -327,6 +346,7 @@ class VisualAgentWrapper:
         print(f'  - Environment Mode: {mode}')
         print(f'  - Maximum Tracking Error: {max_err:.6f} m')
         print(f'  - Avg Inference Time: {avg_time:.4f} seconds/step')
+        print(f'  - Clamp events: {len(self.curr_rollout_clamp_events)}')
         print('-' * 80 + '\n')
 
         if self.save_path is not None:
@@ -334,6 +354,12 @@ class VisualAgentWrapper:
 
         if self.record_mode != 'none' and self.video_frames:
             self._save_diagnostics(ridx)
+
+    def record_step_info(self, info):
+        """Called by Aligning_Sim after each env.step() — accumulates per-step mean_distance."""
+        d = info.get('mean_distance')
+        if d is not None:
+            self.curr_rollout_dist_to_target.append(float(d))
 
     def _save_diagnostics(self, rollout_idx):
         """Save video/gif + stats.txt alongside. Mirrors ddpm_encdec pattern."""
@@ -397,11 +423,11 @@ class VisualAgentWrapper:
             plans      = data['full_plans']            # list of (H, 3) action arrays
             plan_starts = data['plan_start_positions'] # (N, 3)
 
-            fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+            fig, axes = plt.subplots(3, 3, figsize=(18, 15))
             fig.suptitle(f'Rollout {rollout_idx} — MPC vs Real  '
                          f'(success={data.get("success")})')
 
-            # XY trajectory with MPC foresight
+            # Row 0 — Spatial
             axes[0, 0].plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=2,
                             label='Real Path')
             for p_idx, plan in enumerate(plans):
@@ -420,16 +446,45 @@ class VisualAgentWrapper:
             axes[0, 2].plot(real_pos[:, 1], 'k-')
             axes[0, 2].set_title('Y Position over Steps')
 
-            axes[1, 0].plot(real_pos[:, 2], 'r-')
-            axes[1, 0].set_title('Z Height (Contact Stability)')
+            # Row 1 — Task Progress
+            dist_curve = data.get('dist_to_target', [])
+            if dist_curve:
+                axes[1, 0].plot(dist_curve, 'r-')
+                axes[1, 0].axhline(0, color='g', linestyle='--', alpha=0.5, label='target')
+                axes[1, 0].legend(fontsize=8)
+            axes[1, 0].set_title('Distance to Target over Steps')
+            axes[1, 0].set_ylabel('m')
+
+            axes[1, 1].plot(real_pos[:, 2], 'r-')
+            axes[1, 1].set_title('Z Height (Contact Stability)')
 
             if self.curr_rollout_tracking_errors:
-                axes[1, 1].plot(self.curr_rollout_tracking_errors, 'g-')
-            axes[1, 1].set_title('MPC Tracking Error (m)')
+                axes[1, 2].plot(self.curr_rollout_tracking_errors, 'g-')
+            axes[1, 2].set_title('MPC Tracking Error (m)')
+
+            # Row 2 — Action Quality
+            act_mags = data.get('act_magnitudes', [])
+            if act_mags:
+                axes[2, 0].plot(act_mags, 'c-')
+            axes[2, 0].set_title('Action Magnitude per Step (m)')
+            axes[2, 0].set_ylabel('m')
 
             vels = np.linalg.norm(real_pos[1:] - real_pos[:-1], axis=1)
-            axes[1, 2].plot(vels, 'm-')
-            axes[1, 2].set_title('End-Effector Velocity')
+            axes[2, 1].plot(vels, 'm-')
+            axes[2, 1].set_title('End-Effector Velocity')
+
+            clamp_events = data.get('clamp_events', [])
+            if clamp_events:
+                ce_steps = [e[0] for e in clamp_events]
+                ce_mags  = [e[1] for e in clamp_events]
+                axes[2, 2].scatter(ce_steps, ce_mags, c='r', s=20, zorder=3)
+                if self.max_action_delta is not None:
+                    axes[2, 2].axhline(self.max_action_delta, color='orange',
+                                       linestyle='--', alpha=0.7,
+                                       label=f'limit={self.max_action_delta}m')
+                    axes[2, 2].legend(fontsize=8)
+            axes[2, 2].set_title(f'Clamp Events ({len(clamp_events)} total)')
+            axes[2, 2].set_xlabel('Step'); axes[2, 2].set_ylabel('Raw |a| (m)')
 
             plt.tight_layout()
             fig.savefig(os.path.join(diag_path, f'rollout_{rollout_idx}_report.png'))
@@ -456,7 +511,10 @@ class VisualAgentWrapper:
                 try:
                     bp_vis     = cv2.cvtColor((bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
                     inhand_vis = cv2.cvtColor((inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
-                    self.video_frames.append(np.concatenate([bp_vis, inhand_vis], axis=1))
+                    frame = np.concatenate([bp_vis, inhand_vis], axis=1)
+                    cv2.putText(frame, f's{self.step_counter}', (5, 18),
+                                cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 0), 1)
+                    self.video_frames.append(frame)
                 except Exception:
                     pass
 
@@ -604,6 +662,24 @@ class VisualAgentWrapper:
                 ]
                 for h_i, row in enumerate(full_norm):
                     diag_lines.append(f'  step {h_i:2d}: {np.round(row, 4)}')
+                # obs_6d health (Issue 4)
+                diag_lines += [
+                    f'[ DIAG obs ] des_c_pos={np.round(obs_6d_np[:3], 4)}  '
+                    f'c_pos={np.round(obs_6d_np[3:], 4)}',
+                    f'[ DIAG obs ] obs_6d_norm={np.round(obs_6d_norm, 4)}',
+                ]
+                # image health (Issue 5) — visual only
+                if if_vision:
+                    bp_std = float(np.std(bp_np))
+                    ih_std = float(np.std(inhand_np))
+                    diag_lines += [
+                        f'[ DIAG img ] bp_image   std={bp_std:.4f}  shape={bp_np.shape}',
+                        f'[ DIAG img ] inhand_img std={ih_std:.4f}  shape={inhand_np.shape}',
+                    ]
+                    if bp_std < 0.01:
+                        diag_lines.append('[ DIAG img ] WARNING: bp_image near-black — camera may not be rendering')
+                    if ih_std < 0.01:
+                        diag_lines.append('[ DIAG img ] WARNING: inhand_image near-black — camera may not be rendering')
                 for line in diag_lines:
                     print(line)
                 if self.save_path is not None:
@@ -612,11 +688,32 @@ class VisualAgentWrapper:
                         _df.write('\n'.join(diag_lines) + '\n')
                     print(f'[ DIAG ] saved → {diag_file}')
 
+            # Periodic DIAG every 50 replans (Issue 2)
+            self._replan_count += 1
+            if self._replan_count % 50 == 0:
+                _pa0 = trajectory[[which], 0, :3].detach().cpu().numpy().squeeze()
+                _da0 = action_traj[0, 0].detach().cpu().numpy()
+                _dir = _pa0 / (np.linalg.norm(_pa0) + 1e-9)
+                print(f'[ DIAG replan={self._replan_count} step={self.step_counter} ] '
+                      f'norm|a0|={np.linalg.norm(_pa0):.3f}  '
+                      f'denorm|a0|={np.linalg.norm(_da0):.2e} m  '
+                      f'dir={np.round(_dir, 3)}')
+
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
 
         next_action    = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy().squeeze(0)   # (3,)
+        self.curr_rollout_act_magnitudes.append(float(np.linalg.norm(next_action_np)))
+
+        if self.max_action_delta is not None:
+            raw_mag = np.linalg.norm(next_action_np)
+            if raw_mag > self.max_action_delta:
+                next_action_np = next_action_np * (self.max_action_delta / raw_mag)
+                self.curr_rollout_clamp_events.append((self.step_counter, float(raw_mag)))
+                if len(self.curr_rollout_clamp_events) <= 5 or self.step_counter % 50 == 0:
+                    print(f'[ CLAMP step={self.step_counter} ] '
+                          f'raw|a|={raw_mag:.4f} m → clamped to {self.max_action_delta} m')
 
         self.mental_robot_pos += next_action_np
 
@@ -787,6 +884,7 @@ if __name__ == '__main__':
                     trajectory_selection=trajectory_selection,
                     eval_on_train=args_cli.eval_on_train,
                     variant=variant,
+                    max_action_delta=config.get('max_action_delta', None),
                 )
 
                 sim = Aligning_Sim(
