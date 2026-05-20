@@ -24,7 +24,7 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Visual-Aligning Differentiable MPC (DPCC Upgrade)**. Reused FMv3ODE's DPCC projection logic on top of the visual baseline, enforcing 6D absolute workspace constraints. |
 | **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. |
 | **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. |
-| **Gen7 (Visual Flow Matching)** | [fm_encdec_vision/](../fm_encdec_vision) | [fm_encdec_vision_test/](../fm_encdec_vision_test) | May 18, 2026 (Ongoing) | **Continuous-time visual Flow Matching (FMv3ODE)** decoupled sibling migration with advanced solvers.
+| **Gen7 (Visual Flow Matching)** | [fm_visual_aligning/](../fm_visual_aligning) | [fm_visual_aligning_test/](../fm_visual_aligning_test) | May 20, 2026 | **Continuous-time visual Flow Matching (FMv3ODE)**. Clean copy-modify sibling transition from proofed Gen6V4 to continuous-time FM ODE engine with Beta(1.5, 1.0) time sampling and velocity target training. |
 
 ***
 
@@ -1021,5 +1021,68 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 * **BGR-to-RGB Image Parity (FIX_7.2)**: Reverted the color-space conversion in D3IL's image loaders to preserve byte-for-byte image alignment with the original dataset, preventing visual distribution shifts.
 * **Material Simulator & Robot Parity (FIX_7.3)**: Reverted custom simulator control loops, named camera registrations, and rod-tip collisions to restore 100% behavioral parity with original D3IL benchmarks.
 * **Traceability Matrix**: Created [D3IL_DIFF_AUDIT.md](Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Manual_Legacy_retrieval_FIX_7/D3IL_DIFF_AUDIT.md) and [FIX7_LEGACY_REVERT_LOG.md](Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Manual_Legacy_retrieval_FIX_7/FIX7_LEGACY_REVERT_LOG.md) to log all changes and verify parity.
+
+---
+
+## Gen6v4: Visual-DPCC Robustness & Projector Safeguards (Fix 8 & Fix 9) (May 19, 2026)
+
+**Keywords**: BGR→RGB flip, dead assertion, LimitsNormalizer eps-guard, Projector batch-0 initial state broadcast, initial-state scaling B1, Deque temporal ordering B3, post-processing selection Fix 9.4, no-op guard Fix 9.1/9.2, SLSQP delta logging Fix 9.3, B1 unit test.
+
+### 1. Fix 8: Projector and Normalization Robustness
+* **A1: BGR→RGB Inference Correction**: Added a `[::-1].copy()` channel flip to the transposed images inside `aligning_sim.py` (both at init and per-step) to align evaluation's BGR frames with the RGB format the dataset loader (`sequence.py`) produces. *(Note: Later reverted in Fix 11 after deeper audit).*
+* **A2: Dead Assertion Fix**: Corrected `assert RuntimeError()` to `raise RuntimeError(...)` inside `GaussianDiffusion.__init__()` when `clip_denoised=False`.
+* **A3: LimitsNormalizer zero-variance guard**: Prevented division-by-zero crashes on constant dimensions (e.g. end-effector z-height) by adding an eps-guard (`range_ < 1e-8 → 1.0` in `normalize()`, `0.0` in `unnormalize()`).
+* **A4: Batch initial-state broadcast fix**: Fixed the SLSQP projector (`projection.py`) broadcasting sample 0's initial state `s_0` to all batch elements during `project()` and `compute_gradient()`. Moved extraction inside the batch loop so that `s_0` is correctly resolved per-sample.
+* **B1: Dynamics constraint scaling alignment**: Re-scaled the initial-state anchor constraint row in `mat_fix_initial` using `x_diff` (instead of `1`) and the `b` vector using `x_diff * s_0` to match the scale of the dynamics rows, ensuring the solver does not treat the initial state as proportionally weaker.
+* **B3 & B3-ext: Deque temporal ordering**: Replaced `appendleft` with `append` in deques for both visual and non-visual paths in `eval_visual_aligning_dpcc.py` to store trajectories in chronological order (`[oldest, ..., newest]`) instead of inverted order.
+* **C4: Closed-loop proprioceptive feedback**: Corrected observation construction in `eval_visual_aligning_dpcc.py` and `aligning_sim.py`. Previously, both commanded (`des_c_pos`) and actual (`c_pos`) halves of `obs_6d` were fed the commanded position, creating a zero-lag evaluation discrepancy. Correctly concatenated the actual `robot_pos` alongside commanded `des_robot_pos` to match the model's training distribution.
+* **Cascade fixes**: Corrected video capture block in `predict()` to remove redundant `cvtColor(BGR2RGB)` since `bp_np` is already RGB after Fix A1.
+
+### 2. Fix 9: Empty-Constraint SLSQP Safeguards & Cost Selection
+* **9.1 & 9.2: No-op constraints early exit**: Added early-exit guards in `project()` and `compute_gradient()` when `constraint_types: []` (no constraints). This prevents SLSQP from needlessly searching a constrained space and saturating actions to the ±5 bounds (noise amplification), resolving the catastrophic ±94 action range explosion seen in empty-constraint runs.
+* **9.3: SLSQP Delta Logging**: Added verbose logging in `project()` to capture when the solver modifies the trajectory by a norm delta `> 1e-4`.
+* **9.4: Cost-based trajectory selection**: Changed trajectory selection for `post_processing` and `model_free` variants from `random` to `minimum_projection_cost` to select the best trajectory from the batch of 6 instead of a random one.
+* **B1 Unit Test**: Created a new unit test suite `diffuser_visual_aligning_test/test_projector_b1.py` validating that the B1 initial-state scale changes are structurally and functionally correct.
+
+---
+
+## Gen6v4: Evaluation Wiring, Pipeline Alignment & Diagnostics (Fix 10 & Fix 11) (May 20, 2026)
+
+**Keywords**: max_episode_length, Robot_Push_Env, dead parameters cleanup, BGR flip revert, rollout GIF color correction, seeding process dynamic, .copy() safety.
+
+### 1. Fix 10: Episode Rollout Cap Wiring
+* **Wiring rollout steps**: Resolved a dead-field issue where the 400-step episode rollout budget (`max_episode_length`) in `config/aligning-d3il-visual.py` was ignored, silently capping evaluations at 400 steps due to D3IL's hardcoded defaults in `Robot_Push_Env`. Forwarded `max_episode_length` directly to `Robot_Push_Env(max_steps_per_episode=...)`.
+* **Dead configuration cleanup**: Cleaned up the `plan_visual_aligning_dpcc` config block by removing four dead parameters (`policy`, `test_ret`, `value_loadpath`, `dynamic_loss`).
+
+### 2. Fix 11 & 11b: BGR Channel Pipeline Certification
+* **BGR inference revert**: Re-audited the RGB/BGR pipeline channel formats. Discovered that the training dataset is stored RGB-on-disk, but loaded via `cv2.imread` (reading as BGR) and converted via `cvtColor(BGR2RGB)` (reversing back to BGR/RGB). Thus, the training pipeline produced RGB and inference produced BGR (swapped channels). Reverted the premature `[::-1]` flip in `aligning_sim.py` (which had been introduced in Fix 8) and restored the correct `cvtColor(BGR2RGB)` for rollout visualization/GIF color capture (Fix 11b) to fix blue-red swapped visual diagnostics, ensuring model inference input remains BGR.
+* **Smart RNG Seeding & Defensive copies**:
+  * Replaced CPU-process seeding `random.seed(pid)` in `aligning_sim.py` (which caused all eval seeds 6-10 to use the same random rollout sequence with `n_cores=1` and `pid=0`) with process-dynamic seeding `random.seed(self.seed + pid)`. This correctly restores stochastic diversity and ensures deterministic yet unique initial noise `x_T` across eval seeds.
+  * Added defensive deep copies (`.copy()`) to `des_robot_pos` initialization to prevent downstream mutations.
+
+---
+
+## Gen7: Continuous-Time Visual Flow Matching (FMv3ODE) Migration & Baseline Parity (May 20, 2026)
+
+**Keywords**: sibling package scaffolding, fm_visual_aligning, Beta continuous-time, velocity target, Euler ODE forward integration, args_to_watch_fm_visual, gym_aligning_env BGR Native.
+
+### 1. Continuous-Time FM Engine Scaffolding
+* **Scaffolding**: Duplicated the Gen6V4 `diffuser_visual_aligning` package and `diffuser_visual_aligning_test` directory into `fm_visual_aligning` and `fm_visual_aligning_test` (Copy-Modify isolation strategy).
+* **Namespace Refactoring**: Globally refactored all package imports to use the sibling namespace `fm_visual_aligning`, guaranteeing 100% parallel workspace coexistence without regressing the DDPM baseline.
+
+### 2. Continuous-Time Flow Matching Engine
+* **FM Core Math**: Implemented the FMv3ODE mathematical core in `models/diffusion.py` and `models/visual_gaussian_diffusion.py` using linear interpolation (`(1-t)*noise + t*data`) and continuous-time Beta(1.5, 1.0) sampling.
+* **Velocity-Target learning**: Modified the training objective to learn the direct velocity vector field (`v = x_data - x_noise`) instead of the DDPM discrete noise step $\epsilon$.
+* **Inference forward ODE loop**: Developed the forward deterministic ODE solver (legacy Euler) integrating from $t=0 \to 1$ over `flow_steps_v3` (default 16 steps, down from DDPM's 100).
+* **Projector Integration**: Ensured the SLSQP projector is hooked near the end of the forward ODE chain ($t \ge (1 - \text{threshold}) \times K$).
+
+### 3. Configuration & CLI Synchronization
+* **Config update**: Configured `config/aligning-d3il-visual.py` by adding `fm_visual_aligning` training and `plan_fm_visual_aligning` planning blocks.
+* **Descriptive directory naming**: Designed custom visual-specific watch lists `args_to_watch_fm_visual_train` and `args_to_watch_fm_visual_plan` to dynamically include the `if_vision` flag, ensuring visual checkpoints are correctly isolated in the filesystem.
+* **Benchmark suite registration**: Enabled `'fm_visual_aligning'` under the benchmark experiments suite in `config/visual_aligning_eval.yaml`.
+
+### 4. Gen7 Fix 1: Native BGR Return & Comments Cleanup
+* **Native BGR return**: Re-audited the RGB/BGR pipeline channel formats. In D3IL environment package (`gym_aligning/envs/aligning.py`), restored `cvtColor(RGB2BGR)` for `bp_image` and `inhand_image` to native BGR.
+* **Authoritative comments restoration**: Restored factually accurate comments in `aligning_sim.py` documenting that training uses BGR and inference also receives BGR natively via `aligning.py`, resolving the incorrect comment in Phase 0 which falsely claimed training was RGB.
 
 
