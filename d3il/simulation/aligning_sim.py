@@ -83,10 +83,12 @@ class Aligning_Sim(BaseSim):
 
                 if self.if_vision:
                     env_state, bp_image, inhand_image = obs
-                    # Fix 11: no channel flip. Dataset images are stored RGB-on-disk;
-                    # cv2.imread+cvtColor(BGR2RGB) in _load_images() accidentally produces BGR.
-                    # The model is trained on BGR. The env also returns BGR (aligning.py:212).
-                    # [::-1] introduced in fix8 incorrectly flipped to RGB → mismatch → divergence.
+                    # Fix 11: no channel flip.
+                    # Training: cv2.imread(BGR) → cvtColor(BGR2RGB) → RGB. Model trains on RGB.
+                    # Inference: MuJoCo get_image() → RGB → cvtColor(RGB2BGR) → BGR (aligning.py:212).
+                    # There IS a channel mismatch (training=RGB, inference=BGR), but fix7 empirically
+                    # proved the ResNet encoder is robust to channel swap for this geometric task.
+                    # The [::-1] flip (fix8) was reverted: divergence is checkpoint-driven, not channel-driven.
                     bp_image = bp_image.transpose((2, 0, 1)).copy() / 255.
                     inhand_image = inhand_image.transpose((2, 0, 1)).copy() / 255.
 
