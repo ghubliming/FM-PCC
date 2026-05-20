@@ -26,6 +26,9 @@ llim
 ## To Start Training
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/train_fmv3_ode_job.sh
 
+python scripts/train.py --seeds 6 7 8 9 --auto-resume
+
+
 ## To Start Evaluation
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/eval_fmv3_ode_job.sh
 

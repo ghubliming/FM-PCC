@@ -1,0 +1,119 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Tue May 19 13:08:03 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260519_130807-4bh4akv1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning-dpcc
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning-dpcc/runs/4bh4akv1
+[ train ] Seeds: [6]  (source: cli --seeds)
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6
+
+[utils/config ] Config: <class 'diffuser_visual_aligning.datasets.sequence.ParityAligningDataset'>
+    dataset_path: environments/dataset/data/aligning/train_files.pkl
+    horizon: 8
+    max_n_episodes: 256
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/dataset_config.json
+
+Loading states:   0%|          | 0/256 [00:00<?, ?it/s]Loading states: 100%|██████████| 256/256 [00:00<00:00, 10759.91it/s]
+Loading images:   0%|          | 0/256 [00:00<?, ?it/s]Loading images:  61%|██████    | 155/256 [00:10<00:06, 15.46it/s]Loading images: 100%|██████████| 256/256 [00:16<00:00, 15.65it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAligningDataset ] 256 episodes, 44401 windows (horizon=8, traj_dim=9)
+[ train ] Saved obs_normalizer → logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/obs_normalizer.pkl
+[ train ] Saved act_normalizer → logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/act_normalizer.pkl
+[ train ] obs_normalizer [ Normalizer ] dim: 6
+    -: [ 0.33 -0.35  0.13  0.33 -0.35  0.12]
+    +: [0.68 0.44 0.25 0.68 0.43 0.26]
+
+[ train ] act_normalizer [ Normalizer ] dim: 3
+    -: [-0.01 -0.01 -0.01]
+    +: [0.01 0.01 0.01]
+
+
+[utils/config ] Config: <class 'diffuser_visual_aligning.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='diffuser_visual_aligning.models.visual_unet.VisualUNet', diffusion='diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', action_dim=3, obs_dim=6, if_vision=True, horizon=8, n_diffusion_steps=16, action_weight=10, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), condition_dropout=0.1, returns_condition=False, max_path_length=256, logbase='logs', prefix='visual_aligning_dpcc/', exp_name='visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256', batch_size=64, learning_rate=0.0002, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=5000, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ train ] n_diffusion_steps = 16  (must match eval config to avoid denoising-chain mismatch)
+
+[utils/config ] Config: <class 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion'>
+    action_dim: 3
+    action_weight: 10
+    clip_denoised: True
+    goal_dim: 0
+    horizon: 8
+    loss_type: l2
+    n_timesteps: 16
+    observation_dim: 6
+    predict_epsilon: True
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'diffuser_visual_aligning.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 5000
+    results_folder: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6
+    train_batch_size: 64
+    train_lr: 0.0002
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.7484, a0 loss:   0.1060
+Epoch 0: 100%|██████████| 1000/1000 [02:35<00:00,  6.43it/s, a0_loss=0.0156, a0_loss_test=0.106, diffusion_loss=0.487, loss=0.244, loss_test=0.748, lr=0.0002, step=999]Epoch 0: 100%|██████████| 1000/1000 [02:35<00:00,  6.43it/s, a0_loss=0.0156, a0_loss_test=0.106, diffusion_loss=0.487, loss=0.244, loss_test=0.748, lr=0.0002, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [02:35<00:00,  6.42it/s, a0_loss=0.00892, a0_loss_test=0.0189, diffusion_loss=0.176, loss=0.0882, loss_test=0.251, lr=0.000171, step=1999]Epoch 1: 100%|██████████| 1000/1000 [02:35<00:00,  6.42it/s, a0_loss=0.00892, a0_loss_test=0.0189, diffusion_loss=0.176, loss=0.0882, loss_test=0.251, lr=0.000171, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [02:32<00:00,  6.57it/s, a0_loss=0.0106, a0_loss_test=0.0146, diffusion_loss=0.135, loss=0.0675, loss_test=0.11, lr=0.0001, step=2999]Epoch 2: 100%|██████████| 1000/1000 [02:32<00:00,  6.57it/s, a0_loss=0.0106, a0_loss_test=0.0146, diffusion_loss=0.135, loss=0.0675, loss_test=0.11, lr=0.0001, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [02:35<00:00,  6.43it/s, a0_loss=0.00432, a0_loss_test=0.0102, diffusion_loss=0.087, loss=0.0435, loss_test=0.0687, lr=2.93e-5, step=3999]Epoch 3: 100%|██████████| 1000/1000 [02:35<00:00,  6.43it/s, a0_loss=0.00432, a0_loss_test=0.0102, diffusion_loss=0.087, loss=0.0435, loss_test=0.0687, lr=2.93e-5, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [02:36<00:00,  6.37it/s, a0_loss=0.00357, a0_loss_test=0.00831, diffusion_loss=0.089, loss=0.0445, loss_test=0.0548, lr=0, step=4999]Epoch 4: 100%|██████████| 1000/1000 [02:36<00:00,  6.37it/s, a0_loss=0.00357, a0_loss_test=0.00831, diffusion_loss=0.089, loss=0.0445, loss_test=0.0548, lr=0, step=4999]
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.017 MB of 0.035 MB uploaded (0.004 MB deduped)wandb: \ 0.029 MB of 0.035 MB uploaded (0.004 MB deduped)wandb: | 0.029 MB of 0.035 MB uploaded (0.004 MB deduped)wandb: / 0.035 MB of 0.035 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 10.2%
+wandb: 
+wandb: Run history:
+wandb:  test/a0_loss █▂▁▁▁
+wandb:     test/loss █▃▂▁▁
+wandb: train/a0_loss █▂▂▁▁
+wandb:    train/loss █▃▂▁▁
+wandb: 
+wandb: Run summary:
+wandb:  final_test_loss 0.05476
+wandb: final_train_loss 0.04797
+wandb:             seed 6
+wandb:           status completed
+wandb:     test/a0_loss 0.00831
+wandb:        test/loss 0.05476
+wandb:    train/a0_loss 0.00643
+wandb:       train/loss 0.04797
+wandb: 
+wandb: 🚀 View run aligning-d3il-visual-visual_aligning_dpcc/H8_K16_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_steps256-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning-dpcc/runs/4bh4akv1
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning-dpcc
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260519_130807-4bh4akv1/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Visual-DPCC training completed.
+Job completed successfully.

@@ -1,0 +1,16 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Tue May 19 17:09:19 UTC 2026
+JOB ID:    20545
+================================================================================
+Launching Visual Aligning DDPM Pipeline...
+Step 1: Training submitted. Job ID: 20546
+Step 2: Evaluation scheduled (afterok:20546). Job ID: 20547
+--------------------------------------------------------------------------------
+Visual Aligning Pipeline submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+If training fails, evaluation will be cancelled automatically by Slurm.
+================================================================================
+================================================================================
+PIPELINE END:   Tue May 19 17:09:19 UTC 2026
+================================================================================
