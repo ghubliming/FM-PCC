@@ -199,8 +199,8 @@ for seed in selected_seeds:
     from fm_visual_aligning.models.visual_gaussian_diffusion import VisualGaussianDiffusion
 
     _n_diff_steps = getattr(args, 'n_diffusion_steps', 100)
-    print(f'[ train ] n_diffusion_steps = {_n_diff_steps}  '
-          f'(must match eval config to avoid denoising-chain mismatch)')
+    print(f'[ train ] n_timesteps (legacy buffer size) = {_n_diff_steps}  '
+          f'(FM uses continuous time; this value does not affect training dynamics)')
     diffusion_config = utils.Config(
         VisualGaussianDiffusion,
         savepath=(args.savepath, 'diffusion_config.pkl'),
