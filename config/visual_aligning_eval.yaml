@@ -106,9 +106,10 @@ workspace_bounds:
 
 # DPCC Projection parameters
 enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
-constraint_types: ['bounds', 'dynamics']  # Re-enabled — AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md)
+#constraint_types: ['bounds', 'dynamics']  # Re-enabled — AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md)
+constraint_types: []
 
 # Safety clamp — max physical delta per step (metres). null = disabled.
 # 0.01 m ≈ 45× the healthy Gen6V4 step size; stops ODE explosions while
 # allowing normal fast-approach actions. Adjust per experiment.
-max_action_delta: 0.01
+max_action_delta: null # 0.01
