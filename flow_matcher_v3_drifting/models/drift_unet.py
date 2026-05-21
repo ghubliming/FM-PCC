@@ -26,6 +26,7 @@ class DriftConditioner(nn.Module):
         cond_dim: int = 64,
         hidden_dim: int = 128,
         num_layers: int = 2,
+        metric_dim: Optional[int] = None,
     ):
         """
         Args:
@@ -33,11 +34,13 @@ class DriftConditioner(nn.Module):
             cond_dim: Output conditioning dimension
             hidden_dim: Hidden layer width
             num_layers: Number of MLP layers
+            metric_dim: Dimension of optional drift_metrics input; required if drift_metrics
+                will be used at forward time. None = drift_metrics are unsupported.
         """
         super().__init__()
         self.state_dim = state_dim
         self.cond_dim = cond_dim
-        
+
         # MLP encoder: state -> embedding
         layers = []
         in_dim = state_dim
@@ -48,9 +51,11 @@ class DriftConditioner(nn.Module):
                 nn.ReLU() if i < num_layers - 1 else nn.Identity(),
             ])
             in_dim = out_dim
-        
+
         self.encoder = nn.Sequential(*layers)
         self.norm = nn.LayerNorm(cond_dim)
+        # Registered Linear so weights are saved/loaded with the module and stay on device.
+        self.drift_proj = nn.Linear(metric_dim, cond_dim) if metric_dim is not None else None
 
     def forward(
         self,
@@ -78,8 +83,12 @@ class DriftConditioner(nn.Module):
         
         # Optionally fuse drift metrics
         if drift_metrics is not None:
-            # Project drift metrics to cond_dim and add
-            drift_emb = nn.Linear(drift_metrics.shape[-1], self.cond_dim)(drift_metrics)
+            if self.drift_proj is None:
+                raise RuntimeError(
+                    "DriftConditioner received drift_metrics but metric_dim was not "
+                    "set at __init__. Pass metric_dim=<dim> when constructing."
+                )
+            drift_emb = self.drift_proj(drift_metrics)
             cond = cond + 0.1 * drift_emb
         
         return self.norm(cond)
@@ -194,14 +203,15 @@ class DriftAugmentedUNet1D(nn.Module):
             force_dropout=force_dropout,
         )
 
+    @staticmethod
     def wrap_unet(base_unet: nn.Module, **kwargs) -> "DriftAugmentedUNet1D":
         """
         Convenience factory: wrap existing U-Net with drift augmentation.
-        
+
         Args:
             base_unet: Existing U-Net model
             **kwargs: Passed to __init__
-            
+
         Returns:
             DriftAugmentedUNet1D wrapping base_unet
         """

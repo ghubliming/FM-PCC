@@ -26,14 +26,14 @@ class DriftLoss(nn.Module):
     def __init__(
         self,
         trajectory_dim: int,
-        loss_type: str = "kl_divergence",
+        loss_type: str = "embedding_nn",
         memory_bank_size: int = 5000,
         temperature: float = 0.1,
     ):
         """
         Args:
             trajectory_dim: Dimensionality of trajectory (T * state_dim)
-            loss_type: "kl_divergence" | "adversarial" | "mmd"
+            loss_type: "embedding_nn" | "adversarial" | "mmd"
             memory_bank_size: Size of reference distribution buffer
             temperature: Softmax temperature for probability scaling
         """
@@ -51,7 +51,7 @@ class DriftLoss(nn.Module):
         self.register_buffer('memory_bank_ptr', torch.tensor(0, dtype=torch.long))
         self.register_buffer('memory_bank_full', torch.tensor(False, dtype=torch.bool))
         
-        if loss_type == "kl_divergence":
+        if loss_type == "embedding_nn":
             self.encoder = self._build_encoder(trajectory_dim, output_dim=128)
             self.discriminator = None
         elif loss_type == "adversarial":
@@ -107,54 +107,49 @@ class DriftLoss(nn.Module):
         
         self.memory_bank_ptr.fill_((ptr + B) % self.memory_bank_size)
 
-    def compute_kl_divergence(
+    def compute_embedding_nn_loss(
         self,
         sampled_trajectory: torch.Tensor,
     ) -> torch.Tensor:
         """
-        KL divergence loss: D_KL(Q_sampled || P_expert)
-        
+        Embedding nearest-neighbour loss: pushes sampled trajectories toward the
+        expert distribution in the encoder's embedding space.
+
+        NOTE: This is NOT KL divergence (despite the original name). It computes
+        -log(max softmax probability) over pairwise L2 distances in embedding space,
+        which is a nearest-neighbour proxy. Both the sampled and reference branches
+        train the encoder so the representation adapts to the data.
+
         Args:
             sampled_trajectory: (T*state_dim,) or (B, T*state_dim) trajectory
-            
+
         Returns:
-            loss scalar or (B,) tensor
+            loss scalar
         """
         if sampled_trajectory.dim() == 1:
             sampled_trajectory = sampled_trajectory.unsqueeze(0)
-        
+
         B = sampled_trajectory.shape[0]
-        
-        # Encode sampled trajectory
+
         q_z = self.encoder(sampled_trajectory)  # (B, 128)
-        
-        # Get current memory bank (expert trajectories)
+
         if self.memory_bank_full:
-            ref_trajs = self.memory_bank  # (memory_bank_size, T*state_dim)
+            ref_trajs = self.memory_bank
         else:
             ptr = int(self.memory_bank_ptr)
             ref_trajs = self.memory_bank[:ptr]
-        
+
         if ref_trajs.shape[0] == 0:
-            # Memory bank not yet populated; return zero loss with gradient
-            return torch.zeros(B, device=sampled_trajectory.device)
-        
-        # Encode reference trajectories
-        with torch.no_grad():
-            p_z = self.encoder(ref_trajs)  # (N_ref, 128)
-        
-        # Compute pairwise distances (L2 norm)
-        # (B, 128) vs (N_ref, 128) -> (B, N_ref)
-        dist = torch.cdist(q_z, p_z, p=2)  # Euclidean distance
-        
-        # Softmax over reference distribution
+            return torch.zeros(B, device=sampled_trajectory.device).mean()
+
+        # Both branches train the encoder; reference branch no longer detached.
+        p_z = self.encoder(ref_trajs)  # (N_ref, 128)
+
+        dist = torch.cdist(q_z, p_z, p=2)  # (B, N_ref)
         probs = torch.softmax(-dist / self.temperature, dim=1)  # (B, N_ref)
-        
-        # KL as negative log probability of closest match
-        # (Higher prob → lower loss)
-        kl = -torch.log(probs.max(dim=1)[0] + 1e-8)  # (B,)
-        
-        return kl.mean()
+        loss = -torch.log(probs.max(dim=1)[0] + 1e-8)  # (B,)
+
+        return loss.mean()
 
     def compute_mmd_loss(
         self,
@@ -184,10 +179,9 @@ class DriftLoss(nn.Module):
         if ref_trajs.shape[0] == 0:
             return torch.zeros(1, device=sampled_trajectory.device)[0]
         
-        # Encode both
+        # Both branches train the encoder; reference branch no longer detached.
         q_z = self.encoder(sampled_trajectory)  # (B, 128)
-        with torch.no_grad():
-            p_z = self.encoder(ref_trajs)  # (N, 128)
+        p_z = self.encoder(ref_trajs)  # (N, 128)
         
         # RBF kernel: k(x, y) = exp(-||x-y||^2 / sigma)
         def rbf_kernel(x, y, sigma=1.0):
@@ -281,8 +275,8 @@ class DriftLoss(nn.Module):
         
         result = {}
         
-        if self.loss_type == "kl_divergence":
-            loss = self.compute_kl_divergence(sampled_trajectory)
+        if self.loss_type == "embedding_nn":
+            loss = self.compute_embedding_nn_loss(sampled_trajectory)
             result['loss'] = loss
             result['loss_raw'] = loss.detach()
             
@@ -306,11 +300,12 @@ class DriftLoss(nn.Module):
     ) -> torch.Tensor:
         """
         Compute gradient of drift loss with respect to trajectory.
-        Used to guide ODE integration: dx/dt += lambda * grad_loss.
-        
+        Used to guide ODE integration: dx/dt -= lambda * grad_loss  (gradient descent).
+        Subtracting the gradient moves the trajectory toward lower loss = toward experts.
+
         Args:
             trajectory: (T*state_dim,) or (B, T*state_dim) tensor (requires grad)
-            
+
         Returns:
             Gradient tensor same shape as input
         """

@@ -22,12 +22,13 @@ from .helpers import (
 
 class GaussianDiffusion(nn.Module):
     def __init__(self, model, horizon, observation_dim, action_dim, goal_dim=0, n_timesteps=1000,
-        loss_type='l1', clip_denoised=False, predict_epsilon=True, action_weight=1.0, 
+        loss_type='l1', clip_denoised=False, predict_epsilon=True, action_weight=1.0,
         loss_discount=1.0, loss_weights=None, returns_condition=False, condition_guidance_w=0.1,
         time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0,
         flow_steps_v3=None, ode_inference_steps_v3=None,
         ode_solver_backend_v3='legacy_euler', ode_solver_method_v3='euler',
-        ode_solver_rtol_v3=None, ode_solver_atol_v3=None, ode_solver_step_size_v3=None):
+        ode_solver_rtol_v3=None, ode_solver_atol_v3=None, ode_solver_step_size_v3=None,
+        use_drift_augmentation=False, drift_loss_weight=0.1, drift_loss_type='embedding_nn'):
         super().__init__()
         self.horizon = horizon
         self.observation_dim = observation_dim
@@ -59,6 +60,9 @@ class GaussianDiffusion(nn.Module):
         self.ode_solver_rtol_v3 = ode_solver_rtol_v3
         self.ode_solver_atol_v3 = ode_solver_atol_v3
         self.ode_solver_step_size_v3 = ode_solver_step_size_v3
+        self.use_drift_augmentation = bool(use_drift_augmentation)
+        self.drift_loss_weight = float(drift_loss_weight)
+        self.drift_loss_type = str(drift_loss_type)
 
         self.register_buffer('betas', betas)
         self.register_buffer('alphas_cumprod', alphas_cumprod)

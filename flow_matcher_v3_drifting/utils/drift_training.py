@@ -44,37 +44,36 @@ class DriftLossScheduler:
         self.target_weight = target_weight
         self.warmup_steps = warmup_steps
         self.decay_rate = decay_rate
-        self.step = 0
+        self._step_count = 0  # renamed from self.step to avoid shadowing the step() method
 
     def step(self) -> None:
         """Advance scheduler by one step."""
-        self.step += 1
+        self._step_count += 1
 
     def get_weight(self) -> float:
         """Get current drift loss weight."""
         if self.mode == "warmup":
-            if self.step >= self.warmup_steps:
+            if self._step_count >= self.warmup_steps:
                 return self.target_weight
             else:
-                # Linear warmup
-                progress = self.step / self.warmup_steps
+                progress = self._step_count / self.warmup_steps
                 return (
                     self.start_weight +
                     (self.target_weight - self.start_weight) * progress
                 )
-        
+
         elif self.mode == "constant":
             return self.target_weight
-        
+
         elif self.mode == "exponential_decay":
-            return self.target_weight * (self.decay_rate ** self.step)
-        
+            return self.target_weight * (self.decay_rate ** self._step_count)
+
         else:
             raise ValueError(f"Unknown mode: {self.mode}")
 
     def reset(self) -> None:
         """Reset scheduler."""
-        self.step = 0
+        self._step_count = 0
 
 
 class DriftMemoryBank:
@@ -195,17 +194,14 @@ class DriftTrainingWrapper:
     def __init__(
         self,
         drift_loss_fn,
-        memory_bank: Optional[DriftMemoryBank] = None,
         drift_scheduler: Optional[DriftLossScheduler] = None,
     ):
         """
         Args:
-            drift_loss_fn: DriftLoss module
-            memory_bank: DriftMemoryBank for reference trajectories
+            drift_loss_fn: DriftLoss module (owns the reference memory bank)
             drift_scheduler: DriftLossScheduler for weight scheduling
         """
         self.drift_loss_fn = drift_loss_fn
-        self.memory_bank = memory_bank or DriftMemoryBank()
         self.drift_scheduler = drift_scheduler or DriftLossScheduler(
             mode="warmup",
             target_weight=0.1,
@@ -217,16 +213,15 @@ class DriftTrainingWrapper:
         expert_trajectories: torch.Tensor,
     ) -> None:
         """
-        Update memory bank with expert trajectories from training batch.
-        
+        Update DriftLoss memory bank with expert trajectories from training batch.
+
         Args:
             expert_trajectories: (B, T, state_dim) or (B, T*state_dim)
         """
         if expert_trajectories.dim() == 3:
             B, T, state_dim = expert_trajectories.shape
             expert_trajectories = expert_trajectories.reshape(B, -1)
-        
-        self.memory_bank.push(expert_trajectories)
+
         self.drift_loss_fn.update_memory_bank(expert_trajectories)
 
     def compute_training_loss(
@@ -289,7 +284,7 @@ def create_drift_training_config(
     
     config['use_drift_augmentation'] = drift_enabled
     config['drift_loss_weight'] = drift_loss_weight
-    config['drift_loss_type'] = 'kl_divergence'
+    config['drift_loss_type'] = 'embedding_nn'
     config['drift_warmup_epochs'] = drift_warmup_epochs
     
     # Derived settings

@@ -48,6 +48,7 @@ class Trainer(object):
         log_freq=1000,
         train_device='cuda',
         results_folder='./results',
+        drift_wrapper=None,
     ):
         super().__init__()
         self.model = diffusion_model
@@ -96,6 +97,7 @@ class Trainer(object):
         )
 
         self.logdir = results_folder
+        self.drift_wrapper = drift_wrapper
 
         self.reset_parameters()
         self.step = 0
@@ -124,12 +126,21 @@ class Trainer(object):
                 batch = next(self.train_dataloader)
                 batch = batch_to_device(batch, device=self.device)
                 loss, infos = self.model.loss(*batch)
+
+                if self.drift_wrapper is not None:
+                    expert_trajs = batch[0].detach()
+                    self.drift_wrapper.update_memory_bank_from_batch(expert_trajs)
+                    loss, _ = self.drift_wrapper.compute_training_loss(expert_trajs, loss)
+
                 loss = loss / self.gradient_accumulate_every
                 loss.backward()
 
             self.optimizer.step()
             self.lr_scheduler.step()
             self.optimizer.zero_grad()
+
+            if self.drift_wrapper is not None:
+                self.drift_wrapper.step()
 
             if self.step % self.update_ema_every == 0:
                 self.step_ema()
