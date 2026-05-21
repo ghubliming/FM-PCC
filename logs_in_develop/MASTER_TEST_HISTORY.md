@@ -19,6 +19,7 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen3v2 (ODE Solver Addon)** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) | [FM_v3_ode_selectable_test/](../FM_v3_ode_selectable_test) | April 21 – May 4, 2026 | Added advanced ODE solvers (`torchdiffeq`, RK4, Euler, Dopri5) with a dynamic override mechanism (State-Only). |
 | **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). |
 | **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). |
+| **Gen3v5 (BNS Solver)** | Pending | Pending | Pending | **BNS Solver**: Boundary-constrained Noise-guided Solver (Pending Plan). |
 | **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. |
 | **Gen5 (Visual Aligning)** | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision) | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Legacy baseline** (archived). Based on the `ddpmact d3il base` (imitation framework). Succeeded only once and never returned good results since. |
 | **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Visual-Aligning Differentiable MPC (DPCC Upgrade)**. Reused FMv3ODE's DPCC projection logic on top of the visual baseline, enforcing 6D absolute workspace constraints. |
@@ -1130,6 +1131,36 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 > [!IMPORTANT]
 > **Forensic Post-Mortem**: For the complete commit timeline and technical breakdowns, see [`POSTMORTEM_FIX7.2.md`](Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/POSTMORTEM_FIX7.2.md).
+
+***
+
+## Gen7 / Gen6v4: MPC Logic Recovery, Config Refactoring & Codebase Organization (May 21, 2026)
+
+**Keywords**: MPC recovery, `mpc_batch_size` alignment, `clip_denoised` config-driven, SLSQP projection restoration, Data Analysis v3, SLURM logs validation, Codebase Archival.
+
+### 1. Master MPC Inference Loop Recovery (Fix 8 / Upgrade 8)
+* **Plan & Research**: Authored [`PLAN_FIX8_MPC_RECOVERY.md`](Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/upgrade_8/PLAN_FIX8_MPC_RECOVERY.md) and [`RESEARCH_BATCH_SIZE_TRAJECTORY_SELECTION.md`](Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/upgrade_8/RESEARCH_BATCH_SIZE_TRAJECTORY_SELECTION.md) to reconstruct full MPC logic.
+* **Batch Size Parametrization (`mpc_batch_size`)**: Renamed and synchronized all candidate batching parameters to `mpc_batch_size` (e.g., set to 4 in training/evaluation) across scripts (`eval_visual_aligning_dpcc.py`, `eval_fm_visual_aligning.py`) and config files to avoid collision with standard training batch sizes.
+* **Trajectory Selection & Clamping (`clip_denoised`)**:
+  * Made the `clip_denoised` parameter config-driven in `aligning-d3il-visual.py`, preventing unwanted hard clamps inside early denoising chains unless explicitly required.
+  * Corrected DPCC selection logic to choose candidate trajectories based on `minimum_projection_cost` rather than random indices, guaranteeing MPC selects mathematically optimal plans.
+* **SLSQP Projection Optimization**:
+  * Reverted initial-state anchoring modifications to original projection logic configurations.
+  * Enhanced visualization outputs in PNG/HTML reports to display all computed candidate trajectories for debug traceability.
+  * Documented changes in [`CHANGELOG_FIX8.md`](Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/upgrade_8/CHANGELOG_FIX8.md).
+
+### 2. Configuration & Path Standardization
+* **YAML Path Resolution**: Updated parser utilities to support correct YAML config paths during visual-aligning evaluation.
+* **Nested Plan Path Saving**: Fixed evaluation path generation in `config/aligning-d3il-visual.py` to ensure all parallel runs save diagnostic logs and trajectory results to correctly nested directories matching loaded weight parameters.
+
+### 3. Data Analysis & SLURM Runs
+* **Scientific Runs Validation**: Executed multi-seed evaluations for both `ODE1_FM` and `ODE1_vs_Diffusion1` configurations on SLURM cluster nodes.
+* **Visual Plots Update**: Dispatched Data Analysis (DA) scripts to process loaded `.npz` files, generating heatmaps, success rate charts, and computation time metrics.
+* **SLURM Tracking**: Updated [`important_runs.md`](../Slurm_Codes/logs/important_runs/important_runs.md) to serve as a high-fidelity audit trail for cluster evaluations.
+
+### 4. Workspace Hygiene & Codebase Archival
+* **Workspace Cleanliness**: Moved outdated/legacy directories (e.g. legacy `diffuser_visual_aligning(Outdated)`) into an `Archived_Codes/` directory to prevent namespace/importer pollution, ensuring 100% clean development dependencies in the primary project tree.
+
 
 
 

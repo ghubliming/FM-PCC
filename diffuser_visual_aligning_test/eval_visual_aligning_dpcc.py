@@ -18,8 +18,7 @@
 #              ├── results_seed_<s>.pkl
 #              ├── eval_<variant>.log
 #              ├── diag_first_replan.txt
-#              ├── diagnostics/<variant>/rollout_<r>.{mp4,gif,txt}
-#              └── realtime_diagnostics/<variant>/rollout_<r>_{data.pkl,stats.json,report.png}
+#              └── diagnostics/rollout_<r>.{mp4,gif,_data.pkl,_stats.json,_report.png}
 
 import gc
 import json
@@ -274,10 +273,12 @@ class VisualAgentWrapper:
         self.history_selected_idx        = []   # Fix 8: which index was chosen per replan step
         self.history_n_steps             = []
         self.history_avg_time            = []
+        self.history_rollout_mean_dist   = []   # Fix 9: mean_distance per rollout for summary
         self.history_pos_tracking_errors = []
         self.curr_rollout_tracking_errors = []
-        self.curr_rollout_all_candidates  = []  # Fix 8: per-rollout accumulator
+        self.curr_rollout_all_candidates  = []  # Fix 8/9: per-rollout accumulator (stores c_pos dims)
         self.curr_rollout_selected_idx    = []  # Fix 8: per-rollout accumulator
+        self.curr_rollout_c_pos           = []  # Fix 9: actual robot position per step
         self.curr_rollout_time           = 0
         self.master_rollout_history      = {}
         self.video_frames                = []
@@ -300,6 +301,7 @@ class VisualAgentWrapper:
         self.step_counter       = 0
         self.curr_rollout_time  = 0
         self.curr_rollout_tracking_errors.clear()
+        self.curr_rollout_c_pos.clear()            # Fix 9
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
         self.history_full_plans.clear()
@@ -321,29 +323,30 @@ class VisualAgentWrapper:
         mode      = info.get('mode', 0)
         ridx      = int(info.get('context', self.rollout_counter))
 
-        max_err  = float(np.max(self.curr_rollout_tracking_errors)
-                         if self.curr_rollout_tracking_errors else 0.0)
+        max_phys_err = float(np.max(self.curr_rollout_tracking_errors)
+                             if self.curr_rollout_tracking_errors else 0.0)
         avg_time = float(self.curr_rollout_time / max(1, self.step_counter))
 
         self.master_rollout_history[f'rollout_{ridx}'] = {
             'real_robot_pos':      np.array(self.history_real_pos),
+            'c_pos_history':       np.array(self.curr_rollout_c_pos),         # Fix 9
             'desired_actions':     np.array(self.history_desired_actions),
             'full_plans':          np.array(self.history_full_plans),
-            'plan_start_positions': np.array(self.history_real_pos)[::self.action_seq_size],
-            'all_candidates':      list(self.curr_rollout_all_candidates),   # Fix 8: list of (B,H,3)
-            'selected_idx':        list(self.curr_rollout_selected_idx),     # Fix 8: list of int
+            'all_candidates':      list(self.curr_rollout_all_candidates),    # Fix 8/9
+            'selected_idx':        list(self.curr_rollout_selected_idx),      # Fix 8
             'success':   bool(success),
             'mean_distance': float(mean_dist),
             'mode':      int(mode),
             'steps':     int(self.step_counter),
             'avg_time':  avg_time,
-            'max_tracking_error': max_err,
+            'max_physical_tracking_error': max_phys_err,                      # Fix 9
             'act_magnitudes':     list(self.curr_rollout_act_magnitudes),
             'dist_to_target':     list(self.curr_rollout_dist_to_target),
             'clamp_events':       list(self.curr_rollout_clamp_events),
         }
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
+        self.history_rollout_mean_dist.append(float(mean_dist))               # Fix 9
         self.history_pos_tracking_errors.append(
             np.array(self.curr_rollout_tracking_errors))
         self.history_all_candidates.append(list(self.curr_rollout_all_candidates))  # Fix 8
@@ -358,16 +361,13 @@ class VisualAgentWrapper:
         print(f'  - Success status: {success}')
         print(f'  - Final Mean Distance: {mean_dist:.6f} m')
         print(f'  - Environment Mode: {mode}')
-        print(f'  - Maximum Tracking Error: {max_err:.6f} m')
+        print(f'  - Max Physical Tracking Error: {max_phys_err:.6f} m')       # Fix 9
         print(f'  - Avg Inference Time: {avg_time:.4f} seconds/step')
         print(f'  - Clamp events: {len(self.curr_rollout_clamp_events)}')
         print('-' * 80 + '\n')
 
         if self.save_path is not None:
-            self._export_rollout_realtime(ridx)
-
-        if self.record_mode != 'none' and self.video_frames:
-            self._save_diagnostics(ridx)
+            self._export_rollout_realtime(ridx)   # Fix 9: handles PNG+JSON+pkl+video
 
     def record_step_info(self, info):
         """Called by Aligning_Sim after each env.step() — accumulates per-step mean_distance."""
@@ -375,101 +375,85 @@ class VisualAgentWrapper:
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
 
-    def _save_diagnostics(self, rollout_idx):
-        """Save video/gif + stats.txt alongside. Mirrors ddpm_encdec pattern."""
-        path = os.path.join(self.save_path, 'diagnostics')
-        os.makedirs(path, exist_ok=True)
-
-        try:
-            if self.record_mode in ['video', 'all']:
-                try:
-                    imageio.mimsave(
-                        os.path.join(path, f'rollout_{rollout_idx}.mp4'),
-                        self.video_frames, fps=20)
-                except Exception as e:
-                    print(f'[ WARNING ] MP4 failed: {e}')
-
-            if self.record_mode in ['gif', 'all']:
-                try:
-                    imageio.mimsave(
-                        os.path.join(path, f'rollout_{rollout_idx}.gif'),
-                        self.video_frames, fps=10)
-                except Exception as e:
-                    print(f'[ WARNING ] GIF failed: {e}')
-
-            data = self.master_rollout_history.get(f'rollout_{rollout_idx}', {})
-            with open(os.path.join(path, f'rollout_{rollout_idx}_stats.txt'), 'w') as sf:
-                sf.write(f'Rollout {rollout_idx} Execution Summary\n')
-                sf.write('=' * 40 + '\n')
-                sf.write(f'Success: {data.get("success", False)}\n')
-                sf.write(f'Total Steps: {data.get("steps", 0)}\n')
-                sf.write(f'Mean Distance to Target: {data.get("mean_distance", 0.0):.6f} m\n')
-                sf.write(f'Environment Mode: {data.get("mode", 0)}\n')
-                sf.write(f'Average Inference Time: {data.get("avg_time", 0.0):.4f} s/step\n')
-                sf.write(f'Max Tracking Error: {data.get("max_tracking_error", 0.0):.6f} m\n')
-        except Exception as e:
-            print(f'[ WARNING ] Diagnostics save failed: {e}')
+    # Fix 9: _save_diagnostics() removed — video/gif + JSON now consolidated in _export_rollout_realtime().
 
     def _export_rollout_realtime(self, rollout_idx):
-        """Per-rollout PNG (6-panel) + JSON + pkl. Mirrors ddpm_encdec pattern."""
+        """Per-rollout PNG (9-panel) + JSON + pkl + video. Fix 9: consolidated into diagnostics/."""
         try:
-            diag_path = os.path.join(self.save_path, 'realtime_diagnostics')
+            diag_path = os.path.join(self.save_path, 'diagnostics')
             os.makedirs(diag_path, exist_ok=True)
 
             data = self.master_rollout_history[f'rollout_{rollout_idx}']
 
+            # ── Video / GIF (Fix 9: moved from _save_diagnostics) ─────────
+            if self.record_mode != 'none' and self.video_frames:
+                if self.record_mode in ['video', 'all']:
+                    try:
+                        imageio.mimsave(os.path.join(diag_path, f'rollout_{rollout_idx}.mp4'),
+                                        self.video_frames, fps=20)
+                    except Exception as e:
+                        print(f'[ WARNING ] MP4 failed: {e}')
+                if self.record_mode in ['gif', 'all']:
+                    try:
+                        imageio.mimsave(os.path.join(diag_path, f'rollout_{rollout_idx}.gif'),
+                                        self.video_frames, fps=10)
+                    except Exception as e:
+                        print(f'[ WARNING ] GIF failed: {e}')
+
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_data.pkl'), 'wb') as f:
                 pickle.dump(data, f)
 
+            # Fix 9: JSON only (no .txt duplicate); max_physical_tracking_error replaces max_tracking_error
             stats = {
-                'rollout_index':              int(rollout_idx),
-                'success':                    bool(data.get('success', False)),
-                'steps':                      int(data.get('steps', 0)),
-                'mean_distance':              float(data.get('mean_distance', 0.0)),
-                'mode':                       int(data.get('mode', 0)),
-                'avg_inference_time_per_step': float(data.get('avg_time', 0.0)),
-                'max_tracking_error':         float(data.get('max_tracking_error', 0.0)),
+                'rollout_index':                  int(rollout_idx),
+                'success':                        bool(data.get('success', False)),
+                'steps':                          int(data.get('steps', 0)),
+                'mean_distance':                  float(data.get('mean_distance', 0.0)),
+                'mode':                           int(data.get('mode', 0)),
+                'avg_inference_time_per_step':    float(data.get('avg_time', 0.0)),
+                'max_physical_tracking_error':    float(data.get('max_physical_tracking_error', 0.0)),
             }
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_stats.json'), 'w') as sf:
                 json.dump(stats, sf, indent=4)
 
-            real_pos   = data['real_robot_pos']        # (T, 3)
-            plans      = data['full_plans']            # list of (H, 3) action arrays
-            plan_starts = data['plan_start_positions'] # (N, 3)
+            real_pos  = data['real_robot_pos']       # (T, 3) des_robot_pos
+            c_pos_h   = data.get('c_pos_history', None)  # Fix 9: actual robot positions
 
             fig, axes = plt.subplots(3, 3, figsize=(18, 15))
             fig.suptitle(f'Rollout {rollout_idx} — MPC vs Real  '
                          f'(success={data.get("success")})')
 
             # Row 0 — Spatial
-            axes[0, 0].plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=2,
-                            label='Real Path')
-            # Fix 8: plot all batch candidates (light blue) + selected (bold royal blue)
+            # Fix 9 I2: cands are unnormalized c_pos XY, no cumsum; green=selected, gray=others
             all_cands_list = data.get('all_candidates', [])
             sel_idx_list   = data.get('selected_idx',   [])
+            axes[0, 0].plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=2, label='des path')
             for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
                 if step_i % 4 != 0:
                     continue
-                start = plan_starts[min(step_i, len(plan_starts) - 1)]
                 for b in range(cands.shape[0]):
-                    abs_plan = start + np.cumsum(cands[b, :, :3], axis=0)
                     if b == sel:
-                        axes[0, 0].plot(abs_plan[:, 0], abs_plan[:, 1],
-                                        color='royalblue', linewidth=1.5, alpha=0.85)
+                        axes[0, 0].plot(cands[b, :, 0], cands[b, :, 1],
+                                        color='green', linewidth=1.5, alpha=0.85)
                     else:
-                        axes[0, 0].plot(abs_plan[:, 0], abs_plan[:, 1],
-                                        color='lightblue', linewidth=0.5, alpha=0.35)
+                        axes[0, 0].plot(cands[b, :, 0], cands[b, :, 1],
+                                        color='gray', linewidth=0.5, alpha=0.25)
             n_cands = all_cands_list[0].shape[0] if all_cands_list else 1
-            axes[0, 0].set_title(f'XY — MPC foresight  (bold=selected, {n_cands} candidates/step)')
+            axes[0, 0].set_title(f'XY — MPC foresight  (green=selected, {n_cands} candidates/step)')
             axes[0, 0].set_xlabel('X (m)'); axes[0, 0].set_ylabel('Y (m)')
             axes[0, 0].legend()
 
-            axes[0, 1].plot(real_pos[:, 0], 'k-')
-            axes[0, 1].set_title('X Position over Steps')
+            # Fix 9 I6: overlay c_pos (red dashed) on X/Y position panels
+            axes[0, 1].plot(real_pos[:, 0], 'k-', label='des')
+            if c_pos_h is not None and len(c_pos_h):
+                axes[0, 1].plot(c_pos_h[:, 0], 'r--', label='actual')
+            axes[0, 1].set_title('X — des (black) vs actual (red)')
             axes[0, 1].set_ylabel('Meters')
 
-            axes[0, 2].plot(real_pos[:, 1], 'k-')
-            axes[0, 2].set_title('Y Position over Steps')
+            axes[0, 2].plot(real_pos[:, 1], 'k-', label='des')
+            if c_pos_h is not None and len(c_pos_h):
+                axes[0, 2].plot(c_pos_h[:, 1], 'r--', label='actual')
+            axes[0, 2].set_title('Y — des (black) vs actual (red)')
 
             # Row 1 — Task Progress
             dist_curve = data.get('dist_to_target', [])
@@ -483,9 +467,12 @@ class VisualAgentWrapper:
             axes[1, 1].plot(real_pos[:, 2], 'r-')
             axes[1, 1].set_title('Z Height (Contact Stability)')
 
-            if self.curr_rollout_tracking_errors:
-                axes[1, 2].plot(self.curr_rollout_tracking_errors, 'g-')
-            axes[1, 2].set_title('MPC Tracking Error (m)')
+            # Fix 9: physical tracking error |c_pos - des_c_pos|
+            phys_errs = data.get('dist_to_target', [])  # fallback
+            errs_from_hist = list(self.curr_rollout_tracking_errors)
+            if errs_from_hist:
+                axes[1, 2].plot(errs_from_hist, 'g-')
+            axes[1, 2].set_title('Physical Tracking Error |c_pos - des| (m)')
 
             # Row 2 — Action Quality
             act_mags = data.get('act_magnitudes', [])
@@ -547,9 +534,10 @@ class VisualAgentWrapper:
                 self.mental_robot_pos = des_robot_pos_np.copy()
 
             self.history_real_pos.append(des_robot_pos_np.copy())
-            if self.last_predicted_pos is not None:
-                err = np.linalg.norm(des_robot_pos_np[:2] - self.last_predicted_pos[:2])
-                self.curr_rollout_tracking_errors.append(err)
+            self.curr_rollout_c_pos.append(robot_pos_np.copy())              # Fix 9
+            # Fix 9: physical tracking error = |actual - commanded| (PD controller lag)
+            phys_err = float(np.linalg.norm(robot_pos_np[:2] - des_robot_pos_np[:2]))
+            self.curr_rollout_tracking_errors.append(phys_err)
 
             # ── Build 6D obs = [des_c_pos | c_pos] ───────────────────────
             # C4 fix: use actual robot_pos from sim for the c_pos slot.
@@ -594,9 +582,8 @@ class VisualAgentWrapper:
                 self.mental_robot_pos = des_robot_pos_np.copy()
 
             self.history_real_pos.append(des_robot_pos_np.copy())
-            if self.last_predicted_pos is not None:
-                err = np.linalg.norm(des_robot_pos_np[:2] - self.last_predicted_pos[:2])
-                self.curr_rollout_tracking_errors.append(err)
+            self.curr_rollout_c_pos.append(des_robot_pos_np.copy())          # Fix 9: no separate c_pos
+            self.curr_rollout_tracking_errors.append(0.0)                    # Fix 9: no separate c_pos
 
             obs_6d_np = np.concatenate([des_robot_pos_np, des_robot_pos_np])  # (6,)
             if self.obs_normalizer is not None:
@@ -654,8 +641,16 @@ class VisualAgentWrapper:
                     which = 0   # 'random' (DPCC default) = always index 0, deterministic
                     selection_method = 'random (index 0, DPCC semantics)'
 
-            # Fix 8: store all B candidates' action trajectories before discarding
-            self.curr_rollout_all_candidates.append(traj_np[:, :, :3].copy())   # (B, H, 3)
+            # Fix 9: store c_pos dims (6:9) = predicted actual positions, unnormalized
+            cpos_norm = traj_np[:, :, 6:9]   # (B, H, 3) normalized predicted actual positions
+            if self.obs_normalizer is not None:
+                B_f, H_f = cpos_norm.shape[:2]
+                dummy = np.zeros((B_f * H_f, 3), dtype=np.float32)
+                obs6d = np.concatenate([dummy, cpos_norm.reshape(-1, 3).astype(np.float32)], axis=1)
+                obs6d_un = self.obs_normalizer.unnormalize(obs6d)
+                self.curr_rollout_all_candidates.append(obs6d_un[:, 3:].reshape(B_f, H_f, 3).copy())
+            else:
+                self.curr_rollout_all_candidates.append(cpos_norm.copy())
             self.curr_rollout_selected_idx.append(int(which))
 
             self.prev_observations = traj_np[which].copy()
@@ -1016,15 +1011,13 @@ if __name__ == '__main__':
                              n_success=successes.flatten().numpy(),
                              n_steps=np.array(agent.history_n_steps),
                              avg_time=np.array(agent.history_avg_time),
-                             n_violations=np.zeros(len(agent.history_n_steps)),
-                             total_violations=np.zeros(len(agent.history_n_steps)),
-                             collision_free_completed=successes.flatten().numpy(),
+                             mean_distance=mean_dist.flatten().numpy(),
+                             mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist),
+                             physical_tracking_errors=np.array(
+                                 agent.history_pos_tracking_errors, dtype=object),
                              obs_all=np.array(obs_all, dtype=object),
                              act_all=np.array(act_all, dtype=object),
                              sampled_trajectories_all=np.array(plans_all, dtype=object),
-                             pos_tracking_errors=np.array(
-                                 agent.history_pos_tracking_errors, dtype=object),
-                             mean_distance=mean_dist.flatten().numpy(),
                              args=vars(args))
 
                 pkl_name = (f'results_seed_{seed}_train_set.pkl'
@@ -1045,14 +1038,17 @@ if __name__ == '__main__':
                         obs_traj   = obs_all[i]    # (T, 3) des_robot_pos
                         plans_list = plans_all[i]  # list of (H, 3) action arrays
                         rollout_data = agent.master_rollout_history.get(f'rollout_{i}', {})
-                        plan_starts  = rollout_data.get('plan_start_positions',
-                                                        np.zeros((1, 3)))
+                        c_pos_hist   = rollout_data.get('c_pos_history', None)  # Fix 9: actual positions
 
-                        axes[i, 0].plot(obs_traj[:, 0], 'r-')
-                        axes[i, 0].set_title('X Position')
+                        axes[i, 0].plot(obs_traj[:, 0], 'k-', label='des')
+                        if c_pos_hist is not None and len(c_pos_hist):
+                            axes[i, 0].plot(c_pos_hist[:, 0], 'r--', label='actual')
+                        axes[i, 0].set_title('X — des (black) vs actual (red)')
 
-                        axes[i, 1].plot(obs_traj[:, 1], 'g-')
-                        axes[i, 1].set_title('Y Position')
+                        axes[i, 1].plot(obs_traj[:, 1], 'k-', label='des')
+                        if c_pos_hist is not None and len(c_pos_hist):
+                            axes[i, 1].plot(c_pos_hist[:, 1], 'r--', label='actual')
+                        axes[i, 1].set_title('Y — des (black) vs actual (red)')
 
                         axes[i, 2].plot(obs_traj[:, 2], 'b-')
                         axes[i, 2].set_title('Z Height')
@@ -1066,22 +1062,20 @@ if __name__ == '__main__':
                         axes[i, 4].plot(obs_traj[-1, 0], obs_traj[-1, 1], 'ro', markersize=10)
                         axes[i, 4].set_title('XY Trajectory')
 
-                        # Fix 8: show all candidates per replan step
-                        axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.3)
+                        # Fix 9 I2: cands are unnormalized c_pos XY, no cumsum; green=selected
                         all_cands_list = rollout_data.get('all_candidates', [])
                         sel_idx_list   = rollout_data.get('selected_idx',   [])
+                        axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.4)
                         for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
                             if step_i % 4 != 0:
                                 continue
-                            start = plan_starts[min(step_i, len(plan_starts) - 1)]
                             for b in range(cands.shape[0]):
-                                abs_plan = start + np.cumsum(cands[b, :, :3], axis=0)
                                 if b == sel:
-                                    axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1],
-                                                    color='royalblue', linewidth=1.5, alpha=0.85)
+                                    axes[i, 5].plot(cands[b, :, 0], cands[b, :, 1],
+                                                    color='green', linewidth=1.5, alpha=0.85)
                                 else:
-                                    axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1],
-                                                    color='lightblue', linewidth=0.5, alpha=0.3)
+                                    axes[i, 5].plot(cands[b, :, 0], cands[b, :, 1],
+                                                    color='gray', linewidth=0.5, alpha=0.25)
                         n_c = all_cands_list[0].shape[0] if all_cands_list else 1
                         axes[i, 5].set_title(f'MPC Foresight ({n_c} candidates/step)')
 
@@ -1089,26 +1083,27 @@ if __name__ == '__main__':
                     fig.savefig(f'{save_path}/{variant}.png')
                     plt.close(fig)
 
-                # ── 7-metric report (D3IL standard) ─────────────────────────
-                n_success = np.array(successes)
-                n_steps   = np.array(agent.history_n_steps)
-                all_errs  = [e for t in agent.history_pos_tracking_errors for e in t]
-                track_err = float(np.max(all_errs)) if all_errs else 0.0
+                # ── Aligning eval summary ────────────────────────────────────
+                n_success   = np.array(successes.flatten())
+                n_steps     = np.array(agent.history_n_steps)
+                dists       = np.array(agent.history_rollout_mean_dist)
+                all_errs    = np.concatenate([e for e in agent.history_pos_tracking_errors
+                                              if len(e)]) if agent.history_pos_tracking_errors else np.array([0.0])
+                max_phys    = float(np.max(all_errs))
+                mean_phys   = float(np.mean(all_errs))
 
                 run_mode = 'seen training set' if args_cli.eval_on_train else 'default'
                 print(f'--- aligning-d3il-visual [{run_mode}] {variant} seed={seed} ---')
-                print(f'Success rate: {np.mean(n_success):.4f}')
-                print(f'Constraints satisfied: 1.0000')
-                print(f'Success rate (goal and constraints): {np.mean(n_success):.4f}')
-                print(f'Avg number of steps (successful trials): '
-                      f'{np.mean(n_steps[n_success > 0]) if n_success.sum() else 0:.2f} '
-                      f'+- {np.std(n_steps[n_success > 0]) if n_success.sum() else 0:.2f}')
-                print(f'Avg number of steps (all trials): '
-                      f'{np.mean(n_steps):.2f} +- {np.std(n_steps):.2f}')
-                print(f'Avg number of constraint violations: 0.00 +- 0.00')
-                print(f'Avg total violation: 0.000 +- 0.000')
-                print(f'Average computation time per step: {np.mean(agent.history_avg_time):.3f}')
-                print(f'Tracking error: {track_err:.3f}')
+                print(f'Success rate:              {np.mean(n_success):.4f}')
+                print(f'Avg final mean distance:   {np.mean(dists):.4f} m  '
+                      f'+- {np.std(dists):.4f} m')
+                print(f'Min final mean distance:   {np.min(dists):.4f} m')
+                print(f'Avg steps (successful):    '
+                      f'{np.mean(n_steps[n_success > 0]) if n_success.sum() else 0:.2f}'
+                      f' +- {np.std(n_steps[n_success > 0]) if n_success.sum() else 0:.2f}')
+                print(f'Avg steps (all trials):    {np.mean(n_steps):.2f} +- {np.std(n_steps):.2f}')
+                print(f'Physical tracking error:   mean={mean_phys:.4f} m  max={max_phys:.4f} m')
+                print(f'Avg inference time/step:   {np.mean(agent.history_avg_time):.3f} s')
                 print('-' * 80 + '\n')
 
             finally:
