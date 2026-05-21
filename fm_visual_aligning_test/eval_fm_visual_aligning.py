@@ -650,8 +650,8 @@ class VisualAgentWrapper:
                         which = int(np.argmin(projection_costs))
                         selection_method = 'minimum_projection_cost (calculated)'
                 else:
-                    which = 0   # Fix 8: deterministic first-index (matches DPCC 'random'=0 semantics)
-                    selection_method = 'first (index 0)'
+                    which = 0   # 'random' (DPCC default) = always index 0, deterministic
+                    selection_method = 'random (index 0, DPCC semantics)'
 
             # Fix 8: store all B candidates' action trajectories before discarding
             self.curr_rollout_all_candidates.append(traj_np[:, :, :3].copy())   # (B, H, 3)
@@ -947,15 +947,13 @@ if __name__ == '__main__':
                         args, config, obs_normalizer, act_normalizer, variant)
                     print(f'[ eval ] DPCC projector active for variant {variant!r}')
 
-                # Fix 8: trajectory selection driven by variant name suffix (DPCC dpcc-r/c/t pattern).
-                # Default (no suffix) = first index (deterministic; matches DPCC 'random'=0 semantics).
-                # -c = minimum_projection_cost; -t = temporal_consistency.
-                if '-t' in variant:
+                # Trajectory selection — exact DPCC eval.py logic (projection_eval.yaml dpcc-r/c/t).
+                # 'random' = always index 0 (deterministic); same as DPCC Policy.__call__ semantics.
+                trajectory_selection = 'random'
+                if 'dpcc-t' in variant:
                     trajectory_selection = 'temporal_consistency'
-                elif '-c' in variant or 'dpcc-c' in variant:
+                if 'dpcc-c' in variant:
                     trajectory_selection = 'minimum_projection_cost'
-                else:
-                    trajectory_selection = 'first'
 
                 # Fix 8: diffuser runs single sample (no projection, no candidate diversity).
                 # All projected variants use args.batch_size from plan config (MPC candidate pool).

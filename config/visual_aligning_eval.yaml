@@ -43,32 +43,34 @@ n_trajectories_per_context: 1
 diffusion_timestep_threshold: 0.5
 
 # Projection
-# Suffix convention (Fix 8 — matches DPCC dpcc-r/c/t):
-#   no suffix  = first (index 0) — deterministic, DPCC 'random'=0 semantics
-#   -c         = minimum_projection_cost (argmin SLSQP cost over batch)
-#   -t         = temporal_consistency (closest to previous step trajectory)
-#   -tightened = workspace bounds tightened by enlarge_constraints
+# Exact DPCC reference variant list (from dpcc/config/projection_eval.yaml).
+# Trajectory selection driven by variant name, matching DPCC eval.py exactly:
+#   trajectory_selection = 'random'              (default — always index 0, deterministic)
+#   if 'dpcc-t' in variant → 'temporal_consistency'
+#   if 'dpcc-c' in variant → 'minimum_projection_cost'
+# -tightened = workspace bounds tightened by enlarge_constraints
+# dt0p25/dt0p5/dt2p0/dt4p0 = dynamics constraint dt scale factor
 projection_variants: [
-  # Unconstrained baseline
+  # Figure 2, Table 1 and Figure 3:
+  'dpcc-r',
+  'dpcc-r-tightened',
+  'dpcc-c',
+  'dpcc-c-tightened',
+  'dpcc-t',
+  'dpcc-t-tightened',
+  # Table 1:
   'diffuser',
-
-  # Gradient (in-denoising projection)
   'gradient',
   'gradient-tightened',
-
-  # Post-processing: three selection strategies
   'post_processing',
-  'post_processing-c',
-  'post_processing-t',
   'post_processing-tightened',
-  'post_processing-tightened-c',
-
-  # Model-free: three selection strategies
   'model_free',
-  'model_free-c',
-  'model_free-t',
   'model_free-tightened',
-  'model_free-tightened-c',
+  # Table 2:
+  'dpcc-c-tightened-dt0p25',
+  'dpcc-c-tightened-dt0p5',
+  'dpcc-c-tightened-dt2p0',
+  'dpcc-c-tightened-dt4p0',
 ]
 
 # --- STATE-ONLY PROJECTION BASES (COMMENTED OUT: NOT NEEDED FOR VISUAL ALIGNING) ---
