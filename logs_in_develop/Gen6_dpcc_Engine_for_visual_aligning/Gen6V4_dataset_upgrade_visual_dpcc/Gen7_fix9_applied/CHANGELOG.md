@@ -99,3 +99,24 @@ self.curr_rollout_c_pos          = []   # Fix 9
 ```
 
 `reset()`: added `self.curr_rollout_c_pos.clear()`.
+
+---
+
+## Fix 9.1 — Z Panel, Thin Lines, Standalone High-Res MPC Plot
+
+Identical to FM Fix 9.1. Applied symmetrically to `eval_visual_aligning_dpcc.py`.
+
+**Z des/actual overlay**:
+- Per-rollout PNG `axes[1,1]`: was `real_pos[:,2]` red, titled "Z Height (Contact Stability)". Now black=des Z, red dashed=actual Z (`c_pos_h[:,2]`), title "Z — des (black) vs actual (red)".
+- Aggregate PNG `axes[i,2]`: same fix with `c_pos_hist[:,2]`.
+- Import: `from mpl_toolkits.mplot3d import Axes3D` added.
+
+**Thinner MPC foresight lines** (per-rollout `axes[0,0]` and aggregate `axes[i,5]`):
+- Selected: `linewidth=1.5` → `0.8`
+- Non-selected: `linewidth=0.5, alpha=0.25` → `linewidth=0.2, alpha=0.2`
+
+**Standalone high-res MPC foresight file** (`rollout_{idx}_mpc_foresight.png`):
+- `figsize=(26, 11)`, `dpi=200` → ~5200×2200 px. Saved to `diagnostics/`.
+- Left `ax_xy`: XY foresight, every-other-step sampling, `equal` aspect, grid.
+- Right `ax_3d`: 3D projection using `cands[b,:,0/1/2]` — shows Z spread of DPCC predictions.
+- Variable name in DPCC is `c_pos_h` (vs `c_pos_hist` in FM) — kept consistent with existing code.
