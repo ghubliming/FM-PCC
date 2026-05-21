@@ -833,6 +833,20 @@ if __name__ == '__main__':
             print('[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)')
         except Exception as _e:
             print(f'[ expert ] WARNING: MjRobot counter reset failed: {_e}')
+        # FIX-7.2: Clear the process-global render context cache so the variant's
+        # cameras create fresh RenderContextOffscreen objects bound to variant_model
+        # and variant_data. Without this, __RENDER_CTX_MAP in mj_render_singleton.py
+        # holds stale contexts from expert gen (bound to expert_model/expert_data),
+        # causing all variant renders to show the expert gen's robot pose instead of
+        # the variant's → bp_image std 0.1978 (wrong) instead of 0.2093 (correct).
+        try:
+            from environments.d3il.d3il_sim.sims.mj_beta.mj_utils.mj_render_singleton import (
+                reset_singleton as _reset_render_singleton,
+            )
+            _reset_render_singleton()
+            print('[ expert ] Render singleton cache cleared (FIX-7.2)')
+        except Exception as _e:
+            print(f'[ expert ] WARNING: Render singleton reset failed: {_e}')
         # Also delete stale panda_tmp_rb*.xml left by expert gen to suppress noisy
         # mju_openResource warnings on subsequent env inits.
         import glob as _glob
@@ -1065,6 +1079,12 @@ if __name__ == '__main__':
                 # matching the clean-process scene geometry.
                 try:
                     _MjRobot.GLOBAL_MJ_ROBOT_COUNTER = 0
+                except NameError:
+                    pass
+                # FIX-7.2 (per-variant): Clear render context cache so next variant
+                # creates fresh RenderContextOffscreen objects.
+                try:
+                    _reset_render_singleton()
                 except NameError:
                     pass
                 for _stale in _glob.glob(os.path.join(_mj_dir, 'panda_tmp_rb*.xml')):
