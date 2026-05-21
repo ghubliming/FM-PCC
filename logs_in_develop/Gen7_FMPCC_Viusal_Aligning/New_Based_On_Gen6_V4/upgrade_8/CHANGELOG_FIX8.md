@@ -30,23 +30,26 @@ else:
 
 ---
 
-## P2 — Restore DPCC trajectory-selection semantics
+## P2 — Restore DPCC trajectory-selection semantics (corrected)
 
 **File**: both eval scripts (variant loop)
 
-**Removed** the old flat `trajectory_selection = 'random'` assignment.
-
-**Replaced with:**
+**Corrected implementation** (exact `dpcc/scripts/eval.py` logic):
 ```python
-if '-t' in variant:
-    trajectory_selection = 'temporal_consistency'
-elif '-c' in variant or 'dpcc-c' in variant:
-    trajectory_selection = 'minimum_projection_cost'
-else:
-    trajectory_selection = 'first'
+trajectory_selection = 'random'
+if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
+if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
 ```
 
-Suffix convention: no suffix = `first` (index 0, deterministic); `-c` = minimum SLSQP cost; `-t` = temporal consistency vs. previous step.
+`'random'` = always index 0 (deterministic). Only `dpcc-t` and `dpcc-c` variants deviate. `post_processing`, `model_free`, `gradient`, `dpcc-r` all stay at `'random'`.
+
+**Prior incorrect version** (initial Fix 8 — wrong substring matching):
+```python
+if '-t' in variant: trajectory_selection = 'temporal_consistency'
+elif '-c' in variant or 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+else: trajectory_selection = 'first'
+```
+This was wrong: `-c` would match `dpcc-c-tightened-dt0p25` via a generic `-c` check instead of the specific `dpcc-c` guard; `-t` would have incorrectly fired on any future variant containing `-t`; and `'first'` is not a DPCC-defined string.
 
 ---
 
@@ -125,11 +128,15 @@ Same fix as P5. Replaced flat `plans_list` iteration with candidate-aware loop u
 
 ---
 
-## Config — `projection_variants` expanded
+## Config — `projection_variants` corrected to exact DPCC reference
 
 **File**: `config/visual_aligning_eval.yaml`
 
-Added `-c` (minimum_projection_cost) and `-t` (temporal_consistency) suffix variants for `post_processing` and `model_free`, matching DPCC `dpcc-r/c/t` ablation structure. Total variants: 13 (was 7).
+**Correction**: initial Fix 8 invented custom `-c`/`-t` suffixes on `post_processing` and `model_free` (not in DPCC reference). These were removed. The YAML now contains the exact same list as `dpcc/config/projection_eval.yaml`:
+- `dpcc-r/c/t` + `-tightened` variants (6 variants — the DPCC method)
+- `diffuser`, `gradient`, `gradient-tightened`, `post_processing`, `post_processing-tightened`, `model_free`, `model_free-tightened` (7 baselines)
+- `dpcc-c-tightened-dt0p25/0p5/2p0/4p0` (4 dt ablations)
+Total: 17 variants.
 
 ---
 

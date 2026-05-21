@@ -268,9 +268,52 @@ axes[i, 5].set_title(f'MPC Foresight — {cands.shape[0]} candidates/step')
 
 - [ ] Output directory path reads `H8_b4_...` (not `b1`) after config change
 - [ ] `diffuser` variant still uses batch=1 (confirmed in agent init log)
-- [ ] `post_processing` → `which=0`, `post_processing-c` → argmin cost, `post_processing-t` → temporal
-- [ ] `gradient` variant → `which=0` (no more `np.random.randint`)
+- [ ] `dpcc-r` → `which=0` (random), `dpcc-c` → argmin cost, `dpcc-t` → temporal
+- [ ] `post_processing`, `model_free`, `gradient` → `which=0` (random, DPCC default)
 - [ ] `all_candidates` key present in `master_rollout_history` dict
 - [ ] Per-rollout PNG `rollout_0_report.png` shows multiple light-blue candidate lines + one bold selected line in XY panel
-- [ ] Aggregate `post_processing.png` panel [i,5] shows multiple candidate trajectories, not just selected replans
+- [ ] Aggregate `dpcc-c.png` panel [i,5] shows multiple candidate trajectories, not just selected replans
 - [ ] No `batch_size = 6` anywhere in either eval script (`grep "batch_size = 6"` returns empty)
+
+---
+
+## 8. Post-Implementation Correction (Fix 8 Revision)
+
+Sections 4.2 and 4.3 of this plan contained two errors discovered during code review:
+
+**Error 1 — `projection_variants` in YAML (§4.2):**
+The plan invented custom suffixes (`post_processing-c`, `post_processing-t`, `model_free-c`, etc.) that do not exist in the reference DPCC repo. The DPCC paper defines `dpcc-r/c/t` as the three selection variants of the full DPCC method; `post_processing` and `model_free` are comparison baselines that always use `'random'` (= index 0) selection. Custom `-c`/`-t` suffixes on baselines are not in the reference and were removed.
+
+**Corrected YAML** (exact copy of `dpcc/config/projection_eval.yaml`):
+```yaml
+projection_variants: [
+  # Figure 2, Table 1 and Figure 3:
+  'dpcc-r', 'dpcc-r-tightened',
+  'dpcc-c', 'dpcc-c-tightened',
+  'dpcc-t', 'dpcc-t-tightened',
+  # Table 1:
+  'diffuser', 'gradient', 'gradient-tightened',
+  'post_processing', 'post_processing-tightened',
+  'model_free', 'model_free-tightened',
+  # Table 2:
+  'dpcc-c-tightened-dt0p25', 'dpcc-c-tightened-dt0p5',
+  'dpcc-c-tightened-dt2p0',  'dpcc-c-tightened-dt4p0',
+]
+```
+
+**Error 2 — trajectory selection logic (§4.3):**
+The plan used `-c`/`-t` suffix matching, which would also trigger on `dpcc-c-tightened-dt0p25` via the `-c` check and on `model_free-t` (if it existed) via `-t`. The correct DPCC logic uses exact substring checks:
+
+```python
+# WRONG (invented):
+if '-t' in variant: trajectory_selection = 'temporal_consistency'
+elif '-c' in variant: trajectory_selection = 'minimum_projection_cost'
+else: trajectory_selection = 'first'
+
+# CORRECT (exact DPCC eval.py):
+trajectory_selection = 'random'
+if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
+if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+```
+
+Both errors corrected in all affected files (YAML + both eval scripts).
