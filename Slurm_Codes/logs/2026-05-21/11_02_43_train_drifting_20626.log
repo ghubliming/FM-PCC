@@ -1,0 +1,84 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 21 09:08:07 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260521_090810-5zx7qze2
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run avoiding-d3il-flow_matching_v3_drifting-H8_DGaussianDiffusion_a1.5_b1.0_aw1-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll/runs/5zx7qze2
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ train ] Saved seed manifest to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/seeds_config.json
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 150
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/dataset_config_resume_1.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.models.unet1d_temporal_cond.Flow_matcher_U_Net_v2'>
+    cond_dim: 4
+    condition_dropout: 0.25
+    dim: 32
+    dim_mults: (1, 2, 4, 8)
+    horizon: 8
+    returns_condition: False
+    transition_dim: 6
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/model_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.models.diffusion.GaussianDiffusion'>
+    action_dim: 2
+    action_weight: 1
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_type: l2
+    n_timesteps: 20
+    observation_dim: 4
+    ode_inference_steps_v3: 10
+    predict_epsilon: True
+    returns_condition: False
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/diffusion_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    n_steps_per_epoch: 1000
+    n_train_steps: 50000.0
+    results_folder: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6
+    train_batch_size: 8
+    train_lr: 0.0001
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/trainer_config_resume_1.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.6963, a0 loss:   1.4709
+Epoch 0: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=1.42, a0_loss_test=1.47, diffusion_loss=0.863, loss=0.431, loss_test=0.696, lr=0.0001, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=1.42, a0_loss_test=1.47, diffusion_loss=0.863, loss=0.431, loss_test=0.696, lr=0.0001, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]slurmstepd-i6-gpu-1: error: *** JOB 20626 ON i6-gpu-1 CANCELLED AT 2026-05-21T09:10:56 ***

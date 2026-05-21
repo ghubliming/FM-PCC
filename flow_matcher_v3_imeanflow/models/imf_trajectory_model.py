@@ -56,20 +56,24 @@ class iMFTrajectoryModel(nn.Module):
         self,
         x: torch.Tensor,
         t: torch.Tensor,
+        h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
+        force_dropout: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Predict the main flow velocity and a small auxiliary residual."""
-        velocity = self.velocity_net(x, cond, t)
-        aux = self.aux_head(velocity)
+        """Predict the mean flow velocity u and instantaneous deviation v."""
+        velocity = self.velocity_net(x, cond, t, h=h, force_dropout=force_dropout)
+        aux = self.aux_head(x)  # independent head on input x, not on velocity
         return velocity, aux
 
     def forward_train(
         self,
         x_noisy: torch.Tensor,
         t: torch.Tensor,
+        h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
+        force_dropout: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        return self.forward(x_noisy, t, cond)
+        return self.forward(x_noisy, t, h=h, cond=cond, force_dropout=force_dropout)
 
     def sample_trajectory(
         self,
@@ -83,16 +87,16 @@ class iMFTrajectoryModel(nn.Module):
         cond: Optional[torch.Tensor] = None,
         device: Optional[str] = None,
     ) -> torch.Tensor:
-        """Sample a trajectory using explicit Euler integration."""
+        """Sample via forward Euler 0→1 (noise→data) with h-conditioning."""
         device = device or self.device
-        z_t = torch.randn(batch_size, seq_len, self.state_dim, device=device)
+        z_t = torch.randn(batch_size, seq_len, self.state_dim, device=device)  # sigma=1.0
         t_steps = t_steps.to(device)
 
         for i in range(num_steps):
-            t = t_steps[i]
-            r = t_steps[i + 1]
-            h = t - r
-            velocity, aux = self.forward(z_t, t.expand(batch_size), cond)
+            t_cur = t_steps[i]
+            t_next = t_steps[i + 1]
+            h = t_next - t_cur  # forward step size > 0
+            velocity, aux = self.forward(z_t, t_cur.expand(batch_size), h=h, cond=cond)
 
             if schedule == "u_first":
                 combined = u_weight * velocity + 0.1 * v_weight * aux
@@ -101,7 +105,7 @@ class iMFTrajectoryModel(nn.Module):
             else:
                 combined = velocity
 
-            z_t = z_t - h * combined
+            z_t = z_t + h * combined  # forward integration 0→1
 
         return z_t
 
@@ -116,13 +120,13 @@ class iMFTrajectoryModel(nn.Module):
         seed: int = 0,
         cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """Sampling entrypoint expected by iMFDiffusion."""
+        """Sampling entrypoint: forward Euler 0→1 with h-conditioning."""
         torch.manual_seed(seed)
 
         if t_schedule == "quadratic":
-            t_steps = torch.linspace(1.0, 0.0, num_steps + 1, device=self.device) ** 2
+            t_steps = torch.linspace(0.0, 1.0, num_steps + 1, device=self.device) ** 2
         else:
-            t_steps = torch.linspace(1.0, 0.0, num_steps + 1, device=self.device)
+            t_steps = torch.linspace(0.0, 1.0, num_steps + 1, device=self.device)
 
         return self.sample_trajectory(
             batch_size=batch_size,

@@ -72,17 +72,18 @@ class iMeanFlowEngine(nn.Module):
         h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Predict flow velocity and auxiliary residual."""
-        return self.model(x, t, cond)
+        """Predict mean flow velocity u and instantaneous deviation v."""
+        return self.model(x, t, h=h, cond=cond)
 
     def forward(
         self,
         x: torch.Tensor,
         t: torch.Tensor,
+        h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Standard nn.Module forward alias for velocity prediction."""
-        return self.model(x, t, cond)
+        return self.model(x, t, h=h, cond=cond)
     
     @torch.no_grad()
     def sample(
@@ -97,8 +98,12 @@ class iMeanFlowEngine(nn.Module):
         cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
-        Generate trajectories via iMF sampling (matches official repo pattern).
-        
+        Generate trajectories via forward Euler 0→1 with h-conditioning.
+
+        Uses DATA-AT-1 convention (t=0 noise, t=1 data) to match the training
+        objective in iMFDiffusion.p_losses. Each step passes the interval size h
+        to the model so it can adapt its mean-flow prediction accordingly.
+
         Args:
             batch_size: Number of trajectories
             num_steps: Number of ODE steps (NFE)
@@ -107,51 +112,52 @@ class iMeanFlowEngine(nn.Module):
             v_weight: Weight for the auxiliary residual component
             schedule: 'u_first' or 'balanced'
             seed: Random seed
-            
+
         Returns:
             sampled_trajectories [batch_size, seq_len, state_dim]
         """
         torch.manual_seed(seed)
-        
-        # Generate time schedule
+
         if t_schedule == "linear":
-            t_steps = torch.linspace(1.0, 0.0, num_steps + 1, dtype=self.dtype, device=self.device)
+            t_steps = torch.linspace(0.0, 1.0, num_steps + 1, dtype=self.dtype, device=self.device)
         elif t_schedule == "quadratic":
-            t_steps = torch.linspace(1.0, 0.0, num_steps + 1, dtype=self.dtype, device=self.device) ** 2
+            t_steps = torch.linspace(0.0, 1.0, num_steps + 1, dtype=self.dtype, device=self.device) ** 2
         else:
-            t_steps = torch.linspace(1.0, 0.0, num_steps + 1, dtype=self.dtype, device=self.device)
-        
-        # Sample trajectory using iMF's sampling loop (official repo pattern)
+            t_steps = torch.linspace(0.0, 1.0, num_steps + 1, dtype=self.dtype, device=self.device)
+
         z_t = torch.randn(batch_size, self.seq_len, self.state_dim, dtype=self.dtype, device=self.device)
-        
+
         for i in range(num_steps):
-            t = t_steps[i]
-            r = t_steps[i + 1]
-            h = t - r
-            
-            velocity, aux = self.model(z_t, t.expand(batch_size).to(self.dtype), cond)
+            t_cur = t_steps[i]
+            t_next = t_steps[i + 1]
+            h = t_next - t_cur  # forward step size > 0
+
+            velocity, aux = self.model(z_t, t_cur.expand(batch_size).to(self.dtype), h=h, cond=cond)
             velocity = u_weight * velocity + 0.1 * v_weight * aux
-            
-            # ODE step
-            z_t = z_t - h * velocity
-        
+
+            z_t = z_t + h * velocity  # forward integration 0→1
+
         return z_t
     
     def forward_train(
         self,
         x_noisy: torch.Tensor,
         t: torch.Tensor,
+        h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
+        force_dropout: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass for training: return (u, v) predictions.
-        
+
         Args:
             x_noisy: Noisy trajectory [batch, seq_len, state_dim]
             t: Timestep [batch]
+            h: Step-size conditioning [batch] (iMF mean-flow interval)
             cond: Conditioning (optional)
-            
+            force_dropout: Force condition dropout for CFG
+
         Returns:
-            (u, v): Dual velocity predictions for loss computation
+            (u, v): Mean flow and instantaneous velocity predictions
         """
-        return self.model(x_noisy, t, cond)
+        return self.model(x_noisy, t, h=h, cond=cond, force_dropout=force_dropout)

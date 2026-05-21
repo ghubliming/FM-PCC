@@ -17,55 +17,60 @@ except ImportError:
 class DriftAugmentedVelocityField:
     """
     Wraps a velocity field function to include drift loss guidance.
-    
+
     Standard: v(x, t) = model_velocity(x, t)
-    With drift: v(x, t) = model_velocity(x, t) + lambda * grad_drift_loss(x)
+    With drift: v(x, t) = model_velocity(x, t) - lambda * grad_drift_loss(x)
+
+    Gradient descent on the loss (subtract) steers trajectories toward the expert
+    distribution. Adding the gradient (ascent) would push them away.
     """
-    
+
     def __init__(
         self,
         velocity_fn: Callable,
         drift_loss_fn: Optional[Callable] = None,
         drift_weight: float = 0.1,
         drift_clip: float = 1.0,
+        **kwargs,
     ):
         """
         Args:
-            velocity_fn: Function returning velocity field v(x, t) or v(x, cond, t)
+            velocity_fn: Function returning velocity field v(t, x, **kwargs)
             drift_loss_fn: Function returning drift loss gradient grad_loss(x)
             drift_weight: Weight of drift guidance lambda (0 = no drift)
             drift_clip: Clip drift gradient norm to prevent instability
+            **kwargs: Forwarded to velocity_fn on every call (e.g., cond=, returns=)
         """
         self.velocity_fn = velocity_fn
         self.drift_loss_fn = drift_loss_fn
         self.drift_weight = float(drift_weight)
         self.drift_clip = float(drift_clip)
+        self.kwargs = kwargs  # stored so _solve_legacy can call without kwargs args
 
-    def __call__(self, t: torch.Tensor, x: torch.Tensor, **kwargs) -> torch.Tensor:
+    def __call__(self, t: torch.Tensor, x: torch.Tensor, **call_kwargs) -> torch.Tensor:
         """
         Compute augmented velocity field at state x, time t.
-        
+
         Args:
             t: Time step (scalar tensor)
             x: State (B, trajectory_dim)
-            **kwargs: Additional arguments for velocity_fn (e.g., cond, returns)
-            
+            **call_kwargs: Per-call overrides merged with stored kwargs
+
         Returns:
-            v(t, x) = velocity + drift_guidance
+            v(t, x) = velocity - lambda * drift_grad  (gradient descent toward experts)
         """
-        # Compute base velocity
-        velocity = self.velocity_fn(t, x, **kwargs)
-        
-        # Add drift guidance if enabled
+        merged = {**self.kwargs, **call_kwargs}
+        velocity = self.velocity_fn(t, x, **merged)
+
         if self.drift_loss_fn is not None and self.drift_weight > 0:
             drift_grad = self.drift_loss_fn(x)
-            
-            # Clip drift gradient to prevent divergence
+
             drift_norm = torch.norm(drift_grad, p=2, dim=-1, keepdim=True).clamp(min=1e-8)
             drift_grad_clipped = drift_grad * torch.clamp(drift_norm, max=self.drift_clip) / drift_norm
-            
-            velocity = velocity + self.drift_weight * drift_grad_clipped
-        
+
+            # Subtract (gradient descent): moves x toward lower loss = toward experts.
+            velocity = velocity - self.drift_weight * drift_grad_clipped
+
         return velocity
 
 
@@ -129,13 +134,16 @@ class DriftODESolver:
             State tensor at t_end, shape (B, state_dim)
         """
         
-        # Wrap velocity function with drift guidance if enabled
+        # Wrap velocity function with drift guidance if enabled.
+        # Pass **kwargs into the wrapper so cond/returns reach the velocity function
+        # regardless of whether the solver backend passes kwargs on each call.
         if drift_weight > 0 and drift_loss_fn is not None:
             augmented_fn = DriftAugmentedVelocityField(
                 velocity_fn,
                 drift_loss_fn=drift_loss_fn,
                 drift_weight=drift_weight,
                 drift_clip=drift_clip,
+                **kwargs,
             )
         else:
             def augmented_fn(t, x):

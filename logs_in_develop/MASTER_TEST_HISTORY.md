@@ -2,7 +2,45 @@
 
 For SLURM jobs history, refer to [important_runs.md](../Slurm_Codes/logs/important_runs/important_runs.md)
 
-Purpose: concise record of what was tested across all generations/vresions. Master logging markdown.
+Purpose: Concise record of what was tested across all generations/versions. Master logging markdown.
+
+## 🗺️ Master Trace Map: Workspace Architecture (Gen1 - Gen7)
+
+Below is the definitive index mapping every research generation (internal index) to its corresponding isolated sibling folders inside the workspace. This maps out how the codebase transitioned from **State-Only** models to the state-of-the-art **Visual Flow Matching** models:
+
+| Internal Index | Model/Code Folder | Test/Eval Folder | Key Period | What is it / Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Gen1** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Early April 2026 | Early Flow Matching baseline (State-Only). Crucial math bug: reversed ODE trajectory during rollout. |
+| **Gen2** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Mid April 2026 | Basic Flow Matching engine with uniform time sampling in $[0, 1]$ (State-Only). |
+| **Gen2 (U-Net v2)** | [flow_matcher_unet_v2/](../flow_matcher_unet_v2) | [FM_Unet_v2_test/](../FM_Unet_v2_test) | Mid April 2026 | Built U-Net v2 backbone shell/path structure, but no material changes to net behavior (structural upgrades remained TODO). |
+| **Gen3 Upgrade 1** | [flow_matcher/](../flow_matcher) | [FM_hp_tune_test/](../FM_hp_tune_test) | Mid April 2026 | Action loss weight ($a_0$) hyperparameter tuning sweep. |
+| **Gen3 Upgrade 2** | [flow_matcher_v2/](../flow_matcher_v2) | [FM_v2_test/](../FM_v2_test) | Mid-to-Late April 2026 | **FM-v2**: Introduced continuous Beta distribution time prior sampling ($1 - \text{Beta}(\alpha=1.5, \beta=1.0)$) (State-Only). |
+| **Gen3 Upgrade 3** | [flow_matcher_v3/](../flow_matcher_v3) | [FM_v3_test/](../FM_v3_test) | Late April 2026 (up to Apr 20) | **FM-v3**: Introduced SafeFlow-style continuous-time model query semantics (State-Only). |
+| **Gen3v2 (ODE Solver Addon)** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) | [FM_v3_ode_selectable_test/](../FM_v3_ode_selectable_test) | April 21 – May 4, 2026 | Added advanced ODE solvers (`torchdiffeq`, RK4, Euler, Dopri5) with a dynamic override mechanism (State-Only). |
+| **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). |
+| **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). |
+| **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. |
+| **Gen5 (Visual Aligning)** | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision) | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Legacy baseline** (archived). Based on the `ddpmact d3il base` (imitation framework). Succeeded only once and never returned good results since. |
+| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Visual-Aligning Differentiable MPC (DPCC Upgrade)**. Reused FMv3ODE's DPCC projection logic on top of the visual baseline, enforcing 6D absolute workspace constraints. |
+| **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. |
+| **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. |
+| **Gen7 (Visual Flow Matching)** | [fm_visual_aligning/](../fm_visual_aligning) | [fm_visual_aligning_test/](../fm_visual_aligning_test) | May 20, 2026 | **Continuous-time visual Flow Matching (FMv3ODE)**. Clean copy-modify sibling transition from proofed Gen6V4 to continuous-time FM ODE engine with Beta(1.5, 1.0) time sampling and velocity target training. |
+
+***
+
+## 🛠️ Auxiliary Infrastructure & Benchmark Suites
+
+In addition to the main model training/evaluation pipelines, the repository hosts specialized auxiliary systems for ODE precision benchmarking, result aggregation (Data Analysis), and cluster deployment (SLURM orchestrators):
+
+| Infrastructure Component | Folder / Script Path | Key Purpose | Relevant Phase / Period |
+| :--- | :--- | :--- | :--- |
+| **ODE Solver Benchmarks** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) (and scripts inside) | Comparative precision analysis of Euler, RK4, and Oracle (Dopri5) solvers on a locked noise basis (`global_x_init`). | Gen3v2 (Late April 2026) |
+| **Trajectory Quality Visualizer** | `traj_gen_script_for_v4.py` (inside [flow_matcher_v3_ode_selectable_test/](../FM_v3_ode_selectable_test)) | Overlays unnormalized latent robotic plans on environmental half-space/obstacle constraints for visual precision-drift auditing. | Gen3v2 U4.1 (April 22, 2026) |
+| **Data Analysis & Plotting** | [Data_Analysis/](../Data_Analysis) | Dynamic plotting scripts for generating thesis-ready success rate heatmaps and latency charts. | Ongoing (April - May 2026) |
+| **Colab Plotting Suites** | [Results_and_Data_Analysis_Colab_T4/](../Results_and_Data_Analysis_Colab_T4) & [ipynbs_Colab/](../ipynbs_Colab) | Plotting pipelines and Google Colab T4 GPU integration scripts. | Ongoing (April - May 2026) |
+| **Cluster Job Orchestrators** | [Slurm_Codes/](../Slurm_Codes) | Pipeline runner scripts (SBATCH shell scripts) for GPU cluster node dispatch (e.g. `Visual_Aligning/` pipeline). | Gen3v2 Remote Migration & Gen5/Gen7 Visual Aligning (Ongoing) |
+
+***
 
 ## Gen1
 
@@ -907,4 +945,192 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
    * `visual_aligning_pipeline_fm.sh`: Chains training and evaluation sequentially.
 6. **Config Alignment (Offtopic)**: Reorganized [config/avoiding-d3il.py](file:///workspaces/FM-PCC/config/avoiding-d3il.py) to move the iMeanFlow (iMF) training and planning configurations into their correct logical sections (training under models, planning under inference).
 7. **Status**: **COMPLETE & VERIFIED**. Visual Flow Matching architecture, configs, and Slurm managers are fully standardized and ready for production GPU runs.
+
+***
+
+## Gen6v3: Non-Visual Aligning Pipeline (May 18, 2026)
+
+**Keywords**: 17D vs 20D compatibility, U-Net transition-dim scaling, state-only multi-seed evaluation.
+
+1. **State Dimension Parity**: Resolved the $17\text{D} \text{ vs. } 20\text{D}$ proprioceptive state mismatch between baseline datasets and visual-aligned configurations. Rewrote preprocessing pipelines to support conditional state-only load operations.
+2. **Backbone Generalization**: Updated the U-Net spatial layers to dynamically scale `transition_dim` based on evaluation targets, preventing shape crashes when loading visual-trained weights in state-only runs.
+3. **Training & Evaluation**: Stabilized training workflows to bypass visual encoding matrices when running in non-visual mode, aligning standard metrics sweeps.
+
+## Gen6v4: Unified 9D Visual-DPCC Safety Engine (May 18, 2026)
+
+**Keywords**: 9D Joint Trajectory representation, SLSQP Euler Projection, actual proprioceptive boundaries, DPCC Base Pivot, DDPM-ACT Failure.
+
+1. **Strategic Pivot: No more `ddpmact d3il base`**:
+   Historically, the visual encoder-decoder baseline (`ddpm_encdec_vision` from Gen6, and Gen7 which was based on it) utilized the `ddpmact d3il base` (ACT imitation framework). However, this architecture proved highly unstable, **only succeeding once** (archived inside the outdated legacy folders) and failing to return any reproducible good results thereafter. 
+   
+   To resolve this structural deadlock, Gen6v4 introduces a **fundamental new principle**: **migrating entirely to the `dpcc base`** as the core foundation for visual-conditioned trajectory alignment.
+2. **9D Trajectory Paradigm ($x_t \in \mathbb{R}^{H \times 9}$)**:
+   Designed a unified state-action-observation planning representation on top of the DPCC base:
+   $$x_t = \left[ \text{act}(3\text{D}) \;\mid\; \text{des\_c\_pos}(3\text{D}) \;\mid\; \text{c\_pos}(3\text{D}) \right]$$
+   This shifts boundary constraints directly onto the physical, actual end-effector position ($c\_pos$) rather than the commanded position ($des\_c\_pos$), guaranteeing real-world safety cage violations are blocked by the controller.
+3. **Dataset Preprocessing Alignment**:
+   Implemented the `ParityAligningDataset` parser. The normalizer restricts limits fitting strictly to `valid_mask` data points to prevent zero-padded tails from pulling normalizer bounds toward $0$.
+4. **Denoising Clamping Hooks**:
+   Modified `p_mean_variance` inside `VisualGaussianDiffusion` to selectively clamp only the active control slots ($[..., :3]$) to $[-5.0, 5.0]$ while leaving physical $c\_pos$ dimensions unclamped. This ensures physical coordinate integrity is maintained during step integrations.
+
+## Gen5: DDPM EncDec Legacy Restoration & Safety Auditing (May 18, 2026)
+
+**Keywords**: Legacy code protection, Scaler normalization restoration, hyperparameter sanity locks.
+
+1. **Legacy Recovery**: Re-added `add_Legacy_working_Good_Codes (Gen5_DDPM_EncDec)` inside the source tree to preserve baseline training stability.
+2. **Scaler Stabilization**: Restored legacy normalization scale mapping inside `VisualUNet` and `Scaler` objects. This prevents statistical regression and secures reproducible baselines for the $500\text{k}$ training checkpoints.
+3. **Path Fix**: Resolved file loading references in `config/aligning-d3il-visual.py` to ensure proper dataset routing inside cluster configurations.
+
+
+## Gen6v4 / Gen7: Robustness Fixes, Pipeline Standardization & Evaluation Upgrades (May 19, 2026)
+
+**Keywords**: clip_denoised=False, eval-on-train launcher, Slurm pipeline naming alignment, double-prefix importer fix, dataset buffer overflow bypass, actual simulation state tracking.
+
+### 1. Denoising Chain Protection (`clip_denoised=False`)
+* **Problem**: Setting `clip_denoised=True` in training scripts caused the ±5 action clamping to trigger at every early denoising step. Combined with the cosine noise schedule, this amplified bounds mathematically and permanently corrupted the actions by pinning them to thresholds, leading to 100% rollout failures.
+* **Resolution**: Disabled denoising clipping by setting `clip_denoised=False` by default in training and forced it to `False` in evaluation routines. This allows the denoising chain to generate smooth, natural action velocity plans.
+
+### 2. Default Visual Evaluation on Training Set (`--eval-on-train`)
+* **Feature**: Enabled the `--eval-on-train` flag by default inside all three visual evaluation Slurm launcher scripts:
+  * `Slurm_Codes/sbatch/diffuser_visual_aligning/eval_visual_aligning_dpcc.sh`
+  * `Slurm_Codes/sbatch/Visual_Aligning/eval_visual_aligning_fm.sh`
+  * `Slurm_Codes/sbatch/Visual_Aligning/eval_visual_aligning.sh`
+* **Impact**: Ensures that visual evaluations run on seen expert training contexts by default to establish robust diagnostic baselines.
+
+### 3. Slurm Pipeline & Job Naming Consistency
+* **Action**: Renamed `visual_aligning_dpcc_pipeline.sh` to `visual_aligning_pipeline_dpcc.sh` to match the naming convention of other pipelines (`visual_aligning_pipeline.sh` and `visual_aligning_pipeline_fm.sh`).
+* **Alignment**: Standardized the `#SBATCH --job-name` directives of all 12 visual sbatch scripts (including train, eval, load, and pipeline runners) to exactly match their `.sh` filenames, eliminating job name mismatches.
+
+### 4. Double Prefix Class Importer Guard
+* **Problem**: During evaluation weight loading, `import_class()` prepended a double `diffuser_visual_aligning.` prefix to classes already containing it, triggering a catastrophic `ModuleNotFoundError`.
+* **Resolution**: Added a strict guard in class resolution to skip prefix injection if the import string already begins with the correct package prefix.
+
+### 5. Path Length Alignment & Dataset Buffer Overflow Bypass
+* **Fix**: Standardized `max_path_length: 1000` in both training and evaluation configs to prevent `FileNotFoundError` during model loading.
+* **Bypass**: Solved a buffer overflow limit in D3IL dataset loaders by bypassing `Aligning_Dataset` and loading expert trajectory state data directly from raw pickle files, opening the full dataset for visual-DPCC training.
+
+### 6. Closed-Loop Simulation State Tracking
+* **Fix**: Corrected the observation construction in `VisualAgentWrapper`. The observation vectors now concatenate actual simulator commanded positions (`des_robot_pos_np`) instead of dead-reckoning initial coordinate estimates, eliminating trajectory drift under execution.
+
+### 7. Evaluation Logging and Safety Safeguards
+* **WandB Crash Fix**: Disabled WandB logging during D3IL closed-loop evaluation runs to avoid PyTorch/MuJoCo segmentation faults, and cleanly redirected run reports to offline diagnostic dumps (`diag_first_replan.txt`).
+* **Visual Validation**: Implemented strict console logging of scaling normalizer parameters and added sequence length validation locks to prevent silent failures.
+
+### 8. Manual Legacy Retrieval & D3IL Revert Parity (FIX_7.1, FIX_7.2, FIX_7.3)
+* **Revert Fix 38 (FIX_7.1)**: Removed experimental `max_episode_length` plumbing in `Aligning_Sim` environment initialization to restore physics-based default steps.
+* **BGR-to-RGB Image Parity (FIX_7.2)**: Reverted the color-space conversion in D3IL's image loaders to preserve byte-for-byte image alignment with the original dataset, preventing visual distribution shifts.
+* **Material Simulator & Robot Parity (FIX_7.3)**: Reverted custom simulator control loops, named camera registrations, and rod-tip collisions to restore 100% behavioral parity with original D3IL benchmarks.
+* **Traceability Matrix**: Created [D3IL_DIFF_AUDIT.md](Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Manual_Legacy_retrieval_FIX_7/D3IL_DIFF_AUDIT.md) and [FIX7_LEGACY_REVERT_LOG.md](Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Manual_Legacy_retrieval_FIX_7/FIX7_LEGACY_REVERT_LOG.md) to log all changes and verify parity.
+
+---
+
+## Gen6v4: Visual-DPCC Robustness & Projector Safeguards (Fix 8 & Fix 9) (May 19, 2026)
+
+**Keywords**: BGR→RGB flip, dead assertion, LimitsNormalizer eps-guard, Projector batch-0 initial state broadcast, initial-state scaling B1, Deque temporal ordering B3, post-processing selection Fix 9.4, no-op guard Fix 9.1/9.2, SLSQP delta logging Fix 9.3, B1 unit test.
+
+### 1. Fix 8: Projector and Normalization Robustness
+* **A1: BGR→RGB Inference Correction**: Added a `[::-1].copy()` channel flip to the transposed images inside `aligning_sim.py` (both at init and per-step) to align evaluation's BGR frames with the RGB format the dataset loader (`sequence.py`) produces. *(Note: Later reverted in Fix 11 after deeper audit).*
+* **A2: Dead Assertion Fix**: Corrected `assert RuntimeError()` to `raise RuntimeError(...)` inside `GaussianDiffusion.__init__()` when `clip_denoised=False`.
+* **A3: LimitsNormalizer zero-variance guard**: Prevented division-by-zero crashes on constant dimensions (e.g. end-effector z-height) by adding an eps-guard (`range_ < 1e-8 → 1.0` in `normalize()`, `0.0` in `unnormalize()`).
+* **A4: Batch initial-state broadcast fix**: Fixed the SLSQP projector (`projection.py`) broadcasting sample 0's initial state `s_0` to all batch elements during `project()` and `compute_gradient()`. Moved extraction inside the batch loop so that `s_0` is correctly resolved per-sample.
+* **B1: Dynamics constraint scaling alignment**: Re-scaled the initial-state anchor constraint row in `mat_fix_initial` using `x_diff` (instead of `1`) and the `b` vector using `x_diff * s_0` to match the scale of the dynamics rows, ensuring the solver does not treat the initial state as proportionally weaker.
+* **B3 & B3-ext: Deque temporal ordering**: Replaced `appendleft` with `append` in deques for both visual and non-visual paths in `eval_visual_aligning_dpcc.py` to store trajectories in chronological order (`[oldest, ..., newest]`) instead of inverted order.
+* **C4: Closed-loop proprioceptive feedback**: Corrected observation construction in `eval_visual_aligning_dpcc.py` and `aligning_sim.py`. Previously, both commanded (`des_c_pos`) and actual (`c_pos`) halves of `obs_6d` were fed the commanded position, creating a zero-lag evaluation discrepancy. Correctly concatenated the actual `robot_pos` alongside commanded `des_robot_pos` to match the model's training distribution.
+* **Cascade fixes**: Corrected video capture block in `predict()` to remove redundant `cvtColor(BGR2RGB)` since `bp_np` is already RGB after Fix A1.
+
+### 2. Fix 9: Empty-Constraint SLSQP Safeguards & Cost Selection
+* **9.1 & 9.2: No-op constraints early exit**: Added early-exit guards in `project()` and `compute_gradient()` when `constraint_types: []` (no constraints). This prevents SLSQP from needlessly searching a constrained space and saturating actions to the ±5 bounds (noise amplification), resolving the catastrophic ±94 action range explosion seen in empty-constraint runs.
+* **9.3: SLSQP Delta Logging**: Added verbose logging in `project()` to capture when the solver modifies the trajectory by a norm delta `> 1e-4`.
+* **9.4: Cost-based trajectory selection**: Changed trajectory selection for `post_processing` and `model_free` variants from `random` to `minimum_projection_cost` to select the best trajectory from the batch of 6 instead of a random one.
+* **B1 Unit Test**: Created a new unit test suite `diffuser_visual_aligning_test/test_projector_b1.py` validating that the B1 initial-state scale changes are structurally and functionally correct.
+
+---
+
+## Gen6v4: Evaluation Wiring, Pipeline Alignment & Diagnostics (Fix 10 & Fix 11) (May 20, 2026)
+
+**Keywords**: max_episode_length, Robot_Push_Env, dead parameters cleanup, BGR flip revert, rollout GIF color correction, seeding process dynamic, .copy() safety.
+
+### 1. Fix 10: Episode Rollout Cap Wiring
+* **Wiring rollout steps**: Resolved a dead-field issue where the 400-step episode rollout budget (`max_episode_length`) in `config/aligning-d3il-visual.py` was ignored, silently capping evaluations at 400 steps due to D3IL's hardcoded defaults in `Robot_Push_Env`. Forwarded `max_episode_length` directly to `Robot_Push_Env(max_steps_per_episode=...)`.
+* **Dead configuration cleanup**: Cleaned up the `plan_visual_aligning_dpcc` config block by removing four dead parameters (`policy`, `test_ret`, `value_loadpath`, `dynamic_loss`).
+
+### 2. Fix 11 & 11b: BGR Channel Pipeline Certification
+* **BGR inference revert**: Re-audited the RGB/BGR pipeline channel formats. Discovered that the training dataset is stored RGB-on-disk, but loaded via `cv2.imread` (reading as BGR) and converted via `cvtColor(BGR2RGB)` (reversing back to BGR/RGB). Thus, the training pipeline produced RGB and inference produced BGR (swapped channels). Reverted the premature `[::-1]` flip in `aligning_sim.py` (which had been introduced in Fix 8) and restored the correct `cvtColor(BGR2RGB)` for rollout visualization/GIF color capture (Fix 11b) to fix blue-red swapped visual diagnostics, ensuring model inference input remains BGR.
+* **Smart RNG Seeding & Defensive copies**:
+  * Replaced CPU-process seeding `random.seed(pid)` in `aligning_sim.py` (which caused all eval seeds 6-10 to use the same random rollout sequence with `n_cores=1` and `pid=0`) with process-dynamic seeding `random.seed(self.seed + pid)`. This correctly restores stochastic diversity and ensures deterministic yet unique initial noise `x_T` across eval seeds.
+  * Added defensive deep copies (`.copy()`) to `des_robot_pos` initialization to prevent downstream mutations.
+
+---
+
+## Gen7: Continuous-Time Visual Flow Matching (FMv3ODE) Migration & Baseline Parity (May 20, 2026)
+
+**Keywords**: sibling package scaffolding, fm_visual_aligning, Beta continuous-time, velocity target, Euler ODE forward integration, args_to_watch_fm_visual, gym_aligning_env BGR Native.
+
+### 1. Continuous-Time FM Engine Scaffolding
+* **Scaffolding**: Duplicated the Gen6V4 `diffuser_visual_aligning` package and `diffuser_visual_aligning_test` directory into `fm_visual_aligning` and `fm_visual_aligning_test` (Copy-Modify isolation strategy).
+* **Namespace Refactoring**: Globally refactored all package imports to use the sibling namespace `fm_visual_aligning`, guaranteeing 100% parallel workspace coexistence without regressing the DDPM baseline.
+
+### 2. Continuous-Time Flow Matching Engine
+* **FM Core Math**: Implemented the FMv3ODE mathematical core in `models/diffusion.py` and `models/visual_gaussian_diffusion.py` using linear interpolation (`(1-t)*noise + t*data`) and continuous-time Beta(1.5, 1.0) sampling.
+* **Velocity-Target learning**: Modified the training objective to learn the direct velocity vector field (`v = x_data - x_noise`) instead of the DDPM discrete noise step $\epsilon$.
+* **Inference forward ODE loop**: Developed the forward deterministic ODE solver (legacy Euler) integrating from $t=0 \to 1$ over `flow_steps_v3` (default 16 steps, down from DDPM's 100).
+* **Projector Integration**: Ensured the SLSQP projector is hooked near the end of the forward ODE chain ($t \ge (1 - \text{threshold}) \times K$).
+
+### 3. Configuration & CLI Synchronization
+* **Config update**: Configured `config/aligning-d3il-visual.py` by adding `fm_visual_aligning` training and `plan_fm_visual_aligning` planning blocks.
+* **Descriptive directory naming**: Designed custom visual-specific watch lists `args_to_watch_fm_visual_train` and `args_to_watch_fm_visual_plan` to dynamically include the `if_vision` flag, ensuring visual checkpoints are correctly isolated in the filesystem.
+* **Benchmark suite registration**: Enabled `'fm_visual_aligning'` under the benchmark experiments suite in `config/visual_aligning_eval.yaml`.
+
+### 4. Gen7 Fix 1: Native BGR Return & Comments Cleanup
+* **Native BGR return**: Re-audited the RGB/BGR pipeline channel formats. In D3IL environment package (`gym_aligning/envs/aligning.py`), restored `cvtColor(RGB2BGR)` for `bp_image` and `inhand_image` to native BGR.
+* **Authoritative comments restoration**: Restored factually accurate comments in `aligning_sim.py` documenting that training uses BGR and inference also receives BGR natively via `aligning.py`, resolving the incorrect comment in Phase 0 which falsely claimed training was RGB.
+
+***
+
+## Gen3v3: Drifting Engine Forensic Audit & Major Upgrade (May 20, 2026)
+* **Logs**: [`Audit`](./Gen3v3_Drifting/Audit_fix_1/AUDIT_REPORT.md) & [`Changelog`](./Gen3v3_Drifting/Gen3v3u2_Major_Upgrade_direct/CHANGELOG.md)
+* **Critical Issues & Fixes**:
+  * **C-1 (Crash)**: `DriftLossScheduler.step` counter name shadowed the class method → *Crashed on first call*. **Fix**: Renamed to `_step_count`.
+  * **C-2 (Dead Code)**: `DriftTrainingWrapper` not wired into Trainer → *Augmentation was unused (pure FM loss)*. **Fix**: Wired into `train_epoch()`.
+  * **C-3 (Leak)**: `DriftConditioner` created fresh `nn.Linear` layers on every forward pass → *Noisy conditioning & CPU/GPU mismatches*. **Fix**: Moved to `__init__`.
+  * **M-1/M-2 (Math)**: Detached reference encoder (`with torch.no_grad()`) mapped samples toward a fixed, random cluster.
+  * **M-3 (Math)**: Inverted gradient sign performed gradient ascent, pushing trajectories *away* from expert distribution. **Fix**: Inverted to gradient descent.
+  * **D-1 (Port)**: JAX-based force-field algorithm completely replaced by parametric MLP distance.
+* **Infrastructure**: Standardized remote GPU execution via SLURM scripts (`train_drifting.sh`, `eval_drifting.sh`).
+
+***
+
+## Gen3v4: iMeanFlow (iMF) Adaptation Forensic Audit & Upgrade (May 21, 2026)
+* **Logs**: [`Audit`](./Gen3v4_imf/Audit_Fix6/AUDIT_REPORT.md) & [`Changelog`](./Gen3v4_imf/Audit_Fix6/CHANGELOG.md)
+* **Critical Issues & Fixes**:
+  * **BUG-01**: high-precision `torchdiffeq` backend was silently ignored in rollout → *Euler sampler fallback*.
+  * **BUG-02/BUG-03**: Missing `loss_discount` and `gradient_accumulate_every` in config → *Muted future timesteps and 5x effective learning rate*. **Fix**: Restored `loss_discount: 1.0` and `gradient_accumulate_every: 2`.
+  * **BUG-04/BUG-05**: Empty projection costs and CFG parameters dropped in UNet model wrapper.
+  * **MATH-01/MATH-02**: Auxiliary `v` head trained to predict zero against a zero target, with serial dependency on u-head (`aux = aux_head(velocity)`). **Fix**: Implemented real continuous Mean Flow objective and parallel independent head structure.
+  * **MATH-03/MATH-04**: Standalone samplers used wrong reverse 1→0 integration and incorrect noise scale ($\sigma=1.0$ vs $\sigma=0.5$). **Fix**: Standardized to forward 0→1 integration and matching noise scales.
+  * **MATH-05**: Step-size `h = t - r` parameter silently dropped in UNet. **Fix**: Integrated step-size embedding layers inside spatial blocks.
+
+***
+
+## Gen7: Multi-Variant State Contamination ("Frozen Problem") (May 21, 2026)
+* **Logs**: [`Bug Report`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/KEY_fix_6/BUG_REPORT.md) & [`Changelog`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/KEY_fix_6/CHANGELOG.md)
+* **Investigation & Fixes**:
+  * **Symptom**: Sequentially evaluated variants (`[diffuser, post_processing, model_free]`) produced byte-for-byte identical plans.
+  * **Cause A**: In-process expert video generation shifted camera views (`bp_image std = 0.1978` vs clean `0.2093`) due to dirty scene compiling.
+  * **Cause B**: YAML had `constraint_types: []` → DPCC projector was a no-op, forcing pp ≡ mf ≡ raw FM.
+  * **Fixes**: Moved expert gen pre-loop (AUDIT-FIX-1), re-enabled `['bounds', 'dynamics']` constraints (AUDIT-FIX-2), and set variant-specific result paths (AUDIT-FIX-3).
+
+***
+
+## Gen7 / Gen6v4: Process-Global Isolation & Teardown (Fix 7 & 7.2) (May 21, 2026)
+* **Logs**: [`Bug 7`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/BUG_REPORT_7_Audit.md) · [`Post-Mortem 7`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/POSTMORTEM%26change_log.md) · [`7.2 Plan`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/PLAN_FIX7.2.md) · [`7.2 Changelog`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/CHANGELOG_FIX7.2.md)
+* **Chronicle**:
+  * **Fix 7 (Counter Leak)**: `MjRobot.GLOBAL_MJ_ROBOT_COUNTER` was process-global. Expert gen advanced it `0 -> 1`, forcing later variants to compile under `"rb1"` body names. This shifted cameras and mutated visual features. **Cure**: Reset counter to `0` pre-loop and in each variant's `finally:` teardown.
+  * **Fix 7.2 (Cache Collision)**: Name parity (`"rgbd_cage"`) caused the variant renderer to hit `__RENDER_CTX_MAP` in `mj_render_singleton.py`. It returned the stale expert context, freezing trajectories. **Cure**: Injected `reset_singleton()` pre-loop and in variant teardowns. Verified perfect `bp_image std = 0.2093` restoration.
+
+> [!IMPORTANT]
+> **Forensic Post-Mortem**: For the complete commit timeline and technical breakdowns, see [`POSTMORTEM_FIX7.2.md`](Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/POSTMORTEM_FIX7.2.md).
+
+
+
 

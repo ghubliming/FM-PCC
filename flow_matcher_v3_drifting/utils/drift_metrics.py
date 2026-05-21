@@ -195,12 +195,13 @@ def compute_ode_efficiency(
     Returns:
         dict with efficiency metrics
     """
-    efficiency = num_steps_taken / max_steps
-    
+    # Lower step count = higher efficiency (fewer steps to reach the same end state).
+    efficiency = 1.0 - (num_steps_taken / max_steps)
+
     return {
         'steps_taken': float(num_steps_taken),
         'step_efficiency': efficiency,
-        'wasted_budget': 1.0 - efficiency,
+        'wasted_budget': num_steps_taken / max_steps,
     }
 
 

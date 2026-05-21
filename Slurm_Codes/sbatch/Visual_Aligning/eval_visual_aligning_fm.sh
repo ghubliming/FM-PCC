@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=visual_eval_fm
+#SBATCH --job-name=eval_visual_aligning_fm
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -64,6 +64,6 @@ fi
 RECORD_MODE="${2:-all}"
 echo "[ eval ] Recording mode set to: $RECORD_MODE"
 
-python fm_encdec_vision_test/eval_fm_encdec_vision.py $SEED_ARG --record "$RECORD_MODE"
+python fm_encdec_vision_test/eval_fm_encdec_vision.py $SEED_ARG --record "$RECORD_MODE" --eval-on-train
 
 echo "Job completed successfully."

@@ -114,6 +114,13 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             nn.Linear(dim * 4, dim),
         )
 
+        self.h_mlp = nn.Sequential(
+            SinusoidalPosEmb(dim),
+            nn.Linear(dim, dim * 4),
+            nn.Mish(),
+            nn.Linear(dim * 4, dim),
+        )
+
         self.returns_condition = returns_condition
         self.condition_dropout = condition_dropout
         self.calc_energy = calc_energy
@@ -171,10 +178,11 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             nn.Conv1d(dim, transition_dim, 1),
         )
 
-    def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False):
+    def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False, h=None):
         '''
             x : [ batch x horizon x transition ]
             returns : [batch x horizon]
+            h : step-size conditioning scalar or [batch] tensor (iMF h-conditioning)
         '''
         if self.calc_energy:
             x_inp = x
@@ -192,6 +200,15 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
 
         # t = self.time_mlp(time)
         t = self.time_mlp(timesteps)
+
+        if h is not None:
+            if not torch.is_tensor(h):
+                h = torch.tensor([h], dtype=torch.float32, device=x.device)
+            elif torch.is_tensor(h) and len(h.shape) == 0:
+                h = h[None].to(x.device)
+            h = h.float()
+            h = h * torch.ones(x.shape[0], dtype=h.dtype, device=h.device)
+            t = t + self.h_mlp(h)
 
         if self.returns_condition:
             assert returns is not None

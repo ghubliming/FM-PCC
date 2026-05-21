@@ -109,13 +109,14 @@ class iMFDiffusion(nn.Module):
         loss_weights[0, :self.action_dim] = action_weight
         return loss_weights
 
-    def _predict_uv(self, x, cond, t, returns=None):
-        # Returns-conditioning is intentionally ignored here because
-        # iMeanFlowEngine does not model classifier-free guidance.
-        return self.model.forward_train(x, t, cond)
+    def _predict_uv(self, x, cond, t, h=None, returns=None, force_dropout=False):
+        return self.model.forward_train(x, t, h=h, cond=cond, force_dropout=force_dropout)
 
-    def _predict_velocity(self, x, cond, t, returns=None):
-        velocity, aux = self._predict_uv(x, cond, t, returns=returns)
+    def _predict_velocity(self, x, cond, t, h=None, returns=None):
+        velocity, aux = self._predict_uv(x, cond, t, h=h, returns=returns)
+        if self.returns_condition and returns is not None and self.condition_guidance_w > 0:
+            uncond_vel, _ = self._predict_uv(x, cond, t, h=h, returns=returns, force_dropout=True)
+            velocity = (1 + self.condition_guidance_w) * velocity - self.condition_guidance_w * uncond_vel
         return velocity + self.sample_aux_weight * aux
 
     def q_sample(self, x_start, t, noise=None):
@@ -136,43 +137,52 @@ class iMFDiffusion(nn.Module):
         projector=None,
         constraints=None,
         repeat_last=0,
+        num_steps=None,
     ):
         device = self.betas.device
         batch_size = shape[0]
-        x = 0.5 * torch.randn(shape, device=device)
+        flow_steps = int(num_steps) if num_steps is not None else self.flow_steps_v3
+
+        x = torch.randn(shape, device=device)  # sigma=1.0 to match q_sample training noise
         x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
         diffusion = [x] if return_diffusion else None
+        costs = {}
 
-        total_steps = self.flow_steps_v3 + int(repeat_last)
+        total_steps = flow_steps + int(repeat_last)
+        dt = 1.0 / max(flow_steps, 1)
+        h_batch = torch.full((batch_size,), dt, device=device, dtype=torch.float32)
+
         for i in range(total_steps):
-            loop_idx = min(i, self.flow_steps_v3 - 1)
+            loop_idx = min(i, flow_steps - 1)
             t_cont = torch.full(
                 (batch_size,),
-                loop_idx / max(self.flow_steps_v3, 1),
+                loop_idx / max(flow_steps, 1),
                 device=device,
                 dtype=torch.float32,
             )
-            velocity = self._predict_velocity(x, cond, t_cont, returns=returns)
-            dt = 1.0 / max(self.flow_steps_v3, 1)
+            velocity = self._predict_velocity(x, cond, t_cont, h=h_batch, returns=returns)
             x = x + velocity * dt
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
             if projector is not None:
-                snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3)
-                near_end = (loop_idx >= snapping_start_idx) or (loop_idx == self.flow_steps_v3 - 1)
+                snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * flow_steps)
+                near_end = (loop_idx >= snapping_start_idx) or (loop_idx == flow_steps - 1)
                 if near_end and projector.gradient:
                     if self.goal_dim > 0:
                         grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints)
                     else:
                         grad = projector.compute_gradient(x, constraints)
                     x = x + grad
+                    if hasattr(projector, 'compute_cost'):
+                        costs[loop_idx] = projector.compute_cost(x, constraints)
 
                 if near_end and not projector.gradient:
                     if self.goal_dim > 0:
-                        x[:, :, :-self.goal_dim], _ = projector.project(x[:, :, :-self.goal_dim], constraints)
+                        x[:, :, :-self.goal_dim], step_cost = projector.project(x[:, :, :-self.goal_dim], constraints)
                     else:
-                        x, _ = projector.project(x, constraints)
+                        x, step_cost = projector.project(x, constraints)
+                    costs[loop_idx] = step_cost
 
                 x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
@@ -182,15 +192,15 @@ class iMFDiffusion(nn.Module):
         infos = {}
         if return_diffusion:
             infos['diffusion'] = torch.stack(diffusion, dim=1)
-        infos['projection_costs'] = {}
+        infos['projection_costs'] = costs
         return x, infos
 
     @torch.no_grad()
-    def conditional_sample(self, cond, returns=None, horizon=None, *args, **kwargs):
+    def conditional_sample(self, cond, returns=None, horizon=None, num_steps=None, *args, **kwargs):
         batch_size = len(cond[0])
         horizon = horizon or self.horizon
         shape = (batch_size, horizon, self.transition_dim)
-        return self.p_sample_loop(shape, cond, returns=returns, *args, **kwargs)
+        return self.p_sample_loop(shape, cond, returns=returns, num_steps=num_steps, *args, **kwargs)
     
     def sample(
         self,
@@ -201,17 +211,15 @@ class iMFDiffusion(nn.Module):
         guidance_weight: Optional[float] = None,
         num_steps: Optional[int] = None,
     ) -> torch.Tensor:
-        # Keep compatibility with the existing eval script API.
-        if num_steps is not None:
-            self.flow_steps_v3 = int(num_steps)
-            self.ode_inference_steps_v3 = int(num_steps)
-
+        # num_steps is forwarded without mutating self.flow_steps_v3 (BUG-08 fix).
         if conditions is None:
             cond = {0: torch.zeros(batch_size, self.observation_dim, device=self.betas.device)}
         else:
             cond = conditions
 
-        sampled, _ = self.conditional_sample(cond=cond, returns=returns, horizon=self.horizon)
+        sampled, _ = self.conditional_sample(
+            cond=cond, returns=returns, horizon=self.horizon, num_steps=num_steps
+        )
         return sampled
 
     def loss(
@@ -235,22 +243,41 @@ class iMFDiffusion(nn.Module):
         t: torch.Tensor,
         returns: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, Dict]:
+        # Sample noise with sigma=1.0 (matches q_sample training distribution at t=0)
         x_base = torch.randn_like(x_start)
         x_base = apply_conditioning(x_base, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
+        # Sample r ~ Uniform(0, t) per sample to define the mean-flow interval [r, t]
+        r = t * torch.rand_like(t)
+        h = t - r  # step size h = t - r > 0
+
+        # Interpolants at times t and r (DATA-AT-1: t=0 is noise, t=1 is data)
         x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)
         x_t = apply_conditioning(x_t, cond, self.action_dim, goal_dim=self.goal_dim)
 
+        x_r = self.q_sample(x_start=x_start, t=r, noise=x_base)
+
+        # Expand h for broadcasting against [batch, horizon, dim] tensors
+        h_expand = h
+        while h_expand.ndim < x_start.ndim:
+            h_expand = h_expand.unsqueeze(-1)
+
+        # Mean flow target: (x_data - x_r) / h  — average velocity from x_r to x_data over interval h
+        u_target = (x_start - x_r) / (h_expand + 1e-8)
+        u_target = apply_conditioning(u_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+
+        # Instantaneous FM velocity target for the aux (v) branch
         v_target = x_start - x_base
         v_target = apply_conditioning(v_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, returns=returns)
+        velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, h=h, returns=returns)
         if not self.predict_epsilon:
             velocity_pred = apply_conditioning(velocity_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        main_loss, info = self.loss_fn(velocity_pred, v_target)
-        aux_loss = F.mse_loss(aux_pred, torch.zeros_like(aux_pred))
-        total_loss = main_loss + self.aux_loss_weight * aux_loss
+        main_loss, info = self.loss_fn(velocity_pred, u_target)
+        aux_loss = F.mse_loss(aux_pred, v_target)  # real v_target, not zero
+        # Apply u_mix to main loss so the u/v weighting is actually applied
+        total_loss = self.u_mix * main_loss + self.aux_loss_weight * aux_loss
 
         info['diffusion_loss'] = main_loss
         info['a0_loss'] = info.get('a0_loss', torch.tensor(0.0, device=x_start.device))

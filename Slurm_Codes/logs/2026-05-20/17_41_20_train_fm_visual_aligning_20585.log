@@ -1,0 +1,143 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed May 20 15:41:21 UTC 2026
+JOB NAME:  train_fm_visual_aligning
+JOB ID:    20585
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   9fff089
+================================================================================
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260520_154124-1gapvikr
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-FM
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-FM/runs/1gapvikr
+[ train ] Seeds: [6]  (source: cli --seeds)
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6
+
+[utils/config ] Config: <class 'fm_visual_aligning.datasets.sequence.ParityAligningDataset'>
+    dataset_path: environments/dataset/data/aligning/train_files.pkl
+    horizon: 8
+    max_n_episodes: 1000
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/dataset_config.json
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 9963.16it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  14%|█▍        | 130/900 [00:10<00:59, 12.87it/s]Loading images:  29%|██▉       | 261/900 [00:20<00:49, 12.96it/s]Loading images:  44%|████▍     | 399/900 [00:30<00:37, 13.31it/s]Loading images:  61%|██████    | 547/900 [00:40<00:25, 13.87it/s]Loading images:  77%|███████▋  | 695/900 [00:50<00:14, 13.93it/s]Loading images:  93%|█████████▎| 838/900 [01:00<00:04, 14.05it/s]Loading images: 100%|██████████| 900/900 [01:05<00:00, 13.81it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+[ train ] Saved obs_normalizer → logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/obs_normalizer.pkl
+[ train ] Saved act_normalizer → logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/act_normalizer.pkl
+[ train ] obs_normalizer [ Normalizer ] dim: 6
+    -: [ 0.22 -0.35  0.12  0.21 -0.36  0.1 ]
+    +: [0.72 0.47 0.25 0.74 0.49 0.27]
+
+[ train ] act_normalizer [ Normalizer ] dim: 3
+    -: [-0.01 -0.01 -0.01]
+    +: [0.01 0.01 0.01]
+
+
+[utils/config ] Config: <class 'fm_visual_aligning.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='fm_visual_aligning.models.visual_unet.VisualUNet', diffusion='fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', action_dim=3, obs_dim=6, if_vision=True, horizon=8, time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, action_weight=1, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), condition_dropout=0.1, returns_condition=False, max_path_length=1000, logbase='logs', prefix='fm_visual_aligning/', exp_name='fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000', batch_size=64, learning_rate=0.0002, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=10000.0, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ train ] n_timesteps (legacy buffer size) = 100  (FM uses continuous time; this value does not affect training dynamics)
+
+[utils/config ] Config: <class 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion'>
+    action_dim: 3
+    action_weight: 1
+    clip_denoised: False
+    flow_steps_v3: 100
+    goal_dim: 0
+    horizon: 8
+    loss_type: l2
+    n_timesteps: 100
+    observation_dim: 6
+    ode_solver_backend_v3: legacy_euler
+    ode_solver_method_v3: euler
+    predict_epsilon: True
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'fm_visual_aligning.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 10000.0
+    results_folder: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6
+    train_batch_size: 64
+    train_lr: 0.0002
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0: 100%|██████████| 1000/1000 [02:32<00:00,  6.55it/s, a0_loss=1.02, a0_loss_test=1.23, diffusion_loss=0.381, loss=0.19, loss_test=0.659, lr=0.0002, step=999]Epoch 0: 100%|██████████| 1000/1000 [02:32<00:00,  6.55it/s, a0_loss=1.02, a0_loss_test=1.23, diffusion_loss=0.381, loss=0.19, loss_test=0.659, lr=0.0002, step=999]
+Initial test loss:   0.6585, a0 loss:   1.2312
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [02:18<00:00,  7.24it/s, a0_loss=0.412, a0_loss_test=0.96, diffusion_loss=0.193, loss=0.0967, loss_test=0.205, lr=0.000194, step=1999]Epoch 1: 100%|██████████| 1000/1000 [02:18<00:00,  7.24it/s, a0_loss=0.412, a0_loss_test=0.96, diffusion_loss=0.193, loss=0.0967, loss_test=0.205, lr=0.000194, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [02:26<00:00,  6.84it/s, a0_loss=0.391, a0_loss_test=0.474, diffusion_loss=0.123, loss=0.0616, loss_test=0.0985, lr=0.000177, step=2999]Epoch 2: 100%|██████████| 1000/1000 [02:26<00:00,  6.84it/s, a0_loss=0.391, a0_loss_test=0.474, diffusion_loss=0.123, loss=0.0616, loss_test=0.0985, lr=0.000177, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [02:19<00:00,  7.17it/s, a0_loss=0.349, a0_loss_test=0.366, diffusion_loss=0.11, loss=0.0552, loss_test=0.0745, lr=0.00015, step=3999]Epoch 3: 100%|██████████| 1000/1000 [02:19<00:00,  7.17it/s, a0_loss=0.349, a0_loss_test=0.366, diffusion_loss=0.11, loss=0.0552, loss_test=0.0745, lr=0.00015, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [02:24<00:00,  6.92it/s, a0_loss=0.27, a0_loss_test=0.338, diffusion_loss=0.104, loss=0.0519, loss_test=0.0654, lr=0.000117, step=4999]Epoch 4: 100%|██████████| 1000/1000 [02:24<00:00,  6.92it/s, a0_loss=0.27, a0_loss_test=0.338, diffusion_loss=0.104, loss=0.0519, loss_test=0.0654, lr=0.000117, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [02:35<00:00,  6.44it/s, a0_loss=0.258, a0_loss_test=0.323, diffusion_loss=0.102, loss=0.0511, loss_test=0.0595, lr=8.26e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [02:35<00:00,  6.44it/s, a0_loss=0.258, a0_loss_test=0.323, diffusion_loss=0.102, loss=0.0511, loss_test=0.0595, lr=8.26e-5, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [02:28<00:00,  6.74it/s, a0_loss=0.233, a0_loss_test=0.302, diffusion_loss=0.0821, loss=0.041, loss_test=0.055, lr=5e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [02:28<00:00,  6.74it/s, a0_loss=0.233, a0_loss_test=0.302, diffusion_loss=0.0821, loss=0.041, loss_test=0.055, lr=5e-5, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [02:33<00:00,  6.51it/s, a0_loss=0.207, a0_loss_test=0.28, diffusion_loss=0.0863, loss=0.0431, loss_test=0.0519, lr=2.34e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [02:33<00:00,  6.51it/s, a0_loss=0.207, a0_loss_test=0.28, diffusion_loss=0.0863, loss=0.0431, loss_test=0.0519, lr=2.34e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [02:24<00:00,  6.92it/s, a0_loss=0.228, a0_loss_test=0.252, diffusion_loss=0.0798, loss=0.0399, loss_test=0.0468, lr=6.03e-6, step=8999]Epoch 8: 100%|██████████| 1000/1000 [02:24<00:00,  6.92it/s, a0_loss=0.228, a0_loss_test=0.252, diffusion_loss=0.0798, loss=0.0399, loss_test=0.0468, lr=6.03e-6, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [02:16<00:00,  7.35it/s, a0_loss=0.207, a0_loss_test=0.24, diffusion_loss=0.0837, loss=0.0419, loss_test=0.0448, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [02:16<00:00,  7.35it/s, a0_loss=0.207, a0_loss_test=0.24, diffusion_loss=0.0837, loss=0.0419, loss_test=0.0448, lr=0, step=9999]
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.017 MB of 0.026 MB uploadedwandb: \ 0.026 MB of 0.037 MB uploadedwandb: | 0.026 MB of 0.037 MB uploadedwandb: / 0.026 MB of 0.037 MB uploadedwandb: - 0.037 MB of 0.037 MB uploadedwandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:  test/a0_loss █▆▃▂▂▂▁▁▁▁
+wandb:     test/loss █▃▂▁▁▁▁▁▁▁
+wandb: train/a0_loss █▆▄▃▂▃▁▂▂▁
+wandb:    train/loss █▃▂▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:  final_test_loss 0.04476
+wandb: final_train_loss 0.03933
+wandb:             seed 6
+wandb:           status completed
+wandb:     test/a0_loss 0.24049
+wandb:        test/loss 0.04476
+wandb:    train/a0_loss 0.19355
+wandb:       train/loss 0.03933
+wandb: 
+wandb: 🚀 View run aligning-d3il-visual-fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-FM/runs/1gapvikr
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-FM
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260520_154124-1gapvikr/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Visual-FM (Gen7) training completed.
+Job completed successfully.

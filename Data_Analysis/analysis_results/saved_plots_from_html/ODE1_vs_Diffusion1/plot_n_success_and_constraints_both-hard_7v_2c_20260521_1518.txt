@@ -1,0 +1,18 @@
+AUDIT LOG: plot_n_success_and_constraints_both-hard_7v_2c_20260521_1518
+========================================
+TIMESTAMP: 2026-05-21 15:18:40
+METRIC:    n_success_and_constraints
+ENV:       both-hard
+
+SELECTED VARIANTS (7):
+ - diffuser
+ - dpcc-c
+ - dpcc-c-tightened
+ - dpcc-r
+ - dpcc-r-tightened
+ - dpcc-t
+ - dpcc-t-tightened
+
+SELECTED CANDIDATES (2):
+ - CAND_B (Source: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K1_Dmodels.GaussianDiffusion_aw10/H8_K1_T0.5_Dmodels.GaussianDiffusion)
+ - CAND_I (Source: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion)

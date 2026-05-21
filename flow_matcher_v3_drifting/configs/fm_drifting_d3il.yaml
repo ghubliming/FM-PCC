@@ -21,7 +21,7 @@ sampling:
 drift:
   enabled: true
   loss_weight: 0.15              # Slightly higher for smoother arm trajectories
-  loss_type: "kl_divergence"
+  loss_type: "embedding_nn"
   memory_bank_size: 2000         # Smaller bank for faster updates
   encoder_dim: 128
   warmup_epochs: 5               # Faster warmup on D3IL

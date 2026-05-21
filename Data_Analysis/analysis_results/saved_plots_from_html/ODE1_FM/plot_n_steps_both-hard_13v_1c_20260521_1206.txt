@@ -1,0 +1,23 @@
+AUDIT LOG: plot_n_steps_both-hard_13v_1c_20260521_1206
+========================================
+TIMESTAMP: 2026-05-21 12:06:01
+METRIC:    n_steps
+ENV:       both-hard
+
+SELECTED VARIANTS (13):
+ - diffuser
+ - dpcc-c
+ - dpcc-c-tightened
+ - dpcc-r
+ - dpcc-r-tightened
+ - dpcc-t
+ - dpcc-t-tightened
+ - gradient
+ - gradient-tightened
+ - model_free
+ - model_free-tightened
+ - post_processing
+ - post_processing-tightened
+
+SELECTED CANDIDATES (1):
+ - CAND_J (Source: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion)

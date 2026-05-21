@@ -404,7 +404,7 @@ base = {
         # FM-D Drift Augmentation Parameters (Locked 3 params)
         'use_drift_augmentation': True,            # bool: enable FM-D mode
         'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
-        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
+        'drift_loss_type': 'embedding_nn',          # str: "embedding_nn" | "adversarial" | "mmd"
 
         # dataset
         'loader': 'datasets.SequenceDataset',
@@ -481,6 +481,8 @@ base = {
         'gradient_clip': 1.0,
         'ema_decay': 0.995,
         'action_weight': 10,
+        'loss_discount': 1.0,              # BUG-02 fix: explicit uniform trajectory weighting
+        'gradient_accumulate_every': 2,    # BUG-03 fix: match FMv3ODE effective batch size
         
         ## ODE inference (match FMv3ODE-style deterministic rollout)
         'ode_inference_steps_v3': 10,
@@ -751,8 +753,8 @@ base = {
         # FM-D Drift Augmentation Parameters (Locked 3 params)
         'use_drift_augmentation': True,            # bool: enable FM-D mode during inference
         'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
-        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
-        
+        'drift_loss_type': 'embedding_nn',          # str: "embedding_nn" | "adversarial" | "mmd"
+
         'returns_condition': False,
         'diffusion_timestep_threshold': _yaml_threshold,
 

@@ -41,7 +41,7 @@ def example_fm_d_inference():
     fm_model = create_dummy_diffusion_model()
     drift_loss = DriftLoss(
         trajectory_dim=28,
-        loss_type='kl_divergence',
+        loss_type='embedding_nn',
         memory_bank_size=100,
     )
     

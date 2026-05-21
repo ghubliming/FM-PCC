@@ -1,0 +1,98 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Mon May 18 14:19:18 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260518_141921-wdonn6l2
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/wdonn6l2
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/seeds_config.json
+
+[utils/config ] Config: <class 'd3il.environments.dataset.aligning_dataset.Aligning_Img_Dataset'>
+    action_dim: 3
+    data_directory: environments/dataset/data/aligning/train_files.pkl
+    max_len_data: 512
+    obs_dim: 3
+    window_size: 10
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/dataset_config.json
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 13.22it/s]100%|██████████| 3/3 [00:00<00:00, 12.61it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] Calculating dataset statistics (ignoring zero-padding)...
+[ train ] Dataset Stats: Obs Mean 0.2609, Act Std 0.0034
+[ train ] Saved scaler to logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/scaler.pkl
+
+[utils/config ] Config: <class 'fm_encdec_vision.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='fm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', action_dim=3, obs_seq_len=16, action_seq_size=10, horizon=10, window_size=8, time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, flow_steps_v3=16, ode_inference_steps_v3=16, ode_solver_backend_v3='legacy_euler', ode_solver_method_v3='euler', n_diffusion_steps=16, action_weight=10, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), hidden_dim=256, condition_dropout=0.25, diffusion='fm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion', obs_dim=128, visual_input=True, loss_discount=1.0, returns_condition=False, predict_epsilon=True, dynamic_loss=False, attention=False, condition_guidance_w=1.2, test_ret=0.9, max_path_length=512, loader='ignored', normalizer='LimitsNormalizer', preprocess_fns=[], clip_denoised=False, use_padding=True, include_returns=True, returns_scale=400, discount=0.99, logbase='logs', prefix='fm_encdec_vision/', exp_name='fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10', batch_size=64, learning_rate=0.0002, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=10000.0, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+
+[utils/config ] Config: <class 'fm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion'>
+    action_dim: 3
+    action_weight: 10
+    clip_denoised: False
+    flow_steps_v3: 16
+    goal_dim: 0
+    horizon: 10
+    loss_type: l2
+    n_timesteps: 16
+    observation_dim: 3
+    ode_inference_steps_v3: 16
+    ode_solver_backend_v3: legacy_euler
+    ode_solver_method_v3: euler
+    predict_epsilon: True
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'fm_encdec_vision.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 10000.0
+    results_folder: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6
+    scaler: <fm_encdec_vision.utils.scaler.Scaler object at 0x7fecd8fd2fb0>
+    train_batch_size: 64
+    train_device: cuda
+    train_lr: 0.0002
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/fm_encdec_vision/H10_Dfm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw10/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   1.5537, a0 loss:   0.2185
+Epoch 0: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.0299, a0_loss_test=0.218, diffusion_loss=0.62, loss=0.31, loss_test=1.55, lr=0.0002, step=999]Epoch 0: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.0299, a0_loss_test=0.218, diffusion_loss=0.62, loss=0.31, loss_test=1.55, lr=0.0002, step=999]Epoch 0: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.0299, a0_loss_test=0.218, diffusion_loss=0.62, loss=0.31, loss_test=1.55, lr=0.0002, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [08:19<00:00,  2.00it/s, a0_loss=0.0169, a0_loss_test=0.0598, diffusion_loss=0.284, loss=0.142, loss_test=0.41, lr=0.000194, step=1999]Epoch 1: 100%|██████████| 1000/1000 [08:19<00:00,  2.00it/s, a0_loss=0.0169, a0_loss_test=0.0598, diffusion_loss=0.284, loss=0.142, loss_test=0.41, lr=0.000194, step=1999]Epoch 1: 100%|██████████| 1000/1000 [08:19<00:00,  2.00it/s, a0_loss=0.0169, a0_loss_test=0.0598, diffusion_loss=0.284, loss=0.142, loss_test=0.41, lr=0.000194, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00484, a0_loss_test=0.0529, diffusion_loss=0.152, loss=0.0759, loss_test=0.287, lr=0.000177, step=2999]Epoch 2: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00484, a0_loss_test=0.0529, diffusion_loss=0.152, loss=0.0759, loss_test=0.287, lr=0.000177, step=2999]Epoch 2: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00484, a0_loss_test=0.0529, diffusion_loss=0.152, loss=0.0759, loss_test=0.287, lr=0.000177, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00252, a0_loss_test=0.0498, diffusion_loss=0.0807, loss=0.0403, loss_test=0.273, lr=0.00015, step=3999]Epoch 3: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00252, a0_loss_test=0.0498, diffusion_loss=0.0807, loss=0.0403, loss_test=0.273, lr=0.00015, step=3999]Epoch 3: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00252, a0_loss_test=0.0498, diffusion_loss=0.0807, loss=0.0403, loss_test=0.273, lr=0.00015, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [08:22<00:00,  1.99it/s, a0_loss=0.00194, a0_loss_test=0.0575, diffusion_loss=0.0655, loss=0.0327, loss_test=0.285, lr=0.000117, step=4999]Epoch 4: 100%|██████████| 1000/1000 [08:22<00:00,  1.99it/s, a0_loss=0.00194, a0_loss_test=0.0575, diffusion_loss=0.0655, loss=0.0327, loss_test=0.285, lr=0.000117, step=4999]Epoch 4: 100%|██████████| 1000/1000 [08:22<00:00,  1.99it/s, a0_loss=0.00194, a0_loss_test=0.0575, diffusion_loss=0.0655, loss=0.0327, loss_test=0.285, lr=0.000117, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [08:21<00:00,  1.99it/s, a0_loss=0.00114, a0_loss_test=0.0573, diffusion_loss=0.0363, loss=0.0182, loss_test=0.294, lr=8.26e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [08:21<00:00,  1.99it/s, a0_loss=0.00114, a0_loss_test=0.0573, diffusion_loss=0.0363, loss=0.0182, loss_test=0.294, lr=8.26e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [08:21<00:00,  1.99it/s, a0_loss=0.00114, a0_loss_test=0.0573, diffusion_loss=0.0363, loss=0.0182, loss_test=0.294, lr=8.26e-5, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00149, a0_loss_test=0.0729, diffusion_loss=0.0398, loss=0.0199, loss_test=0.348, lr=5e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00149, a0_loss_test=0.0729, diffusion_loss=0.0398, loss=0.0199, loss_test=0.348, lr=5e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.00149, a0_loss_test=0.0729, diffusion_loss=0.0398, loss=0.0199, loss_test=0.348, lr=5e-5, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.000613, a0_loss_test=0.0787, diffusion_loss=0.0196, loss=0.00981, loss_test=0.379, lr=2.34e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.000613, a0_loss_test=0.0787, diffusion_loss=0.0196, loss=0.00981, loss_test=0.379, lr=2.34e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [08:20<00:00,  2.00it/s, a0_loss=0.000613, a0_loss_test=0.0787, diffusion_loss=0.0196, loss=0.00981, loss_test=0.379, lr=2.34e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]slurmstepd-i6-gpu-1: error: *** JOB 20487 ON i6-gpu-1 CANCELLED AT 2026-05-18T15:29:48 ***

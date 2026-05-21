@@ -1,0 +1,954 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 21 08:13:05 UTC 2026
+JOB NAME:  eval_fm_visual_aligning
+JOB ID:    20623
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   fe7251a
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/6
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 10067.70it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  14%|█▍        | 129/900 [00:10<01:00, 12.81it/s]Loading images:  29%|██▉       | 259/900 [00:20<00:49, 12.90it/s]Loading images:  44%|████▎     | 393/900 [00:30<00:38, 13.12it/s]Loading images:  59%|█████▊    | 527/900 [00:41<00:29, 12.77it/s]Loading images:  72%|███████▏  | 650/900 [00:51<00:19, 12.54it/s]Loading images:  88%|████████▊ | 792/900 [01:01<00:08, 13.09it/s]Loading images: 100%|██████████| 900/900 [01:08<00:00, 13.06it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ utils/training ] Restored loss history from checkpoint at step 90000
+[ eval ] clip_denoised forced → False (FM ODE does not clamp)
+[ eval ] Model n_timesteps = 100  (config n_diffusion_steps = ?)
+[ eval ] FM flow_steps_v3 = 20  (Euler ODE integration steps 0→1) [overridden from args]
+[ expert ] Generating 3 expert reference videos...
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+  [ expert ] Saved logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/expert_references/expert_rollout_0.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/expert_references/expert_rollout_1.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/expert_references/expert_rollout_2.gif
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+2728573 {0}
+Process 2728573 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_122bbdde-54ed-11f1-b7db-d85ed34e311e.xml' with default provider at slot 1
+
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_22f29f48-54ed-11f1-b7db-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [-0.0017  0.0568 -0.9671]  |mag| = 0.9688
+[ DIAG first-replan ] denormalized a0 = [-1.00e-05  4.70e-04 -7.98e-03]  |mag| = 0.007990 m
+[ DIAG first-replan ] horizon act (normalized) range: [-1.0841, 0.0725]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0017  0.0568 -0.9671]
+  step  1: [-0.0266  0.0725 -1.0067]
+  step  2: [-0.0224  0.0449 -0.9927]
+  step  3: [ 0.0199  0.0396 -1.0325]
+  step  4: [ 0.0179 -0.0104 -1.0543]
+  step  5: [ 0.014   0.0317 -1.0632]
+  step  6: [-0.016   0.0274 -1.0841]
+  step  7: [-0.0857 -0.0383 -1.0725]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.1978  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2418  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diag_first_replan.txt
+[ CLAMP step=15 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=27 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=28 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=45 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=48 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.249  denorm|a0|=1.01e-02 m  dir=[-0.693 -0.674 -0.255]
+[ DIAG replan=100 step=99 ] norm|a0|=1.459  denorm|a0|=1.05e-02 m  dir=[-0.824 -0.505 -0.258]
+[ DIAG replan=150 step=149 ] norm|a0|=1.720  denorm|a0|=1.16e-02 m  dir=[-0.801 -0.52  -0.298]
+[ CLAMP step=150 ] raw|a|=0.0117 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.089  denorm|a0|=1.19e-02 m  dir=[-0.83  -0.528 -0.181]
+[ CLAMP step=200 ] raw|a|=0.0122 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.421  denorm|a0|=1.26e-02 m  dir=[-0.835 -0.481 -0.269]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.952  denorm|a0|=1.31e-02 m  dir=[-0.817 -0.517 -0.255]
+[ CLAMP step=300 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.987  denorm|a0|=1.22e-02 m  dir=[-0.842 -0.51  -0.173]
+[ CLAMP step=350 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.250  denorm|a0|=1.23e-02 m  dir=[-0.851 -0.495 -0.172]
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.269481 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2915 seconds/step
+  - Clamp events: 337
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ CLAMP step=38 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=40 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=41 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=42 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.254  denorm|a0|=1.02e-02 m  dir=[-0.68  -0.701 -0.214]
+[ CLAMP step=50 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.405  denorm|a0|=1.10e-02 m  dir=[-0.761 -0.598 -0.253]
+[ CLAMP step=100 ] raw|a|=0.0109 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.424  denorm|a0|=9.77e-03 m  dir=[-0.873 -0.406 -0.272]
+[ DIAG replan=200 step=199 ] norm|a0|=1.900  denorm|a0|=1.19e-02 m  dir=[-0.787 -0.59  -0.183]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.247  denorm|a0|=1.19e-02 m  dir=[-0.8   -0.574 -0.173]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.907  denorm|a0|=1.18e-02 m  dir=[-0.818 -0.564 -0.114]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.103  denorm|a0|=1.18e-02 m  dir=[-0.843 -0.529 -0.098]
+[ CLAMP step=350 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.285  denorm|a0|=1.21e-02 m  dir=[-0.84  -0.523 -0.146]
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.413659 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2859 seconds/step
+  - Clamp events: 330
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 2 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.219  denorm|a0|=6.65e-04 m  dir=[ 0.109  0.311 -0.944]
+[ DIAG replan=100 step=99 ] norm|a0|=0.229  denorm|a0|=6.21e-04 m  dir=[ 0.066  0.306 -0.95 ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.989  denorm|a0|=8.21e-03 m  dir=[-0.016  0.014 -1.   ]
+[ CLAMP step=177 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=178 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=179 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=180 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=181 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.243  denorm|a0|=1.01e-02 m  dir=[-0.64  -0.731 -0.239]
+[ DIAG replan=250 step=249 ] norm|a0|=1.529  denorm|a0|=1.10e-02 m  dir=[-0.798 -0.537 -0.273]
+[ CLAMP step=250 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=1.679  denorm|a0|=1.18e-02 m  dir=[-0.777 -0.566 -0.276]
+[ CLAMP step=300 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=1.956  denorm|a0|=1.18e-02 m  dir=[-0.83  -0.531 -0.174]
+[ CLAMP step=350 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=2.405  denorm|a0|=1.20e-02 m  dir=[-0.824 -0.534 -0.188]
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.462226 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2864 seconds/step
+  - Clamp events: 192
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 3 Rollout 0
+[ CLAMP step=17 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=18 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=33 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=37 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.313  denorm|a0|=1.07e-02 m  dir=[-0.706 -0.68  -0.198]
+[ CLAMP step=50 ] raw|a|=0.0108 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.228  denorm|a0|=9.33e-03 m  dir=[-0.872 -0.377 -0.314]
+[ DIAG replan=150 step=149 ] norm|a0|=1.718  denorm|a0|=1.11e-02 m  dir=[-0.834 -0.484 -0.265]
+[ CLAMP step=150 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.019  denorm|a0|=1.12e-02 m  dir=[-0.879 -0.428 -0.21 ]
+[ CLAMP step=200 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.524  denorm|a0|=1.22e-02 m  dir=[-0.855 -0.476 -0.207]
+[ CLAMP step=250 ] raw|a|=0.0127 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.840  denorm|a0|=1.24e-02 m  dir=[-0.816 -0.542 -0.203]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.806  denorm|a0|=1.20e-02 m  dir=[-0.831 -0.533 -0.157]
+[ CLAMP step=350 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.100  denorm|a0|=1.35e-02 m  dir=[-0.806 -0.527 -0.27 ]
+[ Seen Training Context 3 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.669308 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2872 seconds/step
+  - Clamp events: 342
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 4 Rollout 0
+[ CLAMP step=43 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=44 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=45 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ CLAMP step=46 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=47 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.236  denorm|a0|=1.01e-02 m  dir=[-0.71  -0.668 -0.222]
+[ DIAG replan=100 step=99 ] norm|a0|=1.328  denorm|a0|=1.07e-02 m  dir=[-0.743 -0.612 -0.272]
+[ CLAMP step=100 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.352  denorm|a0|=1.01e-02 m  dir=[-0.829 -0.5   -0.25 ]
+[ CLAMP step=150 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.956  denorm|a0|=1.20e-02 m  dir=[-0.798 -0.563 -0.215]
+[ CLAMP step=200 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.349  denorm|a0|=1.23e-02 m  dir=[-0.805 -0.546 -0.231]
+[ CLAMP step=250 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.532  denorm|a0|=1.20e-02 m  dir=[-0.842 -0.511 -0.17 ]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.853  denorm|a0|=1.30e-02 m  dir=[-0.762 -0.593 -0.262]
+[ CLAMP step=350 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.232  denorm|a0|=1.18e-02 m  dir=[-0.806 -0.583 -0.105]
+[ Seen Training Context 4 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.281349 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2869 seconds/step
+  - Clamp events: 322
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 5 Rollout 0
+[ CLAMP step=41 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=42 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=43 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=44 ] raw|a|=0.0108 m → clamped to 0.01 m
+[ CLAMP step=45 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.276  denorm|a0|=1.04e-02 m  dir=[-0.69  -0.692 -0.215]
+[ CLAMP step=50 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.322  denorm|a0|=1.07e-02 m  dir=[-0.738 -0.626 -0.251]
+[ CLAMP step=100 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.399  denorm|a0|=9.92e-03 m  dir=[-0.851 -0.417 -0.318]
+[ DIAG replan=200 step=199 ] norm|a0|=2.054  denorm|a0|=1.21e-02 m  dir=[-0.823 -0.516 -0.238]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.361  denorm|a0|=1.19e-02 m  dir=[-0.849 -0.5   -0.173]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.904  denorm|a0|=1.18e-02 m  dir=[-0.827 -0.56  -0.058]
+[ CLAMP step=300 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.072  denorm|a0|=1.18e-02 m  dir=[-0.848 -0.522 -0.092]
+[ CLAMP step=350 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.555  denorm|a0|=1.24e-02 m  dir=[-0.826 -0.539 -0.165]
+[ Seen Training Context 5 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.273534 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2879 seconds/step
+  - Clamp events: 323
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_5.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 6 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.044  denorm|a0|=8.41e-03 m  dir=[-0.163 -0.952 -0.26 ]
+[ CLAMP step=57 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=59 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=67 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=71 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=76 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.392  denorm|a0|=1.12e-02 m  dir=[-0.737 -0.634 -0.234]
+[ CLAMP step=100 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.417  denorm|a0|=1.01e-02 m  dir=[-0.844 -0.459 -0.276]
+[ CLAMP step=150 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.738  denorm|a0|=1.17e-02 m  dir=[-0.799 -0.55  -0.244]
+[ CLAMP step=200 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.325  denorm|a0|=1.19e-02 m  dir=[-0.793 -0.59  -0.15 ]
+[ CLAMP step=250 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.743  denorm|a0|=1.18e-02 m  dir=[-0.801 -0.586 -0.121]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.068  denorm|a0|=1.24e-02 m  dir=[-0.827 -0.527 -0.196]
+[ CLAMP step=350 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.282  denorm|a0|=1.20e-02 m  dir=[-0.834 -0.535 -0.137]
+[ Seen Training Context 6 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.287384 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2872 seconds/step
+  - Clamp events: 313
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_6.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 7 Rollout 0
+[ CLAMP step=36 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=37 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=40 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.228  denorm|a0|=9.98e-03 m  dir=[-0.665 -0.711 -0.228]
+[ DIAG replan=100 step=99 ] norm|a0|=1.373  denorm|a0|=1.08e-02 m  dir=[-0.765 -0.596 -0.244]
+[ CLAMP step=100 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.782  denorm|a0|=1.21e-02 m  dir=[-0.715 -0.641 -0.278]
+[ CLAMP step=150 ] raw|a|=0.0123 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.084  denorm|a0|=1.23e-02 m  dir=[-0.787 -0.555 -0.271]
+[ CLAMP step=200 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.471  denorm|a0|=1.21e-02 m  dir=[-0.799 -0.569 -0.192]
+[ CLAMP step=250 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.893  denorm|a0|=1.18e-02 m  dir=[-0.826 -0.553 -0.11 ]
+[ CLAMP step=300 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.294  denorm|a0|=1.21e-02 m  dir=[-0.816 -0.561 -0.143]
+[ CLAMP step=350 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.455  denorm|a0|=1.20e-02 m  dir=[-0.798 -0.591 -0.122]
+[ Seen Training Context 7 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.252582 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2873 seconds/step
+  - Clamp events: 328
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_7.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 8 Rollout 0
+[ CLAMP step=23 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=28 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=35 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=37 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.187  denorm|a0|=9.59e-03 m  dir=[-0.568 -0.782 -0.256]
+[ DIAG replan=100 step=99 ] norm|a0|=1.408  denorm|a0|=1.08e-02 m  dir=[-0.787 -0.58  -0.211]
+[ CLAMP step=100 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.729  denorm|a0|=1.19e-02 m  dir=[-0.774 -0.593 -0.222]
+[ CLAMP step=150 ] raw|a|=0.0114 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.775  denorm|a0|=1.15e-02 m  dir=[-0.821 -0.505 -0.266]
+[ CLAMP step=200 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.219  denorm|a0|=1.24e-02 m  dir=[-0.853 -0.453 -0.258]
+[ CLAMP step=250 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.908  denorm|a0|=1.21e-02 m  dir=[-0.828 -0.535 -0.168]
+[ CLAMP step=300 ] raw|a|=0.0128 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.806  denorm|a0|=1.19e-02 m  dir=[-0.807 -0.573 -0.144]
+[ CLAMP step=350 ] raw|a|=0.0124 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.479  denorm|a0|=1.20e-02 m  dir=[-0.855 -0.504 -0.124]
+[ Seen Training Context 8 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.518925 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2889 seconds/step
+  - Clamp events: 329
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_8.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 9 Rollout 0
+[ CLAMP step=29 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=30 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=31 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=32 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=33 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.173  denorm|a0|=9.48e-03 m  dir=[-0.686 -0.682 -0.253]
+[ DIAG replan=100 step=99 ] norm|a0|=1.390  denorm|a0|=1.03e-02 m  dir=[-0.819 -0.498 -0.285]
+[ CLAMP step=100 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.702  denorm|a0|=1.16e-02 m  dir=[-0.794 -0.54  -0.28 ]
+[ CLAMP step=150 ] raw|a|=0.0116 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.990  denorm|a0|=1.19e-02 m  dir=[-0.828 -0.529 -0.185]
+[ CLAMP step=200 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.359  denorm|a0|=1.24e-02 m  dir=[-0.808 -0.533 -0.251]
+[ CLAMP step=250 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.809  denorm|a0|=1.31e-02 m  dir=[-0.773 -0.572 -0.272]
+[ CLAMP step=300 ] raw|a|=0.0127 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.038  denorm|a0|=1.18e-02 m  dir=[-0.828 -0.55  -0.107]
+[ CLAMP step=350 ] raw|a|=0.0123 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.412  denorm|a0|=1.35e-02 m  dir=[-0.805 -0.539 -0.249]
+[ Seen Training Context 9 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.463367 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2876 seconds/step
+  - Clamp events: 337
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/diffuser_train_set/rollout_9.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.38918161392211914
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for diffuser_train_set...
+--- aligning-d3il-visual [seen training set] diffuser_train_set seed=6 ---
+Success rate: 0.0000
+Constraints satisfied: 1.0000
+Success rate (goal and constraints): 0.0000
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 400.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.288
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/expert_references. Skipping.
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'gradient_train_set'
+there are cpus:  64
+2728573 {0}
+Process 2728573 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_603eef3e-54f0-11f1-b7db-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0022  0.051  -0.9699]  |mag| = 0.9712
+[ DIAG first-replan ] denormalized a0 = [-2.00e-05  4.20e-04 -8.01e-03]  |mag| = 0.008017 m
+[ DIAG first-replan ] horizon act (normalized) range: [-1.0845, 0.0725]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0022  0.051  -0.9699]
+  step  1: [-0.0248  0.0725 -1.0085]
+  step  2: [-0.0256  0.0444 -0.992 ]
+  step  3: [ 0.0247  0.0383 -1.0314]
+  step  4: [ 0.0122 -0.008  -1.0564]
+  step  5: [ 0.0161  0.0348 -1.064 ]
+  step  6: [-0.0105  0.029  -1.0845]
+  step  7: [-0.0769 -0.0357 -1.0744]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.1978  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2418  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diag_first_replan.txt
+[ CLAMP step=26 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=27 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=28 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=29 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=41 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.256  denorm|a0|=1.02e-02 m  dir=[-0.685 -0.681 -0.258]
+[ CLAMP step=50 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.456  denorm|a0|=1.03e-02 m  dir=[-0.839 -0.481 -0.254]
+[ DIAG replan=150 step=149 ] norm|a0|=1.641  denorm|a0|=1.12e-02 m  dir=[-0.815 -0.527 -0.242]
+[ CLAMP step=150 ] raw|a|=0.0113 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.116  denorm|a0|=1.20e-02 m  dir=[-0.83  -0.517 -0.209]
+[ CLAMP step=200 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.526  denorm|a0|=1.18e-02 m  dir=[-0.852 -0.505 -0.136]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.797  denorm|a0|=1.33e-02 m  dir=[-0.798 -0.531 -0.285]
+[ CLAMP step=300 ] raw|a|=0.0126 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.101  denorm|a0|=1.32e-02 m  dir=[-0.797 -0.55  -0.249]
+[ CLAMP step=350 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.334  denorm|a0|=1.19e-02 m  dir=[-0.838 -0.535 -0.108]
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.269481 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2864 seconds/step
+  - Clamp events: 337
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ CLAMP step=35 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=36 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=37 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.248  denorm|a0|=1.02e-02 m  dir=[-0.686 -0.696 -0.212]
+[ CLAMP step=50 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.338  denorm|a0|=1.07e-02 m  dir=[-0.768 -0.59  -0.249]
+[ CLAMP step=100 ] raw|a|=0.0109 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.521  denorm|a0|=1.00e-02 m  dir=[-0.868 -0.41  -0.281]
+[ CLAMP step=150 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.886  denorm|a0|=1.21e-02 m  dir=[-0.794 -0.551 -0.257]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.603  denorm|a0|=1.25e-02 m  dir=[-0.791 -0.563 -0.24 ]
+[ CLAMP step=250 ] raw|a|=0.0124 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.875  denorm|a0|=1.20e-02 m  dir=[-0.818 -0.554 -0.155]
+[ CLAMP step=300 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.273  denorm|a0|=1.20e-02 m  dir=[-0.829 -0.543 -0.135]
+[ CLAMP step=350 ] raw|a|=0.0123 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.154  denorm|a0|=1.21e-02 m  dir=[-0.85  -0.502 -0.158]
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.413659 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2867 seconds/step
+  - Clamp events: 327
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 2 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.218  denorm|a0|=6.09e-04 m  dir=[ 0.131  0.27  -0.954]
+[ DIAG replan=100 step=99 ] norm|a0|=0.227  denorm|a0|=6.80e-04 m  dir=[ 0.051  0.337 -0.94 ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.967  denorm|a0|=7.76e-03 m  dir=[-0.055 -0.959 -0.277]
+[ CLAMP step=161 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=162 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=166 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=168 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=172 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.241  denorm|a0|=1.01e-02 m  dir=[-0.663 -0.706 -0.25 ]
+[ DIAG replan=250 step=249 ] norm|a0|=1.474  denorm|a0|=1.09e-02 m  dir=[-0.792 -0.561 -0.243]
+[ CLAMP step=250 ] raw|a|=0.0109 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=1.626  denorm|a0|=1.11e-02 m  dir=[-0.82  -0.525 -0.229]
+[ CLAMP step=300 ] raw|a|=0.0108 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.053  denorm|a0|=1.18e-02 m  dir=[-0.794 -0.592 -0.139]
+[ CLAMP step=350 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=2.434  denorm|a0|=1.20e-02 m  dir=[-0.832 -0.522 -0.185]
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.462226 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2874 seconds/step
+  - Clamp events: 196
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 3 Rollout 0
+[ CLAMP step=18 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=19 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=20 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.330  denorm|a0|=1.09e-02 m  dir=[-0.689 -0.699 -0.194]
+[ CLAMP step=50 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.212  denorm|a0|=8.99e-03 m  dir=[-0.903 -0.293 -0.315]
+[ DIAG replan=150 step=149 ] norm|a0|=1.715  denorm|a0|=1.13e-02 m  dir=[-0.821 -0.505 -0.266]
+[ CLAMP step=150 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.168  denorm|a0|=1.22e-02 m  dir=[-0.829 -0.507 -0.237]
+[ CLAMP step=200 ] raw|a|=0.0115 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.512  denorm|a0|=1.22e-02 m  dir=[-0.863 -0.461 -0.206]
+[ CLAMP step=250 ] raw|a|=0.0124 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.825  denorm|a0|=1.24e-02 m  dir=[-0.822 -0.532 -0.205]
+[ CLAMP step=300 ] raw|a|=0.0122 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.686  denorm|a0|=1.31e-02 m  dir=[-0.825 -0.489 -0.283]
+[ CLAMP step=350 ] raw|a|=0.0124 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.358  denorm|a0|=1.37e-02 m  dir=[-0.842 -0.473 -0.26 ]
+[ Seen Training Context 3 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.669308 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2883 seconds/step
+  - Clamp events: 338
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 4 Rollout 0
+[ CLAMP step=44 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=45 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=46 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=47 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=48 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.223  denorm|a0|=9.94e-03 m  dir=[-0.71  -0.667 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=1.297  denorm|a0|=1.03e-02 m  dir=[-0.794 -0.556 -0.247]
+[ CLAMP step=100 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.427  denorm|a0|=1.05e-02 m  dir=[-0.804 -0.508 -0.308]
+[ CLAMP step=150 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.924  denorm|a0|=1.22e-02 m  dir=[-0.808 -0.526 -0.267]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.379  denorm|a0|=1.23e-02 m  dir=[-0.836 -0.499 -0.229]
+[ CLAMP step=250 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.693  denorm|a0|=1.18e-02 m  dir=[-0.823 -0.557 -0.116]
+[ CLAMP step=300 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.151  denorm|a0|=1.18e-02 m  dir=[-0.843 -0.527 -0.11 ]
+[ CLAMP step=350 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.111  denorm|a0|=1.21e-02 m  dir=[-0.785 -0.6   -0.158]
+[ Seen Training Context 4 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.281349 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2872 seconds/step
+  - Clamp events: 319
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 5 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.009  denorm|a0|=8.13e-03 m  dir=[-0.106 -0.961 -0.255]
+[ CLAMP step=66 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=68 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=76 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=77 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=79 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.305  denorm|a0|=1.06e-02 m  dir=[-0.719 -0.656 -0.229]
+[ CLAMP step=100 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.319  denorm|a0|=9.71e-03 m  dir=[-0.858 -0.436 -0.271]
+[ DIAG replan=200 step=199 ] norm|a0|=1.823  denorm|a0|=1.18e-02 m  dir=[-0.752 -0.651 -0.104]
+[ CLAMP step=200 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.322  denorm|a0|=1.18e-02 m  dir=[-0.803 -0.584 -0.124]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.592  denorm|a0|=1.22e-02 m  dir=[-0.796 -0.573 -0.197]
+[ CLAMP step=300 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.035  denorm|a0|=1.18e-02 m  dir=[-0.787 -0.61  -0.09 ]
+[ CLAMP step=350 ] raw|a|=0.0131 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.484  denorm|a0|=1.18e-02 m  dir=[-0.808 -0.586 -0.058]
+[ Seen Training Context 5 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.273534 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2887 seconds/step
+  - Clamp events: 309
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_5.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 6 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.069  denorm|a0|=8.43e-03 m  dir=[-0.138 -0.962 -0.237]
+[ CLAMP step=54 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=59 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=60 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=66 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=67 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.333  denorm|a0|=1.08e-02 m  dir=[-0.754 -0.606 -0.254]
+[ CLAMP step=100 ] raw|a|=0.0109 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.443  denorm|a0|=1.02e-02 m  dir=[-0.844 -0.469 -0.259]
+[ CLAMP step=150 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.768  denorm|a0|=1.16e-02 m  dir=[-0.815 -0.546 -0.191]
+[ CLAMP step=200 ] raw|a|=0.0123 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.361  denorm|a0|=1.20e-02 m  dir=[-0.816 -0.549 -0.182]
+[ CLAMP step=250 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.753  denorm|a0|=1.24e-02 m  dir=[-0.801 -0.559 -0.215]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.110  denorm|a0|=1.18e-02 m  dir=[-0.812 -0.573 -0.111]
+[ CLAMP step=350 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.398  denorm|a0|=1.19e-02 m  dir=[-0.802 -0.587 -0.111]
+[ Seen Training Context 6 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.287384 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2893 seconds/step
+  - Clamp events: 312
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_6.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 7 Rollout 0
+[ CLAMP step=37 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ CLAMP step=40 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=41 ] raw|a|=0.0104 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.261  denorm|a0|=1.03e-02 m  dir=[-0.687 -0.697 -0.206]
+[ DIAG replan=100 step=99 ] norm|a0|=1.397  denorm|a0|=1.07e-02 m  dir=[-0.787 -0.571 -0.233]
+[ CLAMP step=100 ] raw|a|=0.0110 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.772  denorm|a0|=1.21e-02 m  dir=[-0.725 -0.63  -0.279]
+[ CLAMP step=150 ] raw|a|=0.0123 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.906  denorm|a0|=1.20e-02 m  dir=[-0.773 -0.593 -0.227]
+[ CLAMP step=200 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.472  denorm|a0|=1.23e-02 m  dir=[-0.809 -0.545 -0.22 ]
+[ CLAMP step=250 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.782  denorm|a0|=1.18e-02 m  dir=[-0.813 -0.578 -0.07 ]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.066  denorm|a0|=1.18e-02 m  dir=[-0.826 -0.556 -0.09 ]
+[ CLAMP step=350 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.311  denorm|a0|=1.20e-02 m  dir=[-0.827 -0.546 -0.136]
+[ Seen Training Context 7 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.252582 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2876 seconds/step
+  - Clamp events: 330
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_7.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 8 Rollout 0
+[ CLAMP step=24 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=26 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=37 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=38 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.234  denorm|a0|=1.00e-02 m  dir=[-0.564 -0.789 -0.243]
+[ DIAG replan=100 step=99 ] norm|a0|=1.376  denorm|a0|=1.05e-02 m  dir=[-0.793 -0.546 -0.268]
+[ CLAMP step=100 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.745  denorm|a0|=1.19e-02 m  dir=[-0.774 -0.595 -0.215]
+[ CLAMP step=150 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.935  denorm|a0|=1.12e-02 m  dir=[-0.864 -0.432 -0.259]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.421  denorm|a0|=1.18e-02 m  dir=[-0.824 -0.554 -0.115]
+[ CLAMP step=250 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.619  denorm|a0|=1.23e-02 m  dir=[-0.865 -0.458 -0.207]
+[ CLAMP step=300 ] raw|a|=0.0123 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.859  denorm|a0|=1.19e-02 m  dir=[-0.808 -0.575 -0.132]
+[ CLAMP step=350 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.561  denorm|a0|=1.19e-02 m  dir=[-0.851 -0.514 -0.109]
+[ Seen Training Context 8 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.518925 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2890 seconds/step
+  - Clamp events: 328
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_8.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 9 Rollout 0
+[ CLAMP step=28 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=30 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=31 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=32 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=33 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.195  denorm|a0|=9.67e-03 m  dir=[-0.675 -0.696 -0.245]
+[ DIAG replan=100 step=99 ] norm|a0|=1.441  denorm|a0|=1.04e-02 m  dir=[-0.822 -0.508 -0.256]
+[ CLAMP step=100 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.788  denorm|a0|=1.21e-02 m  dir=[-0.744 -0.61  -0.272]
+[ CLAMP step=150 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.209  denorm|a0|=1.20e-02 m  dir=[-0.796 -0.57  -0.202]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.511  denorm|a0|=1.20e-02 m  dir=[-0.819 -0.55  -0.165]
+[ CLAMP step=250 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.744  denorm|a0|=1.31e-02 m  dir=[-0.785 -0.555 -0.275]
+[ CLAMP step=300 ] raw|a|=0.0127 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.241  denorm|a0|=1.18e-02 m  dir=[-0.819 -0.568 -0.081]
+[ CLAMP step=350 ] raw|a|=0.0130 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.136  denorm|a0|=1.27e-02 m  dir=[-0.803 -0.555 -0.217]
+[ Seen Training Context 9 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.463367 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2901 seconds/step
+  - Clamp events: 342
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/gradient_train_set/rollout_9.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.38918161392211914
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for gradient_train_set...
+--- aligning-d3il-visual [seen training set] gradient_train_set seed=6 ---
+Success rate: 0.0000
+Constraints satisfied: 1.0000
+Success rate (goal and constraints): 0.0000
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 400.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.288
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/expert_references. Skipping.
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'post_processing_train_set'
+there are cpus:  64
+2728573 {0}
+Process 2728573 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb3_9eaca146-54f3-11f1-b7db-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0017  0.0568 -0.9671]  |mag| = 0.9687
+[ DIAG first-replan ] denormalized a0 = [-1.00e-05  4.70e-04 -7.98e-03]  |mag| = 0.007990 m
+[ DIAG first-replan ] horizon act (normalized) range: [-1.0841, 0.0725]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0017  0.0568 -0.9671]
+  step  1: [-0.0266  0.0725 -1.0069]
+  step  2: [-0.0223  0.0448 -0.9924]
+  step  3: [ 0.0199  0.0396 -1.0323]
+  step  4: [ 0.0177 -0.0104 -1.0541]
+  step  5: [ 0.0139  0.0318 -1.0632]
+  step  6: [-0.016   0.0273 -1.0841]
+  step  7: [-0.0858 -0.0384 -1.0724]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.1978  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2418  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diag_first_replan.txt
+[ CLAMP step=15 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=27 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=28 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=45 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=48 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.249  denorm|a0|=1.01e-02 m  dir=[-0.693 -0.674 -0.255]
+[ DIAG replan=100 step=99 ] norm|a0|=1.459  denorm|a0|=1.05e-02 m  dir=[-0.824 -0.505 -0.258]
+[ DIAG replan=150 step=149 ] norm|a0|=1.717  denorm|a0|=1.16e-02 m  dir=[-0.801 -0.52  -0.298]
+[ CLAMP step=150 ] raw|a|=0.0117 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=2.088  denorm|a0|=1.19e-02 m  dir=[-0.83  -0.528 -0.18 ]
+[ CLAMP step=200 ] raw|a|=0.0122 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.421  denorm|a0|=1.26e-02 m  dir=[-0.835 -0.481 -0.269]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.953  denorm|a0|=1.31e-02 m  dir=[-0.817 -0.517 -0.254]
+[ CLAMP step=300 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=2.987  denorm|a0|=1.22e-02 m  dir=[-0.843 -0.51  -0.172]
+[ CLAMP step=350 ] raw|a|=0.0121 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.251  denorm|a0|=1.23e-02 m  dir=[-0.851 -0.496 -0.172]
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.269481 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2874 seconds/step
+  - Clamp events: 337
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/post_processing_train_set/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ CLAMP step=38 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=39 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=40 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=41 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=42 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.254  denorm|a0|=1.02e-02 m  dir=[-0.68  -0.701 -0.214]
+[ CLAMP step=50 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=1.404  denorm|a0|=1.10e-02 m  dir=[-0.761 -0.598 -0.253]
+[ CLAMP step=100 ] raw|a|=0.0109 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=1.432  denorm|a0|=9.79e-03 m  dir=[-0.872 -0.407 -0.271]
+[ DIAG replan=200 step=199 ] norm|a0|=1.897  denorm|a0|=1.18e-02 m  dir=[-0.787 -0.589 -0.183]
+[ CLAMP step=200 ] raw|a|=0.0120 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=2.244  denorm|a0|=1.19e-02 m  dir=[-0.801 -0.573 -0.174]
+[ CLAMP step=250 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=2.903  denorm|a0|=1.18e-02 m  dir=[-0.819 -0.562 -0.114]
+[ CLAMP step=300 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=3.102  denorm|a0|=1.18e-02 m  dir=[-0.843 -0.529 -0.098]
+[ CLAMP step=350 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=3.285  denorm|a0|=1.21e-02 m  dir=[-0.84  -0.522 -0.146]
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.413659 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.2881 seconds/step
+  - Clamp events: 329
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results_train_set/diagnostics/post_processing_train_set/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 2 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.219  denorm|a0|=6.65e-04 m  dir=[ 0.114  0.309 -0.944]
+[ DIAG replan=100 step=99 ] norm|a0|=0.228  denorm|a0|=6.15e-04 m  dir=[ 0.066  0.303 -0.951]
+[ DIAG replan=150 step=149 ] norm|a0|=0.994  denorm|a0|=8.26e-03 m  dir=[-0.012  0.019 -1.   ]
+[ CLAMP step=164 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=187 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=188 ] raw|a|=0.0102 m → clamped to 0.01 m
+[ CLAMP step=190 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ CLAMP step=196 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=1.247  denorm|a0|=1.02e-02 m  dir=[-0.652 -0.726 -0.219]
+[ DIAG replan=250 step=249 ] norm|a0|=1.498  denorm|a0|=1.12e-02 m  dir=[-0.768 -0.585 -0.26 ]
+[ CLAMP step=250 ] raw|a|=0.0109 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=1.743  denorm|a0|=1.20e-02 m  dir=[-0.708 -0.663 -0.244]
+[ CLAMP step=300 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=1.922  denorm|a0|=1.18e-02 m  dir=[-0.809 -0.561 -0.174]
+[ CLAMP step=350 ] raw|a|=0.0117 m → clamped to 0.01 m
+slurmstepd-i6-gpu-1: error: *** JOB 20623 ON i6-gpu-1 CANCELLED AT 2026-05-21T09:08:02 ***

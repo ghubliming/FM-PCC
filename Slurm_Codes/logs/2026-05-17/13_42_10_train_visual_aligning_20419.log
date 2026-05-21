@@ -1,0 +1,84 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Sun May 17 11:42:10 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260517_114214-i0fpi96r
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-ddpm_encdec_vision/H8-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-visual-aligning/runs/i0fpi96r
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6
+[ train ] Saved seed manifest to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/seeds_config.json
+
+[utils/config ] Config: <class 'd3il.environments.dataset.aligning_dataset.Aligning_Img_Dataset'>
+    action_dim: 3
+    data_directory: environments/dataset/data/aligning/train_files.pkl
+    max_len_data: 512
+    obs_dim: 3
+    window_size: 8
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/dataset_config.json
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 12.09it/s]100%|██████████| 3/3 [00:00<00:00, 11.84it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] Calculating dataset statistics (ignoring zero-padding)...
+[ train ] Dataset Stats: Obs Mean 0.2609, Act Std 0.0034
+[ train ] Saved scaler to logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/scaler.pkl
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', horizon=8, window_size=8, obs_dim=128, action_dim=3, visual_input=True, obs_seq_len=5, action_seq_size=4, n_diffusion_steps=16, loss_type='l2', loader='ignored', max_path_length=512, logbase='logs', prefix='ddpm_encdec_vision/', exp_name='ddpm_encdec_vision/H8', n_steps_per_epoch=1000, n_train_steps=10000.0, batch_size=64, learning_rate=0.0005, gradient_accumulate_every=2, ema_decay=0.995, train_test_split=0.9, device='cuda', savepath='logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion'>
+    action_dim: 3
+    action_weight: 10.0
+    clip_denoised: True
+    goal_dim: 0
+    horizon: 8
+    loss_type: l2
+    n_timesteps: 16
+    observation_dim: 3
+    predict_epsilon: True
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'ddpm_encdec_vision.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 10000.0
+    results_folder: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6
+    scaler: <ddpm_encdec_vision.utils.scaler.Scaler object at 0x7fe1eef8f790>
+    train_batch_size: 64
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/ddpm_encdec_vision/H8/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.8392, a0 loss:   0.1079
+slurmstepd-i6-gpu-1: error: *** JOB 20419 ON i6-gpu-1 CANCELLED AT 2026-05-17T11:43:30 ***

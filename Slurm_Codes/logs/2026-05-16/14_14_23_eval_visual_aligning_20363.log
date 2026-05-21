@@ -1,0 +1,99 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat May 16 12:14:24 UTC 2026
+JOB NAME:  eval_visual_aligning
+JOB ID:    20363
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   3e0da6a
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+Evaluating seed 6...
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6
+
+[ eval loading ] Intercepting load from logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6
+
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 14.82it/s]100%|██████████| 3/3 [00:00<00:00, 14.55it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ utils/training ] Restored loss history from checkpoint at step 2000
+[ expert ] Generating 3 reference videos from dataset...
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+  [ expert ] Saved logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/expert_references/expert_rollout_0.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/expert_references/expert_rollout_1.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/ddpm_encdec_vision/H10/6/results/expert_references/expert_rollout_2.gif
+[ eval ] Loaded scaler from: logs/aligning-d3il-visual/ddpm_encdec_vision/H10/6/scaler.pkl
+there are cpus:  64
+2964876 {0}
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+[ diag ] Real-time export failed for rollout -1: 'rollout_-1'
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_cb69dcac-5120-11f1-bc26-d85ed34e311e.xml' with default provider at slot 1
+
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_ddb6cd48-5120-11f1-bc26-d85ed34e311e.xml' with default provider at slot 1
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 485, in <module>
+    success_rate, mode_encoding, successes, mean_distance_tensor = sim.test_agent(agent)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 173, in test_agent
+    self.eval_agent(agent, contexts, self.n_trajectories_per_context, mode_encoding, successes, mean_distance, 0, cpu_set=set([0]))
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 84, in eval_agent
+    pred_action = agent.predict((bp_image, inhand_image, des_robot_pos), if_vision=self.if_vision)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision_test/eval_ddpm_encdec_vision.py", line 303, in predict
+    trajectory, _ = self.model(cond)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_gaussian_diffusion.py", line 56, in forward
+    return super().forward(new_cond, *args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/models/diffusion.py", line 305, in forward
+    return self.conditional_sample(cond=cond, *args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/models/diffusion.py", line 214, in conditional_sample
+    return self.p_sample_loop(shape, cond, returns, *args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/models/diffusion.py", line 182, in p_sample_loop
+    x = self.p_sample(x, cond, timesteps, returns)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/models/diffusion.py", line 157, in p_sample
+    model_mean, _, model_log_variance = self.p_mean_variance(x=x, cond=cond, t=t, returns=returns, projector=projector, constraints=constraints)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser/models/diffusion.py", line 132, in p_mean_variance
+    epsilon = self.model(x, cond, t)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_unet.py", line 97, in forward
+    visual_emb = self.encode_visual(bp_imgs, inhand_imgs, state=state)
+  File "/u/home/llim/FMPCC/FM-PCC/ddpm_encdec_vision/models/visual_unet.py", line 80, in encode_visual
+    obs_dict["robot_ee_pos"] = state.view(B * T, -1)
+RuntimeError: shape '[8, -1]' is invalid for input of size 15

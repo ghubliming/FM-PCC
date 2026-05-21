@@ -38,7 +38,7 @@ class Aligning_Sim(BaseSim):
             n_trajectories_per_context: int = 1,
             if_vision: bool = False,
             eval_on_train: bool = False,
-            max_episode_length: int = 400
+            max_episode_length: int = 400,
     ):
         super().__init__(seed, device, render, n_cores, if_vision)
 
@@ -50,14 +50,18 @@ class Aligning_Sim(BaseSim):
     def eval_agent(self, agent, contexts, n_trajectories, mode_encoding, successes, mean_distance, pid, cpu_set):
 
         print(os.getpid(), cpu_set)
-        assign_process_to_cpu(os.getpid(), cpu_set)
+        if not self.if_vision:
+            assign_process_to_cpu(os.getpid(), cpu_set)
+        else:
+            print(f"Process {os.getpid()} unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).")
 
-        env = Robot_Push_Env(render=self.render, if_vision=self.if_vision, max_steps_per_episode=self.max_episode_length)
+        env = Robot_Push_Env(render=self.render, if_vision=self.if_vision,
+                             max_steps_per_episode=self.max_episode_length)
         env.start()
 
-        random.seed(pid)
-        torch.manual_seed(pid)
-        np.random.seed(pid)
+        random.seed(self.seed + pid)
+        torch.manual_seed(self.seed + pid)
+        np.random.seed(self.seed + pid)
 
         for context in contexts:
             for i in range(n_trajectories):
@@ -65,10 +69,13 @@ class Aligning_Sim(BaseSim):
                 agent.reset()
 
                 print(f'Context {context} Rollout {i}')
-                if self.eval_on_train:
-                    obs = env.reset(random=False, context=train_contexts[context])
-                else:
-                    obs = env.reset(random=False, context=test_contexts[context])
+                # training contexts
+                # env.manager.set_index(context)
+                # obs = env.reset(random=False, context=test_contexts[context])
+
+                # obs = env.reset()
+                ctx_pool = train_contexts if self.eval_on_train else test_contexts
+                obs = env.reset(random=False, context=ctx_pool[context])
 
                 # test contexts
                 # test_context = env.manager.sample()
@@ -76,18 +83,25 @@ class Aligning_Sim(BaseSim):
 
                 if self.if_vision:
                     env_state, bp_image, inhand_image = obs
-                    bp_image = bp_image.transpose((2, 0, 1)) / 255.
-                    inhand_image = inhand_image.transpose((2, 0, 1)) / 255.
+                    # Fix 11: no channel flip. Dataset images are stored RGB-on-disk;
+                    # cv2.imread+cvtColor(BGR2RGB) in _load_images() accidentally produces BGR.
+                    # The model is trained on BGR. The env also returns BGR (aligning.py:212).
+                    # [::-1] introduced in fix8 incorrectly flipped to RGB → mismatch → divergence.
+                    bp_image = bp_image.transpose((2, 0, 1)).copy() / 255.
+                    inhand_image = inhand_image.transpose((2, 0, 1)).copy() / 255.
 
-                    des_robot_pos = env_state[:3]
+                    des_robot_pos = env_state[:3].copy()
+                    robot_pos = env_state[:3].copy()  # actual == commanded at t=0 (C4)
                     done = False
 
                     while not done:
-                        pred_action = agent.predict((bp_image, inhand_image, des_robot_pos), if_vision=self.if_vision)
+                        pred_action = agent.predict((bp_image, inhand_image, des_robot_pos, robot_pos), if_vision=self.if_vision)
                         pred_action = pred_action[0] + des_robot_pos
 
                         pred_action = np.concatenate((pred_action, [0, 1, 0, 0]), axis=0)
                         obs, reward, done, info = env.step(pred_action)
+                        if hasattr(agent, 'record_step_info'):
+                            agent.record_step_info(info)
 
                         des_robot_pos = pred_action[:3]
 
@@ -99,8 +113,8 @@ class Aligning_Sim(BaseSim):
                         # cv2.imshow('1', inhand_image)
                         # cv2.waitKey(1)
 
-                        bp_image = bp_image.transpose((2, 0, 1)) / 255.
-                        inhand_image = inhand_image.transpose((2, 0, 1)) / 255.
+                        bp_image = bp_image.transpose((2, 0, 1)).copy() / 255.
+                        inhand_image = inhand_image.transpose((2, 0, 1)).copy() / 255.
 
                 else:
 
@@ -116,14 +130,15 @@ class Aligning_Sim(BaseSim):
                         pred_action = np.concatenate((pred_action, [0, 1, 0, 0]), axis=0)
 
                         obs, reward, done, info = env.step(pred_action)
-
-                info['context'] = context
-                if hasattr(agent, 'update_rollout_info'):
-                    agent.update_rollout_info(info)
+                        if hasattr(agent, 'record_step_info'):
+                            agent.record_step_info(info)
 
                 mode_encoding[context, i] = torch.tensor(info['mode'])
                 successes[context, i] = torch.tensor(info['success'])
                 mean_distance[context, i] = torch.tensor(info['mean_distance'])
+
+                if hasattr(agent, 'update_rollout_info'):
+                    agent.update_rollout_info({**info, 'context': context})
 
     ################################
     # we use multi-process for the simulation
@@ -134,10 +149,6 @@ class Aligning_Sim(BaseSim):
     def test_agent(self, agent):
 
         log.info('Starting trained model evaluation')
-        if self.eval_on_train:
-            print("\n🚀 [ EVALUATION ] Evaluating on SEEN EXPERT TRAINING CONTEXTS (for memorization audit)!")
-        else:
-            print("\n🚀 [ EVALUATION ] Evaluating on UNSEEN TEST CONTEXTS (for generalization audit)!")
 
         mode_encoding = torch.zeros([self.n_contexts, self.n_trajectories_per_context]).share_memory_()
         successes = torch.zeros((self.n_contexts, self.n_trajectories_per_context)).share_memory_()
@@ -212,4 +223,4 @@ class Aligning_Sim(BaseSim):
         print(f'Successrate {success_rate}')
         print(f'entropy {entropy}')
 
-        return success_rate, mode_encoding, successes, mean_distance
+        return success_rate, mode_encoding, successes, mean_distance

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=visual_load_fm
+#SBATCH --job-name=load_results_visual_aligning_fm
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

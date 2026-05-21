@@ -2,6 +2,8 @@
 write_to_file: True
 exps: [
   'aligning-d3il-visual',
+  'visual_aligning_dpcc',
+  'fm_visual_aligning',
 ]
 seeds: [6, 7, 8, 9, 10]
 
@@ -16,15 +18,21 @@ seeds: [6, 7, 8, 9, 10]
 #
 # dt: {
 #   'avoiding': 1,
-# } # NOT NEEDED: Aligning operates on a physical robot controller with a base integration step dt of 0.1s.
+# } # NOT IN USE: setup_dpcc_projector() defaults to dt=1.0 (config.get('dt', 1.0)).
+#   # dt=1.0 IS CORRECT for this task: actions are position deltas [dx,dy,dz], not
+#   # velocity × dt. The Euler dynamics constraint is c_pos[t+1] = c_pos[t] + 1.0 * act[t].
+#   # DO NOT set dt=0.1 (the robot controller integration step) — that value belongs to
+#   # the physical controller, not to the DPCC trajectory constraint scaling.
 #
 # observation_indices: {
 #   'avoiding': {'x_des': 0, 'y_des': 1, 'x': 2, 'y': 3},
-# } # NOT NEEDED: Mapped directly in python wrapper since visual proprioception is always located at dims [3, 4, 5].
+# } # NOT IN USE: Our eval script hardcodes trajectory indices directly in setup_dpcc_projector()
+#   # as ('deriv', [6,0]), ('deriv', [7,1]), ('deriv', [8,2]). No YAML lookup needed.
 #
 # action_indices: {
 #   'avoiding': {'vx': 0, 'vy': 1},
-# } # NOT NEEDED: Cartesian control actions are always hardcoded to the first 3 trajectory dimensions [0, 1, 2].
+# } # NOT IN USE: Same reason — action dims 0-2 are hardcoded in setup_dpcc_projector().
+#   # workspace_bounds (below) replaces the old 'bounds' dict for Cartesian safety limits.
 # -----------------------------------------------------------------------------
 
 # D3IL simulation parameters
@@ -34,8 +42,22 @@ n_trajectories_per_context: 1
 # Policy
 diffusion_timestep_threshold: 0.5
 
-# Projection 
+# Projection
+# Exact DPCC reference variant list (from dpcc/config/projection_eval.yaml).
+# Trajectory selection driven by variant name, matching DPCC eval.py exactly:
+#   trajectory_selection = 'random'              (default — always index 0, deterministic)
+#   if 'dpcc-t' in variant → 'temporal_consistency'
+#   if 'dpcc-c' in variant → 'minimum_projection_cost'
+# -tightened = workspace bounds tightened by enlarge_constraints
+# dt0p25/dt0p5/dt2p0/dt4p0 = dynamics constraint dt scale factor
 projection_variants: [
+  # Figure 2, Table 1 and Figure 3:
+  'dpcc-r',
+  'dpcc-r-tightened',
+  'dpcc-c',
+  'dpcc-c-tightened',
+  'dpcc-t',
+  'dpcc-t-tightened',
   # Table 1:
   'diffuser',
   'gradient',
@@ -44,6 +66,11 @@ projection_variants: [
   'post_processing-tightened',
   'model_free',
   'model_free-tightened',
+  # Table 2:
+  'dpcc-c-tightened-dt0p25',
+  'dpcc-c-tightened-dt0p5',
+  'dpcc-c-tightened-dt2p0',
+  'dpcc-c-tightened-dt4p0',
 ]
 
 # --- STATE-ONLY PROJECTION BASES (COMMENTED OUT: NOT NEEDED FOR VISUAL ALIGNING) ---
@@ -81,5 +108,10 @@ workspace_bounds:
 
 # DPCC Projection parameters
 enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
-# constraint_types: ['bounds', 'dynamics']  # Original (with constraints)
-constraint_types: []               # OPTION A: No constraints (Turned Off)
+#constraint_types: ['bounds', 'dynamics']  # Re-enabled — AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md)
+constraint_types: []
+
+# Safety clamp — max physical delta per step (metres). null = disabled.
+# 0.01 m ≈ 45× the healthy Gen6V4 step size; stops ODE explosions while
+# allowing normal fast-approach actions. Adjust per experiment.
+max_action_delta: null # 0.01
