@@ -819,6 +819,31 @@ if __name__ == '__main__':
         gc.collect()
         torch.cuda.empty_cache()
 
+        # FIX-7: Reset MuJoCo global robot body counter after expert gen.
+        # Robot_Push_Env.__init__() creates an MjRobot which increments
+        # MjRobot.GLOBAL_MJ_ROBOT_COUNTER (0→1). env.close() does NOT decrement it.
+        # Without this reset, the first variant's Robot_Push_Env gets robot_id=1
+        # (body prefix "rb1") instead of robot_id=0 ("rb0"), compiling a different
+        # MuJoCo XML where camera bodies are named "rb1_*" instead of "rb0_*".
+        # The mismatch changes what the camera renders → bp_image std 0.1978 instead
+        # of clean 0.2093 → model receives wrong visual input → wrong trajectory.
+        try:
+            from environments.d3il.d3il_sim.sims.mj_beta.MjRobot import MjRobot as _MjRobot
+            _MjRobot.GLOBAL_MJ_ROBOT_COUNTER = 0
+            print('[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)')
+        except Exception as _e:
+            print(f'[ expert ] WARNING: MjRobot counter reset failed: {_e}')
+        # Also delete stale panda_tmp_rb*.xml left by expert gen to suppress noisy
+        # mju_openResource warnings on subsequent env inits.
+        import glob as _glob
+        _mj_dir = os.path.join(
+            os.environ.get('D3IL_DIR', 'd3il/environments/d3il'), 'models/mj/robot')
+        for _stale in _glob.glob(os.path.join(_mj_dir, 'panda_tmp_rb*.xml')):
+            try:
+                os.remove(_stale)
+            except OSError:
+                pass
+
         for variant in projection_variants:
             if args_cli.eval_on_train:
                 variant   = f'{variant}_train_set'
@@ -1035,5 +1060,17 @@ if __name__ == '__main__':
                 sys.stdout = old_stdout
                 sys.stderr = old_stderr
                 log_f.close()
+                # FIX-7 (per-variant): Reset MuJoCo robot body counter so next
+                # variant's Robot_Push_Env gets robot_id=0 (rb0 body prefix),
+                # matching the clean-process scene geometry.
+                try:
+                    _MjRobot.GLOBAL_MJ_ROBOT_COUNTER = 0
+                except NameError:
+                    pass
+                for _stale in _glob.glob(os.path.join(_mj_dir, 'panda_tmp_rb*.xml')):
+                    try:
+                        os.remove(_stale)
+                    except OSError:
+                        pass
 
     print('Visual-DPCC evaluation completed.')
