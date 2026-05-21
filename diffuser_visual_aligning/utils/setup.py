@@ -207,12 +207,12 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-        # 2. Copy associated yaml configs (e.g. projection_eval.yaml)
-        # We look in the 'config/' directory relative to the current working directory
-        yaml_path = 'config/projection_eval.yaml'
+        # 2. Copy associated yaml configs — visual_aligning_eval.yaml is the live
+        # eval config read by eval_visual_aligning_dpcc.py at runtime.
+        yaml_path = 'config/visual_aligning_eval.yaml'
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'projection_eval.yaml')
+                dest = os.path.join(snapshot_dir, 'visual_aligning_eval.yaml')
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:
