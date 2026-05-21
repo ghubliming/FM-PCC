@@ -944,11 +944,11 @@ if __name__ == '__main__':
                     trajectory_selection = 'minimum_projection_cost'
 
                 # Fix 8: diffuser runs single sample (no projection, no candidate diversity).
-                # All projected variants use args.batch_size from plan config (MPC candidate pool).
+                # All projected variants use args.mpc_batch_size from plan config (MPC candidate pool).
                 if 'diffuser' in variant:
                     batch_size = 1
                 else:
-                    batch_size = getattr(args, 'batch_size', 4)
+                    batch_size = getattr(args, 'mpc_batch_size', 4)
 
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model,
