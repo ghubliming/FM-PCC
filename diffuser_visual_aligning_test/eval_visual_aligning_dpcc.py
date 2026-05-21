@@ -813,13 +813,14 @@ if __name__ == '__main__':
                 device=args.device,
             )
             diffusion_model = exp.diffusion
-            # Original DPCC uses clip_denoised=False. Older checkpoints may have
-            # been saved with clip_denoised=True, which causes the ±5 clamp to fire
-            # at the first denoising step (cosine schedule amplification ~9.4× at
-            # t=T-1), permanently corrupting the denoising chain. Force False here
-            # so all checkpoints use the correct inference behaviour.
-            diffusion_model.clip_denoised = False
-            print('[ eval ] clip_denoised forced → False (matches original DPCC)')
+            # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule
+            # amplifies x_0 prediction by ~9.4× at early timesteps, so clipping to ±1 corrupts the
+            # denoising chain. Older checkpoints may have been saved with True; this override corrects them.
+            # D1: config-driven (was hardcoded False). Default=False matches reference DPCC.
+            # Set clip_denoised=True in plan_visual_aligning_dpcc config only to ablate.
+            _clip_denoised = getattr(args, 'clip_denoised', False)
+            diffusion_model.clip_denoised = _clip_denoised
+            print(f'[ eval ] clip_denoised set → {_clip_denoised} (config-driven; original DPCC default: False)')
             _model_n_ts  = getattr(diffusion_model, 'n_timesteps', '?')
             _config_n_ts = getattr(args, 'n_diffusion_steps', '?')
             print(f'[ eval ] Model n_timesteps = {_model_n_ts}  '

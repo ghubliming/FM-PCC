@@ -139,3 +139,35 @@ Added `-c` (minimum_projection_cost) and `-t` (temporal_consistency) suffix vari
 - `max_action_delta`, `constraint_types`, `enlarge_constraints` — independent of MPC logic
 - `diffuser` variant: stays batch=1, no trajectory selection needed
 - `gradient` variant: stays no suffix (first-index); gradient projection applied independently per sample so batch diversity gives no selection benefit
+
+---
+
+## D1 — `clip_denoised` made config-driven
+
+**Files**: `eval_visual_aligning_dpcc.py`, `eval_fm_visual_aligning.py`, `config/aligning-d3il-visual.py`
+
+Removed hardcoded `diffusion_model.clip_denoised = False`. Now reads `getattr(args, 'clip_denoised', False)` so the value comes from `plan_visual_aligning_dpcc.clip_denoised` / `plan_fm_visual_aligning.clip_denoised` in config. Default `False` in both config and code matches reference DPCC. Change to `True` in config to ablate.
+
+---
+
+## D4/B1 — Reverted initial-state row coefficient to original
+
+**File**: `diffuser_visual_aligning/sampling/projection.py`, `fm_visual_aligning/sampling/projection.py`
+
+`[DANGEROUS_FLAG_B1_SCALING]` treatment applied at all 3 sites (`build_matrices`, `project`, `compute_gradient`). Each site now shows:
+- Upgrade reason in header comment
+- Upgraded code in `# Upgraded code (not in use):` block
+- Original code in `# Original code (implemented):` commented block
+- Live code is the original (`mat_fix_initial[0, x_idx] = 1`, `b[...] = s_0[x_idx]`)
+
+`_initial_state_x_diffs` field in `DynamicConstraints.__init__` commented out (was only needed for B1 scaling).
+
+---
+
+## D7/A4 — Reverted per-sample initial-state anchor to original
+
+**File**: `diffuser_visual_aligning/sampling/projection.py`, `fm_visual_aligning/sampling/projection.py`
+
+`[DANGEROUS_FLAG_A4_PER_SAMPLE_ANCHOR]` treatment applied at `project()` and `compute_gradient()`. Same comment structure as D4/B1: upgrade reason, upgraded code block, original code block, live code is original (`s_0 = trajectory_reshaped[0, ...]` outside the batch loop).
+
+POSTMORTEM `§7.4` updated: D1, D4, D7 reclassified from `REVIEW` to `LEAVE`.

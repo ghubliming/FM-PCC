@@ -812,13 +812,14 @@ if __name__ == '__main__':
                 device=args.device,
             )
             diffusion_model = exp.diffusion
-            # Original DPCC uses clip_denoised=False. Older checkpoints may have
-            # been saved with clip_denoised=True, which causes the ±5 clamp to fire
-            # at the first denoising step (cosine schedule amplification ~9.4× at
-            # t=T-1), permanently corrupting the denoising chain. Force False here
-            # so all checkpoints use the correct inference behaviour.
-            diffusion_model.clip_denoised = False
-            print('[ eval ] clip_denoised forced → False (FM ODE does not clamp)')
+            # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule
+            # amplifies x_0 prediction by ~9.4× at early timesteps, so clipping to ±1 corrupts the
+            # denoising chain. FM ODE does not clamp at all (no cosine schedule), so False is correct here too.
+            # D1: config-driven (was hardcoded False). Default=False matches reference DPCC.
+            # Set clip_denoised=True in plan_fm_visual_aligning config only to ablate.
+            _clip_denoised = getattr(args, 'clip_denoised', False)
+            diffusion_model.clip_denoised = _clip_denoised
+            print(f'[ eval ] clip_denoised set → {_clip_denoised} (config-driven; original DPCC default: False)')
 
             # Fix 5: override flow_steps_v3 from args so Slurm --flow_steps_v3 N
             # actually changes ODE integration steps, not just the output directory name.

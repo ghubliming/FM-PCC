@@ -242,15 +242,15 @@ Before Fix 5, `--flow_steps_v3 10` would create a results directory named `flow_
 | S1 `max_action_delta` | `null` — no clamp existed in either baseline | `0.01 m/step` (rescales action vector to unit ball) | **`REVIEW`** | `max_action_delta: null` in YAML |
 | S2 `constraint_types` | `['bounds','dynamics']` in Gen6 orig → `[]` user-disabled (Fix8) | `['bounds','dynamics']` (re-enabled AUDIT-FIX-2) | **`REVIEW`** | `constraint_types: []` in YAML |
 | S3 `trajectory_selection` for `post_processing`/`model_free` | `'random'` in both baselines | `'minimum_projection_cost'` (best-of-6 by cost) | **`REVIEW`** | Change assignment to `'random'` in eval script |
-| D1 `clip_denoised` | `False` (correct original DPCC spec) — wrongly `True` in old checkpoints | `False` forced at eval; `False` in new training | **`REVIEW`** | Change `clip_denoised` override back to `True` in eval/train scripts |
+| D1 `clip_denoised` | `False` (correct original DPCC spec) — wrongly `True` in old checkpoints | `False` default in config; config-driven at eval (not hardcoded) | **`LEAVE`** | — default=False matches reference DPCC; ablate via config only |
 | D2/D3 `LimitsNormalizer` constant dims | Unprotected (div-by-zero possible) | Protected (`range_<1e-8 → 1.0/0.0`) | **`LEAVE`** | — no-op for 6D aligning obs (all dims have non-zero range) |
-| D4 B1 initial-state row coefficient | `mat_fix_initial[0,x_idx] = 1` | `= x_diff ≈ 0.4` (scaled to match dynamics rows) | **`REVIEW`** | Search `[DANGEROUS_FLAG_B1_SCALING]` to revert scaling back to `1` and `s_0` |
+| D4 B1 initial-state row coefficient | `mat_fix_initial[0,x_idx] = 1` | Reverted to `= 1`; upgrade code kept in comments | **`LEAVE`** | — reverted to reference DPCC; upgrade rationale preserved in code comments |
 | D5/D6 skip SLSQP / grad when no constraints | SLSQP runs unconditionally | Early-return when `A`, `C` empty (currently dead code — constraints enabled) | **`LEAVE`** | — inactive; guards against QP corruption if constraints ever disabled |
-| D7 A4 per-sample initial-state anchor | `trajectory_reshaped[0,...]` — batch[0] anchor for all | `trajectory_reshaped[i,...]` — per-sample anchor | **`REVIEW`** | Search `[DANGEROUS_FLAG_A4_PER_SAMPLE_ANCHOR]` to revert `[i]` back to `[0]` |
+| D7 A4 per-sample initial-state anchor | `trajectory_reshaped[0,...]` — batch[0] anchor for all | Reverted to `[0]`; upgrade code kept in comments | **`LEAVE`** | — reverted to reference DPCC; upgrade rationale preserved in code comments |
 | F1 `flow_steps_v3` Slurm propagation | Checkpoint value used; `--flow_steps_v3` arg silently ignored | Slurm arg overrides checkpoint at eval start | **`LEAVE`** | — removing breaks step-count ablations with no benefit |
 | F2 ODE params intercepted in `VisualGaussianDiffusion` | `TypeError` crash if config has `ode_solver_rtol_v3` etc. | Silently consumed in `__init__` | **`LEAVE`** | — crash-prevention only; zero behavioral change |
 
 > **Removed from table:** S4 (`diffusion_timestep_threshold: 0.5`) and S5 (`enlarge_constraints: 0.01`) — both values were present in the Gen6 DPCC first-principle baseline from the first commit (`eefec19`) and have not changed. No divergence exists.
 
-**Only 6 `REVIEW` items remain: S1, S2, S3, D1, D4, D7. Everything else is `LEAVE`.**
+**Only 3 `REVIEW` items remain: S1, S2, S3. D1, D4, D7 reverted — tagged `LEAVE`. Everything else is `LEAVE`.**
 
