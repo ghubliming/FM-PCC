@@ -1,0 +1,409 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 21 13:52:48 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    20651
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   765cd17
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 10027.96it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  14%|█▍        | 128/900 [00:10<01:00, 12.72it/s]Loading images:  29%|██▊       | 257/900 [00:20<00:50, 12.79it/s]Loading images:  43%|████▎     | 391/900 [00:30<00:39, 13.04it/s]Loading images:  58%|█████▊    | 525/900 [00:40<00:29, 12.77it/s]Loading images:  72%|███████▏  | 651/900 [00:50<00:19, 12.71it/s]Loading images:  88%|████████▊ | 796/900 [01:01<00:07, 13.29it/s]Loading images: 100%|██████████| 900/900 [01:08<00:00, 13.20it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ utils/training ] Restored loss history from checkpoint at step 9000
+[ eval ] clip_denoised forced → False (matches original DPCC)
+[ eval ] Model n_timesteps = 5  (config n_diffusion_steps = 5)
+[ expert ] Generating 3 expert reference videos...
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+  [ expert ] Saved logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/expert_references/expert_rollout_0.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/expert_references/expert_rollout_1.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/expert_references/expert_rollout_2.gif
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+2745069 {0}
+Process 2745069 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_878cba2c-551c-11f1-8427-d85ed34e311e.xml' with default provider at slot 1
+
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_9858fbea-551c-11f1-8427-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [ 0.5018 -0.3836 -0.6487]  |mag| = 0.9054
+[ DIAG first-replan ] denormalized a0 = [ 0.00418 -0.0032  -0.00452]  |mag| = 0.006935 m
+[ DIAG first-replan ] horizon act (normalized) range: [-1.6239, 4.1926]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 0.5018 -0.3836 -0.6487]
+  step  1: [1.9078 3.3311 0.5139]
+  step  2: [-0.3273  0.3878  0.9386]
+  step  3: [ 1.4799 -0.9891  0.0399]
+  step  4: [1.8835 3.9351 1.1854]
+  step  5: [ 0.8184  4.1926 -0.0652]
+  step  6: [ 2.8078  1.3576 -1.0921]
+  step  7: [ 3.3148  2.7102 -1.6239]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/diffuser/diag_first_replan.txt
+[ CLAMP step=3 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=4 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ CLAMP step=8 ] raw|a|=0.0122 m → clamped to 0.01 m
+[ CLAMP step=12 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=14 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=32.213  denorm|a0|=1.78e-02 m  dir=[-0.903 -0.228  0.363]
+[ CLAMP step=50 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=82.355  denorm|a0|=1.78e-02 m  dir=[-0.825 -0.078  0.56 ]
+[ CLAMP step=100 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=104.491  denorm|a0|=1.78e-02 m  dir=[-0.953 -0.097  0.286]
+[ CLAMP step=150 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=144.241  denorm|a0|=1.78e-02 m  dir=[-0.879  0.187  0.438]
+[ CLAMP step=200 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=144.316  denorm|a0|=1.78e-02 m  dir=[-0.959  0.166  0.228]
+[ CLAMP step=250 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=153.933  denorm|a0|=1.78e-02 m  dir=[-0.89   0.45   0.067]
+[ CLAMP step=300 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=179.144  denorm|a0|=1.44e-02 m  dir=[-0.804  0.581 -0.123]
+[ CLAMP step=350 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=202.111  denorm|a0|=1.78e-02 m  dir=[-0.8    0.583  0.142]
+[ Unseen Test Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0802 seconds/step
+  - Clamp events: 387
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/diffuser/diagnostics/diffuser/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ CLAMP step=12 ] raw|a|=0.0107 m → clamped to 0.01 m
+[ CLAMP step=13 ] raw|a|=0.0105 m → clamped to 0.01 m
+[ CLAMP step=14 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ CLAMP step=15 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ CLAMP step=24 ] raw|a|=0.0118 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=3.230  denorm|a0|=1.26e-02 m  dir=[ 0.922  0.163 -0.351]
+[ DIAG replan=100 step=99 ] norm|a0|=33.913  denorm|a0|=1.44e-02 m  dir=[ 0.965  0.224 -0.134]
+[ CLAMP step=100 ] raw|a|=0.0132 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=71.527  denorm|a0|=1.44e-02 m  dir=[ 0.968  0.245 -0.052]
+[ CLAMP step=150 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=92.028  denorm|a0|=1.44e-02 m  dir=[ 0.973  0.23  -0.031]
+[ CLAMP step=200 ] raw|a|=0.0130 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=143.922  denorm|a0|=1.44e-02 m  dir=[ 0.955  0.293 -0.037]
+[ CLAMP step=250 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=183.197  denorm|a0|=1.78e-02 m  dir=[0.929 0.369 0.023]
+[ CLAMP step=300 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=207.485  denorm|a0|=1.44e-02 m  dir=[ 0.925  0.378 -0.042]
+[ CLAMP step=350 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=228.547  denorm|a0|=1.78e-02 m  dir=[0.922 0.386 0.035]
+[ Unseen Test Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.362127 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0749 seconds/step
+  - Clamp events: 363
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/diffuser/diagnostics/diffuser/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.3374188244342804
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for diffuser...
+--- aligning-d3il-visual [default] diffuser seed=6 ---
+Success rate: 0.0000
+Constraints satisfied: 1.0000
+Success rate (goal and constraints): 0.0000
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 400.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.078
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'post_processing'
+there are cpus:  64
+2745069 {0}
+Process 2745069 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_da7aae56-551c-11f1-8427-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 0.5    -0.3864 -0.638 ]  |mag| = 0.8980
+[ DIAG first-replan ] denormalized a0 = [ 0.00417 -0.00322 -0.0044 ]  |mag| = 0.006862 m
+[ DIAG first-replan ] horizon act (normalized) range: [-1.6299, 4.2383]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 0.5    -0.3864 -0.638 ]
+  step  1: [1.8996 3.3453 0.5055]
+  step  2: [-0.3361  0.3965  0.9595]
+  step  3: [ 1.4444 -1.0205  0.0917]
+  step  4: [1.8746 3.9216 1.2159]
+  step  5: [ 0.7827  4.2383 -0.0684]
+  step  6: [ 2.8153  1.3962 -1.1145]
+  step  7: [ 3.2962  2.7489 -1.6299]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/post_processing/diag_first_replan.txt
+[ CLAMP step=3 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=4 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ CLAMP step=8 ] raw|a|=0.0122 m → clamped to 0.01 m
+[ CLAMP step=12 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=14 ] raw|a|=0.0176 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=32.437  denorm|a0|=1.78e-02 m  dir=[-0.903 -0.23   0.362]
+[ CLAMP step=50 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=82.591  denorm|a0|=1.78e-02 m  dir=[-0.824 -0.078  0.561]
+[ CLAMP step=100 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=104.741  denorm|a0|=1.78e-02 m  dir=[-0.953 -0.1    0.286]
+[ CLAMP step=150 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=144.471  denorm|a0|=1.78e-02 m  dir=[-0.879  0.188  0.438]
+[ CLAMP step=200 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=144.303  denorm|a0|=1.78e-02 m  dir=[-0.96   0.166  0.227]
+[ CLAMP step=250 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=153.880  denorm|a0|=1.78e-02 m  dir=[-0.891  0.45   0.066]
+[ CLAMP step=300 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=178.855  denorm|a0|=1.44e-02 m  dir=[-0.804  0.581 -0.124]
+[ CLAMP step=350 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=202.303  denorm|a0|=1.78e-02 m  dir=[-0.8    0.583  0.142]
+[ Unseen Test Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0752 seconds/step
+  - Clamp events: 386
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/post_processing/diagnostics/post_processing/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ CLAMP step=12 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=13 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=14 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ CLAMP step=15 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ CLAMP step=24 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.249  denorm|a0|=9.75e-03 m  dir=[ 0.27   0.403 -0.874]
+[ CLAMP step=50 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=7.069  denorm|a0|=1.44e-02 m  dir=[ 0.746  0.587 -0.315]
+[ CLAMP step=100 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=42.900  denorm|a0|=1.44e-02 m  dir=[ 0.845  0.527 -0.09 ]
+[ CLAMP step=150 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=69.100  denorm|a0|=1.42e-02 m  dir=[0.833 0.553 0.007]
+[ CLAMP step=200 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=125.579  denorm|a0|=1.44e-02 m  dir=[ 0.851  0.524 -0.042]
+[ CLAMP step=250 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=169.519  denorm|a0|=1.78e-02 m  dir=[0.827 0.562 0.019]
+[ CLAMP step=300 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=192.113  denorm|a0|=1.44e-02 m  dir=[ 0.844  0.535 -0.042]
+[ CLAMP step=350 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=211.663  denorm|a0|=1.78e-02 m  dir=[0.863 0.504 0.03 ]
+[ Unseen Test Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.420365 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0751 seconds/step
+  - Clamp events: 339
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/post_processing/diagnostics/post_processing/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.3665376305580139
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for post_processing...
+--- aligning-d3il-visual [default] post_processing seed=6 ---
+Success rate: 0.0000
+Constraints satisfied: 1.0000
+Success rate (goal and constraints): 0.0000
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 400.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.075
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'model_free'
+there are cpus:  64
+2745069 {0}
+Process 2745069 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_1b634036-551d-11f1-8427-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 0.5    -0.3864 -0.638 ]  |mag| = 0.8980
+[ DIAG first-replan ] denormalized a0 = [ 0.00417 -0.00322 -0.0044 ]  |mag| = 0.006862 m
+[ DIAG first-replan ] horizon act (normalized) range: [-1.6299, 4.2383]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 0.5    -0.3864 -0.638 ]
+  step  1: [1.8996 3.3453 0.5055]
+  step  2: [-0.3361  0.3965  0.9595]
+  step  3: [ 1.4444 -1.0205  0.0917]
+  step  4: [1.8746 3.9216 1.2159]
+  step  5: [ 0.7827  4.2383 -0.0684]
+  step  6: [ 2.8153  1.3962 -1.1145]
+  step  7: [ 3.2962  2.7489 -1.6299]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/model_free/diag_first_replan.txt
+[ CLAMP step=3 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=4 ] raw|a|=0.0111 m → clamped to 0.01 m
+[ CLAMP step=8 ] raw|a|=0.0122 m → clamped to 0.01 m
+[ CLAMP step=12 ] raw|a|=0.0101 m → clamped to 0.01 m
+[ CLAMP step=14 ] raw|a|=0.0176 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=32.437  denorm|a0|=1.78e-02 m  dir=[-0.903 -0.23   0.362]
+[ CLAMP step=50 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=82.591  denorm|a0|=1.78e-02 m  dir=[-0.824 -0.078  0.561]
+[ CLAMP step=100 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=104.741  denorm|a0|=1.78e-02 m  dir=[-0.953 -0.1    0.286]
+[ CLAMP step=150 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=144.471  denorm|a0|=1.78e-02 m  dir=[-0.879  0.188  0.438]
+[ CLAMP step=200 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=144.303  denorm|a0|=1.78e-02 m  dir=[-0.96   0.166  0.227]
+[ CLAMP step=250 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=153.880  denorm|a0|=1.78e-02 m  dir=[-0.891  0.45   0.066]
+[ CLAMP step=300 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=178.855  denorm|a0|=1.44e-02 m  dir=[-0.804  0.581 -0.124]
+[ CLAMP step=350 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=202.276  denorm|a0|=1.78e-02 m  dir=[-0.8    0.583  0.141]
+[ Unseen Test Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0750 seconds/step
+  - Clamp events: 386
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/model_free/diagnostics/model_free/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ CLAMP step=12 ] raw|a|=0.0106 m → clamped to 0.01 m
+[ CLAMP step=13 ] raw|a|=0.0103 m → clamped to 0.01 m
+[ CLAMP step=14 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ CLAMP step=15 ] raw|a|=0.0119 m → clamped to 0.01 m
+[ CLAMP step=24 ] raw|a|=0.0125 m → clamped to 0.01 m
+[ DIAG replan=50 step=49 ] norm|a0|=1.249  denorm|a0|=9.75e-03 m  dir=[ 0.27   0.403 -0.874]
+[ CLAMP step=50 ] raw|a|=0.0100 m → clamped to 0.01 m
+[ DIAG replan=100 step=99 ] norm|a0|=7.069  denorm|a0|=1.44e-02 m  dir=[ 0.746  0.587 -0.315]
+[ CLAMP step=100 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=150 step=149 ] norm|a0|=42.900  denorm|a0|=1.44e-02 m  dir=[ 0.845  0.527 -0.09 ]
+[ CLAMP step=150 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=200 step=199 ] norm|a0|=69.100  denorm|a0|=1.42e-02 m  dir=[0.833 0.553 0.007]
+[ CLAMP step=200 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=250 step=249 ] norm|a0|=125.579  denorm|a0|=1.44e-02 m  dir=[ 0.851  0.524 -0.042]
+[ CLAMP step=250 ] raw|a|=0.0178 m → clamped to 0.01 m
+[ DIAG replan=300 step=299 ] norm|a0|=169.519  denorm|a0|=1.78e-02 m  dir=[0.827 0.562 0.019]
+[ CLAMP step=300 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=350 step=349 ] norm|a0|=192.113  denorm|a0|=1.44e-02 m  dir=[ 0.844  0.535 -0.042]
+[ CLAMP step=350 ] raw|a|=0.0144 m → clamped to 0.01 m
+[ DIAG replan=400 step=399 ] norm|a0|=211.663  denorm|a0|=1.78e-02 m  dir=[0.863 0.504 0.03 ]
+[ Unseen Test Context 1 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.420365 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 0.0753 seconds/step
+  - Clamp events: 339
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K5_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/model_free/diagnostics/model_free/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.3665376305580139
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for model_free...
+--- aligning-d3il-visual [default] model_free seed=6 ---
+Success rate: 0.0000
+Constraints satisfied: 1.0000
+Success rate (goal and constraints): 0.0000
+Avg number of steps (successful trials): 0.00 +- 0.00
+Avg number of steps (all trials): 400.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.075
+Tracking error: 0.000
+--------------------------------------------------------------------------------
+
+Visual-DPCC evaluation completed.
+Job completed successfully.
