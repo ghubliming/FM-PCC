@@ -33,6 +33,7 @@ args_to_watch_dpcc_plan = [
     # NOTE: max_episode_length is forwarded to Robot_Push_Env(max_steps_per_episode=...).
     #       max_path_length is a loadpath key only (checkpoint directory name fragment).
     ('max_episode_length', 'steps'),
+    ('mpc_batch_size', 'mpc'),          # MPC candidate pool size in plan folder name (mpc4)
 ]
 
 args_to_watch_fmv3_ode_train = [
@@ -74,6 +75,7 @@ args_to_watch_fm_visual_plan = [
     ('diffusion_timestep_threshold', 'T'),
     ('diffusion', 'D'),
     ('if_vision', 'V'),
+    ('mpc_batch_size', 'mpc'),       # MPC candidate pool size in plan folder name (mpc4)
 ]
 
 logbase = 'logs'
@@ -364,7 +366,7 @@ base = {
         # ======================================================================================
         # 🏋️‍♂️ TRAINING HYPERPARAMETERS
         # ======================================================================================
-        'batch_size': 32,             # d3il vision baseline: 64
+        'batch_size': 64,             # d3il vision baseline: 64
         'learning_rate': 2e-4,
         'ema_decay': 0.995,
         'n_steps_per_epoch': 1000,
@@ -408,7 +410,7 @@ base = {
         # 'flow_steps_v3': 100,             # DEAD in training
         # 'ode_solver_backend_v3': ...,     # DEAD in training
         # 'ode_solver_method_v3': ...,      # DEAD in training
-        'action_weight': 10,
+        'action_weight': 1,
         'loss_type': 'l2',
         'dim': 32,
         'dim_mults': (1, 2, 4, 8),
@@ -438,7 +440,7 @@ base = {
         # ======================================================================================
         # 🏋️‍♂️ TRAINING HYPERPARAMETERS
         # ======================================================================================
-        'batch_size': 32,             # d3il vision baseline: 64
+        'batch_size': 64,             # d3il vision baseline: 64
         'learning_rate': 2e-4,
         'ema_decay': 0.995,
         'n_steps_per_epoch': 1000,
@@ -566,10 +568,10 @@ base = {
         # mpc_batch_size: MPC candidate pool — all B trajectories compete under trajectory_selection.
         # DPCC reference (avoiding-d3il.py) uses batch_size=4. diffuser variant overrides to 1 in eval script.
         # Distinct from train batch_size (32) — renamed to avoid path ambiguity.
-        'mpc_batch_size': 4,
+        'mpc_batch_size': 1,
         # train_batch_size: reflects visual_aligning_dpcc.batch_size (32) for diffusion_loadpath construction.
         # MUST match the training config exactly or diffusion_loadpath resolves to a non-existent directory.
-        'train_batch_size': 32,
+        'train_batch_size': 64,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -577,8 +579,8 @@ base = {
         'logbase': logbase,
         'prefix': (
             'f:plans/visual_aligning_dpcc/'
-            'H{horizon}_mpc{mpc_batch_size}_K{n_diffusion_steps}_D{diffusion}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
         ),
         'exp_name': watch(args_to_watch_dpcc_plan),
         'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
@@ -631,7 +633,7 @@ base = {
         # Increase only after confirming the model benefits from a longer rollout budget.
         'max_episode_length': 400,
         'max_path_length': 1000,    # MUST match fm_visual_aligning.max_path_length: loadpath key only
-        'action_weight': 10,
+        'action_weight': 1,
         # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
         # provides single-frame images per sample, so the model is trained on T_win=1.
         # Using window_size>1 at eval would mean-pool multiple frames and shift the
@@ -645,7 +647,7 @@ base = {
         'mpc_batch_size': 4,
         # train_batch_size: reflects fm_visual_aligning.batch_size (32) for diffusion_loadpath construction.
         # MUST match the training config exactly or diffusion_loadpath resolves to a non-existent directory.
-        'train_batch_size': 32,
+        'train_batch_size': 64,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -657,8 +659,8 @@ base = {
         'logbase': logbase,
         'prefix': (
             'f:plans/fm_visual_aligning/'
-            'H{horizon}_mpc{mpc_batch_size}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}/'
+            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
         ),
         'exp_name': watch(args_to_watch_fm_visual_plan),
         'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
