@@ -21,7 +21,7 @@ sampling:
 drift:
   enabled: true
   loss_weight: 0.12              # Moderate guidance for collision-free paths
-  loss_type: "kl_divergence"     # Distribution matching works well for nav
+  loss_type: "embedding_nn"     # Distribution matching works well for nav
   memory_bank_size: 5000
   encoder_dim: 128
   warmup_epochs: 8

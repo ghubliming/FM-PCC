@@ -404,7 +404,7 @@ base = {
         # FM-D Drift Augmentation Parameters (Locked 3 params)
         'use_drift_augmentation': True,            # bool: enable FM-D mode
         'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
-        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
+        'drift_loss_type': 'embedding_nn',          # str: "embedding_nn" | "adversarial" | "mmd"
 
         # dataset
         'loader': 'datasets.SequenceDataset',
@@ -751,8 +751,8 @@ base = {
         # FM-D Drift Augmentation Parameters (Locked 3 params)
         'use_drift_augmentation': True,            # bool: enable FM-D mode during inference
         'drift_loss_weight': 0.1,                  # float: lambda in drift field equation
-        'drift_loss_type': 'kl_divergence',        # str: "kl_divergence" | "adversarial" | "mmd"
-        
+        'drift_loss_type': 'embedding_nn',          # str: "embedding_nn" | "adversarial" | "mmd"
+
         'returns_condition': False,
         'diffusion_timestep_threshold': _yaml_threshold,
 

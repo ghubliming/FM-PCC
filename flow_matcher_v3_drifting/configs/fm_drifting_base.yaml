@@ -31,7 +31,7 @@ sampling:
 drift:
   enabled: true                  # Enable drift-guided ODE integration
   loss_weight: 0.1               # λ: weight of drift guidance in velocity field
-  loss_type: "kl_divergence"     # "kl_divergence" | "mmd" | "adversarial"
+  loss_type: "embedding_nn"     # "embedding_nn" | "mmd" | "adversarial"
   memory_bank_size: 5000         # Max reference trajectories for distribution
   encoder_dim: 128               # Hidden dimension for trajectory encoder
   temperature: 0.1               # Softmax temperature for probability scaling

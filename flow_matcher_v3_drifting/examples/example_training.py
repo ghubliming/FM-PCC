@@ -70,7 +70,7 @@ def example_fm_d_training():
     # Initialize drift components
     drift_loss_fn = DriftLoss(
         trajectory_dim=trajectory_dim,
-        loss_type='kl_divergence',
+        loss_type='embedding_nn',
         memory_bank_size=200,
     )
     
@@ -95,7 +95,7 @@ def example_fm_d_training():
     print(f"  - Epochs: {num_epochs}")
     print(f"  - Batch size: {batch_size}")
     print(f"  - Trajectory dim: {trajectory_dim}")
-    print(f"  - Drift loss type: kl_divergence")
+    print(f"  - Drift loss type: embedding_nn")
     print(f"  - Drift warmup: 100 steps\n")
     
     # Training loop
