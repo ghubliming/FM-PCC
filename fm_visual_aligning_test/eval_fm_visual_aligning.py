@@ -269,10 +269,14 @@ class VisualAgentWrapper:
         self.history_real_pos            = []
         self.history_desired_actions     = []
         self.history_full_plans          = []
+        self.history_all_candidates      = []   # Fix 8: (B,H,3) per replan step, all candidates
+        self.history_selected_idx        = []   # Fix 8: which index was chosen per replan step
         self.history_n_steps             = []
         self.history_avg_time            = []
         self.history_pos_tracking_errors = []
         self.curr_rollout_tracking_errors = []
+        self.curr_rollout_all_candidates  = []  # Fix 8: per-rollout accumulator
+        self.curr_rollout_selected_idx    = []  # Fix 8: per-rollout accumulator
         self.curr_rollout_time           = 0
         self.master_rollout_history      = {}
         self.video_frames                = []
@@ -298,6 +302,8 @@ class VisualAgentWrapper:
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
         self.history_full_plans.clear()
+        self.curr_rollout_all_candidates.clear()   # Fix 8
+        self.curr_rollout_selected_idx.clear()     # Fix 8
         self.bp_image_context.clear()
         self.inhand_image_context.clear()
         self.obs_context.clear()
@@ -323,6 +329,8 @@ class VisualAgentWrapper:
             'desired_actions':     np.array(self.history_desired_actions),
             'full_plans':          np.array(self.history_full_plans),
             'plan_start_positions': np.array(self.history_real_pos)[::self.action_seq_size],
+            'all_candidates':      list(self.curr_rollout_all_candidates),   # Fix 8: list of (B,H,3)
+            'selected_idx':        list(self.curr_rollout_selected_idx),     # Fix 8: list of int
             'success':   bool(success),
             'mean_distance': float(mean_dist),
             'mode':      int(mode),
@@ -337,6 +345,8 @@ class VisualAgentWrapper:
         self.history_avg_time.append(avg_time)
         self.history_pos_tracking_errors.append(
             np.array(self.curr_rollout_tracking_errors))
+        self.history_all_candidates.append(list(self.curr_rollout_all_candidates))  # Fix 8
+        self.history_selected_idx.append(list(self.curr_rollout_selected_idx))      # Fix 8
         self.history_act_magnitudes.append(list(self.curr_rollout_act_magnitudes))
         self.history_dist_to_target.append(list(self.curr_rollout_dist_to_target))
         self.history_clamp_events.append(list(self.curr_rollout_clamp_events))
@@ -366,7 +376,7 @@ class VisualAgentWrapper:
 
     def _save_diagnostics(self, rollout_idx):
         """Save video/gif + stats.txt alongside. Mirrors ddpm_encdec pattern."""
-        path = os.path.join(self.save_path, 'diagnostics', self.variant)
+        path = os.path.join(self.save_path, 'diagnostics')
         os.makedirs(path, exist_ok=True)
 
         try:
@@ -402,7 +412,7 @@ class VisualAgentWrapper:
     def _export_rollout_realtime(self, rollout_idx):
         """Per-rollout PNG (6-panel) + JSON + pkl. Mirrors ddpm_encdec pattern."""
         try:
-            diag_path = os.path.join(self.save_path, 'realtime_diagnostics', self.variant)
+            diag_path = os.path.join(self.save_path, 'realtime_diagnostics')
             os.makedirs(diag_path, exist_ok=True)
 
             data = self.master_rollout_history[f'rollout_{rollout_idx}']
@@ -433,12 +443,23 @@ class VisualAgentWrapper:
             # Row 0 — Spatial
             axes[0, 0].plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=2,
                             label='Real Path')
-            for p_idx, plan in enumerate(plans):
-                if p_idx % 4 == 0:
-                    start = plan_starts[min(p_idx, len(plan_starts) - 1)]
-                    abs_plan = start + np.cumsum(plan[:, :3], axis=0)
-                    axes[0, 0].plot(abs_plan[:, 0], abs_plan[:, 1], 'b-', alpha=0.3)
-            axes[0, 0].set_title('XY Projection (MPC foresight in blue)')
+            # Fix 8: plot all batch candidates (light blue) + selected (bold royal blue)
+            all_cands_list = data.get('all_candidates', [])
+            sel_idx_list   = data.get('selected_idx',   [])
+            for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                if step_i % 4 != 0:
+                    continue
+                start = plan_starts[min(step_i, len(plan_starts) - 1)]
+                for b in range(cands.shape[0]):
+                    abs_plan = start + np.cumsum(cands[b, :, :3], axis=0)
+                    if b == sel:
+                        axes[0, 0].plot(abs_plan[:, 0], abs_plan[:, 1],
+                                        color='royalblue', linewidth=1.5, alpha=0.85)
+                    else:
+                        axes[0, 0].plot(abs_plan[:, 0], abs_plan[:, 1],
+                                        color='lightblue', linewidth=0.5, alpha=0.35)
+            n_cands = all_cands_list[0].shape[0] if all_cands_list else 1
+            axes[0, 0].set_title(f'XY — MPC foresight  (bold=selected, {n_cands} candidates/step)')
             axes[0, 0].set_xlabel('X (m)'); axes[0, 0].set_ylabel('Y (m)')
             axes[0, 0].legend()
 
@@ -628,9 +649,13 @@ class VisualAgentWrapper:
                         _, projection_costs = self.projector.project(trajectory)
                         which = int(np.argmin(projection_costs))
                         selection_method = 'minimum_projection_cost (calculated)'
-                elif self.trajectory_selection == 'random':
-                    which = np.random.randint(self.batch_size)
-                    selection_method = 'random'
+                else:
+                    which = 0   # Fix 8: deterministic first-index (matches DPCC 'random'=0 semantics)
+                    selection_method = 'first (index 0)'
+
+            # Fix 8: store all B candidates' action trajectories before discarding
+            self.curr_rollout_all_candidates.append(traj_np[:, :, :3].copy())   # (B, H, 3)
+            self.curr_rollout_selected_idx.append(int(which))
 
             self.prev_observations = traj_np[which].copy()
 
@@ -921,15 +946,22 @@ if __name__ == '__main__':
                         args, config, obs_normalizer, act_normalizer, variant)
                     print(f'[ eval ] DPCC projector active for variant {variant!r}')
 
-                trajectory_selection = 'random'
-                if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
-                elif 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
-                elif 'post_processing' in variant or 'model_free' in variant:
-                    trajectory_selection = 'minimum_projection_cost'  # Fix 9.4: cost-based over random from batch=6
+                # Fix 8: trajectory selection driven by variant name suffix (DPCC dpcc-r/c/t pattern).
+                # Default (no suffix) = first index (deterministic; matches DPCC 'random'=0 semantics).
+                # -c = minimum_projection_cost; -t = temporal_consistency.
+                if '-t' in variant:
+                    trajectory_selection = 'temporal_consistency'
+                elif '-c' in variant or 'dpcc-c' in variant:
+                    trajectory_selection = 'minimum_projection_cost'
+                else:
+                    trajectory_selection = 'first'
 
-                batch_size = getattr(args, 'batch_size', 1)
-                if 'diffuser' not in variant:
-                    batch_size = 6
+                # Fix 8: diffuser runs single sample (no projection, no candidate diversity).
+                # All projected variants use args.batch_size from plan config (MPC candidate pool).
+                if 'diffuser' in variant:
+                    batch_size = 1
+                else:
+                    batch_size = getattr(args, 'batch_size', 4)
 
                 agent = VisualAgentWrapper(
                     diffusion_model=diffusion_model,
@@ -1047,14 +1079,23 @@ if __name__ == '__main__':
                         axes[i, 4].plot(obs_traj[-1, 0], obs_traj[-1, 1], 'ro', markersize=10)
                         axes[i, 4].set_title('XY Trajectory')
 
-                        axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.3)
-                        for p_idx, plan_deltas in enumerate(plans_list):
-                            if p_idx % 4 == 0:
-                                start = plan_starts[min(p_idx, len(plan_starts) - 1)]
-                                abs_plan = start + np.cumsum(plan_deltas[:, :3], axis=0)
-                                axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1],
-                                                'b-', alpha=0.6)
-                        axes[i, 5].set_title('MPC Foresight (blue)')
+                        all_cands_list = rollout_data.get('all_candidates', [])
+                        sel_idx_list   = rollout_data.get('selected_idx',   [])
+                        axes[i, 5].plot(obs_traj[:, 0], obs_traj[:, 1], 'k-', alpha=0.4)
+                        for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                            if step_i % 4 != 0:
+                                continue
+                            start = plan_starts[min(step_i, len(plan_starts) - 1)]
+                            for b in range(cands.shape[0]):
+                                abs_plan = start + np.cumsum(cands[b, :, :3], axis=0)
+                                if b == sel:
+                                    axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1],
+                                                    color='royalblue', linewidth=1.5, alpha=0.85)
+                                else:
+                                    axes[i, 5].plot(abs_plan[:, 0], abs_plan[:, 1],
+                                                    color='lightblue', linewidth=0.5, alpha=0.25)
+                        n_cands = all_cands_list[0].shape[0] if all_cands_list else 1
+                        axes[i, 5].set_title(f'MPC Foresight — {n_cands} candidates/step')
 
                     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
                     fig.savefig(f'{save_path}/{variant}.png')
