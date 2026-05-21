@@ -17,8 +17,7 @@
 #              ├── results_seed_<s>.pkl
 #              ├── eval_<variant>.log
 #              ├── diag_first_replan.txt
-#              ├── diagnostics/<variant>/rollout_<r>.{mp4,gif,txt}
-#              └── realtime_diagnostics/<variant>/rollout_<r>_{data.pkl,stats.json,report.png}
+#              └── diagnostics/rollout_<r>.{mp4,gif,_data.pkl,_stats.json,_report.png,_mpc_foresight.png}
 
 import gc
 import json
@@ -35,6 +34,7 @@ from collections import deque
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
+from mpl_toolkits.mplot3d import Axes3D   # noqa: F401 — registers 3D projection
 import imageio
 import cv2
 
@@ -433,10 +433,10 @@ class VisualAgentWrapper:
                 for b in range(cands.shape[0]):
                     if b == sel:
                         axes[0, 0].plot(cands[b, :, 0], cands[b, :, 1],
-                                        color='green', linewidth=1.5, alpha=0.9, zorder=5)
+                                        color='green', linewidth=0.8, alpha=0.9, zorder=5)
                     else:
                         axes[0, 0].plot(cands[b, :, 0], cands[b, :, 1],
-                                        color='gray', linewidth=0.5, alpha=0.25)
+                                        color='gray', linewidth=0.2, alpha=0.2)
             axes[0, 0].plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=2,
                             label='Real Path (des_c_pos)', zorder=10)
             n_cands = all_cands_list[0].shape[0] if all_cands_list else 0
@@ -467,8 +467,12 @@ class VisualAgentWrapper:
             axes[1, 0].set_title('Distance to Target over Steps')
             axes[1, 0].set_ylabel('m')
 
-            axes[1, 1].plot(real_pos[:, 2], 'r-')
-            axes[1, 1].set_title('Z Height (Contact Stability)')
+            axes[1, 1].plot(real_pos[:, 2], 'k-', label='Z des')
+            if c_pos_hist is not None and len(c_pos_hist):
+                axes[1, 1].plot(np.array(c_pos_hist)[:, 2], 'r--', alpha=0.7, label='Z actual')
+                axes[1, 1].legend(fontsize=7)
+            axes[1, 1].set_title('Z — des (black) vs actual (red)')
+            axes[1, 1].set_ylabel('Meters')
 
             # Fix 9: physical tracking error |c_pos - des_c_pos| replaces trivially-zero mental model error
             phys_errs = data.get('max_physical_tracking_error', 0.0)
@@ -505,6 +509,69 @@ class VisualAgentWrapper:
             plt.tight_layout()
             fig.savefig(os.path.join(diag_path, f'rollout_{rollout_idx}_report.png'))
             plt.close(fig)
+
+            # ── Standalone high-res MPC foresight: XY (left) + XYZ 3D (right) ──
+            if all_cands_list:
+                fig_mpc = plt.figure(figsize=(26, 11))
+                fig_mpc.suptitle(
+                    f'Rollout {rollout_idx} — MPC Foresight  '
+                    f'(success={data.get("success")},  {n_cands} cands/step)',
+                    fontsize=14)
+                ax_xy = fig_mpc.add_subplot(1, 2, 1)
+                ax_3d = fig_mpc.add_subplot(1, 2, 2, projection='3d')
+
+                # XY panel — every other replan for density control
+                for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                    if step_i % 2 != 0:
+                        continue
+                    for b in range(cands.shape[0]):
+                        if b == sel:
+                            ax_xy.plot(cands[b, :, 0], cands[b, :, 1],
+                                       color='green', linewidth=0.8, alpha=0.9, zorder=5)
+                        else:
+                            ax_xy.plot(cands[b, :, 0], cands[b, :, 1],
+                                       color='gray', linewidth=0.2, alpha=0.18)
+                ax_xy.plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=1.5,
+                           label='des path', zorder=10)
+                if c_pos_hist is not None and len(c_pos_hist):
+                    c_arr = np.array(c_pos_hist)
+                    ax_xy.plot(c_arr[:, 0], c_arr[:, 1], 'r--', linewidth=1.0,
+                               alpha=0.85, label='actual path', zorder=9)
+                ax_xy.set_title('XY — MPC Foresight', fontsize=13)
+                ax_xy.set_xlabel('X (m)', fontsize=11)
+                ax_xy.set_ylabel('Y (m)', fontsize=11)
+                ax_xy.legend(fontsize=10)
+                ax_xy.set_aspect('equal', adjustable='datalim')
+                ax_xy.grid(True, alpha=0.3)
+
+                # 3D XYZ panel
+                for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                    if step_i % 2 != 0:
+                        continue
+                    for b in range(cands.shape[0]):
+                        if b == sel:
+                            ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
+                                       color='green', linewidth=0.8, alpha=0.9)
+                        else:
+                            ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
+                                       color='gray', linewidth=0.2, alpha=0.18)
+                ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
+                           'k-', linewidth=1.5, label='des path')
+                if c_pos_hist is not None and len(c_pos_hist):
+                    c_arr = np.array(c_pos_hist)
+                    ax_3d.plot(c_arr[:, 0], c_arr[:, 1], c_arr[:, 2],
+                               'r--', linewidth=1.0, alpha=0.85, label='actual')
+                ax_3d.set_title('XYZ — MPC Foresight (3D)', fontsize=13)
+                ax_3d.set_xlabel('X (m)', fontsize=9)
+                ax_3d.set_ylabel('Y (m)', fontsize=9)
+                ax_3d.set_zlabel('Z (m)', fontsize=9)
+                ax_3d.legend(fontsize=10)
+
+                fig_mpc.tight_layout()
+                fig_mpc.savefig(
+                    os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight.png'),
+                    dpi=200, bbox_inches='tight')
+                plt.close(fig_mpc)
 
         except Exception as e:
             print(f'[ diag ] Real-time export failed for rollout {rollout_idx}: {e}')
@@ -1069,8 +1136,11 @@ if __name__ == '__main__':
                             axes[i, 1].plot(c_pos_hist[:, 1], 'r--', label='actual')
                         axes[i, 1].set_title('Y — des (black) vs actual (red)')
 
-                        axes[i, 2].plot(obs_traj[:, 2], 'b-')
-                        axes[i, 2].set_title('Z Height')
+                        axes[i, 2].plot(obs_traj[:, 2], 'k-', label='Z des')
+                        if c_pos_hist is not None and len(c_pos_hist):
+                            axes[i, 2].plot(np.array(c_pos_hist)[:, 2], 'r--',
+                                            alpha=0.7, label='Z actual')
+                        axes[i, 2].set_title('Z — des (black) vs actual (red)')
 
                         vels = np.linalg.norm(obs_traj[1:] - obs_traj[:-1], axis=1)
                         axes[i, 3].plot(vels, color='gray', alpha=0.5)
@@ -1091,10 +1161,10 @@ if __name__ == '__main__':
                             for b in range(cands.shape[0]):
                                 if b == sel:
                                     axes[i, 5].plot(cands[b, :, 0], cands[b, :, 1],
-                                                    color='green', linewidth=1.5, alpha=0.85)
+                                                    color='green', linewidth=0.8, alpha=0.9)
                                 else:
                                     axes[i, 5].plot(cands[b, :, 0], cands[b, :, 1],
-                                                    color='gray', linewidth=0.5, alpha=0.25)
+                                                    color='gray', linewidth=0.2, alpha=0.2)
                         n_cands = all_cands_list[0].shape[0] if all_cands_list else 1
                         axes[i, 5].set_title(f'MPC Foresight — {n_cands} candidates/step')
 

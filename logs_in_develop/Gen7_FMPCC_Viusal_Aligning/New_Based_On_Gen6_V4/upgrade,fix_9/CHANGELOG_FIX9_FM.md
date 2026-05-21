@@ -97,3 +97,24 @@ Avg inference time/step:   X.XXX s
 **Added**:
 - `mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist)` — per-rollout final distance
 - `physical_tracking_errors=np.array(agent.history_pos_tracking_errors, dtype=object)` — real PD lag
+
+---
+
+## Fix 9.1 — Z Panel, Thin Lines, Standalone High-Res MPC Plot
+
+**Z des/actual overlay** (same I6 treatment as X/Y):
+- Per-rollout PNG `axes[1,1]`: was `real_pos[:,2]` red, titled "Z Height (Contact Stability)". Now black=des Z, red dashed=actual Z, title "Z — des (black) vs actual (red)". Legend added.
+- Aggregate PNG `axes[i,2]`: same fix. `c_pos_hist[:,2]` overlaid when available.
+- Import: `from mpl_toolkits.mplot3d import Axes3D` added to both eval files.
+
+**Thinner MPC foresight lines** (per-rollout `axes[0,0]` and aggregate `axes[i,5]`):
+- Selected candidate: `linewidth=1.5` → `0.8`
+- Non-selected candidates: `linewidth=0.5, alpha=0.25` → `linewidth=0.2, alpha=0.2`
+- Real path retains `linewidth=2`, `zorder=10` so it stays clearly on top.
+
+**Standalone high-res MPC foresight file** (`rollout_{idx}_mpc_foresight.png`):
+- Saved to `diagnostics/` alongside `_report.png`, only when `all_cands_list` is non-empty.
+- `figsize=(26, 11)`, `dpi=200` → ~5200×2200 px.
+- Left panel `ax_xy`: XY foresight — every other replan step (`% 2`), `set_aspect('equal')`, grid.
+- Right panel `ax_3d`: `projection='3d'`, same candidate loop using full `cands[b,:,0/1/2]`, shows Z spread of MPC predictions alongside XY motion.
+- Both panels: green=selected (lw=0.8), gray=others (lw=0.2), black des path (lw=1.5), red actual path (lw=1.0, dashed).
