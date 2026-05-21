@@ -1085,4 +1085,52 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 * **Native BGR return**: Re-audited the RGB/BGR pipeline channel formats. In D3IL environment package (`gym_aligning/envs/aligning.py`), restored `cvtColor(RGB2BGR)` for `bp_image` and `inhand_image` to native BGR.
 * **Authoritative comments restoration**: Restored factually accurate comments in `aligning_sim.py` documenting that training uses BGR and inference also receives BGR natively via `aligning.py`, resolving the incorrect comment in Phase 0 which falsely claimed training was RGB.
 
+***
+
+## Gen3v3: Drifting Engine Forensic Audit & Major Upgrade (May 20, 2026)
+* **Logs**: [`Audit`](./Gen3v3_Drifting/Audit_fix_1/AUDIT_REPORT.md) & [`Changelog`](./Gen3v3_Drifting/Gen3v3u2_Major_Upgrade_direct/CHANGELOG.md)
+* **Critical Issues & Fixes**:
+  * **C-1 (Crash)**: `DriftLossScheduler.step` counter name shadowed the class method → *Crashed on first call*. **Fix**: Renamed to `_step_count`.
+  * **C-2 (Dead Code)**: `DriftTrainingWrapper` not wired into Trainer → *Augmentation was unused (pure FM loss)*. **Fix**: Wired into `train_epoch()`.
+  * **C-3 (Leak)**: `DriftConditioner` created fresh `nn.Linear` layers on every forward pass → *Noisy conditioning & CPU/GPU mismatches*. **Fix**: Moved to `__init__`.
+  * **M-1/M-2 (Math)**: Detached reference encoder (`with torch.no_grad()`) mapped samples toward a fixed, random cluster.
+  * **M-3 (Math)**: Inverted gradient sign performed gradient ascent, pushing trajectories *away* from expert distribution. **Fix**: Inverted to gradient descent.
+  * **D-1 (Port)**: JAX-based force-field algorithm completely replaced by parametric MLP distance.
+* **Infrastructure**: Standardized remote GPU execution via SLURM scripts (`train_drifting.sh`, `eval_drifting.sh`).
+
+***
+
+## Gen3v4: iMeanFlow (iMF) Adaptation Forensic Audit & Upgrade (May 21, 2026)
+* **Logs**: [`Audit`](./Gen3v4_imf/Audit_Fix6/AUDIT_REPORT.md) & [`Changelog`](./Gen3v4_imf/Audit_Fix6/CHANGELOG.md)
+* **Critical Issues & Fixes**:
+  * **BUG-01**: high-precision `torchdiffeq` backend was silently ignored in rollout → *Euler sampler fallback*.
+  * **BUG-02/BUG-03**: Missing `loss_discount` and `gradient_accumulate_every` in config → *Muted future timesteps and 5x effective learning rate*. **Fix**: Restored `loss_discount: 1.0` and `gradient_accumulate_every: 2`.
+  * **BUG-04/BUG-05**: Empty projection costs and CFG parameters dropped in UNet model wrapper.
+  * **MATH-01/MATH-02**: Auxiliary `v` head trained to predict zero against a zero target, with serial dependency on u-head (`aux = aux_head(velocity)`). **Fix**: Implemented real continuous Mean Flow objective and parallel independent head structure.
+  * **MATH-03/MATH-04**: Standalone samplers used wrong reverse 1→0 integration and incorrect noise scale ($\sigma=1.0$ vs $\sigma=0.5$). **Fix**: Standardized to forward 0→1 integration and matching noise scales.
+  * **MATH-05**: Step-size `h = t - r` parameter silently dropped in UNet. **Fix**: Integrated step-size embedding layers inside spatial blocks.
+
+***
+
+## Gen7: Multi-Variant State Contamination ("Frozen Problem") (May 21, 2026)
+* **Logs**: [`Bug Report`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/KEY_fix_6/BUG_REPORT.md) & [`Changelog`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/KEY_fix_6/CHANGELOG.md)
+* **Investigation & Fixes**:
+  * **Symptom**: Sequentially evaluated variants (`[diffuser, post_processing, model_free]`) produced byte-for-byte identical plans.
+  * **Cause A**: In-process expert video generation shifted camera views (`bp_image std = 0.1978` vs clean `0.2093`) due to dirty scene compiling.
+  * **Cause B**: YAML had `constraint_types: []` → DPCC projector was a no-op, forcing pp ≡ mf ≡ raw FM.
+  * **Fixes**: Moved expert gen pre-loop (AUDIT-FIX-1), re-enabled `['bounds', 'dynamics']` constraints (AUDIT-FIX-2), and set variant-specific result paths (AUDIT-FIX-3).
+
+***
+
+## Gen7 / Gen6v4: Process-Global Isolation & Teardown (Fix 7 & 7.2) (May 21, 2026)
+* **Logs**: [`Bug 7`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/BUG_REPORT_7_Audit.md) · [`Post-Mortem 7`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/POSTMORTEM%26change_log.md) · [`7.2 Plan`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/PLAN_FIX7.2.md) · [`7.2 Changelog`](./Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/CHANGELOG_FIX7.2.md)
+* **Chronicle**:
+  * **Fix 7 (Counter Leak)**: `MjRobot.GLOBAL_MJ_ROBOT_COUNTER` was process-global. Expert gen advanced it `0 -> 1`, forcing later variants to compile under `"rb1"` body names. This shifted cameras and mutated visual features. **Cure**: Reset counter to `0` pre-loop and in each variant's `finally:` teardown.
+  * **Fix 7.2 (Cache Collision)**: Name parity (`"rgbd_cage"`) caused the variant renderer to hit `__RENDER_CTX_MAP` in `mj_render_singleton.py`. It returned the stale expert context, freezing trajectories. **Cure**: Injected `reset_singleton()` pre-loop and in variant teardowns. Verified perfect `bp_image std = 0.2093` restoration.
+
+> [!IMPORTANT]
+> **Forensic Post-Mortem**: For the complete commit timeline and technical breakdowns, see [`POSTMORTEM_FIX7.2.md`](Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/fix_7/7.2/POSTMORTEM_FIX7.2.md).
+
+
+
 

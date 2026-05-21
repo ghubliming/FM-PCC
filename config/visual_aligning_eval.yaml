@@ -42,16 +42,33 @@ n_trajectories_per_context: 1
 # Policy
 diffusion_timestep_threshold: 0.5
 
-# Projection 
+# Projection
+# Suffix convention (Fix 8 — matches DPCC dpcc-r/c/t):
+#   no suffix  = first (index 0) — deterministic, DPCC 'random'=0 semantics
+#   -c         = minimum_projection_cost (argmin SLSQP cost over batch)
+#   -t         = temporal_consistency (closest to previous step trajectory)
+#   -tightened = workspace bounds tightened by enlarge_constraints
 projection_variants: [
-  # Table 1:
+  # Unconstrained baseline
   'diffuser',
+
+  # Gradient (in-denoising projection)
   'gradient',
   'gradient-tightened',
+
+  # Post-processing: three selection strategies
   'post_processing',
+  'post_processing-c',
+  'post_processing-t',
   'post_processing-tightened',
+  'post_processing-tightened-c',
+
+  # Model-free: three selection strategies
   'model_free',
+  'model_free-c',
+  'model_free-t',
   'model_free-tightened',
+  'model_free-tightened-c',
 ]
 
 # --- STATE-ONLY PROJECTION BASES (COMMENTED OUT: NOT NEEDED FOR VISUAL ALIGNING) ---

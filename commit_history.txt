@@ -1,3 +1,43 @@
+765cd17aa7261013da80fe710c574d4bf3fa62fb | ghubliming | 2026-05-21 13:35:50 | Implement FIX-7.2(gen7 & gen6v4): Clear Render Context Cache After Expert Generation
+fd27e2105ec04a23c77c49239fdc505fdfa79ddb | ghubliming | 2026-05-21 12:38:25 | fix (gen7 Fix 7 & sync into Gen6V4): reset MuJoCo global robot body counter after expert generation to prevent contamination in visual evaluations
+68f07333305f9e911ba02f4a0f052cc527ddd315 | ghubliming | 2026-05-21 11:07:37 | refactor: update yaml config paths in Parser class for visual aligning evaluation
+0b8acfe1e3db2956354b63b5a42a91bdf3cf7694 | ghubliming | 2026-05-21 10:24:51 | fix(KEY FIX Gen7 F6 + Sync into Gen6V4): resolve Slurm override issue for flow_steps_v3 in FM visual aligning
+9c3d09f97ae142f2ba711215d29c73179acb5d3b | ghubliming | 2026-05-21 08:59:56 | (Gen5V4u2)Implement real iMeanFlow (iMF) architecture with dual-velocity decomposition and h-conditioning. Fix confirmed bugs and math errors from audit report, including aux branch training, sampler direction, and config parameters. Add h-conditioning to UNet and propagate through model. Update training objective to reflect iMF design. Document changes in CHANGELOG.md and create audit report for reference.
+00ea7d5f6a509ce19baa1ebd5d0a5246a7caea14 | ghubliming | 2026-05-21 08:32:55 | (Gen3v3u2)Fix critical bugs and improve drift augmentation functionality
+a43c192bf7362eac554697e3de0342c1099c958b | ghubliming | 2026-05-20 22:23:59 | Stop tracking .claude_history_backup
+fe7251a3baac0168996ccf6c85609d62a323e5a9 | ghubliming | 2026-05-20 21:45:48 | (recover from dpcc-diffuser corrpution)refactor: remove unnecessary scaler instantiation and related comments in training script
+48d48292e97e5cf1049773a95f9a4d12593421b0 | Liming_vmknoll | 2026-05-20 23:16:23 | regular SLURM logging sync 20 May
+f4b91204a7a9bf81e84fe1beb276e058cb61b468 | ghubliming | 2026-05-20 21:27:51 | feat: implement Fix 5 to ensure Slurm --flow_steps_v3 overrides propagate to the model during evaluation
+9c39bb1e758842e0e34138f35b28169aa3aeda69 | ghubliming | 2026-05-20 20:34:32 | feat: include batch_size in experiment directory naming prefixes
+2c87cb70342c85d35f4d4154d06796b0338ce4d8 | ghubliming | 2026-05-20 20:04:12 | feat:(Gen7 Fix3 + 4; Sync into Gen6V4) Implement Fix 3 and Fix 4 for Eval Diagnostic Enrichment and ODE Explosion Protection
+9fff0899d0319f6b2328fdbad45473a569755064 | ghubliming | 2026-05-20 15:34:14 | Gen7fix2: align `fm_visual_aligning` config with FMv3ODE pattern and update related scripts
+83afdf344f44834847c64c2d5d029fb536e0d283 | ghubliming | 2026-05-20 15:11:43 | Add Gen7Fix1 Upgrade Evaluation and Fix 1 Changes
+bc247343d0e36c99d1f61ed7a9bc64222ac98121 | ghubliming | 2026-05-20 14:55:21 | feat: implement Gen7(after P0) visual Flow Matching pipeline with new model architectures and training/evaluation infrastructure
+79939b02d37088f82e05848b7639e6c0ae282ada | ghubliming | 2026-05-20 14:42:11 | Phase 0 Gen7 Upgrade fixes: RGB natively returned, seeding fixed, comment cleanup
+004c13292b1c2bcd4424b5660412ebc4490964db | ghubliming | 2026-05-20 14:35:01 | misc fix
+e227a2730bc53c6706cdd4d92f1658c5ad67f2dc | ghubliming | 2026-05-20 13:20:25 | fix(Gen6V4 F11.2+3): restore BGR to RGB color conversion for rollout GIF capture and clarify YAML configuration comments.
+1de6921eaa2744656acf8fe24f6f8f1df93fade5 | ghubliming | 2026-05-20 10:45:22 | Gen6V5 Fix10,11 Add Fix 11: Revert BGR→RGB Flip in aligning_sim.py
+a9df159d46d568de941608c43d78050ea857c3c8 | ghubliming | 2026-05-19 22:56:28 | Preparing FMPCC - Visual Aligning & Audit for Gen3 IMF & DRIFTING
+0dedc33548f911785e8564fb0d52b77a364051c7 | ghubliming | 2026-05-19 22:43:01 | KEY UPDATE GEN3V4Fix 9
+7ba1f07a8fe7539425497544314cb2d0f45f44fa | ghubliming | 2026-05-19 22:12:37 | KEY UPDATE Gen6V4 FIX8
+f1df45352979011cca104d479e753a4e6f5f713c | ghubliming | 2026-05-19 20:40:45 | fix: restore CPU affinity bypass for visual mode and re-add eval_on_train flag in Aligning_Sim
+19caddc3d63e5627014c945737e346baa1623924 | ghubliming | 2026-05-19 19:40:30 | Refactor Aligning_Sim and Revert D3IL Parity Changes
+bde467b74980e59b9f0686cb4fb341325e9abce9 | ghubliming | 2026-05-19 16:56:31 | KEY UPDATE GEN6V$ FIX7 D3IL Revert
+c0f0caafbe5526a4669baabfbc6923bca34b7c9b | ghubliming | 2026-05-19 15:37:10 | fix (Gen6V4F6): set clip_denoised=False in training and evaluation scripts to prevent denoising chain corruption
+11bfd0c2539082ca06be82517599e11488b87531 | ghubliming | 2026-05-19 15:16:59 | fix: address non-visual mode issues in eval and enhance DIAG output handling
+6fc83a7d531552582f405a1b88f4f6551962abe6 | ghubliming | 2026-05-19 13:07:20 | Gen6V4Fix4 Enahnve Eval Debug, Logging & Reorg Legacy Folder Path
+28148ea5a12c2cab1eaf100d13233569124a70d4 | ghubliming | 2026-05-19 10:37:49 | chore: update Slurm evaluation scripts for visual alignment tasks
+71474e8c688661ba2b50c7231873fa56b2a5d097 | ghubliming | 2026-05-19 10:32:51 | refactor: standardize sbatch job names, update pipeline script, and add technical documentation for visual alignment configuration
+456cf8173e5c05d73c6d6156d7701293c0cadef2 | Liming_vmknoll | 2026-05-19 11:50:04 | regular SLURM run update; 19 May
+debc9d853c5d7f24babeb9b05c3e9a57445d0276 | ghubliming | 2026-05-19 09:49:13 | fix:2Gen6V4 resolve double-prefix issue in import_class to prevent ModuleNotFoundError during eval load
+bb7e429913fa2e9a18ea3f3292385ac29cad2783 | ghubliming | 2026-05-19 09:32:36 | fix: update eval max_path_length to match training and migrate documentation logs
+ed2fa325fdc932b6d689eb73b878904757d76677 | ghubliming | 2026-05-19 09:18:57 | Add project overview and memory index; improve progress bar handling
+594a5f5060dfefc0e5490f0808a494b8149018ca | ghubliming | 2026-05-19 08:49:10 | fix: bypass Aligning_Dataset to prevent buffer overflow by loading state data directly from pickle files
+e3f846daa420049712abe77a747ae938dee2e5b5 | ghubliming | 2026-05-19 08:27:10 | fix: update observation construction in VisualAgentWrapper to use actual simulation state
+7b14333888f1f2e1ae3029a04a225ac553edf913 | ghubliming | 2026-05-18 23:12:19 | feat(KEY UPDATE Gen6v4; DEBUG unfinshed): pivot from ddpmact to 9D Visual-DPCC safety engine
+2fc2832096c0cc197644064d68a147aff795cde8 | ghubliming | 2026-05-18 17:24:35 | path fix config/aligning-d3il-visual.py
+62103c9fa491476f8edd94e1b10bdd9e4963adbc | ghubliming | 2026-05-18 16:22:10 | (Gen6v1fix5)fix: restore legacy behavior in VisualUNet and Scaler for stability
+75a88a87098ce2e4410cac2490f8fb46e3a88b06 | ghubliming | 2026-05-18 16:06:21 | add_Legacy_working_Good_Codes (Gen5_DDPM_EncDec)
 06e91f4e7048600190d17d9d554a997407329190 | ghubliming | 2026-05-18 15:31:56 | (Key Update Gen6V4) Add comprehensive documentation and migration plans for Visual-DPCC model
 60a8f38b513f08746831781c67c6dae242463683 | ghubliming | 2026-05-18 14:34:43 | feat (Key Update Gen6v3) : Implement non-visual aligning pipeline for Gen6 framework
 b16a1d00526c36b5cc8d941ed28659e80065eabd | ghubliming | 2026-05-18 12:56:35 | feat: gate diagnostic trajectory selection logs behind verbosity checks and update ODE solver documentation in config
