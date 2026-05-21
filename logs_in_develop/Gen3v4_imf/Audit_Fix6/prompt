@@ -1,0 +1,6 @@
+Orignial code is fmv3ode. Core enrty is flow_matcher_v3_ode_selectable and FM_v3_ode_selectable_test and the /config `avoiding-d3il.py`, `projection_eval.yaml`
+
+I done some upgrade to imf by /workspaces/imeanflow repo into "flow_matcher_v3_imeanflow" and "flow_matcher_v3_imeanflow_test"
+But the Code is writen in a weak AI! it runs good and return results all good. I need a audit report focus on 1. code logic/bug 2. Math Error in ML/Robot! (imporatnt) need to see if make sense, also most diffiuilt part for your audit 3. derivation from original repo that no make sense,
+
+audit md please write under path "logs_in_develop/Gen3v4_imf/Audit_Fix6" in that "logs_in_develop/Gen3v4_imf" may also has something useful, but must read code. Go.
