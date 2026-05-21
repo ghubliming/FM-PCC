@@ -481,6 +481,8 @@ base = {
         'gradient_clip': 1.0,
         'ema_decay': 0.995,
         'action_weight': 10,
+        'loss_discount': 1.0,              # BUG-02 fix: explicit uniform trajectory weighting
+        'gradient_accumulate_every': 2,    # BUG-03 fix: match FMv3ODE effective batch size
         
         ## ODE inference (match FMv3ODE-style deterministic rollout)
         'ode_inference_steps_v3': 10,
