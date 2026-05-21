@@ -11,14 +11,17 @@
 #   - D3IL API: only des_robot_pos exposed → obs_6d = [des_pos, des_pos]
 #
 # Output:  logs/aligning-d3il-visual/visual_aligning_dpcc/<exp>/results/<seed>/
-#          ├── diffuser.npz
-#          ├── diffuser.png          (6-panel rollout grid)
-#          ├── results_seed_<s>.pkl
-#          ├── eval_diffuser.log
-#          ├── diagnostics/<variant>/rollout_<r>.{mp4,gif,txt}
-#          ├── realtime_diagnostics/<variant>/rollout_<r>_{data.pkl,stats.json,report.png}
-#          └── expert_references/expert_rollout_<r>.{mp4,gif}
+#          ├── expert_references/expert_rollout_<r>.{mp4,gif}   (generated once before variant loop)
+#          └── <variant>/
+#              ├── <variant>.npz
+#              ├── <variant>.png     (6-panel rollout grid)
+#              ├── results_seed_<s>.pkl
+#              ├── eval_<variant>.log
+#              ├── diag_first_replan.txt
+#              ├── diagnostics/<variant>/rollout_<r>.{mp4,gif,txt}
+#              └── realtime_diagnostics/<variant>/rollout_<r>_{data.pkl,stats.json,report.png}
 
+import gc
 import json
 import time
 import yaml
@@ -803,16 +806,26 @@ if __name__ == '__main__':
                           f'config says {_config_n_ts}. '
                           f'Denoising chain will use checkpoint value ({_model_n_ts}).')
 
+        # Expert reference videos generated ONCE before the variant loop.
+        # Running env.start()/env.close() inside the loop leaves residual MuJoCo
+        # global state (body counter, OpenGL context) that corrupts the first
+        # variant's scene init and changes bp_image pixel statistics.
+        # gc.collect + cuda.empty_cache after close forces cleanup before any
+        # variant env is created.  (AUDIT-FIX-1 — KEY_fix_6/BUG_REPORT.md)
+        _base_results = (f'{args.savepath}/results_train_set'
+                         if args_cli.eval_on_train else f'{args.savepath}/results')
+        os.makedirs(_base_results, exist_ok=True)
+        generate_expert_reference(_base_results, n_rollouts=3)
+        gc.collect()
+        torch.cuda.empty_cache()
+
         for variant in projection_variants:
             if args_cli.eval_on_train:
                 variant   = f'{variant}_train_set'
-                save_path = f'{args.savepath}/results_train_set'
+                save_path = f'{args.savepath}/results_train_set/{variant}'
             else:
-                save_path = f'{args.savepath}/results'
+                save_path = f'{args.savepath}/results/{variant}'
             os.makedirs(save_path, exist_ok=True)
-
-            # Expert reference videos (best-effort)
-            generate_expert_reference(save_path, n_rollouts=3)
 
             if args_cli.aggregate_only:
                 continue
