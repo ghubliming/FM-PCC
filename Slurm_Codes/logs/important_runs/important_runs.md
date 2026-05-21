@@ -7,6 +7,13 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-04/18_00_14_eval_dpcc_job_19869.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-05/11_09_57_load_results_dpcc_job_19884.log
 
+- DPCC Diffusion = 1
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_49_25_dpcc_train_20616.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_49_25_dpcc_eval_20617.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_49_25_dpcc_load_results_20618.log
+
 - FMv3ODE full train, default para
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-02/18_09_44_fmv3_train_19819.log
 
@@ -45,6 +52,12 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/13_11_03_eval_fmv3_ode_job_19965.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-07/20_52_35_load_results_fmv3_job_19981.log
 
+- fmv3ode aw1 ode1 legacy euler (Incredible)
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/21_59_15_eval_fmv3_ode_job_20604.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_09_43_load_results_fmv3_job_20606.log
+
 - fmv3ode full proj
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-08/11_35_01_eval_fmv3_ode_job_20010.log
 
@@ -69,6 +82,43 @@ Finished
 
 Eval 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/12_39_47_eval_drifting_20150.log
+
+---
+incorrect runs bofore! 
+- u2
+train + eval 21 may
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/15_33_37_train_drifting_20649.log
+
+- iMF
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
+
+finished, by loss curve is bad
+abandoned
+
+update, re train
+seed 6
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/11_42_47_train_imf_20229.log
+
++ seed 789 10
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/13_45_58_train_imf_20245.log
+
+killed at Epoch 38, seed 8
+
+eval
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/15_55_29_eval_imf_20263.log
+
+look the `diffusor` metric, it is very bad, very bad
+
+reset parameter correctly in d3il.py
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/23_26_00_eval_imf_20298.log
+
+---
+incorrect runs bofore! 
+- u2
+train + eval 21 may
+
 
 
 - Visual 
@@ -190,6 +240,15 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/21_59_15_eval_fmv3_ode_job_20604.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_09_43_load_results_fmv3_job_20606.log
 
+
+---
+
+-> Fix7.2 **CORRECTED FIXED** it is the expert video gen destroy the mojoco!
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/15_49_29_eval_visual_aligning_dpcc_20651.log
+
+note: 100K 1e4 train. looks bad.
+
 ---
 
 - FM Gen7 New fm_visual_alinging
@@ -205,38 +264,46 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/18_39_01_eval_fm_visual_aligning_20592.
 
 BOTH wrong crushed eval for `diffuser` 
 BUT some success on `post processing`!!! others fail
+(direct look: FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000/H8_K20_Mrk4_T0.1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue/6/results/diagnostics/post_processing)
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/19_41_48_eval_fm_visual_aligning_20595.log
 
 -> Fix Gen7F4 done
-(
-FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b4_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000
-)
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/22_43_53_eval_fm_visual_aligning_20605.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/23_51_44_eval_fm_visual_aligning_20619.log
+
+& 
+
+(FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/00_14_17_eval_fm_visual_aligning_20620.log) mistake.
+
+(FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/10_13_04_eval_fm_visual_aligning_20623.log) All TASH results, maybe eval on train flag. remove, reeval
 
 
 ---
 
-- iMF
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
+THIS REVEAL PROBLEM "FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_b1_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps900"
+(FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/11_54_36_eval_fm_visual_aligning_20632.log
 
-finished, by loss curve is bad
-abandoned
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/11_54_36_eval_fm_visual_aligning_20632.log
 
-update, re train
-seed 6
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/11_42_47_train_imf_20229.log
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/11_35_56_eval_fm_visual_aligning_20628.log
+)
 
-+ seed 789 10
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/13_45_58_train_imf_20245.log
+-> *KEY FIX 6(Gen7)*
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/12_43_00_eval_fm_visual_aligning_20634.log (FAILED AGAIN)
 
-killed at Epoch 38, seed 8
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/12_58_29_eval_fm_visual_aligning_20637.log (SUCCESS)
 
-eval
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/15_55_29_eval_imf_20263.log
+still wrong
+-> Fix7.2 **CORRECTED FIXED** it is the expert video gen destroy the mojoco!
 
-look the `diffusor` metric, it is very bad, very bad
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/15_37_02_eval_fm_visual_aligning_20650.log
 
-reset parameter correctly in d3il.py
+note: Clamp 0.01 
 
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-14/23_26_00_eval_imf_20298.log
+turn off
+->FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/16_27_58_eval_fm_visual_aligning_20655.log
+&
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/17_21_49_eval_fm_visual_aligning_20660.log
+
+u8

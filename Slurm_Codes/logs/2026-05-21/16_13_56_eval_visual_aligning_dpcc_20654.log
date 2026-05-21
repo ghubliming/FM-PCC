@@ -1,0 +1,100 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 21 14:13:57 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    20654
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   765cd17
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K100_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 9625.68it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  14%|█▍        | 126/900 [00:10<01:01, 12.59it/s]Loading images:  29%|██▉       | 259/900 [00:20<00:49, 12.97it/s]Loading images:  44%|████▍     | 395/900 [00:30<00:38, 13.25it/s]Loading images:  59%|█████▉    | 531/900 [00:40<00:28, 12.96it/s]Loading images:  74%|███████▍  | 666/900 [00:50<00:17, 13.14it/s]Loading images:  90%|█████████ | 812/900 [01:00<00:06, 13.60it/s]Loading images: 100%|██████████| 900/900 [01:06<00:00, 13.45it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ utils/training ] Restored loss history from checkpoint at step 9000
+[ eval ] clip_denoised forced → False (matches original DPCC)
+[ eval ] Model n_timesteps = 100  (config n_diffusion_steps = 100)
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K100_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K100_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/expert_references. Skipping.
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K100_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+2746187 {0}
+Process 2746187 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_7a790766-551f-11f1-93d9-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [102.1023  35.7414 -25.3928]  |mag| = 111.1176
+[ DIAG first-replan ] denormalized a0 = [ 0.00833  0.00833 -0.00833]  |mag| = 0.014434 m
+[ DIAG first-replan ] horizon act (normalized) range: [-110.5254, 303.6729]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [102.1023  35.7414 -25.3928]
+  step  1: [139.3719 303.6729 -36.6555]
+  step  2: [74.0163  6.371  31.9087]
+  step  3: [120.362  120.4433   0.6327]
+  step  4: [187.2617 152.3541  64.8929]
+  step  5: [ 82.7017 212.9922   0.8373]
+  step  6: [ 216.3491  113.0418 -110.5254]
+  step  7: [195.7835 231.4866 -77.1015]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K100_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K100_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/diffuser/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=399.409  denorm|a0|=1.44e-02 m  dir=[ 0.856  0.507 -0.099]
+[ DIAG replan=100 step=99 ] norm|a0|=1093.742  denorm|a0|=1.44e-02 m  dir=[ 0.836  0.524 -0.163]
+[ DIAG replan=150 step=149 ] norm|a0|=1640.277  denorm|a0|=1.78e-02 m  dir=[0.887 0.461 0.004]
+[ DIAG replan=200 step=199 ] norm|a0|=2261.170  denorm|a0|=1.44e-02 m  dir=[ 0.874  0.484 -0.03 ]
+[ DIAG replan=250 step=249 ] norm|a0|=2868.294  denorm|a0|=1.78e-02 m  dir=[0.825 0.562 0.06 ]
+[ DIAG replan=300 step=299 ] norm|a0|=3860.447  denorm|a0|=1.78e-02 m  dir=[0.726 0.645 0.237]
+[ DIAG replan=350 step=349 ] norm|a0|=4594.210  denorm|a0|=1.78e-02 m  dir=[0.613 0.754 0.236]
+[ DIAG replan=400 step=399 ] norm|a0|=5627.851  denorm|a0|=1.78e-02 m  dir=[0.526 0.794 0.305]
+[ Unseen Test Context 0 Finished ]
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Maximum Tracking Error: 0.000000 m
+  - Avg Inference Time: 1.4400 seconds/step
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_b1_K100_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000/H8_K100_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400/6/results/diffuser/diagnostics/diffuser/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=460.803  denorm|a0|=1.78e-02 m  dir=[0.819 0.574 0.018]
+slurmstepd-i6-gpu-1: error: *** JOB 20654 ON i6-gpu-1 CANCELLED AT 2026-05-21T14:27:24 ***

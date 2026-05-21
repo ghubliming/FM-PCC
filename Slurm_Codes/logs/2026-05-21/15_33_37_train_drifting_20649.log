@@ -1,0 +1,158 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+JOB START: Thu May 21 13:33:38 UTC 2026
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260521_133342-snlpemqu
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run avoiding-d3il-flow_matching_v3_drifting-H8_DGaussianDiffusion_a1.5_b1.0_aw1-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll/runs/snlpemqu
+[ train ] Seed source: cli --seeds
+[ train ] Training seeds: [6]
+[ train ] Saved seed manifest to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/seeds_config.json
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 150
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/dataset_config_resume_1.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.models.unet1d_temporal_cond.Flow_matcher_U_Net_v2'>
+    cond_dim: 4
+    condition_dropout: 0.25
+    dim: 32
+    dim_mults: (1, 2, 4, 8)
+    horizon: 8
+    returns_condition: False
+    transition_dim: 6
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/model_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.models.diffusion.GaussianDiffusion'>
+    action_dim: 2
+    action_weight: 1
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_type: l2
+    n_timesteps: 20
+    observation_dim: 4
+    ode_inference_steps_v3: 10
+    predict_epsilon: True
+    returns_condition: False
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/diffusion_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_drifting.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    n_steps_per_epoch: 1000
+    n_train_steps: 50000.0
+    results_folder: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6
+    train_batch_size: 8
+    train_lr: 0.0001
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/6/trainer_config_resume_1.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.6963, a0 loss:   1.4709
+Epoch 0: 100%|██████████| 1000/1000 [01:40<00:00,  9.99it/s, a0_loss=1.42, a0_loss_test=1.47, diffusion_loss=0.863, loss=0.431, loss_test=0.696, lr=0.0001, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:40<00:00,  9.99it/s, a0_loss=1.42, a0_loss_test=1.47, diffusion_loss=0.863, loss=0.431, loss_test=0.696, lr=0.0001, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:37<00:00, 10.28it/s, a0_loss=0.458, a0_loss_test=1.21, diffusion_loss=0.36, loss=0.18, loss_test=0.36, lr=9.99e-5, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:37<00:00, 10.28it/s, a0_loss=0.458, a0_loss_test=1.21, diffusion_loss=0.36, loss=0.18, loss_test=0.36, lr=9.99e-5, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:38<00:00, 10.19it/s, a0_loss=0.884, a0_loss_test=0.918, diffusion_loss=0.302, loss=0.151, loss_test=0.173, lr=9.96e-5, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:38<00:00, 10.18it/s, a0_loss=0.884, a0_loss_test=0.918, diffusion_loss=0.302, loss=0.151, loss_test=0.173, lr=9.96e-5, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:40<00:00,  9.98it/s, a0_loss=0.589, a0_loss_test=0.719, diffusion_loss=0.139, loss=0.0693, loss_test=0.141, lr=9.91e-5, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:40<00:00,  9.98it/s, a0_loss=0.589, a0_loss_test=0.719, diffusion_loss=0.139, loss=0.0693, loss_test=0.141, lr=9.91e-5, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=0.382, a0_loss_test=0.714, diffusion_loss=0.184, loss=0.0918, loss_test=0.133, lr=9.84e-5, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=0.382, a0_loss_test=0.714, diffusion_loss=0.184, loss=0.0918, loss_test=0.133, lr=9.84e-5, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.44, a0_loss_test=0.574, diffusion_loss=0.209, loss=0.105, loss_test=0.116, lr=9.75e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.44, a0_loss_test=0.574, diffusion_loss=0.209, loss=0.105, loss_test=0.116, lr=9.75e-5, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=0.267, a0_loss_test=0.593, diffusion_loss=0.172, loss=0.0858, loss_test=0.109, lr=9.63e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=0.267, a0_loss_test=0.593, diffusion_loss=0.172, loss=0.0858, loss_test=0.109, lr=9.63e-5, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:37<00:00, 10.29it/s, a0_loss=0.803, a0_loss_test=0.521, diffusion_loss=0.248, loss=0.124, loss_test=0.0976, lr=9.5e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:37<00:00, 10.29it/s, a0_loss=0.803, a0_loss_test=0.521, diffusion_loss=0.248, loss=0.124, loss_test=0.0976, lr=9.5e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:39<00:00, 10.03it/s, a0_loss=0.328, a0_loss_test=0.463, diffusion_loss=0.189, loss=0.0943, loss_test=0.089, lr=9.36e-5, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:39<00:00, 10.03it/s, a0_loss=0.328, a0_loss_test=0.463, diffusion_loss=0.189, loss=0.0943, loss_test=0.089, lr=9.36e-5, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=0.27, a0_loss_test=0.486, diffusion_loss=0.202, loss=0.101, loss_test=0.0893, lr=9.19e-5, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=0.27, a0_loss_test=0.486, diffusion_loss=0.202, loss=0.101, loss_test=0.0893, lr=9.19e-5, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:25<00:00, 11.72it/s, a0_loss=0.281, a0_loss_test=0.5, diffusion_loss=0.188, loss=0.0938, loss_test=0.0915, lr=9.01e-5, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:25<00:00, 11.72it/s, a0_loss=0.281, a0_loss_test=0.5, diffusion_loss=0.188, loss=0.0938, loss_test=0.0915, lr=9.01e-5, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:37<00:00, 10.24it/s, a0_loss=0.783, a0_loss_test=0.469, diffusion_loss=0.222, loss=0.111, loss_test=0.0841, lr=8.81e-5, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:37<00:00, 10.24it/s, a0_loss=0.783, a0_loss_test=0.469, diffusion_loss=0.222, loss=0.111, loss_test=0.0841, lr=8.81e-5, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:39<00:00, 10.05it/s, a0_loss=1.47, a0_loss_test=0.493, diffusion_loss=0.156, loss=0.078, loss_test=0.0858, lr=8.59e-5, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:39<00:00, 10.05it/s, a0_loss=1.47, a0_loss_test=0.493, diffusion_loss=0.156, loss=0.078, loss_test=0.0858, lr=8.59e-5, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:40<00:00,  9.93it/s, a0_loss=0.305, a0_loss_test=0.453, diffusion_loss=0.16, loss=0.08, loss_test=0.0857, lr=8.36e-5, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:40<00:00,  9.93it/s, a0_loss=0.305, a0_loss_test=0.453, diffusion_loss=0.16, loss=0.08, loss_test=0.0857, lr=8.36e-5, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:40<00:00,  9.98it/s, a0_loss=0.221, a0_loss_test=0.402, diffusion_loss=0.115, loss=0.0575, loss_test=0.0796, lr=8.12e-5, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:40<00:00,  9.98it/s, a0_loss=0.221, a0_loss_test=0.402, diffusion_loss=0.115, loss=0.0575, loss_test=0.0796, lr=8.12e-5, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:39<00:00, 10.06it/s, a0_loss=0.556, a0_loss_test=0.406, diffusion_loss=0.214, loss=0.107, loss_test=0.0759, lr=7.86e-5, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:39<00:00, 10.06it/s, a0_loss=0.556, a0_loss_test=0.406, diffusion_loss=0.214, loss=0.107, loss_test=0.0759, lr=7.86e-5, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:37<00:00, 10.22it/s, a0_loss=0.546, a0_loss_test=0.446, diffusion_loss=0.235, loss=0.118, loss_test=0.0747, lr=7.59e-5, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:37<00:00, 10.22it/s, a0_loss=0.546, a0_loss_test=0.446, diffusion_loss=0.235, loss=0.118, loss_test=0.0747, lr=7.59e-5, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:35<00:00, 10.42it/s, a0_loss=1.05, a0_loss_test=0.438, diffusion_loss=0.272, loss=0.136, loss_test=0.0776, lr=7.31e-5, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:35<00:00, 10.42it/s, a0_loss=1.05, a0_loss_test=0.438, diffusion_loss=0.272, loss=0.136, loss_test=0.0776, lr=7.31e-5, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:39<00:00, 10.01it/s, a0_loss=0.336, a0_loss_test=0.427, diffusion_loss=0.142, loss=0.071, loss_test=0.0742, lr=7.02e-5, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:39<00:00, 10.01it/s, a0_loss=0.336, a0_loss_test=0.427, diffusion_loss=0.142, loss=0.071, loss_test=0.0742, lr=7.02e-5, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:39<00:00, 10.06it/s, a0_loss=0.626, a0_loss_test=0.424, diffusion_loss=0.233, loss=0.116, loss_test=0.0722, lr=6.73e-5, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:39<00:00, 10.05it/s, a0_loss=0.626, a0_loss_test=0.424, diffusion_loss=0.233, loss=0.116, loss_test=0.0722, lr=6.73e-5, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:37<00:00, 10.25it/s, a0_loss=0.419, a0_loss_test=0.367, diffusion_loss=0.18, loss=0.09, loss_test=0.0709, lr=6.42e-5, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:37<00:00, 10.25it/s, a0_loss=0.419, a0_loss_test=0.367, diffusion_loss=0.18, loss=0.09, loss_test=0.0709, lr=6.42e-5, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.499, a0_loss_test=0.377, diffusion_loss=0.158, loss=0.0789, loss_test=0.0692, lr=6.11e-5, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.499, a0_loss_test=0.377, diffusion_loss=0.158, loss=0.0789, loss_test=0.0692, lr=6.11e-5, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:37<00:00, 10.24it/s, a0_loss=0.372, a0_loss_test=0.401, diffusion_loss=0.193, loss=0.0964, loss_test=0.0723, lr=5.8e-5, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:37<00:00, 10.24it/s, a0_loss=0.372, a0_loss_test=0.401, diffusion_loss=0.193, loss=0.0964, loss_test=0.0723, lr=5.8e-5, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:37<00:00, 10.21it/s, a0_loss=0.173, a0_loss_test=0.433, diffusion_loss=0.114, loss=0.057, loss_test=0.0714, lr=5.48e-5, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:37<00:00, 10.21it/s, a0_loss=0.173, a0_loss_test=0.433, diffusion_loss=0.114, loss=0.057, loss_test=0.0714, lr=5.48e-5, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:40<00:00,  9.99it/s, a0_loss=0.69, a0_loss_test=0.367, diffusion_loss=0.124, loss=0.0621, loss_test=0.0687, lr=5.16e-5, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:40<00:00,  9.99it/s, a0_loss=0.69, a0_loss_test=0.367, diffusion_loss=0.124, loss=0.0621, loss_test=0.0687, lr=5.16e-5, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:39<00:00, 10.09it/s, a0_loss=1.06, a0_loss_test=0.336, diffusion_loss=0.193, loss=0.0964, loss_test=0.0629, lr=4.84e-5, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:39<00:00, 10.09it/s, a0_loss=1.06, a0_loss_test=0.336, diffusion_loss=0.193, loss=0.0964, loss_test=0.0629, lr=4.84e-5, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:39<00:00, 10.00it/s, a0_loss=0.136, a0_loss_test=0.37, diffusion_loss=0.129, loss=0.0647, loss_test=0.0689, lr=4.52e-5, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:39<00:00, 10.00it/s, a0_loss=0.136, a0_loss_test=0.37, diffusion_loss=0.129, loss=0.0647, loss_test=0.0689, lr=4.52e-5, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:39<00:00, 10.03it/s, a0_loss=0.626, a0_loss_test=0.37, diffusion_loss=0.104, loss=0.0518, loss_test=0.0673, lr=4.2e-5, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:39<00:00, 10.03it/s, a0_loss=0.626, a0_loss_test=0.37, diffusion_loss=0.104, loss=0.0518, loss_test=0.0673, lr=4.2e-5, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:39<00:00, 10.04it/s, a0_loss=0.182, a0_loss_test=0.316, diffusion_loss=0.0646, loss=0.0323, loss_test=0.0593, lr=3.89e-5, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:39<00:00, 10.04it/s, a0_loss=0.182, a0_loss_test=0.316, diffusion_loss=0.0646, loss=0.0323, loss_test=0.0593, lr=3.89e-5, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=0.263, a0_loss_test=0.335, diffusion_loss=0.131, loss=0.0653, loss_test=0.0596, lr=3.58e-5, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=0.263, a0_loss_test=0.335, diffusion_loss=0.131, loss=0.0653, loss_test=0.0596, lr=3.58e-5, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=0.461, a0_loss_test=0.356, diffusion_loss=0.112, loss=0.056, loss_test=0.0617, lr=3.27e-5, step=30999]Epoch 30: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=0.461, a0_loss_test=0.356, diffusion_loss=0.112, loss=0.056, loss_test=0.0617, lr=3.27e-5, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [01:40<00:00,  9.93it/s, a0_loss=0.361, a0_loss_test=0.316, diffusion_loss=0.0515, loss=0.0257, loss_test=0.0564, lr=2.98e-5, step=31999]Epoch 31: 100%|██████████| 1000/1000 [01:40<00:00,  9.93it/s, a0_loss=0.361, a0_loss_test=0.316, diffusion_loss=0.0515, loss=0.0257, loss_test=0.0564, lr=2.98e-5, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.135, a0_loss_test=0.356, diffusion_loss=0.0782, loss=0.0391, loss_test=0.0595, lr=2.69e-5, step=32999]Epoch 32: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.135, a0_loss_test=0.356, diffusion_loss=0.0782, loss=0.0391, loss_test=0.0595, lr=2.69e-5, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [01:35<00:00, 10.47it/s, a0_loss=0.161, a0_loss_test=0.331, diffusion_loss=0.05, loss=0.025, loss_test=0.0581, lr=2.41e-5, step=33999]Epoch 33: 100%|██████████| 1000/1000 [01:35<00:00, 10.47it/s, a0_loss=0.161, a0_loss_test=0.331, diffusion_loss=0.05, loss=0.025, loss_test=0.0581, lr=2.41e-5, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [01:39<00:00, 10.03it/s, a0_loss=0.26, a0_loss_test=0.377, diffusion_loss=0.135, loss=0.0674, loss_test=0.0594, lr=2.14e-5, step=34999]Epoch 34: 100%|██████████| 1000/1000 [01:39<00:00, 10.02it/s, a0_loss=0.26, a0_loss_test=0.377, diffusion_loss=0.135, loss=0.0674, loss_test=0.0594, lr=2.14e-5, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [01:35<00:00, 10.44it/s, a0_loss=0.164, a0_loss_test=0.322, diffusion_loss=0.135, loss=0.0674, loss_test=0.0576, lr=1.88e-5, step=35999]Epoch 35: 100%|██████████| 1000/1000 [01:35<00:00, 10.44it/s, a0_loss=0.164, a0_loss_test=0.322, diffusion_loss=0.135, loss=0.0674, loss_test=0.0576, lr=1.88e-5, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [01:40<00:00,  9.97it/s, a0_loss=0.351, a0_loss_test=0.32, diffusion_loss=0.138, loss=0.0691, loss_test=0.0595, lr=1.64e-5, step=36999]Epoch 36: 100%|██████████| 1000/1000 [01:40<00:00,  9.97it/s, a0_loss=0.351, a0_loss_test=0.32, diffusion_loss=0.138, loss=0.0691, loss_test=0.0595, lr=1.64e-5, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [01:40<00:00,  9.98it/s, a0_loss=0.806, a0_loss_test=0.299, diffusion_loss=0.276, loss=0.138, loss_test=0.0545, lr=1.41e-5, step=37999]Epoch 37: 100%|██████████| 1000/1000 [01:40<00:00,  9.98it/s, a0_loss=0.806, a0_loss_test=0.299, diffusion_loss=0.276, loss=0.138, loss_test=0.0545, lr=1.41e-5, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [01:40<00:00,  9.95it/s, a0_loss=0.284, a0_loss_test=0.312, diffusion_loss=0.0756, loss=0.0378, loss_test=0.056, lr=1.19e-5, step=38999]Epoch 38: 100%|██████████| 1000/1000 [01:40<00:00,  9.95it/s, a0_loss=0.284, a0_loss_test=0.312, diffusion_loss=0.0756, loss=0.0378, loss_test=0.056, lr=1.19e-5, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [01:39<00:00, 10.00it/s, a0_loss=0.209, a0_loss_test=0.286, diffusion_loss=0.0739, loss=0.0369, loss_test=0.0539, lr=9.93e-6, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [01:39<00:00, 10.00it/s, a0_loss=0.209, a0_loss_test=0.286, diffusion_loss=0.0739, loss=0.0369, loss_test=0.0539, lr=9.93e-6, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [01:39<00:00, 10.05it/s, a0_loss=0.159, a0_loss_test=0.308, diffusion_loss=0.113, loss=0.0565, loss_test=0.0571, lr=8.1e-6, step=40999]Epoch 40: 100%|██████████| 1000/1000 [01:39<00:00, 10.05it/s, a0_loss=0.159, a0_loss_test=0.308, diffusion_loss=0.113, loss=0.0565, loss_test=0.0571, lr=8.1e-6, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [01:38<00:00, 10.14it/s, a0_loss=0.161, a0_loss_test=0.32, diffusion_loss=0.0732, loss=0.0366, loss_test=0.0533, lr=6.43e-6, step=41999]Epoch 41: 100%|██████████| 1000/1000 [01:38<00:00, 10.14it/s, a0_loss=0.161, a0_loss_test=0.32, diffusion_loss=0.0732, loss=0.0366, loss_test=0.0533, lr=6.43e-6, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [01:39<00:00, 10.01it/s, a0_loss=0.255, a0_loss_test=0.306, diffusion_loss=0.175, loss=0.0874, loss_test=0.0519, lr=4.95e-6, step=42999]Epoch 42: 100%|██████████| 1000/1000 [01:39<00:00, 10.01it/s, a0_loss=0.255, a0_loss_test=0.306, diffusion_loss=0.175, loss=0.0874, loss_test=0.0519, lr=4.95e-6, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [01:38<00:00, 10.16it/s, a0_loss=0.12, a0_loss_test=0.292, diffusion_loss=0.0395, loss=0.0198, loss_test=0.0538, lr=3.65e-6, step=43999]Epoch 43: 100%|██████████| 1000/1000 [01:38<00:00, 10.16it/s, a0_loss=0.12, a0_loss_test=0.292, diffusion_loss=0.0395, loss=0.0198, loss_test=0.0538, lr=3.65e-6, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [01:40<00:00,  9.94it/s, a0_loss=0.187, a0_loss_test=0.299, diffusion_loss=0.138, loss=0.0688, loss_test=0.0536, lr=2.55e-6, step=44999]Epoch 44: 100%|██████████| 1000/1000 [01:40<00:00,  9.94it/s, a0_loss=0.187, a0_loss_test=0.299, diffusion_loss=0.138, loss=0.0688, loss_test=0.0536, lr=2.55e-6, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [01:38<00:00, 10.12it/s, a0_loss=0.28, a0_loss_test=0.293, diffusion_loss=0.096, loss=0.048, loss_test=0.0544, lr=1.64e-6, step=45999]Epoch 45: 100%|██████████| 1000/1000 [01:38<00:00, 10.12it/s, a0_loss=0.28, a0_loss_test=0.293, diffusion_loss=0.096, loss=0.048, loss_test=0.0544, lr=1.64e-6, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.198, a0_loss_test=0.29, diffusion_loss=0.147, loss=0.0736, loss_test=0.0516, lr=9.22e-7, step=46999]Epoch 46: 100%|██████████| 1000/1000 [01:39<00:00, 10.08it/s, a0_loss=0.198, a0_loss_test=0.29, diffusion_loss=0.147, loss=0.0736, loss_test=0.0516, lr=9.22e-7, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [01:39<00:00, 10.01it/s, a0_loss=0.158, a0_loss_test=0.288, diffusion_loss=0.15, loss=0.075, loss_test=0.0499, lr=4.1e-7, step=47999]Epoch 47: 100%|██████████| 1000/1000 [01:39<00:00, 10.01it/s, a0_loss=0.158, a0_loss_test=0.288, diffusion_loss=0.15, loss=0.075, loss_test=0.0499, lr=4.1e-7, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [01:34<00:00, 10.62it/s, a0_loss=0.331, a0_loss_test=0.305, diffusion_loss=0.128, loss=0.064, loss_test=0.0542, lr=1.03e-7, step=48999]Epoch 48: 100%|██████████| 1000/1000 [01:34<00:00, 10.62it/s, a0_loss=0.331, a0_loss_test=0.305, diffusion_loss=0.128, loss=0.064, loss_test=0.0542, lr=1.03e-7, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [01:40<00:00,  9.99it/s, a0_loss=0.521, a0_loss_test=0.261, diffusion_loss=0.187, loss=0.0933, loss_test=0.0496, lr=0, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [01:40<00:00,  9.99it/s, a0_loss=0.521, a0_loss_test=0.261, diffusion_loss=0.187, loss=0.0933, loss_test=0.0496, lr=0, step=5e+4]
+wandb: - 0.012 MB of 0.012 MB uploadedwandb: \ 0.012 MB of 0.012 MB uploadedwandb: | 0.012 MB of 0.012 MB uploadedwandb: / 0.012 MB of 0.012 MB uploadedwandb: - 0.012 MB of 0.012 MB uploadedwandb: \ 0.012 MB of 0.012 MB uploadedwandb: | 0.012 MB of 0.012 MB uploadedwandb: / 0.012 MB of 0.012 MB uploadedwandb: - 0.021 MB of 0.045 MB uploaded (0.004 MB deduped)wandb: \ 0.021 MB of 0.045 MB uploaded (0.004 MB deduped)wandb: | 0.045 MB of 0.045 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 7.9%
+wandb: 
+wandb: Run history:
+wandb:  test/a0_loss █▇▅▄▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▁▂▂▁▂▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     test/loss █▄▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: train/a0_loss █▃▆▃▃▂▂▂▂▂▂▂▁▂▂▃▁▁▂▂▂▁▂▂▂▅▃▂▁▃▁▁▂▂▁▁▁▂▂▂
+wandb:    train/loss █▄▃▂▃▁▂▂▃▁▂▁▁▁▁▂▂▁▁▁▁▁▂▁▁▂▂▁▁▁▁▁▁▁▂▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:  final_test_loss 0.04961
+wandb: final_train_loss 0.05768
+wandb:             seed 6
+wandb:           status completed
+wandb:     test/a0_loss 0.2609
+wandb:        test/loss 0.04961
+wandb:    train/a0_loss 0.26049
+wandb:       train/loss 0.05768
+wandb: 
+wandb: 🚀 View run avoiding-d3il-flow_matching_v3_drifting-H8_DGaussianDiffusion_a1.5_b1.0_aw1-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll/runs/snlpemqu
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-knoll
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260521_133342-snlpemqu/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+FM_v3 training completed.
+Job completed successfully.
