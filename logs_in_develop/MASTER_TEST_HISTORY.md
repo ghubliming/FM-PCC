@@ -1161,6 +1161,19 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 ### 4. Workspace Hygiene & Codebase Archival
 * **Workspace Cleanliness**: Moved outdated/legacy directories (e.g. legacy `diffuser_visual_aligning(Outdated)`) into an `Archived_Codes/` directory to prevent namespace/importer pollution, ensuring 100% clean development dependencies in the primary project tree.
 
+## Gen7 / Gen6v4: Data Analysis Updates & Baseline Evaluations (May 22, 2026)
+
+**Keywords**: Data Analysis module, Visual Aligning DA, MPC foresight visualization, working baselines.
+
+### 1. Data Analysis (DA) Pipeline Upgrades for Visual Aligning
+* **DAv3 Visualizer Enhancements**: Implemented a rebuilt DAv3 adding a custom seed comparison mode, per-seed scatter visualizations, and missing seed detection in the DA pipeline.
+* **MPC Foresight & Context Logging**: Upgraded the diagnostics to include context info logging and MPC decision-point foresight stride visualization (high-res plots with improved Z panel overlays).
+* **NPZ Enhancements**: Added raw seed data tracking and updated data loading logic to support comprehensive raw data analysis.
+
+### 2. Working Baselines Verification
+* **Visual Aligning DPCC (Working Run)**: The baseline DPCC configuration located at `FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64` was evaluated. Note that this is not a final run, but a working run that returns quite good results.
+* **FM Visual Aligning (Working Run)**: The continuous-time FM architecture evaluation at `FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000_bs64/H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4/6/results` was completed. Similarly, this is not a final run, but a working run that also returns quite good results.
+
 
 
 

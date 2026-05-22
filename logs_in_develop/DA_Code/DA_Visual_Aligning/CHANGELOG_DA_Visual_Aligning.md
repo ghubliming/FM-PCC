@@ -69,6 +69,58 @@ To re-activate: remove comment markers.
 
 ---
 
+## Bugfix — HTML Visualizer & Dynamic CSV (2026-05-22)
+
+### Problem
+Initial `index.html` rendered static PNG images (metric selector changed the `<img>` src). This was wrong — the visualizer should be fully dynamic like the existing `Visualizer/index.html` (PyScript + matplotlib, no static images).
+
+Additionally, `batch_reporter.py` was not producing `va_candidates_dynamic.csv`, so the HTML had nothing to load.
+
+### Fixes
+
+| File | Change |
+|---|---|
+| `Visualizer_Visual_Aligning/index.html` | Rewritten as dynamic PyScript + matplotlib visualizer. Loads `va_candidates_dynamic.csv` (long-format). AGGREGATE mode: metric dropdown, variant/candidate checkboxes, dynamic bar chart. PER-ROLLOUT mode: loads `per_rollout_detail.csv`, table with green/red row coding. No env-select / halfspace / seed-mode controls (absent by design — VA has no constraint dimension). Fixed stale `id` reference (`controls-panel-agg` → `agg-controls`). |
+| `batch_reporter.py` | Added `save_dynamic_csv()` method generating long-format `va_candidates_dynamic.csv` (columns: `Candidate, FolderName, FullPath, variant, metric, mean, std, n`). `save_all_reports()` now calls it. |
+
+### CSV format (`va_candidates_dynamic.csv`)
+Long-format, one row per Candidate × variant × metric. No halfspace/constraint columns.
+
+---
+
+## Bugfix — JSON Mode Loading (2026-05-22)
+
+### Problem
+`--source json` appeared to not work ("cannot load my path"). Three bugs combined:
+
+1. **`batch_data_loader.py`** — when `--variants` not specified, the loader was substituting `DEFAULT_PROJECTION_VARIANTS` (13 variants) before passing to `DataLoader`. For a run that only has `diffuser`, 12 of 13 variants returned MISSING in the log, making it look like nothing loaded even though `diffuser` did load.
+
+2. **`aggregator.py`** — per-rollout extraction used `arr.shape[0] > 1`, silently dropping arrays from runs with exactly 1 rollout. Changed to `>= 1`.
+
+3. **Sbatch scripts** — both scripts hardcoded `--source npz` and wrong `--parent-path` / `INPUT_PATH` defaults, so the user's actual path was never searched.
+
+### Fixes
+
+| File | Change |
+|---|---|
+| `batch_data_loader.py` | Removed `DEFAULT_PROJECTION_VARIANTS` fallback; `variants=None` now passes through to `DataLoader` which auto-discovers via `os.listdir` |
+| `aggregator.py` | `arr.shape[0] > 1` → `arr.shape[0] >= 1` in `_extract_per_rollout` |
+| `run_da_batch_visual_aligning.sh` | `PARENT_PATH=$1` (default `logs/aligning-d3il-visual/plans/fm_visual_aligning`), `SOURCE=$2` (default `json`) |
+| `run_da_single_visual_aligning.sh` | `INPUT_PATH=$1` (required, errors if missing), `SOURCE=$2` (default `json`); added comment explaining correct path level |
+
+### Usage after fix
+```bash
+# Batch — auto-discovers H8_K100_..._mpc4/ recursively:
+sbatch run_da_batch_visual_aligning.sh \
+  logs/aligning-d3il-visual/plans/fm_visual_aligning json
+
+# Single — must point directly at folder containing 6/:
+sbatch run_da_single_visual_aligning.sh \
+  logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_.../H8_K100_...mpc4 json
+```
+
+---
+
 ## `--source` Flag
 
 Default `npz` loads `{seed}/results/{variant}/{variant}.npz` (requires U10.2).  
