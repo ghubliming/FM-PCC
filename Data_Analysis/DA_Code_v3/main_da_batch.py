@@ -171,7 +171,11 @@ def main():
         logger.info("[PHASE 1/5] AUTO-DISCOVERING CANDIDATES")
         logger.info("-" * 70)
         
-        candidates = discover_candidates_recursive(args.parent_path, max_depth=10)
+        seeds = None
+        if args.seeds:
+            seeds = [int(s.strip()) for s in args.seeds.split(',')]
+        
+        candidates = discover_candidates_recursive(args.parent_path, seed_list=seeds, max_depth=10)
         
         if not candidates:
             logger.error("No candidates found. Exiting.")
@@ -206,10 +210,6 @@ def main():
         logger.info("-" * 70)
         
         # Parse optional arguments
-        seeds = None
-        if args.seeds:
-            seeds = [int(s.strip()) for s in args.seeds.split(',')]
-        
         variants = None
         if args.variants:
             variants = [v.strip() for v in args.variants.split(',')]

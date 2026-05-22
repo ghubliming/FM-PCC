@@ -294,12 +294,31 @@ def update_scorecard(subset, metric):
 
 def render_path_map():
     p_col = 'Full_Path' if 'Full_Path' in df.columns else 'Folder_Name'
-    mapping = df[['Candidate', p_col]].drop_duplicates().sort_values('Candidate')
-    html = '<table><thead><tr><th style="width:100px">ID</th><th>Source Path (Audit)</th></tr></thead><tbody>'
+    has_missing = 'Missing_Seeds' in df.columns
+    
+    cols_to_get = ['Candidate', p_col]
+    if has_missing: cols_to_get.append('Missing_Seeds')
+    
+    mapping = df[cols_to_get].drop_duplicates().sort_values('Candidate')
+    
+    html = '<table><thead><tr><th style="width:100px">ID</th>'
+    if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'
+    html += '<th>Source Path (Audit)</th></tr></thead><tbody>'
+    
     for _, row in mapping.iterrows():
         segs = str(row[p_col]).split('/')
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
-        html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td><td><code>{c_path}</code></td></tr>'
+        
+        html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td>'
+        if has_missing:
+            missing_val = row["Missing_Seeds"]
+            if pd.isna(missing_val) or str(missing_val).strip() == '':
+                html += '<td style="color: green; font-weight: bold;">ALL SEEDS</td>'
+            else:
+                html += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
+                
+        html += f'<td><code>{c_path}</code></td></tr>'
+        
     document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
 
 document.trigger_plot = create_proxy(trigger_plot)
