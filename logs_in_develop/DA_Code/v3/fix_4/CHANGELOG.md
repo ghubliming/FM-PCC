@@ -20,3 +20,15 @@ Rather than failing or dropping these candidates, the pipeline now gracefully in
   - Upgraded the **Path Audit Map** to dynamically render a **"Warnings"** column if missing seeds are detected in the dataset.
   - Candidates with partial evaluations prominently display **"MISSING: [7, 8, 9, 10]"** in bold orange.
   - Fully evaluated candidates confidently display **"ALL SEEDS"** in bold green.
+
+## Fix 4.2: Per-Seed Scatter Visualization
+Based on the realization that the DA v3 pipeline strictly preserves raw data, a powerful frontend visualization upgrade was implemented to allow direct "per-seed" visual inspection.
+
+- **`batch_reporter.py`**:
+  - Injected `Folder_Name`, `Full_Path`, and `Missing_Seeds` metadata into the `candidates_multidimensional_raw.csv` so it matches the aggregated schema.
+- **`Visualizer/index.html`**:
+  - The default data source was switched to `candidates_multidimensional_raw.csv`.
+  - The PyScript backend was rewritten to calculate both `mean` and `std` dynamically on the fly from the raw dataframe.
+  - Added a new UI Toggle: **2.5 Plot Style** (`Bar Chart (Mean ± Std)` vs `Per-Seed Scatter (Raw)`).
+  - Designed custom Matplotlib logic that computes the exact spatial X-axis offsets for grouped pandas bar charts, allowing individual seed values to be plotted perfectly aligned on top of the bars.
+  - Color-coded the scatter dots by seed (`6: red`, `7: blue`, `8: green`, `9: purple`, `10: orange`) with a dedicated legend, empowering researchers to instantly spot single-seed anomalies or systemic failures across candidates.
