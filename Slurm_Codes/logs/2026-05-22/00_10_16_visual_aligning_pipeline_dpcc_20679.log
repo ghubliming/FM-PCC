@@ -1,0 +1,16 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Fri May 22 01:47:38 UTC 2026
+JOB ID:    20679
+================================================================================
+Launching Visual-DPCC Pipeline...
+Step 1: Training submitted. Job ID: 20680
+Step 2: Evaluation scheduled (afterok:20680). Job ID: 20681
+--------------------------------------------------------------------------------
+Visual-DPCC Pipeline submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+If training fails, evaluation will be cancelled automatically by Slurm.
+================================================================================
+================================================================================
+PIPELINE END:   Fri May 22 01:47:38 UTC 2026
+================================================================================
