@@ -796,6 +796,7 @@ base = {
         'ode_solver_rtol_v3': None,
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
+        'diffusion_timestep_threshold': _yaml_threshold,   # encodes T in path so threshold sweeps don't overwrite
 
         ## loading
         'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
