@@ -205,15 +205,6 @@ def populate_dynamic_filters():
     cands_list = sorted(df_agg['Candidate'].unique())
     document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
 
-def toggle_seed_mode(event=None):
-    mode = document.getElementById("seed-mode-select").value
-    if mode == "custom":
-        document.getElementById("custom-seed-panel").style.display = "block"
-    else:
-        document.getElementById("custom-seed-panel").style.display = "none"
-    trigger_plot()
-window.toggle_seed_mode = toggle_seed_mode
-
 async def trigger_plot(event=None):
     global df_agg, df_raw, current_fig
     if df_agg is None: return
@@ -424,7 +415,22 @@ asyncio.ensure_future(init_manifest())
         document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
         applyZoom();
     }
-    function trigger_plot() { if (window.document.trigger_plot) window.document.trigger_plot(); }
+    async function trigger_plot() { 
+        if (window.document.trigger_plot) {
+            try {
+                await window.document.trigger_plot();
+            } catch (e) {
+                console.error("Plot error:", e);
+            }
+        }
+    }
+    
+    function toggle_seed_mode() {
+        const mode = document.getElementById("seed-mode-select").value;
+        document.getElementById("custom-seed-panel").style.display = (mode === "custom") ? "block" : "none";
+        trigger_plot();
+    }
+    
     function bulkSelect(className, state) {
         const elements = document.getElementsByClassName(className);
         for (let e of elements) { e.checked = state; }
