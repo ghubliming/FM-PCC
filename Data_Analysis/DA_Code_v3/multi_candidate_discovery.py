@@ -14,26 +14,27 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 
-def has_seeds(seed_list, folder_path):
+def get_existing_seeds(seed_list, folder_path):
     """
-    Check if a folder contains all required seed directories.
+    Check which required seed directories exist in a folder.
     
     Args:
         seed_list: List of seed numbers (e.g., [6, 7, 8, 9, 10])
         folder_path: Path to check for seed directories
         
     Returns:
-        bool: True if all seeds exist as subdirectories, False otherwise
+        list: List of seeds that exist
     """
+    existing = []
     if not os.path.isdir(folder_path):
-        return False
+        return existing
     
     for seed in seed_list:
         seed_dir = os.path.join(folder_path, str(seed))
-        if not os.path.isdir(seed_dir):
-            return False
+        if os.path.isdir(seed_dir):
+            existing.append(seed)
     
-    return True
+    return existing
 
 
 def discover_candidates(parent_path, seed_list=None):
@@ -85,15 +86,21 @@ def discover_candidates(parent_path, seed_list=None):
         if subfolder_name.startswith('.'):
             continue
         
-        # Check if this folder contains all required seeds
-        if has_seeds(seed_list, subfolder_path):
+        # Check if this folder contains required seeds
+        existing_seeds = get_existing_seeds(seed_list, subfolder_path)
+        if existing_seeds:
             # Assign letter code
             letter_code = chr(ord('A') + letter_index)
+            missing_seeds = [s for s in seed_list if s not in existing_seeds]
+            
+            if missing_seeds:
+                logger.warning(f"Candidate {letter_code} ({subfolder_name}) is MISSING seeds: {missing_seeds}")
             
             candidates[letter_code] = {
                 'path': os.path.abspath(subfolder_path),
                 'name': subfolder_name,
-                'seeds': seed_list.copy()
+                'seeds': existing_seeds,
+                'missing_seeds': missing_seeds
             }
             
             logger.info(f"Candidate {letter_code}: {subfolder_name}")
@@ -148,12 +155,19 @@ def discover_candidates_recursive(parent_path, seed_list=None, max_depth=3):
                 continue
             
             # Check if this is a candidate
-            if has_seeds(seed_list, entry_path):
+            existing_seeds = get_existing_seeds(seed_list, entry_path)
+            if existing_seeds:
                 letter_code = chr(ord('A') + letter_index)
+                missing_seeds = [s for s in seed_list if s not in existing_seeds]
+                
+                if missing_seeds:
+                    logger.warning(f"Candidate {letter_code} ({entry}) is MISSING seeds: {missing_seeds}")
+                
                 candidates[letter_code] = {
                     'path': os.path.abspath(entry_path),
                     'name': entry,
-                    'seeds': seed_list.copy()
+                    'seeds': existing_seeds,
+                    'missing_seeds': missing_seeds
                 }
                 logger.info(f"Candidate {letter_code}: {entry}")
                 letter_index += 1
@@ -247,7 +261,9 @@ def get_candidate_summary(candidates):
         info = candidates[letter]
         lines.append(f"  {letter}: {info['name']}")
         lines.append(f"      Path: {info['path']}")
-        lines.append(f"      Seeds: {info['seeds']}")
+        lines.append(f"      Seeds Found: {info['seeds']}")
+        if info.get('missing_seeds'):
+            lines.append(f"      WARNING: Missing Seeds {info['missing_seeds']}")
         if 'custom_name' in info:
             lines.append(f"      Display: {info['custom_name']}")
         lines.append("")
