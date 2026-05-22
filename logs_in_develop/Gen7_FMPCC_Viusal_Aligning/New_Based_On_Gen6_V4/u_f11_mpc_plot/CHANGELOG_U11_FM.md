@@ -51,3 +51,21 @@ Both saved to `diagnostics/`:
 - `figsize=(26, 11)` unchanged
 - 9-panel `_report.png` unchanged
 - Aggregate PNG (`{variant}.png`) unchanged — thin-line fix from Fix 9.1 still in place
+
+---
+
+## U11.2 — Yaml-settable stride + start/end markers
+
+**Date**: 2026-05-22
+
+### Changes
+
+| | Before | After |
+|---|---|---|
+| Stride | `_STRIDE = 6` hardcoded | `_STRIDE = self.mpc_foresight_stride` read from yaml |
+| Yaml key | — | `mpc_foresight_stride: 6` in `config/visual_aligning_eval.yaml` (default 6) |
+| Start marker | none | lime `★` (`s=180`) at `c_arr[0]` (fallback `real_pos[0]`) on XY + XYZ panels |
+| End marker | none | red `■` (`s=80`) at `c_arr[-1]` (fallback `real_pos[-1]`) on XY + XYZ panels |
+| Legend | 4 entries | 6 entries — added `start` and `end` |
+
+`VisualAgentWrapper.__init__` gains `mpc_foresight_stride=6` param; agent construction passes `config.get('mpc_foresight_stride', 6)`.
