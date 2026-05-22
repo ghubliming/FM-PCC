@@ -1139,6 +1139,22 @@ if __name__ == '__main__':
 
                 # ── NPZ save (legacy-compatible) ─────────────────────────────
                 if config.get('write_to_file', True):
+                    # U10.2: flatten context_info + clean tracking error into NPZ
+                    # so DA code can load per-rollout arrays directly (same pattern as avoiding).
+                    _ci = agent.history_context_info   # list of dicts, one per rollout
+                    _max_phys = np.array([
+                        float(np.max(e)) if len(e) else 0.0
+                        for e in agent.history_pos_tracking_errors
+                    ], dtype=np.float32)
+                    _ctx_box_xy   = np.array([[c.get('box_init_xy',  [0.0, 0.0])[0],
+                                               c.get('box_init_xy',  [0.0, 0.0])[1]]
+                                              for c in _ci], dtype=np.float32)
+                    _ctx_tgt_xy   = np.array([[c.get('target_xy',    [0.0, 0.0])[0],
+                                               c.get('target_xy',    [0.0, 0.0])[1]]
+                                              for c in _ci], dtype=np.float32)
+                    _ctx_box_ang  = np.array([c.get('box_init_angle_deg', 0.0) for c in _ci], dtype=np.float32)
+                    _ctx_tgt_ang  = np.array([c.get('target_angle_deg',   0.0) for c in _ci], dtype=np.float32)
+                    _ctx_xy_dist  = np.array([c.get('init_xy_dist',       0.0) for c in _ci], dtype=np.float32)
                     np.savez(f'{save_path}/{variant}.npz',
                              success_rate=success_rate, entropy=entropy,
                              mode_encoding=mode_encoding.numpy(),
@@ -1150,6 +1166,12 @@ if __name__ == '__main__':
                              mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist),
                              physical_tracking_errors=np.array(
                                  agent.history_pos_tracking_errors, dtype=object),
+                             max_phys_error_per_rollout=_max_phys,
+                             context_box_init_xy=_ctx_box_xy,
+                             context_target_xy=_ctx_tgt_xy,
+                             context_box_angle_deg=_ctx_box_ang,
+                             context_target_angle_deg=_ctx_tgt_ang,
+                             context_init_xy_dist=_ctx_xy_dist,
                              obs_all=np.array(obs_all, dtype=object),
                              act_all=np.array(act_all, dtype=object),
                              sampled_trajectories_all=np.array(plans_all, dtype=object),

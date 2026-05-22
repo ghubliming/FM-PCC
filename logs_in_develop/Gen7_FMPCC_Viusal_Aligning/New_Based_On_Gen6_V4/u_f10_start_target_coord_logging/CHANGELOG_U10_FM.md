@@ -62,3 +62,30 @@ Extracts from the context 4-tuple `(box_pos[3], box_quat[4], target_pos[3], targ
 - Rotation distance at t=0 (requires `euler2quat` import — derivable post-hoc from angles)
 - Box dimensions / four corners (derivable from center + angle + known geometry)
 - Full quaternion arrays (stored in `master_rollout_history` pkl if needed)
+
+---
+
+## U10.2 — Context arrays + clean tracking error in NPZ
+
+**Date**: 2026-05-22
+
+### Motivation
+
+U10 logged context_info to per-rollout JSON (human-readable). DA code loads NPZ. To let DA code access context fields and clean tracking error per rollout — without touching JSON — we extend the `np.savez()` call additively.
+
+### New NPZ fields (both FM and DPCC eval)
+
+| Key | Shape | Type | Description |
+|---|---|---|---|
+| `max_phys_error_per_rollout` | `(N_rollouts,)` | float32 | `max(tracking_errors)` per rollout — clean scalar vs ragged `physical_tracking_errors` |
+| `context_box_init_xy` | `(N_rollouts, 2)` | float32 | Box initial XY position (m) |
+| `context_target_xy` | `(N_rollouts, 2)` | float32 | Target XY position (m) |
+| `context_box_angle_deg` | `(N_rollouts,)` | float32 | Box initial angle (°) |
+| `context_target_angle_deg` | `(N_rollouts,)` | float32 | Target angle (°) |
+| `context_init_xy_dist` | `(N_rollouts,)` | float32 | Euclidean XY dist box→target at start (m) |
+
+### What did NOT change
+- All existing NPZ keys unchanged (additive only — zero risk to existing flows)
+- Per-rollout JSON format unchanged
+- PKL format unchanged
+- DA Code v3 (avoiding) unaffected

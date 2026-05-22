@@ -20,3 +20,12 @@ Identical to FM Upgrade 10. `aligning_sim.py` is shared — the `hasattr` hook f
 - `_export_rollout_realtime()` JSON: `'context_info'` field added to `rollout_N_stats.json`
 
 `aligning_sim.py` change is shared (one edit covers both FM and DPCC).
+
+---
+
+## U10.2 Applied to Gen6V4 (DPCC)
+
+**Date**: 2026-05-22  
+**Source MD**: [u_f10_start_target_coord_logging/CHANGELOG_U10_FM.md §U10.2](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/u_f10_start_target_coord_logging/CHANGELOG_U10_FM.md)
+
+Identical NPZ extension applied to `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`. All 6 new keys added to `np.savez()`. Additive only — no existing fields changed.
