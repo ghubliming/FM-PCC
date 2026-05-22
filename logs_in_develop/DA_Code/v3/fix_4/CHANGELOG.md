@@ -21,14 +21,12 @@ Rather than failing or dropping these candidates, the pipeline now gracefully in
   - Candidates with partial evaluations prominently display **"MISSING: [7, 8, 9, 10]"** in bold orange.
   - Fully evaluated candidates confidently display **"ALL SEEDS"** in bold green.
 
-## Fix 4.2: Per-Seed Scatter Visualization
-Based on the realization that the DA v3 pipeline strictly preserves raw data, a powerful frontend visualization upgrade was implemented to allow direct "per-seed" visual inspection.
+## Fix 4.2: Custom Seed Compare Logic (Rebuild)
+Based on user feedback, the previous "per-seed scatter plot" experimental feature was reverted in favor of a robust, standard-preserving **Custom Seed Compare** mode.
 
-- **`batch_reporter.py`**:
-  - Injected `Folder_Name`, `Full_Path`, and `Missing_Seeds` metadata into the `candidates_multidimensional_raw.csv` so it matches the aggregated schema.
 - **`Visualizer/index.html`**:
-  - The default data source was switched to `candidates_multidimensional_raw.csv`.
-  - The PyScript backend was rewritten to calculate both `mean` and `std` dynamically on the fly from the raw dataframe.
-  - Added a new UI Toggle: **2.5 Plot Style** (`Bar Chart (Mean ± Std)` vs `Per-Seed Scatter (Raw)`).
-  - Designed custom Matplotlib logic that computes the exact spatial X-axis offsets for grouped pandas bar charts, allowing individual seed values to be plotted perfectly aligned on top of the bars.
-  - Color-coded the scatter dots by seed (`6: red`, `7: blue`, `8: green`, `9: purple`, `10: orange`) with a dedicated legend, empowering researchers to instantly spot single-seed anomalies or systemic failures across candidates.
+  - **Standard Mode (Default):** Restored full backward compatibility with Fix 4.1. The visualizer explicitly fetches `candidates_multidimensional_aggregated.csv` and preserves the clean, high-quality "Path Audit Map" rendering. It calculates the mean/std based on whatever seeds were found during discovery (with warnings displayed for partial seeds).
+  - **Custom Seed Compare Mode:** A new UI option that dynamically fetches `candidates_multidimensional_raw.csv`.
+  - Added a responsive UI to select exact seeds to compare (e.g., `[6, 7]`).
+  - Added strict validation: if a candidate in the current view is missing any of the user-selected seeds, plotting aborts gracefully and an error is displayed (e.g., `Error: CAND_A missing seed(s) [7]!`).
+  - If validation passes, it dynamically recalculates the exact Mean and Std strictly constrained to the subset of user-selected seeds.

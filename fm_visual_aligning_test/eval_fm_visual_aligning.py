@@ -618,7 +618,7 @@ class VisualAgentWrapper:
 
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')
-                fig_mpc.savefig(f'{_mpc_base}.png', dpi=200, bbox_inches='tight')
+                # fig_mpc.savefig(f'{_mpc_base}.png', dpi=200, bbox_inches='tight')
                 fig_mpc.savefig(f'{_mpc_base}.svg', bbox_inches='tight')
                 plt.close(fig_mpc)
 
