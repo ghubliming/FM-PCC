@@ -372,7 +372,7 @@ base = {
         'n_steps_per_epoch': 1000,
         # d3il trains for epoch=4 (epoch-based). We use steps-based training.
         # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
-        'n_train_steps': 5e5,
+        'n_train_steps': 1e5,
         'gradient_accumulate_every': 2,
         'train_test_split': 0.9,
         'device': 'cuda',
@@ -446,7 +446,7 @@ base = {
         'n_steps_per_epoch': 1000,
         # d3il trains for epoch=4 (epoch-based). We use steps-based training.
         # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
-        'n_train_steps': 5e5,
+        'n_train_steps': 1e5,
         'gradient_accumulate_every': 2,
         'train_test_split': 0.9,
         'device': 'cuda',
