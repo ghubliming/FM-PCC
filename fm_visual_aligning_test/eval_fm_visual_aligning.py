@@ -235,7 +235,8 @@ class VisualAgentWrapper:
                  batch_size=1, projector=None,
                  trajectory_selection='random',
                  eval_on_train=False, variant='unspecified',
-                 max_action_delta=None):
+                 max_action_delta=None,
+                 mpc_foresight_stride=6):
 
         self.model              = diffusion_model
         self.device             = device
@@ -285,6 +286,7 @@ class VisualAgentWrapper:
         self.master_rollout_history      = {}
         self.video_frames                = []
         self.max_action_delta            = max_action_delta
+        self.mpc_foresight_stride        = mpc_foresight_stride
         self.curr_rollout_act_magnitudes = []
         self.curr_rollout_dist_to_target = []
         self.curr_rollout_clamp_events   = []
@@ -544,7 +546,7 @@ class VisualAgentWrapper:
             #      des=black solid, actual=red solid (no dashes); PNG@200DPI + SVG.
             if all_cands_list:
                 from matplotlib.lines import Line2D as _Line2D
-                _STRIDE   = 6          # show every 6th replan decision point
+                _STRIDE   = self.mpc_foresight_stride   # U11.2: yaml-settable (mpc_foresight_stride)
                 n_steps   = len(real_pos)
                 n_replans = len(all_cands_list)
                 spr       = max(1, n_steps // max(1, n_replans))  # env steps per replan
@@ -577,6 +579,12 @@ class VisualAgentWrapper:
                                color='red', linewidth=1.2, zorder=9)
                 ax_xy.plot(real_pos[:, 0], real_pos[:, 1],
                            color='black', linewidth=1.2, zorder=7)
+                # U11.2: start / end markers
+                _ref = c_arr if c_arr is not None else real_pos
+                ax_xy.scatter([_ref[0, 0]],  [_ref[0, 1]],
+                              color='lime', marker='*', s=180, zorder=12, linewidths=0)
+                ax_xy.scatter([_ref[-1, 0]], [_ref[-1, 1]],
+                              color='red',  marker='s', s=80,  zorder=12, linewidths=0)
                 _lgd = [
                     _Line2D([0],[0], color='green', lw=0.8,
                             label=f'MPC candidates ({n_cands}/step)'),
@@ -584,6 +592,10 @@ class VisualAgentWrapper:
                     _Line2D([0],[0], color='red',   lw=1.2, label='actual (c_pos)'),
                     _Line2D([0],[0], marker='o', color='w', markerfacecolor='black',
                             markersize=7, label='replan decision point'),
+                    _Line2D([0],[0], marker='*', color='w', markerfacecolor='lime',
+                            markersize=10, label='start'),
+                    _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
+                            markersize=7,  label='end'),
                 ]
                 ax_xy.legend(handles=_lgd, fontsize=9)
                 ax_xy.set_title(f'XY — MPC Decision Points  (every {_STRIDE} replans)',
@@ -610,6 +622,11 @@ class VisualAgentWrapper:
                                color='red', linewidth=1.2, label='actual (c_pos)')
                 ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
                            color='black', linewidth=1.2, label='des (commanded)')
+                # U11.2: start / end markers
+                ax_3d.scatter([_ref[0, 0]],  [_ref[0, 1]],  [_ref[0, 2]],
+                              color='lime', marker='*', s=180, zorder=12)
+                ax_3d.scatter([_ref[-1, 0]], [_ref[-1, 1]], [_ref[-1, 2]],
+                              color='red',  marker='s', s=80,  zorder=12)
                 ax_3d.set_title('XYZ — MPC Decision Points (3D)', fontsize=12)
                 ax_3d.set_xlabel('X (m)', fontsize=9)
                 ax_3d.set_ylabel('Y (m)', fontsize=9)
@@ -1096,6 +1113,7 @@ if __name__ == '__main__':
                     eval_on_train=args_cli.eval_on_train,
                     variant=variant,
                     max_action_delta=config.get('max_action_delta', None),
+                    mpc_foresight_stride=config.get('mpc_foresight_stride', 6),
                 )
 
                 sim = Aligning_Sim(

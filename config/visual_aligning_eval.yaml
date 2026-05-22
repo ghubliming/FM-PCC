@@ -41,6 +41,7 @@ n_trajectories_per_context: 1
 
 # Policy
 diffusion_timestep_threshold: 0.5
+mpc_foresight_stride: 6          # show every Nth replan decision point in standalone MPC plot (default 6)
 
 # Projection
 # Exact DPCC reference variant list (from dpcc/config/projection_eval.yaml).
