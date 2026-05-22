@@ -250,6 +250,7 @@ def plot_all(self, output_dir, show=False):
 ```
 
 Add `--seed` arg (default: `6`).  
+Add `--source npz|json` arg (default: `npz`).  
 Remove `--constraint-types` arg.  
 Remove `--halfspace-variants` arg.
 
@@ -333,6 +334,32 @@ Two view modes:
 | `batch_visualizer.py` | `plot_matrix_analysis()` call | `# HIERARCHICAL-DEACTIVATED` |
 
 Re-activating any of these later = remove the comment marker.
+
+---
+
+## `--source` flag (backward compatibility)
+
+| Flag | Loader path | When to use |
+|---|---|---|
+| `--source npz` (default) | `{seed}/results/{variant}/{variant}.npz` | U10.2+ runs (has per-rollout context arrays) |
+| `--source json` | `{seed}/results/{variant}/diagnostics/rollout_*_stats.json` | Pre-U10.2 runs (JSON-only) |
+
+JSON loader reconstructs the same `(N_rollouts,)` arrays so downstream aggregator/visualizer is identical:
+
+| NPZ key | JSON field |
+|---|---|
+| `n_success` | `success` |
+| `n_steps` | `steps` |
+| `avg_time` | `avg_inference_time_per_replan` |
+| `mean_dist_per_rollout` | `mean_distance` |
+| `max_phys_error_per_rollout` | `max_physical_tracking_error` |
+| `context_init_xy_dist` | `context_info.init_xy_dist` |
+| `context_box_init_xy` | `context_info.box_init_xy` |
+| `context_target_xy` | `context_info.target_xy` |
+| `context_box_angle_deg` | `context_info.box_init_angle_deg` |
+| `context_target_angle_deg` | `context_info.target_angle_deg` |
+
+Both modes produce identical output directory structure and PNG filenames.
 
 ---
 
