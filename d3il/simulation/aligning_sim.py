@@ -77,6 +77,10 @@ class Aligning_Sim(BaseSim):
                 ctx_pool = train_contexts if self.eval_on_train else test_contexts
                 obs = env.reset(random=False, context=ctx_pool[context])
 
+                # Fix 10: pass full context tuple to agent for logging (box/target pos+angle)
+                if hasattr(agent, 'record_context_info'):
+                    agent.record_context_info(ctx_pool[context], int(context))
+
                 # test contexts
                 # test_context = env.manager.sample()
                 # obs = env.reset(random=False, context=test_context)
