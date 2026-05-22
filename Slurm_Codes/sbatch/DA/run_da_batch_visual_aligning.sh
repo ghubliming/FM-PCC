@@ -9,6 +9,13 @@
 
 set -e
 
+# Pass args:  $1 = parent path (folder containing candidate subfolders)
+#             $2 = source: 'json' (default, pre-U10.2) or 'npz' (U10.2+)
+# Example:
+#   sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json
+PARENT_PATH=${1:-"logs/aligning-d3il-visual/plans/fm_visual_aligning"}
+SOURCE=${2:-"json"}
+
 # 1) Workspace paths
 FMPCC_ROOT="$HOME/FMPCC"
 REPO="$FMPCC_ROOT/FM-PCC"
@@ -27,12 +34,10 @@ export MPLBACKEND="agg"
 # 4) Run
 cd "$REPO"
 
-# --source npz (default, requires U10.2 NPZ)
-# Change to --source json for pre-U10.2 runs
 python Data_Analysis/DA_Visual_Aligning/main_da_batch.py \
-    --parent-path logs/visual-aligning-dpcc/plans \
+    --parent-path "$PARENT_PATH" \
     --seed 6 \
-    --source npz \
+    --source "$SOURCE" \
     --output-path Data_Analysis/analysis_results/va_batch_$(date +%Y%m%d_%H%M%S)
 
 echo "DA Visual Aligning batch analysis completed."

@@ -32,11 +32,13 @@ class BatchDataLoader:
         Returns:
             {letter: {variant: metrics_dict}}
         """
-        from config import DEFAULT_PROJECTION_VARIANTS, ACTIVE_SEED
+        from config import ACTIVE_SEED
         if seed is None:
             seed = ACTIVE_SEED
-        if variants is None:
-            variants = DEFAULT_PROJECTION_VARIANTS
+        # Pass variants=None through to DataLoader so each candidate auto-discovers
+        # its own variant folders via os.listdir.  Only override when caller explicitly
+        # passes a list.  Using DEFAULT_PROJECTION_VARIANTS here caused 12 "MISSING"
+        # failures for runs that only have 'diffuser', making JSON mode appear broken.
 
         total = len(candidates_dict)
         logger.info(f'Loading {total} candidates, seed={seed}, source={self.source}')

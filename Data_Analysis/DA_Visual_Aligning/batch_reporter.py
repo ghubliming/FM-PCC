@@ -28,7 +28,38 @@ class BatchReporter:
         self.save_candidates_ranking_csv(os.path.join(output_dir, 'candidates_ranking.csv'))
         self.save_candidates_detailed_csv(os.path.join(output_dir, 'candidates_detailed.csv'))
         self.save_per_variant_breakdown_csv(os.path.join(output_dir, 'candidates_per_variant.csv'))
+        self.save_dynamic_csv(os.path.join(output_dir, 'va_candidates_dynamic.csv'))
         logger.info(f'All reports saved to: {output_dir}')
+
+    def save_dynamic_csv(self, output_path):
+        """
+        Long-format CSV for the HTML visualizer dynamic plots.
+        Columns: Candidate, FolderName, FullPath, variant, metric, mean, std, n
+        One row per Candidate × variant × metric combination.
+        """
+        if not self.aggregator:
+            logger.warning('No aggregator — cannot save dynamic CSV.')
+            return
+        all_dfs = []
+        for letter in sorted(self.aggregator.candidate_aggregators.keys()):
+            agg  = self.aggregator.candidate_aggregators[letter]
+            info = self.candidates_info.get(letter, {})
+            df   = agg.to_summary_dataframe()
+            if df is not None and not df.empty:
+                df = df.copy()
+                df['Candidate']  = letter
+                df['FolderName'] = info.get('name', 'Unknown')
+                df['FullPath']   = info.get('path', 'Unknown')
+                all_dfs.append(df)
+        if all_dfs:
+            out = pd.concat(all_dfs, ignore_index=True)
+            # Reorder: Candidate first
+            cols = ['Candidate', 'FolderName', 'FullPath', 'variant', 'metric', 'mean', 'std', 'n']
+            cols = [c for c in cols if c in out.columns] + [c for c in out.columns if c not in cols]
+            out[cols].to_csv(output_path, index=False)
+            logger.info(f'Dynamic CSV saved: {output_path} ({len(out)} rows)')
+        else:
+            logger.warning('No data for dynamic CSV.')
 
     # ------------------------------------------------------------------
     def save_candidates_summary_txt(self, output_path):

@@ -57,7 +57,7 @@ class DataAggregator:
             out[variant] = {}
             for k, v in metrics.items():
                 arr = np.asarray(v) if not isinstance(v, np.ndarray) else v
-                if arr.ndim >= 1 and arr.shape[0] > 1:
+                if arr.ndim >= 1 and arr.shape[0] >= 1:
                     out[variant][k] = arr
                 # scalar / tiny arrays stored as-is under summary, not per_rollout
         return out
