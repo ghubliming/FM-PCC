@@ -1,0 +1,224 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 21 21:45:50 UTC 2026
+JOB NAME:  load_results_imf
+JOB ID:    20672
+NODE:      i6-gpu-1
+================================================================================
+[ utils ] Set plot_path to: logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion/plots/load_results_output_all_seeds
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-r ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 100.75 +- 43.25
+Average violations: 37.83 +- 48.93
+Average total violations: 1.101 +- 1.492
+Average time: 0.33 +- 0.01
+$100.8 \pm 43.3$ & $0.67$ & $0.00$ & $37.8 \pm 48.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-r-tightened ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.33
+Success rate (constraints): 0.33
+Average steps: 100.50 +- 44.55
+Average violations: 36.00 +- 50.91
+Average total violations: 0.616 +- 0.870
+Average time: 0.39 +- 0.02
+$100.5 \pm 44.6$ & $0.67$ & $0.33$ & $36.0 \pm 50.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 103.75 +- 40.26
+Average violations: 39.00 +- 48.11
+Average total violations: 1.170 +- 1.446
+Average time: 0.36 +- 0.00
+$103.8 \pm 40.3$ & $0.67$ & $0.00$ & $39.0 \pm 48.1$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.33
+Success rate (constraints): 0.33
+Average steps: 100.50 +- 44.52
+Average violations: 36.00 +- 50.91
+Average total violations: 0.616 +- 0.871
+Average time: 0.43 +- 0.04
+$100.5 \pm 44.5$ & $0.67$ & $0.33$ & $36.0 \pm 50.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-t ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 101.50 +- 42.51
+Average violations: 38.00 +- 48.84
+Average total violations: 1.106 +- 1.488
+Average time: 0.32 +- 0.01
+$101.5 \pm 42.5$ & $0.67$ & $0.00$ & $38.0 \pm 48.8$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-t-tightened ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.33
+Success rate (constraints): 0.33
+Average steps: 100.00 +- 45.01
+Average violations: 36.00 +- 50.91
+Average total violations: 0.616 +- 0.870
+Average time: 0.44 +- 0.02
+$100.0 \pm 45.0$ & $0.67$ & $0.33$ & $36.0 \pm 50.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: diffuser ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 62.00 +- 0.00
+Average violations: 16.33 +- 9.29
+Average total violations: 8.607 +- 10.431
+Average time: 0.19 +- 0.00
+$62.0 \pm 0.0$ & $0.67$ & $0.00$ & $16.3 \pm 9.3$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: gradient ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 62.00 +- 0.00
+Average violations: 16.33 +- 9.29
+Average total violations: 8.607 +- 10.431
+Average time: 0.19 +- 0.00
+$62.0 \pm 0.0$ & $0.67$ & $0.00$ & $16.3 \pm 9.3$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: gradient-tightened ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 62.00 +- 0.00
+Average violations: 16.33 +- 9.29
+Average total violations: 8.607 +- 10.431
+Average time: 0.20 +- 0.00
+$62.0 \pm 0.0$ & $0.67$ & $0.00$ & $16.3 \pm 9.3$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: post_processing ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 100.75 +- 43.25
+Average violations: 37.83 +- 48.93
+Average total violations: 1.101 +- 1.492
+Average time: 0.33 +- 0.01
+$100.8 \pm 43.3$ & $0.67$ & $0.00$ & $37.8 \pm 48.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: post_processing-tightened ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.33
+Success rate (constraints): 0.33
+Average steps: 100.50 +- 44.55
+Average violations: 36.00 +- 50.91
+Average total violations: 0.616 +- 0.870
+Average time: 0.39 +- 0.02
+$100.5 \pm 44.6$ & $0.67$ & $0.33$ & $36.0 \pm 50.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: model_free ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 64.00 +- 0.00
+Average violations: 17.00 +- 7.87
+Average total violations: 8.235 +- 10.004
+Average time: 0.23 +- 0.00
+$64.0 \pm 0.0$ & $0.67$ & $0.00$ & $17.0 \pm 7.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: model_free-tightened ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 64.00 +- 0.00
+Average violations: 17.00 +- 7.87
+Average total violations: 8.235 +- 10.004
+Average time: 0.23 +- 0.00
+$64.0 \pm 0.0$ & $0.67$ & $0.00$ & $17.0 \pm 7.9$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt0p25 ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 111.50 +- 33.50
+Average violations: 39.17 +- 48.74
+Average total violations: 0.673 +- 0.832
+Average time: 0.49 +- 0.01
+$111.5 \pm 33.5$ & $0.67$ & $0.00$ & $39.2 \pm 48.7$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt0p5 ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.17
+Success rate (constraints): 0.17
+Average steps: 105.75 +- 39.33
+Average violations: 36.83 +- 50.33
+Average total violations: 0.628 +- 0.863
+Average time: 0.48 +- 0.07
+$105.8 \pm 39.3$ & $0.67$ & $0.17$ & $36.8 \pm 50.3$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt2p0 ------------------
+Success rate (goal): 0.67
+Success rate (goal + constraints): 0.33
+Success rate (constraints): 0.33
+Average steps: 99.50 +- 47.00
+Average violations: 36.33 +- 51.38
+Average total violations: 0.949 +- 1.367
+Average time: 0.37 +- 0.01
+$99.5 \pm 47.0$ & $0.67$ & $0.33$ & $36.3 \pm 51.4$ \\
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+Eval ODE=10, FlowSteps=10, Beta=(1.5,1.0)
+------------------ Variant: dpcc-c-tightened-dt4p0 ------------------
+Success rate (goal): 0.83
+Success rate (goal + constraints): 0.33
+Success rate (constraints): 0.33
+Average steps: 75.80 +- 37.97
+Average violations: 20.83 +- 41.37
+Average total violations: 0.434 +- 0.920
+Average time: 0.39 +- 0.01
+$75.8 \pm 38.0$ & $0.83$ & $0.33$ & $20.8 \pm 41.4$ \\
+[0.6666666666666666, 0.6666666666666666, 0.6666666666666666]
+[0.0, 0.0, 0.0]
+[100.75, 101.5, 103.75]
+[43.251445062564095, 42.50588194591426, 40.263972729972885]
+[0.6666666666666666, 0.6666666666666666, 0.6666666666666666]
+[0.3333333333333333, 0.3333333333333333, 0.3333333333333333]
+[100.5, 100.0, 100.5]
+[44.55053310567675, 45.00555521266236, 44.52246623896749]
+Results analysis completed successfully.
+================================================================================
+JOB END:   Thu May 21 21:45:53 UTC 2026
+================================================================================
