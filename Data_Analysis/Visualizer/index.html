@@ -80,6 +80,7 @@
     </div>
     <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
         <div class="control-group"><label>2. Analysis Mode</label><select id="mode-select" onchange="trigger_plot()"><option value="candidate">By Candidate</option><option value="env">By Environment</option></select></div>
+        <div class="control-group"><label>2.5 Plot Style</label><select id="plot-mode-select" onchange="trigger_plot()"><option value="bar">Bar Chart (Mean ± Std)</option><option value="scatter">Per-Seed Scatter (Raw)</option></select></div>
         <div class="control-group"><label>3. Metric</label><select id="metric-select" onchange="trigger_plot()"></select></div>
         <div class="control-group"><label>4. Environment Focus</label><select id="env-select" onchange="trigger_plot()"></select></div>
         <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-list" class="checkbox-list"></div></div>
@@ -148,7 +149,7 @@ async def load_data(event=None):
     mode = window.currentMode
     if mode == "list":
         batch = document.getElementById("batch-select").value
-        path = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
+        path = f"../analysis_results/{batch}/candidates_multidimensional_raw.csv"
     else:
         path = document.getElementById("custom-path").value
     
@@ -194,23 +195,60 @@ async def trigger_plot(event=None):
     if mode == "candidate": mask &= (df['halfspace_variant'] == env)
     subset = df[mask]
     if subset.empty: return
-    val_col = 'mean' if 'mean' in df.columns else 'value'
+    val_col = 'value' if 'value' in df.columns else 'mean'
     pivot_mean = subset.groupby([x_axis, 'variant'])[val_col].mean().unstack()
-    pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df.columns else None
+    if 'value' in df.columns:
+        pivot_std = subset.groupby([x_axis, 'variant'])['value'].std().unstack()
+    else:
+        pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df.columns else None
+        
     cols = [v for v in checked_vars if v in pivot_mean.columns]
     pivot_mean = pivot_mean[cols]
     if pivot_std is not None: pivot_std = pivot_std[cols]
+    
     # Use manual fixed width from the input box
     try:
         calc_width = float(document.getElementById("fig-width").value)
     except:
         calc_width = 10.0
     
+    is_scatter = document.getElementById("plot-mode-select").value == "scatter"
+    alpha_val = 0.3 if is_scatter else 0.9
+    
     plt.close('all')
     fig, ax = plt.subplots(figsize=(calc_width, 6))
-    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=0.9, yerr=pivot_std, capsize=4)
+    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=alpha_val, yerr=pivot_std, capsize=4)
+    
+    if is_scatter and 'seed' in subset.columns:
+        x_groups = list(pivot_mean.index)
+        v_groups = list(pivot_mean.columns)
+        seed_colors = {6: '#d62728', 7: '#1f77b4', 8: '#2ca02c', 9: '#9467bd', 10: '#ff7f0e'}
+        
+        for v_idx, v_name in enumerate(v_groups):
+            for x_idx, x_name in enumerate(x_groups):
+                bar_idx = v_idx * len(x_groups) + x_idx
+                if bar_idx < len(ax.patches):
+                    bar = ax.patches[bar_idx]
+                    x_center = bar.get_x() + bar.get_width() / 2.0
+                    
+                    mask_point = (subset[x_axis] == x_name) & (subset['variant'] == v_name)
+                    points = subset[mask_point]
+                    
+                    for _, row in points.iterrows():
+                        seed_val = row.get('seed', -1)
+                        c = seed_colors.get(seed_val, '#333333')
+                        jitter = (seed_val - 8) * 0.015 if seed_val != -1 else 0
+                        ax.scatter(x_center + jitter, row['value'], color=c, s=50, zorder=5, edgecolors='white', linewidth=0.5)
+        
+        # Add seed legend manually
+        from matplotlib.lines import Line2D
+        custom_lines = [Line2D([0], [0], marker='o', color='w', markerfacecolor=c, markersize=8) for c in seed_colors.values()]
+        ax.legend(custom_lines, [f'Seed {s}' for s in seed_colors.keys()], title="Seeds", bbox_to_anchor=(1.05, 0.5), loc='center left', fontsize=8)
+    else:
+        ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+    ax.grid(True, alpha=0.2, axis='y')
     ax.set_title(f"Dynamic Analysis: {metric.upper()}", fontsize=12, fontweight='bold'); ax.set_ylabel(metric)
-    ax.grid(True, alpha=0.2, axis='y'); ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
     plt.tight_layout()
     current_fig = fig
     area = document.getElementById("plot-area")

@@ -206,8 +206,10 @@ class BatchReporter:
         try:
             df = self.aggregator.get_full_detailed_dataframe()
             if df is not None and not df.empty:
-                # Add folder info
+                # Add folder and path info
                 df['Folder_Name'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                df['Full_Path'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
+                df['Missing_Seeds'] = df['Candidate'].apply(lambda c: str(self.candidates_info.get(c, {}).get('missing_seeds', [])) if self.candidates_info.get(c, {}).get('missing_seeds') else '')
                 df.to_csv(output_path, index=False)
                 logger.info(f"Saved multidimensional CSV ({len(df)} rows): {output_path}")
             else:
