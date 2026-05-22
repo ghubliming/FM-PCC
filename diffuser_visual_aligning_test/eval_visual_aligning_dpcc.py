@@ -280,6 +280,8 @@ class VisualAgentWrapper:
         self.curr_rollout_all_candidates  = []  # Fix 8/9: per-rollout accumulator (stores c_pos dims)
         self.curr_rollout_selected_idx    = []  # Fix 8: per-rollout accumulator
         self.curr_rollout_c_pos           = []  # Fix 9: actual robot position per step
+        self.curr_context_info            = {}  # Fix 10: set by record_context_info each rollout
+        self.history_context_info         = []  # Fix 10: per-rollout context records
         self.curr_rollout_time           = 0
         self.master_rollout_history      = {}
         self.video_frames                = []
@@ -303,6 +305,7 @@ class VisualAgentWrapper:
         self.curr_rollout_time  = 0
         self.curr_rollout_tracking_errors.clear()
         self.curr_rollout_c_pos.clear()            # Fix 9
+        self.curr_context_info = {}                # Fix 10
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
         self.history_full_plans.clear()
@@ -326,7 +329,7 @@ class VisualAgentWrapper:
 
         max_phys_err = float(np.max(self.curr_rollout_tracking_errors)
                              if self.curr_rollout_tracking_errors else 0.0)
-        avg_time = float(self.curr_rollout_time / max(1, self.step_counter))
+        avg_time = float(self.curr_rollout_time / max(1, self._replan_count))  # Fix 12: per-replan avg
 
         self.master_rollout_history[f'rollout_{ridx}'] = {
             'real_robot_pos':      np.array(self.history_real_pos),
@@ -344,6 +347,7 @@ class VisualAgentWrapper:
             'act_magnitudes':     list(self.curr_rollout_act_magnitudes),
             'dist_to_target':     list(self.curr_rollout_dist_to_target),
             'clamp_events':       list(self.curr_rollout_clamp_events),
+            'context_info':       dict(self.curr_context_info),               # Fix 10
         }
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
@@ -355,15 +359,24 @@ class VisualAgentWrapper:
         self.history_act_magnitudes.append(list(self.curr_rollout_act_magnitudes))
         self.history_dist_to_target.append(list(self.curr_rollout_dist_to_target))
         self.history_clamp_events.append(list(self.curr_rollout_clamp_events))
+        self.history_context_info.append(dict(self.curr_context_info))        # Fix 10
 
         ctx_type = 'Seen Training Context' if self.eval_on_train else 'Unseen Test Context'
+        ci = self.curr_context_info
         print(f'[ {ctx_type} {ridx} Finished ]')
+        if ci:                                                                 # Fix 10
+            print(f'  - Context idx: {ci.get("context_idx")}')
+            print(f'  - Box  init XY=({ci["box_init_xy"][0]:.3f}, {ci["box_init_xy"][1]:.3f})  '
+                  f'angle={ci["box_init_angle_deg"]:.1f}°')
+            print(f'  - Target   XY=({ci["target_xy"][0]:.3f}, {ci["target_xy"][1]:.3f})  '
+                  f'angle={ci["target_angle_deg"]:.1f}°')
+            print(f'  - Init XY dist (box→target): {ci["init_xy_dist"]:.4f} m')
         print(f'  - Total Steps: {self.step_counter}')
         print(f'  - Success status: {success}')
         print(f'  - Final Mean Distance: {mean_dist:.6f} m')
         print(f'  - Environment Mode: {mode}')
         print(f'  - Max Physical Tracking Error: {max_phys_err:.6f} m')       # Fix 9
-        print(f'  - Avg Inference Time: {avg_time:.4f} seconds/step')
+        print(f'  - Avg Inference Time: {avg_time:.4f} seconds/replan')
         print(f'  - Clamp events: {len(self.curr_rollout_clamp_events)}')
         print('-' * 80 + '\n')
 
@@ -375,6 +388,21 @@ class VisualAgentWrapper:
         d = info.get('mean_distance')
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
+
+    def record_context_info(self, context, context_idx):
+        """Called by Aligning_Sim after reset — stores initial scene config. Fix 10."""
+        pos, quat, target_pos, target_quat = context
+        init_xy_dist = float(np.linalg.norm(
+            np.array([pos[0], pos[1]]) - np.array([target_pos[0], target_pos[1]])
+        ))
+        self.curr_context_info = {
+            'context_idx':        int(context_idx),
+            'box_init_xy':        [float(pos[0]), float(pos[1])],
+            'box_init_angle_deg': float(pos[2]),
+            'target_xy':          [float(target_pos[0]), float(target_pos[1])],
+            'target_angle_deg':   float(target_pos[2]),
+            'init_xy_dist':       init_xy_dist,
+        }
 
     # Fix 9: _save_diagnostics() removed — video/gif + JSON now consolidated in _export_rollout_realtime().
 
@@ -404,15 +432,16 @@ class VisualAgentWrapper:
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_data.pkl'), 'wb') as f:
                 pickle.dump(data, f)
 
-            # Fix 9: JSON only (no .txt duplicate); max_physical_tracking_error replaces max_tracking_error
+            # Fix 9: JSON only (no .txt duplicate); Fix 10: context_info added
             stats = {
                 'rollout_index':                  int(rollout_idx),
                 'success':                        bool(data.get('success', False)),
                 'steps':                          int(data.get('steps', 0)),
                 'mean_distance':                  float(data.get('mean_distance', 0.0)),
                 'mode':                           int(data.get('mode', 0)),
-                'avg_inference_time_per_step':    float(data.get('avg_time', 0.0)),
+                'avg_inference_time_per_replan':  float(data.get('avg_time', 0.0)),  # Fix 12
                 'max_physical_tracking_error':    float(data.get('max_physical_tracking_error', 0.0)),
+                'context_info':                   data.get('context_info', {}),
             }
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_stats.json'), 'w') as sf:
                 json.dump(stats, sf, indent=4)
@@ -507,67 +536,87 @@ class VisualAgentWrapper:
             fig.savefig(os.path.join(diag_path, f'rollout_{rollout_idx}_report.png'))
             plt.close(fig)
 
-            # ── Standalone high-res MPC foresight: XY (left) + XYZ 3D (right) ──
+            # ── Standalone high-res MPC decision-point plot: XY (left) + XYZ 3D (right) ──
+            # U11: all candidates uniform green solid; replan decision-point dots (black);
+            #      des=black solid, actual=red solid (no dashes); PNG@200DPI + SVG.
             if all_cands_list:
+                from matplotlib.lines import Line2D as _Line2D
+                _STRIDE   = 6          # show every 6th replan decision point
+                n_steps   = len(real_pos)
+                n_replans = len(all_cands_list)
+                spr       = max(1, n_steps // max(1, n_replans))  # env steps per replan
+                c_arr = (np.array(c_pos_h)
+                         if (c_pos_h is not None and len(c_pos_h)) else None)
+
                 fig_mpc = plt.figure(figsize=(26, 11))
                 fig_mpc.suptitle(
-                    f'Rollout {rollout_idx} — MPC Foresight  '
-                    f'(success={data.get("success")},  {n_cands} cands/step)',
-                    fontsize=14)
+                    f'Rollout {rollout_idx} — MPC Decision Points  '
+                    f'(success={data.get("success")},  {n_cands} candidates/step,  '
+                    f'every {_STRIDE} replans shown)',
+                    fontsize=13)
                 ax_xy = fig_mpc.add_subplot(1, 2, 1)
                 ax_3d = fig_mpc.add_subplot(1, 2, 2, projection='3d')
 
-                # XY panel — every other replan for density control
-                for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
-                    if step_i % 2 != 0:
+                # ── XY panel ─────────────────────────────────────────────────
+                for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                    if step_i % _STRIDE != 0:
                         continue
+                    env_step = min(step_i * spr, n_steps - 1)
+                    anchor   = c_arr[env_step] if c_arr is not None else real_pos[env_step]
                     for b in range(cands.shape[0]):
-                        if b == sel:
-                            ax_xy.plot(cands[b, :, 0], cands[b, :, 1],
-                                       color='green', linewidth=0.8, alpha=0.9, zorder=5)
-                        else:
-                            ax_xy.plot(cands[b, :, 0], cands[b, :, 1],
-                                       color='gray', linewidth=0.2, alpha=0.18)
-                ax_xy.plot(real_pos[:, 0], real_pos[:, 1], 'k-', linewidth=1.5,
-                           label='des path', zorder=10)
-                if c_pos_h is not None and len(c_pos_h):
-                    c_arr = np.array(c_pos_h)
-                    ax_xy.plot(c_arr[:, 0], c_arr[:, 1], 'r--', linewidth=1.0,
-                               alpha=0.85, label='actual path', zorder=9)
-                ax_xy.set_title('XY — MPC Foresight', fontsize=13)
+                        ax_xy.plot(cands[b, :, 0], cands[b, :, 1],
+                                   color='green', linewidth=0.6, alpha=0.7, zorder=4)
+                    ax_xy.scatter([anchor[0]], [anchor[1]],
+                                  color='black', s=30, zorder=8, linewidths=0)
+
+                if c_arr is not None:
+                    ax_xy.plot(c_arr[:, 0], c_arr[:, 1],
+                               color='red', linewidth=1.2, zorder=9)
+                ax_xy.plot(real_pos[:, 0], real_pos[:, 1],
+                           color='black', linewidth=1.2, zorder=7)
+                _lgd = [
+                    _Line2D([0],[0], color='green', lw=0.8,
+                            label=f'MPC candidates ({n_cands}/step)'),
+                    _Line2D([0],[0], color='black', lw=1.2, label='des (commanded)'),
+                    _Line2D([0],[0], color='red',   lw=1.2, label='actual (c_pos)'),
+                    _Line2D([0],[0], marker='o', color='w', markerfacecolor='black',
+                            markersize=7, label='replan decision point'),
+                ]
+                ax_xy.legend(handles=_lgd, fontsize=9)
+                ax_xy.set_title(f'XY — MPC Decision Points  (every {_STRIDE} replans)',
+                                fontsize=12)
                 ax_xy.set_xlabel('X (m)', fontsize=11)
                 ax_xy.set_ylabel('Y (m)', fontsize=11)
-                ax_xy.legend(fontsize=10)
                 ax_xy.set_aspect('equal', adjustable='datalim')
                 ax_xy.grid(True, alpha=0.3)
 
-                # 3D XYZ panel
-                for step_i, (cands, sel) in enumerate(zip(all_cands_list, sel_idx_list)):
-                    if step_i % 2 != 0:
+                # ── 3D XYZ panel ──────────────────────────────────────────────
+                for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                    if step_i % _STRIDE != 0:
                         continue
+                    env_step = min(step_i * spr, n_steps - 1)
+                    anchor   = c_arr[env_step] if c_arr is not None else real_pos[env_step]
                     for b in range(cands.shape[0]):
-                        if b == sel:
-                            ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
-                                       color='green', linewidth=0.8, alpha=0.9)
-                        else:
-                            ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
-                                       color='gray', linewidth=0.2, alpha=0.18)
-                ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
-                           'k-', linewidth=1.5, label='des path')
-                if c_pos_h is not None and len(c_pos_h):
-                    c_arr = np.array(c_pos_h)
+                        ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
+                                   color='green', linewidth=0.6, alpha=0.7)
+                    ax_3d.scatter([anchor[0]], [anchor[1]], [anchor[2]],
+                                  color='black', s=30)
+
+                if c_arr is not None:
                     ax_3d.plot(c_arr[:, 0], c_arr[:, 1], c_arr[:, 2],
-                               'r--', linewidth=1.0, alpha=0.85, label='actual')
-                ax_3d.set_title('XYZ — MPC Foresight (3D)', fontsize=13)
+                               color='red', linewidth=1.2, label='actual (c_pos)')
+                ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
+                           color='black', linewidth=1.2, label='des (commanded)')
+                ax_3d.set_title('XYZ — MPC Decision Points (3D)', fontsize=12)
                 ax_3d.set_xlabel('X (m)', fontsize=9)
                 ax_3d.set_ylabel('Y (m)', fontsize=9)
                 ax_3d.set_zlabel('Z (m)', fontsize=9)
-                ax_3d.legend(fontsize=10)
+                ax_3d.legend(fontsize=9)
 
                 fig_mpc.tight_layout()
-                fig_mpc.savefig(
-                    os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight.png'),
-                    dpi=200, bbox_inches='tight')
+                _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')
+                fig_mpc.savefig(f'{_mpc_base}.png', dpi=200, bbox_inches='tight')
+                fig_mpc.savefig(f'{_mpc_base}.svg', bbox_inches='tight')
                 plt.close(fig_mpc)
 
         except Exception as e:
@@ -668,8 +717,8 @@ class VisualAgentWrapper:
             cond = {0: obs_anchor}
 
         # ── Plan (or execute from cached action chunk) ─────────────────────
-        t_start = time.time()
         if self.action_counter == self.action_seq_size:
+            t_replan = time.time()   # Fix 12: time only the replan call, not cached fetches
             self.action_counter = 0
             self.model.eval()
 
@@ -793,6 +842,7 @@ class VisualAgentWrapper:
 
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
+            self.curr_rollout_time += time.time() - t_replan   # Fix 12: accumulate per-replan time
 
         next_action    = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy().squeeze(0)   # (3,)
@@ -812,7 +862,6 @@ class VisualAgentWrapper:
         self.history_desired_actions.append(next_action_np.copy())
         self.last_predicted_pos = self.mental_robot_pos.copy()
 
-        self.curr_rollout_time += time.time() - t_start
         self.action_counter += 1
         self.step_counter   += 1
         return next_action_np.reshape(1, -1)   # (1, 3) — sim expects (1, act_dim)
@@ -1174,7 +1223,7 @@ if __name__ == '__main__':
                       f' +- {np.std(n_steps[n_success > 0]) if n_success.sum() else 0:.2f}')
                 print(f'Avg steps (all trials):    {np.mean(n_steps):.2f} +- {np.std(n_steps):.2f}')
                 print(f'Physical tracking error:   mean={mean_phys:.4f} m  max={max_phys:.4f} m')
-                print(f'Avg inference time/step:   {np.mean(agent.history_avg_time):.3f} s')
+                print(f'Avg inference time/replan: {np.mean(agent.history_avg_time):.3f} s')
                 print('-' * 80 + '\n')
 
             finally:
