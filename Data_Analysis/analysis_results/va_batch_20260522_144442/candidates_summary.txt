@@ -1,0 +1,21 @@
+======================================================================
+FM VISUAL ALIGNING — CROSS-CANDIDATE COMPARISON
+======================================================================
+Generated: 2026-05-22 14:44:47
+
+CANDIDATES
+----------------------------------------------------------------------
+  A: H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4
+
+RANKINGS (by success rate)
+----------------------------------------------------------------------
+  1. Candidate A: 0.0% success, 0.4452m avg dist, 1.4374s avg time
+      diffuser                         0.0% | dist=0.3601m
+      dpcc-c                           0.0% | dist=0.4756m
+      dpcc-r                           0.0% | dist=0.4756m
+      dpcc-t                           0.0% | dist=0.3786m
+      gradient                         0.0% | dist=0.4756m
+      model_free                       0.0% | dist=0.4756m
+      post_processing                  0.0% | dist=0.4756m
+
+======================================================================

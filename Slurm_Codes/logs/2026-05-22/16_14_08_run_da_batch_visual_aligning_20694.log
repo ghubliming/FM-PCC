@@ -1,0 +1,11 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - ======================================================================
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - FM Visual Aligning — Multi-Candidate Batch Analysis
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - ======================================================================
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - Start: 2026-05-22 14:14:09
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - Source: json  Seed: 6
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - Output: Data_Analysis/analysis_results/va_batch_20260522_141409
+[2026-05-22 14:14:09] DA_VA_Batch - INFO - [1/5] Discovering candidates...
+No candidates found in logs/visual-aligning-dpcc/plans
+[2026-05-22 14:14:09] DA_VA_Batch - ERROR - No candidates found. Exiting.
+[ DA ] Updated manifest: /data/home/llim/FMPCC/FM-PCC/Data_Analysis/analysis_results/results_manifest.json
