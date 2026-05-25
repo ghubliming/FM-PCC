@@ -195,14 +195,14 @@ for seed in selected_seeds:
     )
     model = model_config()
 
-    # ── 3. Diffusion engine — VisualGaussianDiffusion ─────────────────────────
-    from fm_visual_aligning.models.visual_gaussian_diffusion import VisualGaussianDiffusion
+    # ── 3. FM engine — VisualFlowMatching ─────────────────────────────────────
+    from fm_visual_aligning.models.visual_gaussian_diffusion import VisualFlowMatching
 
     _n_diff_steps = getattr(args, 'n_diffusion_steps', 100)
     print(f'[ train ] n_timesteps (legacy buffer size) = {_n_diff_steps}  '
           f'(FM uses continuous time; this value does not affect training dynamics)')
     diffusion_config = utils.Config(
-        VisualGaussianDiffusion,
+        VisualFlowMatching,
         savepath=(args.savepath, 'diffusion_config.pkl'),
         horizon=args.horizon,
         observation_dim=6,         # 6D obs: [des_c_pos(3), c_pos(3)]

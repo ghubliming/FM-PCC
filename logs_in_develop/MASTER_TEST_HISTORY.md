@@ -1174,7 +1174,12 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 * **Visual Aligning DPCC (Working Run)**: The baseline DPCC configuration located at `FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64` was evaluated. Note that this is not a final run, but a working run that returns quite good results.
 * **FM Visual Aligning (Working Run)**: The continuous-time FM architecture evaluation at `FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_a1.5_b1.0_aw1_VTrue_steps1000_bs64/H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4/6/results` was completed. Similarly, this is not a final run, but a working run that also returns quite good results.
 
+***
 
+## [DANGER]Gen7 / Gen3: API Rename - Flow Matching Classes (May 25, 2026)
 
+**Keywords**: API Rename, Flow Matching, GaussianDiffusion, FlowMatchingODE, Danger Change.
 
-
+* **DANGER CHANGE**: Renamed `GaussianDiffusion` to `FlowMatchingODE` across 4 active FM modules (`FMv3ODE`, `FMDrifting`, `FMiMeanFlow`, `FMVisual`).
+* **Other Renames**: `iMFDiffusion` to `iMeanFlowODE`, `VisualGaussianDiffusion` to `VisualFlowMatching`.
+* **Details**: For the full audit trail and breakdown of changed files, refer to [`CHANGELOG_API_RENAME.md`](./API_UPDATE/CHANGELOG_API_RENAME.md).
