@@ -1,13 +1,13 @@
 import torch
-from fm_visual_aligning.models.diffusion import GaussianDiffusion
+from fm_visual_aligning.models.diffusion import FlowMatchingODE
 from fm_visual_aligning.models.helpers import apply_conditioning
 
 
-class VisualGaussianDiffusion(GaussianDiffusion):
+class VisualFlowMatching(FlowMatchingODE):
     """
-    DDPM engine for Visual-DPCC (Gen6V4).
+    FM engine for Visual-DPCC (Gen6V4).
 
-    Extends GaussianDiffusion with:
+    Extends FlowMatchingODE with:
     - Explicit loss(trajectories, conditions) — matches Batch namedtuple unpacking
       by Trainer.train_epoch():  loss, infos = self.model.loss(*batch)
       *batch unpacks Batch(trajectories, conditions) → loss(trajectories, conditions)
@@ -27,7 +27,7 @@ class VisualGaussianDiffusion(GaussianDiffusion):
                  ode_solver_step_size_v3=None,
                  **kwargs):
         # Intercept all ODE solver params so they don't cause TypeError in the
-        # base GaussianDiffusion.__init__ (which has no **kwargs).
+        # base FlowMatchingODE.__init__ (which has no **kwargs).
         super().__init__(*args, **kwargs)
 
     # ── training ──────────────────────────────────────────────────────────────

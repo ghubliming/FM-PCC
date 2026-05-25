@@ -20,7 +20,7 @@ from .helpers import (
 #     * "torchdiffeq"  -> use torchdiffeq.odeint when torchdiffeq is installed
 # - ode_solver_method_v3 and optional tolerances/step-size are config-driven.
 
-class GaussianDiffusion(nn.Module):
+class FlowMatchingODE(nn.Module):
     def __init__(self, model, horizon, observation_dim, action_dim, goal_dim=0, n_timesteps=1000,
         loss_type='l1', clip_denoised=False, predict_epsilon=True, action_weight=1.0,
         loss_discount=1.0, loss_weights=None, returns_condition=False, condition_guidance_w=0.1,

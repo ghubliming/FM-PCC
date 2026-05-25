@@ -327,7 +327,7 @@ base = {
     'flow_matching_v3_ode_selectable': {
         # Copied-folder FM-v3 variant with config-selectable ODE backend/method.
         'model': 'models.Flow_matcher_U_Net_v2',
-        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
         # 'n_diffusion_steps': 20, # this old parameter is not used in v3
         'loss_type': 'l2',
@@ -383,7 +383,7 @@ base = {
     'flow_matching_v3_drifting': {
         # Drift-augmented Flow Matcher v3: combines FM ODE with drift loss guidance.
         'model': 'models.Flow_matcher_U_Net_v2',
-        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
         'loss_type': 'l2',
         'loss_discount': 1.0,
@@ -441,7 +441,7 @@ base = {
         
         ## model & engine (REAL iMF from official repo)
         'model': 'flow_matcher_v3_imeanflow.models.iMeanFlowEngine',
-        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'diffusion': 'flow_matcher_v3_imeanflow.models.iMeanFlowODE',
         'horizon': 8,
         
         ## iMF architecture (matches official repo)
@@ -687,7 +687,7 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 model
-        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
         'action_weight': 1,
         'time_beta_alpha_v3': 1.5,
@@ -737,7 +737,7 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 drifting model
-        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
         'action_weight': 1,
         'time_beta_alpha_v3': 1.5,
@@ -783,7 +783,7 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 imeanflow model
-        'diffusion': 'flow_matcher_v3_imeanflow.models.iMFDiffusion',
+        'diffusion': 'flow_matcher_v3_imeanflow.models.iMeanFlowODE',
         'horizon': 8,
         'action_weight': 10,
         'u_loss_weight': 1.0,

@@ -153,7 +153,7 @@ for exp in exps:
                 if robot_name == 'pointmaze': env.env.env.env.point_env.frame_skip = 2
                 if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
                 
-                if fm_model.__class__.__name__ in ['GaussianDiffusion', 'iMFDiffusion']:
+                if fm_model.__class__.__name__ in ['FlowMatchingODE', 'iMeanFlowODE']:
                     trajectory_dim = fm_model.observation_dim + fm_model.action_dim - fm_model.goal_dim if hasattr(fm_model, 'observation_dim') else fm_model.transition_dim - fm_model.goal_dim
                     action_dim = fm_model.action_dim
                     fm_variant = 'states_actions'

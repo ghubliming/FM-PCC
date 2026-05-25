@@ -388,7 +388,7 @@ base = {
         # DPCC SLSQP projector enforces workspace bounds on c_pos (indices 6-8).
         # ======================================================================================
         'model': 'fm_visual_aligning.models.visual_unet.VisualUNet',
-        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'action_dim': 3,            # 3D velocity: [dx, dy, dz]
         'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)] — MUST be 6, never 3 or 128
         'if_vision': True,
@@ -663,7 +663,7 @@ base = {
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
         ),
         'exp_name': watch(args_to_watch_fm_visual_plan),
-        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'returns_condition': False,
         'predict_epsilon': True,
         'diffusion_timestep_threshold': _yaml_threshold,
