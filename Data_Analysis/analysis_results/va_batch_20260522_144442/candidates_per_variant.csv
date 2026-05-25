@@ -1,0 +1,8 @@
+Candidate,FolderName,Variant,SuccessRate,MeanDist_m,AvgTime_s,MaxPhysErr_m,AvgSteps
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,diffuser,0.0,0.36011362075805664,1.4270341396331787,1.1242966651916504,400.0
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,dpcc-c,0.0,0.4755541980266571,1.4394241571426392,0.9779186248779297,400.0
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,dpcc-r,0.0,0.4755541980266571,1.4384937286376953,0.9779186248779297,400.0
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,dpcc-t,0.0,0.37864816188812256,1.438493251800537,1.0708999633789062,400.0
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,gradient,0.0,0.4755541980266571,1.4379991292953491,0.9762166738510132,400.0
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,model_free,0.0,0.4755541980266571,1.4386652708053589,0.9798974990844727,400.0
+A,H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4,post_processing,0.0,0.4755541980266571,1.442009449005127,0.9762166738510132,400.0

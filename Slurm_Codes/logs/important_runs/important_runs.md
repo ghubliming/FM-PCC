@@ -269,10 +269,15 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/00_00_51_train_visual_aligning_dpcc_206
 - Massive Reeval on it (killed by SLURM time limit) u9
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/00_10_16_eval_visual_aligning_dpcc_20681.log
 
+- Turn off visual
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_27_visual_aligning_pipeline_dpcc_20697.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_27_train_visual_aligning_dpcc_20698.log
+
 ---
 
 
-- FM Gen7 New fm_visual_alinging
+# FM Gen7 New fm_visual_alinging
 
 First FM Gen7 New fm_visual_alinging run
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-20/17_41_20_train_fm_visual_aligning_20585.log
@@ -333,3 +338,16 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/18_02_28_eval_fm_visual_aligning_20665.
 
 check if less training step is enough. (1e4 train, use trick of 1000 steps to distinguish last 900 step(1e5 train))
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/22_37_14_eval_fm_visual_aligning_20669.log
+
+---
+1000(1e4 train) ODE100
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/12_49_23_eval_fm_visual_aligning_20688.log
+
+900(1e5 train) ODE20
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/17_08_32_eval_fm_visual_aligning_20696.log
+(latest diag 22 May, fix10.2(after 12))
+
+- Turn off visual
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_49_fm_visual_aligning_pipeline_20700.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_49_train_fm_visual_aligning_20701.log
