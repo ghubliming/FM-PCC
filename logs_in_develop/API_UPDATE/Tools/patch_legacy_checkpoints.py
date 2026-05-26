@@ -2,13 +2,15 @@
 """
 patch_legacy_checkpoints.py — Patch one FM-PCC checkpoint folder after the API rename.
 
-Give the path to an experiment folder. The script checks the folder's basename for
-old class tokens. If none are found the script exits immediately without touching
-anything. If legacy tokens are found it patches all pkl/json config files inside,
-then renames the folder to the corrected name.
+Scan-then-fix flow:
+  1. SCAN  — check folder name, every .pkl, every args.json for legacy tokens.
+  2. REPORT — print exactly what is legacy and what is already clean.
+  3. FIX   — patch only the items that are actually legacy; leave clean items untouched.
+
+Safe to point at an already-correct path — if nothing is legacy, nothing is written.
 
 Usage:
-    python patch_legacy_checkpoints.py --path <folder_path> [--dry-run] [--backup]
+    python patch_legacy_checkpoints.py --path <folder> [--dry-run] [--backup]
 """
 
 import argparse
@@ -18,9 +20,8 @@ import pickle
 import shutil
 import sys
 
-# ── Token remap ────────────────────────────────────────────────────────────
-# Applied as plain string replacement on the folder basename.
-# Longer / more-specific patterns listed first to avoid partial matches.
+# ── Token remap (folder name / json string replacement) ───────────────────
+# Longer / more-specific patterns first to avoid partial matches.
 TOKEN_REMAP = [
     ('fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
      'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching'),
@@ -38,7 +39,6 @@ TOKEN_REMAP = [
      'flow_matcher_v3_imeanflow.models.imf_diffusion.iMeanFlowODE'),
     ('flow_matcher_v3_ode_selectable.models.diffusion.GaussianDiffusion',
      'flow_matcher_v3_ode_selectable.models.diffusion.FlowMatchingODE'),
-    # Short-form fallbacks
     ('models.visual_gaussian_diffusion.VisualGaussianDiffusion',
      'models.visual_gaussian_diffusion.VisualFlowMatching'),
     ('models.imf_diffusion.iMFDiffusion', 'models.imf_diffusion.iMeanFlowODE'),
@@ -77,55 +77,61 @@ class RemapUnpickler(pickle.Unpickler):
         return super().find_class(module, name)
 
 
-def is_legacy(basename):
-    """Return True if the folder basename contains any old class token."""
-    return any(tok in basename for tok in OLD_TOKENS)
-
-
 def apply_token_remap(s):
     for old, new in TOKEN_REMAP:
         s = s.replace(old, new)
     return s
 
 
-def patch_pkl(path, dry_run=False, backup=False):
+def has_legacy_token(s):
+    return any(tok in s for tok in OLD_TOKENS)
+
+
+# ── Scan helpers ───────────────────────────────────────────────────────────
+
+def scan_pkl(path):
+    """Return (is_legacy, raw_bytes, remapped_bytes_or_None, error_str_or_None)."""
     with open(path, 'rb') as f:
         raw = f.read()
     try:
         obj     = RemapUnpickler(io.BytesIO(raw)).load()
         new_raw = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
     except Exception as e:
-        print(f'  [pkl] ERROR: {os.path.basename(path)}: {e}')
-        return False
-    if new_raw == raw:
-        print(f'  [pkl] unchanged: {os.path.basename(path)}')
-        return False
-    print(f'  [pkl] {"(dry) " if dry_run else ""}patching: {os.path.basename(path)}')
+        return False, raw, None, str(e)
+    legacy = (new_raw != raw)
+    return legacy, raw, new_raw if legacy else None, None
+
+
+def scan_json(path):
+    """Return (is_legacy, original_text, new_text_or_None)."""
+    with open(path, 'r') as f:
+        text = f.read()
+    new_text = apply_token_remap(text)
+    legacy = (new_text != text)
+    return legacy, text, new_text if legacy else None
+
+
+# ── Fix helpers ────────────────────────────────────────────────────────────
+
+def fix_pkl(path, new_raw, dry_run=False, backup=False):
     if not dry_run:
         if backup:
             shutil.copy2(path, path + '.bak')
         with open(path, 'wb') as f:
             f.write(new_raw)
-    return True
 
 
-def patch_json(path, dry_run=False):
-    with open(path, 'r') as f:
-        text = f.read()
-    new_text = apply_token_remap(text)
-    if new_text == text:
-        print(f'  [json] unchanged: {os.path.basename(path)}')
-        return False
-    print(f'  [json] {"(dry) " if dry_run else ""}patching: {os.path.basename(path)}')
+def fix_json(path, new_text, dry_run=False):
     if not dry_run:
         with open(path, 'w') as f:
             f.write(new_text)
-    return True
 
+
+# ── Main ───────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--path', required=True)
+    parser.add_argument('--path',    required=True)
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--backup',  action='store_true')
     args = parser.parse_args()
@@ -134,48 +140,86 @@ def main():
     basename = os.path.basename(folder)
     parent   = os.path.dirname(folder)
 
-    print(f'[ patch ] Path     : {folder}')
-
-    # ── Guard: only act on legacy folders ─────────────────────────────────
     if not os.path.isdir(folder):
         print(f'[ patch ] ERROR: path does not exist or is not a directory.')
         sys.exit(1)
 
-    if not is_legacy(basename):
-        print(f'[ patch ] Folder name contains no legacy tokens — nothing to do.')
-        sys.exit(0)
-
-    new_basename = apply_token_remap(basename)
-    new_folder   = os.path.join(parent, new_basename)
-    print(f'[ patch ] New name : {new_basename}')
-    print(f'[ patch ] Dry-run  : {args.dry_run}')
+    print(f'[ patch ] Path    : {folder}')
+    print(f'[ patch ] Dry-run : {args.dry_run}')
     print()
 
-    # ── Patch pkl / json inside ────────────────────────────────────────────
-    n_patched = 0
+    # ── 1. SCAN ────────────────────────────────────────────────────────────
+    legacy_folder = has_legacy_token(basename)
+    legacy_pkls   = {}   # path → new_raw
+    legacy_jsons  = {}   # path → new_text
+    errors        = {}   # path → error string
+
     for dirpath, _, filenames in os.walk(folder):
         for fname in filenames:
             fpath = os.path.join(dirpath, fname)
+            rel   = os.path.relpath(fpath, folder)
+
             if fname.endswith('.pkl') and fname != 'losses.pkl':
-                if patch_pkl(fpath, dry_run=args.dry_run, backup=args.backup):
-                    n_patched += 1
+                is_leg, _, new_raw, err = scan_pkl(fpath)
+                if err:
+                    errors[rel] = err
+                elif is_leg:
+                    legacy_pkls[fpath] = new_raw
+
             elif fname == 'args.json':
-                if patch_json(fpath, dry_run=args.dry_run):
-                    n_patched += 1
+                is_leg, _, new_text = scan_json(fpath)
+                if is_leg:
+                    legacy_jsons[fpath] = new_text
+
+    # ── 2. REPORT ──────────────────────────────────────────────────────────
+    any_legacy = legacy_folder or legacy_pkls or legacy_jsons
+
+    print('[ scan ] Folder name  :', 'LEGACY' if legacy_folder else 'clean')
+    for fpath in sorted(legacy_pkls):
+        print(f'[ scan ] pkl   LEGACY  : {os.path.relpath(fpath, folder)}')
+    for fpath in sorted(legacy_jsons):
+        print(f'[ scan ] json  LEGACY  : {os.path.relpath(fpath, folder)}')
+    for rel, err in sorted(errors.items()):
+        print(f'[ scan ] pkl   ERROR   : {rel}  ({err})')
+
+    if not any_legacy and not errors:
+        print()
+        print('[ patch ] Everything is already up to date — nothing to do.')
+        sys.exit(0)
 
     print()
-    print(f'[ patch ] {n_patched} file(s) patched.')
 
-    # ── Rename folder ──────────────────────────────────────────────────────
-    if os.path.exists(new_folder):
-        print(f'[ patch ] WARNING: rename target already exists — skipping rename.')
-        print(f'          {new_folder}')
-    else:
-        print(f'[ patch ] {"(dry) " if args.dry_run else ""}rename:')
-        print(f'          {basename}')
-        print(f'          → {new_basename}')
-        if not args.dry_run:
-            os.rename(folder, new_folder)
+    # ── 3. FIX ─────────────────────────────────────────────────────────────
+    n_fixed = 0
+
+    for fpath, new_raw in sorted(legacy_pkls.items()):
+        rel = os.path.relpath(fpath, folder)
+        print(f'  [pkl]  {"(dry) " if args.dry_run else ""}fixing: {rel}')
+        fix_pkl(fpath, new_raw, dry_run=args.dry_run, backup=args.backup)
+        n_fixed += 1
+
+    for fpath, new_text in sorted(legacy_jsons.items()):
+        rel = os.path.relpath(fpath, folder)
+        print(f'  [json] {"(dry) " if args.dry_run else ""}fixing: {rel}')
+        fix_json(fpath, new_text, dry_run=args.dry_run)
+        n_fixed += 1
+
+    if legacy_folder:
+        new_basename = apply_token_remap(basename)
+        new_folder   = os.path.join(parent, new_basename)
+        if os.path.exists(new_folder):
+            print(f'  [dir]  WARNING: rename target already exists — skipping.')
+            print(f'         {new_folder}')
+        else:
+            print(f'  [dir]  {"(dry) " if args.dry_run else ""}rename:')
+            print(f'         {basename}')
+            print(f'         → {new_basename}')
+            if not args.dry_run:
+                os.rename(folder, new_folder)
+            n_fixed += 1
+
+    print()
+    print(f'[ patch ] {"(dry) " if args.dry_run else ""}{n_fixed} item(s) fixed.')
 
 
 if __name__ == '__main__':
