@@ -135,38 +135,104 @@ constraint_types: ['bounds', 'dynamics']  # AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md
 # ── Geo constraint sweep ────────────────────────────────────────────────────────
 # Outer loop over geometric constraint configurations.  Each entry produces a
 # separate output subtree:  results/{name}/{variant}/
-# _1 = current baseline parameters (active).
-# _2 = placeholder for parameter tuning (uncomment + edit values to run).
+#
+# Naming scheme:
+#   no index      — no tunable geometric parameters (no_constraint, dynamics_only)
+#   _1 / _2       — parameter variants for single-type configs (bounds_only, obstacle_only)
+#   combined_N    — numbered combination slots; content defined by constraint_types below
+#
+# Named dims for obstacle_constraints (map to 9D trajectory indices):
+#   'x'=6  'y'=7  'z'=8  (EE Cartesian position, metres)
+#   'dx'=0 'dy'=1 'dz'=2 (action / velocity deltas)
+#   'des_x'=3 'des_y'=4 'des_z'=5 (desired EE position)
 geo_constraint_variants:
-  # ── no constraints: raw FM, projector is a no-op — baseline reference ──────
-  # No _1/_2 index: constraint_types: [] has no tunable parameters.
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # TIER 1 — Baseline
+  # ════════════════════════════════════════════════════════════════════════════
+  # Projector is a no-op.  Use to verify raw FM output and as result denominator.
+  # No index: constraint_types: [] has no tunable parameters.
   - name: no_constraint
     constraint_types: []
 
-  # ── bounds only: workspace box, no kinematic integration link ──────────────
+  # ════════════════════════════════════════════════════════════════════════════
+  # TIER 2 — Single-type ablation  (isolate effect of each constraint)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  # ── dynamics only ─────────────────────────────────────────────────────────
+  # Euler integration link only: c_pos[t+1] = c_pos[t] + act[t].
+  # No geometric bounds, no obstacles.  No tunable params → no index.
+  - name: dynamics_only
+    constraint_types: ['dynamics']
+
+  # ── bounds only ───────────────────────────────────────────────────────────
+  # Workspace box on EE position (dims 6-8).  No kinematic link.
+  # workspace_bounds + enlarge_constraints are tunable → _1/_2 index.
   - name: bounds_only_1
     constraint_types: ['bounds']
-    # workspace_bounds and enlarge_constraints inherited from top-level defaults above
+    # workspace_bounds and enlarge_constraints inherited from top-level defaults
 
-  # ── bounds + dynamics: box + Euler integration consistency ─────────────────
-  - name: bounds_dynamics_1
-    constraint_types: ['bounds', 'dynamics']
-    # workspace_bounds and enlarge_constraints inherited from top-level defaults above
-
-  # ── Placeholder _2 configs — uncomment and edit values to run a second sweep ─
-  #- name: bounds_only_2
+  #- name: bounds_only_2           # ← parameter tuning variant; edit values below
   #  constraint_types: ['bounds']
   #  workspace_bounds:
-  #    lb: [0.3, -0.35, 0.05]   # ← tune: widen/narrow x forward reach
-  #    ub: [0.7,  0.35, 0.40]   # ← tune: widen/narrow x forward reach
-  #  enlarge_constraints: 0.01  # ← tune: tightening margin for *-tightened variants
+  #    lb: [0.3, -0.35, 0.05]     # ← tune: adjust reach envelope
+  #    ub: [0.7,  0.35, 0.40]     # ← tune
+  #  enlarge_constraints: 0.01    # ← tune: tightening margin for *-tightened variants
 
-  #- name: bounds_dynamics_2
-  #  constraint_types: ['bounds', 'dynamics']
-  #  workspace_bounds:
-  #    lb: [0.3, -0.35, 0.05]   # ← tune
-  #    ub: [0.7,  0.35, 0.40]   # ← tune
-  #  enlarge_constraints: 0.01  # ← tune
+  # ── obstacle only ─────────────────────────────────────────────────────────
+  # Sphere exclusion zone only.  Disabled: obstacle geometry not yet measured.
+  # obstacle_constraints are tunable (center, radius, dims) → _1/_2 index.
+  #
+  # Virtual obstacle sits on the direct block-push path (centre of reach envelope),
+  # testing DPCC routing around it — analogous to avoiding paper's Table 1.
+  #
+  # 2D cylinder (x-y plane, same style as avoiding paper — no z constraint):
+  #- name: obstacle_only_1
+  #  constraint_types: ['obstacles']
+  #  obstacle_constraints:
+  #    - type: sphere_outside
+  #      dimensions: ['x', 'y']   # 2D cylinder projection — avoiding-paper style
+  #      center: [0.50, 0.00]     # metres — tune to actual obstacle position
+  #      radius: 0.06             # metres — tune to actual obstacle size
+  #
+  #- name: obstacle_only_2         # ← 3D sphere variant (stricter, more realistic)
+  #  constraint_types: ['obstacles']
+  #  obstacle_constraints:
+  #    - type: sphere_outside
+  #      dimensions: ['x', 'y', 'z']   # true 3D sphere
+  #      center: [0.50, 0.00, 0.12]    # metres — z ≈ table + block height; tune
+  #      radius: 0.06                   # metres — tune
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # TIER 3 — Combinations  (numbered slots; define content via constraint_types)
+  # ════════════════════════════════════════════════════════════════════════════
+  # combined_N are flexible experiment slots.  Change constraint_types (and add
+  # obstacle_constraints if needed) to define what each slot tests.
+  # Obstacle-involving slots are disabled until obstacle geometry is measured.
+
+  # combined_1: dynamics + obstacle  [disabled — obstacle geometry not ready]
+  #- name: combined_1
+  #  constraint_types: ['dynamics', 'obstacles']
+  #  obstacle_constraints:
+  #    - type: sphere_outside
+  #      dimensions: ['x', 'y']
+  #      center: [0.50, 0.00]
+  #      radius: 0.06
+
+  # combined_2: dynamics + bounds  [active — DPCC-equivalent for this task]
+  # Closest match to the avoiding paper's full constraint set (minus halfspace/
+  # obstacle which have no physical analogue in the aligning workspace).
+  - name: combined_2
+    constraint_types: ['dynamics', 'bounds']
+
+  # combined_3: dynamics + bounds + obstacle  [disabled — obstacle geometry not ready]
+  #- name: combined_3
+  #  constraint_types: ['dynamics', 'bounds', 'obstacles']
+  #  obstacle_constraints:
+  #    - type: sphere_outside
+  #      dimensions: ['x', 'y']
+  #      center: [0.50, 0.00]
+  #      radius: 0.06
 
 # Safety clamp — max physical delta per step (metres). null = disabled.
 # 0.01 m ≈ 45× the healthy Gen6V4 step size; stops ODE explosions while

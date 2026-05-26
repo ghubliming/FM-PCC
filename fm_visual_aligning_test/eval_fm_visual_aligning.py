@@ -82,7 +82,12 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant):
     Constraints:
         - Workspace bounds on actual EE position (c_pos, indices 6-8)
         - Euler dynamics: c_pos[t+1] = c_pos[t] + act[t]  (indices [6←0, 7←1, 8←2])
+        - Obstacle exclusion: sphere_outside on EE position dims (from obstacle_constraints)
     """
+    # Named-dim map: yaml obstacle_constraints may use strings instead of raw indices.
+    _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
+            'x': 6, 'y': 7, 'z': 8}
+
     tightening = config.get('constraint_tightening_margin',
                             config.get('enlarge_constraints', 0.0))
     ws_lb = np.array(config['workspace_bounds']['lb'])   # (3,)
@@ -105,6 +110,11 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant):
         constraint_list.append(('deriv', [6, 0]))   # c_pos_x ← dx
         constraint_list.append(('deriv', [7, 1]))   # c_pos_y ← dy
         constraint_list.append(('deriv', [8, 2]))   # c_pos_z ← dz
+
+    if 'obstacles' in config.get('constraint_types', []):
+        for obs in config.get('obstacle_constraints', []):
+            dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
+            constraint_list.append((obs['type'], dims, obs['center'], obs['radius']))
 
     dt = config.get('dt', 1.0)
     if   'dt0p25' in variant: dt *= 0.25
