@@ -41,7 +41,7 @@ class Policy:
         test_ret = test_ret if test_ret is not None else self.test_ret
         returns = to_device(test_ret * torch.ones(batch_size, 1), 'cuda')
 
-        # Use FlowMatchingODE model
+        # Use FlowMatchingDrifting model
         projector = self.projector if not disable_projection else None
         samples, infos = self.model(conditions, returns=returns, projector=projector, constraints=constraints, horizon=horizon, **self.sample_kwargs)
 

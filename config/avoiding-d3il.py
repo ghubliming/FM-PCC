@@ -383,7 +383,7 @@ base = {
     'flow_matching_v3_drifting': {
         # Drift-augmented Flow Matcher v3: combines FM ODE with drift loss guidance.
         'model': 'models.Flow_matcher_U_Net_v2',
-        'diffusion': 'models.diffusion.FlowMatchingODE',
+        'diffusion': 'models.diffusion.FlowMatchingDrifting',
         'horizon': 8,
         'loss_type': 'l2',
         'loss_discount': 1.0,
@@ -737,7 +737,7 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 drifting model
-        'diffusion': 'models.diffusion.FlowMatchingODE',
+        'diffusion': 'models.diffusion.FlowMatchingDrifting',
         'horizon': 8,
         'action_weight': 1,
         'time_beta_alpha_v3': 1.5,
