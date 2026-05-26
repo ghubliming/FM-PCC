@@ -74,7 +74,7 @@ class ProjectorNormalizer:
 
 # ── Projector setup ───────────────────────────────────────────────────────────
 
-def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant):
+def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, is_tightened=False):
     """
     Build the DPCC SLSQP projector for the 9D trajectory space.
 
@@ -89,18 +89,15 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant):
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
             'x': 6, 'y': 7, 'z': 8}
 
-    tightening = config.get('constraint_tightening_margin',
-                            config.get('enlarge_constraints', 0.0))
-    ws_lb = np.array(config['workspace_bounds']['lb'])   # (3,)
-    ws_ub = np.array(config['workspace_bounds']['ub'])   # (3,)
-
-    if 'tightened' in variant and tightening > 0.0:
-        ws_lb += tightening
-        ws_ub -= tightening
-
     constraint_list = []
 
     if 'bounds' in config.get('constraint_types', []):
+        tightening = config.get('enlarge_constraints') or 0.0
+        ws_lb = np.array(config['workspace_bounds']['lb'])   # (3,)
+        ws_ub = np.array(config['workspace_bounds']['ub'])   # (3,)
+        if is_tightened and tightening > 0.0:
+            ws_lb += tightening   # lower bound rises — smaller box
+            ws_ub -= tightening   # upper bound drops  — smaller box
         # Bounds only on c_pos dims (indices 6,7,8); act and des_c_pos unconstrained
         lb = np.concatenate([np.full(6, -np.inf), ws_lb])   # (9,)
         ub = np.concatenate([np.full(6,  np.inf), ws_ub])   # (9,)
@@ -112,10 +109,24 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant):
         constraint_list.append(('deriv', [7, 1]))   # c_pos_y ← dy
         constraint_list.append(('deriv', [8, 2]))   # c_pos_z ← dz
 
+    if 'halfspace' in config.get('constraint_types', []):
+        # Oriented linear inequality constraints in the x-y plane (EE horizontal position).
+        # Same formulation as original DPCC avoiding paper.
+        # Each entry: [[x1,y1], [x2,y2], 'above'/'below'] — line through two points, keep the named side.
+        # Tightening shifts the boundary inward by enlarge_constraints (metres).
+        tightening = config.get('enlarge_constraints') or 0.0
+        _hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}   # EE x=6, y=7 in 9D trajectory
+        for hs in config.get('halfspace_constraints', []):
+            margin = tightening if is_tightened else 0.0
+            C_row, d = utils.formulate_halfspace_constraints(hs, margin, 9, _hs_indices)
+            constraint_list.append(('ineq', (C_row, d)))
+
     if 'obstacles' in config.get('constraint_types', []):
+        tightening = config.get('enlarge_constraints') or 0.0
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
-            constraint_list.append((obs['type'], dims, obs['center'], obs['radius']))
+            radius = obs['radius'] + (tightening if is_tightened else 0.0)  # larger exclusion when tightened
+            constraint_list.append((obs['type'], dims, obs['center'], radius))
 
     dt = config.get('dt', 1.0)
     if   'dt0p25' in variant: dt *= 0.25
@@ -1027,19 +1038,28 @@ if __name__ == '__main__':
         # Build flat (geo_name, geo_config, base_variant) product so the inner
         # loop body needs no indentation change.
         _geo_specs = config.get('geo_constraint_variants', [
-            {'name': 'bounds_dynamics_1',
-             'constraint_types': config.get('constraint_types', ['bounds', 'dynamics'])}
+            {'name': 'combined_2',
+             'constraint_types': config.get('constraint_types', ['bounds', 'dynamics']),
+             'workspace_bounds': {'lb': [0.30, -0.35, 0.05], 'ub': [0.70, 0.35, 0.40]}}
         ])
+        # enlarge_constraints: None when yaml sets null → no tightened twin generated
+        _enlarge = config.get('enlarge_constraints')
         _run_items = []
         for _gs in _geo_specs:
             _gc = dict(config)
             _gc['constraint_types'] = _gs['constraint_types']
-            if 'workspace_bounds'    in _gs: _gc['workspace_bounds']    = _gs['workspace_bounds']
-            if 'enlarge_constraints' in _gs: _gc['enlarge_constraints'] = _gs['enlarge_constraints']
+            if 'workspace_bounds'      in _gs: _gc['workspace_bounds']      = _gs['workspace_bounds']
+            if 'obstacle_constraints'  in _gs: _gc['obstacle_constraints']  = _gs['obstacle_constraints']
+            if 'halfspace_constraints' in _gs: _gc['halfspace_constraints'] = _gs['halfspace_constraints']
+            _has_geo = any(t in _gs['constraint_types'] for t in ('bounds', 'halfspace', 'obstacles'))
             for _v in projection_variants:
-                _run_items.append((_gs['name'], _gc, _v))
+                _run_items.append((_gs['name'], _gc, _v, False))
+            # auto-generate tightened twin for entries with bounds/obstacles
+            if _enlarge is not None and _has_geo:
+                for _v in projection_variants:
+                    _run_items.append((_gs['name'] + '-tightened', _gc, _v, True))
 
-        for geo_name, geo_config, geo_variant in _run_items:
+        for geo_name, geo_config, geo_variant, is_tightened in _run_items:
             if geo_variant == projection_variants[0]:
                 print(f'\n[ geo ] ── Constraint variant: {geo_name}  '
                       f'types={geo_config["constraint_types"]} ──')
@@ -1091,7 +1111,7 @@ if __name__ == '__main__':
                 projector = None
                 if 'diffuser' not in variant and obs_normalizer is not None:
                     projector = setup_dpcc_projector(
-                        args, geo_config, obs_normalizer, act_normalizer, variant)
+                        args, geo_config, obs_normalizer, act_normalizer, variant, is_tightened)
                     print(f'[ eval ] DPCC projector active for variant {variant!r}')
 
                 # Trajectory selection — exact DPCC eval.py logic (projection_eval.yaml dpcc-r/c/t).
