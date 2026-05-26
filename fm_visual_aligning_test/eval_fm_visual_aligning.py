@@ -1116,12 +1116,19 @@ if __name__ == '__main__':
                     mpc_foresight_stride=config.get('mpc_foresight_stride', 6),
                 )
 
+                _if_vision_config = getattr(args, 'if_vision', True)
+                if_vision = _if_vision_config
+                if not if_vision and args_cli.record != 'none':
+                    if_vision = True
+                    print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
+                          'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
+
                 sim = Aligning_Sim(
                     seed=seed, device=args.device,
                     render=False, n_cores=1,
                     n_contexts=n_contexts,
                     n_trajectories_per_context=n_trajectories,
-                    if_vision=getattr(args, 'if_vision', True),
+                    if_vision=if_vision,
                     eval_on_train=args_cli.eval_on_train,
                     max_episode_length=getattr(args, 'max_episode_length', 400),
                 )

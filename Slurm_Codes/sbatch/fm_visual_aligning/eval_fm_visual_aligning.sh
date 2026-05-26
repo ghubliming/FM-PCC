@@ -53,6 +53,12 @@ cd "$REPO"
 # Results saved to: logs/aligning-d3il-visual/plans/fm_visual_aligning/<exp>/<seed>/results/
 
 # Args: $1=seed (optional), $2=record_mode (optional, default=all)
+# $1 blank → seed list read from config yaml (default, runs all configured seeds sequentially).
+# $1 set   → overrides yaml; only that single seed runs. Use for parallel per-seed Slurm fan-out:
+#   sbatch eval_fm_visual_aligning.sh 5
+#   sbatch eval_fm_visual_aligning.sh 6
+# When record_mode != "none", the eval script auto-enables visual mode even if config
+# has if_vision=False, so GIFs/videos are always captured (UF-13).
 SEED_ARG=""
 if [ -n "$1" ]; then
     SEED_ARG="--seed $1"
