@@ -174,3 +174,74 @@ All `-tightened` variants removed. `dpcc-c-tightened-dt*` renamed to `dpcc-c-dt*
 ### `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`
 
 Identical changes as FM eval above.
+
+---
+
+## Revision B — Halfspace, 2D/3D bounds scheme, constraint loading analysis (2026-05-26)
+
+### B1 — Halfspace constraint support (2D)
+
+`halfspace` is now a first-class constraint type in both eval scripts, on par with `bounds` and `obstacles`.
+
+**`setup_dpcc_projector` halfspace block** (after dynamics, before obstacles):
+```python
+if 'halfspace' in config.get('constraint_types', []):
+    tightening = config.get('enlarge_constraints') or 0.0
+    _hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}   # EE x=6, y=7 in 9D trajectory
+    for hs in config.get('halfspace_constraints', []):
+        margin = tightening if is_tightened else 0.0
+        C_row, d = utils.formulate_halfspace_constraints(hs, margin, 9, _hs_indices)
+        constraint_list.append(('ineq', (C_row, d)))
+```
+
+`utils.formulate_halfspace_constraints` was already implemented in
+`fm_visual_aligning/utils/constraints_helpers.py` (exported via `__init__.py`).
+The Projector already supports `('ineq', (C_row, d))` format (projection.py line 58).
+Tightening shifts the halfspace boundary inward by `enlarge_constraints` — matches original DPCC halfspace tightening.
+
+**`_has_geo`** updated: `any(t in constraint_types for t in ('bounds', 'halfspace', 'obstacles'))` — halfspace now triggers tightened-twin generation.
+
+**Geo loop**: `halfspace_constraints` transferred from geo spec to `_gc`, alongside `obstacle_constraints` and `workspace_bounds`.
+
+**3D halfspace** — NOT implemented. 3D requires a plane normal + offset (not a two-point 2D line). A `halfspace_only_2` placeholder is in the yaml but disabled — implement before enabling.
+
+### B2 — 2D/3D bounds scheme for all standalone ablation configs
+
+Single-type ablation configs default to 2D (x-y only, z=±∞). The full 3D version is the `_2` variant:
+
+| Entry | Bounds | z |
+|---|---|---|
+| `bounds_only_1` | `lb: [0.30,-0.35,-.inf]`, `ub: [0.70,0.35,.inf]` | unconstrained (2D) |
+| `bounds_only_2` | `lb: [0.30,-0.35,0.05]`, `ub: [0.70,0.35,0.40]` | floor+ceiling (3D) |
+| `halfspace_only_1` | 2D line in x-y plane | z unconstrained |
+| `halfspace_only_2` | 3D plane (pending) | — |
+| `combined_2` | `lb: [0.30,-0.35,0.05]`, `ub: [0.70,0.35,0.40]` | 3D intentionally |
+
+`combined_2` keeps 3D bounds (floor/ceiling active) — the combination config is the full physical model. Ablation configs use 2D to isolate x-y constraint effect only.
+
+2D = 3D with z=±∞. PyYAML parses `-.inf` / `.inf` as Python `float('-inf')` / `float('inf')`. The projector handles inf bounds correctly (no z constraint applied).
+
+### B3 — New geo entries added to yaml
+
+- `halfspace_only_1` — 2D halfspace, active for debugging (verifies halfspace code path)
+- `halfspace_only_2` — 3D halfspace, commented (pending implementation)
+- `combined_4` — `['dynamics', 'bounds', 'halfspace', 'obstacles']`, exact match to original avoiding paper when obstacle geometry is measured
+
+**Current yaml state**: `combined_4` is the only active entry (all others commented). Obstacle geometry in `combined_4` uses placeholder values — not real measurements. For a valid DPCC-equivalent run, comment out `combined_4` and uncomment `combined_2`.
+
+### B4 — Investigation: original DPCC constraint loading vs our design
+
+See `UF14_investigation_constraint_loading.md` for full analysis. Summary:
+
+**Original DPCC (brittle)**:
+- `scripts/eval.py` selects constraints by hard-coded integer indices into flat YAML lists (`[0]`, `[3]`, `[4]`...).
+- Commenting out one YAML list item shifts all subsequent indices — silently loads wrong constraints.
+- `bounds` dict defined with duplicate lower/upper entries for the same dimensions, creating redundant constraints fed to the solver for every variant.
+
+**Our design (safe)**:
+- Each `geo_constraint_variants` entry is a named dict carrying its own complete constraint specification inline.
+- The geo loop iterates ALL items in `halfspace_constraints` / `obstacle_constraints` with no index picking.
+- A single `workspace_bounds` lb/ub replaces the redundant bounds list.
+- YAML entries can be freely commented/uncommented without affecting other entries' indexing.
+
+No code changes required — our existing design already avoids both issues identified in the investigation.

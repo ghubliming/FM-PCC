@@ -50,7 +50,7 @@ Dynamics is always skipped regardless of the geo entry's `constraint_types`. Hal
 
 **Unique results**: `bounds_only_1/model_free`, `halfspace_only_1/model_free`, `combined_4/model_free`.
 
-### `dpcc-c-dt*` — only meaningful under `combined_2`
+### `dpcc-c-dt*` — only meaningful under dynamics-containing entries
 
 `dpcc-c-dt0p25/dt0p5/dt2p0/dt4p0` scale the **dynamics constraint** coefficient.
 Under any geo entry without `'dynamics'` in `constraint_types`, there is no dynamics
@@ -59,11 +59,13 @@ constraint to scale:
 | Geo config | `dpcc-c-dt0p25/dt0p5/dt2p0/dt4p0` result |
 |---|---|
 | `no_constraint` | all four == `diffuser` (empty constraints) |
-| `dynamics_only` | all four differ from each other and from `dpcc-c` — **meaningful** |
+| `dynamics_only` | all four differ — **meaningful** (pure dynamics scale sweep) |
 | `bounds_only_1` | all four == `dpcc-c` under `bounds_only_1` (no dynamics to scale) |
-| `combined_2` | all four differ — **meaningful**, this is the intended sweep |
+| `halfspace_only_1` | all four == `dpcc-c` under `halfspace_only_1` (no dynamics to scale) |
+| `combined_2` | all four differ — **meaningful**, this is the intended DPCC sweep |
+| `combined_4` | all four differ — **meaningful** (dynamics scale + full geo) |
 
-**Run `dpcc-c-dt*` under `combined_2` only** (and its `-tightened` twin).
+**Run `dpcc-c-dt*` under `combined_2` (or `dynamics_only`) only** — and their `-tightened` twins where applicable.
 
 ### `post_processing` — NOT always dynamics-enabled
 
@@ -79,13 +81,15 @@ The `model_free` rule (skip dynamics) does **not** apply to `post_processing`.
 
 | Goal | Minimum geo entries needed |
 |---|---|
-| Final paper numbers (DPCC-equivalent) | `combined_2` (+ tightened twin) |
+| Final paper numbers (DPCC-equivalent, no obstacles) | `combined_2` (+ tightened twin) |
+| Full DPCC match (once obstacle geometry measured) | `combined_4` (+ tightened twin) |
 | Ablation: which constraint type contributes what | `no_constraint` + `bounds_only_1` + `dynamics_only` + `combined_2` |
+| Halfspace ablation | `halfspace_only_1` (+ tightened twin) |
 | Obstacle study | `obstacle_only_1/2` + `combined_3` (once geometry is measured) |
 
-`combined_2` alone gives the full DPCC-equivalent result. The ablation entries
-(`bounds_only_1`, `dynamics_only`) isolate each constraint type's contribution
-and are needed for the analysis figures, not for the headline metric.
+`combined_2` alone gives the full DPCC-equivalent result without obstacles. The ablation entries
+(`bounds_only_1`, `dynamics_only`, `halfspace_only_1`) isolate each constraint type's contribution
+and are needed for analysis figures, not the headline metric.
 
 ---
 
@@ -275,31 +279,118 @@ constraint_types: ['halfspace', 'obstacles', 'dynamics', 'bounds']
 enlarge_constraints: {'avoiding': 0.025}
 ```
 
-| Constraint type | Avoiding (published) | Visual aligning | Reason |
+| Constraint type | Avoiding (published) | Visual aligning | Status |
 |---|---|---|---|
-| `halfspace` | ✅ triangular wall obstacles | ⏸ implemented, disabled | No known oblique physical boundary yet |
-| `obstacles` | ✅ spherical exclusion zones | ⏸ implemented, disabled | Geometry not yet measured |
-| `bounds` | ✅ 2D xy velocity/position limits | ✅ 3D xyz workspace box | Extended to 3D Cartesian |
-| `dynamics` | ✅ Euler link 2D | ✅ Euler link 3D | Extended to 3D |
+| `halfspace` | ✅ triangular wall obstacles | ✅ 2D implemented (`halfspace_only_1`) | Disabled by default — no real diagonal boundary yet |
+| `obstacles` | ✅ spherical exclusion zones | ✅ 2D/3D implemented | Disabled — real geometry not measured (placeholder values only) |
+| `bounds` | ✅ 2D xy velocity/position limits | ✅ 3D xyz workspace box | Active in `combined_2` / `combined_4` |
+| `dynamics` | ✅ Euler link 2D | ✅ Euler link 3D | Active in all `combined_*` entries |
 
-All four constraint types are now **fully implemented** for visual aligning.
+All four constraint types are **fully implemented** for visual aligning.
 
-**`combined_2`** (`['dynamics', 'bounds']`) is the current DPCC-equivalent.  
-**`combined_3`** (`['dynamics', 'bounds', 'obstacles']`) — once obstacle geometry is measured.  
-A `combined_4` (`['dynamics', 'bounds', 'halfspace', 'obstacles']`) would be the exact full match to the avoiding paper.
+**`combined_2`** (`['dynamics', 'bounds']`) is the current DPCC-equivalent (no obstacles).  
+**`combined_4`** (`['dynamics', 'bounds', 'halfspace', 'obstacles']`) is the exact full match once obstacle geometry is confirmed.
 
-### How to replicate DPCC-equivalent results
+---
 
-`combined_2` is already active in the default yaml — no changes needed:
+### Design difference from original DPCC constraint loading
+
+The original DPCC (`scripts/eval.py`) uses brittle **integer-index selection** to pick halfspace and obstacle constraints from flat YAML lists:
+
+```python
+# Original DPCC — brittle! list order is load-bearing
+if halfspace_variant == 'top-left-hard':
+    polytopic_constraints = [config['halfspace_constraints'][exp][0]]
+    obstacle_constraints  = [config['obstacle_constraints'][exp][3]]
+elif halfspace_variant == 'top-right-hard':
+    polytopic_constraints = [config['halfspace_constraints'][exp][1]]
+    obstacle_constraints  = [config['obstacle_constraints'][exp][4]]
+```
+
+**Problem**: commenting out one item from the YAML list shifts all subsequent indices — silently loading wrong constraints with no error.
+
+Additionally, the original DPCC `bounds` dict defines duplicate lower/upper entries for the same dimensions (`vx`, `vy`) for all variants unconditionally, creating redundant/conflicting constraints fed to the solver every run.
+
+**Our design avoids both issues**:
+- Each `geo_constraint_variants` entry is a self-contained named dict carrying its own constraints inline.
+- The geo loop iterates ALL items in `halfspace_constraints` / `obstacle_constraints` — no index picking, no positional dependency.
+- A single `workspace_bounds` lb/ub per geo entry replaces the original's redundant bounds list.
+- Commented-out YAML entries have zero effect on indexing — safe to enable/disable freely.
+
+---
+
+### How to run a DPCC-equivalent eval
+
+#### Option A — focused DPCC run (no ablation, just paper numbers)
+
+Comment out everything except `combined_2` and keep `enlarge_constraints: 0.01`:
 
 ```yaml
+enlarge_constraints: 0.01   # auto-generates combined_2-tightened
+
+geo_constraint_variants:
   - name: combined_2
     constraint_types: ['dynamics', 'bounds']
     workspace_bounds:
-      lb: [0.30, -0.35, 0.05]   # x forward, y lateral, z vertical (metres)
+      lb: [0.30, -0.35, 0.05]
+      ub: [0.70,  0.35, 0.40]
+  # all other entries commented out
+```
+
+Output mapping to original DPCC paper Table 1:
+
+| Our output folder | Paper equivalent |
+|---|---|
+| `results/combined_2/{variant}/` | `results/halfspace_X/{variant}/` (base constraint run) |
+| `results/combined_2-tightened/{variant}/` | `results/halfspace_X/{variant}-tightened/` |
+
+#### Option B — full ablation (paper figures + analysis)
+
+Uncomment all four ablation tiers + keep `enlarge_constraints: 0.01`:
+
+```yaml
+enlarge_constraints: 0.01
+
+geo_constraint_variants:
+  - name: no_constraint
+    constraint_types: []
+  - name: dynamics_only
+    constraint_types: ['dynamics']
+  - name: bounds_only_1
+    constraint_types: ['bounds']
+    workspace_bounds:
+      lb: [0.30, -0.35,  -.inf]   # 2D ablation
+      ub: [0.70,  0.35,   .inf]
+  - name: combined_2
+    constraint_types: ['dynamics', 'bounds']
+    workspace_bounds:
+      lb: [0.30, -0.35, 0.05]
       ub: [0.70,  0.35, 0.40]
 ```
 
-With `enlarge_constraints: 0.01` set globally, the eval also produces
-`results/combined_2-tightened/` — the tightened-constraint counterpart to
-`dpcc-c-tightened` in the original paper's Table 1.
+#### Option C — closest match to original DPCC (once obstacle geometry confirmed)
+
+Uncomment `combined_4` and fill in real scene measurements:
+
+```yaml
+  - name: combined_4
+    constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
+    workspace_bounds:
+      lb: [0.30, -0.35, 0.05]
+      ub: [0.70,  0.35, 0.40]
+    halfspace_constraints:
+      - [[x1, y1], [x2, y2], 'above'/'below']   # ← measure from scene
+    obstacle_constraints:
+      - type: sphere_outside
+        dimensions: ['x', 'y']
+        center: [cx, cy]    # ← measure from scene (metres)
+        radius: r           # ← measure from scene (metres)
+```
+
+`combined_4` with real geometry maps exactly to the original avoiding paper's
+`constraint_types: ['halfspace', 'obstacles', 'dynamics', 'bounds']`.
+
+> **Warning — current yaml state**: `combined_4` is currently the **only active entry**,
+> with placeholder obstacle geometry (`center: [0.50, 0.00], radius: 0.06`). These are
+> not real measurements. For a valid DPCC-equivalent run, comment out `combined_4` and
+> uncomment `combined_2` until real obstacle geometry is available.
