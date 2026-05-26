@@ -119,19 +119,54 @@ workspace_bounds:
   lb: [0.3, -0.35, 0.05]
   ub: [0.7,  0.35, 0.40]
 
-# DPCC Projection parameters
+# DPCC Projection parameters (defaults — overridden per geo_constraint_variants entry below)
 # enlarge_constraints: inward tightening (m) applied to workspace_bounds when the
 # variant name contains 'tightened' (e.g. 'dpcc-r-tightened'). Shrinks the safe
 # box by this margin on every side, adding a safety buffer before the hard wall.
 enlarge_constraints: 0.01
-# constraint_types controls which physical constraints the DPCC projector enforces:
+
+# constraint_types: fallback used only when geo_constraint_variants is absent.
+# Each geo entry below overrides this value — do not tune here, tune in the geo entries.
 #   'bounds'   — box bounds on EE position (workspace_bounds above, dims 6-8)
 #   'dynamics' — Euler integration link: c_pos[t+1] = c_pos[t] + dx[t] (dims 6←0, 7←1, 8←2)
 #                skipped for 'model_free' variants (no kinematic model assumed)
-# With both active: projected trajectories are physically reachable AND stay in-bounds.
-# With [] (empty): projector is a no-op — all variants collapse to unconstrained FM.
 constraint_types: ['bounds', 'dynamics']  # AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md)
-#constraint_types: []
+
+# ── Geo constraint sweep ────────────────────────────────────────────────────────
+# Outer loop over geometric constraint configurations.  Each entry produces a
+# separate output subtree:  results/{name}/{variant}/
+# _1 = current baseline parameters (active).
+# _2 = placeholder for parameter tuning (uncomment + edit values to run).
+geo_constraint_variants:
+  # ── no constraints: raw FM, projector is a no-op — baseline reference ──────
+  # No _1/_2 index: constraint_types: [] has no tunable parameters.
+  - name: no_constraint
+    constraint_types: []
+
+  # ── bounds only: workspace box, no kinematic integration link ──────────────
+  - name: bounds_only_1
+    constraint_types: ['bounds']
+    # workspace_bounds and enlarge_constraints inherited from top-level defaults above
+
+  # ── bounds + dynamics: box + Euler integration consistency ─────────────────
+  - name: bounds_dynamics_1
+    constraint_types: ['bounds', 'dynamics']
+    # workspace_bounds and enlarge_constraints inherited from top-level defaults above
+
+  # ── Placeholder _2 configs — uncomment and edit values to run a second sweep ─
+  #- name: bounds_only_2
+  #  constraint_types: ['bounds']
+  #  workspace_bounds:
+  #    lb: [0.3, -0.35, 0.05]   # ← tune: widen/narrow x forward reach
+  #    ub: [0.7,  0.35, 0.40]   # ← tune: widen/narrow x forward reach
+  #  enlarge_constraints: 0.01  # ← tune: tightening margin for *-tightened variants
+
+  #- name: bounds_dynamics_2
+  #  constraint_types: ['bounds', 'dynamics']
+  #  workspace_bounds:
+  #    lb: [0.3, -0.35, 0.05]   # ← tune
+  #    ub: [0.7,  0.35, 0.40]   # ← tune
+  #  enlarge_constraints: 0.01  # ← tune
 
 # Safety clamp — max physical delta per step (metres). null = disabled.
 # 0.01 m ≈ 45× the healthy Gen6V4 step size; stops ODE explosions while
