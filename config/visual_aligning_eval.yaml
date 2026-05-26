@@ -5,7 +5,8 @@ exps: [
   'visual_aligning_dpcc',
   'fm_visual_aligning',
 ]
-seeds: [6, 7, 8, 9, 10]
+#seeds: [6, 7, 8, 9, 10]
+seeds: [6]
 
 # --- STATE-ONLY PARAMETERS (COMMENTED OUT: NOT NEEDED FOR VISUAL ALIGNING) ---
 # avoiding_halfspace_variants: [
@@ -36,7 +37,7 @@ seeds: [6, 7, 8, 9, 10]
 # -----------------------------------------------------------------------------
 
 # D3IL simulation parameters
-n_contexts: 30
+n_contexts: 3
 n_trajectories_per_context: 1
 
 # Policy
@@ -52,6 +53,7 @@ mpc_foresight_stride: 6          # show every Nth replan decision point in stand
 # -tightened = workspace bounds tightened by enlarge_constraints
 # dt0p25/dt0p5/dt2p0/dt4p0 = dynamics constraint dt scale factor
 projection_variants: [
+  'diffuser',
   # Figure 2, Table 1 and Figure 3:
   'dpcc-r',
   'dpcc-r-tightened',
@@ -60,7 +62,7 @@ projection_variants: [
   'dpcc-t',
   'dpcc-t-tightened',
   # Table 1:
-  'diffuser',
+  #'diffuser',
   'gradient',
   'gradient-tightened',
   'post_processing',
@@ -102,15 +104,34 @@ projection_variants: [
 # } # NOT NEEDED: Handled visually via 3D MuJoCo rendering and Tee log interceptors instead of 2D matplotlib axes.
 # ---------------------------------------------------------------------------------
 
-# Physical Franka Workspace bounds in meters (x, y, z)
+# Physical Franka EE workspace bounds in metres (x=forward, y=lateral, z=vertical).
+# Franka panda table-top setup — aligning task (push block to goal):
+#   x:  0.30–0.70 m  — forward reach from robot base; table surface starts ~0.30 m
+#   y: -0.35–0.35 m  — left/right of centre-line; covers full block travel lane
+#   z:  0.05–0.40 m  — above table; 0.05 m floor prevents EE from hitting table,
+#                      0.40 m ceiling prevents upward escape during pushes
+# Constraint effect: DPCC projector clips generated c_pos trajectory waypoints
+# (trajectory dims 6-8) so every planned EE position stays inside this box.
+# Expected behaviour: trajectories that would drive the EE off-table or into the
+# robot body are projected back to the nearest feasible point before execution.
+# If projection is too aggressive (robot stalls), widen bounds or disable 'bounds'.
 workspace_bounds:
   lb: [0.3, -0.35, 0.05]
-  ub: [0.7, 0.35, 0.40]
+  ub: [0.7,  0.35, 0.40]
 
 # DPCC Projection parameters
-enlarge_constraints: 0.01          # Tightening/Contracting amount in meters for bounds
-#constraint_types: ['bounds', 'dynamics']  # Re-enabled — AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md)
-constraint_types: []
+# enlarge_constraints: inward tightening (m) applied to workspace_bounds when the
+# variant name contains 'tightened' (e.g. 'dpcc-r-tightened'). Shrinks the safe
+# box by this margin on every side, adding a safety buffer before the hard wall.
+enlarge_constraints: 0.01
+# constraint_types controls which physical constraints the DPCC projector enforces:
+#   'bounds'   — box bounds on EE position (workspace_bounds above, dims 6-8)
+#   'dynamics' — Euler integration link: c_pos[t+1] = c_pos[t] + dx[t] (dims 6←0, 7←1, 8←2)
+#                skipped for 'model_free' variants (no kinematic model assumed)
+# With both active: projected trajectories are physically reachable AND stay in-bounds.
+# With [] (empty): projector is a no-op — all variants collapse to unconstrained FM.
+constraint_types: ['bounds', 'dynamics']  # AUDIT-FIX-2 (KEY_fix_6/BUG_REPORT.md)
+#constraint_types: []
 
 # Safety clamp — max physical delta per step (metres). null = disabled.
 # 0.01 m ≈ 45× the healthy Gen6V4 step size; stops ODE explosions while
