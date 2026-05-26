@@ -152,6 +152,199 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
         device=args.device,
     )
 
+# ── Constraint geometry visualisation (UF-15) ────────────────────────────────
+
+def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
+    """Draw one halfspace boundary line + feasible-side arrow in an XY axes."""
+    pt1, pt2, side = hs
+    x1, y1 = float(pt1[0]), float(pt1[1])
+    x2, y2 = float(pt2[0]), float(pt2[1])
+    dx, dy = x2 - x1, y2 - y1
+    nx, ny = (-dy, dx) if side == 'above' else (dy, -dx)   # normal → feasible side
+    nlen = np.hypot(nx, ny)
+    if nlen < 1e-9:
+        return
+    nx /= nlen;  ny /= nlen
+    x1 += enlarge * nx;  y1 += enlarge * ny    # tightening shifts boundary inward
+    x2 += enlarge * nx;  y2 += enlarge * ny
+    dx, dy = x2 - x1, y2 - y1
+    ts = []
+    if abs(dx) > 1e-9:
+        ts += [(xlim[0]-x1)/dx, (xlim[1]-x1)/dx]
+    if abs(dy) > 1e-9:
+        ts += [(ylim[0]-y1)/dy, (ylim[1]-y1)/dy]
+    if len(ts) < 2:
+        return
+    ts = sorted(ts)
+    px = [x1 + ts[0]*dx, x1 + ts[-1]*dx]
+    py = [y1 + ts[0]*dy, y1 + ts[-1]*dy]
+    ax.plot(px, py, color='darkorange', linewidth=1.5, zorder=3, label='halfspace')
+    mx, my = (px[0]+px[1])/2, (py[0]+py[1])/2
+    ax.annotate('', xy=(mx+nx*0.06, my+ny*0.06), xytext=(mx, my),
+                arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.5))
+    ax.text(mx+nx*0.09, my+ny*0.09, 'feasible', fontsize=6, color='darkorange',
+            ha='center', va='center')
+
+
+def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
+    """
+    3-panel constraint geometry overview: 3D wireframe | XY top-down | XZ side.
+    Saved as constraint_overview.png at out_dir (geo-level results folder).
+    Called once per geo entry before any trajectory runs (UF-15).
+
+    Panels show: workspace box (steelblue), halfspace boundary + feasible arrow
+    (darkorange), obstacle sphere (tomato). Dynamics constraint has no geometric
+    shape — noted in figure footer only.
+    """
+    out_path = os.path.join(out_dir, 'constraint_overview.png')
+    if os.path.exists(out_path):
+        return   # idempotent — skip if already generated this run
+
+    import matplotlib.patches as _mpa
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection as _P3C
+
+    constraint_types = geo_config.get('constraint_types', [])
+    enlarge = (geo_config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
+
+    # ── Workspace bounds (tighten + clamp inf for display) ───────────────────
+    has_bounds = 'bounds' in constraint_types
+    ws_lb = ws_ub = lb_d = ub_d = None
+    _Z_DISP = (0.0, 0.50)   # default z display when z is unconstrained (±inf)
+    if has_bounds and 'workspace_bounds' in geo_config:
+        ws_lb = np.array(geo_config['workspace_bounds']['lb'], dtype=float)
+        ws_ub = np.array(geo_config['workspace_bounds']['ub'], dtype=float)
+        ws_lb += enlarge;  ws_ub -= enlarge
+        lb_d = ws_lb.copy();  ub_d = ws_ub.copy()
+        lb_d[2] = _Z_DISP[0] if np.isinf(lb_d[2]) else lb_d[2]
+        ub_d[2] = _Z_DISP[1] if np.isinf(ub_d[2]) else ub_d[2]
+
+    def _xlim(): return (lb_d[0]-0.05, ub_d[0]+0.05) if lb_d is not None else (0.20, 0.80)
+    def _ylim(): return (lb_d[1]-0.05, ub_d[1]+0.05) if lb_d is not None else (-0.45, 0.45)
+    def _zlim(): return (lb_d[2]-0.02, ub_d[2]+0.05) if lb_d is not None else (_Z_DISP[0]-0.02, _Z_DISP[1]+0.05)
+
+    halfspace_list = geo_config.get('halfspace_constraints', []) if 'halfspace' in constraint_types else []
+    obstacle_list  = geo_config.get('obstacle_constraints',  []) if 'obstacles'  in constraint_types else []
+
+    fig = plt.figure(figsize=(16, 5))
+    _tstr = ' [tightened]' if is_tightened else ''
+    fig.suptitle(f'{geo_name}{_tstr}  |  types: {constraint_types}',
+                 fontsize=11, fontweight='bold', y=0.98)
+
+    # ── 3D panel ─────────────────────────────────────────────────────────────
+    ax3 = fig.add_subplot(131, projection='3d')
+    ax3.set_title('3D view', fontsize=9)
+    ax3.set_xlabel('x (m)', fontsize=7, labelpad=2)
+    ax3.set_ylabel('y (m)', fontsize=7, labelpad=2)
+    ax3.set_zlabel('z (m)', fontsize=7, labelpad=2)
+    ax3.tick_params(labelsize=6)
+
+    if lb_d is not None:
+        x0, y0, z0 = lb_d;  x1v, y1v, z1v = ub_d
+        for xs, ys, zs in [
+            ([x0,x1v],[y0,y0],[z0,z0]), ([x0,x1v],[y1v,y1v],[z0,z0]),
+            ([x0,x1v],[y0,y0],[z1v,z1v]), ([x0,x1v],[y1v,y1v],[z1v,z1v]),
+            ([x0,x0],[y0,y1v],[z0,z0]), ([x1v,x1v],[y0,y1v],[z0,z0]),
+            ([x0,x0],[y0,y1v],[z1v,z1v]), ([x1v,x1v],[y0,y1v],[z1v,z1v]),
+            ([x0,x0],[y0,y0],[z0,z1v]), ([x1v,x1v],[y0,y0],[z0,z1v]),
+            ([x0,x0],[y1v,y1v],[z0,z1v]), ([x1v,x1v],[y1v,y1v],[z0,z1v]),
+        ]:
+            ax3.plot(xs, ys, zs, color='steelblue', alpha=0.7, lw=1.2)
+        ax3.add_collection3d(_P3C([
+            [(x0,y0,z0),(x1v,y0,z0),(x1v,y1v,z0),(x0,y1v,z0)],
+            [(x0,y0,z1v),(x1v,y0,z1v),(x1v,y1v,z1v),(x0,y1v,z1v)],
+            [(x0,y0,z0),(x0,y0,z1v),(x0,y1v,z1v),(x0,y1v,z0)],
+            [(x1v,y0,z0),(x1v,y0,z1v),(x1v,y1v,z1v),(x1v,y1v,z0)],
+            [(x0,y0,z0),(x1v,y0,z0),(x1v,y0,z1v),(x0,y0,z1v)],
+            [(x0,y1v,z0),(x1v,y1v,z0),(x1v,y1v,z1v),(x0,y1v,z1v)],
+        ], alpha=0.06, facecolor='steelblue', edgecolor='none'))
+
+    for obs in obstacle_list:
+        _DIM_MAP = {'x': 6, 'y': 7, 'z': 8}
+        cx, cy = float(obs['center'][0]), float(obs['center'][1])
+        obs_dims = obs.get('dimensions', ['x', 'y'])
+        cz = (float(obs['center'][2]) if len(obs['center']) > 2 and 'z' in obs_dims
+              else ((lb_d[2]+ub_d[2])/2 if lb_d is not None else 0.12))
+        r = obs['radius'] + enlarge
+        u = np.linspace(0, 2*np.pi, 25);  v = np.linspace(0, np.pi, 15)
+        ax3.plot_surface(
+            cx + r*np.outer(np.cos(u), np.sin(v)),
+            cy + r*np.outer(np.sin(u), np.sin(v)),
+            cz + r*np.outer(np.ones_like(u), np.cos(v)),
+            color='tomato', alpha=0.25, linewidth=0)
+
+    if not has_bounds and not obstacle_list and not halfspace_list:
+        ax3.text2D(0.5, 0.5, 'no geometric\nconstraints',
+                   ha='center', va='center', transform=ax3.transAxes, fontsize=9, color='gray')
+
+    ax3.set_xlim(*_xlim());  ax3.set_ylim(*_ylim());  ax3.set_zlim(*_zlim())
+
+    # ── XY top-down panel ────────────────────────────────────────────────────
+    ax_xy = fig.add_subplot(132)
+    ax_xy.set_title('XY top-down (z projected)', fontsize=9)
+    ax_xy.set_xlabel('x forward (m)', fontsize=7)
+    ax_xy.set_ylabel('y lateral (m)', fontsize=7)
+    ax_xy.set_aspect('equal');  ax_xy.grid(True, linestyle='--', alpha=0.4)
+    ax_xy.tick_params(labelsize=6)
+
+    if lb_d is not None:
+        ax_xy.add_patch(_mpa.Rectangle(
+            (lb_d[0], lb_d[1]), ub_d[0]-lb_d[0], ub_d[1]-lb_d[1],
+            lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12, label='bounds'))
+    else:
+        ax_xy.text(0.5, 0.5, 'no bounds', ha='center', va='center',
+                   transform=ax_xy.transAxes, fontsize=9, color='gray')
+
+    for hs in halfspace_list:
+        _hs_xy_draw(ax_xy, hs, enlarge, _xlim(), _ylim())
+    for obs in obstacle_list:
+        ax_xy.add_patch(_mpa.Circle(
+            (float(obs['center'][0]), float(obs['center'][1])), obs['radius']+enlarge,
+            lw=1.5, edgecolor='tomato', facecolor='tomato', alpha=0.2, label='obstacle'))
+        ax_xy.plot(float(obs['center'][0]), float(obs['center'][1]), 'r+', ms=6)
+
+    ax_xy.set_xlim(*_xlim());  ax_xy.set_ylim(*_ylim())
+
+    # ── XZ side panel ────────────────────────────────────────────────────────
+    ax_xz = fig.add_subplot(133)
+    ax_xz.set_title('XZ side (y projected)', fontsize=9)
+    ax_xz.set_xlabel('x forward (m)', fontsize=7)
+    ax_xz.set_ylabel('z vertical (m)', fontsize=7)
+    ax_xz.grid(True, linestyle='--', alpha=0.4)
+    ax_xz.tick_params(labelsize=6)
+
+    if lb_d is not None:
+        ax_xz.add_patch(_mpa.Rectangle(
+            (lb_d[0], lb_d[2]), ub_d[0]-lb_d[0], ub_d[2]-lb_d[2],
+            lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12))
+        z_inf_lo = np.isinf(ws_lb[2])
+        z_inf_hi = np.isinf(ws_ub[2])
+        ax_xz.axhline(lb_d[2], color='steelblue', ls='--', lw=0.9, alpha=0.7,
+                      label='z=−∞ (display clamped)' if z_inf_lo else f'floor z={lb_d[2]:.3f} m')
+        ax_xz.axhline(ub_d[2], color='steelblue', ls='--', lw=0.9, alpha=0.7,
+                      label='z=+∞ (display clamped)' if z_inf_hi else f'ceiling z={ub_d[2]:.3f} m')
+        ax_xz.legend(fontsize=6, loc='upper right')
+    else:
+        ax_xz.text(0.5, 0.5, 'no bounds', ha='center', va='center',
+                   transform=ax_xz.transAxes, fontsize=9, color='gray')
+
+    for obs in obstacle_list:
+        if 'z' in obs.get('dimensions', []):
+            ax_xz.add_patch(_mpa.Circle(
+                (float(obs['center'][0]), float(obs['center'][2])), obs['radius']+enlarge,
+                lw=1.5, edgecolor='tomato', facecolor='tomato', alpha=0.2))
+
+    ax_xz.set_xlim(*_xlim());  ax_xz.set_ylim(*_zlim())
+
+    if 'dynamics' in constraint_types:
+        fig.text(0.5, 0.01,
+                 'Dynamics: c_pos[t+1] = c_pos[t] + act[t]  (Euler link — no geometric shape)',
+                 ha='center', fontsize=7, color='dimgray', style='italic')
+
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+    fig.savefig(out_path, dpi=120, bbox_inches='tight')
+    plt.close(fig)
+    print(f'[ geo ] Constraint overview → {out_path}')
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 class Tee:
@@ -1081,6 +1274,10 @@ if __name__ == '__main__':
             if geo_variant == projection_variants[0]:
                 print(f'\n[ geo ] ── Constraint variant: {geo_name}  '
                       f'types={geo_config["constraint_types"]} ──')
+                _results_root = 'results_train_set' if args_cli.eval_on_train else 'results'
+                _geo_fig_dir  = os.path.join(args.savepath, _results_root, geo_name)
+                os.makedirs(_geo_fig_dir, exist_ok=True)
+                plot_geo_constraints(geo_name, geo_config, _geo_fig_dir, is_tightened)
             variant = geo_variant
             if args_cli.eval_on_train:
                 variant   = f'{variant}_train_set'
