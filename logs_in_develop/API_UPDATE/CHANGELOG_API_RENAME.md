@@ -1,6 +1,6 @@
 # API Rename Changelog — FM Class Names
 
-**Date:** 2026-05-25  
+**Date:** 2026-05-25 (updated 2026-05-26)  
 **Branch:** update_into_FM  
 **Scope:** 4 active FM modules + eval scripts + configs  
 **Reference:** `API_RENAME_REPORT.md` (same directory) for rationale and audit trail
@@ -11,9 +11,13 @@
 
 | Old Name | New Name | Module |
 |---|---|---|
-| `GaussianDiffusion` | `FlowMatchingODE` | FMv3ODE, FMDrifting, FMiMeanFlow, FMVisual |
-| `iMFDiffusion` | `iMeanFlowODE` | FMiMeanFlow only |
+| `GaussianDiffusion` | `FlowMatchingODE` | FMv3ODE only |
+| `GaussianDiffusion` | `FlowMatchingDrifting` | FMDrifting only |
+| `GaussianDiffusion` | `FlowMatchingIMF` | FMiMeanFlow (base class) only |
+| `iMFDiffusion` | `iMeanFlowODE` | FMiMeanFlow (engine class) only |
 | `VisualGaussianDiffusion` | `VisualFlowMatching` | FMVisual only |
+
+> **Note (2026-05-26):** Initial rename used `FlowMatchingODE` for all four modules. Drifting and IMF were subsequently refined to `FlowMatchingDrifting` and `FlowMatchingIMF` respectively so each module's class name reflects its algorithm variant, not just the ODE solver shared mechanism.
 
 ---
 
@@ -25,10 +29,10 @@
 - `class GaussianDiffusion(nn.Module)` → `class FlowMatchingODE(nn.Module)`
 
 **`flow_matcher_v3_drifting/models/diffusion.py`**
-- `class GaussianDiffusion(nn.Module)` → `class FlowMatchingODE(nn.Module)`
+- `class GaussianDiffusion(nn.Module)` → `class FlowMatchingDrifting(nn.Module)` *(initially FlowMatchingODE, refined 2026-05-26)*
 
 **`flow_matcher_v3_imeanflow/models/diffusion.py`**
-- `class GaussianDiffusion(nn.Module)` → `class FlowMatchingODE(nn.Module)`
+- `class GaussianDiffusion(nn.Module)` → `class FlowMatchingIMF(nn.Module)` *(initially FlowMatchingODE, refined 2026-05-26)*
 
 **`fm_visual_aligning/models/diffusion.py`**
 - `class GaussianDiffusion(nn.Module)` → `class FlowMatchingODE(nn.Module)`
@@ -49,10 +53,10 @@
 - `from .diffusion import GaussianDiffusion` → `FlowMatchingODE`
 
 **`flow_matcher_v3_drifting/models/__init__.py`**
-- `from .diffusion import GaussianDiffusion` → `FlowMatchingODE`
+- `from .diffusion import GaussianDiffusion` → `FlowMatchingDrifting`
 
 **`flow_matcher_v3_imeanflow/models/__init__.py`**
-- `GaussianDiffusion` → `FlowMatchingODE`
+- `GaussianDiffusion` → `FlowMatchingIMF`
 - `iMFDiffusion` → `iMeanFlowODE`
 
 **`fm_visual_aligning/models/__init__.py`**
@@ -68,10 +72,10 @@ The `GaussianInvDynDiffusion` class never existed in any FM module. Three `polic
 - Retained comment updated: `# Use FlowMatchingODE model`
 
 **`flow_matcher_v3_drifting/sampling/policies.py`**
-- Same removal
+- Same removal; retained comment: `# Use FlowMatchingDrifting model`
 
 **`flow_matcher_v3_imeanflow/sampling/policies.py`**
-- Same removal
+- Same removal; retained comment: `# Use FlowMatchingIMF model`
 
 ### 4. IMF engine internal reference
 
@@ -84,10 +88,10 @@ The `GaussianInvDynDiffusion` class never existed in any FM module. Three `polic
 - `fm_model.__class__.__name__ == 'GaussianDiffusion'` → `'FlowMatchingODE'`
 
 **`FM_v3_drifting_test/eval_flow_matching_v3_drifting.py`** (line 155)
-- `fm_model.__class__.__name__ == 'GaussianDiffusion'` → `'FlowMatchingODE'`
+- `fm_model.__class__.__name__ == 'GaussianDiffusion'` → `'FlowMatchingDrifting'`
 
 **`FM_v3_imeanflow_test/eval_flow_matching_v3_imeanflow.py`** (line 156)
-- `fm_model.__class__.__name__ in ['GaussianDiffusion', 'iMFDiffusion']` → `['FlowMatchingODE', 'iMeanFlowODE']`
+- `fm_model.__class__.__name__ in ['GaussianDiffusion', 'iMFDiffusion']` → `['FlowMatchingIMF', 'iMeanFlowODE']`
 
 **`FM_v3_imeanflow_test/eval_flow_matching_v3_ode_selectable.py`** (line 155) *(missed in first sweep, fixed separately)*
 - `fm_model.__class__.__name__ == 'GaussianDiffusion'` → `'FlowMatchingODE'`
@@ -111,10 +115,10 @@ The `GaussianInvDynDiffusion` class never existed in any FM module. Three `polic
 
 **`config/avoiding-d3il.py`** — 6 surgical changes in FM blocks only (DDPM blocks untouched):
 - `flow_matching_v3_ode_selectable` training: `'models.diffusion.GaussianDiffusion'` → `'models.diffusion.FlowMatchingODE'`
-- `flow_matching_v3_drifting` training: `'models.diffusion.GaussianDiffusion'` → `'models.diffusion.FlowMatchingODE'`
+- `flow_matching_v3_drifting` training: `'models.diffusion.GaussianDiffusion'` → `'models.diffusion.FlowMatchingDrifting'`
 - `flow_matching_v3_imeanflow` training: `'flow_matcher_v3_imeanflow.models.iMFDiffusion'` → `'flow_matcher_v3_imeanflow.models.iMeanFlowODE'`
 - `plan_fm_v3_ode_selectable` inference: `GaussianDiffusion` → `FlowMatchingODE`
-- `plan_fm_v3_drifting` inference: `GaussianDiffusion` → `FlowMatchingODE`
+- `plan_fm_v3_drifting` inference: `GaussianDiffusion` → `FlowMatchingDrifting`
 - `plan_fm_v3_imeanflow` inference: `iMFDiffusion` → `iMeanFlowODE`
 
 **`config/aligning-d3il-visual.py`** — 2 surgical changes in `fm_visual_aligning` blocks only:
@@ -144,4 +148,10 @@ Old checkpoints saved with `GaussianDiffusion`/`iMFDiffusion`/`VisualGaussianDif
 
 ## New Training Runs
 
-The config `{diffusion}` path template means new training runs will produce output directories containing `FlowMatchingODE` (or `iMeanFlowODE`, `VisualFlowMatching`) in the path name. Old directories with `GaussianDiffusion` in the name remain valid for eval.
+The config `{diffusion}` path template means new training runs will produce output directories containing the new class name in the path:
+- FMv3ODE → `FlowMatchingODE`
+- FMDrifting → `FlowMatchingDrifting`
+- FMiMeanFlow → `FlowMatchingIMF` or `iMeanFlowODE`
+- FMVisual → `VisualFlowMatching`
+
+Old directories with `GaussianDiffusion` in the name remain valid for eval.

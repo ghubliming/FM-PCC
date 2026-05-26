@@ -197,3 +197,16 @@ The standalone replay script saves **only the model inference time** — but it 
 
 > [!IMPORTANT]
 > **Conclusion: No reason to write a standalone replay script.** The correct approach is to simply re-run eval in visual mode (`if_vision=True`). The compute cost is comparable, the engineering effort is zero, and you get exact physics + full diagnostics + GIFs for free. The eval script already handles everything.
+
+---
+
+## 5. Addendum: Camera Outputs in Non-Visual GIFs
+
+**Observation:** When generating GIFs for a non-visual model (e.g., using `--record gif` or viewing the expert references), you may notice the in-hand camera output on the right side of the GIF. **This is completely correct and working exactly as intended.**
+
+**Why this happens:**
+1. **The Cameras Always Exist in Physics:** In the MuJoCo simulation (`Robot_Push_Env`), both the bird's-eye camera (`bp_cam`) and the in-hand camera (`inhand_cam`) are physically attached to the scene. "Non-visual mode" just means your **model (policy)** ignores the cameras and only looks at 3D numeric coordinates. 
+2. **UF-13 Auto-Enable Logic:** As implemented in the UF-13 update, if you evaluate a non-visual model but request a GIF recording (e.g., `--record gif`), the evaluation script automatically forces the environment into visual mode (`if_vision=True`). It does this purely so the offscreen GPU renderer can wake up and capture pixels for you to watch.
+3. **Hardcoded GIF Layout:** When the script captures frames for the GIF, it is hardcoded to always take the bird's-eye view (`bp_vis`) and the in-hand view (`inhand_vis`) and stitch them together side-by-side (`np.concatenate([bp_vis, inhand_vis], axis=1)`). 
+
+**The takeaway:** The camera outputs you see in the GIF are **strictly for human visualization**. Your non-visual policy remains completely blind and is still correctly making all its decisions based on the numeric state (coordinates/velocities). The GIF just uses the simulation's cameras to show you what happened during the rollout!
