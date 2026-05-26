@@ -70,10 +70,15 @@ CLASS_REMAP = {
 
 
 class RemapUnpickler(pickle.Unpickler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.remapped_count = 0
+
     def find_class(self, module, name):
         mapped = CLASS_REMAP.get((module, name))
         if mapped:
             module, name = mapped
+            self.remapped_count += 1
         return super().find_class(module, name)
 
 
@@ -94,11 +99,12 @@ def scan_pkl(path):
     with open(path, 'rb') as f:
         raw = f.read()
     try:
-        obj     = RemapUnpickler(io.BytesIO(raw)).load()
+        unpickler = RemapUnpickler(io.BytesIO(raw))
+        obj = unpickler.load()
         new_raw = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
     except Exception as e:
         return False, raw, None, str(e)
-    legacy = (new_raw != raw)
+    legacy = (unpickler.remapped_count > 0)
     return legacy, raw, new_raw if legacy else None, None
 
 
