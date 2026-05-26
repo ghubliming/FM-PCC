@@ -1013,12 +1013,32 @@ if __name__ == '__main__':
             except OSError:
                 pass
 
-        for variant in projection_variants:
+        # ── Geo constraint outer loop (UF-14) ────────────────────────────────
+        # Build flat (geo_name, geo_config, base_variant) product so the inner
+        # loop body needs no indentation change.
+        _geo_specs = config.get('geo_constraint_variants', [
+            {'name': 'bounds_dynamics_1',
+             'constraint_types': config.get('constraint_types', ['bounds', 'dynamics'])}
+        ])
+        _run_items = []
+        for _gs in _geo_specs:
+            _gc = dict(config)
+            _gc['constraint_types'] = _gs['constraint_types']
+            if 'workspace_bounds'    in _gs: _gc['workspace_bounds']    = _gs['workspace_bounds']
+            if 'enlarge_constraints' in _gs: _gc['enlarge_constraints'] = _gs['enlarge_constraints']
+            for _v in projection_variants:
+                _run_items.append((_gs['name'], _gc, _v))
+
+        for geo_name, geo_config, geo_variant in _run_items:
+            if geo_variant == projection_variants[0]:
+                print(f'\n[ geo ] ── Constraint variant: {geo_name}  '
+                      f'types={geo_config["constraint_types"]} ──')
+            variant = geo_variant
             if args_cli.eval_on_train:
                 variant   = f'{variant}_train_set'
-                save_path = f'{args.savepath}/results_train_set/{variant}'
+                save_path = f'{args.savepath}/results_train_set/{geo_name}/{variant}'
             else:
-                save_path = f'{args.savepath}/results/{variant}'
+                save_path = f'{args.savepath}/results/{geo_name}/{variant}'
             os.makedirs(save_path, exist_ok=True)
 
             if args_cli.aggregate_only:
@@ -1061,7 +1081,7 @@ if __name__ == '__main__':
                 projector = None
                 if 'diffuser' not in variant and obs_normalizer is not None:
                     projector = setup_dpcc_projector(
-                        args, config, obs_normalizer, act_normalizer, variant)
+                        args, geo_config, obs_normalizer, act_normalizer, variant)
                     print(f'[ eval ] DPCC projector active for variant {variant!r}')
 
                 # Trajectory selection — exact DPCC eval.py logic (projection_eval.yaml dpcc-r/c/t).
@@ -1094,8 +1114,8 @@ if __name__ == '__main__':
                     trajectory_selection=trajectory_selection,
                     eval_on_train=args_cli.eval_on_train,
                     variant=variant,
-                    max_action_delta=config.get('max_action_delta', None),
-                    mpc_foresight_stride=config.get('mpc_foresight_stride', 6),
+                    max_action_delta=geo_config.get('max_action_delta', None),
+                    mpc_foresight_stride=geo_config.get('mpc_foresight_stride', 6),
                 )
 
                 _if_vision_config = getattr(args, 'if_vision', True)
@@ -1145,7 +1165,7 @@ if __name__ == '__main__':
                         plans_all.append(d['full_plans'])
 
                 # ── NPZ save (legacy-compatible) ─────────────────────────────
-                if config.get('write_to_file', True):
+                if geo_config.get('write_to_file', True):
                     # U10.2: flatten context_info + clean tracking error into NPZ
                     # so DA code can load per-rollout arrays directly (same pattern as avoiding).
                     _ci = agent.history_context_info   # list of dicts, one per rollout
