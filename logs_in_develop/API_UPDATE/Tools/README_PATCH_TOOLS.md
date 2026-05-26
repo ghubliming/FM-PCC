@@ -35,12 +35,11 @@ point at an already-correct path).
 
 ## What the Python script does
 
-1. **Checks** the folder's basename for old class tokens.
-   - If none found → prints "nothing to do" and exits immediately.
-2. **Patches all `.pkl` config files** using a custom `RemapUnpickler` that intercepts
+1. **Always patches all `.pkl` config files** using a custom `RemapUnpickler` that intercepts
    old class references and redirects them to the new names. Re-saves only if changed.
-3. **Patches `args.json`** files via string replacement of old dotted class-path strings.
-4. **Renames the folder** to the corrected name.
+2. **Always patches `args.json`** files via string replacement of old dotted class-path strings.
+3. **Renames the folder** only if the basename contains legacy tokens.
+   - If the folder was already renamed manually (basename is clean) → skips rename, still patches contents.
 
 `losses.pkl` and `state_*.pt` weight files are never touched.
 
