@@ -109,3 +109,58 @@ if geo_variant == projection_variants[0]:
 
 ### `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`
 - Identical changes — same functions, same call site
+
+---
+
+## Update 2 — UF-15.2: Constraint overlay on foresight SVG (2026-05-26)
+
+### Motivation
+
+The standalone `constraint_overview.png` (UF-15.1) is a pre-run sanity check.
+The per-rollout `rollout_N_mpc_foresight.svg` shows actual EE trajectories and MPC
+candidates — but without constraint boundaries, there is no way to see whether the
+robot respected the constraints. UF-15.2 overlays constraint geometry directly onto
+the two panels of the foresight SVG.
+
+### What is added to the foresight SVG
+
+**XY panel** (left):
+- Workspace bounds → steelblue filled rectangle (alpha=0.10, zorder=1 — behind trajectories)
+- Halfspace boundary → darkorange line + feasible-side arrow (via `_hs_xy_draw`)
+- Obstacle exclusion zone → tomato filled circle (alpha=0.15) + centre cross marker
+
+**3D panel** (right):
+- Workspace bounds → steelblue wireframe box (12 edges, alpha=0.45, lw=1.0)
+- Inf z-bounds clamped to (0.0, 0.50) for display — same as `plot_geo_constraints`
+
+Halfspace and obstacle overlays appear only when those constraint types are active in
+`geo_config['constraint_types']`. For `no_constraint` / `dynamics_only` entries,
+`_gc` is an empty dict and all overlay guards are False — no drawing, no error.
+
+### Wiring
+
+`geo_config` and `is_tightened` added to `VisualAgentWrapper.__init__` and stored as
+`self.geo_config` / `self.is_tightened`. Both passed from the geo loop instantiation site.
+
+In the foresight block, `_gc`, `_ct`, `_enlarge` are computed once after the two axes
+are created, then consumed by both the XY and 3D overlay sections:
+
+```python
+_gc      = self.geo_config
+_ct      = _gc.get('constraint_types', [])
+_enlarge = (_gc.get('enlarge_constraints') or 0.0) if self.is_tightened else 0.0
+```
+
+`_mpa_uf15` is a local alias for `matplotlib.patches` (already imported globally, aliased
+locally to avoid any name collision in the method scope).
+
+### Changed files (UF-15.2)
+
+**`fm_visual_aligning_test/eval_fm_visual_aligning.py`**:
+- `VisualAgentWrapper.__init__`: added `geo_config=None, is_tightened=False` params + store as attributes
+- `VisualAgentWrapper` instantiation: passes `geo_config=geo_config, is_tightened=is_tightened`
+- Foresight block: `_gc/_ct/_enlarge` compute block after axes creation
+- Foresight XY panel: constraint overlay after `ax_xy.grid(True, alpha=0.3)`
+- Foresight 3D panel: box wireframe after `ax_3d.legend(fontsize=9)`
+
+**`diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`**: identical changes.

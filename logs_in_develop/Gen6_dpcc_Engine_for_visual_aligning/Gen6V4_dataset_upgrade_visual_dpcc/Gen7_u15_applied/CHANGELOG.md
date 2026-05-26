@@ -26,3 +26,15 @@ results/{geo_name}-tightened/constraint_overview.png
 **Call site**: inside `if geo_variant == projection_variants[0]:` guard in the geo loop — 4 lines added, no structural change to the loop body.
 
 **Idempotent**: skips generation if `constraint_overview.png` already exists.
+
+---
+
+## UF-15.2: Constraint overlay on foresight SVG
+
+See [CHANGELOG_UF15.md UF-15.2](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/u_f_15_constrainst_visual/CHANGELOG_UF15.md) for full detail. DPCC-side changes are identical to FM.
+
+**XY panel overlay**: bounds rectangle (steelblue, zorder=1), halfspace line+arrow (darkorange), obstacle circle (tomato) — all drawn behind trajectories.
+
+**3D panel overlay**: workspace box wireframe (steelblue, 12 edges).
+
+**Wiring**: `geo_config` and `is_tightened` added as `VisualAgentWrapper` constructor params and stored as instance attributes. Passed from the geo loop instantiation. Empty `geo_config` → all overlay guards False → no drawing, no error.

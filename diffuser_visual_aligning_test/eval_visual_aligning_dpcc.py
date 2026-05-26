@@ -450,7 +450,9 @@ class VisualAgentWrapper:
                  trajectory_selection='random',
                  eval_on_train=False, variant='unspecified',
                  max_action_delta=None,
-                 mpc_foresight_stride=6):
+                 mpc_foresight_stride=6,
+                 geo_config=None,
+                 is_tightened=False):
 
         self.model              = diffusion_model
         self.device             = device
@@ -501,6 +503,8 @@ class VisualAgentWrapper:
         self.video_frames                = []
         self.max_action_delta            = max_action_delta
         self.mpc_foresight_stride        = mpc_foresight_stride
+        self.geo_config                  = geo_config or {}
+        self.is_tightened                = is_tightened
         self.curr_rollout_act_magnitudes = []
         self.curr_rollout_dist_to_target = []
         self.curr_rollout_clamp_events   = []
@@ -772,6 +776,11 @@ class VisualAgentWrapper:
                 ax_xy = fig_mpc.add_subplot(1, 2, 1)
                 ax_3d = fig_mpc.add_subplot(1, 2, 2, projection='3d')
 
+                # UF-15.2: constraint geometry variables (reused by both panels)
+                _gc      = self.geo_config
+                _ct      = _gc.get('constraint_types', [])
+                _enlarge = (_gc.get('enlarge_constraints') or 0.0) if self.is_tightened else 0.0
+
                 # ── XY panel ─────────────────────────────────────────────────
                 for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
                     if step_i % _STRIDE != 0:
@@ -815,6 +824,33 @@ class VisualAgentWrapper:
                 ax_xy.set_aspect('equal', adjustable='datalim')
                 ax_xy.grid(True, alpha=0.3)
 
+                # UF-15.2: constraint geometry overlay — drawn behind trajectories (zorder=1)
+                if _gc:
+                    import matplotlib.patches as _mpa_uf15
+                    if 'bounds' in _ct and 'workspace_bounds' in _gc:
+                        _wb    = _gc['workspace_bounds']
+                        _lb_xy = np.array(_wb['lb'][:2], dtype=float) + _enlarge
+                        _ub_xy = np.array(_wb['ub'][:2], dtype=float) - _enlarge
+                        ax_xy.add_patch(_mpa_uf15.Rectangle(
+                            (_lb_xy[0], _lb_xy[1]), _ub_xy[0]-_lb_xy[0], _ub_xy[1]-_lb_xy[1],
+                            lw=1.5, edgecolor='steelblue', facecolor='steelblue',
+                            alpha=0.10, zorder=1))
+                    if 'halfspace' in _ct and _gc.get('halfspace_constraints'):
+                        _wb  = _gc.get('workspace_bounds', {})
+                        _xlm = (float(_wb['lb'][0])-0.05, float(_wb['ub'][0])+0.05) if _wb else (0.20, 0.80)
+                        _ylm = (float(_wb['lb'][1])-0.05, float(_wb['ub'][1])+0.05) if _wb else (-0.45, 0.45)
+                        for _hs in _gc['halfspace_constraints']:
+                            _hs_xy_draw(ax_xy, _hs, _enlarge, _xlm, _ylm)
+                    if 'obstacles' in _ct:
+                        for _obs in _gc.get('obstacle_constraints', []):
+                            ax_xy.add_patch(_mpa_uf15.Circle(
+                                (float(_obs['center'][0]), float(_obs['center'][1])),
+                                _obs['radius'] + _enlarge,
+                                lw=1.5, edgecolor='tomato', facecolor='tomato',
+                                alpha=0.15, zorder=1))
+                            ax_xy.plot(float(_obs['center'][0]), float(_obs['center'][1]),
+                                       'r+', ms=6, zorder=2)
+
                 # ── 3D XYZ panel ──────────────────────────────────────────────
                 for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
                     if step_i % _STRIDE != 0:
@@ -842,6 +878,23 @@ class VisualAgentWrapper:
                 ax_3d.set_ylabel('Y (m)', fontsize=9)
                 ax_3d.set_zlabel('Z (m)', fontsize=9)
                 ax_3d.legend(fontsize=9)
+
+                # UF-15.2: workspace box wireframe on 3D panel
+                if _gc and 'bounds' in _ct and 'workspace_bounds' in _gc:
+                    _wb  = _gc['workspace_bounds']
+                    _x0, _y0, _z0 = np.array(_wb['lb'], dtype=float) + _enlarge
+                    _x1, _y1, _z1 = np.array(_wb['ub'], dtype=float) - _enlarge
+                    _z0 = 0.0  if np.isinf(_z0) else _z0
+                    _z1 = 0.50 if np.isinf(_z1) else _z1
+                    for _xs, _ys, _zs in [
+                        ([_x0,_x1],[_y0,_y0],[_z0,_z0]),([_x0,_x1],[_y1,_y1],[_z0,_z0]),
+                        ([_x0,_x1],[_y0,_y0],[_z1,_z1]),([_x0,_x1],[_y1,_y1],[_z1,_z1]),
+                        ([_x0,_x0],[_y0,_y1],[_z0,_z0]),([_x1,_x1],[_y0,_y1],[_z0,_z0]),
+                        ([_x0,_x0],[_y0,_y1],[_z1,_z1]),([_x1,_x1],[_y0,_y1],[_z1,_z1]),
+                        ([_x0,_x0],[_y0,_y0],[_z0,_z1]),([_x1,_x1],[_y0,_y0],[_z0,_z1]),
+                        ([_x0,_x0],[_y1,_y1],[_z0,_z1]),([_x1,_x1],[_y1,_y1],[_z0,_z1]),
+                    ]:
+                        ax_3d.plot(_xs, _ys, _zs, color='steelblue', alpha=0.45, lw=1.0)
 
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')
@@ -1342,6 +1395,8 @@ if __name__ == '__main__':
                     variant=variant,
                     max_action_delta=geo_config.get('max_action_delta', None),
                     mpc_foresight_stride=geo_config.get('mpc_foresight_stride', 6),
+                    geo_config=geo_config,
+                    is_tightened=is_tightened,
                 )
 
                 _if_vision_config = getattr(args, 'if_vision', True)
