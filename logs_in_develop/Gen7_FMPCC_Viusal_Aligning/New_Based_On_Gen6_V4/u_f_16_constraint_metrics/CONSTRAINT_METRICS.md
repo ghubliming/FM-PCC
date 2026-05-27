@@ -30,9 +30,18 @@ All metrics are computed in the **physical Franka EE Cartesian frame** (metres):
 | `y` | Lateral (left = positive) | −0.35 – 0.35 m |
 | `z` | Vertical (up) | 0.05 – 0.40 m |
 
-Tightening (`enlarge_constraints`) shifts constraint boundaries inward by the
-configured margin (default 0.01 m).  All metrics respect this margin — bounds are
-tightened `lb += enlarge` / `ub -= enlarge`, obstacles grow by `enlarge`.
+---
+
+## Constraint boundary used per metric type
+
+This matches the original DPCC paper convention (see `eval.py` in `/workspaces/dpcc/scripts/`):
+
+| Metric level | Boundary used | Reason |
+|---|---|---|
+| **Execution** `exec_*` | **Nominal** (`enlarge=0`) for ALL variants | All variants compared on the same baseline; tightened should show fewer violations because the δ buffer keeps the trajectory inside nominal bounds |
+| **Planning** `plan_*` | **Own** constraints (nominal uses 0, tightened uses δ) | Answers "did the projector enforce the constraints it was given?" — must use the same boundary the projector used |
+
+**Key insight**: in the paper, tightening the planning constraints is designed to reduce nominal-constraint violations under execution disturbances.  Measuring `exec_*` against the nominal boundary (not the tighter one) makes this improvement visible in the metrics.  If `exec_*` were measured against the tighter boundary for tightened runs, the comparison would be unfair — tightened would be evaluated against a harder test than nominal.
 
 ---
 

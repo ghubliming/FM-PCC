@@ -52,3 +52,15 @@ for every metric and per-rollout list.
 - `diffuser_visual_aligning/sampling/projection.py` — projector internals untouched
 - Existing `results.pkl` / `{variant}.npz` format — fully backwards compatible
 - `constraint_overview.png` — visualisation unaffected
+
+---
+
+## Post-release fixes (2026-05-27)
+
+**Source MD**: [u_f_16_constraint_metrics/CHANGELOG_UF16_3.md — Post-release fixes](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/u_f_16_constraint_metrics/CHANGELOG_UF16_3.md)
+
+Both fixes are shared infrastructure — no DPCC-specific divergence from the FM version.
+
+**Fix 1 — halfspace sign in `_check_planned_violations`**: changed `x1 -= enlarge * nx` → `x1 += enlarge * nx` (and y). Previous sign moved the halfspace boundary in the infeasible direction for tightened runs, making the planned violation check looser than the projector's actual constraint.
+
+**Fix 2 — exec metrics always check against nominal boundary**: `check_trajectory_constraints` now called with `enlarge=0.0` for all variants, matching original DPCC `eval.py` convention. Tightened variant expected to show better `exec_constraint_sat_rate` because its planned trajectories have a δ buffer over the nominal boundary.

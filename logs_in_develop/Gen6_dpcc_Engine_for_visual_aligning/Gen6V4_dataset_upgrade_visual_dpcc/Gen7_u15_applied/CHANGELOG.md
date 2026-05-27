@@ -68,3 +68,13 @@ See [CHANGELOG_UF15.md UF-15.5](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based
 **Foresight SVG 3D `ax_3d`**: obstacle `plot_surface` sphere was missing entirely — added after halfspace block. 2D obstacles placed at workspace z midpoint.
 
 **Overview XZ panel**: 2D obstacles (xy-only) now rendered as a shaded vertical band `axvspan(cx-r, cx+r)` with dashed edge lines. Halfspace presence noted via italic text annotation `"N× halfspace (XY plane only)"`.
+
+---
+
+## UF-15.6: XZ panel 2D obstacle — circle only (2026-05-27)
+
+**Source MD**: [u_f_15_constrainst_visual/CHANGELOG_UF15.md — UF-15.6](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/u_f_15_constrainst_visual/CHANGELOG_UF15.md)
+
+Removed `axvspan` and both `axvline` calls for 2D obstacles in the XZ overview panel.
+Circle at workspace z-midpoint is the sole remaining representation — the dotted edge
+lines and band were redundant given the circle.  DPCC-side change is identical to FM.
