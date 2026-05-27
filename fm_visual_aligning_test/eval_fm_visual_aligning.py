@@ -1407,6 +1407,12 @@ if __name__ == '__main__':
         ])
         # enlarge_constraints: None when yaml sets null → no tightened twin generated
         _enlarge = config.get('enlarge_constraints')
+        # active_geo_variants: name list in yaml selects which entries to run — null = all
+        _active_names = config.get('active_geo_variants')
+        if _active_names is not None:
+            _active_set = set(_active_names)
+            _geo_specs  = [gs for gs in _geo_specs if gs['name'] in _active_set]
+            print(f'\n[ geo ] active_geo_variants: {[gs["name"] for gs in _geo_specs]}')
         _run_items = []
         for _gs in _geo_specs:
             _gc = dict(config)
@@ -1414,7 +1420,7 @@ if __name__ == '__main__':
             if 'workspace_bounds'      in _gs: _gc['workspace_bounds']      = _gs['workspace_bounds']
             if 'obstacle_constraints'  in _gs: _gc['obstacle_constraints']  = _gs['obstacle_constraints']
             if 'halfspace_constraints' in _gs: _gc['halfspace_constraints'] = _gs['halfspace_constraints']
-            _has_geo = any(t in _gs['constraint_types'] for t in ('bounds', 'halfspace', 'obstacles'))
+            _has_geo = any(t in _gc['constraint_types'] for t in ('bounds', 'halfspace', 'obstacles'))
             for _v in projection_variants:
                 _run_items.append((_gs['name'], _gc, _v, False))
             # auto-generate tightened twin for entries with bounds/obstacles
