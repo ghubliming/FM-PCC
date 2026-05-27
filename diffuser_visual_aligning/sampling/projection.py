@@ -200,10 +200,11 @@ class Projector:
             projection_costs[i] = 0.5 * sol_np[i] @ Q @ sol_np[i] + r_np[i] @ sol_np[i] + 0.5 * trajectory_np[i] @ Q @ trajectory_np[i]
 
             # Fix 9.3: log when SLSQP meaningfully modifies the trajectory
-            delta = np.linalg.norm(sol_np[i] - trajectory_np[i])
-            if delta > 1e-4:
-                print(f'[ projector ] sample {i}: SLSQP delta={delta:.6f} '
-                      f'success={res.success} nit={res.nit} status={res.status}')
+            # (suppressed — fires on every active-constraint sample and floods console)
+            # delta = np.linalg.norm(sol_np[i] - trajectory_np[i])
+            # if delta > 1e-4:
+            #     print(f'[ projector ] sample {i}: SLSQP delta={delta:.6f} '
+            #           f'success={res.success} nit={res.nit} status={res.status}')
 
         sol = torch.tensor(sol_np, device=self.device).reshape(dims)
 
