@@ -155,12 +155,13 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
 # ── Constraint geometry visualisation (UF-15) ────────────────────────────────
 
 def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
-    """Draw one halfspace boundary line + feasible-side arrow in an XY axes.
+    """Draw halfspace: shaded infeasible region + boundary line + feasible-side arrow.
 
-    Uses proper parametric clipping (Cohen-Sutherland style): intersects the
-    t-interval from x-limits with the t-interval from y-limits so the drawn
-    segment is strictly inside the display box. Required for auto-scaling axes
-    (foresight SVG) to avoid expanding the view far beyond the workspace.
+    Infeasible half-plane fill uses a polygon built from the two clipped boundary
+    endpoints plus the viewport corners that lie on the infeasible side.  All
+    vertices stay within xlim×ylim — no BIG coordinates — so auto-scaling axes in
+    the foresight SVG are not affected.  Cohen-Sutherland clipping ensures the
+    boundary line segment lies strictly inside the display box.
     """
     pt1, pt2, side = hs
     x1, y1 = float(pt1[0]), float(pt1[1])
@@ -174,15 +175,44 @@ def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
     x1 += enlarge * nx;  y1 += enlarge * ny    # tightening shifts boundary inward
     x2 += enlarge * nx;  y2 += enlarge * ny
     dx, dy = x2 - x1, y2 - y1
-    # Parametric clipping: find t-range where segment lies inside [xlim] × [ylim]
     tx = sorted([(xlim[0]-x1)/dx, (xlim[1]-x1)/dx]) if abs(dx) > 1e-9 else [-1e9, 1e9]
     ty = sorted([(ylim[0]-y1)/dy, (ylim[1]-y1)/dy]) if abs(dy) > 1e-9 else [-1e9, 1e9]
     t_lo = max(tx[0], ty[0])
     t_hi = min(tx[1], ty[1])
     if t_lo >= t_hi:
-        return   # line does not intersect display box
+        return
     px = [x1 + t_lo*dx, x1 + t_hi*dx]
     py = [y1 + t_lo*dy, y1 + t_hi*dy]
+
+    # ── infeasible half-plane fill ────────────────────────────────────────────
+    # The boundary line divides the viewport rectangle into two polygons.
+    # Collect viewport corners on the infeasible side (dot-product with feasible
+    # normal < 0) by walking CCW from p0's edge to p1's edge, then try the
+    # reverse direction if the forward arc has no infeasible corners.
+    import matplotlib.patches as _mpa_hs
+    _C = [(xlim[0],ylim[0]),(xlim[1],ylim[0]),(xlim[1],ylim[1]),(xlim[0],ylim[1])]
+    def _inf(c): return (c[0]-x1)*nx + (c[1]-y1)*ny < -1e-9
+    def _edge(p):
+        if abs(p[1]-ylim[0]) < 1e-9: return 0
+        if abs(p[0]-xlim[1]) < 1e-9: return 1
+        if abs(p[1]-ylim[1]) < 1e-9: return 2
+        return 3
+    _e0, _e1 = _edge((px[0], py[0])), _edge((px[1], py[1]))
+    _df = (_e1 - _e0) % 4
+    if _df:
+        _cf = [_C[(_e0+1+k)%4] for k in range(_df)]
+        _cr = [_C[(_e0-k)%4]   for k in range(4-_df)]
+        if _cf and all(_inf(c) for c in _cf):
+            _poly = [(px[0],py[0])] + _cf + [(px[1],py[1])]
+        elif _cr and all(_inf(c) for c in _cr):
+            _poly = [(px[1],py[1])] + _cr + [(px[0],py[0])]
+        else:
+            _ifc = [c for c in _cf if _inf(c)] or [c for c in _cr if _inf(c)]
+            _poly = ([(px[0],py[0])] + _ifc + [(px[1],py[1])]) if _ifc else None
+        if _poly and len(_poly) >= 3:
+            ax.add_patch(_mpa_hs.Polygon(_poly, closed=True, facecolor='darkorange',
+                                          alpha=0.15, edgecolor='none', zorder=1))
+
     ax.plot(px, py, color='darkorange', linewidth=1.5, zorder=3, label='halfspace')
     mx, my = (px[0]+px[1])/2, (py[0]+py[1])/2
     ax.annotate('', xy=(mx+nx*0.06, my+ny*0.06), xytext=(mx, my),
@@ -276,6 +306,33 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
             cy + r*np.outer(np.sin(u), np.sin(v)),
             cz + r*np.outer(np.ones_like(u), np.cos(v)),
             color='tomato', alpha=0.25, linewidth=0)
+
+    # 3D halfspace boundary plane — vertical rect spanning workspace z, clipped to XY
+    _hs_zlo = lb_d[2] if lb_d is not None else _Z_DISP[0]
+    _hs_zhi = ub_d[2] if ub_d is not None else _Z_DISP[1]
+    for _hs3 in halfspace_list:
+        _hpt1, _hpt2, _hside = _hs3
+        _hx1, _hy1 = float(_hpt1[0]), float(_hpt1[1])
+        _hx2, _hy2 = float(_hpt2[0]), float(_hpt2[1])
+        _hdx, _hdy = _hx2-_hx1, _hy2-_hy1
+        _hn = np.array([-_hdy, _hdx]) if _hside == 'above' else np.array([_hdy, -_hdx])
+        _hnl = float(np.hypot(*_hn))
+        if _hnl < 1e-9: continue
+        _hn /= _hnl
+        _hx1 += enlarge*_hn[0]; _hy1 += enlarge*_hn[1]
+        _hx2 += enlarge*_hn[0]; _hy2 += enlarge*_hn[1]
+        _hdx, _hdy = _hx2-_hx1, _hy2-_hy1
+        _hxl, _hyl = _xlim(), _ylim()
+        _htx = sorted([(_hxl[0]-_hx1)/_hdx, (_hxl[1]-_hx1)/_hdx]) if abs(_hdx) > 1e-9 else [-1e9, 1e9]
+        _hty = sorted([(_hyl[0]-_hy1)/_hdy, (_hyl[1]-_hy1)/_hdy]) if abs(_hdy) > 1e-9 else [-1e9, 1e9]
+        _htlo = max(_htx[0], _hty[0]); _hthi = min(_htx[1], _hty[1])
+        if _htlo >= _hthi: continue
+        _hpx = [_hx1+_htlo*_hdx, _hx1+_hthi*_hdx]
+        _hpy = [_hy1+_htlo*_hdy, _hy1+_hthi*_hdy]
+        ax3.add_collection3d(_P3C([[
+            [_hpx[0], _hpy[0], _hs_zlo], [_hpx[1], _hpy[1], _hs_zlo],
+            [_hpx[1], _hpy[1], _hs_zhi], [_hpx[0], _hpy[0], _hs_zhi],
+        ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
 
     if not has_bounds and not obstacle_list and not halfspace_list:
         ax3.text2D(0.5, 0.5, 'no geometric\nconstraints',
@@ -904,6 +961,43 @@ class VisualAgentWrapper:
                         ([_x0,_x0],[_y1,_y1],[_z0,_z1]),([_x1,_x1],[_y1,_y1],[_z0,_z1]),
                     ]:
                         ax_3d.plot(_xs, _ys, _zs, color='steelblue', alpha=0.45, lw=1.0)
+
+                # UF-15.2: halfspace boundary plane on 3D panel
+                if _gc and 'halfspace' in _ct and _gc.get('halfspace_constraints'):
+                    _hs_wb = _gc.get('workspace_bounds', {})
+                    if _hs_wb:
+                        _hs_lb3 = np.array(_hs_wb['lb'], dtype=float) + _enlarge
+                        _hs_ub3 = np.array(_hs_wb['ub'], dtype=float) - _enlarge
+                    else:
+                        _hs_lb3 = np.array([0.30, -0.35, 0.05])
+                        _hs_ub3 = np.array([0.70,  0.35, 0.40])
+                    _hs3_zlo = 0.0  if np.isinf(_hs_lb3[2]) else float(_hs_lb3[2])
+                    _hs3_zhi = 0.50 if np.isinf(_hs_ub3[2]) else float(_hs_ub3[2])
+                    _hs3_xlm = (float(_hs_lb3[0])-0.05, float(_hs_ub3[0])+0.05)
+                    _hs3_ylm = (float(_hs_lb3[1])-0.05, float(_hs_ub3[1])+0.05)
+                    from mpl_toolkits.mplot3d.art3d import Poly3DCollection as _P3C_hs
+                    for _hs3d in _gc['halfspace_constraints']:
+                        _h3pt1, _h3pt2, _h3side = _hs3d
+                        _h3x1, _h3y1 = float(_h3pt1[0]), float(_h3pt1[1])
+                        _h3x2, _h3y2 = float(_h3pt2[0]), float(_h3pt2[1])
+                        _h3dx, _h3dy = _h3x2-_h3x1, _h3y2-_h3y1
+                        _h3n = np.array([-_h3dy,_h3dx]) if _h3side=='above' else np.array([_h3dy,-_h3dx])
+                        _h3nl = float(np.hypot(*_h3n))
+                        if _h3nl < 1e-9: continue
+                        _h3n /= _h3nl
+                        _h3x1 += _enlarge*_h3n[0]; _h3y1 += _enlarge*_h3n[1]
+                        _h3x2 += _enlarge*_h3n[0]; _h3y2 += _enlarge*_h3n[1]
+                        _h3dx, _h3dy = _h3x2-_h3x1, _h3y2-_h3y1
+                        _h3tx = sorted([(_hs3_xlm[0]-_h3x1)/_h3dx, (_hs3_xlm[1]-_h3x1)/_h3dx]) if abs(_h3dx)>1e-9 else [-1e9,1e9]
+                        _h3ty = sorted([(_hs3_ylm[0]-_h3y1)/_h3dy, (_hs3_ylm[1]-_h3y1)/_h3dy]) if abs(_h3dy)>1e-9 else [-1e9,1e9]
+                        _h3tlo = max(_h3tx[0],_h3ty[0]); _h3thi = min(_h3tx[1],_h3ty[1])
+                        if _h3tlo >= _h3thi: continue
+                        _h3px = [_h3x1+_h3tlo*_h3dx, _h3x1+_h3thi*_h3dx]
+                        _h3py = [_h3y1+_h3tlo*_h3dy, _h3y1+_h3thi*_h3dy]
+                        ax_3d.add_collection3d(_P3C_hs([[
+                            [_h3px[0],_h3py[0],_hs3_zlo],[_h3px[1],_h3py[1],_hs3_zlo],
+                            [_h3px[1],_h3py[1],_hs3_zhi],[_h3px[0],_h3py[0],_hs3_zhi],
+                        ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
 
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')

@@ -278,11 +278,18 @@ geo_constraint_variants:
   # Enable once obstacle geometry is measured AND halfspace 3D is implemented (if needed).
   - name: combined_4
     constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
+    # ── bounds: relaxed for test purpose (wider box, more room for EE) ─────────
     workspace_bounds:
-      lb: [0.30, -0.35, 0.05]
-      ub: [0.70,  0.35, 0.40]
+      lb: [0.20, -0.45, 0.02]   # relaxed: ±0.10 wider in x, ±0.10 wider in y, z floor lowered
+      ub: [0.80,  0.45, 0.50]   # relaxed: ceiling raised to 0.50
+    # Original (nominal scene bounds — re-enable once scene geometry confirmed):
+    #   lb: [0.30, -0.35, 0.05]
+    #   ub: [0.70,  0.35, 0.40]
+    # ── halfspace: relaxed for test purpose (line near workspace edge) ─────────
     halfspace_constraints:
-      - [[0.30, -0.05], [0.70, 0.05], 'above']   # gentle slope: y≈-0.05→0.05 across full x; tune to scene
+      - [[0.20, -0.38], [0.80, -0.30], 'above']   # relaxed: line near lower-y edge; only ~0.08 m strip forbidden
+    # Original (moderate slope, cuts ~half the y-range):
+    #   - [[0.30, -0.05], [0.70, 0.05], 'above']   # gentle slope: y≈-0.05→0.05 across full x; tune to scene
     obstacle_constraints:
       - type: sphere_outside
         dimensions: ['x', 'y']
