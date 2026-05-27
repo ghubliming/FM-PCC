@@ -164,3 +164,49 @@ locally to avoid any name collision in the method scope).
 - Foresight 3D panel: box wireframe after `ax_3d.legend(fontsize=9)`
 
 **`diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`**: identical changes.
+
+---
+
+## Update 3 — UF-15.3: `_hs_xy_draw` clipping fix + moderate halfspace value (2026-05-27)
+
+### Bug fixed: parametric line clipping in `_hs_xy_draw`
+
+The original implementation collected all t-values for x- and y-boundary intersections,
+sorted them, and used `ts[0]`/`ts[-1]` as endpoints. This is **incorrect**: it extends
+the line to where x OR y limits are crossed (outer extremes), not the viewport-clipped
+segment where BOTH are satisfied.
+
+For the old halfspace `[[0.35,-0.35],[0.65,0.35],'above']` with xlim=(0.30,0.70),
+ylim=(-0.35,0.35), the buggy code drew from (0.30, -0.60) to (0.70, 0.60) — both
+endpoints outside the display box, which caused auto-scaling axes in the foresight
+SVG to expand the view far outside the workspace.
+
+**Fix**: proper Cohen-Sutherland parametric clipping —
+```python
+tx = sorted([(xlim[0]-x1)/dx, (xlim[1]-x1)/dx]) if abs(dx) > 1e-9 else [-1e9, 1e9]
+ty = sorted([(ylim[0]-y1)/dy, (ylim[1]-y1)/dy]) if abs(dy) > 1e-9 else [-1e9, 1e9]
+t_lo = max(tx[0], ty[0])   # intersection of x-slab AND y-slab
+t_hi = min(tx[1], ty[1])
+if t_lo >= t_hi: return    # line doesn't pass through the viewport
+```
+
+Applied to both eval scripts. The standalone `plot_geo_constraints` function uses
+fixed `xlim`/`ylim` from workspace bounds (not auto-scaling), so display there was
+less affected — but the fix makes both consistent and correct.
+
+### Halfspace value moderated in `config/visual_aligning_eval.yaml`
+
+Old value: `[[0.35, -0.35], [0.65, 0.35], 'above']` — corner-to-corner diagonal,
+cuts workspace at ~45°, too aggressive for the aligning task.
+
+New value: `[[0.30, -0.05], [0.70, 0.05], 'above']` — nearly horizontal, gentle
+slope (rise 0.10 over run 0.40), boundary sits at y ≈ -0.05 → 0.05 across the full
+x range. EE must stay in the upper ~60% of the y workspace.
+
+Changed in both `halfspace_only_1` (commented) and `combined_4` (active).
+
+### Changed files (UF-15.3)
+
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py`: `_hs_xy_draw` clipping rewrite
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`: same `_hs_xy_draw` fix
+- `config/visual_aligning_eval.yaml`: halfspace values updated in both geo entries

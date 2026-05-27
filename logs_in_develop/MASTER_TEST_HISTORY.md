@@ -1183,3 +1183,29 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 * **DANGER CHANGE**: Renamed `GaussianDiffusion` to `FlowMatchingODE` across 4 active FM modules (`FMv3ODE`, `FMDrifting`, `FMiMeanFlow`, `FMVisual`).
 * **Other Renames**: `iMFDiffusion` to `iMeanFlowODE`, `VisualGaussianDiffusion` to `VisualFlowMatching`.
 * **Details**: For the full audit trail and breakdown of changed files, refer to [`CHANGELOG_API_RENAME.md`](./API_UPDATE/CHANGELOG_API_RENAME.md).
+
+***
+
+## Gen7 / Gen6v4: API Rename Completion, Checkpoint Patching & Geometric Constraint Upgrades (May 26, 2026)
+
+**Keywords**: Checkpoint Patching, RemapUnpickler, UF-13 Non-Visual recording, UF-14 Geo Constraint Sweep, UF-15 Constraint Geometry Visualisation, MPC foresight SVG overlays.
+
+1. **API Rename Completion & Checkpoint Patching / Reverting Tools**:
+   * Refined module-specific renaming of diffusion classes: `FlowMatchingDrifting` (for drifting FM) and `FlowMatchingIMF` (for iMeanFlow base class) to perfectly isolate class types per algorithm variant, while `FlowMatchingODE` remains standard for FMv3ODE and FMVisual.
+   * Built a robust, production-grade scan-and-fix checkpoint remapping utility (`patch_legacy_checkpoints.py` and `revert_legacy_checkpoints.py` under `logs_in_develop/API_UPDATE/Tools/`).
+   * Implemented a custom `RemapUnpickler(pickle.Unpickler)` that intercepts outdated class namespaces (e.g., `GaussianDiffusion`, `iMFDiffusion`, `VisualGaussianDiffusion`) on load and dynamically maps them to the new class names.
+   * The tools automatically scan entire checkpoint directory subtrees, patch `.pkl` binary serializations and `args.json` text configs, and rename the root folder structure safely (with high-protocol binary re-encoding and `--dry-run`/`--backup` options), or revert them cleanly back to legacy states for 100% bidirectional parity.
+2. **UF-13: Non-Visual Mode GIF/Video Capture Restoration**:
+   * Resolved a critical diagnostic gap where evaluations in non-visual mode (`if_vision=False` in configs) completely suppressed GIF and video generation even when explicitly requesting recording (`--record gif`/`video`/`all` flags).
+   * Patched both `eval_fm_visual_aligning.py` (Gen7) and `eval_visual_aligning_dpcc.py` (Gen6v4) to automatically promote `if_vision` to `True` during simulator instantiation if a recording mode is active, cleanly generating execution GIFs with console warning transparency.
+3. **UF-14: Multi-Variant Geo Constraint Evaluation Sweep**:
+   * Replaced static top-level constraint configuration with a fully dynamic, named `geo_constraint_variants` sweep outer loop. Both evaluation scripts now sequentially run all active geometries (`no_constraint`, `dynamics_only`, `bounds_only_1`, `combined_2`, etc.) in a single job execution, saving trajectories to logically structured subtrees: `results/{geo_name}/{variant}/`.
+   * Re-architected constraint tightening to reside at the geo-constraint level instead of duplicating projection variants. A tightened sibling `{geo_name}-tightened` is automatically instantiated for any active geometry containing bounds, halfspaces, or obstacles when a global `enlarge_constraints` is defined.
+   * Integrated full 2D `halfspace` constraints parsing with the SLSQP projector and the outer loop sweeps (reorienting boundaries inward during tightening), and standardized 2D/3D workspace boundaries (`bounds_only_1` at x-y 2D plane, `bounds_only_2` / `combined_2` at full 3D xyz box limits).
+   * Authored `UF14_investigation_constraint_loading.md` analyzing the brittle integer-index mapping and redundant bounds declarations in legacy DPCC architectures, ensuring our modular design is structurally safe against item indexing shifts.
+4. **UF-15 & UF-15.2: Automated Constraint Visualization & MPC Foresight Overlays**:
+   * **UF-15**: Integrated pre-run constraint diagnostics. The eval scripts now generate a self-contained 3-panel `constraint_overview.png` at the start of each geo entry:
+     * *Panel 1 (3D View)*: Steelblue semi-transparent wireframe workspace box & tomato obstacle spheres.
+     * *Panel 2 (XY Top-down View)*: Feasible bounding rectangle, obstacle circles, and darkorange halfspace lines with directional feasible-region normal arrows.
+     * *Panel 3 (XZ Side View)*: Floor/ceiling box limits.
+   * **UF-15.2**: Upgraded `VisualAgentWrapper` diagnostics to dynamically overlay active constraint geometries directly onto the MPC foresight SVG charts (`rollout_N_mpc_foresight.svg`). Planned and candidate end-effector trajectories are now visually mapped against the steelblue bounding box wireframes, darkorange halfspaces, and tomato obstacle zones, providing absolute validation of safety boundaries.

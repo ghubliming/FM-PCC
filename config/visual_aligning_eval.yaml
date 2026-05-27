@@ -222,9 +222,9 @@ geo_constraint_variants:
   #- name: halfspace_only_1
   #  constraint_types: ['halfspace']
   #  halfspace_constraints:
-  #    - [[0.35, -0.35], [0.65, 0.35], 'above']  # diagonal line lower-left→upper-right
-      #   EE must stay 'above' this line (positive-y side of the diagonal)
-      #   Tune points to physically meaningful boundary once scene geometry is known
+  #    - [[0.30, -0.05], [0.70, 0.05], 'above']  # gentle slope: y≈-0.05→0.05 across full x
+      #   EE must stay 'above' this line (positive-y side).  Nearly horizontal — moderate
+      #   constraint that keeps EE in the upper ~60% of the y workspace.
 
   #- name: halfspace_only_2
   #  # 3D halfspace — PENDING IMPLEMENTATION
@@ -282,7 +282,7 @@ geo_constraint_variants:
       lb: [0.30, -0.35, 0.05]
       ub: [0.70,  0.35, 0.40]
     halfspace_constraints:
-      - [[0.35, -0.35], [0.65, 0.35], 'above']   # tune to scene
+      - [[0.30, -0.05], [0.70, 0.05], 'above']   # gentle slope: y≈-0.05→0.05 across full x; tune to scene
     obstacle_constraints:
       - type: sphere_outside
         dimensions: ['x', 'y']
