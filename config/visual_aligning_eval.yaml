@@ -108,14 +108,25 @@ projection_variants: [
 # All constraint-related settings are grouped here at the end.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# enlarge_constraints: global tightening amount (metres) applied to bounds/obstacles.
+# enlarge_constraints: tightening margin δ (metres) for the auto-generated tightened twin.
+#
+#   PLANNING (projector) — uses δ, makes constraints HARDER:
+#     Bounds:    ws_lb += δ, ws_ub -= δ     → smaller workspace box
+#     Obstacles: radius += δ                → larger exclusion sphere
+#     Halfspace: boundary shifts +δ·n inward → less usable xy area
+#     Dynamics:  unchanged (equality constraint, no boundary to move)
+#
+#   EXECUTION METRICS — always checked against NOMINAL (δ=0) for all variants.
+#     This matches the original DPCC paper convention so that nominal vs tightened
+#     results are directly comparable.  Expected outcome: tightened shows BETTER
+#     exec_constraint_sat_rate because its trajectories stay δ inside the nominal
+#     boundary, absorbing execution noise up to δ metres.
+#
 #   Non-null → geo loop auto-generates a '{geo_name}-tightened' sibling run for every
-#   active geo entry whose constraint_types includes 'bounds' or 'obstacles'.
-#   Bounds: ws_lb += enlarge, ws_ub -= enlarge  (smaller workspace box).
-#   Obstacles: radius += enlarge  (larger exclusion sphere — same as original DPCC).
-#   dynamics_only and no_constraint entries are unaffected (no bounds/obstacles to tighten).
+#   active geo entry whose constraint_types includes 'bounds', 'obstacles', or 'halfspace'.
+#   dynamics_only and no_constraint entries are unaffected.
 #   null → tightening disabled; no -tightened folders are created.
-enlarge_constraints: 0.01
+enlarge_constraints: 0.03
 
 # ── Which geo entries to run ──────────────────────────────────────────────────
 # Change this list to select which named entries from geo_constraint_variants below
@@ -318,9 +329,9 @@ geo_constraint_variants:
       ub: [0.80,  0.45, 0.50]
     # ── halfspace: '\' shaped line on the right side ───────────────────────────
     halfspace_constraints:
-      # Line goes from top-left (0.75, 0.45) to bottom-right (0.85, -0.45), creating a '\' shape.
+      # Line goes from top-left (0.65, 0.45) to bottom-right (0.80, -0.45), creating a '\' shape.
       # 'below' means the safe zone is to the left/bottom of this line (cuts off top-right).
-      - [[0.75, 0.45], [0.85, -0.45], 'below']
+      - [[0.65, 0.45], [0.80, -0.45], 'below']
     # ── obstacles: kept identical to combined_4 ────────────────────────────────
     obstacle_constraints:
       - type: sphere_outside

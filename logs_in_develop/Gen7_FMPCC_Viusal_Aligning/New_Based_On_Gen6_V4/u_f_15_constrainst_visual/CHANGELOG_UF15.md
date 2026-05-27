@@ -294,3 +294,40 @@ projected onto XZ without additional 3D plane information.
 |---|---|
 | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | Added obstacle `plot_surface` to foresight SVG `ax_3d`; fixed XZ panel obstacle + halfspace annotation |
 | `fm_visual_aligning_test/eval_fm_visual_aligning.py` | Identical changes |
+
+---
+
+## Update 6 — UF-15.6: XZ panel 2D obstacle — circle only, no dotted lines (2026-05-27)
+
+### Bug fixed
+
+UF-15.5 rendered 2D obstacles in the XZ panel as three elements: a shaded vertical
+band (`axvspan`), two dashed vertical edge lines (`axvline` at `cx±r`), and a circle
+at the workspace z midpoint.  The two `axvline` calls produced redundant red dotted
+lines that cluttered the panel — the circle already communicates the obstacle position
+and radius.  The `axvspan` shading was also redundant given the circle fill.
+
+### What changed
+
+Removed `axvspan` and both `axvline` calls for 2D obstacles in the XZ panel.
+The `_cz_mid` circle (`matplotlib.patches.Circle`) is retained as the sole representation.
+
+Before:
+```python
+ax_xz.axvspan(cx_o - r_o, cx_o + r_o, color='tomato', alpha=0.12, ymin=..., ymax=...)
+ax_xz.axvline(cx_o - r_o, color='tomato', lw=1.0, ls='--', alpha=0.7)
+ax_xz.axvline(cx_o + r_o, color='tomato', lw=1.0, ls='--', alpha=0.7)
+ax_xz.add_patch(Circle((cx_o, _cz_mid), r_o, ...))
+```
+
+After:
+```python
+ax_xz.add_patch(Circle((cx_o, _cz_mid), r_o, ...))
+```
+
+### Changed files (UF-15.6)
+
+| File | Change |
+|---|---|
+| `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | Removed `axvspan` + 2× `axvline` for 2D obstacle in XZ panel |
+| `fm_visual_aligning_test/eval_fm_visual_aligning.py` | Identical change |

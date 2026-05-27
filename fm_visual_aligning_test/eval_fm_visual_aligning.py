@@ -398,16 +398,46 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
                 (cx_o, float(obs['center'][2])), r_o,
                 lw=1.5, edgecolor='tomato', facecolor='tomato', alpha=0.2))
         else:
-            # 2D obstacle (xy-only): full cylinder — show as vertical band in XZ
-            ax_xz.axvspan(cx_o - r_o, cx_o + r_o, color='tomato', alpha=0.12)
-            ax_xz.axvline(cx_o - r_o, color='tomato', lw=1.0, ls='--', alpha=0.7)
-            ax_xz.axvline(cx_o + r_o, color='tomato', lw=1.0, ls='--', alpha=0.7)
-            ax_xz.plot(cx_o, (lb_d[2]+ub_d[2])/2 if lb_d is not None else 0.20, 'r+', ms=6)
+            # 2D obstacle (xy-only): show as circle at workspace z-midpoint
+            _cz_mid = (lb_d[2] + ub_d[2]) / 2 if lb_d is not None else 0.20
+            ax_xz.add_patch(_mpa.Circle(
+                (cx_o, _cz_mid), r_o,
+                lw=1.2, edgecolor='tomato', facecolor='tomato', alpha=0.25,
+                linestyle='--'))
 
-    if halfspace_list:
-        ax_xz.text(0.02, 0.02, f'{len(halfspace_list)}× halfspace (XY plane only)',
-                   transform=ax_xz.transAxes, fontsize=6, color='darkorange',
-                   va='bottom', ha='left', style='italic')
+    for _hs_xz in halfspace_list:
+        _hxpt1, _hxpt2, _hxside = _hs_xz
+        _hxx1, _hxy1 = float(_hxpt1[0]), float(_hxpt1[1])
+        _hxx2, _hxy2 = float(_hxpt2[0]), float(_hxpt2[1])
+        _hxdx, _hxdy = _hxx2 - _hxx1, _hxy2 - _hxy1
+        _hxnx, _hxny = (-_hxdy, _hxdx) if _hxside == 'above' else (_hxdy, -_hxdx)
+        _hxnl = float(np.hypot(_hxnx, _hxny))
+        if _hxnl < 1e-9:
+            continue
+        _hxnx /= _hxnl;  _hxny /= _hxnl
+        _hxx1 += enlarge * _hxnx;  _hxy1 += enlarge * _hxny
+        _hxx2 += enlarge * _hxnx;  _hxy2 += enlarge * _hxny
+        _hxdx, _hxdy = _hxx2 - _hxx1, _hxy2 - _hxy1
+        _hxxl, _hxyl = _xlim(), _ylim()
+        _hxtx = sorted([(_hxxl[0]-_hxx1)/_hxdx, (_hxxl[1]-_hxx1)/_hxdx]) if abs(_hxdx) > 1e-9 else [-1e9, 1e9]
+        _hxty = sorted([(_hxyl[0]-_hxy1)/_hxdy, (_hxyl[1]-_hxy1)/_hxdy]) if abs(_hxdy) > 1e-9 else [-1e9, 1e9]
+        _hxtlo = max(_hxtx[0], _hxty[0]);  _hxthi = min(_hxtx[1], _hxty[1])
+        if _hxtlo >= _hxthi:
+            continue
+        _hxpx = [_hxx1 + _hxtlo*_hxdx, _hxx1 + _hxthi*_hxdx]
+        _hxpy = [_hxy1 + _hxtlo*_hxdy, _hxy1 + _hxthi*_hxdy]
+        _xb_lo = min(_hxpx[0], _hxpx[1])
+        _xb_hi = max(_hxpx[0], _hxpx[1])
+        _yb_lo = min(_hxpy[0], _hxpy[1])
+        _yb_hi = max(_hxpy[0], _hxpy[1])
+        ax_xz.axvspan(_xb_lo, _xb_hi, color='darkorange', alpha=0.13, zorder=1)
+        ax_xz.axvline(_xb_lo, color='darkorange', lw=1.0, ls='--', alpha=0.8, zorder=2)
+        ax_xz.axvline(_xb_hi, color='darkorange', lw=1.0, ls='--', alpha=0.8, zorder=2)
+        _zc = (_zlim()[0] + _zlim()[1]) / 2
+        ax_xz.text((_xb_lo + _xb_hi) / 2, _zc,
+                   f'HS\ny∈[{_yb_lo:.2f},{_yb_hi:.2f}]',
+                   ha='center', va='center', fontsize=5, color='darkorange',
+                   style='italic', zorder=3)
 
     ax_xz.set_xlim(*_xlim());  ax_xz.set_ylim(*_zlim())
 
@@ -475,7 +505,7 @@ def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
             if nl < 1e-9:
                 continue
             nx, ny = nx / nl, ny / nl
-            x1 -= enlarge * nx;  y1 -= enlarge * ny
+            x1 += enlarge * nx;  y1 += enlarge * ny
             sd = nx * (pos[:, 0] - x1) + ny * (pos[:, 1] - y1)
             ok = sd >= -1e-6
             hs_mag    = np.maximum(hs_mag,  np.where(~ok, -sd,  0.0))
@@ -570,7 +600,7 @@ def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
             nl = float(np.hypot(nx, ny))
             if nl < 1e-9: continue
             nx, ny = nx/nl, ny/nl
-            x1 -= enlarge*nx;  y1 -= enlarge*ny
+            x1 += enlarge*nx;  y1 += enlarge*ny
             sd = nx*(flat[:,0]-x1) + ny*(flat[:,1]-y1)
             viol |= (sd < -1e-6)
 
@@ -814,16 +844,18 @@ class VisualAgentWrapper:
             'context_info':       dict(self.curr_context_info),              # Fix 10
         }
 
-        # UF-16.3: compute constraint satisfaction metrics for this rollout
-        _enlarge_val = ((self.geo_config.get('enlarge_constraints') or 0.0)
-                        if self.is_tightened else 0.0)
+        # UF-16.3: compute constraint satisfaction metrics for this rollout.
+        # Execution metrics always check against NOMINAL constraints (enlarge=0), matching
+        # original DPCC paper convention: all variants measured on the same nominal boundary
+        # so that tightened vs nominal comparison is meaningful (tightened should show fewer
+        # violations because the projector gave it a δ buffer over the nominal boundary).
         _cmetrics = {}
         if self.geo_config and self.curr_rollout_c_pos:
             _cmetrics = check_trajectory_constraints(
                 self.curr_rollout_c_pos,
                 list(self.history_desired_actions),
                 self.geo_config,
-                _enlarge_val)
+                0.0)
         if self._plan_post_viol_rates:
             _cmetrics['plan_post_viol_rate_mean'] = float(np.mean(self._plan_post_viol_rates))
             _cmetrics['plan_post_viol_rate_max']  = float(np.max(self._plan_post_viol_rates))

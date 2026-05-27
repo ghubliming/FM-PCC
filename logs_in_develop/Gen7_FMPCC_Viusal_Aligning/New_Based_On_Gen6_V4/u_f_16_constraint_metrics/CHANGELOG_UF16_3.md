@@ -127,3 +127,55 @@ interpretation guide, and comparison table between variants.
 |---|---|
 | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | Added `check_trajectory_constraints()`, `_check_planned_violations()`, integration into `__init__`/`reset`/`predict`/`update_rollout_info`/`_export_rollout_realtime`/summary |
 | `fm_visual_aligning_test/eval_fm_visual_aligning.py` | Identical changes |
+
+---
+
+## Post-release fixes (2026-05-27)
+
+### Fix 1 — halfspace sign in `_check_planned_violations`
+
+```python
+# WRONG (original) — subtracts feasible-side normal → shifts boundary into infeasible direction
+x1 -= enlarge * nx;  y1 -= enlarge * ny
+
+# CORRECT — adds feasible-side normal → shifts boundary into feasible region (tighter)
+x1 += enlarge * nx;  y1 += enlarge * ny
+```
+
+`(nx, ny)` is the unit normal pointing toward the feasible side.  The original sign
+moved the halfspace boundary in the wrong direction, making `_check_planned_violations`
+evaluate a *looser* halfspace for tightened runs than the projector actually enforced.
+
+### Fix 2 — exec metrics always check against nominal boundary (matches original DPCC paper)
+
+`check_trajectory_constraints` is now called with `enlarge=0.0` for **all** variants,
+regardless of `is_tightened`.
+
+**Why**: the original DPCC `eval.py` checks all variants against nominal constraint
+boundaries (`constraint_list_polytopic_not_tightened`, un-enlarged obstacle radii).
+Our previous code passed `enlarge=δ` for tightened runs, measuring those trajectories
+against a harder standard than nominal runs — making cross-variant comparison unfair
+and masking the safety benefit of tightening.
+
+**Expected outcome after fix**: the tightened variant should show *better*
+`exec_constraint_sat_rate` than the nominal variant, because its trajectories are
+planned with a δ buffer and thus stay δ inside the nominal boundary even under
+execution noise.  This is the intended DPCC tightening result.
+
+**`_check_planned_violations` unchanged**: that metric still uses `enlarge=δ` for
+tightened runs — it answers "did SLSQP enforce the constraints it was *given*?"
+(the projector's own tighter boundary), not the paper-level safety comparison.
+
+| Function | enlarge used | Question answered |
+|---|---|---|
+| `check_trajectory_constraints` | always 0 | Was the real trajectory safe vs nominal? |
+| `_check_planned_violations` | δ for tightened, 0 for nominal | Did the projector succeed at the boundary it was given? |
+
+### Changed files (fixes)
+
+| File | Change |
+|---|---|
+| `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | `_check_planned_violations` halfspace sign `+=`; `check_trajectory_constraints` call site `enlarge=0.0` |
+| `fm_visual_aligning_test/eval_fm_visual_aligning.py` | Identical changes |
+| `config/visual_aligning_eval.yaml` | `enlarge_constraints` comment expanded to explain planning-harder / metrics-nominal split |
+| `u_f_15_constrainst_visual/TIGHTENING_CONVENTION.md` | TL;DR table added; sign bug section split into Fix 1 / Fix 2; code table updated |
