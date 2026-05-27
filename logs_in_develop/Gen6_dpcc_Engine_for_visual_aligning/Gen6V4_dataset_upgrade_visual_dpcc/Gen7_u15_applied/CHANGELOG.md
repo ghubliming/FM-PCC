@@ -38,3 +38,13 @@ See [CHANGELOG_UF15.md UF-15.2](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based
 **3D panel overlay**: workspace box wireframe (steelblue, 12 edges).
 
 **Wiring**: `geo_config` and `is_tightened` added as `VisualAgentWrapper` constructor params and stored as instance attributes. Passed from the geo loop instantiation. Empty `geo_config` → all overlay guards False → no drawing, no error.
+
+---
+
+## UF-15.3: `_hs_xy_draw` clipping fix + moderate halfspace value (2026-05-27)
+
+See [CHANGELOG_UF15.md UF-15.3](../../../../Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/u_f_15_constrainst_visual/CHANGELOG_UF15.md) for full detail. DPCC-side changes are identical to FM.
+
+**`_hs_xy_draw` parametric clipping fix**: old outer-extreme t selection drew halfspace lines with endpoints outside the display viewport, causing auto-scaling axes in the foresight SVG to expand incorrectly. Fixed with Cohen-Sutherland slab intersection (`t_lo = max(tx[0], ty[0])`, `t_hi = min(tx[1], ty[1])`).
+
+**Halfspace moderated** in `config/visual_aligning_eval.yaml`: `[[0.35,-0.35],[0.65,0.35],'above']` (45° diagonal, too aggressive) → `[[0.30,-0.05],[0.70,0.05],'above']` (nearly horizontal, y ≈ -0.05→0.05).

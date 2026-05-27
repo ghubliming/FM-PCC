@@ -155,7 +155,13 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
 # ── Constraint geometry visualisation (UF-15) ────────────────────────────────
 
 def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
-    """Draw one halfspace boundary line + feasible-side arrow in an XY axes."""
+    """Draw one halfspace boundary line + feasible-side arrow in an XY axes.
+
+    Uses proper parametric clipping (Cohen-Sutherland style): intersects the
+    t-interval from x-limits with the t-interval from y-limits so the drawn
+    segment is strictly inside the display box. Required for auto-scaling axes
+    (foresight SVG) to avoid expanding the view far beyond the workspace.
+    """
     pt1, pt2, side = hs
     x1, y1 = float(pt1[0]), float(pt1[1])
     x2, y2 = float(pt2[0]), float(pt2[1])
@@ -168,16 +174,15 @@ def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
     x1 += enlarge * nx;  y1 += enlarge * ny    # tightening shifts boundary inward
     x2 += enlarge * nx;  y2 += enlarge * ny
     dx, dy = x2 - x1, y2 - y1
-    ts = []
-    if abs(dx) > 1e-9:
-        ts += [(xlim[0]-x1)/dx, (xlim[1]-x1)/dx]
-    if abs(dy) > 1e-9:
-        ts += [(ylim[0]-y1)/dy, (ylim[1]-y1)/dy]
-    if len(ts) < 2:
-        return
-    ts = sorted(ts)
-    px = [x1 + ts[0]*dx, x1 + ts[-1]*dx]
-    py = [y1 + ts[0]*dy, y1 + ts[-1]*dy]
+    # Parametric clipping: find t-range where segment lies inside [xlim] × [ylim]
+    tx = sorted([(xlim[0]-x1)/dx, (xlim[1]-x1)/dx]) if abs(dx) > 1e-9 else [-1e9, 1e9]
+    ty = sorted([(ylim[0]-y1)/dy, (ylim[1]-y1)/dy]) if abs(dy) > 1e-9 else [-1e9, 1e9]
+    t_lo = max(tx[0], ty[0])
+    t_hi = min(tx[1], ty[1])
+    if t_lo >= t_hi:
+        return   # line does not intersect display box
+    px = [x1 + t_lo*dx, x1 + t_hi*dx]
+    py = [y1 + t_lo*dy, y1 + t_hi*dy]
     ax.plot(px, py, color='darkorange', linewidth=1.5, zorder=3, label='halfspace')
     mx, my = (px[0]+px[1])/2, (py[0]+py[1])/2
     ax.annotate('', xy=(mx+nx*0.06, my+ny*0.06), xytext=(mx, my),
