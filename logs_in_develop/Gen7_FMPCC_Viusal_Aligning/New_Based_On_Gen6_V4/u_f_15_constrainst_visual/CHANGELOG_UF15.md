@@ -210,3 +210,36 @@ Changed in both `halfspace_only_1` (commented) and `combined_4` (active).
 - `fm_visual_aligning_test/eval_fm_visual_aligning.py`: `_hs_xy_draw` clipping rewrite
 - `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`: same `_hs_xy_draw` fix
 - `config/visual_aligning_eval.yaml`: halfspace values updated in both geo entries
+
+---
+
+## Update 4 — UF-15.4: Halfspace shown as filled plane, not just a line (2026-05-27)
+
+### Motivation
+
+The previous implementation showed the halfspace only as a boundary line + arrow. A line alone gives no intuition about which region is forbidden — you have to read the tiny arrow label. The constraint is a **half-plane**; the forbidden region should be visually filled.
+
+### What changed
+
+**2D XY panel** (`_hs_xy_draw` rewritten in both eval files):
+
+The infeasible half of the viewport is now filled with a semi-transparent darkorange polygon (alpha=0.15). The polygon is built from the two clipped boundary endpoints plus any viewport corners that lie on the infeasible side:
+
+```
+polygon = [p0] + [infeasible viewport corners, CCW order] + [p1]
+```
+
+This avoids using large `BIG` coordinates that would expand auto-scaling axes. The boundary line and feasible-side arrow remain on top of the fill (zorder=3 vs zorder=1).
+
+**3D panels** (`plot_geo_constraints` overview + foresight SVG):
+
+The halfspace now appears as a darkorange vertical rectangle (semi-transparent, alpha=0.25) spanning from workspace z_lo to z_hi. The four vertices are the two clipped XY endpoints at z_lo and z_hi, rendered as a `Poly3DCollection`. This makes the boundary plane visible from any 3D camera angle.
+
+### Changed files (UF-15.4)
+
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py`:
+  - `_hs_xy_draw`: added infeasible fill polygon (CCW viewport corner walk)
+  - `plot_geo_constraints` 3D panel: added halfspace `Poly3DCollection` rectangle
+  - Foresight SVG 3D panel: added halfspace `Poly3DCollection` rectangle
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`: identical changes
+- `READING_CONSTRAINT_PLOTS.md`: updated to describe fill polygon and 3D plane

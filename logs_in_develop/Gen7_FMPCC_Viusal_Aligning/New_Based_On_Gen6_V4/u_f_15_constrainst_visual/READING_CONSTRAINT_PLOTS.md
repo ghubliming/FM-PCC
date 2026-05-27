@@ -85,18 +85,29 @@ The normal vector **always points toward the feasible region** — the side the 
 | Arrow from line midpoint | darkorange | Points toward the **feasible** (allowed) region |
 | Label "feasible" | darkorange | Confirms which side is allowed |
 
-**How to read**: the darkorange line divides the XY plane. The arrow tells you which side the EE is supposed to be on. If a trajectory crosses to the other side of the line, it violates the halfspace constraint.
+**How to read**: the shaded darkorange region is the **forbidden zone** — the EE must not enter it. The boundary line is the exact limit. The arrow from the midpoint of the line confirms the feasible (allowed) side. If a trajectory crosses into the shaded region, it violates the halfspace constraint.
+
+#### Infeasible fill polygon
+
+The fill covers the infeasible half of the display viewport without using coordinates outside the visible area (which would expand auto-scaling axes). The algorithm:
+1. Clip the infinite halfspace boundary to the viewport box using Cohen-Sutherland
+2. Walk CCW around the viewport corners from the clip entry point to the clip exit point
+3. Collect corners that are on the infeasible side (dot product with feasible normal < 0)
+4. Build polygon: `[entry_point] + [infeasible corners] + [exit_point]`
 
 #### Viewport clipping (Cohen-Sutherland)
 
-The line is infinite in theory but drawn only inside the visible area. The clipping logic:
 ```
 tx = [t at xlim[0], t at xlim[1]]   # where the line crosses x boundaries
 ty = [t at ylim[0], t at ylim[1]]   # where the line crosses y boundaries
 t_lo = max(min(tx), min(ty))         # enter both slabs
 t_hi = min(max(tx), max(ty))         # exit both slabs
 ```
-This ensures both endpoints are inside the display box. Only drawn in 2D panels (XY, XZ); the 3D panel does not render halfspace lines.
+Both endpoints are guaranteed inside the display box.
+
+#### 3D halfspace plane
+
+In the 3D panel, the halfspace appears as a semi-transparent darkorange vertical **rectangle** (not a line): the two clipped XY endpoints are extruded from `z_lo` to `z_hi` (workspace z bounds). This makes the boundary plane visible from any 3D camera angle.
 
 ---
 
@@ -160,7 +171,7 @@ Shows the full 3D workspace. Camera is at a fixed elevation and azimuth (elev=20
 |---|---|
 | Steelblue wireframe box + semi-transparent faces | `'bounds'` in constraint_types |
 | Tomato sphere surface | `'obstacles'` in constraint_types |
-| No halfspace shape | Halfspace is 2D only — not rendered in 3D panel |
+| Darkorange vertical rectangle | `'halfspace'` in constraint_types — clipped to workspace z extent (z_lo → z_hi), XY footprint matches XY panel |
 
 The wireframe has 12 edges (all box edges). The semi-transparent faces use `Poly3DCollection` with `alpha=0.08` so the interior remains visible.
 
@@ -186,7 +197,7 @@ Side view showing height profile.
 | Grey dashed lines + z annotations | Always — marks floor (lb_z) and ceiling (ub_z) |
 | Tomato circle | `'obstacles'` in constraint_types **and** `'z' in dimensions` |
 
-For 2D obstacles (no z), the XZ panel shows no obstacle circle — the sphere only constrains x-y.
+**Why no obstacle circle in XZ for 2D obstacles**: `dimensions: ['x','y']` means the constraint only acts in the x-y plane — there is no z component, so there is nothing to draw in XZ. Switch to `dimensions: ['x','y','z']` for a true 3D sphere and the circle will appear in XZ too.
 
 ---
 
@@ -226,7 +237,7 @@ Drawn after `ax_3d.legend(fontsize=9)`:
 | Wireframe box (12 edges) | steelblue, alpha=0.45, lw=1.0 | `'bounds'` in constraint_types |
 | No obstacle or halfspace shape | — | 3D panel is wireframe-only in the foresight SVG |
 
-The 3D panel does not re-draw obstacles or halfspace in the foresight view (no `Poly3DCollection` sphere, no halfspace plane) — the wireframe alone makes the workspace boundary visible without obscuring the trajectory.
+The 3D panel renders the workspace box wireframe **and** the halfspace boundary plane (darkorange vertical rectangle). Obstacles are not drawn in 3D (a `Poly3DCollection` sphere is a large opaque blob that hides trajectory lines; the XY circle already covers that).
 
 ---
 
