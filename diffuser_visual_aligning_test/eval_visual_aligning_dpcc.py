@@ -390,10 +390,24 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
                    transform=ax_xz.transAxes, fontsize=9, color='gray')
 
     for obs in obstacle_list:
-        if 'z' in obs.get('dimensions', []):
+        obs_dims = obs.get('dimensions', ['x', 'y'])
+        cx_o = float(obs['center'][0])
+        r_o  = obs['radius'] + enlarge
+        if 'z' in obs_dims and len(obs['center']) > 2:
             ax_xz.add_patch(_mpa.Circle(
-                (float(obs['center'][0]), float(obs['center'][2])), obs['radius']+enlarge,
+                (cx_o, float(obs['center'][2])), r_o,
                 lw=1.5, edgecolor='tomato', facecolor='tomato', alpha=0.2))
+        else:
+            # 2D obstacle (xy-only): full cylinder — show as vertical band in XZ
+            ax_xz.axvspan(cx_o - r_o, cx_o + r_o, color='tomato', alpha=0.12)
+            ax_xz.axvline(cx_o - r_o, color='tomato', lw=1.0, ls='--', alpha=0.7)
+            ax_xz.axvline(cx_o + r_o, color='tomato', lw=1.0, ls='--', alpha=0.7)
+            ax_xz.plot(cx_o, (lb_d[2]+ub_d[2])/2 if lb_d is not None else 0.20, 'r+', ms=6)
+
+    if halfspace_list:
+        ax_xz.text(0.02, 0.02, f'{len(halfspace_list)}× halfspace (XY plane only)',
+                   transform=ax_xz.transAxes, fontsize=6, color='darkorange',
+                   va='bottom', ha='left', style='italic')
 
     ax_xz.set_xlim(*_xlim());  ax_xz.set_ylim(*_zlim())
 
@@ -994,6 +1008,32 @@ class VisualAgentWrapper:
                             [_h3px[0],_h3py[0],_hs3_zlo],[_h3px[1],_h3py[1],_hs3_zlo],
                             [_h3px[1],_h3py[1],_hs3_zhi],[_h3px[0],_h3py[0],_hs3_zhi],
                         ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
+
+                # UF-15.5: obstacle sphere on 3D panel
+                if _gc and 'obstacles' in _ct:
+                    _wb_obs = _gc.get('workspace_bounds', {})
+                    if _wb_obs:
+                        _ob_lb = np.array(_wb_obs['lb'], dtype=float) + _enlarge
+                        _ob_ub = np.array(_wb_obs['ub'], dtype=float) - _enlarge
+                        _ob_z0 = 0.0  if np.isinf(_ob_lb[2]) else float(_ob_lb[2])
+                        _ob_z1 = 0.50 if np.isinf(_ob_ub[2]) else float(_ob_ub[2])
+                    else:
+                        _ob_z0, _ob_z1 = 0.02, 0.50
+                    _ob_zmid = (_ob_z0 + _ob_z1) / 2
+                    for _obs3d in _gc.get('obstacle_constraints', []):
+                        _ocx = float(_obs3d['center'][0])
+                        _ocy = float(_obs3d['center'][1])
+                        _od  = _obs3d.get('dimensions', ['x', 'y'])
+                        _ocz = (float(_obs3d['center'][2]) if len(_obs3d['center']) > 2 and 'z' in _od
+                                else _ob_zmid)
+                        _or  = float(_obs3d['radius']) + _enlarge
+                        _ou  = np.linspace(0, 2*np.pi, 20)
+                        _ov  = np.linspace(0, np.pi, 12)
+                        ax_3d.plot_surface(
+                            _ocx + _or*np.outer(np.cos(_ou), np.sin(_ov)),
+                            _ocy + _or*np.outer(np.sin(_ou), np.sin(_ov)),
+                            _ocz + _or*np.outer(np.ones_like(_ou), np.cos(_ov)),
+                            color='tomato', alpha=0.30, linewidth=0)
 
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')

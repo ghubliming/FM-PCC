@@ -243,3 +243,54 @@ The halfspace now appears as a darkorange vertical rectangle (semi-transparent, 
   - Foresight SVG 3D panel: added halfspace `Poly3DCollection` rectangle
 - `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`: identical changes
 - `READING_CONSTRAINT_PLOTS.md`: updated to describe fill polygon and 3D plane
+
+---
+
+## Update 5 — UF-15.5: Missing obstacle in SVG 3D panel + XZ overview panel (2026-05-27)
+
+### Bugs fixed
+
+**Bug 1 — Foresight SVG 3D panel: obstacle sphere never drawn**
+
+The `ax_3d` panel in the foresight SVG rendered the workspace box wireframe and the
+halfspace boundary plane, but had no obstacle rendering code at all. The XY panel
+did show the obstacle circle correctly.  The `plot_surface` sphere block was only
+present in `plot_geo_constraints` (overview PNG), not in the inline foresight SVG
+drawing loop.
+
+Fix: added obstacle `plot_surface` sphere after the halfspace `Poly3DCollection`
+block in both eval files (after `fig_mpc.tight_layout()` — before that line):
+
+```python
+if _gc and 'obstacles' in _ct:
+    for _obs3d in _gc.get('obstacle_constraints', []):
+        ax_3d.plot_surface(
+            _ocx + _or*np.outer(np.cos(_ou), np.sin(_ov)),
+            _ocy + _or*np.outer(np.sin(_ou), np.sin(_ov)),
+            _ocz + _or*np.outer(np.ones_like(_ou), np.cos(_ov)),
+            color='tomato', alpha=0.30, linewidth=0)
+```
+
+For 2D obstacles (xy-only), `_ocz` is set to the workspace z midpoint
+`(_ob_z0 + _ob_z1) / 2` so the sphere is placed at a sensible height.
+
+**Bug 2 — Overview PNG XZ panel (3rd subplot): 2D obstacle not shown; halfspace not annotated**
+
+The XZ panel only rendered obstacles that had `'z' in dimensions`.  Since
+`combined_4` uses a 2D obstacle (`dimensions: ['x', 'y']`), it was silently skipped.
+The halfspace (which lives in the XY plane) had no representation in XZ at all.
+
+Fix — 2D obstacles in XZ: rendered as a shaded vertical band (x = cx±r, full z
+height) with dashed edge lines.  This correctly represents the full cylinder that the
+2D obstacle implies.
+
+Fix — halfspace in XZ: added a small italic text annotation in the bottom-left corner:
+`"N× halfspace (XY plane only)"` — clarifies the constraint exists but cannot be
+projected onto XZ without additional 3D plane information.
+
+### Changed files (UF-15.5)
+
+| File | Change |
+|---|---|
+| `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | Added obstacle `plot_surface` to foresight SVG `ax_3d`; fixed XZ panel obstacle + halfspace annotation |
+| `fm_visual_aligning_test/eval_fm_visual_aligning.py` | Identical changes |

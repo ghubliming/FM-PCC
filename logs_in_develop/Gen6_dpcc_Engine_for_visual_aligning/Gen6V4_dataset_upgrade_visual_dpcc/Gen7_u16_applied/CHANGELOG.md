@@ -29,6 +29,18 @@ Original values preserved as comments directly below each relaxed line.
 
 ---
 
-## UF-16.2: Suppressed SLSQP per-sample console print
+## UF-16.2: `active_geo_variants` selector
+
+See source MD for full detail.  Summary:
+
+- Added `active_geo_variants` list key in `config/visual_aligning_eval.yaml` (geo constraint section, after `enlarge_constraints`).  One-line change to select which named geo entries run; `null` = run all.
+- All ready geo entries uncommented in yaml so any can be activated directly via the list.
+- Dead top-level `constraint_types` fallback removed.
+- Both eval scripts updated: filter `_geo_specs` by active names; fix `_has_geo` to use effective `_gc['constraint_types']`.
+- `halfspace_only_2` kept commented — 3D normal/offset format not implemented in code.
+
+---
+
+## UF-16.3: Suppressed SLSQP per-sample console print
 
 `diffuser_visual_aligning/sampling/projection.py` and `fm_visual_aligning/sampling/projection.py` — the Fix 9.3 diagnostic block that printed one line per sample per replanning step was commented out.  It produced O(B × T / stride) lines per rollout, flooding the console and hiding all other eval output.  Lines kept as comments for easy re-enable.
