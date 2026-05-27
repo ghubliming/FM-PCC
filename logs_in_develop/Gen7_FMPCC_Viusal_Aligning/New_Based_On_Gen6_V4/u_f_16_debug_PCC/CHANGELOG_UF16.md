@@ -64,7 +64,64 @@ Swap the active/commented lines inside the `combined_4` entry in `visual_alignin
 
 ---
 
-## UF-16.2 — Suppressed SLSQP per-sample print
+## UF-16.2 — `active_geo_variants` selector in yaml
+
+### Problem
+
+Choosing which geo constraint configurations to run required manually commenting and uncommenting large `- name:` blocks inside `geo_constraint_variants`.  With 11 entries, a single-experiment test meant scrolling through ~150 lines of yaml and toggling dozens of lines — error-prone and slow.
+
+### Solution
+
+Added a top-level `active_geo_variants` key in the geo constraint section of `config/visual_aligning_eval.yaml` (placed immediately after `enlarge_constraints`):
+
+```yaml
+active_geo_variants: [combined_4]
+# null → run all defined entries
+# Any subset: [no_constraint, dynamics_only, combined_4]
+```
+
+The eval scripts (`eval_visual_aligning_dpcc.py`, `eval_fm_visual_aligning.py`) filter `_geo_specs` against this list before building `_run_items`:
+
+```python
+_active_names = config.get('active_geo_variants')
+if _active_names is not None:
+    _active_set = set(_active_names)
+    _geo_specs  = [gs for gs in _geo_specs if gs['name'] in _active_set]
+    print(f'\n[ geo ] active_geo_variants: {[gs["name"] for gs in _geo_specs]}')
+```
+
+`null` is fully backwards-compatible — all entries run as before.
+
+### All geo entries uncommented
+
+All ready entry definitions in `geo_constraint_variants` were uncommented so any combination can be activated without touching the definitions:
+
+| Entry | Status |
+|---|---|
+| `no_constraint` | active (always was) |
+| `dynamics_only` | active (always was) |
+| `bounds_only_1` | **uncommented** |
+| `bounds_only_2` | **uncommented** |
+| `obstacle_only_1` | **uncommented** |
+| `obstacle_only_2` | **uncommented** |
+| `halfspace_only_1` | **uncommented** |
+| `combined_1` | **uncommented** |
+| `combined_2` | **uncommented** |
+| `combined_3` | **uncommented** |
+| `combined_4` | active (always was) |
+| `halfspace_only_2` | stays commented — 3D `normal`/`offset` format not yet implemented in code |
+
+### Dead code removed
+
+The top-level `constraint_types: ['bounds', 'dynamics']` fallback line was removed.  It was only used when `geo_constraint_variants` was absent — dead since the geo loop was introduced.
+
+### `_has_geo` fix
+
+`_has_geo` was checking `_gs['constraint_types']` (per-entry definition, before tightened twin generation).  Changed to `_gc['constraint_types']` (the effective value) so tightened twins are correctly recognised as having geometry.
+
+---
+
+## UF-16.3 — Suppressed SLSQP per-sample print
 
 ### Files changed
 
@@ -104,6 +161,9 @@ if delta > 1e-4 and not res.success:
 
 | File | Change |
 |---|---|
-| `config/visual_aligning_eval.yaml` | Relaxed `workspace_bounds` and `halfspace_constraints` in `combined_4`; originals commented out |
-| `diffuser_visual_aligning/sampling/projection.py` | Commented out Fix 9.3 per-sample SLSQP print |
-| `fm_visual_aligning/sampling/projection.py` | Same |
+| `config/visual_aligning_eval.yaml` | UF-16.1: Relaxed `workspace_bounds` and `halfspace_constraints` in `combined_4`; originals commented out |
+| `config/visual_aligning_eval.yaml` | UF-16.2: Added `active_geo_variants` selector; uncommented all ready geo entries; removed dead `constraint_types` fallback |
+| `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` | UF-16.2: Filter `_geo_specs` by `active_geo_variants`; fix `_has_geo` to use `_gc['constraint_types']` |
+| `fm_visual_aligning_test/eval_fm_visual_aligning.py` | UF-16.2: Same as DPCC eval |
+| `diffuser_visual_aligning/sampling/projection.py` | UF-16.3: Commented out Fix 9.3 per-sample SLSQP print |
+| `fm_visual_aligning/sampling/projection.py` | UF-16.3: Same |
