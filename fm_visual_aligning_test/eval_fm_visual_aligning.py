@@ -421,6 +421,171 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
     plt.close(fig)
     print(f'[ geo ] Constraint overview → {out_path}')
 
+# ── UF-16.3: Constraint satisfaction / violation metrics ──────────────────────
+
+def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
+    """
+    Evaluate actual EE trajectory against all active geometric constraints.
+
+    c_pos_traj : (T, 3) actual end-effector positions in metres
+    act_traj   : (T, 3) commanded actions per step (for dynamics consistency check)
+    geo_config : eval geo_config dict — constraint_types, workspace_bounds, etc.
+    enlarge    : tightening margin (>0 for tightened twin runs, else 0)
+
+    Returns dict of exec_* metrics (all JSON-serialisable floats/ints/bools).
+    Metrics that are inapplicable for a given constraint set are set to 0 / -1.
+    """
+    ct  = geo_config.get('constraint_types', [])
+    pos = np.array(c_pos_traj, dtype=float)   # (T, 3)
+    T   = len(pos)
+    if T == 0:
+        return {}
+    act = np.array(act_traj, dtype=float) if (act_traj is not None and len(act_traj)) else None
+
+    _DIM = {'x': 0, 'y': 1, 'z': 2}
+
+    b_mag  = np.zeros(T)
+    hs_mag = np.zeros(T)
+    ob_pen = np.zeros(T)
+    b_margin  = np.full(T, np.inf)
+    hs_margin = np.full(T, np.inf)
+    ob_margin = np.full(T, np.inf)
+
+    if 'bounds' in ct and 'workspace_bounds' in geo_config:
+        wb = geo_config['workspace_bounds']
+        lb = np.where(np.isinf(np.array(wb['lb'], dtype=float)), -1e9,
+                      np.array(wb['lb'], dtype=float)) + enlarge
+        ub = np.where(np.isinf(np.array(wb['ub'], dtype=float)),  1e9,
+                      np.array(wb['ub'], dtype=float)) - enlarge
+        viol_lo  = np.maximum(0.0, lb - pos)
+        viol_hi  = np.maximum(0.0, pos - ub)
+        b_mag    = np.maximum(viol_lo, viol_hi).max(axis=1)
+        ok       = b_mag <= 1e-6
+        margins  = np.minimum(pos - lb, ub - pos).min(axis=1)
+        b_margin = np.where(ok, margins, 0.0)
+
+    if 'halfspace' in ct:
+        for hs in geo_config.get('halfspace_constraints', []):
+            pt1, pt2, side = hs
+            x1, y1 = float(pt1[0]), float(pt1[1])
+            x2, y2 = float(pt2[0]), float(pt2[1])
+            dx, dy  = x2 - x1, y2 - y1
+            nx, ny  = (-dy, dx) if side == 'above' else (dy, -dx)
+            nl = float(np.hypot(nx, ny))
+            if nl < 1e-9:
+                continue
+            nx, ny = nx / nl, ny / nl
+            x1 -= enlarge * nx;  y1 -= enlarge * ny
+            sd = nx * (pos[:, 0] - x1) + ny * (pos[:, 1] - y1)
+            ok = sd >= -1e-6
+            hs_mag    = np.maximum(hs_mag,  np.where(~ok, -sd,  0.0))
+            hs_margin = np.minimum(hs_margin, np.where(ok,  sd, np.inf))
+
+    if 'obstacles' in ct:
+        for obs in geo_config.get('obstacle_constraints', []):
+            dims  = obs.get('dimensions', ['x', 'y'])
+            idx   = [_DIM[d] for d in dims if d in _DIM]
+            ctr   = np.array([obs['center'][k] for k in range(len(idx))], dtype=float)
+            r     = float(obs['radius']) + enlarge
+            dist  = np.linalg.norm(pos[:, idx] - ctr, axis=1)
+            pen   = np.maximum(0.0, r - dist)
+            ok    = pen <= 1e-6
+            ob_pen    = np.maximum(ob_pen, pen)
+            ob_margin = np.minimum(ob_margin, np.where(ok, dist - r, np.inf))
+
+    b_viol  = b_mag  > 1e-6
+    hs_viol = hs_mag > 1e-6
+    ob_viol = ob_pen > 1e-6
+    any_viol = b_viol | hs_viol | ob_viol
+
+    m_all = np.full(T, np.inf)
+    if 'bounds'    in ct: m_all = np.minimum(m_all, b_margin)
+    if 'halfspace' in ct: m_all = np.minimum(m_all, hs_margin)
+    if 'obstacles' in ct: m_all = np.minimum(m_all, ob_margin)
+    valid_m     = m_all[(~any_viol) & np.isfinite(m_all)]
+    mean_margin = float(valid_m.mean()) if len(valid_m) else 0.0
+
+    max_streak = cur = 0
+    for v in any_viol:
+        cur = 0 if v else cur + 1
+        if cur > max_streak:
+            max_streak = cur
+
+    viol_idx   = np.where(any_viol)[0]
+    first_viol = int(viol_idx[0]) if len(viol_idx) else -1
+
+    dyn_mean = dyn_max = 0.0
+    if act is not None and T > 1:
+        L    = min(T - 1, len(act))
+        derr = np.linalg.norm(pos[1:L+1] - pos[:L] - act[:L], axis=1)
+        dyn_mean = float(derr.mean())
+        dyn_max  = float(derr.max())
+
+    return {
+        'exec_n_steps':                         int(T),
+        'exec_n_violated_steps':                int(any_viol.sum()),
+        'exec_constraint_sat_rate':             float(1.0 - any_viol.mean()),
+        'exec_zero_violation_rollout':          bool(int(any_viol.sum()) == 0),
+        'exec_bounds_viol_count':               int(b_viol.sum()),
+        'exec_halfspace_viol_count':            int(hs_viol.sum()),
+        'exec_obstacle_viol_count':             int(ob_viol.sum()),
+        'exec_max_bounds_viol_m':               float(b_mag.max()),
+        'exec_max_halfspace_viol_m':            float(hs_mag.max()),
+        'exec_max_obstacle_penetration_m':      float(ob_pen.max()),
+        'exec_constraint_margin_mean_m':        mean_margin,
+        'exec_first_violation_step':            first_viol,
+        'exec_longest_safe_streak':             int(max_streak),
+        'exec_dynamics_consistency_error_mean': dyn_mean,
+        'exec_dynamics_consistency_error_max':  dyn_max,
+    }
+
+
+def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
+    """
+    Check post-projection planned c_pos candidates against all geometric constraints.
+    cands_xyz : (B, H, 3) unnormalised planned EE positions
+    Returns fraction of (sample, horizon_step) pairs violating any constraint.
+    """
+    ct = geo_config.get('constraint_types', [])
+    B, H, _ = cands_xyz.shape
+    flat  = cands_xyz.reshape(-1, 3)
+    viol  = np.zeros(B * H, dtype=bool)
+    _DIM  = {'x': 0, 'y': 1, 'z': 2}
+
+    if 'bounds' in ct and 'workspace_bounds' in geo_config:
+        wb = geo_config['workspace_bounds']
+        lb = np.where(np.isinf(np.array(wb['lb'], dtype=float)), -1e9,
+                      np.array(wb['lb'], dtype=float)) + enlarge
+        ub = np.where(np.isinf(np.array(wb['ub'], dtype=float)),  1e9,
+                      np.array(wb['ub'], dtype=float)) - enlarge
+        viol |= np.any((flat < lb) | (flat > ub), axis=1)
+
+    if 'halfspace' in ct:
+        for hs in geo_config.get('halfspace_constraints', []):
+            pt1, pt2, side = hs
+            x1, y1 = float(pt1[0]), float(pt1[1])
+            x2, y2 = float(pt2[0]), float(pt2[1])
+            dx, dy  = x2 - x1, y2 - y1
+            nx, ny  = (-dy, dx) if side == 'above' else (dy, -dx)
+            nl = float(np.hypot(nx, ny))
+            if nl < 1e-9: continue
+            nx, ny = nx/nl, ny/nl
+            x1 -= enlarge*nx;  y1 -= enlarge*ny
+            sd = nx*(flat[:,0]-x1) + ny*(flat[:,1]-y1)
+            viol |= (sd < -1e-6)
+
+    if 'obstacles' in ct:
+        for obs in geo_config.get('obstacle_constraints', []):
+            dims = obs.get('dimensions', ['x', 'y'])
+            idx  = [_DIM[d] for d in dims if d in _DIM]
+            ctr  = np.array([obs['center'][k] for k in range(len(idx))], dtype=float)
+            r    = float(obs['radius']) + enlarge
+            dist = np.linalg.norm(flat[:, idx] - ctr, axis=1)
+            viol |= (dist < r - 1e-6)
+
+    return float(viol.mean())
+
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 class Tee:
@@ -588,6 +753,9 @@ class VisualAgentWrapper:
         self.history_dist_to_target      = []
         self.history_clamp_events        = []
         self._replan_count               = 0
+        # UF-16.3: constraint metrics
+        self.history_constraint_metrics  = []
+        self._plan_post_viol_rates       = []
 
     def reset(self):
         self.mental_robot_pos   = None
@@ -614,6 +782,7 @@ class VisualAgentWrapper:
         self.curr_rollout_dist_to_target.clear()
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
+        self._plan_post_viol_rates.clear()   # UF-16.3
 
     def update_rollout_info(self, info):
         """Called by Aligning_Sim at rollout end. Mirrors ddpm_encdec verbose format."""
@@ -644,6 +813,24 @@ class VisualAgentWrapper:
             'clamp_events':       list(self.curr_rollout_clamp_events),
             'context_info':       dict(self.curr_context_info),              # Fix 10
         }
+
+        # UF-16.3: compute constraint satisfaction metrics for this rollout
+        _enlarge_val = ((self.geo_config.get('enlarge_constraints') or 0.0)
+                        if self.is_tightened else 0.0)
+        _cmetrics = {}
+        if self.geo_config and self.curr_rollout_c_pos:
+            _cmetrics = check_trajectory_constraints(
+                self.curr_rollout_c_pos,
+                list(self.history_desired_actions),
+                self.geo_config,
+                _enlarge_val)
+        if self._plan_post_viol_rates:
+            _cmetrics['plan_post_viol_rate_mean'] = float(np.mean(self._plan_post_viol_rates))
+            _cmetrics['plan_post_viol_rate_max']  = float(np.max(self._plan_post_viol_rates))
+            _cmetrics['plan_n_replan_steps']       = len(self._plan_post_viol_rates)
+        self.master_rollout_history[f'rollout_{ridx}']['constraint_metrics'] = _cmetrics
+        self.history_constraint_metrics.append(_cmetrics)
+
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
         self.history_rollout_mean_dist.append(float(mean_dist))              # Fix 9
@@ -737,7 +924,26 @@ class VisualAgentWrapper:
                 'avg_inference_time_per_replan':  float(data.get('avg_time', 0.0)),  # Fix 12
                 'max_physical_tracking_error':    float(data.get('max_physical_tracking_error', 0.0)),
                 'context_info':                   data.get('context_info', {}),
+                'constraint_metrics':             data.get('constraint_metrics', {}),  # UF-16.3
             }
+            _cm = data.get('constraint_metrics', {})
+            if _cm:
+                _sat = _cm.get('exec_constraint_sat_rate', 1.0)
+                _nviol = _cm.get('exec_n_violated_steps', 0)
+                _bv = _cm.get('exec_bounds_viol_count', 0)
+                _hv = _cm.get('exec_halfspace_viol_count', 0)
+                _ov = _cm.get('exec_obstacle_viol_count', 0)
+                _fv = _cm.get('exec_first_violation_step', -1)
+                _ls = _cm.get('exec_longest_safe_streak', 0)
+                _mg = _cm.get('exec_constraint_margin_mean_m', 0.0)
+                _dy = _cm.get('exec_dynamics_consistency_error_mean', 0.0)
+                _pv = _cm.get('plan_post_viol_rate_mean', 0.0)
+                _zv = _cm.get('exec_zero_violation_rollout', False)
+                print(f'  [ constraints ] sat={_sat:.3f}  violated={_nviol}steps'
+                      f'  (bounds={_bv} hs={_hv} obs={_ov})')
+                print(f'    first_viol_step={_fv}  longest_safe={_ls}  '
+                      f'margin={_mg:.4f}m  dyn_err={_dy:.4f}m')
+                print(f'    plan_post_viol_rate={_pv:.4f}  zero_viol={_zv}')
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_stats.json'), 'w') as sf:
                 json.dump(stats, sf, indent=4)
 
@@ -1197,6 +1403,14 @@ class VisualAgentWrapper:
             else:
                 self.curr_rollout_all_candidates.append(cpos_norm.copy())
             self.curr_rollout_selected_idx.append(int(which))
+
+            # UF-16.3: planning violation rate on post-projection candidates
+            if self.geo_config and self.curr_rollout_all_candidates:
+                _pv = _check_planned_violations(
+                    self.curr_rollout_all_candidates[-1],
+                    self.geo_config,
+                    (self.geo_config.get('enlarge_constraints') or 0.0) if self.is_tightened else 0.0)
+                self._plan_post_viol_rates.append(_pv)
 
             self.prev_observations = traj_np[which].copy()
 
@@ -1736,6 +1950,68 @@ if __name__ == '__main__':
                 print(f'Avg steps (all trials):    {np.mean(n_steps):.2f} +- {np.std(n_steps):.2f}')
                 print(f'Physical tracking error:   mean={mean_phys:.4f} m  max={max_phys:.4f} m')
                 print(f'Avg inference time/replan: {np.mean(agent.history_avg_time):.3f} s')
+
+                # UF-16.3: aggregate constraint satisfaction metrics across rollouts
+                _hcm = agent.history_constraint_metrics
+                if _hcm:
+                    def _cm_arr(key, default=0.0):
+                        return np.array([m.get(key, default) for m in _hcm], dtype=float)
+                    _sat_arr  = _cm_arr('exec_constraint_sat_rate', 1.0)
+                    _nviol    = _cm_arr('exec_n_violated_steps')
+                    _bv       = _cm_arr('exec_bounds_viol_count')
+                    _hv       = _cm_arr('exec_halfspace_viol_count')
+                    _ov       = _cm_arr('exec_obstacle_viol_count')
+                    _bmx      = _cm_arr('exec_max_bounds_viol_m')
+                    _hmx      = _cm_arr('exec_max_halfspace_viol_m')
+                    _omx      = _cm_arr('exec_max_obstacle_penetration_m')
+                    _mg       = _cm_arr('exec_constraint_margin_mean_m')
+                    _fv       = _cm_arr('exec_first_violation_step', -1)
+                    _ls       = _cm_arr('exec_longest_safe_streak')
+                    _dy       = _cm_arr('exec_dynamics_consistency_error_mean')
+                    _pv       = _cm_arr('plan_post_viol_rate_mean')
+                    _zv_cnt   = int(sum(m.get('exec_zero_violation_rollout', False) for m in _hcm))
+                    n_r = len(_hcm)
+                    print(f'--- Constraint Metrics [{variant}] ---')
+                    print(f'  Execution satisfaction rate:    {_sat_arr.mean():.3f} ± {_sat_arr.std():.3f}')
+                    print(f'  Violated steps/rollout:         {_nviol.mean():.1f} ± {_nviol.std():.1f}  '
+                          f'(bounds={_bv.mean():.1f}  hs={_hv.mean():.1f}  obs={_ov.mean():.1f})')
+                    print(f'  Max bounds viol (m):            {_bmx.mean():.4f} ± {_bmx.std():.4f}')
+                    print(f'  Max halfspace viol (m):         {_hmx.mean():.4f} ± {_hmx.std():.4f}')
+                    print(f'  Max obstacle penetration (m):   {_omx.mean():.4f} ± {_omx.std():.4f}')
+                    print(f'  Constraint margin mean (m):     {_mg.mean():.4f} ± {_mg.std():.4f}')
+                    print(f'  First violation step:           {_fv[_fv>=0].mean():.1f} '
+                          f'(n_rollouts_with_viol={((_fv>=0).sum())})')
+                    print(f'  Longest safe streak (steps):    {_ls.mean():.1f} ± {_ls.std():.1f}')
+                    print(f'  Dynamics consistency err (m):   {_dy.mean():.4f} ± {_dy.std():.4f}')
+                    print(f'  Plan post-proj viol rate:       {_pv.mean():.4f} ± {_pv.std():.4f}')
+                    print(f'  Zero-violation rollouts:        {_zv_cnt} / {n_r}  '
+                          f'({100*_zv_cnt/max(1,n_r):.1f}%)')
+
+                    _cm_summary = {
+                        'variant': variant, 'geo_name': geo_name, 'seed': int(seed),
+                        'n_rollouts': n_r,
+                        'exec_constraint_sat_rate':         {'mean': float(_sat_arr.mean()), 'std': float(_sat_arr.std())},
+                        'exec_n_violated_steps':            {'mean': float(_nviol.mean()),   'std': float(_nviol.std())},
+                        'exec_bounds_viol_count':           {'mean': float(_bv.mean()),      'std': float(_bv.std())},
+                        'exec_halfspace_viol_count':        {'mean': float(_hv.mean()),      'std': float(_hv.std())},
+                        'exec_obstacle_viol_count':         {'mean': float(_ov.mean()),      'std': float(_ov.std())},
+                        'exec_max_bounds_viol_m':           {'mean': float(_bmx.mean()),     'std': float(_bmx.std())},
+                        'exec_max_halfspace_viol_m':        {'mean': float(_hmx.mean()),     'std': float(_hmx.std())},
+                        'exec_max_obstacle_penetration_m':  {'mean': float(_omx.mean()),     'std': float(_omx.std())},
+                        'exec_constraint_margin_mean_m':    {'mean': float(_mg.mean()),      'std': float(_mg.std())},
+                        'exec_first_violation_step':        {'mean': float(_fv[_fv>=0].mean()) if (_fv>=0).any() else -1,
+                                                             'n_rollouts_with_violation': int((_fv>=0).sum())},
+                        'exec_longest_safe_streak':         {'mean': float(_ls.mean()),      'std': float(_ls.std())},
+                        'exec_dynamics_consistency_error':  {'mean': float(_dy.mean()),      'std': float(_dy.std())},
+                        'plan_post_viol_rate':              {'mean': float(_pv.mean()),      'std': float(_pv.std())},
+                        'exec_zero_violation_rollouts':     _zv_cnt,
+                        'per_rollout':                      _hcm,
+                    }
+                    _cm_path = os.path.join(save_path, 'constraint_metrics.json')
+                    with open(_cm_path, 'w') as _cmf:
+                        json.dump(_cm_summary, _cmf, indent=2, default=str)
+                    print(f'  → Saved: {_cm_path}')
+
                 print('-' * 80 + '\n')
 
             finally:
