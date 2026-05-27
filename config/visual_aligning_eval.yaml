@@ -131,7 +131,7 @@ enlarge_constraints: 0.01
 #   (halfspace_only_2 stays commented — 3D halfspace format not yet implemented in code)
 #
 #active_geo_variants: [no_constraint, dynamics_only, combined_4]
-active_geo_variants: [combined_4]
+active_geo_variants: [combined_5]
 
 
 # ── Geo constraint sweep ────────────────────────────────────────────────────────
@@ -306,5 +306,25 @@ geo_constraint_variants:
       - type: sphere_outside
         dimensions: ['x', 'y']
         center: [0.50, 0.00]   # tune to measured obstacle position
+        radius: 0.06
+
+  # combined_5: derived from combined_4, halfspace moved to the right side with a '\' shape
+  # Pushes the allowable workspace from right to left, acting as a skewed wall on the right.
+  - name: combined_5
+    constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
+    # ── bounds: kept identical to combined_4 ───────────────────────────────────
+    workspace_bounds:
+      lb: [0.20, -0.45, 0.02]
+      ub: [0.80,  0.45, 0.50]
+    # ── halfspace: '\' shaped line on the right side ───────────────────────────
+    halfspace_constraints:
+      # Line goes from top-left (0.75, 0.45) to bottom-right (0.85, -0.45), creating a '\' shape.
+      # 'below' means the safe zone is to the left/bottom of this line (cuts off top-right).
+      - [[0.75, 0.45], [0.85, -0.45], 'below']
+    # ── obstacles: kept identical to combined_4 ────────────────────────────────
+    obstacle_constraints:
+      - type: sphere_outside
+        dimensions: ['x', 'y']
+        center: [0.50, 0.00]
         radius: 0.06
 
