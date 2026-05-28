@@ -154,7 +154,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
 
 # ── Constraint geometry visualisation (UF-15) ────────────────────────────────
 
-def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
+def _hs_xy_draw(ax, hs, enlarge, xlim, ylim, dashed=False):
     """Draw halfspace: shaded infeasible region + boundary line + feasible-side arrow.
 
     Infeasible half-plane fill uses a polygon built from the two clipped boundary
@@ -162,6 +162,9 @@ def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
     vertices stay within xlim×ylim — no BIG coordinates — so auto-scaling axes in
     the foresight SVG are not affected.  Cohen-Sutherland clipping ensures the
     boundary line segment lies strictly inside the display box.
+
+    dashed=True: draw boundary as dashed line only — skip infeasible fill and arrow.
+    Used for the inner planning boundary when showing dual-boundary on tightened plots.
     """
     pt1, pt2, side = hs
     x1, y1 = float(pt1[0]), float(pt1[1])
@@ -184,41 +187,40 @@ def _hs_xy_draw(ax, hs, enlarge, xlim, ylim):
     px = [x1 + t_lo*dx, x1 + t_hi*dx]
     py = [y1 + t_lo*dy, y1 + t_hi*dy]
 
-    # ── infeasible half-plane fill ────────────────────────────────────────────
-    # The boundary line divides the viewport rectangle into two polygons.
-    # Collect viewport corners on the infeasible side (dot-product with feasible
-    # normal < 0) by walking CCW from p0's edge to p1's edge, then try the
-    # reverse direction if the forward arc has no infeasible corners.
-    import matplotlib.patches as _mpa_hs
-    _C = [(xlim[0],ylim[0]),(xlim[1],ylim[0]),(xlim[1],ylim[1]),(xlim[0],ylim[1])]
-    def _inf(c): return (c[0]-x1)*nx + (c[1]-y1)*ny < -1e-9
-    def _edge(p):
-        if abs(p[1]-ylim[0]) < 1e-9: return 0
-        if abs(p[0]-xlim[1]) < 1e-9: return 1
-        if abs(p[1]-ylim[1]) < 1e-9: return 2
-        return 3
-    _e0, _e1 = _edge((px[0], py[0])), _edge((px[1], py[1]))
-    _df = (_e1 - _e0) % 4
-    if _df:
-        _cf = [_C[(_e0+1+k)%4] for k in range(_df)]
-        _cr = [_C[(_e0-k)%4]   for k in range(4-_df)]
-        if _cf and all(_inf(c) for c in _cf):
-            _poly = [(px[0],py[0])] + _cf + [(px[1],py[1])]
-        elif _cr and all(_inf(c) for c in _cr):
-            _poly = [(px[1],py[1])] + _cr + [(px[0],py[0])]
-        else:
-            _ifc = [c for c in _cf if _inf(c)] or [c for c in _cr if _inf(c)]
-            _poly = ([(px[0],py[0])] + _ifc + [(px[1],py[1])]) if _ifc else None
-        if _poly and len(_poly) >= 3:
-            ax.add_patch(_mpa_hs.Polygon(_poly, closed=True, facecolor='darkorange',
-                                          alpha=0.15, edgecolor='none', zorder=1))
+    if not dashed:
+        # ── infeasible half-plane fill ────────────────────────────────────────
+        import matplotlib.patches as _mpa_hs
+        _C = [(xlim[0],ylim[0]),(xlim[1],ylim[0]),(xlim[1],ylim[1]),(xlim[0],ylim[1])]
+        def _inf(c): return (c[0]-x1)*nx + (c[1]-y1)*ny < -1e-9
+        def _edge(p):
+            if abs(p[1]-ylim[0]) < 1e-9: return 0
+            if abs(p[0]-xlim[1]) < 1e-9: return 1
+            if abs(p[1]-ylim[1]) < 1e-9: return 2
+            return 3
+        _e0, _e1 = _edge((px[0], py[0])), _edge((px[1], py[1]))
+        _df = (_e1 - _e0) % 4
+        if _df:
+            _cf = [_C[(_e0+1+k)%4] for k in range(_df)]
+            _cr = [_C[(_e0-k)%4]   for k in range(4-_df)]
+            if _cf and all(_inf(c) for c in _cf):
+                _poly = [(px[0],py[0])] + _cf + [(px[1],py[1])]
+            elif _cr and all(_inf(c) for c in _cr):
+                _poly = [(px[1],py[1])] + _cr + [(px[0],py[0])]
+            else:
+                _ifc = [c for c in _cf if _inf(c)] or [c for c in _cr if _inf(c)]
+                _poly = ([(px[0],py[0])] + _ifc + [(px[1],py[1])]) if _ifc else None
+            if _poly and len(_poly) >= 3:
+                ax.add_patch(_mpa_hs.Polygon(_poly, closed=True, facecolor='darkorange',
+                                              alpha=0.15, edgecolor='none', zorder=1))
 
-    ax.plot(px, py, color='darkorange', linewidth=1.5, zorder=3, label='halfspace')
-    mx, my = (px[0]+px[1])/2, (py[0]+py[1])/2
-    ax.annotate('', xy=(mx+nx*0.06, my+ny*0.06), xytext=(mx, my),
-                arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.5))
-    ax.text(mx+nx*0.09, my+ny*0.09, 'feasible', fontsize=6, color='darkorange',
-            ha='center', va='center')
+    _ls = '--' if dashed else '-'
+    ax.plot(px, py, color='darkorange', linewidth=1.5, linestyle=_ls, zorder=3)
+    if not dashed:
+        mx, my = (px[0]+px[1])/2, (py[0]+py[1])/2
+        ax.annotate('', xy=(mx+nx*0.06, my+ny*0.06), xytext=(mx, my),
+                    arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.5))
+        ax.text(mx+nx*0.09, my+ny*0.09, 'feasible', fontsize=6, color='darkorange',
+                ha='center', va='center')
 
 
 def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
@@ -825,6 +827,23 @@ class VisualAgentWrapper:
                              if self.curr_rollout_tracking_errors else 0.0)
         avg_time = float(self.curr_rollout_time / max(1, self._replan_count))  # Fix 12: per-replan avg
 
+        # UF-16: final box position + angle from aligning_sim
+        _fbp = info.get('final_box_pos')
+        _fbq = info.get('final_box_quat')
+        if _fbp is not None and self.curr_context_info:
+            _fx, _fy = float(_fbp[0]), float(_fbp[1])
+            _w, _x, _y, _z = float(_fbq[0]), float(_fbq[1]), float(_fbq[2]), float(_fbq[3])
+            _final_angle_deg = float(np.degrees(
+                np.arctan2(2*(_w*_z + _x*_y), 1 - 2*(_y**2 + _z**2))
+            ))
+            _txy = self.curr_context_info.get('target_xy', [0.0, 0.0])
+            _final_xy_dist = float(np.sqrt((_fx - _txy[0])**2 + (_fy - _txy[1])**2))
+            self.curr_context_info.update({
+                'final_box_xy':        [_fx, _fy],
+                'final_box_angle_deg': _final_angle_deg,
+                'final_xy_dist':       _final_xy_dist,
+            })
+
         self.master_rollout_history[f'rollout_{ridx}'] = {
             'real_robot_pos':      np.array(self.history_real_pos),
             'c_pos_history':       np.array(self.curr_rollout_c_pos),         # Fix 9
@@ -885,6 +904,10 @@ class VisualAgentWrapper:
             print(f'  - Target   XY=({ci["target_xy"][0]:.3f}, {ci["target_xy"][1]:.3f})  '
                   f'angle={ci["target_angle_deg"]:.1f}°')
             print(f'  - Init XY dist (box→target): {ci["init_xy_dist"]:.4f} m')
+            if 'final_box_xy' in ci:
+                print(f'  - Box  final XY=({ci["final_box_xy"][0]:.3f}, {ci["final_box_xy"][1]:.3f})  '
+                      f'angle={ci["final_box_angle_deg"]:.1f}°'
+                      f'  (dist_to_target: {ci["final_xy_dist"]:.4f} m)')
         print(f'  - Total Steps: {self.step_counter}')
         print(f'  - Success status: {success}')
         print(f'  - Final Mean Distance: {mean_dist:.6f} m')
@@ -1134,6 +1157,13 @@ class VisualAgentWrapper:
                     _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
                             markersize=7,  label='end'),
                 ]
+                if self.is_tightened and _enlarge > 0:
+                    _lgd += [
+                        _Line2D([0],[0], color='steelblue', lw=1.5, linestyle='-',
+                                label=f'nominal constraint (eval boundary)'),
+                        _Line2D([0],[0], color='steelblue', lw=1.5, linestyle='--',
+                                label=f'planning constraint (δ={_enlarge:.3f}m inside)'),
+                    ]
                 ax_xy.legend(handles=_lgd, fontsize=9)
                 ax_xy.set_title(f'XY — MPC Decision Points  (every {_STRIDE} replans)',
                                 fontsize=12)
@@ -1142,32 +1172,46 @@ class VisualAgentWrapper:
                 ax_xy.set_aspect('equal', adjustable='datalim')
                 ax_xy.grid(True, alpha=0.3)
 
-                # UF-15.2: constraint geometry overlay — drawn behind trajectories (zorder=1)
+                # UF-15.2 / UF-16: constraint geometry overlay — drawn behind trajectories.
+                # For tightened variants draw two layers:
+                #   (enlarge=0,       dashed=False) → nominal boundary  — solid fill+edge
+                #   (enlarge=_enlarge, dashed=True) → planning boundary — dashed edge only
+                _c_layers = [(0.0, False)]
+                if self.is_tightened and _enlarge > 0:
+                    _c_layers.append((_enlarge, True))
+
                 if _gc:
                     import matplotlib.patches as _mpa_uf15
-                    if 'bounds' in _ct and 'workspace_bounds' in _gc:
-                        _wb    = _gc['workspace_bounds']
-                        _lb_xy = np.array(_wb['lb'][:2], dtype=float) + _enlarge
-                        _ub_xy = np.array(_wb['ub'][:2], dtype=float) - _enlarge
-                        ax_xy.add_patch(_mpa_uf15.Rectangle(
-                            (_lb_xy[0], _lb_xy[1]), _ub_xy[0]-_lb_xy[0], _ub_xy[1]-_lb_xy[1],
-                            lw=1.5, edgecolor='steelblue', facecolor='steelblue',
-                            alpha=0.10, zorder=1))
-                    if 'halfspace' in _ct and _gc.get('halfspace_constraints'):
-                        _wb  = _gc.get('workspace_bounds', {})
-                        _xlm = (float(_wb['lb'][0])-0.05, float(_wb['ub'][0])+0.05) if _wb else (0.20, 0.80)
-                        _ylm = (float(_wb['lb'][1])-0.05, float(_wb['ub'][1])+0.05) if _wb else (-0.45, 0.45)
-                        for _hs in _gc['halfspace_constraints']:
-                            _hs_xy_draw(ax_xy, _hs, _enlarge, _xlm, _ylm)
-                    if 'obstacles' in _ct:
-                        for _obs in _gc.get('obstacle_constraints', []):
-                            ax_xy.add_patch(_mpa_uf15.Circle(
-                                (float(_obs['center'][0]), float(_obs['center'][1])),
-                                _obs['radius'] + _enlarge,
-                                lw=1.5, edgecolor='tomato', facecolor='tomato',
-                                alpha=0.15, zorder=1))
-                            ax_xy.plot(float(_obs['center'][0]), float(_obs['center'][1]),
-                                       'r+', ms=6, zorder=2)
+                    for _cl_e, _cl_dash in _c_layers:
+                        _cl_ls = '--' if _cl_dash else '-'
+                        if 'bounds' in _ct and 'workspace_bounds' in _gc:
+                            _wb    = _gc['workspace_bounds']
+                            _lb_xy = np.array(_wb['lb'][:2], dtype=float) + _cl_e
+                            _ub_xy = np.array(_wb['ub'][:2], dtype=float) - _cl_e
+                            ax_xy.add_patch(_mpa_uf15.Rectangle(
+                                (_lb_xy[0], _lb_xy[1]), _ub_xy[0]-_lb_xy[0], _ub_xy[1]-_lb_xy[1],
+                                lw=1.5, linestyle=_cl_ls, edgecolor='steelblue',
+                                facecolor='steelblue' if not _cl_dash else 'none',
+                                alpha=0.10 if not _cl_dash else 0.9,
+                                zorder=1))
+                        if 'halfspace' in _ct and _gc.get('halfspace_constraints'):
+                            _wb  = _gc.get('workspace_bounds', {})
+                            _xlm = (float(_wb['lb'][0])-0.05, float(_wb['ub'][0])+0.05) if _wb else (0.20, 0.80)
+                            _ylm = (float(_wb['lb'][1])-0.05, float(_wb['ub'][1])+0.05) if _wb else (-0.45, 0.45)
+                            for _hs in _gc['halfspace_constraints']:
+                                _hs_xy_draw(ax_xy, _hs, _cl_e, _xlm, _ylm, dashed=_cl_dash)
+                        if 'obstacles' in _ct:
+                            for _obs in _gc.get('obstacle_constraints', []):
+                                ax_xy.add_patch(_mpa_uf15.Circle(
+                                    (float(_obs['center'][0]), float(_obs['center'][1])),
+                                    _obs['radius'] + _cl_e,
+                                    lw=1.5, linestyle=_cl_ls, edgecolor='tomato',
+                                    facecolor='tomato' if not _cl_dash else 'none',
+                                    alpha=0.15 if not _cl_dash else 0.9,
+                                    zorder=1))
+                                if not _cl_dash:
+                                    ax_xy.plot(float(_obs['center'][0]), float(_obs['center'][1]),
+                                               'r+', ms=6, zorder=2)
 
                 # ── 3D XYZ panel ──────────────────────────────────────────────
                 for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
@@ -1197,70 +1241,87 @@ class VisualAgentWrapper:
                 ax_3d.set_zlabel('Z (m)', fontsize=9)
                 ax_3d.legend(fontsize=9)
 
-                # UF-15.2: workspace box wireframe on 3D panel
+                # UF-15.2 / UF-16: workspace box wireframe on 3D panel
+                # For tightened variants: solid nominal box + dashed inner planning box
                 if _gc and 'bounds' in _ct and 'workspace_bounds' in _gc:
-                    _wb  = _gc['workspace_bounds']
-                    _x0, _y0, _z0 = np.array(_wb['lb'], dtype=float) + _enlarge
-                    _x1, _y1, _z1 = np.array(_wb['ub'], dtype=float) - _enlarge
-                    _z0 = 0.0  if np.isinf(_z0) else _z0
-                    _z1 = 0.50 if np.isinf(_z1) else _z1
-                    for _xs, _ys, _zs in [
-                        ([_x0,_x1],[_y0,_y0],[_z0,_z0]),([_x0,_x1],[_y1,_y1],[_z0,_z0]),
-                        ([_x0,_x1],[_y0,_y0],[_z1,_z1]),([_x0,_x1],[_y1,_y1],[_z1,_z1]),
-                        ([_x0,_x0],[_y0,_y1],[_z0,_z0]),([_x1,_x1],[_y0,_y1],[_z0,_z0]),
-                        ([_x0,_x0],[_y0,_y1],[_z1,_z1]),([_x1,_x1],[_y0,_y1],[_z1,_z1]),
-                        ([_x0,_x0],[_y0,_y0],[_z0,_z1]),([_x1,_x1],[_y0,_y0],[_z0,_z1]),
-                        ([_x0,_x0],[_y1,_y1],[_z0,_z1]),([_x1,_x1],[_y1,_y1],[_z0,_z1]),
-                    ]:
-                        ax_3d.plot(_xs, _ys, _zs, color='steelblue', alpha=0.45, lw=1.0)
+                    for _cl_e, _cl_dash in _c_layers:
+                        _wb  = _gc['workspace_bounds']
+                        _x0, _y0, _z0 = np.array(_wb['lb'], dtype=float) + _cl_e
+                        _x1, _y1, _z1 = np.array(_wb['ub'], dtype=float) - _cl_e
+                        _z0 = 0.0  if np.isinf(_z0) else _z0
+                        _z1 = 0.50 if np.isinf(_z1) else _z1
+                        _3d_ls  = '--' if _cl_dash else '-'
+                        _3d_alp = 0.70 if _cl_dash else 0.45
+                        for _xs, _ys, _zs in [
+                            ([_x0,_x1],[_y0,_y0],[_z0,_z0]),([_x0,_x1],[_y1,_y1],[_z0,_z0]),
+                            ([_x0,_x1],[_y0,_y0],[_z1,_z1]),([_x0,_x1],[_y1,_y1],[_z1,_z1]),
+                            ([_x0,_x0],[_y0,_y1],[_z0,_z0]),([_x1,_x1],[_y0,_y1],[_z0,_z0]),
+                            ([_x0,_x0],[_y0,_y1],[_z1,_z1]),([_x1,_x1],[_y0,_y1],[_z1,_z1]),
+                            ([_x0,_x0],[_y0,_y0],[_z0,_z1]),([_x1,_x1],[_y0,_y0],[_z0,_z1]),
+                            ([_x0,_x0],[_y1,_y1],[_z0,_z1]),([_x1,_x1],[_y1,_y1],[_z0,_z1]),
+                        ]:
+                            ax_3d.plot(_xs, _ys, _zs, color='steelblue',
+                                       alpha=_3d_alp, lw=1.0, linestyle=_3d_ls)
 
-                # UF-15.2: halfspace boundary plane on 3D panel
+                # UF-15.2 / UF-16: halfspace boundary plane on 3D panel
+                # For tightened variants: solid nominal plane + dashed inner quad edges
                 if _gc and 'halfspace' in _ct and _gc.get('halfspace_constraints'):
-                    _hs_wb = _gc.get('workspace_bounds', {})
-                    if _hs_wb:
-                        _hs_lb3 = np.array(_hs_wb['lb'], dtype=float) + _enlarge
-                        _hs_ub3 = np.array(_hs_wb['ub'], dtype=float) - _enlarge
-                    else:
-                        _hs_lb3 = np.array([0.30, -0.35, 0.05])
-                        _hs_ub3 = np.array([0.70,  0.35, 0.40])
-                    _hs3_zlo = 0.0  if np.isinf(_hs_lb3[2]) else float(_hs_lb3[2])
-                    _hs3_zhi = 0.50 if np.isinf(_hs_ub3[2]) else float(_hs_ub3[2])
-                    _hs3_xlm = (float(_hs_lb3[0])-0.05, float(_hs_ub3[0])+0.05)
-                    _hs3_ylm = (float(_hs_lb3[1])-0.05, float(_hs_ub3[1])+0.05)
                     from mpl_toolkits.mplot3d.art3d import Poly3DCollection as _P3C_hs
-                    for _hs3d in _gc['halfspace_constraints']:
-                        _h3pt1, _h3pt2, _h3side = _hs3d
-                        _h3x1, _h3y1 = float(_h3pt1[0]), float(_h3pt1[1])
-                        _h3x2, _h3y2 = float(_h3pt2[0]), float(_h3pt2[1])
-                        _h3dx, _h3dy = _h3x2-_h3x1, _h3y2-_h3y1
-                        _h3n = np.array([-_h3dy,_h3dx]) if _h3side=='above' else np.array([_h3dy,-_h3dx])
-                        _h3nl = float(np.hypot(*_h3n))
-                        if _h3nl < 1e-9: continue
-                        _h3n /= _h3nl
-                        _h3x1 += _enlarge*_h3n[0]; _h3y1 += _enlarge*_h3n[1]
-                        _h3x2 += _enlarge*_h3n[0]; _h3y2 += _enlarge*_h3n[1]
-                        _h3dx, _h3dy = _h3x2-_h3x1, _h3y2-_h3y1
-                        _h3tx = sorted([(_hs3_xlm[0]-_h3x1)/_h3dx, (_hs3_xlm[1]-_h3x1)/_h3dx]) if abs(_h3dx)>1e-9 else [-1e9,1e9]
-                        _h3ty = sorted([(_hs3_ylm[0]-_h3y1)/_h3dy, (_hs3_ylm[1]-_h3y1)/_h3dy]) if abs(_h3dy)>1e-9 else [-1e9,1e9]
-                        _h3tlo = max(_h3tx[0],_h3ty[0]); _h3thi = min(_h3tx[1],_h3ty[1])
-                        if _h3tlo >= _h3thi: continue
-                        _h3px = [_h3x1+_h3tlo*_h3dx, _h3x1+_h3thi*_h3dx]
-                        _h3py = [_h3y1+_h3tlo*_h3dy, _h3y1+_h3thi*_h3dy]
-                        ax_3d.add_collection3d(_P3C_hs([[
-                            [_h3px[0],_h3py[0],_hs3_zlo],[_h3px[1],_h3py[1],_hs3_zlo],
-                            [_h3px[1],_h3py[1],_hs3_zhi],[_h3px[0],_h3py[0],_hs3_zhi],
-                        ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
+                    for _cl_e, _cl_dash in _c_layers:
+                        _hs_wb = _gc.get('workspace_bounds', {})
+                        if _hs_wb:
+                            _hs_lb3 = np.array(_hs_wb['lb'], dtype=float) + _cl_e
+                            _hs_ub3 = np.array(_hs_wb['ub'], dtype=float) - _cl_e
+                        else:
+                            _hs_lb3 = np.array([0.30, -0.35, 0.05])
+                            _hs_ub3 = np.array([0.70,  0.35, 0.40])
+                        _hs3_zlo = 0.0  if np.isinf(_hs_lb3[2]) else float(_hs_lb3[2])
+                        _hs3_zhi = 0.50 if np.isinf(_hs_ub3[2]) else float(_hs_ub3[2])
+                        _hs3_xlm = (float(_hs_lb3[0])-0.05, float(_hs_ub3[0])+0.05)
+                        _hs3_ylm = (float(_hs_lb3[1])-0.05, float(_hs_ub3[1])+0.05)
+                        for _hs3d in _gc['halfspace_constraints']:
+                            _h3pt1, _h3pt2, _h3side = _hs3d
+                            _h3x1, _h3y1 = float(_h3pt1[0]), float(_h3pt1[1])
+                            _h3x2, _h3y2 = float(_h3pt2[0]), float(_h3pt2[1])
+                            _h3dx, _h3dy = _h3x2-_h3x1, _h3y2-_h3y1
+                            _h3n = np.array([-_h3dy,_h3dx]) if _h3side=='above' else np.array([_h3dy,-_h3dx])
+                            _h3nl = float(np.hypot(*_h3n))
+                            if _h3nl < 1e-9: continue
+                            _h3n /= _h3nl
+                            _h3x1 += _cl_e*_h3n[0]; _h3y1 += _cl_e*_h3n[1]
+                            _h3x2 += _cl_e*_h3n[0]; _h3y2 += _cl_e*_h3n[1]
+                            _h3dx, _h3dy = _h3x2-_h3x1, _h3y2-_h3y1
+                            _h3tx = sorted([(_hs3_xlm[0]-_h3x1)/_h3dx, (_hs3_xlm[1]-_h3x1)/_h3dx]) if abs(_h3dx)>1e-9 else [-1e9,1e9]
+                            _h3ty = sorted([(_hs3_ylm[0]-_h3y1)/_h3dy, (_hs3_ylm[1]-_h3y1)/_h3dy]) if abs(_h3dy)>1e-9 else [-1e9,1e9]
+                            _h3tlo = max(_h3tx[0],_h3ty[0]); _h3thi = min(_h3tx[1],_h3ty[1])
+                            if _h3tlo >= _h3thi: continue
+                            _h3px = [_h3x1+_h3tlo*_h3dx, _h3x1+_h3thi*_h3dx]
+                            _h3py = [_h3y1+_h3tlo*_h3dy, _h3y1+_h3thi*_h3dy]
+                            if _cl_dash:
+                                _h3v = [[_h3px[0],_h3py[0],_hs3_zlo],[_h3px[1],_h3py[1],_hs3_zlo],
+                                        [_h3px[1],_h3py[1],_hs3_zhi],[_h3px[0],_h3py[0],_hs3_zhi]]
+                                for _ei in range(4):
+                                    _va, _vb = _h3v[_ei], _h3v[(_ei+1)%4]
+                                    ax_3d.plot([_va[0],_vb[0]], [_va[1],_vb[1]], [_va[2],_vb[2]],
+                                               color='darkorange', lw=1.2, linestyle='--', alpha=0.8)
+                            else:
+                                ax_3d.add_collection3d(_P3C_hs([[
+                                    [_h3px[0],_h3py[0],_hs3_zlo],[_h3px[1],_h3py[1],_hs3_zlo],
+                                    [_h3px[1],_h3py[1],_hs3_zhi],[_h3px[0],_h3py[0],_hs3_zhi],
+                                ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
 
-                # UF-15.5: obstacle sphere on 3D panel
+                # UF-15.5 / UF-16: obstacle sphere on 3D panel
+                # For tightened variants: solid filled sphere (nominal) + wireframe circles (planning)
                 if _gc and 'obstacles' in _ct:
                     _wb_obs = _gc.get('workspace_bounds', {})
-                    if _wb_obs:
-                        _ob_lb = np.array(_wb_obs['lb'], dtype=float) + _enlarge
-                        _ob_ub = np.array(_wb_obs['ub'], dtype=float) - _enlarge
-                        _ob_z0 = 0.0  if np.isinf(_ob_lb[2]) else float(_ob_lb[2])
-                        _ob_z1 = 0.50 if np.isinf(_ob_ub[2]) else float(_ob_ub[2])
-                    else:
-                        _ob_z0, _ob_z1 = 0.02, 0.50
+                    for _cl_e, _cl_dash in _c_layers:
+                        if _wb_obs:
+                            _ob_lb = np.array(_wb_obs['lb'], dtype=float) + _cl_e
+                            _ob_ub = np.array(_wb_obs['ub'], dtype=float) - _cl_e
+                            _ob_z0 = 0.0  if np.isinf(_ob_lb[2]) else float(_ob_lb[2])
+                            _ob_z1 = 0.50 if np.isinf(_ob_ub[2]) else float(_ob_ub[2])
+                        else:
+                            _ob_z0, _ob_z1 = 0.02, 0.50
                     _ob_zmid = (_ob_z0 + _ob_z1) / 2
                     for _obs3d in _gc.get('obstacle_constraints', []):
                         _ocx = float(_obs3d['center'][0])
@@ -1268,14 +1329,27 @@ class VisualAgentWrapper:
                         _od  = _obs3d.get('dimensions', ['x', 'y'])
                         _ocz = (float(_obs3d['center'][2]) if len(_obs3d['center']) > 2 and 'z' in _od
                                 else _ob_zmid)
-                        _or  = float(_obs3d['radius']) + _enlarge
-                        _ou  = np.linspace(0, 2*np.pi, 20)
-                        _ov  = np.linspace(0, np.pi, 12)
-                        ax_3d.plot_surface(
-                            _ocx + _or*np.outer(np.cos(_ou), np.sin(_ov)),
-                            _ocy + _or*np.outer(np.sin(_ou), np.sin(_ov)),
-                            _ocz + _or*np.outer(np.ones_like(_ou), np.cos(_ov)),
-                            color='tomato', alpha=0.30, linewidth=0)
+                        for _cl_e, _cl_dash in _c_layers:
+                            _or = float(_obs3d['radius']) + _cl_e
+                            _ou = np.linspace(0, 2*np.pi, 20)
+                            _ov = np.linspace(0, np.pi, 12)
+                            if _cl_dash:
+                                _th = np.linspace(0, 2*np.pi, 60)
+                                ax_3d.plot(_ocx+_or*np.cos(_th), _ocy+_or*np.sin(_th),
+                                           [_ocz]*60, color='tomato', lw=1.0,
+                                           linestyle='--', alpha=0.8)
+                                for _mz in [_ocz-_or*0.5, _ocz, _ocz+_or*0.5]:
+                                    _rh = np.sqrt(max(0.0, _or**2 - (_mz-_ocz)**2))
+                                    if _rh > 0:
+                                        ax_3d.plot(_ocx+_rh*np.cos(_th), _ocy+_rh*np.sin(_th),
+                                                   [_mz]*60, color='tomato', lw=0.6,
+                                                   linestyle='--', alpha=0.5)
+                            else:
+                                ax_3d.plot_surface(
+                                    _ocx + _or*np.outer(np.cos(_ou), np.sin(_ov)),
+                                    _ocy + _or*np.outer(np.sin(_ou), np.sin(_ov)),
+                                    _ocz + _or*np.outer(np.ones_like(_ou), np.cos(_ov)),
+                                    color='tomato', alpha=0.30, linewidth=0)
 
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')
