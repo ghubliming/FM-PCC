@@ -306,7 +306,7 @@ def build_agent(d3il_config_dir, agent_cfg_group, device, seed):
     """
     GlobalHydra.instance().clear()
     abs_cfg_dir = os.path.abspath(d3il_config_dir)
-    with initialize_config_dir(config_dir=abs_cfg_dir, version_base=None):
+    with initialize_config_dir(config_dir=abs_cfg_dir):
         cfg = compose(
             config_name="aligning_config",
             overrides=[
