@@ -94,7 +94,8 @@ class DiffusionMLPNetwork(nn.Module):
 
         if len(state.shape) == 3:
             # x = einops.rearrange(x, 'batch dim-> batch 1 dim')
-            t = einops.rearrange(t, 'batch dim-> batch 1 dim')
+            # expand t from [B,1,t_dim] to [B,T,t_dim] to match sequence length of x and state
+            t = einops.rearrange(t, 'batch dim-> batch 1 dim').expand(-1, x.shape[1], -1)
             if self.goal_conditioned:
                 # check cond mask prob
                 if self.training:
