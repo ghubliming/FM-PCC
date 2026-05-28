@@ -175,6 +175,8 @@ iteratively (each triggered a new job submission after git-pull).
 | 6 | `RuntimeError: Sizes of tensors must match…Expected 8 got 1` in `DiffusionMLPNetwork.forward` | `t=[B,1,4]` can't cat with `x=[B,8,3]` on dim=2 — expand missing | Add `.expand(-1, x.shape[1], -1)` in 3D branch of `diffusion_models.py` |
 | 7 | Only 1 epoch trained (config says `epoch=4`) | `train_vision_agent()` is one epoch only; `run_vision.py` wraps it in an outer loop; we called it once | Added `_train_vision()` outer epoch loop matching `run_vision.py` |
 | 8 | `AttributeError: 'tuple' has no attribute 'shape'` in `agent.evaluate()` | `evaluate()` is state-only; we passed a vision tuple `(bp_imgs, inhand_imgs, obs)` | Replaced with `_eval_vision_loss()` that calls `agent.model()` directly |
+| 9 | `wandb.Error: You must call wandb.init() before wandb.log()` during eval agent construction | `base_agent.__init__` calls `wandb.log({"model parameters": ...})` unconditionally; eval script never called `wandb.init()` | Added `import wandb` at top of eval script; call `wandb.init(mode="disabled")` before `build_agent()` if no run is active |
+| 10 | `RuntimeError: Error(s) in loading state_dict` — missing `layers.3.l1.weight`, unexpected `layers.3.weight` | `build_agent()` hardcoded `aligning_config` (`num_hidden_layers=6`) but training used `aligning_vision_config` (`num_hidden_layers=4`); `ResidualMLPNetwork` had different depth → mismatched keys | `build_agent()` now auto-selects config: `_vision` in agent group → `aligning_vision_config`, else `aligning_config` |
 
 ---
 
