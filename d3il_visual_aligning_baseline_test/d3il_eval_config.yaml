@@ -1,0 +1,29 @@
+# D3IL Visual Aligning Baseline — eval config
+# Read by eval_d3il_visual_aligning.py via yaml.safe_load (no Hydra).
+# All values can be overridden by CLI args (see --help).
+
+# ── Agent ──────────────────────────────────────────────────────────────────────
+# agent_name:      used for output dir naming and checkpoint filename lookup
+# agent_cfg_group: Hydra agents group override (filename in d3il/configs/agents/ without .yaml)
+agent_name:      "ddpm_encdec_vision"
+agent_cfg_group: "ddpm_encdec_vision_agent"
+
+# ── Paths ──────────────────────────────────────────────────────────────────────
+# checkpoint_root: {root}/{agent_name}/seed_{s}/weights/  must contain eval_best_*.pth
+# d3il_config_dir: path to d3il/configs/ (relative from repo root)
+checkpoint_root: "logs/d3il_visual_aligning_baseline"
+d3il_config_dir: "d3il/configs"
+
+# ── Eval settings ──────────────────────────────────────────────────────────────
+seeds:                       [42]
+n_contexts:                  3       # smoke: 3  |  full: 30
+n_trajectories_per_context:  1
+eval_on_train:               false
+max_episode_length:          400
+if_vision:                   true    # true = capture bp_cam frames for video
+
+# ── Output ─────────────────────────────────────────────────────────────────────
+# record_mode: all | gif | video | none
+record_mode: "all"
+save_root:   "logs/d3il_visual_aligning_baseline"
+device:      "cuda"
