@@ -34,6 +34,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import wandb
 import yaml
 
 try:
@@ -348,6 +349,9 @@ def run_eval_seed(seed, cfg_eval, record_mode):
     print(f'{"=" * 72}')
 
     # ── build agent ────────────────────────────────────────────────────────────
+    # base_agent.__init__ calls wandb.log() unconditionally; init disabled so it doesn't crash
+    if not wandb.run:
+        wandb.init(mode="disabled")
     agent = build_agent(d3il_cfg_dir, agent_cfg_grp, device, seed)
 
     # load best eval checkpoint; fall back to last
