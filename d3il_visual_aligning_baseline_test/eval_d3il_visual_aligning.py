@@ -509,7 +509,8 @@ def main():
 
     # CLI overrides
     if args.agent_name:
-        cfg['agent_name'] = args.agent_name
+        cfg['agent_name']      = args.agent_name
+        cfg['agent_cfg_group'] = f'{args.agent_name}_agent'  # derive Hydra group from name
     if args.n_contexts is not None:
         cfg['n_contexts'] = args.n_contexts
     if args.record is not None:

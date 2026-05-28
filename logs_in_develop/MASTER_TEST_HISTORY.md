@@ -1209,3 +1209,27 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
      * *Panel 2 (XY Top-down View)*: Feasible bounding rectangle, obstacle circles, and darkorange halfspace lines with directional feasible-region normal arrows.
      * *Panel 3 (XZ Side View)*: Floor/ceiling box limits.
    * **UF-15.2**: Upgraded `VisualAgentWrapper` diagnostics to dynamically overlay active constraint geometries directly onto the MPC foresight SVG charts (`rollout_N_mpc_foresight.svg`). Planned and candidate end-effector trajectories are now visually mapped against the steelblue bounding box wireframes, darkorange halfspaces, and tomato obstacle zones, providing absolute validation of safety boundaries.
+
+***
+
+## Gen7 / Gen6v4: Constraint Metrics, Advanced Geo-Visualization & Native D3IL Aligning Pipeline (May 27, 2026)
+
+**Keywords**: constraint metrics, violation tracking, active_geo_variants, halfspace/obstacle visualization, D3IL native pipeline, prior model evaluation.
+
+1. **UF-16.3: Constraint Satisfaction and Violation Metrics**:
+   - Implemented `check_trajectory_constraints` and `_check_planned_violations` for deep evaluation of geometric constraints.
+   - Enhanced `VisualAgentWrapper` to track constraint metrics (execution vs planning violation rates) across rollouts and log them to JSON and console summaries.
+   - Authored `CONSTRAINT_METRICS.md` as a comprehensive reference guide.
+2. **UF-15.3 - UF-15.5: Enhanced 2D/3D Geometric Visualization**:
+   - Upgraded halfspace visualization (`_hs_xy_draw`) to fill infeasible regions with semi-transparent polygons for clarity, and added 3D boundary plane rendering spanning the workspace.
+   - Improved obstacle rendering in both 2D and 3D panels.
+   - Fixed parametric clipping to correctly represent halfspaces.
+   - Documented reading guides in `READING_CONSTRAINT_PLOTS.md`.
+3. **UF-16.2: Selective Geo Entry Execution & PC Debugging**:
+   - Added `active_geo_variants` support via YAML to run selected geometry variants selectively, speeding up evaluation pipelines.
+   - Relaxed overly strict constraints and suppressed noisy SLSQP per-sample logging for a cleaner debugging experience.
+4. **D3IL Native Visual Aligning Pipeline Integration**:
+   - Authored `D3IL_Native_Visual_Aligning_Pipeline_Guide.md` to establish a standardized pipeline for training and evaluating D3IL native visual aligning agents (e.g., DDPM-MLP), matching the FMPCC Slurm submission workflow.
+5. **Prior Model Evaluation Documentation & Independent Constraint Skewing**:
+   - Audited the prior model script (`scripts/eval_prior_model.py`) and documented its behavior regarding environment setup and rollout performance.
+   - Refined `combined_5` halfspace skewing for task difficulty and verified visualization via `plot_yaml_constraints.py`.
