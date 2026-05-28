@@ -37,7 +37,7 @@ def _set_seed(seed: int) -> None:
     random.seed(seed)
 
 
-@hydra.main(config_path="../d3il/configs", config_name="aligning_config")
+@hydra.main(config_path="../d3il/configs", config_name="aligning_vision_config")
 def main(cfg: DictConfig) -> None:
     _set_seed(cfg.seed)
 
