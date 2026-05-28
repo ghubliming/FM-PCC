@@ -10,8 +10,9 @@
 Standalone pipeline to train and evaluate any pre-trained D3IL aligning agent
 (BC, DDPM-EncDec-Vision, BESO…) with rich per-rollout recording — GIF/video,
 JSON stats, summary PNG — matching the DPCC/FM-PCC eval output schema for direct
-A/B comparison.  Zero permanent changes to `d3il/`; all outputs land under
-`logs/d3il_visual_aligning_baseline/` (already gitignored by root `.gitignore`).
+A/B comparison.  Zero permanent changes to `d3il/` (aside from one genuine bug fix
+noted below); all outputs land under `logs/d3il_visual_aligning_baseline/`
+(already gitignored by root `.gitignore`).
 
 ---
 
@@ -19,17 +20,25 @@ A/B comparison.  Zero permanent changes to `d3il/`; all outputs land under
 
 ### `d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py`
 
-Thin Hydra training wrapper for the aligning task.
+Training wrapper for the aligning task, mirroring `d3il/run_vision.py`.
 
-- `@hydra.main(config_path="../d3il/configs", config_name="aligning_config")` —
+- `@hydra.main(config_path="../d3il/configs", config_name="aligning_vision_config")` —
   resolves configs relative to its own location, works when called from repo root.
-- Calls `agent.train_agent()` only — no `env_sim.test_agent()` at end (eval is
-  handled separately by the rich eval script).
-- W&B disabled by default; enabled when `use_wandb=True` is passed as Hydra override.
+  No `version_base` parameter (cluster Hydra is pre-1.2).
+- W&B on by default; `???` placeholders in `wandb.entity/project` are handled safely
+  (`throw_on_missing=False` + guard), defaulting project to `'d3il-baseline'`.
+- Dispatches on `agent.model.visual_input`:
+  - **Vision agents** → `_train_vision(agent)` — outer epoch loop calling
+    `train_vision_agent()` once per epoch, with val-loss checkpointing via
+    `_eval_vision_loss()`.  Mirrors `d3il/run_vision.py`; avoids MuJoCo during train.
+  - **State agents** → `agent.train_agent()` — has its own complete epoch loop.
+- `_eval_vision_loss()` — computes val loss by calling `agent.model(state, None,
+  action=action, if_train=True)` directly (vision tuple); bypasses state-only
+  `agent.evaluate()` which calls `scaler.scale_input(state)` on a plain tensor.
 - `hydra.run.dir` is overridden from the SLURM CLI to
   `logs/d3il_visual_aligning_baseline/{agent_name}/seed_{s}/weights/`.
-  Hydra changes CWD to that dir → `agent.working_dir = os.getcwd()` resolves there →
-  `agent.store_model_weights()` writes checkpoints there, inside the gitignored tree.
+  Hydra changes CWD → `agent.working_dir = os.getcwd()` resolves there →
+  checkpoints land in the gitignored tree.
 
 ### `d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py`
 
@@ -63,6 +72,8 @@ Uses `hydra.initialize_config_dir + compose` (programmatic Hydra — no CWD chan
 no Hydra output dirs).  `OmegaConf.register_new_resolver("add", ...)` called before
 compose to resolve `${add:...}` interpolations in DDPM agent config.  Checkpoint
 loaded via `agent.load_pretrained_model(ckpt_dir, sv_name=eval_model_name)`.
+`agent_cfg_group` is always derived from `agent_name` at runtime (not from YAML),
+so `--agent-name ddpm_vision` correctly selects `ddpm_vision_agent` config.
 
 **Rollout loop:**
 Follows the `if_vision / else` pattern from `aligning_sim.eval_agent` exactly:
@@ -96,6 +107,8 @@ if_vision, record_mode.  All keys overridable by CLI args.
 
 SLURM train job. Mirrors `train_visual_aligning_dpcc.sh` header (GPU, mem, time).
 Args: `$1=agent_name` (default `ddpm_encdec_vision`), `$2=seed` (default 42).
+Auto-selects config: agents with `_vision` suffix → `aligning_vision_config`;
+others → `aligning_config`.
 Calls `train_d3il_visual_aligning.py` with `hydra.run.dir` override to
 `logs/d3il_visual_aligning_baseline/{agent_name}/seed_{s}/weights`.
 
@@ -115,6 +128,27 @@ Args: `$1=agent_name`, `$2=seed`, `$3=record_mode`.
 
 ## Updated Files
 
+### `Slurm_Codes/submit.sh`
+
+**Bug fix**: was silently dropping all arguments after `$1` (script path).
+Added `shift` after capturing `$1` and stored remaining args in `SCRIPT_ARGS=("$@")`;
+appended `"${SCRIPT_ARGS[@]}"` to the `sbatch` call.
+Without this fix, `submit.sh train_d3il_baseline.sh ddpm_vision 6` would submit with
+default `agent_name=ddpm_encdec_vision seed=42` regardless of what was passed.
+
+### `d3il/agents/models/diffusion/diffusion_models.py`
+
+**Bug fix in `DiffusionMLPNetwork.forward()` 3D path** (vision + sequence input):
+The code rearranged the timestep embedding `t` to `[B, 1, t_dim]` then tried
+`torch.cat([x, t, state], dim=2)` where `x = [B, T, action_dim]` and `state = [B, T, obs_dim]`.
+The concat fails because dim-1 size is `T` for `x`/`state` but `1` for `t`.
+Fix: `.expand(-1, x.shape[1], -1)` to broadcast `t` over the sequence length.
+
+This is a genuine omission in D3IL's code — the 3D branch was written but the
+expand was never added. The 2D (state-only) path is unaffected.
+Only `ddpm_vision` hits this path; `ddpm_encdec_vision` uses a Transformer backbone
+with a different forward pass.
+
 ### `logs_in_develop/D3IL_Visual_Aligning_RUN/PLAN.md`
 
 Updated with:
@@ -126,9 +160,26 @@ Updated with:
 
 ---
 
+## Debugging Iteration — Runtime Fixes on Cluster
+
+The following bugs were discovered by running on the remote SLURM cluster and fixed
+iteratively (each triggered a new job submission after git-pull).
+
+| # | Error | Root Cause | Fix |
+|---|---|---|---|
+| 1 | `TypeError: main() got unexpected kwarg 'version_base'` | Cluster Hydra is pre-1.2; `version_base` didn't exist | Removed from `@hydra.main()` and `initialize_config_dir()` |
+| 2 | `agent=ddpm_encdec_vision seed=42` despite passing `ddpm_vision 6` | `submit.sh` dropped all args after script path | `shift` + `SCRIPT_ARGS` fix in `submit.sh` |
+| 3 | `ValueError: too many values to unpack` in `train_agent` (expects 3-tuple, got 5) | `aligning_config` (state dataset) was used instead of `aligning_vision_config` | SLURM script auto-selects config by `*_vision*` in agent name; Python wrapper also updated |
+| 4 | `MissingMandatoryValue: entity` (W&B crash) | `aligning_vision_config.yaml` has `wandb: {entity: ???}` as mandatory missing; `throw_on_missing=True` crashes | `throw_on_missing=False` + guard against `None`/`'???'` |
+| 5 | `ValueError: too many values to unpack (expected 3)` in `train_agent` line 217 | `train_agent()` is state-only (expects 3-tuple); vision dataset returns 5-tuple | Detect `agent.model.visual_input`; dispatch to `train_vision_agent()` |
+| 6 | `RuntimeError: Sizes of tensors must match…Expected 8 got 1` in `DiffusionMLPNetwork.forward` | `t=[B,1,4]` can't cat with `x=[B,8,3]` on dim=2 — expand missing | Add `.expand(-1, x.shape[1], -1)` in 3D branch of `diffusion_models.py` |
+| 7 | Only 1 epoch trained (config says `epoch=4`) | `train_vision_agent()` is one epoch only; `run_vision.py` wraps it in an outer loop; we called it once | Added `_train_vision()` outer epoch loop matching `run_vision.py` |
+| 8 | `AttributeError: 'tuple' has no attribute 'shape'` in `agent.evaluate()` | `evaluate()` is state-only; we passed a vision tuple `(bp_imgs, inhand_imgs, obs)` | Replaced with `_eval_vision_loss()` that calls `agent.model()` directly |
+
+---
+
 ## Unchanged
 
-- `d3il/` folder — zero edits beyond UF-16.4 hook already committed
 - `diffuser_visual_aligning_test/`, `fm_visual_aligning_test/`, `config/` — untouched
 
 ---
@@ -137,15 +188,21 @@ Updated with:
 
 ```bash
 # Train one agent/seed (from repo root or via SLURM):
-python d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py \
-    "agents=ddpm_encdec_vision_agent" "agent_name=ddpm_encdec_vision" \
-    "seed=42" "hydra.run.dir=logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights"
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/train_d3il_baseline.sh \
+    ddpm_vision 6
 
 # Eval one agent/seed:
-python d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py \
-    --agent-name ddpm_encdec_vision --seed 42 --record all
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/eval_d3il_baseline.sh \
+    ddpm_vision 6 all
 
-# Full pipeline via SLURM:
-sbatch Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh \
-    ddpm_encdec_vision 42 all
+# Full pipeline (train → eval chained):
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh \
+    ddpm_vision 6 all
+
+# Local smoke test (5 epochs):
+python d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py \
+    --config-name aligning_vision_config \
+    "agents=ddpm_vision_agent" "agent_name=ddpm_vision" \
+    "seed=6" "epoch=5" \
+    "hydra.run.dir=logs/d3il_visual_aligning_baseline/ddpm_vision/seed_6/weights"
 ```
