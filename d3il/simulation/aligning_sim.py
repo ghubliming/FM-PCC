@@ -142,7 +142,11 @@ class Aligning_Sim(BaseSim):
                 mean_distance[context, i] = torch.tensor(info['mean_distance'])
 
                 if hasattr(agent, 'update_rollout_info'):
-                    agent.update_rollout_info({**info, 'context': context})
+                    _fbox_pos  = env.scene.get_obj_pos(env.push_box)
+                    _fbox_quat = env.scene.get_obj_quat(env.push_box)
+                    agent.update_rollout_info({**info, 'context': context,
+                                               'final_box_pos':  _fbox_pos,
+                                               'final_box_quat': _fbox_quat})
 
     ################################
     # we use multi-process for the simulation

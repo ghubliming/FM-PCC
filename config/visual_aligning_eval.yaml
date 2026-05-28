@@ -16,7 +16,7 @@ seeds: [6]
 #   'both-hard',
 # ] # NOT NEEDED: Aligning task represents open-table manipulation and has no vertical halfspace walls.
 #
-# n_trials: 2 # NOT NEEDED: Visual aligning uses 'n_contexts: 30' context rollouts for robust statistical evaluation.
+# n_trials: 2 # NOT NEEDED: Visual aligning uses 'n_contexts' context rollouts (see n_contexts below) for evaluation.
 #
 # dt: {
 #   'avoiding': 1,
@@ -138,7 +138,7 @@ enlarge_constraints: 0.03
 #   bounds_only_1 | bounds_only_2
 #   obstacle_only_1 | obstacle_only_2   ← PLACEHOLDER geometry, tune before real use
 #   halfspace_only_1
-#   combined_1 | combined_2 | combined_3 | combined_4
+#   combined_1 | combined_2 | combined_3 | combined_4 | combined_5
 #   (halfspace_only_2 stays commented — 3D halfspace format not yet implemented in code)
 #
 #active_geo_variants: [no_constraint, dynamics_only, combined_4]
@@ -186,8 +186,8 @@ geo_constraint_variants:
   # 2D vs 3D: '2D' means only x-y are bounded; z = -.inf/+.inf (unconstrained).
   #           '3D' extends the box to include z (floor + ceiling).
   #           2D is just 3D with z = ±∞ — code handles inf values correctly.
-  # _1 = 2D (x-y only) — default, simpler ablation.
-  # _2 = 3D (x-y-z box) — adds floor/ceiling constraint; commented until needed.
+  # _1 = 2D (x-y only) — simpler ablation; z unconstrained.
+  # _2 = 3D (x-y-z box) — adds floor/ceiling constraint; both entries are defined and selectable.
   #
   # workspace_bounds: Physical Franka EE Cartesian limits in metres.
   #   x=forward (from robot base), y=lateral (left/right), z=vertical.
@@ -240,7 +240,7 @@ geo_constraint_variants:
   #   Line defined by two 2D EE position points; 'above'/'below' = feasible side.
   # 2D vs 3D: 2D operates only in x-y plane (z unconstrained).
   #           3D requires a full plane normal — different yaml format, PENDING impl.
-  # _1 = 2D halfspace — ACTIVE for debugging (verifies halfspace code path)
+  # _1 = 2D halfspace — defined; selectable for debugging (verifies halfspace code path)
   # _2 = 3D halfspace — commented, pending implementation
   - name: halfspace_only_1
     constraint_types: ['halfspace']
@@ -264,7 +264,7 @@ geo_constraint_variants:
   # ════════════════════════════════════════════════════════════════════════════
   # combined_N are flexible experiment slots — change constraint_types (and add
   # obstacle_constraints if needed) without renaming, so output folders are stable.
-  # Obstacle-involving slots disabled until obstacle geometry is confirmed.
+  # Obstacle-involving slots use PLACEHOLDER geometry until real obstacle positions are measured.
 
   # combined_1: dynamics + obstacle  [PLACEHOLDER obstacle geometry — tune before real use]
   - name: combined_1
@@ -275,7 +275,7 @@ geo_constraint_variants:
         center: [0.50, 0.00]   # PLACEHOLDER
         radius: 0.06           # PLACEHOLDER
 
-  # combined_2: dynamics + bounds  [active — DPCC-equivalent for this task]
+  # combined_2: dynamics + bounds  [defined; not currently active — see active_geo_variants]
   # Uses 3D bounds (x-y-z all constrained) intentionally — the combination config
   # is the full physical model; ablation (bounds_only_1) uses 2D.
   - name: combined_2
@@ -296,9 +296,10 @@ geo_constraint_variants:
         center: [0.50, 0.00]   # PLACEHOLDER
         radius: 0.06           # PLACEHOLDER
 
-  # combined_4: dynamics + bounds + halfspace + obstacles  [disabled — full DPCC equiv]
-  # Exact match to avoiding paper's constraint_types: ['halfspace','obstacles','dynamics','bounds']
-  # Enable once obstacle geometry is measured AND halfspace 3D is implemented (if needed).
+  # combined_4: dynamics + bounds + halfspace + obstacles  [defined; not currently active — see active_geo_variants]
+  # Full DPCC constraint set (matches avoiding paper: ['halfspace','obstacles','dynamics','bounds']).
+  # Uses RELAXED bounds and halfspace for debug/test (UF-16.1); obstacle geometry is still PLACEHOLDER.
+  # Swap to nominal bounds/halfspace once scene geometry is confirmed (commented originals below).
   - name: combined_4
     constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
     # ── bounds: relaxed for test purpose (wider box, more room for EE) ─────────
@@ -319,8 +320,11 @@ geo_constraint_variants:
         center: [0.50, 0.00]   # tune to measured obstacle position
         radius: 0.06
 
-  # combined_5: derived from combined_4, halfspace moved to the right side with a '\' shape
-  # Pushes the allowable workspace from right to left, acting as a skewed wall on the right.
+  # combined_5: dynamics + bounds + halfspace + obstacles  [CURRENTLY ACTIVE — see active_geo_variants]
+  # Same constraint set as combined_4 but with a '\'-shaped halfspace on the right side of the workspace.
+  # The halfspace line (top-left → bottom-right) cuts off the upper-right region, keeping the EE
+  # to the left/lower side — simulates a diagonal wall on the right.
+  # Bounds and obstacle geometry identical to combined_4 (relaxed bounds, PLACEHOLDER obstacle).
   - name: combined_5
     constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
     # ── bounds: kept identical to combined_4 ───────────────────────────────────
