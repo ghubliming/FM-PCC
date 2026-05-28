@@ -118,6 +118,7 @@ def main(cfg: DictConfig) -> None:
     wandb.init(
         project=project,
         entity=entity,
+        name=f'{cfg_dict.get("agent_name", "agent")}_seed{cfg_dict.get("seed", 0)}',
         group=cfg_dict.get('group', f'aligning_{cfg_dict.get("agent_name", "")}'),
         mode="online" if use_wandb else "disabled",
         config=cfg_dict,
