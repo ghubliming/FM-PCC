@@ -304,12 +304,17 @@ class D3ILBaselineWrapper:
 def build_agent(d3il_config_dir, agent_cfg_group, device, seed):
     """Instantiate a D3IL agent via Hydra compose.
     No Hydra main decorator → no CWD change, no output directories created.
+    Vision agents use aligning_vision_config (num_hidden_layers=4);
+    state agents use aligning_config (num_hidden_layers=6).
+    Must match the config used at training time or state_dict keys won't align.
     """
+    # Mirror the same auto-select logic as train_d3il_baseline.sh
+    base_config = "aligning_vision_config" if "_vision" in agent_cfg_group else "aligning_config"
     GlobalHydra.instance().clear()
     abs_cfg_dir = os.path.abspath(d3il_config_dir)
     with initialize_config_dir(config_dir=abs_cfg_dir):
         cfg = compose(
-            config_name="aligning_config",
+            config_name=base_config,
             overrides=[
                 f"agents={agent_cfg_group}",
                 f"seed={seed}",
