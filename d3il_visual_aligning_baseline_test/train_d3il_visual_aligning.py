@@ -41,14 +41,18 @@ def _set_seed(seed: int) -> None:
 def main(cfg: DictConfig) -> None:
     _set_seed(cfg.seed)
 
-    wandb_mode = "online" if cfg.get("use_wandb", False) else "disabled"
-    wandb.config = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    use_wandb = cfg.get("use_wandb", True)
+    # throw_on_missing=False so ??? placeholders in vision config don't crash
+    cfg_dict = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)
+    _wb = cfg_dict.get('wandb', {})
+    entity  = _wb.get('entity')  if _wb.get('entity')  not in (None, '???') else None
+    project = _wb.get('project') if _wb.get('project') not in (None, '???') else 'd3il-baseline'
     wandb.init(
-        project=cfg.wandb.project,
-        entity=cfg.wandb.entity,
-        group=cfg.group,
-        mode=wandb_mode,
-        config=wandb.config,
+        project=project,
+        entity=entity,
+        group=cfg_dict.get('group', f'aligning_{cfg_dict.get("agent_name", "")}'),
+        mode="online" if use_wandb else "disabled",
+        config=cfg_dict,
     )
 
     print(f"[ train ] agent={cfg.agent_name}  seed={cfg.seed}  "
