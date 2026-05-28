@@ -44,6 +44,41 @@ def _set_seed(seed: int) -> None:
     random.seed(seed)
 
 
+def _eval_vision_loss(agent) -> float:
+    """
+    Validation loss for vision agents.
+    agent.evaluate() is state-only (calls scaler.scale_input on a plain tensor);
+    there is no vision evaluate() variant. We mirror train_vision_agent() but
+    without the optimizer step, using EMA weights if available.
+    """
+    if agent.use_ema:
+        agent.ema_helper.store(agent.model.parameters())
+        agent.ema_helper.copy_to(agent.model.parameters())
+    agent.model.eval()
+
+    val_losses = []
+    with torch.no_grad():
+        for data in agent.test_dataloader:
+            bp_imgs, inhand_imgs, obs, action, mask = data
+            bp_imgs     = bp_imgs.to(agent.device)
+            inhand_imgs = inhand_imgs.to(agent.device)
+            obs    = agent.scaler.scale_input(obs)
+            action = agent.scaler.scale_output(action)
+            if hasattr(agent, 'obs_seq_len'):
+                action      = action[:, agent.obs_seq_len - 1:, :].contiguous()
+                obs         = obs[:, :agent.obs_seq_len].contiguous()
+                bp_imgs     = bp_imgs[:, :agent.obs_seq_len].contiguous()
+                inhand_imgs = inhand_imgs[:, :agent.obs_seq_len].contiguous()
+            state = (bp_imgs, inhand_imgs, obs)
+            loss = agent.model(state, None, action=action, if_train=True)
+            val_losses.append(loss.item())
+
+    if agent.use_ema:
+        agent.ema_helper.restore(agent.model.parameters())
+    agent.model.train()
+    return sum(val_losses) / len(val_losses)
+
+
 def _train_vision(agent) -> None:
     """
     Epoch loop for vision agents, mirroring d3il/run_vision.py.
@@ -56,25 +91,7 @@ def _train_vision(agent) -> None:
         agent.train_vision_agent()
 
         if not (num_epoch + 1) % agent.eval_every_n_epochs:
-            # Validation pass — iterate val dataloader like state agents do
-            val_losses = []
-            for data in agent.test_dataloader:
-                bp_imgs, inhand_imgs, obs, action, mask = data
-                bp_imgs   = bp_imgs.to(agent.device)
-                inhand_imgs = inhand_imgs.to(agent.device)
-                obs    = agent.scaler.scale_input(obs)
-                action = agent.scaler.scale_output(action)
-                # Slice obs/action the same way train_vision_agent does if needed
-                if hasattr(agent, 'obs_seq_len'):
-                    action  = action[:, agent.obs_seq_len - 1:, :].contiguous()
-                    obs     = obs[:, :agent.obs_seq_len].contiguous()
-                    bp_imgs = bp_imgs[:, :agent.obs_seq_len].contiguous()
-                    inhand_imgs = inhand_imgs[:, :agent.obs_seq_len].contiguous()
-                state = (bp_imgs, inhand_imgs, obs)
-                val_loss = agent.evaluate(state, action)
-                val_losses.append(val_loss)
-
-            avg_val = sum(val_losses) / len(val_losses)
+            avg_val = _eval_vision_loss(agent)
             log.info(f"Epoch {num_epoch}: val loss = {avg_val:.6f}")
             wandb.log({"val_loss": avg_val, "epoch": num_epoch})
 
