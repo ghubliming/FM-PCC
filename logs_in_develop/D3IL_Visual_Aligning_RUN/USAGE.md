@@ -18,27 +18,42 @@
 
 ### Via SLURM (recommended)
 
+Epoch defaults follow the D3IL paper: **200 for vision agents, 500 for state agents**,
+with `eval_every_n_epochs = epoch / 10` (paper: "evaluate after every 1/10th of training").
+
 ```bash
-# Full pipeline: train → eval chained automatically
-sbatch Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh \
-    ddpm_encdec_vision  42  all
-#   ^agent_name         ^seed  ^record_mode
+# Full pipeline: train (paper epochs) → eval chained automatically
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh \
+    ddpm_encdec_vision  42          # epoch=200 by default (vision), record=all
+#   ^agent_name         ^seed
+
+# With explicit epoch override (e.g. reproduce exactly or custom length)
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh \
+    ddpm_encdec_vision  42  200  all
+#   ^agent_name         ^seed  ^epoch  ^record_mode
 ```
 
 ```bash
-# Train only
-sbatch Slurm_Codes/sbatch/d3il_visual_aligning_baseline/train_d3il_baseline.sh \
-    ddpm_encdec_vision  42
+# Train only (paper defaults)
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/train_d3il_baseline.sh \
+    ddpm_encdec_vision  42        # → 200 epochs, eval every 20
+
+# Train with explicit epoch
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/d3il_visual_aligning_baseline/train_d3il_baseline.sh \
+    ddpm_encdec_vision  42  200
 ```
 
 ### Locally (smoke check)
 
 ```bash
+# Quick smoke: 5 epochs to verify pipeline end-to-end
 python d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py \
+    --config-name aligning_vision_config \
     "agents=ddpm_encdec_vision_agent" \
     "agent_name=ddpm_encdec_vision" \
     "seed=42" \
     "epoch=5" \
+    "eval_every_n_epochs=1" \
     "hydra.run.dir=logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights"
 ```
 

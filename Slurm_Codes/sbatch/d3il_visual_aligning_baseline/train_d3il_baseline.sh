@@ -55,25 +55,38 @@ cd "$REPO"
 # ─── Args ───────────────────────────────────────────────────────────────────
 # $1 = agent_name  (default: ddpm_encdec_vision)
 # $2 = seed        (default: 42)
+# $3 = epoch       (default: paper setting — 200 for vision, 500 for state)
 #
 # Vision agents (*_vision): use aligning_vision_config  → Aligning_Img_Dataset, obs_dim=3
 # State agents (no _vision): use aligning_config        → Aligning_Dataset,     obs_dim=20
+#
+# D3IL paper (ICLR 2024): 200 epochs for image agents, 500 for state agents;
+# eval every 1/10th of total training; best val-loss checkpoint saved.
 #
 # Outputs land in: logs/d3il_visual_aligning_baseline/{agent_name}/seed_{s}/weights/
 # (already gitignored via root .gitignore  logs/*)
 
 AGENT_NAME="${1:-ddpm_encdec_vision}"
 SEED="${2:-42}"
-SAVE_DIR="logs/d3il_visual_aligning_baseline/${AGENT_NAME}/seed_${SEED}/weights"
 
 # Auto-select base config: vision agents need the image dataset config
 if [[ "$AGENT_NAME" == *"_vision"* ]]; then
     CONFIG_NAME="aligning_vision_config"
+    DEFAULT_EPOCH=200
 else
     CONFIG_NAME="aligning_config"
+    DEFAULT_EPOCH=500
 fi
 
+EPOCH="${3:-$DEFAULT_EPOCH}"
+EVAL_EVERY=$(( EPOCH / 10 ))   # eval every 1/10th of training (paper setting)
+# guard: eval_every must be at least 1
+if [[ "$EVAL_EVERY" -lt 1 ]]; then EVAL_EVERY=1; fi
+
+SAVE_DIR="logs/d3il_visual_aligning_baseline/${AGENT_NAME}/seed_${SEED}/weights"
+
 echo "[ train ] agent=${AGENT_NAME}  seed=${SEED}  config=${CONFIG_NAME}"
+echo "[ train ] epoch=${EPOCH}  eval_every=${EVAL_EVERY}"
 echo "[ train ] weights will be saved to: ${REPO}/${SAVE_DIR}"
 
 python d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py \
@@ -81,6 +94,8 @@ python d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py \
     "agents=${AGENT_NAME}_agent" \
     "agent_name=${AGENT_NAME}" \
     "seed=${SEED}" \
+    "epoch=${EPOCH}" \
+    "eval_every_n_epochs=${EVAL_EVERY}" \
     "hydra.run.dir=${SAVE_DIR}"
 
 echo "Job completed successfully."
