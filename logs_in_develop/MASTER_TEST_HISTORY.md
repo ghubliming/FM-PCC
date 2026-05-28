@@ -8,24 +8,29 @@ Purpose: Concise record of what was tested across all generations/versions. Mast
 
 Below is the definitive index mapping every research generation (internal index) to its corresponding isolated sibling folders inside the workspace. This maps out how the codebase transitioned from **State-Only** models to the state-of-the-art **Visual Flow Matching** models:
 
-| Internal Index | Model/Code Folder | Test/Eval Folder | Key Period | What is it / Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Gen1** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Early April 2026 | Early Flow Matching baseline (State-Only). Crucial math bug: reversed ODE trajectory during rollout. |
-| **Gen2** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Mid April 2026 | Basic Flow Matching engine with uniform time sampling in $[0, 1]$ (State-Only). |
-| **Gen2 (U-Net v2)** | [flow_matcher_unet_v2/](../flow_matcher_unet_v2) | [FM_Unet_v2_test/](../FM_Unet_v2_test) | Mid April 2026 | Built U-Net v2 backbone shell/path structure, but no material changes to net behavior (structural upgrades remained TODO). |
-| **Gen3 Upgrade 1** | [flow_matcher/](../flow_matcher) | [FM_hp_tune_test/](../FM_hp_tune_test) | Mid April 2026 | Action loss weight ($a_0$) hyperparameter tuning sweep. |
-| **Gen3 Upgrade 2** | [flow_matcher_v2/](../flow_matcher_v2) | [FM_v2_test/](../FM_v2_test) | Mid-to-Late April 2026 | **FM-v2**: Introduced continuous Beta distribution time prior sampling ($1 - \text{Beta}(\alpha=1.5, \beta=1.0)$) (State-Only). |
-| **Gen3 Upgrade 3** | [flow_matcher_v3/](../flow_matcher_v3) | [FM_v3_test/](../FM_v3_test) | Late April 2026 (up to Apr 20) | **FM-v3**: Introduced SafeFlow-style continuous-time model query semantics (State-Only). |
-| **Gen3v2 (ODE Solver Addon)** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) | [FM_v3_ode_selectable_test/](../FM_v3_ode_selectable_test) | April 21 – May 4, 2026 | Added advanced ODE solvers (`torchdiffeq`, RK4, Euler, Dopri5) with a dynamic override mechanism (State-Only). |
-| **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). |
-| **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). |
-| **Gen3v5 (BNS Solver)** | Pending | Pending | Pending | **BNS Solver**: Boundary-constrained Noise-guided Solver (Pending Plan). |
-| **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. |
-| **Gen5 (Visual Aligning)** | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision) | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Legacy baseline** (archived). Based on the `ddpmact d3il base` (imitation framework). Succeeded only once and never returned good results since. |
-| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Visual-Aligning Differentiable MPC (DPCC Upgrade)**. Reused FMv3ODE's DPCC projection logic on top of the visual baseline, enforcing 6D absolute workspace constraints. |
-| **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. |
-| **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. |
-| **Gen7 (Visual Flow Matching)** | [fm_visual_aligning/](../fm_visual_aligning) | [fm_visual_aligning_test/](../fm_visual_aligning_test) | May 20, 2026 | **Continuous-time visual Flow Matching (FMv3ODE)**. Clean copy-modify sibling transition from proofed Gen6V4 to continuous-time FM ODE engine with Beta(1.5, 1.0) time sampling and velocity target training. |
+| Internal Index | Model/Code Folder | Test/Eval Folder | Key Period | What is it / Status | FLAG |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gen0 (Baseline)** | [diffuser/](../diffuser) | [scripts/](../scripts) | Pre-April 2026 | Original DPCC Baseline model (after functional upgrades like wandb, resume training, etc.). | |
+| **Gen1** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Early April 2026 | Early Flow Matching baseline (State-Only). Crucial math bug: reversed ODE trajectory during rollout. | |
+| **Gen2** | [flow_matcher/](../flow_matcher) | [FM_test/](../FM_test) | Mid April 2026 | Basic Flow Matching engine with uniform time sampling in $[0, 1]$ (State-Only). | |
+| **Gen2 (U-Net v2)** | [flow_matcher_unet_v2/](../flow_matcher_unet_v2) | [FM_Unet_v2_test/](../FM_Unet_v2_test) | Mid April 2026 | Built U-Net v2 backbone shell/path structure, but no material changes to net behavior (structural upgrades remained TODO). | |
+| **Gen3 Upgrade 1** | [flow_matcher/](../flow_matcher) | [FM_hp_tune_test/](../FM_hp_tune_test) | Mid April 2026 | Action loss weight ($a_0$) hyperparameter tuning sweep. | |
+| **Gen3 Upgrade 2** | [flow_matcher_v2/](../flow_matcher_v2) | [FM_v2_test/](../FM_v2_test) | Mid-to-Late April 2026 | **FM-v2**: Introduced continuous Beta distribution time prior sampling ($1 - \text{Beta}(\alpha=1.5, \beta=1.0)$) (State-Only). | |
+| **Gen3 Upgrade 3** | [flow_matcher_v3/](../flow_matcher_v3) | [FM_v3_test/](../FM_v3_test) | Late April 2026 (up to Apr 20) | **FM-v3**: Introduced SafeFlow-style continuous-time model query semantics (State-Only). | |
+| **Gen3v2 (ODE Solver Addon)** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) | [FM_v3_ode_selectable_test/](../FM_v3_ode_selectable_test) | April 21 – May 4, 2026 | Added advanced ODE solvers (`torchdiffeq`, RK4, Euler, Dopri5) with a dynamic override mechanism (State-Only). | finished |
+| **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). | working on |
+| **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). | working on |
+| **Gen3v5 (BNS Solver)** | Pending | Pending | Pending | **BNS Solver**: Boundary-constrained Noise-guided Solver (Pending Plan). | |
+| **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. | |
+| **Gen5 (Visual Aligning)** | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision) | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Legacy baseline** (archived). Based on the `ddpmact d3il base` (imitation framework). Succeeded only once and never returned good results since. | |
+| **Gen6 (Visual DPCC)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Visual-Aligning Differentiable MPC (DPCC Upgrade)**. Reused FMv3ODE's DPCC projection logic on top of the visual baseline, enforcing 6D absolute workspace constraints. | |
+| **Gen6v2 (Old Abandoned Pending)** | [ddpm_encdec_vision/](../ddpm_encdec_vision) | [ddpm_encdec_vision_test/](../ddpm_encdec_vision_test) | May 17, 2026 | **Abandoned pending**. Dual-Backbone Calibration & Pipeline Orchestration. Will do it later. | |
+| **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. | |
+| **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. | working on |
+| **Gen7 (Visual Flow Matching)** | [fm_visual_aligning/](../fm_visual_aligning) | [fm_visual_aligning_test/](../fm_visual_aligning_test) | May 20, 2026 | **Continuous-time visual Flow Matching (FMv3ODE)**. Clean copy-modify sibling transition from proofed Gen6V4 to continuous-time FM ODE engine with Beta(1.5, 1.0) time sampling and velocity target training. | working on |
+| **Gen8 (Visual Avoiding Env)** | Pending | Pending | Planned | **Planned Extension**: Create a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. Will modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. | planning |
+| **Gen9 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). | |
+| **Gen10 (UAV Vis-Traj in MuJoCo)** | Pending | Pending | Planned | **Planned Extension**: Implement a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. Will adapt expert data from the paper "AV-Flow Colosseo: A Real-World Benchmark for Flying-on-a-Word UAV Imitation Learning". Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone. | |
 
 ***
 
@@ -1233,3 +1238,23 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 5. **Prior Model Evaluation Documentation & Independent Constraint Skewing**:
    - Audited the prior model script (`scripts/eval_prior_model.py`) and documented its behavior regarding environment setup and rollout performance.
    - Refined `combined_5` halfspace skewing for task difficulty and verified visualization via `plot_yaml_constraints.py`.
+
+***
+
+## Gen7 / Gen6v4 & D3IL Baseline: Dual Boundary Representation, Final Box Angle Tracking & Baseline Framework (May 28, 2026)
+
+**Keywords**: dual boundary, final box angle, dashed line, D3IL baseline, epoch loop, DiffusionMLPNetwork sequence expand.
+
+1. **UF-16.4: Dual Boundary Representation & Final Box Angle Tracking**:
+   - Enhanced constraint visualization (`_hs_xy_draw`) to support dashed line representation for planning boundaries, differentiating nominal and planning constraints.
+   - Upgraded `VisualAgentWrapper` to calculate and store the final box position and angle (via 3-point planar estimation) at the end of rollouts.
+   - Introduced detailed logging for the final box state (distance to target, orientation angle).
+   - Authored `SUCCESS_MODE_ANGLE_EXPLAINER.md` detailing success criteria and mode definitions.
+2. **D3IL Visual Aligning Baseline - Core Framework Implementation**:
+   - Introduced `train_d3il_visual_aligning.py` and `eval_d3il_visual_aligning.py` for training and evaluating native D3IL aligning agents with Hydra configuration.
+   - Built a complete SLURM job suite (`train_d3il_baseline.sh`, `eval_d3il_baseline.sh`, `pipeline_d3il_baseline.sh`) for automated deployment.
+   - Authored `PLAN.md`, `USAGE.md`, and `CHANGELOG.md` inside `logs_in_develop/D3IL_Visual_Aligning_RUN/` to document the new baseline setup.
+3. **D3IL Baseline Bug Fixes & Agent Support Initialization**:
+   - **Epoch Loop & Wandb Refactor**: Repaired the training script by adding an outer `_train_vision()` epoch loop to mirror state-based agents and ensure complete training cycles. Refactored WandB config initialization.
+   - **DiffusionMLPNetwork Bug Fix**: Patched a tensor dimension mismatch in `d3il/agents/models/diffusion/diffusion_models.py` where 3D visual paths were missing sequence expansion (`.expand(-1, x.shape[1], -1)`).
+   - **Submit Script Hotfix**: Fixed `Slurm_Codes/submit.sh` to correctly forward extra arguments (like `agent_name`, `seed`) and dispatch the correct `train_vision_agent` payload.
