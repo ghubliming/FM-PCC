@@ -59,7 +59,16 @@ def main(cfg: DictConfig) -> None:
           f"epochs={cfg.epoch}  save_dir={os.getcwd()}")
 
     agent = hydra.utils.instantiate(cfg.agents)
-    agent.train_agent()
+
+    # Vision agents have train_vision_agent(); state agents use train_agent().
+    # Detect via the policy's visual_input flag so no external flag is needed.
+    _is_visual = getattr(getattr(agent, 'model', None), 'visual_input', False)
+    if _is_visual and hasattr(agent, 'train_vision_agent'):
+        print(f'[ train ] visual path → train_vision_agent()')
+        agent.train_vision_agent()
+    else:
+        print(f'[ train ] state path → train_agent()')
+        agent.train_agent()
 
     print(f"[ train ] done — weights in {agent.working_dir}")
     wandb.finish()

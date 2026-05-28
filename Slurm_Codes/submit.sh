@@ -4,11 +4,13 @@
 # Usage: ./submit.sh Slurm_Codes/sbatch/your_script.sh
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <path_to_slurm_script>"
+    echo "Usage: $0 <path_to_slurm_script> [script_arg1] [script_arg2] ..."
     exit 1
 fi
 
 SCRIPT_PATH=$1
+shift          # remaining args ($2, $3, ...) are passed to the job script
+SCRIPT_ARGS=("$@")
 SCRIPT_NAME=$(basename "$SCRIPT_PATH")
 JOB_NAME="${SCRIPT_NAME%.*}"
 
@@ -38,7 +40,7 @@ SBATCH_OUT=$(sbatch --parsable \
        --output="$LOG_FILE" \
        --error="$LOG_FILE" \
        --export=ALL,SUBMIT_TIME=$TIME,SUBMIT_DATE=$DATE \
-       "$SCRIPT_PATH")
+       "$SCRIPT_PATH" "${SCRIPT_ARGS[@]}")
 
 if [ $? -eq 0 ]; then
     JOB_ID=$SBATCH_OUT
