@@ -450,3 +450,205 @@ iMeanFlow:
 The mean-flow head learns to "skip ahead" on the ODE path by predicting the right
 velocity to reach the data in exactly `h` integration time — enabling one-step generation
 in the limit without explicit distillation.
+
+---
+
+## 14. ODE Steps Analysis: One-Shot vs Multi-Step in iMF
+
+### 14.1 Core Question
+
+If we set `flow_steps_v3 = 1` (ODE = 1), are we running the "real" iMF one-shot
+generation that the paper advertises? And if we set ODE = 2 or ODE = 10, are we doing
+something useful — or wasting compute?
+
+### 14.2 Answer: ODE = 1 Is the "Real" iMF One-Shot
+
+**Yes.** Setting `flow_steps_v3 = 1` (equivalently, `num_sampling_steps = 1` in the
+official repo) is exactly the canonical iMF one-shot generation. Here is why:
+
+**Official reference implementation** (`imeanflow/imf.py:117-136`):
+
+```python
+t_steps = torch.linspace(1.0, 0.0, num_steps + 1)   # e.g. [1.0, 0.0] for num_steps=1
+
+for i in range(num_steps):
+    t = t_steps[i]       # t = 1.0
+    r = t_steps[i + 1]   # r = 0.0
+    h = t - r             # h = 1.0 (full interval)
+    u = self.u_fn(z_t, t, h, ω, t_min, t_max, y)[0]
+    z_t = z_t - h * u     # one jump from noise to data
+```
+
+With `num_steps = 1`: the model sees `h = 1.0` (the entire [0, 1] interval) and predicts
+the mean velocity that carries the sample directly from pure noise to data in a single
+evaluation. This is what the paper calls **1-NFE** (one Network Function Evaluation).
+
+The paper explicitly benchmarks at 1-NFE as its primary result: **iMF-XL/2 achieves
+FID 1.72 with a single function evaluation** on ImageNet 256×256.
+
+**In our Gen3v4 port** (`imf_diffusion.py`), the equivalent path is:
+
+```python
+dt = 1.0 / flow_steps  # dt = 1.0 when flow_steps = 1
+h_batch = torch.full((batch_size,), dt)  # h = 1.0
+
+for i in range(flow_steps):   # exactly one iteration
+    t_cont = 0.0 / 1 = 0.0
+    velocity = _predict_velocity(x, cond, t=0.0, h=1.0)
+    x = x + velocity * 1.0    # one-shot jump
+```
+
+After this single step, if a projector is configured, the PCC QP projection fires
+(because `loop_idx == flow_steps - 1` always triggers). So the full pipeline is:
+
+```
+noise → [iMF one-shot] → raw trajectory → [QP projection] → constrained trajectory
+```
+
+This is the cleanest form of the iMF + PCC combination: one model call for generation,
+one optimization call for constraint enforcement.
+
+### 14.3 What About ODE = 2?
+
+With `flow_steps_v3 = 2`, the sampler does:
+
+```
+Step 0: t=0.0, h=0.5  →  x = x + velocity(t=0.0, h=0.5) * 0.5
+Step 1: t=0.5, h=0.5  →  x = x + velocity(t=0.5, h=0.5) * 0.5
+```
+
+The model sees `h = 0.5` at each step. Because iMF is **trained with random
+sub-intervals** (`h = t - r` where `r ~ Uniform(0, t)`), it has learned to predict
+the correct mean flow for *any* step size `h ∈ (0, 1]`. So `h = 0.5` is a valid
+query — the model predicts the mean velocity to travel half the ODE path per step.
+
+**Does ODE = 2 improve over ODE = 1?** The paper demonstrates **yes**:
+
+| Model | NFE (ODE steps) | FID | Notes |
+|---|---|---|---|
+| iMF-XL/2 | 1 | 1.72 | One-shot (primary benchmark) |
+| iMF-XL/2 | 2 | **1.54** | Two-step (paper Section 5.3) |
+
+The 2-step result is strictly better. This makes mathematical sense: two smaller steps
+with `h = 0.5` give the ODE integrator a mid-point correction opportunity. Even though
+the model was primarily optimized for one-shot, the mean-flow training with random
+sub-intervals also teaches it shorter-interval predictions.
+
+**Note on CFG tuning**: The official 2-NFE evaluation uses different CFG parameters
+(`ω = 4.0` instead of `8.0`, wider interval `[0.36, 0.64]` instead of `[0.42, 0.62]`).
+This indicates that multi-step sampling shifts the optimal guidance scale — stronger
+models (more NFE) favor weaker guidance. Our Gen3v4 port does not use CFG (no
+`returns_condition` in the avoiding task), so this nuance does not apply.
+
+### 14.4 What About ODE = 10?
+
+With `flow_steps_v3 = 10` (the current default in `avoiding-d3il.py`), each step uses
+`h = 0.1`. The model predicts mean velocities for very short intervals.
+
+**Is this harmful?** No — but there are diminishing returns.
+
+**Why it is not harmful:**
+- The model is trained on all possible `(r, t)` pairs, including tiny `h` values.
+  In the limit `h → 0`, the mean flow `u(z_t, r, t)` converges to the instantaneous
+  velocity `v(z_t, t)` (this is the mathematical definition — the average velocity
+  over an infinitesimal interval is the instantaneous velocity). So with many steps,
+  iMF gracefully degrades to behaving like a standard FM ODE solver.
+- The aux branch `v_pred` is explicitly trained on the FM velocity target `x_data - x_base`,
+  so the combined velocity `u + 0.01·v` has a standard-FM component as a safety net.
+
+**Why diminishing returns apply:**
+- iMF's entire architectural innovation (h-conditioning, mean-flow target) is designed
+  to make **few steps work well**. Using 10+ steps means you are solving a well-behaved
+  ODE with many small Euler steps — exactly what standard FM already does. The h-MLP
+  inside the UNet has learned the mean-flow shortcuts, but when `h = 0.1`, the "shortcut"
+  is only 10% of the path, and the mean flow is nearly identical to the instantaneous
+  velocity. You are paying for the extra h-conditioning compute without getting the
+  benefit.
+- The paper's FID progression (extrapolated from the 1→2 NFE improvement of
+  1.72→1.54, roughly 0.18 FID per doubling) strongly suggests convergence: 2→4 might
+  gain another ~0.1, 4→8 another ~0.05. By 10 steps, you are deep into diminishing
+  returns territory.
+
+**Conclusion for ODE = 10:** It works correctly and will produce valid samples, but
+the quality gain over ODE = 2 (or even ODE = 1) is marginal at best. The 10-step
+default in `avoiding-d3il.py` is a conservative legacy setting inherited from the
+standard FM config. For MPC replanning (where inference latency matters), reducing to
+ODE = 1 or 2 is strongly recommended.
+
+### 14.5 Interaction with PCC Projection
+
+The number of ODE steps also affects *when* QP projection fires:
+
+| ODE Steps | Projection threshold = 0.5 | Projection steps | Total model+QP calls |
+|---|---|---|---|
+| 1 | `snapping_start_idx = 0` | Step 0 (always, via `loop_idx == flow_steps - 1`) | 1 model + 1 QP |
+| 2 | `snapping_start_idx = 1` | Step 1 (last step) | 2 model + 1 QP |
+| 10 | `snapping_start_idx = 5` | Steps 5, 6, 7, 8, 9 | 10 model + 5 QP |
+
+With ODE = 1:
+- The single model call produces a raw trajectory.
+- One QP projection enforces constraints on that trajectory.
+- This is the **minimal-cost** PCC pipeline: 1 NFE + 1 QP solve.
+
+With ODE = 2:
+- Two model calls produce a refined trajectory.
+- One QP projection at the end.
+- This is the "sweet spot" for quality/speed: 2 NFE + 1 QP solve.
+
+With ODE = 10:
+- Ten model calls, five QP projections.
+- Much higher compute cost, minimal quality gain.
+
+### 14.6 Summary Table
+
+| Setting | What it is | Quality | Speed | PCC QP calls (T=0.5) |
+|---|---|---|---|---|
+| **ODE = 1** | True iMF one-shot (1-NFE) | Excellent — the primary iMF design point | Fastest | 1 |
+| **ODE = 2** | Two-step iMF | Better than 1-shot (proven by paper: 1.54 vs 1.72 FID) | Fast | 1 |
+| **ODE = 5** | Multi-step, approaching standard FM territory | Marginal gain over ODE=2 | Moderate | 2–3 |
+| **ODE = 10** | Conservative, standard-FM-like | Near-plateau, not harmful but not helpful | Slow | 5 |
+| **ODE = 100** | Pure ODE solving (iMF ≈ standard FM at small h) | No gain — doing useless work | Very slow | 50 |
+
+### 14.7 Recommendation for Gen3v4 FM-PCC
+
+1. **Primary config: `flow_steps_v3 = 1`** — True one-shot iMF. Fastest inference,
+   minimal PCC overhead, and the generation quality that iMF was designed to deliver.
+   Post-process with a single QP projection for constraint enforcement.
+
+2. **Quality config: `flow_steps_v3 = 2`** — Two-step iMF. Slightly better quality
+   at 2× model cost, still only 1 QP call (with `threshold = 0.5`). Good default if
+   compute is not the bottleneck.
+
+3. **Avoid `flow_steps_v3 ≥ 10`** — You are paying the cost of h-conditioning compute
+   without the benefit of mean-flow shortcuts. If you need 10+ steps, you might as well
+   use standard FM (FMv3ODE) which does not carry the aux-head overhead.
+
+### 14.8 Why the Paper Says "One-Shot" but Allows Multi-Step
+
+The iMF paper is clear about this: **one-shot (1-NFE) is the primary design goal**,
+but the formulation naturally supports multi-step. Quoting the abstract:
+
+> "iMF achieves 1.72 FID with a single function evaluation (1-NFE)"
+
+And from Section 5.3:
+
+> "When relaxing NFE to 2, iMF achieves an FID of 1.54."
+
+The paper presents multi-step as a "relaxation" — you are spending extra compute for
+diminishing-returns quality improvement. The model is not *worse* at multi-step
+(because training covers all `h` values), but the marginal return per additional step
+is small precisely because the model is already excellent at one-shot.
+
+This is architecturally encoded: the official DiT model (`imfDiT.forward()`) only
+conditions on `h = t - r`, **not** on `t` and `r` separately (see line 370 in
+`imfDiT.py`: _"We don't explicitly condition on time t, only on h = t - r"_). This
+means the model treats all intervals of the same width identically regardless of where
+on the ODE path they fall. For ODE = 1, `h = 1.0` is a unique, well-defined query.
+For ODE = 10, `h = 0.1` is essentially asking the model to predict a tiny local
+velocity — something it can do, but it is not exploiting its mean-flow architecture.
+
+**Key note for our Gen3v4 port:** Our UNet backbone conditions on both `t` **and** `h`
+(the `h_mlp` is additive to the `time_mlp`), so `t` information is available. This
+means our port can potentially distinguish between `(t=0.0, h=0.5)` and `(t=0.5, h=0.5)`
+in a 2-step setting, which the official DiT cannot. Whether this provides any advantage
+over the paper's h-only conditioning is an open empirical question.
