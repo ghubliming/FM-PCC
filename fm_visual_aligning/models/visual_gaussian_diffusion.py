@@ -1,13 +1,13 @@
 import torch
-from fm_visual_aligning.models.diffusion import GaussianDiffusion
+from fm_visual_aligning.models.diffusion import FlowMatchingODE
 from fm_visual_aligning.models.helpers import apply_conditioning
 
 
-class VisualGaussianDiffusion(GaussianDiffusion):
+class VisualFlowMatching(FlowMatchingODE):
     """
-    DDPM engine for Visual-DPCC (Gen6V4).
+    FM engine for Visual-DPCC (Gen6V4).
 
-    Extends GaussianDiffusion with:
+    Extends FlowMatchingODE with:
     - Explicit loss(trajectories, conditions) — matches Batch namedtuple unpacking
       by Trainer.train_epoch():  loss, infos = self.model.loss(*batch)
       *batch unpacks Batch(trajectories, conditions) → loss(trajectories, conditions)
@@ -27,7 +27,7 @@ class VisualGaussianDiffusion(GaussianDiffusion):
                  ode_solver_step_size_v3=None,
                  **kwargs):
         # Intercept all ODE solver params so they don't cause TypeError in the
-        # base GaussianDiffusion.__init__ (which has no **kwargs).
+        # base FlowMatchingODE.__init__ (which has no **kwargs).
         super().__init__(*args, **kwargs)
 
     # ── training ──────────────────────────────────────────────────────────────
@@ -36,29 +36,39 @@ class VisualGaussianDiffusion(GaussianDiffusion):
         """
         Called as self.model.loss(*batch) where batch is Batch(trajectories, conditions).
 
-        trajectories: (B, H, 9)   — [act(3) | des_pos(3) | c_pos(3)] normalized
-        conditions:   dict {
-            0:             (B, 6)   — obs anchor for apply_conditioning at t=0
-            'primary_img': (B,C,H,W) — agentview camera
-            'wrist_img':   (B,C,H,W) — wrist camera
-        }
+        Visual (if_vision=True):
+            trajectories: (B, H, 9)   — [act(3) | des_pos(3) | c_pos(3)]
+            conditions:   {0: (B,6), 'primary_img': (B,C,H,W), 'wrist_img': (B,C,H,W)}
+
+        Non-visual (if_vision=False):
+            trajectories: (B, H, 23)  — [act(3) | obs_20D]
+            conditions:   {0: (B,20)} — no image keys (StateOnlyAligningDataset)
         """
-        # unsqueeze to window_size=1 for MultiImageObsEncoder: (B,C,H,W) → (B,1,C,H,W)
+        if not self.model.if_vision:
+            # Non-visual: no image keys — route directly to base p_losses.
+            # apply_conditioning uses cond[0] (20D obs anchor) to pin obs at step 0.
+            x = trajectories
+            batch_size = len(x)
+            alpha = torch.tensor(self.time_beta_alpha_v3, device=x.device)
+            beta  = torch.tensor(self.time_beta_beta_v3, device=x.device)
+            t = 1.0 - torch.distributions.Beta(alpha, beta).sample((batch_size,))
+            return self.p_losses(x, conditions, t)
+
+        # Visual path — unchanged
         primary_img = conditions['primary_img'].unsqueeze(1)   # (B, 1, C, H, W)
         wrist_img   = conditions['wrist_img'].unsqueeze(1)     # (B, 1, C, H, W)
         obs_0       = conditions[0]                             # (B, 6) — snap anchor
-        obs_seq     = trajectories[..., self.action_dim:]      # (B, H, 6) — proprio context
+        obs_seq     = trajectories[..., self.action_dim:]      # (B, H, 6)
 
         cond = {
             'visual': (primary_img, wrist_img, obs_seq),
-            # 0 key used by apply_conditioning in p_sample_loop to snap x[:,0,action_dim:]
             0: obs_0,
         }
 
-        x = trajectories                                        # (B, H, 9)
+        x = trajectories
         batch_size = len(x)
         alpha = torch.tensor(self.time_beta_alpha_v3, device=x.device)
-        beta = torch.tensor(self.time_beta_beta_v3, device=x.device)
+        beta  = torch.tensor(self.time_beta_beta_v3, device=x.device)
         beta_dist = torch.distributions.Beta(alpha, beta)
         t = beta_dist.sample((batch_size,))
         t = 1.0 - t

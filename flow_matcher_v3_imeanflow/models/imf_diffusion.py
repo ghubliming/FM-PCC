@@ -11,7 +11,7 @@ from .imf_engine import iMeanFlowEngine
 from .helpers import apply_conditioning, Losses
 
 
-class iMFDiffusion(nn.Module):
+class iMeanFlowODE(nn.Module):
     """iMeanFlow wrapper that preserves FM-PCC/FMv3ODE diffusion interfaces."""
     
     def __init__(
@@ -303,7 +303,7 @@ class iMFDiffusion(nn.Module):
 
             if strict and (missing_keys or unexpected_keys):
                 raise RuntimeError(
-                    'Error(s) in loading state_dict for iMFDiffusion:\n'
+                    'Error(s) in loading state_dict for iMeanFlowODE:\n'
                     f'\tMissing key(s) in state_dict: {missing_keys}\n'
                     f'\tUnexpected key(s) in state_dict: {unexpected_keys}'
                 )

@@ -372,7 +372,7 @@ base = {
         'n_steps_per_epoch': 1000,
         # d3il trains for epoch=4 (epoch-based). We use steps-based training.
         # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
-        'n_train_steps': 5e5,
+        'n_train_steps': 1e5,
         'gradient_accumulate_every': 2,
         'train_test_split': 0.9,
         'device': 'cuda',
@@ -388,7 +388,7 @@ base = {
         # DPCC SLSQP projector enforces workspace bounds on c_pos (indices 6-8).
         # ======================================================================================
         'model': 'fm_visual_aligning.models.visual_unet.VisualUNet',
-        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'action_dim': 3,            # 3D velocity: [dx, dy, dz]
         'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)] — MUST be 6, never 3 or 128
         'if_vision': True,
@@ -446,7 +446,7 @@ base = {
         'n_steps_per_epoch': 1000,
         # d3il trains for epoch=4 (epoch-based). We use steps-based training.
         # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
-        'n_train_steps': 5e5,
+        'n_train_steps': 1e5,
         'gradient_accumulate_every': 2,
         'train_test_split': 0.9,
         'device': 'cuda',
@@ -663,7 +663,7 @@ base = {
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
         ),
         'exp_name': watch(args_to_watch_fm_visual_plan),
-        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'returns_condition': False,
         'predict_epsilon': True,
         'diffusion_timestep_threshold': _yaml_threshold,
@@ -687,8 +687,8 @@ base = {
 # ─── Gen6 State-Only Non-Visual Configuration Appends ────────────────────────
 base['ddpm_encdec_vision_nonvisual'] = {
     **base['ddpm_encdec_vision'],
-    'action_dim': 2,
-    'obs_dim': 20,
+    'action_dim': 3,   # UF-17: 3D velocity [dx,dy,dz] — matches visual path and DPCC principle
+    'obs_dim': 20,     # full state: des_c_pos(3)+c_pos(3)+box(3)+box_q(4)+tgt(3)+tgt_q(4)
     'if_vision': False,
     'prefix': 'ddpm_encdec_vision_nonvisual/',
 }

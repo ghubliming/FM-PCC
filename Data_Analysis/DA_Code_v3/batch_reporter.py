@@ -184,7 +184,8 @@ class BatchReporter:
                     'Accuracy_Std': stats.get('accuracy_std', ''),
                     'Time_ms': stats.get('time_ms', ''),
                     'Time_Std': stats.get('time_std', ''),
-                    'Robustness_Score': stats.get('robustness', '')
+                    'Robustness_Score': stats.get('robustness', ''),
+                    'Missing_Seeds': str(info.get('missing_seeds', [])) if info.get('missing_seeds') else ''
                 }
                 rows.append(row)
         
@@ -205,8 +206,10 @@ class BatchReporter:
         try:
             df = self.aggregator.get_full_detailed_dataframe()
             if df is not None and not df.empty:
-                # Add folder info
+                # Add folder and path info
                 df['Folder_Name'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
+                df['Full_Path'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
+                df['Missing_Seeds'] = df['Candidate'].apply(lambda c: str(self.candidates_info.get(c, {}).get('missing_seeds', [])) if self.candidates_info.get(c, {}).get('missing_seeds') else '')
                 df.to_csv(output_path, index=False)
                 logger.info(f"Saved multidimensional CSV ({len(df)} rows): {output_path}")
             else:
@@ -232,9 +235,10 @@ class BatchReporter:
                 # Add folder and path info
                 grouped['Folder_Name'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
                 grouped['Full_Path'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
+                grouped['Missing_Seeds'] = grouped['Candidate'].apply(lambda c: str(self.candidates_info.get(c, {}).get('missing_seeds', [])) if self.candidates_info.get(c, {}).get('missing_seeds') else '')
                 
                 # Reorder columns
-                cols = ['Candidate', 'Folder_Name', 'Full_Path', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
+                cols = ['Candidate', 'Folder_Name', 'Full_Path', 'Missing_Seeds', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
                 grouped = grouped[cols]
                 
                 grouped.to_csv(output_path, index=False)

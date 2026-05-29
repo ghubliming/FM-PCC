@@ -80,6 +80,18 @@
     </div>
     <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
         <div class="control-group"><label>2. Analysis Mode</label><select id="mode-select" onchange="trigger_plot()"><option value="candidate">By Candidate</option><option value="env">By Environment</option></select></div>
+        <div class="control-group"><label>2.5 Seed Mode</label><select id="seed-mode-select" onchange="toggle_seed_mode()"><option value="standard">Standard (Avg All Available)</option><option value="custom">Custom Seed Compare</option></select></div>
+        <div class="control-group" id="custom-seed-panel" style="display:none;">
+            <label>Select Seeds to Compare</label>
+            <div class="checkbox-list" style="display:flex; flex-wrap:wrap; gap:5px;">
+                <div class="checkbox-item"><input type="checkbox" class="seed-check" value="6" checked onchange="trigger_plot()"><span>6</span></div>
+                <div class="checkbox-item"><input type="checkbox" class="seed-check" value="7" checked onchange="trigger_plot()"><span>7</span></div>
+                <div class="checkbox-item"><input type="checkbox" class="seed-check" value="8" checked onchange="trigger_plot()"><span>8</span></div>
+                <div class="checkbox-item"><input type="checkbox" class="seed-check" value="9" checked onchange="trigger_plot()"><span>9</span></div>
+                <div class="checkbox-item"><input type="checkbox" class="seed-check" value="10" checked onchange="trigger_plot()"><span>10</span></div>
+            </div>
+            <div id="seed-error-msg" style="color:red; font-size: 11px; margin-top:5px; font-weight:bold;"></div>
+        </div>
         <div class="control-group"><label>3. Metric</label><select id="metric-select" onchange="trigger_plot()"></select></div>
         <div class="control-group"><label>4. Environment Focus</label><select id="env-select" onchange="trigger_plot()"></select></div>
         <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-list" class="checkbox-list"></div></div>
@@ -144,23 +156,33 @@ async def init_manifest():
         pass
 
 async def load_data(event=None):
-    global df
+    global df_agg, df_raw
     mode = window.currentMode
     if mode == "list":
         batch = document.getElementById("batch-select").value
-        path = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
+        path_agg = f"../analysis_results/{batch}/candidates_multidimensional_aggregated.csv"
+        path_raw = f"../analysis_results/{batch}/candidates_multidimensional_raw.csv"
     else:
-        path = document.getElementById("custom-path").value
+        path_agg = document.getElementById("custom-path").value
+        path_raw = path_agg.replace("aggregated.csv", "raw.csv")
     
     try:
-        console.log(f"[ loader ] Fetching from {path}...")
+        console.log(f"[ loader ] Fetching from {path_agg}...")
         document.getElementById("engine-status").innerText = "FETCHING..."
-        response = await fetch(path)
+        
+        response = await fetch(path_agg)
         if not response.ok:
             raise Exception(f"HTTP {response.status}")
-            
         csv_text = await response.text()
-        df = pd.read_csv(io.StringIO(csv_text))
+        df_agg = pd.read_csv(io.StringIO(csv_text))
+        
+        # Try fetch raw (silent fail if not found)
+        resp_raw = await fetch(path_raw)
+        if resp_raw.ok:
+            df_raw = pd.read_csv(io.StringIO(await resp_raw.text()))
+        else:
+            df_raw = None
+
         document.getElementById("controls-panel").style.display = "flex"
         document.getElementById("download-btn").style.display = "block"
         document.getElementById("path-section").style.display = "block"
@@ -174,33 +196,64 @@ async def load_data(event=None):
         console.log(str(e))
 
 def populate_dynamic_filters():
-    metrics = sorted(df['metric'].unique())
+    metrics = sorted(df_agg['metric'].unique())
     document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}">{m.upper()}</option>' for m in metrics])
-    envs = sorted(df['halfspace_variant'].unique())
+    envs = sorted(df_agg['halfspace_variant'].unique())
     document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
-    vars_list = sorted(df['variant'].unique())
+    vars_list = sorted(df_agg['variant'].unique())
     document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
-    cands_list = sorted(df['Candidate'].unique())
+    cands_list = sorted(df_agg['Candidate'].unique())
     document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
 
 async def trigger_plot(event=None):
-    global df, current_fig
-    if df is None: return
+    global df_agg, df_raw, current_fig
+    if df_agg is None: return
     metric, mode, env = document.getElementById("metric-select").value, document.getElementById("mode-select").value, document.getElementById("env-select").value
     checked_vars, checked_cands = get_checked("var-check"), get_checked("cand-check")
     if not checked_vars or not checked_cands or not metric: return
-    mask = (df['metric'] == metric) & (df['variant'].isin(checked_vars)) & (df['Candidate'].isin(checked_cands))
+    
+    seed_mode = document.getElementById("seed-mode-select").value
+    document.getElementById("seed-error-msg").innerText = ""
     x_axis = 'Candidate' if mode == "candidate" else 'halfspace_variant'
-    if mode == "candidate": mask &= (df['halfspace_variant'] == env)
-    subset = df[mask]
-    if subset.empty: return
-    val_col = 'mean' if 'mean' in df.columns else 'value'
-    pivot_mean = subset.groupby([x_axis, 'variant'])[val_col].mean().unstack()
-    pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df.columns else None
+    
+    if seed_mode == "custom" and df_raw is not None:
+        checked_seeds = [int(x) for x in get_checked("seed-check")]
+        if not checked_seeds:
+            document.getElementById("seed-error-msg").innerText = "Select >= 1 seed."
+            return
+            
+        mask = (df_raw['metric'] == metric) & (df_raw['variant'].isin(checked_vars)) & (df_raw['Candidate'].isin(checked_cands)) & (df_raw['seed'].isin(checked_seeds))
+        if mode == "candidate": mask &= (df_raw['halfspace_variant'] == env)
+        subset = df_raw[mask]
+        
+        # Verify seeds
+        for cand in checked_cands:
+            cand_subset = subset[subset['Candidate'] == cand]
+            found = set(cand_subset['seed'].unique())
+            missing = set(checked_seeds) - found
+            if missing:
+                document.getElementById("seed-error-msg").innerText = f"Error: CAND_{cand} missing seed(s) {list(missing)}!"
+                document.getElementById("plot-area").innerHTML = ""
+                plt.close('all')
+                return
+                
+        pivot_mean = subset.groupby([x_axis, 'variant'])['value'].mean().unstack()
+        pivot_std = subset.groupby([x_axis, 'variant'])['value'].std().unstack() if len(checked_seeds) > 1 else None
+        active_subset = subset
+    else:
+        mask = (df_agg['metric'] == metric) & (df_agg['variant'].isin(checked_vars)) & (df_agg['Candidate'].isin(checked_cands))
+        if mode == "candidate": mask &= (df_agg['halfspace_variant'] == env)
+        subset = df_agg[mask]
+        if subset.empty: return
+        val_col = 'mean' if 'mean' in df_agg.columns else 'value'
+        pivot_mean = subset.groupby([x_axis, 'variant'])[val_col].mean().unstack()
+        pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df_agg.columns else None
+        active_subset = subset
+
     cols = [v for v in checked_vars if v in pivot_mean.columns]
     pivot_mean = pivot_mean[cols]
     if pivot_std is not None: pivot_std = pivot_std[cols]
-    # Use manual fixed width from the input box
+    
     try:
         calc_width = float(document.getElementById("fig-width").value)
     except:
@@ -209,8 +262,10 @@ async def trigger_plot(event=None):
     plt.close('all')
     fig, ax = plt.subplots(figsize=(calc_width, 6))
     pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=0.9, yerr=pivot_std, capsize=4)
+    ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+    ax.grid(True, alpha=0.2, axis='y')
     ax.set_title(f"Dynamic Analysis: {metric.upper()}", fontsize=12, fontweight='bold'); ax.set_ylabel(metric)
-    ax.grid(True, alpha=0.2, axis='y'); ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
     plt.tight_layout()
     current_fig = fig
     area = document.getElementById("plot-area")
@@ -222,7 +277,7 @@ async def trigger_plot(event=None):
     await asyncio.sleep(0.1)
     window.applyZoom()
     
-    update_scorecard(subset, metric)
+    update_scorecard(active_subset, metric)
 
 def download_plot(event):
     global current_fig
@@ -242,9 +297,8 @@ def download_plot(event):
     js_array = Uint8Array.new(buf.read()); file_png = File.new([js_array], f"{base_name}.png", { "type": "image/png" }); url_png = URL.createObjectURL(file_png)
     link_png = document.createElement("a"); link_png.href = url_png; link_png.download = f"{base_name}.png"; link_png.click(); URL.revokeObjectURL(url_png)
     
-    # 2. Download Metadata TXT
-    p_col = 'Full_Path' if 'Full_Path' in df.columns else 'Folder_Name'
-    path_map = df[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
     
     metadata = f"AUDIT LOG: {base_name}\n"
     metadata += "="*40 + "\n"
@@ -293,13 +347,33 @@ def update_scorecard(subset, metric):
     document.getElementById("scorecard-container").innerHTML = html
 
 def render_path_map():
-    p_col = 'Full_Path' if 'Full_Path' in df.columns else 'Folder_Name'
-    mapping = df[['Candidate', p_col]].drop_duplicates().sort_values('Candidate')
-    html = '<table><thead><tr><th style="width:100px">ID</th><th>Source Path (Audit)</th></tr></thead><tbody>'
+    if df_agg is None: return
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    has_missing = 'Missing_Seeds' in df_agg.columns
+    
+    cols_to_get = ['Candidate', p_col]
+    if has_missing: cols_to_get.append('Missing_Seeds')
+    
+    mapping = df_agg[cols_to_get].drop_duplicates().sort_values('Candidate')
+    
+    html = '<table><thead><tr><th style="width:100px">ID</th>'
+    if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'
+    html += '<th>Source Path (Audit)</th></tr></thead><tbody>'
+    
     for _, row in mapping.iterrows():
         segs = str(row[p_col]).split('/')
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
-        html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td><td><code>{c_path}</code></td></tr>'
+        
+        html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td>'
+        if has_missing:
+            missing_val = row["Missing_Seeds"]
+            if pd.isna(missing_val) or str(missing_val).strip() == '':
+                html += '<td style="color: green; font-weight: bold;">ALL SEEDS</td>'
+            else:
+                html += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
+                
+        html += f'<td><code>{c_path}</code></td></tr>'
+        
     document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
 
 document.trigger_plot = create_proxy(trigger_plot)
@@ -341,7 +415,22 @@ asyncio.ensure_future(init_manifest())
         document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
         applyZoom();
     }
-    function trigger_plot() { if (window.document.trigger_plot) window.document.trigger_plot(); }
+    async function trigger_plot() { 
+        if (window.document.trigger_plot) {
+            try {
+                await window.document.trigger_plot();
+            } catch (e) {
+                console.error("Plot error:", e);
+            }
+        }
+    }
+    
+    function toggle_seed_mode() {
+        const mode = document.getElementById("seed-mode-select").value;
+        document.getElementById("custom-seed-panel").style.display = (mode === "custom") ? "block" : "none";
+        trigger_plot();
+    }
+    
     function bulkSelect(className, state) {
         const elements = document.getElementsByClassName(className);
         for (let e of elements) { e.checked = state; }

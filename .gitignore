@@ -4,6 +4,7 @@ logs/*
 
 # Specific D3IL data ignores (keeping .pkl index files)
 d3il/environments/dataset/data/aligning/all_data
+d3il/environments/dataset/data/avoiding/all_data
 d3il/environments/dataset/data/avoiding/data
 d3il/environments/dataset/data/avoiding/check_data.py
 d3il/environments/dataset/data/inserting/data_3

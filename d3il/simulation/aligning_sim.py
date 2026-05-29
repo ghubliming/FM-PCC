@@ -77,6 +77,10 @@ class Aligning_Sim(BaseSim):
                 ctx_pool = train_contexts if self.eval_on_train else test_contexts
                 obs = env.reset(random=False, context=ctx_pool[context])
 
+                # Fix 10: pass full context tuple to agent for logging (box/target pos+angle)
+                if hasattr(agent, 'record_context_info'):
+                    agent.record_context_info(ctx_pool[context], int(context))
+
                 # test contexts
                 # test_context = env.manager.sample()
                 # obs = env.reset(random=False, context=test_context)
@@ -138,7 +142,11 @@ class Aligning_Sim(BaseSim):
                 mean_distance[context, i] = torch.tensor(info['mean_distance'])
 
                 if hasattr(agent, 'update_rollout_info'):
-                    agent.update_rollout_info({**info, 'context': context})
+                    _fbox_pos  = env.scene.get_obj_pos(env.push_box)
+                    _fbox_quat = env.scene.get_obj_quat(env.push_box)
+                    agent.update_rollout_info({**info, 'context': context,
+                                               'final_box_pos':  _fbox_pos,
+                                               'final_box_quat': _fbox_quat})
 
     ################################
     # we use multi-process for the simulation

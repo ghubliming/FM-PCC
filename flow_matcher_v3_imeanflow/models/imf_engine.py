@@ -101,7 +101,7 @@ class iMeanFlowEngine(nn.Module):
         Generate trajectories via forward Euler 0→1 with h-conditioning.
 
         Uses DATA-AT-1 convention (t=0 noise, t=1 data) to match the training
-        objective in iMFDiffusion.p_losses. Each step passes the interval size h
+        objective in iMeanFlowODE.p_losses. Each step passes the interval size h
         to the model so it can adapt its mean-flow prediction accordingly.
 
         Args:

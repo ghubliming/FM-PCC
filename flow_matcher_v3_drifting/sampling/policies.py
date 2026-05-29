@@ -23,13 +23,7 @@ class Policy:
         self.test_ret = test_ret
         self.sample_kwargs = sample_kwargs
 
-        # Inverse dynamics model
-        if self.model.__class__.__name__ == 'GaussianInvDynDiffusion':
-            self.inverse_dynamics = True
-            self.inv_model = self.model.inv_model
-            self.action_dim = 0
-        else:
-            self.inverse_dynamics = False
+        self.inverse_dynamics = False
 
         # Projector
         self.projector = projector
@@ -47,7 +41,7 @@ class Policy:
         test_ret = test_ret if test_ret is not None else self.test_ret
         returns = to_device(test_ret * torch.ones(batch_size, 1), 'cuda')
 
-        # Use GaussianDiffusion model with DDPM
+        # Use FlowMatchingDrifting model
         projector = self.projector if not disable_projection else None
         samples, infos = self.model(conditions, returns=returns, projector=projector, constraints=constraints, horizon=horizon, **self.sample_kwargs)
 

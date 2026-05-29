@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FM-PCC Visual Aligning Explorer</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 360px; background: #f8f8f8; border-right: 2px solid #000; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        h1 { font-size: 15px; border-bottom: 2px solid #000; padding-bottom: 8px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 10px; font-weight: bold; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input[type="text"], input[type="number"] { padding: 8px; border: 1px solid #000; width: 100%; box-sizing: border-box; font-family: inherit; background: #fff; font-size: 12px; }
+        .mode-toggle { display: flex; gap: 6px; }
+        .mode-btn { font-size: 10px; padding: 6px 10px; border: 1px solid #000; cursor: pointer; background: #eee; text-transform: uppercase; font-weight: bold; flex: 1; text-align: center; }
+        .mode-btn.active { background: #000; color: #fff; }
+        .bulk-actions { display: flex; gap: 10px; margin-bottom: 4px; }
+        .bulk-link { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; color: #666; }
+        .checkbox-list { border: 1px solid #000; background: #fff; padding: 8px; max-height: 130px; overflow-y: auto; font-size: 12px; }
+        .checkbox-item { display: flex; align-items: flex-start; margin-bottom: 5px; }
+        .checkbox-item input[type="checkbox"] { margin: 2px 7px 0 0; flex-shrink: 0; width: auto; }
+        .btn-main { padding: 12px; background: #000; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; font-size: 12px; }
+        .btn-download { padding: 10px; background: #007bff; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; font-size: 11px; margin-top: 4px; }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .toolbar { padding: 8px 20px; background: #000; color: #fff; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+        .status { font-weight: bold; color: #0f0; }
+        .content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .scorecard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .score-card { border: 1px solid #000; padding: 10px; background: #fff; text-align: center; }
+        .score-val { font-size: 20px; font-weight: bold; }
+        .score-label { font-size: 9px; color: #666; font-weight: bold; text-transform: uppercase; margin-top: 3px; }
+        #plot-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 480px; text-align: center; overflow-x: auto; }
+        .path-section { border-top: 2px solid #000; padding-top: 16px; }
+        /* Per-rollout table */
+        #rollout-area { display: none; }
+        table.rt { border-collapse: collapse; width: 100%; font-size: 11px; }
+        table.rt th, table.rt td { border: 1px solid #ddd; padding: 7px 10px; text-align: right; }
+        table.rt th { background: #000; color: #fff; text-align: center; font-size: 10px; }
+        table.rt td:first-child { text-align: center; font-weight: bold; }
+        tr.srow { background: #e8f5e9; }
+        tr.frow { background: #ffebee; }
+        .sec-title { font-size: 11px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+        .p-seg-0{color:#c62828;font-weight:bold} .p-seg-1{color:#1565c0;font-weight:bold}
+        .p-seg-2{color:#2e7d32;font-weight:bold} .p-seg-3{color:#ef6c00;font-weight:bold}
+        .p-seg-4{color:#6a1b9a;font-weight:bold} .p-seg-5{color:#00838f;font-weight:bold}
+    </style>
+
+    <py-config>
+        packages = ["pandas", "matplotlib"]
+    </py-config>
+</head>
+<body>
+
+<div class="sidebar">
+    <h1>FM-PCC<br>Visual Aligning Explorer</h1>
+
+    <!-- View mode -->
+    <div class="control-group">
+        <label>View Mode</label>
+        <div class="mode-toggle">
+            <div id="btn-agg"  class="mode-btn active" onclick="setViewMode('aggregate')">AGGREGATE</div>
+            <div id="btn-roll" class="mode-btn"        onclick="setViewMode('rollout')">PER-ROLLOUT</div>
+        </div>
+    </div>
+
+    <!-- Source -->
+    <div class="control-group">
+        <label>1. Experiment Batch Source</label>
+        <div class="mode-toggle">
+            <div id="btn-list" class="mode-btn active" onclick="switchMode('list')">QUICK_LIST</div>
+            <div id="btn-path" class="mode-btn"        onclick="switchMode('path')">CUSTOM_PATH</div>
+        </div>
+        <div id="input-list"><select id="batch-select"></select></div>
+        <div id="input-path" style="display:none">
+            <input type="text" id="custom-path" placeholder="../analysis_results/va_batch_.../va_candidates_dynamic.csv">
+        </div>
+    </div>
+
+    <!-- Aggregate controls (shown in AGGREGATE mode) -->
+    <div id="agg-controls" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="control-group">
+            <label>2. Metric</label>
+            <select id="metric-select" onchange="trigger_plot()"></select>
+        </div>
+        <div class="control-group">
+            <label>3. Variants</label>
+            <div class="bulk-actions">
+                <span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span>
+                <span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span>
+            </div>
+            <div id="variant-list" class="checkbox-list"></div>
+        </div>
+        <div class="control-group">
+            <label>4. Candidates</label>
+            <div class="bulk-actions">
+                <span class="bulk-link" onclick="bulkSelect('cand-check', true)">[ALL]</span>
+                <span class="bulk-link" onclick="bulkSelect('cand-check', false)">[NONE]</span>
+            </div>
+            <div id="candidate-list" class="checkbox-list"></div>
+        </div>
+        <div class="control-group">
+            <label>5. Fig Width</label>
+            <input type="number" id="fig-width" value="10.0" step="1.0" onchange="trigger_plot()">
+        </div>
+        <div class="control-group">
+            <label>6. Zoom</label>
+            <div style="display:flex; gap:5px;">
+                <button class="mode-btn" onclick="adjustZoom(-0.2)" style="flex:1">SMALLER</button>
+                <button class="mode-btn" onclick="adjustZoom(0.2)"  style="flex:1">LARGER</button>
+            </div>
+            <div style="text-align:center; font-size:10px; font-weight:bold; margin-top:4px;">
+                Scale: <span id="zoom-val">1.0x</span>
+                <input type="hidden" id="width-zoom" value="1.0">
+            </div>
+        </div>
+        <button class="mode-btn" style="background:#444; color:#fff;" py-click="trigger_plot">REFRESH_RE_DRAW</button>
+        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">DOWNLOAD_PNG</button>
+    </div>
+
+    <!-- Per-rollout controls (shown in PER-ROLLOUT mode) -->
+    <div id="roll-controls" style="display:none; flex-direction:column; gap:10px;">
+        <div class="control-group">
+            <label>Variant</label>
+            <select id="variant-roll-select" onchange="show_rollout_table()"></select>
+        </div>
+        <div class="control-group">
+            <label>Sort by</label>
+            <select id="sort-select" onchange="show_rollout_table()">
+                <option value="rollout_idx">Rollout Index</option>
+                <option value="mean_dist_m">Distance (asc)</option>
+                <option value="success">Success</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
+</div>
+
+<!-- ================================================================ -->
+<div class="main">
+    <div class="toolbar">
+        <div id="engine-status" class="status">ENGINE_READY</div>
+        <div>FM-PCC VISUAL ALIGNING v1.0</div>
+    </div>
+    <div class="content">
+
+        <!-- AGGREGATE view -->
+        <div id="aggregate-area">
+            <div id="scorecard-area" style="display:none">
+                <div class="sec-title">Performance Scorecard</div>
+                <div class="scorecard-grid" id="scorecard-container"></div>
+            </div>
+            <div id="plot-area"><p style="padding-top:180px; color:#999;">CHOOSE_EXPERIMENT_TO_START</p></div>
+            <div class="path-section" id="path-section" style="display:none">
+                <div class="sec-title">Path Audit Map</div>
+                <div id="path-map-container"></div>
+            </div>
+        </div>
+
+        <!-- PER-ROLLOUT view -->
+        <div id="rollout-area">
+            <div class="sec-title" id="rollout-title">PER-ROLLOUT DETAIL</div>
+            <div id="rollout-table-container">
+                <p style="color:#999;">Load an experiment, then select a variant.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================================================================ -->
+<script type="py">
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+from pyscript import display
+from js import document, console, fetch, window, Uint8Array, File, URL
+from pyodide.ffi import create_proxy
+
+df_agg   = None   # va_candidates_dynamic.csv  (long format)
+df_roll  = None   # per_rollout_detail.csv      (rollout rows)
+current_fig = None
+
+
+# ------------------------------------------------------------------
+async def init_manifest():
+    import re
+    try:
+        resp = await fetch("../analysis_results/")
+        if resp.ok:
+            html = await resp.text()
+            batches = re.findall(r'href="(va_batch_[^/"]+)/?"', html)
+            batches = sorted(set(batches), reverse=True)
+        else:
+            resp2 = await fetch("../analysis_results/results_manifest.json")
+            data  = await resp2.json()
+            batches = data.to_py().get("batches", []) if hasattr(data, 'to_py') else []
+
+        if batches:
+            document.getElementById("batch-select").innerHTML = "".join(
+                [f'<option value="{b}">{b}</option>' for b in batches])
+            document.getElementById("engine-status").innerText = "ENGINE_READY"
+    except Exception as e:
+        console.log(f"[ manifest ] {e}")
+
+
+# ------------------------------------------------------------------
+async def load_data(event=None):
+    global df_agg, df_roll
+    document.getElementById("engine-status").innerText = "FETCHING..."
+
+    mode = window.currentMode
+    if mode == "list":
+        batch = document.getElementById("batch-select").value
+        base  = f"../analysis_results/{batch}"
+    else:
+        raw = document.getElementById("custom-path").value.strip()
+        # Accept either the CSV path or the folder path
+        base = raw.rstrip("/").removesuffix("/va_candidates_dynamic.csv")
+
+    # Load long-format dynamic CSV
+    try:
+        resp = await fetch(f"{base}/va_candidates_dynamic.csv")
+        if not resp.ok:
+            raise Exception(f"HTTP {resp.status}")
+        df_agg = pd.read_csv(io.StringIO(await resp.text()))
+        console.log(f"[ loader ] va_candidates_dynamic.csv: {len(df_agg)} rows")
+    except Exception as e:
+        document.getElementById("engine-status").innerText = "LOAD_ERROR"
+        console.log(f"[ loader ] {e}")
+        return
+
+    # Load per-rollout CSV (optional — only exists for single-candidate runs)
+    df_roll = None
+    try:
+        resp2 = await fetch(f"{base}/per_rollout_detail.csv")
+        if resp2.ok:
+            df_roll = pd.read_csv(io.StringIO(await resp2.text()))
+            console.log(f"[ loader ] per_rollout_detail.csv: {len(df_roll)} rows")
+    except Exception:
+        pass
+
+    # Populate controls
+    populate_filters()
+    populate_rollout_variants()
+    render_path_map()
+
+    document.getElementById("agg-controls").style.display    = "flex"
+    document.getElementById("scorecard-area").style.display  = "block"
+    document.getElementById("path-section").style.display    = "block"
+    document.getElementById("download-btn").style.display    = "block"
+
+    await trigger_plot(None)
+    document.getElementById("engine-status").innerText = "SYNC_COMPLETE"
+
+
+# ------------------------------------------------------------------
+def populate_filters():
+    metrics  = sorted(df_agg['metric'].unique())
+    variants = sorted(df_agg['variant'].unique())
+    cands    = sorted(df_agg['Candidate'].unique())
+
+    document.getElementById("metric-select").innerHTML = "".join(
+        [f'<option value="{m}">{m.upper()}</option>' for m in metrics])
+
+    document.getElementById("variant-list").innerHTML = "".join(
+        [f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"><span>{v}</span></div>'
+         for v in variants])
+
+    document.getElementById("candidate-list").innerHTML = "".join(
+        [f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"><span>CAND_{c}</span></div>'
+         for c in cands])
+
+
+def populate_rollout_variants():
+    if df_roll is None:
+        return
+    vcol = "variant" if "variant" in df_roll.columns else None
+    if vcol is None:
+        return
+    variants = sorted(df_roll[vcol].unique())
+    document.getElementById("variant-roll-select").innerHTML = "".join(
+        [f'<option value="{v}">{v}</option>' for v in variants])
+
+
+# ------------------------------------------------------------------
+async def trigger_plot(event=None):
+    global df_agg, current_fig
+    if df_agg is None:
+        return
+
+    metric        = document.getElementById("metric-select").value
+    checked_vars  = get_checked("var-check")
+    checked_cands = get_checked("cand-check")
+    if not metric or not checked_vars or not checked_cands:
+        return
+
+    mask   = (df_agg['metric'] == metric) & \
+              df_agg['variant'].isin(checked_vars) & \
+              df_agg['Candidate'].isin(checked_cands)
+    subset = df_agg[mask]
+    if subset.empty:
+        return
+
+    pivot_mean = subset.groupby(['Candidate', 'variant'])['mean'].mean().unstack()
+    pivot_std  = subset.groupby(['Candidate', 'variant'])['std'].mean().unstack() \
+                 if 'std' in subset.columns else None
+
+    cols = [v for v in checked_vars if v in pivot_mean.columns]
+    pivot_mean = pivot_mean[cols]
+    if pivot_std is not None:
+        pivot_std = pivot_std[[c for c in cols if c in pivot_std.columns]]
+        if pivot_std.shape != pivot_mean.shape:
+            pivot_std = None
+
+    try:
+        fig_w = float(document.getElementById("fig-width").value)
+    except Exception:
+        fig_w = 10.0
+
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(fig_w, 6))
+    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black',
+                    colormap='tab10', alpha=0.9,
+                    yerr=pivot_std, capsize=4)
+    ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    ax.grid(True, alpha=0.2, axis='y')
+    ax.set_title(f"Visual Aligning: {metric.upper()}", fontsize=12, fontweight='bold')
+    ax.set_ylabel(metric)
+    ax.set_xlabel("Candidate")
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    current_fig = fig
+
+    area = document.getElementById("plot-area")
+    area.innerHTML = ""
+    display(fig, target="plot-area")
+
+    import asyncio
+    await asyncio.sleep(0.1)
+    window.applyZoom()
+
+    update_scorecard(subset, metric)
+
+
+# ------------------------------------------------------------------
+def download_plot(event=None):
+    global current_fig
+    if current_fig is None:
+        return
+    from datetime import datetime
+    now    = datetime.now().strftime("%Y%m%d_%H%M")
+    metric = document.getElementById("metric-select").value
+    name   = f"va_plot_{metric}_{now}"
+
+    buf = io.BytesIO()
+    current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+    buf.seek(0)
+    arr  = Uint8Array.new(buf.read())
+    fobj = File.new([arr], f"{name}.png", {"type": "image/png"})
+    url  = URL.createObjectURL(fobj)
+    lnk  = document.createElement("a")
+    lnk.href = url; lnk.download = f"{name}.png"; lnk.click()
+    URL.revokeObjectURL(url)
+
+
+# ------------------------------------------------------------------
+def show_rollout_table(event=None):
+    global df_roll
+    if df_roll is None:
+        document.getElementById("rollout-table-container").innerHTML = \
+            "<p style='color:#999'>No per-rollout CSV loaded (only available for single-candidate runs).</p>"
+        return
+
+    vcol    = "variant" if "variant" in df_roll.columns else None
+    variant = document.getElementById("variant-roll-select").value
+    sort_by = document.getElementById("sort-select").value
+
+    subset = df_roll[df_roll[vcol] == variant].copy() if vcol else df_roll.copy()
+
+    cm = {
+        "rollout_idx":       next((c for c in ["rollout_idx"] if c in subset.columns), None),
+        "success":           next((c for c in ["success"] if c in subset.columns), None),
+        "mean_dist_m":       next((c for c in ["mean_dist_m"] if c in subset.columns), None),
+        "steps":             next((c for c in ["steps"] if c in subset.columns), None),
+        "phys_err_m":        next((c for c in ["phys_err_m"] if c in subset.columns), None),
+        "context_xy_dist_m": next((c for c in ["context_xy_dist_m"] if c in subset.columns), None),
+        "avg_time_s":        next((c for c in ["avg_time_s"] if c in subset.columns), None),
+    }
+
+    sort_col = cm.get(sort_by) or cm.get("rollout_idx")
+    if sort_col:
+        subset = subset.sort_values(sort_col, ascending=(sort_by != "success"))
+
+    def _c(row, k, fmt=".4f"):
+        col = cm.get(k)
+        if col and col in row.index:
+            try:
+                v = float(row[col])
+                if pd.isna(v): return "—"
+                if k in ("rollout_idx", "steps"): return str(int(v))
+                if k == "success": return "✓" if v >= 0.5 else "✗"
+                return format(v, fmt)
+            except Exception: return str(row[col])
+        return "—"
+
+    rows_html = ""
+    n_suc = 0
+    for _, row in subset.iterrows():
+        suc = float(row[cm["success"]]) if cm["success"] and cm["success"] in row.index else 0
+        cls = "srow" if suc >= 0.5 else "frow"
+        if suc >= 0.5: n_suc += 1
+        rows_html += (f'<tr class="{cls}">'
+            f'<td>{_c(row,"rollout_idx")}</td>'
+            f'<td>{_c(row,"success")}</td>'
+            f'<td>{_c(row,"mean_dist_m")}</td>'
+            f'<td>{_c(row,"steps")}</td>'
+            f'<td>{_c(row,"phys_err_m")}</td>'
+            f'<td>{_c(row,"context_xy_dist_m")}</td>'
+            f'<td>{_c(row,"avg_time_s")}</td>'
+            f'</tr>')
+
+    total = len(subset)
+    html  = (f'<div style="font-size:12px;margin-bottom:8px;font-weight:bold;">'
+             f'Variant: <b>{variant}</b> — {n_suc}/{total} success '
+             f'({100*n_suc/max(total,1):.1f}%)</div>')
+    html += ('<table class="rt"><thead><tr>'
+             '<th>Rollout</th><th>Success</th><th>Dist (m)</th><th>Steps</th>'
+             '<th>PhysErr (m)</th><th>CtxDist (m)</th><th>Time (s)</th>'
+             f'</tr></thead><tbody>{rows_html}</tbody></table>')
+    document.getElementById("rollout-table-container").innerHTML = html
+
+
+# ------------------------------------------------------------------
+def update_scorecard(subset, metric):
+    if subset is None or subset.empty: return
+    best_idx = (subset['mean'].idxmax() if 'success' in metric.lower()
+                else subset['mean'].idxmin())
+    best     = subset.loc[best_idx]
+    cand, var, val = best['Candidate'], best['variant'], best['mean']
+    html = (f'<div class="score-card" style="grid-column:span 4;background:#e8f5e9;'
+            f'border:2px solid #2e7d32;text-align:center;padding:14px;">'
+            f'<div class="score-label" style="color:#2e7d32;font-size:13px;">'
+            f'BEST FOR: {metric.upper()}</div>'
+            f'<div class="score-val" style="margin-top:8px;font-size:15px;">'
+            f'Candidate <b>{cand}</b> · <b>{var}</b><br>'
+            f'<span style="font-size:30px;font-weight:900;">{val:.4f}</span></div></div>')
+    document.getElementById("scorecard-container").innerHTML = html
+
+
+# ------------------------------------------------------------------
+def render_path_map():
+    if df_agg is None: return
+    p_col = 'FullPath' if 'FullPath' in df_agg.columns else 'FolderName'
+    mapping = df_agg[['Candidate', p_col, 'FolderName']].drop_duplicates().sort_values('Candidate')
+    html = '<table style="border-collapse:collapse;width:100%;font-size:11px;"><thead><tr><th style="background:#000;color:#fff;padding:8px;width:80px">ID</th><th style="background:#000;color:#fff;padding:8px">Source Path</th></tr></thead><tbody>'
+    for _, row in mapping.iterrows():
+        segs  = str(row[p_col]).split('/')
+        cpath = "".join([f'<span class="p-seg-{i%6}">{s}</span><span style="color:#999">/</span>'
+                         for i, s in enumerate(segs) if s])
+        html += f'<tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold">CAND_{row["Candidate"]}</td><td style="padding:6px;border:1px solid #ddd"><code>{cpath}</code></td></tr>'
+    document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
+
+
+# ------------------------------------------------------------------
+def get_checked(cls):
+    return [e.value for e in document.getElementsByClassName(cls) if e.checked]
+
+
+document.trigger_plot       = create_proxy(trigger_plot)
+document.show_rollout_table = create_proxy(show_rollout_table)
+
+import asyncio
+asyncio.ensure_future(init_manifest())
+</script>
+
+<!-- ================================================================ -->
+<script>
+    window.currentMode = "list";
+
+    function switchMode(mode) {
+        window.currentMode = mode;
+        document.getElementById("btn-list").classList.toggle("active", mode === "list");
+        document.getElementById("btn-path").classList.toggle("active", mode === "path");
+        document.getElementById("input-list").style.display = mode === "list" ? "block" : "none";
+        document.getElementById("input-path").style.display = mode === "path" ? "block" : "none";
+    }
+
+    function setViewMode(mode) {
+        document.getElementById("btn-agg").classList.toggle("active",  mode === "aggregate");
+        document.getElementById("btn-roll").classList.toggle("active", mode === "rollout");
+        document.getElementById("agg-controls").style.display   = mode === "aggregate" ? "flex"  : "none";
+        document.getElementById("roll-controls").style.display  = mode === "rollout"   ? "flex"  : "none";
+        document.getElementById("aggregate-area").style.display = mode === "aggregate" ? "block" : "none";
+        document.getElementById("rollout-area").style.display   = mode === "rollout"   ? "block" : "none";
+        if (mode === "rollout" && window.document.show_rollout_table) {
+            window.document.show_rollout_table();
+        }
+    }
+
+    function applyZoom() {
+        const val  = parseFloat(document.getElementById("width-zoom").value);
+        const imgs = document.querySelectorAll("#plot-area img");
+        if (imgs.length > 0) {
+            const img = imgs[0];
+            if (!img.dataset.baseWidth) img.dataset.baseWidth = img.naturalWidth || img.width || 800;
+            const bw = parseFloat(img.dataset.baseWidth);
+            if (bw > 0) { img.style.width = (bw * val) + "px"; img.style.height = "auto"; img.style.maxWidth = "none"; }
+        }
+    }
+
+    function adjustZoom(delta) {
+        const el = document.getElementById("width-zoom");
+        let val = parseFloat(el.value) + delta;
+        if (val < 0.1) val = 0.1;
+        el.value = val.toFixed(1);
+        document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
+        applyZoom();
+    }
+
+    async function trigger_plot() {
+        if (window.document.trigger_plot) {
+            try { await window.document.trigger_plot(); } catch(e) { console.error(e); }
+        }
+    }
+
+    function show_rollout_table() {
+        if (window.document.show_rollout_table) window.document.show_rollout_table();
+    }
+
+    function bulkSelect(cls, state) {
+        for (let e of document.getElementsByClassName(cls)) e.checked = state;
+        trigger_plot();
+    }
+
+</script>
+
+</body>
+</html>

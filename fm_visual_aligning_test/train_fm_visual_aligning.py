@@ -159,11 +159,21 @@ for seed in selected_seeds:
             config={**vars(args), 'selected_seeds': selected_seeds, 'seed_source': seed_source},
         )
 
-    # ── 1. Dataset — ParityAligningDataset (9D joint trajectory) ─────────────
-    from fm_visual_aligning.datasets.sequence import ParityAligningDataset
+    # ── 1. Dataset ────────────────────────────────────────────────────────────
+    # Visual (if_vision=True):     ParityAligningDataset  — 9D  [act(3)|des_c_pos(3)|c_pos(3)]
+    # Non-visual (if_vision=False): StateOnlyAligningDataset — 23D [act(3)|obs_20D]
+    _if_vision = getattr(args, 'if_vision', True)
+    if _if_vision:
+        from fm_visual_aligning.datasets.sequence import ParityAligningDataset
+        _DatasetClass = ParityAligningDataset
+        print(f'[ train ] dataset=ParityAligningDataset (visual, 9D trajectory)')
+    else:
+        from fm_visual_aligning.datasets.sequence import StateOnlyAligningDataset
+        _DatasetClass = StateOnlyAligningDataset
+        print(f'[ train ] dataset=StateOnlyAligningDataset (non-visual, 23D trajectory)')
 
     dataset_config = utils.Config(
-        ParityAligningDataset,
+        _DatasetClass,
         savepath=(args.savepath, 'dataset_config.pkl'),
         dataset_path='environments/dataset/data/aligning/train_files.pkl',
         horizon=args.horizon,
@@ -195,17 +205,18 @@ for seed in selected_seeds:
     )
     model = model_config()
 
-    # ── 3. Diffusion engine — VisualGaussianDiffusion ─────────────────────────
-    from fm_visual_aligning.models.visual_gaussian_diffusion import VisualGaussianDiffusion
+    # ── 3. FM engine — VisualFlowMatching ─────────────────────────────────────
+    from fm_visual_aligning.models.visual_gaussian_diffusion import VisualFlowMatching
 
     _n_diff_steps = getattr(args, 'n_diffusion_steps', 100)
     print(f'[ train ] n_timesteps (legacy buffer size) = {_n_diff_steps}  '
           f'(FM uses continuous time; this value does not affect training dynamics)')
+    _obs_dim = 6 if _if_vision else 20   # UF-17: non-visual uses 20D obs in trajectory
     diffusion_config = utils.Config(
-        VisualGaussianDiffusion,
+        VisualFlowMatching,
         savepath=(args.savepath, 'diffusion_config.pkl'),
         horizon=args.horizon,
-        observation_dim=6,         # 6D obs: [des_c_pos(3), c_pos(3)]
+        observation_dim=_obs_dim,   # 6D visual / 20D non-visual
         action_dim=args.action_dim, # 3D act: [dx, dy, dz]
         goal_dim=0,
         n_timesteps=_n_diff_steps,
