@@ -144,9 +144,12 @@ def replay_and_capture(env, des_c_pos, resolution):
 
         env.step(cmd_7d)
 
-        # Capture bp-cam at current sim state
-        frame = env.bp_cam.get_image(width=resolution, height=resolution)
-        # get_image already applies vertical_flip; returns BGR uint8 (H, W, 3)
+        # Capture bp-cam at current sim state.
+        # depth=False is REQUIRED — default depth=True returns (rgb, depth) tuple.
+        # get_image returns RGB uint8 (H, W, 3); convert to BGR so cv2.imwrite
+        # stores it correctly (the visual aligning loader does BGR→RGB on read).
+        frame = env.bp_cam.get_image(width=resolution, height=resolution, depth=False)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         frames.append(frame.astype(np.uint8))
 
     return frames

@@ -53,12 +53,37 @@ LOG_DIR="Slurm_Codes/logs/$DATE"
 mkdir -p "$LOG_DIR"
 
 # ─── Environment ─────────────────────────────────────────────────────────────
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+# NOTE: SLURM copies the submitted script to a spool dir (e.g. /var/lib/slurmd/...),
+# so ${BASH_SOURCE[0]} does NOT point at the repo. Use $SLURM_SUBMIT_DIR (the dir
+# from which sbatch was invoked) and locate the repo root from there.
+MARKER="collect_visual_avoiding_data"
+if [ -n "$SLURM_SUBMIT_DIR" ]; then
+    REPO="$SLURM_SUBMIT_DIR"
+    # Walk upward until we find the marker dir (or hit /)
+    while [ "$REPO" != "/" ] && [ ! -d "$REPO/$MARKER" ]; do
+        REPO="$(dirname "$REPO")"
+    done
+else
+    REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+fi
+
+if [ ! -d "$REPO/$MARKER" ]; then
+    echo "[ sbatch ] ERROR: could not locate FM-PCC repo root."
+    echo "  SLURM_SUBMIT_DIR=$SLURM_SUBMIT_DIR"
+    echo "  Resolved REPO=$REPO  (missing marker dir '$MARKER')"
+    echo "  Submit from the repo root, e.g.:"
+    echo "    cd /path/to/FM-PCC && sbatch Slurm_Codes/sbatch/visual_avoiding/collect_visual_avoiding.sh"
+    exit 1
+fi
+
 cd "$REPO"
 echo "[ sbatch ] Repo root: $REPO"
 
-# EGL offscreen rendering — must be set before MuJoCo is imported
+# EGL offscreen rendering — must be set before MuJoCo is imported.
+# MuJoCo's egl backend also gates on PYOPENGL_PLATFORM: it must be unset or 'egl'.
+# Some cluster shells preset it to 'glx'/'osmesa', which trips ImportError, so pin it.
 export MUJOCO_GL=egl
+export PYOPENGL_PLATFORM=egl
 export EGL_DEVICE_ID=0
 
 source activate FMPCC 2>/dev/null || conda activate FMPCC
