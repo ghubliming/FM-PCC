@@ -455,3 +455,789 @@ by a warmup schedule) to the FM regression objective. At inference time the grad
 the loss can be subtracted from the velocity field step-by-step
 (`velocity -= λ · ∇_x drift_loss`), steering the ODE trajectory toward expert-like
 regions before the SLSQP projector delivers the final constraint snap.
+
+---
+
+## 15. ODE Steps, Drift-at-Inference, and PCC in FM-D
+
+*Companion analysis to iMF §14. The drifting case is more complex and the answers
+differ substantially from iMF.*
+
+---
+
+### 15.1 Core Questions
+
+1. Is FM-D natively one-shot like the original drifting paper?
+2. Since drift is "all in training", can we drop projection in eval?
+3. At ODE = 1, is PCC useless (trajectory already near-feasible from drift)?
+4. What is the right ODE step count for FM-D?
+
+---
+
+### 15.2 Architecture Divergence: Original Drifting vs Our FM-D Port
+
+The original drifting paper (`DitGen`, JAX) is **strictly one-shot**:
+
+```
+noise → [DiT single forward pass] → trajectory
+```
+
+No ODE. No timestep `t`. No loop. The drift loss is a force-field kernel matching
+algorithm applied **only during training** to regularize the DiT weights. At inference
+there is no drift gradient — just a single transformer forward. PCC projection could be
+added as a post-processing step, but the model has no ODE structure to project into.
+
+Our FM-D port (`FlowMatchingDrifting`) is **architecturally completely different**:
+
+```
+noise → [FM ODE with flow_steps steps] → trajectory
+```
+
+It is standard FM (forward Euler, Beta prior, same as FMv3ODE) with drift as a
+**training-time regularizer** only. The `DriftAugmentedVelocityField` / `DriftODESolver`
+path (for inference-time drift gradient subtraction) is implemented but **not wired into
+`p_sample_loop`** — `use_drift_augmentation=True` in config is stored as an attribute
+but never acted upon inside the main sampling loop. In practice:
+
+| Component | Original Drifting | FM-D Port (Gen3v3) |
+|---|---|---|
+| Generator | Single-pass DiT (no ODE) | Standard FM ODE |
+| Drift at training | Force-field kernel matching | Embedding NN loss (approximation) |
+| Drift at inference | None (training-only) | **Also none** (unwired in `p_sample_loop`) |
+| Model weights | Biased toward expert distribution | Same |
+| PCC hook | Not applicable (no ODE) | End-of-ODE SLSQP snap |
+
+**The critical implication**: FM-D at inference is mechanistically **identical to standard
+FMv3ODE** plus biased model weights from drift training. There is no runtime drift
+gradient subtraction happening. The drift only shapes the learned velocity field during
+training; at inference you are running a plain FM ODE.
+
+---
+
+### 15.3 Can Projection Be Dropped in Eval?
+
+**Short answer: No — for hard constraints. Partial credit: drift reduces how much PCC
+needs to correct.**
+
+The argument "drift is all in training, so projection isn't needed in eval" conflates two
+different things:
+
+| | Drift (training) | PCC Projection (eval) |
+|---|---|---|
+| **What it enforces** | Soft proximity to expert distribution | Hard geometric constraints (bounds, halfspace, dynamics) |
+| **Guarantee type** | Probabilistic — pushes toward expert regions | Deterministic — SLSQP guarantee at snap |
+| **Does expert data satisfy constraints?** | Not guaranteed | N/A — PCC enforces constraints regardless |
+| **What happens without it** | Distribution may drift out-of-expert | Constraints may be violated |
+
+Drift pushes the FM model to generate trajectories that *look like* expert demonstrations.
+If experts were constrained-feasible, drift biases toward feasible trajectories. But it is
+a *soft prior*, not a *hard projection*. The SLSQP projector gives a deterministic
+guarantee that the workspace bounds, halfspace, and dynamics constraints are satisfied —
+something a learned signal cannot provide.
+
+**The synergy**: Drift reduces the magnitude of PCC correction (trajectories are already
+near-feasible before snapping), improving SLSQP convergence quality. PCC provides the hard
+guarantee drift cannot. They are complementary, not redundant.
+
+---
+
+### 15.4 ODE = 1 Analysis for FM-D
+
+With `flow_steps_v3 = 1`:
+
+```
+dt = 1.0,  t = 0.0
+
+x_noise → [FM_velocity(x=noise, t=0.0)] → x_data_raw
+         → [PCC snap — fires because loop_idx == flow_steps-1] → x_constrained
+```
+
+**Key differences from iMF ODE = 1**:
+
+| | iMF ODE = 1 | FM-D ODE = 1 |
+|---|---|---|
+| Architecture designed for 1-shot? | **Yes** — h-conditioning, mean-flow training | **No** — standard FM, no h-conditioning |
+| Quality at ODE = 1 | Excellent (primary design point, 1.72 FID) | Poor (FM requires multiple Euler steps) |
+| Why it can skip steps | Learns chord velocity `u = (x_data - x_r)/h` | Learns instantaneous velocity only |
+| Drift help at t = 0? | N/A (iMF has no drift) | Marginal — weights biased, but x=noise gives weak signal |
+| PCC correction work | Small — trajectory already near-feasible | Heavy — FM ODE=1 output is far from data manifold |
+
+At ODE=1, the FM velocity is evaluated at `t=0` on **pure Gaussian noise**. The drift
+bias in the model weights provides some benefit (the velocity steers toward the expert
+distribution), but the fundamental FM accuracy issue remains: a single Euler step from
+pure noise cannot traverse the full data manifold accurately without the iterative
+correction that multi-step ODE provides.
+
+**Is PCC useless at ODE=1?** The opposite — PCC is *more necessary* at ODE=1 because
+the raw trajectory quality is worse. PCC does heavy SLSQP correction on a poorly-formed
+trajectory. This is the reverse of iMF, where ODE=1 produces a high-quality trajectory
+needing only minor PCC adjustment.
+
+---
+
+### 15.5 ODE = 2: Marginal Improvement
+
+```
+Step 0: t=0.0 → x = x + FM_vel(x_noise, t=0.0) * 0.5    [trajectory at ~midpoint]
+Step 1: t=0.5 → x = x + FM_vel(x_mid,   t=0.5) * 0.5    [trajectory reaches data region]
+               → PCC snap (snapping_start_idx=1, threshold=0.5)
+```
+
+Better than ODE=1: the mid-point correction at step 1 significantly improves trajectory
+quality. Drift-biased weights help more at step 1 (x is now near the data manifold, so
+the drift gradient would be more informative if active). Unlike iMF where the paper
+proves ODE=2 improves FID 1.72→1.54, FM-D has no equivalent guarantee — it is just
+better-behaved ODE integration.
+
+---
+
+### 15.6 ODE = 10 (Default): Drift-PCC Synergy in Action
+
+With `flow_steps_v3 = 10`, by step 5 the trajectory is already near-feasible (drift-biased
+FM has been integrating toward expert-like trajectories). The PCC projector snaps a
+trajectory that is *almost* constraint-satisfying → smaller SLSQP displacements, better
+convergence.
+
+**Interaction table** (threshold = 0.5):
+
+| ODE Steps | PCC QP calls | Drift benefit | FM quality | Recommendation |
+|---|---|---|---|---|
+| 1 | 1 (always) | Marginal (pure noise) | Poor | Avoid — PCC overloaded |
+| 2 | 1 (step 1) | Modest (mid-trajectory) | Acceptable | Compute-constrained fallback |
+| 5 | 2–3 | Good (near data) | Good | Reasonable |
+| **10** | 5 | **Best (drift accumulates)** | **Best** | **Default — use this** |
+
+---
+
+### 15.7 Why FM-D Cannot Match iMF One-Shot Quality
+
+iMF's one-shot capability comes from **architectural design**:
+- `h_mlp` in the UNet: model conditions on step size → learns mean-flow shortcut
+- Mean-flow training target `(x_data - x_r)/h`: explicitly teaches the chord velocity
+
+FM-D has **neither**:
+- No `h_mlp` → model cannot adapt to step size → ODE=1 means a bad single Euler step
+- Training target is standard FM `v = x_data - x_noise` → no mean-flow shortcuts
+
+The drift bias makes the FM velocity field **point more toward the expert distribution**,
+which helps quality. But it does not make FM capable of one-shot generation — the FM ODE
+integration needs multiple steps for accurate trajectory reconstruction regardless.
+
+**Key asymmetry vs iMF**:
+- iMF: ODE steps ↓ → still good quality (by design)
+- FM-D: ODE steps ↓ → quality degrades (standard FM limitation)
+
+---
+
+### 15.8 The "Fake FM-D" Summary
+
+Our Gen3v3 port is "fake" FM-D in two senses:
+
+1. **Drift algorithm mismatch**: Original drifting uses force-field kernel matching
+   (JAX, multi-scale `R_list`, symmetric softmax affinity). Our port uses embedding NN
+   loss (MLP encoder + L2 nearest-neighbour). Different algorithm, different math
+   (D-1/D-2 in CHANGELOG are unfixed).
+
+2. **Inference structure mismatch**: Original drifting is one-shot DiT, no ODE. Our port
+   is standard FM ODE, with drift gradient at inference unwired from `p_sample_loop`.
+   What we actually run at inference is **FMv3ODE with drift-biased weights** — not
+   drifting-augmented ODE integration.
+
+Given this, the practical recommendation for Gen3v3:
+
+| Config | What you get | When to use |
+|---|---|---|
+| `flow_steps=10, projection=on` | Drift-biased FM ODE + PCC snap (5 QP calls) | **Default — best quality** |
+| `flow_steps=2, projection=on` | Minimal ODE + PCC (1 QP call) | Compute-constrained fallback |
+| `flow_steps=1, projection=on` | Poor FM + heavy PCC correction | Not recommended |
+| `flow_steps=10, projection=off` | Drift-biased FM ODE, no hard constraints | Ablation only |
+| `flow_steps=1, projection=off` | Poor quality, no constraints | Avoid |
+
+The only scenario where projection could be considered redundant is if the expert
+demonstrations used to fill the drift memory bank were all constraint-satisfying AND the
+drift embedding accurately captures the constraint-feasible submanifold — a strong
+assumption that cannot be guaranteed without verification.
+
+---
+
+## 16. Is Strict Mathematical SLSQP Projection Possible for One-Shot / Original Drifting?
+
+*Direct answer to: "is there strict math possible for drifting projection?"*
+
+---
+
+### 16.1 Short Answer
+
+**Yes — post-processing SLSQP projection is always mathematically valid regardless of
+how the trajectory was generated.** The projector is trajectory-agnostic: it takes any
+`x ∈ ℝ^{H×d}` and solves a constrained optimisation to find the nearest feasible point.
+It does not care whether `x` came from a DiT one-shot, an FM ODE, or a random sample.
+
+The constraint is on the **trajectory space** (not the generation mechanism), so
+projection is always applicable. The question is not *can* you project, but *how much
+work* projection has to do and whether it can converge given where the trajectory landed.
+
+---
+
+### 16.2 Three Distinct Projection Modes for Drifting
+
+#### Mode A — Post-Processing (original DiT one-shot)
+
+```
+z ~ N(0,I)  →  [DiT one-shot forward]  →  x_raw  →  [SLSQP]  →  x_constrained
+```
+
+- **Mathematically identical** to FM-D at ODE=1 with `threshold=1.0`
+- One model call, one SLSQP solve
+- The projector receives the raw one-shot output and finds the nearest feasible point
+- No ODE to inject into — projection can only happen here
+- **Valid. Fully supported by existing Projector code** (it's just called once at the end)
+
+#### Mode B — In-Loop Projection (FM ODE, `flow_steps > 1`)
+
+```
+x_t → [FM step] → x_{t+dt} → [SLSQP snap] → x_{t+dt}^* → [FM step] → ...
+```
+
+- Projection fires inside the ODE loop at steps near `t=1` (threshold-controlled)
+- Each projected intermediate trajectory **anchors the subsequent ODE step** to the
+  feasible region — the next velocity evaluation starts from a constraint-satisfying point
+- This is strictly stronger than post-processing because the ODE *continues* from the
+  projected point, not from the raw point
+- **Only possible with ODE-based generation (flow_steps ≥ 2)**
+- The original drifting DiT cannot do this — there is no ODE loop
+
+#### Mode C — Noise-Space Projection (gradient search through DiT)
+
+```
+z ~ N(0,I)  →  [DiT]  →  x  →  compute constraint violation
+                                 →  ∇_z constraint_loss(DiT(z))
+                                 →  z' = z - α∇_z  →  [DiT]  →  x'  →  repeat
+```
+
+- Backpropagates constraint gradients through the entire DiT to find noise `z*` such
+  that `DiT(z*)` is constraint-satisfying
+- **Theoretically possible** but practically very expensive: requires full DiT backward
+  pass per iteration, and convergence is not guaranteed (DiT is highly non-linear)
+- Not implemented in FM-PCC and not recommended — SLSQP on the trajectory space (Mode A)
+  is far cheaper and more reliable
+- **Not used anywhere in our codebase**
+
+---
+
+### 16.3 Why Mode B (In-Loop) Is Strictly Better Than Mode A (Post-Processing)
+
+This is the mathematical key difference between ODE-based generation and one-shot:
+
+**Mode A (one-shot + post-processing)**:
+
+```
+x_raw  →  SLSQP  →  x*
+```
+
+The SLSQP finds the closest feasible `x*` to `x_raw`. If `x_raw` is far from the
+feasible manifold (bad trajectory quality), the displacement `‖x* - x_raw‖` is large.
+Large displacements:
+- Make SLSQP harder to converge (more iterations, possible local minima)
+- Produce trajectories that satisfy constraints but may be unnatural (far from data)
+- The trajectory is *feasible* but not necessarily *good*
+
+**Mode B (in-loop at step k)**:
+
+```
+x_raw[k]  →  SLSQP  →  x*[k]  →  [FM velocity at x*[k]]  →  x_raw[k+1]
+```
+
+Each SLSQP snap at step `k` serves as the **starting point for the next ODE step**.
+The FM velocity field at the projected (feasible) point `x*[k]` steers the trajectory
+toward data *while respecting that it is starting from a feasible configuration*. This
+means:
+- SLSQP displacements are smaller at each step (incremental correction)
+- The ODE integrator actively works *from within* the feasible region
+- The final trajectory is both feasible AND closer to the data manifold
+
+**Mathematical analogy**:
+- Mode A = project a completed trajectory (like correcting a path after it's drawn)
+- Mode B = draw the path step by step, correcting at each step (like a GPS rerouting continuously)
+
+Mode B cannot exist without an ODE. This is the fundamental reason why FM/DDPM-based
+generation is strictly more compatible with PCC than one-shot generation.
+
+---
+
+### 16.4 Drift + Post-Processing (Mode A): When Does It Work?
+
+For the original drifting DiT (or FM-D at ODE=1), the quality of post-processing
+projection depends on how close the raw output is to the feasible manifold:
+
+**Best case** — experts were constraint-satisfying AND drift training worked well:
+```
+x_raw ≈ x_expert ≈ x_feasible   →   small SLSQP displacement   →   good projection
+```
+
+**Worst case** — experts violated constraints OR drift training failed:
+```
+x_raw far from feasibility   →   large SLSQP displacement   →   poor projection quality
+                                                               (may not converge)
+```
+
+The drift training mechanism provides a probabilistic guarantee that `x_raw` is
+near the expert distribution. If the expert distribution overlaps significantly with
+the constraint-feasible set, drift implicitly pre-conditions the trajectory toward
+feasibility before SLSQP acts. This is the one concrete scenario where Mode A (one-shot
++ projection) is competitive with Mode B (in-loop): **when drift has already done much
+of the feasibility work**.
+
+| Expert data | Drift effectiveness | Mode A result |
+|---|---|---|
+| All constraint-satisfying | High (experts = feasible) | SLSQP correction ≈ 0; projection trivial |
+| Mixed (some violate) | Medium | Moderate SLSQP correction |
+| All violating constraints | Low or counterproductive | Large SLSQP displacement; may fail to converge |
+
+---
+
+### 16.5 Practical Comparison: One-Shot + Projection vs ODE=10 + Projection
+
+| Property | One-shot (ODE=1) + SLSQP | ODE=10 + SLSQP (threshold=0.5) |
+|---|---|---|
+| Model calls | 1 | 10 |
+| QP solves | 1 | 5 |
+| Total compute | Cheapest | 15× more |
+| Trajectory quality before snap | Low (FM ODE=1 poor quality) | High (10-step ODE) |
+| SLSQP displacement needed | Large | Small |
+| Hard constraint guarantee | Yes | Yes |
+| Trajectory naturalness after snap | Lower (large displacement distorts) | Higher (small displacement) |
+| Applicable to original DiT drifting? | **Yes** | No (needs ODE) |
+| Applicable to FM-D (ODE-based)? | Yes | **Yes — recommended** |
+
+**Verdict**: One-shot + projection is mathematically valid and computationally cheapest,
+but the trajectory naturalness after projection depends entirely on how good the
+one-shot output is. For original drifting (with strong drift training), it can be
+competitive. For FM-D's port (standard FM, weaker one-shot quality), ODE=10 with
+in-loop projection remains superior.
+
+---
+
+### 16.6 Summary
+
+| Question | Answer |
+|---|---|
+| Is SLSQP projection mathematically possible on one-shot output? | **Yes** — trajectory-agnostic, always valid |
+| Is in-loop projection (Mode B) possible for original drifting DiT? | **No** — no ODE loop to inject into |
+| Is Mode B strictly better than Mode A mathematically? | **Yes** — in-loop anchors ODE to feasible region incrementally |
+| Can noise-space projection (Mode C) work? | Theoretically yes, practically impractical |
+| When is one-shot + projection competitive? | When drift training ensures output is near-feasible |
+| Recommended config for FM-D port? | ODE=10, in-loop projection (Mode B) |
+
+---
+
+## 17. Theoretical Evaluation of FM-D Philosophy
+
+*A pure theoretical assessment — not how it works mechanically, but what it is
+philosophically and whether the theory behind it is sound.*
+
+---
+
+### 17.1 What FM-D Is Philosophically Trying to Do
+
+The original drifting paper's core philosophy is elegant:
+
+> **Shape the learned representation so that the generator is naturally attracted to the
+> expert distribution — without changing the generator architecture or inference procedure.**
+
+In other words: rather than correcting bad samples at inference (what PCC does), drift
+tries to make the model *incapable of generating* non-expert-like samples in the first
+place. The drift loss is a regularizer on the training objective that adds geometric
+structure to what the model learns. At inference nothing changes — the model simply
+generates from its learned (biased) distribution.
+
+This is philosophically distinct from PCC:
+
+| Approach | Philosophy | When it acts | Guarantee |
+|---|---|---|---|
+| PCC | Correct bad samples after generation | Inference | Hard — SLSQP convergence |
+| Drift (original) | Prevent bad samples from being generated | Training | Soft — distributional alignment |
+| FM-D port | Both, but drift is training-only in practice | Training (+ optionally inference) | Soft + Hard |
+
+The philosophy is sound. The question is whether the mathematical machinery used to
+implement it actually achieves the stated goal.
+
+---
+
+### 17.2 Theoretical Problem 1: Perturbing the FM Velocity Field
+
+Standard FM theory (Lipman et al., 2022; Albergo & Vanden-Eijnden, 2022) guarantees
+that minimising the flow matching objective
+
+```
+L_FM = E_{t, x_0, x_1} [ ‖ v_θ(x_t, t) − (x_1 − x_0) ‖² ]
+```
+
+recovers the optimal transport velocity field, and that ODE integration under `v_θ`
+transports the source distribution `p_0 = N(0,I)` to the target data distribution
+`p_data`. This guarantee rests on the loss having a **unique minimum** at the true
+conditional velocity.
+
+Adding the drift regularizer gives:
+
+```
+L_total = L_FM + λ · L_drift
+```
+
+The new minimum `v_θ*` is **no longer the true conditional FM velocity**. It is a
+compromise between:
+- Fitting the exact OT velocity (FM term)
+- Biasing the velocity toward the expert embedding neighbourhood (drift term)
+
+**There is no formal theorem** characterising what distribution is learned under this
+perturbed objective. The FM convergence guarantee is broken the moment `λ > 0`. In
+practice the learned distribution is *approximately* `p_data` for small `λ`, but "small"
+is undefined without empirical calibration.
+
+**Verdict**: FM-D does not inherit FM's theoretical guarantees. The learned velocity field
+is a regularised approximation of the true OT velocity, with unknown bias.
+
+---
+
+### 17.3 Theoretical Problem 2: The Embedding NN Proxy
+
+The drift loss in our port is:
+
+```
+L_drift = -log( max_j softmax(-‖ encoder(x) − encoder(expert_j) ‖² / τ) )
+```
+
+This is a nearest-neighbour proxy in a **learned 128D embedding space**. Several issues:
+
+**Confounded training signal**: The encoder is co-trained with the FM model. Its
+embedding space adapts to make `L_drift` easier to minimise — not necessarily to capture
+the true geometric structure of the expert distribution. The encoder may collapse
+(mapping everything to a small region) or overfit to the training experts.
+
+**Temperature collapse**: With `τ = 0.1`, the softmax is nearly argmax. The gradient of
+`L_drift` is almost entirely determined by the single nearest expert. This means:
+- The drift loss does not distribute signal uniformly across the expert distribution
+- Small clusters of frequently-seen experts dominate the gradient signal
+- Rare but constraint-satisfying experts are effectively ignored
+
+**Not the expert distribution**: `L_drift` measures proximity to specific stored
+embeddings, not proximity to the *distribution* `p_data`. Two trajectories at the same
+distance from an expert embedding will receive the same gradient even if one is physically
+implausible and the other is highly expert-like. The loss has no notion of the data
+manifold's intrinsic geometry.
+
+**Original force-field contrast**: The original drifting uses non-parametric kernel
+matching (`R_list` multi-scale, symmetric softmax affinity). This does not suffer from
+encoder confounding and measures distributional proximity more faithfully. Our port's
+embedding NN loss is a significantly weaker proxy.
+
+---
+
+### 17.4 Theoretical Problem 3: "Looking Like Experts" ≠ "Constraint-Satisfying"
+
+The drift regulariser pushes trajectories toward the expert distribution. But:
+
+```
+Expert distribution P_experts ⊄ Constraint-feasible set C  (in general)
+```
+
+Unless every demonstration in the training set was recorded with the robot operating
+inside all constraints (bounds, halfspace, dynamics), the expert distribution will
+partially overlap with the infeasible region. Drift training toward this distribution
+therefore simultaneously pushes *toward* feasibility (for the constraint-satisfying
+fraction of experts) *and toward* infeasibility (for the constraint-violating fraction).
+
+The drift regulariser has no mechanism to distinguish between these two subsets of the
+expert distribution. It is, in principle, learning the wrong target if experts are
+unconstrained demonstrations.
+
+**Implication**: PCC is not merely a "correction" for FM-D — it is the only component
+that provides constraint information at all. The drift loss is blind to constraints by
+design.
+
+---
+
+### 17.5 What the FM-D Port Actually Approximates (Honest Theory)
+
+Stripping away the philosophical ambition, the FM-D port as implemented is:
+
+> **A regularised FM model, where the regulariser biases the learned velocity field
+> toward a learned nearest-neighbour proxy of the expert distribution in a 128D MLP
+> embedding space, with the regulariser strength decaying from 0 to λ=0.1 over 1000
+> training steps.**
+
+The theoretical behaviour follows two regimes:
+
+**Regime 1 — Drift training converges** (encoder captures expert geometry):
+
+```
+v_θ ≈ v_{OT} + small perturbation toward expert-distribution attractor
+→ generated trajectories are near p_data AND near p_experts
+→ PCC correction is small
+→ combined quality: good
+```
+
+**Regime 2 — Drift training fails** (encoder collapses, `L_drift` becomes trivial):
+
+```
+v_θ ≈ v_{OT}   (drift term adds noise but no signal)
+→ generated trajectories ≈ pure FM trajectories
+→ FM-D reduces to FMv3ODE + PCC
+→ combined quality: same as FMv3ODE
+```
+
+In Regime 2, FM-D is a strictly worse FMv3ODE (same quality, extra training overhead).
+There is no regime where FM-D is theoretically *worse* than FMv3ODE — the worst case
+is equivalence. The drift regulariser is a free bet: upside if it works, no downside
+if it fails.
+
+---
+
+### 17.6 The Right Way to Think About FM-D + PCC Together
+
+Given the theoretical murkiness of FM-D alone, the combined FM-D + PCC pipeline has a
+cleaner interpretation:
+
+```
+FM (trained) → approximately samples from p_data
+Drift (training regulariser) → approximately samples from p_data ∩ neighbourhood(p_experts)
+PCC (inference projection) → exactly projects onto constraint manifold C
+```
+
+The full pipeline approximates sampling from:
+
+```
+p_data ∩ neighbourhood(p_experts) ∩ C
+```
+
+Each component handles a different property:
+- FM: trajectory realism (looks like a plausible robot motion)
+- Drift: expert alignment (looks like demonstrations)
+- PCC: constraint satisfaction (geometrically feasible)
+
+This decomposition is **philosophically sound** even if the individual FM-D theoretical
+guarantees are weak. PCC is the hard-constraint enforcer that compensates for drift's
+inability to guarantee feasibility.
+
+The practical question — does drift training actually add value over pure FMv3ODE + PCC?
+— is an empirical one that requires running both and comparing constraint satisfaction
+rates and trajectory quality.
+
+---
+
+### 17.7 Final Verdict: FM-D Philosophy vs Practice
+
+| Aspect | Philosophy | Theory | Practice |
+|---|---|---|---|
+| **Core idea** | Train model to "be" near experts, not just "look" near them | Sound intuition | Depends on drift quality |
+| **FM loss perturbation** | Small regularisation | Breaks FM convergence guarantee | Minor in practice (λ=0.1 is small) |
+| **Embedding NN proxy** | Distributional alignment | Weak proxy — confounded, temperature-collapsed | Unknown — no ablation |
+| **Expert ≠ feasible** | Ignored | Fundamental gap | PCC compensates |
+| **Original vs port** | Identical intent | Algorithmically divergent (D-1, D-2) | Our port ≈ FMv3ODE + biased weights |
+| **Combined with PCC** | Principled decomposition | Each component covers different property | Theoretically best option available |
+| **Worst case** | No harm | Reduces to FMv3ODE | Free bet — take it |
+| **Best case** | Better data-aligned trajectories with easier PCC | Unproven | Empirically testable |
+
+**One-sentence verdict**: FM-D is a philosophically motivated but theoretically under-
+specified regulariser that, in the best case, reduces the PCC correction burden by
+pre-aligning the FM trajectory distribution toward experts, and in the worst case
+degrades silently to FMv3ODE — making it a low-risk, potentially high-value addition
+to the FM-PCC stack, contingent on empirical validation of drift training convergence.
+
+---
+
+## 18. Can a Powerful Enough One-Shot DGM Replicate In-Loop Projection Behaviour?
+
+*Addressing the core theoretical question: original drifting is a pure one-shot DGM.
+The diffuser in-loop projection (Mode B) is structurally impossible for it. But can
+a sufficiently powerful model approximate the same **outcome** without the mechanism?*
+
+---
+
+### 18.1 The Distinction: Mechanism vs Outcome
+
+Mode B in-loop projection is **mechanistically impossible** for a one-shot model:
+
+```
+One-shot:  z → [Model] → x        (one forward pass, no ODE to inject into)
+Mode B:    z → [Step 1] → [Snap] → [Step 2] → [Snap] → ... → x*
+```
+
+There is no loop, therefore there is no hook. This is not an engineering limitation —
+it is a structural one. A one-shot model literally cannot execute Mode B.
+
+**But Mode B's goal is an outcome, not a mechanism**:
+
+```
+Mode B outcome:   x* ∈ p_data ∩ C    (samples lie in data distribution AND feasible set)
+```
+
+The question is: can a one-shot model learn to produce samples directly from
+`p_data ∩ C` without ever running a projector?
+
+**Yes — in the limit of infinite capacity and perfect training data.**
+
+If the model is trained exclusively on demonstrations that lie in `p_data ∩ C`, and is
+powerful enough to learn the exact data distribution, it will generate samples from
+`p_data ∩ C` by construction. No projector needed. Mode B outcome, achieved by Mode A
+mechanism. This is what the original drifting paper implicitly aspires to.
+
+---
+
+### 18.2 What "Really Really Powerful" Means Formally
+
+For a one-shot DGM to replicate in-loop projection behaviour, it must learn:
+
+**1. The data distribution `p_data`** — standard DGM task. Tractable with enough capacity.
+
+**2. The constraint manifold boundary ∂C** — this is the hard part.
+
+The constraint manifold C is defined by hard geometric inequalities:
+
+```
+C = { x ∈ ℝ^{H×d} : lb ≤ c_pos[t] ≤ ub,  c_pos[t+1] = c_pos[t] + act[t],  ... }
+```
+
+C has **sharp boundaries** (step functions in probability space — density is zero
+outside, non-zero inside). For the model to assign zero probability outside C, it must
+learn this sharp boundary from training data alone.
+
+This requires:
+- **Dense sampling near ∂C**: training data must explore trajectories that approach but
+  respect the constraint boundary. If experts never go near the walls, the model has
+  no signal about where the boundary is.
+- **Sharp density representation**: the model must represent a distribution with
+  discontinuous support boundaries. Standard neural networks with smooth activations
+  approximate this only asymptotically — the boundary is always blurred.
+- **Generalization of constraint geometry across contexts**: the same constraint (e.g.
+  workspace bound `x ≤ 0.70m`) must be respected for all box positions and targets,
+  not just the ones seen during training.
+
+Meeting all three simultaneously requires a model that is *not just large* but that
+has somehow internalized the algebraic structure of the constraint set — which is
+a geometric fact, not a statistical one.
+
+---
+
+### 18.3 The Fundamental Asymmetry
+
+The in-loop projection decomposes the problem into two parts with very different
+complexities:
+
+```
+FM (statistical):   learn v_θ ≈ v_{OT}   → model the data distribution
+SLSQP (geometric):  solve a QP           → enforce constraints analytically
+```
+
+The SLSQP solver has **perfect knowledge of C** (it is given the constraint
+equations explicitly). It does not need to learn the boundary from data. It solves
+a deterministic constrained optimisation problem that always converges (under mild
+conditions) to the correct projected point.
+
+For a one-shot model to replicate this, it must learn the geometric structure of C
+from data — essentially doing statistical approximation of what the SLSQP does
+analytically. This is:
+
+```
+Diffuser + projector:   geometric constraints handled by exact QP solver
+                        → zero error on constraint satisfaction (up to SLSQP tolerance)
+
+One-shot DGM:           geometric constraints learned from data distribution
+                        → nonzero error always, decreasing with model capacity and data
+```
+
+**There is no model capacity that makes statistical learning of geometric constraints
+as reliable as analytical enforcement.** The SLSQP solves a convex QP to optimality;
+no DGM can match this with certainty.
+
+---
+
+### 18.4 The "Really Really Powerful" Requirement — Quantified
+
+How powerful does the one-shot model need to be?
+
+Consider a simple workspace bound: `c_pos_x ∈ [0.30, 0.70]` over `H=8` timesteps.
+The constraint boundary in trajectory space is a set of 16 hyperplanes (8 lower + 8
+upper bounds). The model must learn to assign zero probability to the `O(H × d)`
+half-spaces outside these hyperplanes.
+
+For each hyperplane boundary, the model needs training data within `ε` of the boundary
+to learn it with precision `ε`. If trajectories in the training set have typical margins
+of `δ >> ε` from the constraint boundary (experts are "safe" and stay away from walls),
+the model will place the learned boundary at `δ`, not at the true boundary.
+
+The SLSQP projector knows the boundary is at exactly `x = 0.70`, regardless of `δ`.
+
+To make `δ ≈ 0` (model learns the true boundary):
+- Training data must densely explore the boundary region — requiring adversarial or
+  constraint-aware data collection
+- Model capacity must scale with the geometric complexity of C (number of constraints,
+  their interactions, their joint effect over the horizon)
+- Constraint geometry must be extrapolated to unseen task configurations
+
+In our setting with bounds + halfspace + dynamics + obstacles over H=8, the constraint
+set has `O(H × n_constraints)` boundary surfaces. This is a **much harder statistical
+learning problem** than just learning `p_data`, and grows with the constraint complexity.
+
+---
+
+### 18.5 The Irony of Drifting + PCC
+
+The original drifting philosophy was: bake constraint behaviour into the model so you
+don't need an external projector. But:
+
+1. Drift learns toward *expert distribution*, not toward *constraint set C*
+2. Expert distribution ≠ constraint-feasible set (§17.4)
+3. So drift does not even target the right objective for constraint satisfaction
+
+The correct version of the original philosophy would require:
+```
+Training data: demonstrations that are BOTH expert-like AND constraint-satisfying
+Drift loss: proximity to THIS filtered distribution
+```
+
+Even then, the statistical-learning-of-geometric-boundaries problem remains. The
+one-shot model is still statistically approximating what SLSQP does analytically.
+
+**The irony**: to fully replace SLSQP, the one-shot DGM needs the constraint
+specification (lb, ub, halfspace equations) to be embedded in the training data
+structure — which is essentially the same information the SLSQP uses directly. The
+model is learning analytically-available geometric information from statistical signals,
+which is always harder and less reliable.
+
+---
+
+### 18.6 Theoretical Summary
+
+```
+One-shot DGM (perfect, infinite capacity, constraint-satisfying training data)
+    → outcome matches Mode B in-loop projection
+    → requires: all training data ∈ C, model learns ∂C exactly, generalises perfectly
+    → probability of achieving this in practice: effectively zero
+
+Mode B in-loop projection (FM + SLSQP)
+    → outcome: samples from p_data ∩ C, by construction
+    → requires: FM learns p_data (standard), SLSQP enforces C (analytical, exact)
+    → probability of achieving this in practice: high (SLSQP is deterministic)
+```
+
+| Property | Perfect One-Shot DGM | FM + In-Loop SLSQP |
+|---|---|---|
+| Constraint satisfaction | Statistical approximation of C | Exact (QP to tolerance) |
+| Data distribution | Learned | Learned |
+| Constraint boundary knowledge | Must be learned from data | Given explicitly to SLSQP |
+| Scales with constraint complexity | Exponentially harder | Linearly harder (more QP variables) |
+| Required model power | "Really really powerful" | Standard FM capacity |
+| Practical achievability | Near-impossible | Standard practice |
+| Boundary blurring | Always present | None |
+
+**The conclusion the user identified is correct**: a one-shot DGM *can* theoretically
+approach the behaviour of diffuser + in-loop projection, but requires model power and
+data richness that scale with the algebraic complexity of the constraint set —
+complexity that the SLSQP solver handles analytically and exactly for free.
+
+The diffuser + projector decomposition is not just pragmatically easier — it is the
+**correct architectural decomposition** that matches the problem structure:
+statistical learning for the data distribution, analytical optimisation for the
+geometric constraints. Trying to unify both in a single DGM conflates two
+fundamentally different types of knowledge.
