@@ -1,20 +1,26 @@
 """
 Collect camera image data for D3IL avoiding task by replaying state expert demos.
 
-Replays each recorded expert trajectory in MuJoCo (EGL offscreen), captures bp-cam
-frames at every timestep, and saves them as 96×96 BGR PNG files in the same directory
-structure as the visual aligning dataset.
+Replays each recorded expert trajectory in MuJoCo (EGL offscreen), captures
+BOTH the cage cam (env.bp_cam) and the wrist cam (env.robot.inhand_cam) at every
+timestep, and saves them as 96×96 BGR PNG files in the same directory structure
+as the visual aligning dataset.
 
 Output layout:
     d3il/environments/dataset/data/avoiding/all_data/
         state/               ← symlink → ../data  (existing state files)
-        images/bp-cam/
+        images/bp-cam/       ← env.bp_cam (cage / third-person)
             env_0/0.png, 1.png, ...
             env_1/0.png, 1.png, ...
-        images/inhand-cam/   ← duplicate of bp-cam (Option B); replace with robot_cam later
+        images/inhand-cam/   ← env.robot.inhand_cam (wrist / first-person)
             env_0/0.png, ...
         train_files.pkl      ← list of filenames for training
         eval_files.pkl
+
+Option A vs B (history): earlier versions duplicated bp-cam into inhand-cam
+because the avoiding env doesn't re-export `self.inhand_cam`. We now read the
+wrist cam directly off the robot (env.robot.inhand_cam) — same MjInhandCamera
+instance the aligning env exposes. Zero D3IL files were modified.
 
 Usage:
     # Smoke: 5 episodes
@@ -102,7 +108,8 @@ def build_env():
     """
     Instantiate ObstacleAvoidanceEnv in EGL offscreen mode and start the sim.
     The interactive viewer is disabled (render=False); camera capture uses
-    MuJoCo's offscreen EGL path directly via env.bp_cam.get_image().
+    MuJoCo's offscreen EGL path directly via env.bp_cam.get_image() and
+    env.robot.inhand_cam.get_image().
     """
     from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import \
         ObstacleAvoidanceEnv
@@ -110,15 +117,40 @@ def build_env():
     print('[ collect ] Initialising ObstacleAvoidanceEnv (EGL offscreen)...')
     env = ObstacleAvoidanceEnv(render=False)
     env.start()
-    print('[ collect ] Env ready.')
+
+    # Sanity check: the avoiding env doesn't expose self.inhand_cam, but the
+    # robot owns one. Fail fast if that assumption breaks (e.g. robot subclass
+    # change), so we don't silently fall back to single-camera output.
+    if not hasattr(env, 'robot') or getattr(env.robot, 'inhand_cam', None) is None:
+        raise RuntimeError(
+            '[ collect ] env.robot.inhand_cam not found. The avoiding env\'s '
+            'robot must own an MjInhandCamera (MjRobot.py:62) for two-stream '
+            'capture. Aborting rather than emit duplicate bp-cam data.'
+        )
+    print('[ collect ] Env ready (bp_cam + robot.inhand_cam available).')
     return env
+
+
+def _preflight_cameras(env, resolution):
+    """One-shot render from each cam to surface backend errors before the loop."""
+    env.reset()
+    bp     = env.bp_cam.get_image(           width=resolution, height=resolution, depth=False)
+    inhand = env.robot.inhand_cam.get_image( width=resolution, height=resolution, depth=False)
+    for name, arr in (('bp_cam', bp), ('inhand_cam', inhand)):
+        if arr is None or arr.ndim != 3 or arr.shape[2] != 3:
+            raise RuntimeError(f'[ collect ] preflight: {name} returned bad shape '
+                               f'{None if arr is None else arr.shape}')
+        if arr.std() < 1.0:
+            print(f'[ collect ] WARN: {name} preflight image looks ~uniform '
+                  f'(std={arr.std():.2f}). Render context may be misconfigured.')
+    print(f'[ collect ] preflight ok — bp_cam {bp.shape}, inhand_cam {inhand.shape}')
 
 
 # ── replay + capture ──────────────────────────────────────────────────────────
 
 def replay_and_capture(env, des_c_pos, resolution):
     """
-    Replay one expert episode and capture bp-cam at each step.
+    Replay one expert episode and capture both cameras at each step.
 
     Args:
         env:        ObstacleAvoidanceEnv (already started)
@@ -126,7 +158,8 @@ def replay_and_capture(env, des_c_pos, resolution):
         resolution: int — output image size (square)
 
     Returns:
-        frames: list of (resolution, resolution, 3) uint8 BGR arrays, length T
+        (bp_frames, inhand_frames): two parallel lists of length T, each
+        element a (resolution, resolution, 3) uint8 BGR array.
     """
     T = len(des_c_pos) - 1
 
@@ -135,7 +168,7 @@ def replay_and_capture(env, des_c_pos, resolution):
     # fixed_z — actual z height from the sim after reset (≈ 0.12 m)
     fixed_z = env.robot_state()[2:]   # shape (1,) or scalar
 
-    frames = []
+    bp_frames, inhand_frames = [], []
     for t in range(T):
         # Absolute desired TCP position at step t+1 (x, y from demo; z from sim)
         next_xy  = des_c_pos[t + 1, :2]
@@ -144,32 +177,33 @@ def replay_and_capture(env, des_c_pos, resolution):
 
         env.step(cmd_7d)
 
-        # Capture bp-cam at current sim state.
+        # Capture both cameras at the current sim state.
         # depth=False is REQUIRED — default depth=True returns (rgb, depth) tuple.
         # get_image returns RGB uint8 (H, W, 3); convert to BGR so cv2.imwrite
         # stores it correctly (the visual aligning loader does BGR→RGB on read).
-        frame = env.bp_cam.get_image(width=resolution, height=resolution, depth=False)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        frames.append(frame.astype(np.uint8))
+        bp     = env.bp_cam.get_image(           width=resolution, height=resolution, depth=False)
+        inhand = env.robot.inhand_cam.get_image( width=resolution, height=resolution, depth=False)
+        bp     = cv2.cvtColor(bp,     cv2.COLOR_RGB2BGR)
+        inhand = cv2.cvtColor(inhand, cv2.COLOR_RGB2BGR)
+        bp_frames.append(bp.astype(np.uint8))
+        inhand_frames.append(inhand.astype(np.uint8))
 
-    return frames
+    return bp_frames, inhand_frames
 
 
 # ── image saving ──────────────────────────────────────────────────────────────
 
-def save_frames(frames, bp_dir, inhand_dir):
+def save_frames(bp_frames, inhand_frames, bp_dir, inhand_dir):
     """
-    Save frames to bp-cam and inhand-cam directories.
-    inhand-cam is a duplicate of bp-cam (Option B — placeholder).
+    Save the two streams to their respective directories.
+    Caller guarantees len(bp_frames) == len(inhand_frames).
     """
     os.makedirs(bp_dir,     exist_ok=True)
     os.makedirs(inhand_dir, exist_ok=True)
 
-    for t, frame in enumerate(frames):
-        path_bp = os.path.join(bp_dir,     f'{t}.png')
-        path_ih = os.path.join(inhand_dir, f'{t}.png')
-        cv2.imwrite(path_bp, frame)
-        cv2.imwrite(path_ih, frame)   # duplicate for now (Option B)
+    for t, (bp, ih) in enumerate(zip(bp_frames, inhand_frames)):
+        cv2.imwrite(os.path.join(bp_dir,     f'{t}.png'), bp)
+        cv2.imwrite(os.path.join(inhand_dir, f'{t}.png'), ih)
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
@@ -200,8 +234,9 @@ def main():
     print(f'[ collect ] {len(state_files)} episodes  '
           f'(resolution={args.resolution}×{args.resolution}, skip_existing={skip})')
 
-    # ── build env once ────────────────────────────────────────────────────────
+    # ── build env once + preflight both cameras ──────────────────────────────
     env = build_env()
+    _preflight_cameras(env, args.resolution)
 
     # ── episode loop ──────────────────────────────────────────────────────────
     collected = 0
@@ -213,7 +248,11 @@ def main():
         bp_dir     = os.path.join(all_data, 'images', 'bp-cam',     ep_name)
         inhand_dir = os.path.join(all_data, 'images', 'inhand-cam', ep_name)
 
-        if skip and os.path.isdir(bp_dir) and len(os.listdir(bp_dir)) > 0:
+        # Skip only if BOTH dirs are populated — guards against partial Option-B
+        # runs where bp-cam exists but inhand-cam is missing or duplicated.
+        if (skip
+                and os.path.isdir(bp_dir)     and len(os.listdir(bp_dir))     > 0
+                and os.path.isdir(inhand_dir) and len(os.listdir(inhand_dir)) > 0):
             skipped += 1
             continue
 
@@ -223,8 +262,8 @@ def main():
 
             des_c_pos = env_state['robot']['des_c_pos']   # (T+1, 3)
 
-            frames = replay_and_capture(env, des_c_pos, args.resolution)
-            save_frames(frames, bp_dir, inhand_dir)
+            bp_frames, inhand_frames = replay_and_capture(env, des_c_pos, args.resolution)
+            save_frames(bp_frames, inhand_frames, bp_dir, inhand_dir)
             collected += 1
 
         except Exception as exc:
