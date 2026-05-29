@@ -687,8 +687,8 @@ base = {
 # ─── Gen6 State-Only Non-Visual Configuration Appends ────────────────────────
 base['ddpm_encdec_vision_nonvisual'] = {
     **base['ddpm_encdec_vision'],
-    'action_dim': 2,
-    'obs_dim': 20,
+    'action_dim': 3,   # UF-17: 3D velocity [dx,dy,dz] — matches visual path and DPCC principle
+    'obs_dim': 20,     # full state: des_c_pos(3)+c_pos(3)+box(3)+box_q(4)+tgt(3)+tgt_q(4)
     'if_vision': False,
     'prefix': 'ddpm_encdec_vision_nonvisual/',
 }

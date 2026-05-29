@@ -169,3 +169,85 @@ class ParityAligningDataset(torch.utils.data.Dataset):
         if frames:
             return torch.cat(frames, dim=0)   # (T_img, C, H, W)
         return torch.zeros(0, 3, 96, 96)
+
+
+# ─── 23D State-Only DPCC Dataset (UF-17) ─────────────────────────────────────
+
+class StateOnlyAligningDataset(torch.utils.data.Dataset):
+    """
+    23D trajectory dataset for non-visual DPCC (pure state, no images).
+    Mirror of fm_visual_aligning.datasets.sequence.StateOnlyAligningDataset.
+    See that class for full documentation.
+    """
+
+    ACTION_DIM = 3
+    OBS_DIM    = 20
+    TRAJ_DIM   = 23
+
+    def __init__(self, dataset_path, horizon=8, max_n_episodes=1000):
+        super().__init__()
+        self.horizon = horizon
+
+        from agents.utils.sim_path import sim_framework_path
+
+        state_files = np.load(sim_framework_path(dataset_path), allow_pickle=True)
+        rp_data_dir = sim_framework_path("environments/dataset/data/aligning/all_data/state")
+
+        n_eps = min(len(state_files), max_n_episodes)
+
+        all_obs_20d = []
+        all_actions = []
+
+        for file in tqdm(state_files[:n_eps], desc='Loading states (non-visual)', mininterval=10.0):
+            with open(os.path.join(rp_data_dir, file), 'rb') as f:
+                env_state = pickle.load(f)
+
+            robot_des_pos   = env_state['robot']['des_c_pos']
+            robot_c_pos     = env_state['robot']['c_pos']
+            push_box_pos    = env_state['push-box']['pos']
+            push_box_quat   = env_state['push-box']['quat']
+            target_box_pos  = env_state['target-box']['pos']
+            target_box_quat = env_state['target-box']['quat']
+
+            T = len(robot_des_pos) - 1
+            obs_20d = np.concatenate([
+                robot_des_pos[:T], robot_c_pos[:T],
+                push_box_pos[:T],  push_box_quat[:T],
+                target_box_pos[:T], target_box_quat[:T],
+            ], axis=-1).astype(np.float32)
+            actions = (robot_des_pos[1:] - robot_des_pos[:-1]).astype(np.float32)
+
+            all_obs_20d.append(obs_20d)
+            all_actions.append(actions)
+
+        self.n_episodes = n_eps
+        valid_obs = np.concatenate(all_obs_20d, axis=0)
+        valid_act = np.concatenate(all_actions, axis=0)
+        self.obs_normalizer = LimitsNormalizer(valid_obs)
+        self.act_normalizer = LimitsNormalizer(valid_act)
+        self._obs_20d  = all_obs_20d
+        self._actions  = all_actions
+        self.indices   = self._make_indices()
+        print(f'[ StateOnlyAligningDataset ] {n_eps} episodes, {len(self.indices)} windows '
+              f'(horizon={horizon}, traj_dim={self.TRAJ_DIM})')
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        ep, start, end = self.indices[idx]
+        obs_raw = self._obs_20d[ep][start:end]
+        act_raw = self._actions[ep][start:end]
+        obs_norm = self.obs_normalizer.normalize(obs_raw).astype(np.float32)
+        act_norm = self.act_normalizer.normalize(act_raw).astype(np.float32)
+        trajectories = np.concatenate([act_norm, obs_norm], axis=-1)   # (H, 23)
+        conditions = {0: obs_norm[0]}   # (20,) — no image keys
+        return Batch(trajectories, conditions)
+
+    def _make_indices(self):
+        indices = []
+        for ep in range(self.n_episodes):
+            T = len(self._obs_20d[ep])
+            for start in range(T - self.horizon + 1):
+                indices.append((ep, start, start + self.horizon))
+        return np.array(indices, dtype=np.int64)

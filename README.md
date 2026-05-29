@@ -1,22 +1,21 @@
 # FM-PCC
 
-## Training Usage in CLI (new)
-
-For the current training CLI commands and options, see [TRAINING_CLI_USAGE.md](TRAINING_CLI_USAGE.md).
-
 ## Test History (incl. Code tests and Model tests)
 
 Master Overview See [logs_in_develop/MASTER_TEST_HISTORY.md](logs_in_develop/MASTER_TEST_HISTORY.md).
 
 ### Results and Data Analysis
 
-See [Results_and_Data_Analysis_Colab_T4](Results_and_Data_Analysis_Colab_T4/).
+- **New SLURM Runs Data & HTML Visualizer**: See [Data_Analysis/analysis_results](Data_Analysis/analysis_results/) and the interactive [Visualizer](Data_Analysis/Visualizer/index.html).
+- **Old Colab Runs**: See [Results_and_Data_Analysis_Colab_T4](Results_and_Data_Analysis_Colab_T4/).
+
+> **Note**: The actual `/logs` folders generated during training and evaluation (which contain model weights and raw outputs) are ignored by git and not included in this repository. They only exist on your local machine or remote cluster.
 
 And all the Jupyter notebooks used for Colab training/evaluation/data analysis are in [ipynbs_Colab](ipynbs_Colab/).
 
 ---
 
-# Methodology & Implementation Summary
+## Methodology & Implementation Summary
 
 This repository implements **Flow Matching Predictive Control (FM-PCC)**, replacing the stochastic diffusion engine of Diffusion Predictive Control (DPCC) with deterministic Flow Matching to achieve faster inference and smoother physical control. 
 
@@ -25,16 +24,14 @@ The architecture features a dual-path design that decouples generative planning 
 * **The Physical Brakes (MPC):** A Model Predictive Control algorithm filters this idealized path, enforcing strict physical and environmental constraints (e.g., maximum torque, obstacle boundaries) to output safe, executable motor commands.
 
 ---
-# Appendix
-
-## Hint: All the DPCC Parameters & How to modify
-
-See [MODIFY_DIFFUSION_TRAINING_PARAMS.md](MODIFY_DIFFUSION_TRAINING_PARAMS.md).
 
 ## Code Versions Develop History & Notes
 
 See [logs_in_develop](logs_in_develop/).
 
-## Trained Weights and Evaluation Results Files 
+## How to use
+### Training Usage in CLI (new)
 
-Current saved in  Developer's Google Drive and local.
+For the current training CLI commands and options, see [TRAINING_CLI_USAGE.md](TRAINING_CLI_USAGE.md).
+
+Pending

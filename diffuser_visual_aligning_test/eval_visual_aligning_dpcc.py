@@ -74,58 +74,58 @@ class ProjectorNormalizer:
 
 # ── Projector setup ───────────────────────────────────────────────────────────
 
-def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, is_tightened=False):
+def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
+                         is_tightened=False, trajectory_dim=9):
     """
-    Build the DPCC SLSQP projector for the 9D trajectory space.
+    Build the DPCC SLSQP projector.
 
-    Trajectory layout: [dx(0) dy(1) dz(2) | des_x(3) des_y(4) des_z(5) | x(6) y(7) z(8)]
+    Visual (9D): [dx(0) dy(1) dz(2) | des_x(3) des_y(4) des_z(5) | x(6) y(7) z(8)]
+    Non-visual (23D): same first 9 dims + obs_20D trailing dims (9-22, unconstrained).
 
-    Constraints:
-        - Workspace bounds on actual EE position (c_pos, indices 6-8)
-        - Euler dynamics: c_pos[t+1] = c_pos[t] + act[t]  (indices [6←0, 7←1, 8←2])
-        - Obstacle exclusion: sphere_outside on EE position dims (from obstacle_constraints)
+    trajectory_dim=9 for visual, 23 for non-visual (UF-17).
     """
-    # Named-dim map: yaml obstacle_constraints may use strings instead of raw indices.
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
             'x': 6, 'y': 7, 'z': 8}
 
+    proj_obs_normalizer = obs_normalizer
+    if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > 6:
+        from diffuser_visual_aligning.datasets.normalization import LimitsNormalizer as _LN
+        _dummy = np.stack([obs_normalizer.mins[:6], obs_normalizer.maxs[:6]])
+        proj_obs_normalizer = _LN(_dummy)
+
+    pad = trajectory_dim - 9
     constraint_list = []
 
     if 'bounds' in config.get('constraint_types', []):
         tightening = config.get('enlarge_constraints') or 0.0
-        ws_lb = np.array(config['workspace_bounds']['lb'])   # (3,)
-        ws_ub = np.array(config['workspace_bounds']['ub'])   # (3,)
+        ws_lb = np.array(config['workspace_bounds']['lb'])
+        ws_ub = np.array(config['workspace_bounds']['ub'])
         if is_tightened and tightening > 0.0:
-            ws_lb += tightening   # lower bound rises — smaller box
-            ws_ub -= tightening   # upper bound drops  — smaller box
-        # Bounds only on c_pos dims (indices 6,7,8); act and des_c_pos unconstrained
-        lb = np.concatenate([np.full(6, -np.inf), ws_lb])   # (9,)
-        ub = np.concatenate([np.full(6,  np.inf), ws_ub])   # (9,)
+            ws_lb += tightening
+            ws_ub -= tightening
+        lb = np.concatenate([np.full(6, -np.inf), ws_lb, np.full(pad, -np.inf)])
+        ub = np.concatenate([np.full(6,  np.inf), ws_ub, np.full(pad,  np.inf)])
         constraint_list.append(['lb', lb])
         constraint_list.append(['ub', ub])
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        constraint_list.append(('deriv', [6, 0]))   # c_pos_x ← dx
-        constraint_list.append(('deriv', [7, 1]))   # c_pos_y ← dy
-        constraint_list.append(('deriv', [8, 2]))   # c_pos_z ← dz
+        constraint_list.append(('deriv', [6, 0]))
+        constraint_list.append(('deriv', [7, 1]))
+        constraint_list.append(('deriv', [8, 2]))
 
     if 'halfspace' in config.get('constraint_types', []):
-        # Oriented linear inequality constraints in the x-y plane (EE horizontal position).
-        # Same formulation as original DPCC avoiding paper.
-        # Each entry: [[x1,y1], [x2,y2], 'above'/'below'] — line through two points, keep the named side.
-        # Tightening shifts the boundary inward by enlarge_constraints (metres).
         tightening = config.get('enlarge_constraints') or 0.0
-        _hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}   # EE x=6, y=7 in 9D trajectory
+        _hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
             margin = tightening if is_tightened else 0.0
-            C_row, d = utils.formulate_halfspace_constraints(hs, margin, 9, _hs_indices)
+            C_row, d = utils.formulate_halfspace_constraints(hs, margin, trajectory_dim, _hs_indices)
             constraint_list.append(('ineq', (C_row, d)))
 
     if 'obstacles' in config.get('constraint_types', []):
         tightening = config.get('enlarge_constraints') or 0.0
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
-            radius = obs['radius'] + (tightening if is_tightened else 0.0)  # larger exclusion when tightened
+            radius = obs['radius'] + (tightening if is_tightened else 0.0)
             constraint_list.append((obs['type'], dims, obs['center'], radius))
 
     dt = config.get('dt', 1.0)
@@ -139,11 +139,11 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
 
     return Projector(
         horizon=getattr(args, 'horizon', 8),
-        transition_dim=9,
+        transition_dim=trajectory_dim,
         action_dim=3,
         goal_dim=0,
         constraint_list=constraint_list,
-        normalizer=ProjectorNormalizer(obs_normalizer, act_normalizer),
+        normalizer=ProjectorNormalizer(proj_obs_normalizer, act_normalizer),
         diffusion_timestep_threshold=threshold,
         variant='states_actions',
         dt=dt,
@@ -1446,29 +1446,30 @@ class VisualAgentWrapper:
             cond = {0: (bp_batch, inhand_batch, obs_batch)}
 
         else:
-            # Non-visual path: D3IL provides obs_np with robot_pos at [:3]
-            obs_np = np.asarray(state, dtype=np.float64)
-            des_robot_pos_np = obs_np[:3]
+            # Non-visual path (UF-17): aligning_sim prepends des_c_pos to env obs →
+            # state is 20D = [des_c_pos(3) | c_pos(3) | box(3) | box_q(4) | tgt(3) | tgt_q(4)]
+            obs_20d_np = np.asarray(state, dtype=np.float64)   # (20,)
+            des_robot_pos_np = obs_20d_np[:3].copy()
+            robot_pos_np     = obs_20d_np[3:6].copy()
 
             if self.mental_robot_pos is None:
                 self.mental_robot_pos = des_robot_pos_np.copy()
 
             self.history_real_pos.append(des_robot_pos_np.copy())
-            self.curr_rollout_c_pos.append(des_robot_pos_np.copy())          # Fix 9: no separate c_pos
-            self.curr_rollout_tracking_errors.append(0.0)                    # Fix 9: no separate c_pos
+            self.curr_rollout_c_pos.append(robot_pos_np.copy())
+            phys_err = float(np.linalg.norm(robot_pos_np[:2] - des_robot_pos_np[:2]))
+            self.curr_rollout_tracking_errors.append(phys_err)
 
-            obs_6d_np = np.concatenate([des_robot_pos_np, des_robot_pos_np])  # (6,)
             if self.obs_normalizer is not None:
-                obs_6d_norm = self.obs_normalizer.normalize(
-                    obs_6d_np.reshape(1, -1)).astype(np.float32).squeeze(0)
+                obs_norm = self.obs_normalizer.normalize(
+                    obs_20d_np.reshape(1, -1)).astype(np.float32).squeeze(0)  # (20,)
             else:
-                obs_6d_norm = obs_6d_np.astype(np.float32)
-            obs_t = torch.from_numpy(obs_6d_norm).to(self.device).unsqueeze(0)  # (1, 6)
+                obs_norm = obs_20d_np.astype(np.float32)
+            obs_t = torch.from_numpy(obs_norm).to(self.device).unsqueeze(0)   # (1, 20)
             self.obs_context.append(obs_t)
             while len(self.obs_context) < self.obs_seq_len:
                 self.obs_context.append(obs_t)
-            # obs anchor for apply_conditioning: {0: (B,6)} — no 'visual' key
-            obs_anchor = obs_t.repeat(self.batch_size, 1)   # (B, 6)
+            obs_anchor = obs_t.repeat(self.batch_size, 1)   # (B, 20)
             cond = {0: obs_anchor}
 
         # ── Plan (or execute from cached action chunk) ─────────────────────
@@ -1513,14 +1514,15 @@ class VisualAgentWrapper:
                     which = 0   # 'random' (DPCC default) = always index 0, deterministic
                     selection_method = 'random (index 0, DPCC semantics)'
 
-            # Fix 9: store c_pos dims (6:9) = predicted actual positions, unnormalized
+            # c_pos at traj dims 6-8, obs dims 3-5 — true for both 9D (visual) and 23D (non-visual).
             cpos_norm = traj_np[:, :, 6:9]   # (B, H, 3) normalized predicted actual positions
             if self.obs_normalizer is not None:
                 B_f, H_f = cpos_norm.shape[:2]
-                dummy = np.zeros((B_f * H_f, 3), dtype=np.float32)
-                obs6d = np.concatenate([dummy, cpos_norm.reshape(-1, 3).astype(np.float32)], axis=1)
-                obs6d_un = self.obs_normalizer.unnormalize(obs6d)
-                self.curr_rollout_all_candidates.append(obs6d_un[:, 3:].reshape(B_f, H_f, 3).copy())
+                obs_dim = self.obs_normalizer.mins.shape[0]   # 6 (visual) or 20 (non-visual)
+                dummy = np.zeros((B_f * H_f, obs_dim), dtype=np.float32)
+                dummy[:, 3:6] = cpos_norm.reshape(-1, 3).astype(np.float32)
+                obs_un = self.obs_normalizer.unnormalize(dummy)
+                self.curr_rollout_all_candidates.append(obs_un[:, 3:6].reshape(B_f, H_f, 3).copy())
             else:
                 self.curr_rollout_all_candidates.append(cpos_norm.copy())
             self.curr_rollout_selected_idx.append(int(which))
@@ -1844,10 +1846,14 @@ if __name__ == '__main__':
 
                 # ── Setup DPCC projector ─────────────────────────────────────
                 projector = None
+                _if_vis = getattr(args, 'if_vision', True)
+                _traj_dim = 9 if _if_vis else 23   # UF-17: non-visual uses 23D trajectory
                 if 'diffuser' not in variant and obs_normalizer is not None:
                     projector = setup_dpcc_projector(
-                        args, geo_config, obs_normalizer, act_normalizer, variant, is_tightened)
-                    print(f'[ eval ] DPCC projector active for variant {variant!r}')
+                        args, geo_config, obs_normalizer, act_normalizer, variant, is_tightened,
+                        trajectory_dim=_traj_dim)
+                    print(f'[ eval ] DPCC projector active for variant {variant!r} '
+                          f'(trajectory_dim={_traj_dim})')
 
                 # Trajectory selection — exact DPCC eval.py logic (projection_eval.yaml dpcc-r/c/t).
                 # 'random' = always index 0 (deterministic); same as DPCC Policy.__call__ semantics.
