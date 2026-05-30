@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FM-PCC Visual Aligning Explorer</title>
+    <title>FM-PCC Visual Aligning Explorer v2.0</title>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 
@@ -45,6 +45,10 @@
         .p-seg-0{color:#c62828;font-weight:bold} .p-seg-1{color:#1565c0;font-weight:bold}
         .p-seg-2{color:#2e7d32;font-weight:bold} .p-seg-3{color:#ef6c00;font-weight:bold}
         .p-seg-4{color:#6a1b9a;font-weight:bold} .p-seg-5{color:#00838f;font-weight:bold}
+        /* U_2: Dynamic Compare */
+        #compare-area { display: none; }
+        .cmp-card { border:1px solid #000; padding:10px; background:#fffde7; margin-bottom:8px; font-size:11px; }
+        .cmp-card b { color:#c62828; }
     </style>
 
     <py-config>
@@ -62,6 +66,7 @@
         <div class="mode-toggle">
             <div id="btn-agg"  class="mode-btn active" onclick="setViewMode('aggregate')">AGGREGATE</div>
             <div id="btn-roll" class="mode-btn"        onclick="setViewMode('rollout')">PER-ROLLOUT</div>
+            <div id="btn-cmp"  class="mode-btn"        onclick="setViewMode('compare')">COMPARE</div>
         </div>
     </div>
 
@@ -131,8 +136,53 @@
                 <option value="rollout_idx">Rollout Index</option>
                 <option value="mean_dist_m">Distance (asc)</option>
                 <option value="success">Success</option>
+                <option value="final_xy_dist_m">Final XY Dist (asc)</option>
+                <option value="constraint_sat_rate">Constraint Sat Rate</option>
             </select>
         </div>
+    </div>
+
+    <!-- U_2: Dynamic Compare controls -->
+    <div id="cmp-controls" style="display:none; flex-direction:column; gap:10px;">
+        <div class="control-group">
+            <label>Compare Metric (Y-axis)</label>
+            <select id="cmp-metric-y">
+                <option value="final_xy_dist_m">Final XY Dist (m)</option>
+                <option value="mean_dist_m">Mean Distance (m)</option>
+                <option value="constraint_sat_rate">Constraint Sat Rate</option>
+                <option value="max_bounds_viol_m">Max Bounds Viol (m)</option>
+                <option value="max_halfspace_viol_m">Max Halfspace Viol (m)</option>
+                <option value="phys_err_m">Phys Track Error (m)</option>
+                <option value="avg_time_s">Avg Time (s)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>X-axis</label>
+            <select id="cmp-metric-x">
+                <option value="rollout_idx">Rollout Index</option>
+                <option value="context_xy_dist_m">Init XY Dist (m)</option>
+                <option value="mean_dist_m">Mean Distance (m)</option>
+                <option value="steps">Steps</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Chart Type</label>
+            <div class="mode-toggle">
+                <div id="btn-scatter" class="mode-btn active" onclick="setCmpChart('scatter')">SCATTER</div>
+                <div id="btn-bar"     class="mode-btn"        onclick="setCmpChart('bar')">BAR</div>
+                <div id="btn-box"     class="mode-btn"        onclick="setCmpChart('box')">BOX</div>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Variants</label>
+            <div class="bulk-actions">
+                <span class="bulk-link" onclick="bulkSelect('cmp-var-check', true)">[ALL]</span>
+                <span class="bulk-link" onclick="bulkSelect('cmp-var-check', false)">[NONE]</span>
+            </div>
+            <div id="cmp-variant-list" class="checkbox-list"></div>
+        </div>
+        <button class="btn-main" style="background:#c62828" py-click="trigger_compare">DRAW COMPARE</button>
+        <button class="btn-download" id="cmp-download-btn" py-click="download_compare_plot" style="display:none">DOWNLOAD_PNG</button>
     </div>
 
     <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
@@ -142,7 +192,7 @@
 <div class="main">
     <div class="toolbar">
         <div id="engine-status" class="status">ENGINE_READY</div>
-        <div>FM-PCC VISUAL ALIGNING v1.0</div>
+        <div>FM-PCC VISUAL ALIGNING v2.0 (U_2)</div>
     </div>
     <div class="content">
 
@@ -164,6 +214,15 @@
             <div class="sec-title" id="rollout-title">PER-ROLLOUT DETAIL</div>
             <div id="rollout-table-container">
                 <p style="color:#999;">Load an experiment, then select a variant.</p>
+            </div>
+        </div>
+
+        <!-- U_2: Dynamic Compare view -->
+        <div id="compare-area">
+            <div class="sec-title">DYNAMIC COMPARE</div>
+            <div id="cmp-summary" class="cmp-card" style="display:none"></div>
+            <div id="cmp-plot-area" style="background:#fff;border:1px solid #000;padding:15px;min-height:480px;text-align:center">
+                <p style="padding-top:180px;color:#999">SELECT METRICS AND DRAW</p>
             </div>
         </div>
 
@@ -247,6 +306,7 @@ async def load_data(event=None):
     # Populate controls
     populate_filters()
     populate_rollout_variants()
+    populate_compare_variants()
     render_path_map()
 
     document.getElementById("agg-controls").style.display    = "flex"
@@ -422,6 +482,8 @@ def show_rollout_table(event=None):
             f'<td>{_c(row,"phys_err_m")}</td>'
             f'<td>{_c(row,"context_xy_dist_m")}</td>'
             f'<td>{_c(row,"avg_time_s")}</td>'
+            f'<td>{_c(row,"final_xy_dist_m")}</td>'
+            f'<td>{_c(row,"constraint_sat_rate")}</td>'
             f'</tr>')
 
     total = len(subset)
@@ -431,6 +493,7 @@ def show_rollout_table(event=None):
     html += ('<table class="rt"><thead><tr>'
              '<th>Rollout</th><th>Success</th><th>Dist (m)</th><th>Steps</th>'
              '<th>PhysErr (m)</th><th>CtxDist (m)</th><th>Time (s)</th>'
+             '<th>FinalXY (m)</th><th>CnstrSat</th>'
              f'</tr></thead><tbody>{rows_html}</tbody></table>')
     document.getElementById("rollout-table-container").innerHTML = html
 
@@ -471,8 +534,106 @@ def get_checked(cls):
     return [e.value for e in document.getElementsByClassName(cls) if e.checked]
 
 
-document.trigger_plot       = create_proxy(trigger_plot)
-document.show_rollout_table = create_proxy(show_rollout_table)
+# ======================== U_2: Dynamic Compare ========================
+cmp_fig = None
+
+def populate_compare_variants():
+    if df_roll is None:
+        return
+    vcol = 'variant' if 'variant' in df_roll.columns else None
+    if vcol is None:
+        return
+    variants = sorted(df_roll[vcol].unique())
+    document.getElementById('cmp-variant-list').innerHTML = ''.join(
+        [f'<div class="checkbox-item"><input type="checkbox" class="cmp-var-check" value="{v}" checked><span>{v}</span></div>'
+         for v in variants])
+
+
+async def trigger_compare(event=None):
+    global df_roll, cmp_fig
+    if df_roll is None:
+        document.getElementById('cmp-plot-area').innerHTML = '<p style="color:#c62828">No per-rollout CSV loaded.</p>'
+        return
+    y_col = document.getElementById('cmp-metric-y').value
+    x_col = document.getElementById('cmp-metric-x').value
+    chart = window.cmpChartType or 'scatter'
+    sel_vars = get_checked('cmp-var-check')
+    if not sel_vars:
+        return
+    sub = df_roll[df_roll['variant'].isin(sel_vars)].copy()
+    if y_col not in sub.columns:
+        document.getElementById('cmp-plot-area').innerHTML = f'<p style="color:#c62828">Column {y_col} not in CSV. Re-run DA pipeline with U_2 reporter.</p>'
+        return
+    if x_col not in sub.columns:
+        document.getElementById('cmp-plot-area').innerHTML = f'<p style="color:#c62828">Column {x_col} not in CSV.</p>'
+        return
+    sub = sub.dropna(subset=[y_col, x_col])
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = ['#c62828','#1565c0','#2e7d32','#ef6c00','#6a1b9a','#00838f','#d81b60','#5d4037']
+    if chart == 'scatter':
+        for i, v in enumerate(sel_vars):
+            vd = sub[sub['variant']==v]
+            if vd.empty: continue
+            ax.scatter(vd[x_col], vd[y_col], label=v, alpha=0.7, s=40, color=colors[i%len(colors)], edgecolors='k', linewidths=0.3)
+        ax.set_xlabel(x_col)
+        ax.set_ylabel(y_col)
+    elif chart == 'bar':
+        means = sub.groupby('variant')[y_col].mean().reindex(sel_vars).dropna()
+        stds  = sub.groupby('variant')[y_col].std().reindex(sel_vars).dropna()
+        x_pos = range(len(means))
+        bars = ax.bar(x_pos, means.values, yerr=stds.values, capsize=4, color=[colors[i%len(colors)] for i in range(len(means))], edgecolor='k')
+        ax.set_xticks(list(x_pos))
+        ax.set_xticklabels(means.index, rotation=30, ha='right', fontsize=8)
+        ax.set_ylabel(y_col)
+    elif chart == 'box':
+        box_data = [sub[sub['variant']==v][y_col].dropna().values for v in sel_vars if not sub[sub['variant']==v].empty]
+        box_labels = [v for v in sel_vars if not sub[sub['variant']==v].empty]
+        bp = ax.boxplot(box_data, labels=box_labels, patch_artist=True)
+        for i, patch in enumerate(bp['boxes']):
+            patch.set_facecolor(colors[i%len(colors)])
+            patch.set_alpha(0.6)
+        ax.set_ylabel(y_col)
+        plt.xticks(rotation=30, ha='right', fontsize=8)
+    ax.set_title(f'Compare: {y_col}', fontsize=12, fontweight='bold')
+    ax.legend(fontsize=7, loc='best')
+    ax.grid(True, alpha=0.2)
+    plt.tight_layout()
+    cmp_fig = fig
+    area = document.getElementById('cmp-plot-area')
+    area.innerHTML = ''
+    display(fig, target='cmp-plot-area')
+    # Summary card
+    smry = sub.groupby('variant')[y_col].agg(['mean','std','min','max'])
+    best_v = smry['mean'].idxmin() if 'dist' in y_col or 'viol' in y_col or 'err' in y_col else smry['mean'].idxmax()
+    card = f'<b>BEST {y_col}:</b> {best_v} = {smry.loc[best_v,"mean"]:.4f} (std={smry.loc[best_v,"std"]:.4f})'
+    document.getElementById('cmp-summary').innerHTML = card
+    document.getElementById('cmp-summary').style.display = 'block'
+    document.getElementById('cmp-download-btn').style.display = 'block'
+
+
+def download_compare_plot(event=None):
+    global cmp_fig
+    if cmp_fig is None: return
+    from datetime import datetime
+    now = datetime.now().strftime('%Y%m%d_%H%M')
+    y_col = document.getElementById('cmp-metric-y').value
+    name = f'va_compare_{y_col}_{now}'
+    buf = io.BytesIO()
+    cmp_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+    buf.seek(0)
+    arr = Uint8Array.new(buf.read())
+    fobj = File.new([arr], f'{name}.png', {'type': 'image/png'})
+    url = URL.createObjectURL(fobj)
+    lnk = document.createElement('a')
+    lnk.href = url; lnk.download = f'{name}.png'; lnk.click()
+    URL.revokeObjectURL(url)
+
+
+document.trigger_plot        = create_proxy(trigger_plot)
+document.show_rollout_table  = create_proxy(show_rollout_table)
+document.trigger_compare     = create_proxy(trigger_compare)
+document.download_compare_plot = create_proxy(download_compare_plot)
 
 import asyncio
 asyncio.ensure_future(init_manifest())
@@ -490,16 +651,28 @@ asyncio.ensure_future(init_manifest())
         document.getElementById("input-path").style.display = mode === "path" ? "block" : "none";
     }
 
+    window.cmpChartType = 'scatter';
+
     function setViewMode(mode) {
         document.getElementById("btn-agg").classList.toggle("active",  mode === "aggregate");
         document.getElementById("btn-roll").classList.toggle("active", mode === "rollout");
+        document.getElementById("btn-cmp").classList.toggle("active",  mode === "compare");
         document.getElementById("agg-controls").style.display   = mode === "aggregate" ? "flex"  : "none";
         document.getElementById("roll-controls").style.display  = mode === "rollout"   ? "flex"  : "none";
+        document.getElementById("cmp-controls").style.display   = mode === "compare"   ? "flex"  : "none";
         document.getElementById("aggregate-area").style.display = mode === "aggregate" ? "block" : "none";
         document.getElementById("rollout-area").style.display   = mode === "rollout"   ? "block" : "none";
+        document.getElementById("compare-area").style.display   = mode === "compare"   ? "block" : "none";
         if (mode === "rollout" && window.document.show_rollout_table) {
             window.document.show_rollout_table();
         }
+    }
+
+    function setCmpChart(type) {
+        window.cmpChartType = type;
+        document.getElementById('btn-scatter').classList.toggle('active', type==='scatter');
+        document.getElementById('btn-bar').classList.toggle('active', type==='bar');
+        document.getElementById('btn-box').classList.toggle('active', type==='box');
     }
 
     function applyZoom() {

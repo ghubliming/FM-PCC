@@ -2,7 +2,9 @@
 
 **Date**: 2026-05-30
 **Branch**: `update_into_FM`
-**Related**: [`INVESTIGATION_REPORT.md`](INVESTIGATION_REPORT.md) — full evidence + line refs
+**Related**:
+- [`INVESTIGATION_REPORT.md`](INVESTIGATION_REPORT.md) — full evidence + line refs
+- [`SEVERITY_AND_RETRAIN_IMPACT.md`](SEVERITY_AND_RETRAIN_IMPACT.md) — what's actually broken vs. what isn't, and what to do with existing checkpoints
 **Scope**: **Two code-level fixes applied** so the non-visual `K=1` DPCC train + `ODE=1` FM eval experiment can run end-to-end. Visual path remains unchanged (verified by user 2026-05-30).
 **Source logs**: `temp/one_shot_run/visual_dpcc`, `temp/one_shot_run/visual_fm`
 

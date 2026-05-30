@@ -120,6 +120,12 @@ class DataLoader:
           context_info.target_xy     → context_target_xy
           context_info.box_init_angle_deg   → context_box_angle_deg
           context_info.target_angle_deg     → context_target_angle_deg
+          --- U_2: extended context_info ---
+          context_info.final_xy_dist       → context_final_xy_dist
+          context_info.final_box_angle_deg → context_final_box_angle_deg
+          context_info.final_box_xy        → context_final_box_xy
+          --- U_2: constraint_metrics block ---
+          constraint_metrics.*             → exec_* / plan_*
         """
         diag_path = os.path.join(seed_results_path, variant, 'diagnostics')
         self.files_found += 1
@@ -170,6 +176,13 @@ class DataLoader:
                 dtype=np.float32
             )
 
+        def _cmet(field, default=0.0):
+            """Extract from constraint_metrics sub-dict."""
+            return np.array(
+                [r.get('constraint_metrics', {}).get(field, default) for r in rows],
+                dtype=np.float32
+            )
+
         n_success = _arr('success', 0)
         metrics = {
             'n_success':                 n_success,
@@ -181,6 +194,27 @@ class DataLoader:
             'context_init_xy_dist':      _ctx('init_xy_dist', 0.0),
             'context_box_angle_deg':     _ctx('box_init_angle_deg', 0.0),
             'context_target_angle_deg':  _ctx('target_angle_deg', 0.0),
+            # --- U_2: extended context_info ---
+            'context_final_xy_dist':         _ctx('final_xy_dist', 0.0),
+            'context_final_box_angle_deg':   _ctx('final_box_angle_deg', 0.0),
+            # --- U_2: constraint_metrics ---
+            'exec_n_violated_steps':                _cmet('exec_n_violated_steps', 0),
+            'exec_constraint_sat_rate':             _cmet('exec_constraint_sat_rate', 0.0),
+            'exec_zero_violation_rollout':           _cmet('exec_zero_violation_rollout', 0),
+            'exec_bounds_viol_count':               _cmet('exec_bounds_viol_count', 0),
+            'exec_halfspace_viol_count':             _cmet('exec_halfspace_viol_count', 0),
+            'exec_obstacle_viol_count':              _cmet('exec_obstacle_viol_count', 0),
+            'exec_max_bounds_viol_m':               _cmet('exec_max_bounds_viol_m', 0.0),
+            'exec_max_halfspace_viol_m':             _cmet('exec_max_halfspace_viol_m', 0.0),
+            'exec_max_obstacle_penetration_m':       _cmet('exec_max_obstacle_penetration_m', 0.0),
+            'exec_constraint_margin_mean_m':         _cmet('exec_constraint_margin_mean_m', 0.0),
+            'exec_first_violation_step':             _cmet('exec_first_violation_step', 0),
+            'exec_longest_safe_streak':              _cmet('exec_longest_safe_streak', 0),
+            'exec_dynamics_consistency_error_mean':  _cmet('exec_dynamics_consistency_error_mean', 0.0),
+            'exec_dynamics_consistency_error_max':   _cmet('exec_dynamics_consistency_error_max', 0.0),
+            'plan_post_viol_rate_mean':              _cmet('plan_post_viol_rate_mean', 0.0),
+            'plan_post_viol_rate_max':               _cmet('plan_post_viol_rate_max', 0.0),
+            'plan_n_replan_steps':                   _cmet('plan_n_replan_steps', 0),
             # 2-D arrays
             'context_box_init_xy': np.array(
                 [r.get('context_info', {}).get('box_init_xy', [0.0, 0.0]) for r in rows],
@@ -188,6 +222,10 @@ class DataLoader:
             ),
             'context_target_xy': np.array(
                 [r.get('context_info', {}).get('target_xy', [0.0, 0.0]) for r in rows],
+                dtype=np.float32
+            ),
+            'context_final_box_xy': np.array(
+                [r.get('context_info', {}).get('final_box_xy', [0.0, 0.0]) for r in rows],
                 dtype=np.float32
             ),
         }
