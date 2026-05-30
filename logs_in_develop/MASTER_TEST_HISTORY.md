@@ -31,7 +31,7 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen8 (iMeanFlow Visual Engine)** | Pending | Pending | Planned | **Planned Extension**: Add the iMeanFlow (iMF) engine as an alternative to the Gen7/Gen6v4 visual aligning pipelines. **Key Milestone**: This represents a major leap in making the core ML engine completely switchable, effectively merging the architectural capabilities of Gen6v4 and Gen7, and now seamlessly integrating iMF. | planning |
 | **Gen9 (Visual Avoiding Env)** | Partial | Partial | In Progress | **PARTIAL COMPLETION (30 May 2026): Camera Environment Capture Confirmed**. Created a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. **COMPLETED**: Camera capture pipeline. **PENDING**: Modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present. | in progress |
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
-| **Gen11 (UAV Vis-Traj in MuJoCo)** | Pending | Pending | Planned | **Planned Extension**: Implement a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. Will adapt expert data from the paper "AV-Flow Colosseo: A Real-World Benchmark for Flying-on-a-Word UAV Imitation Learning". Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone. | |
+| **Gen11 (UAV Vis-Traj in MuJoCo)** | Partial | Partial | In Progress | **PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone. | in progress |
 
 ***
 
@@ -1282,3 +1282,28 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 2. **StateOnlyAligningDataset**: Introduced `StateOnlyAligningDataset` that produces 23D trajectories without image keys, explicitly built for non-visual training.
 3. **Evaluation Restoration**: Rewrote the prediction branch to provide full 20D observation to the model instead of collapsing it to a fake 6D vector (which previously discarded box and target info). Restored pure DPCC architecture with proper initial state pinning.
 4. **Flow Matching p_losses Fix**: Added an `if_vision` guard in `VisualFlowMatching.loss()` to route directly to base `p_losses` without requesting missing image conditions.
+
+***
+
+## Gen7 & Gen6v4: UF-18 Non-Visual Aligning Architecture Fix Completion (May 30, 2026)
+
+**Keywords**: UF-18, non-visual adjustments, DPCC, FM sync.
+
+1. **Non-Visual Adjustments**: Applied critical non-visual adjustments and fixes to DPCC and FM evaluation and training scripts. This finalizes the sync between Gen7 and Gen6v4 non-visual pipelines.
+
+***
+
+## Data Analysis Tool v2: U_2 Dynamic Compare Upgrade (May 30, 2026)
+
+**Keywords**: DA v2, U_2, dynamic compare, constraint metrics, interactive plotting, final_xy_dist.
+
+1. **Extended Metrics Extraction**: Upgraded the `data_loader.py` to recursively extract all `constraint_metrics` and extended `context_info` (e.g., `final_xy_dist_m`, `final_box_xy`) from diagnostic JSON files.
+2. **Interactive Dynamic Compare Mode**: Added a "COMPARE" mode to the PyScript HTML visualizer, enabling dynamic generation of scatter, bar, and box plots comparing metrics across variants (e.g., highlighting `final_xy_dist_m` vs `mean_dist_m` or `constraint_sat_rate`).
+
+***
+
+## Gen11 Epoch 1: MuJoCo MPC UAV Model Initialization (May 30, 2026)
+
+**Keywords**: Gen11, UAV, MPC, MuJoCo.
+
+1. **UAV Model Assets Migration (Epoch 1 Completed)**: Successfully completed Epoch 1 of the Gen11 UAV pipeline. Migrated the Skydio X2 quadrotor model (XML, low-poly mesh, textures, and racing gates) from `mujoco_menagerie` and applied the MJPC drone-task modifications. These assets are now correctly placed within the `d3il` MuJoCo environment models directory, laying the physical groundwork for the UAV Visual-Trajectory environment.
