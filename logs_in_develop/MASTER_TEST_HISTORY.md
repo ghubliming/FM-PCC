@@ -1259,3 +1259,26 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
    - **Epoch Loop & Wandb Refactor**: Repaired the training script by adding an outer `_train_vision()` epoch loop to mirror state-based agents and ensure complete training cycles. Refactored WandB config initialization.
    - **DiffusionMLPNetwork Bug Fix**: Patched a tensor dimension mismatch in `d3il/agents/models/diffusion/diffusion_models.py` where 3D visual paths were missing sequence expansion (`.expand(-1, x.shape[1], -1)`).
    - **Submit Script Hotfix**: Fixed `Slurm_Codes/submit.sh` to correctly forward extra arguments (like `agent_name`, `seed`) and dispatch the correct `train_vision_agent` payload.
+
+***
+
+## Gen9 Epoch 1: Visual Avoiding Task Initialization & Data Collection (May 29, 2026)
+
+**Keywords**: Gen9, visual avoiding, data collection, inhand camera, bp-cam, .gitignore.
+
+1. **Visual Data Collection Pipeline**: Created a standalone pipeline (`collect_visual_avoiding_data.py`) to collect both `bp-cam` (third-person/cage) and `inhand-cam` (first-person/wrist) frames for the D3IL avoiding task by replaying existing state expert demonstrations in MuJoCo.
+2. **In-Hand Camera Integration**: Sourced the wrist view directly from `env.robot.inhand_cam` instead of duplicating `bp-cam`.
+3. **Pipeline Refactoring**: Added SLURM job wrappers (`collect_visual_avoiding.sh`) with proper EGL setup for offscreen rendering, and preflight checks to ensure camera data is not corrupted.
+4. **Repository Maintenance**: Updated `.gitignore` to avoid checking in the generated visual datasets (`all_data`).
+5. **Documentation**: Authored `CAMERAS_IN_D3IL_AND_VISUAL_ALIGNING.md` detailing the D3IL camera definitions and how the pipeline consumes them.
+
+***
+
+## Gen7 & Gen6v4: UF-17 Non-Visual Aligning Architecture Fix (May 29, 2026)
+
+**Keywords**: UF-17, StateOnlyAligningDataset, action_dim=3, pure DPCC principle.
+
+1. **Non-Visual Architecture Fix (UF-17)**: Fixed the structurally broken state-only aligning pipeline. Changed `action_dim=2` back to `action_dim=3` to match the visual path and restored the 23D trajectory `[act(3) | des_c_pos(3) | c_pos(3) | box_pos(3) | box_quat(4) | tgt_pos(3) | tgt_quat(4)]`. This places `c_pos` correctly at dims 6-8 for the projector.
+2. **StateOnlyAligningDataset**: Introduced `StateOnlyAligningDataset` that produces 23D trajectories without image keys, explicitly built for non-visual training.
+3. **Evaluation Restoration**: Rewrote the prediction branch to provide full 20D observation to the model instead of collapsing it to a fake 6D vector (which previously discarded box and target info). Restored pure DPCC architecture with proper initial state pinning.
+4. **Flow Matching p_losses Fix**: Added an `if_vision` guard in `VisualFlowMatching.loss()` to route directly to base `p_losses` without requesting missing image conditions.

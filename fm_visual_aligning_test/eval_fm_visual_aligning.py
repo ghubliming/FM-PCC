@@ -1845,8 +1845,18 @@ if __name__ == '__main__':
 
                 # ── Setup DPCC projector ─────────────────────────────────────
                 projector = None
-                _if_vis = getattr(args, 'if_vision', True)
-                _traj_dim = 9 if _if_vis else 23   # UF-17: non-visual uses 23D trajectory
+                # FIX-18: derive _traj_dim from the SAVED normalizer dimensionalities
+                # (action + observation) instead of args.if_vision. The flag can be
+                # flipped by UF-13 record-mode auto-enable, but the checkpoint's
+                # normalizers are immutable ground truth: act(3)+obs(6)=9 visual,
+                # act(3)+obs(20)=23 non-visual. Decouples projector dim from CLI args.
+                _act_dim_norm = act_normalizer.mins.shape[0]
+                _obs_dim_norm = obs_normalizer.mins.shape[0]
+                _traj_dim = _act_dim_norm + _obs_dim_norm
+                if _traj_dim not in (9, 23):
+                    print(f'[ eval ] WARNING: unexpected _traj_dim={_traj_dim} '
+                          f'(act={_act_dim_norm}, obs={_obs_dim_norm}); '
+                          f'expected 9 (visual) or 23 (non-visual)')
                 if 'diffuser' not in variant and obs_normalizer is not None:
                     projector = setup_dpcc_projector(
                         args, geo_config, obs_normalizer, act_normalizer, variant, is_tightened,
