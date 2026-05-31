@@ -39,7 +39,7 @@
 | No LLM-synthesized library code | ✅ Cascaded PID structure follows the well-known Lee 2010 / Mellinger 2011 design and was hand-typed against that spec — no vendored library |
 | No edits to existing source files | ✅ Inventory above is all "Created", zero "Modified" |
 | Syntax-checked before commit | ✅ `bash -n run_naive.sh` clean; `ast.parse` clean on all 4 Python files |
-| Reversible | ✅ `rm -rf uav_naive_test Slurm_Codes/sbatch/uav_naive logs_in_develop/Gen11/Epoch2_env/results` fully undoes Epoch 2 |
+| Reversible | ✅ `rm -rf uav_naive_test Slurm_Codes/sbatch/uav_naive logs/uav_naive` fully undoes Epoch 2 |
 
 ---
 
@@ -82,7 +82,7 @@ sbatch Slurm_Codes/sbatch/uav_naive/run_naive.sh C 9D     # circle, 9-D traj
 sbatch Slurm_Codes/sbatch/uav_naive/run_naive.sh all
 ```
 
-Results land in `logs_in_develop/Gen11/Epoch2_env/results/<task_label>/`:
+Results land in `logs/uav_naive/<task_label>/`:
 - `log.json` — per-step state, target, control
 - `metrics.txt` — final/mean/RMS/max position error
 - `rollout.gif` — visual sanity GIF
@@ -99,7 +99,7 @@ Results land in `logs_in_develop/Gen11/Epoch2_env/results/<task_label>/`:
 ```bash
 rm -rf uav_naive_test
 rm -rf Slurm_Codes/sbatch/uav_naive
-rm -rf logs_in_develop/Gen11/Epoch2_env/results
+rm -rf logs/uav_naive
 ```
 
 Repository state then identical to immediately after Epoch 1.

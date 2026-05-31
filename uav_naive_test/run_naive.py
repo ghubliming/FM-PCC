@@ -5,7 +5,7 @@ Usage:
         [--trajectory-format {6D|9D}] [--render] [--seed N]
 
 Output:
-    logs_in_develop/Gen11/Epoch2_env/results/<label>/
+    logs/uav_naive/<label>/
         log.json     — per-step state, target, control
         metrics.txt  — RMS / max / final position errors
         rollout.gif  — if --render
@@ -101,7 +101,7 @@ def run():
         label = f'{label}_{args.trajectory_format}'
 
     out_dir = args.out_dir or os.path.join(
-        _REPO, 'logs_in_develop/Gen11/Epoch2_env/results', label)
+        _REPO, 'logs/uav_naive', label)
     os.makedirs(out_dir, exist_ok=True)
 
     # ── initial state ────────────────────────────────────────────────────

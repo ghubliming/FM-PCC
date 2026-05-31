@@ -43,7 +43,7 @@ OK nq=7 nv=6 nu=4 qpos_z=0.0517
 
 ### 2.2 Task A (hover at `(0, 0, 0.5)` for 5 s)
 
-**Look in** `logs_in_develop/Gen11/Epoch2_env/results/task_A_hover/metrics.txt`:
+**Look in** `logs/uav_naive/task_A_hover/metrics.txt`:
 
 | Metric | Expected | Threshold for pass |
 |---|---|---|
@@ -111,16 +111,16 @@ Max **5 gain-tuning iterations** before considering the controller inadequate an
 
 ```bash
 # Were results written?
-ls -la logs_in_develop/Gen11/Epoch2_env/results/
+ls -la logs/uav_naive/
 
 # How did the task score?
-cat logs_in_develop/Gen11/Epoch2_env/results/task_A_hover/metrics.txt
+cat logs/uav_naive/task_A_hover/metrics.txt
 
 # Did the controller initialise correctly?
-cat logs_in_develop/Gen11/Epoch2_env/results/task_A_hover/controller.txt
+cat logs/uav_naive/task_A_hover/controller.txt
 
 # Sanity check that log.json isn't empty
-python -c "import json; print(len(json.load(open('logs_in_develop/Gen11/Epoch2_env/results/task_A_hover/log.json'))))"
+python -c "import json; print(len(json.load(open('logs/uav_naive/task_A_hover/log.json'))))"
 # expect a number near duration_s / timestep — Task A = 5 / 0.002 ≈ 2500
 ```
 
@@ -143,7 +143,7 @@ If only A and B passed but C failed in both formats: still a partial success. Do
 ```bash
 rm -rf uav_naive_test
 rm -rf Slurm_Codes/sbatch/uav_naive
-rm -rf logs_in_develop/Gen11/Epoch2_env/results
+rm -rf logs/uav_naive
 ```
 
 Repo state then identical to immediately after Epoch 1.

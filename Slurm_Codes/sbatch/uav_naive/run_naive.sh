@@ -95,4 +95,4 @@ case "$TASK" in
         ;;
 esac
 
-echo "[ sbatch ] Output (if applicable): logs_in_develop/Gen11/Epoch2_env/results/"
+echo "[ sbatch ] Output (if applicable): logs/uav_naive/"
