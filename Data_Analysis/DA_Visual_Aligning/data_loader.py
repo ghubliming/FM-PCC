@@ -62,22 +62,35 @@ class DataLoader:
             logger.warning(f'Results dir not found: {seed_results_path}')
             return {}
 
-        # Step into the geo-constraint subfolder when explicitly requested.
-        # This matches the eval script schema: results/{geo_name}/{variant}/...
-        if geo_variant is not None:
-            geo_path = os.path.join(seed_results_path, geo_variant)
-            if not os.path.exists(geo_path):
-                logger.warning(f'geo_variant folder not found: {geo_path}')
-                return {}
-            logger.info(f'Using geo_variant layer: {geo_variant}')
-            seed_results_path = geo_path
-
-        # Auto-discover variants if not specified
+        # AUTO-RETRIEVAL: Recursively find all variants, regardless of geo_constraint depth
         if variants is None:
-            variants = sorted(
-                d for d in os.listdir(seed_results_path)
-                if os.path.isdir(os.path.join(seed_results_path, d))
-            )
+            import glob
+            variants_set = set()
+            if self.source == 'json':
+                # Find all 'diagnostics' folders
+                search_pattern = os.path.join(seed_results_path, '**', 'diagnostics')
+                for path in glob.glob(search_pattern, recursive=True):
+                    if os.path.isdir(path):
+                        # The variant name is the relative path from seed_results_path
+                        # e.g., 'combined_5/dpcc-c' or just 'dpcc-c'
+                        rel_path = os.path.relpath(os.path.dirname(path), seed_results_path)
+                        variants_set.add(rel_path)
+            else:
+                # Find all '.npz' files
+                search_pattern = os.path.join(seed_results_path, '**', '*.npz')
+                for path in glob.glob(search_pattern, recursive=True):
+                    # Exclude the file name itself to get the variant folder
+                    rel_path = os.path.relpath(os.path.dirname(path), seed_results_path)
+                    variants_set.add(rel_path)
+            
+            variants = sorted(list(variants_set))
+            if not variants:
+                logger.warning(f'No {self.source} data found recursively in {seed_results_path}')
+                return {}
+        else:
+            # If explicitly passed but geo_variant is used (legacy compat)
+            if geo_variant is not None:
+                variants = [os.path.join(geo_variant, v) for v in variants]
 
         logger.info(f'Loading seed={seed}, source={self.source}, variants={len(variants)}')
 
@@ -106,8 +119,9 @@ class DataLoader:
 
     # ------------------------------------------------------------------
     def _load_npz(self, seed_results_path, variant):
-        """Load per-rollout arrays from {variant}/{variant}.npz."""
-        npz_path = os.path.join(seed_results_path, variant, f'{variant}.npz')
+        """Load per-rollout arrays from {variant}/{basename(variant)}.npz."""
+        variant_basename = os.path.basename(variant)
+        npz_path = os.path.join(seed_results_path, variant, f'{variant_basename}.npz')
         self.files_found += 1
 
         if not os.path.exists(npz_path):

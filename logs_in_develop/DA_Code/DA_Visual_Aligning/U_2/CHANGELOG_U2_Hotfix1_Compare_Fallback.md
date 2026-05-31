@@ -95,29 +95,28 @@ Maps the COMPARE dropdown `y_col` values to metric names in `va_candidates_dynam
 
 ---
 
-# U_2 Hotfix-2 — DataLoader Explicit Geo-Variant Schema Support
+# U_2 Hotfix-2 — DataLoader Robust Auto-Retrieval for Nested Schemas
 
 **Date**: 2026-05-31  
-**Files**: `data_loader.py`, `batch_data_loader.py`, `main_da_batch.py`, `run_da_batch_visual_aligning.sh`  
+**Files**: `data_loader.py`  
 **Scope**: Pipeline backend data loading fix  
 
 ## Problem
-The data loader was expecting JSON logs to be at `{seed}/results/{variant}/diagnostics/...`. However, new evaluations using geometric constraints (like `combined_5`) introduced a new layer to the path schema: `{seed}/results/{geo_name}/{variant}/diagnostics/...`. 
+The data loader was hardcoded to look for JSON logs at `{seed}/results/{variant}/diagnostics/...`. However, new evaluations using geometric constraints (like `combined_5`) introduced an arbitrary new layer to the path schema: `{seed}/results/{geo_name}/{variant}/diagnostics/...`. 
 
-Because the `DataLoader` did not account for this `geo_name` layer, it incorrectly parsed the directory structure, resulting in mass candidate loading failures (Candidates A, C, D, E, F, G, J) and returning `0.0` for new constraint metrics.
+Because the `DataLoader` did not account for this `geo_name` layer, it incorrectly parsed the directory structure, resulting in mass candidate loading failures (Candidates A, C, D, E, F, G, J) and returning `0.0` for new constraint metrics. 
 
 ## Fix Summary
-A fragile directory-guessing heuristic was avoided in favor of an explicit, backward-compatible, pipeline-wide parameter (`geo_variant`). This explicit parameter ensures that the data loader mirrors the exact path generation logic used by `eval_fm_visual_aligning.py` when it saves results.
+A fully robust **Auto-Retrieval** system was implemented in `data_loader.py` to seamlessly flatten any nested directory structure.
 
-| File | Changes Made |
+| Component | Implementation Details |
 |------|--------------|
-| `data_loader.py` | `load_results()` now accepts a `geo_variant=None` parameter. When provided, it steps into `results/{geo_variant}/` before discovering variant folders. If `None`, it defaults to the old flat schema. |
-| `batch_data_loader.py` | Added `geo_variant` to the constructor and passed it down to every `DataLoader.load_results()` invocation. |
-| `main_da_batch.py` | Added the `--geo-variant` CLI argument and wired it to `BatchDataLoader`. |
-| `run_da_batch_visual_aligning.sh` | Added an optional `$3` parameter mapping to `GEO_VARIANT`. Safely defaults to empty, preserving compatibility for all legacy runs. |
+| `data_loader.py` | Uses a deep recursive search (`glob.glob('**/diagnostics', recursive=True)` for JSON, or `**/*.npz` for NPZ) to find all actual data targets regardless of depth. |
+| **Dynamic Variant Keys** | The relative path from the `results/` folder (e.g., `combined_5/dpcc-c`) is extracted and used as the unique variant key. This handles runs that contain multiple active geometric constraints simultaneously without collision. |
+| **Zero Configuration** | No CLI flags or bash script changes are required. The script automatically traverses nested structures for newer runs while seamlessly supporting flat structures from older runs. |
 
 ## Usage
-To evaluate runs that include a geometric constraint layer (e.g., `combined_5`), explicitly pass it as the 3rd argument to the slurm bash script:
+No new flags or parameters are needed! The original batch command now works flawlessly across all candidate schemas:
 ```bash
-sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json combined_5
+sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json
 ```
