@@ -537,29 +537,117 @@ def get_checked(cls):
 # ======================== U_2: Dynamic Compare ========================
 cmp_fig = None
 
+# Hotfix-1: mapping from compare-dropdown y_col keys to metric names in df_agg
+_CMP_METRIC_MAP = {
+    'final_xy_dist_m':     'context_final_xy_dist',
+    'mean_dist_m':         'mean_dist_per_rollout',
+    'constraint_sat_rate': 'exec_constraint_sat_rate',
+    'max_bounds_viol_m':   'exec_max_bounds_viol_m',
+    'max_halfspace_viol_m':'exec_max_halfspace_viol_m',
+    'phys_err_m':          'max_phys_error_per_rollout',
+    'avg_time_s':          'avg_time',
+}
+
 def populate_compare_variants():
-    if df_roll is None:
+    # Hotfix-1: fallback to df_agg variants when per-rollout CSV absent
+    if df_roll is not None:
+        vcol = 'variant' if 'variant' in df_roll.columns else None
+        if vcol is None:
+            return
+        variants = sorted(df_roll[vcol].unique())
+    elif df_agg is not None:
+        variants = sorted(df_agg['variant'].unique())
+    else:
         return
-    vcol = 'variant' if 'variant' in df_roll.columns else None
-    if vcol is None:
-        return
-    variants = sorted(df_roll[vcol].unique())
     document.getElementById('cmp-variant-list').innerHTML = ''.join(
         [f'<div class="checkbox-item"><input type="checkbox" class="cmp-var-check" value="{v}" checked><span>{v}</span></div>'
          for v in variants])
 
 
 async def trigger_compare(event=None):
-    global df_roll, cmp_fig
-    if df_roll is None:
-        document.getElementById('cmp-plot-area').innerHTML = '<p style="color:#c62828">No per-rollout CSV loaded.</p>'
-        return
-    y_col = document.getElementById('cmp-metric-y').value
-    x_col = document.getElementById('cmp-metric-x').value
-    chart = window.cmpChartType or 'scatter'
+    global df_roll, df_agg, cmp_fig
+    y_col    = document.getElementById('cmp-metric-y').value
+    x_col    = document.getElementById('cmp-metric-x').value
+    chart    = window.cmpChartType or 'scatter'
     sel_vars = get_checked('cmp-var-check')
+    colors   = ['#c62828','#1565c0','#2e7d32','#ef6c00','#6a1b9a','#00838f','#d81b60','#5d4037']
     if not sel_vars:
         return
+
+    # ------------------------------------------------------------------
+    # Hotfix-1: AGGREGATED FALLBACK — use df_agg when df_roll is absent
+    # ------------------------------------------------------------------
+    if df_roll is None:
+        if df_agg is None:
+            document.getElementById('cmp-plot-area').innerHTML = '<p style="color:#c62828">No data loaded. Click SYNC_SOURCE first.</p>'
+            return
+        agg_metric = _CMP_METRIC_MAP.get(y_col)
+        if agg_metric is None:
+            document.getElementById('cmp-plot-area').innerHTML = f'<p style="color:#c62828">No mapping for {y_col} in aggregated data.</p>'
+            return
+        sub = df_agg[(df_agg['metric'] == agg_metric) & df_agg['variant'].isin(sel_vars)].copy()
+        if sub.empty:
+            document.getElementById('cmp-plot-area').innerHTML = f'<p style="color:#c62828">No data for metric: {agg_metric}. Old eval format?</p>'
+            return
+        all_zero = (sub['mean'].abs() < 1e-9).all()
+        plt.close('all')
+        fig, ax = plt.subplots(figsize=(10, 6))
+        actual_chart = chart
+        if chart == 'box':
+            ax.text(0.5, 0.58, 'BOX requires per-rollout CSV', ha='center', va='center',
+                    transform=ax.transAxes, fontsize=11, color='#888')
+            ax.text(0.5, 0.48, 'Showing BAR (aggregated means) instead', ha='center', va='center',
+                    transform=ax.transAxes, fontsize=9, color='#aaa')
+            actual_chart = 'bar'
+        if actual_chart == 'scatter':
+            cands = sorted(sub['Candidate'].unique())
+            cand_idx = {c: i for i, c in enumerate(cands)}
+            for i, v in enumerate(sel_vars):
+                vd = sub[sub['variant'] == v]
+                if vd.empty: continue
+                xs = [cand_idx[c] for c in vd['Candidate']]
+                ax.scatter(xs, vd['mean'].values, label=v, alpha=0.8, s=60,
+                           color=colors[i % len(colors)], edgecolors='k', linewidths=0.5)
+                ax.errorbar(xs, vd['mean'].values, yerr=vd['std'].values,
+                            fmt='none', color=colors[i % len(colors)], alpha=0.35, capsize=3)
+            ax.set_xticks(list(range(len(cands))))
+            ax.set_xticklabels(cands, fontsize=9)
+            ax.set_xlabel('Candidate')
+            ax.set_ylabel(y_col)
+        elif actual_chart == 'bar':
+            means = sub.groupby('variant')['mean'].mean().reindex(sel_vars).dropna()
+            stds  = sub.groupby('variant')['std'].mean().reindex(sel_vars).fillna(0)
+            x_pos = range(len(means))
+            ax.bar(x_pos, means.values, yerr=stds.values, capsize=4,
+                   color=[colors[i % len(colors)] for i in range(len(means))],
+                   edgecolor='k', alpha=0.85)
+            ax.set_xticks(list(x_pos))
+            ax.set_xticklabels(means.index, rotation=30, ha='right', fontsize=8)
+            ax.set_ylabel(y_col)
+        ax.set_title(f'Compare: {y_col}  [AGGREGATED MODE — no per-rollout CSV]',
+                     fontsize=10, fontweight='bold', color='#555')
+        ax.legend(fontsize=7, loc='best')
+        ax.grid(True, alpha=0.2)
+        plt.tight_layout()
+        cmp_fig = fig
+        area = document.getElementById('cmp-plot-area')
+        area.innerHTML = ''
+        display(fig, target='cmp-plot-area')
+        smry = sub.groupby('variant')['mean'].mean()
+        best_v = smry.idxmin() if any(k in y_col for k in ('dist','viol','err','time')) else smry.idxmax()
+        zero_warn = ' &nbsp;<span style="color:#e65100;font-size:10px">[WARNING: all 0.0 — old eval format missing this metric]</span>' if all_zero else ''
+        card = (f'<b>BEST {y_col}:</b> {best_v} = {smry[best_v]:.4f}'
+                f' &nbsp;|&nbsp; <i style="color:#888;font-size:10px">AGGREGATED MODE — batch summary data, not per-rollout</i>{zero_warn}')
+        el = document.getElementById('cmp-summary')
+        el.innerHTML = card
+        el.style.background = '#fff3e0'
+        el.style.display = 'block'
+        document.getElementById('cmp-download-btn').style.display = 'block'
+        return
+
+    # ------------------------------------------------------------------
+    # Original path — per-rollout CSV available (df_roll is not None)
+    # ------------------------------------------------------------------
     sub = df_roll[df_roll['variant'].isin(sel_vars)].copy()
     if y_col not in sub.columns:
         document.getElementById('cmp-plot-area').innerHTML = f'<p style="color:#c62828">Column {y_col} not in CSV. Re-run DA pipeline with U_2 reporter.</p>'
@@ -570,7 +658,6 @@ async def trigger_compare(event=None):
     sub = sub.dropna(subset=[y_col, x_col])
     plt.close('all')
     fig, ax = plt.subplots(figsize=(10, 6))
-    colors = ['#c62828','#1565c0','#2e7d32','#ef6c00','#6a1b9a','#00838f','#d81b60','#5d4037']
     if chart == 'scatter':
         for i, v in enumerate(sel_vars):
             vd = sub[sub['variant']==v]
@@ -582,7 +669,7 @@ async def trigger_compare(event=None):
         means = sub.groupby('variant')[y_col].mean().reindex(sel_vars).dropna()
         stds  = sub.groupby('variant')[y_col].std().reindex(sel_vars).dropna()
         x_pos = range(len(means))
-        bars = ax.bar(x_pos, means.values, yerr=stds.values, capsize=4, color=[colors[i%len(colors)] for i in range(len(means))], edgecolor='k')
+        ax.bar(x_pos, means.values, yerr=stds.values, capsize=4, color=[colors[i%len(colors)] for i in range(len(means))], edgecolor='k')
         ax.set_xticks(list(x_pos))
         ax.set_xticklabels(means.index, rotation=30, ha='right', fontsize=8)
         ax.set_ylabel(y_col)
@@ -603,7 +690,6 @@ async def trigger_compare(event=None):
     area = document.getElementById('cmp-plot-area')
     area.innerHTML = ''
     display(fig, target='cmp-plot-area')
-    # Summary card
     smry = sub.groupby('variant')[y_col].agg(['mean','std','min','max'])
     best_v = smry['mean'].idxmin() if 'dist' in y_col or 'viol' in y_col or 'err' in y_col else smry['mean'].idxmax()
     card = f'<b>BEST {y_col}:</b> {best_v} = {smry.loc[best_v,"mean"]:.4f} (std={smry.loc[best_v,"std"]:.4f})'
