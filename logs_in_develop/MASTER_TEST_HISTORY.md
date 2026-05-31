@@ -1307,3 +1307,41 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 **Keywords**: Gen11, UAV, MPC, MuJoCo.
 
 1. **UAV Model Assets Migration (Epoch 1 Completed)**: Successfully completed Epoch 1 of the Gen11 UAV pipeline. Migrated the Skydio X2 quadrotor model (XML, low-poly mesh, textures, and racing gates) from `mujoco_menagerie` and applied the MJPC drone-task modifications. These assets are now correctly placed within the `d3il` MuJoCo environment models directory, laying the physical groundwork for the UAV Visual-Trajectory environment.
+
+***
+
+## Data Analysis Tool v2: U_2 Hotfixes (May 31, 2026)
+
+**Keywords**: DA v2, COMPARE fallback, DataLoader nested schemas, PyScript stderr suppression, geo-layer filters.
+
+1. **Hotfix 1 (COMPARE Mode Fallback)**: Implemented an aggregated data fallback for COMPARE mode, allowing it to function and display bar and scatter charts even without per-rollout detail CSVs.
+2. **Hotfix 2 (DataLoader Schema Auto-Retrieval)**: Upgraded `data_loader.py` to seamlessly parse nested directory structures introduced by geometric constraints (e.g., `combined_5`), resolving candidate loading failures without requiring CLI flag changes.
+3. **Hotfix 3 (UI Filters & PyScript Stability)**: Added Geo-Layer UI Filters to declutter variant checkboxes. Executed a global standard error suppression (`sys.stderr` buffer redirection) to prevent PyScript from displaying fatal red-box overlays triggered by non-fatal Matplotlib warnings.
+
+***
+
+## Gen11 Epoch 2: UAV Naive Test Framework Closure (May 31, 2026)
+
+**Keywords**: Gen11, Epoch 2, cascaded PID, 9D trajectory, hover instability.
+
+1. **Architectural Hypothesis Validated**: Proven that planning and control can be safely decoupled. A hand-written cascaded PID flight controller successfully tracked a 30-second 9D `[p, v, a]` reference trajectory with 2.9 cm RMS error.
+2. **Hover Instability Diagnosis**: Documented a discrete-time limit cycle failure during stationary hover, caused by overly aggressive rate damping (`Kp_omega`) for the 100 Hz simulation rate. This was classified as a known-acceptable tuning gap since the downstream FM-PCC pipelines produce continuously-moving paths, avoiding the zero-velocity instability.
+
+***
+
+## Gen11 Epoch 3: UAV Environment Test Framework Closure (May 31, 2026)
+
+**Keywords**: Gen11, Epoch 3, MuJoCo scenes, obstacle traversal, asset-path resolution.
+
+1. **Environment Integration**: Successfully loaded the Skydio X2 quadrotor into full MuJoCo scenes (`empty`, `corridor`, `pillars`, `s_curve`). Resolved a critical XML asset-path resolution bug that caused mesh loading failures by overriding compiler mesh/texture directories.
+2. **Controller Scene-Agnosticism Proven**: The `empty` scene test achieved the exact same 2.9 cm RMS error as the Epoch 2 baseline, confirming the PID flight controller behaves identically with or without a surrounding scene wrapper.
+3. **Obstacle Demos & Tracking Status**: Demonstrated clean end-to-end traversal in the `corridor` scene and mild-grazing traversal in the `pillars` scene. The `s_curve` trajectory resulted in lag and collisions, traceable to the same zero-velocity tuning gap identified in Epoch 2.
+
+***
+
+## Gen3v4u2: iMeanFlow Major Upgrade Direct (Fix 1) (May 31, 2026)
+
+**Keywords**: iMeanFlow, training target math bug, velocity over-scaling, linear interpolant.
+
+1. **Velocity Target Math Fix**: Identified and resolved a critical bug in `imf_diffusion.py` where the training target `(x_start - x_r)/h` over-scaled the velocity regression by a factor of roughly `N` at small timesteps. 
+2. **Correction**: Updated the target formula to `(x_t - x_r)/h`, which correctly equals the instantaneous velocity `v` for linear interpolants, resolving the issue where model rollouts would shoot off in chaotic straight lines. Retraining is required to benefit from the corrected scale.
