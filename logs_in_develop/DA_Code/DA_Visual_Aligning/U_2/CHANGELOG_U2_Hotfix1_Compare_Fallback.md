@@ -1,4 +1,4 @@
-# U_2 Hotfix-1 — COMPARE Mode Aggregated Fallback
+# U_2 Hotfix-1 & Hotfix-2 — COMPARE Fallback & DataLoader Schema Updates
 
 **Date**: 2026-05-31  
 **File**: `Visualizer_Visual_Aligning/index.html`  
@@ -88,7 +88,36 @@ Maps the COMPARE dropdown `y_col` values to metric names in `va_candidates_dynam
 
 ## Remaining Limitations (not fixed by this hotfix)
 
-1. `context_final_xy_dist` (and all `exec_*` metrics) are **0.0** for candidates B, H, I, K because the eval code that produced their JSONs predates the new schema. The hotfix correctly shows the zero-value warning for these.
-2. Candidates A, C, D, E, F, G, J failed loading entirely (old JSON format). They do not appear in COMPARE.
+1. ~~`context_final_xy_dist` (and all `exec_*` metrics) are **0.0** for candidates B, H, I, K because the eval code that produced their JSONs predates the new schema. The hotfix correctly shows the zero-value warning for these.~~ *(Resolved by Hotfix 2: The pipeline now successfully reads the nested schema for all candidates.)*
+2. ~~Candidates A, C, D, E, F, G, J failed loading entirely (old JSON format). They do not appear in COMPARE.~~ *(Resolved by Hotfix 2: Explicit `--geo-variant` support fixes discovery of these candidates.)*
 3. BOX chart in aggregated mode degrades to BAR — true distribution plots require `per_rollout_detail.csv`.
 4. COMPARE SCATTER in aggregated mode shows one point per Candidate, not one point per rollout — granularity is lower.
+
+---
+
+# U_2 Hotfix-2 — DataLoader Explicit Geo-Variant Schema Support
+
+**Date**: 2026-05-31  
+**Files**: `data_loader.py`, `batch_data_loader.py`, `main_da_batch.py`, `run_da_batch_visual_aligning.sh`  
+**Scope**: Pipeline backend data loading fix  
+
+## Problem
+The data loader was expecting JSON logs to be at `{seed}/results/{variant}/diagnostics/...`. However, new evaluations using geometric constraints (like `combined_5`) introduced a new layer to the path schema: `{seed}/results/{geo_name}/{variant}/diagnostics/...`. 
+
+Because the `DataLoader` did not account for this `geo_name` layer, it incorrectly parsed the directory structure, resulting in mass candidate loading failures (Candidates A, C, D, E, F, G, J) and returning `0.0` for new constraint metrics.
+
+## Fix Summary
+A fragile directory-guessing heuristic was avoided in favor of an explicit, backward-compatible, pipeline-wide parameter (`geo_variant`). This explicit parameter ensures that the data loader mirrors the exact path generation logic used by `eval_fm_visual_aligning.py` when it saves results.
+
+| File | Changes Made |
+|------|--------------|
+| `data_loader.py` | `load_results()` now accepts a `geo_variant=None` parameter. When provided, it steps into `results/{geo_variant}/` before discovering variant folders. If `None`, it defaults to the old flat schema. |
+| `batch_data_loader.py` | Added `geo_variant` to the constructor and passed it down to every `DataLoader.load_results()` invocation. |
+| `main_da_batch.py` | Added the `--geo-variant` CLI argument and wired it to `BatchDataLoader`. |
+| `run_da_batch_visual_aligning.sh` | Added an optional `$3` parameter mapping to `GEO_VARIANT`. Safely defaults to empty, preserving compatibility for all legacy runs. |
+
+## Usage
+To evaluate runs that include a geometric constraint layer (e.g., `combined_5`), explicitly pass it as the 3rd argument to the slurm bash script:
+```bash
+sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json combined_5
+```

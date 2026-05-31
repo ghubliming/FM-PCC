@@ -31,14 +31,21 @@ class DataLoader:
         self.loading_log  = []
 
     # ------------------------------------------------------------------
-    def load_results(self, root_path, seed=None, variants=None):
+    def load_results(self, root_path, seed=None, variants=None, geo_variant=None):
         """
         Load result files for one seed.
 
         Args:
-            root_path: path to model_exp_name folder (contains seed subfolders)
-            seed:      seed number (default: ACTIVE_SEED)
-            variants:  list of variant names (default: all discovered)
+            root_path:   path to model_exp_name folder (contains seed subfolders)
+            seed:        seed number (default: ACTIVE_SEED)
+            variants:    list of variant names (default: all discovered)
+            geo_variant: geometric constraint subfolder name (e.g. 'combined_5').
+                         When provided the loader steps into
+                         {seed}/results/{geo_variant}/ before discovering variants.
+                         This matches the eval script output schema:
+                           results/{geo_name}/{variant}/diagnostics/rollout_*_stats.json
+                         When None (default) the old flat schema is used:
+                           results/{variant}/diagnostics/rollout_*_stats.json
 
         Returns:
             {variant: metrics_dict} where array values have shape (N_rollouts,)
@@ -54,6 +61,16 @@ class DataLoader:
         if not os.path.exists(seed_results_path):
             logger.warning(f'Results dir not found: {seed_results_path}')
             return {}
+
+        # Step into the geo-constraint subfolder when explicitly requested.
+        # This matches the eval script schema: results/{geo_name}/{variant}/...
+        if geo_variant is not None:
+            geo_path = os.path.join(seed_results_path, geo_variant)
+            if not os.path.exists(geo_path):
+                logger.warning(f'geo_variant folder not found: {geo_path}')
+                return {}
+            logger.info(f'Using geo_variant layer: {geo_variant}')
+            seed_results_path = geo_path
 
         # Auto-discover variants if not specified
         if variants is None:
