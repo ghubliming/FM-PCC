@@ -262,8 +262,16 @@ class iMeanFlowODE(nn.Module):
         while h_expand.ndim < x_start.ndim:
             h_expand = h_expand.unsqueeze(-1)
 
-        # Mean flow target: (x_data - x_r) / h  — average velocity from x_r to x_data over interval h
-        u_target = (x_start - x_r) / (h_expand + 1e-8)
+        # Mean flow target: (x_t - x_r) / h  — average instantaneous velocity over interval [r, t].
+        # For the linear interpolant q_sample(τ) = (1−τ)·noise + τ·x_data this equals
+        # the constant v = x_data − noise (since dx/dτ is constant for a linear path),
+        # which matches the iMeanFlow definition u(x_t, t, h) := (1/h) ∫_{t−h}^t v dτ.
+        # FIX-1: previous code had (x_start − x_r)/h = ((1−r)/h)·v, which over-scales
+        # the target by ~N at small t for N-step Euler sampling and causes the trained
+        # model to output velocities so large that the first sampling Euler step lands
+        # outside the data manifold (chaotic-straight-line rollouts). See
+        # logs_in_develop/Gen3v4_imf/Gen3v4u2_Major_Upgrade_direct/fix_1/INVESTIGATION.md
+        u_target = (x_t - x_r) / (h_expand + 1e-8)
         u_target = apply_conditioning(u_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
         # Instantaneous FM velocity target for the aux (v) branch
