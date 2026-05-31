@@ -1,5 +1,9 @@
 <mujoco model="UAV Empty Scene">
   <include file="../quadrotor_modified.xml"/>
+  <!-- Override the included file's assetdir="assets" because that resolves
+       relative to the TOP-LEVEL XML's dir (here: scenes/), not the included
+       file's dir. Point at the real asset location one level up. -->
+  <compiler meshdir="../assets" texturedir="../assets"/>
 
   <visual>
     <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
