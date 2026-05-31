@@ -14,9 +14,10 @@ logger = logging.getLogger(__name__)
 class BatchDataLoader:
     """Load evaluation data for multiple candidate folders (single seed each)."""
 
-    def __init__(self, verbose=False, source='npz'):
-        self.verbose  = verbose
-        self.source   = source      # passed to each DataLoader
+    def __init__(self, verbose=False, source='npz', geo_variant=None):
+        self.verbose     = verbose
+        self.source      = source       # passed to each DataLoader
+        self.geo_variant = geo_variant  # geo-constraint subfolder (e.g. 'combined_5'), or None
         self.batch_data      = {}   # {letter: {variant: metrics_dict}}
         self.loading_summary = {}
 
@@ -54,6 +55,7 @@ class BatchDataLoader:
                     root_path=info['path'],
                     seed=seed,
                     variants=variants,
+                    geo_variant=self.geo_variant,
                 )
                 self.batch_data[letter]      = candidate_data
                 self.loading_summary[letter] = loader.get_loading_summary()
