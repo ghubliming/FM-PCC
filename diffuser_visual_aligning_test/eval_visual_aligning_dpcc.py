@@ -87,10 +87,17 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
             'x': 6, 'y': 7, 'z': 8}
 
+    # FIX-18.5: slice the obs normalizer to match trajectory_dim - action_dim,
+    # NOT a hardcoded 6. Visual: trajectory_dim=9 → keep obs at 6 (no-op).
+    # Non-visual: trajectory_dim=23 → keep obs at 20 (was: trimmed to 6,
+    # which left the projector with 9-D ranges while constraint bound vectors
+    # are built at full 23-D → broadcast crash at build_matrices line 401).
+    _target_obs_dim = trajectory_dim - 3   # action_dim is hardcoded 3 throughout
     proj_obs_normalizer = obs_normalizer
-    if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > 6:
+    if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > _target_obs_dim:
         from diffuser_visual_aligning.datasets.normalization import LimitsNormalizer as _LN
-        _dummy = np.stack([obs_normalizer.mins[:6], obs_normalizer.maxs[:6]])
+        _dummy = np.stack([obs_normalizer.mins[:_target_obs_dim],
+                           obs_normalizer.maxs[:_target_obs_dim]])
         proj_obs_normalizer = _LN(_dummy)
 
     pad = trajectory_dim - 9

@@ -6,7 +6,7 @@
 - [`INVESTIGATION_REPORT.md`](INVESTIGATION_REPORT.md) — full evidence + line refs
 - [`SEVERITY_AND_RETRAIN_IMPACT.md`](SEVERITY_AND_RETRAIN_IMPACT.md) — what's actually broken vs. what isn't, and what to do with existing checkpoints
 - [`STALE_CONFIG_PATCH.md`](STALE_CONFIG_PATCH.md) — side-patch (`utils.Config` always-overwrite) + one-off regen script for pre-Fix-A `model_config.pkl` left over on disk
-**Scope**: **Four code-level fixes** (18.1 Fix A / 18.2 Fix B / 18.3 Fix C / 18.4 Fix D) + one side-patch (`utils.Config`), so the non-visual `K=1` DPCC train + non-visual DPCC eval + ODE=1 FM eval all run end-to-end. Visual path remains unchanged.
+**Scope**: **Five code-level fixes** (18.1 Fix A / 18.2 Fix B / 18.3 Fix C / 18.4 Fix D / 18.5 Fix E) + one side-patch (`utils.Config`), so the non-visual `K=1` DPCC train + non-visual DPCC eval (all projection variants) + ODE=1 FM eval all run end-to-end. Visual path remains unchanged.
 **Source logs**: `temp/one_shot_run/visual_dpcc`, `temp/one_shot_run/visual_fm`, plus the 2026-05-31 console log captured in [`fix_console_logs`](fix_console_logs) (regen-script execution that produced the fresh `model_config.pkl`) and SLURM job `21046` stderr (the UF-13 broadcast crash that motivated Fix C).
 
 ---
@@ -208,6 +208,59 @@ sub-block remains visual-only as before — that's correctly guarded.
 **Consequence**: non-visual eval now passes the first-replan diagnostic
 and continues into the rollout loop. No effect on visual path.
 
+### Fix E (= 18.5) — eval scripts: `setup_dpcc_projector` slices normalizer to wrong width for 23-D trajectory
+
+**Added**: 2026-05-31 (after Fix D let the first ("diffuser") variant complete a full 5-context rollout; crash moved to the second variant's projector setup).
+
+**Files**:
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (around lines 90-100, inside `setup_dpcc_projector`)
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py`           (around lines 90-100, same function name)
+
+**Symptom prevented**: `ValueError: operands could not be broadcast
+together with shapes (23,) (9,)` at `Projector.build_matrices` line 401
+(`a = bound[0] * (x_max - x_min) / 2`), when the second eval variant
+needs a projector and the trajectory is non-visual (23-D). The first
+variant (`diffuser`) does NOT instantiate a projector, so it ran clean
+through all 5 contexts before the crash on variant 2.
+
+**Root cause**: `setup_dpcc_projector` always sliced `obs_normalizer`
+down to its first 6 dims:
+```python
+proj_obs_normalizer = obs_normalizer
+if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > 6:
+    ... = obs_normalizer.mins[:6] ...   # ← hardcoded 6
+```
+Visual: obs_normalizer is 6-D → no-op. Fine.
+Non-visual: obs_normalizer is 20-D → trimmed to 6-D, leaving the
+projector's `self.normalizer` with `3 act + 6 obs = 9-D` ranges. But the
+halfspace bound vector is built at the full `trajectory_dim = 23` width
+by `formulate_halfspace_constraints`. `(23,) * (9,)` → crash.
+
+**Patch**: derive the slice target from `trajectory_dim - action_dim`
+(=20 for non-visual, =6 for visual), so the slice only fires when the
+normalizer is truly oversized for the trajectory at hand:
+
+```python
+_target_obs_dim = trajectory_dim - 3   # action_dim hardcoded 3 throughout
+proj_obs_normalizer = obs_normalizer
+if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > _target_obs_dim:
+    ...slice to _target_obs_dim...
+```
+
+Why this is safe for the trailing 14 trajectory dims (positions 9-22 in
+non-visual): they carry **zero bound coefficients** from
+`formulate_halfspace_constraints` (which only emits non-zero entries at
+the explicit `_DIM` indices, all in 0-8). So `bound[0] * range = 0 *
+anything = 0` for those positions, contributing nothing to the
+constraint matrix. The slice change keeps PCC's robot-kinematic
+constraints (dims 0-8) bit-identical to before; it only enlarges the
+normalizer so the shape arithmetic works.
+
+**Consequence**: non-visual eval can now build the projector for any
+variant after `diffuser` (`dpcc-r`, `dpcc-c`, `dpcc-t`, post-processing,
+gradient, …). Visual eval is unchanged (the slice condition `len > 6`
+was already false for visual; new condition `len > 6` is still false).
+
 ### What was NOT touched
 
 - `config/aligning-d3il-visual.py` — variants are correct.
@@ -218,6 +271,11 @@ and continues into the rollout loop. No effect on visual path.
 - `Aligning_Sim` (`d3il/simulation/aligning_sim.py`) — non-visual branch
   already worked correctly; Fixes C and D just let the eval driver reach
   it and survive its first-replan diagnostic.
+- `*/sampling/projection.py` — `Projector` and `build_matrices` are
+  correct; the bug was in how the call site sized the normalizer it
+  passed in (Fix E).
+- `formulate_halfspace_constraints` — emits zero-padded bound vectors
+  correctly; the consumer's normalizer just needed to be sized to match.
 - The visual path of any of the above scripts.
 
 ---
@@ -230,8 +288,8 @@ and continues into the rollout loop. No effect on visual path.
 |---|---|---|
 | Modified | `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` | A (= 18.1) |
 | Modified | `fm_visual_aligning_test/train_fm_visual_aligning.py`         | A (= 18.1) |
-| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3), D (= 18.4) |
-| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3), D (= 18.4) |
+| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3), D (= 18.4), E (= 18.5) |
+| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3), D (= 18.4), E (= 18.5) |
 | Modified | `diffuser_visual_aligning/utils/config.py`                    | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
 | Modified | `fm_visual_aligning/utils/config.py`                          | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
 
@@ -253,6 +311,7 @@ and continues into the rollout loop. No effect on visual path.
 - **18.2 (Fix B)** — eval scripts derive `_traj_dim` from the saved normalizer (immune to UF-13).
 - **18.3 (Fix C)** — eval scripts guard the UF-13 record-mode `if_vision` flip on the saved normalizer dim, so a non-visual checkpoint isn't forced into the visual `predict()` path.
 - **18.4 (Fix D)** — eval scripts' first-replan DIAG block aliases `obs_6d_np`/`obs_6d_norm` (visual) vs `obs_20d_np`/`obs_norm` (non-visual) so neither path hits `UnboundLocalError`.
+- **18.5 (Fix E)** — `setup_dpcc_projector` now slices the obs normalizer to `trajectory_dim - action_dim` instead of a hardcoded 6, so the 23-D non-visual trajectory gets matching 20-D obs ranges and the projector's bound × range arithmetic stops broadcast-erroring at variant 2+.
 - **Side-patch (STALE_CONFIG)** — `utils.Config.save()` always overwrites `model_config.pkl`; sibling regen script repairs pre-existing broken checkpoints without re-training.
 
 ---
