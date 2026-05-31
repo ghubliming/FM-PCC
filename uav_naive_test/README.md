@@ -27,4 +27,4 @@ sbatch Slurm_Codes/sbatch/uav_naive/run_naive.sh C 9D       # circle (9-D traj)
 sbatch Slurm_Codes/sbatch/uav_naive/run_naive.sh all        # everything
 ```
 
-Results land in `logs_in_develop/Gen11/Epoch2_env/results/<task_label>/`.
+Results land in `logs/uav_naive/<task_label>/`.

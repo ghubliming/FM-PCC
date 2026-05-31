@@ -140,7 +140,7 @@ Driver logic per task:
    - `mj_step`.
    - Log state, target, control to a list each step.
 5. After loop:
-   - Save logs to `logs_in_develop/Gen11/Epoch2_env/results/task_X_*/log.csv` + `.json` (state per step, target per step, control per step).
+   - Save logs to `logs/uav_naive/task_X_*/log.csv` + `.json` (state per step, target per step, control per step).
    - Compute pass-fail metrics per PREP_PLAN §5 / §8.
    - If `--render`, save a GIF/MP4 from a third-person tracking camera.
 
@@ -237,7 +237,7 @@ Buffer to **8 h** if SE(3) controller becomes necessary.
 
 ## 7. What Success Looks Like at End of Epoch 2
 
-A directory `logs_in_develop/Gen11/Epoch2_env/results/` containing:
+A directory `logs/uav_naive/` containing:
 - Four sub-directories (Task A, B, C-6D, C-9D) each with `log.csv`, `log.json`, `rollout.gif`, `metrics.txt`.
 - Pass/fail status for each task.
 - A locked trajectory format choice (6-D or 9-D) recorded in the changelog with the tracking-RMS comparison that motivated it.
