@@ -16,7 +16,7 @@ Carrying over from Epoch 1 §11.1:
 1. **No LLM-synthesized XML or vendored library code.** Anything brought in from upstream (controller references, MuJoCo Python idioms) comes via `cp` from a known source or is hand-typed from a paper / spec we can cite.
 2. **Code we write ourselves** (cascaded PID, trajectory authoring, driver) is written fresh, but **kept small and reviewable** (each file <300 lines).
 3. **The `Edit` tool is for code edits;** larger structural changes go through `Write` with explicit purpose.
-4. **Reversible:** entire Epoch 2 lives under `temp/uav_naive_test/`, `Slurm_Codes/sbatch/uav_naive/`, and `logs_in_develop/Gen11/Epoch2_env/`. `rm -rf` of those three paths fully undoes Epoch 2.
+4. **Reversible:** entire Epoch 2 lives under `uav_naive_test/`, `Slurm_Codes/sbatch/uav_naive/`, and `logs_in_develop/Gen11/Epoch2_env/`. `rm -rf` of those three paths fully undoes Epoch 2.
 
 ---
 
@@ -25,7 +25,7 @@ Carrying over from Epoch 1 §11.1:
 Exhaustive list. Anything not on this list is out of scope.
 
 ```
-temp/uav_naive_test/
+uav_naive_test/
 ├── __init__.py                      ← empty package marker
 ├── flight_controller.py             ← cascaded PID, ~150 lines
 ├── trajectories.py                  ← hand-coded Tasks A/B/C, ~100 lines
@@ -62,7 +62,7 @@ Before writing controller / trajectories, prove the patched XML actually loads o
 
 **Action:** create a minimal one-file script, submit to Slurm.
 
-`temp/uav_naive_test/smoke_load.py` (~15 lines):
+`uav_naive_test/smoke_load.py` (~15 lines):
 - `import mujoco`
 - `mujoco.MjModel.from_xml_path(<path to quadrotor_modified.xml>)`
 - `mujoco.MjData(model)`
@@ -79,7 +79,7 @@ Before writing controller / trajectories, prove the patched XML actually loads o
 
 ### Phase 2-β — Cascaded PID controller
 
-**Action:** write `temp/uav_naive_test/flight_controller.py`.
+**Action:** write `uav_naive_test/flight_controller.py`.
 
 Public API the driver will call:
 ```
@@ -109,7 +109,7 @@ Initial gains: hand-tune on Task A. Start with `Kp_pos = [4, 4, 8]`, `Kd_pos = [
 
 ### Phase 2-γ — Trajectories module
 
-**Action:** write `temp/uav_naive_test/trajectories.py`.
+**Action:** write `uav_naive_test/trajectories.py`.
 
 Three trajectory generators, each returning a callable `traj(t) -> (p, v, a, yaw)`:
 
@@ -121,7 +121,7 @@ Pure functions, no MuJoCo dependency. Should be unit-checkable by printing value
 
 ### Phase 2-δ — Driver
 
-**Action:** write `temp/uav_naive_test/run_naive.py`.
+**Action:** write `uav_naive_test/run_naive.py`.
 
 CLI:
 ```
@@ -156,7 +156,7 @@ Standard template, mirrors `Slurm_Codes/sbatch/visual_avoiding/collect_visual_av
 - Resolves `$REPO` via `$SLURM_SUBMIT_DIR` walking up to the marker dir (same idiom as the visual_avoiding sbatch).
 - Args: `$1 = task (A|B|C|all)`, `$2 = trajectory-format (6D|9D, default 9D, only meaningful for C)`.
 
-Inside: activates `FMPCC` conda env, runs `python temp/uav_naive_test/run_naive.py …` once per task.
+Inside: activates `FMPCC` conda env, runs `python uav_naive_test/run_naive.py …` once per task.
 
 ### Phase 2-ζ — Run + iterate
 
@@ -254,7 +254,7 @@ Before I start writing `flight_controller.py`:
 - [ ] PREP_PLAN.md trajectory-format decision (6-D, 9-D, or both) confirmed
 - [ ] Controller choice (cascaded PID vs SE(3)) confirmed — default cascaded PID
 - [ ] SLURM resource limits confirmed acceptable (1 GPU, ~30 min walltime)
-- [ ] OK to use `temp/uav_naive_test/` as the home directory (not `tools/`, not `scripts/`)
+- [ ] OK to use `uav_naive_test/` as the home directory (not `tools/`, not `scripts/`)
 - [ ] OK to write the SLURM script under `Slurm_Codes/sbatch/uav_naive/`
 
 Defaults are applied where the user hasn't specified. Ready to execute Phase 2-α on greenlight.

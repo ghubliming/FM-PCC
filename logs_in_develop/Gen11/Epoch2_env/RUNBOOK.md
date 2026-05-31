@@ -141,7 +141,7 @@ If only A and B passed but C failed in both formats: still a partial success. Do
 ## 6. Reversal (if Epoch 2 results unusable)
 
 ```bash
-rm -rf temp/uav_naive_test
+rm -rf uav_naive_test
 rm -rf Slurm_Codes/sbatch/uav_naive
 rm -rf logs_in_develop/Gen11/Epoch2_env/results
 ```
