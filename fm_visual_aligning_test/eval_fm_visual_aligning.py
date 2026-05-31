@@ -1902,10 +1902,21 @@ if __name__ == '__main__':
 
                 _if_vision_config = getattr(args, 'if_vision', True)
                 if_vision = _if_vision_config
+                # FIX-18-followup: see same comment in eval_visual_aligning_dpcc.py.
+                # Guard UF-13 flip on the saved normalizer dim — only auto-enable
+                # visual mode when the checkpoint actually has an image encoder.
+                _ckpt_is_visual = (obs_normalizer is not None
+                                   and obs_normalizer.mins.shape[0] == 6)
                 if not if_vision and args_cli.record != 'none':
-                    if_vision = True
-                    print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
-                          'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
+                    if _ckpt_is_visual:
+                        if_vision = True
+                        print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
+                              'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
+                    else:
+                        print('[ eval ] NOTE: record_mode is active but checkpoint is non-visual '
+                              f'(obs_normalizer dim = {obs_normalizer.mins.shape[0]}). '
+                              'Cannot auto-enable visual mode (this model has no image encoder); '
+                              'proceeding with non-visual rollouts. No GIFs/videos will be captured.')
 
                 sim = Aligning_Sim(
                     seed=seed, device=args.device,
