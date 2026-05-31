@@ -1568,11 +1568,19 @@ class VisualAgentWrapper:
                 ]
                 for h_i, row in enumerate(full_norm):
                     diag_lines.append(f'  step {h_i:2d}: {np.round(row, 4)}')
-                # obs_6d health (Issue 4)
+                # obs health (Issue 4) — branch on if_vision because the visual
+                # and non-visual paths name their obs tensors differently.
+                if if_vision:
+                    _diag_obs_raw  = obs_6d_np      # (6,) [des_c_pos | c_pos]
+                    _diag_obs_norm = obs_6d_norm    # (6,)
+                else:
+                    _diag_obs_raw  = obs_20d_np     # (20,)
+                    _diag_obs_norm = obs_norm       # (20,)
                 diag_lines += [
-                    f'[ DIAG obs ] des_c_pos={np.round(obs_6d_np[:3], 4)}  '
-                    f'c_pos={np.round(obs_6d_np[3:], 4)}',
-                    f'[ DIAG obs ] obs_6d_norm={np.round(obs_6d_norm, 4)}',
+                    f'[ DIAG obs ] des_c_pos={np.round(_diag_obs_raw[:3], 4)}  '
+                    f'c_pos={np.round(_diag_obs_raw[3:6], 4)}',
+                    f'[ DIAG obs ] obs_norm (dim={_diag_obs_norm.shape[0]})='
+                    f'{np.round(_diag_obs_norm, 4)}',
                 ]
                 # image health (Issue 5) — visual only
                 if if_vision:
