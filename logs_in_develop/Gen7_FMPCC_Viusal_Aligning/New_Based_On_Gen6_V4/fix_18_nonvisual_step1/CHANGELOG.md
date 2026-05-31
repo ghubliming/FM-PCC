@@ -147,10 +147,17 @@ if not if_vision and args_cli.record != 'none':
               'proceeding with non-visual rollouts. No GIFs/videos will be captured.')
 ```
 
-**Consequence**: eval on a non-visual checkpoint with `--record all`
-now succeeds and produces metrics + logs, but **no GIFs** (which is
-correct: there's no image encoder in the model to render through).
-If you want GIFs, you must train a visual checkpoint.
+**Consequence (initially)**: eval on a non-visual checkpoint with
+`--record all` succeeded and produced metrics + logs, but no GIFs
+(there's no image encoder in the model to render through). This was
+considered acceptable since the alternative was the crash above.
+
+**Superseded by Fix F (=18.6)**: the "no GIFs for non-visual" caveat
+was eliminated by adding `record_sim_frame(env)` — an env-render hook
+independent of the policy's image-handling capability. After Fix-18.6,
+genuine 23-D non-visual eval ALSO produces GIFs. See §"Fix F (= 18.6)
+HOTFIX" below for details. The NOTE message printed by Fix-18.3 was
+updated to reflect this.
 
 **Out-of-band patch shipped alongside Fix C** (see
 [`STALE_CONFIG_PATCH.md`](STALE_CONFIG_PATCH.md)): `utils.Config.save()`
@@ -207,6 +214,76 @@ sub-block remains visual-only as before — that's correctly guarded.
 
 **Consequence**: non-visual eval now passes the first-replan diagnostic
 and continues into the rollout loop. No effect on visual path.
+
+### Fix F (= 18.6) HOTFIX — non-visual GIF capture via env-render hook
+
+**Added**: 2026-05-31 (after user observed: "DPCC K=1 non-visual eval produces no GIFs, but FM non-visual DOES produce GIFs — inconsistent").
+
+**Files**:
+- `d3il/simulation/aligning_sim.py` (around line 137-142, non-visual rollout branch)
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (new `record_sim_frame` method on Policy; updated Fix-18.3 NOTE message)
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py` (same)
+
+**Symptom prevented**: Asymmetric GIF behavior across non-visual eval runs.
+The legacy FM `_VFalse_` checkpoint (structurally 9-D visual) still
+produced GIFs because UF-13 routed it through the visual `predict()`
+path, which has its own frame capture buffer. The new DPCC K=1 `_VFalse_`
+checkpoint (genuinely 23-D non-visual, post-Fix-18.1) produced no GIFs
+because Fix-18.3 correctly kept UF-13 off (avoiding the (1,6) vs (20,)
+crash), but the non-visual `Aligning_Sim` branch had no frame-capture
+mechanism at all.
+
+**Root cause**: GIF capture in the codebase was historically baked
+INSIDE the visual `predict()` path (next to where bp/inhand images are
+already being constructed for the model). The non-visual rollout never
+had a parallel mechanism — it didn't need one when "non-visual" was
+always actually-visual-with-flag-confusion. Once Fix-18.1 enabled
+genuine 23-D non-visual training, the gap became visible.
+
+**Patch**: add a render-from-sim hook decoupled from the policy:
+
+1. **`d3il/simulation/aligning_sim.py`** — call
+   `agent.record_sim_frame(env)` after every `env.step()` in the
+   non-visual branch (visual branch unchanged). Hook is optional via
+   `hasattr` check so Aligning_Sim stays compatible with agents that
+   don't implement it.
+
+2. **Both eval scripts** — add `Policy.record_sim_frame(env)`. It
+   pulls `env.bp_cam.get_image(...)` + `env.inhand_cam.get_image(...)`
+   directly from MuJoCo (both cams exist on Robot_Push_Env regardless
+   of the env's `if_vision` flag), formats a side-by-side BGR→RGB
+   frame with a step-counter overlay (matching the visual branch's
+   format), and appends to `self.video_frames`.
+
+3. **The existing save path** in `update_rollout_info` (`if
+   self.record_mode != 'none' and self.video_frames: imageio.mimsave(...)`)
+   automatically picks up the new frames — no save-side change needed.
+
+4. **Updated Fix-18.3 NOTE message** in both eval scripts: removes
+   "No GIFs/videos will be captured" claim (now stale; was always
+   conditional on the missing hook).
+
+**Consequence**: non-visual eval (both DPCC and FM, at any K/ODE step
+count) now produces GIFs of the actual rollout, captured from the sim's
+own cameras independent of whether the policy consumed them. Behavior
+table now uniform:
+
+| Checkpoint type | UF-13 fires? | GIF source | Result |
+|---|---|---|---|
+| Visual `_VTrue_` | N/A (already visual) | visual `predict()` capture buffer | ✅ GIF |
+| Legacy 9-D `_VFalse_` (cosmetic non-visual) | Yes (Fix-18.3) | visual `predict()` capture buffer | ✅ GIF |
+| Genuine 23-D `_VFalse_` (Fix-18.1 path) | No (Fix-18.3) | **env-render hook (Fix-18.6)** | ✅ GIF |
+
+**Safety**:
+- `record_sim_frame` is a no-op if `record_mode == 'none'`.
+- All env calls wrapped in `try/except` so a misbehaving camera
+  cannot crash a rollout.
+- Does NOT alter policy state, predictions, or metrics — pure
+  side-channel rendering.
+- Visual rollout path is untouched (its existing capture inside
+  visual `predict()` is unchanged; the new hook also doesn't fire
+  there because the visual branch in `aligning_sim.py` was not
+  modified).
 
 ### Fix E (= 18.5) — eval scripts: `setup_dpcc_projector` slices normalizer to wrong width for 23-D trajectory
 
@@ -288,8 +365,9 @@ was already false for visual; new condition `len > 6` is still false).
 |---|---|---|
 | Modified | `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` | A (= 18.1) |
 | Modified | `fm_visual_aligning_test/train_fm_visual_aligning.py`         | A (= 18.1) |
-| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3), D (= 18.4), E (= 18.5) |
-| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3), D (= 18.4), E (= 18.5) |
+| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3), D (= 18.4), E (= 18.5), F-hotfix (= 18.6) |
+| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3), D (= 18.4), E (= 18.5), F-hotfix (= 18.6) |
+| Modified | `d3il/simulation/aligning_sim.py` | F-hotfix (= 18.6) — one-line `record_sim_frame` hook in non-visual branch |
 | Modified | `diffuser_visual_aligning/utils/config.py`                    | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
 | Modified | `fm_visual_aligning/utils/config.py`                          | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
 
@@ -360,3 +438,42 @@ Not applied as code in this fix; tracked here for follow-up:
 
 Documentation-only fix. **Sync to Gen6V4 is parallel**, not a code copy. See
 [`Gen6V4_dataset_upgrade_visual_dpcc/Gen7_fix18_applied/CHANGELOG.md`](../../../Gen6_dpcc_Engine_for_visual_aligning/Gen6V4_dataset_upgrade_visual_dpcc/Gen7_fix18_applied/CHANGELOG.md).
+
+---
+
+## Final Post-Fix-18 Audit (2026-05-31)
+
+Every fix 18.1 through 18.6 (plus the STALE_CONFIG side-patch) was
+re-audited at the time of the Fix-18.6 commit. Conclusion: **none are
+hallucinated, none can be safely reverted.**
+
+| Fix | Without it | Verdict |
+|---|---|---|
+| 18.1 train obs_dim override | Non-visual training crashes at first conv (model 9-D, data 23-D) | Load-bearing |
+| 18.2 eval `_traj_dim` from normalizer | Defensive only — if `args.if_vision` matches the checkpoint, old `9 if if_vision else 23` works. Could in principle be reverted, but cleanup gain is 3 lines and it adds a real robustness margin | Defensive — kept |
+| 18.3 UF-13 normalizer-dim guard | Genuine 23-D non-visual eval crashes with `(1,6) vs (20,)` broadcast (UF-13 forces visual predict path on a model that can't consume 6-D obs against 20-D normalizer) | Load-bearing |
+| 18.4 DIAG var alias | Non-visual predict() crashes at first-replan diagnostic with UnboundLocalError | Load-bearing |
+| 18.5 projector slice `_target_obs_dim` | Projector setup for variant 2+ crashes with `(23,) vs (9,)` (obs normalizer trimmed to 6-D vs 23-D bound vectors) | Load-bearing |
+| 18.6 record_sim_frame | Genuine 23-D non-visual eval produces no GIFs (visual capture path blocked by 18.3 guard, no fallback) | Load-bearing for GIFs |
+| STALE_CONFIG | `model_config.pkl` becomes stale after retraining → misleads eval (shape mismatch) AND human audit (the exact dim confusion that consumed hours of this session) | Load-bearing for sanity |
+
+Visual path is bit-for-bit unchanged at every fix. Verified by every
+fix's guard condition resolving to either "no-op on visual" (e.g.,
+Fix-18.1's `if not _if_vision:`) or "same result on visual" (e.g.,
+Fix-18.5's `_target_obs_dim = 6` when trajectory_dim is 9).
+
+### Dim inventory at commit time
+
+| Model | Trajectory dim | Notes |
+|---|---|---|
+| Visual DPCC / FM (any K, any ODE) | **9-D** | Canonical since Gen6V4; not touched by any Fix-18 |
+| DPCC K=1 non-visual `_VFalse_` | **23-D** | Trained this week under Fix-18.1; verified by the [32,23,5] shape that appeared in the original shape-mismatch crash |
+| FM ODE=1 `_VFalse_` | **Unverified — could be 9 or 23** | model_config showed `obs_dim=6` (suggests 9-D), but STALE_CONFIG bug makes that file unreliable; user asserts the checkpoint was trained under Fix-18.1 (suggests 23-D). Authoritative check is state_dict tensor shape (one-line script in `K1_DDPM_CLOSURE.md` §8). Either way is functionally equivalent post-Fix-18.6 — GIFs work for both. |
+
+### "Why DPCC didn't record GIF but FM did" — final answer
+
+Depends on which interpretation of the FM dim is correct:
+- If FM is 9-D visual: asymmetry explained by architectural difference. FM uses UF-13 visual-capture path; DPCC needed Fix-18.6's env-render path.
+- If FM is 23-D non-visual: asymmetry unexplained without more data. Both should have behaved identically.
+
+Fix-18.6 closes the asymmetry regardless of which interpretation is true.

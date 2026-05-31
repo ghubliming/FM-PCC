@@ -97,3 +97,64 @@ behaviourally aligned.
 
 Both folders contain only documentation. Investigation report lives only at
 the Gen7 location; this changelog references it via the link above.
+
+---
+
+## Update 2026-05-31 — Fix-18 expanded to 18.6 (Fix-18.1 → 18.6 + STALE_CONFIG side-patch)
+
+The original Fix-18 commit (`606ad1e`, May 30) bundled Fix-18.1 (train obs_dim
+override) and Fix-18.2 (eval `_traj_dim` from normalizer). Subsequent crashes
+surfaced four more issues on the genuine 23-D non-visual code path, each
+fixed in a follow-up commit:
+
+| Fix | Commit | Touches DPCC? | Touches FM? | What it fixes |
+|---|---|---|---|---|
+| 18.3 UF-13 normalizer-dim guard | `761b2ef` | ✅ | ✅ | UF-13 indiscriminately flipped `if_vision=True` for record mode → visual `predict()` crashes on 23-D model (`(1,6) vs (20,)`). Guarded on `obs_normalizer.mins.shape[0] == 6`. |
+| 18.4 DIAG var alias | `20a1895` | ✅ | ✅ | First-replan diagnostic in `predict()` referenced visual-branch-only var names → `UnboundLocalError` on the non-visual path. |
+| 18.5 projector slice `_target_obs_dim` | `a361854` | ✅ | ✅ | `setup_dpcc_projector` slicing obs_normalizer to a hardcoded 6 → 9-D vs 23-D mismatch in `Projector.build_matrices` for non-visual. Slice target now `trajectory_dim - action_dim`. |
+| 18.6 record_sim_frame env-render hook | (working tree) | ✅ | ✅ | Genuine 23-D non-visual eval can't reach the visual capture buffer (blocked by 18.3 guard) → no GIFs. Added a render-from-sim hook in `aligning_sim.py` (non-visual branch only) and a `Policy.record_sim_frame(env)` method on both eval scripts. |
+| STALE_CONFIG | `b125365` | ✅ | ✅ | `utils.Config.save()` skipped overwriting `model_config.pkl` if file existed → stale config across retraining runs → eval loads wrong-shaped model → shape mismatch crash on state_dict load. Always overwrites now. |
+
+**DPCC-side files touched by 18.3-18.6:**
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (18.3, 18.4, 18.5, 18.6)
+- `d3il/simulation/aligning_sim.py` (18.6 — one `hasattr`-gated hook line in the non-visual branch)
+- `diffuser_visual_aligning/utils/config.py` (STALE_CONFIG)
+
+Visual path **unchanged** at every fix. Every fix's guard condition resolves
+to either "no-op on visual" (e.g., `if not _if_vision:`) or "same result on
+visual" (e.g., Fix-18.5's `_target_obs_dim = 6` when trajectory_dim is 9).
+
+### Critical reminder for future DPCC work
+
+**Dim invariants (do not break):**
+- Visual DPCC trajectory: **9-D** `[act(3) | des_c_pos(3) | c_pos(3)]`. Hardcoded
+  via `VisualUNet.TRANSITION_DIM = 9` in the visual branch. Documented in
+  `Audit_CheckPoint_Fix7/GEN6V4_AUDIT_REPORT.md:314`.
+- Non-visual DPCC trajectory: **23-D** `[act(3) | obs(20)]`. Computed via
+  `transition_dim = action_dim + obs_dim` in the non-visual branch.
+  `obs_dim = 20` is the UF-17 / Fix-18.1 contract (full state including box
+  + target poses).
+- Obs normalizer dim is the **authoritative checkpoint identity**: 6 = visual,
+  20 = non-visual. **`model_config.pkl` was unreliable before STALE_CONFIG was
+  patched** — for any pre-Fix-18 checkpoint, prefer reading the state_dict
+  tensor shape over the config metadata.
+
+**Audit script** to print the truth for any checkpoint:
+```bash
+python -c "
+import torch, glob, sys
+ckpt = sorted(glob.glob('<checkpoint_dir>/state_*.pt'))[-1]
+sd = torch.load(ckpt, map_location='cpu')['model']
+k = next(k for k in sd if 'downs.0.0.blocks.0.block.0.weight' in k)
+n = sd[k].shape[1]
+print(f'first-conv input channels: {n}  → {n}-D model  ({\"visual\" if n == 9 else \"non-visual\" if n == 23 else \"unknown\"})')
+"
+```
+
+### Re-audit at Fix-18.6 commit time
+
+All six post-Fix-18.1 changes (18.2 through 18.6 + STALE_CONFIG) were
+re-examined; each maps to a specific crash that occurred during this
+session. **None were reverted.** See the Gen7 canonical
+`fix_18_nonvisual_step1/CHANGELOG.md` "Final Post-Fix-18 Audit" section for
+the full per-fix justification table.
