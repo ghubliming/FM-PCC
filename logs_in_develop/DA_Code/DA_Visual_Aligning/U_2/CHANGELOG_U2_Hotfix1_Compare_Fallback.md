@@ -120,3 +120,26 @@ No new flags or parameters are needed! The original batch command now works flaw
 ```bash
 sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json
 ```
+
+---
+
+# U_2 Hotfix-3 — Geo-Layer UI Filters & PyScript Stderr Suppression
+
+**Date**: 2026-05-31  
+**Files**: `Visualizer_Visual_Aligning/index.html`  
+**Scope**: HTML-only UI hotfix  
+
+## Problem 1: Variant Checkbox Clutter
+Due to the nested schema auto-retrieval (Hotfix 2), the variants list in the UI became extremely cluttered with combined paths (e.g., `combined_5/dpcc-c`, `expert_references/dpcc-c`, etc.). 
+
+**Fix**: Implemented a **"Geo-Layer Filter"** dropdown in both the AGGREGATE and COMPARE views.
+- Automatically extracts unique prefix constraints (e.g., `combined_5`) from the loaded CSV data.
+- When a layer is selected, the "Variants" checkbox list dynamically filters to only show variants matching that specific constraint layer.
+
+## Problem 2: PyScript Red Screen of Death
+When the frontend generated large plots or plots with empty elements, Matplotlib issued non-fatal warnings (e.g., `UserWarning: Tight layout not applied` or `No artists with labels found`). PyScript natively intercepts standard error at the system level and aggressively displays any stderr output as a giant, fatal red box overlay covering the entire UI, forcing the user to refresh.
+
+**Fix**: Executed a nuclear suppression of standard error inside the `index.html` Pyodide execution block.
+- Standard python `warnings.filterwarnings('ignore')` was insufficient because C-level Matplotlib logging still leaked to stderr.
+- Added `import sys; import io; sys.stderr = io.StringIO()` to silently swallow all standard error output into a dummy buffer.
+- This fully prevents PyScript from triggering the red error overlay for non-fatal plot warnings.
