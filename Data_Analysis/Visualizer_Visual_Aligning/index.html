@@ -90,6 +90,10 @@
             <select id="metric-select" onchange="trigger_plot()"></select>
         </div>
         <div class="control-group">
+            <label>2.5 Geo-Layer filter</label>
+            <select id="geo-layer-select" onchange="if(window.document.update_var_list) window.document.update_var_list()"></select>
+        </div>
+        <div class="control-group">
             <label>3. Variants</label>
             <div class="bulk-actions">
                 <span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span>
@@ -174,6 +178,10 @@
             </div>
         </div>
         <div class="control-group">
+            <label>Geo-Layer Filter</label>
+            <select id="cmp-geo-layer-select" onchange="if(window.document.update_cmp_var_list) window.document.update_cmp_var_list()"></select>
+        </div>
+        <div class="control-group">
             <label>Variants</label>
             <div class="bulk-actions">
                 <span class="bulk-link" onclick="bulkSelect('cmp-var-check', true)">[ALL]</span>
@@ -235,7 +243,11 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings('ignore')
+import sys
 import io
+sys.stderr = io.StringIO()
 from pyscript import display
 from js import document, console, fetch, window, Uint8Array, File, URL
 from pyodide.ffi import create_proxy
@@ -327,13 +339,41 @@ def populate_filters():
     document.getElementById("metric-select").innerHTML = "".join(
         [f'<option value="{m}">{m.upper()}</option>' for m in metrics])
 
-    document.getElementById("variant-list").innerHTML = "".join(
-        [f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"><span>{v}</span></div>'
-         for v in variants])
+    # Extract unique geo layers
+    geo_layers = set()
+    for v in variants:
+        if '/' in v: geo_layers.add(v.split('/')[0])
+        else: geo_layers.add('flat_schema')
+    geo_layers = sorted(list(geo_layers))
+
+    opts = '<option value="ALL">ALL LAYERS</option>'
+    for g in geo_layers:
+        opts += f'<option value="{g}">{g}</option>'
+    document.getElementById("geo-layer-select").innerHTML = opts
+
+    update_var_list()
 
     document.getElementById("candidate-list").innerHTML = "".join(
         [f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"><span>CAND_{c}</span></div>'
          for c in cands])
+
+def update_var_list(event=None):
+    if df_agg is None: return
+    variants = sorted(df_agg['variant'].unique())
+    geo = document.getElementById("geo-layer-select").value
+
+    filtered = []
+    for v in variants:
+        g = v.split('/')[0] if '/' in v else 'flat_schema'
+        if geo == "ALL" or g == geo:
+            filtered.append(v)
+
+    document.getElementById("variant-list").innerHTML = "".join(
+        [f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"><span>{v}</span></div>'
+         for v in filtered])
+    
+    import asyncio
+    asyncio.ensure_future(trigger_plot(None))
 
 
 def populate_rollout_variants():
@@ -559,9 +599,40 @@ def populate_compare_variants():
         variants = sorted(df_agg['variant'].unique())
     else:
         return
+        
+    geo_layers = set()
+    for v in variants:
+        if '/' in v: geo_layers.add(v.split('/')[0])
+        else: geo_layers.add('flat_schema')
+    geo_layers = sorted(list(geo_layers))
+
+    opts = '<option value="ALL">ALL LAYERS</option>'
+    for g in geo_layers:
+        opts += f'<option value="{g}">{g}</option>'
+    document.getElementById("cmp-geo-layer-select").innerHTML = opts
+
+    update_cmp_var_list()
+
+def update_cmp_var_list(event=None):
+    if df_agg is None and df_roll is None: return
+    if df_roll is not None and 'variant' in df_roll.columns:
+        variants = sorted(df_roll['variant'].unique())
+    elif df_agg is not None:
+        variants = sorted(df_agg['variant'].unique())
+    else:
+        return
+
+    geo = document.getElementById("cmp-geo-layer-select").value
+
+    filtered = []
+    for v in variants:
+        g = v.split('/')[0] if '/' in v else 'flat_schema'
+        if geo == "ALL" or g == geo:
+            filtered.append(v)
+
     document.getElementById('cmp-variant-list').innerHTML = ''.join(
         [f'<div class="checkbox-item"><input type="checkbox" class="cmp-var-check" value="{v}" checked><span>{v}</span></div>'
-         for v in variants])
+         for v in filtered])
 
 
 async def trigger_compare(event=None):
@@ -720,6 +791,8 @@ document.trigger_plot        = create_proxy(trigger_plot)
 document.show_rollout_table  = create_proxy(show_rollout_table)
 document.trigger_compare     = create_proxy(trigger_compare)
 document.download_compare_plot = create_proxy(download_compare_plot)
+document.update_var_list     = create_proxy(update_var_list)
+document.update_cmp_var_list = create_proxy(update_cmp_var_list)
 
 import asyncio
 asyncio.ensure_future(init_manifest())
