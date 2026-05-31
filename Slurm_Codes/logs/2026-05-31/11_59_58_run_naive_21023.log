@@ -1,0 +1,25 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV NAIVE FLY TEST
+DATE:   Sun May 31 09:59:58 UTC 2026
+NODE:   i6-gpu-1
+JOB_ID: 21023
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC   Task: all   Format: 9D
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ run_naive ] task=A fmt=9D dt=0.01000 steps=500 duration=5.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_naive/task_A_hover
+[ run_naive ] saved 50 frames → rollout.gif
+[ run_naive ] DONE.  final_pos_err=0.5851 m  rms=0.3349 m  max=0.5851 m
+[ run_naive ] task=B fmt=9D dt=0.01000 steps=600 duration=6.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_naive/task_B_step
+[ run_naive ] saved 60 frames → rollout.gif
+[ run_naive ] DONE.  final_pos_err=0.1203 m  rms=0.3285 m  max=0.9965 m
+[ run_naive ] task=C fmt=6D dt=0.01000 steps=3000 duration=30.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_naive/task_C_circle_6D
+[ run_naive ] saved 300 frames → rollout.gif
+[ run_naive ] DONE.  final_pos_err=0.1951 m  rms=0.2140 m  max=0.2675 m
+[ run_naive ] task=C fmt=9D dt=0.01000 steps=3000 duration=30.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_naive/task_C_circle_9D
+[ run_naive ] saved 300 frames → rollout.gif
+[ run_naive ] DONE.  final_pos_err=0.0271 m  rms=0.0291 m  max=0.0798 m
+[ sbatch ] Output (if applicable): logs/uav_naive/
+========================================
+JOB END: Sun May 31 10:00:17 UTC 2026
+========================================

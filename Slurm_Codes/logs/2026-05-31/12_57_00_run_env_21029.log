@@ -1,0 +1,18 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV IN ENV TEST
+DATE:   Sun May 31 10:57:02 UTC 2026
+NODE:   i6-gpu-1
+JOB_ID: 21029
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC   Scene: smoke_empty   Task: C
+OK scene=empty  nq=7 nv=6 nu=4  qpos_z=-0.0002
+[ smoke ] body_mass(x2) total = 1.3250 kg
+[ smoke ] gravity = [ 0.    0.   -9.81]
+[ smoke ] timestep = 0.01
+[ smoke ] ngeom = 11  (includes drone + scene geoms)
+[ smoke ] ncon at end = 4  (active contacts; >0 = drone touched something)
+[ sbatch ] Output (if applicable): logs/uav_env/
+========================================
+JOB END: Sun May 31 10:57:03 UTC 2026
+========================================

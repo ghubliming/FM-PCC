@@ -1,0 +1,60 @@
+=== Batch Loading Summary ===
+
+Candidate A:
+  Files Found:  18
+  Files Loaded: 18
+  Files Failed: 0
+
+Candidate B:
+  Files Found:  7
+  Files Loaded: 7
+  Files Failed: 0
+
+Candidate C:
+  Files Found:  1
+  Files Loaded: 1
+  Files Failed: 0
+
+Candidate D:
+  Files Found:  22
+  Files Loaded: 22
+  Files Failed: 0
+
+Candidate E:
+  Files Found:  13
+  Files Loaded: 13
+  Files Failed: 0
+
+Candidate F:
+  Files Found:  22
+  Files Loaded: 22
+  Files Failed: 0
+
+Candidate G:
+  Files Found:  53
+  Files Loaded: 53
+  Files Failed: 0
+
+Candidate H:
+  Files Found:  7
+  Files Loaded: 7
+  Files Failed: 0
+
+Candidate I:
+  Files Found:  7
+  Files Loaded: 7
+  Files Failed: 0
+
+Candidate J:
+  Files Found:  0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate K:
+  Files Found:  7
+  Files Loaded: 7
+  Files Failed: 0
+
+=== Total ===
+Total Loaded: 157
+Total Failed: 0

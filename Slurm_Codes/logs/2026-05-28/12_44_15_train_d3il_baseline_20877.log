@@ -1,0 +1,68 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 28 10:44:15 UTC 2026
+JOB NAME:  train_d3il_baseline
+JOB ID:    20877
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   289a684
+================================================================================
+[ train ] agent=ddpm_encdec_vision  seed=42  config=aligning_vision_config
+[ train ] weights will be saved to: /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_vision_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+Error executing job with overrides: ['agents=ddpm_encdec_vision_agent', 'agent_name=ddpm_encdec_vision', 'seed=42']
+An error occurred during Hydra's exception formatting:
+TypeError("print_exception() got an unexpected keyword argument 'etype'")
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 65, in <module>
+    main()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/main.py", line 48, in decorated_main
+    _run_hydra(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 377, in _run_hydra
+    run_and_report(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 294, in run_and_report
+    raise ex
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 211, in run_and_report
+    return func()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 378, in <lambda>
+    lambda: hydra.run(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 111, in run
+    _ = ret.return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 233, in return_value
+    raise self._return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 160, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 45, in main
+    wandb.config = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/omegaconf.py", line 553, in to_container
+    return BaseContainer._to_content(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/basecontainer.py", line 253, in _to_content
+    value = get_node_value(key)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/basecontainer.py", line 208, in get_node_value
+    value = BaseContainer._to_content(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/basecontainer.py", line 253, in _to_content
+    value = get_node_value(key)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/basecontainer.py", line 199, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/base.py", line 190, in _format_and_raise
+    format_and_raise(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/_utils.py", line 821, in format_and_raise
+    _raise(ex, cause)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/_utils.py", line 719, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set end OC_CAUSE=1 for full backtrace
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/basecontainer.py", line 197, in get_node_value
+    node = conf._get_node(key, throw_on_missing_value=throw_on_missing)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/omegaconf/dictconfig.py", line 472, in _get_node
+    raise MissingMandatoryValue("Missing mandatory value: $KEY")
+omegaconf.errors.MissingMandatoryValue: Missing mandatory value: entity
+    full_key: wandb.entity
+    object_type=dict

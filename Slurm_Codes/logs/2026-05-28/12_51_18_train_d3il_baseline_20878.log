@@ -1,0 +1,95 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 28 10:51:19 UTC 2026
+JOB NAME:  train_d3il_baseline
+JOB ID:    20878
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   69ce908
+================================================================================
+[ train ] agent=ddpm_encdec_vision  seed=42  config=aligning_vision_config
+[ train ] weights will be saved to: /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_vision_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights/wandb/run-20260528_105124-mmo7rtfn
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run lilac-lion-1
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline/runs/mmo7rtfn
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] agent=ddpm_encdec_vision  seed=42  epochs=4  save_dir=/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[2026-05-28 10:51:38,448][agents.models.diffusion.diffusion_models][INFO] - number of parameters: 3.749790e+05
+[2026-05-28 10:51:38,479][root][INFO] - Loading Robot Push Dataset
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.67it/s]100%|██████████| 3/3 [00:00<00:00, 17.11it/s]
+[2026-05-28 10:51:38,657][root][INFO] - Loading Robot Push Dataset
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 12.14it/s]100%|██████████| 3/3 [00:00<00:00, 11.45it/s]
+[2026-05-28 10:51:38,921][agents.utils.scaler][INFO] - Datset Info: state min: [-2.11611752 -1.9385157  -0.97139735] and max: [1.65030038 1.22006127 2.20369843], action min: [-2.39178454 -2.66525925 -3.51553528] and max: [2.26779489 1.01813854 0.28445203]
+[2026-05-28 10:51:38,922][agents.utils.scaler][INFO] - Training dataset size: input (521, 3) target (521, 3)
+[2026-05-28 10:51:38,923][agents.base_agent][INFO] - The model has a total amount of 22769155 parameters
+  0%|          | 0/4 [00:00<?, ?it/s]  0%|          | 0/4 [00:00<?, ?it/s]
+Error executing job with overrides: ['agents=ddpm_encdec_vision_agent', 'agent_name=ddpm_encdec_vision', 'seed=42']
+An error occurred during Hydra's exception formatting:
+TypeError("print_exception() got an unexpected keyword argument 'etype'")
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 283, in run_and_report
+    print_exception(etype=None, value=ex, tb=final_tb)  # type: ignore
+TypeError: print_exception() got an unexpected keyword argument 'etype'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 69, in <module>
+    main()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/main.py", line 48, in decorated_main
+    _run_hydra(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 377, in _run_hydra
+    run_and_report(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 294, in run_and_report
+    raise ex
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 211, in run_and_report
+    return func()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 378, in <lambda>
+    lambda: hydra.run(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 111, in run
+    _ = ret.return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 233, in return_value
+    raise self._return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 160, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 62, in main
+    agent.train_agent()
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_encdec_vision_agent.py", line 217, in train_agent
+    state, action, mask = data
+ValueError: too many values to unpack (expected 3)
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.045 MB of 0.064 MB uploadedwandb: 
+wandb: Run history:
+wandb: model parameters ▁
+wandb: 
+wandb: Run summary:
+wandb: model parameters 22769155
+wandb: 
+wandb: 🚀 View run lilac-lion-1 at: https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline/runs/mmo7rtfn
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260528_105124-mmo7rtfn/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.

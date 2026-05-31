@@ -1,0 +1,86 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 28 10:35:38 UTC 2026
+JOB NAME:  train_d3il_baseline
+JOB ID:    20876
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   426a9fb
+================================================================================
+[ train ] agent=ddpm_encdec_vision  seed=42
+[ train ] weights will be saved to: /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] agent=ddpm_encdec_vision  seed=42  epochs=500  save_dir=/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[2026-05-28 10:35:50,426][agents.models.diffusion.diffusion_models][INFO] - number of parameters: 3.749790e+05
+[2026-05-28 10:35:50,458][root][INFO] - Loading Robot Push Dataset
+[2026-05-28 10:35:50,598][root][INFO] - Loading Robot Push Dataset
+[2026-05-28 10:35:50,798][agents.utils.scaler][INFO] - Datset Info: state min: [ -4.19993099  -1.88808427  -1.34938335  -4.29771556  -1.91772166
+  -1.82548397  -3.0228992   -1.77607488  -4.01469877  -8.86088619
+ -36.46198882 -33.99183289  -2.40799243  -1.71996411  -1.89191239
+   0.          -2.00359925   0.          -0.          -1.5898811 ] and max: [ 3.49784538  1.90820128  2.5356592   3.69505912  2.04300524  2.71634765
+  2.90901374  1.61998388 11.57087698  0.58105899 19.02556381 50.7125742
+  2.24873632  1.79882817  1.72462809  0.          1.18796393  0.
+ -0.          1.58701459], action min: [-2.05728892 -2.43230054 -3.90826189] and max: [2.16420668 1.09369912 6.95218648]
+[2026-05-28 10:35:50,798][agents.utils.scaler][INFO] - Training dataset size: input (174574, 20) target (174574, 3)
+[2026-05-28 10:35:50,800][agents.base_agent][INFO] - The model has a total amount of 22769155 parameters
+  0%|          | 0/500 [00:00<?, ?it/s]  0%|          | 0/500 [00:00<?, ?it/s]
+Error executing job with overrides: ['agents=ddpm_encdec_vision_agent', 'agent_name=ddpm_encdec_vision', 'seed=42']
+An error occurred during Hydra's exception formatting:
+TypeError("print_exception() got an unexpected keyword argument 'etype'")
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 283, in run_and_report
+    print_exception(etype=None, value=ex, tb=final_tb)  # type: ignore
+TypeError: print_exception() got an unexpected keyword argument 'etype'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 65, in <module>
+    main()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/main.py", line 48, in decorated_main
+    _run_hydra(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 377, in _run_hydra
+    run_and_report(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 294, in run_and_report
+    raise ex
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 211, in run_and_report
+    return func()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 378, in <lambda>
+    lambda: hydra.run(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 111, in run
+    _ = ret.return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 233, in return_value
+    raise self._return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 160, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 58, in main
+    agent.train_agent()
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_encdec_vision_agent.py", line 218, in train_agent
+    batch_loss = self.train_step(state, action)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_encdec_vision_agent.py", line 275, in train_step
+    loss = self.model(state, goal, action=action, if_train=True)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_encdec_vision_agent.py", line 64, in forward
+    agentview_image, in_hand_image, state = inputs
+ValueError: too many values to unpack (expected 3)

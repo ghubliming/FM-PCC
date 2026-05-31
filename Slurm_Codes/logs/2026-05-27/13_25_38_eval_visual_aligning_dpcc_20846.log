@@ -1,0 +1,2533 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed May 27 11:25:39 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    20846
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   e908128
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 11002.70it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  16%|█▌        | 145/900 [00:10<00:52, 14.39it/s]Loading images:  33%|███▎      | 293/900 [00:20<00:41, 14.59it/s]Loading images:  49%|████▉     | 441/900 [00:30<00:31, 14.44it/s]Loading images:  65%|██████▍   | 584/900 [00:41<00:23, 13.72it/s]Loading images:  81%|████████  | 725/900 [00:51<00:12, 13.82it/s]Loading images:  98%|█████████▊| 882/900 [01:01<00:01, 14.42it/s]Loading images: 100%|██████████| 900/900 [01:03<00:00, 14.28it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ utils/training ] Restored loss history from checkpoint at step 97000
+[ eval ] clip_denoised set → False (config-driven; original DPCC default: False)
+[ eval ] Model n_timesteps = 20  (config n_diffusion_steps = 20)
+[ expert ] Generating 3 expert reference videos...
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+  [ expert ] Saved logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/expert_references/expert_rollout_0.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/expert_references/expert_rollout_1.gif
+  [ expert ] Saved logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/expert_references/expert_rollout_2.gif
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+
+[ geo ] ── Constraint variant: dynamics_only  types=['dynamics'] ──
+[ geo ] Constraint overview → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/constraint_overview.png
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f61d33bc-59be-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_0a12983a-59bf-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [ 2.000e-04 -9.000e-04 -2.345e-01]  |mag| = 0.2345
+[ DIAG first-replan ] denormalized a0 = [ 0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000016 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2380, 1.0001]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 2.000e-04 -9.000e-04 -2.345e-01]
+  step  1: [-0.007   0.8999 -0.238 ]
+  step  2: [-0.0032  0.9964 -0.2314]
+  step  3: [-0.0014  1.0001 -0.2268]
+  step  4: [-0.018   0.9927 -0.2358]
+  step  5: [-0.0064  0.9994 -0.2311]
+  step  6: [-0.006  0.995 -0.237]
+  step  7: [-1.000e-04  9.842e-01 -2.341e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/diffuser/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.30e-03 m  dir=[-0.001  0.974 -0.225]
+[ DIAG replan=100 step=99 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.007  0.974 -0.228]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=1.96e-05 m  dir=[-0.006 -0.006 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.233  denorm|a0|=2.75e-05 m  dir=[-0.014 -0.001 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=1.78e-05 m  dir=[-0.007 -0.005 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.233  denorm|a0|=1.79e-05 m  dir=[-0.004 -0.008 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.518018 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.051134 m
+  - Avg Inference Time: 0.3092 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/diffuser/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.026  denorm|a0|=8.33e-03 m  dir=[-0.002  0.974 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=0.768  denorm|a0|=6.09e-03 m  dir=[ 0.012 -0.953 -0.304]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=6.52e-05 m  dir=[-0.003  0.033 -0.999]
+[ DIAG replan=200 step=199 ] norm|a0|=0.231  denorm|a0|=4.47e-05 m  dir=[-0.004  0.018 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=2.59e-05 m  dir=[-0.001  0.01  -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=3.92e-05 m  dir=[-0.017  0.01  -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.444779 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035842 m
+  - Avg Inference Time: 0.2930 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/diffuser/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4813985526561737
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for diffuser...
+--- aligning-d3il-visual [default] diffuser seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4814 m  +- 0.0366 m
+Min final mean distance:   0.4448 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0105 m  max=0.0511 m
+Avg inference time/replan: 0.301 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-r'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_8fff9e20-59bf-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0034 -0.005  -0.206 ]  |mag| = 0.2061
+[ DIAG first-replan ] denormalized a0 = [-3.e-05 -4.e-05  3.e-04]  |mag| = 0.000299 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2366, 0.9965]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0034 -0.005  -0.206 ]
+  step  1: [-0.0086  0.8965 -0.2154]
+  step  2: [-0.007   0.9924 -0.2128]
+  step  3: [-0.0042  0.9954 -0.2138]
+  step  4: [-0.0194  0.9896 -0.2262]
+  step  5: [-0.0071  0.9965 -0.2264]
+  step  6: [-0.0064  0.9948 -0.2366]
+  step  7: [ 0.0023  0.9833 -0.2358]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-r/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.205  denorm|a0|=3.94e-04 m  dir=[ 0.097  0.09  -0.991]
+[ DIAG replan=100 step=99 ] norm|a0|=1.628  denorm|a0|=1.58e-02 m  dir=[0.038 0.678 0.734]
+[ DIAG replan=150 step=149 ] norm|a0|=1.809  denorm|a0|=1.19e-02 m  dir=[-0.819  0.571 -0.054]
+[ DIAG replan=200 step=199 ] norm|a0|=2.195  denorm|a0|=1.18e-02 m  dir=[-0.799  0.597 -0.077]
+[ DIAG replan=250 step=249 ] norm|a0|=2.926  denorm|a0|=1.28e-02 m  dir=[-0.835  0.498 -0.234]
+[ DIAG replan=300 step=299 ] norm|a0|=4.556  denorm|a0|=1.53e-02 m  dir=[-0.889  0.435  0.146]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.624627 m
+  - Avg Inference Time: 0.5153 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-r/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.195  denorm|a0|=9.77e-03 m  dir=[-0.826  0.531 -0.19 ]
+[ DIAG replan=100 step=99 ] norm|a0|=2.042  denorm|a0|=1.27e-02 m  dir=[-0.854  0.511  0.096]
+[ DIAG replan=150 step=149 ] norm|a0|=2.350  denorm|a0|=1.21e-02 m  dir=[-0.877  0.48   0.001]
+[ DIAG replan=200 step=199 ] norm|a0|=3.688  denorm|a0|=1.49e-02 m  dir=[-0.9    0.403  0.166]
+[ DIAG replan=250 step=249 ] norm|a0|=5.233  denorm|a0|=1.35e-02 m  dir=[-0.955  0.286  0.071]
+[ DIAG replan=300 step=299 ] norm|a0|=5.471  denorm|a0|=1.78e-02 m  dir=[-0.914  0.336  0.228]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.209987 m
+  - Avg Inference Time: 0.6817 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-r/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-r...
+--- aligning-d3il-visual [default] dpcc-r seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.5142 m  max=2.2100 m
+Avg inference time/replan: 0.598 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_8155945a-59c0-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0047 -0.0055 -0.2045]  |mag| = 0.2046
+[ DIAG first-replan ] denormalized a0 = [-4.0e-05 -5.0e-05  3.1e-04]  |mag| = 0.000318 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2377, 0.9968]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0047 -0.0055 -0.2045]
+  step  1: [-0.007   0.8111 -0.2167]
+  step  2: [-0.012   0.986  -0.2213]
+  step  3: [-0.0101  0.9967 -0.2153]
+  step  4: [-0.0161  0.9882 -0.22  ]
+  step  5: [-0.0084  0.9968 -0.2298]
+  step  6: [-0.0055  0.994  -0.2377]
+  step  7: [ 0.0018  0.983  -0.2377]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.195  denorm|a0|=4.99e-04 m  dir=[ 0.1    0.107 -0.989]
+[ DIAG replan=100 step=99 ] norm|a0|=1.416  denorm|a0|=1.49e-02 m  dir=[-0.011  0.768  0.641]
+[ DIAG replan=150 step=149 ] norm|a0|=1.806  denorm|a0|=1.19e-02 m  dir=[-0.817  0.574 -0.053]
+[ DIAG replan=200 step=199 ] norm|a0|=2.277  denorm|a0|=1.32e-02 m  dir=[-0.787  0.602  0.137]
+[ DIAG replan=250 step=249 ] norm|a0|=3.445  denorm|a0|=1.40e-02 m  dir=[-0.85   0.453 -0.268]
+[ DIAG replan=300 step=299 ] norm|a0|=4.684  denorm|a0|=1.45e-02 m  dir=[-0.896  0.428  0.116]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.813583 m
+  - Avg Inference Time: 0.5104 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.221  denorm|a0|=9.99e-03 m  dir=[-0.786  0.588 -0.19 ]
+[ DIAG replan=100 step=99 ] norm|a0|=2.152  denorm|a0|=1.28e-02 m  dir=[-0.856  0.505  0.11 ]
+[ DIAG replan=150 step=149 ] norm|a0|=2.564  denorm|a0|=1.23e-02 m  dir=[-0.859  0.462 -0.221]
+[ DIAG replan=200 step=199 ] norm|a0|=4.931  denorm|a0|=1.78e-02 m  dir=[-0.893  0.366  0.263]
+[ DIAG replan=250 step=249 ] norm|a0|=5.308  denorm|a0|=1.65e-02 m  dir=[-0.942  0.297  0.157]
+[ DIAG replan=300 step=299 ] norm|a0|=5.772  denorm|a0|=1.78e-02 m  dir=[-0.866  0.374  0.331]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.252939 m
+  - Avg Inference Time: 0.7212 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c...
+--- aligning-d3il-visual [default] dpcc-c seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.5417 m  max=2.2529 m
+Avg inference time/replan: 0.616 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-t'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_78db837e-59c1-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0034 -0.005  -0.206 ]  |mag| = 0.2061
+[ DIAG first-replan ] denormalized a0 = [-3.e-05 -4.e-05  3.e-04]  |mag| = 0.000299 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2366, 0.9965]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0034 -0.005  -0.206 ]
+  step  1: [-0.0086  0.8965 -0.2154]
+  step  2: [-0.007   0.9924 -0.2128]
+  step  3: [-0.0042  0.9954 -0.2138]
+  step  4: [-0.0194  0.9896 -0.2262]
+  step  5: [-0.0071  0.9965 -0.2264]
+  step  6: [-0.0064  0.9948 -0.2366]
+  step  7: [ 0.0023  0.9833 -0.2358]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-t/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.274  denorm|a0|=5.54e-04 m  dir=[ 0.118  0.122 -0.986]
+[ DIAG replan=100 step=99 ] norm|a0|=1.084  denorm|a0|=9.61e-03 m  dir=[-0.037  0.981  0.189]
+[ DIAG replan=150 step=149 ] norm|a0|=1.894  denorm|a0|=1.23e-02 m  dir=[-0.829  0.558  0.045]
+[ DIAG replan=200 step=199 ] norm|a0|=2.395  denorm|a0|=1.34e-02 m  dir=[-0.774  0.617  0.144]
+[ DIAG replan=250 step=249 ] norm|a0|=3.590  denorm|a0|=1.44e-02 m  dir=[-0.838  0.45  -0.309]
+[ DIAG replan=300 step=299 ] norm|a0|=4.938  denorm|a0|=1.45e-02 m  dir=[-0.92   0.375  0.111]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.820823 m
+  - Avg Inference Time: 0.5636 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-t/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.227  denorm|a0|=1.00e-02 m  dir=[-0.767  0.613 -0.191]
+[ DIAG replan=100 step=99 ] norm|a0|=1.931  denorm|a0|=1.15e-02 m  dir=[-0.874  0.483 -0.052]
+[ DIAG replan=150 step=149 ] norm|a0|=2.798  denorm|a0|=1.44e-02 m  dir=[-0.868  0.458  0.19 ]
+[ DIAG replan=200 step=199 ] norm|a0|=4.816  denorm|a0|=1.78e-02 m  dir=[-0.893  0.373  0.253]
+[ DIAG replan=250 step=249 ] norm|a0|=5.507  denorm|a0|=1.78e-02 m  dir=[-0.908  0.313  0.279]
+[ DIAG replan=300 step=299 ] norm|a0|=5.747  denorm|a0|=1.78e-02 m  dir=[-0.87   0.354  0.343]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.247391 m
+  - Avg Inference Time: 0.7186 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-t/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-t...
+--- aligning-d3il-visual [default] dpcc-t seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.5516 m  max=2.2474 m
+Avg inference time/replan: 0.641 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'gradient'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_7b73b5ce-59c2-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.     -0.0009 -0.2341]  |mag| = 0.2341
+[ DIAG first-replan ] denormalized a0 = [-0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000012 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2376, 0.9997]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.     -0.0009 -0.2341]
+  step  1: [-0.0069  0.8978 -0.2376]
+  step  2: [-0.0029  0.9957 -0.2315]
+  step  3: [-8.000e-04  9.997e-01 -2.266e-01]
+  step  4: [-0.0182  0.9921 -0.2359]
+  step  5: [-0.0062  0.9994 -0.2315]
+  step  6: [-0.0056  0.9958 -0.2374]
+  step  7: [-3.000e-04  9.834e-01 -2.346e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/gradient/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.022  denorm|a0|=8.29e-03 m  dir=[-0.002  0.974 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=1.026  denorm|a0|=8.32e-03 m  dir=[-0.005  0.973 -0.229]
+[ DIAG replan=150 step=149 ] norm|a0|=0.231  denorm|a0|=3.16e-05 m  dir=[ 0.009  0.009 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.233  denorm|a0|=2.00e-05 m  dir=[-0.001  0.01  -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=1.29e-05 m  dir=[ 0.003  0.006 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=1.87e-05 m  dir=[ 0.006  0.004 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.498622 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.050924 m
+  - Avg Inference Time: 0.3048 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/gradient/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.30e-03 m  dir=[-0.002  0.974 -0.228]
+[ DIAG replan=100 step=99 ] norm|a0|=0.236  denorm|a0|=4.40e-05 m  dir=[ 0.004 -0.014 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.233  denorm|a0|=5.33e-05 m  dir=[-0.021  0.017 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.232  denorm|a0|=4.87e-05 m  dir=[-0.014  0.019 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=3.73e-05 m  dir=[-0.014  0.013 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.234  denorm|a0|=4.95e-05 m  dir=[-0.021  0.014 -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.491366 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.037659 m
+  - Avg Inference Time: 0.3061 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/gradient/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4949941039085388
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for gradient...
+--- aligning-d3il-visual [default] gradient seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4950 m  +- 0.0036 m
+Min final mean distance:   0.4914 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0114 m  max=0.0509 m
+Avg inference time/replan: 0.305 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'post_processing'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_0432fa6e-59c3-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0027 -0.005  -0.2043]  |mag| = 0.2044
+[ DIAG first-replan ] denormalized a0 = [-2.0e-05 -4.0e-05  3.1e-04]  |mag| = 0.000317 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2349, 0.9975]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0027 -0.005  -0.2043]
+  step  1: [-0.0102  0.8955 -0.2115]
+  step  2: [-0.0064  0.9922 -0.2106]
+  step  3: [-0.0045  0.9963 -0.2121]
+  step  4: [-0.0209  0.9899 -0.2263]
+  step  5: [-0.0084  0.9975 -0.226 ]
+  step  6: [-0.0071  0.9941 -0.2349]
+  step  7: [-1.000e-04  9.843e-01 -2.341e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/post_processing/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.034  denorm|a0|=8.34e-03 m  dir=[ 0.006  0.967 -0.254]
+[ DIAG replan=100 step=99 ] norm|a0|=7.258  denorm|a0|=1.78e-02 m  dir=[0.226 0.689 0.689]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.856650 m
+  - Avg Inference Time: 0.3391 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/post_processing/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.206  denorm|a0|=9.86e-03 m  dir=[-0.77   0.608 -0.193]
+[ DIAG replan=100 step=99 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.253302 m
+  - Avg Inference Time: 0.3430 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/post_processing/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for post_processing...
+--- aligning-d3il-visual [default] post_processing seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.6624 m  max=2.2533 m
+Avg inference time/replan: 0.341 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'model_free'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_9a547734-59c3-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 2.000e-04 -9.000e-04 -2.345e-01]  |mag| = 0.2345
+[ DIAG first-replan ] denormalized a0 = [ 0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000016 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2380, 1.0001]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 2.000e-04 -9.000e-04 -2.345e-01]
+  step  1: [-0.007   0.8998 -0.238 ]
+  step  2: [-0.0032  0.9964 -0.2314]
+  step  3: [-0.0012  1.0001 -0.2268]
+  step  4: [-0.0179  0.9929 -0.2359]
+  step  5: [-0.0063  0.9996 -0.2312]
+  step  6: [-0.0059  0.9951 -0.237 ]
+  step  7: [-1.000e-04  9.843e-01 -2.341e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/model_free/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.31e-03 m  dir=[-0.001  0.974 -0.226]
+[ DIAG replan=100 step=99 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.007  0.973 -0.229]
+[ DIAG replan=150 step=149 ] norm|a0|=0.229  denorm|a0|=5.12e-05 m  dir=[-0.007 -0.012 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.232  denorm|a0|=1.87e-05 m  dir=[-0.005  0.006 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=9.62e-06 m  dir=[-0.001  0.003 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=1.96e-05 m  dir=[ 0.004 -0.001 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.506160 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.050877 m
+  - Avg Inference Time: 0.2958 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/model_free/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.025  denorm|a0|=8.32e-03 m  dir=[-0.002  0.974 -0.228]
+[ DIAG replan=100 step=99 ] norm|a0|=1.033  denorm|a0|=8.33e-03 m  dir=[-0.005 -0.974 -0.227]
+[ DIAG replan=150 step=149 ] norm|a0|=1.175  denorm|a0|=9.60e-03 m  dir=[ 0.615  0.764 -0.196]
+[ DIAG replan=200 step=199 ] norm|a0|=0.231  denorm|a0|=5.62e-05 m  dir=[-0.004  0.026 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=4.80e-05 m  dir=[-0.022  0.011 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.233  denorm|a0|=5.69e-05 m  dir=[-0.028  0.008 -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.455158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035838 m
+  - Avg Inference Time: 0.2970 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/model_free/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.48065871000289917
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for model_free...
+--- aligning-d3il-visual [default] model_free seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4807 m  +- 0.0255 m
+Min final mean distance:   0.4552 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0141 m  max=0.0509 m
+Avg inference time/replan: 0.296 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt0p25'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_1ff2bee6-59c4-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0028  0.0003 -0.2233]  |mag| = 0.2234
+[ DIAG first-replan ] denormalized a0 = [-2.0e-05  0.0e+00  1.1e-04]  |mag| = 0.000110 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2384, 1.0014]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0028  0.0003 -0.2233]
+  step  1: [-0.0043  0.8358 -0.2325]
+  step  2: [-0.0092  0.9929 -0.2337]
+  step  3: [-0.0076  1.0014 -0.2238]
+  step  4: [-0.0136  0.9927 -0.2247]
+  step  5: [-0.0073  0.9998 -0.233 ]
+  step  6: [-0.0057  0.9945 -0.2384]
+  step  7: [ 9.000e-04  9.842e-01 -2.368e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt0p25/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.029  denorm|a0|=8.34e-03 m  dir=[ 0.974  0.022 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=1.823  denorm|a0|=1.04e-02 m  dir=[ 0.972 -0.173  0.16 ]
+[ DIAG replan=150 step=149 ] norm|a0|=3.754  denorm|a0|=1.78e-02 m  dir=[0.838 0.426 0.342]
+[ DIAG replan=200 step=199 ] norm|a0|=4.079  denorm|a0|=1.78e-02 m  dir=[0.732 0.483 0.48 ]
+[ DIAG replan=250 step=249 ] norm|a0|=4.559  denorm|a0|=1.78e-02 m  dir=[0.546 0.58  0.605]
+[ DIAG replan=300 step=299 ] norm|a0|=5.087  denorm|a0|=1.78e-02 m  dir=[0.413 0.618 0.668]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.274918 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.619004 m
+  - Avg Inference Time: 0.7514 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt0p25/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.017  denorm|a0|=8.26e-03 m  dir=[-0.975  0.013 -0.224]
+[ DIAG replan=100 step=99 ] norm|a0|=2.040  denorm|a0|=1.13e-02 m  dir=[-0.887  0.445 -0.123]
+[ DIAG replan=150 step=149 ] norm|a0|=4.198  denorm|a0|=1.78e-02 m  dir=[-0.868  0.336  0.365]
+[ DIAG replan=200 step=199 ] norm|a0|=5.501  denorm|a0|=1.78e-02 m  dir=[-0.909  0.298  0.292]
+[ DIAG replan=250 step=249 ] norm|a0|=5.595  denorm|a0|=1.78e-02 m  dir=[-0.894  0.337  0.297]
+[ DIAG replan=300 step=299 ] norm|a0|=6.203  denorm|a0|=1.78e-02 m  dir=[-0.806  0.424  0.413]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.223117 m
+  - Avg Inference Time: 0.8502 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt0p25/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4259052276611328
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt0p25...
+--- aligning-d3il-visual [default] dpcc-c-dt0p25 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4259 m  +- 0.1510 m
+Min final mean distance:   0.2749 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.8469 m  max=2.6190 m
+Avg inference time/replan: 0.801 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt0p5'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_59519094-59c5-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0035 -0.0006 -0.216 ]  |mag| = 0.2160
+[ DIAG first-replan ] denormalized a0 = [-3.0e-05 -1.0e-05  1.9e-04]  |mag| = 0.000189 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2379, 1.0006]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0035 -0.0006 -0.216 ]
+  step  1: [-0.0051  0.8352 -0.2264]
+  step  2: [-0.0102  0.9918 -0.2289]
+  step  3: [-0.0083  1.0006 -0.2203]
+  step  4: [-0.0144  0.9921 -0.2224]
+  step  5: [-0.0077  0.9994 -0.2316]
+  step  6: [-0.0057  0.9945 -0.2379]
+  step  7: [ 0.0012  0.9837 -0.2371]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt0p5/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.202  denorm|a0|=9.83e-03 m  dir=[ 0.697  0.691 -0.192]
+[ DIAG replan=100 step=99 ] norm|a0|=2.695  denorm|a0|=1.25e-02 m  dir=[ 0.851 -0.184 -0.492]
+[ DIAG replan=150 step=149 ] norm|a0|=4.385  denorm|a0|=1.27e-02 m  dir=[ 0.944 -0.13  -0.303]
+[ DIAG replan=200 step=199 ] norm|a0|=5.629  denorm|a0|=1.44e-02 m  dir=[ 0.888 -0.254 -0.383]
+[ DIAG replan=250 step=249 ] norm|a0|=6.184  denorm|a0|=1.44e-02 m  dir=[ 0.809 -0.357 -0.468]
+[ DIAG replan=300 step=299 ] norm|a0|=6.644  denorm|a0|=1.44e-02 m  dir=[ 0.753 -0.382 -0.536]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.754007 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.383341 m
+  - Avg Inference Time: 0.4000 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt0p5/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.213  denorm|a0|=9.73e-03 m  dir=[-0.849  0.496 -0.185]
+[ DIAG replan=100 step=99 ] norm|a0|=2.093  denorm|a0|=1.23e-02 m  dir=[-0.878  0.476  0.052]
+[ DIAG replan=150 step=149 ] norm|a0|=3.415  denorm|a0|=1.78e-02 m  dir=[-0.8    0.441  0.408]
+[ DIAG replan=200 step=199 ] norm|a0|=5.341  denorm|a0|=1.78e-02 m  dir=[-0.909  0.313  0.274]
+[ DIAG replan=250 step=249 ] norm|a0|=5.410  denorm|a0|=1.78e-02 m  dir=[-0.924  0.306  0.228]
+[ DIAG replan=300 step=299 ] norm|a0|=5.891  denorm|a0|=1.78e-02 m  dir=[-0.849  0.38   0.368]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.241599 m
+  - Avg Inference Time: 0.7836 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt0p5/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.665449857711792
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt0p5...
+--- aligning-d3il-visual [default] dpcc-c-dt0p5 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.6654 m  +- 0.0886 m
+Min final mean distance:   0.5769 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.7917 m  max=2.3833 m
+Avg inference time/replan: 0.592 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt2p0'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_48dd8988-59c6-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0052 -0.0131 -0.1961]  |mag| = 0.1966
+[ DIAG first-replan ] denormalized a0 = [-4.0e-05 -1.1e-04  4.0e-04]  |mag| = 0.000420 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2368, 0.9900]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0052 -0.0131 -0.1961]
+  step  1: [-0.0044  0.2752 -0.2074]
+  step  2: [-0.0114  0.9801 -0.2153]
+  step  3: [-0.0086  0.9877 -0.2116]
+  step  4: [-0.0142  0.9708 -0.2206]
+  step  5: [-0.0056  0.9881 -0.226 ]
+  step  6: [-1.000e-04  9.900e-01 -2.368e-01]
+  step  7: [-0.0046  0.9832 -0.2338]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt2p0/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.052  denorm|a0|=8.36e-03 m  dir=[ 0.007  0.959 -0.282]
+[ DIAG replan=100 step=99 ] norm|a0|=1.513  denorm|a0|=1.58e-02 m  dir=[-0.106  0.723  0.683]
+[ DIAG replan=150 step=149 ] norm|a0|=1.752  denorm|a0|=1.18e-02 m  dir=[-0.806  0.588 -0.068]
+[ DIAG replan=200 step=199 ] norm|a0|=2.184  denorm|a0|=1.33e-02 m  dir=[-0.729  0.667  0.152]
+[ DIAG replan=250 step=249 ] norm|a0|=2.913  denorm|a0|=1.44e-02 m  dir=[-0.76   0.532 -0.373]
+[ DIAG replan=300 step=299 ] norm|a0|=3.847  denorm|a0|=1.30e-02 m  dir=[-0.878  0.474  0.068]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.532141 m
+  - Avg Inference Time: 0.4025 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt2p0/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.187  denorm|a0|=9.69e-03 m  dir=[-0.817  0.541 -0.198]
+[ DIAG replan=100 step=99 ] norm|a0|=1.985  denorm|a0|=1.20e-02 m  dir=[-0.848  0.529 -0.023]
+[ DIAG replan=150 step=149 ] norm|a0|=2.272  denorm|a0|=1.36e-02 m  dir=[-0.83   0.53   0.176]
+[ DIAG replan=200 step=199 ] norm|a0|=2.797  denorm|a0|=1.22e-02 m  dir=[-0.87   0.493  0.025]
+[ DIAG replan=250 step=249 ] norm|a0|=3.950  denorm|a0|=1.44e-02 m  dir=[-0.856  0.366 -0.364]
+[ DIAG replan=300 step=299 ] norm|a0|=4.778  denorm|a0|=1.21e-02 m  dir=[-0.93   0.367  0.006]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.852440 m
+  - Avg Inference Time: 0.3938 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt2p0/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt2p0...
+--- aligning-d3il-visual [default] dpcc-c-dt2p0 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.4418 m  max=1.8524 m
+Avg inference time/replan: 0.398 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt4p0'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f30b8fb8-59c6-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.002  -0.07   -0.1983]  |mag| = 0.2103
+[ DIAG first-replan ] denormalized a0 = [-2.0e-05 -5.8e-04  3.8e-04]  |mag| = 0.000696 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2413, 0.9911]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.002  -0.07   -0.1983]
+  step  1: [-0.0041 -0.073  -0.2061]
+  step  2: [-0.0165  0.8816 -0.2154]
+  step  3: [-0.0093  0.9338 -0.2169]
+  step  4: [-0.0131  0.9306 -0.2281]
+  step  5: [-0.0037  0.951  -0.231 ]
+  step  6: [ 0.0026  0.9767 -0.2413]
+  step  7: [-0.0091  0.9911 -0.2357]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt4p0/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.256  denorm|a0|=5.93e-04 m  dir=[ 0.204  0.178 -0.963]
+[ DIAG replan=100 step=99 ] norm|a0|=0.242  denorm|a0|=2.81e-04 m  dir=[ 0.101  0.091 -0.991]
+[ DIAG replan=150 step=149 ] norm|a0|=0.242  denorm|a0|=3.24e-04 m  dir=[ 0.109  0.115 -0.987]
+[ DIAG replan=200 step=199 ] norm|a0|=1.003  denorm|a0|=8.12e-03 m  dir=[ 0.034  0.971 -0.237]
+[ DIAG replan=250 step=249 ] norm|a0|=1.065  denorm|a0|=9.37e-03 m  dir=[-0.382  0.923  0.041]
+[ DIAG replan=300 step=299 ] norm|a0|=1.470  denorm|a0|=1.13e-02 m  dir=[-0.784  0.616 -0.075]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.034635 m
+  - Avg Inference Time: 0.3863 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt4p0/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.053  denorm|a0|=8.56e-03 m  dir=[-0.769  0.601 -0.218]
+[ DIAG replan=100 step=99 ] norm|a0|=1.672  denorm|a0|=1.17e-02 m  dir=[-0.822  0.57  -0.01 ]
+[ DIAG replan=150 step=149 ] norm|a0|=1.712  denorm|a0|=1.26e-02 m  dir=[-0.786  0.611  0.096]
+[ DIAG replan=200 step=199 ] norm|a0|=2.352  denorm|a0|=1.25e-02 m  dir=[-0.778  0.57  -0.265]
+[ DIAG replan=250 step=249 ] norm|a0|=3.299  denorm|a0|=1.21e-02 m  dir=[-0.886  0.442 -0.142]
+[ DIAG replan=300 step=299 ] norm|a0|=4.384  denorm|a0|=1.31e-02 m  dir=[-0.913  0.402  0.065]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.754466 m
+  - Avg Inference Time: 0.3921 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/dynamics_only/dpcc-c-dt4p0/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt4p0...
+--- aligning-d3il-visual [default] dpcc-c-dt4p0 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.2330 m  max=1.7545 m
+Avg inference time/replan: 0.389 s
+--------------------------------------------------------------------------------
+
+
+[ geo ] ── Constraint variant: combined_4  types=['dynamics', 'bounds', 'halfspace', 'obstacles'] ──
+[ geo ] Constraint overview → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/constraint_overview.png
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_99a4cae2-59c7-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 2.000e-04 -9.000e-04 -2.345e-01]  |mag| = 0.2345
+[ DIAG first-replan ] denormalized a0 = [ 0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000016 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2380, 1.0001]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 2.000e-04 -9.000e-04 -2.345e-01]
+  step  1: [-0.007   0.8999 -0.238 ]
+  step  2: [-0.0032  0.9964 -0.2314]
+  step  3: [-0.0014  1.0001 -0.2268]
+  step  4: [-0.018   0.9927 -0.2358]
+  step  5: [-0.0064  0.9994 -0.2311]
+  step  6: [-0.006  0.995 -0.237]
+  step  7: [-1.000e-04  9.842e-01 -2.341e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/diffuser/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.30e-03 m  dir=[-0.001  0.974 -0.225]
+[ DIAG replan=100 step=99 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.007  0.974 -0.228]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=1.96e-05 m  dir=[-0.006 -0.006 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.233  denorm|a0|=2.75e-05 m  dir=[-0.014 -0.001 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=1.78e-05 m  dir=[-0.007 -0.005 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.233  denorm|a0|=1.79e-05 m  dir=[-0.004 -0.008 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.518018 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.051134 m
+  - Avg Inference Time: 0.2957 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/diffuser/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.026  denorm|a0|=8.33e-03 m  dir=[-0.002  0.974 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=0.768  denorm|a0|=6.09e-03 m  dir=[ 0.012 -0.953 -0.304]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=6.52e-05 m  dir=[-0.003  0.033 -0.999]
+[ DIAG replan=200 step=199 ] norm|a0|=0.231  denorm|a0|=4.50e-05 m  dir=[-0.004  0.018 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=2.58e-05 m  dir=[-0.001  0.01  -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=3.84e-05 m  dir=[-0.016  0.009 -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.444779 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035842 m
+  - Avg Inference Time: 0.2957 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/diffuser/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4813985526561737
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for diffuser...
+--- aligning-d3il-visual [default] diffuser seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4814 m  +- 0.0366 m
+Min final mean distance:   0.4448 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0105 m  max=0.0511 m
+Avg inference time/replan: 0.296 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-r'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_1e2153c6-59c8-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG first-replan ] normalized   a0 = [-0.0628  1.4491 -0.2187]  |mag| = 1.4669
+[ DIAG first-replan ] denormalized a0 = [-0.00052  0.00833  0.00016]  |mag| = 0.008351 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2350, 1.4491]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0628  1.4491 -0.2187]
+  step  1: [-0.0073  1.0014 -0.2204]
+  step  2: [-0.0093  1.0013 -0.2183]
+  step  3: [-0.0046  0.999  -0.2117]
+  step  4: [-0.0075  1.0057 -0.2159]
+  step  5: [-0.0037  1.0134 -0.2279]
+  step  6: [ 0.0039  1.0103 -0.2334]
+  step  7: [ 0.0046  0.997  -0.235 ]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-r/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.006  denorm|a0|=8.15e-03 m  dir=[-0.01   0.971 -0.237]
+[ DIAG replan=100 step=99 ] norm|a0|=1.700  denorm|a0|=1.59e-02 m  dir=[-0.16   0.737  0.657]
+[ DIAG replan=150 step=149 ] norm|a0|=1.630  denorm|a0|=1.14e-02 m  dir=[-0.831  0.555 -0.037]
+[ DIAG replan=200 step=199 ] norm|a0|=2.889  denorm|a0|=1.60e-02 m  dir=[ 0.928 -0.168  0.334]
+[ DIAG replan=250 step=249 ] norm|a0|=1.468  denorm|a0|=1.09e-02 m  dir=[-0.813  0.568 -0.125]
+[ DIAG replan=300 step=299 ] norm|a0|=5.083  denorm|a0|=1.13e-02 m  dir=[-0.155 -0.093 -0.984]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.058167 m
+  - Avg Inference Time: 1.4024 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-r/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.169  denorm|a0|=9.69e-03 m  dir=[-0.545  0.828 -0.134]
+[ DIAG replan=100 step=99 ] norm|a0|=2.174  denorm|a0|=9.20e-03 m  dir=[-0.968 -0.212 -0.138]
+[ DIAG replan=150 step=149 ] norm|a0|=3.003  denorm|a0|=8.60e-03 m  dir=[-0.99   0.006 -0.143]
+[ DIAG replan=200 step=199 ] norm|a0|=5.220  denorm|a0|=1.21e-02 m  dir=[ 0.958 -0.064 -0.28 ]
+[ DIAG replan=250 step=249 ] norm|a0|=5.314  denorm|a0|=1.44e-02 m  dir=[ 0.941 -0.192 -0.279]
+[ DIAG replan=300 step=299 ] norm|a0|=5.457  denorm|a0|=1.44e-02 m  dir=[ 0.916 -0.257 -0.307]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.574776 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.069450 m
+  - Avg Inference Time: 1.4479 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-r/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.44374316930770874
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-r...
+--- aligning-d3il-visual [default] dpcc-r seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4437 m  +- 0.1310 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.1865 m  max=1.0695 m
+Avg inference time/replan: 1.425 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_3871e00e-59ca-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG first-replan ] normalized   a0 = [-0.0689  1.4483 -0.2227]  |mag| = 1.4669
+[ DIAG first-replan ] denormalized a0 = [-0.00057  0.00833  0.00011]  |mag| = 0.008354 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2383, 1.4483]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0689  1.4483 -0.2227]
+  step  1: [-0.0098  1.0021 -0.2233]
+  step  2: [-0.006   1.0018 -0.222 ]
+  step  3: [-0.0109  0.9993 -0.2166]
+  step  4: [-0.0074  1.0013 -0.216 ]
+  step  5: [-0.0098  1.0085 -0.2242]
+  step  6: [-7.0000e-04  1.0106e+00 -2.3340e-01]
+  step  7: [-0.0022  0.9978 -0.2383]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.022  denorm|a0|=8.33e-03 m  dir=[ 0.003  0.978 -0.208]
+[ DIAG replan=100 step=99 ] norm|a0|=1.205  denorm|a0|=9.86e-03 m  dir=[-0.683  0.706 -0.189]
+[ DIAG replan=150 step=149 ] norm|a0|=0.235  denorm|a0|=6.26e-05 m  dir=[-0.03   0.007 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.230  denorm|a0|=3.83e-05 m  dir=[-0.002 -0.011 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.230  denorm|a0|=4.72e-05 m  dir=[ 0.01  -0.009 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.230  denorm|a0|=4.49e-05 m  dir=[ 0.004 -0.017 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.453635 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.051385 m
+  - Avg Inference Time: 0.5371 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.386  denorm|a0|=8.55e-03 m  dir=[-0.974 -0.165 -0.152]
+[ DIAG replan=100 step=99 ] norm|a0|=1.374  denorm|a0|=9.96e-03 m  dir=[ 0.465  0.849 -0.251]
+[ DIAG replan=150 step=149 ] norm|a0|=1.680  denorm|a0|=1.31e-02 m  dir=[-0.799  0.565  0.206]
+[ DIAG replan=200 step=199 ] norm|a0|=2.813  denorm|a0|=1.44e-02 m  dir=[-0.462 -0.58  -0.671]
+[ DIAG replan=250 step=249 ] norm|a0|=1.527  denorm|a0|=1.13e-02 m  dir=[0.952 0.009 0.306]
+[ DIAG replan=300 step=299 ] norm|a0|=1.715  denorm|a0|=1.30e-02 m  dir=[-0.698  0.505 -0.508]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.081144 m
+  - Avg Inference Time: 0.9658 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.5152636766433716
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c...
+--- aligning-d3il-visual [default] dpcc-c seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5153 m  +- 0.0616 m
+Min final mean distance:   0.4536 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0218 m  max=0.0811 m
+Avg inference time/replan: 0.751 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-t'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_614bb5f8-59cb-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG first-replan ] normalized   a0 = [-0.0628  1.4491 -0.2187]  |mag| = 1.4669
+[ DIAG first-replan ] denormalized a0 = [-0.00052  0.00833  0.00016]  |mag| = 0.008351 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2350, 1.4491]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0628  1.4491 -0.2187]
+  step  1: [-0.0073  1.0014 -0.2204]
+  step  2: [-0.0093  1.0013 -0.2183]
+  step  3: [-0.0046  0.999  -0.2117]
+  step  4: [-0.0075  1.0057 -0.2159]
+  step  5: [-0.0037  1.0134 -0.2279]
+  step  6: [ 0.0039  1.0103 -0.2334]
+  step  7: [ 0.0046  0.997  -0.235 ]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-t/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.051  denorm|a0|=8.35e-03 m  dir=[-0.002  0.962 -0.272]
+[ DIAG replan=100 step=99 ] norm|a0|=1.625  denorm|a0|=1.58e-02 m  dir=[-0.1    0.749  0.656]
+[ DIAG replan=150 step=149 ] norm|a0|=1.623  denorm|a0|=1.14e-02 m  dir=[-0.827  0.56  -0.053]
+[ DIAG replan=200 step=199 ] norm|a0|=3.526  denorm|a0|=1.78e-02 m  dir=[ 0.88  -0.351  0.32 ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.889  denorm|a0|=9.55e-03 m  dir=[ 0.466 -0.762  0.449]
+[ DIAG replan=300 step=299 ] norm|a0|=4.466  denorm|a0|=1.37e-02 m  dir=[-0.29   0.185 -0.939]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.060997 m
+  - Avg Inference Time: 0.8043 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-t/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.326  denorm|a0|=1.88e-03 m  dir=[ 0.362 -0.588 -0.724]
+[ DIAG replan=100 step=99 ] norm|a0|=1.518  denorm|a0|=1.21e-02 m  dir=[-0.7    0.714  0.012]
+[ DIAG replan=150 step=149 ] norm|a0|=3.902  denorm|a0|=1.21e-02 m  dir=[ 0.958 -0.086 -0.272]
+[ DIAG replan=200 step=199 ] norm|a0|=0.896  denorm|a0|=9.13e-03 m  dir=[-0.013  0.941  0.339]
+[ DIAG replan=250 step=249 ] norm|a0|=5.083  denorm|a0|=1.13e-02 m  dir=[-0.176  0.036 -0.984]
+[ DIAG replan=300 step=299 ] norm|a0|=5.110  denorm|a0|=1.54e-02 m  dir=[ 0.978 -0.12   0.168]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.067558 m
+  - Avg Inference Time: 1.3609 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-t/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-t...
+--- aligning-d3il-visual [default] dpcc-t seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0269 m  max=0.0676 m
+Avg inference time/replan: 1.083 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'gradient'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_ffc82300-59cc-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 0.     -0.001  -0.2341]  |mag| = 0.2341
+[ DIAG first-replan ] denormalized a0 = [-0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000012 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2377, 0.9997]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 0.     -0.001  -0.2341]
+  step  1: [-0.0069  0.8979 -0.2377]
+  step  2: [-0.0028  0.9956 -0.2316]
+  step  3: [-8.000e-04  9.997e-01 -2.265e-01]
+  step  4: [-0.0182  0.9922 -0.2358]
+  step  5: [-0.0062  0.9993 -0.2316]
+  step  6: [-0.0055  0.9959 -0.2373]
+  step  7: [-1.000e-04  9.836e-01 -2.345e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/gradient/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.30e-03 m  dir=[-0.001  0.974 -0.226]
+[ DIAG replan=100 step=99 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.007  0.974 -0.227]
+[ DIAG replan=150 step=149 ] norm|a0|=0.230  denorm|a0|=5.43e-05 m  dir=[ 0.005 -0.022 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.232  denorm|a0|=1.55e-05 m  dir=[ 0.004 -0.003 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=2.47e-05 m  dir=[ 0.009 -0.006 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.231  denorm|a0|=3.53e-05 m  dir=[ 0.01 -0.01 -1.  ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.508101 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.050953 m
+  - Avg Inference Time: 0.3091 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/gradient/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.022  denorm|a0|=8.29e-03 m  dir=[-0.001  0.974 -0.228]
+[ DIAG replan=100 step=99 ] norm|a0|=0.236  denorm|a0|=3.47e-04 m  dir=[ 0.173  0.034 -0.984]
+[ DIAG replan=150 step=149 ] norm|a0|=0.233  denorm|a0|=4.37e-05 m  dir=[-0.02  0.01 -1.  ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.232  denorm|a0|=4.12e-05 m  dir=[-0.015  0.013 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=3.54e-05 m  dir=[-0.011  0.014 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.234  denorm|a0|=5.51e-05 m  dir=[-0.025  0.012 -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.487775 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.037670 m
+  - Avg Inference Time: 0.3091 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/gradient/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4979383945465088
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for gradient...
+--- aligning-d3il-visual [default] gradient seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4979 m  +- 0.0102 m
+Min final mean distance:   0.4878 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0103 m  max=0.0510 m
+Avg inference time/replan: 0.309 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'post_processing'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_89555bb0-59cd-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.1934  1.4317 -0.2043]  |mag| = 1.4591
+[ DIAG first-replan ] denormalized a0 = [-0.00161  0.00833  0.00031]  |mag| = 0.008494 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2349, 1.4317]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.1934  1.4317 -0.2043]
+  step  1: [-0.009   0.8923 -0.2115]
+  step  2: [-0.0055  0.9895 -0.2106]
+  step  3: [-0.0038  0.9941 -0.2121]
+  step  4: [-0.0203  0.9882 -0.2263]
+  step  5: [-0.008   0.9964 -0.226 ]
+  step  6: [-0.0069  0.9935 -0.2349]
+  step  7: [-1.000e-04  9.843e-01 -2.341e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/post_processing/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.051  denorm|a0|=8.36e-03 m  dir=[-0.005  0.961 -0.275]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ DIAG replan=100 step=99 ] norm|a0|=7.215  denorm|a0|=1.44e-02 m  dir=[ 0.693  0.693 -0.199]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[0.577 0.577 0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[0.577 0.577 0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.984589 m
+  - Avg Inference Time: 0.3653 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/post_processing/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.204  denorm|a0|=9.85e-03 m  dir=[-0.634  0.75  -0.192]
+[ DIAG replan=100 step=99 ] norm|a0|=1.042  denorm|a0|=8.33e-03 m  dir=[-0.976 -0.002 -0.217]
+[ DIAG replan=150 step=149 ] norm|a0|=0.516  denorm|a0|=4.34e-03 m  dir=[-0.97  0.03 -0.24]
+[ DIAG replan=200 step=199 ] norm|a0|=1.765  denorm|a0|=1.10e-02 m  dir=[-0.332 -0.852 -0.404]
+[ DIAG replan=250 step=249 ] norm|a0|=2.835  denorm|a0|=1.18e-02 m  dir=[ 0.132 -0.326 -0.936]
+[ DIAG replan=300 step=299 ] norm|a0|=5.275  denorm|a0|=1.24e-02 m  dir=[ 0.948 -0.318  0.024]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.464922 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.076079 m
+  - Avg Inference Time: 0.3589 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/post_processing/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.38881611824035645
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for post_processing...
+--- aligning-d3il-visual [default] post_processing seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.3888 m  +- 0.0761 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.5132 m  max=1.9846 m
+Avg inference time/replan: 0.362 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'model_free'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_26333042-59ce-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 2.000e-04 -8.000e-04 -2.345e-01]  |mag| = 0.2345
+[ DIAG first-replan ] denormalized a0 = [ 0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000016 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2378, 0.9998]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 2.000e-04 -8.000e-04 -2.345e-01]
+  step  1: [-0.007   0.902  -0.2378]
+  step  2: [-0.0031  0.9962 -0.2316]
+  step  3: [-0.0011  0.9998 -0.2267]
+  step  4: [-0.018   0.9929 -0.2359]
+  step  5: [-0.0065  0.9994 -0.2313]
+  step  6: [-0.0059  0.9949 -0.2373]
+  step  7: [-4.000e-04  9.843e-01 -2.340e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/model_free/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.30e-03 m  dir=[-0.001  0.974 -0.226]
+[ DIAG replan=100 step=99 ] norm|a0|=1.028  denorm|a0|=8.33e-03 m  dir=[-0.007  0.974 -0.227]
+[ DIAG replan=150 step=149 ] norm|a0|=0.231  denorm|a0|=2.75e-05 m  dir=[ 0.007 -0.007 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.233  denorm|a0|=1.40e-05 m  dir=[-0.006  0.003 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=5.67e-06 m  dir=[ 0.    -0.001 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=1.44e-05 m  dir=[-0.001 -0.003 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.508805 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.050853 m
+  - Avg Inference Time: 0.3748 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/model_free/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.026  denorm|a0|=8.33e-03 m  dir=[-0.002  0.974 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=0.231  denorm|a0|=5.44e-05 m  dir=[-0.001 -0.025 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=1.026  denorm|a0|=8.33e-03 m  dir=[-0.005  0.974 -0.225]
+[ DIAG replan=200 step=199 ] norm|a0|=0.230  denorm|a0|=4.49e-05 m  dir=[-0.004  0.017 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=1.031  denorm|a0|=8.33e-03 m  dir=[-0.     0.975 -0.222]
+[ DIAG replan=300 step=299 ] norm|a0|=0.231  denorm|a0|=4.79e-05 m  dir=[ 0.014  0.015 -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.486369 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.038111 m
+  - Avg Inference Time: 0.3940 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/model_free/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.49758708477020264
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for model_free...
+--- aligning-d3il-visual [default] model_free seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4976 m  +- 0.0112 m
+Min final mean distance:   0.4864 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0144 m  max=0.0509 m
+Avg inference time/replan: 0.384 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt0p25'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_ca9c5b86-59ce-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-5.      5.     -0.2679]  |mag| = 7.0761
+[ DIAG first-replan ] denormalized a0 = [-0.00833  0.00833 -0.00038]  |mag| = 0.011791 m
+[ DIAG first-replan ] horizon act (normalized) range: [-5.0000, 5.0000]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-5.      5.     -0.2679]
+  step  1: [-0.3156  1.1173 -0.1441]
+  step  2: [-0.1695  1.0272 -0.2017]
+  step  3: [ 0.1465  0.7517 -0.2397]
+  step  4: [-0.0322  1.0367 -0.2046]
+  step  5: [ 0.3721  0.7366 -0.2052]
+  step  6: [ 0.2092  0.7679 -0.1526]
+  step  7: [ 0.4962  0.4098 -0.1583]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt0p25/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG replan=50 step=49 ] norm|a0|=1.047  denorm|a0|=8.33e-03 m  dir=[ 0.001  0.004 -1.   ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.137  denorm|a0|=9.28e-03 m  dir=[ 0.61   0.765 -0.205]
+[ DIAG replan=150 step=149 ] norm|a0|=0.227  denorm|a0|=8.37e-05 m  dir=[-0.026 -0.01  -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.232  denorm|a0|=3.59e-05 m  dir=[-0.017 -0.005 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=3.01e-05 m  dir=[-0.013 -0.005 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.231  denorm|a0|=3.74e-05 m  dir=[-0.008  0.01  -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.190722 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.040422 m
+  - Avg Inference Time: 0.6293 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt0p25/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.844  denorm|a0|=6.71e-03 m  dir=[-0.555  0.777 -0.298]
+[ DIAG replan=100 step=99 ] norm|a0|=2.693  denorm|a0|=1.78e-02 m  dir=[-0.691  0.521  0.501]
+[ DIAG replan=150 step=149 ] norm|a0|=1.778  denorm|a0|=1.20e-02 m  dir=[-0.837  0.546  0.032]
+[ DIAG replan=200 step=199 ] norm|a0|=2.390  denorm|a0|=1.41e-02 m  dir=[-0.596  0.392 -0.701]
+[ DIAG replan=250 step=249 ] norm|a0|=5.487  denorm|a0|=1.78e-02 m  dir=[ 0.911 -0.337  0.237]
+[ DIAG replan=300 step=299 ] norm|a0|=5.383  denorm|a0|=1.44e-02 m  dir=[-0.301  0.216 -0.929]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.086248 m
+  - Avg Inference Time: 3.7917 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt0p25/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.3838072121143341
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt0p25...
+--- aligning-d3il-visual [default] dpcc-c-dt0p25 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.3838 m  +- 0.1931 m
+Min final mean distance:   0.1907 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0189 m  max=0.0862 m
+Avg inference time/replan: 2.211 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt0p5'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_fc4ba62a-59d1-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.2848  2.877  -0.2497]  |mag| = 2.9018
+[ DIAG first-replan ] denormalized a0 = [-0.00237  0.00833 -0.00018]  |mag| = 0.008667 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2848, 2.8770]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.2848  2.877  -0.2497]
+  step  1: [ 0.0269  1.0777 -0.201 ]
+  step  2: [-0.0072  1.0574 -0.1956]
+  step  3: [ 0.0384  1.0404 -0.2074]
+  step  4: [-0.0015  0.9974 -0.1811]
+  step  5: [ 0.0676  0.9915 -0.2285]
+  step  6: [ 0.0343  0.9995 -0.2037]
+  step  7: [ 0.018   0.9706 -0.2397]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt0p5/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG replan=50 step=49 ] norm|a0|=1.022  denorm|a0|=8.32e-03 m  dir=[-0.002  0.977 -0.212]
+[ DIAG replan=100 step=99 ] norm|a0|=1.203  denorm|a0|=9.83e-03 m  dir=[-0.665  0.721 -0.195]
+[ DIAG replan=150 step=149 ] norm|a0|=0.238  denorm|a0|=5.34e-05 m  dir=[ 0.002  0.008 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.233  denorm|a0|=2.17e-05 m  dir=[-0.009  0.006 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=2.40e-05 m  dir=[-0.008  0.009 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.231  denorm|a0|=4.01e-05 m  dir=[-0.01   0.012 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.489818 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.049877 m
+  - Avg Inference Time: 0.5380 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt0p5/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.168  denorm|a0|=9.57e-03 m  dir=[-0.835  0.52  -0.182]
+[ DIAG replan=100 step=99 ] norm|a0|=1.256  denorm|a0|=8.34e-03 m  dir=[-0.982 -0.022 -0.188]
+[ DIAG replan=150 step=149 ] norm|a0|=2.821  denorm|a0|=1.10e-02 m  dir=[-0.944 -0.235 -0.233]
+[ DIAG replan=200 step=199 ] norm|a0|=5.264  denorm|a0|=1.44e-02 m  dir=[ 0.95  -0.223 -0.219]
+[ DIAG replan=250 step=249 ] norm|a0|=3.730  denorm|a0|=1.44e-02 m  dir=[ 0.827 -0.402 -0.393]
+[ DIAG replan=300 step=299 ] norm|a0|=7.455  denorm|a0|=1.44e-02 m  dir=[-0.671  0.671 -0.317]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 2.720325 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.712156 m
+  - Avg Inference Time: 1.0157 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt0p5/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 1.605071783065796
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt0p5...
+--- aligning-d3il-visual [default] dpcc-c-dt0p5 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   1.6051 m  +- 1.1153 m
+Min final mean distance:   0.4898 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.1344 m  max=0.7122 m
+Avg inference time/replan: 0.777 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt2p0'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_2c215ff6-59d3-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0058  0.8889 -0.2077]  |mag| = 0.9128
+[ DIAG first-replan ] denormalized a0 = [-5.00e-05  7.41e-03  2.80e-04]  |mag| = 0.007412 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2394, 0.9954]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0058  0.8889 -0.2077]
+  step  1: [-0.0097  0.9667 -0.2141]
+  step  2: [-0.0074  0.9683 -0.2262]
+  step  3: [-0.0083  0.9753 -0.2143]
+  step  4: [-0.0113  0.9797 -0.2245]
+  step  5: [-0.0118  0.9888 -0.2271]
+  step  6: [ 4.000e-04  9.954e-01 -2.394e-01]
+  step  7: [-0.0036  0.9941 -0.2384]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt2p0/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ DIAG replan=50 step=49 ] norm|a0|=0.231  denorm|a0|=4.11e-04 m  dir=[ 0.133  0.162 -0.978]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG replan=100 step=99 ] norm|a0|=1.081  denorm|a0|=9.77e-03 m  dir=[-0.164  0.966  0.2  ]
+[ DIAG replan=150 step=149 ] norm|a0|=1.325  denorm|a0|=1.07e-02 m  dir=[-0.764  0.603 -0.23 ]
+[ DIAG replan=200 step=199 ] norm|a0|=2.273  denorm|a0|=1.00e-02 m  dir=[ 0.99  -0.087  0.113]
+[ DIAG replan=250 step=249 ] norm|a0|=1.435  denorm|a0|=1.09e-02 m  dir=[-0.771  0.518 -0.371]
+[ DIAG replan=300 step=299 ] norm|a0|=1.943  denorm|a0|=1.01e-02 m  dir=[ 0.978 -0.178  0.109]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.049848 m
+  - Avg Inference Time: 0.5121 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt2p0/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.164  denorm|a0|=9.53e-03 m  dir=[-0.835  0.518 -0.185]
+[ DIAG replan=100 step=99 ] norm|a0|=1.288  denorm|a0|=9.60e-03 m  dir=[ 0.386  0.922 -0.014]
+[ DIAG replan=150 step=149 ] norm|a0|=1.001  denorm|a0|=8.52e-03 m  dir=[-0.964  0.256 -0.066]
+[ DIAG replan=200 step=199 ] norm|a0|=1.690  denorm|a0|=9.12e-03 m  dir=[ 0.961 -0.258 -0.098]
+[ DIAG replan=250 step=249 ] norm|a0|=1.474  denorm|a0|=1.12e-02 m  dir=[-0.758  0.514 -0.402]
+[ DIAG replan=300 step=299 ] norm|a0|=2.156  denorm|a0|=8.83e-03 m  dir=[ 0.997 -0.081 -0.001]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.050834 m
+  - Avg Inference Time: 0.5065 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt2p0/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt2p0...
+--- aligning-d3il-visual [default] dpcc-c-dt2p0 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0241 m  max=0.0508 m
+Avg inference time/replan: 0.509 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c-dt4p0'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_fb103094-59d3-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.0442  0.3585 -0.2005]  |mag| = 0.4131
+[ DIAG first-replan ] denormalized a0 = [-0.00037  0.00299  0.00035]  |mag| = 0.003031 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2425, 0.9983]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0442  0.3585 -0.2005]
+  step  1: [-0.0103 -0.0014 -0.2021]
+  step  2: [-0.0021  0.8601 -0.2106]
+  step  3: [ 6.000e-04  9.266e-01 -2.202e-01]
+  step  4: [-0.0124  0.9316 -0.225 ]
+  step  5: [-0.0036  0.9496 -0.2284]
+  step  6: [ 0.0146  0.9688 -0.2425]
+  step  7: [ 0.0077  0.9983 -0.2337]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt4p0/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.258  denorm|a0|=5.50e-04 m  dir=[ 0.186  0.154 -0.97 ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.243  denorm|a0|=2.90e-04 m  dir=[ 0.102  0.094 -0.99 ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.242  denorm|a0|=3.27e-04 m  dir=[ 0.108  0.118 -0.987]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ DIAG replan=200 step=199 ] norm|a0|=0.981  denorm|a0|=7.94e-03 m  dir=[ 0.032  0.971 -0.236]
+[ DIAG replan=250 step=249 ] norm|a0|=1.232  denorm|a0|=1.03e-02 m  dir=[-0.605  0.793 -0.076]
+[ DIAG replan=300 step=299 ] norm|a0|=0.225  denorm|a0|=2.26e-03 m  dir=[ 0.889 -0.164 -0.428]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.033462 m
+  - Avg Inference Time: 0.4954 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt4p0/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.888  denorm|a0|=7.20e-03 m  dir=[-0.972  0.004 -0.235]
+[ DIAG replan=100 step=99 ] norm|a0|=0.942  denorm|a0|=7.92e-03 m  dir=[-0.064  0.991 -0.113]
+[ DIAG replan=150 step=149 ] norm|a0|=0.129  denorm|a0|=1.91e-03 m  dir=[-0.734  0.327 -0.595]
+[ DIAG replan=200 step=199 ] norm|a0|=0.247  denorm|a0|=8.58e-04 m  dir=[-0.329  0.253 -0.91 ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.393  denorm|a0|=1.88e-03 m  dir=[ 0.346 -0.143 -0.927]
+[ DIAG replan=300 step=299 ] norm|a0|=0.375  denorm|a0|=1.89e-03 m  dir=[-0.501  0.146 -0.853]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.043245 m
+  - Avg Inference Time: 0.5022 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4/dpcc-c-dt4p0/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c-dt4p0...
+--- aligning-d3il-visual [default] dpcc-c-dt4p0 seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0075 m  max=0.0432 m
+Avg inference time/replan: 0.499 s
+--------------------------------------------------------------------------------
+
+
+[ geo ] ── Constraint variant: combined_4-tightened  types=['dynamics', 'bounds', 'halfspace', 'obstacles'] ──
+[ geo ] Constraint overview → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/constraint_overview.png
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_c70547e8-59d4-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 2.000e-04 -9.000e-04 -2.345e-01]  |mag| = 0.2345
+[ DIAG first-replan ] denormalized a0 = [ 0.e+00 -1.e-05 -1.e-05]  |mag| = 0.000016 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2380, 1.0001]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 2.000e-04 -9.000e-04 -2.345e-01]
+  step  1: [-0.007   0.8999 -0.238 ]
+  step  2: [-0.0032  0.9964 -0.2314]
+  step  3: [-0.0014  1.0001 -0.2268]
+  step  4: [-0.018   0.9927 -0.2358]
+  step  5: [-0.0064  0.9994 -0.2311]
+  step  6: [-0.006  0.995 -0.237]
+  step  7: [-1.000e-04  9.842e-01 -2.341e-01]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/diffuser/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.023  denorm|a0|=8.30e-03 m  dir=[-0.001  0.974 -0.225]
+[ DIAG replan=100 step=99 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.007  0.974 -0.228]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=1.07e-05 m  dir=[ 0.    -0.001 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.233  denorm|a0|=1.65e-05 m  dir=[-0.007  0.004 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.233  denorm|a0|=4.18e-06 m  dir=[-0.001 -0.    -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=1.33e-05 m  dir=[-0.    -0.002 -1.   ]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.496038 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.051134 m
+  - Avg Inference Time: 0.2940 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/diffuser/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.026  denorm|a0|=8.33e-03 m  dir=[-0.002  0.974 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=0.768  denorm|a0|=6.09e-03 m  dir=[ 0.012 -0.953 -0.304]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=6.52e-05 m  dir=[-0.003  0.033 -0.999]
+[ DIAG replan=200 step=199 ] norm|a0|=0.231  denorm|a0|=4.46e-05 m  dir=[-0.004  0.018 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=2.56e-05 m  dir=[-0.001  0.01  -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.232  denorm|a0|=3.98e-05 m  dir=[-0.017  0.01  -1.   ]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.444779 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035842 m
+  - Avg Inference Time: 0.2942 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/diffuser/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4704088568687439
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for diffuser...
+--- aligning-d3il-visual [default] diffuser seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4704 m  +- 0.0256 m
+Min final mean distance:   0.4448 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0104 m  max=0.0511 m
+Avg inference time/replan: 0.294 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-r'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_487d9b86-59d5-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.1913  2.6426 -0.236 ]  |mag| = 2.6600
+[ DIAG first-replan ] denormalized a0 = [-1.59e-03  8.33e-03 -3.00e-05]  |mag| = 0.008484 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2360, 2.6426]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.1913  2.6426 -0.236 ]
+  step  1: [ 0.0471  1.0251 -0.1814]
+  step  2: [-0.0343  1.0236 -0.2199]
+  step  3: [ 0.0118  1.0575 -0.1754]
+  step  4: [ 0.0152  1.0176 -0.1693]
+  step  5: [ 0.0122  1.005  -0.2327]
+  step  6: [ 0.0343  1.0517 -0.2148]
+  step  7: [ 0.0287  0.9841 -0.207 ]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-r/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG replan=50 step=49 ] norm|a0|=1.158  denorm|a0|=9.17e-03 m  dir=[-0.392  0.886 -0.247]
+[ DIAG replan=100 step=99 ] norm|a0|=1.621  denorm|a0|=1.22e-02 m  dir=[-0.812  0.574  0.106]
+[ DIAG replan=150 step=149 ] norm|a0|=4.499  denorm|a0|=1.18e-02 m  dir=[ 0.843 -0.538 -0.028]
+[ DIAG replan=200 step=199 ] norm|a0|=1.156  denorm|a0|=1.14e-02 m  dir=[-0.9   -0.167  0.403]
+[ DIAG replan=250 step=249 ] norm|a0|=2.506  denorm|a0|=1.36e-02 m  dir=[-0.518  0.327 -0.79 ]
+[ DIAG replan=300 step=299 ] norm|a0|=4.732  denorm|a0|=1.48e-02 m  dir=[0.971 0.201 0.132]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.067523 m
+  - Avg Inference Time: 1.8128 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-r/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.089  denorm|a0|=8.41e-03 m  dir=[ 0.968 -0.129 -0.217]
+[ DIAG replan=100 step=99 ] norm|a0|=2.531  denorm|a0|=1.49e-02 m  dir=[0.77  0.59  0.242]
+[ DIAG replan=150 step=149 ] norm|a0|=1.674  denorm|a0|=1.15e-02 m  dir=[-0.836  0.548 -0.018]
+[ DIAG replan=200 step=199 ] norm|a0|=3.494  denorm|a0|=1.17e-02 m  dir=[-0.279  0.015 -0.96 ]
+[ DIAG replan=250 step=249 ] norm|a0|=4.351  denorm|a0|=1.19e-02 m  dir=[ 0.789 -0.608 -0.085]
+[ DIAG replan=300 step=299 ] norm|a0|=1.000  denorm|a0|=8.33e-03 m  dir=[-0.665  0.735 -0.133]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.065604 m
+  - Avg Inference Time: 1.3479 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-r/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.4448015093803406
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-r...
+--- aligning-d3il-visual [default] dpcc-r seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4448 m  +- 0.1321 m
+Min final mean distance:   0.3127 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0272 m  max=0.0675 m
+Avg inference time/replan: 1.580 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-c'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_9666d14e-59d7-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.2485  2.635  -0.2502]  |mag| = 2.6584
+[ DIAG first-replan ] denormalized a0 = [-0.00207  0.00833 -0.00018]  |mag| = 0.008589 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2502, 2.6350]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.2485  2.635  -0.2502]
+  step  1: [ 0.0176  1.0533 -0.2054]
+  step  2: [-0.0079  1.0438 -0.1976]
+  step  3: [ 0.0277  1.0283 -0.2126]
+  step  4: [-0.0038  0.9928 -0.1822]
+  step  5: [ 0.0493  0.9903 -0.2299]
+  step  6: [ 0.0266  1.0019 -0.2061]
+  step  7: [ 0.0149  0.9816 -0.2369]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-c/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ DIAG replan=50 step=49 ] norm|a0|=1.022  denorm|a0|=8.33e-03 m  dir=[-0.     0.978 -0.21 ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.186  denorm|a0|=9.68e-03 m  dir=[-0.807  0.555 -0.199]
+[ DIAG replan=150 step=149 ] norm|a0|=0.238  denorm|a0|=9.81e-05 m  dir=[ 0.039  0.018 -0.999]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG replan=200 step=199 ] norm|a0|=0.222  denorm|a0|=1.25e-04 m  dir=[-0.011  0.014 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.223  denorm|a0|=1.13e-04 m  dir=[-0.011  0.014 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.219  denorm|a0|=1.66e-04 m  dir=[-0.034  0.01  -0.999]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.430730 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.054174 m
+  - Avg Inference Time: 0.4804 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-c/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.074  denorm|a0|=8.64e-03 m  dir=[-0.785 -0.555 -0.275]
+[ DIAG replan=100 step=99 ] norm|a0|=2.517  denorm|a0|=1.57e-02 m  dir=[0.693 0.662 0.284]
+[ DIAG replan=150 step=149 ] norm|a0|=5.211  denorm|a0|=1.31e-02 m  dir=[ 0.959 -0.276  0.056]
+[ DIAG replan=200 step=199 ] norm|a0|=1.416  denorm|a0|=9.67e-03 m  dir=[ 0.347 -0.938  0.011]
+[ DIAG replan=250 step=249 ] norm|a0|=2.265  denorm|a0|=1.37e-02 m  dir=[-0.584  0.372 -0.721]
+[ DIAG replan=300 step=299 ] norm|a0|=3.706  denorm|a0|=1.39e-02 m  dir=[ 0.665 -0.738  0.119]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.078304 m
+  - Avg Inference Time: 1.7628 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-c/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+p(m|c) tensor([[0., 0.],
+        [0., 0.]])
+Mean Distance 0.5038110017776489
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c...
+--- aligning-d3il-visual [default] dpcc-c seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5038 m  +- 0.0731 m
+Min final mean distance:   0.4307 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.0197 m  max=0.0783 m
+Avg inference time/replan: 1.122 s
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-t'
+there are cpus:  64
+1947048 {0}
+Process 1947048 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_40857030-59d9-11f1-b4a5-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-0.1913  2.6426 -0.236 ]  |mag| = 2.6600
+[ DIAG first-replan ] denormalized a0 = [-1.59e-03  8.33e-03 -3.00e-05]  |mag| = 0.008484 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2360, 2.6426]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.1913  2.6426 -0.236 ]
+  step  1: [ 0.0471  1.0251 -0.1814]
+  step  2: [-0.0343  1.0236 -0.2199]
+  step  3: [ 0.0118  1.0575 -0.1754]
+  step  4: [ 0.0152  1.0176 -0.1693]
+  step  5: [ 0.0122  1.005  -0.2327]
+  step  6: [ 0.0343  1.0517 -0.2148]
+  step  7: [ 0.0287  0.9841 -0.207 ]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_6d_norm=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps300_mpc4/6/results/combined_4-tightened/dpcc-t/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+slurmstepd-i6-gpu-1: error: *** JOB 20846 ON i6-gpu-1 CANCELLED AT 2026-05-27T14:35:32 ***

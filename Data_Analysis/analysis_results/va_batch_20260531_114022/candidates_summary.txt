@@ -1,0 +1,190 @@
+======================================================================
+FM VISUAL ALIGNING — CROSS-CANDIDATE COMPARISON
+======================================================================
+Generated: 2026-05-31 11:40:31
+
+CANDIDATES
+----------------------------------------------------------------------
+  A: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+  B: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VFalse_mpc4
+  C: (Crushed)H8_K1_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VFalse_mpc4
+  D: H8_K1_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VFalse_mpc4
+  E: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VFalse_mpc4
+  F: H8_K1_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+  G: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+  H: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_mpc4
+  I: H8_K100_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4
+  J: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+  K: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4
+
+RANKINGS (by success rate)
+----------------------------------------------------------------------
+  1. Candidate A: 0.0% success, 0.3099m avg dist, 0.5852s avg time
+      combined_4-tightened/diffuser    0.0% | dist=0.2209m
+      combined_4-tightened/dpcc-c      0.0% | dist=0.3683m
+      combined_4-tightened/dpcc-r      0.0% | dist=0.3683m
+      combined_4-tightened/dpcc-t      0.0% | dist=0.3683m
+      combined_4-tightened/gradient    0.0% | dist=0.2905m
+      combined_4-tightened/model_free   0.0% | dist=0.2499m
+      combined_4-tightened/post_processing   0.0% | dist=0.2191m
+      combined_4/diffuser              0.0% | dist=0.2230m
+      combined_4/dpcc-c                0.0% | dist=0.3683m
+      combined_4/dpcc-c-dt0p25         0.0% | dist=0.3683m
+      combined_4/dpcc-c-dt0p5          0.0% | dist=0.3683m
+      combined_4/dpcc-c-dt2p0          0.0% | dist=0.3683m
+      combined_4/dpcc-c-dt4p0          0.0% | dist=0.3683m
+      combined_4/dpcc-r                0.0% | dist=0.3683m
+      combined_4/dpcc-t                0.0% | dist=0.3683m
+      combined_4/gradient              0.0% | dist=0.2217m
+      combined_4/model_free            0.0% | dist=0.2514m
+      combined_4/post_processing       0.0% | dist=0.2191m
+  2. Candidate B: 0.0% success, 0.3125m avg dist, 0.1710s avg time
+      diffuser                         0.0% | dist=0.2965m
+      dpcc-c                           0.0% | dist=0.3046m
+      dpcc-r                           0.0% | dist=0.3046m
+      dpcc-t                           0.0% | dist=0.3683m
+      gradient                         0.0% | dist=0.3046m
+      model_free                       0.0% | dist=0.3046m
+      post_processing                  0.0% | dist=0.3046m
+  3. Candidate C: 0.0% success, 0.2804m avg dist, 0.0117s avg time
+      combined_5/diffuser              0.0% | dist=0.2804m
+  4. Candidate D: 0.0% success, 0.4970m avg dist, 0.1177s avg time
+      combined_5-tightened/diffuser    0.0% | dist=0.2804m
+      combined_5-tightened/dpcc-c      0.0% | dist=0.2955m
+      combined_5-tightened/dpcc-c-dt0p25   0.0% | dist=0.7463m
+      combined_5-tightened/dpcc-c-dt0p5   0.0% | dist=0.6795m
+      combined_5-tightened/dpcc-c-dt2p0   0.0% | dist=0.9139m
+      combined_5-tightened/dpcc-c-dt4p0   0.0% | dist=0.5633m
+      combined_5-tightened/dpcc-r      0.0% | dist=0.2665m
+      combined_5-tightened/dpcc-t      0.0% | dist=0.9381m
+      combined_5-tightened/gradient    0.0% | dist=0.2665m
+      combined_5-tightened/model_free   0.0% | dist=0.2665m
+      combined_5-tightened/post_processing   0.0% | dist=0.2665m
+      combined_5/diffuser              0.0% | dist=0.2804m
+      combined_5/dpcc-c                0.0% | dist=0.3316m
+      combined_5/dpcc-c-dt0p25         0.0% | dist=0.7682m
+      combined_5/dpcc-c-dt0p5          0.0% | dist=0.6098m
+      combined_5/dpcc-c-dt2p0          0.0% | dist=0.7774m
+      combined_5/dpcc-c-dt4p0          0.0% | dist=0.6787m
+      combined_5/dpcc-r                0.0% | dist=0.2665m
+      combined_5/dpcc-t                0.0% | dist=0.9381m
+      combined_5/gradient              0.0% | dist=0.2665m
+      combined_5/model_free            0.0% | dist=0.2665m
+      combined_5/post_processing       0.0% | dist=0.2665m
+  5. Candidate E: 0.0% success, 0.4087m avg dist, 0.6835s avg time
+      combined_5-tightened/diffuser    0.0% | dist=0.4751m
+      combined_5-tightened/dpcc-r      0.0% | dist=0.3438m
+      combined_5/diffuser              0.0% | dist=0.4751m
+      combined_5/dpcc-c                0.0% | dist=0.3842m
+      combined_5/dpcc-c-dt0p25         0.0% | dist=0.4177m
+      combined_5/dpcc-c-dt0p5          0.0% | dist=0.4392m
+      combined_5/dpcc-c-dt2p0          0.0% | dist=0.3433m
+      combined_5/dpcc-c-dt4p0          0.0% | dist=0.3433m
+      combined_5/dpcc-r                0.0% | dist=0.4876m
+      combined_5/dpcc-t                0.0% | dist=0.3467m
+      combined_5/gradient              0.0% | dist=0.3958m
+      combined_5/model_free            0.0% | dist=0.3289m
+      combined_5/post_processing       0.0% | dist=0.5319m
+  6. Candidate F: 0.0% success, 0.2678m avg dist, 0.0366s avg time
+      combined_5-tightened/diffuser    0.0% | dist=0.2219m
+      combined_5-tightened/dpcc-c      0.0% | dist=0.3246m
+      combined_5-tightened/dpcc-c-dt0p25   0.0% | dist=0.3497m
+      combined_5-tightened/dpcc-c-dt0p5   0.0% | dist=0.2586m
+      combined_5-tightened/dpcc-c-dt2p0   0.0% | dist=0.2271m
+      combined_5-tightened/dpcc-c-dt4p0   0.0% | dist=0.2093m
+      combined_5-tightened/dpcc-r      0.0% | dist=0.3022m
+      combined_5-tightened/dpcc-t      0.0% | dist=0.2231m
+      combined_5-tightened/gradient    0.0% | dist=0.3022m
+      combined_5-tightened/model_free   0.0% | dist=0.3022m
+      combined_5-tightened/post_processing   0.0% | dist=0.3022m
+      combined_5/diffuser              0.0% | dist=0.2219m
+      combined_5/dpcc-c                0.0% | dist=0.2293m
+      combined_5/dpcc-c-dt0p25         0.0% | dist=0.2422m
+      combined_5/dpcc-c-dt0p5          0.0% | dist=0.2606m
+      combined_5/dpcc-c-dt2p0          0.0% | dist=0.2598m
+      combined_5/dpcc-c-dt4p0          0.0% | dist=0.2224m
+      combined_5/dpcc-r                0.0% | dist=0.3022m
+      combined_5/dpcc-t                0.0% | dist=0.2231m
+      combined_5/gradient              0.0% | dist=0.3022m
+      combined_5/model_free            0.0% | dist=0.3022m
+      combined_5/post_processing       0.0% | dist=0.3022m
+  7. Candidate G: 0.0% success, 0.2854m avg dist, 0.6610s avg time
+      (Good Run_27_05)combined_4/diffuser   0.0% | dist=0.2176m
+      (Good Run_27_05)combined_4/dpcc-c   0.0% | dist=0.2877m
+      (Good Run_27_05)combined_4/dpcc-c-dt0p25   0.0% | dist=0.1719m
+      (Good Run_27_05)combined_4/dpcc-c-dt0p5   0.0% | dist=0.4164m
+      (Good Run_27_05)combined_4/dpcc-c-dt2p0   0.0% | dist=0.2181m
+      (Good Run_27_05)combined_4/dpcc-c-dt4p0   0.0% | dist=0.4448m
+      (Good Run_27_05)combined_4/dpcc-r   0.0% | dist=0.2830m
+      (Good Run_27_05)combined_4/dpcc-t   0.0% | dist=0.2801m
+      (Good Run_27_05)combined_4/gradient   0.0% | dist=0.2469m
+      (Good Run_27_05)combined_4/model_free   0.0% | dist=0.2812m
+      (Good Run_27_05)combined_4/post_processing   0.0% | dist=0.2210m
+      combined_4_uf15/diffuser         0.0% | dist=0.2178m
+      combined_4_uf15/dpcc-c           0.0% | dist=0.3683m
+      combined_4_uf15/dpcc-r           0.0% | dist=0.3683m
+      combined_4_uf15/dpcc-t           0.0% | dist=0.3683m
+      combined_4_uf15/gradient         0.0% | dist=0.2560m
+      combined_4_uf15/model_free       0.0% | dist=0.2670m
+      combined_4_uf15/post_processing   0.0% | dist=0.2191m
+      combined_5-tightened(old_plot)/diffuser   0.0% | dist=0.2318m
+      combined_5-tightened(old_plot)/dpcc-c   0.0% | dist=0.3374m
+      combined_5-tightened(old_plot)/dpcc-c-dt0p25   0.0% | dist=0.2847m
+      combined_5-tightened(old_plot)/dpcc-c-dt0p5   0.0% | dist=0.2781m
+      combined_5-tightened(old_plot)/dpcc-c-dt2p0   0.0% | dist=0.2324m
+      combined_5-tightened(old_plot)/dpcc-c-dt4p0   0.0% | dist=0.4448m
+      combined_5-tightened(old_plot)/dpcc-r   0.0% | dist=0.4251m
+      combined_5-tightened(old_plot)/dpcc-t   0.0% | dist=0.2718m
+      combined_5-tightened(old_plot)/gradient   0.0% | dist=0.2460m
+      combined_5-tightened(old_plot)/model_free   0.0% | dist=0.2659m
+      combined_5-tightened(old_plot)/post_processing   0.0% | dist=0.2324m
+      combined_5-tightened/diffuser    0.0% | dist=0.2028m
+      combined_5-tightened/dpcc-r      0.0% | dist=0.3742m
+      combined_5/diffuser              0.0% | dist=0.2028m
+      combined_5/dpcc-c                0.0% | dist=0.3106m
+      combined_5/dpcc-c-dt0p25         0.0% | dist=0.2442m
+      combined_5/dpcc-c-dt0p5          0.0% | dist=0.2454m
+      combined_5/dpcc-c-dt2p0          0.0% | dist=0.4274m
+      combined_5/dpcc-c-dt4p0          0.0% | dist=0.3433m
+      combined_5/dpcc-r                0.0% | dist=0.2828m
+      combined_5/dpcc-t                0.0% | dist=0.2047m
+      combined_5/gradient              0.0% | dist=0.2082m
+      combined_5/model_free            0.0% | dist=0.2425m
+      combined_5/post_processing       0.0% | dist=0.1663m
+      dynamics_only/diffuser           0.0% | dist=0.2238m
+      dynamics_only/dpcc-c             0.0% | dist=0.4524m
+      dynamics_only/dpcc-c-dt0p25      0.0% | dist=0.2550m
+      dynamics_only/dpcc-c-dt0p5       0.0% | dist=0.2204m
+      dynamics_only/dpcc-c-dt2p0       0.0% | dist=0.2589m
+      dynamics_only/dpcc-c-dt4p0       0.0% | dist=0.4448m
+      dynamics_only/dpcc-r             0.0% | dist=0.3972m
+      dynamics_only/dpcc-t             0.0% | dist=0.3180m
+      dynamics_only/gradient           0.0% | dist=0.2765m
+      dynamics_only/model_free         0.0% | dist=0.2210m
+      dynamics_only/post_processing    0.0% | dist=0.2210m
+  8. Candidate H: 0.0% success, 0.3169m avg dist, 0.3374s avg time
+      diffuser                         0.0% | dist=0.3209m
+      dpcc-c                           0.0% | dist=0.3053m
+      dpcc-r                           0.0% | dist=0.3053m
+      dpcc-t                           0.0% | dist=0.3710m
+      gradient                         0.0% | dist=0.3053m
+      model_free                       0.0% | dist=0.3053m
+      post_processing                  0.0% | dist=0.3053m
+  9. Candidate I: 0.0% success, 0.4452m avg dist, 1.4374s avg time
+      diffuser                         0.0% | dist=0.3601m
+      dpcc-c                           0.0% | dist=0.4756m
+      dpcc-r                           0.0% | dist=0.4756m
+      dpcc-t                           0.0% | dist=0.3786m
+      gradient                         0.0% | dist=0.4756m
+      model_free                       0.0% | dist=0.4756m
+      post_processing                  0.0% | dist=0.4756m
+  10. Candidate K: 0.0% success, 0.2273m avg dist, 0.2881s avg time
+      diffuser                         0.0% | dist=0.2209m
+      dpcc-c                           0.0% | dist=0.2191m
+      dpcc-r                           0.0% | dist=0.2191m
+      dpcc-t                           0.0% | dist=0.2750m
+      gradient                         0.0% | dist=0.2191m
+      model_free                       0.0% | dist=0.2191m
+      post_processing                  0.0% | dist=0.2191m
+
+======================================================================

@@ -1,0 +1,26 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri May 29 22:12:55 UTC 2026
+JOB NAME:  run_patch_legacy_checkpoints
+JOB ID:    20962
+NODE:      i6-gpu-1
+GIT REV:   4723e20
+================================================================================
+[ patch ] Target: /u/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10
+[ patch ] Flags:  none
+
+[ patch ] Path    : /u/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10
+[ patch ] Dry-run : False
+
+[ scan ] Folder name  : LEGACY
+[ scan ] pkl   LEGACY  : 6/diffusion_config.pkl
+[ scan ] pkl   ERROR   : 6/dataset_config.pkl  ('NoneType' object has no attribute 'glGetError')
+
+  [pkl]  fixing: 6/diffusion_config.pkl
+  [dir]  rename:
+         H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10
+         → H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10
+
+[ patch ] 2 item(s) fixed.
+
+Job completed successfully.

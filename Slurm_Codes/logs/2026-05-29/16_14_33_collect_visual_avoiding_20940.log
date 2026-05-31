@@ -1,0 +1,226 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+COLLECT VISUAL AVOIDING CAMERA DATA
+DATE:   Fri May 29 14:14:33 UTC 2026
+NODE:   i6-gpu-1
+JOB_ID: 20940
+========================================
+[ sbatch ] Repo root: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ sbatch ] Resolution: 96  MaxEp: all  TrainRatio: 0.9
+pybullet build time: Nov 28 2023 23:45:17
+[ collect ] 96 episodes  (resolution=96×96, skip_existing=True)
+[ collect ] Initialising ObstacleAvoidanceEnv (EGL offscreen)...
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+[ collect ] Env ready.
+Collecting:   0%|          | 0/96 [00:00<?, ?it/s]                                                  Collecting:   0%|          | 0/96 [00:00<?, ?it/s]Collecting:   1%|          | 1/96 [00:00<00:21,  4.39it/s]                                                          Collecting:   1%|          | 1/96 [00:00<00:21,  4.39it/s]                                                          Collecting:   1%|          | 1/96 [00:00<00:21,  4.39it/s]                                                          Collecting:   1%|          | 1/96 [00:00<00:21,  4.39it/s]Collecting:   4%|▍         | 4/96 [00:00<00:07, 12.10it/s]                                                          Collecting:   4%|▍         | 4/96 [00:00<00:07, 12.10it/s]                                                          Collecting:   4%|▍         | 4/96 [00:00<00:07, 12.10it/s]                                                          Collecting:   4%|▍         | 4/96 [00:00<00:07, 12.10it/s]Collecting:   7%|▋         | 7/96 [00:00<00:05, 15.61it/s]                                                          Collecting:   7%|▋         | 7/96 [00:00<00:05, 15.61it/s]                                                          Collecting:   7%|▋         | 7/96 [00:00<00:05, 15.61it/s]                                                          Collecting:   7%|▋         | 7/96 [00:00<00:05, 15.61it/s]Collecting:  10%|█         | 10/96 [00:00<00:04, 17.54it/s]                                                           Collecting:  10%|█         | 10/96 [00:00<00:04, 17.54it/s]                                                           Collecting:  10%|█         | 10/96 [00:00<00:04, 17.54it/s]                                                           Collecting:  10%|█         | 10/96 [00:00<00:04, 17.54it/s]Collecting:  14%|█▎        | 13/96 [00:00<00:04, 18.69it/s]                                                           Collecting:  14%|█▎        | 13/96 [00:00<00:04, 18.69it/s]                                                           Collecting:  14%|█▎        | 13/96 [00:00<00:04, 18.69it/s]                                                           Collecting:  14%|█▎        | 13/96 [00:00<00:04, 18.69it/s]Collecting:  17%|█▋        | 16/96 [00:00<00:04, 19.44it/s]                                                           Collecting:  17%|█▋        | 16/96 [00:01<00:04, 19.44it/s]                                                           Collecting:  17%|█▋        | 16/96 [00:01<00:04, 19.44it/s]Collecting:  19%|█▉        | 18/96 [00:01<00:04, 19.46it/s]                                                           Collecting:  19%|█▉        | 18/96 [00:01<00:04, 19.46it/s]                                                           Collecting:  19%|█▉        | 18/96 [00:01<00:04, 19.46it/s]                                                           Collecting:  19%|█▉        | 18/96 [00:01<00:04, 19.46it/s]Collecting:  22%|██▏       | 21/96 [00:01<00:03, 19.97it/s]                                                           Collecting:  22%|██▏       | 21/96 [00:01<00:03, 19.97it/s]                                                           Collecting:  22%|██▏       | 21/96 [00:01<00:03, 19.97it/s]                                                           Collecting:  22%|██▏       | 21/96 [00:01<00:03, 19.97it/s]Collecting:  25%|██▌       | 24/96 [00:01<00:03, 20.32it/s]                                                           Collecting:  25%|██▌       | 24/96 [00:01<00:03, 20.32it/s]                                                           Collecting:  25%|██▌       | 24/96 [00:01<00:03, 20.32it/s]                                                           Collecting:  25%|██▌       | 24/96 [00:01<00:03, 20.32it/s]Collecting:  28%|██▊       | 27/96 [00:01<00:03, 20.55it/s]                                                           Collecting:  28%|██▊       | 27/96 [00:01<00:03, 20.55it/s]                                                           Collecting:  28%|██▊       | 27/96 [00:01<00:03, 20.55it/s]                                                           Collecting:  28%|██▊       | 27/96 [00:01<00:03, 20.55it/s]Collecting:  31%|███▏      | 30/96 [00:01<00:03, 20.70it/s]                                                           Collecting:  31%|███▏      | 30/96 [00:01<00:03, 20.70it/s]                                                           Collecting:  31%|███▏      | 30/96 [00:01<00:03, 20.70it/s]                                                           Collecting:  31%|███▏      | 30/96 [00:01<00:03, 20.70it/s]Collecting:  34%|███▍      | 33/96 [00:01<00:03, 20.74it/s]                                                           Collecting:  34%|███▍      | 33/96 [00:01<00:03, 20.74it/s]                                                           Collecting:  34%|███▍      | 33/96 [00:01<00:03, 20.74it/s]                                                           Collecting:  34%|███▍      | 33/96 [00:01<00:03, 20.74it/s]Collecting:  38%|███▊      | 36/96 [00:01<00:02, 20.82it/s]                                                           Collecting:  38%|███▊      | 36/96 [00:01<00:02, 20.82it/s]                                                           Collecting:  38%|███▊      | 36/96 [00:02<00:02, 20.82it/s]                                                           Collecting:  38%|███▊      | 36/96 [00:02<00:02, 20.82it/s]Collecting:  41%|████      | 39/96 [00:02<00:02, 20.90it/s]                                                           Collecting:  41%|████      | 39/96 [00:02<00:02, 20.90it/s]                                                           Collecting:  41%|████      | 39/96 [00:02<00:02, 20.90it/s]                                                           Collecting:  41%|████      | 39/96 [00:02<00:02, 20.90it/s]Collecting:  44%|████▍     | 42/96 [00:02<00:02, 20.98it/s]                                                           Collecting:  44%|████▍     | 42/96 [00:02<00:02, 20.98it/s]                                                           Collecting:  44%|████▍     | 42/96 [00:02<00:02, 20.98it/s]                                                           Collecting:  44%|████▍     | 42/96 [00:02<00:02, 20.98it/s]Collecting:  47%|████▋     | 45/96 [00:02<00:02, 21.01it/s]                                                           Collecting:  47%|████▋     | 45/96 [00:02<00:02, 21.01it/s]                                                           Collecting:  47%|████▋     | 45/96 [00:02<00:02, 21.01it/s]                                                           Collecting:  47%|████▋     | 45/96 [00:02<00:02, 21.01it/s]Collecting:  50%|█████     | 48/96 [00:02<00:02, 21.04it/s]                                                           Collecting:  50%|█████     | 48/96 [00:02<00:02, 21.04it/s]                                                           Collecting:  50%|█████     | 48/96 [00:02<00:02, 21.04it/s]                                                           Collecting:  50%|█████     | 48/96 [00:02<00:02, 21.04it/s]Collecting:  53%|█████▎    | 51/96 [00:02<00:02, 21.05it/s]                                                           Collecting:  53%|█████▎    | 51/96 [00:02<00:02, 21.05it/s]                                                           Collecting:  53%|█████▎    | 51/96 [00:02<00:02, 21.05it/s]                                                           Collecting:  53%|█████▎    | 51/96 [00:02<00:02, 21.05it/s]Collecting:  56%|█████▋    | 54/96 [00:02<00:01, 21.06it/s]                                                           Collecting:  56%|█████▋    | 54/96 [00:02<00:01, 21.06it/s]                                                           Collecting:  56%|█████▋    | 54/96 [00:02<00:01, 21.06it/s]                                                           Collecting:  56%|█████▋    | 54/96 [00:02<00:01, 21.06it/s]Collecting:  59%|█████▉    | 57/96 [00:02<00:01, 21.08it/s]                                                           Collecting:  59%|█████▉    | 57/96 [00:02<00:01, 21.08it/s]                                                           Collecting:  59%|█████▉    | 57/96 [00:02<00:01, 21.08it/s]                                                           Collecting:  59%|█████▉    | 57/96 [00:03<00:01, 21.08it/s]Collecting:  62%|██████▎   | 60/96 [00:03<00:01, 21.09it/s]                                                           Collecting:  62%|██████▎   | 60/96 [00:03<00:01, 21.09it/s]                                                           Collecting:  62%|██████▎   | 60/96 [00:03<00:01, 21.09it/s]                                                           Collecting:  62%|██████▎   | 60/96 [00:03<00:01, 21.09it/s]Collecting:  66%|██████▌   | 63/96 [00:03<00:01, 21.09it/s]                                                           Collecting:  66%|██████▌   | 63/96 [00:03<00:01, 21.09it/s]                                                           Collecting:  66%|██████▌   | 63/96 [00:03<00:01, 21.09it/s]                                                           Collecting:  66%|██████▌   | 63/96 [00:03<00:01, 21.09it/s]Collecting:  69%|██████▉   | 66/96 [00:03<00:01, 21.02it/s]                                                           Collecting:  69%|██████▉   | 66/96 [00:03<00:01, 21.02it/s]                                                           Collecting:  69%|██████▉   | 66/96 [00:03<00:01, 21.02it/s]                                                           Collecting:  69%|██████▉   | 66/96 [00:03<00:01, 21.02it/s]Collecting:  72%|███████▏  | 69/96 [00:03<00:01, 21.01it/s]                                                           Collecting:  72%|███████▏  | 69/96 [00:03<00:01, 21.01it/s]                                                           Collecting:  72%|███████▏  | 69/96 [00:03<00:01, 21.01it/s]                                                           Collecting:  72%|███████▏  | 69/96 [00:03<00:01, 21.01it/s]Collecting:  75%|███████▌  | 72/96 [00:03<00:01, 20.98it/s]                                                           Collecting:  75%|███████▌  | 72/96 [00:03<00:01, 20.98it/s]                                                           Collecting:  75%|███████▌  | 72/96 [00:03<00:01, 20.98it/s]                                                           Collecting:  75%|███████▌  | 72/96 [00:03<00:01, 20.98it/s]Collecting:  78%|███████▊  | 75/96 [00:03<00:01, 20.96it/s]                                                           Collecting:  78%|███████▊  | 75/96 [00:03<00:01, 20.96it/s]                                                           Collecting:  78%|███████▊  | 75/96 [00:03<00:01, 20.96it/s]                                                           Collecting:  78%|███████▊  | 75/96 [00:03<00:01, 20.96it/s]Collecting:  81%|████████▏ | 78/96 [00:03<00:00, 20.95it/s]                                                           Collecting:  81%|████████▏ | 78/96 [00:03<00:00, 20.95it/s]                                                           Collecting:  81%|████████▏ | 78/96 [00:04<00:00, 20.95it/s]                                                           Collecting:  81%|████████▏ | 78/96 [00:04<00:00, 20.95it/s]Collecting:  84%|████████▍ | 81/96 [00:04<00:00, 20.90it/s]                                                           Collecting:  84%|████████▍ | 81/96 [00:04<00:00, 20.90it/s]                                                           Collecting:  84%|████████▍ | 81/96 [00:04<00:00, 20.90it/s]                                                           Collecting:  84%|████████▍ | 81/96 [00:04<00:00, 20.90it/s]Collecting:  88%|████████▊ | 84/96 [00:04<00:00, 20.89it/s]                                                           Collecting:  88%|████████▊ | 84/96 [00:04<00:00, 20.89it/s]                                                           Collecting:  88%|████████▊ | 84/96 [00:04<00:00, 20.89it/s]                                                           Collecting:  88%|████████▊ | 84/96 [00:04<00:00, 20.89it/s]Collecting:  91%|█████████ | 87/96 [00:04<00:00, 20.88it/s]                                                           Collecting:  91%|█████████ | 87/96 [00:04<00:00, 20.88it/s]                                                           Collecting:  91%|█████████ | 87/96 [00:04<00:00, 20.88it/s]                                                           Collecting:  91%|█████████ | 87/96 [00:04<00:00, 20.88it/s]Collecting:  94%|█████████▍| 90/96 [00:04<00:00, 20.86it/s]                                                           Collecting:  94%|█████████▍| 90/96 [00:04<00:00, 20.86it/s]                                                           Collecting:  94%|█████████▍| 90/96 [00:04<00:00, 20.86it/s]                                                           Collecting:  94%|█████████▍| 90/96 [00:04<00:00, 20.86it/s]Collecting:  97%|█████████▋| 93/96 [00:04<00:00, 20.85it/s]                                                           Collecting:  97%|█████████▋| 93/96 [00:04<00:00, 20.85it/s]                                                           Collecting:  97%|█████████▋| 93/96 [00:04<00:00, 20.85it/s]                                                           Collecting:  97%|█████████▋| 93/96 [00:04<00:00, 20.85it/s]Collecting: 100%|██████████| 96/96 [00:04<00:00, 20.83it/s]Collecting: 100%|██████████| 96/96 [00:04<00:00, 20.13it/s]
+[ collect ] WARN: env_000_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_001_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_002_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_003_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_004_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_005_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_006_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_007_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_009_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_010_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_011_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_012_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_013_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_014_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_015_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_016_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_017_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_018_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_019_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_020_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_021_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_022_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_023_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_024_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_025_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_026_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_027_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_028_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_029_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_030_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_031_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_032_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_033_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_034_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_035_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_036_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_037_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_038_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_039_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_040_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_041_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_042_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_043_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_044_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_045_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_046_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_047_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_048_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_049_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_050_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_051_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_052_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_053_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_054_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_055_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_056_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_057_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_058_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_059_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_060_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_061_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_062_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_063_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_064_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_065_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_066_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_067_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_068_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_069_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_070_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_071_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_072_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_073_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_074_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_075_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_076_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_077_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_078_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_079_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_080_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_081_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_082_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_083_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_084_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_085_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_086_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_087_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_088_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_089_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_090_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_091_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_092_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_093_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_094_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_095_00.pkl failed — 'tuple' object has no attribute 'astype'
+[ collect ] WARN: env_096_00.pkl failed — 'tuple' object has no attribute 'astype'
+
+============================================================
+[ collect ] Done.
+  Collected:   0 episodes
+  Skipped:     0 episodes (already existed)
+  Errors:      96
+  Train split: 86 / Eval split: 10
+  Output dir:  /data/home/llim/FMPCC/FM-PCC/d3il/environments/dataset/data/avoiding/all_data
+  Failed episodes:
+    env_000_00.pkl: 'tuple' object has no attribute 'astype'
+    env_001_00.pkl: 'tuple' object has no attribute 'astype'
+    env_002_00.pkl: 'tuple' object has no attribute 'astype'
+    env_003_00.pkl: 'tuple' object has no attribute 'astype'
+    env_004_00.pkl: 'tuple' object has no attribute 'astype'
+    env_005_00.pkl: 'tuple' object has no attribute 'astype'
+    env_006_00.pkl: 'tuple' object has no attribute 'astype'
+    env_007_00.pkl: 'tuple' object has no attribute 'astype'
+    env_009_00.pkl: 'tuple' object has no attribute 'astype'
+    env_010_00.pkl: 'tuple' object has no attribute 'astype'
+    env_011_00.pkl: 'tuple' object has no attribute 'astype'
+    env_012_00.pkl: 'tuple' object has no attribute 'astype'
+    env_013_00.pkl: 'tuple' object has no attribute 'astype'
+    env_014_00.pkl: 'tuple' object has no attribute 'astype'
+    env_015_00.pkl: 'tuple' object has no attribute 'astype'
+    env_016_00.pkl: 'tuple' object has no attribute 'astype'
+    env_017_00.pkl: 'tuple' object has no attribute 'astype'
+    env_018_00.pkl: 'tuple' object has no attribute 'astype'
+    env_019_00.pkl: 'tuple' object has no attribute 'astype'
+    env_020_00.pkl: 'tuple' object has no attribute 'astype'
+    env_021_00.pkl: 'tuple' object has no attribute 'astype'
+    env_022_00.pkl: 'tuple' object has no attribute 'astype'
+    env_023_00.pkl: 'tuple' object has no attribute 'astype'
+    env_024_00.pkl: 'tuple' object has no attribute 'astype'
+    env_025_00.pkl: 'tuple' object has no attribute 'astype'
+    env_026_00.pkl: 'tuple' object has no attribute 'astype'
+    env_027_00.pkl: 'tuple' object has no attribute 'astype'
+    env_028_00.pkl: 'tuple' object has no attribute 'astype'
+    env_029_00.pkl: 'tuple' object has no attribute 'astype'
+    env_030_00.pkl: 'tuple' object has no attribute 'astype'
+    env_031_00.pkl: 'tuple' object has no attribute 'astype'
+    env_032_00.pkl: 'tuple' object has no attribute 'astype'
+    env_033_00.pkl: 'tuple' object has no attribute 'astype'
+    env_034_00.pkl: 'tuple' object has no attribute 'astype'
+    env_035_00.pkl: 'tuple' object has no attribute 'astype'
+    env_036_00.pkl: 'tuple' object has no attribute 'astype'
+    env_037_00.pkl: 'tuple' object has no attribute 'astype'
+    env_038_00.pkl: 'tuple' object has no attribute 'astype'
+    env_039_00.pkl: 'tuple' object has no attribute 'astype'
+    env_040_00.pkl: 'tuple' object has no attribute 'astype'
+    env_041_00.pkl: 'tuple' object has no attribute 'astype'
+    env_042_00.pkl: 'tuple' object has no attribute 'astype'
+    env_043_00.pkl: 'tuple' object has no attribute 'astype'
+    env_044_00.pkl: 'tuple' object has no attribute 'astype'
+    env_045_00.pkl: 'tuple' object has no attribute 'astype'
+    env_046_00.pkl: 'tuple' object has no attribute 'astype'
+    env_047_00.pkl: 'tuple' object has no attribute 'astype'
+    env_048_00.pkl: 'tuple' object has no attribute 'astype'
+    env_049_00.pkl: 'tuple' object has no attribute 'astype'
+    env_050_00.pkl: 'tuple' object has no attribute 'astype'
+    env_051_00.pkl: 'tuple' object has no attribute 'astype'
+    env_052_00.pkl: 'tuple' object has no attribute 'astype'
+    env_053_00.pkl: 'tuple' object has no attribute 'astype'
+    env_054_00.pkl: 'tuple' object has no attribute 'astype'
+    env_055_00.pkl: 'tuple' object has no attribute 'astype'
+    env_056_00.pkl: 'tuple' object has no attribute 'astype'
+    env_057_00.pkl: 'tuple' object has no attribute 'astype'
+    env_058_00.pkl: 'tuple' object has no attribute 'astype'
+    env_059_00.pkl: 'tuple' object has no attribute 'astype'
+    env_060_00.pkl: 'tuple' object has no attribute 'astype'
+    env_061_00.pkl: 'tuple' object has no attribute 'astype'
+    env_062_00.pkl: 'tuple' object has no attribute 'astype'
+    env_063_00.pkl: 'tuple' object has no attribute 'astype'
+    env_064_00.pkl: 'tuple' object has no attribute 'astype'
+    env_065_00.pkl: 'tuple' object has no attribute 'astype'
+    env_066_00.pkl: 'tuple' object has no attribute 'astype'
+    env_067_00.pkl: 'tuple' object has no attribute 'astype'
+    env_068_00.pkl: 'tuple' object has no attribute 'astype'
+    env_069_00.pkl: 'tuple' object has no attribute 'astype'
+    env_070_00.pkl: 'tuple' object has no attribute 'astype'
+    env_071_00.pkl: 'tuple' object has no attribute 'astype'
+    env_072_00.pkl: 'tuple' object has no attribute 'astype'
+    env_073_00.pkl: 'tuple' object has no attribute 'astype'
+    env_074_00.pkl: 'tuple' object has no attribute 'astype'
+    env_075_00.pkl: 'tuple' object has no attribute 'astype'
+    env_076_00.pkl: 'tuple' object has no attribute 'astype'
+    env_077_00.pkl: 'tuple' object has no attribute 'astype'
+    env_078_00.pkl: 'tuple' object has no attribute 'astype'
+    env_079_00.pkl: 'tuple' object has no attribute 'astype'
+    env_080_00.pkl: 'tuple' object has no attribute 'astype'
+    env_081_00.pkl: 'tuple' object has no attribute 'astype'
+    env_082_00.pkl: 'tuple' object has no attribute 'astype'
+    env_083_00.pkl: 'tuple' object has no attribute 'astype'
+    env_084_00.pkl: 'tuple' object has no attribute 'astype'
+    env_085_00.pkl: 'tuple' object has no attribute 'astype'
+    env_086_00.pkl: 'tuple' object has no attribute 'astype'
+    env_087_00.pkl: 'tuple' object has no attribute 'astype'
+    env_088_00.pkl: 'tuple' object has no attribute 'astype'
+    env_089_00.pkl: 'tuple' object has no attribute 'astype'
+    env_090_00.pkl: 'tuple' object has no attribute 'astype'
+    env_091_00.pkl: 'tuple' object has no attribute 'astype'
+    env_092_00.pkl: 'tuple' object has no attribute 'astype'
+    env_093_00.pkl: 'tuple' object has no attribute 'astype'
+    env_094_00.pkl: 'tuple' object has no attribute 'astype'
+    env_095_00.pkl: 'tuple' object has no attribute 'astype'
+    env_096_00.pkl: 'tuple' object has no attribute 'astype'
+============================================================
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_b85c15ce-5b68-11f1-9564-d85ed34e311e.xml' with default provider at slot 1
+
+[ sbatch ] Collection complete.
+Output: d3il/environments/dataset/data/avoiding/all_data/
+========================================
+JOB END: Fri May 29 14:14:40 UTC 2026
+========================================
