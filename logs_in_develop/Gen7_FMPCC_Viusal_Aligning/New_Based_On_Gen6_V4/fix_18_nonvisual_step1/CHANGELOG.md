@@ -5,8 +5,9 @@
 **Related**:
 - [`INVESTIGATION_REPORT.md`](INVESTIGATION_REPORT.md) — full evidence + line refs
 - [`SEVERITY_AND_RETRAIN_IMPACT.md`](SEVERITY_AND_RETRAIN_IMPACT.md) — what's actually broken vs. what isn't, and what to do with existing checkpoints
-**Scope**: **Two code-level fixes applied** so the non-visual `K=1` DPCC train + `ODE=1` FM eval experiment can run end-to-end. Visual path remains unchanged (verified by user 2026-05-30).
-**Source logs**: `temp/one_shot_run/visual_dpcc`, `temp/one_shot_run/visual_fm`
+- [`STALE_CONFIG_PATCH.md`](STALE_CONFIG_PATCH.md) — side-patch (`utils.Config` always-overwrite) + one-off regen script for pre-Fix-A `model_config.pkl` left over on disk
+**Scope**: **Three code-level fixes** (18.1 Fix A / 18.2 Fix B / 18.3 Fix C) + one side-patch (`utils.Config`), so the non-visual `K=1` DPCC train + non-visual DPCC eval + ODE=1 FM eval all run end-to-end. Visual path remains unchanged.
+**Source logs**: `temp/one_shot_run/visual_dpcc`, `temp/one_shot_run/visual_fm`, plus the 2026-05-31 console log captured in [`fix_console_logs`](fix_console_logs) (regen-script execution that produced the fresh `model_config.pkl`) and SLURM job `21046` stderr (the UF-13 broadcast crash that motivated Fix C).
 
 ---
 
@@ -100,6 +101,69 @@ _obs_dim_norm = obs_normalizer.mins.shape[0]
 _traj_dim = _act_dim_norm + _obs_dim_norm
 ```
 
+### Fix C (= 18.3) — eval scripts: guard UF-13 record-mode flip on actual checkpoint type
+
+**Added**: 2026-05-31 (after Fix A + Fix B unblocked training but eval still crashed downstream).
+
+**Files**:
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (around lines 1902-1920)
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py`           (around lines 1903-1921)
+
+**Symptom prevented**: `ValueError: operands could not be broadcast together
+with shapes (1,6) (20,)` at `normalize()` inside `predict()`, when
+running eval on a **non-visual** checkpoint with `--record all`.
+
+**Root cause**: UF-13 used to indiscriminately set `if_vision = True`
+whenever recording was on, regardless of what the checkpoint was actually
+trained for. With a non-visual checkpoint (20-D obs_normalizer), this
+forced `Aligning_Sim` into the visual code path, which then called
+`agent.predict((bp_image, inhand_image, des_robot_pos, robot_pos),
+if_vision=True)`. Inside, the visual branch built a 6-D obs vector and
+tried to normalize against the 20-D normalizer → broadcast crash.
+
+The pre-Fix-C UF-13 line:
+```python
+if not if_vision and args_cli.record != 'none':
+    if_vision = True   # ← flips even when there's no image encoder
+```
+
+**Patch**: guard the flip on the saved normalizer dim. Only flip when
+`obs_normalizer.mins.shape[0] == 6` (i.e. the checkpoint *is* visual).
+For non-visual checkpoints, print a NOTE explaining that GIFs/videos
+cannot be captured (the model has no image encoder) and proceed with
+non-visual rollouts.
+
+```python
+_ckpt_is_visual = (obs_normalizer is not None
+                   and obs_normalizer.mins.shape[0] == 6)
+if not if_vision and args_cli.record != 'none':
+    if _ckpt_is_visual:
+        if_vision = True
+        print('[ eval ] WARNING: ... auto-enabling visual mode ... (UF-13).')
+    else:
+        print('[ eval ] NOTE: record_mode is active but checkpoint is non-visual '
+              f'(obs_normalizer dim = {obs_normalizer.mins.shape[0]}). '
+              'Cannot auto-enable visual mode (this model has no image encoder); '
+              'proceeding with non-visual rollouts. No GIFs/videos will be captured.')
+```
+
+**Consequence**: eval on a non-visual checkpoint with `--record all`
+now succeeds and produces metrics + logs, but **no GIFs** (which is
+correct: there's no image encoder in the model to render through).
+If you want GIFs, you must train a visual checkpoint.
+
+**Out-of-band patch shipped alongside Fix C** (see
+[`STALE_CONFIG_PATCH.md`](STALE_CONFIG_PATCH.md)): `utils.Config.save()`
+in both DPCC and FM `utils/config.py` previously skipped overwriting
+`model_config.pkl` if a stale copy existed on disk. That mismatch caused
+eval to instantiate a 9-D model from the stale config and fail to load a
+fresh 23-D state dict (the bug surfaced *between* Fix-18 train success
+and Fix C; the patch makes future training runs always overwrite, and
+the one-off `regen_stale_model_config.py` script repairs existing
+broken checkpoints without re-training). Not strictly part of Fix-18's
+non-visual fixes but the same investigation thread; documented in its
+own MD to keep this changelog focused.
+
 ### What was NOT touched
 
 - `config/aligning-d3il-visual.py` — variants are correct.
@@ -107,22 +171,43 @@ _traj_dim = _act_dim_norm + _obs_dim_norm
   obs_dim value it reads was wrong.
 - `*/datasets/sequence.py` — `StateOnlyAligningDataset` (UF-17) already
   produces 23-D correctly.
+- `Aligning_Sim` (`d3il/simulation/aligning_sim.py`) — non-visual branch
+  already worked correctly; Fix C just lets the eval driver reach it.
 - The visual path of any of the above scripts.
 
 ---
 
 ## Files Changed in This Fix
 
+### Code (sources)
+
+| Action | File | Fix |
+|---|---|---|
+| Modified | `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` | A (= 18.1) |
+| Modified | `fm_visual_aligning_test/train_fm_visual_aligning.py`         | A (= 18.1) |
+| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3) |
+| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3) |
+| Modified | `diffuser_visual_aligning/utils/config.py`                    | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
+| Modified | `fm_visual_aligning/utils/config.py`                          | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
+
+### Docs / one-off scripts
+
 | Action | File |
 |---|---|
-| Modified (code) | `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` — Fix A |
-| Modified (code) | `fm_visual_aligning_test/train_fm_visual_aligning.py` — Fix A |
-| Modified (code) | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` — Fix B |
-| Modified (code) | `fm_visual_aligning_test/eval_fm_visual_aligning.py` — Fix B |
 | Created | `fix_18_nonvisual_step1/INVESTIGATION_REPORT.md` |
 | Created | `fix_18_nonvisual_step1/CHANGELOG.md` (this file) |
+| Created | `fix_18_nonvisual_step1/SEVERITY_AND_RETRAIN_IMPACT.md` |
+| Created | `fix_18_nonvisual_step1/STALE_CONFIG_PATCH.md` (documents the `utils.Config` side-patch + regen script) |
+| Created | `fix_18_nonvisual_step1/regen_stale_model_config.py` (one-off cleanup for pre-Fix-A `model_config.pkl` left over on disk) |
 | Edited (report) | Status banner added confirming visual-path verification (2026-05-30) |
 | Edited (report) | Recommendation #2 and §6 rewritten — vanilla FM train/eval ARE decoupled, so the 1-step FM under-integration is fixed by eval re-run, **not** retraining. Only mean-flow / iMeanFlow requires retraining. |
+
+### Fix numbering recap
+
+- **18.1 (Fix A)** — train scripts override `args.obs_dim` so the model is built 23-D for non-visual.
+- **18.2 (Fix B)** — eval scripts derive `_traj_dim` from the saved normalizer (immune to UF-13).
+- **18.3 (Fix C)** — eval scripts guard the UF-13 record-mode `if_vision` flip on the saved normalizer dim, so a non-visual checkpoint isn't forced into the visual `predict()` path.
+- **Side-patch (STALE_CONFIG)** — `utils.Config.save()` always overwrites `model_config.pkl`; sibling regen script repairs pre-existing broken checkpoints without re-training.
 
 ---
 
