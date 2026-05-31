@@ -938,6 +938,31 @@ class VisualAgentWrapper:
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
 
+    def record_sim_frame(self, env):
+        """Fix-18.6 HOTFIX: capture a bp/inhand frame DIRECTLY from the env every
+        non-visual rollout step, so GIFs work even when the policy itself
+        has no image encoder. Called by Aligning_Sim non-visual branch
+        after env.step(). Pushes into self.video_frames so the existing
+        save logic in update_rollout_info dumps it as GIF/MP4. Safe defaults:
+        no-ops if record_mode is 'none', if bp_cam is missing, or if
+        rendering raises. Never alters policy state."""
+        if self.record_mode == 'none':
+            return
+        try:
+            bp = env.bp_cam.get_image(width=96, height=96, depth=False)
+            ih = env.inhand_cam.get_image(width=96, height=96, depth=False)
+        except Exception:
+            return
+        try:
+            bp_vis = cv2.cvtColor(bp.astype(np.uint8), cv2.COLOR_BGR2RGB)
+            ih_vis = cv2.cvtColor(ih.astype(np.uint8), cv2.COLOR_BGR2RGB)
+            frame = np.concatenate([bp_vis, ih_vis], axis=1)
+            cv2.putText(frame, f's{self.step_counter}', (5, 18),
+                        cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 0), 1)
+            self.video_frames.append(frame)
+        except Exception:
+            pass
+
     def record_context_info(self, context, context_idx):
         """Called by Aligning_Sim after reset — stores initial scene config. Fix 10."""
         pos, quat, target_pos, target_quat = context
@@ -1930,10 +1955,11 @@ if __name__ == '__main__':
                         print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
                               'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
                     else:
-                        print('[ eval ] NOTE: record_mode is active but checkpoint is non-visual '
+                        print('[ eval ] NOTE: record_mode is active and checkpoint is non-visual '
                               f'(obs_normalizer dim = {obs_normalizer.mins.shape[0]}). '
-                              'Cannot auto-enable visual mode (this model has no image encoder); '
-                              'proceeding with non-visual rollouts. No GIFs/videos will be captured.')
+                              'Visual mode NOT auto-enabled (model has no image encoder), but '
+                              'GIFs/videos WILL be captured via the env-render hook (Fix-18.6 '
+                              'record_sim_frame).')
 
                 sim = Aligning_Sim(
                     seed=seed, device=args.device,
