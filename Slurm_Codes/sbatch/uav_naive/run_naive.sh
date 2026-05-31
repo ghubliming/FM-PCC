@@ -75,19 +75,19 @@ echo "[ sbatch ] Python: $(which python)"
 # ─── Dispatch ────────────────────────────────────────────────────────────
 case "$TASK" in
     smoke)
-        python temp/uav_naive_test/smoke_load.py
+        python uav_naive_test/smoke_load.py
         ;;
     A|B)
-        python temp/uav_naive_test/run_naive.py --task "$TASK" --render
+        python uav_naive_test/run_naive.py --task "$TASK" --render
         ;;
     C)
-        python temp/uav_naive_test/run_naive.py --task C --trajectory-format "$FMT" --render
+        python uav_naive_test/run_naive.py --task C --trajectory-format "$FMT" --render
         ;;
     all)
-        python temp/uav_naive_test/run_naive.py --task A --render
-        python temp/uav_naive_test/run_naive.py --task B --render
-        python temp/uav_naive_test/run_naive.py --task C --trajectory-format 6D --render
-        python temp/uav_naive_test/run_naive.py --task C --trajectory-format 9D --render
+        python uav_naive_test/run_naive.py --task A --render
+        python uav_naive_test/run_naive.py --task B --render
+        python uav_naive_test/run_naive.py --task C --trajectory-format 6D --render
+        python uav_naive_test/run_naive.py --task C --trajectory-format 9D --render
         ;;
     *)
         echo "[ sbatch ] ERROR: unknown task '$TASK' (expected smoke | A | B | C | all)"

@@ -101,9 +101,9 @@ For Task C, **author the trajectory in both 6-D and 9-D formats** (position+velo
 
 | Artifact | Location | Purpose |
 |---|---|---|
-| `temp/uav_naive_test/flight_controller.py` | Cascaded PID, ~150 lines | The controller-under-the-policy fixture |
-| `temp/uav_naive_test/trajectories.py` | Hand-coded Tasks A/B/C | Test inputs |
-| `temp/uav_naive_test/run_naive.py` | Driver: loads X2, runs each task, saves logs + GIF | Smoke harness |
+| `uav_naive_test/flight_controller.py` | Cascaded PID, ~150 lines | The controller-under-the-policy fixture |
+| `uav_naive_test/trajectories.py` | Hand-coded Tasks A/B/C | Test inputs |
+| `uav_naive_test/run_naive.py` | Driver: loads X2, runs each task, saves logs + GIF | Smoke harness |
 | `Slurm_Codes/sbatch/uav_naive/run_naive.sh` | Submits the harness to a GPU node for offscreen rendering | Cluster runner |
 | `logs_in_develop/Gen11/Epoch2_env/results/` | Output logs, plots, GIFs of each task | Evidence |
 | `logs_in_develop/Gen11/Epoch2_env/CHANGELOG.md` | What was created, what passed/failed, controller gains chosen | Closure |
@@ -173,4 +173,4 @@ Epoch 2 = **one Python harness + one SLURM script + three hand-coded tasks**, ru
 If yes → Epochs 3-4-… are unblocked.
 If no → we know now, before building three layers on top of an unflyable sim.
 
-Ready to start drafting `temp/uav_naive_test/flight_controller.py` on greenlight.
+Ready to start drafting `uav_naive_test/flight_controller.py` on greenlight.

@@ -13,12 +13,12 @@
 
 | File | Lines | Why |
 |---|---|---|
-| `temp/uav_naive_test/__init__.py` | 0 | Marks the directory as a Python package; permits relative imports from the driver. |
-| `temp/uav_naive_test/smoke_load.py` | 39 | Phase 2-α: minimal "does the Epoch 1 XML load on Slurm" check. Prints `nq/nv/nu/qpos_z` + mass + gravity + timestep. This is the runtime check that local Docker couldn't run (no Python in container per project convention). |
-| `temp/uav_naive_test/flight_controller.py` | 143 | Phase 2-β: cascaded PID flight controller (Lee/Mellinger SO(3) structure). Position PD + feed-forward → desired body-z + yaw → SO(3) attitude PD + gyroscopic comp → motor allocation via 4×4 matrix built from `model.site_pos` and `model.actuator_gear`. Zero hardcoded geometry — every constant comes from the loaded model. |
-| `temp/uav_naive_test/trajectories.py` | 59 | Phase 2-γ: hand-coded reference trajectories. Three factories (`hover_at`, `step_to`, `circle`) returning `traj(t) → (p, v, a, yaw)`. Pure functions, no MuJoCo dependency. |
-| `temp/uav_naive_test/run_naive.py` | 205 | Phase 2-δ: driver. Parses CLI, loads X2 from Epoch 1's `quadrotor_modified.xml`, sets initial state, builds the controller, runs the sim loop at MuJoCo's native timestep, logs per-step state/target/control to JSON, writes metrics (final/mean/RMS/max position error), optionally renders a GIF via `mujoco.Renderer` with the X2's `track` camera. |
-| `temp/uav_naive_test/README.md` | — | One-pager pointing at PREP_PLAN + EXECUTION_PLAN and listing the Slurm commands to run each task. |
+| `uav_naive_test/__init__.py` | 0 | Marks the directory as a Python package; permits relative imports from the driver. |
+| `uav_naive_test/smoke_load.py` | 39 | Phase 2-α: minimal "does the Epoch 1 XML load on Slurm" check. Prints `nq/nv/nu/qpos_z` + mass + gravity + timestep. This is the runtime check that local Docker couldn't run (no Python in container per project convention). |
+| `uav_naive_test/flight_controller.py` | 143 | Phase 2-β: cascaded PID flight controller (Lee/Mellinger SO(3) structure). Position PD + feed-forward → desired body-z + yaw → SO(3) attitude PD + gyroscopic comp → motor allocation via 4×4 matrix built from `model.site_pos` and `model.actuator_gear`. Zero hardcoded geometry — every constant comes from the loaded model. |
+| `uav_naive_test/trajectories.py` | 59 | Phase 2-γ: hand-coded reference trajectories. Three factories (`hover_at`, `step_to`, `circle`) returning `traj(t) → (p, v, a, yaw)`. Pure functions, no MuJoCo dependency. |
+| `uav_naive_test/run_naive.py` | 205 | Phase 2-δ: driver. Parses CLI, loads X2 from Epoch 1's `quadrotor_modified.xml`, sets initial state, builds the controller, runs the sim loop at MuJoCo's native timestep, logs per-step state/target/control to JSON, writes metrics (final/mean/RMS/max position error), optionally renders a GIF via `mujoco.Renderer` with the X2's `track` camera. |
+| `uav_naive_test/README.md` | — | One-pager pointing at PREP_PLAN + EXECUTION_PLAN and listing the Slurm commands to run each task. |
 | `Slurm_Codes/sbatch/uav_naive/run_naive.sh` | 98 | Phase 2-ε: SLURM wrapper. 1 GPU, 30 min walltime, EGL + PYOPENGL_PLATFORM exported before Python starts. Repo root resolved via `$SLURM_SUBMIT_DIR` + upward marker-dir search (same idiom as `visual_avoiding/collect_visual_avoiding.sh`, which we know works post-Fix-1). Dispatches on `$1 ∈ {smoke, A, B, C, all}` and `$2 ∈ {6D, 9D}`. |
 
 ## Files Modified
@@ -39,7 +39,7 @@
 | No LLM-synthesized library code | ✅ Cascaded PID structure follows the well-known Lee 2010 / Mellinger 2011 design and was hand-typed against that spec — no vendored library |
 | No edits to existing source files | ✅ Inventory above is all "Created", zero "Modified" |
 | Syntax-checked before commit | ✅ `bash -n run_naive.sh` clean; `ast.parse` clean on all 4 Python files |
-| Reversible | ✅ `rm -rf temp/uav_naive_test Slurm_Codes/sbatch/uav_naive logs_in_develop/Gen11/Epoch2_env/results` fully undoes Epoch 2 |
+| Reversible | ✅ `rm -rf uav_naive_test Slurm_Codes/sbatch/uav_naive logs_in_develop/Gen11/Epoch2_env/results` fully undoes Epoch 2 |
 
 ---
 
@@ -97,7 +97,7 @@ Results land in `logs_in_develop/Gen11/Epoch2_env/results/<task_label>/`:
 ## How to Reverse Epoch 2
 
 ```bash
-rm -rf temp/uav_naive_test
+rm -rf uav_naive_test
 rm -rf Slurm_Codes/sbatch/uav_naive
 rm -rf logs_in_develop/Gen11/Epoch2_env/results
 ```
