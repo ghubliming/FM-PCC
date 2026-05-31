@@ -32,9 +32,14 @@ class Config(Mapping):
 
         if savepath is not None:
             savepath = os.path.join(*savepath) if type(savepath) is tuple else savepath
-            if not os.path.exists(savepath):
-                pickle.dump(self, open(savepath, 'wb'))
-                print(f'[ utils/config ] Saved config to: {savepath}\n')
+            # FIX (Gen7 fix-18 follow-up): always overwrite the pickle. The previous
+            # "skip if exists" behavior silently kept stale configs on disk across
+            # retraining runs, causing eval to instantiate a model with the wrong
+            # shape and fail to load fresh state_*.pt weights with a shape mismatch.
+            # See logs_in_develop/Gen7_FMPCC_Viusal_Aligning/New_Based_On_Gen6_V4/
+            #     fix_18_nonvisual_step1/STALE_CONFIG_PATCH.md
+            pickle.dump(self, open(savepath, 'wb'))
+            print(f'[ utils/config ] Saved config to: {savepath}\n')
 
             # Also save as JSON for better robustness/readability
             json_base = savepath.replace('.pkl', '')
