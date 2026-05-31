@@ -6,7 +6,7 @@
 - [`INVESTIGATION_REPORT.md`](INVESTIGATION_REPORT.md) — full evidence + line refs
 - [`SEVERITY_AND_RETRAIN_IMPACT.md`](SEVERITY_AND_RETRAIN_IMPACT.md) — what's actually broken vs. what isn't, and what to do with existing checkpoints
 - [`STALE_CONFIG_PATCH.md`](STALE_CONFIG_PATCH.md) — side-patch (`utils.Config` always-overwrite) + one-off regen script for pre-Fix-A `model_config.pkl` left over on disk
-**Scope**: **Three code-level fixes** (18.1 Fix A / 18.2 Fix B / 18.3 Fix C) + one side-patch (`utils.Config`), so the non-visual `K=1` DPCC train + non-visual DPCC eval + ODE=1 FM eval all run end-to-end. Visual path remains unchanged.
+**Scope**: **Four code-level fixes** (18.1 Fix A / 18.2 Fix B / 18.3 Fix C / 18.4 Fix D) + one side-patch (`utils.Config`), so the non-visual `K=1` DPCC train + non-visual DPCC eval + ODE=1 FM eval all run end-to-end. Visual path remains unchanged.
 **Source logs**: `temp/one_shot_run/visual_dpcc`, `temp/one_shot_run/visual_fm`, plus the 2026-05-31 console log captured in [`fix_console_logs`](fix_console_logs) (regen-script execution that produced the fresh `model_config.pkl`) and SLURM job `21046` stderr (the UF-13 broadcast crash that motivated Fix C).
 
 ---
@@ -164,6 +164,50 @@ broken checkpoints without re-training). Not strictly part of Fix-18's
 non-visual fixes but the same investigation thread; documented in its
 own MD to keep this changelog focused.
 
+### Fix D (= 18.4) — eval scripts: first-replan DIAG block referenced visual-only var names
+
+**Added**: 2026-05-31 (after Fix C let eval reach the non-visual `predict()` path).
+
+**Files**:
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (around lines 1571-1582)
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py`           (around lines 1557-1568)
+
+**Symptom prevented**: `UnboundLocalError: local variable 'obs_6d_np' referenced before assignment`
+at the first-replan diagnostic print, only on the non-visual code path.
+
+**Root cause**: the visual branch of `predict()` defines `obs_6d_np` and
+`obs_6d_norm` (the 6-D obs anchor + its normalized form). The non-visual
+branch defines `obs_20d_np` and `obs_norm` instead — different names.
+The one-shot first-replan diagnostic block hardcoded the visual names,
+so reaching it from the non-visual path raised UnboundLocalError.
+
+**Patch**: branch the diagnostic on `if_vision` and bind a pair of
+local aliases (`_diag_obs_raw`, `_diag_obs_norm`) to whichever pair
+exists. Also generalised the print to include the actual obs dim:
+
+```python
+if if_vision:
+    _diag_obs_raw  = obs_6d_np      # (6,)
+    _diag_obs_norm = obs_6d_norm    # (6,)
+else:
+    _diag_obs_raw  = obs_20d_np     # (20,)
+    _diag_obs_norm = obs_norm       # (20,)
+diag_lines += [
+    f'[ DIAG obs ] des_c_pos={np.round(_diag_obs_raw[:3], 4)}  '
+    f'c_pos={np.round(_diag_obs_raw[3:6], 4)}',
+    f'[ DIAG obs ] obs_norm (dim={_diag_obs_norm.shape[0]})='
+    f'{np.round(_diag_obs_norm, 4)}',
+]
+```
+
+For non-visual, only the first 6 entries of the 20-D obs are
+des_c_pos + c_pos (positions 0-2 and 3-5); the remaining 14 entries
+(box pose, target pose) print fully via `obs_norm`. The "image health"
+sub-block remains visual-only as before — that's correctly guarded.
+
+**Consequence**: non-visual eval now passes the first-replan diagnostic
+and continues into the rollout loop. No effect on visual path.
+
 ### What was NOT touched
 
 - `config/aligning-d3il-visual.py` — variants are correct.
@@ -172,7 +216,8 @@ own MD to keep this changelog focused.
 - `*/datasets/sequence.py` — `StateOnlyAligningDataset` (UF-17) already
   produces 23-D correctly.
 - `Aligning_Sim` (`d3il/simulation/aligning_sim.py`) — non-visual branch
-  already worked correctly; Fix C just lets the eval driver reach it.
+  already worked correctly; Fixes C and D just let the eval driver reach
+  it and survive its first-replan diagnostic.
 - The visual path of any of the above scripts.
 
 ---
@@ -185,8 +230,8 @@ own MD to keep this changelog focused.
 |---|---|---|
 | Modified | `diffuser_visual_aligning_test/train_visual_aligning_dpcc.py` | A (= 18.1) |
 | Modified | `fm_visual_aligning_test/train_fm_visual_aligning.py`         | A (= 18.1) |
-| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3) |
-| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3) |
+| Modified | `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`  | B (= 18.2), C (= 18.3), D (= 18.4) |
+| Modified | `fm_visual_aligning_test/eval_fm_visual_aligning.py`          | B (= 18.2), C (= 18.3), D (= 18.4) |
 | Modified | `diffuser_visual_aligning/utils/config.py`                    | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
 | Modified | `fm_visual_aligning/utils/config.py`                          | side-patch (STALE_CONFIG, always-overwrite `model_config.pkl`) |
 
@@ -207,6 +252,7 @@ own MD to keep this changelog focused.
 - **18.1 (Fix A)** — train scripts override `args.obs_dim` so the model is built 23-D for non-visual.
 - **18.2 (Fix B)** — eval scripts derive `_traj_dim` from the saved normalizer (immune to UF-13).
 - **18.3 (Fix C)** — eval scripts guard the UF-13 record-mode `if_vision` flip on the saved normalizer dim, so a non-visual checkpoint isn't forced into the visual `predict()` path.
+- **18.4 (Fix D)** — eval scripts' first-replan DIAG block aliases `obs_6d_np`/`obs_6d_norm` (visual) vs `obs_20d_np`/`obs_norm` (non-visual) so neither path hits `UnboundLocalError`.
 - **Side-patch (STALE_CONFIG)** — `utils.Config.save()` always overwrites `model_config.pkl`; sibling regen script repairs pre-existing broken checkpoints without re-training.
 
 ---
