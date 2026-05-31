@@ -1,0 +1,91 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 28 13:17:20 UTC 2026
+JOB NAME:  eval_d3il_baseline
+JOB ID:    20889
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   083bffb
+================================================================================
+[ eval ] seed override: 6
+[ eval ] agent=ddpm_transformer_vision  record_mode=all
+pybullet build time: Nov 28 2023 23:45:17
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_vision_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+========================================================================
+[ D3IL Baseline Eval ] agent=ddpm_transformer_vision  seed=6
+  contexts=3  trajs_per_ctx=1  eval_on_train=False  if_vision=True
+  checkpoint_dir: logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/weights
+  save_path:      logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6
+========================================================================
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 16.86it/s]100%|██████████| 3/3 [00:00<00:00, 15.56it/s]
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.10it/s]100%|██████████| 3/3 [00:00<00:00, 16.59it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_9303f854-5a97-11f1-be0d-d85ed34e311e.xml' with default provider at slot 1
+
+[ checkpoint ] loaded: logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/weights/eval_best_ddpm.pth
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+
+[ rollout 0 ] context=0  traj=0
+  - Success: False   mode=1   mean_dist=0.3127   steps=400
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Box final XY=(0.581, -0.204)  angle=-43.5°  (dist_to_target: 0.5433 m)
+[ WARNING ] mp4 failed: Could not find a backend to open `logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+
+[ rollout 1 ] context=1  traj=0
+  - Success: False   mode=1   mean_dist=0.5769   steps=400
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Box final XY=(0.556, -0.247)  angle=-81.0°  (dist_to_target: 0.4836 m)
+[ WARNING ] mp4 failed: Could not find a backend to open `logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+
+[ rollout 2 ] context=2  traj=0
+  - Success: False   mode=0   mean_dist=0.2155   steps=400
+  - Box  init XY=(0.527, -0.127)  angle=-34.4°
+  - Target   XY=(0.513, 0.302)  angle=-34.6°
+  - Init XY dist (box→target): 0.4297 m
+  - Box final XY=(0.605, 0.553)  angle=-5.0°  (dist_to_target: 0.2667 m)
+[ WARNING ] mp4 failed: Could not find a backend to open `logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+
+────────────────────────────────────────────────────────────
+[ Seed 6 Summary ]
+  success_rate:       0.000
+  mean_distance:      0.3684 ± 0.1527
+  final_xy_dist:      0.4312 ± 0.1189 m
+  n_steps:            400.0 ± 0.0
+  mode_0_rate:        0.333
+────────────────────────────────────────────────────────────
+[ saved ] logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/results_seed_6.json
+Job completed successfully.

@@ -1,0 +1,43 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat May 30 22:52:11 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    21008
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   51e1a10
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/H8_K1_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_steps300_mpc4/6
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/6
+
+Loading states (non-visual):   0%|          | 0/900 [00:00<?, ?it/s]Loading states (non-visual): 100%|██████████| 900/900 [00:00<00:00, 8998.49it/s]
+[ StateOnlyAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=23)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py", line 1687, in <module>
+    exp = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py", line 1654, in load_diffusion_with_override
+    trainer.load(epoch)
+  File "/u/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning/utils/training.py", line 320, in load
+    self.model.load_state_dict(data['model'])
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 2153, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for VisualGaussianDiffusion:
+	size mismatch for model.backbone.downs.0.0.blocks.0.block.0.weight: copying a param with shape torch.Size([32, 23, 5]) from checkpoint, the shape in current model is torch.Size([32, 9, 5]).
+	size mismatch for model.backbone.downs.0.0.residual_conv.weight: copying a param with shape torch.Size([32, 23, 1]) from checkpoint, the shape in current model is torch.Size([32, 9, 1]).
+	size mismatch for model.backbone.final_conv.1.weight: copying a param with shape torch.Size([23, 32, 1]) from checkpoint, the shape in current model is torch.Size([9, 32, 1]).
+	size mismatch for model.backbone.final_conv.1.bias: copying a param with shape torch.Size([23]) from checkpoint, the shape in current model is torch.Size([9]).
