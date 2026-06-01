@@ -113,11 +113,22 @@ class iMeanFlowODE(nn.Module):
         return self.model.forward_train(x, t, h=h, cond=cond, force_dropout=force_dropout)
 
     def _predict_velocity(self, x, cond, t, h=None, returns=None):
-        velocity, aux = self._predict_uv(x, cond, t, h=h, returns=returns)
+        # FIX-3 / Deviation A (per fix_2/REFERENCE_IMF_AUDIT.md §5.3 + §7.1):
+        # reference iMF's inference uses ONLY the u (mean-velocity) head and
+        # explicitly DISCARDS the v (instantaneous-velocity) head at sampling
+        # time. See imeanflow/imf.py:93 (`u_fn(...)[0]`) and imfDiT.py:282-288
+        # (v_heads are not even instantiated when eval_mode=True).
+        #
+        # The aux head is an MLP on the current latent x; as x drifts during
+        # integration, its output varies step-to-step even though the true
+        # mean-flow target is a CONSTANT v_const = x_data − noise. Mixing
+        # `sample_aux_weight * aux` into the sampling velocity introduced
+        # step-to-step jitter that was the post-fix_1 residual symptom.
+        velocity, _aux = self._predict_uv(x, cond, t, h=h, returns=returns)
         if self.returns_condition and returns is not None and self.condition_guidance_w > 0:
             uncond_vel, _ = self._predict_uv(x, cond, t, h=h, returns=returns, force_dropout=True)
             velocity = (1 + self.condition_guidance_w) * velocity - self.condition_guidance_w * uncond_vel
-        return velocity + self.sample_aux_weight * aux
+        return velocity   # was: velocity + self.sample_aux_weight * aux
 
     def q_sample(self, x_start, t, noise=None):
         if noise is None:
@@ -153,15 +164,35 @@ class iMeanFlowODE(nn.Module):
         dt = 1.0 / max(flow_steps, 1)
         h_batch = torch.full((batch_size,), dt, device=device, dtype=torch.float32)
 
+        # FIX-3 / Deviation B (per fix_2/REFERENCE_IMF_AUDIT.md §7.2): reference
+        # iMF (imeanflow/models/imfDiT.py:370-372) explicitly conditions ONLY on
+        # `h` and ignores `t`, citing the iMeanFlow paper (Kaiming He et al.,
+        # arXiv:2502.13129). For a linear interpolant the mean-flow target is
+        # v_const = x_data − noise, INDEPENDENT of t. Conditioning on t risks
+        # the model overfitting a spurious t-dependence (especially since
+        # training had correlated (t,h) but inference has constant h=1/N
+        # decoupled from t).
+        #
+        # Our model architecturally has both `time_mlp(t)` and `h_mlp(h)`
+        # contributions (unet1d_temporal_cond.py:202,211). We can't remove
+        # time_mlp without retraining, so we freeze its contribution by passing
+        # a CONSTANT t to the model at every sampling step. This makes the
+        # time_mlp output a fixed bias term that affects all steps identically
+        # — effectively converting our (t, h)-conditioned model into a
+        # h-only-conditioned model at inference.
+        #
+        # Chosen constant: 0.5 (midpoint of training's t distribution, which is
+        # 1 - Beta(1.5, 1.0) with mean ≈ 0.4). Close to the training mean so the
+        # time_mlp output is on-distribution.
+        T_CONST_INFERENCE = 0.5
+        t_const = torch.full(
+            (batch_size,), T_CONST_INFERENCE,
+            device=device, dtype=torch.float32,
+        )
+
         for i in range(total_steps):
             loop_idx = min(i, flow_steps - 1)
-            t_cont = torch.full(
-                (batch_size,),
-                loop_idx / max(flow_steps, 1),
-                device=device,
-                dtype=torch.float32,
-            )
-            velocity = self._predict_velocity(x, cond, t_cont, h=h_batch, returns=returns)
+            velocity = self._predict_velocity(x, cond, t_const, h=h_batch, returns=returns)
             x = x + velocity * dt
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 

@@ -296,3 +296,146 @@ jitter over N Euler steps. **Permanent fix: change line 120 of
 `imf_diffusion.py` from `return velocity + self.sample_aux_weight *
 aux` to `return velocity`.** Retraining is NOT needed — the aux head
 weights stay trained but unused at inference.
+
+---
+
+## 7. Second audit pass (2026-06-01) — STRONGER evidence + ONE additional deviation
+
+After the initial audit, user asked me to deep-verify the claim by
+also reading the architecture file `models/imfDiT.py` and cross-referencing
+against the iMeanFlow paper (Kaiming He et al., arXiv:2502.13129
+linked in the reference code's own comment).
+
+### 7.1 Defense — Deviation A (aux at inference) is STRONGLY confirmed
+
+The reference repo doesn't just *use* `[0]` indexing at inference; it
+goes further — the v-head transformer blocks are **conditionally not
+even instantiated** when `eval_mode=True`:
+
+`models/imfDiT.py:282-288`:
+
+```python
+# We don't need the v heads during evaluation
+self.v_heads = nn.ModuleList(
+    [
+        TransformerBlock(**block_kwargs)
+        for _ in range(head_depth if not self.eval_mode else 0)
+    ]
+)
+```
+
+When `eval_mode=True`, `self.v_heads` is an empty `ModuleList`. The
+`for block in self.v_heads:` loop at line 381 then runs zero
+iterations, and `v_seq = seq` (untouched after the shared backbone).
+The v-final layer still runs, producing some output, but it never
+went through the v-specific transformer blocks.
+
+This is **explicit, intentional, code-level confirmation**: the
+reference authors regard the v head as a training-only artifact
+strong enough to literally omit its weights at inference. Adding
+`sample_aux_weight * aux` at inference, like our code does, is
+unambiguously a deviation from reference iMF's design.
+
+**Verdict**: Deviation A is real. Hypothesis A in fix_2/INVESTIGATION.md
+is correct.
+
+### 7.2 NEW: Deviation B — our model conditions on `t` AND `h`; reference conditions on `h` ONLY
+
+Found on the second audit pass. `models/imfDiT.py:370-372`:
+
+```python
+# We don't explicitly condition on time t, only on h = t - r
+# following https://arxiv.org/abs/2502.13129
+seq = self._build_sequence(x, h, w, t_min, t_max, y)
+```
+
+The reference iMF model receives **only `h`** as a time-related
+conditioning input, not `t`. The forward signature is
+`forward(self, x, t, h, w, t_min, t_max, y)` — `t` is in the
+signature but **unused** in the body (only `h` is passed into
+`_build_sequence`).
+
+Why iMeanFlow does this (from the paper, Kaiming He et al. 2025):
+for a linear interpolant `x_τ = (1−τ)·noise + τ·data`, the
+mean-flow target is:
+```
+u(x_t, t, h) = (1/h) · ∫_{t−h}^{t} v_inst(x_τ, τ) dτ
+            = v_const = data − noise
+```
+This is **independent of t** (and of h, for that matter — for a
+linear path the average over any window equals the constant). The
+true mean-flow target depends ONLY on `x` (via what data and noise
+were sampled). Conditioning the model on `t` gives it extra capacity
+to learn a `t`-dependent function — which **should** be flat, but
+might overfit to spurious patterns in the training distribution.
+
+Our code in `unet1d_temporal_cond.py:181-211`:
+
+```python
+def forward(self, x, cond, time, returns=None, use_dropout=True,
+            force_dropout=False, h=None):
+    ...
+    t = self.time_mlp(timesteps)        # ← USES t
+    ...
+    if h is not None:
+        ...
+        t = t + self.h_mlp(h)           # ← AND USES h
+```
+
+We add the time-embedding `time_mlp(t)` and the h-embedding `h_mlp(h)`
+together. So we condition on **both** `t` and `h`. This deviates from
+reference iMF.
+
+### 7.3 Likely effect of deviation B at inference
+
+- If the model learned a "correct" function (flat in `t`, only depends on
+  `h` and `x`), deviation B is benign — passing `t` doesn't hurt.
+- If the model learned a spurious `t`-dependence (overfitting to
+  training distribution where `(t, h)` were correlated `h ∈ [0, t]`),
+  then at inference the model is queried with `(t = i/N, h = 1/N)` —
+  decoupled pairs that the model rarely saw — and the prediction may
+  drift from the true v_const.
+- The decoupled-pair OOD effect compounds over N Euler steps,
+  contributing to (but not fully explaining) the post-fix_1 jitter.
+
+This is essentially fix_2/INVESTIGATION.md Hypothesis C
+(h-distribution mismatch) re-framed at the architectural level:
+**reference iMF eliminates the mismatch by simply not using `t` as a
+conditioning input at all.**
+
+### 7.4 Per-deviation fix plan
+
+| Deviation | Fix | Retrain required? |
+|---|---|---|
+| **A** — aux at inference | One-line change at `imf_diffusion.py:120`: `return velocity` instead of `return velocity + self.sample_aux_weight * aux`. The aux head's weights stay trained but go unused at inference. | **No** |
+| **B** — t-conditioning | Drop `t = self.time_mlp(timesteps)` and just use `t = self.h_mlp(h)` in `unet1d_temporal_cond.py`. The trained `time_mlp` weights become dead but no removal needed. **OR**, at inference, pass a constant `t` (e.g., `t = 0.5`) for every step — this freezes the time embedding contribution so it acts as a constant bias. The model still uses `h` (which varies) to predict u. | Maybe — depends on whether the trained model's `t`-dependence is actually flat (benign) or actively learned (harmful). Apply A first; if jitter persists, try the inference-time t-freezing trick; if jitter STILL persists, full retrain is the clean fix. |
+
+Both fixes are easy to test at inference without retraining:
+- Fix A: just don't add aux.
+- Fix B (lighter test): pass `t = torch.zeros_like(t)` or `t = 0.5 * torch.ones_like(t)` to the model at every step, see if jitter reduces.
+
+### 7.5 Revised recommendation
+
+1. **Apply fix A as a permanent code change.** Confirmed-correct
+   single-line edit.
+2. **Empirically test fix B.** Add a runtime toggle that passes
+   constant `t` to the model. If jitter further reduces, schedule a
+   retrain without `time_mlp` for the cleanest match to reference iMF.
+   If it doesn't, leave time_mlp in place (it's just dead capacity).
+3. **Document this dual finding** so the next iMF investigator knows
+   about both deviations from reference.
+
+### 7.6 What was NOT found on re-audit (still aligned with reference)
+
+- Step direction / sign convention: still equivalent under DATA-AT-0 ↔
+  DATA-AT-1 (§4.1 of this MD).
+- Aux head's training-time role: confirmed — reference instantiates v
+  heads only when `eval_mode=False`. Our aux head is trained the same
+  way. Difference is ONLY at inference (whether to add the aux
+  contribution to the velocity).
+- Target formula `u_target = (x_t − x_r)/h` (fix_1): still correct;
+  matches MeanFlow paper's mean-flow definition for linear
+  interpolants.
+- CFG / guidance interval: ours doesn't implement `omega, t_min, t_max`
+  (we use simpler `returns_condition`); but this is a feature
+  difference, not a math error. Doesn't cause jitter.
