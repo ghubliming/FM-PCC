@@ -1366,3 +1366,38 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Jittery Trajectory Diagnosis**: Investigated why iMF rollouts exhibited step-quantized jitter despite the Fix 1 correction preventing explosions. Identified the auxiliary head (`iMFTrajectoryModel.aux_head`) as the most probable cause, as it introduces step-to-step noise when fed with drifting off-manifold observations during Euler integration.
 2. **Inference Monkey-Patching**: Designed a runtime monkey-patch (`disable_aux_at_inference.py`) to silence the auxiliary head during sampling without requiring source code edits or retraining. This provides an immediate, cheap hypothesis test for the jitter issue before progressing to costlier architectural changes like modifying the training `(t, h)` joint distribution.
+
+***
+
+## Gen7: Non-Visual One-Shot Run & Stabilization (Fix 18.1 - 18.6.1) (June 1, 2026)
+
+**Keywords**: Non-Visual, One-Shot, obs_dim override, normalizer, broadcast crash, color swap, STALE_CONFIG.
+
+1. **Non-Visual Training Dimension Override (Fix 18.1)**: Fixed a training crash (model building 9-D input while expecting 23-D data) by dynamically overriding `args.obs_dim` to match the dataset normalizer for non-visual pipelines.
+2. **Evaluation Slicing and Safeguards (Fix 18.2 - 18.5)**: 
+   - Derived `_traj_dim` directly from saved normalizers to prevent CLI flag mismatches.
+   - Guarded the UF-13 auto-visual override by checking the saved normalizer dimension, avoiding a `(1,6) vs (20,)` broadcast crash when evaluating genuine non-visual models.
+   - Branched first-replan diagnostic variables (`obs_6d_np` vs `obs_20d_np`) to eliminate an `UnboundLocalError`.
+   - Updated `setup_dpcc_projector` to slice the obs normalizer to `trajectory_dim - action_dim`, fixing a projector initialization crash for non-visual variant evaluation.
+3. **Non-Visual GIF Hook & Color Correction (Fix 18.6 & 18.6.1)**: Added an environment-render hook (`record_sim_frame`) specifically for non-visual rollouts to safely pull from MuJoCo cameras, fully restoring GIF capabilities. Promptly fixed a cosmetic RGB/BGR color-inversion bug introduced by this hook.
+4. **Stale Config Side-Patch**: Updated `utils.Config.save()` to forcefully overwrite `model_config.pkl`, preventing legacy configs from misleading eval scripts and causing shape-mismatch crashes.
+
+***
+
+## Gen3v4u2: iMeanFlow Forensic Audit vs. Reference Repo (June 1, 2026)
+
+**Keywords**: iMeanFlow, reference audit, aux head, t-conditioning, deviation analysis.
+
+1. **Mathematical Verification of Target**: Verified that the previously implemented training target formula `(x_t - x_r)/h` is mathematically correct and identical to the original MeanFlow formulation.
+2. **Auxiliary Head Jitter (Deviation A)**: Conducted a deep code-level audit of the reference image-domain `imeanflow` repository and confirmed that it completely discards the auxiliary `v` head at inference. Validated that our practice of adding `sample_aux_weight * aux` was the root cause of step-to-step jitter, requiring a permanent codebase change.
+3. **Time vs. Step Conditioning (Deviation B)**: Identified that our model conditions on both time `t` and step size `h`, whereas the reference architecture uses `h` alone. Proposed evaluating the impact of dropping the time dependency during inference.
+
+***
+
+## Conceptual Math & Architecture Notes: One-Shot vs. Horizon (June 1, 2026)
+
+**Keywords**: Conceptual, DGM time, real-world horizon, MPC, one-shot generation.
+
+1. **Orthogonality of Time Axes**: Documented the critical distinction between "diffusion time" (NFE) and "trajectory horizon time" (H). "One-shot" (NFE=1) collapses diffusion iterations but does not imply generating the entire real-world trajectory at once.
+2. **MPC Chunking vs. Open-Loop**: Clarified that applying iMF at `H=8` is fundamentally correct. Long-horizon (H ≈ 300) open-loop generation suffers from compounding state drift and multi-modality collapse, confirming that small-H Model Predictive Control (MPC) with replanning remains the most robust design choice for contact-rich manipulation tasks.
+3. **D3IL Agent Typology**: Classified D3IL's heterogeneous agent suite to emphasize that "no horizon" agents are actually `H=1` single-step reactive predictors, distinguishing them from chunk-based MPC policies like our `H=8` DPCC/FM implementations.
