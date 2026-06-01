@@ -1345,3 +1345,24 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Velocity Target Math Fix**: Identified and resolved a critical bug in `imf_diffusion.py` where the training target `(x_start - x_r)/h` over-scaled the velocity regression by a factor of roughly `N` at small timesteps. 
 2. **Correction**: Updated the target formula to `(x_t - x_r)/h`, which correctly equals the instantaneous velocity `v` for linear interpolants, resolving the issue where model rollouts would shoot off in chaotic straight lines. Retraining is required to benefit from the corrected scale.
+
+***
+
+## Gen7 & Gen6v4: Non-Visual Aligning Code Fixes 18.3–18.6 (May 31, 2026)
+
+**Keywords**: non-visual evaluation, normalizer guards, diagnostic block, projector dims, GIF capture hook.
+
+1. **UF-13 Normalizer Guard (Fix 18.3)**: Fixed a broadcast crash during non-visual evaluation by guarding the UF-13 auto-visual override. The evaluation now correctly identifies when a checkpoint lacks an image encoder and proceeds with non-visual rollouts instead of forcing visual dependencies.
+2. **First-Replan Diagnostic Alignment (Fix 18.4)**: Addressed an `UnboundLocalError` in the evaluation scripts by branching diagnostic variable names (`obs_6d_np` vs `obs_20d_np`) depending on whether the code path is visual or non-visual.
+3. **Projector Normalizer Slicing (Fix 18.5)**: Fixed the `setup_dpcc_projector` logic to slice the observation normalizer based on the trajectory dimension minus action dimension (e.g., 20 for non-visual) instead of a hardcoded 6. This resolved a `(23,) vs (9,)` broadcast crash during DPCC evaluation constraints construction.
+4. **Environment-Based GIF Capture (Fix 18.6)**: Implemented `record_sim_frame(env)`, an environment-render hook directly pulling from MuJoCo cameras during non-visual rollouts. This restores GIF generation for genuine 23-D non-visual models, matching the legacy visual behavior independently of the policy's image capabilities.
+5. **Dimension Invariants Documentation**: Created comprehensive documentation (`0_READ_ME_DIM_INVARIANTS.md`) standardizing the exact dimension rules for visual (9-D) and non-visual (23-D) data handling across both Gen6v4 and Gen7 models.
+
+***
+
+## Gen3v4u2: iMeanFlow Major Upgrade Direct (Fix 2 Investigation) (May 31, 2026)
+
+**Keywords**: iMeanFlow, jittery trajectory, aux head, test methodology.
+
+1. **Jittery Trajectory Diagnosis**: Investigated why iMF rollouts exhibited step-quantized jitter despite the Fix 1 correction preventing explosions. Identified the auxiliary head (`iMFTrajectoryModel.aux_head`) as the most probable cause, as it introduces step-to-step noise when fed with drifting off-manifold observations during Euler integration.
+2. **Inference Monkey-Patching**: Designed a runtime monkey-patch (`disable_aux_at_inference.py`) to silence the auxiliary head during sampling without requiring source code edits or retraining. This provides an immediate, cheap hypothesis test for the jitter issue before progressing to costlier architectural changes like modifying the training `(t, h)` joint distribution.
