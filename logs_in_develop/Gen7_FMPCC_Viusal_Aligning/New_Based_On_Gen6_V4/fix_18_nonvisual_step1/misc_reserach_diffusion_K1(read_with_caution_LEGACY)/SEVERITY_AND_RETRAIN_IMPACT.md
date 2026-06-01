@@ -15,12 +15,18 @@ checkpoint.
 | Is this a severe fix? | **Yes for FM eval (Fix B), low for FM/DPCC train (Fix A).** Fix A is a latent bug nobody had actually hit yet because no one had successfully trained a *genuine* 23-D non-visual model. Fix B is hit immediately by any eval of a `_VFalse_` checkpoint with UF-13 active. |
 | Was the old non-visual *code* wrong? | The model-construction path was wrong for genuine 23-D non-visual mode. But **no genuine 23-D non-visual checkpoint actually exists** on disk — see §2. |
 | Is this specific to `K=1` / `ODE=1`? | **No.** Step count is irrelevant. The bug would fire for any non-visual training attempt that goes through the 23-D dataset path. |
-| Do I need to retrain anything? | **No retrain required for any existing checkpoint.** All existing `_VFalse_` checkpoints are actually 9-D visual models with a misleading flag name — see §2. Fix A is for *future* genuine non-visual training, which has never been run before. |
+| Do I need to retrain anything? | **No retrain required for the current eval pipeline to work.** The user-side May 30 reasoning was "all existing `_VFalse_` checkpoints are 9-D visual under the hood, no retrain needed." This MAY still be true for the FM checkpoint but **was not definitively verified** — see "Update 2026-05-31" at the bottom of §3. For DPCC K=1 specifically, the checkpoint trained this past week IS genuine 23-D (verified by the `[32,23,5]` shape in the crash trace). Fix A is what enabled that. |
 
-The earlier MD versions over-claimed severity and gave wrong retrain
-guidance. The actual picture is: **the existing FM `_VFalse_` checkpoint
-is a 9-D visual model wearing a non-visual nameplate. Keep using it as
-a visual checkpoint. There is no real 23-D non-visual model to lose.**
+**Update 2026-05-31 (post Fix-18.3 → 18.6):** the May 30 claim that
+"all `_VFalse_` checkpoints are 9-D visual" was based on `model_config.pkl`
+metadata which the subsequently-discovered STALE_CONFIG bug renders
+unreliable for any pre-Fix-18 checkpoint. The DPCC K=1 `_VFalse_` checkpoint
+trained THIS week IS genuine 23-D (verified). The FM `_VFalse_` checkpoint
+on disk is **unverified** — could be 9-D legacy OR genuine 23-D, depending
+on training history. Authoritative check: state_dict tensor shape (see
+`K1_DDPM_CLOSURE.md` §8 for the one-liner). For ALL post-Fix-18.6 eval
+runs, either dim works correctly (asymmetry closed by Fix-18.6) — so the
+retrain decision is independent of dim resolution.
 
 ---
 
@@ -108,9 +114,18 @@ training.**
 | Scenario | Retrain? | Why |
 |---|---|---|
 | Any visual checkpoint (`_VTrue_`, any K, any ODE step count) | ❌ No | Path was never broken |
-| FM checkpoint with `_VFalse_` in path | ❌ **No** | It's a 9-D visual model with a misleading flag (see §1). Keep using it as visual. Just need Fix B for eval to work. |
-| DPCC checkpoint with `_VFalse_` in path | ❌ **No (probably)** | Same reasoning — but check `model_config.pkl` to confirm `obs_dim=6` (i.e. 9-D). If `obs_dim=20`, it's a genuine 23-D model and was somehow trained successfully (would require investigation). |
-| Genuine 23-D non-visual checkpoint | N/A — none exists | Train fresh with Fix A patched if you want one |
+| FM checkpoint with `_VFalse_` in path | ❌ No | Functional under current code (Fixes A–F applied). Dim is **unverified** without a state_dict check — see "**Update 2026-05-31**" below; the May 30 claim "this is a 9-D model with a misleading flag" was based on a `model_config.pkl` that the subsequently-discovered STALE_CONFIG bug renders unreliable for any pre-Fix-18 checkpoint. Either way (9-D or 23-D), no retrain needed for the current eval pipeline. |
+| DPCC checkpoint with `_VFalse_` in path | ❌ No | If trained post-Fix-18.1 (this past week), it's genuine 23-D (verified by the `[32,23,5]` shape that surfaced in the shape-mismatch crash). Works with Fixes A–F. |
+| Genuine 23-D non-visual checkpoint trained post-Fix-18.1 | N/A — exists for DPCC (above); for FM, exists IF user retrained post-Fix-18.1 (claimed but unverified) | If you do choose to retrain FM post-Fix-18.1, Fix-18.1's `args.obs_dim=20` override makes it 23-D by construction |
+
+**Update 2026-05-31 (later same day, post Fix-18.3 → 18.6 work):**
+the May 30 claim "FM `_VFalse_` is a 9-D model" was based on a
+`model_config.pkl` showing `obs_dim=6`. The STALE_CONFIG bug discovered
+during Fix-18 follow-up makes that file unreliable for any checkpoint
+trained before commit `b125365`. Authoritative check is the state_dict
+tensor shape — see `K1_DDPM_CLOSURE.md` §8 for the one-line script.
+Going forward, **always read state_dict shape, never trust
+model_config.pkl as the source of truth**.
 
 ### Quick verification (run on cluster)
 

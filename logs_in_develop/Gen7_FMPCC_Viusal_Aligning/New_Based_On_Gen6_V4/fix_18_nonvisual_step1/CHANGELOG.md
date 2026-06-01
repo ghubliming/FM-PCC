@@ -285,6 +285,51 @@ table now uniform:
   there because the visual branch in `aligning_sim.py` was not
   modified).
 
+### Fix F.1 (= 18.6.1) — `record_sim_frame` produced inverted-color GIFs (R↔B swap)
+
+**Added**: 2026-06-01 (immediately after Fix-18.6 ship, surfaced by
+the user's next non-visual DPCC K=1 eval run).
+
+**Symptom**: GIFs produced by Fix-18.6's `record_sim_frame` hook had
+inverted colors — blue floor appeared red, red box appeared blue.
+Other metrics (positions, success rates) were correct; only the
+visual output was wrong.
+
+**Root cause**: Fix-18.6's `record_sim_frame` mistakenly copy-pasted
+the `cv2.cvtColor(..., COLOR_BGR2RGB)` call from the visual
+`predict()` capture path WITHOUT realizing the two paths receive
+images in different color orders.
+
+| Path | Source of image | Color order arriving at the capture code |
+|---|---|---|
+| Visual `predict()` (pre-existing) | `env.step` returns `bp_image` AFTER `aligning.py:212` did `RGB → BGR` | **BGR** — so `BGR2RGB` in capture is correct (un-does the env's conversion) |
+| Fix-18.6 `record_sim_frame` | Directly calls `env.bp_cam.get_image(depth=False)` — **bypasses** env.step's RGB→BGR conversion | **RGB** (per MuJoCo MjCamera spec) — so `BGR2RGB` here applied to RGB data **swaps R↔B** → "inverted" GIFs |
+
+**Patch**: in both eval scripts' `record_sim_frame`, remove the
+`cv2.cvtColor(..., COLOR_BGR2RGB)` calls. The camera output is
+already RGB; `imageio.mimsave` writes RGB; no conversion needed:
+
+```python
+# BEFORE (Fix-18.6, wrong):
+bp_vis = cv2.cvtColor(bp.astype(np.uint8), cv2.COLOR_BGR2RGB)
+ih_vis = cv2.cvtColor(ih.astype(np.uint8), cv2.COLOR_BGR2RGB)
+
+# AFTER (Fix-18.6.1, correct):
+bp_vis = bp.astype(np.uint8)
+ih_vis = ih.astype(np.uint8)
+```
+
+**Files**:
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py:971-972`
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py:957-958`
+
+**Scope**: localized to Fix-18.6's `record_sim_frame` only. None of
+Fix-18.1–18.5 are affected. Visual `predict()` capture path is
+untouched (still correctly does `BGR2RGB` because it receives BGR).
+
+**No model retraining required.** The bug was purely cosmetic in the
+GIF channel — no policy state, no metrics, no normalizers affected.
+
 ### Fix E (= 18.5) — eval scripts: `setup_dpcc_projector` slices normalizer to wrong width for 23-D trajectory
 
 **Added**: 2026-05-31 (after Fix D let the first ("diffuser") variant complete a full 5-context rollout; crash moved to the second variant's projector setup).
@@ -390,6 +435,8 @@ was already false for visual; new condition `len > 6` is still false).
 - **18.3 (Fix C)** — eval scripts guard the UF-13 record-mode `if_vision` flip on the saved normalizer dim, so a non-visual checkpoint isn't forced into the visual `predict()` path.
 - **18.4 (Fix D)** — eval scripts' first-replan DIAG block aliases `obs_6d_np`/`obs_6d_norm` (visual) vs `obs_20d_np`/`obs_norm` (non-visual) so neither path hits `UnboundLocalError`.
 - **18.5 (Fix E)** — `setup_dpcc_projector` now slices the obs normalizer to `trajectory_dim - action_dim` instead of a hardcoded 6, so the 23-D non-visual trajectory gets matching 20-D obs ranges and the projector's bound × range arithmetic stops broadcast-erroring at variant 2+.
+- **18.6 (Fix F)** — `Policy.record_sim_frame(env)` env-render hook added; non-visual rollouts now produce GIFs via direct bp_cam/inhand_cam access.
+- **18.6.1 (Fix F.1)** — `record_sim_frame` had inverted color (R↔B swap) because it copy-pasted `cv2.cvtColor(BGR2RGB)` from the visual capture path, but the camera output is already RGB (it bypasses env.step's RGB→BGR conversion). One-line removal of the cvtColor calls. Bug introduced and fixed within the same epoch; no model effect.
 - **Side-patch (STALE_CONFIG)** — `utils.Config.save()` always overwrites `model_config.pkl`; sibling regen script repairs pre-existing broken checkpoints without re-training.
 
 ---
