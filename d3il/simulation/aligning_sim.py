@@ -136,11 +136,20 @@ class Aligning_Sim(BaseSim):
                         obs, reward, done, info = env.step(pred_action)
                         if hasattr(agent, 'record_step_info'):
                             agent.record_step_info(info)
-                        # Fix-18.6: non-visual GIF hook — let the agent
-                        # capture bp_cam/inhand_cam directly from the sim,
-                        # independent of whether the policy consumed images.
-                        if hasattr(agent, 'record_sim_frame'):
-                            agent.record_sim_frame(env)
+                        # Non-visual GIF capture: reuse the visual path's exact
+                        # pipeline — get RGB from cam, swap to BGR (matches
+                        # aligning.py:212), transpose+/255 (matches visual
+                        # branch above), hand to agent.capture_frame() which
+                        # mirrors the visual predict()'s capture lines.
+                        if hasattr(agent, 'capture_frame'):
+                            try:
+                                bp_img = env.bp_cam.get_image(depth=False)[:, :, ::-1]
+                                ih_img = env.inhand_cam.get_image(depth=False)[:, :, ::-1]
+                                bp_np = bp_img.transpose((2, 0, 1)).copy() / 255.
+                                ih_np = ih_img.transpose((2, 0, 1)).copy() / 255.
+                                agent.capture_frame(bp_np, ih_np)
+                            except Exception:
+                                pass
 
                 mode_encoding[context, i] = torch.tensor(info['mode'])
                 successes[context, i] = torch.tensor(info['success'])

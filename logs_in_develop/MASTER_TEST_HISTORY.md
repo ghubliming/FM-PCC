@@ -1401,3 +1401,24 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Orthogonality of Time Axes**: Documented the critical distinction between "diffusion time" (NFE) and "trajectory horizon time" (H). "One-shot" (NFE=1) collapses diffusion iterations but does not imply generating the entire real-world trajectory at once.
 2. **MPC Chunking vs. Open-Loop**: Clarified that applying iMF at `H=8` is fundamentally correct. Long-horizon (H ≈ 300) open-loop generation suffers from compounding state drift and multi-modality collapse, confirming that small-H Model Predictive Control (MPC) with replanning remains the most robust design choice for contact-rich manipulation tasks.
 3. **D3IL Agent Typology**: Classified D3IL's heterogeneous agent suite to emphasize that "no horizon" agents are actually `H=1` single-step reactive predictors, distinguishing them from chunk-based MPC policies like our `H=8` DPCC/FM implementations.
+
+***
+
+## Gen3v4u2: iMeanFlow Architectural Deviations Resolution (Fix 3) (June 1, 2026)
+
+**Keywords**: iMeanFlow, reference audit, aux head, t-conditioning, fix 3, no retraining.
+
+1. **Auxiliary Head Removal at Inference (Deviation A)**: Removed the auxiliary `v` head contribution (`sample_aux_weight * aux`) from the inference output in `_predict_velocity`. This aligns our implementation with the reference iMF architecture, which explicitly relies solely on the mean-velocity (`u`) head during inference, while retaining the aux head for training only.
+2. **Constant Time Conditioning at Inference (Deviation B)**: Froze the continuous time input `t` to a constant (`T_CONST_INFERENCE = 0.5`) during the sampling loop. This converts the `(t,h)`-conditioned model into an effectively `h`-only conditioned model at inference, mimicking the reference iMF code and preventing the excitation of spurious time-dependencies learned during training.
+3. **Outcome**: These structural corrections, implemented without requiring a model retrain, ensure the iMF inference pipeline strictly adheres to the canonical reference. Trajectories are expected to be significantly smoother, fully resolving the step-quantized jitter identified in previous diagnostic audits.
+
+***
+
+## Gen11 Epoch 4 & Path Preparations: UAV-Flow Replication and Expert Data Sourcing (June 1, 2026)
+
+**Keywords**: Gen11, UAV-Flow, SafeFlowMPC, expert data collection, MuJoCo replication.
+
+1. **UAV-Flow Sim-to-Real Analysis**: Analyzed the UAV-Flow reference framework and confirmed it lacks explicit dynamic equations, relying entirely on Unreal Engine for black-box physics and waypoint generation. Porting the logic to MuJoCo requires building a custom quadrotor environment and abstract geometry constraints.
+2. **Architecture Transfer Strategy (V-A-FM-DPCC)**: Finalized the strategy to reuse existing drone models (e.g., Skydio X2 from `mujoco_menagerie`) and wire them with `mujoco_mpc` for receding-horizon control. Outlined a 7-step implementation roadmap for transferring the FlowMP/SafeFlowMPC paradigm from robotic arms to a UAV context.
+3. **Epoch 4 Expert Data Sourcing Strategy**: Conducted a thorough evaluation of expert data sources for FM-PCC training. Ruled out using UAV-Flow directly due to simulation mismatches (Unreal vs. MuJoCo, different scales, waypoints instead of actions) and MuJoCo MPC due to its racing-task focus. 
+4. **Manual Generation Approach**: Determined that manual data generation in the custom MuJoCo stack is the only viable path to obtain `(state, action)` trajectories in the required 9-D format (`[act(3) | p(3), v(3)]`). Planned the extraction of UAV-Flow kinematic statistics (e.g., typical altitudes, max velocities) to inform hand-designed reference trajectories for generating the expert dataset.

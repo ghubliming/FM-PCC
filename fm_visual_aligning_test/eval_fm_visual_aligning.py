@@ -938,37 +938,17 @@ class VisualAgentWrapper:
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
 
-    def record_sim_frame(self, env):
-        """Fix-18.6 HOTFIX: capture a bp/inhand frame DIRECTLY from the env every
-        non-visual rollout step, so GIFs work even when the policy itself
-        has no image encoder. Called by Aligning_Sim non-visual branch
-        after env.step(). Pushes into self.video_frames so the existing
-        save logic in update_rollout_info dumps it as GIF/MP4. Safe defaults:
-        no-ops if record_mode is 'none', if bp_cam is missing, or if
-        rendering raises. Never alters policy state."""
+    def capture_frame(self, bp_np, inhand_np):
+        """Non-visual GIF hook. Receives (C,H,W) float[0,1] BGR images from
+        Aligning_Sim's non-visual branch — same shape/dtype/convention the
+        visual predict() receives. Capture logic is copied verbatim from
+        the visual predict() block (cv2.cvtColor BGR2RGB → mimsave RGB)."""
         if self.record_mode == 'none':
             return
         try:
-            bp = env.bp_cam.get_image(width=96, height=96, depth=False)
-            ih = env.inhand_cam.get_image(width=96, height=96, depth=False)
-        except Exception:
-            return
-        try:
-            # Fix-18.6.1: NO color conversion here. env.bp_cam.get_image(depth=False)
-            # returns RGB uint8 directly (per MjCamera spec). imageio.mimsave writes
-            # RGB frames. So we use the camera output verbatim.
-            #
-            # The visual predict() capture path elsewhere DOES use cv2.cvtColor(BGR2RGB)
-            # because it receives `bp_image` from env.step(), which goes through
-            # aligning.py:212's `cv2.cvtColor(RGB2BGR)` first. That path's BGR2RGB
-            # un-does the env's RGB2BGR. We bypass env.step here (call bp_cam directly),
-            # so we never see the BGR form — no un-conversion needed.
-            #
-            # The original Fix-18.6 mistakenly copy-pasted BGR2RGB from the visual
-            # predict() path, which produced R↔B-swapped (inverted-looking) GIFs.
-            bp_vis = bp.astype(np.uint8)
-            ih_vis = ih.astype(np.uint8)
-            frame = np.concatenate([bp_vis, ih_vis], axis=1)
+            bp_vis     = cv2.cvtColor((bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+            inhand_vis = cv2.cvtColor((inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+            frame = np.concatenate([bp_vis, inhand_vis], axis=1)
             cv2.putText(frame, f's{self.step_counter}', (5, 18),
                         cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 0), 1)
             self.video_frames.append(frame)
@@ -1967,11 +1947,11 @@ if __name__ == '__main__':
                         print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
                               'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
                     else:
-                        print('[ eval ] NOTE: record_mode is active and checkpoint is non-visual '
+                        print('[ eval ] NOTE: record_mode is active but checkpoint is non-visual '
                               f'(obs_normalizer dim = {obs_normalizer.mins.shape[0]}). '
-                              'Visual mode NOT auto-enabled (model has no image encoder), but '
-                              'GIFs/videos WILL be captured via the env-render hook (Fix-18.6 '
-                              'record_sim_frame).')
+                              'Cannot auto-enable visual mode (this model has no image encoder); '
+                              'proceeding with non-visual rollouts. GIFs/videos WILL be captured '
+                              'via Aligning_Sim non-visual hook → agent.capture_frame().')
 
                 sim = Aligning_Sim(
                     seed=seed, device=args.device,
