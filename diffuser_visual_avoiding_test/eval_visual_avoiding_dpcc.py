@@ -114,9 +114,10 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list.append(['ub', ub])
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        constraint_list.append(('deriv', [6, 0]))
-        constraint_list.append(('deriv', [7, 1]))
-        constraint_list.append(('deriv', [8, 2]))
+        # Gen9 Ep2 Fix-3: avoiding 6D traj [act(2)|des_xy(2)|c_xy(2)].
+        # c_xy is at indices 4,5 (linked to actions 0,1). No z dimension.
+        constraint_list.append(('deriv', [4, 0]))   # c_x[t+1] = c_x[t] + act_x[t]
+        constraint_list.append(('deriv', [5, 1]))   # c_y[t+1] = c_y[t] + act_y[t]
 
     if 'halfspace' in config.get('constraint_types', []):
         tightening = config.get('enlarge_constraints') or 0.0
@@ -671,7 +672,7 @@ def generate_expert_reference(save_path, n_rollouts=3):
         from envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 
         state_data_dir = sim_framework_path('environments/dataset/data/avoiding/all_data/state')
-        env = ObstacleAvoidanceEnv(render=False, if_vision=True)
+        env = ObstacleAvoidanceEnv(render=False)  # Fix-3: no if_vision kwarg on avoiding env
         env.start()
 
         for idx in range(n_rollouts):
@@ -1934,7 +1935,7 @@ if __name__ == '__main__':
                 # normalizer → shape mismatch. Guard on the saved normalizer dim:
                 # only flip when the checkpoint is actually visual (6-D obs anchor).
                 _ckpt_is_visual = (obs_normalizer is not None
-                                   and obs_normalizer.mins.shape[0] == 6)
+                                   and obs_normalizer.mins.shape[0] in (4, 6))  # 4=avoiding, 6=aligning
                 if not if_vision and args_cli.record != 'none':
                     if _ckpt_is_visual:
                         if_vision = True
