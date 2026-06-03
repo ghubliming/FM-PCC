@@ -4,6 +4,7 @@ import os
 import random
 from envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 
+import cv2
 import numpy as np
 import torch
 import wandb
@@ -11,6 +12,10 @@ import wandb
 from simulation.base_sim import BaseSim
 
 log = logging.getLogger(__name__)
+
+# Training images are 96×96 RGB (ParityAvoidingDataset: cv2.cvtColor BGR2RGB + transpose).
+# BPCageCam defaults to 1024×1024 — resize every frame before passing to the model.
+_IMG_W = _IMG_H = 96
 
 
 def assign_process_to_cpu(pid, cpus):
@@ -92,8 +97,10 @@ class Avoiding_Sim(BaseSim):
                     while not done:
                         c_xy = env.robot.current_c_pos[:2].copy()
 
-                        # Single camera image — BGR (env convention matches training data)
+                        # Single camera: env returns BGR 1024×1024; resize to training res 96×96,
+                        # then BGR→RGB via [::-1] to match ParityAvoidingDataset._load_images().
                         bp_img_raw = env.bp_cam.get_image(depth=False)
+                        bp_img_raw = cv2.resize(bp_img_raw, (_IMG_W, _IMG_H), interpolation=cv2.INTER_AREA)
                         bp_image = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
 
                         pred_delta = agent.predict(
@@ -147,6 +154,7 @@ class Avoiding_Sim(BaseSim):
                         if hasattr(agent, 'capture_frame'):
                             try:
                                 bp_img_raw = env.bp_cam.get_image(depth=False)
+                                bp_img_raw = cv2.resize(bp_img_raw, (_IMG_W, _IMG_H), interpolation=cv2.INTER_AREA)
                                 bp_np = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
                                 agent.capture_frame(bp_np, bp_np)
                             except Exception:
