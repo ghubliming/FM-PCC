@@ -140,6 +140,7 @@ If empty or missing:
 
 Per the plan §7.5, runs in this order on cluster:
 
+0. **Package-level import smoke** *(added after [`Fix_1/CHANGELOG.md`](Fix_1/CHANGELOG.md) — catches stale `__init__.py` re-exports that AST checks miss)*: `python -c "import diffuser_visual_avoiding.datasets; import fm_visual_avoiding.datasets; import diffuser_visual_avoiding.models; import fm_visual_avoiding.models; print('package imports OK')"` — must succeed before any train/eval script is invoked. Fix-1 was an `ImportError` from this exact failure mode.
 1. **Import smoke**: `python -c "import diffuser_visual_avoiding; import fm_visual_avoiding; print('imports OK')"`
 2. **Dataset smoke**: load 5 episodes, verify tensor shapes are `(8, 6)` for trajectories, `(4,)` for `conditions[0]`, `(3, 96, 96)` for `conditions['primary_img']`.
 3. **Model forward**: `python -c "from diffuser_visual_avoiding.models.visual_unet import VisualUNet; from omegaconf import OmegaConf; m = VisualUNet(OmegaConf.create({'horizon': 8, 'if_vision': True, 'action_dim': 2})); print(m)"`

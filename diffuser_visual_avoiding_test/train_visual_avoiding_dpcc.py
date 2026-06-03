@@ -1,6 +1,6 @@
 # Visual-DPCC (Gen6V4) training script.
 # Copy-modified from FM_v3_ode_selectable_test/train_flow_matching_v3_ode_selectable.py.
-# Core: diffuser_visual_avoiding  |  Dataset: ParityAligningDataset (9D)
+# Core: diffuser_visual_avoiding  |  Dataset: ParityAvoidingDataset (6D, single-cam)
 import argparse
 import glob
 import json
