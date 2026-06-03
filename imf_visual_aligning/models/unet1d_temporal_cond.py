@@ -81,10 +81,16 @@ class ResidualTemporalBlock(nn.Module):
 
         return out + self.residual_conv(x)
 
-# TODO: [Structural Modification] This class is the core for the new U-Net v2.
-# Structural changes to the layer depth, attention mechanisms, and skip connections 
-# should be implemented within this class.
-class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
+# ── Gen8 merged UNet backbone ────────────────────────────────────────────────
+# Combines:
+#   - Gen3v4 `Flow_matcher_U_Net_v2`: h_mlp for iMF h-conditioning
+#   - Gen7  `UNet1DTemporalCondModel`: cond_mlp / use_cond_projection for FiLM visual conditioning
+#
+# Fix_1 (2026-06-03): Renamed from Flow_matcher_U_Net_v2 to UNet1DTemporalCondModel
+# to match __init__.py and visual_unet.py imports. Added use_cond_projection and
+# cond_mlp from Gen7. Kept h_mlp from Gen3v4.
+# A backward-compatible alias Flow_matcher_U_Net_v2 is provided at module level.
+class UNet1DTemporalCondModel(ModelMixin, ConfigMixin):
 
     def __init__(
         self,
@@ -97,6 +103,7 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
         condition_dropout=0.1,
         calc_energy=False,
         kernel_size=5,
+        use_cond_projection=False,
     ):
         super().__init__()
 
@@ -106,6 +113,7 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
 
         self.time_dim = dim
         self.returns_dim = dim
+        self.cond_dim = cond_dim
 
         self.time_mlp = nn.Sequential(
             SinusoidalPosEmb(dim),
@@ -114,6 +122,10 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             nn.Linear(dim * 4, dim),
         )
 
+        # ── iMF h-conditioning (from Gen3v4) ──────────────────────────────
+        # Projects the step-size scalar h into the same space as the time
+        # embedding, so it can modulate the ResidualTemporalBlocks via
+        # addition with t. Used by iMeanFlow ODE for h-conditioning.
         self.h_mlp = nn.Sequential(
             SinusoidalPosEmb(dim),
             nn.Linear(dim, dim * 4),
@@ -121,10 +133,30 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             nn.Linear(dim * 4, dim),
         )
 
+        # ── Conditioning Projection (FiLM-style, from Gen7) ──────────────
+        # Projects the external conditioning vector (e.g. visual embeddings)
+        # into the same space as the time embedding, so it can modulate
+        # the ResidualTemporalBlocks via concatenation with t.
+        # Only enabled when use_cond_projection=True (visual pipelines).
+        # The state-based pipeline passes cond as a dict for inpainting,
+        # not as a tensor, so it must NOT enable this.
+        if use_cond_projection and cond_dim > 0:
+            self.cond_mlp = nn.Sequential(
+                nn.Linear(cond_dim, dim),
+                nn.Mish(),
+                nn.Linear(dim, dim),
+            )
+            cond_embed_dim = dim  # will be concatenated with time_dim
+        else:
+            self.cond_mlp = None
+            cond_embed_dim = 0
+
         self.returns_condition = returns_condition
         self.condition_dropout = condition_dropout
         self.calc_energy = calc_energy
 
+        # embed_dim = time_dim + (optional cond_dim) + (optional returns_dim)
+        embed_dim = dim + cond_embed_dim
         if self.returns_condition:
             self.returns_mlp = nn.Sequential(
                         nn.Linear(1, dim),
@@ -134,9 +166,7 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
                         nn.Linear(dim * 4, dim),
                     )
             self.mask_dist = Bernoulli(probs=1-self.condition_dropout)
-            embed_dim = 2*dim
-        else:
-            embed_dim = dim
+            embed_dim += dim
 
         # TODO: [Structural Modification] Initialize new architectural components such as 
         # Self-Attention, Cross-Attention, or Transformer blocks here for Gen3 U-Net.
@@ -181,6 +211,11 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
     def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False, h=None):
         '''
             x : [ batch x horizon x transition ]
+            cond : [ batch x cond_dim ] or None
+                   External conditioning (e.g. visual embeddings from ResNet).
+                   Projected via cond_mlp, then concatenated with the time
+                   embedding to modulate all ResidualTemporalBlocks
+                   (FiLM-style conditioning).
             returns : [batch x horizon]
             h : step-size conditioning scalar or [batch] tensor (iMF h-conditioning)
         '''
@@ -201,14 +236,32 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
         # t = self.time_mlp(time)
         t = self.time_mlp(timesteps)
 
+        # ── iMF h-conditioning ─────────────────────────────────────────────
         if h is not None:
             if not torch.is_tensor(h):
-                h = torch.tensor([h], dtype=torch.float32, device=x.device)
+                h_val = torch.tensor([h], dtype=torch.float32, device=x.device)
             elif torch.is_tensor(h) and len(h.shape) == 0:
-                h = h[None].to(x.device)
-            h = h.float()
-            h = h * torch.ones(x.shape[0], dtype=h.dtype, device=h.device)
-            t = t + self.h_mlp(h)
+                h_val = h[None].to(x.device)
+            else:
+                h_val = h
+            h_val = h_val.float()
+            h_val = h_val * torch.ones(x.shape[0], dtype=h_val.dtype, device=h_val.device)
+            t = t + self.h_mlp(h_val)
+
+        # ── Integrate external conditioning (FiLM, from Gen7) ─────────────
+        # Pool over temporal axis and project to dim, then concat with t.
+        # NOTE: In the state-based pipeline, `cond` is a dict {0: state},
+        # not a tensor. The cond_mlp path only fires for tensor conditioning
+        # (e.g. visual embeddings from VisualUNet).
+        if self.cond_mlp is not None and cond is not None and isinstance(cond, torch.Tensor):
+            if len(cond.shape) == 3:
+                # cond: [B, T, cond_dim] → pool → [B, cond_dim]
+                cond_pooled = cond.mean(dim=1)
+            else:
+                # cond: [B, cond_dim] — already pooled
+                cond_pooled = cond
+            cond_emb = self.cond_mlp(cond_pooled)  # [B, dim]
+            t = torch.cat([t, cond_emb], dim=-1)
 
         if self.returns_condition:
             assert returns is not None
@@ -294,6 +347,9 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
         x = einops.rearrange(x, 'b t h -> b h t')
 
         return x
+
+# Backward-compatible alias — Gen3v4 non-visual code may still reference this name
+Flow_matcher_U_Net_v2 = UNet1DTemporalCondModel
 
 class MLPnet(nn.Module):
     def __init__(
