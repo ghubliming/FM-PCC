@@ -1440,3 +1440,36 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Provenance Audit**: Conducted a deep-dive audit into upstream expert data sources (`EXPERT_DATA_PROVENANCE.md`). Confirmed that D3IL relies on human teleoperators on real Franka robots (multi-modal IL), while UAV-Flow uses human expert pilots flying real drones.
 2. **Generation Strategy Defense**: Formalized the defense for using "manual generation" (PID/MPC scripts) for FM-PCC drone planning validation. Since the current goal is validating a constraint-aware planner architecture rather than studying multi-modal style transfer or language conditioning, algorithmically generated constraint-respecting data provides the necessary controllability and format alignment without the prohibitive cost of real-world multi-modal collection.
+
+***
+
+## Gen9 Epoch 2: Single Camera Visual Avoiding Pipeline (June 3, 2026)
+
+**Keywords**: Gen9, visual avoiding, single camera, 6-D trajectory, sphere_outside, config split.
+
+1. **Pipeline Architecture**: Successfully scaffolded Visual-DPCC and Visual-FM pipelines for the D3IL avoiding task by porting from Gen7/Gen6v4 visual aligning pipelines. Dropped trajectory dimension from 9-D to 6-D (`[act(2) | des_xy(2) | c_xy(2)]`) and scaled vision down to a single camera (bp-only, `LATENT_DIM=64`).
+2. **Dataset & Models**: Implemented `ParityAvoidingDataset` and updated `VisualUNet`, `VisualGaussianDiffusion`, and `VisualFlowMatching` to process single-camera payloads without `wrist_img`. Created `Avoiding_Img_Dataset` for D3IL-native loops. 
+3. **Constraint Injection**: Configured the 6 fixed obstacles from the avoiding task as explicit `sphere_outside` projector constraints directly into the planning configurations rather than observation vector entries.
+4. **Configuration Structuring**: Followed the Gen7 pattern by splitting the config into a dedicated `config/avoiding-d3il-visual.py` (mirrors `aligning-d3il-visual.py`), keeping non-visual configurations isolated from visual logic.
+5. **Minor Fixes (Fix 1 & Fix 2)**: Addressed package-level import issues by fixing stale dataset class re-exports in `datasets/__init__.py`. Replaced aligning-era integer hardcodes (like `_obs_dim = 6`) with dynamic configuration properties to avoid silent dimension mismatch bugs.
+
+***
+
+## Gen8 Epoch 1: iMeanFlow Visual Aligning Initialization (June 3, 2026)
+
+**Keywords**: Gen8, iMeanFlow, VisualIMF, FiLM-conditioning, visual aligning.
+
+1. **Engine Swap**: Initiated the Gen8 extension to swap the Gen7 vanilla Flow Matching (`FlowMatchingODE`) engine with the newly audited and stabilized iMeanFlow engine (`iMeanFlowODE` from Gen3v4). This introduces mean-flow training, step-size `h`-conditioning, and dual `u/v` heads into the visual aligning architecture.
+2. **VisualIMF Wrapper**: Created `visual_imf_diffusion.py` hosting `VisualIMF`, extending `iMeanFlowODE`. It unpacks multi-camera FiLM conditions (bp, in-hand) and delegates to the base iMF `p_losses` and forward methods, perfectly mirroring the Gen7 logic.
+3. **Model Integration**: Integrated `VisualUNet` (FiLM-conditioned) as the primary velocity-net within `iMFTrajectoryModel`, allowing visual data to flow into the iMF core, while retaining the unconditioned `aux_head` on raw trajectory data. 
+4. **Configuration Reuse**: Appended `imf_visual_aligning` and `plan_imf_visual_aligning` entries directly to `aligning-d3il-visual.py`. Unlike Gen9, Gen8 introduces no dimension changes (9-D visual trajectory preserved), allowing it to cleanly piggyback on the existing visual configuration.
+
+***
+
+## Gen3v4u2: iMeanFlow Forensic Audit Conclusion & Fix 3 (June 3, 2026)
+
+**Keywords**: iMeanFlow, paper-readiness, reference audit, structural alignment.
+
+1. **Audit Completion**: Finalized the forensic architectural audit comparing the FM-PCC `flow_matcher_v3_imeanflow` implementation with the canonical reference iMeanFlow repository.
+2. **Correctness Confirmed**: Verified that all critical mathematical deviations are definitively resolved. Fix 1 correctly scales the mean-flow target as `(x_t - x_r)/h`. Fix 3 correctly mimics reference inference by silencing the auxiliary `v`-head and freezing the continuous-time parameter to `t=0.5` (relying on `h`-conditioning alone during generation).
+3. **Remaining Known Behavior**: Documented acceptable domain adaptations, including the use of a 1-D U-Net backbone (instead of DiT) and a shallow MLP for the `v`-head. Acknowledged an "E4 stability spike" in training due to numerical noise amplification at extremely small `h`, recommending explicit gradient clipping and an `h_min` threshold for future retrains. The inference codebase is ruled paper-ready.
