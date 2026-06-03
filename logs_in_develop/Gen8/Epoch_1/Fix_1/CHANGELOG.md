@@ -1,12 +1,12 @@
-# Gen8 Epoch 1 — Fix_1: UNet Class Mismatch & Missing FiLM Conditioning
+# Gen8 Epoch 1 — Fix_1: Two-Source Copy Collision (Import Name Mismatches)
 
 **Date**: 2026-06-03
-**Status**: ✅ Fixed (uncommitted). Re-submit cluster job to validate.
+**Status**: ✅ Fix_1.1 + Fix_1.2 applied (uncommitted). Re-submit cluster job to validate.
 **Parent**: [`../CHANGELOG.md`](../CHANGELOG.md) (Epoch 1 initial implementation)
 
 ---
 
-## 1. Symptom
+## 1. Symptom (Fix_1.1)
 
 Cluster job `21155` (`train_imf_visual_aligning`, node `i6-gpu-1`) crashed immediately after dataset loading with:
 
@@ -18,31 +18,50 @@ ImportError: cannot import name 'UNet1DTemporalCondModel' from
 
 Full traceback in [`temp/debug_gen8/gen8_outputs`](../../../temp/debug_gen8/gen8_outputs).
 
+## 1b. Symptom (Fix_1.2)
+
+After Fix_1.1 was applied, cluster job `21160` (same node) crashed at the same phase with:
+
+```
+ImportError: cannot import name 'FlowMatchingODE' from
+'imf_visual_aligning.models.diffusion'
+(/u/home/llim/FMPCC/FM-PCC/imf_visual_aligning/models/diffusion.py)
+```
+
+Full traceback in [`temp/debug_gen8/outputs_2`](../../../temp/debug_gen8/outputs_2).
+
 ---
 
 ## 2. Root cause
 
-**Two-source copy collision.** Gen8's `unet1d_temporal_cond.py` was copied from **Gen3v4** (iMF branch), while `visual_unet.py` and `__init__.py` were scaffolded from **Gen7** (FM visual aligning branch). The two branches used **different class names** for the same architectural role:
+**Two-source copy collision.** Gen8 was assembled from two branches — Gen3v4 (iMF engine files) and Gen7 (visual aligning scaffold). These branches used **different class names** for the same architectural roles. The `__init__.py` from Gen7 eagerly imports all symbols, so any single name mismatch crashes the entire package at import time.
 
-| Source | Class name in `unet1d_temporal_cond.py` | Has `h_mlp`? | Has `cond_mlp` / `use_cond_projection`? |
+### Fix_1.1 — `unet1d_temporal_cond.py`: `Flow_matcher_U_Net_v2` vs `UNet1DTemporalCondModel`
+
+| Source | Class name | Has `h_mlp`? | Has `cond_mlp` / `use_cond_projection`? |
 |---|---|---|---|
 | Gen3v4 (iMF) | `Flow_matcher_U_Net_v2` | ✅ Yes | ❌ No |
 | Gen7 (FM visual) | `UNet1DTemporalCondModel` | ❌ No | ✅ Yes |
 | **Gen8 (needed)** | **`UNet1DTemporalCondModel`** | **✅ Yes** | **✅ Yes** |
 
-### Bug 1 — Name mismatch (import crash)
+**Bug 1a** — `__init__.py` line 1 and `visual_unet.py` line 61 import `UNet1DTemporalCondModel`, but the Gen3v4-sourced file only defines `Flow_matcher_U_Net_v2` → `ImportError`.
 
-`__init__.py` line 1 and `visual_unet.py` line 61 both import `UNet1DTemporalCondModel`, but the Gen3v4-sourced file only defines `Flow_matcher_U_Net_v2`. Python raises `ImportError` at module import time before any training code executes.
+**Bug 1b** — Even with a rename, `visual_unet.py` passes `use_cond_projection=True` which Gen3v4's constructor doesn't accept → `TypeError`. And without `cond_mlp`, visual embeddings would silently be ignored.
 
-### Bug 2 — Missing FiLM conditioning (latent, would have crashed at model construction)
+### Fix_1.2 — `diffusion.py`: `FlowMatchingIMF` vs `FlowMatchingODE`
 
-Even if Bug 1 were bypassed by renaming alone, `visual_unet.py` line 84 passes `use_cond_projection=self.if_vision` to the constructor. Gen3v4's `Flow_matcher_U_Net_v2.__init__` does **not** accept this kwarg — it would raise `TypeError: __init__() got an unexpected keyword argument 'use_cond_projection'`.
+| Source | Class name in `diffusion.py` |
+|---|---|
+| Gen3v4 (iMF) | `FlowMatchingIMF` |
+| Gen7 (FM visual) | `FlowMatchingODE` |
 
-Furthermore, without `cond_mlp`, the visual embeddings from the ResNet encoder would silently be ignored (passed as `cond` tensor to `forward()` but never projected into the time-embedding space), producing **no visual conditioning** during training — a silent architectural failure.
+**Bug** — `__init__.py` line 2 imports `FlowMatchingODE`, and `visual_gaussian_diffusion.py` line 2+6 imports and inherits from `FlowMatchingODE`. The Gen3v4-sourced `diffusion.py` only defines `FlowMatchingIMF` → `ImportError`.
+
+Note: `VisualFlowMatching(FlowMatchingODE)` is not directly used in the iMF training path (which uses `VisualIMF(iMeanFlowODE)`), but it's still imported eagerly by `__init__.py`, so the mismatch still crashes the package.
 
 ---
 
-## 3. Fix applied
+## 3. Fix_1.1 applied (UNet)
 
 **Merged both capabilities** into a single `UNet1DTemporalCondModel` class in `unet1d_temporal_cond.py`:
 
@@ -73,11 +92,32 @@ t = cat([t, returns_embed])      # returns conditioning (concat, if enabled)
 |---|---|
 | `imf_visual_aligning/models/unet1d_temporal_cond.py` | Rewrote: renamed class, added `use_cond_projection`/`cond_mlp`/`cond_dim` from Gen7, kept `h_mlp`/`h` from Gen3v4, added `Flow_matcher_U_Net_v2` alias |
 
-**No changes needed** in `__init__.py`, `visual_unet.py`, `imf_trajectory_model.py`, or any other file — they already import the correct names.
+---
+
+## 3b. Fix_1.2 applied (diffusion base class)
+
+Added backward-compatible alias at the bottom of `diffusion.py`:
+
+```python
+# Fix_1.2 (2026-06-03)
+FlowMatchingODE = FlowMatchingIMF
+```
+
+### File changed
+
+| File | Change |
+|---|---|
+| `imf_visual_aligning/models/diffusion.py` | Appended `FlowMatchingODE = FlowMatchingIMF` alias at module level |
+
+### Why an alias is sufficient (no merge needed)
+
+Unlike Fix_1.1's UNet (which required merging `h_mlp` + `cond_mlp` from different sources), the `diffusion.py` class is a straight copy from Gen3v4 — its constructor is a superset of Gen7's `FlowMatchingODE.__init__` (adds ODE solver params that Gen7 didn't have). The `VisualFlowMatching` subclass intercepts those extra params in its own `__init__`, so they safely default. No code merge needed — just the name alias.
 
 ---
 
 ## 4. Verification
+
+### Fix_1.1 checks
 
 | Check | Result |
 |---|---|
@@ -91,6 +131,30 @@ t = cat([t, returns_embed])      # returns conditioning (concat, if enabled)
 | `visual_unet.py` passes `use_cond_projection=True` → accepted by constructor | ✅ |
 | `h=None` in `forward()` → iMF h-conditioning threaded end-to-end | ✅ |
 | `cond_mlp` path only fires for tensor cond (not dict) → state-based pipeline safe | ✅ |
+
+### Fix_1.2 checks
+
+| Check | Result |
+|---|---|
+| `FlowMatchingODE` alias defined in `diffusion.py` | ✅ |
+| `__init__.py` line 2 `from .diffusion import FlowMatchingODE` → resolves | ✅ |
+| `visual_gaussian_diffusion.py` line 2 import → resolves | ✅ |
+| `VisualFlowMatching(FlowMatchingODE)` inheritance → resolves to `FlowMatchingIMF` | ✅ |
+| `FlowMatchingIMF.__init__` is superset of Gen7's `FlowMatchingODE.__init__` | ✅ |
+
+### Comprehensive `__init__.py` import audit
+
+| Import | Source module | Actual name | Status |
+|---|---|---|---|
+| `UNet1DTemporalCondModel` | `unet1d_temporal_cond` | class | ✅ Fix_1.1 |
+| `Flow_matcher_U_Net_v2` | `unet1d_temporal_cond` | alias | ✅ Fix_1.1 |
+| `FlowMatchingODE` | `diffusion` | alias | ✅ Fix_1.2 |
+| `VisualUNet` | `visual_unet` | class | ✅ |
+| `VisualFlowMatching` | `visual_gaussian_diffusion` | class | ✅ |
+| `iMeanFlowODE` | `imf_diffusion` | class | ✅ |
+| `iMeanFlowEngine` | `imf_engine` | class | ✅ |
+| `iMFTrajectoryModel` | `imf_trajectory_model` | class | ✅ |
+| `VisualIMF` | `visual_imf_diffusion` | class | ✅ |
 
 ---
 
@@ -121,4 +185,5 @@ But **did not** test whether exported symbols in `__init__.py` actually resolve 
 |---|---|
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Epoch 1 initial implementation (pre-fix) |
 | [`../PLAN.md`](../PLAN.md) | Full design rationale |
-| [`temp/debug_gen8/gen8_outputs`](../../../temp/debug_gen8/gen8_outputs) | Raw cluster crash log |
+| [`temp/debug_gen8/gen8_outputs`](../../../temp/debug_gen8/gen8_outputs) | Raw cluster crash log (Fix_1.1 — job 21155) |
+| [`temp/debug_gen8/outputs_2`](../../../temp/debug_gen8/outputs_2) | Raw cluster crash log (Fix_1.2 — job 21160) |
