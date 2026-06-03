@@ -330,6 +330,89 @@ untouched (still correctly does `BGR2RGB` because it receives BGR).
 **No model retraining required.** The bug was purely cosmetic in the
 GIF channel — no policy state, no metrics, no normalizers affected.
 
+### Fix F.2 (= 18.6.2) — Replace `record_sim_frame` with `capture_frame`; reuse the visual capture pipeline verbatim
+
+**Added**: 2026-06-02 (after Fix-18.6.1's "no-conversion" patch was
+verified by the user to STILL produce inverted GIFs on the cluster —
+falsifying the 18.6.1 hypothesis that the camera output was RGB in our
+runtime).
+
+**Symptom**: Fix-18.6.1's `bp_vis = bp.astype(np.uint8)` (no cvtColor)
+also produced inverted-color GIFs. So *both* Fix-18.6 (with `BGR2RGB`)
+and Fix-18.6.1 (without) produced wrong colors. Either the d3il
+`MjCamera` docstring ("returns RGB") is wrong on this build, or there
+is some other subtle source-order issue in `bp_cam.get_image()` direct
+calls. Empirically the *only* color pipeline known to work on this
+cluster is the visual `predict()` capture path that runs through
+`aligning.py:212`'s `RGB → BGR` first.
+
+**Root cause (architectural)**: Fix-18.6's `record_sim_frame` invented
+a NEW image-acquisition path (call `env.bp_cam.get_image()` directly)
+instead of REUSING the proven pipeline the visual rollout uses. That
+introduced an unverified color-order assumption (camera output is
+RGB), and 18.6.1's "fix" doubled down on the same assumption by
+flipping the cvtColor — still based on a guess. The actual fix is to
+**stop guessing** and route through the pipeline whose output we have
+ground-truth evidence for (visual GIFs look correct).
+
+**Patch**: replace `record_sim_frame(env)` (which took the env and
+called the camera itself) with `capture_frame(bp_np, inhand_np)`
+(which receives images already-processed through the visual
+pipeline). Move the image-acquisition + RGB→BGR step into
+`Aligning_Sim`'s non-visual branch, where it mirrors the visual
+branch line-for-line.
+
+| Stage | Visual rollout (proven) | Non-visual rollout (NEW, Fix-18.6.2) |
+|---|---|---|
+| 1. Camera | `bp_cam.get_image()` → RGB | `bp_cam.get_image()` → RGB |
+| 2. RGB→BGR | `aligning.py:212` `cv2.cvtColor(RGB2BGR)` | `aligning_sim.py` `[:, :, ::-1]` (numpy form of the same channel swap; no `cv2` import needed) |
+| 3. Transpose + /255 | `aligning_sim.py:120-121` | `aligning_sim.py` (new block, **same code**) |
+| 4. Handoff to agent | `agent.predict(..., if_vision=True)` | `agent.capture_frame(bp_np, ih_np)` |
+| 5. Capture cvtColor | `predict()` visual block: `cv2.cvtColor(... COLOR_BGR2RGB)` | `capture_frame()`: **byte-identical** `cv2.cvtColor(... COLOR_BGR2RGB)` |
+| 6. Frame assembly | `np.concatenate([bp_vis, ih_vis], axis=1)` + `cv2.putText` | **byte-identical** assembly + `putText` |
+| 7. Append | `self.video_frames.append(frame)` | `self.video_frames.append(frame)` |
+| 8. Save GIF | `imageio.mimsave(... fps=10)` (unchanged) | same unchanged save path |
+
+Stages 4 onward are a literal copy of the visual capture lines. Stages
+1–3 are mirrored from the visual branch of `aligning_sim.py`. If the
+visual GIF looks correct (which it does — user-confirmed) then the
+non-visual GIF is structurally guaranteed to look correct because it
+goes through the same channel-swap sequence end-to-end.
+
+**Files**:
+- `d3il/simulation/aligning_sim.py` — non-visual branch (~line 138), added image render + `agent.capture_frame()` call. Uses `[:, :, ::-1]` instead of `cv2.cvtColor` to avoid a new `cv2` import in this file.
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` — removed `record_sim_frame` (Fix-18.6/18.6.1 deleted); added new `capture_frame(bp_np, inhand_np)` method near `record_step_info` (line ~953). Internal cvtColor lines are byte-identical to predict()'s visual block.
+- `fm_visual_aligning_test/eval_fm_visual_aligning.py` — same change as DPCC, mirrored.
+- Misleading "No GIFs/videos will be captured" warning updated in both eval scripts to: "GIFs/videos WILL be captured via Aligning_Sim non-visual hook → agent.capture_frame()."
+
+**What was removed**:
+- `record_sim_frame(env)` method from both eval scripts (Fix-18.6 and 18.6.1's combined surface).
+- The `if hasattr(agent, 'record_sim_frame'): agent.record_sim_frame(env)` hook in `aligning_sim.py` non-visual branch.
+
+**What was kept**:
+- Fix-18.1 through Fix-18.5 — all load-bearing for the non-visual eval pipeline crashes, completely orthogonal to the GIF path.
+- Visual `predict()` capture path — byte-identical to UF-18.1 (verified by `diff` on the `cvtColor`/`putText`/`append` lines).
+- UF-13 auto-enable for 6-D-normalizer (visual) checkpoints — still fires via UF-18.3's `_ckpt_is_visual` guard, which is why FM with a 9-D visual checkpoint and `config if_vision=False` continues to produce GIFs through the visual path the way it did at UF-18.1.
+
+**Scope**: cosmetic GIF channel only. No policy state, metrics,
+normalizers, or model code is touched. No retraining required.
+
+**Color-pipeline guarantee**: structural, not empirical. The
+non-visual GIF and the visual GIF traverse the same RGB→BGR→BGR2RGB
+sequence; only Stage 4's hand-off differs. If one is correct the
+other must be.
+
+**Reverts**: localized to ~40 lines across the 3 files. To roll back
+Fix-18.6.2 specifically (returning to "no non-visual GIFs"):
+```
+git checkout a361854 -- d3il/simulation/aligning_sim.py \
+    diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py \
+    fm_visual_aligning_test/eval_fm_visual_aligning.py
+```
+(That's the UF-18.5 commit — strips Fix-18.6, 18.6.1, *and* 18.6.2 in
+one go. Visual path remains unaffected because it's untouched at
+UF-18.5.)
+
 ### Fix E (= 18.5) — eval scripts: `setup_dpcc_projector` slices normalizer to wrong width for 23-D trajectory
 
 **Added**: 2026-05-31 (after Fix D let the first ("diffuser") variant complete a full 5-context rollout; crash moved to the second variant's projector setup).
@@ -437,6 +520,7 @@ was already false for visual; new condition `len > 6` is still false).
 - **18.5 (Fix E)** — `setup_dpcc_projector` now slices the obs normalizer to `trajectory_dim - action_dim` instead of a hardcoded 6, so the 23-D non-visual trajectory gets matching 20-D obs ranges and the projector's bound × range arithmetic stops broadcast-erroring at variant 2+.
 - **18.6 (Fix F)** — `Policy.record_sim_frame(env)` env-render hook added; non-visual rollouts now produce GIFs via direct bp_cam/inhand_cam access.
 - **18.6.1 (Fix F.1)** — `record_sim_frame` had inverted color (R↔B swap) because it copy-pasted `cv2.cvtColor(BGR2RGB)` from the visual capture path, but the camera output is already RGB (it bypasses env.step's RGB→BGR conversion). One-line removal of the cvtColor calls. Bug introduced and fixed within the same epoch; no model effect.
+- **18.6.2 (Fix F.2)** — 18.6.1's "no-conversion" patch ALSO produced inverted GIFs on the cluster, falsifying the "camera output is RGB" assumption empirically. Replaced the env-render hook (`record_sim_frame`) entirely with a `capture_frame(bp_np, ih_np)` agent method whose image-acquisition is moved into `Aligning_Sim`'s non-visual branch and mirrors the visual branch line-for-line (RGB→BGR via `[:, :, ::-1]`, transpose+/255, hand to agent). The agent-side `capture_frame` then uses byte-identical `cv2.cvtColor(... COLOR_BGR2RGB)` lines copied from `predict()`'s visual block. Structural guarantee: visual GIF correct ⇒ non-visual GIF correct.
 - **Side-patch (STALE_CONFIG)** — `utils.Config.save()` always overwrites `model_config.pkl`; sibling regen script repairs pre-existing broken checkpoints without re-training.
 
 ---
@@ -501,7 +585,9 @@ hallucinated, none can be safely reverted.**
 | 18.3 UF-13 normalizer-dim guard | Genuine 23-D non-visual eval crashes with `(1,6) vs (20,)` broadcast (UF-13 forces visual predict path on a model that can't consume 6-D obs against 20-D normalizer) | Load-bearing |
 | 18.4 DIAG var alias | Non-visual predict() crashes at first-replan diagnostic with UnboundLocalError | Load-bearing |
 | 18.5 projector slice `_target_obs_dim` | Projector setup for variant 2+ crashes with `(23,) vs (9,)` (obs normalizer trimmed to 6-D vs 23-D bound vectors) | Load-bearing |
-| 18.6 record_sim_frame | Genuine 23-D non-visual eval produces no GIFs (visual capture path blocked by 18.3 guard, no fallback) | Load-bearing for GIFs |
+| 18.6 record_sim_frame | Genuine 23-D non-visual eval produces no GIFs (visual capture path blocked by 18.3 guard, no fallback) | **Superseded by 18.6.2** |
+| 18.6.1 no-conversion patch | Tried to fix 18.6's R↔B by removing cvtColor — *still inverted* on cluster (assumption "camera = RGB" empirically false) | **Superseded by 18.6.2** |
+| 18.6.2 capture_frame (reuse visual pipeline) | Without it, 23-D non-visual eval again produces no GIFs (the 18.6/18.6.1 hook was removed; visual capture path is still blocked by 18.3 guard) | Load-bearing for GIFs |
 | STALE_CONFIG | `model_config.pkl` becomes stale after retraining → misleads eval (shape mismatch) AND human audit (the exact dim confusion that consumed hours of this session) | Load-bearing for sanity |
 
 Visual path is bit-for-bit unchanged at every fix. Verified by every

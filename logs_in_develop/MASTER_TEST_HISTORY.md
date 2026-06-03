@@ -1422,3 +1422,21 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 2. **Architecture Transfer Strategy (V-A-FM-DPCC)**: Finalized the strategy to reuse existing drone models (e.g., Skydio X2 from `mujoco_menagerie`) and wire them with `mujoco_mpc` for receding-horizon control. Outlined a 7-step implementation roadmap for transferring the FlowMP/SafeFlowMPC paradigm from robotic arms to a UAV context.
 3. **Epoch 4 Expert Data Sourcing Strategy**: Conducted a thorough evaluation of expert data sources for FM-PCC training. Ruled out using UAV-Flow directly due to simulation mismatches (Unreal vs. MuJoCo, different scales, waypoints instead of actions) and MuJoCo MPC due to its racing-task focus. 
 4. **Manual Generation Approach**: Determined that manual data generation in the custom MuJoCo stack is the only viable path to obtain `(state, action)` trajectories in the required 9-D format (`[act(3) | p(3), v(3)]`). Planned the extraction of UAV-Flow kinematic statistics (e.g., typical altitudes, max velocities) to inform hand-designed reference trajectories for generating the expert dataset.
+
+***
+
+## Gen7 & Gen6v4: Non-Visual GIF Capture Color Pipeline Correction (Fix 18.6.2) (June 2, 2026)
+
+**Keywords**: Non-Visual, capture_frame, RGB-BGR inversion, Aligning_Sim, color pipeline.
+
+1. **Color Pipeline Re-Architecture (Fix 18.6.2)**: Addressed persistent R↔B color inversion in non-visual GIF captures. The previous assumptions in Fix 18.6 and 18.6.1 about native camera output formats were proven empirically false on the cluster.
+2. **Visual Pipeline Parity**: Replaced the `record_sim_frame(env)` hook with `capture_frame(bp_np, inhand_np)`. Shifted the image acquisition and RGB→BGR conversion directly into `Aligning_Sim`'s non-visual branch, enforcing a line-for-line mirror of the proven visual capture pipeline to guarantee structurally correct colors without relying on unverified assumptions.
+
+***
+
+## Gen11 Epoch 4: Expert-Data Provenance and Generation Strategy (June 2, 2026)
+
+**Keywords**: Gen11, Expert Data, Provenance, D3IL, UAV-Flow, sim-to-real.
+
+1. **Provenance Audit**: Conducted a deep-dive audit into upstream expert data sources (`EXPERT_DATA_PROVENANCE.md`). Confirmed that D3IL relies on human teleoperators on real Franka robots (multi-modal IL), while UAV-Flow uses human expert pilots flying real drones.
+2. **Generation Strategy Defense**: Formalized the defense for using "manual generation" (PID/MPC scripts) for FM-PCC drone planning validation. Since the current goal is validating a constraint-aware planner architecture rather than studying multi-modal style transfer or language conditioning, algorithmically generated constraint-respecting data provides the necessary controllability and format alignment without the prohibitive cost of real-world multi-modal collection.

@@ -112,12 +112,14 @@ fixed in a follow-up commit:
 | 18.3 UF-13 normalizer-dim guard | `761b2ef` | ✅ | ✅ | UF-13 indiscriminately flipped `if_vision=True` for record mode → visual `predict()` crashes on 23-D model (`(1,6) vs (20,)`). Guarded on `obs_normalizer.mins.shape[0] == 6`. |
 | 18.4 DIAG var alias | `20a1895` | ✅ | ✅ | First-replan diagnostic in `predict()` referenced visual-branch-only var names → `UnboundLocalError` on the non-visual path. |
 | 18.5 projector slice `_target_obs_dim` | `a361854` | ✅ | ✅ | `setup_dpcc_projector` slicing obs_normalizer to a hardcoded 6 → 9-D vs 23-D mismatch in `Projector.build_matrices` for non-visual. Slice target now `trajectory_dim - action_dim`. |
-| 18.6 record_sim_frame env-render hook | (working tree) | ✅ | ✅ | Genuine 23-D non-visual eval can't reach the visual capture buffer (blocked by 18.3 guard) → no GIFs. Added a render-from-sim hook in `aligning_sim.py` (non-visual branch only) and a `Policy.record_sim_frame(env)` method on both eval scripts. |
+| 18.6 record_sim_frame env-render hook | `cf27dd4` | ✅ | ✅ | Genuine 23-D non-visual eval can't reach the visual capture buffer (blocked by 18.3 guard) → no GIFs. Added a render-from-sim hook in `aligning_sim.py` (non-visual branch only) and a `Policy.record_sim_frame(env)` method on both eval scripts. **Superseded by 18.6.2.** |
+| 18.6.1 no-conversion patch | `a306d95` | ✅ | ✅ | 18.6's `record_sim_frame` produced inverted GIFs because it copy-pasted `cv2.cvtColor(BGR2RGB)` from the visual capture path while bypassing `env.step`'s RGB→BGR conversion. Removed the cvtColor based on docstring claim that the camera returns RGB. **Empirically still inverted → superseded by 18.6.2.** |
+| 18.6.2 `capture_frame` (reuse visual pipeline) | (working tree) | ✅ | ✅ | Replaced 18.6/18.6.1's env-render hook with a `Policy.capture_frame(bp_np, ih_np)` method whose images are produced by `aligning_sim.py`'s non-visual branch mirroring the visual branch line-for-line (`get_image() → [:, :, ::-1] → transpose+/255`), then handed to a `capture_frame` whose `cvtColor(BGR2RGB)` lines are byte-identical to `predict()`'s visual block. Structural color guarantee: same pipeline as the visual GIF (known-good), no new assumptions about camera color order. |
 | STALE_CONFIG | `b125365` | ✅ | ✅ | `utils.Config.save()` skipped overwriting `model_config.pkl` if file existed → stale config across retraining runs → eval loads wrong-shaped model → shape mismatch crash on state_dict load. Always overwrites now. |
 
-**DPCC-side files touched by 18.3-18.6:**
-- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (18.3, 18.4, 18.5, 18.6)
-- `d3il/simulation/aligning_sim.py` (18.6 — one `hasattr`-gated hook line in the non-visual branch)
+**DPCC-side files touched by 18.3-18.6.2:**
+- `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (18.3, 18.4, 18.5, 18.6, 18.6.1, 18.6.2)
+- `d3il/simulation/aligning_sim.py` (18.6 hook → replaced by 18.6.2 render+capture_frame call, still localized to the non-visual branch)
 - `diffuser_visual_aligning/utils/config.py` (STALE_CONFIG)
 
 Visual path **unchanged** at every fix. Every fix's guard condition resolves
