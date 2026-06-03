@@ -54,7 +54,7 @@ import d3il
 print(f'[ eval ] Using d3il from: {d3il.__file__}')
 print(f'[ eval ] D3IL_DIR set to: {os.environ["D3IL_DIR"]}')
 
-from d3il.simulation.avoiding_sim import Aligning_Sim
+from d3il.simulation.avoiding_sim import Avoiding_Sim
 
 # ── Normalizer wrapper for Projector ─────────────────────────────────────────
 
@@ -74,29 +74,21 @@ class ProjectorNormalizer:
 # ── Projector setup ───────────────────────────────────────────────────────────
 
 def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
-                         is_tightened=False, trajectory_dim=9):
+                         is_tightened=False, trajectory_dim=6):
     """
     Build the DPCC SLSQP projector.
 
-    Visual (9D): [dx(0) dy(1) dz(2) | des_x(3) des_y(4) des_z(5) | x(6) y(7) z(8)]
-    Non-visual (23D): same first 9 dims + obs_20D trailing dims (9-22, unconstrained).
-
-    trajectory_dim=9 for visual, 23 for non-visual (UF-17).
-    Constraint-relevant dims are always at 0-8 regardless of trajectory_dim.
+    Gen9 Ep2 Fix-3: avoiding trajectory is 6D, not 9D.
+    Visual (6D): [dx(0) dy(1) | des_x(2) des_y(3) | x(4) y(5)]
+    Non-visual (22D): same first 6 dims + obs_20D trailing dims (6-25, unconstrained).
+    action_dim=2 (not 3); obs_dim=4 (not 6); no z dimension.
     """
-    _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
-            'x': 6, 'y': 7, 'z': 8}
+    _DIM = {'dx': 0, 'dy': 1, 'des_x': 2, 'des_y': 3, 'x': 4, 'y': 5}
 
-    # FIX-18.5: slice the obs normalizer to match trajectory_dim - action_dim,
-    # NOT a hardcoded 6. Visual: trajectory_dim=9 → keep obs at 6 (no-op).
-    # Non-visual: trajectory_dim=23 → keep obs at 20 (was: trimmed to 6,
-    # which left the projector with 9-D ranges while constraint bound vectors
-    # are built at full 23-D → broadcast crash at build_matrices line 401).
-    # The trailing 14 trajectory dims (box/target poses) carry zero bound
-    # coefficients from formulate_halfspace_constraints anyway, so passing
-    # the full normalizer doesn't change the constraint semantics for the
-    # first-9 robot-kinematic dims that PCC actually constrains.
-    _target_obs_dim = trajectory_dim - 3   # action_dim is hardcoded 3 throughout
+    # FIX-18.5 (inherited): slice obs normalizer to trajectory_dim - action_dim.
+    # Visual: trajectory_dim=6 → keep obs at 4 (action_dim=2).
+    # Non-visual: trajectory_dim=22 → keep obs at 20.
+    _target_obs_dim = trajectory_dim - 2   # Gen9 Ep2 Fix-3: action_dim=2 for avoiding
     proj_obs_normalizer = obs_normalizer
     if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > _target_obs_dim:
         from fm_visual_avoiding.datasets.normalization import LimitsNormalizer as _LN
@@ -104,7 +96,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
                            obs_normalizer.maxs[:_target_obs_dim]])
         proj_obs_normalizer = _LN(_dummy)
 
-    pad = trajectory_dim - 9   # extra dims to pad lb/ub with ±inf (0 for visual)
+    pad = trajectory_dim - 6   # Gen9 Ep2 Fix-3: avoiding 6D traj (was trajectory_dim - 9)
     constraint_list = []
 
     if 'bounds' in config.get('constraint_types', []):
@@ -114,8 +106,9 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         if is_tightened and tightening > 0.0:
             ws_lb += tightening
             ws_ub -= tightening
-        lb = np.concatenate([np.full(6, -np.inf), ws_lb, np.full(pad, -np.inf)])
-        ub = np.concatenate([np.full(6,  np.inf), ws_ub, np.full(pad,  np.inf)])
+        # Gen9 Ep2 Fix-3: skip act(2)+des_xy(2)=4 dims before workspace bounds
+        lb = np.concatenate([np.full(4, -np.inf), ws_lb, np.full(pad, -np.inf)])
+        ub = np.concatenate([np.full(4,  np.inf), ws_ub, np.full(pad,  np.inf)])
         constraint_list.append(['lb', lb])
         constraint_list.append(['ub', ub])
 
@@ -1398,64 +1391,57 @@ class VisualAgentWrapper:
         """
         cond = None
         if if_vision:
-            bp_np, inhand_np, des_robot_pos_np, robot_pos_np = state  # C4: unpack actual robot_pos
+            # Gen9 Ep2 Fix-3: single cam, 2D positions (no inhand, no z)
+            bp_np, des_xy_np, c_xy_np = state
 
-            # ── Video capture ──────────────────────────────────────────────
-            # bp_np is (C,H,W) float32 in BGR order (fix11: no [::-1] flip, env returns BGR).
-            # imageio.mimsave() expects RGB, so convert at capture time — same as expert GIF.
+            # ── Video capture (single camera) ─────────────────────────────
             if self.record_mode != 'none':
                 try:
-                    bp_vis     = cv2.cvtColor((bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
-                    inhand_vis = cv2.cvtColor((inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
-                    frame = np.concatenate([bp_vis, inhand_vis], axis=1)
-                    cv2.putText(frame, f's{self.step_counter}', (5, 18),
+                    bp_vis = cv2.cvtColor(
+                        (bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8),
+                        cv2.COLOR_BGR2RGB)
+                    cv2.putText(bp_vis, f's{self.step_counter}', (5, 18),
                                 cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 0), 1)
-                    self.video_frames.append(frame)
+                    self.video_frames.append(bp_vis)
                 except Exception:
                     pass
 
             if self.mental_robot_pos is None:
-                self.mental_robot_pos = des_robot_pos_np.copy()
+                self.mental_robot_pos = des_xy_np.copy()
 
-            self.history_real_pos.append(des_robot_pos_np.copy())
-            self.curr_rollout_c_pos.append(robot_pos_np.copy())             # Fix 9: actual robot pos
-            # Fix 9: physical tracking error = |c_pos - des_c_pos| (replaces trivially-zero mental model error)
-            phys_err = float(np.linalg.norm(robot_pos_np[:2] - des_robot_pos_np[:2]))
+            self.history_real_pos.append(des_xy_np.copy())
+            self.curr_rollout_c_pos.append(c_xy_np.copy())
+            phys_err = float(np.linalg.norm(c_xy_np - des_xy_np))
             self.curr_rollout_tracking_errors.append(phys_err)
 
-            # ── Build 6D obs = [des_c_pos | c_pos] ───────────────────────
-            # C4 fix: use actual robot_pos from sim for the c_pos slot.
-            # des_robot_pos_np = commanded position; robot_pos_np = actual sim state.
-            obs_6d_np = np.concatenate([des_robot_pos_np, robot_pos_np])  # (6,) [des_c_pos | c_pos]
+            # ── Build 4D obs = [des_xy(2) | c_xy(2)] ────────────────────
+            # Gen9 Ep2 Fix-3: avoiding visual obs is 4D (not 6D like aligning).
+            obs_4d_np = np.concatenate([des_xy_np, c_xy_np])  # (4,) [des_xy | c_xy]
 
             if self.obs_normalizer is not None:
-                obs_6d_norm = self.obs_normalizer.normalize(
-                    obs_6d_np.reshape(1, -1)).astype(np.float32).squeeze(0)
+                obs_4d_norm = self.obs_normalizer.normalize(
+                    obs_4d_np.reshape(1, -1)).astype(np.float32).squeeze(0)
             else:
-                obs_6d_norm = obs_6d_np.astype(np.float32)
+                obs_4d_norm = obs_4d_np.astype(np.float32)
 
-            bp_t     = torch.from_numpy(bp_np.astype(np.float32)).to(self.device).unsqueeze(0)
-            inhand_t = torch.from_numpy(inhand_np.astype(np.float32)).to(self.device).unsqueeze(0)
-            obs_t    = torch.from_numpy(obs_6d_norm).to(self.device).unsqueeze(0)  # (1, 6)
+            bp_t  = torch.from_numpy(bp_np.astype(np.float32)).to(self.device).unsqueeze(0)
+            obs_t = torch.from_numpy(obs_4d_norm).to(self.device).unsqueeze(0)  # (1, 4)
 
             self.bp_image_context.append(bp_t)
-            self.inhand_image_context.append(inhand_t)
             self.obs_context.append(obs_t)
 
             while len(self.bp_image_context) < self.window_size:
                 self.bp_image_context.append(bp_t)
-                self.inhand_image_context.append(inhand_t)
                 self.obs_context.append(obs_t)
 
-            bp_seq     = torch.cat(list(self.bp_image_context), dim=0)      # (W, C, H, W)
-            inhand_seq = torch.cat(list(self.inhand_image_context), dim=0)  # (W, C, H, W)
-            obs_seq    = torch.cat(list(self.obs_context), dim=0)           # (W, 6)
+            bp_seq  = torch.cat(list(self.bp_image_context), dim=0)   # (W, C, H, W)
+            obs_seq = torch.cat(list(self.obs_context), dim=0)         # (W, 4)
 
-            bp_batch     = bp_seq.unsqueeze(0).repeat(self.batch_size, 1, 1, 1, 1)
-            inhand_batch = inhand_seq.unsqueeze(0).repeat(self.batch_size, 1, 1, 1, 1)
-            obs_batch    = obs_seq.unsqueeze(0).repeat(self.batch_size, 1, 1)
+            bp_batch  = bp_seq.unsqueeze(0).repeat(self.batch_size, 1, 1, 1, 1)
+            obs_batch = obs_seq.unsqueeze(0).repeat(self.batch_size, 1, 1)
 
-            cond = {0: (bp_batch, inhand_batch, obs_batch)}
+            # Gen9 Ep2 Fix-3: single-cam cond tuple (no inhand_batch)
+            cond = {0: (bp_batch, obs_batch)}
 
         else:
             # Non-visual path (UF-17): aligning_sim prepends des_c_pos to env obs →
@@ -1495,7 +1481,7 @@ class VisualAgentWrapper:
             else:
                 trajectory, infos = self.model(cond)
 
-            traj_np = trajectory.detach().cpu().numpy()   # (B, H, 9)
+            traj_np = trajectory.detach().cpu().numpy()   # (B, H, 6) — Gen9 Ep2 Fix-3
             which   = 0
             selection_method = 'default (first)'
 
@@ -1527,14 +1513,14 @@ class VisualAgentWrapper:
                     selection_method = 'random (index 0, DPCC semantics)'
 
             # c_pos at traj dims 6-8, obs dims 3-5 — true for both 9D (visual) and 23D (non-visual).
-            cpos_norm = traj_np[:, :, 6:9]   # (B, H, 3) normalized predicted actual positions
+            cpos_norm = traj_np[:, :, 4:6]   # (B, H, 2) normalized c_xy — Gen9 Ep2 Fix-3
             if self.obs_normalizer is not None:
                 B_f, H_f = cpos_norm.shape[:2]
-                obs_dim = self.obs_normalizer.mins.shape[0]   # 6 (visual) or 20 (non-visual)
+                obs_dim = self.obs_normalizer.mins.shape[0]   # 4 (visual) or 20 (non-visual) — Fix-3
                 dummy = np.zeros((B_f * H_f, obs_dim), dtype=np.float32)
-                dummy[:, 3:6] = cpos_norm.reshape(-1, 3).astype(np.float32)
+                dummy[:, 2:4] = cpos_norm.reshape(-1, 2).astype(np.float32)  # Fix-3
                 obs_un = self.obs_normalizer.unnormalize(dummy)
-                self.curr_rollout_all_candidates.append(obs_un[:, 3:6].reshape(B_f, H_f, 3).copy())
+                self.curr_rollout_all_candidates.append(obs_un[:, 2:4].reshape(B_f, H_f, 2).copy())  # Fix-3
             else:
                 self.curr_rollout_all_candidates.append(cpos_norm.copy())
             self.curr_rollout_selected_idx.append(int(which))
@@ -1550,7 +1536,7 @@ class VisualAgentWrapper:
             self.prev_observations = traj_np[which].copy()
 
             # action dims = indices 0:3
-            action_traj = trajectory[[which], :, :3]   # (1, H, 3)
+            action_traj = trajectory[[which], :, :2]   # (1, H, 2) — Gen9 Ep2 Fix-3
 
             if self.act_normalizer is not None:
                 act_np = action_traj.detach().cpu().numpy()
@@ -1566,9 +1552,9 @@ class VisualAgentWrapper:
             # Also writes a dedicated diag_first_replan.txt to save_path for easy
             # grep / cross-run comparison (not buried in the full eval log).
             if self.rollout_counter == 0 and self.step_counter == 0:
-                norm_a0   = trajectory[[which], 0, :3].detach().cpu().numpy().squeeze()
+                norm_a0   = trajectory[[which], 0, :2].detach().cpu().numpy().squeeze()  # Fix-3: 2D
                 denorm_a0 = action_traj[0, 0].detach().cpu().numpy()
-                full_norm = trajectory[which, :, :3].detach().cpu().numpy()
+                full_norm = trajectory[which, :, :2].detach().cpu().numpy()  # Fix-3: 2D
                 diag_lines = [
                     f'[ DIAG first-replan ] normalized   a0 = {np.round(norm_a0, 4)}'
                     f'  |mag| = {np.linalg.norm(norm_a0):.4f}',
@@ -1583,8 +1569,8 @@ class VisualAgentWrapper:
                 # obs health (Issue 4) — branch on if_vision because the visual
                 # and non-visual paths name their obs tensors differently.
                 if if_vision:
-                    _diag_obs_raw  = obs_6d_np      # (6,) [des_c_pos | c_pos]
-                    _diag_obs_norm = obs_6d_norm    # (6,)
+                    _diag_obs_raw  = obs_4d_np      # (4,) [des_xy | c_xy] — Fix-3
+                    _diag_obs_norm = obs_4d_norm    # (4,)
                 else:
                     _diag_obs_raw  = obs_20d_np     # (20,)
                     _diag_obs_norm = obs_norm       # (20,)
@@ -1617,7 +1603,7 @@ class VisualAgentWrapper:
             # Periodic DIAG every 50 replans (Issue 2)
             self._replan_count += 1
             if self._replan_count % 50 == 0:
-                _pa0 = trajectory[[which], 0, :3].detach().cpu().numpy().squeeze()
+                _pa0 = trajectory[[which], 0, :2].detach().cpu().numpy().squeeze()  # Fix-3: 2D
                 _da0 = action_traj[0, 0].detach().cpu().numpy()
                 _dir = _pa0 / (np.linalg.norm(_pa0) + 1e-9)
                 print(f'[ DIAG replan={self._replan_count} step={self.step_counter} ] '
