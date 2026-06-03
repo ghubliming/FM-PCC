@@ -1,2 +1,2 @@
-from .sequence import Batch, ParityAligningDataset, StateOnlyAligningDataset
+from .sequence import Batch, ParityAvoidingDataset
 from .normalization import LimitsNormalizer

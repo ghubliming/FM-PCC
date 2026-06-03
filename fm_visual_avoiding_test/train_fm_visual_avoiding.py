@@ -1,6 +1,6 @@
 # Visual-FM (Gen7) training script.
 # Copy-modified from diffuser_visual_avoiding_test/train_visual_aligning_dpcc.py.
-# Core: fm_visual_avoiding (FM ODE engine)  |  Dataset: ParityAligningDataset (9D)
+# Core: fm_visual_avoiding (FM ODE engine)  |  Dataset: ParityAvoidingDataset (6D, single-cam)
 import argparse
 import glob
 import json
