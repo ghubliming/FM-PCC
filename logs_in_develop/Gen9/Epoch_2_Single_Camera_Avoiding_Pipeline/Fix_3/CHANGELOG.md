@@ -1,8 +1,8 @@
-# Gen9 Epoch 2 — Fix-3: Eval Script Crashes (ImportError + dim hardcodes)
+# Gen9 Epoch 2 — Fix-3: Eval Script Crashes (ImportError + dim hardcodes + wrong loadpath)
 
 **Date**: 2026-06-03
 **Status**: ✅ Fixed (uncommitted)
-**Triggered by**: `temp/debug_Gen9E2/outputs` — Slurm jobs 21147 (DPCC eval) + 21148 (FM eval)
+**Triggered by**: `temp/debug_Gen9E2/outputs` (jobs 21147/21148) + `outputs_2` (job 21156)
 **Parent**: [`../CHANGELOG.md`](../CHANGELOG.md), [`../Fix_2/CHANGELOG.md`](../Fix_2/CHANGELOG.md)
 **Pre-predicted by**: Fix-2 CHANGELOG §7 flagged this exact class of eval-side hardcodes
 
@@ -190,6 +190,50 @@ M  fm_visual_avoiding_test/eval_fm_visual_avoiding.py          (import + 5 dim s
 | `pad = trajectory_dim - 6` in both | ✅ |
 
 **Cluster-side rerun expectation**: both eval scripts should now pass the import stage and reach the first rollout without crashing. The `Avoiding_Sim.eval_agent()` visual branch provides images from `env.bp_cam.get_image()` and calls `agent.predict((bp_image, des_xy, c_xy), if_vision=True)` with the correct 3-item tuple matching the updated `predict()` unpack.
+
+---
+
+---
+
+## Fix-3.5 — `outputs_2` (job 21156): FileNotFoundError after import fixed
+
+### Symptom
+
+After Fix-3 landed (jobs 21147/21148 fixed the ImportError), job 21156 got past import but crashed loading the checkpoint:
+
+```
+[ eval loading ] Loading from logs/avoiding-d3il/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1/6
+FileNotFoundError: ... 'logs/avoiding-d3il/fm_visual_avoiding/H8_D..._aw1/6/dataset_config.pkl'
+```
+
+Two separate mismatches between where training saved and where eval looked.
+
+### Root cause A — wrong log base directory
+
+Both eval scripts had `dataset: str = 'avoiding-d3il'` in their `Parser` class. The `dataset` field drives the log base: `logs/{dataset}/...`. Training used `exp = 'avoiding-d3il-visual'` → saved to `logs/avoiding-d3il-visual/...`. Eval looked in `logs/avoiding-d3il/...`.
+
+### Root cause B — FM `diffusion_loadpath` missing `_V_steps_bs` suffix
+
+The `fm_visual_avoiding` training config uses `args_to_watch_fm_visual_train` which includes `('if_vision', 'V')`, `('max_path_length', 'steps')`, `('batch_size', 'bs')`. Training therefore saved to:
+```
+fm_visual_avoiding/H8_D..._a1.5_b1.0_aw1_VTrue_steps200_bs64/
+```
+
+But `plan_fm_visual_avoiding.diffusion_loadpath` in `avoiding-d3il-visual.py` was:
+```python
+'f:fm_visual_avoiding/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}'
+```
+— missing `_V{if_vision}_steps{max_path_length}_bs{train_batch_size}`. (DPCC plan already had all three; only FM plan was incomplete.)
+
+### Fix-3.5 changes
+
+| File | Change |
+|---|---|
+| `fm_visual_avoiding_test/eval_fm_visual_avoiding.py` | `dataset: str = 'avoiding-d3il-visual'` |
+| `diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py` | same |
+| `config/avoiding-d3il-visual.py` `plan_fm_visual_avoiding` | `diffusion_loadpath` += `_V{if_vision}_steps{max_path_length}_bs{train_batch_size}` |
+
+All 3 files AST-clean. DPCC `diffusion_loadpath` already had the full suffix — unchanged.
 
 ---
 
