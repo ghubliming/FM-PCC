@@ -596,13 +596,13 @@ def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
 def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
     """
     Check post-projection planned c_pos candidates against all geometric constraints.
-    cands_xyz : (B, H, 3) unnormalised planned EE positions
+    cands_xyz : (B, H, C) unnormalised planned EE positions — C=2 for avoiding (xy), C=3 for aligning (xyz)
     Returns fraction of (sample, horizon_step) pairs violating any constraint.
     A non-zero result means projection did not fully enforce constraints.
     """
     ct = geo_config.get('constraint_types', [])
     B, H, _ = cands_xyz.shape
-    flat  = cands_xyz.reshape(-1, 3)   # (B*H, 3)
+    flat  = cands_xyz.reshape(-1, cands_xyz.shape[-1])  # (B*H, C) — Fix-6: avoiding C=2, aligning C=3
     viol  = np.zeros(B * H, dtype=bool)
     _DIM  = {'x': 0, 'y': 1, 'z': 2}
 
