@@ -122,8 +122,11 @@ class Avoiding_Sim(BaseSim):
                         if hasattr(agent, 'record_step_info'):
                             agent.record_step_info(info_dict)
 
-                        # No inhand_cam — pass bp_image twice so capture_frame(bp, ih) signature works
-                        if hasattr(agent, 'capture_frame'):
+                        # Visual mode: predict() already appends frames to agent.video_frames.
+                        # Do NOT also call capture_frame — it concatenates bp+inhand side-by-side
+                        # producing (96,192,3) frames that mismatch predict()'s (96,96,3), causing
+                        # "all input arrays must have the same shape" on GIF save.
+                        if False and hasattr(agent, 'capture_frame'):
                             try:
                                 agent.capture_frame(bp_image, bp_image)
                             except Exception:

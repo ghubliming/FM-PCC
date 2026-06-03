@@ -1093,12 +1093,16 @@ class VisualAgentWrapper:
             axes[1, 0].set_title('Distance to Target over Steps')
             axes[1, 0].set_ylabel('m')
 
-            axes[1, 1].plot(real_pos[:, 2], 'k-', label='Z des')
-            if c_pos_h is not None and len(c_pos_h):
-                axes[1, 1].plot(np.array(c_pos_h)[:, 2], 'r--', alpha=0.7, label='Z actual')
-                axes[1, 1].legend(fontsize=7)
-            axes[1, 1].set_title('Z — des (black) vs actual (red)')
-            axes[1, 1].set_ylabel('Meters')
+            # Z panel: skip for 2D avoiding trajectories (no z component)
+            if real_pos.shape[1] > 2:
+                axes[1, 1].plot(real_pos[:, 2], 'k-', label='Z des')
+                if c_pos_h is not None and len(c_pos_h):
+                    axes[1, 1].plot(np.array(c_pos_h)[:, 2], 'r--', alpha=0.7, label='Z actual')
+                    axes[1, 1].legend(fontsize=7)
+                axes[1, 1].set_title('Z — des (black) vs actual (red)')
+                axes[1, 1].set_ylabel('Meters')
+            else:
+                axes[1, 1].set_visible(False)  # avoiding is 2D; no Z axis
 
             # Fix 9: physical tracking error |c_pos - des_c_pos|
             phys_errs = data.get('dist_to_target', [])  # fallback
@@ -1253,33 +1257,36 @@ class VisualAgentWrapper:
                                     ax_xy.plot(float(_obs['center'][0]), float(_obs['center'][1]),
                                                'r+', ms=6, zorder=2)
 
-                # ── 3D XYZ panel ──────────────────────────────────────────────
-                for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
-                    if step_i % _STRIDE != 0:
-                        continue
-                    env_step = min(step_i * spr, n_steps - 1)
-                    anchor   = c_arr[env_step] if c_arr is not None else real_pos[env_step]
-                    for b in range(cands.shape[0]):
-                        ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
-                                   color='green', linewidth=0.6, alpha=0.7)
-                    ax_3d.scatter([anchor[0]], [anchor[1]], [anchor[2]],
-                                  color='black', s=30)
+                # ── 3D XYZ panel — skip entirely for 2D avoiding ────────────
+                if real_pos.shape[1] < 3:
+                    ax_3d.set_visible(False)
+                else:
+                    for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
+                        if step_i % _STRIDE != 0:
+                            continue
+                        env_step = min(step_i * spr, n_steps - 1)
+                        anchor   = c_arr[env_step] if c_arr is not None else real_pos[env_step]
+                        for b in range(cands.shape[0]):
+                            ax_3d.plot(cands[b, :, 0], cands[b, :, 1], cands[b, :, 2],
+                                       color='green', linewidth=0.6, alpha=0.7)
+                        ax_3d.scatter([anchor[0]], [anchor[1]], [anchor[2]],
+                                      color='black', s=30)
 
-                if c_arr is not None:
-                    ax_3d.plot(c_arr[:, 0], c_arr[:, 1], c_arr[:, 2],
-                               color='red', linewidth=1.2, label='actual (c_pos)')
-                ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
-                           color='black', linewidth=1.2, label='des (commanded)')
-                # U11.2: start / end markers
-                ax_3d.scatter([_ref[0, 0]],  [_ref[0, 1]],  [_ref[0, 2]],
-                              color='lime', marker='*', s=180, zorder=12)
-                ax_3d.scatter([_ref[-1, 0]], [_ref[-1, 1]], [_ref[-1, 2]],
-                              color='red',  marker='s', s=80,  zorder=12)
-                ax_3d.set_title('XYZ — MPC Decision Points (3D)', fontsize=12)
-                ax_3d.set_xlabel('X (m)', fontsize=9)
-                ax_3d.set_ylabel('Y (m)', fontsize=9)
-                ax_3d.set_zlabel('Z (m)', fontsize=9)
-                ax_3d.legend(fontsize=9)
+                    if c_arr is not None:
+                        ax_3d.plot(c_arr[:, 0], c_arr[:, 1], c_arr[:, 2],
+                                   color='red', linewidth=1.2, label='actual (c_pos)')
+                    ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
+                               color='black', linewidth=1.2, label='des (commanded)')
+                    # U11.2: start / end markers
+                    ax_3d.scatter([_ref[0, 0]],  [_ref[0, 1]],  [_ref[0, 2]],
+                                  color='lime', marker='*', s=180, zorder=12)
+                    ax_3d.scatter([_ref[-1, 0]], [_ref[-1, 1]], [_ref[-1, 2]],
+                                  color='red',  marker='s', s=80,  zorder=12)
+                    ax_3d.set_title('XYZ — MPC Decision Points (3D)', fontsize=12)
+                    ax_3d.set_xlabel('X (m)', fontsize=9)
+                    ax_3d.set_ylabel('Y (m)', fontsize=9)
+                    ax_3d.set_zlabel('Z (m)', fontsize=9)
+                    ax_3d.legend(fontsize=9)
 
                 # UF-15.2 / UF-16: workspace box wireframe on 3D panel
                 # For tightened variants: solid nominal box + dashed inner planning box
@@ -2055,11 +2062,15 @@ if __name__ == '__main__':
                             axes[i, 1].plot(c_pos_hist[:, 1], 'r--', label='actual')
                         axes[i, 1].set_title('Y — des (black) vs actual (red)')
 
-                        axes[i, 2].plot(obs_traj[:, 2], 'k-', label='Z des')
-                        if c_pos_hist is not None and len(c_pos_hist):
-                            axes[i, 2].plot(np.array(c_pos_hist)[:, 2], 'r--',
-                                            alpha=0.7, label='Z actual')
-                        axes[i, 2].set_title('Z — des (black) vs actual (red)')
+                        # Z panel: skip for 2D avoiding (no z component)
+                        if obs_traj.shape[1] > 2:
+                            axes[i, 2].plot(obs_traj[:, 2], 'k-', label='Z des')
+                            if c_pos_hist is not None and len(c_pos_hist):
+                                axes[i, 2].plot(np.array(c_pos_hist)[:, 2], 'r--',
+                                                alpha=0.7, label='Z actual')
+                            axes[i, 2].set_title('Z — des (black) vs actual (red)')
+                        else:
+                            axes[i, 2].set_visible(False)  # avoiding is 2D; no Z axis
 
                         vels = np.linalg.norm(obs_traj[1:] - obs_traj[:-1], axis=1)
                         axes[i, 3].plot(vels, color='gray', alpha=0.5)
