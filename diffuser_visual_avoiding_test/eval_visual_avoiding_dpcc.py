@@ -1690,7 +1690,7 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
 
 class Parser(utils.Parser):
     dataset: str = 'avoiding-d3il'
-    config: str  = 'config.avoiding-d3il'
+    config: str  = 'config.avoiding-d3il-visual'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
