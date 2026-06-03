@@ -18,84 +18,174 @@ def assign_process_to_cpu(pid, cpus):
 
 
 class Avoiding_Sim(BaseSim):
+    """
+    Gen9 Ep 2 Fix-3: visual-extended Avoiding_Sim.
+
+    Mirrors Aligning_Sim interface (n_contexts, n_trajectories_per_context, if_vision,
+    eval_on_train, max_episode_length) so the visual avoiding eval scripts can call
+    test_agent() and get back (success_rate, mode_encoding, successes, mean_distance).
+
+    Key differences from Aligning_Sim:
+    - Uses ObstacleAvoidanceEnv (single bp_cam; no inhand_cam; no if_vision kwarg on env)
+    - No pre-defined context files — treats each context idx as an independent random-start episode
+    - step() returns (obs, reward, done, (mode_enc, success)) tuple; converted to info dict here
+    - Visual predict call: agent.predict((bp_image, des_xy, c_xy), if_vision=True)
+      — 2D positions, single image (no inhand)
+    - Non-visual predict call: agent.predict(np.concat([des_xy, env_obs]))
+    - Mode encoding: 1=success, 0=failure (2-mode for eval script compatibility)
+    """
+
     def __init__(
             self,
             seed: int,
             device: str,
             render: bool,
             n_cores: int = 1,
-            n_trajectories: int = 30
+            n_contexts: int = 30,
+            n_trajectories_per_context: int = 1,
+            if_vision: bool = False,
+            eval_on_train: bool = False,
+            max_episode_length: int = 400,
     ):
-        super().__init__(seed, device, render, n_cores)
+        super().__init__(seed, device, render, n_cores, if_vision)
+        self.n_contexts = n_contexts
+        self.n_trajectories_per_context = n_trajectories_per_context
+        self.eval_on_train = eval_on_train
+        self.max_episode_length = max_episode_length
 
-        self.n_trajectories = n_trajectories
-
-    def eval_agent(self, agent, n_trajectories, mode_encoding, successes, robot_c_pos, pid, cpu_set):
+    def eval_agent(self, agent, contexts, n_trajectories,
+                   mode_encoding, successes, mean_distance, pid, cpu_set):
 
         print(os.getpid(), cpu_set)
-        assign_process_to_cpu(os.getpid(), cpu_set)
+        if not self.if_vision:
+            assign_process_to_cpu(os.getpid(), cpu_set)
+        else:
+            print(f"Process {os.getpid()} unpinned — visual eval requires all CPU threads.")
 
-        env = ObstacleAvoidanceEnv(render=self.render)
+        env = ObstacleAvoidanceEnv(render=self.render,
+                                   max_steps_per_episode=self.max_episode_length)
         env.start()
 
-        random.seed(pid)
-        torch.manual_seed(pid)
-        np.random.seed(pid)
+        random.seed(self.seed + pid)
+        torch.manual_seed(self.seed + pid)
+        np.random.seed(self.seed + pid)
 
-        for i in range(n_trajectories):
+        for context in contexts:
+            for i in range(n_trajectories):
 
-            agent.reset()
+                agent.reset()
+                print(f'Context {context} Rollout {i}')
 
-            print(f'core {pid}, Rollout {i}')
+                obs = env.reset(random=True)  # avoiding has no fixed context files; random start
 
-            obs = env.reset()
+                if hasattr(agent, 'record_context_info'):
+                    agent.record_context_info({}, int(context))
 
-            pred_action = env.robot_state()
-            fixed_z = pred_action[2:]
-            done = False
+                # initial desired 2D position and fixed-z suffix for full 7-D action
+                pred_xy = env.robot_state()[:2].copy()
+                fixed_z_q = np.concatenate([env.robot_state()[2:], [0, 1, 0, 0]])
 
-            c_pos = [env.robot.current_c_pos]
+                done = False
+                rollout_dists = []
 
-            while not done:
+                if self.if_vision:
+                    while not done:
+                        c_xy = env.robot.current_c_pos[:2].copy()
 
-                obs = np.concatenate((pred_action[:2], obs))
+                        # Single camera image — BGR (env convention matches training data)
+                        bp_img_raw = env.bp_cam.get_image(depth=False)
+                        bp_image = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
 
-                pred_action = agent.predict(obs)
-                pred_action = pred_action[0] + obs[:2]
+                        pred_delta = agent.predict(
+                            (bp_image, pred_xy.copy(), c_xy.copy()), if_vision=True)
+                        pred_xy = pred_delta[0] + pred_xy
 
-                pred_action = np.concatenate((pred_action, fixed_z, [0, 1, 0, 0]), axis=0)
+                        full_action = np.concatenate([pred_xy, fixed_z_q])
+                        obs, reward, done, (mode_enc, success) = env.step(full_action)
 
-                obs, reward, done, info = env.step(pred_action)
+                        c_xy = env.robot.current_c_pos[:2].copy()
+                        dist = float(abs(c_xy[1] - env.goal_ypos))
+                        rollout_dists.append(dist)
 
-                c_pos.append(env.robot.current_c_pos)
+                        info_dict = {
+                            'mode': 1 if success else 0,
+                            'success': bool(success),
+                            'mean_distance': dist,
+                        }
+                        if hasattr(agent, 'record_step_info'):
+                            agent.record_step_info(info_dict)
 
-            c_pos = torch.tensor(np.array(c_pos))[:, :2]
-            robot_c_pos[pid * n_trajectories + i, :c_pos.shape[0], :] = c_pos
+                        # No inhand_cam — pass bp_image twice so capture_frame(bp, ih) signature works
+                        if hasattr(agent, 'capture_frame'):
+                            try:
+                                agent.capture_frame(bp_image, bp_image)
+                            except Exception:
+                                pass
 
-            mode_encoding[pid * n_trajectories + i, :] = torch.tensor(info[0])
-            successes[pid * n_trajectories + i] = torch.tensor(info[1])
+                else:  # non-visual
+                    while not done:
+                        obs_concat = np.concatenate([pred_xy, obs])
+
+                        pred_delta = agent.predict(obs_concat)
+                        pred_xy = pred_delta[0] + obs_concat[:2]
+
+                        full_action = np.concatenate([pred_xy, fixed_z_q])
+                        obs, reward, done, (mode_enc, success) = env.step(full_action)
+
+                        c_xy = env.robot.current_c_pos[:2].copy()
+                        dist = float(abs(c_xy[1] - env.goal_ypos))
+                        rollout_dists.append(dist)
+
+                        info_dict = {
+                            'mode': 1 if success else 0,
+                            'success': bool(success),
+                            'mean_distance': dist,
+                        }
+                        if hasattr(agent, 'record_step_info'):
+                            agent.record_step_info(info_dict)
+
+                        if hasattr(agent, 'capture_frame'):
+                            try:
+                                bp_img_raw = env.bp_cam.get_image(depth=False)
+                                bp_np = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
+                                agent.capture_frame(bp_np, bp_np)
+                            except Exception:
+                                pass
+
+                mode_encoding[context, i] = torch.tensor(1 if success else 0, dtype=torch.float32)
+                successes[context, i]     = torch.tensor(float(success))
+                mean_distance[context, i] = torch.tensor(
+                    float(np.mean(rollout_dists)) if rollout_dists else 0.0)
+
+                final_info = {
+                    'mean_distance': float(np.mean(rollout_dists)) if rollout_dists else 0.0,
+                    'success': bool(success),
+                    'mode': 1 if success else 0,
+                }
+                if hasattr(agent, 'update_rollout_info'):
+                    agent.update_rollout_info(final_info)
 
     ################################
-    # we use multi-process for the simulation
-    # n_trajectories: rollout policy for n times
-    # n_cores: the number of cores used for simulation
+    # n_contexts: number of evaluation episodes (no fixed context files for avoiding)
+    # n_trajectories_per_context: trials per episode
+    # n_cores: parallel worker count
     ###############################
     def test_agent(self, agent):
 
         log.info('Starting trained model evaluation')
 
-        robot_c_pos = torch.zeros([self.n_trajectories, 150, 2]).share_memory_()
+        mode_encoding = torch.zeros(
+            [self.n_contexts, self.n_trajectories_per_context]).share_memory_()
+        successes     = torch.zeros(
+            (self.n_contexts, self.n_trajectories_per_context)).share_memory_()
+        mean_distance = torch.zeros(
+            (self.n_contexts, self.n_trajectories_per_context)).share_memory_()
 
-        mode_encoding = torch.zeros([self.n_trajectories, 9]).share_memory_()
-        successes = torch.zeros(self.n_trajectories).share_memory_()
+        contexts = np.arange(self.n_contexts)
+        workload = self.n_contexts // self.n_cores
 
         num_cpu = mp.cpu_count()
         cpu_set = list(range(num_cpu))
-
-        # start = self.seed * 20
-        # end = start + 20
-        #
-        # cpu_set = cpu_set[start:end]
         print("there are cpus: ", num_cpu)
 
         ctx = mp.get_context('spawn')
@@ -106,39 +196,46 @@ class Avoiding_Sim(BaseSim):
                 p = ctx.Process(
                     target=self.eval_agent,
                     kwargs={
-                        "agent": agent,
-                        "n_trajectories": self.n_trajectories // self.n_cores,
+                        "agent":         agent,
+                        "contexts":      contexts[i * workload:(i + 1) * workload],
+                        "n_trajectories": self.n_trajectories_per_context,
                         "mode_encoding": mode_encoding,
-                        "successes": successes,
-                        "robot_c_pos": robot_c_pos,
-                        "pid": i,
-                        "cpu_set": set(cpu_set[i:i + 1])
+                        "successes":     successes,
+                        "mean_distance": mean_distance,
+                        "pid":           i,
+                        "cpu_set":       set(cpu_set[i:i + 1]),
                     },
                 )
-                print("Start {}".format(i))
+                print(f"Start {i}")
                 p.start()
                 p_list.append(p)
             [p.join() for p in p_list]
 
         else:
-            self.eval_agent(agent, self.n_trajectories, mode_encoding, successes, robot_c_pos, 0, set([0]))
-            
-        # TODO: save robot_c_pos
+            self.eval_agent(agent, contexts, self.n_trajectories_per_context,
+                            mode_encoding, successes, mean_distance, 0, cpu_set=set([0]))
 
+        n_modes = 2
         success_rate = torch.mean(successes).item()
 
-        # calculate entropy
-        data = mode_encoding[successes == 1].numpy()
-        data_decimal = data.dot(1 << np.arange(data.shape[-1]))
-        _, counts = np.unique(data_decimal, return_counts=True)
-        mode_dist = counts / np.sum(counts)
-        entropy = - np.sum(mode_dist * (np.log(mode_dist) / np.log(24)))
+        mode_probs = torch.zeros([self.n_contexts, n_modes])
+        for c in range(self.n_contexts):
+            mode_probs[c] = torch.tensor([
+                (mode_encoding[c] == 0).sum().item() / self.n_trajectories_per_context,
+                (mode_encoding[c] == 1).sum().item() / self.n_trajectories_per_context,
+            ])
+        mode_probs /= (mode_probs.sum(1).reshape(-1, 1) + 1e-12)
 
-        wandb.log({'score': (success_rate * 0.8 + entropy * 0.2)})
+        entropy = -(mode_probs * torch.log(mode_probs + 1e-12) /
+                    torch.log(torch.tensor(float(n_modes)))).sum(1).mean()
+
+        wandb.log({'score': 0.5 * (success_rate + entropy.item())})
         wandb.log({'Metrics/successes': success_rate})
-        wandb.log({'Metrics/entropy': entropy})
+        wandb.log({'Metrics/entropy': entropy.item()})
+        wandb.log({'Metrics/distance': mean_distance.mean().item()})
 
-        print(f'Successrate {success_rate}')
-        print(f'entropy {entropy}')
+        print(f'Mean Distance {mean_distance.mean().item()}')
+        print(f'Success Rate  {success_rate}')
+        print(f'Entropy       {entropy.item()}')
 
-        return successes, entropy
+        return success_rate, mode_encoding, successes, mean_distance
