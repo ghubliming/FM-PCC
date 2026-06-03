@@ -78,8 +78,8 @@ class Avoiding_Sim(BaseSim):
 
                 obs = env.reset(random=True)  # avoiding has no fixed context files; random start
 
-                if hasattr(agent, 'record_context_info'):
-                    agent.record_context_info({}, int(context))
+                # avoiding has no box/target context — record_context_info expects a 4-tuple
+                # (box_pos, box_quat, target_pos, target_quat) which doesn't exist here; skip.
 
                 # initial desired 2D position and fixed-z suffix for full 7-D action
                 pred_xy = env.robot_state()[:2].copy()

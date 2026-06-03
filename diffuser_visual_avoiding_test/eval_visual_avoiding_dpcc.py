@@ -687,22 +687,24 @@ def generate_expert_reference(save_path, n_rollouts=3):
                 with open(os.path.join(state_data_dir, all_files[idx]), 'rb') as f:
                     expert_data = pickle.load(f)
 
+            # Fix-4: avoiding has no push-box/target-box context.
+            # Replay trajectory with random start; get images from single bp_cam.
             expert_path = expert_data['robot']['des_c_pos']
-            box_pos    = expert_data['push-box']['pos'][0]
-            box_quat   = expert_data['push-box']['quat'][0]
-            target_pos = expert_data['target-box']['pos'][0]
-            target_quat = expert_data['target-box']['quat'][0]
-            context = (box_pos, box_quat, target_pos, target_quat)
 
-            env.reset(random=False, context=context)
+            env.reset(random=True)
             frames = []
             for step in range(len(expert_path)):
-                sim_action = np.concatenate((expert_path[step], [0, 1, 0, 0]))
-                obs, _, _, _ = env.step(sim_action)
-                _, bp_img, ih_img = obs
-                frames.append(np.concatenate(
-                    [cv2.cvtColor(bp_img, cv2.COLOR_BGR2RGB),
-                     cv2.cvtColor(ih_img, cv2.COLOR_BGR2RGB)], axis=1))
+                waypoint = expert_path[step]
+                sim_action = np.concatenate((waypoint[:3], [0, 1, 0, 0]))
+                obs, _, done, _ = env.step(sim_action)
+                try:
+                    bp_img = env.bp_cam.get_image(depth=False)
+                except Exception:
+                    bp_img = None
+                if bp_img is not None:
+                    frames.append(cv2.cvtColor(bp_img, cv2.COLOR_BGR2RGB))
+                if done:
+                    break
 
             save_file = os.path.join(expert_dir, f'expert_rollout_{idx}.mp4')
             try:
@@ -1879,7 +1881,7 @@ if __name__ == '__main__':
                 _act_dim_norm = act_normalizer.mins.shape[0]
                 _obs_dim_norm = obs_normalizer.mins.shape[0]
                 _traj_dim = _act_dim_norm + _obs_dim_norm
-                if _traj_dim not in (9, 23):
+                if _traj_dim not in (6, 9, 23):  # 6=visual avoiding, 9=visual aligning, 23=non-visual
                     print(f'[ eval ] WARNING: unexpected _traj_dim={_traj_dim} '
                           f'(act={_act_dim_norm}, obs={_obs_dim_norm}); '
                           f'expected 9 (visual) or 23 (non-visual)')
