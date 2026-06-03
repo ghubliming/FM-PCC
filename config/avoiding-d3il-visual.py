@@ -238,7 +238,8 @@ base = {
         'clip_denoised':    False,
         'diffusion_loadpath': (
             'f:fm_visual_avoiding/'
-            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}'
+            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
         ),
         'diffusion_epoch':  'best',
         'verbose':          False,

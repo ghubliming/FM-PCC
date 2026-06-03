@@ -1683,7 +1683,7 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
 # ── Parser & Main ─────────────────────────────────────────────────────────────
 
 class Parser(utils.Parser):
-    dataset: str = 'avoiding-d3il'
+    dataset: str = 'avoiding-d3il-visual'   # Fix-3: matches train script exp='avoiding-d3il-visual'
     config: str  = 'config.avoiding-d3il-visual'
 
 if __name__ == '__main__':
