@@ -369,3 +369,8 @@ class FlowMatchingIMF(nn.Module):
 
     def forward(self, cond, *args, **kwargs):
         return self.conditional_sample(cond=cond, *args, **kwargs)
+
+# Backward-compatible alias — Gen7-sourced files (visual_gaussian_diffusion.py,
+# __init__.py) import FlowMatchingODE; Gen3v4 named it FlowMatchingIMF.
+# Fix_1.2 (2026-06-03): added to resolve ImportError.
+FlowMatchingODE = FlowMatchingIMF
