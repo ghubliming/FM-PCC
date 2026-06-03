@@ -237,6 +237,60 @@ All 3 files AST-clean. DPCC `diffusion_loadpath` already had the full suffix —
 
 ---
 
+---
+
+## Fix-3 round 3 — `outputs_3` (job 21157): eval loop silently skipped
+
+### Symptom
+
+After Fix-3.5 resolved the loadpath, job 21157 loaded dataset + checkpoint correctly but printed `Visual-FM (Gen7) evaluation completed.` with zero rollout output, then exited successfully. No `Context N Rollout N` lines, no normalizer prints.
+
+### Root cause A — `_run_items = []` (primary)
+
+```python
+projection_variants = config.get('projection_variants', ['diffuser'])
+# ... geo loop builds _run_items ...
+for geo_name, geo_config, geo_variant, is_tightened in _run_items:
+    # variant body — entire eval section
+```
+
+`config/visual_avoiding_eval.yaml` had:
+```yaml
+projection_variants: []
+geo_constraint_variants: []
+```
+
+Both explicitly set to empty list. `config.get()` returns `[]` (not the default `['diffuser']`) because the key EXISTS in the yaml. `_run_items` is therefore always empty. The entire eval body (normalizer loading, agent creation, `sim.test_agent`, NPZ save) is completely skipped. Exit code 0 — no crash, no warning, total silence.
+
+### Root cause B — `ObstacleAvoidanceEnv(if_vision=True)` in expert generation
+
+Expert generation code (copy from aligning) called `ObstacleAvoidanceEnv(render=False, if_vision=True)`. The avoiding env constructor doesn't accept `if_vision`. This was caught by the surrounding `try/except` and printed a warning, but the warning obscured the more serious root cause A.
+
+### Root cause C — `_ckpt_is_visual == 6` (minor)
+
+UF-13 guard checked `obs_normalizer.mins.shape[0] == 6` (aligning visual). Avoiding visual obs is 4D, so `_ckpt_is_visual = False` even for a visual checkpoint. Non-blocking (the guard is only reached when `if_vision=False`, which never happens in the avoiding config), but logically wrong.
+
+### Root cause D — dynamics constraint indices (non-blocking)
+
+`setup_dpcc_projector` had `('deriv', [6, 0])`, `('deriv', [7, 1])`, `('deriv', [8, 2])` — aligning c_pos at indices 6-8. For avoiding 6D traj, c_xy is at indices 4-5. No z axis. Would crash any `dynamics`-type constraint variant; not triggered by `no_constraint` baseline.
+
+### Fix-3 round 3 changes
+
+| File | Change |
+|---|---|
+| `config/visual_avoiding_eval.yaml` | `projection_variants: ['diffuser']`; `geo_constraint_variants: [{no_constraint}]`; `active_geo_variants: null` |
+| Both eval scripts | `ObstacleAvoidanceEnv(render=False)` — removed `if_vision=True` |
+| Both eval scripts | `_ckpt_is_visual`: `== 6` → `in (4, 6)` |
+| Both eval scripts `setup_dpcc_projector` | dynamics deriv indices: `[6,0],[7,1],[8,2]` → `[4,0],[5,1]` (no z for avoiding) |
+
+All AST clean.
+
+**Cluster-side expectation after this round**: the variant loop will execute with one `_run_items` entry: `('no_constraint', {constraint_types:[]}, 'diffuser', False)`. With `variant='diffuser'`, no projector is built. `sim.test_agent(agent)` runs 3 rollouts. `Context N Rollout N` lines appear.
+
+Note: all output inside the variant `try/finally` block is redirected through `Tee(stdout, log_file)` — output appears BOTH in the SLURM log AND in `results/no_constraint/diffuser/eval_diffuser.log`.
+
+---
+
 ## 6. Known remaining items
 
 - `ObstacleAvoidanceEnv.reset(random=True)` — `random=True` is the default but not tested with the visual model. If the env doesn't randomize starting positions sufficiently, add a context seed based on `context` index.
