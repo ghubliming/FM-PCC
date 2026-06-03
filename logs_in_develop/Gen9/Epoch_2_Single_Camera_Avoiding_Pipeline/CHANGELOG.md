@@ -141,6 +141,7 @@ If empty or missing:
 Per the plan §7.5, runs in this order on cluster:
 
 0. **Package-level import smoke** *(added after [`Fix_1/CHANGELOG.md`](Fix_1/CHANGELOG.md) — catches stale `__init__.py` re-exports that AST checks miss)*: `python -c "import diffuser_visual_avoiding.datasets; import fm_visual_avoiding.datasets; import diffuser_visual_avoiding.models; import fm_visual_avoiding.models; print('package imports OK')"` — must succeed before any train/eval script is invoked. Fix-1 was an `ImportError` from this exact failure mode.
+0.5 **Dimension-hardcode grep** *(added after [`Fix_2/CHANGELOG.md`](Fix_2/CHANGELOG.md) — catches aligning-era integer hardcodes that AST can't surface)*: `grep -nE "= 6 if|= 9 if|trajectory_dim - 3|trajectory_dim - 9|action_dim *= *3|obs_dim *= *6" diffuser_visual_avoiding* fm_visual_avoiding*` — every hit is a candidate for the avoiding-correct value (2/4/6 instead of 3/6/9). Fix-2 was the train-script `_obs_dim = 6` hit; Fix-3+ will be the eval-script hits flagged in `Fix_2/CHANGELOG.md` §7.
 1. **Import smoke**: `python -c "import diffuser_visual_avoiding; import fm_visual_avoiding; print('imports OK')"`
 2. **Dataset smoke**: load 5 episodes, verify tensor shapes are `(8, 6)` for trajectories, `(4,)` for `conditions[0]`, `(3, 96, 96)` for `conditions['primary_img']`.
 3. **Model forward**: `python -c "from diffuser_visual_avoiding.models.visual_unet import VisualUNet; from omegaconf import OmegaConf; m = VisualUNet(OmegaConf.create({'horizon': 8, 'if_vision': True, 'action_dim': 2})); print(m)"`
