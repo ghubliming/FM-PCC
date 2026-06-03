@@ -1603,18 +1603,14 @@ class VisualAgentWrapper:
                     f'[ DIAG obs ] obs_norm (dim={_diag_obs_norm.shape[0]})='
                     f'{np.round(_diag_obs_norm, 4)}',
                 ]
-                # image health (Issue 5) — visual only
+                # image health (Issue 5) — visual only; avoiding is single-cam (no inhand)
                 if if_vision:
                     bp_std = float(np.std(bp_np))
-                    ih_std = float(np.std(inhand_np))
                     diag_lines += [
                         f'[ DIAG img ] bp_image   std={bp_std:.4f}  shape={bp_np.shape}',
-                        f'[ DIAG img ] inhand_img std={ih_std:.4f}  shape={inhand_np.shape}',
                     ]
                     if bp_std < 0.01:
                         diag_lines.append('[ DIAG img ] WARNING: bp_image near-black — camera may not be rendering')
-                    if ih_std < 0.01:
-                        diag_lines.append('[ DIAG img ] WARNING: inhand_image near-black — camera may not be rendering')
                 for line in diag_lines:
                     print(line)
                 if self.save_path is not None:

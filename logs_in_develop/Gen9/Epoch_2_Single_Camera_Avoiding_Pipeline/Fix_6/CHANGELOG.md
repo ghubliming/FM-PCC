@@ -115,6 +115,23 @@ File "fm_visual_avoiding_test/eval_fm_visual_avoiding.py", line 589, in _check_p
     flat  = cands_xyz.reshape(-1, 3)
 ValueError: cannot reshape array of size 16 into shape (3)
 ```
+
+### Root cause
+`_check_planned_violations` hardcoded `reshape(-1, 3)`. Avoiding `cands_xyz` is `(B, H, 2)`.
+
+### Fix
+`flat = cands_xyz.reshape(-1, cands_xyz.shape[-1])` — dynamic last dim. Both eval scripts.
+
+---
+
+## Fix-6 round 3 — `outputs_6.2` (job 21164): `NameError: inhand_np` in DIAG block
+
+### Symptom
+```
+File "fm_visual_avoiding_test/eval_fm_visual_avoiding.py", line 589, in _check_planned_violations
+    flat  = cands_xyz.reshape(-1, 3)
+ValueError: cannot reshape array of size 16 into shape (3)
+```
 `cands_xyz` has shape `(1, 8, 2)` = 16 elements. `reshape(-1, 3)` requires divisibility by 3.
 
 ### Root cause
@@ -137,6 +154,40 @@ All constraint checks (`bounds`, `halfspace`, `obstacles`) downstream use `flat[
 - No `reshape(-1, 3)` remaining in either eval script ✅
 
 **Cluster-side expectation**: `_check_planned_violations` completes; `predict()` returns a trajectory; rollout runs to `done=True`.
+
+### Symptom
+```
+File "fm_visual_avoiding_test/eval_fm_visual_avoiding.py", line 1588, in predict
+    ih_std = float(np.std(inhand_np))
+NameError: name 'inhand_np' is not defined
+```
+
+### Root cause
+The first-replan diagnostic block (line ~1586) still referenced `inhand_np` for image health logging. Fix-3 removed `inhand_np` from the visual path unpacking (`bp_np, des_xy_np, c_xy_np = state`) but the DIAG section below the plan/cache fork was missed.
+
+### Fix — both eval scripts
+Removed the two inhand lines from the DIAG image-health block:
+```python
+# Before:
+bp_std = float(np.std(bp_np))
+ih_std = float(np.std(inhand_np))       # NameError
+diag_lines += [f'[ DIAG img ] bp_image   std={bp_std:.4f} ...', 
+               f'[ DIAG img ] inhand_img std={ih_std:.4f} ...']  # NameError
+if ih_std < 0.01: ...                    # NameError
+
+# After:
+bp_std = float(np.std(bp_np))
+diag_lines += [f'[ DIAG img ] bp_image   std={bp_std:.4f} ...']
+# inhand lines removed — avoiding is single-cam
+```
+
+Note: `capture_frame(self, bp_np, inhand_np)` body still uses `inhand_np` as a **method parameter** — that's fine; `avoiding_sim.py` calls `agent.capture_frame(bp_image, bp_image)` passing bp twice.
+
+### Verification
+- AST pass ✅
+- No `inhand_np` outside `capture_frame` body in either eval script ✅
+
+**Cluster-side expectation**: DIAG block runs clean; rollout steps continue past step 0.
 
 ---
 
