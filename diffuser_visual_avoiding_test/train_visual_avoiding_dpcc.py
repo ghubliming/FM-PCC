@@ -209,7 +209,7 @@ for seed in selected_seeds:
                   f'(non-visual; from dataset normalizer)')
             args.obs_dim = _dataset_obs_dim
 
-    # ── 2. Model — VisualUNet with hardcoded transition_dim=9 ─────────────────
+    # ── 2. Model — VisualUNet with hardcoded transition_dim=6 (Gen9 Ep 2) ────
     from diffuser_visual_avoiding.models.visual_unet import VisualUNet
 
     model_config = utils.Config(
@@ -225,13 +225,16 @@ for seed in selected_seeds:
     _n_diff_steps = getattr(args, 'n_diffusion_steps', 100)
     print(f'[ train ] n_diffusion_steps = {_n_diff_steps}  '
           f'(must match eval config to avoid denoising-chain mismatch)')
-    _obs_dim = 6 if _if_vision else 20   # UF-17: non-visual uses 20D obs in trajectory
+    # Gen9 Ep 2 Fix-2: visual avoiding obs is 4-D [des_xy(2), c_xy(2)] (NOT 6).
+    # Aligning hardcoded _obs_dim=6 because its visual obs was [des_c_pos(3), c_pos(3)].
+    # transition_dim = action(2) + obs(4) = 6 for visual avoiding.
+    _obs_dim = 4 if _if_vision else 20   # visual=4 (avoiding 2-D), non-visual=20 (out of scope)
     diffusion_config = utils.Config(
         VisualGaussianDiffusion,
         savepath=(args.savepath, 'diffusion_config.pkl'),
         horizon=args.horizon,
-        observation_dim=_obs_dim,   # 6D visual / 20D non-visual
-        action_dim=args.action_dim, # 3D act: [dx, dy, dz]
+        observation_dim=_obs_dim,   # 4D visual avoiding / 20D non-visual (not currently used)
+        action_dim=args.action_dim, # 2D act: [dx, dy]
         goal_dim=0,
         n_timesteps=_n_diff_steps,
         loss_type=args.loss_type,
