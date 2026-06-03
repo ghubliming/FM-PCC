@@ -13,7 +13,7 @@ import torch
 import wandb
 import diffuser_visual_avoiding.utils as utils
 
-exp = 'avoiding-d3il'
+exp = 'avoiding-d3il-visual'
 DEFAULT_SEEDS = [5, 6, 7, 8, 9]
 
 # ── helpers (identical boilerplate from fmv3ode train) ────────────────────────

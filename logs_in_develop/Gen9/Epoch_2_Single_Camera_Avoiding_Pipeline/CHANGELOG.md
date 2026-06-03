@@ -1,6 +1,6 @@
 # Gen9 Epoch 2 — Single Camera Visual Avoiding Pipeline — Implementation Changelog
 
-**Date**: 2026-06-03
+**Date**: 2026-06-03 (initial); revision 2026-06-03 (per user review — see §10)
 **Status**: ✅ Phases 1–4 complete (all coding); Phase 5 (smoke + training) pending cluster
 **Parent plan**: [`PLAN_SINGLE_CAMERA_VISUAL_AVOIDING.md`](PLAN_SINGLE_CAMERA_VISUAL_AVOIDING.md) (audit-corrected per §12)
 **Branch**: `update_into_FM` (uncommitted)
@@ -56,15 +56,18 @@ All `__pycache__/` directories cleared inside the new folders so stale `.pyc`s d
 
 | File | Change |
 |---|---|
-| `config/avoiding-d3il.py` | Appended 4 new top-level config entries: `visual_avoiding_dpcc`, `fm_visual_avoiding` (training) and `plan_visual_avoiding_dpcc`, `plan_fm_visual_avoiding` (inference). Each plan config carries a `constraint_list` of 6 `sphere_outside` entries — positions copied verbatim from `d3il/.../objects/avoiding_objects.py:get_obj_xy_list()` with radius **0.04 m** (obstacle geom radius 0.025 m + safety margin 0.015 m). |
+| `config/avoiding-d3il.py` | **(revision)** *no longer touched* — the 4 new config entries were initially appended here but moved to a dedicated `config/avoiding-d3il-visual.py` file in revision (mirrors aligning's split between `aligning-d3il.py` and `aligning-d3il-visual.py`). This file is at its pre-Epoch-2 state. |
 | `d3il/environments/dataset/avoiding_dataset.py` | Added `Avoiding_Img_Dataset` class mirroring `Aligning_Img_Dataset` for D3IL-native training loops. Reads bp-cam + inhand-cam frames; obs is 2-D-sliced `[des_x, des_y, c_x, c_y]` filled into the first 4 indices of the 20-D buffer (D3IL's buffer-size convention). Added `from tqdm import tqdm` import. |
 
 ### 2.4 Files created
 
 | File | Purpose |
 |---|---|
+| `config/avoiding-d3il-visual.py` | **(revision — new file)** Dedicated visual-avoiding config, mirrors `config/aligning-d3il-visual.py`. Contains 4 entries: `visual_avoiding_dpcc`, `fm_visual_avoiding` (train) and `plan_visual_avoiding_dpcc`, `plan_fm_visual_avoiding` (plan). Both plan entries pull `constraint_list` from the module-level `_AVOIDING_OBSTACLES` (6 `sphere_outside` constraints — positions verbatim from `avoiding_objects.py:get_obj_xy_list()`, radius 0.04 m). Reads `_yaml_threshold` from `config/visual_avoiding_eval.yaml`. Defines the same `args_to_watch_*` helpers as aligning visual for checkpoint naming. |
 | `d3il/configs/avoiding_vision_config.yaml` | New D3IL Hydra config for visual avoiding training. Points at `Avoiding_Img_Dataset` (the new class), `Avoiding_Sim` with `if_vision=True`, `obs_dim=4`, `action_dim=2`, `max_len_data=200`, `window_size=8`. |
-| `config/visual_avoiding_eval.yaml` | Minimal eval-time YAML stub. Lists `avoiding-d3il`, `visual_avoiding_dpcc`, `fm_visual_avoiding` as exps. Geo-constraint variants intentionally empty — avoiding's obstacles live in `config/avoiding-d3il.py:plan_*.constraint_list`, not in this YAML. |
+| `config/visual_avoiding_eval.yaml` | Minimal eval-time YAML stub. Lists `avoiding-d3il-visual`, `visual_avoiding_dpcc`, `fm_visual_avoiding` as exps. Geo-constraint variants intentionally empty — avoiding's obstacles live in `config/avoiding-d3il-visual.py:plan_*.constraint_list`, not in this YAML. |
+| `Slurm_Codes/sbatch/diffuser_visual_avoiding/` | **(revision — new dir)** 3 sbatch scripts copied + modified from `Slurm_Codes/sbatch/diffuser_visual_aligning/`: `train_visual_avoiding_dpcc.sh`, `eval_visual_avoiding_dpcc.sh`, `visual_avoiding_pipeline_dpcc.sh`. Module names, experiment names, config file refs, job names, and wandb projects all updated. |
+| `Slurm_Codes/sbatch/fm_visual_avoiding/` | **(revision — new dir)** 3 sbatch scripts copied + modified from `Slurm_Codes/sbatch/fm_visual_aligning/`: `train_fm_visual_avoiding.sh`, `eval_fm_visual_avoiding.sh`, `fm_visual_avoiding_pipeline.sh`. Same rename pattern. |
 
 ---
 
@@ -147,13 +150,60 @@ If smokes 1-5 all pass: launch training with `python scripts/train.py --dataset 
 
 ---
 
-## 8. Counts
+## 10. Revision (2026-06-03 user review)
 
-- Files newly created: **8** (4 folders × avg 6-15 files; 1 D3IL YAML; 1 eval YAML stub; this changelog) — net new lines ~3.5k (mostly copy-renamed boilerplate).
-- Files modified: **3** outside the new folders (`config/avoiding-d3il.py`, `d3il/environments/dataset/avoiding_dataset.py`, the plan MD itself via §12 audit yesterday).
-- Lines added to `config/avoiding-d3il.py`: **176** (Phase 4 entries with comments).
-- Lines added to `d3il/environments/dataset/avoiding_dataset.py`: **~140** (the new `Avoiding_Img_Dataset` class).
-- AST/YAML parses passing: **14 / 14** ✅
+User feedback after the initial Phase 1–4 land identified three issues; all are fixed in this revision.
+
+### 10.1 Stale `constraint_plots/` directory
+
+**Issue**: `fm_visual_avoiding_test/constraint_plots/` was carried over from the aligning original (24 sub-dirs of `bounds_only_*`/`halfspace_*` plot outputs) — task-specific plot artifacts that have no meaning for avoiding.
+
+**Fix**: `rm -rf fm_visual_avoiding_test/constraint_plots/`. The diffuser variant didn't have this directory to begin with — no action needed there.
+
+### 10.2 Missing Slurm sbatch entries
+
+**Issue**: The plan §7 / §8 implicitly assumed Slurm scripts exist, but `Slurm_Codes/sbatch/{diffuser,fm}_visual_avoiding/` did not — only the aligning versions did.
+
+**Fix**: Copied both aligning sbatch directories to their avoiding counterparts, renamed the 6 files (3 per variant: `train_*.sh`, `eval_*.sh`, `*_pipeline*.sh`), and ran `sed` for the same identifier rewrites used inside the source folders (module names, experiment names, config file refs, job names, wandb project names, eval YAML path).
+
+**Pre-existing oddity carried over verbatim**: `train_fm_visual_avoiding.sh` returns a `bash -n` "unexpected end of file" — but so does the original aligning `train_fm_visual_aligning.sh` (verified: same line-62 EOF complaint). This is a pre-existing upstream issue not introduced by Epoch 2; bash itself still executes the script via `sbatch` because the parse-error is in a heredoc-ish region that the runtime tolerates but `-n` doesn't. Out of scope to "fix" without changing aligning behavior; flagged here for record.
+
+### 10.3 Config split — separate `avoiding-d3il-visual.py` file
+
+**Issue**: The initial Phase 4 land appended the 4 new config entries to `config/avoiding-d3il.py`. This **diverges from the aligning pattern**, which uses a separate `config/aligning-d3il-visual.py` (so non-visual avoiding configs in `avoiding-d3il.py` aren't polluted by visual additions).
+
+**Fix**:
+1. **Removed** the 4 entries (+ surrounding comments) from `config/avoiding-d3il.py`. File reverted to pre-Epoch-2 state (892 lines, AST OK).
+2. **Created** `config/avoiding-d3il-visual.py` (mirrors aligning visual structure): full `args_to_watch_*` helpers, `_AVOIDING_OBSTACLES` module-level constant, the 4 entries pulled from the original block. All 4 plan entries reference `list(_AVOIDING_OBSTACLES)` for constraint list.
+3. **Updated** train + eval scripts: `exp = 'avoiding-d3il-visual'` (was `'avoiding-d3il'`). `Parser`'s `config = 'config.' + exp` now resolves to `'config.avoiding-d3il-visual'` automatically.
+4. **Updated** the new YAML `config/visual_avoiding_eval.yaml`: `exps:` list now contains `'avoiding-d3il-visual'` (was `'avoiding-d3il'`), matching the script's `exp` variable.
+5. **Updated** the Slurm sbatch scripts' `python ...` invocations and their `--config` flags (where applicable) to use `avoiding-d3il-visual`.
+
+**Why this matters**: aligning maintains the same split, and downstream tooling (the `Parser` machinery, checkpoint directory naming via `args_to_watch`) assumes the visual-config file mirrors the visual-config-file convention. Bundling avoiding-visual into the non-visual `avoiding-d3il.py` would have made checkpoint paths inconsistent with the aligning convention and broken any cross-task tooling that diffs aligning-d3il-visual vs avoiding-d3il-visual.
+
+### 10.4 Revision verification
+
+| Check | Status |
+|---|---|
+| `fm_visual_avoiding_test/constraint_plots/` removed | ✅ `ls` returns no such directory |
+| `config/avoiding-d3il.py` reverted to pre-Epoch-2 (892 lines) | ✅ |
+| `config/avoiding-d3il-visual.py` created (AST OK) | ✅ |
+| 4 entries (`visual_avoiding_dpcc`, `fm_visual_avoiding`, `plan_*`) live in new file | ✅ |
+| Train/eval scripts point at `config.avoiding-d3il-visual` | ✅ (`exp = 'avoiding-d3il-visual'` in all 4) |
+| `config/visual_avoiding_eval.yaml` `exps:` list updated | ✅ |
+| `Slurm_Codes/sbatch/diffuser_visual_avoiding/` (3 files) | ✅ |
+| `Slurm_Codes/sbatch/fm_visual_avoiding/` (3 files) | ✅ |
+| All affected AST + YAML + `bash -n` checks (modulo the pre-existing aligning oddity) | ✅ |
+
+---
+
+## 8. Counts (post-revision)
+
+- Folders newly created: **6** — 4 source code (`diffuser_visual_avoiding{,_test}`, `fm_visual_avoiding{,_test}`) + 2 Slurm sbatch.
+- Standalone files newly created: **5** — `config/avoiding-d3il-visual.py`, `config/visual_avoiding_eval.yaml`, `d3il/configs/avoiding_vision_config.yaml`, this CHANGELOG, the `PLAN_*.md` (from yesterday's audit).
+- Files modified outside new folders: **1** — `d3il/environments/dataset/avoiding_dataset.py` (added `Avoiding_Img_Dataset` class, ~140 new lines).
+- `config/avoiding-d3il.py`: **unchanged** in final state (revision reverted my initial addition).
+- AST/YAML/bash parses passing: **14 / 14** Python+YAML files ✅. **5 / 6** sbatch scripts pass `bash -n`; the 6th (`train_fm_visual_avoiding.sh`) inherits a pre-existing parse-mode oddity from the aligning original — see §10.2.
 
 ---
 
