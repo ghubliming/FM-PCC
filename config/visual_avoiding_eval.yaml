@@ -1,0 +1,40 @@
+# Visual Avoiding Eval Config — Gen9 Epoch 2 stub
+# Date: 2026-06-03
+#
+# This is a MINIMAL stub copied from visual_aligning_eval.yaml's structure with
+# avoiding-task-appropriate defaults. Geo-constraint variants, MPC ablations,
+# and other aligning-specific blocks are intentionally OMITTED — the avoiding
+# task uses fixed sphere_outside obstacles declared in
+# config/avoiding-d3il.py:plan_*_avoiding.constraint_list, not yaml-driven
+# halfspace variants.
+#
+# If you add geo-constraint sweep functionality later, mirror the
+# `geo_constraint_variants:` block from visual_aligning_eval.yaml.
+
+# General
+write_to_file: True
+exps: [
+  'avoiding-d3il',
+  'visual_avoiding_dpcc',
+  'fm_visual_avoiding',
+]
+seeds: [6]
+
+# Number of rollouts
+n_contexts: 3
+n_trajectories_per_context: 1
+
+# Diffusion / projector controls
+diffusion_timestep_threshold: 0.5
+mpc_foresight_stride: 6
+max_action_delta: null
+
+# Projection variant list — pull from existing aligning config or extend.
+# Empty = use only the base 'diffuser' / 'fm' variant (no projected twins).
+projection_variants: []
+
+# Geo-constraint sweep is OFF for avoiding — obstacles are env-constants declared in
+# config/avoiding-d3il.py:plan_*_avoiding.constraint_list, not yaml-driven.
+enlarge_constraints: null
+active_geo_variants: null
+geo_constraint_variants: []
