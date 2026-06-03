@@ -476,6 +476,187 @@ Updated phasing:
 
 ---
 
+## 3c. Two-stage collection — state-only manual generation + post-hoc dual-camera replay (recommended)
+
+**Triggering question** (user, paraphrased):
+> "Could we use Gen9's camera setup — overhead bp-cam + first-person inhand-cam — but generate the *state* trajectories manually first, then collect the *images* by replaying through the env?"
+
+**Verdict**: **Yes — this is the cleanest path forward**, and the pattern is already proven in this repo by Gen9 Epoch 1 (`collect_visual_avoiding_data/collect_visual_avoiding_data.py`). It cleanly separates the two concerns that don't need to be coupled, and unlocks several capabilities (re-renderability, domain randomization, cheap state-space sweeps) that a single-stage pipeline can't offer.
+
+### 3c.1 The proposal, precisely
+
+Two stages, run sequentially, each independently restartable:
+
+| Stage | What | Cost | Output |
+|---|---|---|---|
+| **Stage 1 — State generation** *(headless, fast)* | Scripted PID / MPC controller (Epoch 2's cascaded PID, validated at RMS 0.029 m on Task C 9D) flies the drone through parametrised scenarios. Records `(t, p, v, q, ω, des_p, des_yaw, motor_thrusts)` per step. No rendering, no GPU. Maybe `tqdm` progress; can run 1000s of trajectories per minute on CPU. | ~minutes per 1k trajectories | `state_pickles/<ep_id>.pkl` |
+| **Stage 2 — Visual augmentation** *(GPU-bound, slow)* | Load each state pickle, replay the action sequence step-by-step through a MuJoCo env that has `bp-cam` (third-person overhead) + `inhand-cam` (body-frame FPV) mounted. Capture both cameras per step. Save frames to `images/{bp,inhand}-cam/<ep_id>/<frame>.jpg`. | ~seconds per trajectory; tens of minutes for 1k trajectories | `images/bp-cam/<ep>/`, `images/inhand-cam/<ep>/` |
+
+This is **structurally identical to `collect_visual_avoiding_data.py:151` `replay_and_capture()`** which already does this for the avoiding task (state pickles → replay through env with cameras → save frames).
+
+### 3c.2 Why two stages, not one
+
+A single-stage pipeline that flies the drone AND renders images per step couples them — every iteration on the controller forces a re-render of all trajectories. The two-stage pattern decouples:
+
+| Capability | Single-stage | Two-stage |
+|---|---|---|
+| Iterate on controller without re-rendering | ❌ — every controller tweak invalidates all images | ✅ — re-run Stage 1 only; Stage 2 only when you ship |
+| Render multiple camera variants from one state set | ❌ — must re-fly each | ✅ — change camera config in Stage 2, replay |
+| Domain randomization at render time (textures, lighting, distractors) | ❌ — domain noise corrupts physics | ✅ — physics is frozen in Stage 1; Stage 2 randomizes visuals only |
+| Render high-res for eval and low-res for train from same dataset | ❌ — would require two flights | ✅ — same state, two render passes |
+| Skip image rendering entirely when training a non-visual baseline | ❌ — wastes the render cost | ✅ — Stage 1 output IS the non-visual dataset |
+| Cheaply expand from 1k to 10k state trajectories | ❌ — flight + render scales linearly | ✅ — Stage 1 scales; Stage 2 only renders the subset you actually need |
+
+### 3c.3 Camera placement for the drone — what `bp-cam` and `inhand-cam` mean here
+
+D3IL's terminology maps cleanly but the camera names should be renamed to avoid confusion with the manipulation context. Proposed mapping for the UAV task:
+
+| D3IL name *(for the manipulation arm)* | Drone-task analogue | Mount | Frame |
+|---|---|---|---|
+| `bp-cam` (cage / third-person observer) | `world-cam` | Fixed in world frame, looking down at the flight arena | World |
+| `inhand-cam` (wrist / first-person) | `fpv-cam` | Rigid-mounted on the drone body, forward-facing | Body |
+
+You could keep `bp-cam` / `inhand-cam` as filename conventions for compatibility with the Gen9 collection script's directory layout — the renamed semantic labels are for documentation only. Concretely:
+
+- **`bp-cam` (overhead world)**: gives the policy global awareness of obstacle positions. Equivalent to UAV-Flow's "Colosseo" outside-observer view. Cheap to add — one fixed MuJoCo `<camera>` XML entry.
+- **`inhand-cam` (body-frame FPV)**: gives the policy ego-view; matches what a human FPV pilot sees. Equivalent to UAV-Flow's recorded camera frames (which are drone-body-mounted real cam). One MuJoCo `<camera>` entry parented to the drone body, with `pos="0 0.05 0"` (just forward of CoM) and `xyaxes` set for forward-facing orientation.
+
+### 3c.4 Determinism — the only real risk
+
+For Stage 2's replay to land at the same scene state Stage 1 produced, the env must be deterministic: same `(qpos_0, qvel_0)` initial condition + same action sequence + same RNG seed → same trajectory. MuJoCo satisfies this in general but with two caveats:
+
+1. **Floating-point drift over long episodes.** ~100-step episodes are well within the safe regime; ~1000-step episodes may show ε-level divergence after the long replay. Mitigation: at each Stage 2 step, *also* check the env's reported state against the Stage 1 pickle; if drift exceeds a threshold, log a warning. Don't try to "correct" — that breaks reproducibility.
+2. **Camera-rendering side-effects.** `mjr_readPixels` and `mujoco.mj_step` should not interact, but on some MuJoCo+GPU combinations the render backend can perturb the offscreen context. Mitigation: render *after* `mj_step`, never *before* the next step is computed.
+
+Both Gen9 Epoch 1's `replay_and_capture()` and Gen6V4's visual aligning collection survived this in production, so the pattern is empirically safe.
+
+### 3c.5 How this slots into the §3.5 phased answer
+
+The two-stage pattern is **how Stage 1 of the §3.5 phasing actually gets executed**. Updated phasing:
+
+| Phase | Stage 1 (state) | Stage 2 (images) |
+|---|---|---|
+| Epoch 4 early | Scripted PID flies parametric routes → state pickles | Skip (validate non-visual FM-PCC first) |
+| **Epoch 4 mid–late** | MuJoCo-viewer teleop (§3b.4) records `des_p` + state | **Render dual-cam images via `replay_and_capture`** |
+| Epoch 5–6 | Either Stage-1 source feeds the same Stage 2 | Re-render with domain randomization for sim-to-real prep |
+| Epoch 7+ | UAV-Flow real-pilot data (if scope) | Already has real cam frames — Stage 2 is moot |
+
+### 3c.6 Concrete deliverables to build (when this becomes Epoch 4 mid–late work)
+
+1. **`tools/generate_state_trajectories.py`** *(new)* — Stage 1. Wraps `uav_naive_test/flight_controller.py` (Epoch 2 cascaded PID) + a scene-config iterator. Outputs `state_pickles/<ep_id>.pkl` with the same key structure D3IL uses (`['robot']['des_c_pos']`, etc., adapted: maybe `['drone']['des_p']`, `['drone']['p']`).
+2. **`tools/collect_visual_uav_data.py`** *(new)* — Stage 2. Direct mirror of `collect_visual_avoiding_data/collect_visual_avoiding_data.py:151` (`replay_and_capture`), adapted for the UAV env. Reads `state_pickles/`, replays, saves `images/{bp,inhand}-cam/`.
+3. **MuJoCo MJCF additions** — add two `<camera>` entries to the UAV scene XMLs: one fixed overhead (`world-cam`), one body-mounted forward (`fpv-cam`).
+4. **`config/uav-d3il-visual.py`** *(new, when Gen11 hits "visual UAV" epoch)* — mirrors `config/avoiding-d3il-visual.py` with UAV-appropriate `obs_dim` (probably 6 for `[p(3), v(3)]`) and `action_dim` (3 for position-target deltas). 6 obstacle sphere constraints stay the same pattern.
+
+None of this is in Epoch 4's *current* scope — Epoch 4's RESEARCH.md aims to land Stage 1 (state-only generation) first. But the design above lets Stage 2 be added later as a separate epoch without re-doing Stage 1.
+
+### 3c.7 What this idea is NOT solving
+
+Worth being explicit so the scope doesn't creep:
+
+- **Not a teleop system.** §3b covers human-in-the-loop teleop; §3c is about post-hoc image rendering on top of *any* state source (scripted OR teleop). The two compose: Stage 1 can be either.
+- **Not a sim-to-real bridge.** Renders are still MuJoCo-quality. If you need photoreal images for sim-to-real, that's a Stage 2 *enhancement* (different rendering backend) — out of Epoch 4 scope.
+- **Not multi-agent.** One drone, one Stage 1, one Stage 2. Multi-drone teleop / multi-agent rendering is a separate research thread.
+- **Not a substitute for real data.** §3.4's "if you want a deployable drone, you need real pilots" argument stands. §3c is for *training-time* visual data in MuJoCo, not for the final eval.
+
+### 3c.8 One-line summary
+
+The Gen9 Epoch 1 pattern — **manual state generation → post-hoc dual-camera replay** — is the cleanest deliverable shape for Epoch 4's visual UAV pipeline. It separates state from pixels, lets us iterate on either in isolation, supports cheap multi-camera and domain-randomization variants, and reuses an already-validated `replay_and_capture()` template byte-for-byte. **Adopt this as the Epoch 4 mid-to-late stage architecture; promote `tools/generate_state_trajectories.py` + `tools/collect_visual_uav_data.py` to the Epoch 4 deliverables list.**
+
+---
+
+## 3d. The "manual vs automated" spectrum — what does *manual generation* actually mean?
+
+**Triggering question** (user, paraphrased):
+> "I thought 'manual generation' meant *we draw a line by hand* showing how the UAV crosses the obstacles in the abstract-geometry env. But your earlier writing sounded like an automated PID. Which is it? Add a section on how manual/auto ideas relate."
+
+The user caught a real ambiguity. Earlier sections used "manual generation" loosely — sometimes meaning "scripted controller" (automated), sometimes implying "human draws a path" (truly manual). They are *different* points on a spectrum, and the right one for our use case isn't obvious without laying out all six options.
+
+### 3d.1 The spectrum (six approaches, from most-manual to most-automated)
+
+| # | Approach | Who decides the path? | Who executes? | Human time per traj | Style diversity | Throughput |
+|---|---|---|---|---|---|---|
+| **A** | **Hand-drawn waypoint sketch** | Human draws line in 2-D plot / GUI | Spline + tracking PID | ~30-60 s | High (creative) | ~60-120/hr |
+| **B** | **Waypoint-and-go** | Human clicks ~5 sparse waypoints | PID navigates between | ~10-15 s | Medium (route choice) | ~250/hr |
+| **C** | **Joystick teleop** *(§3b.4)* | Human flies in real-time | PID closes inner loop | ~episode-duration | High (continuous control) | ~30/hr |
+| **D** | **Parametrised scripted** | Generator script (`(start, end, "go-left-of-obs3")` table) | PID | 0 (one-time script write) | Medium (parameter-sweep based) | ~10k/hr |
+| **E** | **Sample-based planner** (RRT, A*) | Algorithm finds any collision-free path | PID tracks the result | 0 | Low (algorithm bias) | ~1k/hr |
+| **F** | **Optimal-control / MPC planner** | Cost function (smoothness + collision) | The planner IS the controller (already produces controls) | 0 | Very low (one solution per IC) | ~100s/hr |
+
+"Manual" in the strictest sense = **A** (literal hand-drawn line). "Manual" in the loose sense I used earlier = **D** (parametrised scripted) — a human writes the GENERATOR by hand, but the trajectories themselves come out automated.
+
+### 3d.2 What earlier sections were *actually* recommending
+
+| Earlier section | Actually meant | Spectrum row |
+|---|---|---|
+| §3.1 "manual generation means a controller we wrote flies the drone inside MuJoCo" | Parametrised scripted | **D** |
+| §3.2(b) "policy learns whatever demonstrator you give it" — examples all assumed PID/MPC | Scripted, mostly | **D / F** |
+| §3b.4 "MuJoCo teleop with joystick" | Joystick teleop | **C** |
+| §3b.6 "co-pilot mode: human clicks waypoints, PID flies between" | Waypoint-and-go | **B** |
+| §3c "manual state generation" | Parametrised scripted | **D** |
+
+So my earlier "manual generation" was almost always **D** (scripted), occasionally **B** or **C**. **Never A** (literal hand-drawn lines), which is what your question implied. The discrepancy is the ambiguity worth resolving.
+
+### 3d.3 Should we use A (literal hand-drawn lines)?
+
+**Probably no, but A has a defensible niche.**
+
+**The case AGAINST A as the primary path:**
+
+1. **Throughput.** FM-PCC training on D3IL-scale problems needs ~1000–10000 trajectories. Even at 60 trajectories per hour, A demands 17-170 hours of human drawing time — a week of work just to make a dataset that the script can produce overnight.
+2. **Floor-quality issue.** Hand-drawn paths are *not* dynamically feasible by construction. A line drawn on a 2-D plot may have curvature radii that violate the drone's max-acceleration constraint. The system would either reject the path or "snap" it to feasibility, in which case the human's intent doesn't survive the post-processing anyway — at which point you're back to D.
+3. **Coverage.** A human draws what feels natural; they will not systematically cover the state space the way a parameter sweep does. For learning a *planner* (which is what FM-PCC is), you need distributional coverage, not stylistic richness.
+4. **The thing A would buy** (genuinely novel paths around obstacles, captured human intuition for "what looks like a good route") is what **C (teleop)** gives you at higher throughput with feedback-loop quality control built in.
+
+**The case FOR A as a small supplement:**
+
+1. **Seed paths for hard scenarios.** If the script's auto-generated paths miss a topologically interesting route (e.g., "duck under and pop up between obstacles 4 and 5"), a single hand-drawn path is a cheap way to *seed* the dataset with that mode. The script can then generate variations around the seed.
+2. **Demonstrating intent.** For papers / presentations: showing a hand-drawn path that the policy then replicates is much more compelling than "the script generated this." Useful for figures, not for training data scale.
+3. **Sanity check.** Drawing 5–10 paths by hand and feeding them through the same Stage-1 → Stage-2 pipeline as the scripted paths catches schema mismatches early.
+
+So: **A as 0.1% of the dataset** (10 seed paths in a 10k-trajectory corpus) makes sense; A as the bulk does not.
+
+### 3d.4 Recommendation: layered combination
+
+Don't pick one row of the spectrum — combine them. Updated phasing (refinement of §3.5 + §3c.5):
+
+| Phase | Primary source | Volume | What it contributes |
+|---|---|---|---|
+| Epoch 4 early | **D** (scripted, parametrised by start/end pairs and "go-left/right-of-obs-N" labels) | ~1k-10k | Bulk coverage of obstacle-avoidance patterns |
+| Epoch 4 mid | **F** (MPC planner as oracle, generates feasible+optimal) | ~500-1k | High-quality "expert" trajectories for the model to imitate; useful upper-bound benchmark |
+| Epoch 4 late | **C** (joystick teleop, §3b.4) | ~100-200 | Stylistic richness, multi-modal demos (the FM/diffusion sweet spot) |
+| **Optional augmentation** | **A** (hand-drawn) | ~10-50 | Seed paths for hard topological cases; figures for paper |
+| Out of scope (Epoch 4) | **B** (waypoint-click) | n/a | Useful for §3c-style co-pilot mode in later epochs |
+
+Why this layering: rows D and F give you **distributional coverage and feasibility floors**, row C adds **multi-modality** (the property that justifies using diffusion/FM in the first place), and row A adds **interpretability seeds** for paper figures. Each layer has a different cost-to-benefit ratio; mixing them is strictly better than any single source.
+
+### 3d.5 What "abstract-geometry env" already gives us for free
+
+The user's mental model of an "abstract-geometry env we created" is the right one: it's a MuJoCo XML with N obstacle cylinders, a planar workspace, and a kinematic drone. That env supports *every* row of the spectrum:
+
+- For **A**: tools/draw_path.py opens a matplotlib top-down view of the env, captures mouse clicks, fits a B-spline, hands the spline to the PID as a reference trajectory.
+- For **B**: same tool, fewer clicks, no spline (PID handles the straight-line segments).
+- For **C**: §3b.4's `tools/teleop_uav.py`.
+- For **D**: a generator script that iterates over `(start, end) ∈ start_set × end_set` and labels paths with "(L, R, R, L, L, R)" indicating which side of each obstacle to pass on.
+- For **E**: drop in [`OMPL`](https://ompl.kavrakilab.org/) or the standard library's [`networkx.astar_path`](https://networkx.org) on a grid discretization.
+- For **F**: MJPC / drake's iLQR / a Python iLQR. Higher integration cost.
+
+The env itself is invariant; only the *trajectory source* changes. The Stage-1 / Stage-2 split from §3c means the env is also invariant w.r.t. whether you're producing state-only or visual data.
+
+### 3d.6 The honest one-liner I should have used earlier
+
+When earlier sections said "manual generation," what was meant was:
+
+> **"A trajectory generator that we (humans) wrote in Python, parametrised by start/end conditions and high-level route hints, executed by a deterministic controller in MuJoCo."**
+
+Which is "manual" in the sense that *we authored the generator*, not in the sense that *we drew each path by hand*. The terminology was ambiguous; **D** (parametrised scripted) is the correct technical name and what this document now uses consistently in subsequent sections.
+
+### 3d.7 One-line summary of §3d
+
+The "manual vs automated" axis is a six-row spectrum from **A** (hand-drawn lines, 30–60 s of human time per trajectory) through **D** (parametrised scripted, ~0 human time per trajectory) to **F** (full MPC oracle). Earlier sections used "manual" to mean **D**, not **A**. The recommended Epoch 4 architecture is a *layered combination* — bulk **D** for coverage, a slice of **F** for feasibility upper-bound demos, a smaller slice of **C** (teleop) for stylistic multi-modality, and optionally a handful of **A** seeds for hard topological cases and paper figures. The "abstract-geometry env" we built supports all six paths via the same Stage 1 / Stage 2 pipeline (§3c).
+
+---
+
 ## 4. The cross-domain pattern
 
 If you abstract over D3IL, UAV-Flow, and our drone work, the choice of expert demonstrator follows a single principle:
@@ -523,4 +704,6 @@ Not applied here — left for the next pass on `RESEARCH.md` itself, or for whic
 - **D3IL got expert data from** multiple human teleoperators driving real Franka Panda robots in a KIT lab via the primary→replica teleop rig at `d3il/.../teleoperation/`. `TeachingLog` captures `tau_cmd, c_pos, c_vel, c_quat, j_pos, j_vel, gripper, power` per step — both raw torque commands AND full state. But the *training* dataloader (`aligning_dataset.py`) discards torque and uses **`vel = des_c_pos[1:] − des_c_pos[:-1]`** as the action — i.e., forward differences of the human's commanded Cartesian position.
 - **UAV-Flow got expert data from** expert pilots flying real drones (UAV-Flow) and simulated drones in UnrealZoo (UAV-Flow-Sim). The recorded JSON is pose-only — `reference_path_raw` is `[T, 6]` of `(x, y, z, roll, pitch, yaw)` — no torque, no IMU. The OpenVLA-UAV loader (`uav_dataset.py:_process_episode`) computes **actions on-the-fly as local-frame pose deltas** `Δ(x, y, z, yaw)`. Structurally identical to D3IL's "action = forward-difference of position intent" convention, just in body frame.
 - **Manual generation is sensible for FM-PCC-on-drones** because (a) we are validating a constraint-aware planner architecture, not building a deployable real-world flight policy or studying language-conditioning; (b) *both* D3IL and UAV-Flow's actual training-time action format is "position-delta", which a PID/MPC controller in MuJoCo can produce natively without any human-in-the-loop; (c) FM/iMF theory is demonstrator-agnostic — it fits whatever manifold the data lies on. The instinct "we need real expert data" is correct *for a different project* (deployable drone, language-conditioned IL, multi-modal style transfer); none of those is Epoch 4's scope.
+- **"Manual generation" is a six-row spectrum, not one technique.** Rows A→F: hand-drawn waypoints → click-and-go → joystick teleop → **parametrised scripted (what earlier sections actually meant)** → sample-based planner → optimal-control oracle. Earlier writing was loose; **D (scripted)** is the load-bearing primary source, with optional **C (teleop)** for multi-modality, **F (MPC oracle)** for a feasibility upper bound, and **A (hand-drawn)** at ≤0.1% of dataset only for paper-figure seeds. The abstract-geometry env supports all six. *(See §3d for the full breakdown.)*
+- **Gen9's two-stage collection pattern (state-then-images) is the recommended Epoch 4 architecture.** Stage 1 = scripted PID / MPC (or teleop, per §3b) flies the drone and records state-only pickles. Stage 2 = `replay_and_capture()`-style replay through the env with `bp-cam` (overhead world view) + `inhand-cam` / `fpv-cam` (body-frame FPV) mounted, saving frames per timestep. Decouples controller iteration from rendering, enables domain randomization at Stage 2 without re-flying, and reuses the already-validated `collect_visual_avoiding_data.py:replay_and_capture` template (Gen9 Epoch 1). Concrete deliverables: `tools/generate_state_trajectories.py` (Stage 1) + `tools/collect_visual_uav_data.py` (Stage 2, mirror of Gen9 script) + two `<camera>` MJCF entries (world + body-mounted forward).
 - **An "Isaac-Lab-style game" for human-piloted demos is feasible but should be built in MuJoCo, not Isaac Lab.** Isaac Lab's teleop drivers (`Se3KeyboardController`, `Se3GamepadController`, etc.) require Omniverse Kit + recent CUDA/driver stack that our Slurm cluster doesn't ship and shouldn't try to ship — *and human teleop has to happen at a laptop, not the cluster, regardless of which sim is used*. The MuJoCo equivalent is a ~150-line `tools/teleop_uav.py` wrapping `mujoco.viewer.launch_passive` + `pygame.joystick` + the **already-validated Epoch 2 cascaded PID** (RMS 0.029 m on Task C 9D). Recommended Epoch 4 mid–late deliverable: this rig + a "co-pilot" mode (human clicks waypoints, PID flies between) so a human session yields multi-modal demos at near-scripted cost. Isaac Lab is useful as a *design reference* (SE(3) abstraction, dead-zone/exponential axis mapping, callback-based recording) — those design choices port directly into our MuJoCo rig.

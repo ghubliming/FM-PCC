@@ -698,3 +698,40 @@ base['plan_ddpm_encdec_vision_nonvisual'] = {
     'prefix': 'f:plans/ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
     'diffusion_loadpath': 'f:ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
 }
+
+# ─── Gen8 iMF Visual Aligning (Training) ─────────────────────────────────────
+# Same task/data/dims as Gen7 fm_visual_aligning (9D, dual-cam, D3IL aligning).
+# Engine swap: FlowMatchingODE → iMeanFlowODE (mean-flow target, h-conditioning, u/v dual heads).
+# Dims unchanged: action_dim=3, obs_dim=6, transition_dim=9.
+# u_loss_weight / v_loss_weight / loss_schedule: iMF-specific; not in fm_visual_aligning.
+base['imf_visual_aligning'] = {
+    **base['fm_visual_aligning'],
+    'model':     'imf_visual_aligning.models.imf_engine.iMeanFlowEngine',
+    'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
+    'prefix':    'imf_visual_aligning/',
+    'exp_name':  watch(args_to_watch_fm_visual_train),
+    # iMF-specific loss mixing weights (inherited by VisualIMF from iMeanFlowODE)
+    'u_loss_weight':  1.0,   # weight on main u-head (mean-flow target)
+    'v_loss_weight':  0.1,   # weight on aux v-head (instantaneous velocity)
+    'loss_schedule':  'balanced',
+    # iMF guardrails against E4 spike (Gen3v4 lesson):
+    # lower lr (2e-4 already set via fm_visual_aligning inherit) + smaller action_weight
+    'action_weight': 1,
+    'learning_rate': 2e-4,
+}
+
+# ─── Gen8 iMF Visual Aligning (Planning/Eval) ────────────────────────────────
+base['plan_imf_visual_aligning'] = {
+    **base['plan_fm_visual_aligning'],
+    'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
+    'prefix': (
+        'f:plans/imf_visual_aligning/'
+        'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
+    ),
+    'diffusion_loadpath': (
+        'f:imf_visual_aligning/'
+        'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
+    ),
+}
