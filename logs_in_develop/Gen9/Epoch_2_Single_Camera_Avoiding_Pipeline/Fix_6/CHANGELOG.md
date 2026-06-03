@@ -105,6 +105,41 @@ M  d3il/simulation/avoiding_sim.py   (import cv2 + _IMG_W/H constant + 2× resiz
 
 ---
 
+---
+
+## Fix-6 round 2 — `outputs_6` (job 21163): `_check_planned_violations` reshape crash
+
+### Symptom
+```
+File "fm_visual_avoiding_test/eval_fm_visual_avoiding.py", line 589, in _check_planned_violations
+    flat  = cands_xyz.reshape(-1, 3)
+ValueError: cannot reshape array of size 16 into shape (3)
+```
+`cands_xyz` has shape `(1, 8, 2)` = 16 elements. `reshape(-1, 3)` requires divisibility by 3.
+
+### Root cause
+`_check_planned_violations` hardcoded `reshape(-1, 3)` (aligning 3D c_pos). For avoiding, `curr_rollout_all_candidates` stores `(B, H, 2)` c_xy arrays (from the Fix-3 `4:6` slice).
+
+### Fix — both eval scripts
+```python
+# Before:
+flat = cands_xyz.reshape(-1, 3)
+
+# After:
+B, H, C = cands_xyz.shape
+flat = cands_xyz.reshape(-1, C)   # C=2 for avoiding (xy), C=3 for aligning (xyz)
+```
+
+All constraint checks (`bounds`, `halfspace`, `obstacles`) downstream use `flat[:, idx]` with idx from `dimensions: ['x','y']` → idx `[0, 1]`, which works for both `C=2` and `C=3`.
+
+### Verification
+- AST pass ✅
+- No `reshape(-1, 3)` remaining in either eval script ✅
+
+**Cluster-side expectation**: `_check_planned_violations` completes; `predict()` returns a trajectory; rollout runs to `done=True`.
+
+---
+
 ## 6. Cross-references
 
 | Document | Content |
