@@ -1,0 +1,78 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jun  4 10:12:42 UTC 2026
+JOB NAME:  eval_fm_visual_avoiding
+JOB ID:    21184
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   18bfdad
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 17121.23it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 44.44it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ utils/training ] Restored loss history from checkpoint at step 5000
+[ eval ] clip_denoised set → False (config-driven; original DPCC default: False)
+[ eval ] Model n_timesteps = 100  (config n_diffusion_steps = ?)
+[ eval ] FM flow_steps_v3 = 100  (Euler ODE integration steps 0→1) [overridden from args]
+[ expert ] Reference videos already exist in logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/expert_references. Skipping.
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+
+[ geo ] active_geo_variants: ['no_constraint', 'obstacles_exact']
+
+[ geo ] ── Constraint variant: no_constraint  types=[] ──
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+there are cpus:  64
+2657733 {0}
+Process 2657733 unpinned — visual eval requires all CPU threads.
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f2319384-5ffd-11f1-a82b-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [-0.5068  0.0647]  |mag| = 0.5109
+[ DIAG first-replan ] denormalized a0 = [-0.00634  0.00665]  |mag| = 0.009188 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.6629, 0.8533]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.5068  0.0647]
+  step  1: [-0.6492  0.2861]
+  step  2: [-0.6629  0.4434]
+  step  3: [-0.6554  0.5437]
+  step  4: [-0.631   0.6363]
+  step  5: [-0.6192  0.6704]
+  step  6: [-0.632  0.781]
+  step  7: [-0.6084  0.8533]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/no_constraint/diffuser_train_set/diag_first_replan.txt
+slurmstepd-i6-gpu-1: error: *** JOB 21184 ON i6-gpu-1 CANCELLED AT 2026-06-04T10:12:58 ***

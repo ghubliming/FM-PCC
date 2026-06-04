@@ -1,0 +1,130 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jun  3 10:37:39 UTC 2026
+JOB NAME:  train_fm_visual_avoiding
+JOB ID:    21144
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0e47d73
+================================================================================
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260603_103743-q0r5t7zq
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run avoiding-d3il-visual-fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM/runs/q0r5t7zq
+[ train ] Seeds: [6]  (source: cli --seeds)
+[ train ] dataset=ParityAvoidingDataset (visual, 6D trajectory)
+
+[utils/config ] Config: <class 'fm_visual_avoiding.datasets.sequence.ParityAvoidingDataset'>
+    dataset_path: environments/dataset/data/avoiding/all_data/train_files.pkl
+    horizon: 8
+    max_n_episodes: 200
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/dataset_config.json
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 3632.16it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:02<00:00, 34.37it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+[ train ] Saved obs_normalizer → logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/obs_normalizer.pkl
+[ train ] Saved act_normalizer → logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/act_normalizer.pkl
+[ train ] obs_normalizer [ Normalizer ] dim: 4
+    -: [ 0.23 -0.28  0.21 -0.28]
+    +: [0.82 0.49 0.77 0.49]
+
+[ train ] act_normalizer [ Normalizer ] dim: 2
+    -: [-0.01  0.  ]
+    +: [0.01 0.01]
+
+
+[utils/config ] Config: <class 'fm_visual_avoiding.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.avoiding-d3il-visual', seed=6, dataset='avoiding-d3il-visual', model='fm_visual_avoiding.models.visual_unet.VisualUNet', diffusion='fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching', action_dim=2, obs_dim=4, if_vision=True, horizon=8, time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, action_weight=1, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), condition_dropout=0.1, returns_condition=False, max_path_length=200, logbase='logs', prefix='fm_visual_avoiding/', exp_name='fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64', batch_size=64, learning_rate=0.0002, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=100000.0, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', savepath='logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6')
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ train ] n_timesteps (legacy buffer size) = 100  (FM uses continuous time; this value does not affect training dynamics)
+
+[utils/config ] Config: <class 'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching'>
+    action_dim: 2
+    action_weight: 1
+    clip_denoised: False
+    flow_steps_v3: 100
+    goal_dim: 0
+    horizon: 8
+    loss_type: l2
+    n_timesteps: 100
+    observation_dim: 6
+    ode_solver_backend_v3: legacy_euler
+    ode_solver_method_v3: euler
+    predict_epsilon: True
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'fm_visual_avoiding.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000.0
+    results_folder: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+    train_batch_size: 64
+    train_lr: 0.0002
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/fm_visual_avoiding_test/train_fm_visual_avoiding.py", line 282, in <module>
+    trainer.train()
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/utils/training.py", line 194, in train
+    self.train_epoch(steps_this_epoch, epoch)
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/utils/training.py", line 124, in train_epoch
+    loss, infos = self.model.loss(*batch)
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/models/visual_gaussian_diffusion.py", line 57, in loss
+    return self.p_losses(x, cond, t)
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/models/diffusion.py", line 283, in p_losses
+    loss, info = self.loss_fn(v_pred, v_target)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/models/helpers.py", line 187, in forward
+    weighted_loss = (loss * self.weights).mean()
+RuntimeError: The size of tensor a (6) must match the size of tensor b (8) at non-singleton dimension 2
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.016 MB of 0.028 MB uploaded (0.004 MB deduped)wandb: - 0.034 MB of 0.034 MB uploaded (0.004 MB deduped)wandb: 🚀 View run avoiding-d3il-visual-fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM/runs/q0r5t7zq
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260603_103743-q0r5t7zq/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.

@@ -1,0 +1,35 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jun  4 10:29:48 UTC 2026
+JOB NAME:  eval_imf_visual_aligning
+JOB ID:    21192
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   95e213e
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6
+
+[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from args.json
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/imf_visual_aligning_test/eval_imf_visual_aligning.py", line 1753, in <module>
+    exp = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/imf_visual_aligning_test/eval_imf_visual_aligning.py", line 1706, in load_diffusion_with_override
+    model_config = _rebuild_engine_config_from_args(lp, device=device)
+  File "/data/home/llim/FMPCC/FM-PCC/imf_visual_aligning_test/eval_imf_visual_aligning.py", line 1668, in _rebuild_engine_config_from_args
+    raise FileNotFoundError(
+FileNotFoundError: model_config.pkl missing and no args.json in logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6. Re-train with the current codebase to regenerate the checkpoint.
