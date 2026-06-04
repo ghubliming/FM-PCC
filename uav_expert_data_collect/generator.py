@@ -122,9 +122,9 @@ def _build_traj_and_init(scene, homotopy, rng):
 
     elif scene == 's_curve':
         y_jitter = float(rng.uniform(-0.04, 0.04))
-        # Fix_1: longer duration gives each of the 5 legs more time → lower peak
-        # speed per segment → less PID overshoot near wall boundaries.
-        dur      = float(rng.uniform(16.0, 22.0))
+        # Fix_3: extend duration [16,22]→[22,30]s; combined with k=2.0 in the
+        # tanh trajectory, peak lateral speed drops from 1.17 to 0.34–0.47 m/s.
+        dur      = float(rng.uniform(22.0, 30.0))
         p_s = np.array([-3.2, -0.8 + y_jitter, z])
         return trajs.s_curve_scene_path(z, dur, y_jitter=y_jitter), p_s, dur
 

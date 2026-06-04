@@ -117,8 +117,11 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
     y2  =  0.8 + y_jitter
     v_x = (x_e - x_s) / T
 
-    # tanh centred at x=0; k chosen so tanh(k*0.5)≈0.95 → k = arctanh(0.95)/0.5 ≈ 3.66
-    k     = 3.66
+    # Fix_3: lower k from 3.66 → 2.0.
+    # k=3.66 gave clearance 0.46 m at walls but peak lateral v ≈ 1.17 m/s → PID
+    # lag caused 62% rejection.  k=2.0 reduces peak lateral v to 0.34–0.47 m/s
+    # (comparable to corridor scene) while keeping clearance 0.31 m at x=±0.5.
+    k     = 2.0
     y_mid = (y1 + y2) / 2.0
     y_amp = (y2 - y1) / 2.0
 
