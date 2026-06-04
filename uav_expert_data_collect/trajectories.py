@@ -117,11 +117,11 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
     y2  =  0.8 + y_jitter
     v_x = (x_e - x_s) / T
 
-    # Fix_3: lower k from 3.66 → 2.0.
-    # k=3.66 gave clearance 0.46 m at walls but peak lateral v ≈ 1.17 m/s → PID
-    # lag caused 62% rejection.  k=2.0 reduces peak lateral v to 0.34–0.47 m/s
-    # (comparable to corridor scene) while keeping clearance 0.31 m at x=±0.5.
-    k     = 2.0
+    # Fix_4: revert k 2.0 → 3.66.  k=2.0 brought the path CLOSER to the inner
+    # wall (clearance 0.31 m) causing 82% rejection.  k=3.66 keeps the path at
+    # y=±0.76 inside the corridors (clearance 0.46 m) and the high lateral speed
+    # only occurs in the gap x∈(-0.5,+0.5) where there are no walls.
+    k     = 3.66
     y_mid = (y1 + y2) / 2.0
     y_amp = (y2 - y1) / 2.0
 
