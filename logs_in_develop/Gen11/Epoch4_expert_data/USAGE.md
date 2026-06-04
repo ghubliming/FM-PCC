@@ -225,7 +225,7 @@ When `scene=all_scenes`, `SLURM_ARRAY_TASK_ID` (0–3) selects the scene automat
 
 Seed for each array task = `seed_offset + ARRAY_ID × 10000`, so parallel tasks never produce overlapping episodes.
 
-**Resource spec** (in script header): 1 node, 4 CPUs, 8 GB RAM, 4 h walltime, `cpu-student` partition. No GPU — collection is headless MuJoCo with `MUJOCO_GL=egl` set defensively.
+**Resource spec** (in script header): 1 node, 4 CPUs, 8 GB RAM, 4 h walltime, `gpu-1-student` partition with `gres=gpu:1` — same as all other jobs in this project. Collection is headless MuJoCo (`MUJOCO_GL=egl`); the GPU allocation is unused but required by the partition.
 
 ---
 
