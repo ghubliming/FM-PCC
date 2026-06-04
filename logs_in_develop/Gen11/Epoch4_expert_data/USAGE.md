@@ -32,17 +32,20 @@ Submit from the repo root after `git push` / sync to cluster.
 
 ```bash
 # 1+2. Smoke-test: 10 trials, empty scene — validator output appears in job log
-sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 10
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 10
 
-# 3+4. Full collection — all 4 scenes in parallel (500 trials each)
-sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+# 3+4. Full collection — submit one job per scene (run all four)
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty    500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh s_curve  500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars  500
 ```
 
 Each job writes to the cluster filesystem (gitignored):
 - `logs/uav_expert_data/<scene>/` — episode pickles
 - `logs/uav_expert_data/<scene>/run_summary.json` — rejection rate, timing
 - `logs/uav_expert_data/<scene>/dataset_stats.json` — speed/length stats vs targets
-- validator comparison table printed to the job's stdout log
+- validator comparison table printed to the job's stdout log (`Slurm_Codes/logs/<date>/`)
 
 ---
 
@@ -202,14 +205,11 @@ Expected output: **~2000 episodes** total (500 × 4 scenes), stored under `logs/
 **File**: `Slurm_Codes/sbatch/uav_expert_data/collect.sh`
 
 ```bash
-# Single scene, single job
-sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 200
-
-# All 4 scenes in parallel (one array task per scene)
-sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+# Single scene
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 200
 
 # With explicit gain variant and seed offset
-sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500 pid_high_gain 1000
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500 pid_high_gain 1000
 ```
 
 **Arguments** (positional):

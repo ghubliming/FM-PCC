@@ -12,15 +12,18 @@
 # Runs collect.py then stats_validator.py so the full USAGE.md quick-start
 # executes entirely on the cluster without needing a local Python runtime.
 #
-# Usage patterns (submit from repo root):
-#   # Step 1+2 — smoke test (10 trials, empty scene, validate output)
-#   sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 10
+# Usage patterns (submit from repo root via submit.sh):
+#   # Smoke test (10 trials, empty scene, validate output)
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 10
 #
-#   # Step 3+4 — full collection, all scenes in parallel
-#   sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+#   # Full collection — one job per scene
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty    500
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh s_curve  500
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars  500
 #
 #   # Single scene, explicit gain
-#   sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500 pid_default 0
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500 pid_high_gain 1000
 #
 # Args:
 #   $1 = scene       (empty|corridor|s_curve|pillars|all_scenes)  [default: empty]
@@ -75,18 +78,8 @@ export PYOPENGL_PLATFORM=egl
 
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
-# Seed = offset + (array_id * 10000) so parallel array tasks don't overlap.
-ARRAY_ID="${SLURM_ARRAY_TASK_ID:-0}"
-SEED=$(( SEED_OFFSET + ARRAY_ID * 10000 ))
-
-# Map array task id to scene when running all_scenes mode.
-ALL_SCENES=("empty" "corridor" "s_curve" "pillars")
-
-if [ "$SCENE_ARG" = "all_scenes" ]; then
-    SCENE="${ALL_SCENES[$ARRAY_ID % 4]}"
-else
-    SCENE="$SCENE_ARG"
-fi
+SEED=$(( SEED_OFFSET ))
+SCENE="$SCENE_ARG"
 
 echo "[ sbatch ] scene=$SCENE  n_trials=$N_TRIALS  gain=$GAIN  seed=$SEED"
 
