@@ -101,28 +101,36 @@ trainer.load(epoch)                   # loads state_<step>.pt
 
 ---
 
-## 3b. Eval fallback for existing pre-Fix_2 checkpoints
+## 3b. Eval fallback for existing pre-Fix_2 checkpoints (two-round fix)
 
 The training fix (§3) prevents the problem going forward but does not help the **already-saved
-checkpoint** (job from before Fix_2 was applied). That checkpoint directory exists but has no
-`model_config.pkl`.
+checkpoint**. That directory has no `model_config.pkl` — and it also has **no `args.json`**:
+the parser only saves `args.json` when `experiment == 'train'` (literal string), which is never
+true here (`experiment='imf_visual_aligning'`). So neither file exists.
 
-**Additional fix — `eval_imf_visual_aligning.py`**: added `_rebuild_engine_config_from_args(lp, device)` helper and a conditional in `load_diffusion_with_override`:
+**Solution**: parse the checkpoint directory name. The `exp_name` fragment encodes all needed
+params: `H{horizon}_D{cls}_a{alpha}_b{beta}_aw{aw}_V{if_vision}_steps{n}_bs{bs}`. `VisualUNet`
+only reads `horizon`, `action_dim`, `if_vision`, `dim`, `condition_dropout`, `dim_mults`,
+`returns_condition` — all either parseable from the path or fixed defaults for the aligning task.
+
+**Additional fix — `eval_imf_visual_aligning.py`**: replaced `_rebuild_engine_config_from_args`
+(which needed `args.json`) with `_rebuild_engine_config_from_path(lp, device)`:
 
 ```python
 _mc_path = os.path.join(lp, 'model_config.pkl')
 if os.path.exists(_mc_path):
     model_config = utils.load_config(*loadpath, 'model_config.pkl')
 else:
-    print('[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from args.json')
-    model_config = _rebuild_engine_config_from_args(lp, device=device)
+    print('[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from path')
+    model_config = _rebuild_engine_config_from_path(lp, device=device)
 ```
 
-`_rebuild_engine_config_from_args` loads `args.json` (written by the parser at training time),
-reconstructs `utils.Config(iMeanFlowEngine, ...)` with the same kwargs the train script would
-have used, **writes `model_config.pkl`** to the checkpoint dir for future runs, and returns the Config.
+`_rebuild_engine_config_from_path` parses `H{n}` and `V{True|False}` from the directory name
+using regex, constructs a minimal `vis_config` namespace with all defaults `VisualUNet` needs,
+builds `utils.Config(iMeanFlowEngine, ...)`, **writes `model_config.pkl`** to the checkpoint
+dir, and returns the Config.
 
-This means: no retrain needed. The first eval run auto-heals the checkpoint; subsequent runs use the pkl directly.
+No retrain needed. The first eval run auto-heals the checkpoint; subsequent runs use the pkl.
 
 ---
 
@@ -143,7 +151,8 @@ The missing file only matters at eval load time. Training completed and wrote a 
 | Save order: `model_config` before `diffusion_config` | ✅ (lines 227 vs 246) |
 | `engine = model_config()` produces same object as direct call | ✅ (same kwargs) |
 | AST parse: `eval_imf_visual_aligning.py` | ✅ |
-| `_rebuild_engine_config_from_args` fallback added | ✅ |
+| `_rebuild_engine_config_from_path` fallback added | ✅ |
+| Regex `H(\d+)` and `V(True\|False)` parse correctly on actual path | ✅ (verified) |
 | Fallback writes pkl so second run uses fast path | ✅ |
 | Eval `load_diffusion_with_override` load order matches | ✅ dataset → model → diffusion → trainer |
 
@@ -163,7 +172,7 @@ Fix_1's `__init__.py` import audit verified that all symbol names resolved corre
 
 ```
 M  imf_visual_aligning_test/train_imf_visual_aligning.py    (wrap engine in utils.Config)
-M  imf_visual_aligning_test/eval_imf_visual_aligning.py     (fallback: rebuild model_config from args.json)
+M  imf_visual_aligning_test/eval_imf_visual_aligning.py     (fallback: rebuild model_config from checkpoint path)
 ```
 
 ---
