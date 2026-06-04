@@ -1734,6 +1734,23 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     _mc_path = os.path.join(lp, 'model_config.pkl')
     if os.path.exists(_mc_path):
         model_config = utils.load_config(*loadpath, 'model_config.pkl')
+        # Validate stored dim against checkpoint weights — guards against stale pkl
+        # written by Fix_2.3 which hardcoded dim=128 before Fix_2.4 added inference.
+        import glob as _g, torch as _t
+        _sfiles = sorted(_g.glob(os.path.join(lp, 'state_*.pt')))
+        if _sfiles:
+            _ck  = _t.load(_sfiles[-1], map_location='cpu')
+            _st  = _ck.get('model', _ck)
+            _wkey = 'model.model.velocity_net.backbone.time_mlp.1.weight'
+            if _wkey in _st:
+                _ckpt_dim  = int(_st[_wkey].shape[1])
+                _vis_conf  = model_config._dict.get('vis_config', None)
+                _stored_dim = int(getattr(_vis_conf, 'dim', -1)) if _vis_conf is not None else -1
+                if _stored_dim != _ckpt_dim:
+                    print(f'[ eval ] model_config.pkl has dim={_stored_dim} but checkpoint '
+                          f'has dim={_ckpt_dim} — regenerating (stale Fix_2.3 pkl)')
+                    os.remove(_mc_path)
+                    model_config = _rebuild_engine_config_from_path(lp, device=device)
     else:
         print(f'[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from path')
         model_config = _rebuild_engine_config_from_path(lp, device=device)
