@@ -104,21 +104,41 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
 
     y_jitter : small lateral perturbation (m) applied to both corridor
                centres — shifts the entire path slightly without violating walls.
+
+    Fix_2: replaced piecewise traverse_line (zero-velocity stops at wall
+    boundaries → 90% rejection) with a single continuous tanh trajectory.
+    The tanh transition is calibrated to complete 95% of the y-shift within
+    the open gap x ∈ (-0.5, +0.5) — no stops anywhere near the walls.
     """
-    z = float(altitude)
-    # Fix_1: 6 waypoints instead of 4.  The added interior waypoints keep the
-    # drone well inside each corridor before the gap crossing, reducing the per-
-    # segment speed and the PID overshoot that caused 100% rejection before.
-    wps = [
-        (-3.2, -0.8 + y_jitter, z),
-        (-1.5, -0.8 + y_jitter, z),   # well inside seg1
-        (-0.5, -0.8 + y_jitter, z),   # at seg1 exit
-        ( 0.5,  0.8 + y_jitter, z),   # at seg2 entry
-        ( 1.5,  0.8 + y_jitter, z),   # well inside seg2
-        ( 3.2,  0.8 + y_jitter, z),
-    ]
-    seg_dur = duration / 5.0
-    return s_curve_path(wps, seg_dur, yaw=yaw)
+    z   = float(altitude)
+    T   = float(duration)
+    x_s, x_e = -3.2, 3.2
+    y1  = -0.8 + y_jitter
+    y2  =  0.8 + y_jitter
+    v_x = (x_e - x_s) / T
+
+    # tanh centred at x=0; k chosen so tanh(k*0.5)≈0.95 → k = arctanh(0.95)/0.5 ≈ 3.66
+    k     = 3.66
+    y_mid = (y1 + y2) / 2.0
+    y_amp = (y2 - y1) / 2.0
+
+    def traj(t):
+        t_eff  = min(t, T)
+        x      = x_s + v_x * t_eff
+        th     = np.tanh(k * x)
+        sech2  = 1.0 - th * th
+
+        y      = y_mid + y_amp * th
+        dy_dt  = y_amp * k * sech2 * v_x
+        d2y_dt = y_amp * k * (-2.0 * th * sech2 * k * v_x) * v_x
+
+        moving = t < T
+        p = np.array([x, y, z])
+        v = np.array([v_x * moving, dy_dt * moving, 0.0])
+        a = np.array([0.0,          d2y_dt * moving, 0.0])
+        return p, v, a, float(yaw)
+
+    return traj
 
 
 def empty_path(p_start, p_end, duration, yaw=0.0):

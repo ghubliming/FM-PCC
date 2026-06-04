@@ -134,10 +134,13 @@ def _build_traj_and_init(scene, homotopy, rng):
         # Homotopy classes mapped to amplitude sign: L-dominant → negative y
         # (passes outside column A), R-dominant → positive y (outside column B).
         # Centre-passes (L,R,L) and (R,L,R) use smaller amplitude through centre.
+        # Fix_2: (L,R,L) and (R,L,R) amplitude ±0.55 was inside the pillar zone
+        # (column A/B edges at y=±0.48) → 100% rejection for those classes.
+        # Set to 0.0 → straight centre-line at y=0, clearance 0.48 m each side.
         _amp_map = {
             '(L,L,L)': -1.0,
-            '(L,R,L)':  0.55,
-            '(R,L,R)': -0.55,
+            '(L,R,L)':  0.0,
+            '(R,L,R)':  0.0,
             '(R,R,R)':  1.0,
         }
         amp = _amp_map[homotopy]
