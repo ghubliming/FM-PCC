@@ -121,16 +121,33 @@ def _build_traj_and_init(scene, homotopy, rng):
         return trajs.corridor_path(homotopy, z, dur), p_s, dur
 
     elif scene == 's_curve':
-        y_jitter = float(rng.uniform(-0.05, 0.05))
-        dur      = float(rng.uniform(10.0, 16.0))
+        y_jitter = float(rng.uniform(-0.04, 0.04))
+        # Fix_1: longer duration gives each of the 5 legs more time → lower peak
+        # speed per segment → less PID overshoot near wall boundaries.
+        dur      = float(rng.uniform(16.0, 22.0))
         p_s = np.array([-3.2, -0.8 + y_jitter, z])
         return trajs.s_curve_scene_path(z, dur, y_jitter=y_jitter), p_s, dur
 
     elif scene == 'pillars':
-        seq = [c.strip() for c in homotopy.strip('()').split(',')]
-        dur = float(rng.uniform(8.0, 14.0))
+        # Fix_1: replace s_curve_path-based pillar_path (zero-velocity stops near
+        # pillars → collisions) with the continuous sinusoidal weave factory.
+        # Homotopy classes mapped to amplitude sign: L-dominant → negative y
+        # (passes outside column A), R-dominant → positive y (outside column B).
+        # Centre-passes (L,R,L) and (R,L,R) use smaller amplitude through centre.
+        _amp_map = {
+            '(L,L,L)': -1.0,
+            '(L,R,L)':  0.55,
+            '(R,L,R)': -0.55,
+            '(R,R,R)':  1.0,
+        }
+        amp = _amp_map[homotopy]
+        dur = float(rng.uniform(10.0, 16.0))
         p_s = np.array([-3.2, 0.0, z])
-        return trajs.pillar_path(seq, z, dur), p_s, dur
+        traj_fn = trajs.weave(
+            x_range=(-3.2, 3.2), y_amplitude=amp,
+            period=4.0, altitude=z, duration=dur,
+        )
+        return traj_fn, p_s, dur
 
     raise ValueError(f'Unknown scene: {scene!r}')
 

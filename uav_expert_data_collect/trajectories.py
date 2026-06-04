@@ -106,13 +106,18 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
                centres — shifts the entire path slightly without violating walls.
     """
     z = float(altitude)
+    # Fix_1: 6 waypoints instead of 4.  The added interior waypoints keep the
+    # drone well inside each corridor before the gap crossing, reducing the per-
+    # segment speed and the PID overshoot that caused 100% rejection before.
     wps = [
         (-3.2, -0.8 + y_jitter, z),
-        (-0.5, -0.8 + y_jitter, z),
-        ( 0.5,  0.8 + y_jitter, z),
+        (-1.5, -0.8 + y_jitter, z),   # well inside seg1
+        (-0.5, -0.8 + y_jitter, z),   # at seg1 exit
+        ( 0.5,  0.8 + y_jitter, z),   # at seg2 entry
+        ( 1.5,  0.8 + y_jitter, z),   # well inside seg2
         ( 3.2,  0.8 + y_jitter, z),
     ]
-    seg_dur = duration / 3.0
+    seg_dur = duration / 5.0
     return s_curve_path(wps, seg_dur, yaw=yaw)
 
 
