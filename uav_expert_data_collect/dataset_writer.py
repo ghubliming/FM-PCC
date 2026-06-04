@@ -57,8 +57,13 @@ def rollout_to_episode(rollout, episode_id, noise_sigma=NOISE_SIGMA, rng=None):
     if noise_sigma > 0.0:
         if rng is None:
             rng = np.random.default_rng(abs(hash(episode_id)) % (2**32))
-        targets = (targets
-                   + rng.normal(0.0, noise_sigma, targets.shape).astype(np.float32))
+        # Fix_1: one constant offset per episode, not per-step independent noise.
+        # Per-step noise makes actions = np.diff(noisy_targets) noise-dominated
+        # (std ≈ √2·σ = 0.028 m/step >> signal ≈ 0.012 m/step at 0.4 m/s 33 Hz).
+        # A constant offset shifts the whole trajectory rigidly: Δ of a constant
+        # is zero, so action deltas are unaffected.
+        offset = rng.normal(0.0, noise_sigma, (1, 3)).astype(np.float32)
+        targets = targets + offset
 
     actions = np.diff(targets, axis=0).astype(np.float32)  # (T-1, 3)  Δp_des
 
