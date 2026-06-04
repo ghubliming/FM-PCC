@@ -8,10 +8,18 @@
 #SBATCH --partition=cpu-student
 #
 # Epoch 4 expert data collection — headless MuJoCo PID rollouts (no GPU needed).
-# Can be run as a single job or as an array:
-#   sbatch collect.sh                              # empty scene, 200 trials
-#   sbatch collect.sh corridor 500 pid_default 0
-#   sbatch --array=0-3 collect.sh all_scenes 250  # one scene per array task
+# Runs collect.py then stats_validator.py so the full USAGE.md quick-start
+# executes entirely on the cluster without needing a local Python runtime.
+#
+# Usage patterns (submit from repo root):
+#   # Step 1+2 — smoke test (10 trials, empty scene, validate output)
+#   sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 10
+#
+#   # Step 3+4 — full collection, all scenes in parallel
+#   sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+#
+#   # Single scene, explicit gain
+#   sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500 pid_default 0
 #
 # Args:
 #   $1 = scene       (empty|corridor|s_curve|pillars|all_scenes)  [default: empty]
@@ -82,11 +90,16 @@ fi
 echo "[ sbatch ] scene=$SCENE  n_trials=$N_TRIALS  gain=$GAIN  seed=$SEED"
 
 python uav_expert_data_collect/collect.py \
-    --scene      "$SCENE" \
-    --n-trials   "$N_TRIALS" \
+    --scene        "$SCENE" \
+    --n-trials     "$N_TRIALS" \
     --gain-variant "$GAIN" \
-    --seed       "$SEED" \
-    --homotopy   all \
-    --noise-sigma 0.02
+    --seed         "$SEED" \
+    --homotopy     all \
+    --noise-sigma  0.02
+
+echo "[ sbatch ] Collection done. Running stats validator …"
+
+python uav_expert_data_collect/stats_validator.py \
+    --data-dir "logs/uav_expert_data/$SCENE"
 
 echo "[ sbatch ] Output: logs/uav_expert_data/$SCENE/"

@@ -7,19 +7,42 @@
 
 ## Quick-start
 
+### Option A — Local Python (no SLURM)
+
 ```bash
-# 1. Smoke-test locally: 10 trials, empty scene, no GPU needed
+# 1. Smoke-test: 10 trials, empty scene
 python uav_expert_data_collect/collect.py --scene empty --n-trials 10 --seed 0
 
 # 2. Validate the 10 episodes
 python uav_expert_data_collect/stats_validator.py --data-dir logs/uav_expert_data/empty
 
-# 3. Full collection on SLURM — all 4 scenes in parallel (500 trials each)
-sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+# 3. Full collection — run once per scene (or wrap in a loop)
+python uav_expert_data_collect/collect.py --scene corridor --n-trials 500 --seed 0
+python uav_expert_data_collect/collect.py --scene s_curve  --n-trials 500 --seed 0
+python uav_expert_data_collect/collect.py --scene pillars  --n-trials 500 --seed 0
 
-# 4. Validate after overnight run
+# 4. Validate after collection
 python uav_expert_data_collect/stats_validator.py --data-dir logs/uav_expert_data/corridor
 ```
+
+### Option B — SLURM (cluster, recommended for full collection)
+
+The `collect.sh` script runs **collect → validate** as a single job.
+Submit from the repo root after `git push` / sync to cluster.
+
+```bash
+# 1+2. Smoke-test: 10 trials, empty scene — validator output appears in job log
+sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 10
+
+# 3+4. Full collection — all 4 scenes in parallel (500 trials each)
+sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+```
+
+Each job writes to the cluster filesystem (gitignored):
+- `logs/uav_expert_data/<scene>/` — episode pickles
+- `logs/uav_expert_data/<scene>/run_summary.json` — rejection rate, timing
+- `logs/uav_expert_data/<scene>/dataset_stats.json` — speed/length stats vs targets
+- validator comparison table printed to the job's stdout log
 
 ---
 
@@ -174,6 +197,38 @@ Expected output: **~2000 episodes** total (500 × 4 scenes), stored under `logs/
 
 ---
 
+## SLURM script
+
+**File**: `Slurm_Codes/sbatch/uav_expert_data/collect.sh`
+
+```bash
+# Single scene, single job
+sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 200
+
+# All 4 scenes in parallel (one array task per scene)
+sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+
+# With explicit gain variant and seed offset
+sbatch Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500 pid_high_gain 1000
+```
+
+**Arguments** (positional):
+
+| Position | Name | Default | Values |
+|---|---|---|---|
+| `$1` | scene | `empty` | `empty` `corridor` `s_curve` `pillars` `all_scenes` |
+| `$2` | n_trials | `200` | any int |
+| `$3` | gain | `pid_default` | `pid_default` `pid_high_gain` `pid_low_gain` |
+| `$4` | seed_offset | `0` | any int |
+
+When `scene=all_scenes`, `SLURM_ARRAY_TASK_ID` (0–3) selects the scene automatically: 0=empty, 1=corridor, 2=s_curve, 3=pillars.
+
+Seed for each array task = `seed_offset + ARRAY_ID × 10000`, so parallel tasks never produce overlapping episodes.
+
+**Resource spec** (in script header): 1 node, 4 CPUs, 8 GB RAM, 4 h walltime, `cpu-student` partition. No GPU — collection is headless MuJoCo with `MUJOCO_GL=egl` set defensively.
+
+---
+
 ## Cross-references
 
 | Document | Content |
@@ -182,3 +237,4 @@ Expected output: **~2000 episodes** total (500 × 4 scenes), stored under `logs/
 | `Materials/AUDIT.md` | R1–R9 recommendations; R4 (12D fallback), R5 (covariate shift), R7 (velocity stat) |
 | `phase4_alpha_uavflow_stats.json` | UAV-Flow reference statistics (273 episodes) |
 | `CHANGELOG.md` | All files touched in this session |
+| `Slurm_Codes/sbatch/uav_expert_data/collect.sh` | SLURM wrapper for Phase 4-γ collection |
