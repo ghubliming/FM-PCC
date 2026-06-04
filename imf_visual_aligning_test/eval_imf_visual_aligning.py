@@ -1653,36 +1653,58 @@ class VisualAgentWrapper:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
-def _rebuild_engine_config_from_args(lp, device='cuda:0'):
-    """Reconstruct iMeanFlowEngine utils.Config from args.json for pre-Fix_2 checkpoints.
+def _rebuild_engine_config_from_path(lp, device='cuda:0'):
+    """Reconstruct iMeanFlowEngine utils.Config by parsing the checkpoint directory name.
 
-    pre-Fix_2 training runs never saved model_config.pkl (engine was instantiated
-    directly instead of via utils.Config). This function reconstructs an equivalent
-    Config from args.json, writes model_config.pkl for future runs, and returns it.
+    pre-Fix_2 checkpoints have no model_config.pkl and no args.json (args.json was
+    gated on experiment=='train' which was never true). The directory name encodes all
+    params needed: H{horizon}_D{cls}_a{alpha}_b{beta}_aw{aw}_V{if_vision}_steps{n}_bs{bs}.
+    VisualUNet only reads: horizon, action_dim, if_vision, dim, condition_dropout,
+    dim_mults, returns_condition — all derivable from the path or fixed defaults.
     """
-    import json as _json
+    import re as _re
     import pickle as _pickle
     import types as _types
-    args_path = os.path.join(lp, 'args.json')
-    if not os.path.exists(args_path):
-        raise FileNotFoundError(
-            f'model_config.pkl missing and no args.json in {lp}. '
-            f'Re-train with the current codebase to regenerate the checkpoint.'
-        )
-    with open(args_path) as f:
-        saved = _json.load(f)
+
+    # parent dir of the seed folder is the exp_name dir
+    exp_dir = os.path.basename(os.path.dirname(lp))
+    # parse H{horizon}
+    m_h = _re.search(r'_H(\d+)_|^H(\d+)_', exp_dir)
+    horizon = int((m_h.group(1) or m_h.group(2))) if m_h else 8
+    # parse V{True|False}
+    m_v = _re.search(r'_V(True|False)(?:_|$)', exp_dir)
+    _if_vision = (m_v.group(1) == 'True') if m_v else True
+
+    print(f'[ eval ] Parsed from path: horizon={horizon}, if_vision={_if_vision}  '
+          f'(exp_dir={exp_dir})')
+
+    # aligning task: action_dim=3, obs_dim=6 (visual) / 20 (non-visual)
+    _action_dim     = 3
+    _obs_dim        = 6 if _if_vision else 20
+    _transition_dim = _action_dim + _obs_dim   # 9 visual / 23 non-visual
+
+    # vis_config: only horizon, action_dim, dim, condition_dropout, dim_mults,
+    # returns_condition are read by VisualUNet — all others can be any value.
+    vis_config = _types.SimpleNamespace(
+        horizon=horizon,
+        action_dim=_action_dim,
+        obs_dim=_obs_dim,
+        dim=128,
+        dim_mults=(1, 2, 4, 8),
+        condition_dropout=0.1,
+        returns_condition=False,
+        device=device,
+        if_vision=_if_vision,
+    )
+
     from imf_visual_aligning.models.imf_engine import iMeanFlowEngine
-    _if_vision   = saved.get('if_vision', True)
-    _obs_dim     = 6 if _if_vision else 20
-    _transition_dim = int(saved.get('action_dim', 3)) + _obs_dim
-    vis_config   = _types.SimpleNamespace(**saved)
     model_config = utils.Config(
         iMeanFlowEngine,
         savepath=None,
         state_dim=_transition_dim,
-        seq_len=int(saved.get('horizon', 8)),
-        freq_dim=int(saved.get('dim', 128)),
-        dropout_rate=float(saved.get('condition_dropout', 0.1)),
+        seq_len=horizon,
+        freq_dim=128,
+        dropout_rate=0.1,
         device=device,
         if_vision=_if_vision,
         vis_config=vis_config,
@@ -1690,7 +1712,7 @@ def _rebuild_engine_config_from_args(lp, device='cuda:0'):
     pkl_path = os.path.join(lp, 'model_config.pkl')
     with open(pkl_path, 'wb') as f:
         _pickle.dump(model_config, f)
-    print(f'[ eval ] Rebuilt missing model_config.pkl from args.json → {pkl_path}')
+    print(f'[ eval ] Rebuilt and saved model_config.pkl → {pkl_path}')
     return model_config
 
 
@@ -1702,8 +1724,8 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     if os.path.exists(_mc_path):
         model_config = utils.load_config(*loadpath, 'model_config.pkl')
     else:
-        print(f'[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from args.json')
-        model_config = _rebuild_engine_config_from_args(lp, device=device)
+        print(f'[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from path')
+        model_config = _rebuild_engine_config_from_path(lp, device=device)
     diffusion_config = utils.load_config(*loadpath, 'diffusion_config.pkl')
     trainer_config   = utils.load_config(*loadpath, 'trainer_config.pkl')
     trainer_config._dict['results_folder'] = lp
