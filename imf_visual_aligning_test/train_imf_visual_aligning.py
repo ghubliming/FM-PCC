@@ -219,15 +219,21 @@ for seed in selected_seeds:
     _obs_dim = 6 if _if_vision else 20   # visual=6 (aligning 3-D pos×2), non-visual=20
     _transition_dim = args.action_dim + _obs_dim  # 3 + 6 = 9 for visual
 
-    engine = iMeanFlowEngine(
+    # Wrap in utils.Config so model_config.pkl is written alongside diffusion_config.pkl.
+    # eval_imf_visual_aligning.load_diffusion_with_override() loads model_config.pkl to
+    # reconstruct the engine before passing it to VisualIMF — same pattern as Gen7 VisualUNet.
+    model_config = utils.Config(
+        iMeanFlowEngine,
+        savepath=(args.savepath, 'model_config.pkl'),
         state_dim=_transition_dim,
         seq_len=args.horizon,
         freq_dim=getattr(args, 'dim', 128),
         dropout_rate=getattr(args, 'condition_dropout', 0.1),
         device=args.device,
         if_vision=_if_vision,
-        vis_config=args,  # forwarded to VisualUNet.__init__ for visual mode
+        vis_config=args,
     )
+    engine = model_config()
 
     # ── 3. iMF diffusion wrapper — VisualIMF ──────────────────────────────────
     from imf_visual_aligning.models.visual_imf_diffusion import VisualIMF
