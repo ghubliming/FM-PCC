@@ -101,6 +101,31 @@ trainer.load(epoch)                   # loads state_<step>.pt
 
 ---
 
+## 3b. Eval fallback for existing pre-Fix_2 checkpoints
+
+The training fix (§3) prevents the problem going forward but does not help the **already-saved
+checkpoint** (job from before Fix_2 was applied). That checkpoint directory exists but has no
+`model_config.pkl`.
+
+**Additional fix — `eval_imf_visual_aligning.py`**: added `_rebuild_engine_config_from_args(lp, device)` helper and a conditional in `load_diffusion_with_override`:
+
+```python
+_mc_path = os.path.join(lp, 'model_config.pkl')
+if os.path.exists(_mc_path):
+    model_config = utils.load_config(*loadpath, 'model_config.pkl')
+else:
+    print('[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from args.json')
+    model_config = _rebuild_engine_config_from_args(lp, device=device)
+```
+
+`_rebuild_engine_config_from_args` loads `args.json` (written by the parser at training time),
+reconstructs `utils.Config(iMeanFlowEngine, ...)` with the same kwargs the train script would
+have used, **writes `model_config.pkl`** to the checkpoint dir for future runs, and returns the Config.
+
+This means: no retrain needed. The first eval run auto-heals the checkpoint; subsequent runs use the pkl directly.
+
+---
+
 ## 4. Why training itself was unaffected
 
 Training does not use `model_config.pkl` at all — it only reads the returned Python object.
@@ -117,9 +142,12 @@ The missing file only matters at eval load time. Training completed and wrote a 
 | `model_config.pkl` savepath present in Config call | ✅ |
 | Save order: `model_config` before `diffusion_config` | ✅ (lines 227 vs 246) |
 | `engine = model_config()` produces same object as direct call | ✅ (same kwargs) |
+| AST parse: `eval_imf_visual_aligning.py` | ✅ |
+| `_rebuild_engine_config_from_args` fallback added | ✅ |
+| Fallback writes pkl so second run uses fast path | ✅ |
 | Eval `load_diffusion_with_override` load order matches | ✅ dataset → model → diffusion → trainer |
 
-**Cluster-side expectation**: re-train (to regenerate checkpoint with `model_config.pkl`), then eval should load cleanly past line 1660.
+**Cluster-side expectation**: eval re-run on existing checkpoint will trigger the `args.json` fallback, write `model_config.pkl`, and proceed to model construction. No retrain needed.
 
 ---
 
@@ -135,6 +163,7 @@ Fix_1's `__init__.py` import audit verified that all symbol names resolved corre
 
 ```
 M  imf_visual_aligning_test/train_imf_visual_aligning.py    (wrap engine in utils.Config)
+M  imf_visual_aligning_test/eval_imf_visual_aligning.py     (fallback: rebuild model_config from args.json)
 ```
 
 ---
