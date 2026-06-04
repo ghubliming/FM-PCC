@@ -100,35 +100,49 @@ size mismatch for model.model.velocity_net.backbone.time_mlp.1.weight:
 
 ---
 
-## Fix_2.4 — Infer dim from checkpoint weights (final fix)
+## Fix_2.4 — Infer dim from checkpoint weights (partial — stale pkl not evicted)
 
 **Triggered by**: `temp/debug_gen8/outputs_2` — Slurm eval job 21193
 
+### What was done
+
+Updated `_rebuild_engine_config_from_path` to infer `dim` from `time_mlp.1.weight` shape in
+`state_*.pt` (`[4*dim, dim]` → `dim = shape[1]`). Falls back to `dim=32` if no file found.
+
+### Why it still failed (Fix_2.5 symptom)
+
+Fix_2.3 had already written `model_config.pkl` (dim=128) to the cluster checkpoint dir.
+The `os.path.exists(_mc_path)` check found it → loaded the stale pkl → skipped the fallback
+entirely. The dim-inference code in `_rebuild_engine_config_from_path` never ran.
+
+---
+
+## Fix_2.5 — Validate loaded pkl dim against checkpoint (final fix)
+
+**Triggered by**: `temp/debug_gen8/output_2.4` — Slurm eval job 21195
+
 ### Root cause
 
-`dim` controls the base channel width of every conv layer in `UNet1DTemporalCondModel`.
-It is not encoded in the checkpoint path and not present in any saved config file.
-The only reliable source is the **saved weights themselves**: `time_mlp.1.weight` has shape
-`[4*dim, dim]` → `dim = shape[1]`.
+The existence check is insufficient: a `model_config.pkl` can exist but be wrong.
+Must validate the stored `vis_config.dim` against the checkpoint weight shape after loading.
 
-### Fix — `eval_imf_visual_aligning.py`
+### Fix — `eval_imf_visual_aligning.py` `load_diffusion_with_override`
 
-Updated `_rebuild_engine_config_from_path` to load the latest `state_*.pt` and read `dim`:
+After loading `model_config.pkl`, validate immediately:
 
 ```python
-state_files = sorted(glob.glob(os.path.join(lp, 'state_*.pt')))
-if state_files:
-    ckpt = torch.load(state_files[-1], map_location='cpu')
-    state = ckpt.get('model', ckpt)
-    _key = 'model.model.velocity_net.backbone.time_mlp.1.weight'
-    if _key in state:
-        dim = state[_key].shape[1]  # [4*dim, dim] → dim = shape[1]
+_ckpt_dim   = int(state['model.model.velocity_net.backbone.time_mlp.1.weight'].shape[1])
+_stored_dim = int(getattr(model_config._dict.get('vis_config'), 'dim', -1))
+if _stored_dim != _ckpt_dim:
+    os.remove(_mc_path)   # evict stale pkl
+    model_config = _rebuild_engine_config_from_path(lp, device=device)  # writes correct one
 ```
 
-Falls back to `dim=32` (config default) if no checkpoint file is found.
-The stale `model_config.pkl` (dim=128) written by Fix_2.3 is overwritten by this run.
+On mismatch: removes the stale pkl, calls `_rebuild_engine_config_from_path` which infers
+`dim=32` from the checkpoint and writes the correct `model_config.pkl`. Next run finds a valid
+pkl and the validation passes — no overhead.
 
-**No retrain needed.** Existing weights are intact; only architecture config was wrong.
+**No retrain needed.**
 
 ---
 
@@ -152,9 +166,9 @@ M  imf_visual_aligning_test/eval_imf_visual_aligning.py     (Fix_2.3: fallback r
 | Regex `H(\d+)` + `V(True\|False)` on actual path | ✅ verified |
 | `dim` inferred from `time_mlp.1.weight` shape in state_*.pt | ✅ |
 | Falls back to `dim=32` if no checkpoint present | ✅ |
-| Stale model_config.pkl overwritten on retry | ✅ |
+| Loaded pkl dim validated against checkpoint — stale pkl evicted on mismatch | ✅ |
 
-**Cluster expectation**: next eval run triggers fallback → infers `dim=32` from weights → writes correct `model_config.pkl` → loads cleanly.
+**Cluster expectation**: validation detects dim=128 vs dim=32 mismatch → removes stale pkl → rebuilds with dim=32 → loads cleanly.
 
 ---
 
