@@ -1654,17 +1654,18 @@ class VisualAgentWrapper:
 # ── Model loading ─────────────────────────────────────────────────────────────
 
 def _rebuild_engine_config_from_path(lp, device='cuda:0'):
-    """Reconstruct iMeanFlowEngine utils.Config by parsing the checkpoint directory name.
+    """Reconstruct iMeanFlowEngine utils.Config by parsing the checkpoint directory name
+    and inferring dim from the saved checkpoint weights.
 
     pre-Fix_2 checkpoints have no model_config.pkl and no args.json (args.json was
-    gated on experiment=='train' which was never true). The directory name encodes all
-    params needed: H{horizon}_D{cls}_a{alpha}_b{beta}_aw{aw}_V{if_vision}_steps{n}_bs{bs}.
-    VisualUNet only reads: horizon, action_dim, if_vision, dim, condition_dropout,
-    dim_mults, returns_condition — all derivable from the path or fixed defaults.
+    gated on experiment=='train' which was never true). The directory name encodes
+    horizon and if_vision; dim is inferred from state_*.pt weight shapes.
     """
     import re as _re
+    import glob as _glob
     import pickle as _pickle
     import types as _types
+    import torch as _torch
 
     # parent dir of the seed folder is the exp_name dir
     exp_dir = os.path.basename(os.path.dirname(lp))
@@ -1675,7 +1676,18 @@ def _rebuild_engine_config_from_path(lp, device='cuda:0'):
     m_v = _re.search(r'_V(True|False)(?:_|$)', exp_dir)
     _if_vision = (m_v.group(1) == 'True') if m_v else True
 
-    print(f'[ eval ] Parsed from path: horizon={horizon}, if_vision={_if_vision}  '
+    # Infer UNet dim from checkpoint: time_mlp.1.weight has shape [4*dim, dim]
+    # This is the only reliable source since dim is not encoded in the path.
+    dim = 32  # config default for aligning (fallback if no checkpoint found)
+    state_files = sorted(_glob.glob(os.path.join(lp, 'state_*.pt')))
+    if state_files:
+        ckpt = _torch.load(state_files[-1], map_location='cpu')
+        state = ckpt.get('model', ckpt)
+        _key = 'model.model.velocity_net.backbone.time_mlp.1.weight'
+        if _key in state:
+            dim = state[_key].shape[1]  # [4*dim, dim] → dim = shape[1]
+
+    print(f'[ eval ] Parsed from path: horizon={horizon}, if_vision={_if_vision}, dim={dim}  '
           f'(exp_dir={exp_dir})')
 
     # aligning task: action_dim=3, obs_dim=6 (visual) / 20 (non-visual)
@@ -1683,13 +1695,11 @@ def _rebuild_engine_config_from_path(lp, device='cuda:0'):
     _obs_dim        = 6 if _if_vision else 20
     _transition_dim = _action_dim + _obs_dim   # 9 visual / 23 non-visual
 
-    # vis_config: only horizon, action_dim, dim, condition_dropout, dim_mults,
-    # returns_condition are read by VisualUNet — all others can be any value.
     vis_config = _types.SimpleNamespace(
         horizon=horizon,
         action_dim=_action_dim,
         obs_dim=_obs_dim,
-        dim=128,
+        dim=dim,
         dim_mults=(1, 2, 4, 8),
         condition_dropout=0.1,
         returns_condition=False,
@@ -1703,16 +1713,17 @@ def _rebuild_engine_config_from_path(lp, device='cuda:0'):
         savepath=None,
         state_dim=_transition_dim,
         seq_len=horizon,
-        freq_dim=128,
+        freq_dim=dim,
         dropout_rate=0.1,
         device=device,
         if_vision=_if_vision,
         vis_config=vis_config,
     )
+    # Delete any stale model_config.pkl written with wrong dim before overwriting
     pkl_path = os.path.join(lp, 'model_config.pkl')
     with open(pkl_path, 'wb') as f:
         _pickle.dump(model_config, f)
-    print(f'[ eval ] Rebuilt and saved model_config.pkl → {pkl_path}')
+    print(f'[ eval ] Rebuilt and saved model_config.pkl (dim={dim}) → {pkl_path}')
     return model_config
 
 
