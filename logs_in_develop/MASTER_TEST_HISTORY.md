@@ -1473,3 +1473,26 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Audit Completion**: Finalized the forensic architectural audit comparing the FM-PCC `flow_matcher_v3_imeanflow` implementation with the canonical reference iMeanFlow repository.
 2. **Correctness Confirmed**: Verified that all critical mathematical deviations are definitively resolved. Fix 1 correctly scales the mean-flow target as `(x_t - x_r)/h`. Fix 3 correctly mimics reference inference by silencing the auxiliary `v`-head and freezing the continuous-time parameter to `t=0.5` (relying on `h`-conditioning alone during generation).
 3. **Remaining Known Behavior**: Documented acceptable domain adaptations, including the use of a 1-D U-Net backbone (instead of DiT) and a shallow MLP for the `v`-head. Acknowledged an "E4 stability spike" in training due to numerical noise amplification at extremely small `h`, recommending explicit gradient clipping and an `h_min` threshold for future retrains. The inference codebase is ruled paper-ready.
+
+***
+
+## Gen8 Epoch 1: iMeanFlow Architecture Fix 1 (June 3, 2026)
+
+**Keywords**: Gen8, iMeanFlow, import collision, UNet1DTemporalCondModel, FlowMatchingODE.
+
+1. **Two-Source Copy Collision Resolution**: Fixed catastrophic package import crashes (`ImportError`) caused by colliding class names from Gen3v4 and Gen7 branches.
+2. **UNet Backbone Merge (Fix 1.1)**: Merged the iMF conditioning capabilities (`h_mlp`, additive `t` conditioning) from `Flow_matcher_U_Net_v2` with the FiLM visual capabilities (`cond_mlp`, concatenated visual conditioning) of Gen7 into a single, unified `UNet1DTemporalCondModel` in `unet1d_temporal_cond.py`. Retained backward-compatible aliases.
+3. **Diffusion Base Alias (Fix 1.2)**: Added a `FlowMatchingODE` alias mapping to `FlowMatchingIMF` in `diffusion.py` to seamlessly satisfy the Gen7 scaffold's inheritance imports without requiring structural changes to the core iMF ODE solvers.
+
+***
+
+## Gen9 Epoch 2: Single Camera Avoiding Pipeline Stabilization (Fixes 3–7) (June 3, 2026)
+
+**Keywords**: Gen9, single camera, avoiding simulation, dimension hardcodes, camera resize, diagnostic cleanup.
+
+1. **Context & Dimension Independence (Fixes 3 & 5)**: Updated `eval_visual_avoiding` scripts to correctly handle the 6D trajectory shape for avoiding simulation. Stripped out aligning-task-specific 4-tuple contexts (`push-box`, `target-box`) and adapted the loops to utilize random environment resets natively.
+2. **Constraint & Environment YAML (Fix 4)**: Completely redesigned `visual_avoiding_eval.yaml` to configure 2D environments and upgraded the associated dynamics constraints logic.
+3. **Camera Resolution Mismatch (Fix 6)**: Identified a shape mismatch crashing `MultiImageObsEncoder` (expected 96×96, received 1024×1024). Applied `cv2.resize` with `INTER_AREA` interpolation to the `BPCageCam` output to match the expert dataset format.
+4. **Export & Plotting Crash Recovery (Fix 7)**: 
+   - Disabled the redundant non-visual `capture_frame` hook in the visual loop that caused `video_frames` shape mismatch (96x96x3 vs 96x192x3), restoring GIF generation.
+   - Guarded per-rollout 3D and Z-axis export plotting logic behind `shape[1] > 2` checks, preventing `IndexError` when processing 2D avoiding positions.
