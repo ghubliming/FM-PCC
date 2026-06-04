@@ -1,0 +1,75 @@
+{
+  "source": "UAV-Flow-Eval/test_jsons (273 episodes)",
+  "date": "2026-06-04",
+  "n_episodes": 273,
+  "episode_length_waypoints": {
+    "min": 5,
+    "mean": 46.2,
+    "median": 38.0,
+    "max": 379,
+    "5": 8.0,
+    "25": 26.0,
+    "75": 51.0,
+    "95": 73.8
+  },
+  "altitude_cm_UE4": {
+    "mean": 286.3,
+    "median": 283.3,
+    "min": -6.9,
+    "max": 1333.3,
+    "5": 87.175,
+    "25": 150.0,
+    "75": 360.0,
+    "95": 610.533
+  },
+  "path_length_cm": {
+    "mean": 950.7,
+    "median": 766.3,
+    "min": 0.0,
+    "max": 3780.0,
+    "5": 0.0,
+    "25": 400.0,
+    "75": 1332.463,
+    "95": 2704.5
+  },
+  "path_length_m": {
+    "mean": 9.51,
+    "median": 7.66,
+    "max": 37.8
+  },
+  "displacement_per_waypoint_cm": {
+    "mean": 21.01,
+    "median": 16.36,
+    "max": 95.78,
+    "5": 0.0,
+    "25": 10.0,
+    "75": 32.147,
+    "95": 55.383,
+    "99": 64.139
+  },
+  "notes": {
+    "velocity_unknown": "UAV-Flow does not record waypoint timestamps. Velocity cannot be derived from displacement alone.",
+    "velocity_resolution": "AUDIT R7 flagged 0.3 m/s vs 5x-higher-per-step inconsistency. Cannot resolve without dt. Our generator uses 0.3-0.5 m/s as the target range based on RESEARCH \u00a73.3.",
+    "our_scene_targets": {
+      "altitude_m": [
+        0.7,
+        1.1
+      ],
+      "speed_mps": [
+        0.3,
+        0.5
+      ],
+      "episode_duration_s": [
+        4.0,
+        16.0
+      ],
+      "dataset_hz": 33,
+      "expected_steps_per_episode": [
+        132,
+        528
+      ]
+    },
+    "altitude_note": "UAV-Flow altitude ~280cm (2.8m) typical. Our indoor scenes use 0.7-1.1m.",
+    "path_length_note": "UAV-Flow path length ~9.5m mean. Our scenes span ~6m max. Episodes will be shorter."
+  }
+}
