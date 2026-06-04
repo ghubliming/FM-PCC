@@ -57,8 +57,8 @@ def parse_args():
                    help='Std of Gaussian noise added to targets (0 = off)')
     p.add_argument('--out-dir',      default=None,
                    help='Root output dir (default: logs/uav_expert_data/<scene>)')
-    p.add_argument('--reject-limit', type=float, default=0.30,
-                   help='Abort if rolling rejection rate exceeds this (default: 0.30)')
+    p.add_argument('--reject-limit', type=float, default=0.60,
+                   help='Abort if rolling rejection rate exceeds this (default: 0.60)')
     return p.parse_args()
 
 

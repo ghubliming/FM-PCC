@@ -96,50 +96,48 @@ def corridor_path(homotopy, altitude, duration,
 
 
 def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
-    """Standard 4-waypoint S-curve path with optional y jitter.
+    """S-curve path with duration allocated proportional to segment distance.
 
     Scene geometry (two corridor segments):
         Seg 1: x ∈ [-3, -0.5], corridor centred at y=-0.8
         Seg 2: x ∈ [+0.5, +3], corridor centred at y=+0.8
 
-    y_jitter : small lateral perturbation (m) applied to both corridor
-               centres — shifts the entire path slightly without violating walls.
+    Fix_5: replaced tanh continuous trajectory (peak lateral speed 1.17 m/s →
+    47% rejection) with 3-segment piecewise traverse_line where each segment's
+    duration is proportional to its Euclidean length.  All segments run at the
+    same peak speed (~0.55 m/s at T=20s), matching the corridor scene which
+    achieves 87% pass rate at 0.72 m/s.
 
-    Fix_2: replaced piecewise traverse_line (zero-velocity stops at wall
-    boundaries → 90% rejection) with a single continuous tanh trajectory.
-    The tanh transition is calibrated to complete 95% of the y-shift within
-    the open gap x ∈ (-0.5, +0.5) — no stops anywhere near the walls.
+    Segment layout:
+        Seg A: (-3.2, y1) → (-0.5, y1)  distance 2.7 m   (pure x, inside seg1)
+        Seg B: (-0.5, y1) → (+0.5, y2)  distance 1.89 m  (diagonal gap crossing)
+        Seg C: (+0.5, y2) → (+3.2, y2)  distance 2.7 m   (pure x, inside seg2)
     """
-    z   = float(altitude)
-    T   = float(duration)
-    x_s, x_e = -3.2, 3.2
-    y1  = -0.8 + y_jitter
-    y2  =  0.8 + y_jitter
-    v_x = (x_e - x_s) / T
+    z  = float(altitude)
+    T  = float(duration)
+    y1 = -0.8 + y_jitter
+    y2 =  0.8 + y_jitter
 
-    # Fix_4: revert k 2.0 → 3.66.  k=2.0 brought the path CLOSER to the inner
-    # wall (clearance 0.31 m) causing 82% rejection.  k=3.66 keeps the path at
-    # y=±0.76 inside the corridors (clearance 0.46 m) and the high lateral speed
-    # only occurs in the gap x∈(-0.5,+0.5) where there are no walls.
-    k     = 3.66
-    y_mid = (y1 + y2) / 2.0
-    y_amp = (y2 - y1) / 2.0
+    d_a = 2.7
+    d_b = float(np.sqrt(1.0**2 + (y2 - y1)**2))   # ≈ 1.89 m when jitter=0
+    d_c = 2.7
+    d_total = d_a + d_b + d_c
+
+    t_a = T * d_a / d_total
+    t_b = T * d_b / d_total
+    t_c = T * d_c / d_total
+
+    seg_a = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a, yaw)
+    seg_b = traverse_line((-0.5, y1, z), ( 0.5, y2, z), t_b, yaw)
+    seg_c = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c, yaw)
 
     def traj(t):
-        t_eff  = min(t, T)
-        x      = x_s + v_x * t_eff
-        th     = np.tanh(k * x)
-        sech2  = 1.0 - th * th
-
-        y      = y_mid + y_amp * th
-        dy_dt  = y_amp * k * sech2 * v_x
-        d2y_dt = y_amp * k * (-2.0 * th * sech2 * k * v_x) * v_x
-
-        moving = t < T
-        p = np.array([x, y, z])
-        v = np.array([v_x * moving, dy_dt * moving, 0.0])
-        a = np.array([0.0,          d2y_dt * moving, 0.0])
-        return p, v, a, float(yaw)
+        if t < t_a:
+            return seg_a(t)
+        elif t < t_a + t_b:
+            return seg_b(t - t_a)
+        else:
+            return seg_c(t - t_a - t_b)
 
     return traj
 
