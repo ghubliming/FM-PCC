@@ -67,7 +67,7 @@ class CascadedPID:
 
         # Attitude-loop gains (body frame)
         self.Kp_att = np.array([70.0, 70.0, 4.0])
-        self.Kp_omega = np.array([10.0, 10.0, 2.0])
+        self.Kp_omega = np.array([2.5, 2.5, 1.0])
 
         # Safety floor on total thrust (avoid free fall during recovery)
         self.thrust_floor = 0.1 * self.mass * GRAVITY_MAG
