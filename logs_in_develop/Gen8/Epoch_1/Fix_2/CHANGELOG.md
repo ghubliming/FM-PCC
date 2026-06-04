@@ -1,186 +1,175 @@
-# Gen8 Epoch 1 — Fix_2: Missing `model_config.pkl` (Engine Not Wrapped in `utils.Config`)
+# Gen8 Epoch 1 — Fix_2 Series: Missing `model_config.pkl`
 
 **Date**: 2026-06-04
 **Status**: ✅ Fixed (uncommitted)
-**Triggered by**: `temp/debug_gen8/eval_outputs` — Slurm eval job 21175
 **Parent**: [`../Fix_1/CHANGELOG.md`](../Fix_1/CHANGELOG.md)
 
 ---
 
-## 1. Symptom
+## Fix_2 — Train script: engine not wrapped in `utils.Config`
 
-Eval job 21175 crashed immediately after printing the load path:
+**Triggered by**: `temp/debug_gen8/eval_outputs` — Slurm eval job 21175
+
+### Symptom
 
 ```
-[ eval loading ] Loading from logs/aligning-d3il-visual/imf_visual_aligning/
-    H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6
-
-Traceback (most recent call last):
-  File "eval_imf_visual_aligning.py", line 1707, in <module>
-    exp = load_diffusion_with_override(...)
-  File "eval_imf_visual_aligning.py", line 1660, in load_diffusion_with_override
-    model_config = utils.load_config(*loadpath, 'model_config.pkl')
 FileNotFoundError: [...]/6/model_config.pkl
 ```
 
-Training had completed successfully. The checkpoint directory existed but contained only:
-`dataset_config.pkl`, `diffusion_config.pkl`, `trainer_config.pkl`, `obs_normalizer.pkl`, `act_normalizer.pkl`, and `state_*.pt`.
+Training completed. Checkpoint directory existed but contained only `dataset_config.pkl`,
+`diffusion_config.pkl`, `trainer_config.pkl`, `obs_normalizer.pkl`, `act_normalizer.pkl`,
+`state_*.pt` — no `model_config.pkl`.
 
-`model_config.pkl` was absent.
+### Root cause
 
----
+Gen7 wraps `VisualUNet` in `utils.Config(savepath='model_config.pkl')` before passing it to
+the diffusion wrapper. Gen8 removed the standalone `VisualUNet` construction (Option A wires
+it inside `iMFTrajectoryModel`) but also dropped the `utils.Config` wrapper entirely —
+`iMeanFlowEngine` was instantiated directly, so no pkl was ever written.
 
-## 2. Root cause — Gen8 engine not wrapped in `utils.Config`
+The eval's `load_diffusion_with_override` loads four pkls in sequence and crashes on the first
+missing one.
 
-**Gen7 pattern** (`train_fm_visual_aligning.py`):
-```python
-model_config = utils.Config(
-    VisualUNet,
-    savepath=(args.savepath, 'model_config.pkl'),  # ← writes model_config.pkl
-    config=args,
-)
-model = model_config()
-diffusion_config = utils.Config(VisualFlowMatching, savepath=(args.savepath, 'diffusion_config.pkl'), ...)
-diffusion = diffusion_config(model)
-```
-
-**Gen8 original pattern** (`train_imf_visual_aligning.py`):
-```python
-engine = iMeanFlowEngine(  # ← direct instantiation — no utils.Config, no .pkl written
-    state_dim=_transition_dim, seq_len=args.horizon, ...,
-    if_vision=_if_vision, vis_config=args,
-)
-diffusion = diffusion_config(engine)
-```
-
-Gen8 was written with Option A (engine wired inside `iMFTrajectoryModel`), and the standalone
-`VisualUNet` construction was removed. But the `utils.Config` wrapper that saved `model_config.pkl`
-was also removed. The eval script's `load_diffusion_with_override` always loads all four pkl files
-in sequence — `dataset_config`, `model_config`, `diffusion_config`, `trainer_config` — and crashes
-on the first missing one.
-
----
-
-## 3. Fix
-
-**File**: `imf_visual_aligning_test/train_imf_visual_aligning.py` — §2 Engine block
-
-Wrapped `iMeanFlowEngine` instantiation in `utils.Config` with `savepath=(args.savepath, 'model_config.pkl')`:
+### Fix — `train_imf_visual_aligning.py`
 
 ```python
-# Before:
-engine = iMeanFlowEngine(
-    state_dim=_transition_dim, seq_len=args.horizon, freq_dim=...,
-    dropout_rate=..., device=args.device, if_vision=_if_vision, vis_config=args,
-)
+# Before (direct instantiation — no pkl):
+engine = iMeanFlowEngine(state_dim=..., seq_len=..., ..., if_vision=_if_vision, vis_config=args)
 
-# After:
+# After (wrapped — writes model_config.pkl at Config construction time):
 model_config = utils.Config(
     iMeanFlowEngine,
     savepath=(args.savepath, 'model_config.pkl'),
-    state_dim=_transition_dim,
-    seq_len=args.horizon,
+    state_dim=_transition_dim, seq_len=args.horizon,
     freq_dim=getattr(args, 'dim', 128),
     dropout_rate=getattr(args, 'condition_dropout', 0.1),
-    device=args.device,
-    if_vision=_if_vision,
-    vis_config=args,
+    device=args.device, if_vision=_if_vision, vis_config=args,
 )
 engine = model_config()
 ```
 
-The `utils.Config` call writes `model_config.pkl` at construction time (before `model_config()` is called). The resulting `engine` object is identical to the previous direct instantiation — no behavioral change during training.
+No behavioral change during training. Prevents the problem on all future training runs.
 
-At eval time, `load_diffusion_with_override` now finds `model_config.pkl` and reconstructs:
+---
+
+## Fix_2.2 — Eval fallback attempt via `args.json` (failed)
+
+**Triggered by**: `temp/debug_gen8/outputs_2` — Slurm eval job 21191
+
+### Symptom
+
+Same `FileNotFoundError` despite Fix_2 being applied — because the **existing checkpoint**
+(saved before Fix_2) still has no `model_config.pkl`. Fix_2 only helps future runs.
+
+### Attempted fix
+
+Added `_rebuild_engine_config_from_args(lp, device)` fallback in `load_diffusion_with_override`:
+load `args.json` from the checkpoint dir, reconstruct the engine Config from those values.
+
+### Why it failed
+
+`args.json` is also absent. The parser saves it only when `experiment == 'train'` (literal
+string) — but the training experiment name is `'imf_visual_aligning'`, never `'train'`.
+So neither `model_config.pkl` nor `args.json` exist in the checkpoint.
+
+---
+
+## Fix_2.3 — Eval fallback via checkpoint path parsing (partial — wrong dim)
+
+**Triggered by**: `temp/debug_gen8/outputs_2` — Slurm eval job 21192
+
+### What was done
+
+Replaced the `args.json` fallback with `_rebuild_engine_config_from_path(lp, device)`.
+Parsed `H(\d+)` → `horizon=8` and `V(True|False)` → `if_vision=True` from the exp dir name.
+Fallback ran successfully and wrote `model_config.pkl`.
+
+### Why it still failed (Fix_2.4 symptom)
+
+`dim=128` was hardcoded in the fallback. The training config has `'dim': 32` for all aligning
+variants. `VisualUNet` backbone was reconstructed with 4× too many channels → `RuntimeError`
+on `load_state_dict`:
+
+```
+size mismatch for model.model.velocity_net.backbone.time_mlp.1.weight:
+  checkpoint shape torch.Size([128, 32])  ←  dim=32
+  current model   torch.Size([512, 128])  ←  dim=128
+```
+
+`dim` is not encoded in the path, so path-parsing alone is insufficient.
+
+---
+
+## Fix_2.4 — Infer dim from checkpoint weights (final fix)
+
+**Triggered by**: `temp/debug_gen8/outputs_2` — Slurm eval job 21193
+
+### Root cause
+
+`dim` controls the base channel width of every conv layer in `UNet1DTemporalCondModel`.
+It is not encoded in the checkpoint path and not present in any saved config file.
+The only reliable source is the **saved weights themselves**: `time_mlp.1.weight` has shape
+`[4*dim, dim]` → `dim = shape[1]`.
+
+### Fix — `eval_imf_visual_aligning.py`
+
+Updated `_rebuild_engine_config_from_path` to load the latest `state_*.pt` and read `dim`:
+
 ```python
-engine    = model_config()            # iMeanFlowEngine(...)
-diffusion = diffusion_config(engine)  # VisualIMF(engine, ...params...)
-trainer   = trainer_config(diffusion_model=diffusion, dataset=dataset)
-trainer.load(epoch)                   # loads state_<step>.pt
+state_files = sorted(glob.glob(os.path.join(lp, 'state_*.pt')))
+if state_files:
+    ckpt = torch.load(state_files[-1], map_location='cpu')
+    state = ckpt.get('model', ckpt)
+    _key = 'model.model.velocity_net.backbone.time_mlp.1.weight'
+    if _key in state:
+        dim = state[_key].shape[1]  # [4*dim, dim] → dim = shape[1]
+```
+
+Falls back to `dim=32` (config default) if no checkpoint file is found.
+The stale `model_config.pkl` (dim=128) written by Fix_2.3 is overwritten by this run.
+
+**No retrain needed.** Existing weights are intact; only architecture config was wrong.
+
+---
+
+## Files touched
+
+```
+M  imf_visual_aligning_test/train_imf_visual_aligning.py    (Fix_2:   wrap engine in utils.Config)
+M  imf_visual_aligning_test/eval_imf_visual_aligning.py     (Fix_2.3: fallback rebuild from path)
 ```
 
 ---
 
-## 3b. Eval fallback for existing pre-Fix_2 checkpoints (two-round fix)
-
-The training fix (§3) prevents the problem going forward but does not help the **already-saved
-checkpoint**. That directory has no `model_config.pkl` — and it also has **no `args.json`**:
-the parser only saves `args.json` when `experiment == 'train'` (literal string), which is never
-true here (`experiment='imf_visual_aligning'`). So neither file exists.
-
-**Solution**: parse the checkpoint directory name. The `exp_name` fragment encodes all needed
-params: `H{horizon}_D{cls}_a{alpha}_b{beta}_aw{aw}_V{if_vision}_steps{n}_bs{bs}`. `VisualUNet`
-only reads `horizon`, `action_dim`, `if_vision`, `dim`, `condition_dropout`, `dim_mults`,
-`returns_condition` — all either parseable from the path or fixed defaults for the aligning task.
-
-**Additional fix — `eval_imf_visual_aligning.py`**: replaced `_rebuild_engine_config_from_args`
-(which needed `args.json`) with `_rebuild_engine_config_from_path(lp, device)`:
-
-```python
-_mc_path = os.path.join(lp, 'model_config.pkl')
-if os.path.exists(_mc_path):
-    model_config = utils.load_config(*loadpath, 'model_config.pkl')
-else:
-    print('[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from path')
-    model_config = _rebuild_engine_config_from_path(lp, device=device)
-```
-
-`_rebuild_engine_config_from_path` parses `H{n}` and `V{True|False}` from the directory name
-using regex, constructs a minimal `vis_config` namespace with all defaults `VisualUNet` needs,
-builds `utils.Config(iMeanFlowEngine, ...)`, **writes `model_config.pkl`** to the checkpoint
-dir, and returns the Config.
-
-No retrain needed. The first eval run auto-heals the checkpoint; subsequent runs use the pkl.
-
----
-
-## 4. Why training itself was unaffected
-
-Training does not use `model_config.pkl` at all — it only reads the returned Python object.
-The missing file only matters at eval load time. Training completed and wrote a valid checkpoint
-(`state_*.pt` files), but eval could not reload the architecture to wrap around those weights.
-
----
-
-## 5. Verification
+## Verification
 
 | Check | Result |
 |---|---|
 | AST parse: `train_imf_visual_aligning.py` | ✅ |
-| `model_config.pkl` savepath present in Config call | ✅ |
-| Save order: `model_config` before `diffusion_config` | ✅ (lines 227 vs 246) |
-| `engine = model_config()` produces same object as direct call | ✅ (same kwargs) |
+| `model_config.pkl` savepath in Config call (train) | ✅ |
+| Save order: `model_config` before `diffusion_config` | ✅ |
 | AST parse: `eval_imf_visual_aligning.py` | ✅ |
-| `_rebuild_engine_config_from_path` fallback added | ✅ |
-| Regex `H(\d+)` and `V(True\|False)` parse correctly on actual path | ✅ (verified) |
-| Fallback writes pkl so second run uses fast path | ✅ |
-| Eval `load_diffusion_with_override` load order matches | ✅ dataset → model → diffusion → trainer |
+| Regex `H(\d+)` + `V(True\|False)` on actual path | ✅ verified |
+| `dim` inferred from `time_mlp.1.weight` shape in state_*.pt | ✅ |
+| Falls back to `dim=32` if no checkpoint present | ✅ |
+| Stale model_config.pkl overwritten on retry | ✅ |
 
-**Cluster-side expectation**: eval re-run on existing checkpoint will trigger the `args.json` fallback, write `model_config.pkl`, and proceed to model construction. No retrain needed.
-
----
-
-## 6. Why Phase-0 and Fix_1 checks missed this
-
-Fix_1's `__init__.py` import audit verified that all symbol names resolved correctly — but it only checked *names*, not whether the training script actually *called* `utils.Config` for every loadable component. A simple grep for `utils.Config.*model_config` on the training script would have caught this.
-
-**Lesson for future ports**: when copying a train script across architectures, audit every `utils.load_config(...)` call in the eval script against every `utils.Config(..., savepath=..., 'xxx.pkl')` call in the train script. They must be 1-to-1.
+**Cluster expectation**: next eval run triggers fallback → infers `dim=32` from weights → writes correct `model_config.pkl` → loads cleanly.
 
 ---
 
-## 7. Files touched
+## Lesson
 
-```
-M  imf_visual_aligning_test/train_imf_visual_aligning.py    (wrap engine in utils.Config)
-M  imf_visual_aligning_test/eval_imf_visual_aligning.py     (fallback: rebuild model_config from checkpoint path)
-```
+When porting a train script across architectures, audit every `utils.load_config(...)` call
+in the eval script against every `utils.Config(..., savepath='xxx.pkl')` call in the train
+script. They must be 1-to-1.
 
 ---
 
-## 8. Cross-references
+## Cross-references
 
 | Document | Content |
 |---|---|
 | [`../Fix_1/CHANGELOG.md`](../Fix_1/CHANGELOG.md) | Previous fix (UNet name mismatch + FlowMatchingODE alias) |
-| `imf_visual_aligning_test/eval_imf_visual_aligning.py:1656` | `load_diffusion_with_override` — loads all 4 pkl files |
-| `fm_visual_aligning_test/train_fm_visual_aligning.py:214` | Gen7 reference pattern: `utils.Config(VisualUNet, savepath='model_config.pkl')` |
+| `eval_imf_visual_aligning.py:1656` | `_rebuild_engine_config_from_path` + `load_diffusion_with_override` |
+| `fm_visual_aligning_test/train_fm_visual_aligning.py:214` | Gen7 reference: `utils.Config(VisualUNet, savepath='model_config.pkl')` |
