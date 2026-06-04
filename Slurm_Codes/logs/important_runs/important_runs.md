@@ -141,10 +141,32 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/11_43_28_eval_imf_20984.log
 change the folder name
 FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)
 
-
 - FIX1
 retrain
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/13_39_41_train_imf_21035.log
+
++
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/17_02_27_eval_imf_21047.log
+
+- FIX2
+ (K2)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/17_02_27_eval_imf_21047.log
+
+(K20)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/16_19_15_eval_imf_21088.log
+(Still feels TERRIBLE)
+FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE/6/results/halfspace_top-left-hard/diffuser.png
+
+- FIX3 
+K2
+21091
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/17_18_45_eval_imf_21091.log
+
+K10
+21125
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
+(Still Exploded)
 
 ---
 - Visual 
@@ -183,7 +205,7 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/10_10_04_eval_visual_aligning_20304.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
 
 eval(6,7,8(half))
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
+FMPCC/FM-PCC/Slurm_Codes/logs/202FI6-05-15/15_56_15_eval_visual_aligning_20324.log
 
 - reudce H to 2
 (and change trainign steps to 1k)
@@ -218,16 +240,27 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-17/23_41_46_train_visual_aligning_20455.lo
 
 ...
 
-one shot run
+## one shot run
 (non visual) BUG
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/00_15_06_eval_fm_visual_aligning_20967.log
 rerun after fix 18
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/22_13_23_train_visual_aligning_dpcc_21007.log
 
+FIX18.2
 
 (visual)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/12_24_54_visual_aligning_pipeline_dpcc_20986.log
+(Finished)
 
+FIX18.4
+(non visual success)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/18_03_20_eval_visual_aligning_dpcc_21050.log
+...
+misc fix, run 21080
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/16_58_59_eval_visual_aligning_dpcc_21089.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
+NOT good, closure task
 
 - Gen7 FM Visual Aligning
 (10k train)
@@ -418,6 +451,16 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/18_29_07_eval_fm_visual_aligning_21004.
 (Visual)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/12_16_37_eval_fm_visual_aligning_20985.log
 
+
+(Good Compare)
+diffuser
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_5/diffuser/diagnostics/rollout_1_mpc_foresight.svg
+
+vs 
+dpcc-c
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_5/dpcc-c/diagnostics/rollout_1_mpc_foresight.svg
+
+
 ## Turn off visual
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_49_fm_visual_aligning_pipeline_20700.log
 
@@ -504,10 +547,46 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/16_32_56_eval_d3il_baseline_20894.log
 ---
 
 ---
+# Gen8 iMF Visual Aligning
+
+Fix1.2
+Train
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/17_48_36_train_imf_visual_aligning_21162.log
+(Work, Killed, Run later)
+21166
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/18_00_01_train_imf_visual_aligning_21166.log
+
+fix2.5 eval run
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_50_31_eval_imf_visual_aligning_21196.log
 
 # Gen 9 Visual Avoiding (Camera Data Collection)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-29/16_14_33_collect_visual_avoiding_20940.log
 
+---
+
+E2 Train 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/12_43_49_train_fm_visual_avoiding_21145.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/12_52_35_train_visual_avoiding_dpcc_21146.log
+
+E2 eval
+after Fix_6.3
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/17_58_38_eval_fm_visual_avoiding_21165.log
+(plot bug) -> fix7
+
+21167
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/18_09_54_eval_fm_visual_avoiding_21167.log
+(feels ok)
+
+- Diffusion
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/12_52_35_train_visual_avoiding_dpcc_21146.log
+(K100 , 56789 trained not eval)
+
+eval 6
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_16_52_eval_visual_avoiding_dpcc_21188.log
+
+(K20)
+21234
 
 # Gen11
 # E2 
@@ -518,3 +597,30 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/11_59_58_run_naive_21023.log
 # E3
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/12_57_00_run_env_21029.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/12_57_57_run_env_21031.log
+
+# E4
+smoke
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/15_42_03_collect_21205.log
+
+full run
+21206 to 21209
+
+fix1
+21212 to 21215
+
+fix2 Curve + Pillar
+21220, 21221
+
+fix3 Curve
+21222
+
+fix4 curve
+21226
+
+fix5 Curve
+21227
+
+---
+
+all runs
+21231 -> 21223

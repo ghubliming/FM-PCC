@@ -1,0 +1,43 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Thu Jun  4 13:34:05 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21198
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=empty  n_trials=10  gain=pid_default  seed=0
+[ collect ] scene=empty  n_trials=10  homotopy_pool=['N/A']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected=  0  t=0s  ~0.21s/ep  ETA≈2s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000000.pkl
+[ collect ] DONE  saved=10  rejected=0  (0.0% rejected)  elapsed=2s
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/empty …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 10
+  Homotopy breakdown  : {'N/A': 10}
+
+  Speed (m/s):
+    Generated  mean=0.391  median=0.422  p95=0.625
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ✅ OK
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=190  median=181  [134, 247]
+    UAV-Flow   median=38.0 waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0474  p95=0.0815
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/empty/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/empty/
+========================================
+JOB END: Thu Jun  4 13:34:08 UTC 2026
+========================================
