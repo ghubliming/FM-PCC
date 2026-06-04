@@ -5,7 +5,8 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=8G
 #SBATCH --time=04:00:00
-#SBATCH --partition=cpu-student
+#SBATCH --partition=gpu-1-student
+#SBATCH --gres=gpu:1
 #
 # Epoch 4 expert data collection — headless MuJoCo PID rollouts (no GPU needed).
 # Runs collect.py then stats_validator.py so the full USAGE.md quick-start
