@@ -1521,3 +1521,34 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
    - Built `dataset_writer.py` to downsample the 100 Hz physics engine to ~33 Hz, apply Gaussian noise `N(0, 0.02²)` to thicken the data manifold, and package the rollouts into schema-locked pickle episodes mapping `[dt, obs(T,6), actions(T-1,3)]` with position-delta actions.
    - Introduced `collect.py` as the CLI driver with automatic rejection limits for high-collision scenes, and `stats_validator.py` to validate generated dataset statistics against the Phase 4-α targets.
 4. **SLURM Automation (Phase 4-γ)**: Created `collect.sh` in the `Slurm_Codes` directory to execute batch collection across multiple scenes in parallel using SLURM arrays. Updated `USAGE.md` providing comprehensive instructions for cluster execution and local testing.
+
+***
+
+## Gen11 Epoch 4: UAV Expert Data Collection Refinements (June 4-5, 2026)
+
+**Keywords**: Gen11, UAV expert data, fixes, s_curve, trajectories, noise offset.
+
+1. **Trajectory Generation & Noise Fix (Fix 1)**: Corrected the noise model to apply a per-episode constant offset instead of per-step noise, restoring the expected `[Δp_des]` action norm distribution. Updated s_curve and pillars trajectories.
+2. **Continuous Paths & Amplitude Correction (Fix 2)**: Replaced piecewise path planning with continuous `tanh` trajectories for `s_curve_scene_path` to prevent zero-velocity stops at wall ends. Adjusted amplitudes to zero for centre-pass homotopy classes.
+3. **Thresholds & Segment Tuning (Fix 3 - 5)**: Tuned trajectory parameters (e.g., reverting to `k=3.66`), raised contact thresholds (e.g., s_curve to 8%), and implemented proportional-duration segments ensuring uniform velocity (e.g., ~0.57 m/s) across gap crossings. Increased SLURM abort limits to improve trial completion rates against seed variance, yielding a final dataset of 1769 accepted state-only episodes.
+
+***
+
+## Gen9 Epoch 2: "U2" Avoiding Evaluation Rebuild (June 5, 2026)
+
+**Keywords**: Gen9, U2, avoiding evaluation, evaluation scripts, dataset config, importlib.
+
+1. **Evaluation Framework Redesign**: Discarded legacy evaluation loops and replaced them with streamlined, reduced-complexity evaluation scripts for both FM and DPCC avoiding pipelines.
+2. **Workstream Strategy**: Established execution plans (`PLAN.md` and `CHANGELOG.md`) that separate tasks into independent workstreams for better code maintainability.
+3. **Config & Class Loading Fixes (Fix 1 - 2)**: Updated the `Parser` class to strictly enforce the `avoiding-d3il-visual` dataset configuration in eval scripts. Upgraded `load_diffusion_with_override` to use standard Python `importlib` for module loading, resolving `ModuleNotFoundError` during checkpoint hydration.
+4. **VisualAgent Return Interface Enhancement**: Updated `VisualAgent` to properly return the planned trajectory output, fixing col-5 plotting gaps in FM and DPCC evaluations.
+
+***
+
+## Gen11 Epoch 5: Visual Collection & Validation Pipeline (June 5, 2026)
+
+**Keywords**: Gen11, Epoch 5, visual data collection, GIF generation, mini-FM, dataloader sanity gate.
+
+1. **Camera Image Collection (WS-A)**: Implemented `collect_camera_images.py` to replay Epoch 4 state-only episodes, injecting absolute `qpos`/`qvel` directly into the MuJoCo engine (bypassing PID action replay). Captured 96x96 images from both bird's-eye (`bp-cam`) and FPV (`fpv-cam`) perspectives using offscreen rendering. Fixed a renderer lifecycle bug (`Fix 1`) ensuring safe EGL shutdown.
+2. **Trajectory GIF/Video Generation (WS-B)**: Built `generate_trajectory_gifs.py` and `assemble_gifs_from_pngs.py` to compile rendered frames into stitched (`bp-cam` alongside `fpv-cam`) side-by-side GIFs and MP4s, allowing human visual inspection of expert dataset quality.
+3. **Mini-FM Sanity Gate (WS-C)**: Authored `mini_fm_sanity.py` to train a minimal Flow Matching model (`H=8`, `D=9`, 20 ODE steps) over a subset of `empty` scene trajectories. This acts as a strict structural verification gate to confirm that the `[dt, obs(6), action(3)]` schema and position-delta action conventions are sound before scaling up to full FM-PCC training.

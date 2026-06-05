@@ -260,7 +260,8 @@ def main():
                 errors.append((ep_id, str(exc)))
                 tqdm.write(f'[ gif-gen ] WARN: {ep_id} failed — {exc}')
 
-        renderer.close()
+        if hasattr(renderer, 'close'):
+            renderer.close()
 
     # ── summary ───────────────────────────────────────────────────────────────
     print()
