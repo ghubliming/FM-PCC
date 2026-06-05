@@ -89,7 +89,13 @@ class VisualAgent:
         act_norm = traj[0, 0, :2].detach().cpu().numpy()
         action   = self.act_normalizer.unnormalize(
             act_norm.reshape(1, -1)).squeeze(0)
-        return action
+        # Extract planned robot c_xy positions over the horizon for col-5 visualisation.
+        # traj shape: (1, H, 6) = [act_norm(2)|des_xy_norm(2)|c_xy_norm(2)].
+        # Unnormalise the obs part (dims 2:6) then take c_xy (last 2 cols of 4D obs).
+        obs_norm_traj = traj[0, :, 2:].detach().cpu().numpy()       # (H, 4) normalised
+        obs_raw_traj  = self.obs_normalizer.unnormalize(obs_norm_traj)  # (H, 4) raw
+        planned_xy    = obs_raw_traj[:, 2:4][np.newaxis, :, :]       # (1, H, 2) c_xy
+        return action, planned_xy
 
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
@@ -399,7 +405,7 @@ for exp in exps:
                                                         interpolation=cv2.INTER_AREA)
                                 bp_image = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
                                 c_xy     = env.robot.current_c_pos[:2].copy()
-                                action   = agent.predict(bp_image, obs[:2].copy(), c_xy)
+                                action, traj_plan = agent.predict(bp_image, obs[:2].copy(), c_xy)
                             avg_time[i] += time.time() - start
 
                             if 'avoiding' in exp:
@@ -415,7 +421,7 @@ for exp in exps:
                             desired_next_pos = next_pos_des[:2].copy()
 
                             if _ % save_samples_every == 0:
-                                sampled_trajectories.append(None)   # no candidate traj in visual eval
+                                sampled_trajectories.append(traj_plan)   # (1, H, 2) planned c_xy
 
                             obs_buffer.append(obs)
                             action_buffer.append(action)
@@ -454,6 +460,18 @@ for exp in exps:
                             np.array(obs_buffer)[:, obs_indices['x']],
                             np.array(obs_buffer)[:, obs_indices['y']],
                             colors[seed % len(colors)], linewidth=2)
+
+                        # Col 5: planned c_xy trajectory from FM model at subsampled steps
+                        for traj_np in sampled_trajectories_all[i]:
+                            if traj_np is None:
+                                continue
+                            for k in range(traj_np.shape[0]):
+                                for curr_ax in [ax[i, 5], ax_all[i, variant_idx]]:
+                                    curr_ax.plot(traj_np[k, :, 0], traj_np[k, :, 1],
+                                                 'b', alpha=0.5)
+                                    curr_ax.plot(traj_np[k, 0, 0], traj_np[k, 0, 1], 'go')
+                        ax[i, 5].set_xlim(ax_limits[0])
+                        ax[i, 5].set_ylim(ax_limits[1])
 
                         for curr_ax in [ax[i, 4], ax[i, 5], ax_all[i, variant_idx]]:
                             utils.plot_environment_constraints(exp, curr_ax)
