@@ -120,7 +120,12 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
     trainer_config._dict['results_folder'] = os.path.join(*loadpath)
 
     if target_class is not None:
-        target_cls = utils.config.import_class(target_class)
+        # Fix_1: utils.config.import_class() prepends 'fm_visual_avoiding.' to every
+        # class path, breaking cross-package classes like VisualGaussianDiffusion
+        # (from diffuser_visual_avoiding).  Use plain importlib instead.
+        import importlib as _ilib
+        _parts = target_class.rsplit('.', 1)
+        target_cls = getattr(_ilib.import_module(_parts[0]), _parts[1])
         if (diffusion_config._class.__module__ + '.' + diffusion_config._class.__name__
                 != target_cls.__module__ + '.' + target_cls.__name__):
             diffusion_config._class = target_cls
