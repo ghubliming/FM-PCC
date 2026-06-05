@@ -270,7 +270,8 @@ def main():
                 errors.append((ep_id, str(exc)))
                 tqdm.write(f'[ cam-collect ] WARN: {ep_id} failed — {exc}')
 
-        renderer.close()
+        if hasattr(renderer, 'close'):
+            renderer.close()
 
     # ── summary ───────────────────────────────────────────────────────────────
     print()
