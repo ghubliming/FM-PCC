@@ -35,3 +35,6 @@ temp/*
 
 .claude
 .claude_history_backup
+
+# Scratch directory
+scratch/
