@@ -79,7 +79,10 @@ class VisualAgent:
         act_norm = traj[0, 0, :2].detach().cpu().numpy()
         action   = self.act_normalizer.unnormalize(
             act_norm.reshape(1, -1)).squeeze(0)
-        return action
+        obs_norm_traj = traj[0, :, 2:].detach().cpu().numpy()
+        obs_raw_traj  = self.obs_normalizer.unnormalize(obs_norm_traj)
+        planned_xy    = obs_raw_traj[:, 2:4][np.newaxis, :, :]
+        return action, planned_xy
 
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
@@ -335,6 +338,7 @@ for exp in exps:
                     pos_tracking_errors       = np.zeros((n_trials, args.max_episode_length - 1))
                     obs_all                   = []
                     act_all                   = []
+                    sampled_trajectories_all  = []
 
                     for i in range(n_trials):
                         torch.manual_seed(i)
@@ -345,10 +349,11 @@ for exp in exps:
                             fixed_z = env.robot_state()[2:]
                             obs     = np.concatenate((action[:2], obs))
 
-                        obs_buffer       = []
-                        action_buffer    = []
+                        obs_buffer         = []
+                        action_buffer      = []
+                        sampled_trajectories = []
                         disable_projection = False
-                        desired_next_pos = obs[obs_indices['x']:obs_indices['y'] + 1].copy()
+                        desired_next_pos   = obs[obs_indices['x']:obs_indices['y'] + 1].copy()
 
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
@@ -388,8 +393,11 @@ for exp in exps:
                                                         interpolation=cv2.INTER_AREA)
                                 bp_image = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
                                 c_xy     = env.robot.current_c_pos[:2].copy()
-                                action   = agent.predict(bp_image, obs[:2].copy(), c_xy)
+                                action, traj_plan = agent.predict(bp_image, obs[:2].copy(), c_xy)
                             avg_time[i] += time.time() - start
+
+                            if _ % save_samples_every == 0:
+                                sampled_trajectories.append(traj_plan)
 
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
@@ -417,6 +425,7 @@ for exp in exps:
 
                         obs_all.append(np.array(obs_buffer))
                         act_all.append(np.array(action_buffer))
+                        sampled_trajectories_all.append(sampled_trajectories)
 
                         if i >= plot_how_many:
                             continue
@@ -439,6 +448,17 @@ for exp in exps:
                             np.array(obs_buffer)[:, obs_indices['x']],
                             np.array(obs_buffer)[:, obs_indices['y']],
                             colors[seed % len(colors)], linewidth=2)
+
+                        for traj_np in sampled_trajectories_all[i]:
+                            if traj_np is None:
+                                continue
+                            for k in range(traj_np.shape[0]):
+                                for curr_ax in [ax[i, 5], ax_all[i, variant_idx]]:
+                                    curr_ax.plot(traj_np[k, :, 0], traj_np[k, :, 1],
+                                                 'b', alpha=0.5)
+                                    curr_ax.plot(traj_np[k, 0, 0], traj_np[k, 0, 1], 'go')
+                        ax[i, 5].set_xlim(ax_limits[0])
+                        ax[i, 5].set_ylim(ax_limits[1])
 
                         for curr_ax in [ax[i, 4], ax[i, 5], ax_all[i, variant_idx]]:
                             utils.plot_environment_constraints(exp, curr_ax)
