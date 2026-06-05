@@ -168,9 +168,11 @@ for exp in exps:
         obs_indices         = config['observation_indices'][robot_name]
         act_indices         = config['action_indices'][robot_name]
 
+        # Fix_1: exp ('avoiding-d3il') is used only for YAML constraint/bounds lookups.
+        # The Python config that holds 'plan_visual_avoiding_dpcc' is avoiding-d3il-visual.
         class Parser(utils.Parser):
-            dataset: str = exp
-            config:  str = 'config.' + exp
+            dataset: str = 'avoiding-d3il-visual'
+            config:  str = 'config.avoiding-d3il-visual'
 
         figs_all_seeds, axes_all_seeds = zip(*[
             plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
