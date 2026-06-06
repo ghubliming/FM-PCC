@@ -50,12 +50,13 @@ class VisualAgent:
     Trajectory: 6D [act(2) | des_xy(2) | c_xy(2)].
     """
     def __init__(self, model, obs_normalizer, act_normalizer,
-                 projector=None, device='cuda:0'):
-        self.model          = model
-        self.obs_normalizer = obs_normalizer
-        self.act_normalizer = act_normalizer
-        self.projector      = projector
-        self.device         = device
+                 projector=None, device='cuda:0', plan_batch_size=4):
+        self.model            = model
+        self.obs_normalizer   = obs_normalizer
+        self.act_normalizer   = act_normalizer
+        self.projector        = projector
+        self.device           = device
+        self.plan_batch_size  = plan_batch_size
 
     def predict(self, bp_image, pred_xy, c_xy):
         obs_4d   = np.concatenate([pred_xy, c_xy]).astype(np.float32)
@@ -65,8 +66,9 @@ class VisualAgent:
         bp_t  = torch.from_numpy(bp_image.astype(np.float32)).to(self.device)
         obs_t = torch.from_numpy(obs_norm).to(self.device)
 
-        bp_b  = bp_t.unsqueeze(0).unsqueeze(0)
-        obs_b = obs_t.unsqueeze(0).unsqueeze(0)
+        B = self.plan_batch_size
+        bp_b  = bp_t.unsqueeze(0).unsqueeze(0).repeat(B, 1, 1, 1, 1)  # (B, 1, C, H, W)
+        obs_b = obs_t.unsqueeze(0).unsqueeze(0).repeat(B, 1, 1)        # (B, 1, 4)
 
         cond = {0: (bp_b, obs_b)}
         self.model.eval()
@@ -79,9 +81,9 @@ class VisualAgent:
         act_norm = traj[0, 0, :2].detach().cpu().numpy()
         action   = self.act_normalizer.unnormalize(
             act_norm.reshape(1, -1)).squeeze(0)
-        obs_norm_traj = traj[0, :, 2:].detach().cpu().numpy()
-        obs_raw_traj  = self.obs_normalizer.unnormalize(obs_norm_traj)
-        planned_xy    = obs_raw_traj[:, 2:4][np.newaxis, :, :]
+        obs_norm_traj = traj[:, :, 2:].detach().cpu().numpy()           # (B, H, 4)
+        obs_raw_traj  = self.obs_normalizer.unnormalize(obs_norm_traj)  # (B, H, 4)
+        planned_xy    = obs_raw_traj[:, :, 2:4]                         # (B, H, 2)
         return action, planned_xy
 
 
