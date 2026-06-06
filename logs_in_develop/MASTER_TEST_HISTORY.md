@@ -1552,3 +1552,13 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Camera Image Collection (WS-A)**: Implemented `collect_camera_images.py` to replay Epoch 4 state-only episodes, injecting absolute `qpos`/`qvel` directly into the MuJoCo engine (bypassing PID action replay). Captured 96x96 images from both bird's-eye (`bp-cam`) and FPV (`fpv-cam`) perspectives using offscreen rendering. Fixed a renderer lifecycle bug (`Fix 1`) ensuring safe EGL shutdown.
 2. **Trajectory GIF/Video Generation (WS-B)**: Built `generate_trajectory_gifs.py` and `assemble_gifs_from_pngs.py` to compile rendered frames into stitched (`bp-cam` alongside `fpv-cam`) side-by-side GIFs and MP4s, allowing human visual inspection of expert dataset quality.
 3. **Mini-FM Sanity Gate (WS-C)**: Authored `mini_fm_sanity.py` to train a minimal Flow Matching model (`H=8`, `D=9`, 20 ODE steps) over a subset of `empty` scene trajectories. This acts as a strict structural verification gate to confirm that the `[dt, obs(6), action(3)]` schema and position-delta action conventions are sound before scaling up to full FM-PCC training.
+
+***
+
+## Gen9 Epoch 2: "U2" Avoiding VisualAgent Batch Trajectory Sampling (June 6, 2026)
+
+**Keywords**: Gen9, U2, VisualAgent, plan_batch_size, trajectory sampling, batch processing, col-5 visualization.
+
+1. **VisualAgent Batch Trajectory Generation (Fix 3)**: Identified that `VisualAgent` generated a single trajectory sample (`B=1`) per replanning step, causing col-5 visualizer plots to show thin, noisy, and unrepresentative single-path lines compared to the rich multi-seed evaluation fan in state-based avoiding pipelines.
+2. **Batch Repeats and ODE Multi-seed Initialization**: Added a `plan_batch_size=4` parameter to `VisualAgent.__init__`. The inference loops in both DPCC and FM evaluation scripts were upgraded to repeat identical observation/image contexts across the batch dimension while maintaining independent random noise seeds during the diffusion ODE solver steps.
+3. **Consistent Col-5 Visualization Parity**: This ensures the visual agent generates and returns multiple diverse candidate paths per inference step `(B, H, 2)`. The resulting col-5 foresight plots now present a coherent, multi-path fan that is fully consistent with established state-based diagnostic standards, while preserving acceptable inference costs for evaluation.
