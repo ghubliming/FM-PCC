@@ -89,13 +89,25 @@ This fix does not affect collected data — it only affects the validation repor
 
 ---
 
-## Re-collection needed
+## Fix_1 verification results (all 4 scenes re-collected)
 
-Empty (500 eps) and pillars (477 eps) from the debug run are valid — keep them.  
-Only s_curve needs re-collection. Corridor is borderline (307 eps usable but low for
-L/R). Recommended re-collection scope:
+Jobs 21324–21327, node i6-gpu-1, 2026-06-07 13:03–13:06 UTC.
 
-```bash
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh s_curve  500
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500
-```
+| Scene | Saved | Rejected | Homotopy breakdown | Speed | Action norm | Status |
+|---|---|---|---|---|---|---|
+| empty | 500 | 0 (0%) | N/A: 500 | 0.387 m/s ✅ | 0.0116 m/step ✅ | ✅ |
+| corridor | 436 | 64 (12.8%) | C:167 L:139 R:130 | 0.716 m/s ✅ | 0.0205 m/step ✅ | ✅ |
+| s_curve | 356 | 144 (28.8%) | default: 356 | 0.560 m/s ✅ | 0.0114 m/step ✅ | ✅ |
+| pillars | 477 | 23 (4.6%) | (L,L,L):112 (L,R,L):125 (R,L,R):125 (R,R,R):115 | 0.417 m/s ✅ | 0.0241 m/step ✅ | ✅ |
+| **Total** | **1769** | — | — | — | — | ✅ |
+
+Rejection rates and episode counts match the Fix_5 baseline exactly. Homotopy
+balance restored for corridor (C:167 L:139 R:130 vs the skewed C:167 L:70 R:70 from U2
+pre-fix). Speed validator now reports real velocity values (Fix 3 confirmed working).
+
+**obs shape verified across all scenes**: `(T, 9)` with correct column layout:
+- `obs[:, :3]` = `p_des` (unnoisy commanded position) ✅
+- `obs[:, 3:6]` = `p` (actual position) ✅
+- `obs[:, 6:9]` = `v` (velocity, zero at episode start) ✅
+
+**U2 dataset is complete and clean. No further re-collection needed.**

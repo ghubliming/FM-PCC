@@ -32,7 +32,7 @@
     <light name="spotlight" mode="targetbodycom" target="x2" pos="0 -1 2"/>
     <body name="x2" pos="0 0 0.1" quat="0 0 0 1" childclass="x2">
       <freejoint/>
-      <camera name="track" pos="-1 0 .5" xyaxes="0 -1 0 1 0 2" mode="trackcom"/>
+      <camera name="track" pos="-1 0 .5" xyaxes="0 -1 0 1 0 2"/>
       <site name="imu" pos="0 0 .02"/>
       <geom material="phong3SG" mesh="X2_lowpoly" class="visual" quat="0 0 1 1"/>
       <geom class="collision" size=".06 .027 .02" pos=".04 0 .02"/>

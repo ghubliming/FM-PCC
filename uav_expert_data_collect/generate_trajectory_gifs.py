@@ -139,7 +139,8 @@ def replay_to_frames(model, data, renderer, episode, resolution,
 
     Returns list of (H, W*2, 3) uint8 RGB arrays (ready for imageio).
     """
-    obs = episode['obs']  # (T, 6)
+    obs      = episode['obs']          # (T, 9)  U2: [p_des(3) | p(3) | v(3)]
+    q_stored = episode.get('q', None)  # (T, 4)  D-prep: actual quaternion (E4 U3+); None until re-collect
     T = len(obs)
     scene = episode.get('scene', '?')
     homotopy = episode.get('homotopy', '?')
@@ -156,9 +157,10 @@ def replay_to_frames(model, data, renderer, episode, resolution,
             continue
 
         # Inject state
-        data.qpos[:3] = obs[t, :3]
-        data.qpos[3:7] = [1.0, 0.0, 0.0, 0.0]
-        data.qvel[:3] = obs[t, 3:6]
+        data.qpos[:3] = obs[t, 3:6]   # U2: p at columns 3:6 (was :3 in 6D format)
+        # D-prep: use stored quaternion for attitude-aware rendering; fall back to level
+        data.qpos[3:7] = q_stored[t] if q_stored is not None else [1.0, 0.0, 0.0, 0.0]
+        data.qvel[:3] = obs[t, 6:9]   # U2: v at columns 6:9 (was 3:6 in 6D format)
         data.qvel[3:6] = 0.0
         mujoco.mj_forward(model, data)
 
