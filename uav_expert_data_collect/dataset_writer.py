@@ -7,7 +7,7 @@ scene       : str    'empty'|'corridor'|'s_curve'|'pillars'
 homotopy    : str    '(L,R,L)'|'N/A'|…
 controller  : str    'pid_default'|'pid_high_gain'|…
 dt          : float  dataset timestep (s)  ≈ 0.030 (100 Hz physics → 33 Hz dataset)
-obs         : (T, 6)   float32  [p(3), v(3)]
+obs         : (T, 9)   float32  [p_des(3), p(3), v(3)]   — U2: p_des prepended (DPCC_OBS_DEVIATION §Deviation 2)
 actions     : (T-1, 3) float32  [Δp_des(3)]   — position-DELTA convention (AUDIT Risk 3)
 targets     : (T, 3)   float32  absolute p_des (kept for debugging; not fed to FM)
 obstacles   : list[dict]
@@ -49,8 +49,8 @@ def rollout_to_episode(rollout, episode_id, noise_sigma=NOISE_SIGMA, rng=None):
     steps = _downsample(rollout['steps'], rollout['dt_physics'])
     T = len(steps)
 
-    obs     = np.array([np.concatenate([s['p'], s['v']]) for s in steps],
-                       dtype=np.float32)        # (T, 6)
+    obs     = np.array([np.concatenate([s['p_des'], s['p'], s['v']]) for s in steps],
+                       dtype=np.float32)        # (T, 9)  [p_des(3) | p(3) | v(3)]
     targets = np.array([s['p_des'] for s in steps],
                        dtype=np.float32)        # (T, 3)  absolute
 

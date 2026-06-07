@@ -130,3 +130,68 @@ Effort: ~30 minutes. Risk: low (we already verified MJPC's `quadrotor.xml.patch`
 ## 5. One-line summary
 
 For the obstacle-avoidance line we're pursuing: **keep our Epoch 3 scenes.** If a future epoch wants a flashier visual demo or apples-to-apples comparison with MJPC's baseline, **`cp mjpc/tasks/quadrotor/task.xml` + strip `<custom>` block** gives us a pre-designed racing course in 30 minutes. UAV-Flow gives us **trajectories only**, not envs.
+
+---
+
+## 6. Were the E3 UAV collisions fixed in Epoch 4 and 5?
+
+E3 produced two failure cases in the obstacle scenes.  This section records whether they
+were resolved in subsequent epochs.
+
+### s_curve — 41% contact steps ✅ Fixed in E4
+
+**Root cause**: `s_curve_path` chained `traverse_line` segments with `v_des = 0` at each
+internal waypoint junction (t=5 s, t=10 s).  At those moments the drone entered the
+`Kp_omega = 10` limit-cycle regime — saturating the angular-rate controller →
+violent oscillation → drone wedged into the corridor walls for ~6 s of each 15 s episode.
+
+**Fixed by two independent mechanisms before any E4 data was collected:**
+
+1. **`Kp_omega` correction** (`EPOCH4_EXECUTION_PLAN.md` Decision 2):  
+   `flight_controller.py` updated `[10.0, 10.0, 2.0]` → `[2.5, 2.5, 1.0]`.  
+   Eliminates the saturation condition at its root.
+
+2. **Trajectory redesign** (E4 Fix_5.1):  
+   `s_curve_scene_path()` rewritten from piecewise-stops to a **3-segment
+   proportional-duration `traverse_line`** — each segment's time budget is proportional
+   to its Euclidean length, so no segment forces `v = 0` at an internal joint.  The
+   critical diagonal gap crossing (1.89 m) gets 5.18 s instead of ~3.2 s → peak speed
+   drops from 1.17 m/s to 0.57 m/s.
+
+E4 s_curve final rejection rate: **28.8%** (under an 8% per-scene contact threshold
+introduced in Fix_4 to accept narrow end-face grazes).
+
+### pillars weave — 2.9% contact / 0.922 m RMS ✅ Accepted
+
+**Root cause**: 0.25g lateral demand → ~14° tilt → phase lag in y → 29 grazing contacts
+over 10 s.  The drone always passed on the correct side of each pillar and reached the
+endpoint (final error 0.062 m).  This was a tracking-lag result, not a control failure.
+
+E4 uses the same `weave()` trajectory factory with homotopy-specific amplitude parameters.
+E4 pillar rejection: **4.6%** (477 episodes saved) — similar behaviour, within tolerance.
+Pillar grazing under high lateral demand is considered acceptable training data (realistic
+near-miss behaviour for a visual FM policy).
+
+### corridor — 0 contact in E3 → ⚠️ New concern in E4/E5
+
+E3 corridor was clean (0.023 m RMS, 0 contact steps).  No E3 problem to fix.
+
+In E4, corridor data was collected with a **2% contact threshold** (up to 4 contact steps
+per 200-step episode allowed).  E5 WS-B GIFs revealed that some accepted episodes
+genuinely show the drone clipping the wall at speed.  This is not a regression from E3 —
+it is a threshold policy decision made in E4 that the investigation exposed.
+
+The **E4 U2 upgrade plan** (`../Epoch4_expert_data/U2/PLAN.md`) tightens the corridor
+threshold from 2% → 1% as Change B of the next re-collection.
+
+### Resolution status
+
+| E3 problem | Fixed in E4? | Fixed in E5? | Mechanism |
+|---|---|---|---|
+| `s_curve` 41% contact (limit-cycle at v=0) | ✅ Yes | N/A — E5 is replay-only | `Kp_omega` [10→2.5] + proportional-duration trajectory (Fix_5.1) |
+| `pillars` 2.9% contact / 0.922 m RMS | ✅ Accepted | N/A | Tracking lag within tolerance; weave factory kept |
+| `corridor` (E3 was clean) | N/A | ⚠️ New concern found | E4 2% threshold allows brief contact; U2 tightens to 1% |
+
+Full root-cause analysis: [`METHODOLOGY.md`](METHODOLOGY.md) §Test results.  
+Full E5 corridor GIF investigation: [`../Epoch5_visual_and_validation/INVESTIGATION_wall_contact_gifs.md`](../Epoch5_visual_and_validation/INVESTIGATION_wall_contact_gifs.md).  
+U2 re-collection plan: [`../Epoch4_expert_data/U2/PLAN.md`](../Epoch4_expert_data/U2/PLAN.md).
