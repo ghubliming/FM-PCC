@@ -128,8 +128,11 @@ SCENE_MAX_CONTACT_FRACTION = {
 ### Step 2 — Re-collect (SLURM)
 
 ```bash
-sbatch --array=0-3 Slurm_Codes/sbatch/uav_expert_data/collect.sh all_scenes 500
+./Slurm_Codes/sbatch/uav_expert_data/collect_all.sh 500
 ```
+
+Submits 4 independent SLURM jobs in parallel (one per scene).
+Script: `Slurm_Codes/sbatch/uav_expert_data/collect_all.sh`.
 
 All four scenes in parallel.  Expected wall time: similar to Fix_5 (~2–3 hours).  The new
 episodes will overwrite the Fix_5 pickles in `logs/uav_expert_data/`.
