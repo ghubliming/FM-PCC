@@ -82,10 +82,13 @@ MAX_CONTACT_FRACTION = 0.02
 # Fix_4: s_curve has narrow wall end-faces at x=±0.5 that the drone briefly
 # grazes even on good trajectories.  Raise threshold to 0.08 for that scene
 # so brief end-face clips don't reject otherwise valid episodes.
+# U2: corridor tightened 0.02 → 0.01 (E5 GIF investigation showed real wall contact
+# at 2% teaches the visual FM that wall clips are acceptable).
+# U2: s_curve halved 0.08 → 0.04 (reduces wall-sliding while still covering end-face grazes).
 SCENE_MAX_CONTACT_FRACTION = {
     'empty':    0.02,
-    'corridor': 0.02,
-    's_curve':  0.08,
+    'corridor': 0.01,
+    's_curve':  0.04,
     'pillars':  0.02,
 }
 
