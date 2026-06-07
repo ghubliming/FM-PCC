@@ -10,6 +10,7 @@ dt          : float  dataset timestep (s)  ≈ 0.030 (100 Hz physics → 33 Hz d
 obs         : (T, 9)   float32  [p_des(3), p(3), v(3)]   — U2: p_des prepended (DPCC_OBS_DEVIATION §Deviation 2)
 actions     : (T-1, 3) float32  [Δp_des(3)]   — position-DELTA convention (AUDIT Risk 3)
 targets     : (T, 3)   float32  absolute p_des (kept for debugging; not fed to FM)
+q           : (T, 4)   float32  actual body quaternion [w,x,y,z] — D-prep: for attitude-aware WS-A/B rendering (E4 U3+)
 obstacles   : list[dict]
 metadata    : dict   {start_pos, total_time, dt_physics, contact_fraction,
                       controller_gains, noise_sigma}
@@ -51,6 +52,8 @@ def rollout_to_episode(rollout, episode_id, noise_sigma=NOISE_SIGMA, rng=None):
 
     obs     = np.array([np.concatenate([s['p_des'], s['p'], s['v']]) for s in steps],
                        dtype=np.float32)        # (T, 9)  [p_des(3) | p(3) | v(3)]
+    q       = np.array([s['q'] for s in steps],
+                       dtype=np.float32)        # (T, 4)  [w,x,y,z]  D-prep: attitude for rendering
     targets = np.array([s['p_des'] for s in steps],
                        dtype=np.float32)        # (T, 3)  absolute
 
@@ -78,6 +81,7 @@ def rollout_to_episode(rollout, episode_id, noise_sigma=NOISE_SIGMA, rng=None):
         'obs':        obs,
         'actions':    actions,
         'targets':    targets,
+        'q':          q,
         'obstacles':  rollout['obstacles'],
         'metadata': {
             'start_pos':        rollout['init_pos'],

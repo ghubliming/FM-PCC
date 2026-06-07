@@ -149,7 +149,8 @@ def replay_and_capture(model, data, renderer, episode, resolution):
     Returns:
         (bp_frames, track_frames) — parallel lists of (H, W, 3) uint8 BGR arrays
     """
-    obs = episode['obs']        # (T, 6) = [p(3), v(3)]
+    obs      = episode['obs']          # (T, 9)  U2: [p_des(3) | p(3) | v(3)]
+    q_stored = episode.get('q', None)  # (T, 4)  D-prep: actual quaternion (E4 U3+); None until re-collect
     T = len(obs)
 
     # Find the "track" camera id
@@ -165,11 +166,11 @@ def replay_and_capture(model, data, renderer, episode, resolution):
 
     for t in range(T):
         # Inject position and velocity from stored obs
-        p = obs[t, :3]
-        v = obs[t, 3:6]
+        p = obs[t, 3:6]   # U2: p at columns 3:6 (was :3 in 6D format)
+        v = obs[t, 6:9]   # U2: v at columns 6:9 (was 3:6 in 6D format)
         data.qpos[:3] = p
-        # Keep orientation level (identity quaternion) for rendering
-        data.qpos[3:7] = [1.0, 0.0, 0.0, 0.0]
+        # D-prep: use stored quaternion for attitude-aware rendering; fall back to level
+        data.qpos[3:7] = q_stored[t] if q_stored is not None else [1.0, 0.0, 0.0, 0.0]
         data.qvel[:3] = v
         data.qvel[3:6] = 0.0
 

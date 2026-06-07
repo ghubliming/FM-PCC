@@ -8,9 +8,9 @@ This is a standalone script that does NOT depend on the full FM-PCC training
 pipeline. It implements a minimal training loop with a small 1D temporal UNet
 to validate data flow, not to achieve SoTA performance.
 
-Pass criteria (from EPOCH5_PLAN.md §4.3)
+Pass criteria (from EPOCH5_PLAN.md §4.3)  — U2: D updated 9→12
 -----------------------------------------
-- Tensor shape through dataloader: (B, H=8, D=9) confirmed
+- Tensor shape through dataloader: (B, H=8, D=12) confirmed
 - RMS position error (held-out): < 0.1 m
 - Action delta norm (predicted vs GT): within 2× of GT mean
 
@@ -39,9 +39,9 @@ _DEFAULT_DATA_DIR = os.path.join(_REPO, 'logs', 'uav_expert_data', 'empty')
 
 # ── FM constants ──────────────────────────────────────────────────────────────
 HORIZON = 8       # prediction horizon (number of future steps)
-OBS_DIM = 6       # [p(3), v(3)]
+OBS_DIM = 9       # [p_des(3), p(3), v(3)]  U2: was 6 ([p(3), v(3)])
 ACTION_DIM = 3    # [Δp_des(3)]
-DATA_DIM = 9      # ACTION_DIM + OBS_DIM = 3 + 6
+DATA_DIM = 12     # ACTION_DIM + OBS_DIM = 3 + 9  U2: was 9 (3+6)
 T_FLOW = 20       # number of flow ODE steps (kept small for speed)
 
 
@@ -89,19 +89,19 @@ def load_episodes(data_dir, max_episodes=100):
 def episodes_to_chunks(episodes, horizon=HORIZON):
     """Convert episodes to (N, H, D) training chunks.
 
-    Each chunk is [actions(3) ‖ obs(6)] for H consecutive timesteps.
-    This matches the FM-PCC dataloader format: (B, H=8, D=9).
+    Each chunk is [actions(3) ‖ obs(9)] for H consecutive timesteps.
+    This matches the FM-PCC dataloader format: (B, H=8, D=12).  U2: was D=9.
     """
     chunks = []
     for ep in episodes:
-        obs = ep['obs']          # (T, 6)
+        obs = ep['obs']          # (T, 9)  U2: [p_des(3) | p(3) | v(3)]
         actions = ep['actions']  # (T-1, 3)
         T_act = len(actions)
 
         for t in range(T_act - horizon + 1):
             act_chunk = actions[t:t + horizon]     # (H, 3)
-            obs_chunk = obs[t:t + horizon]          # (H, 6)
-            chunk = np.concatenate([act_chunk, obs_chunk], axis=1)  # (H, 9)
+            obs_chunk = obs[t:t + horizon]          # (H, 9)
+            chunk = np.concatenate([act_chunk, obs_chunk], axis=1)  # (H, 12)
             chunks.append(chunk)
 
     return np.array(chunks, dtype=np.float32)  # (N, H, D)

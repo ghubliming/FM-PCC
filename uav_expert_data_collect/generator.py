@@ -230,7 +230,8 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
                   for ci in range(data.ncon))
         n_hit += int(hit)
 
-        steps.append({'p': p, 'v': v, 'p_des': np.asarray(p_des, dtype=float)})
+        steps.append({'p': p, 'v': v, 'p_des': np.asarray(p_des, dtype=float),
+                      'q': q.astype(np.float32)})  # D-prep: actual quaternion for attitude rendering
 
     contact_frac  = n_hit / max(n_step, 1)
     contact_limit = SCENE_MAX_CONTACT_FRACTION.get(scene, MAX_CONTACT_FRACTION)
