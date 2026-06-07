@@ -44,9 +44,9 @@ def _pct(arr, p):
 def compute_dataset_stats(episodes):
     speeds_mps, ep_lens, act_norms, homotopy_counts = [], [], [], {}
     for ep in episodes:
-        obs     = ep['obs']          # (T, 6)
+        obs     = ep['obs']          # (T, 9)  U2: [p_des(3) | p(3) | v(3)]
         actions = ep['actions']      # (T-1, 3)
-        v       = obs[:, 3:6]        # (T, 3) velocity
+        v       = obs[:, 6:9]        # (T, 3) velocity — U2: shifted from [:, 3:6]
         speed   = np.linalg.norm(v, axis=1)
         speeds_mps.extend(speed.tolist())
         ep_lens.append(len(obs))

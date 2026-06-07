@@ -82,13 +82,15 @@ MAX_CONTACT_FRACTION = 0.02
 # Fix_4: s_curve has narrow wall end-faces at x=±0.5 that the drone briefly
 # grazes even on good trajectories.  Raise threshold to 0.08 for that scene
 # so brief end-face clips don't reject otherwise valid episodes.
-# U2: corridor tightened 0.02 → 0.01 (E5 GIF investigation showed real wall contact
-# at 2% teaches the visual FM that wall clips are acceptable).
-# U2: s_curve halved 0.08 → 0.04 (reduces wall-sliding while still covering end-face grazes).
+# U2: corridor tightened 0.02 → 0.01 — reverted in U2/Fix_1: L/R homotopies always
+# make brief wall contact (physically unavoidable); 0.01 caused 38.6% rejection and
+# severe homotopy imbalance (C=167, L=70, R=70). Reverted to 0.02 for balance.
+# U2: s_curve halved 0.08 → 0.04 — reverted in U2/Fix_1: 71.4% rejection (ABORT)
+# with 0.04; end-face grazes require the original 0.08 headroom (Fix_4 rationale).
 SCENE_MAX_CONTACT_FRACTION = {
     'empty':    0.02,
-    'corridor': 0.01,
-    's_curve':  0.04,
+    'corridor': 0.02,
+    's_curve':  0.08,
     'pillars':  0.02,
 }
 
