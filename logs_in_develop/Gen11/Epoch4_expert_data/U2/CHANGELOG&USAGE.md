@@ -106,12 +106,6 @@ Full analysis: `../Epoch5_visual_and_validation/INVESTIGATION_wall_contact_gifs.
 
 ## Re-collection command
 
-**One-liner** (submits all 4 scenes as parallel SLURM jobs):
-```bash
-./Slurm_Codes/sbatch/uav_expert_data/collect_all.sh 500
-```
-
-**Per-scene** (submit individually):
 ```bash
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty    500
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500
