@@ -1,23 +1,23 @@
 /bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
 ========================================
 UAV EXPERT DATA COLLECTION (Epoch 4)
-DATE:     Thu Jun  4 14:58:29 UTC 2026
+DATE:     Mon Jun  8 12:45:47 UTC 2026
 NODE:     i6-gpu-1
-JOB_ID:   21231
+JOB_ID:   21341
 ARRAY_ID: none
 ========================================
 [ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
 [ sbatch ] scene=s_curve  n_trials=500  gain=pid_default  seed=0
 [ collect ] scene=s_curve  n_trials=500  homotopy_pool=['default']  gain=pid_default  seed=0  noise_sigma=0.02
-[ collect ] saved=   1  rejected=  1  t=1s  ~0.72s/ep  ETA≈358s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000001.pkl
+[ collect ] saved=   1  rejected=  1  t=1s  ~0.71s/ep  ETA≈355s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000001.pkl
 [ collect ] saved=  50  rejected= 24  t=29s  ~0.58s/ep  ETA≈246s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000073.pkl
-[ collect ] saved= 100  rejected= 40  t=55s  ~0.55s/ep  ETA≈197s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000139.pkl
-[ collect ] saved= 150  rejected= 58  t=82s  ~0.54s/ep  ETA≈159s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000207.pkl
-[ collect ] saved= 200  rejected= 71  t=107s  ~0.53s/ep  ETA≈122s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000270.pkl
-[ collect ] saved= 250  rejected= 92  t=135s  ~0.54s/ep  ETA≈85s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000341.pkl
-[ collect ] saved= 300  rejected=110  t=162s  ~0.54s/ep  ETA≈49s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000409.pkl
-[ collect ] saved= 350  rejected=139  t=193s  ~0.55s/ep  ETA≈6s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000488.pkl
-[ collect ] DONE  saved=356  rejected=144  (28.8% rejected)  elapsed=198s
+[ collect ] saved= 100  rejected= 40  t=55s  ~0.55s/ep  ETA≈198s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000139.pkl
+[ collect ] saved= 150  rejected= 58  t=82s  ~0.55s/ep  ETA≈160s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000207.pkl
+[ collect ] saved= 200  rejected= 71  t=108s  ~0.54s/ep  ETA≈123s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000270.pkl
+[ collect ] saved= 250  rejected= 92  t=136s  ~0.54s/ep  ETA≈86s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000341.pkl
+[ collect ] saved= 300  rejected=110  t=163s  ~0.54s/ep  ETA≈49s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000409.pkl
+[ collect ] saved= 350  rejected=139  t=195s  ~0.56s/ep  ETA≈6s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000488.pkl
+[ collect ] DONE  saved=356  rejected=144  (28.8% rejected)  elapsed=199s
 [ sbatch ] Collection done. Running stats validator …
 [ validate ] Loading episodes from logs/uav_expert_data/s_curve …
 
@@ -46,5 +46,5 @@ ARRAY_ID: none
 [ validate ] Stats saved → logs/uav_expert_data/s_curve/dataset_stats.json
 [ sbatch ] Output: logs/uav_expert_data/s_curve/
 ========================================
-JOB END: Thu Jun  4 15:01:47 UTC 2026
+JOB END: Mon Jun  8 12:49:07 UTC 2026
 ========================================

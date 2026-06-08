@@ -1,9 +1,9 @@
 /bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
 ========================================
 UAV EXPERT DATA COLLECTION (Epoch 4)
-DATE:     Thu Jun  4 15:01:05 UTC 2026
+DATE:     Sun Jun  7 11:53:32 UTC 2026
 NODE:     i6-gpu-1
-JOB_ID:   21233
+JOB_ID:   21319
 ARRAY_ID: none
 ========================================
 [ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
@@ -13,7 +13,7 @@ ARRAY_ID: none
 [ collect ] saved=  50  rejected=  0  t=8s  ~0.16s/ep  ETA≈71s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000049.pkl
 [ collect ] saved= 100  rejected=  0  t=15s  ~0.15s/ep  ETA≈61s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000099.pkl
 [ collect ] saved= 150  rejected=  0  t=23s  ~0.15s/ep  ETA≈53s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000149.pkl
-[ collect ] saved= 200  rejected=  0  t=30s  ~0.15s/ep  ETA≈46s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000199.pkl
+[ collect ] saved= 200  rejected=  0  t=30s  ~0.15s/ep  ETA≈45s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000199.pkl
 [ collect ] saved= 250  rejected=  0  t=38s  ~0.15s/ep  ETA≈38s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000249.pkl
 [ collect ] saved= 300  rejected=  0  t=45s  ~0.15s/ep  ETA≈30s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000299.pkl
 [ collect ] saved= 350  rejected=  0  t=53s  ~0.15s/ep  ETA≈23s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000349.pkl
@@ -31,10 +31,10 @@ ARRAY_ID: none
   Homotopy breakdown  : {'N/A': 500}
 
   Speed (m/s):
-    Generated  mean=0.387  median=0.420  p95=0.625
+    Generated  mean=1.519  median=1.482  p95=2.207
     UAV-Flow   velocity unknown (no timestamps in dataset)
     Our target 0.30–0.50 m/s  (RESEARCH §3.3)
-    STATUS: ✅ OK
+    STATUS: ⚠️  CHECK — mean speed outside 0.15–0.80 m/s
 
   Episode length (steps at ~33 Hz):
     Generated  mean=190  median=177  [134, 378]
@@ -49,5 +49,5 @@ ARRAY_ID: none
 [ validate ] Stats saved → logs/uav_expert_data/empty/dataset_stats.json
 [ sbatch ] Output: logs/uav_expert_data/empty/
 ========================================
-JOB END: Thu Jun  4 15:02:22 UTC 2026
+JOB END: Sun Jun  7 11:54:49 UTC 2026
 ========================================

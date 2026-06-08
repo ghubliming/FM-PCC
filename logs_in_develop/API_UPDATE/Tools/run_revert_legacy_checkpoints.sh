@@ -13,8 +13,7 @@ set -e
 # Set to the experiment folder path (relative to $HOME or absolute).
 # Pass the NEW (mistakenly patched) folder name. If the folder name contains no patched tokens the
 # script exits immediately without touching anything (safe to re-run).
-TARGET_PATH="FMPCC/FM-PCC/logs/aligning-d3il-visual/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64"
-
+TARGET_PATH="FMPCC/FM-PCC/logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_aw10_VTrue_steps900_bs64"
 # Optional flags: --dry-run  --backup  (space-separated if both needed)
 EXTRA_FLAGS=""
 # ─────────────────────────────────────────────────────────────────────────────

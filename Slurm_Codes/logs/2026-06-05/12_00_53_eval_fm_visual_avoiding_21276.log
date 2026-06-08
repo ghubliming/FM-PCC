@@ -1,0 +1,27 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Jun  5 10:00:54 UTC 2026
+JOB NAME:  eval_fm_visual_avoiding
+JOB ID:    21276
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   84a137a
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/fm_visual_avoiding_test/eval_fm_visual_avoiding.py", line 192, in <module>
+    args = Parser().parse_args(experiment='plan_fm_visual_avoiding', seed=seed)
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/utils/setup.py", line 73, in parse_args
+    args = self.read_config(args, experiment)
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_avoiding/utils/setup.py", line 96, in read_config
+    params = getattr(module, 'base')[experiment]
+KeyError: 'plan_fm_visual_avoiding'

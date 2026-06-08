@@ -588,6 +588,22 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_16_52_eval_visual_avoiding_dpcc_2118
 (K20)
 21234
 
+- E2U2
+21277 fm (killied at end "--- avoiding-d3il both-hard dpcc-c-tightened-dt2p0 seed=6 ---")
+21279 diffu.
+(seems results correct, but the plot are wrong, mpc plots:
+FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/halfspace_both-hard/diffuser.png)
+
+Fix 2 & FM K20
+21290
+
+Fix 3
+21311 (*Been Canceled Time limit* but the run results seems better)
+(seems fine, run the diffu. pipeline)
+21317,18 
+- [ ] Pending to read the reuslts
+
+
 # Gen11
 # E2 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/11_57_52_run_naive_21022.log
@@ -624,3 +640,23 @@ fix5 Curve
 
 all runs
 21231 -> 21223
+
+## U2
+21319-21322
+Fix1 
+
+21324 -> 21327
+
+## U3
+21339 -> 21342
+
+# E5
+21289
+
+21291(Fail)
+Fix1
+21294 - Good
+
+## U2
+21329 (too long!)
+21330 (./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh "" "" "" 3)
