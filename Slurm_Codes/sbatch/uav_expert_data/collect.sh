@@ -71,9 +71,7 @@ fi
 cd "$REPO"
 echo "[ sbatch ] Repo: $REPO"
 
-# No GPU needed for headless MuJoCo rollouts, but set EGL in case render is added.
-export MUJOCO_GL=egl
-export PYOPENGL_PLATFORM=egl
+# No GPU needed — CPU-only MuJoCo rollouts, no rendering.
 
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
