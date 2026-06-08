@@ -56,10 +56,23 @@ def pillar_path(homotopy_seq, altitude, duration,
                 x_start=-3.2, x_end=3.2, yaw=0.0):
     """Explicit L/R homotopy path through 3 pillar pairs.
 
-    U3 redesign: 5-waypoint scheme with waypoints AT each pillar x position.
-    Channel centres use _Y_L=-1.11 / _Y_R=+1.11, giving 10.8 cm rotor clearance.
-    Zero-velocity transitions are safe at these margins (unlike the old _Y_L=-0.92
-    which was inside the contact zone — the original reason for switching to weave).
+    Fix_1 redesign: 8-waypoint scheme where channel transitions happen BETWEEN
+    pillars, not at pillar x-positions.  Analytical minimum clearance: 8 cm on
+    the straight stabilisation segments, 21-23 cm on the diagonals.
+
+    Key geometry insight: the quadrotor has rotors at ±0.14 (x) and ±0.18 (y)
+    from the body centre.  Any approach diagonal that reaches the target channel
+    y AT a pillar x-position will cause the FRONT rotor (+0.14 in x) to contact
+    the pillar on approach, and the REAR rotor (−0.14 in x) to drag through the
+    pillar on departure.  The fix moves the y-transition midpoints to x=-1.5 and
+    x=+0.5, leaving ≥0.5 m buffer from every pillar before/after each turn.
+
+    Waypoint layout (7 segments):
+        x: [-3.2, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.2]
+        y: [  0,  y0,   y0,  y1,  y1,  y2,  y2,   0 ]
+
+    Time allocation: proportional to Euclidean segment length (not x-distance),
+    so diagonal inter-channel segments get proportionally more time.
 
     homotopy_seq : 3-element list, each 'L' or 'R' (one per pillar pair).
     """
@@ -69,22 +82,22 @@ def pillar_path(homotopy_seq, altitude, duration,
     z = float(altitude) if np.isscalar(altitude) else float(np.mean(altitude))
     T = float(duration)
 
-    # Waypoints: entry(y=0) → pillar1(y=y_ch[0]) → pillar2 → pillar3 → exit(y=0)
-    xs = [x_start, -2.0, 0.0, 2.0, x_end]
-    ys = [0.0, y_ch[0], y_ch[1], y_ch[2], 0.0]
+    xs = [x_start, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, x_end]
+    ys = [0.0, y_ch[0], y_ch[0], y_ch[1], y_ch[1], y_ch[2], y_ch[2], 0.0]
+    n  = len(xs) - 1  # 7 segments
 
-    # Time proportional to x-distance
-    total_x   = x_end - x_start
-    seg_durs  = [T * (xs[i+1] - xs[i]) / total_x for i in range(4)]
-    t_starts  = [sum(seg_durs[:i]) for i in range(4)]
+    dists    = [np.sqrt((xs[i+1]-xs[i])**2 + (ys[i+1]-ys[i])**2) for i in range(n)]
+    total_d  = sum(dists)
+    seg_durs = [T * d / total_d for d in dists]
+    t_starts = [sum(seg_durs[:i]) for i in range(n)]
 
     segs = [
         traverse_line((xs[i], ys[i], z), (xs[i+1], ys[i+1], z), seg_durs[i], yaw)
-        for i in range(4)
+        for i in range(n)
     ]
 
     def traj(t):
-        for i in range(3, -1, -1):
+        for i in range(n - 1, -1, -1):
             if t >= t_starts[i]:
                 return segs[i](t - t_starts[i])
         return segs[0](t)

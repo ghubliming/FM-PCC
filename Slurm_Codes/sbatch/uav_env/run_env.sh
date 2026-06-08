@@ -63,7 +63,9 @@ echo "[ sbatch ] Repo: $REPO   Scene: $SCENE   Task: $TASK"
 
 export MUJOCO_GL=egl
 export PYOPENGL_PLATFORM=egl
-export EGL_DEVICE_ID=0
+export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
+export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
 
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
