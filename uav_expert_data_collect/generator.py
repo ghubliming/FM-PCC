@@ -91,7 +91,8 @@ SCENE_MAX_CONTACT_FRACTION = {
     'empty':    0.02,
     'corridor': 0.02,
     's_curve':  0.08,
-    'pillars':  0.02,
+    # U3: pillar_path keeps rotor 10.8 cm clear — any contact is a trajectory bug.
+    'pillars':  0.001,
 }
 
 
@@ -129,7 +130,10 @@ def _build_traj_and_init(scene, homotopy, rng):
         return trajs.empty_path(p_s, p_e, dur), np.array(p_s), dur
 
     elif scene == 'corridor':
-        y_jitter = float(rng.uniform(-0.05, 0.05))
+        # U3: L/R jitter removed — at ±0.18 the rotor reached 9 cm inside the wall
+        # at worst jitter (±0.05) → contact on every L/R episode.  Channels moved
+        # to ±0.12 (trajectories.py) and jitter is zero for L/R.  C keeps ±0.03.
+        y_jitter = float(rng.uniform(-0.03, 0.03)) if homotopy == 'C' else 0.0
         y_bias   = trajs.CORRIDOR_CHANNELS[homotopy] + y_jitter
         p_s = np.array([-2.8, y_bias, z])
         dur = float(rng.uniform(6.0, 10.0))
@@ -144,27 +148,23 @@ def _build_traj_and_init(scene, homotopy, rng):
         return trajs.s_curve_scene_path(z, dur, y_jitter=y_jitter), p_s, dur
 
     elif scene == 'pillars':
-        # Fix_1: replace s_curve_path-based pillar_path (zero-velocity stops near
-        # pillars → collisions) with the continuous sinusoidal weave factory.
-        # Homotopy classes mapped to amplitude sign: L-dominant → negative y
-        # (passes outside column A), R-dominant → positive y (outside column B).
-        # Centre-passes (L,R,L) and (R,L,R) use smaller amplitude through centre.
-        # Fix_2: (L,R,L) and (R,L,R) amplitude ±0.55 was inside the pillar zone
-        # (column A/B edges at y=±0.48) → 100% rejection for those classes.
-        # Set to 0.0 → straight centre-line at y=0, clearance 0.48 m each side.
-        _amp_map = {
-            '(L,L,L)': -1.0,
-            '(L,R,L)':  0.0,
-            '(R,L,R)':  0.0,
-            '(R,R,R)':  1.0,
+        # U3: revert from weave back to pillar_path with corrected channel margins.
+        # weave was introduced in Fix_1 because pillar_path had zero-velocity stops
+        # at _Y_L=-0.92 which is inside the rotor contact zone (-0.55, -0.97).
+        # With U3 _Y_L=-1.11 (10.8 cm clearance), stops at pillar x positions are
+        # safe.  weave also mislabelled (L,R,L)/(R,L,R): amplitude=0 flew centre
+        # every time, giving those homotopies the wrong label.  pillar_path routes
+        # the drone through the correct channel at each pillar pair explicitly.
+        _seq_map = {
+            '(L,L,L)': ['L', 'L', 'L'],
+            '(L,R,L)': ['L', 'R', 'L'],
+            '(R,L,R)': ['R', 'L', 'R'],
+            '(R,R,R)': ['R', 'R', 'R'],
         }
-        amp = _amp_map[homotopy]
+        seq = _seq_map[homotopy]
         dur = float(rng.uniform(10.0, 16.0))
         p_s = np.array([-3.2, 0.0, z])
-        traj_fn = trajs.weave(
-            x_range=(-3.2, 3.2), y_amplitude=amp,
-            period=4.0, altitude=z, duration=dur,
-        )
+        traj_fn = trajs.pillar_path(seq, altitude=z, duration=dur)
         return traj_fn, p_s, dur
 
     raise ValueError(f'Unknown scene: {scene!r}')
