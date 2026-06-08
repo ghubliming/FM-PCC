@@ -1,0 +1,26 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV IN ENV TEST
+DATE:   Sun May 31 10:57:58 UTC 2026
+NODE:   i6-gpu-1
+JOB_ID: 21031
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC   Scene: all   Task: C
+[ run_env ] scene=empty task=C fmt=9D dt=0.01000 steps=3000 duration=30.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_env/empty_task_C_circle_9D
+[ run_env ] saved 300 frames → rollout.gif
+[ run_env ] DONE.  final_pos_err=0.0271 m  rms=0.0291 m  max=0.0798 m  obstacle_contacts=0
+[ run_env ] scene=corridor task=traverse fmt=9D dt=0.01000 steps=800 duration=8.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_env/corridor_task_traverse
+[ run_env ] saved 80 frames → rollout.gif
+[ run_env ] DONE.  final_pos_err=0.0275 m  rms=0.0235 m  max=0.0405 m  obstacle_contacts=0
+[ run_env ] scene=s_curve task=s_curve fmt=9D dt=0.01000 steps=1500 duration=15.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_env/s_curve_task_s_curve
+[ run_env ] saved 150 frames → rollout.gif
+[ run_env ] WARN: drone touched scene obstacles on 614/1500 steps (40.9%) — trajectory does not clear obstacles
+[ run_env ] DONE.  final_pos_err=1.5630 m  rms=0.5332 m  max=1.5630 m  obstacle_contacts=614
+[ run_env ] scene=pillars task=weave fmt=9D dt=0.01000 steps=1000 duration=10.00s out=/data/home/llim/FMPCC/FM-PCC/logs/uav_env/pillars_task_weave
+[ run_env ] saved 100 frames → rollout.gif
+[ run_env ] WARN: drone touched scene obstacles on 29/1000 steps (2.9%) — trajectory does not clear obstacles
+[ run_env ] DONE.  final_pos_err=0.0618 m  rms=0.9217 m  max=1.8497 m  obstacle_contacts=29
+[ sbatch ] Output (if applicable): logs/uav_env/
+========================================
+JOB END: Sun May 31 10:58:23 UTC 2026
+========================================

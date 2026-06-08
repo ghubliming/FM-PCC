@@ -68,7 +68,7 @@ class Reporter:
 
     # ------------------------------------------------------------------
     def save_per_rollout_csv(self, output_path):
-        """Flat CSV: variant | rollout_idx | success | mean_dist | steps | phys_err | context_xy_dist"""
+        """Flat CSV: variant | rollout_idx | success | mean_dist | steps | phys_err | context_xy_dist | U_2 fields"""
         per = self.aggregator.per_rollout
         rows = []
         for variant in sorted(per.keys()):
@@ -79,22 +79,37 @@ class Reporter:
             pe    = pv.get('max_phys_error_per_rollout', np.array([]))
             cxy   = pv.get('context_init_xy_dist',       np.array([]))
             at    = pv.get('avg_time',                   np.array([]))
+            # --- U_2: extended fields ---
+            fxy   = pv.get('context_final_xy_dist',      np.array([]))
+            csr   = pv.get('exec_constraint_sat_rate',   np.array([]))
+            nvs   = pv.get('exec_n_violated_steps',      np.array([]))
+            mbv   = pv.get('exec_max_bounds_viol_m',     np.array([]))
+            mhv   = pv.get('exec_max_halfspace_viol_m',  np.array([]))
+            lss   = pv.get('exec_longest_safe_streak',   np.array([]))
 
-            n_rollouts = max(len(a) for a in [n_suc, n_st, md, pe, cxy, at] if len(a) > 0) if any(len(a) > 0 for a in [n_suc, n_st, md, pe, cxy, at]) else 0
+            all_arrs = [n_suc, n_st, md, pe, cxy, at, fxy, csr, nvs, mbv, mhv, lss]
+            n_rollouts = max(len(a) for a in all_arrs if len(a) > 0) if any(len(a) > 0 for a in all_arrs) else 0
 
             def _get(arr, i):
                 return float(arr[i]) if len(arr) > i else np.nan
 
             for i in range(n_rollouts):
                 rows.append({
-                    'variant':          variant,
-                    'rollout_idx':      i,
-                    'success':          int(_get(n_suc, i)),
-                    'mean_dist_m':      _get(md, i),
-                    'steps':            int(_get(n_st, i)) if not np.isnan(_get(n_st, i)) else np.nan,
-                    'phys_err_m':       _get(pe, i),
-                    'context_xy_dist_m': _get(cxy, i),
-                    'avg_time_s':       _get(at, i),
+                    'variant':              variant,
+                    'rollout_idx':          i,
+                    'success':              int(_get(n_suc, i)),
+                    'mean_dist_m':          _get(md, i),
+                    'steps':                int(_get(n_st, i)) if not np.isnan(_get(n_st, i)) else np.nan,
+                    'phys_err_m':           _get(pe, i),
+                    'context_xy_dist_m':    _get(cxy, i),
+                    'avg_time_s':           _get(at, i),
+                    # --- U_2 ---
+                    'final_xy_dist_m':      _get(fxy, i),
+                    'constraint_sat_rate':  _get(csr, i),
+                    'n_violated_steps':     int(_get(nvs, i)) if not np.isnan(_get(nvs, i)) else np.nan,
+                    'max_bounds_viol_m':    _get(mbv, i),
+                    'max_halfspace_viol_m': _get(mhv, i),
+                    'longest_safe_streak':  int(_get(lss, i)) if not np.isnan(_get(lss, i)) else np.nan,
                 })
         df = pd.DataFrame(rows)
         df.to_csv(output_path, index=False)

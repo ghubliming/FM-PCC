@@ -1,0 +1,83 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jun  3 15:05:36 UTC 2026
+JOB NAME:  train_imf_visual_aligning
+JOB ID:    21155
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   eb84936
+================================================================================
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260603_150540-sufq6sku
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-iMF/runs/sufq6sku
+[ train ] Seeds: [6]  (source: cli --seeds)
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6
+[ train ] dataset=ParityAligningDataset (visual, 9D trajectory)
+
+[utils/config ] Config: <class 'imf_visual_aligning.datasets.sequence.ParityAligningDataset'>
+    dataset_path: environments/dataset/data/aligning/train_files.pkl
+    horizon: 8
+    max_n_episodes: 1000
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6/dataset_config.json
+
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]
+Loading states: 100%|██████████| 900/900 [00:00<00:00, 2939.70it/s]
+
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]
+Loading images:  11%|█         | 101/900 [00:10<01:19, 10.02it/s]
+Loading images:  22%|██▏       | 202/900 [00:20<01:10,  9.93it/s]
+Loading images:  34%|███▎      | 302/900 [00:30<01:00,  9.93it/s]
+Loading images:  45%|████▍     | 403/900 [00:40<00:49,  9.99it/s]
+Loading images:  56%|█████▌    | 504/900 [00:50<00:40,  9.85it/s]
+Loading images:  67%|██████▋   | 601/900 [01:03<00:32,  9.15it/s]
+Loading images:  76%|███████▌  | 682/900 [01:13<00:24,  8.75it/s]
+Loading images:  85%|████████▍ | 761/900 [01:23<00:16,  8.44it/s]
+Loading images:  94%|█████████▍| 849/900 [01:33<00:05,  8.53it/s]
+Loading images: 100%|██████████| 900/900 [01:39<00:00,  9.08it/s]
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+[ train ] Saved obs_normalizer → logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6/obs_normalizer.pkl
+[ train ] Saved act_normalizer → logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6/act_normalizer.pkl
+[ train ] obs_normalizer [ Normalizer ] dim: 6
+    -: [ 0.22 -0.35  0.12  0.21 -0.36  0.1 ]
+    +: [0.72 0.47 0.25 0.74 0.49 0.27]
+
+[ train ] act_normalizer [ Normalizer ] dim: 3
+    -: [-0.01 -0.01 -0.01]
+    +: [0.01 0.01 0.01]
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/imf_visual_aligning_test/train_imf_visual_aligning.py", line 215, in <module>
+    from imf_visual_aligning.models.imf_engine import iMeanFlowEngine
+  File "/u/home/llim/FMPCC/FM-PCC/imf_visual_aligning/models/__init__.py", line 1, in <module>
+    from .unet1d_temporal_cond import UNet1DTemporalCondModel, Flow_matcher_U_Net_v2
+ImportError: cannot import name 'UNet1DTemporalCondModel' from 'imf_visual_aligning.models.unet1d_temporal_cond' (/u/home/llim/FMPCC/FM-PCC/imf_visual_aligning/models/unet1d_temporal_cond.py)
+wandb: - 0.008 MB of 0.008 MB uploaded
+wandb: \ 0.008 MB of 0.008 MB uploaded
+wandb: | 0.008 MB of 0.008 MB uploaded
+wandb: / 0.008 MB of 0.008 MB uploaded
+wandb: - 0.016 MB of 0.028 MB uploaded
+wandb: \ 0.016 MB of 0.030 MB uploaded
+wandb: | 0.030 MB of 0.030 MB uploaded
+wandb: 🚀 View run aligning-d3il-visual-imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-iMF/runs/sufq6sku
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260603_150540-sufq6sku/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.

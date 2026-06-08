@@ -1,0 +1,53 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Mon Jun  8 12:45:43 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21340
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=corridor  n_trials=500  gain=pid_default  seed=0
+[ collect ] scene=corridor  n_trials=500  homotopy_pool=['L', 'C', 'R']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected=  0  t=0s  ~0.19s/ep  ETA≈97s  last→logs/uav_expert_data/corridor/L/corridor_L_pid_default_0000000.pkl
+[ collect ] saved=  50  rejected=  0  t=10s  ~0.20s/ep  ETA≈88s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000049.pkl
+[ collect ] saved= 100  rejected=  0  t=20s  ~0.20s/ep  ETA≈79s  last→logs/uav_expert_data/corridor/L/corridor_L_pid_default_0000099.pkl
+[ collect ] saved= 150  rejected=  0  t=29s  ~0.20s/ep  ETA≈69s  last→logs/uav_expert_data/corridor/R/corridor_R_pid_default_0000149.pkl
+[ collect ] saved= 200  rejected=  0  t=40s  ~0.20s/ep  ETA≈59s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000199.pkl
+[ collect ] saved= 250  rejected=  0  t=50s  ~0.20s/ep  ETA≈50s  last→logs/uav_expert_data/corridor/L/corridor_L_pid_default_0000249.pkl
+[ collect ] saved= 300  rejected=  0  t=60s  ~0.20s/ep  ETA≈40s  last→logs/uav_expert_data/corridor/R/corridor_R_pid_default_0000299.pkl
+[ collect ] saved= 350  rejected=  0  t=69s  ~0.20s/ep  ETA≈30s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000349.pkl
+[ collect ] saved= 400  rejected=  0  t=79s  ~0.20s/ep  ETA≈20s  last→logs/uav_expert_data/corridor/L/corridor_L_pid_default_0000399.pkl
+[ collect ] saved= 450  rejected=  0  t=89s  ~0.20s/ep  ETA≈10s  last→logs/uav_expert_data/corridor/R/corridor_R_pid_default_0000449.pkl
+[ collect ] saved= 500  rejected=  0  t=99s  ~0.20s/ep  ETA≈0s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000499.pkl
+[ collect ] DONE  saved=500  rejected=0  (0.0% rejected)  elapsed=99s
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/corridor …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 500
+  Homotopy breakdown  : {'L': 167, 'C': 167, 'R': 166}
+
+  Speed (m/s):
+    Generated  mean=0.695  median=0.750  p95=1.227
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ✅ OK
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=269  median=270  [201, 333]
+    UAV-Flow   median=38.0 waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0209  p95=0.0369
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/corridor/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/corridor/
+========================================
+JOB END: Mon Jun  8 12:47:23 UTC 2026
+========================================

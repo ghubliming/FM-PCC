@@ -1,0 +1,172 @@
+# Visual Avoiding Eval Config — Gen9 Epoch 2
+# Fix-4: redesigned to reuse content from config/projection_eval.yaml.
+#
+# Same task, same env (ObstacleAvoidanceEnv), same obstacle geometry as projection_eval.yaml.
+# Key differences from projection_eval.yaml:
+#   - geo_constraint_variants format (required by visual eval scripts' outer loop)
+#   - Obstacle positions: exact from get_obj_xy_list() — 6 obstacles in 3 rows
+#     (projection_eval.yaml had 3 obstacles with ~25mm position error)
+#   - n_contexts / n_trajectories_per_context replace n_trials
+#   - observation_indices / action_indices removed (hardcoded in setup_dpcc_projector)
+#   - bounds removed (velocity-bound format incompatible with visual eval's workspace_bounds)
+#
+# Content reused from projection_eval.yaml:
+#   - projection_variants (full list)
+#   - enlarge_constraints: 0.025
+#   - diffusion_timestep_threshold: 0.5
+#   - halfspace_constraints geometry (hard \ and / shapes)
+#   - constraint_types vocabulary (dynamics, halfspace, obstacles)
+#   - dt=1 convention (actions are position deltas, not velocity × dt)
+
+# ── General ─────────────────────────────────────────────────────────────────────
+write_to_file: True
+exps: [
+  'avoiding-d3il-visual',
+  'visual_avoiding_dpcc',
+  'fm_visual_avoiding',
+]
+
+# From projection_eval.yaml: same seed convention
+seeds: [6]
+
+# ── D3IL sim parameters ──────────────────────────────────────────────────────────
+# projection_eval.yaml used n_trials=2; visual eval splits as n_contexts × n_traj_per_ctx
+n_contexts: 3
+n_trajectories_per_context: 1
+
+# ── Projector ────────────────────────────────────────────────────────────────────
+# From projection_eval.yaml
+diffusion_timestep_threshold: 0.5
+mpc_foresight_stride: 6
+max_action_delta: null
+
+# dt=1: actions are position deltas [dx, dy], not velocity × dt — from projection_eval.yaml
+# (hardcoded in setup_dpcc_projector; kept here for documentation)
+dt: 1
+
+# ── Tightening (from projection_eval.yaml: enlarge_constraints = 0.025) ──────────
+# Tightened twin auto-generated for every geo variant with obstacle/halfspace constraints.
+# At δ=0.025 m each obstacle's exclusion radius grows 2.5 cm in the planner, giving a
+# 2.5 cm safety margin against execution noise.
+enlarge_constraints: 0.025
+
+# ── Active geo variants ──────────────────────────────────────────────────────────
+# null = run all variants below.
+# Change to e.g. ['no_constraint', 'obstacles'] to limit first-run scope.
+active_geo_variants: ['no_constraint', 'obstacles_exact']
+
+# ── Projection variants (from projection_eval.yaml) ──────────────────────────────
+# Identical list — same DPCC paper variants apply to visual avoiding.
+# Each variant runs once per active geo entry, producing results/{geo}/{variant}/ subtrees.
+projection_variants: [
+  # No projection — raw diffusion output (sanity baseline)
+  'diffuser',
+  # Figure 2, Table 1 and Figure 3 from DPCC paper:
+  'dpcc-r',
+  'dpcc-c',
+  'dpcc-t',
+  # Table 1 ablations:
+  'gradient',
+  'post_processing',
+  'model_free',
+  # dt scale sweep (dynamics constraint sensitivity):
+  'dpcc-c-dt0p25',
+  'dpcc-c-dt0p5',
+  'dpcc-c-dt2p0',
+  'dpcc-c-dt4p0',
+]
+
+# ── Geo constraint sweep ──────────────────────────────────────────────────────────
+# Translates projection_eval.yaml's flat constraint config into the nested format
+# required by the visual eval script's outer loop.
+#
+# Obstacle positions: exact from get_obj_xy_list() in avoiding_objects.py
+#   Row 1 (y = -0.10):  [0.500, -0.10]              ← single center obstacle
+#   Row 2 (y =  0.08):  [0.425,  0.08], [0.575, 0.08]  ← left/right pair
+#   Row 3 (y =  0.26):  [0.350,  0.26], [0.500, 0.26], [0.650, 0.26]  ← triplet
+#
+# Radii:
+#   exact  = 0.04 m  — matches _AVOIDING_OBSTACLES in avoiding-d3il-visual.py (training config)
+#   paper  = 0.06 m  — matches projection_eval.yaml (looser, as in DPCC paper ablations)
+#   larger = 0.08 m  — tighter ablation from projection_eval.yaml
+#
+# Halfspace geometry: reused verbatim from projection_eval.yaml halfspace_constraints:
+#   hard \ : [[0.8, -0.5], [0.4, 0.5], 'below']
+#   hard / : [[0.2, -0.5], [0.6, 0.5], 'below']
+geo_constraint_variants:
+
+  # ── Tier 1: Baseline ───────────────────────────────────────────────────────────
+  # Plain diffusion output, no geometric projection. All projection_variants run against
+  # this to measure unconstrained performance. Tightened twin not generated (no geometry).
+  - name: no_constraint
+    constraint_types: []
+
+  # ── Tier 2: Obstacles only (primary avoiding metric) ──────────────────────────
+  # Sphere exclusion zones matching the 6 physical obstacles in the env.
+  # radius=0.04 (exact): matches training config → cleanest constraint formulation.
+  # radius=0.06 (paper): matches projection_eval.yaml → reproduces DPCC paper results.
+
+  - name: obstacles_exact
+    constraint_types: ['obstacles']
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500, -0.10], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.425,  0.08], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.575,  0.08], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.350,  0.26], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500,  0.26], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.650,  0.26], radius: 0.04}
+
+  - name: obstacles_paper
+    constraint_types: ['obstacles']
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500, -0.10], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.425,  0.08], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.575,  0.08], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.350,  0.26], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500,  0.26], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.650,  0.26], radius: 0.06}
+
+  # ── Tier 3: Dynamics only ──────────────────────────────────────────────────────
+  # Euler link: c_xy[t+1] = c_xy[t] + act[t]. Isolates kinematic consistency.
+  - name: dynamics_only
+    constraint_types: ['dynamics']
+
+  # ── Tier 4: Dynamics + obstacles ─────────────────────────────────────────────
+  # Standard DPCC configuration from the paper (dynamics + sphere obstacles).
+  - name: dynamics_obstacles_exact
+    constraint_types: ['dynamics', 'obstacles']
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500, -0.10], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.425,  0.08], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.575,  0.08], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.350,  0.26], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500,  0.26], radius: 0.04}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.650,  0.26], radius: 0.04}
+
+  - name: dynamics_obstacles_paper
+    constraint_types: ['dynamics', 'obstacles']
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500, -0.10], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.425,  0.08], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.575,  0.08], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.350,  0.26], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500,  0.26], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.650,  0.26], radius: 0.06}
+
+  # ── Tier 5: Combined (dynamics + halfspace + obstacles) ───────────────────────
+  # Full avoiding DPCC setup from the paper.
+  # Halfspace geometry reused verbatim from projection_eval.yaml:
+  #   hard \ : upper-right forbidden zone
+  #   hard / : upper-left forbidden zone
+  - name: combined_hard
+    constraint_types: ['dynamics', 'halfspace', 'obstacles']
+    halfspace_constraints:
+      - [[0.8, -0.5], [0.4, 0.5], 'below']   # hard \ shape (from projection_eval.yaml)
+      - [[0.2, -0.5], [0.6, 0.5], 'below']   # hard / shape (from projection_eval.yaml)
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500, -0.10], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.425,  0.08], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.575,  0.08], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.350,  0.26], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.500,  0.26], radius: 0.06}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [0.650,  0.26], radius: 0.06}

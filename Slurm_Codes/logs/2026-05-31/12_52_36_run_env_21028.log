@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV IN ENV TEST
+DATE:   Sun May 31 10:52:36 UTC 2026
+NODE:   i6-gpu-1
+JOB_ID: 21028
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC   Scene: smoke_empty   Task: C
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/uav_env_test/smoke_load_env.py", line 58, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/uav_env_test/smoke_load_env.py", line 45, in main
+    m = mujoco.MjModel.from_xml_path(xml)
+ValueError: Error: file not found: '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/assets/X2_lowpoly.obj'
+========================================
+JOB END: Sun May 31 10:52:37 UTC 2026
+========================================

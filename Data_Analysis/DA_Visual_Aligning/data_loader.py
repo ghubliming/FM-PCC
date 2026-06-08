@@ -31,14 +31,21 @@ class DataLoader:
         self.loading_log  = []
 
     # ------------------------------------------------------------------
-    def load_results(self, root_path, seed=None, variants=None):
+    def load_results(self, root_path, seed=None, variants=None, geo_variant=None):
         """
         Load result files for one seed.
 
         Args:
-            root_path: path to model_exp_name folder (contains seed subfolders)
-            seed:      seed number (default: ACTIVE_SEED)
-            variants:  list of variant names (default: all discovered)
+            root_path:   path to model_exp_name folder (contains seed subfolders)
+            seed:        seed number (default: ACTIVE_SEED)
+            variants:    list of variant names (default: all discovered)
+            geo_variant: geometric constraint subfolder name (e.g. 'combined_5').
+                         When provided the loader steps into
+                         {seed}/results/{geo_variant}/ before discovering variants.
+                         This matches the eval script output schema:
+                           results/{geo_name}/{variant}/diagnostics/rollout_*_stats.json
+                         When None (default) the old flat schema is used:
+                           results/{variant}/diagnostics/rollout_*_stats.json
 
         Returns:
             {variant: metrics_dict} where array values have shape (N_rollouts,)
@@ -55,12 +62,35 @@ class DataLoader:
             logger.warning(f'Results dir not found: {seed_results_path}')
             return {}
 
-        # Auto-discover variants if not specified
+        # AUTO-RETRIEVAL: Recursively find all variants, regardless of geo_constraint depth
         if variants is None:
-            variants = sorted(
-                d for d in os.listdir(seed_results_path)
-                if os.path.isdir(os.path.join(seed_results_path, d))
-            )
+            import glob
+            variants_set = set()
+            if self.source == 'json':
+                # Find all 'diagnostics' folders
+                search_pattern = os.path.join(seed_results_path, '**', 'diagnostics')
+                for path in glob.glob(search_pattern, recursive=True):
+                    if os.path.isdir(path):
+                        # The variant name is the relative path from seed_results_path
+                        # e.g., 'combined_5/dpcc-c' or just 'dpcc-c'
+                        rel_path = os.path.relpath(os.path.dirname(path), seed_results_path)
+                        variants_set.add(rel_path)
+            else:
+                # Find all '.npz' files
+                search_pattern = os.path.join(seed_results_path, '**', '*.npz')
+                for path in glob.glob(search_pattern, recursive=True):
+                    # Exclude the file name itself to get the variant folder
+                    rel_path = os.path.relpath(os.path.dirname(path), seed_results_path)
+                    variants_set.add(rel_path)
+            
+            variants = sorted(list(variants_set))
+            if not variants:
+                logger.warning(f'No {self.source} data found recursively in {seed_results_path}')
+                return {}
+        else:
+            # If explicitly passed but geo_variant is used (legacy compat)
+            if geo_variant is not None:
+                variants = [os.path.join(geo_variant, v) for v in variants]
 
         logger.info(f'Loading seed={seed}, source={self.source}, variants={len(variants)}')
 
@@ -89,8 +119,9 @@ class DataLoader:
 
     # ------------------------------------------------------------------
     def _load_npz(self, seed_results_path, variant):
-        """Load per-rollout arrays from {variant}/{variant}.npz."""
-        npz_path = os.path.join(seed_results_path, variant, f'{variant}.npz')
+        """Load per-rollout arrays from {variant}/{basename(variant)}.npz."""
+        variant_basename = os.path.basename(variant)
+        npz_path = os.path.join(seed_results_path, variant, f'{variant_basename}.npz')
         self.files_found += 1
 
         if not os.path.exists(npz_path):
@@ -120,6 +151,12 @@ class DataLoader:
           context_info.target_xy     → context_target_xy
           context_info.box_init_angle_deg   → context_box_angle_deg
           context_info.target_angle_deg     → context_target_angle_deg
+          --- U_2: extended context_info ---
+          context_info.final_xy_dist       → context_final_xy_dist
+          context_info.final_box_angle_deg → context_final_box_angle_deg
+          context_info.final_box_xy        → context_final_box_xy
+          --- U_2: constraint_metrics block ---
+          constraint_metrics.*             → exec_* / plan_*
         """
         diag_path = os.path.join(seed_results_path, variant, 'diagnostics')
         self.files_found += 1
@@ -170,6 +207,13 @@ class DataLoader:
                 dtype=np.float32
             )
 
+        def _cmet(field, default=0.0):
+            """Extract from constraint_metrics sub-dict."""
+            return np.array(
+                [r.get('constraint_metrics', {}).get(field, default) for r in rows],
+                dtype=np.float32
+            )
+
         n_success = _arr('success', 0)
         metrics = {
             'n_success':                 n_success,
@@ -181,6 +225,27 @@ class DataLoader:
             'context_init_xy_dist':      _ctx('init_xy_dist', 0.0),
             'context_box_angle_deg':     _ctx('box_init_angle_deg', 0.0),
             'context_target_angle_deg':  _ctx('target_angle_deg', 0.0),
+            # --- U_2: extended context_info ---
+            'context_final_xy_dist':         _ctx('final_xy_dist', 0.0),
+            'context_final_box_angle_deg':   _ctx('final_box_angle_deg', 0.0),
+            # --- U_2: constraint_metrics ---
+            'exec_n_violated_steps':                _cmet('exec_n_violated_steps', 0),
+            'exec_constraint_sat_rate':             _cmet('exec_constraint_sat_rate', 0.0),
+            'exec_zero_violation_rollout':           _cmet('exec_zero_violation_rollout', 0),
+            'exec_bounds_viol_count':               _cmet('exec_bounds_viol_count', 0),
+            'exec_halfspace_viol_count':             _cmet('exec_halfspace_viol_count', 0),
+            'exec_obstacle_viol_count':              _cmet('exec_obstacle_viol_count', 0),
+            'exec_max_bounds_viol_m':               _cmet('exec_max_bounds_viol_m', 0.0),
+            'exec_max_halfspace_viol_m':             _cmet('exec_max_halfspace_viol_m', 0.0),
+            'exec_max_obstacle_penetration_m':       _cmet('exec_max_obstacle_penetration_m', 0.0),
+            'exec_constraint_margin_mean_m':         _cmet('exec_constraint_margin_mean_m', 0.0),
+            'exec_first_violation_step':             _cmet('exec_first_violation_step', 0),
+            'exec_longest_safe_streak':              _cmet('exec_longest_safe_streak', 0),
+            'exec_dynamics_consistency_error_mean':  _cmet('exec_dynamics_consistency_error_mean', 0.0),
+            'exec_dynamics_consistency_error_max':   _cmet('exec_dynamics_consistency_error_max', 0.0),
+            'plan_post_viol_rate_mean':              _cmet('plan_post_viol_rate_mean', 0.0),
+            'plan_post_viol_rate_max':               _cmet('plan_post_viol_rate_max', 0.0),
+            'plan_n_replan_steps':                   _cmet('plan_n_replan_steps', 0),
             # 2-D arrays
             'context_box_init_xy': np.array(
                 [r.get('context_info', {}).get('box_init_xy', [0.0, 0.0]) for r in rows],
@@ -188,6 +253,10 @@ class DataLoader:
             ),
             'context_target_xy': np.array(
                 [r.get('context_info', {}).get('target_xy', [0.0, 0.0]) for r in rows],
+                dtype=np.float32
+            ),
+            'context_final_box_xy': np.array(
+                [r.get('context_info', {}).get('final_box_xy', [0.0, 0.0]) for r in rows],
                 dtype=np.float32
             ),
         }

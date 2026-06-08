@@ -1,0 +1,53 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Thu Jun  4 15:01:05 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21233
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=empty  n_trials=500  gain=pid_default  seed=0
+[ collect ] scene=empty  n_trials=500  homotopy_pool=['N/A']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected=  0  t=0s  ~0.19s/ep  ETA≈93s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000000.pkl
+[ collect ] saved=  50  rejected=  0  t=8s  ~0.16s/ep  ETA≈71s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000049.pkl
+[ collect ] saved= 100  rejected=  0  t=15s  ~0.15s/ep  ETA≈61s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000099.pkl
+[ collect ] saved= 150  rejected=  0  t=23s  ~0.15s/ep  ETA≈53s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000149.pkl
+[ collect ] saved= 200  rejected=  0  t=30s  ~0.15s/ep  ETA≈46s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000199.pkl
+[ collect ] saved= 250  rejected=  0  t=38s  ~0.15s/ep  ETA≈38s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000249.pkl
+[ collect ] saved= 300  rejected=  0  t=45s  ~0.15s/ep  ETA≈30s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000299.pkl
+[ collect ] saved= 350  rejected=  0  t=53s  ~0.15s/ep  ETA≈23s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000349.pkl
+[ collect ] saved= 400  rejected=  0  t=61s  ~0.15s/ep  ETA≈15s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000399.pkl
+[ collect ] saved= 450  rejected=  0  t=68s  ~0.15s/ep  ETA≈8s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000449.pkl
+[ collect ] saved= 500  rejected=  0  t=76s  ~0.15s/ep  ETA≈0s  last→logs/uav_expert_data/empty/N_A/empty_N_A_pid_default_0000499.pkl
+[ collect ] DONE  saved=500  rejected=0  (0.0% rejected)  elapsed=76s
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/empty …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 500
+  Homotopy breakdown  : {'N/A': 500}
+
+  Speed (m/s):
+    Generated  mean=0.387  median=0.420  p95=0.625
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ✅ OK
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=190  median=177  [134, 378]
+    UAV-Flow   median=38.0 waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0116  p95=0.0188
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/empty/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/empty/
+========================================
+JOB END: Thu Jun  4 15:02:22 UTC 2026
+========================================

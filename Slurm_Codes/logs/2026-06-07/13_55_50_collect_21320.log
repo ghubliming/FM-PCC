@@ -1,0 +1,49 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Sun Jun  7 11:56:02 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21320
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=corridor  n_trials=500  gain=pid_default  seed=0
+[ collect ] scene=corridor  n_trials=500  homotopy_pool=['L', 'C', 'R']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected=  1  t=0s  ~0.33s/ep  ETA≈166s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000001.pkl
+[ collect ] saved=  50  rejected= 33  t=16s  ~0.31s/ep  ETA≈131s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000082.pkl
+[ collect ] saved= 100  rejected= 64  t=31s  ~0.31s/ep  ETA≈104s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000163.pkl
+[ collect ] saved= 150  rejected= 98  t=47s  ~0.32s/ep  ETA≈80s  last→logs/uav_expert_data/corridor/C/corridor_C_pid_default_0000247.pkl
+[ collect ] saved= 200  rejected=127  t=63s  ~0.31s/ep  ETA≈54s  last→logs/uav_expert_data/corridor/R/corridor_R_pid_default_0000326.pkl
+[ collect ] saved= 250  rejected=161  t=79s  ~0.32s/ep  ETA≈28s  last→logs/uav_expert_data/corridor/R/corridor_R_pid_default_0000410.pkl
+[ collect ] saved= 300  rejected=189  t=94s  ~0.31s/ep  ETA≈3s  last→logs/uav_expert_data/corridor/R/corridor_R_pid_default_0000488.pkl
+[ collect ] DONE  saved=307  rejected=193  (38.6% rejected)  elapsed=96s
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/corridor …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 307
+  Homotopy breakdown  : {'C': 167, 'R': 70, 'L': 70}
+
+  Speed (m/s):
+    Generated  mean=2.037  median=2.165  p95=2.947
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ⚠️  CHECK — mean speed outside 0.15–0.80 m/s
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=278  median=285  [201, 333]
+    UAV-Flow   median=38.0 waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0202  p95=0.0358
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/corridor/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/corridor/
+========================================
+JOB END: Sun Jun  7 11:57:39 UTC 2026
+========================================

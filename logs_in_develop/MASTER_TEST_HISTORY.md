@@ -28,10 +28,10 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. | |
 | **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. | working on |
 | **Gen7 (Visual Flow Matching)** | [fm_visual_aligning/](../fm_visual_aligning) | [fm_visual_aligning_test/](../fm_visual_aligning_test) | May 20, 2026 | **Continuous-time visual Flow Matching (FMv3ODE)**. Clean copy-modify sibling transition from proofed Gen6V4 to continuous-time FM ODE engine with Beta(1.5, 1.0) time sampling and velocity target training. | working on |
-| **Gen8 (iMeanFlow Visual Engine)** | Pending | Pending | Planned | **Planned Extension**: Add the iMeanFlow (iMF) engine as an alternative to the Gen7/Gen6v4 visual aligning pipelines. **Key Milestone**: This represents a major leap in making the core ML engine completely switchable, effectively merging the architectural capabilities of Gen6v4 and Gen7, and now seamlessly integrating iMF. | planning |
-| **Gen9 (Visual Avoiding Env)** | Pending | Pending | Planned | **Planned Extension**: Create a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. Will modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present. **Warning**: Real training might remain pending and may not be fully executed, as the camera in the avoiding task makes little semantic sense; however, validating the environment camera learning pipeline is an important structural milestone. | planning |
+| **Gen8 (iMeanFlow Visual Engine)** | Pending | Pending | Planned | **Planned Extension**: Add the iMeanFlow (iMF) engine as an alternative to the Gen7/Gen6v4 visual aligning pipelines. **Key Milestone**: ~~This represents a major leap in making the core ML engine completely switchable, effectively merging the architectural capabilities of Gen6v4 and Gen7, and now seamlessly integrating iMF.~~ (Maybe too complex and causing hidden bugs, so keep current in diff folders entry. i.e. no more implement pending, low ranking) | planning |
+| **Gen9 (Visual Avoiding Env)** | Partial | Partial | In Progress | **PARTIAL COMPLETION (30 May 2026): Camera Environment Capture Confirmed**. Created a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. **COMPLETED**: Camera capture pipeline. **PENDING**: Modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present. | in progress |
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
-| **Gen11 (UAV Vis-Traj in MuJoCo)** | Pending | Pending | Planned | **Planned Extension**: Implement a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. Will adapt expert data from the paper "AV-Flow Colosseo: A Real-World Benchmark for Flying-on-a-Word UAV Imitation Learning". Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone. | |
+| **Gen11 (UAV Vis-Traj in MuJoCo)** | Partial | Partial | In Progress | **PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone. | in progress |
 
 ***
 
@@ -46,6 +46,7 @@ In addition to the main model training/evaluation pipelines, the repository host
 | **Data Analysis & Plotting** | [Data_Analysis/](../Data_Analysis) | Dynamic plotting scripts for generating thesis-ready success rate heatmaps and latency charts. | Ongoing (April - May 2026) |
 | **Colab Plotting Suites** | [Results_and_Data_Analysis_Colab_T4/](../Results_and_Data_Analysis_Colab_T4) & [ipynbs_Colab/](../ipynbs_Colab) | Plotting pipelines and Google Colab T4 GPU integration scripts. | Ongoing (April - May 2026) |
 | **Cluster Job Orchestrators** | [Slurm_Codes/](../Slurm_Codes) | Pipeline runner scripts (SBATCH shell scripts) for GPU cluster node dispatch (e.g. `Visual_Aligning/` pipeline). | Gen3v2 Remote Migration & Gen5/Gen7 Visual Aligning (Ongoing) |
+| **Real-Time Simulation Recording Ideas** | [REALTIME_RECORDING/IDEAS.md](REALTIME_RECORDING/IDEAS.md) | Need to analyze real-time recordings (not only GIFs, just ideas!) | Pending / Working on (June 2026) |
 
 ***
 
@@ -1259,3 +1260,337 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
    - **Epoch Loop & Wandb Refactor**: Repaired the training script by adding an outer `_train_vision()` epoch loop to mirror state-based agents and ensure complete training cycles. Refactored WandB config initialization.
    - **DiffusionMLPNetwork Bug Fix**: Patched a tensor dimension mismatch in `d3il/agents/models/diffusion/diffusion_models.py` where 3D visual paths were missing sequence expansion (`.expand(-1, x.shape[1], -1)`).
    - **Submit Script Hotfix**: Fixed `Slurm_Codes/submit.sh` to correctly forward extra arguments (like `agent_name`, `seed`) and dispatch the correct `train_vision_agent` payload.
+
+***
+
+## Gen9 Epoch 1: Visual Avoiding Task Initialization & Data Collection (May 29, 2026)
+
+**Keywords**: Gen9, visual avoiding, data collection, inhand camera, bp-cam, .gitignore.
+
+1. **Visual Data Collection Pipeline**: Created a standalone pipeline (`collect_visual_avoiding_data.py`) to collect both `bp-cam` (third-person/cage) and `inhand-cam` (first-person/wrist) frames for the D3IL avoiding task by replaying existing state expert demonstrations in MuJoCo.
+2. **In-Hand Camera Integration**: Sourced the wrist view directly from `env.robot.inhand_cam` instead of duplicating `bp-cam`.
+3. **Pipeline Refactoring**: Added SLURM job wrappers (`collect_visual_avoiding.sh`) with proper EGL setup for offscreen rendering, and preflight checks to ensure camera data is not corrupted.
+4. **Repository Maintenance**: Updated `.gitignore` to avoid checking in the generated visual datasets (`all_data`).
+5. **Documentation**: Authored `CAMERAS_IN_D3IL_AND_VISUAL_ALIGNING.md` detailing the D3IL camera definitions and how the pipeline consumes them.
+
+***
+
+## Gen7 & Gen6v4: UF-17 Non-Visual Aligning Architecture Fix (May 29, 2026)
+
+**Keywords**: UF-17, StateOnlyAligningDataset, action_dim=3, pure DPCC principle.
+
+1. **Non-Visual Architecture Fix (UF-17)**: Fixed the structurally broken state-only aligning pipeline. Changed `action_dim=2` back to `action_dim=3` to match the visual path and restored the 23D trajectory `[act(3) | des_c_pos(3) | c_pos(3) | box_pos(3) | box_quat(4) | tgt_pos(3) | tgt_quat(4)]`. This places `c_pos` correctly at dims 6-8 for the projector.
+2. **StateOnlyAligningDataset**: Introduced `StateOnlyAligningDataset` that produces 23D trajectories without image keys, explicitly built for non-visual training.
+3. **Evaluation Restoration**: Rewrote the prediction branch to provide full 20D observation to the model instead of collapsing it to a fake 6D vector (which previously discarded box and target info). Restored pure DPCC architecture with proper initial state pinning.
+4. **Flow Matching p_losses Fix**: Added an `if_vision` guard in `VisualFlowMatching.loss()` to route directly to base `p_losses` without requesting missing image conditions.
+
+***
+
+## Gen7 & Gen6v4: UF-18 Non-Visual Aligning Architecture Fix Completion (May 30, 2026)
+
+**Keywords**: UF-18, non-visual adjustments, DPCC, FM sync.
+
+1. **Non-Visual Adjustments**: Applied critical non-visual adjustments and fixes to DPCC and FM evaluation and training scripts. This finalizes the sync between Gen7 and Gen6v4 non-visual pipelines.
+
+***
+
+## Data Analysis Tool v2: U_2 Dynamic Compare Upgrade (May 30, 2026)
+
+**Keywords**: DA v2, U_2, dynamic compare, constraint metrics, interactive plotting, final_xy_dist.
+
+1. **Extended Metrics Extraction**: Upgraded the `data_loader.py` to recursively extract all `constraint_metrics` and extended `context_info` (e.g., `final_xy_dist_m`, `final_box_xy`) from diagnostic JSON files.
+2. **Interactive Dynamic Compare Mode**: Added a "COMPARE" mode to the PyScript HTML visualizer, enabling dynamic generation of scatter, bar, and box plots comparing metrics across variants (e.g., highlighting `final_xy_dist_m` vs `mean_dist_m` or `constraint_sat_rate`).
+
+***
+
+## Gen11 Epoch 1: MuJoCo MPC UAV Model Initialization (May 30, 2026)
+
+**Keywords**: Gen11, UAV, MPC, MuJoCo.
+
+1. **UAV Model Assets Migration (Epoch 1 Completed)**: Successfully completed Epoch 1 of the Gen11 UAV pipeline. Migrated the Skydio X2 quadrotor model (XML, low-poly mesh, textures, and racing gates) from `mujoco_menagerie` and applied the MJPC drone-task modifications. These assets are now correctly placed within the `d3il` MuJoCo environment models directory, laying the physical groundwork for the UAV Visual-Trajectory environment.
+
+***
+
+## Data Analysis Tool v2: U_2 Hotfixes (May 31, 2026)
+
+**Keywords**: DA v2, COMPARE fallback, DataLoader nested schemas, PyScript stderr suppression, geo-layer filters.
+
+1. **Hotfix 1 (COMPARE Mode Fallback)**: Implemented an aggregated data fallback for COMPARE mode, allowing it to function and display bar and scatter charts even without per-rollout detail CSVs.
+2. **Hotfix 2 (DataLoader Schema Auto-Retrieval)**: Upgraded `data_loader.py` to seamlessly parse nested directory structures introduced by geometric constraints (e.g., `combined_5`), resolving candidate loading failures without requiring CLI flag changes.
+3. **Hotfix 3 (UI Filters & PyScript Stability)**: Added Geo-Layer UI Filters to declutter variant checkboxes. Executed a global standard error suppression (`sys.stderr` buffer redirection) to prevent PyScript from displaying fatal red-box overlays triggered by non-fatal Matplotlib warnings.
+
+***
+
+## Gen11 Epoch 2: UAV Naive Test Framework Closure (May 31, 2026)
+
+**Keywords**: Gen11, Epoch 2, cascaded PID, 9D trajectory, hover instability.
+
+1. **Architectural Hypothesis Validated**: Proven that planning and control can be safely decoupled. A hand-written cascaded PID flight controller successfully tracked a 30-second 9D `[p, v, a]` reference trajectory with 2.9 cm RMS error.
+2. **Hover Instability Diagnosis**: Documented a discrete-time limit cycle failure during stationary hover, caused by overly aggressive rate damping (`Kp_omega`) for the 100 Hz simulation rate. This was classified as a known-acceptable tuning gap since the downstream FM-PCC pipelines produce continuously-moving paths, avoiding the zero-velocity instability.
+
+***
+
+## Gen11 Epoch 3: UAV Environment Test Framework Closure (May 31, 2026)
+
+**Keywords**: Gen11, Epoch 3, MuJoCo scenes, obstacle traversal, asset-path resolution.
+
+1. **Environment Integration**: Successfully loaded the Skydio X2 quadrotor into full MuJoCo scenes (`empty`, `corridor`, `pillars`, `s_curve`). Resolved a critical XML asset-path resolution bug that caused mesh loading failures by overriding compiler mesh/texture directories.
+2. **Controller Scene-Agnosticism Proven**: The `empty` scene test achieved the exact same 2.9 cm RMS error as the Epoch 2 baseline, confirming the PID flight controller behaves identically with or without a surrounding scene wrapper.
+3. **Obstacle Demos & Tracking Status**: Demonstrated clean end-to-end traversal in the `corridor` scene and mild-grazing traversal in the `pillars` scene. The `s_curve` trajectory resulted in lag and collisions, traceable to the same zero-velocity tuning gap identified in Epoch 2.
+
+***
+
+## Gen3v4u2: iMeanFlow Major Upgrade Direct (Fix 1) (May 31, 2026)
+
+**Keywords**: iMeanFlow, training target math bug, velocity over-scaling, linear interpolant.
+
+1. **Velocity Target Math Fix**: Identified and resolved a critical bug in `imf_diffusion.py` where the training target `(x_start - x_r)/h` over-scaled the velocity regression by a factor of roughly `N` at small timesteps. 
+2. **Correction**: Updated the target formula to `(x_t - x_r)/h`, which correctly equals the instantaneous velocity `v` for linear interpolants, resolving the issue where model rollouts would shoot off in chaotic straight lines. Retraining is required to benefit from the corrected scale.
+
+***
+
+## Gen7 & Gen6v4: Non-Visual Aligning Code Fixes 18.3–18.6 (May 31, 2026)
+
+**Keywords**: non-visual evaluation, normalizer guards, diagnostic block, projector dims, GIF capture hook.
+
+1. **UF-13 Normalizer Guard (Fix 18.3)**: Fixed a broadcast crash during non-visual evaluation by guarding the UF-13 auto-visual override. The evaluation now correctly identifies when a checkpoint lacks an image encoder and proceeds with non-visual rollouts instead of forcing visual dependencies.
+2. **First-Replan Diagnostic Alignment (Fix 18.4)**: Addressed an `UnboundLocalError` in the evaluation scripts by branching diagnostic variable names (`obs_6d_np` vs `obs_20d_np`) depending on whether the code path is visual or non-visual.
+3. **Projector Normalizer Slicing (Fix 18.5)**: Fixed the `setup_dpcc_projector` logic to slice the observation normalizer based on the trajectory dimension minus action dimension (e.g., 20 for non-visual) instead of a hardcoded 6. This resolved a `(23,) vs (9,)` broadcast crash during DPCC evaluation constraints construction.
+4. **Environment-Based GIF Capture (Fix 18.6)**: Implemented `record_sim_frame(env)`, an environment-render hook directly pulling from MuJoCo cameras during non-visual rollouts. This restores GIF generation for genuine 23-D non-visual models, matching the legacy visual behavior independently of the policy's image capabilities.
+5. **Dimension Invariants Documentation**: Created comprehensive documentation (`0_READ_ME_DIM_INVARIANTS.md`) standardizing the exact dimension rules for visual (9-D) and non-visual (23-D) data handling across both Gen6v4 and Gen7 models.
+
+***
+
+## Gen3v4u2: iMeanFlow Major Upgrade Direct (Fix 2 Investigation) (May 31, 2026)
+
+**Keywords**: iMeanFlow, jittery trajectory, aux head, test methodology.
+
+1. **Jittery Trajectory Diagnosis**: Investigated why iMF rollouts exhibited step-quantized jitter despite the Fix 1 correction preventing explosions. Identified the auxiliary head (`iMFTrajectoryModel.aux_head`) as the most probable cause, as it introduces step-to-step noise when fed with drifting off-manifold observations during Euler integration.
+2. **Inference Monkey-Patching**: Designed a runtime monkey-patch (`disable_aux_at_inference.py`) to silence the auxiliary head during sampling without requiring source code edits or retraining. This provides an immediate, cheap hypothesis test for the jitter issue before progressing to costlier architectural changes like modifying the training `(t, h)` joint distribution.
+
+***
+
+## Gen7: Non-Visual One-Shot Run & Stabilization (Fix 18.1 - 18.6.1) (June 1, 2026)
+
+**Keywords**: Non-Visual, One-Shot, obs_dim override, normalizer, broadcast crash, color swap, STALE_CONFIG.
+
+1. **Non-Visual Training Dimension Override (Fix 18.1)**: Fixed a training crash (model building 9-D input while expecting 23-D data) by dynamically overriding `args.obs_dim` to match the dataset normalizer for non-visual pipelines.
+2. **Evaluation Slicing and Safeguards (Fix 18.2 - 18.5)**: 
+   - Derived `_traj_dim` directly from saved normalizers to prevent CLI flag mismatches.
+   - Guarded the UF-13 auto-visual override by checking the saved normalizer dimension, avoiding a `(1,6) vs (20,)` broadcast crash when evaluating genuine non-visual models.
+   - Branched first-replan diagnostic variables (`obs_6d_np` vs `obs_20d_np`) to eliminate an `UnboundLocalError`.
+   - Updated `setup_dpcc_projector` to slice the obs normalizer to `trajectory_dim - action_dim`, fixing a projector initialization crash for non-visual variant evaluation.
+3. **Non-Visual GIF Hook & Color Correction (Fix 18.6 & 18.6.1)**: Added an environment-render hook (`record_sim_frame`) specifically for non-visual rollouts to safely pull from MuJoCo cameras, fully restoring GIF capabilities. Promptly fixed a cosmetic RGB/BGR color-inversion bug introduced by this hook.
+4. **Stale Config Side-Patch**: Updated `utils.Config.save()` to forcefully overwrite `model_config.pkl`, preventing legacy configs from misleading eval scripts and causing shape-mismatch crashes.
+
+***
+
+## Gen3v4u2: iMeanFlow Forensic Audit vs. Reference Repo (June 1, 2026)
+
+**Keywords**: iMeanFlow, reference audit, aux head, t-conditioning, deviation analysis.
+
+1. **Mathematical Verification of Target**: Verified that the previously implemented training target formula `(x_t - x_r)/h` is mathematically correct and identical to the original MeanFlow formulation.
+2. **Auxiliary Head Jitter (Deviation A)**: Conducted a deep code-level audit of the reference image-domain `imeanflow` repository and confirmed that it completely discards the auxiliary `v` head at inference. Validated that our practice of adding `sample_aux_weight * aux` was the root cause of step-to-step jitter, requiring a permanent codebase change.
+3. **Time vs. Step Conditioning (Deviation B)**: Identified that our model conditions on both time `t` and step size `h`, whereas the reference architecture uses `h` alone. Proposed evaluating the impact of dropping the time dependency during inference.
+
+***
+
+## Conceptual Math & Architecture Notes: One-Shot vs. Horizon (June 1, 2026)
+
+**Keywords**: Conceptual, DGM time, real-world horizon, MPC, one-shot generation.
+
+1. **Orthogonality of Time Axes**: Documented the critical distinction between "diffusion time" (NFE) and "trajectory horizon time" (H). "One-shot" (NFE=1) collapses diffusion iterations but does not imply generating the entire real-world trajectory at once.
+2. **MPC Chunking vs. Open-Loop**: Clarified that applying iMF at `H=8` is fundamentally correct. Long-horizon (H ≈ 300) open-loop generation suffers from compounding state drift and multi-modality collapse, confirming that small-H Model Predictive Control (MPC) with replanning remains the most robust design choice for contact-rich manipulation tasks.
+3. **D3IL Agent Typology**: Classified D3IL's heterogeneous agent suite to emphasize that "no horizon" agents are actually `H=1` single-step reactive predictors, distinguishing them from chunk-based MPC policies like our `H=8` DPCC/FM implementations.
+
+***
+
+## Gen3v4u2: iMeanFlow Architectural Deviations Resolution (Fix 3) (June 1, 2026)
+
+**Keywords**: iMeanFlow, reference audit, aux head, t-conditioning, fix 3, no retraining.
+
+1. **Auxiliary Head Removal at Inference (Deviation A)**: Removed the auxiliary `v` head contribution (`sample_aux_weight * aux`) from the inference output in `_predict_velocity`. This aligns our implementation with the reference iMF architecture, which explicitly relies solely on the mean-velocity (`u`) head during inference, while retaining the aux head for training only.
+2. **Constant Time Conditioning at Inference (Deviation B)**: Froze the continuous time input `t` to a constant (`T_CONST_INFERENCE = 0.5`) during the sampling loop. This converts the `(t,h)`-conditioned model into an effectively `h`-only conditioned model at inference, mimicking the reference iMF code and preventing the excitation of spurious time-dependencies learned during training.
+3. **Outcome**: These structural corrections, implemented without requiring a model retrain, ensure the iMF inference pipeline strictly adheres to the canonical reference. Trajectories are expected to be significantly smoother, fully resolving the step-quantized jitter identified in previous diagnostic audits.
+
+***
+
+## Gen11 Epoch 4 & Path Preparations: UAV-Flow Replication and Expert Data Sourcing (June 1, 2026)
+
+**Keywords**: Gen11, UAV-Flow, SafeFlowMPC, expert data collection, MuJoCo replication.
+
+1. **UAV-Flow Sim-to-Real Analysis**: Analyzed the UAV-Flow reference framework and confirmed it lacks explicit dynamic equations, relying entirely on Unreal Engine for black-box physics and waypoint generation. Porting the logic to MuJoCo requires building a custom quadrotor environment and abstract geometry constraints.
+2. **Architecture Transfer Strategy (V-A-FM-DPCC)**: Finalized the strategy to reuse existing drone models (e.g., Skydio X2 from `mujoco_menagerie`) and wire them with `mujoco_mpc` for receding-horizon control. Outlined a 7-step implementation roadmap for transferring the FlowMP/SafeFlowMPC paradigm from robotic arms to a UAV context.
+3. **Epoch 4 Expert Data Sourcing Strategy**: Conducted a thorough evaluation of expert data sources for FM-PCC training. Ruled out using UAV-Flow directly due to simulation mismatches (Unreal vs. MuJoCo, different scales, waypoints instead of actions) and MuJoCo MPC due to its racing-task focus. 
+4. **Manual Generation Approach**: Determined that manual data generation in the custom MuJoCo stack is the only viable path to obtain `(state, action)` trajectories in the required 9-D format (`[act(3) | p(3), v(3)]`). Planned the extraction of UAV-Flow kinematic statistics (e.g., typical altitudes, max velocities) to inform hand-designed reference trajectories for generating the expert dataset.
+
+***
+
+## Gen7 & Gen6v4: Non-Visual GIF Capture Color Pipeline Correction (Fix 18.6.2) (June 2, 2026)
+
+**Keywords**: Non-Visual, capture_frame, RGB-BGR inversion, Aligning_Sim, color pipeline.
+
+1. **Color Pipeline Re-Architecture (Fix 18.6.2)**: Addressed persistent R↔B color inversion in non-visual GIF captures. The previous assumptions in Fix 18.6 and 18.6.1 about native camera output formats were proven empirically false on the cluster.
+2. **Visual Pipeline Parity**: Replaced the `record_sim_frame(env)` hook with `capture_frame(bp_np, inhand_np)`. Shifted the image acquisition and RGB→BGR conversion directly into `Aligning_Sim`'s non-visual branch, enforcing a line-for-line mirror of the proven visual capture pipeline to guarantee structurally correct colors without relying on unverified assumptions.
+
+***
+
+## Gen11 Epoch 4: Expert-Data Provenance and Generation Strategy (June 2, 2026)
+
+**Keywords**: Gen11, Expert Data, Provenance, D3IL, UAV-Flow, sim-to-real.
+
+1. **Provenance Audit**: Conducted a deep-dive audit into upstream expert data sources (`EXPERT_DATA_PROVENANCE.md`). Confirmed that D3IL relies on human teleoperators on real Franka robots (multi-modal IL), while UAV-Flow uses human expert pilots flying real drones.
+2. **Generation Strategy Defense**: Formalized the defense for using "manual generation" (PID/MPC scripts) for FM-PCC drone planning validation. Since the current goal is validating a constraint-aware planner architecture rather than studying multi-modal style transfer or language conditioning, algorithmically generated constraint-respecting data provides the necessary controllability and format alignment without the prohibitive cost of real-world multi-modal collection.
+
+***
+
+## Gen9 Epoch 2: Single Camera Visual Avoiding Pipeline (June 3, 2026)
+
+**Keywords**: Gen9, visual avoiding, single camera, 6-D trajectory, sphere_outside, config split.
+
+1. **Pipeline Architecture**: Successfully scaffolded Visual-DPCC and Visual-FM pipelines for the D3IL avoiding task by porting from Gen7/Gen6v4 visual aligning pipelines. Dropped trajectory dimension from 9-D to 6-D (`[act(2) | des_xy(2) | c_xy(2)]`) and scaled vision down to a single camera (bp-only, `LATENT_DIM=64`).
+2. **Dataset & Models**: Implemented `ParityAvoidingDataset` and updated `VisualUNet`, `VisualGaussianDiffusion`, and `VisualFlowMatching` to process single-camera payloads without `wrist_img`. Created `Avoiding_Img_Dataset` for D3IL-native loops. 
+3. **Constraint Injection**: Configured the 6 fixed obstacles from the avoiding task as explicit `sphere_outside` projector constraints directly into the planning configurations rather than observation vector entries.
+4. **Configuration Structuring**: Followed the Gen7 pattern by splitting the config into a dedicated `config/avoiding-d3il-visual.py` (mirrors `aligning-d3il-visual.py`), keeping non-visual configurations isolated from visual logic.
+5. **Minor Fixes (Fix 1 & Fix 2)**: Addressed package-level import issues by fixing stale dataset class re-exports in `datasets/__init__.py`. Replaced aligning-era integer hardcodes (like `_obs_dim = 6`) with dynamic configuration properties to avoid silent dimension mismatch bugs.
+
+***
+
+## Gen8 Epoch 1: iMeanFlow Visual Aligning Initialization (June 3, 2026)
+
+**Keywords**: Gen8, iMeanFlow, VisualIMF, FiLM-conditioning, visual aligning.
+
+1. **Engine Swap**: Initiated the Gen8 extension to swap the Gen7 vanilla Flow Matching (`FlowMatchingODE`) engine with the newly audited and stabilized iMeanFlow engine (`iMeanFlowODE` from Gen3v4). This introduces mean-flow training, step-size `h`-conditioning, and dual `u/v` heads into the visual aligning architecture.
+2. **VisualIMF Wrapper**: Created `visual_imf_diffusion.py` hosting `VisualIMF`, extending `iMeanFlowODE`. It unpacks multi-camera FiLM conditions (bp, in-hand) and delegates to the base iMF `p_losses` and forward methods, perfectly mirroring the Gen7 logic.
+3. **Model Integration**: Integrated `VisualUNet` (FiLM-conditioned) as the primary velocity-net within `iMFTrajectoryModel`, allowing visual data to flow into the iMF core, while retaining the unconditioned `aux_head` on raw trajectory data. 
+4. **Configuration Reuse**: Appended `imf_visual_aligning` and `plan_imf_visual_aligning` entries directly to `aligning-d3il-visual.py`. Unlike Gen9, Gen8 introduces no dimension changes (9-D visual trajectory preserved), allowing it to cleanly piggyback on the existing visual configuration.
+
+***
+
+## Gen3v4u2: iMeanFlow Forensic Audit Conclusion & Fix 3 (June 3, 2026)
+
+**Keywords**: iMeanFlow, paper-readiness, reference audit, structural alignment.
+
+1. **Audit Completion**: Finalized the forensic architectural audit comparing the FM-PCC `flow_matcher_v3_imeanflow` implementation with the canonical reference iMeanFlow repository.
+2. **Correctness Confirmed**: Verified that all critical mathematical deviations are definitively resolved. Fix 1 correctly scales the mean-flow target as `(x_t - x_r)/h`. Fix 3 correctly mimics reference inference by silencing the auxiliary `v`-head and freezing the continuous-time parameter to `t=0.5` (relying on `h`-conditioning alone during generation).
+3. **Remaining Known Behavior**: Documented acceptable domain adaptations, including the use of a 1-D U-Net backbone (instead of DiT) and a shallow MLP for the `v`-head. Acknowledged an "E4 stability spike" in training due to numerical noise amplification at extremely small `h`, recommending explicit gradient clipping and an `h_min` threshold for future retrains. The inference codebase is ruled paper-ready.
+
+***
+
+## Gen8 Epoch 1: iMeanFlow Architecture Fix 1 (June 3, 2026)
+
+**Keywords**: Gen8, iMeanFlow, import collision, UNet1DTemporalCondModel, FlowMatchingODE.
+
+1. **Two-Source Copy Collision Resolution**: Fixed catastrophic package import crashes (`ImportError`) caused by colliding class names from Gen3v4 and Gen7 branches.
+2. **UNet Backbone Merge (Fix 1.1)**: Merged the iMF conditioning capabilities (`h_mlp`, additive `t` conditioning) from `Flow_matcher_U_Net_v2` with the FiLM visual capabilities (`cond_mlp`, concatenated visual conditioning) of Gen7 into a single, unified `UNet1DTemporalCondModel` in `unet1d_temporal_cond.py`. Retained backward-compatible aliases.
+3. **Diffusion Base Alias (Fix 1.2)**: Added a `FlowMatchingODE` alias mapping to `FlowMatchingIMF` in `diffusion.py` to seamlessly satisfy the Gen7 scaffold's inheritance imports without requiring structural changes to the core iMF ODE solvers.
+
+***
+
+## Gen9 Epoch 2: Single Camera Avoiding Pipeline Stabilization (Fixes 3–7) (June 3, 2026)
+
+**Keywords**: Gen9, single camera, avoiding simulation, dimension hardcodes, camera resize, diagnostic cleanup.
+
+1. **Context & Dimension Independence (Fixes 3 & 5)**: Updated `eval_visual_avoiding` scripts to correctly handle the 6D trajectory shape for avoiding simulation. Stripped out aligning-task-specific 4-tuple contexts (`push-box`, `target-box`) and adapted the loops to utilize random environment resets natively.
+2. **Constraint & Environment YAML (Fix 4)**: Completely redesigned `visual_avoiding_eval.yaml` to configure 2D environments and upgraded the associated dynamics constraints logic.
+3. **Camera Resolution Mismatch (Fix 6)**: Identified a shape mismatch crashing `MultiImageObsEncoder` (expected 96×96, received 1024×1024). Applied `cv2.resize` with `INTER_AREA` interpolation to the `BPCageCam` output to match the expert dataset format.
+4. **Export & Plotting Crash Recovery (Fix 7)**: 
+   - Disabled the redundant non-visual `capture_frame` hook in the visual loop that caused `video_frames` shape mismatch (96x96x3 vs 96x192x3), restoring GIF generation.
+   - Guarded per-rollout 3D and Z-axis export plotting logic behind `shape[1] > 2` checks, preventing `IndexError` when processing 2D avoiding positions.
+
+***
+
+## Gen8 Epoch 1: iMeanFlow Visual Aligning Validation & Config Fixes (Fix 2 Series) (June 4, 2026)
+
+**Keywords**: Gen8, iMeanFlow, model_config.pkl, eval fallback, dim inference, validation.
+
+1. **Config Wrapper Restoration (Fix 2)**: Resolved a `FileNotFoundError` during evaluation caused by the missing `model_config.pkl`. The `iMeanFlowEngine` in `train_imf_visual_aligning.py` was being directly instantiated without the `utils.Config` wrapper used by Gen7. Wrapped the engine to ensure `model_config.pkl` is reliably generated for future training runs.
+2. **Evaluation Fallback via Checkpoint Parsing (Fix 2.2 - 2.4)**: Added fallback logic in `eval_imf_visual_aligning.py` for older checkpoints that lacked `model_config.pkl`. Initial attempts to rebuild from `args.json` failed (as it's not saved for non-'train' names). Subsquently developed path parsing to infer `horizon` and `if_vision`, and extracted the critical `dim` parameter directly from the `time_mlp.1.weight` shape in the `state_*.pt` checkpoint file, avoiding hardcoded mismatches (e.g. `dim=128` vs `dim=32`).
+3. **Stale Config Eviction (Fix 2.5)**: Implemented a robust validation check in the evaluation loader that verifies the loaded `vis_config.dim` against the actual checkpoint weight shape. If a mismatch is detected (due to previous buggy fallbacks writing a stale pkl), the stale configuration is evicted and correctly rebuilt from the checkpoint path, ensuring evaluation stability without requiring model retraining.
+
+***
+
+## Gen11 Epoch 4: UAV Expert Data Collection Pipeline Implementation (June 4, 2026)
+
+**Keywords**: Gen11, UAV expert data, data collection, homotopy, dataset_writer, slurm.
+
+1. **PID Controller Stability Fix**: Addressed hover/limit-cycle instability identified in Epoch 2 by reducing the aggressive rate damping `Kp_omega` (`[10,10,2]` → `[2.5,2.5,1.0]`) in both naive and environment flight controllers. This ensures trajectory generation quality without excessive obstacle contact rates.
+2. **UAV-Flow Kinematic Statistics (Phase 4-α)**: Extracted and analyzed kinematic statistics from UAV-Flow evaluation trajectories (stored in `phase4_alpha_uavflow_stats.json`) to establish targets for the generator (0.3–0.5 m/s velocity, 0.7–1.1 m altitude).
+3. **Expert Data Generator Pipeline (Phase 4-β)**: 
+   - Implemented `generator.py` to handle scene-specific (corridor, pillars, s_curve) rollout trials with configurable homotopy classes (e.g. L/C/R paths) and controller gains (`pid_default`, `pid_high_gain`, `pid_low_gain`).
+   - Added `trajectories.py` for scene-aware trajectory formulations wrapping the baseline functions.
+   - Built `dataset_writer.py` to downsample the 100 Hz physics engine to ~33 Hz, apply Gaussian noise `N(0, 0.02²)` to thicken the data manifold, and package the rollouts into schema-locked pickle episodes mapping `[dt, obs(T,6), actions(T-1,3)]` with position-delta actions.
+   - Introduced `collect.py` as the CLI driver with automatic rejection limits for high-collision scenes, and `stats_validator.py` to validate generated dataset statistics against the Phase 4-α targets.
+4. **SLURM Automation (Phase 4-γ)**: Created `collect.sh` in the `Slurm_Codes` directory to execute batch collection across multiple scenes in parallel using SLURM arrays. Updated `USAGE.md` providing comprehensive instructions for cluster execution and local testing.
+
+***
+
+## Gen11 Epoch 4: UAV Expert Data Collection Refinements (June 4-5, 2026)
+
+**Keywords**: Gen11, UAV expert data, fixes, s_curve, trajectories, noise offset.
+
+1. **Trajectory Generation & Noise Fix (Fix 1)**: Corrected the noise model to apply a per-episode constant offset instead of per-step noise, restoring the expected `[Δp_des]` action norm distribution. Updated s_curve and pillars trajectories.
+2. **Continuous Paths & Amplitude Correction (Fix 2)**: Replaced piecewise path planning with continuous `tanh` trajectories for `s_curve_scene_path` to prevent zero-velocity stops at wall ends. Adjusted amplitudes to zero for centre-pass homotopy classes.
+3. **Thresholds & Segment Tuning (Fix 3 - 5)**: Tuned trajectory parameters (e.g., reverting to `k=3.66`), raised contact thresholds (e.g., s_curve to 8%), and implemented proportional-duration segments ensuring uniform velocity (e.g., ~0.57 m/s) across gap crossings. Increased SLURM abort limits to improve trial completion rates against seed variance, yielding a final dataset of 1769 accepted state-only episodes.
+
+***
+
+## Gen9 Epoch 2: "U2" Avoiding Evaluation Rebuild (June 5, 2026)
+
+**Keywords**: Gen9, U2, avoiding evaluation, evaluation scripts, dataset config, importlib.
+
+1. **Evaluation Framework Redesign**: Discarded legacy evaluation loops and replaced them with streamlined, reduced-complexity evaluation scripts for both FM and DPCC avoiding pipelines.
+2. **Workstream Strategy**: Established execution plans (`PLAN.md` and `CHANGELOG.md`) that separate tasks into independent workstreams for better code maintainability.
+3. **Config & Class Loading Fixes (Fix 1 - 2)**: Updated the `Parser` class to strictly enforce the `avoiding-d3il-visual` dataset configuration in eval scripts. Upgraded `load_diffusion_with_override` to use standard Python `importlib` for module loading, resolving `ModuleNotFoundError` during checkpoint hydration.
+4. **VisualAgent Return Interface Enhancement**: Updated `VisualAgent` to properly return the planned trajectory output, fixing col-5 plotting gaps in FM and DPCC evaluations.
+
+***
+
+## Gen11 Epoch 5: Visual Collection & Validation Pipeline (June 5, 2026)
+
+**Keywords**: Gen11, Epoch 5, visual data collection, GIF generation, mini-FM, dataloader sanity gate.
+
+1. **Camera Image Collection (WS-A)**: Implemented `collect_camera_images.py` to replay Epoch 4 state-only episodes, injecting absolute `qpos`/`qvel` directly into the MuJoCo engine (bypassing PID action replay). Captured 96x96 images from both bird's-eye (`bp-cam`) and FPV (`fpv-cam`) perspectives using offscreen rendering. Fixed a renderer lifecycle bug (`Fix 1`) ensuring safe EGL shutdown.
+2. **Trajectory GIF/Video Generation (WS-B)**: Built `generate_trajectory_gifs.py` and `assemble_gifs_from_pngs.py` to compile rendered frames into stitched (`bp-cam` alongside `fpv-cam`) side-by-side GIFs and MP4s, allowing human visual inspection of expert dataset quality.
+3. **Mini-FM Sanity Gate (WS-C)**: Authored `mini_fm_sanity.py` to train a minimal Flow Matching model (`H=8`, `D=9`, 20 ODE steps) over a subset of `empty` scene trajectories. This acts as a strict structural verification gate to confirm that the `[dt, obs(6), action(3)]` schema and position-delta action conventions are sound before scaling up to full FM-PCC training.
+
+***
+
+## Gen9 Epoch 2: "U2" Avoiding VisualAgent Batch Trajectory Sampling (June 6, 2026)
+
+**Keywords**: Gen9, U2, VisualAgent, plan_batch_size, trajectory sampling, batch processing, col-5 visualization.
+
+1. **VisualAgent Batch Trajectory Generation (Fix 3)**: Identified that `VisualAgent` generated a single trajectory sample (`B=1`) per replanning step, causing col-5 visualizer plots to show thin, noisy, and unrepresentative single-path lines compared to the rich multi-seed evaluation fan in state-based avoiding pipelines.
+2. **Batch Repeats and ODE Multi-seed Initialization**: Added a `plan_batch_size=4` parameter to `VisualAgent.__init__`. The inference loops in both DPCC and FM evaluation scripts were upgraded to repeat identical observation/image contexts across the batch dimension while maintaining independent random noise seeds during the diffusion ODE solver steps.
+3. **Consistent Col-5 Visualization Parity**: This ensures the visual agent generates and returns multiple diverse candidate paths per inference step `(B, H, 2)`. The resulting col-5 foresight plots now present a coherent, multi-path fan that is fully consistent with established state-based diagnostic standards, while preserving acceptable inference costs for evaluation.
+
+***
+
+## Gen11 Documentation and Methodology Consolidation (June 6, 2026)
+
+**Keywords**: Gen11, methodology, documentation, organization.
+
+1. **Architecture & Planning Documentation**: Conducted a major organizational pass over Gen11. Created and structured `METHODOLOGY.md`, `PLAN.md`, and `CHANGELOG.md` files across Epochs 1 through 5.
+2. **Knowledge Persistence**: Solidified the reasoning and processes for UAV sim-to-real transfer, MuJoCo environment construction, expert data generation, and visual dataset compilation into permanent architectural records, aiding long-term project maintainability.
+
+***
+
+## Gen11 Epoch 4 "U2": Observation Schema and Tolerance Upgrades (June 7, 2026)
+
+**Keywords**: Gen11, Epoch 4, U2, observation schema, 9D observation, contact thresholds, SLURM.
+
+1. **9D Observation Expansion**: Upgraded the UAV state-observation schema from 6D (`[p, v]`) to 9D (`[p_des, p, v]`) in `dataset_writer.py`. Explicitly including the desired position `p_des` allows the Flow Matching and DPCC networks to learn stronger goal conditioning, bridging the gap between raw tracking and trajectory generation.
+2. **Tightened Environment Tolerances**: Reduced acceptable wall contact thresholds in the `generator.py` scenes to minimize collision events in the expert dataset. Corridor threshold was halved from 0.02 to 0.01, and S-Curve from 0.08 to 0.04.
+3. **Data Collection Job Management**: Temporarily introduced, then removed `collect_all.sh` in favor of standardizing instructions for SLURM array job submission, maintaining pipeline simplicity.
+
+***
+
+## Gen11 Epoch 5 "U2": Visual Pipeline Correction and Quaternion Injection (June 7, 2026)
+
+**Keywords**: Gen11, Epoch 5, U2, visual pipeline, observation indexing, quaternion, FPV camera, mini-FM.
+
+1. **Visual Pipeline Dimension Sync**: Propagated the new 9D observation structure (`[p_des, p, v]`) across the Epoch 5 visual validation suite (`collect_camera_images.py` and `generate_trajectory_gifs.py`).
+2. **Observation Indexing Bug Fix**: Addressed a critical rendering bug in WS-A and WS-B where the drone was being visually rendered at its *commanded* position (`p_des`) instead of its *actual* physical position (`p`) due to stale 6D slicing logic. Updated column slicing `obs[t, 3:6]` guarantees the drone is drawn exactly where it physically flew.
+3. **Attitude-Aware Rendering Preparation**: Wired `q(T,4)` quaternion data collection into the data pipeline. This prepares the visual generators to correctly render the drone's tilt and pitch (rather than forcing it to remain flat), greatly improving image realism for subsequent visual-policy training.
+4. **FPV Camera Semantics Fix**: Modified the quadrotor XML to remove `mode="trackcom"` from the tracking camera, converting it from an orientation-locked chase camera into a true body-frame FPV camera that rotates with the drone's pitch and roll.
+5. **Mini-FM Gate Sync**: Updated `mini_fm_sanity.py` (WS-C) configuration to accept `OBS_DIM=9` and the newly expanded `DATA_DIM=12` tensor chunk sizes (`[actions(3) ‖ obs(9)]`) to ensure the sanity gate validates the correct U2 data schema.

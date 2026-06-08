@@ -57,6 +57,9 @@ export PYTHONPATH="$FMPCC:$D3IL_ROOT:$GYM_AV:$PYTHONPATH"
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
+export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
+export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
 
 # 4) Run Full Verification (Adapted from Colab Step 9)
 echo "Running FM-PCC Environment Verification..."

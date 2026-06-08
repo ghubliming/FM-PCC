@@ -87,10 +87,17 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
             'x': 6, 'y': 7, 'z': 8}
 
+    # FIX-18.5: slice the obs normalizer to match trajectory_dim - action_dim,
+    # NOT a hardcoded 6. Visual: trajectory_dim=9 → keep obs at 6 (no-op).
+    # Non-visual: trajectory_dim=23 → keep obs at 20 (was: trimmed to 6,
+    # which left the projector with 9-D ranges while constraint bound vectors
+    # are built at full 23-D → broadcast crash at build_matrices line 401).
+    _target_obs_dim = trajectory_dim - 3   # action_dim is hardcoded 3 throughout
     proj_obs_normalizer = obs_normalizer
-    if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > 6:
+    if hasattr(obs_normalizer, 'mins') and len(obs_normalizer.mins) > _target_obs_dim:
         from diffuser_visual_aligning.datasets.normalization import LimitsNormalizer as _LN
-        _dummy = np.stack([obs_normalizer.mins[:6], obs_normalizer.maxs[:6]])
+        _dummy = np.stack([obs_normalizer.mins[:_target_obs_dim],
+                           obs_normalizer.maxs[:_target_obs_dim]])
         proj_obs_normalizer = _LN(_dummy)
 
     pad = trajectory_dim - 9
@@ -943,6 +950,23 @@ class VisualAgentWrapper:
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
 
+    def capture_frame(self, bp_np, inhand_np):
+        """Non-visual GIF hook. Receives (C,H,W) float[0,1] BGR images from
+        Aligning_Sim's non-visual branch — same shape/dtype/convention the
+        visual predict() receives. Capture logic is copied verbatim from
+        the visual predict() block (cv2.cvtColor BGR2RGB → mimsave RGB)."""
+        if self.record_mode == 'none':
+            return
+        try:
+            bp_vis     = cv2.cvtColor((bp_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+            inhand_vis = cv2.cvtColor((inhand_np.copy().transpose(1, 2, 0) * 255).clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+            frame = np.concatenate([bp_vis, inhand_vis], axis=1)
+            cv2.putText(frame, f's{self.step_counter}', (5, 18),
+                        cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 0), 1)
+            self.video_frames.append(frame)
+        except Exception:
+            pass
+
     def record_context_info(self, context, context_idx):
         """Called by Aligning_Sim after reset — stores initial scene config. Fix 10."""
         pos, quat, target_pos, target_quat = context
@@ -1568,11 +1592,19 @@ class VisualAgentWrapper:
                 ]
                 for h_i, row in enumerate(full_norm):
                     diag_lines.append(f'  step {h_i:2d}: {np.round(row, 4)}')
-                # obs_6d health (Issue 4)
+                # obs health (Issue 4) — branch on if_vision because the visual
+                # and non-visual paths name their obs tensors differently.
+                if if_vision:
+                    _diag_obs_raw  = obs_6d_np      # (6,) [des_c_pos | c_pos]
+                    _diag_obs_norm = obs_6d_norm    # (6,)
+                else:
+                    _diag_obs_raw  = obs_20d_np     # (20,)
+                    _diag_obs_norm = obs_norm       # (20,)
                 diag_lines += [
-                    f'[ DIAG obs ] des_c_pos={np.round(obs_6d_np[:3], 4)}  '
-                    f'c_pos={np.round(obs_6d_np[3:], 4)}',
-                    f'[ DIAG obs ] obs_6d_norm={np.round(obs_6d_norm, 4)}',
+                    f'[ DIAG obs ] des_c_pos={np.round(_diag_obs_raw[:3], 4)}  '
+                    f'c_pos={np.round(_diag_obs_raw[3:6], 4)}',
+                    f'[ DIAG obs ] obs_norm (dim={_diag_obs_norm.shape[0]})='
+                    f'{np.round(_diag_obs_norm, 4)}',
                 ]
                 # image health (Issue 5) — visual only
                 if if_vision:
@@ -1846,8 +1878,16 @@ if __name__ == '__main__':
 
                 # ── Setup DPCC projector ─────────────────────────────────────
                 projector = None
-                _if_vis = getattr(args, 'if_vision', True)
-                _traj_dim = 9 if _if_vis else 23   # UF-17: non-visual uses 23D trajectory
+                # FIX-18: derive _traj_dim from SAVED normalizer dimensionalities
+                # instead of args.if_vision (which can be flipped by UF-13
+                # record-mode). Normalizers are checkpoint-immutable ground truth.
+                _act_dim_norm = act_normalizer.mins.shape[0]
+                _obs_dim_norm = obs_normalizer.mins.shape[0]
+                _traj_dim = _act_dim_norm + _obs_dim_norm
+                if _traj_dim not in (9, 23):
+                    print(f'[ eval ] WARNING: unexpected _traj_dim={_traj_dim} '
+                          f'(act={_act_dim_norm}, obs={_obs_dim_norm}); '
+                          f'expected 9 (visual) or 23 (non-visual)')
                 if 'diffuser' not in variant and obs_normalizer is not None:
                     projector = setup_dpcc_projector(
                         args, geo_config, obs_normalizer, act_normalizer, variant, is_tightened,
@@ -1893,10 +1933,25 @@ if __name__ == '__main__':
 
                 _if_vision_config = getattr(args, 'if_vision', True)
                 if_vision = _if_vision_config
+                # FIX-18-followup: UF-13 used to indiscriminately flip if_vision=True
+                # whenever recording was requested. That breaks for a genuinely
+                # non-visual checkpoint (obs_normalizer dim 20) because the visual
+                # predict() path then tries to normalize a 6-D state with a 20-D
+                # normalizer → shape mismatch. Guard on the saved normalizer dim:
+                # only flip when the checkpoint is actually visual (6-D obs anchor).
+                _ckpt_is_visual = (obs_normalizer is not None
+                                   and obs_normalizer.mins.shape[0] == 6)
                 if not if_vision and args_cli.record != 'none':
-                    if_vision = True
-                    print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
-                          'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
+                    if _ckpt_is_visual:
+                        if_vision = True
+                        print('[ eval ] WARNING: config if_vision=False but record_mode is active → '
+                              'auto-enabling visual mode so GIFs/videos are captured (UF-13).')
+                    else:
+                        print('[ eval ] NOTE: record_mode is active but checkpoint is non-visual '
+                              f'(obs_normalizer dim = {obs_normalizer.mins.shape[0]}). '
+                              'Cannot auto-enable visual mode (this model has no image encoder); '
+                              'proceeding with non-visual rollouts. GIFs/videos WILL be captured '
+                              'via Aligning_Sim non-visual hook → agent.capture_frame().')
 
                 sim = Aligning_Sim(
                     seed=seed, device=args.device,

@@ -129,6 +129,46 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/22_08_00_eval_imf_20667.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/23_45_48_load_results_imf_20672.log
 
+---
+imf ode = 1 run 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/00_13_05_eval_imf_20963.log
+
+ode = 2 run
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/11_43_28_eval_imf_20984.log
+
+!!! INCORRECT, STILL
+change the folder name
+FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)
+
+- FIX1
+retrain
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/13_39_41_train_imf_21035.log
+
++
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/17_02_27_eval_imf_21047.log
+
+- FIX2
+ (K2)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/17_02_27_eval_imf_21047.log
+
+(K20)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/16_19_15_eval_imf_21088.log
+(Still feels TERRIBLE)
+FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE/6/results/halfspace_top-left-hard/diffuser.png
+
+- FIX3 
+K2
+21091
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/17_18_45_eval_imf_21091.log
+
+K10
+21125
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
+(Still Exploded)
+
+---
 - Visual 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
 
@@ -165,7 +205,7 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/10_10_04_eval_visual_aligning_20304.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
 
 eval(6,7,8(half))
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-15/15_56_15_eval_visual_aligning_20324.log
+FMPCC/FM-PCC/Slurm_Codes/logs/202FI6-05-15/15_56_15_eval_visual_aligning_20324.log
 
 - reudce H to 2
 (and change trainign steps to 1k)
@@ -199,6 +239,28 @@ rerun the 100 diffusion steps trian
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-17/23_41_46_train_visual_aligning_20455.log
 
 ...
+
+## one shot run
+(non visual) BUG
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/00_15_06_eval_fm_visual_aligning_20967.log
+rerun after fix 18
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/22_13_23_train_visual_aligning_dpcc_21007.log
+
+FIX18.2
+
+(visual)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/12_24_54_visual_aligning_pipeline_dpcc_20986.log
+(Finished)
+
+FIX18.4
+(non visual success)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/18_03_20_eval_visual_aligning_dpcc_21050.log
+...
+misc fix, run 21080
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/16_58_59_eval_visual_aligning_dpcc_21089.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
+NOT good, closure task
 
 - Gen7 FM Visual Aligning
 (10k train)
@@ -269,12 +331,32 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/00_00_51_train_visual_aligning_dpcc_206
 - Massive Reeval on it (killed by SLURM time limit) u9
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/00_10_16_eval_visual_aligning_dpcc_20681.log
 
-- Turn off visual
+
+## Turn off visual
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_27_visual_aligning_pipeline_dpcc_20697.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_27_train_visual_aligning_dpcc_20698.log
 
+**Bring Back Constraints/PCC**
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/11_19_40_eval_visual_aligning_dpcc_20843.log
+
+inital run good no bugs, but looks weird results. maybe PCC 0.5 threshold wrong, maybe the Dynamic Projection wrong, need check.
+
+(FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4/6/results/combined_4_uf15)
+
+UF16.1
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/13_25_38_eval_visual_aligning_dpcc_20846.log
+(Good enough, like the roolout 1 FM is way better than Diffusion. also the PCC obstcle can observed some hint.)
+->
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/(Good Run_27_05)combined_4
+
 ---
+logging update to with metric of constratints violation
++ 
+Combined_5 Yaml
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/16_44_22_eval_visual_aligning_dpcc_20849.log
+
 
 
 # FM Gen7 New fm_visual_alinging
@@ -347,7 +429,234 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/12_49_23_eval_fm_visual_aligning_20688.
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/17_08_32_eval_fm_visual_aligning_20696.log
 (latest diag 22 May, fix10.2(after 12))
 
-- Turn off visual
+
+- WORK!
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(PCC_T1)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64
+
+-> SEE THE Plot "FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(PCC_T1)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_4/dpcc-t/diagnostics/rollout_0_mpc_foresight.svg"
+
+UF15.3 Update the Plots
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/11_12_49_eval_fm_visual_aligning_20837.log
+
+---
+
+one shot run
+(non visual)BUG
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/00_15_06_eval_fm_visual_aligning_20967.log (Failed with logs)
+
+rerun
+21004
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/18_29_07_eval_fm_visual_aligning_21004.log
+
+(Visual)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-30/12_16_37_eval_fm_visual_aligning_20985.log
+
+
+(Good Compare)
+diffuser
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_5/diffuser/diagnostics/rollout_1_mpc_foresight.svg
+
+vs 
+dpcc-c
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_5/dpcc-c/diagnostics/rollout_1_mpc_foresight.svg
+
+
+## Turn off visual
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_49_fm_visual_aligning_pipeline_20700.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_49_train_fm_visual_aligning_20701.log
+
+- [X] NOT UNDERSTAND THE CODE RESULTS, MAYBE WRONG
+
+in FM (FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VFalse_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VFalse_mpc4/6/results/diffuser/diagnostics)
+the roll out 0,1 cannot go inside the box, it is the evidence that worse than viusal?
+
+---
+
+UF17 fix
+rerun, mark old as b_uf17, before uf17 update
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-29/12_12_40_fm_visual_aligning_pipeline_20927.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-29/12_12_40_eval_fm_visual_aligning_20929.log
+
+---
+
+**Bring Back Constraints/PCC**
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-26/16_21_22_eval_fm_visual_aligning_20817.log(old run, legacy)
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-26/17_24_08_eval_fm_visual_aligning_20824.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/11_12_49_eval_fm_visual_aligning_20837.log (LOGGING STOPED WHY?)
+- same weird results like dpcc VA
+(FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_4_uf15)
+
+UF16.1
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/13_02_56_eval_fm_visual_aligning_20845.log
+GOOD RUN CAN VS DIFFUSION AND PROJECTIONs
+->FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/(Good Run_27_05)combined_4
+!THIS IS very good -> "FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/(Good Run_27_05)combined_4/dpcc-r/diagnostics/rollout_1_mpc_foresight.svg"
+
+---
+logging update to with metric of constratints violation
++ 
+Combined_5 Yaml
+
+-> FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/16_44_27_eval_fm_visual_aligning_20850.log
+
+NOTE: ALSO COULD COMPARE THE TIMES OF CONSTRAINTS Violated
+see model_free (FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_5-tightened/model_free/constraint_metrics.json) vs the dpcc-r (FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/combined_5-tightened/dpcc-t/diagnostics/rollout_1_stats.json)
+
+- Minor Update the Plot
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/12_21_25_eval_fm_visual_aligning_20874.log
+
+---
+
+# API Patching. 26. May
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-26/12_54_49_run_patch_legacy_checkpoints_20810.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-26/14_19_27_run_patch_legacy_checkpoints_20814.log
+... untracked lots
+
+---
+
+# 28 May D3IL V_A Baseline
+- ddpm vision smoking run
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/13_20_44_train_d3il_baseline_20881.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/14_21_55_eval_d3il_baseline_20885.log
+
+---
+
+- 200 epoch, as paper said 
+(transformer)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/15_09_24_train_d3il_baseline_20888.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/15_17_17_eval_d3il_baseline_20889.log
+
+(ddpm vision)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/15_22_59_train_d3il_baseline_20890.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/15_30_03_eval_d3il_baseline_20891.log
+
+- increase to 1k 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/15_39_16_train_d3il_baseline_20892.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/16_32_56_eval_d3il_baseline_20894.log
+
+---
+
+---
+# Gen8 iMF Visual Aligning
+
+Fix1.2
+Train
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/17_48_36_train_imf_visual_aligning_21162.log
+(Work, Killed, Run later)
+21166
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/18_00_01_train_imf_visual_aligning_21166.log
+
+fix2.5 eval run
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_50_31_eval_imf_visual_aligning_21196.log
+
+# Gen 9 Visual Avoiding (Camera Data Collection)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-29/16_14_33_collect_visual_avoiding_20940.log
+
+---
+
+E2 Train 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/12_43_49_train_fm_visual_avoiding_21145.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/12_52_35_train_visual_avoiding_dpcc_21146.log
+
+E2 eval
+after Fix_6.3
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/17_58_38_eval_fm_visual_avoiding_21165.log
+(plot bug) -> fix7
+
+21167
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/18_09_54_eval_fm_visual_avoiding_21167.log
+(feels ok)
+
+- Diffusion
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/12_52_35_train_visual_avoiding_dpcc_21146.log
+(K100 , 56789 trained not eval)
+
+eval 6
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_16_52_eval_visual_avoiding_dpcc_21188.log
+
+(K20)
+21234
+
+- E2U2
+21277 fm (killied at end "--- avoiding-d3il both-hard dpcc-c-tightened-dt2p0 seed=6 ---")
+21279 diffu.
+(seems results correct, but the plot are wrong, mpc plots:
+FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/halfspace_both-hard/diffuser.png)
+
+Fix 2 & FM K20
+21290
+
+Fix 3
+21311 (*Been Canceled Time limit* but the run results seems better)
+(seems fine, run the diffu. pipeline)
+21317,18 
+- [ ] Pending to read the reuslts
+
+
+# Gen11
+# E2 
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/11_57_52_run_naive_21022.log
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/11_59_58_run_naive_21023.log
+
+# E3
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/12_57_00_run_env_21029.log
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-31/12_57_57_run_env_21031.log
+
+# E4
+smoke
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/15_42_03_collect_21205.log
+
+full run
+21206 to 21209
+
+fix1
+21212 to 21215
+
+fix2 Curve + Pillar
+21220, 21221
+
+fix3 Curve
+21222
+
+fix4 curve
+21226
+
+fix5 Curve
+21227
+
+---
+
+all runs
+21231 -> 21223
+
+## U2
+21319-21322
+Fix1 
+
+21324 -> 21327
+
+## U3
+21339 -> 21342
+
+# E5
+21289
+
+21291(Fail)
+Fix1
+21294 - Good
+
+## U2
+21329 (too long!)
+21330 (./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh "" "" "" 3)

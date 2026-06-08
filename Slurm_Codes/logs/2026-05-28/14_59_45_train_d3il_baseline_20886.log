@@ -1,0 +1,79 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 28 12:59:47 UTC 2026
+JOB NAME:  train_d3il_baseline
+JOB ID:    20886
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   1648528
+================================================================================
+[ train ] agent=ddpm_transformer_vision  seed=6  config=aligning_vision_config
+[ train ] weights will be saved to: /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/weights
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_vision_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/weights/wandb/run-20260528_125952-24ke6uf2
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run deep-galaxy-5
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline/runs/24ke6uf2
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] agent=ddpm_transformer_vision  seed=6  epochs=4  save_dir=/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/weights
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[2026-05-28 13:00:06,523][agents.models.diffusion.diffusion_models][INFO] - number of parameters: 2.841150e+05
+[2026-05-28 13:00:06,553][root][INFO] - Loading Robot Push Dataset
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.46it/s]100%|██████████| 3/3 [00:00<00:00, 16.72it/s]
+[2026-05-28 13:00:06,735][root][INFO] - Loading Robot Push Dataset
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 16.78it/s]100%|██████████| 3/3 [00:00<00:00, 16.01it/s]
+[2026-05-28 13:00:06,926][agents.utils.scaler][INFO] - Datset Info: state min: [-2.11611752 -1.9385157  -0.97139735] and max: [1.65030038 1.22006127 2.20369843], action min: [-2.39178454 -2.66525925 -3.51553528] and max: [2.26779489 1.01813854 0.28445203]
+[2026-05-28 13:00:06,926][agents.utils.scaler][INFO] - Training dataset size: input (521, 3) target (521, 3)
+[2026-05-28 13:00:06,927][agents.base_agent][INFO] - The model has a total amount of 22678291 parameters
+[ train ] visual path → _train_vision() loop x4 epochs
+  0%|          | 0/4 [00:00<?, ?it/s] 25%|██▌       | 1/4 [00:10<00:32, 10.83s/it][2026-05-28 13:00:20,619][__main__][INFO] - Epoch 1: val loss = 0.522755
+[2026-05-28 13:00:20,805][__main__][INFO] - New best val loss — checkpoint saved.
+ 50%|█████     | 2/4 [00:13<00:12,  6.21s/it] 75%|███████▌  | 3/4 [00:15<00:04,  4.24s/it][2026-05-28 13:00:25,551][__main__][INFO] - Epoch 3: val loss = 0.474115
+[2026-05-28 13:00:25,792][__main__][INFO] - New best val loss — checkpoint saved.
+100%|██████████| 4/4 [00:18<00:00,  3.78s/it]100%|██████████| 4/4 [00:18<00:00,  4.70s/it]
+[2026-05-28 13:00:26,003][__main__][INFO] - Training done!
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.041 MB of 0.058 MB uploaded (0.004 MB deduped)wandb: \ 0.041 MB of 0.058 MB uploaded (0.004 MB deduped)wandb: | 0.058 MB of 0.058 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 6.1%
+wandb: 
+wandb: Run history:
+wandb: best_model_epoch ▁█
+wandb:            epoch ▁█
+wandb: model parameters ▁
+wandb:       train_loss █▇▅▆▄▄▄▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▃▁▂▂▂▂▂▁▁▂
+wandb:         val_loss █▁
+wandb: 
+wandb: Run summary:
+wandb: best_model_epoch 3
+wandb:            epoch 3
+wandb: model parameters 22678291
+wandb:       train_loss 0.50499
+wandb:         val_loss 0.47412
+wandb: 
+wandb: 🚀 View run deep-galaxy-5 at: https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline/runs/24ke6uf2
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260528_125952-24ke6uf2/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+[ train ] done — weights in /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_transformer_vision/seed_6/weights
+Job completed successfully.

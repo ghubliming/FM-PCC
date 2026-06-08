@@ -1,0 +1,20 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Mon Jun  8 12:51:05 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21343
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=pillars  n_trials=500  gain=pid_default  seed=0
+[ collect ] scene=pillars  n_trials=500  homotopy_pool=['(L,L,L)', '(L,R,L)', '(R,L,R)', '(R,R,R)']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] ABORT: rejection rate 100.0% > limit 60.0%. Check PID stability (Decision 2 fix applied?).
+[ collect ] DONE  saved=0  rejected=21  (100.0% rejected)  elapsed=6s
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/pillars …
+[ validate ] No episodes found. Run collect.py first.
+[ sbatch ] Output: logs/uav_expert_data/pillars/
+========================================
+JOB END: Mon Jun  8 12:51:12 UTC 2026
+========================================

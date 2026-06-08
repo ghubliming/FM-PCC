@@ -1,0 +1,67 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun May 31 16:00:07 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    21049
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   761b2ef
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/6
+
+Loading states (non-visual):   0%|          | 0/900 [00:00<?, ?it/s]Loading states (non-visual): 100%|██████████| 900/900 [00:00<00:00, 9725.85it/s]
+[ StateOnlyAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=23)
+[ utils/training ] Restored loss history from checkpoint at step 72000
+[ eval ] clip_denoised set → False (config-driven; original DPCC default: False)
+[ eval ] Model n_timesteps = 1  (config n_diffusion_steps = 1)
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/H8_K1_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_steps300_mpc4/6/results/expert_references. Skipping.
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+
+[ geo ] active_geo_variants: ['combined_5']
+
+[ geo ] ── Constraint variant: combined_5  types=['dynamics', 'bounds', 'halfspace', 'obstacles'] ──
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005  0.3148 -0.2556 -0.0122
+ -0.9898 -0.0692 -0.0541 -1.      0.4     0.2002  0.      0.7074  0.
+ -0.     -0.7066]  maxs=[ 0.7198  0.4658  0.2516  0.7357  0.4911  0.2653  0.6649  0.3908 -0.
+  1.      0.0358  0.0808  1.      0.5998  0.35    0.      1.      0.
+ -0.      0.7068]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] NOTE: record_mode is active but checkpoint is non-visual (obs_normalizer dim = 20). Cannot auto-enable visual mode (this model has no image encoder); proceeding with non-visual rollouts. No GIFs/videos will be captured.
+there are cpus:  64
+2295221 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_cf29682c-5d09-11f1-866e-d85ed34e311e.xml' with default provider at slot 1
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py", line 1939, in <module>
+    success_rate, mode_encoding, successes, mean_dist = sim.test_agent(agent)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 202, in test_agent
+    self.eval_agent(agent, contexts, self.n_trajectories_per_context, mode_encoding, successes, mean_distance, 0, cpu_set=set([0]))
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 131, in eval_agent
+    pred_action = agent.predict(obs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py", line 1573, in predict
+    f'[ DIAG obs ] des_c_pos={np.round(obs_6d_np[:3], 4)}  '
+UnboundLocalError: local variable 'obs_6d_np' referenced before assignment

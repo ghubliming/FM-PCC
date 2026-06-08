@@ -34,6 +34,27 @@ METRICS = [
     'avg_time',                    # (30,) seconds/replan
     'max_phys_error_per_rollout',  # (30,) max PD tracking error (m)
     'context_init_xy_dist',        # (30,) init box→target dist (m)
+    # --- U_2: context_info extended ---
+    'context_final_xy_dist',       # (30,) final box→target dist (m)
+    'context_final_box_angle_deg', # (30,) final box angle (deg)
+    # --- U_2: constraint_metrics ---
+    'exec_n_violated_steps',       # (30,) violated steps count
+    'exec_constraint_sat_rate',    # (30,) constraint satisfaction rate
+    'exec_zero_violation_rollout', # (30,) boolean flag
+    'exec_bounds_viol_count',      # (30,) bounds violation count
+    'exec_halfspace_viol_count',   # (30,) halfspace violation count
+    'exec_obstacle_viol_count',    # (30,) obstacle violation count
+    'exec_max_bounds_viol_m',      # (30,) max bounds violation (m)
+    'exec_max_halfspace_viol_m',   # (30,) max halfspace violation (m)
+    'exec_max_obstacle_penetration_m', # (30,) max obstacle penetration (m)
+    'exec_constraint_margin_mean_m',   # (30,) constraint margin mean (m)
+    'exec_first_violation_step',       # (30,) first violation step idx
+    'exec_longest_safe_streak',        # (30,) longest safe streak
+    'exec_dynamics_consistency_error_mean',  # (30,) dynamics error mean
+    'exec_dynamics_consistency_error_max',   # (30,) dynamics error max
+    'plan_post_viol_rate_mean',    # (30,) plan post-viol rate mean
+    'plan_post_viol_rate_max',     # (30,) plan post-viol rate max
+    'plan_n_replan_steps',         # (30,) plan n replan steps
 ]
 
 # Constraint category — null for now; slot back in when geo constraints added
@@ -66,4 +87,25 @@ METRIC_LABELS = {
     'avg_time':                 'Inference Time / Replan (s)',
     'max_phys_error_per_rollout': 'Max Physical Tracking Error (m)',
     'context_init_xy_dist':     'Init Box-Target Distance (m)',
+    # --- U_2: context_info extended ---
+    'context_final_xy_dist':    'Final XY Distance (m)',
+    'context_final_box_angle_deg': 'Final Box Angle (deg)',
+    # --- U_2: constraint_metrics ---
+    'exec_n_violated_steps':       'Violated Steps Count',
+    'exec_constraint_sat_rate':    'Constraint Satisfaction Rate',
+    'exec_zero_violation_rollout': 'Zero-Violation Rollout',
+    'exec_bounds_viol_count':      'Bounds Violation Count',
+    'exec_halfspace_viol_count':   'Halfspace Violation Count',
+    'exec_obstacle_viol_count':    'Obstacle Violation Count',
+    'exec_max_bounds_viol_m':      'Max Bounds Violation (m)',
+    'exec_max_halfspace_viol_m':   'Max Halfspace Violation (m)',
+    'exec_max_obstacle_penetration_m': 'Max Obstacle Penetration (m)',
+    'exec_constraint_margin_mean_m':   'Constraint Margin Mean (m)',
+    'exec_first_violation_step':       'First Violation Step',
+    'exec_longest_safe_streak':        'Longest Safe Streak',
+    'exec_dynamics_consistency_error_mean': 'Dynamics Error Mean',
+    'exec_dynamics_consistency_error_max':  'Dynamics Error Max',
+    'plan_post_viol_rate_mean':    'Plan Post-Violation Rate Mean',
+    'plan_post_viol_rate_max':     'Plan Post-Violation Rate Max',
+    'plan_n_replan_steps':         'Plan N Replan Steps',
 }

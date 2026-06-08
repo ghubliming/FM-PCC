@@ -57,6 +57,9 @@ export PYTHONPATH="$FMPCC:$D3IL_ROOT:$GYM_AV:$PYTHONPATH"
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
+export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
+export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
 
 # W&B Login (Colab-style from key file)
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then

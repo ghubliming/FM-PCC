@@ -51,6 +51,12 @@ Examples:
                         help='Comma-separated custom names (e.g. "fm_v1,fm_v2")')
     parser.add_argument('--variants', default=None,
                         help='Comma-separated variant names (default: all)')
+    parser.add_argument('--geo-variant', default=None,
+                        help=('Geometric constraint subfolder name to step into '
+                              'before discovering projection variants '
+                              '(e.g. "combined_5"). '
+                              'Use when eval was run with geo_constraint_variants in the YAML. '
+                              'Omit for old flat-schema runs (no geo layer).'))
     parser.add_argument('--no-plots', action='store_true',
                         help='Skip plot generation (faster)')
     parser.add_argument('--verbose', action='store_true',
@@ -124,7 +130,8 @@ def main():
         # ----------------------------------------------------------
         logger.info('[3/5] Loading data...')
         variants = [v.strip() for v in args.variants.split(',')] if args.variants else None
-        loader   = BatchDataLoader(verbose=args.verbose, source=args.source)
+        loader   = BatchDataLoader(verbose=args.verbose, source=args.source,
+                                   geo_variant=args.geo_variant)
         batch_data = loader.load_all_candidates(candidates, variants=variants, seed=seed)
         loader.save_batch_loading_log(os.path.join(output_dir, 'logs', 'batch_loading.log'))
 

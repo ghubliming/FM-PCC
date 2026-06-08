@@ -1,0 +1,269 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun May 31 16:12:17 UTC 2026
+JOB NAME:  eval_visual_aligning_dpcc
+JOB ID:    21051
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   a361854
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/6
+
+Loading states (non-visual):   0%|          | 0/900 [00:00<?, ?it/s]Loading states (non-visual): 100%|██████████| 900/900 [00:00<00:00, 9745.53it/s]
+[ StateOnlyAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=23)
+[ utils/training ] Restored loss history from checkpoint at step 72000
+[ eval ] clip_denoised set → False (config-driven; original DPCC default: False)
+[ eval ] Model n_timesteps = 1  (config n_diffusion_steps = 1)
+[ expert ] Reference videos already exist in logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/H8_K1_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_steps300_mpc4/6/results/expert_references. Skipping.
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+
+[ geo ] active_geo_variants: ['combined_5']
+
+[ geo ] ── Constraint variant: combined_5  types=['dynamics', 'bounds', 'halfspace', 'obstacles'] ──
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005  0.3148 -0.2556 -0.0122
+ -0.9898 -0.0692 -0.0541 -1.      0.4     0.2002  0.      0.7074  0.
+ -0.     -0.7066]  maxs=[ 0.7198  0.4658  0.2516  0.7357  0.4911  0.2653  0.6649  0.3908 -0.
+  1.      0.0358  0.0808  1.      0.5998  0.35    0.      1.      0.
+ -0.      0.7068]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] NOTE: record_mode is active but checkpoint is non-visual (obs_normalizer dim = 20). Cannot auto-enable visual mode (this model has no image encoder); proceeding with non-visual rollouts. No GIFs/videos will be captured.
+there are cpus:  64
+2295643 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_823a9a70-5d0b-11f1-a7c0-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [-0.0772  0.397  -0.6538]  |mag| = 0.7688
+[ DIAG first-replan ] denormalized a0 = [-0.00064  0.00331 -0.00457]  |mag| = 0.005679 m
+[ DIAG first-replan ] horizon act (normalized) range: [-2.2568, 2.4928]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.0772  0.397  -0.6538]
+  step  1: [ 0.305  -1.5684  0.2973]
+  step  2: [ 1.1368  1.0714 -0.0253]
+  step  3: [ 1.0195  0.1211 -1.3071]
+  step  4: [-0.621   2.4928 -2.2568]
+  step  5: [-0.0316  1.3543 -1.1562]
+  step  6: [-0.2351  1.3034 -0.4779]
+  step  7: [ 0.0923 -0.1437 -1.2844]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_norm (dim=20)=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339  0.5185 -0.8393  1.0032
+  0.9284  0.3184 -0.1977 -0.3707 -0.0174  0.7775 -1.      0.1348 -1.
+ -1.     -0.6892]
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/H8_K1_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_steps300_mpc4/6/results/combined_5/diffuser/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.069  denorm|a0|=8.43e-03 m  dir=[-0.129  0.749 -0.65 ]
+[ DIAG replan=100 step=99 ] norm|a0|=7.065  denorm|a0|=1.44e-02 m  dir=[-0.511 -0.632 -0.582]
+[ DIAG replan=150 step=149 ] norm|a0|=8.561  denorm|a0|=1.44e-02 m  dir=[-0.172 -0.619 -0.767]
+[ DIAG replan=200 step=199 ] norm|a0|=18.998  denorm|a0|=1.44e-02 m  dir=[-0.39  -0.643 -0.659]
+[ DIAG replan=250 step=249 ] norm|a0|=26.818  denorm|a0|=1.44e-02 m  dir=[-0.038 -0.67  -0.741]
+[ DIAG replan=300 step=299 ] norm|a0|=36.742  denorm|a0|=1.44e-02 m  dir=[ 0.243 -0.491 -0.837]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Box  final XY=(0.486, -0.763)  angle=29.5°  (dist_to_target: 1.0959 m)
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.791864 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.638118 m
+  - Avg Inference Time: 0.0261 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+  [ constraints ] sat=0.397  violated=181steps  (bounds=181 hs=0 obs=0)
+    first_viol_step=119  longest_safe=119  margin=0.0657m  dyn_err=0.0119m
+    plan_post_viol_rate=0.4075  zero_viol=False
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.691  denorm|a0|=9.94e-03 m  dir=[-0.324 -0.207 -0.923]
+[ DIAG replan=100 step=99 ] norm|a0|=21.799  denorm|a0|=1.44e-02 m  dir=[ 0.058 -0.538 -0.841]
+[ DIAG replan=150 step=149 ] norm|a0|=28.508  denorm|a0|=1.44e-02 m  dir=[-0.035 -0.697 -0.716]
+[ DIAG replan=200 step=199 ] norm|a0|=33.857  denorm|a0|=1.44e-02 m  dir=[ 0.288 -0.468 -0.835]
+[ DIAG replan=250 step=249 ] norm|a0|=33.960  denorm|a0|=1.44e-02 m  dir=[ 0.117 -0.486 -0.866]
+[ DIAG replan=300 step=299 ] norm|a0|=31.668  denorm|a0|=1.44e-02 m  dir=[ 0.042 -0.511 -0.859]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Box  final XY=(0.507, -0.635)  angle=-52.6°  (dist_to_target: 0.8727 m)
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.692562 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.647696 m
+  - Avg Inference Time: 0.0120 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+  [ constraints ] sat=0.310  violated=207steps  (bounds=207 hs=0 obs=0)
+    first_viol_step=93  longest_safe=93  margin=0.0871m  dyn_err=0.0128m
+    plan_post_viol_rate=0.3304  zero_viol=False
+Context 2 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.745  denorm|a0|=5.43e-03 m  dir=[-0.339  0.503 -0.795]
+[ DIAG replan=100 step=99 ] norm|a0|=6.082  denorm|a0|=1.44e-02 m  dir=[-0.271 -0.711 -0.648]
+[ DIAG replan=150 step=149 ] norm|a0|=13.915  denorm|a0|=1.44e-02 m  dir=[-0.332 -0.716 -0.614]
+[ DIAG replan=200 step=199 ] norm|a0|=13.578  denorm|a0|=1.44e-02 m  dir=[-0.075 -0.664 -0.744]
+[ DIAG replan=250 step=249 ] norm|a0|=25.789  denorm|a0|=1.44e-02 m  dir=[-0.141 -0.691 -0.709]
+[ DIAG replan=300 step=299 ] norm|a0|=32.584  denorm|a0|=1.44e-02 m  dir=[ 0.191 -0.478 -0.857]
+[ Unseen Test Context 2 Finished ]
+  - Context idx: 2
+  - Box  init XY=(0.527, -0.127)  angle=-34.4°
+  - Target   XY=(0.513, 0.302)  angle=-34.6°
+  - Init XY dist (box→target): 0.4297 m
+  - Box  final XY=(0.527, -0.127)  angle=-34.4°  (dist_to_target: 0.4297 m)
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.215251 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.468767 m
+  - Avg Inference Time: 0.0115 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+  [ constraints ] sat=0.433  violated=170steps  (bounds=170 hs=0 obs=0)
+    first_viol_step=130  longest_safe=130  margin=0.0838m  dyn_err=0.0207m
+    plan_post_viol_rate=0.4104  zero_viol=False
+Context 3 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.008  denorm|a0|=8.04e-03 m  dir=[-0.335  0.473 -0.815]
+[ DIAG replan=100 step=99 ] norm|a0|=7.930  denorm|a0|=1.44e-02 m  dir=[-0.593 -0.621 -0.512]
+[ DIAG replan=150 step=149 ] norm|a0|=16.625  denorm|a0|=1.44e-02 m  dir=[-0.52  -0.704 -0.484]
+[ DIAG replan=200 step=199 ] norm|a0|=18.179  denorm|a0|=1.44e-02 m  dir=[-0.338 -0.681 -0.649]
+[ DIAG replan=250 step=249 ] norm|a0|=24.835  denorm|a0|=1.39e-02 m  dir=[-0.036 -0.605 -0.795]
+[ DIAG replan=300 step=299 ] norm|a0|=33.923  denorm|a0|=1.44e-02 m  dir=[ 0.032 -0.362 -0.932]
+[ Unseen Test Context 3 Finished ]
+  - Context idx: 3
+  - Box  init XY=(0.517, -0.145)  angle=28.1°
+  - Target   XY=(0.582, 0.285)  angle=-15.4°
+  - Init XY dist (box→target): 0.4341 m
+  - Box  final XY=(0.517, -0.145)  angle=28.1°  (dist_to_target: 0.4341 m)
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.337977 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.485371 m
+  - Avg Inference Time: 0.0109 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+  [ constraints ] sat=0.503  violated=149steps  (bounds=149 hs=0 obs=0)
+    first_viol_step=151  longest_safe=151  margin=0.0743m  dyn_err=0.0166m
+    plan_post_viol_rate=0.4088  zero_viol=False
+Context 4 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.318  denorm|a0|=1.03e-02 m  dir=[-0.528 -0.165 -0.833]
+[ DIAG replan=100 step=99 ] norm|a0|=7.179  denorm|a0|=1.44e-02 m  dir=[-0.375 -0.711 -0.595]
+[ DIAG replan=150 step=149 ] norm|a0|=15.349  denorm|a0|=1.44e-02 m  dir=[-0.32  -0.839 -0.44 ]
+[ DIAG replan=200 step=199 ] norm|a0|=21.234  denorm|a0|=1.44e-02 m  dir=[-0.259 -0.697 -0.669]
+[ DIAG replan=250 step=249 ] norm|a0|=32.161  denorm|a0|=1.44e-02 m  dir=[ 0.049 -0.678 -0.733]
+[ DIAG replan=300 step=299 ] norm|a0|=42.413  denorm|a0|=1.44e-02 m  dir=[ 0.127 -0.563 -0.817]
+[ Unseen Test Context 4 Finished ]
+  - Context idx: 4
+  - Box  init XY=(0.553, -0.135)  angle=-24.2°
+  - Target   XY=(0.514, 0.208)  angle=12.3°
+  - Init XY dist (box→target): 0.3447 m
+  - Box  final XY=(0.553, -0.135)  angle=-24.2°  (dist_to_target: 0.3447 m)
+  - Total Steps: 300
+  - Success status: False
+  - Final Mean Distance: 0.273741 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.033807 m
+  - Avg Inference Time: 0.0118 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+  [ constraints ] sat=0.387  violated=184steps  (bounds=184 hs=0 obs=0)
+    first_viol_step=116  longest_safe=116  margin=0.0789m  dyn_err=0.0119m
+    plan_post_viol_rate=0.4242  zero_viol=False
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.46227899193763733
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for diffuser...
+--- aligning-d3il-visual [default] diffuser seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4623 m  +- 0.2340 m
+Min final mean distance:   0.2153 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    300.00 +- 0.00
+Physical tracking error:   mean=0.6239 m  max=2.0338 m
+Avg inference time/replan: 0.014 s
+--- Constraint Metrics [diffuser] ---
+  Execution satisfaction rate:    0.406 ± 0.063
+  Violated steps/rollout:         178.2 ± 18.9  (bounds=178.2  hs=0.0  obs=0.0)
+  Max bounds viol (m):            0.4831 ± 0.2993
+  Max halfspace viol (m):         0.0000 ± 0.0000
+  Max obstacle penetration (m):   0.0000 ± 0.0000
+  Constraint margin mean (m):     0.0779 ± 0.0075
+  First violation step:           121.8 (n_rollouts_with_viol=5)
+  Longest safe streak (steps):    121.8 ± 18.9
+  Dynamics consistency err (m):   0.0148 ± 0.0034
+  Plan post-proj viol rate:       0.3963 ± 0.0335
+  Zero-violation rollouts:        0 / 5  (0.0%)
+  → Saved: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/H8_K1_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_steps300_mpc4/6/results/combined_5/diffuser/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005  0.3148 -0.2556 -0.0122
+ -0.9898 -0.0692 -0.0541 -1.      0.4     0.2002  0.      0.7074  0.
+ -0.     -0.7066]  maxs=[ 0.7198  0.4658  0.2516  0.7357  0.4911  0.2653  0.6649  0.3908 -0.
+  1.      0.0358  0.0808  1.      0.5998  0.35    0.      1.      0.
+ -0.      0.7068]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'dpcc-r' (trajectory_dim=23)
+[ eval ] NOTE: record_mode is active but checkpoint is non-visual (obs_normalizer dim = 20). Cannot auto-enable visual mode (this model has no image encoder); proceeding with non-visual rollouts. No GIFs/videos will be captured.
+there are cpus:  64
+2295643 {0}
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_c78c5302-5d0b-11f1-a7c0-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-5.      5.      2.6262]  |mag| = 7.5430
+[ DIAG first-replan ] denormalized a0 = [-0.00833  0.00833  0.0134 ]  |mag| = 0.017847 m
+[ DIAG first-replan ] horizon act (normalized) range: [-5.0000, 5.0000]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-5.      5.      2.6262]
+  step  1: [ 0.0642 -1.8103  2.5646]
+  step  2: [1.0082 0.9698 2.39  ]
+  step  3: [0.5697 0.0653 1.3482]
+  step  4: [-1.1902  2.6713 -1.7477]
+  step  5: [-0.2205  1.3217  0.6313]
+  step  6: [-0.2873  1.4021 -0.5026]
+  step  7: [ 0.1065 -0.1406 -1.3125]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_norm (dim=20)=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339  0.5185 -0.8393  1.0032
+  0.9284  0.3184 -0.1977 -0.3707 -0.0174  0.7775 -1.      0.1348 -1.
+ -1.     -0.6892]
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K1_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VFalse_steps900_bs64/H8_K1_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VFalse_steps300_mpc4/6/results/combined_5/dpcc-r/diag_first_replan.txt
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ DIAG replan=50 step=49 ] norm|a0|=6.302  denorm|a0|=1.78e-02 m  dir=[0.377 0.793 0.478]
+slurmstepd-i6-gpu-1: error: *** JOB 21051 ON i6-gpu-1 CANCELLED AT 2026-05-31T16:21:27 ***

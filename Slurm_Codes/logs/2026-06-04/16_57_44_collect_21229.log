@@ -1,0 +1,14 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Thu Jun  4 14:57:44 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21229
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=empty  n_trials=500  gain=pid_default  seed=0
+slurmstepd-i6-gpu-1: error: *** JOB 21229 ON i6-gpu-1 CANCELLED AT 2026-06-04T14:58:27 ***
+========================================
+JOB END: Thu Jun  4 14:58:27 UTC 2026
+========================================

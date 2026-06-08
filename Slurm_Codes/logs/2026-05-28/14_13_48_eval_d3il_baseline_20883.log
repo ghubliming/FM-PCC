@@ -1,0 +1,75 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu May 28 12:13:48 UTC 2026
+JOB NAME:  eval_d3il_baseline
+JOB ID:    20883
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   8419859
+================================================================================
+[ eval ] seed override: 6
+[ eval ] agent=ddpm_vision  record_mode=all
+pybullet build time: Nov 28 2023 23:45:17
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+========================================================================
+[ D3IL Baseline Eval ] agent=ddpm_vision  seed=6
+  contexts=3  trajs_per_ctx=1  eval_on_train=False  if_vision=True
+  checkpoint_dir: logs/d3il_visual_aligning_baseline/ddpm_vision/seed_6/weights
+  save_path:      logs/d3il_visual_aligning_baseline/ddpm_vision/seed_6
+========================================================================
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 62, in _call_target
+    return _target_(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_vision_agent.py", line 123, in __init__
+    super().__init__(model, trainset=trainset, valset=valset, train_batch_size=train_batch_size,
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/base_agent.py", line 67, in __init__
+    wandb.log(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/lib/preinit.py", line 36, in preinit_wrapper
+    raise wandb.Error(f"You must call wandb.init() before {name}()")
+wandb.errors.Error: You must call wandb.init() before wandb.log()
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py", line 566, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py", line 529, in main
+    res = run_eval_seed(seed, cfg, record_mode)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py", line 351, in run_eval_seed
+    agent = build_agent(d3il_cfg_dir, agent_cfg_grp, device, seed)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py", line 318, in build_agent
+    agent = instantiate(cfg.agents)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 180, in instantiate
+    return instantiate_node(config, *args, recursive=_recursive_, convert=_convert_)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 249, in instantiate_node
+    return _call_target(_target_, *args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 64, in _call_target
+    raise type(e)(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 62, in _call_target
+    return _target_(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_vision_agent.py", line 123, in __init__
+    super().__init__(model, trainset=trainset, valset=valset, train_batch_size=train_batch_size,
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/base_agent.py", line 67, in __init__
+    wandb.log(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/lib/preinit.py", line 36, in preinit_wrapper
+    raise wandb.Error(f"You must call wandb.init() before {name}()")
+wandb.errors.Error: Error instantiating 'agents.ddpm_vision_agent.DiffusionAgent' : You must call wandb.init() before wandb.log()

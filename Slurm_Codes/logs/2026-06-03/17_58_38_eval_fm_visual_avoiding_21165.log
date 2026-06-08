@@ -1,0 +1,145 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jun  3 15:58:39 UTC 2026
+JOB NAME:  eval_fm_visual_avoiding
+JOB ID:    21165
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   94b97ee
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 16847.74it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 43.59it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ utils/training ] Restored loss history from checkpoint at step 5000
+[ eval ] clip_denoised set → False (config-driven; original DPCC default: False)
+[ eval ] Model n_timesteps = 100  (config n_diffusion_steps = ?)
+[ eval ] FM flow_steps_v3 = 100  (Euler ODE integration steps 0→1) [overridden from args]
+[ expert ] Reference videos already exist in logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/expert_references. Skipping.
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+
+[ geo ] active_geo_variants: ['no_constraint', 'obstacles_exact']
+
+[ geo ] ── Constraint variant: no_constraint  types=[] ──
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+there are cpus:  64
+2476298 {0}
+Process 2476298 unpinned — visual eval requires all CPU threads.
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_1cb3cc9c-5f65-11f1-aec3-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [-0.5067  0.0652]  |mag| = 0.5109
+[ DIAG first-replan ] denormalized a0 = [-0.00633  0.00666]  |mag| = 0.009189 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.6629, 0.8536]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-0.5067  0.0652]
+  step  1: [-0.6492  0.2865]
+  step  2: [-0.6629  0.4438]
+  step  3: [-0.6553  0.544 ]
+  step  4: [-0.631   0.6367]
+  step  5: [-0.6191  0.6707]
+  step  6: [-0.632   0.7814]
+  step  7: [-0.6083  0.8536]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/no_constraint/diffuser_train_set/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.967  denorm|a0|=1.23e-02 m  dir=[0.112 0.994]
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 54
+  - Success status: True
+  - Final Mean Distance: 0.306053 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.036815 m
+  - Avg Inference Time: 1.1843 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/no_constraint/diffuser_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+[ WARNING ] GIF failed: all input arrays must have the same shape
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=54  margin=0.0000m  dyn_err=0.0043m
+    plan_post_viol_rate=0.0000  zero_viol=True
+[ diag ] Real-time export failed for rollout 0: index 2 is out of bounds for axis 1 with size 2
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 15
+  - Success status: False
+  - Final Mean Distance: 0.557903 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.027496 m
+  - Avg Inference Time: 1.1128 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/no_constraint/diffuser_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+[ WARNING ] GIF failed: all input arrays must have the same shape
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=15  margin=0.0000m  dyn_err=0.0050m
+    plan_post_viol_rate=0.0000  zero_viol=True
+[ diag ] Real-time export failed for rollout 1: index 2 is out of bounds for axis 1 with size 2
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 14
+  - Success status: False
+  - Final Mean Distance: 0.563881 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.031576 m
+  - Avg Inference Time: 1.1153 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results_train_set/no_constraint/diffuser_train_set/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+[ WARNING ] GIF failed: all input arrays must have the same shape
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=14  margin=0.0000m  dyn_err=0.0055m
+    plan_post_viol_rate=0.0000  zero_viol=True
+[ diag ] Real-time export failed for rollout 2: index 2 is out of bounds for axis 1 with size 2
+Mean Distance 0.47594550251960754
+Success Rate  0.3333333432674408
+Entropy       -0.0
+[ eval ] Generating PNG rollout grid for diffuser_train_set...
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/fm_visual_avoiding_test/eval_fm_visual_avoiding.py", line 2049, in <module>
+    axes[i, 2].plot(obs_traj[:, 2], 'k-', label='Z des')
+IndexError: index 2 is out of bounds for axis 1 with size 2

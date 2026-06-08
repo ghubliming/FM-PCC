@@ -1,0 +1,23 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed May 27 09:19:30 UTC 2026
+JOB NAME:  run_revert_legacy_checkpoints
+JOB ID:    20842
+NODE:      i6-gpu-1
+GIT REV:   c13e695
+================================================================================
+[ revert ] Target: /u/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_aw10_VTrue_steps900_bs64
+[ revert ] Flags:  none
+
+[ revert ] Path    : /u/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_aw10_VTrue_steps900_bs64
+[ revert ] Dry-run : False
+
+[ scan ] Folder name  : REVERT REQUIRED
+
+  [dir]  rename:
+         H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_aw10_VTrue_steps900_bs64
+         → H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64
+
+[ revert ] 1 item(s) reverted.
+
+Job completed successfully.

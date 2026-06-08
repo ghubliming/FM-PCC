@@ -1,0 +1,33 @@
+<mujoco model="UAV S-Curve Scene">
+  <include file="../quadrotor_modified.xml"/>
+  <compiler meshdir="../assets" texturedir="../assets"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="32" height="32"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge"
+             rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8"
+             width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"/>
+    <material name="wall" rgba="0.7 0.7 0.7 1"/>
+  </asset>
+
+  <worldbody>
+    <light name="overhead" pos="0 0 5" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="floor" type="plane" size="10 10 0.05" material="groundplane"/>
+
+    <!-- S-curve = 2 offset corridor segments.
+         Segment 1: x ∈ [-3, -0.5], corridor centered at y = -0.8 (between y=-1.3 and y=-0.3)
+         Segment 2: x ∈ [ 0.5,  3], corridor centered at y = +0.8 (between y= 0.3 and y= 1.3)
+         The drone must enter at left, drift north between segments, exit at right. -->
+    <geom name="seg1_wall_neg" type="box" pos="-1.75 -1.3 0.75" size="1.25 0.05 0.75" material="wall"/>
+    <geom name="seg1_wall_pos" type="box" pos="-1.75 -0.3 0.75" size="1.25 0.05 0.75" material="wall"/>
+    <geom name="seg2_wall_neg" type="box" pos=" 1.75  0.3 0.75" size="1.25 0.05 0.75" material="wall"/>
+    <geom name="seg2_wall_pos" type="box" pos=" 1.75  1.3 0.75" size="1.25 0.05 0.75" material="wall"/>
+  </worldbody>
+</mujoco>

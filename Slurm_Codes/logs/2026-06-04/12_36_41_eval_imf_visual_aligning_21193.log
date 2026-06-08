@@ -1,0 +1,266 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jun  4 10:36:42 UTC 2026
+JOB NAME:  eval_imf_visual_aligning
+JOB ID:    21193
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   57cc66e
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6
+
+[ eval ] model_config.pkl missing (pre-Fix_2 checkpoint) — rebuilding from path
+[ eval ] Parsed from path: horizon=8, if_vision=True  (exp_dir=H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64)
+
+[utils/config ] Config: <class 'imf_visual_aligning.models.imf_engine.iMeanFlowEngine'>
+    dropout_rate: 0.1
+    freq_dim: 128
+    if_vision: True
+    seq_len: 8
+    state_dim: 9
+    vis_config: namespace(horizon=8, action_dim=3, obs_dim=6, dim=128, dim_mults=(1, 2, 4, 8), condition_dropout=0.1, returns_condition=False, device='cuda', if_vision=True)
+
+[ eval ] Rebuilt and saved model_config.pkl → logs/aligning-d3il-visual/imf_visual_aligning/H8_Dimf_visual_aligning.models.visual_imf_diffusion.VisualIMF_a1.5_b1.0_aw1_VTrue_steps1000_bs64/6/model_config.pkl
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 4992.58it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  13%|█▎        | 118/900 [00:10<01:06, 11.70it/s]Loading images:  26%|██▌       | 236/900 [00:20<00:57, 11.59it/s]Loading images:  39%|███▉      | 352/900 [00:30<00:48, 11.36it/s]Loading images:  51%|█████▏    | 463/900 [00:41<00:39, 11.12it/s]Loading images:  63%|██████▎   | 571/900 [00:52<00:31, 10.59it/s]Loading images:  74%|███████▍  | 669/900 [01:02<00:22, 10.30it/s]Loading images:  85%|████████▌ | 767/900 [01:12<00:13, 10.09it/s]Loading images:  96%|█████████▋| 867/900 [01:22<00:03, 10.05it/s]Loading images: 100%|██████████| 900/900 [01:25<00:00, 10.55it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/imf_visual_aligning_test/eval_imf_visual_aligning.py", line 1775, in <module>
+    exp = load_diffusion_with_override(
+  File "/data/home/llim/FMPCC/FM-PCC/imf_visual_aligning_test/eval_imf_visual_aligning.py", line 1742, in load_diffusion_with_override
+    trainer.load(epoch)
+  File "/u/home/llim/FMPCC/FM-PCC/imf_visual_aligning/utils/training.py", line 320, in load
+    self.model.load_state_dict(data['model'])
+  File "/u/home/llim/FMPCC/FM-PCC/imf_visual_aligning/models/imf_diffusion.py", line 352, in load_state_dict
+    return super().load_state_dict(remapped_state_dict, strict=strict)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 2153, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for VisualIMF:
+	size mismatch for model.model.velocity_net.backbone.time_mlp.1.weight: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([512, 128]).
+	size mismatch for model.model.velocity_net.backbone.time_mlp.1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.time_mlp.3.weight: copying a param with shape torch.Size([32, 128]) from checkpoint, the shape in current model is torch.Size([128, 512]).
+	size mismatch for model.model.velocity_net.backbone.time_mlp.3.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.h_mlp.1.weight: copying a param with shape torch.Size([128, 32]) from checkpoint, the shape in current model is torch.Size([512, 128]).
+	size mismatch for model.model.velocity_net.backbone.h_mlp.1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.h_mlp.3.weight: copying a param with shape torch.Size([32, 128]) from checkpoint, the shape in current model is torch.Size([128, 512]).
+	size mismatch for model.model.velocity_net.backbone.h_mlp.3.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.cond_mlp.0.weight: copying a param with shape torch.Size([32, 128]) from checkpoint, the shape in current model is torch.Size([128, 128]).
+	size mismatch for model.model.velocity_net.backbone.cond_mlp.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.cond_mlp.2.weight: copying a param with shape torch.Size([32, 32]) from checkpoint, the shape in current model is torch.Size([128, 128]).
+	size mismatch for model.model.velocity_net.backbone.cond_mlp.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.0.block.0.weight: copying a param with shape torch.Size([32, 9, 5]) from checkpoint, the shape in current model is torch.Size([128, 9, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.0.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.0.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.0.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.1.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.1.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.1.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.blocks.1.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.time_mlp.1.weight: copying a param with shape torch.Size([32, 64]) from checkpoint, the shape in current model is torch.Size([128, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.time_mlp.1.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.residual_conv.weight: copying a param with shape torch.Size([32, 9, 1]) from checkpoint, the shape in current model is torch.Size([128, 9, 1]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.0.residual_conv.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.0.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.0.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.0.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.0.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.1.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.1.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.1.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.blocks.1.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.time_mlp.1.weight: copying a param with shape torch.Size([32, 64]) from checkpoint, the shape in current model is torch.Size([128, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.1.time_mlp.1.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.2.conv.weight: copying a param with shape torch.Size([32, 32, 3]) from checkpoint, the shape in current model is torch.Size([128, 128, 3]).
+	size mismatch for model.model.velocity_net.backbone.downs.0.2.conv.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.0.block.0.weight: copying a param with shape torch.Size([64, 32, 5]) from checkpoint, the shape in current model is torch.Size([256, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.0.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.0.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.0.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.1.block.0.weight: copying a param with shape torch.Size([64, 64, 5]) from checkpoint, the shape in current model is torch.Size([256, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.1.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.1.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.blocks.1.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.time_mlp.1.weight: copying a param with shape torch.Size([64, 64]) from checkpoint, the shape in current model is torch.Size([256, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.time_mlp.1.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.residual_conv.weight: copying a param with shape torch.Size([64, 32, 1]) from checkpoint, the shape in current model is torch.Size([256, 128, 1]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.0.residual_conv.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.0.block.0.weight: copying a param with shape torch.Size([64, 64, 5]) from checkpoint, the shape in current model is torch.Size([256, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.0.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.0.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.0.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.1.block.0.weight: copying a param with shape torch.Size([64, 64, 5]) from checkpoint, the shape in current model is torch.Size([256, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.1.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.1.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.blocks.1.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.time_mlp.1.weight: copying a param with shape torch.Size([64, 64]) from checkpoint, the shape in current model is torch.Size([256, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.1.time_mlp.1.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.2.conv.weight: copying a param with shape torch.Size([64, 64, 3]) from checkpoint, the shape in current model is torch.Size([256, 256, 3]).
+	size mismatch for model.model.velocity_net.backbone.downs.1.2.conv.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.0.block.0.weight: copying a param with shape torch.Size([128, 64, 5]) from checkpoint, the shape in current model is torch.Size([512, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.0.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.0.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.0.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.1.block.0.weight: copying a param with shape torch.Size([128, 128, 5]) from checkpoint, the shape in current model is torch.Size([512, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.1.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.1.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.blocks.1.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.time_mlp.1.weight: copying a param with shape torch.Size([128, 64]) from checkpoint, the shape in current model is torch.Size([512, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.time_mlp.1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.residual_conv.weight: copying a param with shape torch.Size([128, 64, 1]) from checkpoint, the shape in current model is torch.Size([512, 256, 1]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.0.residual_conv.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.0.block.0.weight: copying a param with shape torch.Size([128, 128, 5]) from checkpoint, the shape in current model is torch.Size([512, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.0.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.0.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.0.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.1.block.0.weight: copying a param with shape torch.Size([128, 128, 5]) from checkpoint, the shape in current model is torch.Size([512, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.1.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.1.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.blocks.1.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.time_mlp.1.weight: copying a param with shape torch.Size([128, 64]) from checkpoint, the shape in current model is torch.Size([512, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.1.time_mlp.1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.2.conv.weight: copying a param with shape torch.Size([128, 128, 3]) from checkpoint, the shape in current model is torch.Size([512, 512, 3]).
+	size mismatch for model.model.velocity_net.backbone.downs.2.2.conv.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.0.block.0.weight: copying a param with shape torch.Size([256, 128, 5]) from checkpoint, the shape in current model is torch.Size([1024, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.0.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.0.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.0.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.1.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.1.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.1.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.blocks.1.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.time_mlp.1.weight: copying a param with shape torch.Size([256, 64]) from checkpoint, the shape in current model is torch.Size([1024, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.time_mlp.1.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.residual_conv.weight: copying a param with shape torch.Size([256, 128, 1]) from checkpoint, the shape in current model is torch.Size([1024, 512, 1]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.0.residual_conv.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.0.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.0.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.0.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.0.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.1.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.1.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.1.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.blocks.1.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.time_mlp.1.weight: copying a param with shape torch.Size([256, 64]) from checkpoint, the shape in current model is torch.Size([1024, 256]).
+	size mismatch for model.model.velocity_net.backbone.downs.3.1.time_mlp.1.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.0.block.0.weight: copying a param with shape torch.Size([128, 512, 5]) from checkpoint, the shape in current model is torch.Size([512, 2048, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.0.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.0.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.0.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.1.block.0.weight: copying a param with shape torch.Size([128, 128, 5]) from checkpoint, the shape in current model is torch.Size([512, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.1.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.1.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.blocks.1.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.time_mlp.1.weight: copying a param with shape torch.Size([128, 64]) from checkpoint, the shape in current model is torch.Size([512, 256]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.time_mlp.1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.residual_conv.weight: copying a param with shape torch.Size([128, 512, 1]) from checkpoint, the shape in current model is torch.Size([512, 2048, 1]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.0.residual_conv.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.0.block.0.weight: copying a param with shape torch.Size([128, 128, 5]) from checkpoint, the shape in current model is torch.Size([512, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.0.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.0.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.0.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.1.block.0.weight: copying a param with shape torch.Size([128, 128, 5]) from checkpoint, the shape in current model is torch.Size([512, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.1.block.0.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.1.block.2.weight: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.blocks.1.block.2.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.time_mlp.1.weight: copying a param with shape torch.Size([128, 64]) from checkpoint, the shape in current model is torch.Size([512, 256]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.1.time_mlp.1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.2.conv.weight: copying a param with shape torch.Size([128, 128, 4]) from checkpoint, the shape in current model is torch.Size([512, 512, 4]).
+	size mismatch for model.model.velocity_net.backbone.ups.0.2.conv.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.0.block.0.weight: copying a param with shape torch.Size([64, 256, 5]) from checkpoint, the shape in current model is torch.Size([256, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.0.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.0.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.0.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.1.block.0.weight: copying a param with shape torch.Size([64, 64, 5]) from checkpoint, the shape in current model is torch.Size([256, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.1.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.1.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.blocks.1.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.time_mlp.1.weight: copying a param with shape torch.Size([64, 64]) from checkpoint, the shape in current model is torch.Size([256, 256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.time_mlp.1.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.residual_conv.weight: copying a param with shape torch.Size([64, 256, 1]) from checkpoint, the shape in current model is torch.Size([256, 1024, 1]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.0.residual_conv.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.0.block.0.weight: copying a param with shape torch.Size([64, 64, 5]) from checkpoint, the shape in current model is torch.Size([256, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.0.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.0.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.0.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.1.block.0.weight: copying a param with shape torch.Size([64, 64, 5]) from checkpoint, the shape in current model is torch.Size([256, 256, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.1.block.0.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.1.block.2.weight: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.blocks.1.block.2.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.time_mlp.1.weight: copying a param with shape torch.Size([64, 64]) from checkpoint, the shape in current model is torch.Size([256, 256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.1.time_mlp.1.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.2.conv.weight: copying a param with shape torch.Size([64, 64, 4]) from checkpoint, the shape in current model is torch.Size([256, 256, 4]).
+	size mismatch for model.model.velocity_net.backbone.ups.1.2.conv.bias: copying a param with shape torch.Size([64]) from checkpoint, the shape in current model is torch.Size([256]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.0.block.0.weight: copying a param with shape torch.Size([32, 128, 5]) from checkpoint, the shape in current model is torch.Size([128, 512, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.0.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.0.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.0.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.1.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.1.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.1.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.blocks.1.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.time_mlp.1.weight: copying a param with shape torch.Size([32, 64]) from checkpoint, the shape in current model is torch.Size([128, 256]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.time_mlp.1.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.residual_conv.weight: copying a param with shape torch.Size([32, 128, 1]) from checkpoint, the shape in current model is torch.Size([128, 512, 1]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.0.residual_conv.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.0.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.0.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.0.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.0.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.1.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.1.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.1.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.blocks.1.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.time_mlp.1.weight: copying a param with shape torch.Size([32, 64]) from checkpoint, the shape in current model is torch.Size([128, 256]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.1.time_mlp.1.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.2.conv.weight: copying a param with shape torch.Size([32, 32, 4]) from checkpoint, the shape in current model is torch.Size([128, 128, 4]).
+	size mismatch for model.model.velocity_net.backbone.ups.2.2.conv.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.0.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.0.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.0.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.0.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.1.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.1.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.1.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.blocks.1.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.time_mlp.1.weight: copying a param with shape torch.Size([256, 64]) from checkpoint, the shape in current model is torch.Size([1024, 256]).
+	size mismatch for model.model.velocity_net.backbone.mid_block1.time_mlp.1.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.0.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.0.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.0.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.0.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.1.block.0.weight: copying a param with shape torch.Size([256, 256, 5]) from checkpoint, the shape in current model is torch.Size([1024, 1024, 5]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.1.block.0.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.1.block.2.weight: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.blocks.1.block.2.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.time_mlp.1.weight: copying a param with shape torch.Size([256, 64]) from checkpoint, the shape in current model is torch.Size([1024, 256]).
+	size mismatch for model.model.velocity_net.backbone.mid_block2.time_mlp.1.bias: copying a param with shape torch.Size([256]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for model.model.velocity_net.backbone.final_conv.0.block.0.weight: copying a param with shape torch.Size([32, 32, 5]) from checkpoint, the shape in current model is torch.Size([128, 128, 5]).
+	size mismatch for model.model.velocity_net.backbone.final_conv.0.block.0.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.final_conv.0.block.2.weight: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.final_conv.0.block.2.bias: copying a param with shape torch.Size([32]) from checkpoint, the shape in current model is torch.Size([128]).
+	size mismatch for model.model.velocity_net.backbone.final_conv.1.weight: copying a param with shape torch.Size([9, 32, 1]) from checkpoint, the shape in current model is torch.Size([9, 128, 1]).

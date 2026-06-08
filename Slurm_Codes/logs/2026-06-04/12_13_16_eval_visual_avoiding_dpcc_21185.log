@@ -1,0 +1,681 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jun  4 10:13:17 UTC 2026
+JOB NAME:  eval_visual_avoiding_dpcc
+JOB ID:    21185
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   18bfdad
+================================================================================
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+
+=== Evaluating seed 6 ===
+[ utils/setup ] Made savepath: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6
+
+[ eval loading ] Loading from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 17650.72it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 44.00it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ utils/training ] Restored loss history from checkpoint at step 1000
+[ eval ] clip_denoised set → False (config-driven; original DPCC default: False)
+[ eval ] Model n_timesteps = 20  (config n_diffusion_steps = 20)
+[ expert ] Generating 3 expert reference videos...
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+  [ expert ] Saved logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/expert_references/expert_rollout_0.gif
+  [ expert ] Saved logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/expert_references/expert_rollout_1.gif
+  [ expert ] Saved logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/expert_references/expert_rollout_2.gif
+[ expert ] MjRobot.GLOBAL_MJ_ROBOT_COUNTER reset to 0 (FIX-7)
+[ expert ] Render singleton cache cleared (FIX-7.2)
+
+[ geo ] active_geo_variants: ['no_constraint', 'obstacles_exact']
+
+[ geo ] ── Constraint variant: no_constraint  types=[] ──
+[ geo ] Constraint overview → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/constraint_overview.png
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+there are cpus:  64
+2657997 {0}
+Process 2657997 unpinned — visual eval requires all CPU threads.
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_0728b0ce-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_1d08e314-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+[ DIAG first-replan ] normalized   a0 = [-118.5557 -151.1166]  |mag| = 192.0721
+[ DIAG first-replan ] denormalized a0 = [-0.0125  0.    ]  |mag| = 0.012500 m
+[ DIAG first-replan ] horizon act (normalized) range: [-312.8236, 350.8170]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-118.5557 -151.1166]
+  step  1: [-15.8263 290.7334]
+  step  2: [ 10.1928 -43.9495]
+  step  3: [157.1857  67.9025]
+  step  4: [-312.8236  225.3867]
+  step  5: [212.2336  72.4175]
+  step  6: [  9.5963 286.7285]
+  step  7: [350.817  332.7024]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/diffuser_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 38
+  - Success status: False
+  - Final Mean Distance: 0.442579 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.044974 m
+  - Avg Inference Time: 0.3184 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/diffuser_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=38  margin=0.0000m  dyn_err=0.0102m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 17
+  - Success status: False
+  - Final Mean Distance: 0.559158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035997 m
+  - Avg Inference Time: 0.2353 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/diffuser_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=17  margin=0.0000m  dyn_err=0.0100m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 15
+  - Success status: False
+  - Final Mean Distance: 0.562696 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.033340 m
+  - Avg Inference Time: 0.2349 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/diffuser_train_set/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=15  margin=0.0000m  dyn_err=0.0099m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Mean Distance 0.5214777588844299
+Success Rate  0.0
+Entropy       -0.0
+[ eval ] Generating PNG rollout grid for diffuser_train_set...
+--- avoiding-d3il [seen training set] diffuser_train_set seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5215 m  +- 0.0558 m
+Min final mean distance:   0.4426 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    23.33 +- 10.40
+Physical tracking error:   mean=0.0197 m  max=0.0450 m
+Avg inference time/replan: 0.263 s
+--- Constraint Metrics [diffuser_train_set] ---
+  Execution satisfaction rate:    1.000 ± 0.000
+  Violated steps/rollout:         0.0 ± 0.0  (bounds=0.0  hs=0.0  obs=0.0)
+  Max bounds viol (m):            0.0000 ± 0.0000
+  Max halfspace viol (m):         0.0000 ± 0.0000
+  Max obstacle penetration (m):   0.0000 ± 0.0000
+  Constraint margin mean (m):     0.0000 ± 0.0000
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:2155: RuntimeWarning: Mean of empty slice.
+  print(f'  First violation step:           {_fv[_fv>=0].mean():.1f} '
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/core/_methods.py:129: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+  First violation step:           nan (n_rollouts_with_viol=0)
+  Longest safe streak (steps):    23.3 ± 10.4
+  Dynamics consistency err (m):   0.0100 ± 0.0001
+  Plan post-proj viol rate:       0.0000 ± 0.0000
+  Zero-violation rollouts:        3 / 3  (100.0%)
+  → Saved: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/diffuser_train_set/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+[ eval ] DPCC projector active for variant 'dpcc-r_train_set' (trajectory_dim=6)
+there are cpus:  64
+2657997 {0}
+Process 2657997 unpinned — visual eval requires all CPU threads.
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_2e7b646e-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-118.4612 -151.0526]  |mag| = 191.9634
+[ DIAG first-replan ] denormalized a0 = [-0.0125  0.    ]  |mag| = 0.012500 m
+[ DIAG first-replan ] horizon act (normalized) range: [-313.7033, 350.9228]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-118.4612 -151.0526]
+  step  1: [-16.1633 290.8598]
+  step  2: [ 10.5633 -44.1185]
+  step  3: [157.2783  67.9342]
+  step  4: [-313.7033  225.6509]
+  step  5: [211.9355  72.4202]
+  step  6: [  9.4834 285.8706]
+  step  7: [350.9228 333.6504]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-r_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 38
+  - Success status: False
+  - Final Mean Distance: 0.442579 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.044974 m
+  - Avg Inference Time: 0.2326 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-r_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=38  margin=0.0000m  dyn_err=0.0102m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 17
+  - Success status: False
+  - Final Mean Distance: 0.559158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035997 m
+  - Avg Inference Time: 0.2334 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-r_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=17  margin=0.0000m  dyn_err=0.0100m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 15
+  - Success status: False
+  - Final Mean Distance: 0.562696 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.033340 m
+  - Avg Inference Time: 0.2340 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-r_train_set/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=15  margin=0.0000m  dyn_err=0.0099m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Mean Distance 0.5214777588844299
+Success Rate  0.0
+Entropy       -0.0
+[ eval ] Generating PNG rollout grid for dpcc-r_train_set...
+--- avoiding-d3il [seen training set] dpcc-r_train_set seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5215 m  +- 0.0558 m
+Min final mean distance:   0.4426 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    23.33 +- 10.40
+Physical tracking error:   mean=0.0197 m  max=0.0450 m
+Avg inference time/replan: 0.233 s
+--- Constraint Metrics [dpcc-r_train_set] ---
+  Execution satisfaction rate:    1.000 ± 0.000
+  Violated steps/rollout:         0.0 ± 0.0  (bounds=0.0  hs=0.0  obs=0.0)
+  Max bounds viol (m):            0.0000 ± 0.0000
+  Max halfspace viol (m):         0.0000 ± 0.0000
+  Max obstacle penetration (m):   0.0000 ± 0.0000
+  Constraint margin mean (m):     0.0000 ± 0.0000
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:2155: RuntimeWarning: Mean of empty slice.
+  print(f'  First violation step:           {_fv[_fv>=0].mean():.1f} '
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/core/_methods.py:129: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+  First violation step:           nan (n_rollouts_with_viol=0)
+  Longest safe streak (steps):    23.3 ± 10.4
+  Dynamics consistency err (m):   0.0100 ± 0.0001
+  Plan post-proj viol rate:       0.0000 ± 0.0000
+  Zero-violation rollouts:        3 / 3  (100.0%)
+  → Saved: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-r_train_set/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+[ eval ] DPCC projector active for variant 'dpcc-c_train_set' (trajectory_dim=6)
+there are cpus:  64
+2657997 {0}
+Process 2657997 unpinned — visual eval requires all CPU threads.
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_3e4fbef8-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-118.4053 -151.1012]  |mag| = 191.9672
+[ DIAG first-replan ] denormalized a0 = [-0.0125  0.    ]  |mag| = 0.012500 m
+[ DIAG first-replan ] horizon act (normalized) range: [-313.1280, 350.6689]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-118.4053 -151.1012]
+  step  1: [-15.8223 291.0244]
+  step  2: [ 10.2606 -44.062 ]
+  step  3: [157.3468  67.9623]
+  step  4: [-313.128   225.7808]
+  step  5: [211.9954  72.1911]
+  step  6: [  9.9138 286.557 ]
+  step  7: [350.6689 333.3678]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-c_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 38
+  - Success status: False
+  - Final Mean Distance: 0.442579 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.044974 m
+  - Avg Inference Time: 0.2342 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-c_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=38  margin=0.0000m  dyn_err=0.0102m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 17
+  - Success status: False
+  - Final Mean Distance: 0.559158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035997 m
+  - Avg Inference Time: 0.2331 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-c_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=17  margin=0.0000m  dyn_err=0.0100m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 15
+  - Success status: False
+  - Final Mean Distance: 0.562696 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.033340 m
+  - Avg Inference Time: 0.2332 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-c_train_set/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=15  margin=0.0000m  dyn_err=0.0099m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Mean Distance 0.5214777588844299
+Success Rate  0.0
+Entropy       -0.0
+[ eval ] Generating PNG rollout grid for dpcc-c_train_set...
+--- avoiding-d3il [seen training set] dpcc-c_train_set seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5215 m  +- 0.0558 m
+Min final mean distance:   0.4426 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    23.33 +- 10.40
+Physical tracking error:   mean=0.0197 m  max=0.0450 m
+Avg inference time/replan: 0.233 s
+--- Constraint Metrics [dpcc-c_train_set] ---
+  Execution satisfaction rate:    1.000 ± 0.000
+  Violated steps/rollout:         0.0 ± 0.0  (bounds=0.0  hs=0.0  obs=0.0)
+  Max bounds viol (m):            0.0000 ± 0.0000
+  Max halfspace viol (m):         0.0000 ± 0.0000
+  Max obstacle penetration (m):   0.0000 ± 0.0000
+  Constraint margin mean (m):     0.0000 ± 0.0000
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:2155: RuntimeWarning: Mean of empty slice.
+  print(f'  First violation step:           {_fv[_fv>=0].mean():.1f} '
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/core/_methods.py:129: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+  First violation step:           nan (n_rollouts_with_viol=0)
+  Longest safe streak (steps):    23.3 ± 10.4
+  Dynamics consistency err (m):   0.0100 ± 0.0001
+  Plan post-proj viol rate:       0.0000 ± 0.0000
+  Zero-violation rollouts:        3 / 3  (100.0%)
+  → Saved: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-c_train_set/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+[ eval ] DPCC projector active for variant 'dpcc-t_train_set' (trajectory_dim=6)
+there are cpus:  64
+2657997 {0}
+Process 2657997 unpinned — visual eval requires all CPU threads.
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_4dfd987a-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-118.4422 -151.1438]  |mag| = 192.0234
+[ DIAG first-replan ] denormalized a0 = [-0.0125  0.    ]  |mag| = 0.012500 m
+[ DIAG first-replan ] horizon act (normalized) range: [-313.6207, 350.5425]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-118.4422 -151.1438]
+  step  1: [-15.999 290.858]
+  step  2: [ 10.4835 -43.723 ]
+  step  3: [156.9398  67.5799]
+  step  4: [-313.6207  225.0935]
+  step  5: [212.043   71.8991]
+  step  6: [  9.6591 286.793 ]
+  step  7: [350.5426 333.3406]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-t_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 38
+  - Success status: False
+  - Final Mean Distance: 0.442579 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.044974 m
+  - Avg Inference Time: 0.2337 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-t_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=38  margin=0.0000m  dyn_err=0.0102m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 17
+  - Success status: False
+  - Final Mean Distance: 0.559158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035997 m
+  - Avg Inference Time: 0.2372 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-t_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=17  margin=0.0000m  dyn_err=0.0100m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 15
+  - Success status: False
+  - Final Mean Distance: 0.562696 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.033340 m
+  - Avg Inference Time: 0.2356 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-t_train_set/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=15  margin=0.0000m  dyn_err=0.0099m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Mean Distance 0.5214777588844299
+Success Rate  0.0
+Entropy       -0.0
+[ eval ] Generating PNG rollout grid for dpcc-t_train_set...
+--- avoiding-d3il [seen training set] dpcc-t_train_set seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5215 m  +- 0.0558 m
+Min final mean distance:   0.4426 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    23.33 +- 10.40
+Physical tracking error:   mean=0.0197 m  max=0.0450 m
+Avg inference time/replan: 0.236 s
+--- Constraint Metrics [dpcc-t_train_set] ---
+  Execution satisfaction rate:    1.000 ± 0.000
+  Violated steps/rollout:         0.0 ± 0.0  (bounds=0.0  hs=0.0  obs=0.0)
+  Max bounds viol (m):            0.0000 ± 0.0000
+  Max halfspace viol (m):         0.0000 ± 0.0000
+  Max obstacle penetration (m):   0.0000 ± 0.0000
+  Constraint margin mean (m):     0.0000 ± 0.0000
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:2155: RuntimeWarning: Mean of empty slice.
+  print(f'  First violation step:           {_fv[_fv>=0].mean():.1f} '
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/core/_methods.py:129: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+  First violation step:           nan (n_rollouts_with_viol=0)
+  Longest safe streak (steps):    23.3 ± 10.4
+  Dynamics consistency err (m):   0.0100 ± 0.0001
+  Plan post-proj viol rate:       0.0000 ± 0.0000
+  Zero-violation rollouts:        3 / 3  (100.0%)
+  → Saved: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/dpcc-t_train_set/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+[ eval ] DPCC projector active for variant 'gradient_train_set' (trajectory_dim=6)
+there are cpus:  64
+2657997 {0}
+Process 2657997 unpinned — visual eval requires all CPU threads.
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_5dff91c4-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-118.5528 -151.1602]  |mag| = 192.1046
+[ DIAG first-replan ] denormalized a0 = [-0.0125  0.    ]  |mag| = 0.012500 m
+[ DIAG first-replan ] horizon act (normalized) range: [-313.4433, 351.0180]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-118.5528 -151.1602]
+  step  1: [-15.836  291.3454]
+  step  2: [ 10.5294 -43.5474]
+  step  3: [157.1097  67.7003]
+  step  4: [-313.4433  225.5102]
+  step  5: [211.7144  72.1444]
+  step  6: [  9.5256 286.2296]
+  step  7: [351.018  333.2878]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/gradient_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 38
+  - Success status: False
+  - Final Mean Distance: 0.442579 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.044974 m
+  - Avg Inference Time: 0.2349 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/gradient_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=38  margin=0.0000m  dyn_err=0.0102m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 17
+  - Success status: False
+  - Final Mean Distance: 0.559158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035997 m
+  - Avg Inference Time: 0.2363 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/gradient_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=17  margin=0.0000m  dyn_err=0.0100m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 2 Rollout 0
+[ Seen Training Context 2 Finished ]
+  - Total Steps: 15
+  - Success status: False
+  - Final Mean Distance: 0.562696 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.033340 m
+  - Avg Inference Time: 0.2340 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/gradient_train_set/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=15  margin=0.0000m  dyn_err=0.0099m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Mean Distance 0.5214777588844299
+Success Rate  0.0
+Entropy       -0.0
+[ eval ] Generating PNG rollout grid for gradient_train_set...
+--- avoiding-d3il [seen training set] gradient_train_set seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.5215 m  +- 0.0558 m
+Min final mean distance:   0.4426 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    23.33 +- 10.40
+Physical tracking error:   mean=0.0197 m  max=0.0450 m
+Avg inference time/replan: 0.235 s
+--- Constraint Metrics [gradient_train_set] ---
+  Execution satisfaction rate:    1.000 ± 0.000
+  Violated steps/rollout:         0.0 ± 0.0  (bounds=0.0  hs=0.0  obs=0.0)
+  Max bounds viol (m):            0.0000 ± 0.0000
+  Max halfspace viol (m):         0.0000 ± 0.0000
+  Max obstacle penetration (m):   0.0000 ± 0.0000
+  Constraint margin mean (m):     0.0000 ± 0.0000
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:2155: RuntimeWarning: Mean of empty slice.
+  print(f'  First violation step:           {_fv[_fv>=0].mean():.1f} '
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/numpy/core/_methods.py:129: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+  First violation step:           nan (n_rollouts_with_viol=0)
+  Longest safe streak (steps):    23.3 ± 10.4
+  Dynamics consistency err (m):   0.0100 ± 0.0001
+  Plan post-proj viol rate:       0.0000 ± 0.0000
+  Zero-violation rollouts:        3 / 3  (100.0%)
+  → Saved: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/gradient_train_set/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] Loaded normalizers from logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+[ eval ] obs_normalizer  mins=[ 0.2337 -0.2797  0.2149 -0.2825]  maxs=[0.8247 0.4872 0.7708 0.4884]
+[ eval ] act_normalizer  mins=[-0.0125  0.    ]  maxs=[0.0125 0.0125]
+[ eval ] DPCC projector active for variant 'post_processing_train_set' (trajectory_dim=6)
+there are cpus:  64
+2657997 {0}
+Process 2657997 unpinned — visual eval requires all CPU threads.
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_6dac6304-5ffe-11f1-9d91-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [-118.2815 -151.0457]  |mag| = 191.8471
+[ DIAG first-replan ] denormalized a0 = [-0.0125  0.    ]  |mag| = 0.012500 m
+[ DIAG first-replan ] horizon act (normalized) range: [-313.2515, 350.4412]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [-118.2815 -151.0457]
+  step  1: [-15.6526 291.0109]
+  step  2: [  9.927  -44.3714]
+  step  3: [157.6031  68.0948]
+  step  4: [-313.2515  225.5468]
+  step  5: [212.0823  72.1539]
+  step  6: [  9.4936 286.2626]
+  step  7: [350.4412 333.1244]
+[ DIAG obs ] des_c_pos=[ 0.5249 -0.2797  0.5249]  c_pos=[-0.2797]
+[ DIAG obs ] obs_norm (dim=4)=[-0.0144 -1.      0.1154 -0.9929]
+[ DIAG img ] bp_image   std=0.2157  shape=(3, 96, 96)
+[ DIAG ] saved → logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/post_processing_train_set/diag_first_replan.txt
+[ Seen Training Context 0 Finished ]
+  - Total Steps: 38
+  - Success status: False
+  - Final Mean Distance: 0.442579 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.044974 m
+  - Avg Inference Time: 0.2323 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/post_processing_train_set/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=38  margin=0.0000m  dyn_err=0.0102m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ Seen Training Context 1 Finished ]
+  - Total Steps: 17
+  - Success status: False
+  - Final Mean Distance: 0.559158 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.035997 m
+  - Avg Inference Time: 0.2341 seconds/replan
+  - Clamp events: 0
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc1/6/results_train_set/no_constraint/post_processing_train_set/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=17  margin=0.0000m  dyn_err=0.0100m
+    plan_post_viol_rate=0.0000  zero_viol=True
+slurmstepd-i6-gpu-1: error: *** JOB 21185 ON i6-gpu-1 CANCELLED AT 2026-06-04T10:16:37 ***

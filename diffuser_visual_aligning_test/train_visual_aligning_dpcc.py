@@ -193,6 +193,19 @@ for seed in selected_seeds:
     print(f'[ train ] obs_normalizer {dataset.obs_normalizer}')
     print(f'[ train ] act_normalizer {dataset.act_normalizer}')
 
+    # FIX-18: VisualUNet's non-visual branch computes transition_dim from
+    # config.obs_dim. Visual variants hardcode obs_dim=6 (the visual obs
+    # anchor); for non-visual runs we must override it to 20 so the model
+    # builds with the correct 23-D input (3 action + 20 obs). Without this,
+    # the first conv expects 9 channels while the dataset feeds 23 → crash.
+    if not _if_vision:
+        _dataset_obs_dim = dataset.obs_normalizer.mins.shape[0]
+        if getattr(args, 'obs_dim', None) != _dataset_obs_dim:
+            print(f'[ train ] FIX-18: overriding args.obs_dim '
+                  f'{getattr(args, "obs_dim", None)} → {_dataset_obs_dim} '
+                  f'(non-visual; from dataset normalizer)')
+            args.obs_dim = _dataset_obs_dim
+
     # ── 2. Model — VisualUNet with hardcoded transition_dim=9 ─────────────────
     from diffuser_visual_aligning.models.visual_unet import VisualUNet
 
