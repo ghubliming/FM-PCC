@@ -130,10 +130,10 @@ Same commands as U2. No argument changes.
 
 ```bash
 # Collect all scenes (example — same as U2 collect.sh)
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh 500 empty ""
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh 500 corridor ""
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh 500 s_curve ""
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh 500 pillars ""
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty    500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh s_curve  500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars  500
 ```
 
 After collection, verify with a quick contact fraction check:
