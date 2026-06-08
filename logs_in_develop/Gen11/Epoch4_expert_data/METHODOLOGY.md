@@ -199,31 +199,239 @@ Code: `dataset_writer.py` line 68: `actions = np.diff(targets, axis=0)`.
 
 ---
 
-## 8. Episode schema
+## 8. Output structure — folders, filenames, and pickle contents
 
-Each episode is serialised as a Python pickle:
+### 8.1 Folder tree
 
 ```
-logs/uav_expert_data/{scene}/{homotopy_safe}/{episode_id}.pkl
+logs/uav_expert_data/
+│
+├── empty/
+│   └── N_A/                        ← homotopy "N/A" → folder "N_A"
+│       ├── empty_N_A_pid_default_0000001.pkl
+│       ├── empty_N_A_pid_default_0000002.pkl
+│       └── …  (500 episodes)
+│
+├── corridor/
+│   ├── C/                          ← Centre channel (drone flies down the middle)
+│   │   ├── corridor_C_pid_default_0000001.pkl
+│   │   └── …
+│   ├── L/                          ← Left channel (drone hugs left wall)
+│   │   ├── corridor_L_pid_default_0000056.pkl
+│   │   └── …
+│   └── R/                          ← Right channel (drone hugs right wall)
+│       └── …
+│       (436 episodes total: C≈167, L≈139, R≈130)
+│
+├── s_curve/
+│   └── default/                    ← Only one topological route
+│       └── …  (356 episodes)
+│
+└── pillars/
+    ├── L_L_L/                      ← Go left of pillar 1, left of 2, left of 3
+    ├── L_R_L/                      ← Left, right, left
+    ├── R_L_R/                      ← Right, left, right
+    └── R_R_R/                      ← Right of all 3 pillars
+        (477 episodes total: ~112–125 per class)
 ```
 
-| Field | Shape / Type | Meaning |
+**Filename format**: `{scene}_{homotopy_safe}_{controller}_{7-digit-counter}.pkl`  
+Example: `corridor_L_pid_default_0000056.pkl`
+
+**`homotopy_safe`** is the folder-safe version of the homotopy label:
+
+| Raw homotopy | Folder name | Meaning |
 |---|---|---|
-| `episode_id` | str | `{scene}_{controller}_{7-digit-counter}` |
-| `scene` | str | `'empty'` / `'corridor'` / `'s_curve'` / `'pillars'` |
-| `homotopy` | str | `'L'` / `'C'` / `'R'` / `'(L,L,L)'` / `'default'` / `'N/A'` |
-| `controller` | str | `'pid_default'` / `'pid_high_gain'` / `'pid_low_gain'` |
-| `dt` | float | `≈ 0.030 s` (33 Hz dataset) |
-| `obs` | `(T, 6)` float32 | `[p_x, p_y, p_z, v_x, v_y, v_z]` — world-frame position + velocity |
-| `actions` | `(T-1, 3)` float32 | `[Δp_des_x, Δp_des_y, Δp_des_z]` — position-delta |
-| `targets` | `(T, 3)` float32 | Absolute commanded positions (debug only) |
-| `obstacles` | list[dict] | Scene geometry: `{type, name, center, half_extents/radius}` |
-| `metadata` | dict | `{start_pos, total_time, dt_physics, contact_fraction, noise_sigma}` |
+| `'N/A'` | `N_A` | No obstacle — empty scene |
+| `'C'` | `C` | Centre channel |
+| `'L'` | `L` | Left channel |
+| `'R'` | `R` | Right channel |
+| `'default'` | `default` | Only route (s_curve) |
+| `'(L,L,L)'` | `L_L_L` | Parentheses and commas stripped |
 
-**FM-PCC dataloader** reads chunks of length `H` from `(obs, actions)` and assembles
-tensors of shape `(B, H, 9)` where `D = [actions(3) ‖ obs(6)]`.
+---
 
-Code: `dataset_writer.py:rollout_to_episode()` lines 72–90.
+### 8.2 What L / C / R mean physically
+
+**Corridor**: the corridor is a straight hallway with two walls.  The drone can fly through
+three distinct lateral channels:
+
+```
+  ┌─────────────────────────────────────────┐  ← wall (y = +0.45 m)
+  │   L channel   │  C channel  │ R channel │
+  │  (y ≈ −0.22)  │  (y ≈ 0.0)  │ (y ≈+0.22)│
+  └─────────────────────────────────────────┘  ← wall (y = −0.45 m)
+  → flight direction: x
+```
+
+- **C** (centre): flies straight down the middle.  No wall contact.
+- **L** (left): flies near the **negative-y** wall (left when looking forward along +x).
+  Brief wall contact is physically unavoidable — L and R homotopies always have
+  `contact_fraction > 0` (see E4 U2 Fix_1 CLOSURE for why the threshold was not tightened).
+- **R** (right): mirrors L on the **positive-y** wall.
+
+The FM must learn all three — at inference the planner selects a homotopy and the FM
+samples from that conditional distribution.
+
+**Pillars**: three pairs of cylindrical pillars along the flight path.  For each pair the
+drone can pass left or right, giving `2³ = 8` combinations.  Only the four
+topologically distinct ones are collected (the others are mirror images and would be
+redundant given the scene's bilateral symmetry):
+
+| Label | Per-pillar side | Physical path |
+|---|---|---|
+| `(L,L,L)` | Left, Left, Left | S-shape to the negative-y side |
+| `(L,R,L)` | Left, Right, Left | Weave |
+| `(R,L,R)` | Right, Left, Right | Weave (mirror) |
+| `(R,R,R)` | Right, Right, Right | S-shape to the positive-y side |
+
+---
+
+### 8.3 What is inside each PKL — field-by-field
+
+Load an episode:
+```python
+import pickle
+ep = pickle.load(open('logs/uav_expert_data/corridor/L/corridor_L_pid_default_0000056.pkl', 'rb'))
+ep.keys()
+# dict_keys(['episode_id', 'scene', 'homotopy', 'controller', 'dt',
+#            'obs', 'actions', 'targets', 'q', 'obstacles', 'metadata'])
+```
+
+| Field | Shape / Type | Content |
+|---|---|---|
+| `episode_id` | str | `'corridor_L_pid_default_0000056'` — unique identifier, matches filename |
+| `scene` | str | `'corridor'` — which scene XML was loaded |
+| `homotopy` | str | `'L'` — raw label (not folder-safe) |
+| `controller` | str | `'pid_default'` — which PID gain set was used |
+| `dt` | float | `≈ 0.030 s` — time between consecutive obs rows (33 Hz) |
+| `obs` | `(T, 9)` float32 | State at each timestep — **see §8.4** |
+| `actions` | `(T-1, 3)` float32 | Position deltas — **see §8.5** |
+| `targets` | `(T, 3)` float32 | Noisy absolute p_des (debug only — do not feed to FM) |
+| `q` | `(T, 4)` float32 | Actual body quaternion `[w, x, y, z]` — attitude for rendering (E4 U3+) |
+| `obstacles` | list[dict] | Scene geometry for DPCC — **see §8.6** |
+| `metadata` | dict | Run statistics — **see §8.7** |
+
+---
+
+### 8.4 `obs` — the observation tensor `(T, 9)`
+
+After E4 U2, obs is 9D. Each row is the drone state at one timestep:
+
+```
+obs[t] = [ p_des_x,  p_des_y,  p_des_z,    ← columns 0:3  — commanded position (unnoisy)
+           p_x,      p_y,      p_z,         ← columns 3:6  — actual position (world frame, m)
+           v_x,      v_y,      v_z ]        ← columns 6:9  — actual velocity (world frame, m/s)
+```
+
+- **`p_des` (columns 0:3)**: the position the PID was trying to reach at timestep `t`.
+  Unnoisy — this is the exact trajectory-function output `traj(t·dt).p`.  Added in E4 U2
+  to give the FM a goal signal (DPCC_OBS_DEVIATION §Deviation 2).
+
+- **`p` (columns 3:6)**: the drone's actual COM position in world frame (metres).
+  `p[0]` = forward (x), `p[1]` = lateral (y), `p[2]` = altitude (z).
+  Typical values: x ∈ [0, 5] m, y ∈ [−0.45, +0.45] m (corridor), z ∈ [0.7, 1.1] m.
+
+- **`v` (columns 6:9)**: linear velocity in world frame (m/s).  Zero at episode start.
+  Corridor mean speed: 0.716 m/s.  `obs[0, 6:9]` is always `[0, 0, 0]`.
+
+```python
+obs = ep['obs']                 # (T, 9)
+p_des = obs[:, :3]              # (T, 3)  commanded positions
+p     = obs[:, 3:6]             # (T, 3)  actual positions
+v     = obs[:, 6:9]             # (T, 3)  velocities
+print(f'Episode length: T={len(obs)} steps = {len(obs)*ep["dt"]:.1f} s')
+print(f'Mean speed: {np.linalg.norm(v, axis=1).mean():.3f} m/s')
+```
+
+**FM tensor**: the FM dataloader stacks `[actions ‖ obs]` to form a 12D column per step:
+`D = [Δp_des(3) ‖ p_des(3), p(3), v(3)]` — shape `(T-1, 12)` (one fewer row because
+actions are forward differences of targets).
+
+---
+
+### 8.5 `actions` — position deltas `(T-1, 3)`
+
+```
+actions[t] = targets[t+1] − targets[t]   →   Δp_des at step t   (m)
+```
+
+This is the **commanded velocity** at the dataset frequency (33 Hz).  Typical norm: 0.012
+m/step for empty, 0.021 m/step for corridor.
+
+`actions` has one fewer row than `obs` because it is a forward difference.  The FM
+predicts a horizon of `H` future actions from the current obs.
+
+```python
+actions = ep['actions']         # (T-1, 3)
+print(f'Action norm mean: {np.linalg.norm(actions, axis=1).mean():.4f} m/step')
+print(f'Actions range: [{actions.min():.3f}, {actions.max():.3f}] m/step')
+```
+
+---
+
+### 8.6 `obstacles` — scene geometry for DPCC
+
+A list of dicts, one per obstacle geom.  Used by the DPCC safety filter to construct
+half-space constraints.
+
+```python
+ep['obstacles']
+# e.g. for corridor:
+# [{'type': 'box', 'name': 'wall_left',  'center': [2.5, -0.45, 0.5], 'half_extents': [2.5, 0.05, 0.5]},
+#  {'type': 'box', 'name': 'wall_right', 'center': [2.5,  0.45, 0.5], 'half_extents': [2.5, 0.05, 0.5]}]
+```
+
+Keys per obstacle:
+
+| Key | Type | Meaning |
+|---|---|---|
+| `type` | str | `'box'` or `'cylinder'` |
+| `name` | str | MuJoCo geom name |
+| `center` | list[float] | World-frame centre `[x, y, z]` |
+| `half_extents` | list[float] | Box half-sizes `[dx, dy, dz]` (box only) |
+| `radius` | float | Cylinder radius (cylinder only) |
+
+---
+
+### 8.7 `metadata` — run statistics
+
+```python
+ep['metadata']
+# {'start_pos':        [0.1, -0.21, 0.9],   ← initial drone position (m)
+#  'total_time':       6.23,                 ← episode duration (s)
+#  'dt_physics':       0.01,                 ← physics timestep (100 Hz)
+#  'contact_fraction': 0.0138,               ← fraction of steps with wall contact
+#  'controller_gains': 'pid_default',
+#  'noise_sigma':      0.02}                 ← std of target offset noise (m)
+```
+
+`contact_fraction` is the key quality metric — episodes above the per-scene threshold
+were discarded by the contact filter (§4).  The value here is the fraction of the
+*accepted* episode that had contact.
+
+---
+
+### 8.8 `q` — body quaternion `(T, 4)` *(E4 U3+)*
+
+The actual drone body orientation at each timestep, stored as `[w, x, y, z]`:
+
+```python
+q = ep['q']                     # (T, 4)
+print(f'q at hover start: {q[0]}')   # ≈ [1, 0, 0, 0] — level
+print(f'q at mid-speed:   {q[T//2]}') # slightly nose-down during fast forward flight
+```
+
+`q[0]` is always close to identity (drone starts level).  During forward flight the drone
+pitches forward to generate thrust: at 0.7 m/s the pitch is ~10° nose-down.  This field
+is used by Epoch 5 WS-A/B to render the drone with correct tilt (attitude-aware rendering,
+Change D in E5 U2).
+
+**Note**: this field is absent (`episode.get('q', None)` returns `None`) in pickles
+collected before E4 U3.  WS-A/B fall back to identity quaternion (level) in that case.
+
+Code: `dataset_writer.py` lines 52–55 (`q` built from `s['q']` step dicts), `generator.py`
+line 222 (`q = data.qpos[3:7].copy()`).
 
 ---
 

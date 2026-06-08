@@ -46,6 +46,7 @@ In addition to the main model training/evaluation pipelines, the repository host
 | **Data Analysis & Plotting** | [Data_Analysis/](../Data_Analysis) | Dynamic plotting scripts for generating thesis-ready success rate heatmaps and latency charts. | Ongoing (April - May 2026) |
 | **Colab Plotting Suites** | [Results_and_Data_Analysis_Colab_T4/](../Results_and_Data_Analysis_Colab_T4) & [ipynbs_Colab/](../ipynbs_Colab) | Plotting pipelines and Google Colab T4 GPU integration scripts. | Ongoing (April - May 2026) |
 | **Cluster Job Orchestrators** | [Slurm_Codes/](../Slurm_Codes) | Pipeline runner scripts (SBATCH shell scripts) for GPU cluster node dispatch (e.g. `Visual_Aligning/` pipeline). | Gen3v2 Remote Migration & Gen5/Gen7 Visual Aligning (Ongoing) |
+| **Real-Time Simulation Recording Ideas** | [REALTIME_RECORDING/IDEAS.md](REALTIME_RECORDING/IDEAS.md) | Need to analyze real-time recordings (not only GIFs, just ideas!) | Pending / Working on (June 2026) |
 
 ***
 
@@ -1562,3 +1563,34 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **VisualAgent Batch Trajectory Generation (Fix 3)**: Identified that `VisualAgent` generated a single trajectory sample (`B=1`) per replanning step, causing col-5 visualizer plots to show thin, noisy, and unrepresentative single-path lines compared to the rich multi-seed evaluation fan in state-based avoiding pipelines.
 2. **Batch Repeats and ODE Multi-seed Initialization**: Added a `plan_batch_size=4` parameter to `VisualAgent.__init__`. The inference loops in both DPCC and FM evaluation scripts were upgraded to repeat identical observation/image contexts across the batch dimension while maintaining independent random noise seeds during the diffusion ODE solver steps.
 3. **Consistent Col-5 Visualization Parity**: This ensures the visual agent generates and returns multiple diverse candidate paths per inference step `(B, H, 2)`. The resulting col-5 foresight plots now present a coherent, multi-path fan that is fully consistent with established state-based diagnostic standards, while preserving acceptable inference costs for evaluation.
+
+***
+
+## Gen11 Documentation and Methodology Consolidation (June 6, 2026)
+
+**Keywords**: Gen11, methodology, documentation, organization.
+
+1. **Architecture & Planning Documentation**: Conducted a major organizational pass over Gen11. Created and structured `METHODOLOGY.md`, `PLAN.md`, and `CHANGELOG.md` files across Epochs 1 through 5.
+2. **Knowledge Persistence**: Solidified the reasoning and processes for UAV sim-to-real transfer, MuJoCo environment construction, expert data generation, and visual dataset compilation into permanent architectural records, aiding long-term project maintainability.
+
+***
+
+## Gen11 Epoch 4 "U2": Observation Schema and Tolerance Upgrades (June 7, 2026)
+
+**Keywords**: Gen11, Epoch 4, U2, observation schema, 9D observation, contact thresholds, SLURM.
+
+1. **9D Observation Expansion**: Upgraded the UAV state-observation schema from 6D (`[p, v]`) to 9D (`[p_des, p, v]`) in `dataset_writer.py`. Explicitly including the desired position `p_des` allows the Flow Matching and DPCC networks to learn stronger goal conditioning, bridging the gap between raw tracking and trajectory generation.
+2. **Tightened Environment Tolerances**: Reduced acceptable wall contact thresholds in the `generator.py` scenes to minimize collision events in the expert dataset. Corridor threshold was halved from 0.02 to 0.01, and S-Curve from 0.08 to 0.04.
+3. **Data Collection Job Management**: Temporarily introduced, then removed `collect_all.sh` in favor of standardizing instructions for SLURM array job submission, maintaining pipeline simplicity.
+
+***
+
+## Gen11 Epoch 5 "U2": Visual Pipeline Correction and Quaternion Injection (June 7, 2026)
+
+**Keywords**: Gen11, Epoch 5, U2, visual pipeline, observation indexing, quaternion, FPV camera, mini-FM.
+
+1. **Visual Pipeline Dimension Sync**: Propagated the new 9D observation structure (`[p_des, p, v]`) across the Epoch 5 visual validation suite (`collect_camera_images.py` and `generate_trajectory_gifs.py`).
+2. **Observation Indexing Bug Fix**: Addressed a critical rendering bug in WS-A and WS-B where the drone was being visually rendered at its *commanded* position (`p_des`) instead of its *actual* physical position (`p`) due to stale 6D slicing logic. Updated column slicing `obs[t, 3:6]` guarantees the drone is drawn exactly where it physically flew.
+3. **Attitude-Aware Rendering Preparation**: Wired `q(T,4)` quaternion data collection into the data pipeline. This prepares the visual generators to correctly render the drone's tilt and pitch (rather than forcing it to remain flat), greatly improving image realism for subsequent visual-policy training.
+4. **FPV Camera Semantics Fix**: Modified the quadrotor XML to remove `mode="trackcom"` from the tracking camera, converting it from an orientation-locked chase camera into a true body-frame FPV camera that rotates with the drone's pitch and roll.
+5. **Mini-FM Gate Sync**: Updated `mini_fm_sanity.py` (WS-C) configuration to accept `OBS_DIM=9` and the newly expanded `DATA_DIM=12` tensor chunk sizes (`[actions(3) ‖ obs(9)]`) to ensure the sanity gate validates the correct U2 data schema.

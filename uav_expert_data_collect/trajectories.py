@@ -23,65 +23,73 @@ from uav_env_test.trajectories import (  # noqa: F401  (re-exported for collecto
 # ── Pillar scene geometry ─────────────────────────────────────────────────────
 # 6 cylinders: column A at y=-0.6, column B at y=+0.6, x ∈ {-2, 0, +2}
 # radius 0.12 m.  Drone enters from x≈-3.2, exits at x≈+3.2.
-PILLAR_XS       = [-2.0, 0.0, 2.0]
-PILLAR_Y_A      = -0.6
-PILLAR_Y_B      = +0.6
-PILLAR_RADIUS   = 0.12
-PILLAR_MARGIN   = 0.20   # extra clearance beyond pillar edge
+PILLAR_XS          = [-2.0, 0.0, 2.0]
+PILLAR_Y_A         = -0.6
+PILLAR_Y_B         = +0.6
+PILLAR_RADIUS      = 0.12
+# U3: margin accounts for rotor reach (0.31 m) + 8 cm safety, not just pillar edge.
+# Previous PILLAR_MARGIN=0.20 gave _Y_L=-0.92 which is inside the contact zone
+# (rotor clips pillar at y ∈ (-0.55, -0.97)).  New margin gives 10.8 cm clearance.
+PILLAR_ROTOR_REACH = 0.31   # max y-distance from COM to rotor ellipsoid edge
+PILLAR_SAFETY      = 0.08   # 8 cm above zero-contact, sufficient for PID tracking error
 
-# Channel centres for each homotopy class:
-#   L = pass to the left of column A (y < PILLAR_Y_A - r - margin ≈ -0.92)
-#   C = pass between the two columns (y ≈ 0; clearance 0.48 m to each edge)
-#   R = pass to the right of column B (y > PILLAR_Y_B + r + margin ≈ +0.92)
-_Y_L = PILLAR_Y_A - PILLAR_RADIUS - PILLAR_MARGIN   # ≈ -0.92
+# Channel centres: L = left of col A, R = right of col B.
+_Y_L = PILLAR_Y_A - PILLAR_RADIUS - PILLAR_ROTOR_REACH - PILLAR_SAFETY  # = -1.11
 _Y_C = 0.0
-_Y_R = PILLAR_Y_B + PILLAR_RADIUS + PILLAR_MARGIN   # ≈ +0.92
+_Y_R = PILLAR_Y_B + PILLAR_RADIUS + PILLAR_ROTOR_REACH + PILLAR_SAFETY  # = +1.11
 PILLAR_CHANNELS = {'L': _Y_L, 'C': _Y_C, 'R': _Y_R}
 
 # ── Corridor scene geometry ───────────────────────────────────────────────────
 # Walls at y=-0.5 (neg) and y=+0.5 (pos), thickness 0.05 m each.
 # Inner clear-space: y ∈ (-0.45, +0.45).
+# U3: channels moved inward from ±0.18 to ±0.12.  At ±0.18 the rotor reached
+# 9 cm into the wall at worst jitter (contact by design).  At ±0.12 with no
+# L/R jitter, rotor clears wall by 2 cm: 0.12 + 0.31 = 0.43 < 0.45.
 CORRIDOR_CHANNELS = {
-    'L':  -0.18,
+    'L':  -0.12,   # was -0.18
     'C':   0.0,
-    'R':  +0.18,
+    'R':  +0.12,   # was +0.18
 }
 
 
 def pillar_path(homotopy_seq, altitude, duration,
                 x_start=-3.2, x_end=3.2, yaw=0.0):
-    """Explicit L/R/C homotopy path through 3 pillar pairs.
+    """Explicit L/R homotopy path through 3 pillar pairs.
 
-    homotopy_seq : 3-element iterable, each element 'L', 'R', or 'C'.
-    altitude     : z for all waypoints (scalar) or per-waypoint sequence.
-    duration     : total flight time (s).
-    x_start/end  : entry and exit x positions (well outside the pillar field).
+    U3 redesign: 5-waypoint scheme with waypoints AT each pillar x position.
+    Channel centres use _Y_L=-1.11 / _Y_R=+1.11, giving 10.8 cm rotor clearance.
+    Zero-velocity transitions are safe at these margins (unlike the old _Y_L=-0.92
+    which was inside the contact zone — the original reason for switching to weave).
 
-    Uses s_curve_path (piecewise cosine-blended traverse_line) through 8
-    waypoints:  entry → approach-pair-1 → pair-1 → mid-1-2 → pair-2
-                     → mid-2-3 → pair-3 → exit.
+    homotopy_seq : 3-element list, each 'L' or 'R' (one per pillar pair).
     """
     assert len(homotopy_seq) == 3, 'Need exactly 3 homotopy labels (one per pillar pair)'
-    y_ch = [PILLAR_CHANNELS[h] for h in homotopy_seq]
-
+    y_map = {'L': _Y_L, 'R': _Y_R}
+    y_ch = [y_map[h] for h in homotopy_seq]
     z = float(altitude) if np.isscalar(altitude) else float(np.mean(altitude))
+    T = float(duration)
 
-    # Blend from y=0 at entry/exit to the channel y at each pillar station.
-    # Intermediate "blend" waypoints 1 m before/after each pillar pair.
-    xs = [x_start, -2.8, -2.0, -1.0, 0.0, 1.0, 2.0, x_end]
-    ys = [
-        0.0,
-        y_ch[0] * 0.6,                        # approaching pair 1
-        y_ch[0],                               # at pair 1
-        y_ch[0] * 0.4 + y_ch[1] * 0.6,       # mid between pair 1 and 2
-        y_ch[1],                               # at pair 2
-        y_ch[1] * 0.4 + y_ch[2] * 0.6,       # mid between pair 2 and 3
-        y_ch[2],                               # at pair 3
-        0.0,
+    # Waypoints: entry(y=0) → pillar1(y=y_ch[0]) → pillar2 → pillar3 → exit(y=0)
+    xs = [x_start, -2.0, 0.0, 2.0, x_end]
+    ys = [0.0, y_ch[0], y_ch[1], y_ch[2], 0.0]
+
+    # Time proportional to x-distance
+    total_x   = x_end - x_start
+    seg_durs  = [T * (xs[i+1] - xs[i]) / total_x for i in range(4)]
+    t_starts  = [sum(seg_durs[:i]) for i in range(4)]
+
+    segs = [
+        traverse_line((xs[i], ys[i], z), (xs[i+1], ys[i+1], z), seg_durs[i], yaw)
+        for i in range(4)
     ]
-    wps = [(xs[i], ys[i], z) for i in range(8)]
-    seg_dur = duration / 7.0   # 7 legs among 8 waypoints
-    return s_curve_path(wps, seg_dur, yaw=yaw)
+
+    def traj(t):
+        for i in range(3, -1, -1):
+            if t >= t_starts[i]:
+                return segs[i](t - t_starts[i])
+        return segs[0](t)
+
+    return traj
 
 
 def corridor_path(homotopy, altitude, duration,

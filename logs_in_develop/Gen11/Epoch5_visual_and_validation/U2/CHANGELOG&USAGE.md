@@ -160,49 +160,81 @@ Schema comment updated to document the new `q` field.
 
 ## Smoke tests — verify all code changes cheaply before full Phase 2
 
-The sbatch wrappers support `max_episodes` as `$1` and `scene` as `$2`, so a 3-episode
-single-scene job is valid SLURM.  WS-C is numpy-only — no GPU or sbatch needed; run
-locally.  Run these **before** submitting the full Phase 2 jobs.
+### How WS-A and WS-B relate
 
-| Smoke job | Command | Cost | What it verifies |
-|---|---|---|---|
-| E4 U3 mini | `collect.sh empty 5` | ~30 s | D-prep: `q` field written to pickle by generator + dataset_writer |
-| WS-A mini | `collect_camera_images.sh 3 corridor` | ~5 min GPU | A1: obs columns correct; C: XML loads; D-prep: graceful `q` fallback (identity) |
-| WS-B mini | `generate_gifs.sh 3 corridor` | ~2 min GPU | A2: obs columns correct in GIF frames |
-| WS-C local | `python mini_fm_sanity.py ...` | ~2 min CPU | B: D=12 tensor flows, RMS gate |
+**WS-B (GIFs) is fully independent of WS-A (PNGs).** Both scripts do the same
+state-injection loop and render from the same pickles; they just write different outputs:
+- WS-A → numbered PNGs (training data for Epoch 6 visual FM)
+- WS-B → GIFs (human inspection only — not consumed by training)
+
+You can run WS-B alone at any time.  **For a quick visual smoke test, WS-B on 3 episodes
+is the cheapest way to confirm the obs column fix (A2) and XML load (C) in one job.**
+WS-A does not need to run first.
+
+### Do we need WS-C?
+
+**No, not before the smoke test.** WS-C is a mini-FM training gate — it tests that
+the *Epoch 6 training pipeline* can load the data correctly.  The data correctness itself
+was already verified and closed in E4 U2 (stats_validator, Fix_1 CLOSURE, 1769 episodes ✅).
+WS-C is optional: run it only when you are about to start Epoch 6 FM training and want a
+final sanity check on the D=12 tensor dimension.  Skip it for now.
+
+### Recommended smoke sequence (2 jobs only)
 
 ```bash
-# ── Smoke 1 — E4 U3 mini (verify q field in pickle) ──────────────────────────
+# ── Smoke 1 — E4 U3 mini: verify 'q' field written to pickle ─────────────────
+# Collects 5 empty episodes with the new generator/dataset_writer (D-prep).
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty 5
 
-# Check pickle has 'q' after job completes:
+# After job completes — check q field exists:
 python -c "
 import pickle, glob
 ep = pickle.load(open(sorted(glob.glob('logs/uav_expert_data/empty/**/*.pkl', recursive=True))[0], 'rb'))
-print('obs:', ep['obs'].shape)   # expect (T, 9)
-print('q  :', ep['q'].shape)     # expect (T, 4)
-print('q[0]:', ep['q'][0])       # expect near [1, 0, 0, 0] at hover start
+print('obs shape:', ep['obs'].shape)   # expect (T, 9)
+print('q   shape:', ep['q'].shape)     # expect (T, 4)  ← new field
+print('q[0]     :', ep['q'][0])        # expect near [1, 0, 0, 0] at hover start
 "
 
-# ── Smoke 2 — WS-A mini (verify A1 obs columns + XML + quat fallback) ─────────
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect_camera_images.sh 3 corridor
+# ── Smoke 2 — WS-B mini: verify obs column fix visually ──────────────────────
+# Generates 5 corridor GIFs. WS-A does NOT need to run first — WS-B is standalone.
+# Covers: A2 obs columns, Change C XML load, D-prep quat fallback (identity, no crash).
+#
+# sbatch args: $1=max_episodes  $2=scene  $3="mp4"|""  $4=frame_stride
+#
+# WHY SLOW: default stride=1 renders EVERY frame (~274 frames/ep × GPU overhead = ~16s/ep).
+# USE stride=5: renders every 5th frame → ~3s/ep → 5 eps done in ~15s total.
+# GIFs are still readable at 1/5 frames — just slightly choppier.
+#
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh 5 corridor "" 5
+#                                                                              ^ep ^scene ^mp4 ^stride
 
-# Check: 3 episode dirs exist under both bp-cam and track-cam; images non-black
-# (visual spot-check: drone should be centred in overhead frame, not shifted to wall)
-
-# ── Smoke 3 — WS-B mini (verify A2 obs columns in GIF frames) ─────────────────
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh 3 corridor
-
-# Check: 3 GIFs exist under logs/uav_expert_data/gifs/corridor/
-# Open one and confirm drone is not systematically at the wall
-
-# ── Smoke 4 — WS-C local (verify B: D=12 tensor, numpy-only, no GPU) ──────────
-python uav_expert_data_collect/mini_fm_sanity.py --n-episodes 50 --n-steps 200
-# Pass: prints "Tensor shape: (B, 8, 12) ✅" and "RMS < 0.1 m ✅"
-# Note: no sbatch script for WS-C — it is CPU-only and fast enough to run locally
+# After job completes — open a GIF and confirm:
+#   bp-cam panel: drone is centred in corridor, NOT pushed against the wall
+#   track-cam panel: renders without crash (XML Change C loaded OK)
+#   (Drone will still be level — quat tilt only kicks in after full E4 U3 re-collect)
 ```
 
-**After all 4 smokes pass** → submit Phase 2 full runs below.
+**After both smokes pass → submit Phase 2 full runs below.**
+
+### Frame stride reference
+
+| Stride | Frames rendered | Speed vs stride=1 | Use case |
+|---|---|---|---|
+| `1` | Every frame | 1× (slowest) | Full-quality archive GIFs |
+| `3` | Every 3rd frame | ~3× | Full-run default (still smooth enough) |
+| `5` | Every 5th frame | ~5× | Smoke test / quick inspection |
+| `10` | Every 10th frame | ~10× | Ultra-fast sanity check only |
+
+Quick run — all scenes, fast (stride 5):
+```bash
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh "" "" "" 5
+#                                                                              ^all ^all ^no-mp4 ^stride
+```
+
+Full WS-B run with stride 3 (recommended for Phase 2 archive):
+```bash
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh "" "" "" 3
+```
 
 ---
 
