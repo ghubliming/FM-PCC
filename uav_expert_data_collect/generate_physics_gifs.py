@@ -53,7 +53,7 @@ from uav_expert_data_collect.generator import (
 )
 
 _DEFAULT_DATA_DIR = os.path.join(_REPO, 'logs', 'uav_expert_data')
-_TRACK_CAM_NAME   = 'track'
+_TRACK_CAM_NAME   = 'fpv'
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────

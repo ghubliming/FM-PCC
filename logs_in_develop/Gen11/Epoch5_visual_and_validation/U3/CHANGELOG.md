@@ -64,10 +64,60 @@ The 3-line pinning block prevents EGL defaulting to GPU 0 (IT violation).
 
 ---
 
-## No changes to existing files
+## No changes to existing files (initial)
 
 `generator.py` — `_build_traj_and_init` and `_make_pid` were already standalone
 functions (lines 108–170). No refactoring needed.
+
+---
+
+## Fix_1 — FPV Camera Was a Chase Camera (2026-06-09)
+
+**Analysis:** `Fix_1/ANALYSIS.md`
+
+The `track` camera (`quadrotor_modified.xml:35`) was positioned `pos="-1 0 .5"` —
+1 m behind the drone, 0.5 m above. The look-direction math confirms it pointed forward
+from that rear position: a 3rd-person chase view, not an onboard FPV camera.
+
+### Changes applied
+
+**`d3il/.../quadrotor_modified.xml`** — added `fpv` camera alongside `track`:
+```diff
++ <camera name="fpv" pos="0.1 0 0.06" xyaxes="0 -1 0 0 0 1" mode="fixed"/>
+```
+- `pos="0.1 0 0.06"`: nose-mounted, 10 cm forward, 6 cm above body origin
+- `xyaxes="0 -1 0 0 0 1"`: looks exactly along +x body (forward); +z body is up
+- `mode="fixed"`: body-fixed — view pitches/rolls with the drone (authentic FPV)
+
+`track` camera kept in place for backward compatibility.
+
+**`generate_trajectory_gifs.py`**:
+```diff
+- _TRACK_CAM_NAME = 'track'
++ _TRACK_CAM_NAME = 'fpv'
+- _burn_overlay(track_bgr, 'FPV')
++ _burn_overlay(track_bgr, 'FPV-onboard')
+```
+
+**`generate_physics_gifs.py`**:
+```diff
+- _TRACK_CAM_NAME   = 'track'
++ _TRACK_CAM_NAME   = 'fpv'
+```
+
+### Re-run smoke test
+
+Existing GIFs used the old `track` camera. Re-generate to see the fixed FPV view
+(use `--no-skip` to force regeneration of already-existing GIFs):
+
+```bash
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh         3 pillars "" 3
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_physics_gifs.sh  3 pillars "" 3
+```
+
+Note: existing smoke-test GIFs in `gifs/` and `gifs_physics/` were rendered with
+the old `track` camera. They will be regenerated automatically if `--no-skip` is
+passed, or on the next full run (new episodes won't have existing GIFs to skip).
 
 ---
 

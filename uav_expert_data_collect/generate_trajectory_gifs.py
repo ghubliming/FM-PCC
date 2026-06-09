@@ -49,7 +49,7 @@ sys.path.insert(0, _REPO)
 from uav_expert_data_collect.generator import SCENE_XMLS
 
 _DEFAULT_DATA_DIR = os.path.join(_REPO, 'logs', 'uav_expert_data')
-_TRACK_CAM_NAME = 'track'
+_TRACK_CAM_NAME = 'fpv'
 
 
 def parse_args():
@@ -173,7 +173,7 @@ def replay_to_frames(model, data, renderer, episode, resolution,
             track_bgr = cv2.cvtColor(track_rgb, cv2.COLOR_RGB2BGR)
             label = f'{scene}/{homotopy} t={t}/{T}'
             _burn_overlay(bp_bgr, label)
-            _burn_overlay(track_bgr, 'FPV')
+            _burn_overlay(track_bgr, 'FPV-onboard')
             bp_rgb = cv2.cvtColor(bp_bgr, cv2.COLOR_BGR2RGB)
             track_rgb = cv2.cvtColor(track_bgr, cv2.COLOR_BGR2RGB)
 
