@@ -88,14 +88,20 @@ No `mujoco.Renderer` is ever created → `GLContext.__init__()` is never called 
 
 ```bash
 export MUJOCO_GL="disabled"
+# [DEBUG] GPU-leak check — uncomment once to verify MUJOCO_GL=disabled opens no DRM device.
+# Expected output: "DRI fds: NONE — clean". Remove after verification.
+# python3 -c "import os,mujoco; import subprocess; r=subprocess.run(['lsof',f'/proc/{os.getpid()}/fd'],capture_output=True,text=True); dri=[l for l in r.stdout.splitlines() if 'dri' in l.lower() or 'renderD' in l]; print('[ GPU-LEAK CHECK ] DRI fds:', dri or 'NONE — clean')"
 ```
 
 No `PYOPENGL_PLATFORM` needed (PyOpenGL EGL is irrelevant when MuJoCo GL is disabled).  
 No 3-line GPU-pinning block needed (no GPU allocated, and `CUDA_VISIBLE_DEVICES` is unset).
 
+The debug check line runs inside the compute node process immediately after `import mujoco`
+and prints to the SLURM output. Uncomment, submit once, verify, then comment back out.
+
 ---
 
 ## CHANGELOG Update
 
-This corrects the Group C entry in `CHANGELOG.md`.  
-The net change from the original script: `MUJOCO_GL=egl` → `MUJOCO_GL=disabled`, `PYOPENGL_PLATFORM=egl` removed, comment updated.
+This corrects the Group C entry in `logs_in_develop/SLURM_GPU_IT_WARNING/CHANGELOG.md`.  
+Net change from original script: `MUJOCO_GL=egl` → `MUJOCO_GL=disabled`, `PYOPENGL_PLATFORM=egl` removed, comment updated, debug check line added (commented out).

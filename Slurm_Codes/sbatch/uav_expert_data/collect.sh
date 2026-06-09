@@ -81,6 +81,10 @@ export MUJOCO_GL="disabled"
 
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
+# [DEBUG] GPU-leak check — uncomment once to verify MUJOCO_GL=disabled opens no DRM device.
+# Expected output: "DRI fds: NONE — clean". Remove after verification.
+# python3 -c "import os,mujoco; import subprocess; r=subprocess.run(['lsof',f'/proc/{os.getpid()}/fd'],capture_output=True,text=True); dri=[l for l in r.stdout.splitlines() if 'dri' in l.lower() or 'renderD' in l]; print('[ GPU-LEAK CHECK ] DRI fds:', dri or 'NONE — clean')"
+
 SEED=$(( SEED_OFFSET ))
 SCENE="$SCENE_ARG"
 

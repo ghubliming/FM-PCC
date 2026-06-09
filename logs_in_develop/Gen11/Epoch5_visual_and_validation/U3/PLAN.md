@@ -2,8 +2,8 @@
 
 **Date**: 2026-06-08  
 **Based on**: E5 U2 (`CHANGELOG&USAGE.md` — obs column fix, camera fix, q D-prep)  
-**Status**: Planning  
-**Depends on**: E4 U3 completion (for `q` field in pickles — needed for attitude rendering)
+**Status**: Coded — ready for SLURM smoke test  
+**Depends on**: E4 U3 ✅ (`q` field confirmed in all pickles — `generator.py:234`)
 
 ---
 
@@ -121,7 +121,9 @@ def generate_physics_gif(episode_path, out_dir, frame_stride=3):
     os.makedirs(out_dir, exist_ok=True)
     gif_path = os.path.join(out_dir, f"{ep['episode_id']}_physics.gif")
     imageio.mimsave(gif_path, combined, fps=33 / frame_stride)
-    renderer.close()
+    # E5 Fix2 pattern — renderer.close() raises AttributeError on some MuJoCo builds
+    if hasattr(renderer, 'close'):
+        renderer.close()
 ```
 
 ### Contact overlay in `_render_frame`
@@ -171,7 +173,19 @@ def _render_frame(renderer, model, data, cam_name, in_contact, t, ep):
 Mirrors `generate_gifs.sh` but calls `generate_physics_gifs.py`. Same `$1`=max_episodes,
 `$2`=scene, `$3`=mp4, `$4`=frame_stride arguments. Output to `gifs_physics/`.
 
+**EGL note:** Unlike `collect.sh` (physics-only, `MUJOCO_GL=disabled`), this script creates
+`mujoco.Renderer` → EGL IS used. Must have `MUJOCO_GL=egl` + `PYOPENGL_PLATFORM=egl` +
+the 3-line GPU pinning block — same as `generate_gifs.sh` (Group B in SLURM IT CHANGELOG).
+Do NOT use `MUJOCO_GL=disabled` here; `Renderer()` will crash.
+
 ```bash
+export MUJOCO_GL="egl"
+export PYOPENGL_PLATFORM="egl"
+export MPLBACKEND="agg"
+export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
+export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
+
 python uav_expert_data_collect/generate_physics_gifs.py \
     --out-dir logs/uav_expert_data/gifs_physics \
     --max-episodes ${1:-""} \
@@ -225,10 +239,12 @@ output from WS-A or WS-B.
 
 ### Phase 1 — Code (local)
 
-- [ ] Write `generate_physics_gifs.py` — core physics replay loop + contact overlay
-- [ ] Write `_nearest_obstacle_dist()` helper using `ep['obstacles']` geom list
-- [ ] Write `generate_physics_gifs.sh` sbatch script
-- [ ] (Optional) Write comparison GIF stitcher
+- [x] Factor `_build_traj_and_init` / `_make_pid` out of `run_trial()` — already standalone
+      in `generator.py:108–170`, no changes needed
+- [x] Write `generate_physics_gifs.py` — core physics replay loop + contact overlay
+- [x] Write `_nearest_obstacle_dist()` — box SDF + cylinder SDF, uses `ep['obstacles']`
+- [x] Write `generate_physics_gifs.sh` — EGL + 3-line GPU pinning (see Change B note)
+- [ ] (Optional) Write comparison GIF stitcher — deferred until smoke test passes
 
 ### Phase 2 — Smoke test (3 episodes)
 
