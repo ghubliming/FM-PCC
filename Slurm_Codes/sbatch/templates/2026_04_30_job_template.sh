@@ -49,7 +49,22 @@ conda activate "$CONDA_ENV_NAME"
 export PYTHONPATH="$REPO:$REPO/d3il:$PYTHONPATH"
 
 # ------------------------------------------------------------------------------
-# 3) EXECUTION
+# 3) GPU SETUP (headless EGL rendering — remove section if job does not render)
+# ------------------------------------------------------------------------------
+export MUJOCO_GL="egl"
+export PYOPENGL_PLATFORM="egl"
+export MPLBACKEND="agg"
+export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
+export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
+echo "[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  MUJOCO_EGL_DEVICE_ID=$MUJOCO_EGL_DEVICE_ID"
+if [ "$MUJOCO_EGL_DEVICE_ID" != "${CUDA_VISIBLE_DEVICES%%,*}" ]; then
+    echo "[ GPU-LEAK ] EGL device ($MUJOCO_EGL_DEVICE_ID) != CUDA (${CUDA_VISIBLE_DEVICES%%,*}) -- aborting"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# 4) EXECUTION
 # ------------------------------------------------------------------------------
 cd "$REPO"
 

@@ -1594,3 +1594,66 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 3. **Attitude-Aware Rendering Preparation**: Wired `q(T,4)` quaternion data collection into the data pipeline. This prepares the visual generators to correctly render the drone's tilt and pitch (rather than forcing it to remain flat), greatly improving image realism for subsequent visual-policy training.
 4. **FPV Camera Semantics Fix**: Modified the quadrotor XML to remove `mode="trackcom"` from the tracking camera, converting it from an orientation-locked chase camera into a true body-frame FPV camera that rotates with the drone's pitch and roll.
 5. **Mini-FM Gate Sync**: Updated `mini_fm_sanity.py` (WS-C) configuration to accept `OBS_DIM=9` and the newly expanded `DATA_DIM=12` tensor chunk sizes (`[actions(3) ‖ obs(9)]`) to ensure the sanity gate validates the correct U2 data schema.
+
+***
+
+## Gen11 Epoch 4 & 5 "U3": Trajectory Waypoints & Physics Replay (June 8, 2026)
+
+**Keywords**: Gen11, Epoch 4, Epoch 5, U3, physics replay, trajectory waypoints, collision resolution.
+
+1. **Deterministic Trajectory Enhancement (Epoch 4 U3)**: Resolved rotor-obstacle collisions in the expert data generator by widening corridor margins and replacing the continuous pillar weave with a deterministic 8-waypoint scheme. This significantly improves generation reliability without collision clipping.
+2. **Physics Replay GIFs (Epoch 5 U3)**: Designed the "U3" visual validation architecture to generate physics replay GIFs via `mj_step` rather than `mj_forward` state-injection. This approach serves as a "digital twin," allowing visual auditing of actual contact dynamics, physical deflections, and live quaternion attitude during the rollouts.
+
+***
+
+## Infrastructure Hotfix: SLURM GPU Leak Resolution (June 8, 2026)
+
+**Keywords**: SLURM, GPU leak, MuJoCo EGL, device isolation.
+
+1. **GPU Leak Diagnosis**: Diagnosed a critical violation on the SLURM cluster where rendering tasks silently escaped to an unallocated physical GPU. Identified that `MUJOCO_GL="egl"` unconditionally opens the lowest DRM node (GPU 0), entirely bypassing `CUDA_VISIBLE_DEVICES` limits.
+2. **Global EGL Pinning Implementation**: Applied a sweeping fix across 31 evaluation and training SLURM shell scripts. Eradicated legacy `EGL_DEVICE_ID=0` hardcodes and explicitly pinned the EGL renderer to the CUDA-allocated physical GPU by exporting `MUJOCO_EGL_DEVICE_ID="${CUDA_VISIBLE_DEVICES%%,*}"`.
+
+***
+
+## Real-Time Behavior Recording: Digital Twin Audit Framework (June 8, 2026)
+
+**Keywords**: Digital twin, real-time logging, timing audit, behavior tracking.
+
+1. **Framework Conceptualization**: Formalized an evaluation framework (`IDEAS.md`) proposing structured text logs to capture per-step timings (e.g., `fm_ms`, `qp_ms`) and behavioral contexts (e.g., contact events, tracking error, DPCC overrides).
+2. **Real-Time Feasibility Metric**: Emphasized that real-time feasibility—such as adhering to a 33 Hz (30 ms) control loop budget on hardware—is critical for deployment and cannot be validated by standard visualization GIFs alone. The log becomes the authoritative digital twin for timing and behavioral audits.
+
+***
+
+## Gen9 Epoch 2 "U2": Single Camera Avoiding Denoising Fix (Fix 3) (June 9, 2026)
+
+**Keywords**: Gen9, E2 U2, clip_denoised, denoising chain divergence, DDPM explosion.
+
+1. **Denoising Chain Divergence Diagnosis**: Investigated a catastrophic failure in the Visual-DPCC baseline where trajectory lines exploded to extreme coordinates, while Flow Matching (FM) trajectories remained well-behaved. Traced the root cause to `clip_denoised=False`, which allowed noise amplification over 100 stochastic DDPM steps to compound without bounds.
+2. **Action Clamping Fix**: Switched `clip_denoised` to `True` in `config/avoiding-d3il-visual.py` for DPCC planning. This reactivates the `[-5.0, 5.0]` clamp strictly on the action dimensions during inference, bounding the trajectories. FM configurations correctly remain `False` as their deterministic ODE steps do not inject noise.
+
+***
+
+## Gen11 Epoch 5 "U3": Physics-Based Trajectory GIF Generation & Camera Parity (June 9, 2026)
+
+**Keywords**: Gen11, Epoch 5 U3, physics replay GIF, FPV camera, chase camera.
+
+1. **Physics-Based Digital Twin Generator**: Implemented `generate_physics_gifs.py` to create authentic physics replays using actual `mj_step` simulation (instead of `mj_forward` state injection). The generator produces side-by-side GIFs equipped with real-time obstacle proximity bars and red contact overlays to precisely audit physical drone behaviour.
+2. **Camera Orientation Fix (Fix 1)**: Discovered the original `track` camera was behaving as a chase camera (1 m behind, 0.5 m above) rather than a true first-person view. Added a new `fpv` body-fixed camera mounted on the drone's nose to capture authentic rotational dynamics (pitch/roll), restoring realistic visual data collection while keeping the `track` camera for backward compatibility.
+
+***
+
+## Gen11 Epoch 4 "U3" & "U4": Expert Data Floor Crash Purge & Hover Stabilization (June 9, 2026)
+
+**Keywords**: Gen11, Epoch 4, U3 Fix 2, U4, floor crash contamination, s_curve hover pauses.
+
+1. **Floor Crash Contamination Purge (U3 Fix 2)**: Detected that `_is_obstacle_contact` explicitly ignored floor collisions, allowing severely degraded trajectories (e.g., 85% of `s_curve` episodes) to pass the dataset rejection filter with `contact_fraction=0`. Implemented a strict `Z_FLOOR_MARGIN` check, necessitating re-collection of contaminated scenes.
+2. **Hover Stabilization (U4)**: Resolved lag-induced altitude collapse and overshoot in the `s_curve_scene_path` by inserting 1.0-second hover pauses at segment junctions. This allows the PID controller to stabilize lateral velocity before transitions. 
+3. **Data Collection Pipeline Update**: Adjusted duration ranges to accommodate hover times and updated `collect.sh` with a positional argument to allow targeted re-collection of specific homotopies (e.g., `(R,R,R)`).
+
+***
+
+## Infrastructure Hotfix: SLURM GL Backend Deactivation (June 9, 2026)
+
+**Keywords**: SLURM, MuJoCo GL leak, collect.sh, disabled.
+
+1. **GPU Leak Prevention**: Updated `collect.sh` to explicitly disable the MuJoCo GL backend (`MUJOCO_GL="disabled"`) during state-only data generation. This prevents silent rendering leaks onto unallocated physical GPUs during headless trajectory generation.
