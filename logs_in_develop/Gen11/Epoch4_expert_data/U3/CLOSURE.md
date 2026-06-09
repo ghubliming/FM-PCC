@@ -82,4 +82,18 @@ See `Fix_1/COLLECT_SH_GL_FIX.md` for full source-verified analysis.
 ## Unblocks
 
 - **E5 U3** (`Epoch5_visual_and_validation/U3/PLAN.md`) — physics replay GIFs — depends on these clean pillar pickles with `q` field
-- **E6 training** — full 1829-episode dataset available
+- **E6 training** — full 1829-episode dataset available (see Fix_2 caveat below)
+
+---
+
+## Post-Closure: Fix_2 Opened (2026-06-09)
+
+E5 U3 GIF smoke-test revealed floor-crash contamination in the E4 U3 dataset.
+`generator.py:_is_obstacle_contact` excludes floor contacts → floor crashes pass as
+`contact_fraction=0`. Affects pillars L_R_L/R_L_R (~70% contaminated) and s_curve (~85%).
+~492/1829 episodes (27%) are corrupted.
+
+**E4 U3 dataset is NOT safe for E6 training without Fix_2 applied.**
+
+See `Fix_2/ANALYSIS.md` for full investigation and fix plan.  
+Fix requires: `generator.py` z-floor rejection + E4 U4 re-collection of pillars + s_curve.

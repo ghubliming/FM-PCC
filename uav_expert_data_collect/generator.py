@@ -79,6 +79,12 @@ GAIN_VARIANTS = {
 # Trials with more than this fraction of obstacle-contact steps are rejected.
 MAX_CONTACT_FRACTION = 0.02
 
+# Fix_2 (E4 U3): floor crashes were silently accepted because _is_obstacle_contact
+# excludes floor contacts.  Reject any episode where the drone body drops below this
+# altitude (normal hover z = 0.7–1.1 m; floor at z = 0; 0.50 m gives 0.36 m margin
+# above the minimum physical floor-contact height of ~0.14 m rotor radius).
+Z_FLOOR_MARGIN = 0.50
+
 # Fix_4: s_curve has narrow wall end-faces at x=±0.5 that the drone briefly
 # grazes even on good trajectories.  Raise threshold to 0.08 for that scene
 # so brief end-face clips don't reject otherwise valid episodes.
@@ -236,6 +242,11 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
     contact_frac  = n_hit / max(n_step, 1)
     contact_limit = SCENE_MAX_CONTACT_FRACTION.get(scene, MAX_CONTACT_FRACTION)
     if contact_frac > contact_limit:
+        return None
+
+    # Fix_2: reject floor crashes (not caught by contact_frac — see Fix_2/ANALYSIS.md)
+    min_z = min(s['p'][2] for s in steps)
+    if min_z < Z_FLOOR_MARGIN:
         return None
 
     return {

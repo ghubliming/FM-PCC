@@ -114,6 +114,56 @@ while hard-rejecting genuine contact.
 
 ---
 
+---
+
+## Fix_2 — Floor Crash Contamination (2026-06-09, post-closure)
+
+**Trigger:** E5 U3 GIF smoke-test investigation.  
+**Artefact:** `Fix_2/ANALYSIS.md`
+
+### Discovery
+
+Both state-injection and physics-replay GIFs looked identical for the 3 L_L_L smoke-test
+episodes. Investigation of pkl velocity/position data revealed a silent dataset bug:
+`_is_obstacle_contact` in `generator.py:101` explicitly returns `False` for floor
+contacts, so floor crashes register as `contact_fraction=0` and pass the rejection filter.
+
+### Scale
+
+| Scene | Saved | Contaminated | Notes |
+|---|---|---|---|
+| empty | 500 | 0 | Clean |
+| corridor | 500 | 0 | Clean |
+| pillars L_R_L | 115 | 87 (76%) | Large lateral crossing → PID altitude loss |
+| pillars R_L_R | 108 | 70 (65%) | Same |
+| pillars L_L_L / R_R_R | 250 | ~31 (12%) | Minor |
+| s_curve | 356 | 304 (85%) | All 5 consecutive sampled episodes floor-crashed |
+| **Total** | **1829** | **~492 (27%)** | |
+
+### Code Fix Applied
+
+`generator.py` updated (two changes):
+
+1. New constant after `MAX_CONTACT_FRACTION`:
+   ```python
+   Z_FLOOR_MARGIN = 0.50
+   ```
+2. New rejection check in `run_trial` after the contact_frac check:
+   ```python
+   min_z = min(s['p'][2] for s in steps)
+   if min_z < Z_FLOOR_MARGIN:
+       return None
+   ```
+
+### Remaining Step (E4 U4)
+
+Re-collect **pillars** + **s_curve** with the fixed `generator.py`.
+`empty` and `corridor` are clean — no re-collection needed.
+
+E4 U3 dataset is **not safe for E6 training** until E4 U4 re-collection completes.
+
+---
+
 ## Scenes unaffected
 
 | Scene | Status | Reason |
