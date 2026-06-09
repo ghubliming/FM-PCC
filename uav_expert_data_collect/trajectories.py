@@ -117,48 +117,71 @@ def corridor_path(homotopy, altitude, duration,
 
 
 def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
-    """S-curve path with duration allocated proportional to segment distance.
+    """S-curve path with hover pauses at each segment junction.
 
     Scene geometry (two corridor segments):
         Seg 1: x ∈ [-3, -0.5], corridor centred at y=-0.8
         Seg 2: x ∈ [+0.5, +3], corridor centred at y=+0.8
 
-    Fix_5: replaced tanh continuous trajectory (peak lateral speed 1.17 m/s →
-    47% rejection) with 3-segment piecewise traverse_line where each segment's
-    duration is proportional to its Euclidean length.  All segments run at the
-    same peak speed (~0.55 m/s at T=20s), matching the corridor scene which
-    achieves 87% pass rate at 0.72 m/s.
+    Fix_5: replaced tanh continuous trajectory with 3-segment piecewise
+    traverse_line, proportional duration allocation.
 
-    Segment layout:
-        Seg A: (-3.2, y1) → (-0.5, y1)  distance 2.7 m   (pure x, inside seg1)
-        Seg B: (-0.5, y1) → (+0.5, y2)  distance 1.89 m  (diagonal gap crossing)
-        Seg C: (+0.5, y2) → (+3.2, y2)  distance 2.7 m   (pure x, inside seg2)
+    U4 Fix A: added 1.0 s hover pauses at junctions (-0.5, y1) and (+0.5, y2).
+    Without pauses, the drone lags up to 0.185 m behind the commanded y during
+    the cosine acceleration ramp, then overcorrects violently (0.84 m lateral
+    swing in 0.6 s) as the profile decelerates.  The combined y-correction and
+    z-correction demand collapses altitude by 0.40 m, triggering the Z_FLOOR_MARGIN
+    reject on ~90% of trials (confirmed in U4/FIX_PLAN.md via tracking-error table).
+    The hover windows let the drone shed lateral velocity to ~0 before each
+    transition, eliminating the overshoot entirely.
+
+    Segment layout (5 phases):
+        Seg A:  (-3.2, y1, z) → (-0.5, y1, z)  2.7 m   pure-x
+        Hov 1:  hover at (-0.5, y1, z)          1.0 s   stabilise
+        Seg B:  (-0.5, y1, z) → (+0.5, y2, z)  1.89 m  diagonal gap crossing
+        Hov 2:  hover at (+0.5, y2, z)          1.0 s   stabilise
+        Seg C:  (+0.5, y2, z) → (+3.2, y2, z)  2.7 m   pure-x
     """
     z  = float(altitude)
     T  = float(duration)
     y1 = -0.8 + y_jitter
     y2 =  0.8 + y_jitter
 
+    T_HOVER = 1.0                    # seconds per junction pause
+    T_move  = T - 2.0 * T_HOVER     # time budget for the three traverse segments
+
     d_a = 2.7
     d_b = float(np.sqrt(1.0**2 + (y2 - y1)**2))   # ≈ 1.89 m when jitter=0
     d_c = 2.7
     d_total = d_a + d_b + d_c
 
-    t_a = T * d_a / d_total
-    t_b = T * d_b / d_total
-    t_c = T * d_c / d_total
+    t_a = T_move * d_a / d_total
+    t_b = T_move * d_b / d_total
+    t_c = T_move * d_c / d_total
 
     seg_a = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a, yaw)
+    hov_1 = hover_at((-0.5, y1, z), yaw)
     seg_b = traverse_line((-0.5, y1, z), ( 0.5, y2, z), t_b, yaw)
+    hov_2 = hover_at(( 0.5, y2, z), yaw)
     seg_c = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c, yaw)
 
+    # Cumulative phase-end times
+    t1 = t_a
+    t2 = t_a + T_HOVER
+    t3 = t2 + t_b
+    t4 = t3 + T_HOVER
+
     def traj(t):
-        if t < t_a:
+        if t < t1:
             return seg_a(t)
-        elif t < t_a + t_b:
-            return seg_b(t - t_a)
+        elif t < t2:
+            return hov_1(t)
+        elif t < t3:
+            return seg_b(t - t2)
+        elif t < t4:
+            return hov_2(t)
         else:
-            return seg_c(t - t_a - t_b)
+            return seg_c(t - t4)
 
     return traj
 

@@ -147,9 +147,10 @@ def _build_traj_and_init(scene, homotopy, rng):
 
     elif scene == 's_curve':
         y_jitter = float(rng.uniform(-0.04, 0.04))
-        # Fix_4: revert duration [22,30]→[16,22]s to match the Fix_2 config that
-        # achieved 61.9% rejection (best so far).  Longer duration worsened things.
-        dur      = float(rng.uniform(16.0, 22.0))
+        # U4 Fix A: raise duration range [16,22]→[18,24]s to account for the two
+        # 1.0 s hover pauses added to s_curve_scene_path (2.0 s total pause budget).
+        # T_move = dur - 2.0 stays in [16, 22]s — same manoeuvre time as before.
+        dur      = float(rng.uniform(18.0, 24.0))
         p_s = np.array([-3.2, -0.8 + y_jitter, z])
         return trajs.s_curve_scene_path(z, dur, y_jitter=y_jitter), p_s, dur
 

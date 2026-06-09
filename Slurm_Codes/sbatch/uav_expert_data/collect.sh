@@ -29,6 +29,7 @@
 #   $2 = n_trials    [default: 200]
 #   $3 = gain        (pid_default|pid_high_gain|pid_low_gain)      [default: pid_default]
 #   $4 = seed_offset (added to SLURM_ARRAY_TASK_ID * 10000)        [default: 0]
+#   $5 = homotopy    (all | specific label e.g. "(R,R,R)")         [default: all]
 
 set -e
 
@@ -51,6 +52,7 @@ SCENE_ARG="${1:-empty}"
 N_TRIALS="${2:-200}"
 GAIN="${3:-pid_default}"
 SEED_OFFSET="${4:-0}"
+HOMOTOPY="${5:-all}"
 
 # Resolve repo root the same way other sbatch scripts do.
 MARKER="d3il/environments/d3il/models/mj/robot/quadrotor/scenes"
@@ -88,14 +90,14 @@ source activate FMPCC 2>/dev/null || conda activate FMPCC
 SEED=$(( SEED_OFFSET ))
 SCENE="$SCENE_ARG"
 
-echo "[ sbatch ] scene=$SCENE  n_trials=$N_TRIALS  gain=$GAIN  seed=$SEED"
+echo "[ sbatch ] scene=$SCENE  n_trials=$N_TRIALS  gain=$GAIN  seed=$SEED  homotopy=$HOMOTOPY"
 
 python uav_expert_data_collect/collect.py \
     --scene        "$SCENE" \
     --n-trials     "$N_TRIALS" \
     --gain-variant "$GAIN" \
     --seed         "$SEED" \
-    --homotopy     all \
+    --homotopy     "$HOMOTOPY" \
     --noise-sigma  0.02
 
 echo "[ sbatch ] Collection done. Running stats validator …"
