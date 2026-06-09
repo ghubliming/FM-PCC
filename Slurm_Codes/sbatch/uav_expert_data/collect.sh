@@ -71,7 +71,13 @@ fi
 cd "$REPO"
 echo "[ sbatch ] Repo: $REPO"
 
-# No GPU needed — CPU-only MuJoCo rollouts, no rendering.
+# No GPU allocated — disable MuJoCo's GL backend entirely.
+# MUJOCO_GL=disabled skips the entire gl_context import block in mujoco 2.3.7
+# (gl_context.py:25), so neither EGL nor osmesa is loaded.
+# Without this, mujoco falls back to osmesa which isn't installed → AttributeError.
+# With MUJOCO_GL=egl, mujoco/egl/__init__.py:65 calls eglInitialize() at import
+# time → opens a GPU device even with no rendering → GPU leak. "disabled" avoids both.
+export MUJOCO_GL="disabled"
 
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
