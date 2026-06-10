@@ -121,7 +121,7 @@ def _make_pid(model, gain_variant):
 
 def _build_traj_and_init(scene, homotopy, rng):
     """Return (traj_fn, init_pos_array, duration_s) for the given scene + homotopy."""
-    z = float(rng.uniform(0.70, 1.10))
+    z = float(rng.uniform(0.90, 1.30))  # U5 Step 2: +0.20 m altitude headroom
 
     if scene == 'empty':
         # Random start/end with minimum separation 1.0 m.
@@ -198,7 +198,10 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         init_pos        : list[float]
         obstacles       : list[dict]  (from SCENE_OBSTACLES)
         contact_fraction: float
-    or None if obstacle contact fraction exceeds MAX_CONTACT_FRACTION.
+        motor_clip_frac : float  — fraction of steps where any motor hit u_max/u_min
+    or a reject dict {'rejected': True, 'reason': str, 'min_z': float,
+                      'contact_frac': float, 'motor_clip_frac': float}
+    if a quality threshold is exceeded.
     """
     rng = np.random.default_rng(seed)
     model = mujoco.MjModel.from_xml_path(SCENE_XMLS[scene])
@@ -217,8 +220,9 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
     dt     = float(model.opt.timestep)
     n_step = int(round(dur / dt))
 
-    steps    = []
-    n_hit    = 0
+    steps       = []
+    n_hit       = 0
+    n_clip      = 0   # U5 Step 1: motor-saturation step counter
 
     for k in range(n_step):
         t = k * dt
@@ -230,6 +234,8 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         om = data.qvel[3:6].copy()
 
         u = pid.compute(p, q, v, om, p_des, v_des, a_des, yaw_des)
+        # U5 Step 1: count steps where any motor hit its saturation limit
+        n_clip += int(np.any(u >= pid.u_max - 1e-6) or np.any(u <= pid.u_min + 1e-6))
         data.ctrl[:4] = u
         mujoco.mj_step(model, data)
 
@@ -240,15 +246,23 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         steps.append({'p': p, 'v': v, 'p_des': np.asarray(p_des, dtype=float),
                       'q': q.astype(np.float32)})  # D-prep: actual quaternion for attitude rendering
 
-    contact_frac  = n_hit / max(n_step, 1)
-    contact_limit = SCENE_MAX_CONTACT_FRACTION.get(scene, MAX_CONTACT_FRACTION)
+    contact_frac     = n_hit / max(n_step, 1)
+    motor_clip_frac  = n_clip / max(n_step, 1)
+    contact_limit    = SCENE_MAX_CONTACT_FRACTION.get(scene, MAX_CONTACT_FRACTION)
+    min_z            = min(s['p'][2] for s in steps)
+
+    # U5 Step 1: return named reject dicts instead of bare None so collect.py
+    # can build a reject histogram and distinguish the two failure modes.
     if contact_frac > contact_limit:
-        return None
+        return {'rejected': True, 'reason': 'contact',
+                'contact_frac': contact_frac, 'min_z': min_z,
+                'motor_clip_frac': motor_clip_frac}
 
     # Fix_2: reject floor crashes (not caught by contact_frac — see Fix_2/ANALYSIS.md)
-    min_z = min(s['p'][2] for s in steps)
     if min_z < Z_FLOOR_MARGIN:
-        return None
+        return {'rejected': True, 'reason': 'floor',
+                'min_z': min_z, 'contact_frac': contact_frac,
+                'motor_clip_frac': motor_clip_frac}
 
     return {
         'steps':            steps,
@@ -260,6 +274,7 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         'init_pos':         init_pos.tolist(),
         'obstacles':        SCENE_OBSTACLES[scene],
         'contact_fraction': contact_frac,
+        'motor_clip_frac':  motor_clip_frac,
     }
 
 

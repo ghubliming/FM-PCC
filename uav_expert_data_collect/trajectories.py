@@ -126,21 +126,23 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
     Fix_5: replaced tanh continuous trajectory with 3-segment piecewise
     traverse_line, proportional duration allocation.
 
-    U4 Fix A: added 1.0 s hover pauses at junctions (-0.5, y1) and (+0.5, y2).
-    Without pauses, the drone lags up to 0.185 m behind the commanded y during
-    the cosine acceleration ramp, then overcorrects violently (0.84 m lateral
-    swing in 0.6 s) as the profile decelerates.  The combined y-correction and
-    z-correction demand collapses altitude by 0.40 m, triggering the Z_FLOOR_MARGIN
-    reject on ~90% of trials (confirmed in U4/FIX_PLAN.md via tracking-error table).
-    The hover windows let the drone shed lateral velocity to ~0 before each
-    transition, eliminating the overshoot entirely.
+    U4 Fix A: added 1.0 s hover pauses at junctions. Shown in F4 to be at
+    wrong location (junction v was already ~0 per cosine profile) and at
+    x=±0.5 which is on the wall end-face plane (only 0.14 m lateral margin).
+
+    U5 Step 3: Seg B time budget doubled (2× geometric weight) to halve peak
+    lateral accel/velocity — quadratically reduces attitude-loop overshoot that
+    causes the motor saturation → altitude collapse chain.
+
+    U5 Step 5: hover waypoints relocated from x=±0.5 (wall end-face) to
+    x=∓0.7 (0.2 m inside corridor) to remove the wall-proximity risk.
 
     Segment layout (5 phases):
-        Seg A:  (-3.2, y1, z) → (-0.5, y1, z)  2.7 m   pure-x
-        Hov 1:  hover at (-0.5, y1, z)          1.0 s   stabilise
-        Seg B:  (-0.5, y1, z) → (+0.5, y2, z)  1.89 m  diagonal gap crossing
-        Hov 2:  hover at (+0.5, y2, z)          1.0 s   stabilise
-        Seg C:  (+0.5, y2, z) → (+3.2, y2, z)  2.7 m   pure-x
+        Seg A:  (-3.2, y1, z) → (-0.7, y1, z)  2.5 m   pure-x
+        Hov 1:  hover at (-0.7, y1, z)          1.0 s   stabilise
+        Seg B:  (-0.7, y1, z) → (+0.7, y2, z)  2.13 m  diagonal gap crossing
+        Hov 2:  hover at (+0.7, y2, z)          1.0 s   stabilise
+        Seg C:  (+0.7, y2, z) → (+3.2, y2, z)  2.5 m   pure-x
     """
     z  = float(altitude)
     T  = float(duration)
@@ -150,20 +152,21 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
     T_HOVER = 1.0                    # seconds per junction pause
     T_move  = T - 2.0 * T_HOVER     # time budget for the three traverse segments
 
-    d_a = 2.7
-    d_b = float(np.sqrt(1.0**2 + (y2 - y1)**2))   # ≈ 1.89 m when jitter=0
-    d_c = 2.7
-    d_total = d_a + d_b + d_c
+    d_a = 2.5   # x: -3.2 → -0.7
+    d_b = float(np.sqrt(1.4**2 + (y2 - y1)**2))   # ≈ 2.13 m when jitter=0
+    d_c = 2.5   # x: +0.7 → +3.2
 
+    # U5 Step 3: give Seg B 2× weight so peak lateral velocity is ~halved
+    d_total = d_a + 2.0 * d_b + d_c
     t_a = T_move * d_a / d_total
-    t_b = T_move * d_b / d_total
+    t_b = T_move * 2.0 * d_b / d_total
     t_c = T_move * d_c / d_total
 
-    seg_a = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a, yaw)
-    hov_1 = hover_at((-0.5, y1, z), yaw)
-    seg_b = traverse_line((-0.5, y1, z), ( 0.5, y2, z), t_b, yaw)
-    hov_2 = hover_at(( 0.5, y2, z), yaw)
-    seg_c = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c, yaw)
+    seg_a = traverse_line((-3.2, y1, z), (-0.7, y1, z), t_a, yaw)
+    hov_1 = hover_at((-0.7, y1, z), yaw)
+    seg_b = traverse_line((-0.7, y1, z), ( 0.7, y2, z), t_b, yaw)
+    hov_2 = hover_at(( 0.7, y2, z), yaw)
+    seg_c = traverse_line(( 0.7, y2, z), ( 3.2, y2, z), t_c, yaw)
 
     # Cumulative phase-end times
     t1 = t_a

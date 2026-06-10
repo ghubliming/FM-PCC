@@ -129,7 +129,22 @@ class CascadedPID:
         # ── allocation: solve M u = [T; τ_x; τ_y; τ_z] ─────────────────────
         wrench = np.array([T, tau[0], tau[1], tau[2]])
         u = self.M_inv @ wrench
-        u = np.clip(u, self.u_min, self.u_max)
+
+        # U5 Step 4: thrust-priority saturation — when attitude torques would
+        # clip motors, scale torque components down to preserve collective thrust.
+        # The old np.clip corrupted thrust when attitude torques saturated →
+        # altitude collapse → Z_FLOOR_MARGIN reject (s_curve root cause).
+        if u.max() > self.u_max or u.min() < self.u_min:
+            thrust_cmd  = u.mean()                  # collective thrust per motor
+            torque_comp = u - thrust_cmd            # per-motor torque offset
+            scale = 1.0
+            for _ in range(10):                     # binary search: halve torque scale
+                u_try = thrust_cmd + scale * torque_comp
+                if u_try.max() <= self.u_max and u_try.min() >= self.u_min:
+                    break
+                scale *= 0.5
+            u = np.clip(thrust_cmd + scale * torque_comp, self.u_min, self.u_max)
+
         return u
 
 

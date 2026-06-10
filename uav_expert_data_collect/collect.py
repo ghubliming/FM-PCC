@@ -23,6 +23,7 @@ import json
 import os
 import sys
 import time
+from collections import Counter
 
 import numpy as np
 
@@ -71,9 +72,10 @@ def main():
                      if args.homotopy == 'all'
                      else [args.homotopy])
 
-    saved    = 0
-    rejected = 0
-    t0       = time.time()
+    saved          = 0
+    rejected       = 0
+    reject_counter = Counter()   # U5 Step 1: reason → count
+    t0             = time.time()
 
     print(f'[ collect ] scene={args.scene}  n_trials={args.n_trials}  '
           f'homotopy_pool={homotopy_pool}  gain={args.gain_variant}  '
@@ -90,13 +92,22 @@ def main():
             seed=trial_seed,
         )
 
-        if rollout is None:
+        # U5 Step 1: run_trial now returns a reject dict instead of None
+        if rollout is None or rollout.get('rejected'):
             rejected += 1
+            reason = rollout.get('reason', 'unknown') if rollout else 'unknown'
+            reject_counter[reason] += 1
+            min_z_str = (f'  min_z={rollout["min_z"]:.3f}'
+                         if rollout and 'min_z' in rollout else '')
+            clip_str  = (f'  clip={rollout["motor_clip_frac"]:.1%}'
+                         if rollout and 'motor_clip_frac' in rollout else '')
+            print(f'[ collect ] REJECT #{rejected}  reason={reason}{min_z_str}{clip_str}')
             total = rejected + saved
             if total > 20 and rejected / total > args.reject_limit:
+                hist = '  '.join(f'{k}={v}' for k, v in reject_counter.most_common())
                 print(f'[ collect ] ABORT: rejection rate '
                       f'{rejected/total:.1%} > limit {args.reject_limit:.1%}. '
-                      f'Check PID stability (Decision 2 fix applied?).')
+                      f'HISTOGRAM: {hist}')
                 break
             continue
 
@@ -123,23 +134,25 @@ def main():
     elapsed = time.time() - t0
     total   = saved + rejected
     summary = {
-        'scene':          args.scene,
-        'gain_variant':   args.gain_variant,
-        'seed':           args.seed,
-        'n_trials':       args.n_trials,
-        'saved':          saved,
-        'rejected':       rejected,
-        'rejection_rate': round(rejected / max(total, 1), 4),
-        'elapsed_s':      round(elapsed, 1),
-        'sec_per_episode': round(elapsed / max(saved, 1), 3),
+        'scene':            args.scene,
+        'gain_variant':     args.gain_variant,
+        'seed':             args.seed,
+        'n_trials':         args.n_trials,
+        'saved':            saved,
+        'rejected':         rejected,
+        'rejection_rate':   round(rejected / max(total, 1), 4),
+        'reject_histogram': dict(reject_counter),
+        'elapsed_s':        round(elapsed, 1),
+        'sec_per_episode':  round(elapsed / max(saved, 1), 3),
     }
     os.makedirs(out_root, exist_ok=True)
     with open(os.path.join(out_root, 'run_summary.json'), 'w') as f:
         json.dump(summary, f, indent=2)
 
+    hist = '  '.join(f'{k}={v}' for k, v in reject_counter.most_common()) or 'none'
     print(f'[ collect ] DONE  saved={saved}  rejected={rejected}  '
           f'({summary["rejection_rate"]:.1%} rejected)  '
-          f'elapsed={elapsed:.0f}s')
+          f'elapsed={elapsed:.0f}s  HISTOGRAM: {hist}')
 
 
 if __name__ == '__main__':

@@ -1,41 +1,57 @@
 # Gen9E2U2F4 — Problem & Solution
 
 **Date:** 2026-06-10 · **Scope:** Avoiding Visual-DPCC (DDPM) "exploded chaotic lines" at eval
-**Inputs:** `Fix_4/INVESTIGATION.md`, `Fix_4/VERDICT.md`, `temp/Gen9E2_debugging/{losses.pkl, model_config.pkl}`, full code audit this session
-**Principle applied:** code bugs first — training-quality explanations only where code is exonerated.
+**Working assumption (user-confirmed):** this is a **CODE problem**, not a training problem.
+**Critical caveat:** the codebase has since been **reset on the remote** — the local workspace audited in this session is **NOT the version that produced the failing runs**. Every "byte-identical / exonerated" claim from earlier audits is therefore **invalid for the failing runs** and must be re-established against the actual remote code state.
 
 ---
 
 ## Problem
 
-DDPM avoiding eval produces exploded lines that look like **zero learning** — while training loss converged to 0.0015 (near-perfect memorization). The FM engine on the same data/UNet/eval works. `clip_denoised` was investigated twice (Fix_3, Fix_4) and is a confirmed red herring.
+DDPM avoiding eval produces exploded lines with **zero visible structure** — while the same training run's loss converged to ~0.0015 (the model fit its training data essentially perfectly). A model that memorized training data but shows *nothing* at eval is the classic signature of a **train↔eval pipeline mismatch in code**: the eval feeds the model something different from what it was trained on, or mangles the model's output on the way to the robot. The FM engine on the same task works, which narrows the bug to the DDPM-specific code path *as it existed on the remote*.
 
-## Root causes found (code/config level — ranked)
+## Step 0 — Pin down the actual code version (do this before anything else)
 
-### C1 — Config drift: checkpoint trained with K=20, proven recipe is K=100 ⚠️ PRIMARY
+Nothing below is decidable without this:
 
-- The evaluated checkpoint is `H8_**K20**_D..._aw10_VTrue_steps200_bs64`; its frozen `model_config.pkl` confirms `n_diffusion_steps = 20`.
-- The **original** `config/avoiding-d3il-visual.py` (commit `e5d0291`) had `'n_diffusion_steps': 20`. A later hotfix (`d0c2a5c`) corrected it to **100** — matching the working aligning DDPM recipe — **but the model was never retrained**. Eval silently loads K=20 from the pkl (config .py is never read at eval).
-- Why K=20 is fatal with `clip_denoised=False` (mandatory per DPCC): cosine schedule over 20 steps gives `sqrt(1/ᾱ−1)` amplification of ε-error ≈ **12.8× at t=18, 1284× at t=19**, betas clip at 0.999 on the final steps (posterior noise std ≈ 1 at the first denoise step), and the chain has only 20 correction opportunities instead of 100. Nothing bounds `x_recon`. The per-step ε-accuracy demand is far beyond what K=100 requires — the aligning engine (byte-identical code) succeeds at K=100.
+1. On the cluster: identify the commit/state the failing train and eval jobs ran under (`git log -1` at the repo, plus `git diff`/`git stash list` for uncommitted edits; the Slurm job logs record the submit time — match against reflog).
+2. Diff that state against current local `diffuser_visual_avoiding/`, `diffuser_visual_avoiding_test/`, and `config/avoiding-d3il-visual.py`.
+3. Any divergence in the files listed in the checklist below is a prime suspect — the local "clean" audit only proves the *current* code is clean, not the code that ran.
 
-### C2 — Eval uses the worst checkpoint (no best-checkpoint logic)
+## Primary suspects — CODE (ranked, checked against the REMOTE version)
 
-`losses.pkl`: test loss minimum **0.0325 @ step 11,000**; eval loads "latest" = step 99,000 with test loss **0.1685 (5.19× worse)**. Trainer never saves a best checkpoint; eval calls `utils.get_latest_epoch`. The model overfit hard after ~11k and the pipeline guarantees the overfit weights are the ones evaluated.
+These are the places where a bug produces exactly "perfect train fit, zero eval structure". For each: what to check in the remote-version code.
 
-### C3 — Silent pkl precedence (the Fix_4 no-op trap)
+### S1 — Visual conditioning never (correctly) reaches the model at eval
+- `eval_visual_avoiding_dpcc.py` `VisualAgent.predict`: image must be BGR→RGB, CHW, `/255.`, float32 — byte-for-byte the same transform as `ParityAvoidingDataset` at training. A raw 0–255 image into an encoder trained on 0–1 saturates the FiLM latent → model output decorrelates from the scene → garbage trajectories despite perfect training.
+- `VisualGaussianDiffusion.forward` cond unpacking (`{0: (bp_imgs, obs_seq)}` → `{'visual': ..., 0: snap_obs}`): a remote variant with the 2-cam aligning unpack, or a wrong tuple order, silently feeds obs as image or drops the image.
+- `apply_conditioning` string-key guard: if the remote version lacked the `isinstance(t, str)` skip, the `'visual'` key would be applied as a timestep index and corrupt the trajectory tensor every step.
 
-Eval reconstructs everything from frozen config pkls. The intended design ("`.py` config overrides pkl with a console warning") was never implemented — `.py` edits at eval time do nothing, which is exactly why Fix_4 changed nothing. This is a recurring foot-gun, not just a one-off.
+### S2 — Normalizer / action-decode mismatch at eval
+- Eval must load the **same** `obs_normalizer.pkl` / `act_normalizer.pkl` saved by the training run, and apply them in the right direction (normalize obs in, unnormalize actions out). Wrong normalizer file, skipped unnormalize, or normalize/unnormalize swapped → every action becomes a near-max delta → robot flies off in straight-ish exploded lines. This visually matches the symptom exactly.
+- Check `next_pos_des = action + obs[:2]` delta-decode against the dataset's `actions = des_xy[1:] − des_xy[:-1]` encode in the remote version.
 
-### Exonerated (audited clean this session)
+### S3 — Loader / class-swap silently building the wrong model
+- `load_diffusion_with_override`: the Fix_1-era class-swap prune (when pkl class ≠ target class) drops `_dict` keys. On the remote version, verify it was a no-op for this run and that `load_state_dict` ran **strict** — a `strict=False` load that skipped encoder weights leaves a randomly-initialized vision encoder: training looks fine, eval is structureless.
+- Cross-package import quirk (the DPCC eval imports `fm_visual_avoiding.utils`; `import_class` prepends the package name — Fix_1 worked around it with importlib): if the remote version predates that workaround, the wrong class can be instantiated.
 
-Datasets, normalizers, UNets, helpers: byte-identical between FM (works) and DDPM (fails) avoiding packages. Eval scripts: functionally identical after name normalization (image preprocessing `/255.`, BGR→RGB, obs normalization all match). Engine: identical to working aligning DDPM. The ±5 action-only clamp is identical in aligning.
+### S4 — Sampling-loop parameter mismatch baked in at eval
+- `n_timesteps` used by `p_sample_loop` comes from the frozen `diffusion_config.pkl`; the `.py` config is **never read at eval** (no override mechanism exists, despite the intended design). If the remote eval injected config values anywhere (e.g. rebuilding the diffusion from config instead of pkl), train/eval chain-length or schedule mismatch follows.
+- Verify `clip_denoised` ended up False at runtime on the remote (the eval has a setter line — confirm it executed and what value it pulled).
+
+## Secondary factors — POSSIBLE, explicitly NOT the main reason
+
+Kept for completeness only; do not prioritize:
+
+- *(possible)* Checkpoint trained at `n_diffusion_steps=20` while the corrected config says 100 (checkpoint dir `H8_K20_...`); the working aligning recipe is K=100.
+- *(possible)* `losses.pkl` shows test-loss minimum at step 11k vs eval at step 99k (5.19× worse) — overfit checkpoint selection. Note this **cannot** explain zero structure on its own; at most it amplifies whatever the code bug produces.
 
 ## Solution (for the implementing agent)
 
-1. **Retrain avoiding DDPM with full recipe parity to aligning:** `n_diffusion_steps=100` (config already says 100 — just retrain), everything else unchanged. This is the main fix.
-2. **Add best-checkpoint saving** to the shared Trainer (save `state_best.pt` when test loss improves) and make eval prefer it over latest. Apply to both packages.
-3. **Cheap pre-test (before retraining):** if a ~step-11k checkpoint exists on the cluster, re-eval it as-is. It isolates C2 from C1: partial structure → C1+C2 both matter; still chaos → C1 dominates.
-4. **Implement the missing override warning (C3):** at eval load, compare pkl values vs `.py` config for `n_diffusion_steps`, `clip_denoised`, `dim`, `horizon`; print a loud mismatch warning (the n_timesteps warning that already exists in the imf eval is the pattern to copy).
-5. Do **NOT** touch `clip_denoised` (must stay False) and do **NOT** train longer at K=20 — both already disproven.
+1. **Execute Step 0** — recover the exact remote code state of the failing runs. All conclusions flow from this.
+2. **Audit S1→S4 in that version**, in order. S1/S2 are the highest-yield: instrument the eval with a one-batch probe — dump (a) the image tensor stats entering the encoder, (b) the normalized obs cond, (c) the raw model trajectory output, (d) the unnormalized action — and compare each against the same quantities computed from one training batch. The first place the two diverge **is** the bug.
+3. **Fix the divergence found**, re-run eval only (no retrain — training is healthy by its own loss).
+4. Add the missing **config-vs-pkl mismatch warning** at eval load (`n_diffusion_steps`, `clip_denoised`, `dim`, `horizon`) so silent precedence can never eat a fix again.
+5. Only if S1–S4 all verify clean on the true remote version: revisit the secondary factors above (cheap test: re-eval a ~step-11k checkpoint if one exists).
 
-**Expected outcome:** K=100 + best-checkpoint eval produces bounded trajectories comparable to aligning DDPM. If it still trails FM, that residual is the legitimate paradigm result — but only claim it after C1/C2 are fixed.
+**Definition of done:** the one-batch probe (step 2) shows train and eval pipelines numerically identical at every interface, and the eval rollout shows structured (even if imperfect) behaviour.
