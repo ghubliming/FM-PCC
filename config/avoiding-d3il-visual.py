@@ -189,7 +189,7 @@ base = {
         'returns_condition': False,
         'predict_epsilon':  True,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'clip_denoised':    True,   # must be True — activates action-only ±5 clamp in VisualGaussianDiffusion.p_mean_variance; False causes denoising chain divergence
+        'clip_denoised':    False,
         'diffusion_loadpath': (
             'f:visual_avoiding_dpcc/'
             'H{horizon}_K{n_diffusion_steps}_D{diffusion}'

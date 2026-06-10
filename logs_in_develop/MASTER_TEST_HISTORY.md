@@ -1657,3 +1657,12 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 **Keywords**: SLURM, MuJoCo GL leak, collect.sh, disabled.
 
 1. **GPU Leak Prevention**: Updated `collect.sh` to explicitly disable the MuJoCo GL backend (`MUJOCO_GL="disabled"`) during state-only data generation. This prevents silent rendering leaks onto unallocated physical GPUs during headless trajectory generation.
+
+***
+
+## Infrastructure Hotfix: SLURM GPU Leak Safeguard Check (U2) (June 9, 2026)
+
+**Keywords**: SLURM, GPU leak, MuJoCo EGL, device isolation safeguard.
+
+1. **GPU Leak Prevention Safeguard**: Injected a 5-line GPU-check block into 31 EGL-rendering SLURM scripts and the baseline job template. This block dynamically verifies that the MuJoCo EGL device is perfectly pinned to the allocated CUDA GPU (`MUJOCO_EGL_DEVICE_ID == CUDA_VISIBLE_DEVICES`).
+2. **Fail-Fast Mechanism**: If a mismatch is detected (indicating a broken pinning block and a potential leak to GPU 0), the job now immediately aborts instead of silently leaking memory for hours. Every SLURM log now persistently records the allocated GPU and EGL device at startup for straightforward auditing.
