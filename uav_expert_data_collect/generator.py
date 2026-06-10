@@ -234,8 +234,10 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         om = data.qvel[3:6].copy()
 
         u = pid.compute(p, q, v, om, p_des, v_des, a_des, yaw_des)
-        # U5 Step 1: count steps where any motor hit its saturation limit
-        n_clip += int(np.any(u >= pid.u_max - 1e-6) or np.any(u <= pid.u_min + 1e-6))
+        # U6 C3: count raw saturation events (pre-allocation demand exceeded bounds),
+        # not boundary-touching output — U5's boundary check gave 0% for thrust-priority
+        # output which never touches u_max, hiding real saturation.
+        n_clip += int(pid.last_raw_saturated)
         data.ctrl[:4] = u
         mujoco.mj_step(model, data)
 

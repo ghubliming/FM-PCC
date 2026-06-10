@@ -72,6 +72,10 @@ class CascadedPID:
         # Safety floor on total thrust (avoid free fall during recovery)
         self.thrust_floor = 0.1 * self.mass * GRAVITY_MAG
 
+        # Saturation telemetry — updated every compute() call (read by generator.py C3)
+        self.last_raw_saturated = False
+        self.last_torque_scale  = 1.0
+
     def compute(self, p, q, v, omega_body,
                 p_des, v_des=None, a_des=None, yaw_des=0.0):
         p = np.asarray(p, dtype=float)
@@ -130,20 +134,26 @@ class CascadedPID:
         wrench = np.array([T, tau[0], tau[1], tau[2]])
         u = self.M_inv @ wrench
 
-        # U5 Step 4: thrust-priority saturation — when attitude torques would
-        # clip motors, scale torque components down to preserve collective thrust.
-        # The old np.clip corrupted thrust when attitude torques saturated →
-        # altitude collapse → Z_FLOOR_MARGIN reject (s_curve root cause).
-        if u.max() > self.u_max or u.min() < self.u_min:
-            thrust_cmd  = u.mean()                  # collective thrust per motor
-            torque_comp = u - thrust_cmd            # per-motor torque offset
-            scale = 1.0
-            for _ in range(10):                     # binary search: halve torque scale
-                u_try = thrust_cmd + scale * torque_comp
-                if u_try.max() <= self.u_max and u_try.min() >= self.u_min:
-                    break
-                scale *= 0.5
+        # U6 C2: thrust-priority with exact analytic scale + torque floor.
+        # U5's binary search over-cut torque by up to 2× (needed 0.49 → got 0.25),
+        # starving attitude authority on cross-channel diagonals → pillar regression.
+        # Fix: compute the exact largest scale that keeps every motor in bounds,
+        # then enforce a 0.5 floor so attitude authority is never more than halved.
+        self.last_raw_saturated = bool(u.max() > self.u_max or u.min() < self.u_min)
+        if self.last_raw_saturated:
+            thrust_cmd  = u.mean()
+            torque_comp = u - thrust_cmd
+            caps = []
+            for tc in torque_comp:
+                if tc > 1e-9:
+                    caps.append((self.u_max - thrust_cmd) / tc)
+                elif tc < -1e-9:
+                    caps.append((thrust_cmd - self.u_min) / (-tc))
+            scale = max(min(1.0, min(caps)) if caps else 1.0, 0.5)
             u = np.clip(thrust_cmd + scale * torque_comp, self.u_min, self.u_max)
+            self.last_torque_scale = scale
+        else:
+            self.last_torque_scale = 1.0
 
         return u
 

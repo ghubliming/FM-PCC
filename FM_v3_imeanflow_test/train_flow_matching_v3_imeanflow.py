@@ -20,7 +20,7 @@ import pickle
 
 import torch
 
-# Standard FM-PCC imports
+# Standard FM-PCC imports (Note: importing from diffuser.utils is maybe not ideal/optimal?)
 import diffuser.utils as utils
 
 
