@@ -117,74 +117,92 @@ def corridor_path(homotopy, altitude, duration,
 
 
 def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
-    """S-curve path with hover pauses at each segment junction.
+    """S-curve path: corridor 1 → gap crossing (Z-route) → corridor 2.
 
-    Scene geometry (two corridor segments):
+    Scene geometry:
         Seg 1: x ∈ [-3, -0.5], corridor centred at y=-0.8
         Seg 2: x ∈ [+0.5, +3], corridor centred at y=+0.8
+        Gap:   x ∈ [-0.5, +0.5], open (no walls)
 
-    Fix_5: replaced tanh continuous trajectory with 3-segment piecewise
-    traverse_line, proportional duration allocation.
+    U7 C1 — replaced the Seg B diagonal with a 3-leg Z-route through x=0:
 
-    U4 Fix A: added 1.0 s hover pauses at x=±0.5. F4 confirmed zero contact
-    rejects at these positions — 0.14 m lateral clearance to corridor y-walls
-    is sufficient.
+    WHY the diagonal was infeasible (all prior fixes were misdiagnosed):
+        Gap-side wall corners: A=(−0.5,−0.25) on seg1_wall_pos,
+                               B=(+0.5,+0.25) on seg2_wall_neg.
+        Diagonal (−0.5,y1)→(+0.5,y2) passes 0.291 m from both corners —
+        INSIDE the 0.31 m rotor reach on the nominal path alone (0.019 m
+        penetration before any tracking error). No speed or gain change
+        can resolve a geometric infeasibility.
 
-    U5 Step 3: Seg B time budget doubled (2× geometric weight) to halve peak
-    lateral accel/velocity — quadratically reduces attitude-loop overshoot.
+    Z-route clearances (verified):
+        Leg B1 and B3 (pure-x): ≥ 0.55 m from both corners.
+        Leg B2 (pure-y at x=0): 0.50 m from both corners.
+        All legs parallel to the nearest wall at every pinch point →
+        tracking lag is along-path and cannot reduce wall clearance.
 
-    U5 Step 5 (reverted in U6 C1): moving hover/diagonal to x=∓0.7 put the
-    first 0.2 m of Seg B inside the walled section; rotor clipped seg1_wall_pos
-    at x=−0.577 (clearance 0.31 m = rotor_reach). Full revert to x=±0.5.
+    Segment layout (7 phases):
+        Seg A:   (-3.2, y1, z) → (-0.5, y1, z)   2.7 m  pure-x
+        Hov 1:   hover at (-0.5, y1, z)           1.0 s  stabilise
+        Leg B1:  (-0.5, y1, z) → ( 0.0, y1, z)   0.5 m  pure-x, exit corridor 1
+        Leg B2:  ( 0.0, y1, z) → ( 0.0, y2, z)   1.6 m  pure-y, cross on centerline
+        Leg B3:  ( 0.0, y2, z) → (+0.5, y2, z)   0.5 m  pure-x, enter corridor 2
+        Hov 2:   hover at (+0.5, y2, z)           1.0 s  stabilise
+        Seg C:   (+0.5, y2, z) → (+3.2, y2, z)   2.7 m  pure-x
 
-    Segment layout (5 phases):
-        Seg A:  (-3.2, y1, z) → (-0.5, y1, z)  2.7 m   pure-x
-        Hov 1:  hover at (-0.5, y1, z)          1.0 s   stabilise
-        Seg B:  (-0.5, y1, z) → (+0.5, y2, z)  1.89 m  diagonal (entire path in gap)
-        Hov 2:  hover at (+0.5, y2, z)          1.0 s   stabilise
-        Seg C:  (+0.5, y2, z) → (+3.2, y2, z)  2.7 m   pure-x
+    Time allocation: proportional to Euclidean segment distance (no weighting).
     """
     z  = float(altitude)
     T  = float(duration)
     y1 = -0.8 + y_jitter
     y2 =  0.8 + y_jitter
 
-    T_HOVER = 1.0                    # seconds per junction pause
-    T_move  = T - 2.0 * T_HOVER     # time budget for the three traverse segments
+    T_HOVER = 1.0
+    T_move  = T - 2.0 * T_HOVER
 
-    d_a = 2.7   # x: -3.2 → -0.5
-    d_b = float(np.sqrt(1.0**2 + (y2 - y1)**2))   # ≈ 1.89 m when jitter=0
-    d_c = 2.7   # x: +0.5 → +3.2
+    d_a  = 2.7
+    d_b1 = 0.5
+    d_b2 = float(abs(y2 - y1))   # ≈ 1.6 m when jitter=0
+    d_b3 = 0.5
+    d_c  = 2.7
+    d_total = d_a + d_b1 + d_b2 + d_b3 + d_c
 
-    # U5 Step 3 (kept): give Seg B 2× weight so peak lateral velocity is ~halved
-    d_total = d_a + 2.0 * d_b + d_c
-    t_a = T_move * d_a / d_total
-    t_b = T_move * 2.0 * d_b / d_total
-    t_c = T_move * d_c / d_total
+    t_a  = T_move * d_a  / d_total
+    t_b1 = T_move * d_b1 / d_total
+    t_b2 = T_move * d_b2 / d_total
+    t_b3 = T_move * d_b3 / d_total
+    t_c  = T_move * d_c  / d_total
 
-    seg_a = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a, yaw)
-    hov_1 = hover_at((-0.5, y1, z), yaw)
-    seg_b = traverse_line((-0.5, y1, z), ( 0.5, y2, z), t_b, yaw)
-    hov_2 = hover_at(( 0.5, y2, z), yaw)
-    seg_c = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c, yaw)
+    seg_a  = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a,  yaw)
+    hov_1  = hover_at((-0.5, y1, z), yaw)
+    leg_b1 = traverse_line((-0.5, y1, z), ( 0.0, y1, z), t_b1, yaw)
+    leg_b2 = traverse_line(( 0.0, y1, z), ( 0.0, y2, z), t_b2, yaw)
+    leg_b3 = traverse_line(( 0.0, y2, z), ( 0.5, y2, z), t_b3, yaw)
+    hov_2  = hover_at(( 0.5, y2, z), yaw)
+    seg_c  = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c,  yaw)
 
     # Cumulative phase-end times
-    t1 = t_a
-    t2 = t_a + T_HOVER
-    t3 = t2 + t_b
-    t4 = t3 + T_HOVER
+    p1 = t_a
+    p2 = p1 + T_HOVER
+    p3 = p2 + t_b1
+    p4 = p3 + t_b2
+    p5 = p4 + t_b3
+    p6 = p5 + T_HOVER
 
     def traj(t):
-        if t < t1:
+        if t < p1:
             return seg_a(t)
-        elif t < t2:
+        elif t < p2:
             return hov_1(t)
-        elif t < t3:
-            return seg_b(t - t2)
-        elif t < t4:
+        elif t < p3:
+            return leg_b1(t - p2)
+        elif t < p4:
+            return leg_b2(t - p3)
+        elif t < p5:
+            return leg_b3(t - p4)
+        elif t < p6:
             return hov_2(t)
         else:
-            return seg_c(t - t4)
+            return seg_c(t - p6)
 
     return traj
 

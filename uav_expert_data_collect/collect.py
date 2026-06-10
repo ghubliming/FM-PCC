@@ -72,10 +72,11 @@ def main():
                      if args.homotopy == 'all'
                      else [args.homotopy])
 
-    saved          = 0
-    rejected       = 0
-    reject_counter = Counter()   # U5 Step 1: reason → count
-    t0             = time.time()
+    saved              = 0
+    rejected           = 0
+    reject_counter     = Counter()   # U5 Step 1: reason → count
+    accepted_clip_list = []          # U7 C2: clip% of saved episodes
+    t0                 = time.time()
 
     print(f'[ collect ] scene={args.scene}  n_trials={args.n_trials}  '
           f'homotopy_pool={homotopy_pool}  gain={args.gain_variant}  '
@@ -122,6 +123,7 @@ def main():
         ep_dir  = os.path.join(out_root, _safe_dir(homotopy))
         path    = save_episode(episode, ep_dir)
         saved  += 1
+        accepted_clip_list.append(rollout.get('motor_clip_frac', 0.0))
 
         if saved % 50 == 0 or saved == 1:
             elapsed = time.time() - t0
@@ -133,17 +135,22 @@ def main():
 
     elapsed = time.time() - t0
     total   = saved + rejected
+    acc_clip_mean = (sum(accepted_clip_list) / len(accepted_clip_list)
+                     if accepted_clip_list else 0.0)
+    acc_clip_max  = max(accepted_clip_list) if accepted_clip_list else 0.0
     summary = {
-        'scene':            args.scene,
-        'gain_variant':     args.gain_variant,
-        'seed':             args.seed,
-        'n_trials':         args.n_trials,
-        'saved':            saved,
-        'rejected':         rejected,
-        'rejection_rate':   round(rejected / max(total, 1), 4),
-        'reject_histogram': dict(reject_counter),
-        'elapsed_s':        round(elapsed, 1),
-        'sec_per_episode':  round(elapsed / max(saved, 1), 3),
+        'scene':                args.scene,
+        'gain_variant':         args.gain_variant,
+        'seed':                 args.seed,
+        'n_trials':             args.n_trials,
+        'saved':                saved,
+        'rejected':             rejected,
+        'rejection_rate':       round(rejected / max(total, 1), 4),
+        'reject_histogram':     dict(reject_counter),
+        'accepted_clip_mean':   round(acc_clip_mean, 4),
+        'accepted_clip_max':    round(acc_clip_max,  4),
+        'elapsed_s':            round(elapsed, 1),
+        'sec_per_episode':      round(elapsed / max(saved, 1), 3),
     }
     os.makedirs(out_root, exist_ok=True)
     with open(os.path.join(out_root, 'run_summary.json'), 'w') as f:
