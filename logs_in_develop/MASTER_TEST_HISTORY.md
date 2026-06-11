@@ -1694,3 +1694,32 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 4. **Naive Framework Sync & Camera Correction (Gen11E5U3 Fix2)**:
    - Updated the naive `run_env.py` task evaluator with the new 5-leg Z-route waypoints, resolving its previous 40.9% contact failure rate on `s_curve`.
    - Fixed `collect_camera_images.py` to correctly utilize the forward-facing `'fpv'` camera instead of the legacy 3rd-person `'track'` camera, unifying the visual collection format with the rest of the Epoch 5 pipeline.
+
+***
+
+## Gen8 Epoch 1 U2 & Gen3v4 U3: iMeanFlow Engine Architectural Fixes (June 11, 2026)
+
+**Keywords**: iMeanFlow, frozen t bug, redundant sampler, true t_i, endpoint conditioning.
+
+1. **Frozen-t Bug Fix (C1)**: Discovered that `p_sample_loop` in both Gen3v4 (`flow_matcher_v3_imeanflow`) and Gen8 (`imf_visual_aligning`) had a hardcoded `T_CONST_INFERENCE = 0.5`. Since the UNet model adds a `time_mlp(t)` to its hidden states during training with the true time, freezing `t` to a constant value at inference created out-of-distribution conditioning, resulting in chaotic rollouts. Replaced the constant `t=0.5` with the physically correct true `t_i = loop_idx / max(flow_steps, 1)`.
+2. **Endpoint Conditioning Swap (C4)**: Identified a training/inference mismatch in `p_losses`. The model was being conditioned on `x_t` (the data-side interpolant) instead of `x_r` (the noise-side current state). Swapped the conditioning endpoint from `x_t` to `x_r` to properly teach the model to predict velocity from noise-side inputs. This necessitates a fresh retrain for both iMeanFlow pipelines.
+3. **Dead Sampler Cleanup (C2, C3)**: Deleted redundant and inconsistent `sample()` methods from `imf_engine.py` and `sample_trajectory()`/`sample()` from `imf_trajectory_model.py`. These unused paths disagreed with `p_sample_loop` by passing true `t_cur` and mixing auxiliary velocities, which posed a high risk of corrupting future debug harnesses.
+
+***
+
+## Gen9 Epoch 2 U3: Avoiding Baseline DDPM Exploded Lines & Config Trap (June 11, 2026)
+
+**Keywords**: Visual-DPCC, clip_denoised, exploded trajectories, pkl mismatch warning.
+
+1. **`clip_denoised` Fix Restored (C1)**: Restored `clip_denoised=True` in the `config/avoiding-d3il-visual.py` plan configuration block. An earlier revert had turned it to `False`, which allows `x_recon` errors to compound exponentially across denoising steps, leading directly to exploded trajectory evaluation while training metrics appear deceptively healthy.
+2. **PKL Config Mismatch Warning System (C2)**: Diagnosed a "silent precedence" trap where changes to the `.py` eval configuration were completely ignored because the script loaded `clip_denoised`, `n_diffusion_steps`, and `horizon` strictly from the `diffusion_config.pkl` saved during training. Created and injected a `_warn_pkl_config_mismatch()` helper into `eval_visual_avoiding_dpcc.py`. It explicitly compares the live `.py` config against the frozen `.pkl` config and emits a highly visible table/warning to the console and Slurm logs if any divergence is found.
+
+***
+
+## Gen11 Epoch 5 Closure: UAV Expert Data Visual Validation (June 11, 2026)
+
+**Keywords**: UAV expert data, GIF validation, stop-and-go behavior, dataset closure.
+
+1. **Validation Complete**: Successfully concluded Gen11 Epoch 5 visual validation, securing 1,952 episodes for the E4 dataset. The generated trajectory (WS-B) and physics (WS-D) GIFs confirm that drone trajectories perfectly respect scene geometry, with zero obstacle clipping/ghosting. The nose-mounted FPV camera fix was also verified correct.
+2. **Stop-and-Go Trajectory Characteristics Observed**: Visual audits flagged a distinct "stop-and-go" behavior in the data: the drone decelerates to zero at every waypoint and pauses. This is due to the 1.0s hover pauses inserted to stabilize the PID controller, and the cosine velocity profile that forces zero velocity at segment endpoints. 
+3. **Policy Implications**: This intentionally conservative behavior means that any downstream FM-PCC model trained on this dataset will inherit the stop-and-go flight style. Smooth, continuous flight remains out of scope for the current dataset, moving instead as an open question for Epoch 6+ generation.
