@@ -114,6 +114,35 @@ plot_how_many       = config['plot_how_many']
 constraint_types    = config['constraint_types']
 
 
+def _warn_pkl_config_mismatch(diffusion, args):
+    """Surface frozen pkl values and warn when they silently diverge from the .py config.
+
+    The pkl wins unconditionally at eval — .py config changes are no-ops until the pkl is
+    patched.  This function makes that silent precedence visible on every eval run.
+    """
+    import warnings
+    checks = [
+        ('clip_denoised',    getattr(diffusion, 'clip_denoised', None),  getattr(args, 'clip_denoised',     None)),
+        ('n_diffusion_steps', getattr(diffusion, 'n_timesteps',  None),  getattr(args, 'n_diffusion_steps', None)),
+        ('horizon',          getattr(diffusion, 'horizon',       None),  getattr(args, 'horizon',           None)),
+    ]
+    print('\n[ eval pkl values ] (these win over the .py plan config)')
+    for key, pkl_v, cfg_v in checks:
+        mismatch = (pkl_v is not None and cfg_v is not None and pkl_v != cfg_v)
+        tag = '  *** MISMATCH — patch pkl or retrain ***' if mismatch else ''
+        print(f'    {key}: {pkl_v!r}  (config: {cfg_v!r}){tag}')
+    print()
+    for key, pkl_v, cfg_v in checks:
+        if pkl_v is not None and cfg_v is not None and pkl_v != cfg_v:
+            warnings.warn(
+                f'[ pkl/config mismatch ] {key}: pkl={pkl_v!r}, .py config={cfg_v!r}. '
+                f'The pkl value is used at eval. '
+                f'To fix clip_denoised: run '
+                f'python diffuser_visual_avoiding_test/fix_pkl_clip_denoised.py --find logs/',
+                stacklevel=2,
+            )
+
+
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
                                  device='cuda:0', seed=None):
     import inspect
@@ -202,6 +231,7 @@ for exp in exps:
                     args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
                     target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
                 diffusion = diff_experiment.diffusion
+                _warn_pkl_config_mismatch(diffusion, args)
 
                 ckpt_dir = os.path.join(args.loadbase, args.dataset,
                                         args.diffusion_loadpath, str(args.seed))

@@ -8,6 +8,9 @@ import minari
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+# WARNING: Architectural mismatch! This script is in FM_v3_imeanflow_test but is importing
+# from 'flow_matcher_v3_ode_selectable'. De facto it works perfectly because the code in 
+# both variants is functionally identical, but this should ideally import from 'flow_matcher_v3_imeanflow'.
 import flow_matcher_v3_ode_selectable.utils as utils
 from flow_matcher_v3_ode_selectable.sampling.policies import Policy
 from flow_matcher_v3_ode_selectable.sampling.projection import Projector

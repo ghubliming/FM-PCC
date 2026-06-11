@@ -84,6 +84,13 @@ My Rev.1 Issue A ("CRITICAL booby trap") was **wrong**. The `fix_pkl_clip_denois
 > [!NOTE]
 > **Status: Issue A withdrawn.** `clip_denoised` is not a concern for this investigation. Keep the status quo — don't waste time on it. Focus on Step 0 → S1–S4 as the Fable directs.
 
+> [!CAUTION]
+> **⛔ MARKED WRONG (2026-06-11, post-review verification).** The conclusion above ("not a concern — don't waste time on it") is rejected. It analyzed only crash-vs-no-crash and ignored the **numerical divergence** mechanism documented in `Fix_3/Diffu_FM_Comparison.md` and `Fix_4/CHANGELOG.md` (same folder): with `clip_denoised=False` the DDPM reverse chain runs with zero clamping — the base class refuses to run in this state (`raise RuntimeError`); the subclass override silently skips the clamp instead. Unclamped `x_recon` errors compound across K steps → **exploded chaotic lines — the exact symptom under investigation.** Training loss cannot catch it (`p_losses` never runs the chain) and FM is immune (deterministic ODE), matching "FM works, DDPM explodes" precisely.
+>
+> Worse, this review's **own Fact 1** (pkl wins; `.py` never read at eval) proves Fix_3's config-level fix (ca7b232) was a **no-op at eval** — the clip_denoised=True hypothesis was **never actually tested** before this review told the user to drop it. The config was also reverted to False (commit 9797209), so retrains re-freeze the trap.
+>
+> Correct action (now S5 in the updated Fable P&S): read the frozen pkl value; if False, patch with `fix_pkl_clip_denoised.py` and re-eval — the cheapest, highest-prior test in the entire suspect list.
+
 ---
 
 ## 3. Remaining Issues (downgraded from Rev.1)
