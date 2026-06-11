@@ -102,18 +102,60 @@ No callers in the live eval path. Dead code removed entirely.
 
 ---
 
-## Not done (requires retrain)
+## C4 — Swap conditioning endpoint in `p_losses` from `x_t` to `x_r` (B2, final fix)
 
-**Step 3 — endpoint swap in `p_losses`:** condition on `(x_r, r, h)` instead of `(x_t, t, h)`.
-This is the correct data-at-1 transcription of reference iMF and is required before
-few-step / one-step sampling is legitimate. Deferred until Step 1+2 A/B confirms
-B1 was the primary root cause. Implemented in a future U3 training run.
+**File:** `imf_visual_aligning/models/imf_diffusion.py`
+
+### Root cause
+
+Training conditioned the model on `x_t` (data-biased interpolant, near t=1) at time `t`
+(data-biased). At inference, the sampler presents `x` at `t_i = i/N` — the **noise-side**
+current state. This train/inference mismatch means the model was never taught to predict
+velocity from the noise-side inputs it receives at sampling time. B1 fix alone (true t)
+corrected the time label but not the conditioning point, so rollouts remained chaotic.
+
+### Change
+
+```diff
+- x_t = apply_conditioning(x_t, ...)    # old: condition model input on data-side point
++ x_r = apply_conditioning(x_r, ...)    # new: condition model input on noise-side point
+
+- velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, h=h, ...)
++ velocity_pred, aux_pred = self._predict_uv(x_r, cond, r, h=h, ...)
+```
+
+The mean-flow **target** `(x_t - x_r) / h = data - noise` is unchanged — it is
+endpoint-independent for the linear interpolant. Only the model input and its
+paired time shift from the data-side `(x_t, t)` to the noise-side `(x_r, r)`.
+
+This requires a **fresh training run** — the existing checkpoint was trained with
+the old `(x_t, t)` conditioning and cannot be patched without retraining.
+
+### After this retrain
+
+The sampler presents `(x@t_i, t_i)` and the model was trained on `(x_r, r)` pairs —
+fully consistent. One-step and few-step iMF sampling become legitimate.
+
+---
+
+## Files changed (full U2 summary)
+
+| File | Change |
+|------|--------|
+| `imf_visual_aligning/models/imf_diffusion.py` | C1: frozen t → true `t_i`; C4: `p_losses` endpoint swap `x_t,t` → `x_r,r` |
+| `imf_visual_aligning/models/imf_engine.py` | C2: deleted dead `sample()` |
+| `imf_visual_aligning/models/imf_trajectory_model.py` | C3: deleted dead `sample_trajectory()` + `sample()` |
+
+---
 
 ## Validation plan
 
+Retrain from scratch with these fixes, then eval:
+
 ```bash
-# A/B: frozen t vs true t, same seed, same flow_steps
-# Expect (b) structured, (a) chaotic
-python imf_visual_aligning/eval.py --num_steps 10 --seed 42   # fixed-t (rollback to check)
-python imf_visual_aligning/eval.py --num_steps 10 --seed 42   # true-t (this patch)
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/imf_visual_aligning/train_imf_visual_aligning.sh
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/imf_visual_aligning/eval_imf_visual_aligning.sh
 ```
+
+If still chaotic after retrain → conclusion is architectural/capacity, not a code bug.
+Gen8 closes; fall back to vanilla FM (Gen7 baseline).

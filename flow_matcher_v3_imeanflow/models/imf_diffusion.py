@@ -271,25 +271,21 @@ class iMeanFlowODE(nn.Module):
         h = t - r  # step size h = t - r > 0
 
         # Interpolants at times t and r (DATA-AT-1: t=0 is noise, t=1 is data)
-        x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)
-        x_t = apply_conditioning(x_t, cond, self.action_dim, goal_dim=self.goal_dim)
-
-        x_r = self.q_sample(x_start=x_start, t=r, noise=x_base)
+        x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)   # data-biased (target side)
+        x_r = self.q_sample(x_start=x_start, t=r, noise=x_base)   # noise-biased (model input)
+        # U3-B2: condition on x_r (noise-side endpoint) — matches the sampler, which presents
+        # the current noise-side x at each step. Old code conditioned on x_t (data-side), which
+        # the sampler never has access to at inference. apply_conditioning moves to x_r.
+        x_r = apply_conditioning(x_r, cond, self.action_dim, goal_dim=self.goal_dim)
 
         # Expand h for broadcasting against [batch, horizon, dim] tensors
         h_expand = h
         while h_expand.ndim < x_start.ndim:
             h_expand = h_expand.unsqueeze(-1)
 
-        # Mean flow target: (x_t - x_r) / h  — average instantaneous velocity over interval [r, t].
-        # For the linear interpolant q_sample(τ) = (1−τ)·noise + τ·x_data this equals
-        # the constant v = x_data − noise (since dx/dτ is constant for a linear path),
-        # which matches the iMeanFlow definition u(x_t, t, h) := (1/h) ∫_{t−h}^t v dτ.
-        # FIX-1: previous code had (x_start − x_r)/h = ((1−r)/h)·v, which over-scales
-        # the target by ~N at small t for N-step Euler sampling and causes the trained
-        # model to output velocities so large that the first sampling Euler step lands
-        # outside the data manifold (chaotic-straight-line rollouts). See
-        # logs_in_develop/Gen3v4_imf/Gen3v4u2_Major_Upgrade_direct/fix_1/INVESTIGATION.md
+        # Mean flow target: (x_t - x_r) / h — average velocity over interval [r, t].
+        # For the linear interpolant this equals the constant v = x_data − noise,
+        # independent of which endpoint we condition on. Target direction unchanged.
         u_target = (x_t - x_r) / (h_expand + 1e-8)
         u_target = apply_conditioning(u_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
@@ -297,7 +293,8 @@ class iMeanFlowODE(nn.Module):
         v_target = x_start - x_base
         v_target = apply_conditioning(v_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, h=h, returns=returns)
+        # U3-B2: predict from x_r at time r (noise-side) — consistent with inference.
+        velocity_pred, aux_pred = self._predict_uv(x_r, cond, r, h=h, returns=returns)
         if not self.predict_epsilon:
             velocity_pred = apply_conditioning(velocity_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 

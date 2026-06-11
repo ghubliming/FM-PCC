@@ -54,8 +54,42 @@ Comment block updated with U3-B1 guardrail (identical rationale to Gen8 U2).
 
 ---
 
+## C2 — Swap conditioning endpoint in `p_losses` from `x_t` to `x_r` (B2, final fix)
+
+**File:** `flow_matcher_v3_imeanflow/models/imf_diffusion.py`
+
+Identical change to Gen8 U2 C4. Same root cause, same fix:
+
+```diff
+- x_t = apply_conditioning(x_t, ...)
++ x_r = apply_conditioning(x_r, ...)
+
+- velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, h=h, ...)
++ velocity_pred, aux_pred = self._predict_uv(x_r, cond, r, h=h, ...)
+```
+
+Requires fresh training run. Target `(x_t - x_r) / h` unchanged.
+
+---
+
+## Files changed (full U3 summary)
+
+| File | Change |
+|------|--------|
+| `flow_matcher_v3_imeanflow/models/imf_diffusion.py` | C1: frozen t → true `t_i`; C2: `p_losses` endpoint swap `x_t,t` → `x_r,r` |
+
+---
+
 ## Scope note
 
 Gen3v4 does not have the `imf_engine.py` / `imf_trajectory_model.py` redundant-sampler
-issue (B3) — those files are Gen8-specific additions. Only the `p_sample_loop` frozen-t
-fix applies here.
+issue (B3) — those files are Gen8-specific. Only the two `imf_diffusion.py` fixes apply here.
+
+## Validation plan
+
+```bash
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/iMF/train_imf.sh
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/iMF/eval_imf.sh
+```
+
+If still chaotic after retrain → architectural/capacity conclusion, not a code bug.
