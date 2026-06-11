@@ -164,35 +164,23 @@ class iMeanFlowODE(nn.Module):
         dt = 1.0 / max(flow_steps, 1)
         h_batch = torch.full((batch_size,), dt, device=device, dtype=torch.float32)
 
-        # FIX-3 / Deviation B (per fix_2/REFERENCE_IMF_AUDIT.md §7.2): reference
-        # iMF (imeanflow/models/imfDiT.py:370-372) explicitly conditions ONLY on
-        # `h` and ignores `t`, citing the iMeanFlow paper (Kaiming He et al.,
-        # arXiv:2502.13129). For a linear interpolant the mean-flow target is
-        # v_const = x_data − noise, INDEPENDENT of t. Conditioning on t risks
-        # the model overfitting a spurious t-dependence (especially since
-        # training had correlated (t,h) but inference has constant h=1/N
-        # decoupled from t).
-        #
-        # Our model architecturally has both `time_mlp(t)` and `h_mlp(h)`
-        # contributions (unet1d_temporal_cond.py:202,211). We can't remove
-        # time_mlp without retraining, so we freeze its contribution by passing
-        # a CONSTANT t to the model at every sampling step. This makes the
-        # time_mlp output a fixed bias term that affects all steps identically
-        # — effectively converting our (t, h)-conditioned model into a
-        # h-only-conditioned model at inference.
-        #
-        # Chosen constant: 0.5 (midpoint of training's t distribution, which is
-        # 1 - Beta(1.5, 1.0) with mean ≈ 0.4). Close to the training mean so the
-        # time_mlp output is on-distribution.
-        T_CONST_INFERENCE = 0.5
-        t_const = torch.full(
-            (batch_size,), T_CONST_INFERENCE,
-            device=device, dtype=torch.float32,
-        )
+        # U2-B1 guardrail: NEVER freeze t for this architecture. Both time_mlp(t)
+        # and h_mlp(h) are active and additively combined in the UNet backbone
+        # (unet1d_temporal_cond.py:118-123, :249). Training always passed the true
+        # t at each step, so the learned weights encode u(x, t, h). A frozen t at
+        # inference converts that into a biased h-only function; every step receives
+        # (x@t_i, t=constant), which is out-of-distribution and produces chaotic
+        # rollouts. (This was Deviation B from fix_3 — reverted here.)
+        # Use t_i = loop_idx / flow_steps: the position the sampler is currently AT.
+        # See Gen8E1F2_Problem&Solution_Fable.md §B1 for the full derivation.
 
         for i in range(total_steps):
             loop_idx = min(i, flow_steps - 1)
-            velocity = self._predict_velocity(x, cond, t_const, h=h_batch, returns=returns)
+            t_i = torch.full(
+                (batch_size,), loop_idx / max(flow_steps, 1),
+                device=device, dtype=torch.float32,
+            )
+            velocity = self._predict_velocity(x, cond, t_i, h=h_batch, returns=returns)
             x = x + velocity * dt
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 

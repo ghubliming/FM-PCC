@@ -1666,3 +1666,31 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **GPU Leak Prevention Safeguard**: Injected a 5-line GPU-check block into 31 EGL-rendering SLURM scripts and the baseline job template. This block dynamically verifies that the MuJoCo EGL device is perfectly pinned to the allocated CUDA GPU (`MUJOCO_EGL_DEVICE_ID == CUDA_VISIBLE_DEVICES`).
 2. **Fail-Fast Mechanism**: If a mismatch is detected (indicating a broken pinning block and a potential leak to GPU 0), the job now immediately aborts instead of silently leaking memory for hours. Every SLURM log now persistently records the allocated GPU and EGL device at startup for straightforward auditing.
+
+***
+
+## Gen9 Epoch 2 "U2": Avoiding Baseline DDPM Exploded Lines Verdict & Config Reverts (June 10, 2026)
+
+**Keywords**: Gen9, U2, DDPM, exploded lines, clip_denoised, overfitting.
+
+1. **Failure Diagnosis**: Conducted a deep forensic audit to determine if the DDPM "exploded lines" failure was a code bug or a model capability limit. Concluded that severe overfitting is a major contributor: the evaluated checkpoint (step 99k) had a test loss 5.19x worse than the best checkpoint (step 11k). 
+2. **DDPM vs FM Robustness**: Documented how DDPM's multiplicative noise schedule severely amplifies $\epsilon$ errors (up to ~1284x at early steps), turning overfitting into trajectory explosion. By contrast, Flow Matching moves a deterministic 5% along the predicted velocity vector per step, remaining structurally immune to the same overfitting cascade.
+3. **`clip_denoised` Revert**: Reverted `clip_denoised` back to `False` in the configuration and training scripts, acknowledging that the parameter only alters the visual signature of the failure (clamped thresholds vs. exploded coordinates) and does not fix the underlying model divergence.
+
+***
+
+## Gen11 Epoch 4 & 5 "U5 - U7": UAV Expert Data Collection Stability & S-Curve Z-Route Upgrade (June 10, 2026)
+
+**Keywords**: Gen11, Epoch 4, Epoch 5, S-Curve, Z-route, thrust-priority allocation, accepted_clip_list.
+
+1. **Data Collection Instrumentation & Stability (U5 & U6)**:
+   - Instrumented the collection generator to accurately track `contact` vs `floor` rejection reasons and modified the `n_clip` telemetry to use pre-allocation raw saturated flags for truthful saturation reporting.
+   - Added +0.20 m altitude headroom (`z ~ [0.90, 1.30]`) to resolve persistent floor crashes during initial hover.
+   - Re-architected the `CascadedPID` thrust allocation from a binary search to an exact-scale method with a 50% torque floor, preserving essential attitude authority and recovering success rates for cross-channel homotopies.
+2. **S-Curve Z-Route Geometric Resolution (U7)**:
+   - Proved mathematically that the previous single diagonal path for `s_curve` was geometrically infeasible (passing 0.019 m inside the rotor-contact zone even on the nominal path). 
+   - Replaced the single diagonal with a 3-leg Z-route (pure-x, pure-y, pure-x) traversing the gap centerline, achieving strict 0.50 m clearances and resolving deterministic collisions.
+3. **Accepted Episode Telemetry (U7)**: Introduced `accepted_clip_mean` and `accepted_clip_max` logging to measure whether "healthy" episodes still suffer from chronic motor saturation, closing a critical diagnostic gap.
+4. **Naive Framework Sync & Camera Correction (Gen11E5U3 Fix2)**:
+   - Updated the naive `run_env.py` task evaluator with the new 5-leg Z-route waypoints, resolving its previous 40.9% contact failure rate on `s_curve`.
+   - Fixed `collect_camera_images.py` to correctly utilize the forward-facing `'fpv'` camera instead of the legacy 3rd-person `'track'` camera, unifying the visual collection format with the rest of the Epoch 5 pipeline.
