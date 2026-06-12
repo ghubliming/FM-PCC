@@ -1,0 +1,44 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Tue Jun  9 15:06:34 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21370
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=s_curve  n_trials=500  gain=pid_default  seed=0
+[ collect ] scene=s_curve  n_trials=500  homotopy_pool=['default']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected= 10  t=4s  ~4.43s/ep  ETA≈2166s  last→logs/uav_expert_data/s_curve/default/s_curve_default_pid_default_0000010.pkl
+[ collect ] ABORT: rejection rate 90.5% > limit 60.0%. Check PID stability (Decision 2 fix applied?).
+[ collect ] DONE  saved=2  rejected=19  (90.5% rejected)  elapsed=8s
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/s_curve …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 2
+  Homotopy breakdown  : {'default': 2}
+
+  Speed (m/s):
+    Generated  mean=0.390  median=0.382  p95=0.743
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ✅ OK
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=686  median=686  [674, 699]
+    UAV-Flow   median=38.0 waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0106  p95=0.0168
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/s_curve/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/s_curve/
+========================================
+JOB END: Tue Jun  9 15:06:43 UTC 2026
+========================================

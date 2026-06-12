@@ -94,7 +94,7 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/17_55_00_eval_drifting_20662.log
 
 ---
 
-- iMF
+# iMF
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
 
 finished, by loss curve is bad
@@ -168,8 +168,17 @@ K10
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
 (Still Exploded)
 
+- U3
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/11_53_09_eval_imf_21448.log
+
+U3.2/final
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/13_34_25_train_imf_21451.log
++
+21455
+
 ---
-- Visual 
+# Visual 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
 
 Interrupt, the loss curve looks wrong in WandB
@@ -559,6 +568,12 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/18_00_01_train_imf_visual_aligning_2116
 fix2.5 eval run
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_50_31_eval_imf_visual_aligning_21196.log
 
+- U2
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/12_02_36_eval_imf_visual_aligning_21450.log
+
+U2.2/final
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/13_38_13_train_imf_visual_aligning_21452.log
+
 # Gen 9 Visual Avoiding (Camera Data Collection)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-29/16_14_33_collect_visual_avoiding_20940.log
 
@@ -602,6 +617,20 @@ Fix 3
 (seems fine, run the diffu. pipeline)
 21317,18 
 - [ ] Pending to read the reuslts
+
+fix again Fix3(.2)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-09/18_02_22_eval_visual_avoiding_dpcc_21376.log
++
+21457 Eval
++
+21462 Eval
++
+21472
+
+---
+
+## U3
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-12/12_40_24_train_fm_visual_avoiding_21480.log
 
 
 # Gen11
@@ -650,6 +679,32 @@ Fix1
 ## U3
 21339 -> 21342
 
+## U3F1 & GPU Leak Test
+21356
+
+F2
+21368-21371
+
+## U4
+21398 - 21401
+
+## U5
+21408 - 21411
+
+## U6
+21415 - 21418
+
+## U7
+21419 - 21422
+
+## U8,9
+21474 - 21477
+
+fix1
+21482
+
+-> Recollect Gif!  21484 + 21485
+
 # E5
 21289
 
@@ -660,3 +715,27 @@ Fix1
 ## U2
 21329 (too long!)
 21330 (./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh "" "" "" 3)
+
+## U3
+21358
+werid behaviors
+FMPCC/FM-PCC/logs/uav_expert_data/gifs_physics/pillars/L_L_L
+21367
+
+Fix 2 (on Data E4 U7)
+21436
+21437
+
+# misc
+touched files during rebase(already fixed)
+~~Slurm_Codes/sbatch/Drifting/train_drifting.sh~~
+
+Slurm_Codes/sbatch/diffuser_visual_aligning/eval_visual_aligning_dpcc.sh
+
+Slurm_Codes/sbatch/diffuser_visual_aligning/train_visual_aligning_dpcc.sh
+
+Slurm_Codes/sbatch/diffuser_visual_avoiding/train_visual_avoiding_dpcc.sh
+
+Slurm_Codes/sbatch/fm_visual_aligning/eval_fm_visual_aligning.sh
+
+Slurm_Codes/sbatch/iMF/train_imf.sh

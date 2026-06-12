@@ -1,0 +1,274 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Fri Jun 12 10:03:58 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21477
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=pillars  n_trials=500  gain=pid_default  seed=0  homotopy=all
+[ collect ] scene=pillars  n_trials=500  homotopy_pool=['(L,L,L)', '(L,R,L)', '(R,L,R)', '(R,R,R)']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected=  0  t=0s  ~0.32s/ep  ETA≈160s  last→logs/uav_expert_data/pillars/L_L_L/pillars_L_L_L_pid_default_0000000.pkl
+[ collect ] REJECT #1  reason=floor  min_z=0.124  clip=36.2%
+[ collect ] REJECT #2  reason=contact  min_z=0.109  clip=76.1%
+[ collect ] REJECT #3  reason=floor  min_z=0.079  clip=62.4%
+[ collect ] REJECT #4  reason=contact  min_z=0.021  clip=69.3%
+[ collect ] REJECT #5  reason=contact  min_z=0.138  clip=50.9%
+[ collect ] REJECT #6  reason=floor  min_z=0.004  clip=56.0%
+[ collect ] REJECT #7  reason=contact  min_z=-0.006  clip=50.9%
+[ collect ] REJECT #8  reason=contact  min_z=-0.025  clip=70.5%
+[ collect ] REJECT #9  reason=contact  min_z=0.010  clip=76.0%
+[ collect ] REJECT #10  reason=contact  min_z=0.027  clip=47.2%
+[ collect ] REJECT #11  reason=contact  min_z=0.004  clip=63.9%
+[ collect ] REJECT #12  reason=contact  min_z=0.041  clip=78.4%
+[ collect ] REJECT #13  reason=contact  min_z=0.082  clip=75.7%
+[ collect ] REJECT #14  reason=contact  min_z=0.004  clip=61.2%
+[ collect ] REJECT #15  reason=contact  min_z=-0.013  clip=75.1%
+[ collect ] REJECT #16  reason=floor  min_z=0.450  clip=31.1%
+[ collect ] REJECT #17  reason=floor  min_z=-0.011  clip=38.5%
+[ collect ] REJECT #18  reason=contact  min_z=0.012  clip=75.6%
+[ collect ] REJECT #19  reason=floor  min_z=0.077  clip=63.0%
+[ collect ] REJECT #20  reason=contact  min_z=0.106  clip=66.4%
+[ collect ] REJECT #21  reason=contact  min_z=0.004  clip=74.1%
+[ collect ] REJECT #22  reason=contact  min_z=-0.002  clip=78.4%
+[ collect ] REJECT #23  reason=floor  min_z=0.479  clip=30.1%
+[ collect ] REJECT #24  reason=contact  min_z=0.044  clip=58.3%
+[ collect ] REJECT #25  reason=floor  min_z=0.154  clip=43.5%
+[ collect ] REJECT #26  reason=contact  min_z=0.313  clip=74.6%
+[ collect ] REJECT #27  reason=contact  min_z=0.020  clip=62.6%
+[ collect ] REJECT #28  reason=contact  min_z=-0.005  clip=59.9%
+[ collect ] REJECT #29  reason=floor  min_z=0.010  clip=56.4%
+[ collect ] REJECT #30  reason=contact  min_z=0.062  clip=63.4%
+[ collect ] REJECT #31  reason=contact  min_z=0.220  clip=74.6%
+[ collect ] REJECT #32  reason=floor  min_z=0.085  clip=63.9%
+[ collect ] REJECT #33  reason=contact  min_z=-0.001  clip=74.3%
+[ collect ] REJECT #34  reason=contact  min_z=-0.003  clip=62.5%
+[ collect ] REJECT #35  reason=contact  min_z=0.016  clip=56.9%
+[ collect ] REJECT #36  reason=contact  min_z=-0.005  clip=64.9%
+[ collect ] REJECT #37  reason=contact  min_z=0.024  clip=40.4%
+[ collect ] REJECT #38  reason=contact  min_z=0.003  clip=76.0%
+[ collect ] REJECT #39  reason=contact  min_z=-0.001  clip=46.7%
+[ collect ] REJECT #40  reason=floor  min_z=-0.005  clip=74.7%
+[ collect ] REJECT #41  reason=contact  min_z=0.050  clip=64.9%
+[ collect ] REJECT #42  reason=contact  min_z=0.007  clip=50.6%
+[ collect ] saved=  50  rejected= 42  t=29s  ~0.59s/ep  ETA≈239s  last→logs/uav_expert_data/pillars/R_R_R/pillars_R_R_R_pid_default_0000091.pkl
+[ collect ] REJECT #43  reason=floor  min_z=0.076  clip=74.3%
+[ collect ] REJECT #44  reason=floor  min_z=0.073  clip=62.7%
+[ collect ] REJECT #45  reason=contact  min_z=0.077  clip=75.1%
+[ collect ] REJECT #46  reason=floor  min_z=0.096  clip=38.3%
+[ collect ] REJECT #47  reason=contact  min_z=0.003  clip=75.6%
+[ collect ] REJECT #48  reason=floor  min_z=0.362  clip=29.7%
+[ collect ] REJECT #49  reason=contact  min_z=0.087  clip=57.5%
+[ collect ] REJECT #50  reason=contact  min_z=0.033  clip=78.4%
+[ collect ] REJECT #51  reason=contact  min_z=0.119  clip=41.3%
+[ collect ] REJECT #52  reason=floor  min_z=0.085  clip=74.6%
+[ collect ] REJECT #53  reason=contact  min_z=0.007  clip=76.2%
+[ collect ] REJECT #54  reason=contact  min_z=-0.000  clip=71.7%
+[ collect ] REJECT #55  reason=contact  min_z=0.114  clip=64.1%
+[ collect ] REJECT #56  reason=contact  min_z=0.186  clip=59.4%
+[ collect ] REJECT #57  reason=contact  min_z=-0.004  clip=71.8%
+[ collect ] REJECT #58  reason=contact  min_z=0.029  clip=76.1%
+[ collect ] REJECT #59  reason=contact  min_z=0.085  clip=70.9%
+[ collect ] REJECT #60  reason=contact  min_z=0.085  clip=58.9%
+[ collect ] REJECT #61  reason=contact  min_z=0.016  clip=59.5%
+[ collect ] REJECT #62  reason=contact  min_z=0.003  clip=76.9%
+[ collect ] REJECT #63  reason=floor  min_z=0.085  clip=74.6%
+[ collect ] REJECT #64  reason=contact  min_z=0.001  clip=45.1%
+[ collect ] REJECT #65  reason=floor  min_z=0.100  clip=50.3%
+[ collect ] REJECT #66  reason=floor  min_z=0.009  clip=60.8%
+[ collect ] REJECT #67  reason=floor  min_z=0.001  clip=57.2%
+[ collect ] REJECT #68  reason=contact  min_z=0.023  clip=65.4%
+[ collect ] REJECT #69  reason=contact  min_z=0.021  clip=55.2%
+[ collect ] REJECT #70  reason=contact  min_z=-0.010  clip=52.9%
+[ collect ] REJECT #71  reason=contact  min_z=0.043  clip=75.8%
+[ collect ] REJECT #72  reason=contact  min_z=-0.001  clip=58.2%
+[ collect ] REJECT #73  reason=contact  min_z=-0.010  clip=45.6%
+[ collect ] REJECT #74  reason=floor  min_z=0.002  clip=38.4%
+[ collect ] REJECT #75  reason=floor  min_z=0.002  clip=47.9%
+[ collect ] REJECT #76  reason=contact  min_z=0.013  clip=59.5%
+[ collect ] REJECT #77  reason=contact  min_z=0.002  clip=75.8%
+[ collect ] REJECT #78  reason=floor  min_z=0.456  clip=31.9%
+[ collect ] REJECT #79  reason=contact  min_z=0.031  clip=71.0%
+[ collect ] REJECT #80  reason=contact  min_z=0.002  clip=53.3%
+[ collect ] REJECT #81  reason=contact  min_z=0.019  clip=58.3%
+[ collect ] REJECT #82  reason=contact  min_z=0.019  clip=74.5%
+[ collect ] REJECT #83  reason=floor  min_z=0.017  clip=40.9%
+[ collect ] REJECT #84  reason=contact  min_z=0.012  clip=75.8%
+[ collect ] REJECT #85  reason=contact  min_z=0.003  clip=78.4%
+[ collect ] REJECT #86  reason=contact  min_z=-0.001  clip=75.8%
+[ collect ] REJECT #87  reason=contact  min_z=0.014  clip=74.2%
+[ collect ] saved= 100  rejected= 87  t=59s  ~0.59s/ep  ETA≈186s  last→logs/uav_expert_data/pillars/R_L_R/pillars_R_L_R_pid_default_0000186.pkl
+[ collect ] REJECT #88  reason=contact  min_z=0.056  clip=76.8%
+[ collect ] REJECT #89  reason=floor  min_z=0.002  clip=61.7%
+[ collect ] REJECT #90  reason=contact  min_z=0.032  clip=75.8%
+[ collect ] REJECT #91  reason=floor  min_z=0.007  clip=37.2%
+[ collect ] REJECT #92  reason=contact  min_z=0.029  clip=45.0%
+[ collect ] REJECT #93  reason=floor  min_z=0.067  clip=38.8%
+[ collect ] REJECT #94  reason=contact  min_z=0.015  clip=73.1%
+[ collect ] REJECT #95  reason=contact  min_z=0.082  clip=74.9%
+[ collect ] REJECT #96  reason=floor  min_z=0.021  clip=56.6%
+[ collect ] REJECT #97  reason=contact  min_z=0.007  clip=62.4%
+[ collect ] REJECT #98  reason=floor  min_z=0.402  clip=30.9%
+[ collect ] REJECT #99  reason=floor  min_z=0.084  clip=75.1%
+[ collect ] REJECT #100  reason=contact  min_z=0.079  clip=63.3%
+[ collect ] REJECT #101  reason=contact  min_z=0.021  clip=75.5%
+[ collect ] REJECT #102  reason=contact  min_z=0.124  clip=63.7%
+[ collect ] REJECT #103  reason=floor  min_z=0.085  clip=74.6%
+[ collect ] REJECT #104  reason=floor  min_z=0.003  clip=49.2%
+[ collect ] REJECT #105  reason=contact  min_z=0.016  clip=67.3%
+[ collect ] REJECT #106  reason=floor  min_z=0.325  clip=30.8%
+[ collect ] REJECT #107  reason=floor  min_z=-0.006  clip=74.8%
+[ collect ] REJECT #108  reason=contact  min_z=0.001  clip=77.4%
+[ collect ] REJECT #109  reason=floor  min_z=-0.002  clip=41.4%
+[ collect ] REJECT #110  reason=contact  min_z=0.017  clip=66.8%
+[ collect ] REJECT #111  reason=floor  min_z=0.086  clip=60.9%
+[ collect ] REJECT #112  reason=contact  min_z=0.000  clip=74.6%
+[ collect ] REJECT #113  reason=contact  min_z=0.004  clip=75.9%
+[ collect ] REJECT #114  reason=floor  min_z=0.087  clip=57.9%
+[ collect ] REJECT #115  reason=floor  min_z=0.434  clip=29.5%
+[ collect ] REJECT #116  reason=contact  min_z=0.087  clip=65.5%
+[ collect ] REJECT #117  reason=floor  min_z=0.127  clip=41.5%
+[ collect ] REJECT #118  reason=floor  min_z=0.078  clip=61.2%
+[ collect ] REJECT #119  reason=floor  min_z=0.410  clip=31.2%
+[ collect ] REJECT #120  reason=contact  min_z=0.005  clip=63.7%
+[ collect ] REJECT #121  reason=contact  min_z=0.001  clip=54.5%
+[ collect ] REJECT #122  reason=contact  min_z=0.227  clip=75.0%
+[ collect ] REJECT #123  reason=floor  min_z=0.080  clip=62.1%
+[ collect ] saved= 150  rejected=123  t=87s  ~0.58s/ep  ETA≈131s  last→logs/uav_expert_data/pillars/L_L_L/pillars_L_L_L_pid_default_0000272.pkl
+[ collect ] REJECT #124  reason=floor  min_z=0.046  clip=37.5%
+[ collect ] REJECT #125  reason=floor  min_z=0.023  clip=56.3%
+[ collect ] REJECT #126  reason=contact  min_z=0.001  clip=75.6%
+[ collect ] REJECT #127  reason=contact  min_z=0.019  clip=77.0%
+[ collect ] REJECT #128  reason=floor  min_z=0.085  clip=60.0%
+[ collect ] REJECT #129  reason=contact  min_z=0.005  clip=68.5%
+[ collect ] REJECT #130  reason=floor  min_z=0.153  clip=51.6%
+[ collect ] REJECT #131  reason=floor  min_z=0.074  clip=62.9%
+[ collect ] REJECT #132  reason=contact  min_z=0.094  clip=77.3%
+[ collect ] REJECT #133  reason=contact  min_z=-0.001  clip=69.5%
+[ collect ] REJECT #134  reason=floor  min_z=0.083  clip=61.4%
+[ collect ] REJECT #135  reason=contact  min_z=0.026  clip=52.4%
+[ collect ] REJECT #136  reason=contact  min_z=0.013  clip=75.7%
+[ collect ] REJECT #137  reason=contact  min_z=0.018  clip=58.1%
+[ collect ] REJECT #138  reason=contact  min_z=0.000  clip=72.0%
+[ collect ] REJECT #139  reason=contact  min_z=0.000  clip=78.4%
+[ collect ] REJECT #140  reason=contact  min_z=0.001  clip=58.3%
+[ collect ] REJECT #141  reason=contact  min_z=0.009  clip=57.6%
+[ collect ] REJECT #142  reason=floor  min_z=0.085  clip=75.8%
+[ collect ] REJECT #143  reason=contact  min_z=0.003  clip=45.9%
+[ collect ] REJECT #144  reason=contact  min_z=0.002  clip=59.0%
+[ collect ] REJECT #145  reason=contact  min_z=0.016  clip=56.5%
+[ collect ] REJECT #146  reason=floor  min_z=0.083  clip=75.7%
+[ collect ] REJECT #147  reason=contact  min_z=0.034  clip=73.4%
+[ collect ] REJECT #148  reason=contact  min_z=0.000  clip=64.8%
+[ collect ] REJECT #149  reason=floor  min_z=0.101  clip=36.0%
+[ collect ] REJECT #150  reason=floor  min_z=0.075  clip=62.0%
+[ collect ] REJECT #151  reason=contact  min_z=0.020  clip=69.1%
+[ collect ] REJECT #152  reason=contact  min_z=0.005  clip=58.6%
+[ collect ] REJECT #153  reason=contact  min_z=0.039  clip=47.3%
+[ collect ] REJECT #154  reason=contact  min_z=0.000  clip=47.9%
+[ collect ] REJECT #155  reason=contact  min_z=0.018  clip=74.1%
+[ collect ] REJECT #156  reason=contact  min_z=0.006  clip=72.5%
+[ collect ] REJECT #157  reason=floor  min_z=0.389  clip=29.9%
+[ collect ] REJECT #158  reason=floor  min_z=0.421  clip=31.2%
+[ collect ] REJECT #159  reason=contact  min_z=-0.022  clip=47.3%
+[ collect ] REJECT #160  reason=contact  min_z=0.139  clip=66.0%
+[ collect ] REJECT #161  reason=contact  min_z=-0.007  clip=76.1%
+[ collect ] REJECT #162  reason=contact  min_z=0.013  clip=63.9%
+[ collect ] REJECT #163  reason=contact  min_z=0.312  clip=74.3%
+[ collect ] REJECT #164  reason=floor  min_z=0.085  clip=74.8%
+[ collect ] REJECT #165  reason=floor  min_z=0.383  clip=30.3%
+[ collect ] saved= 200  rejected=165  t=116s  ~0.58s/ep  ETA≈78s  last→logs/uav_expert_data/pillars/L_L_L/pillars_L_L_L_pid_default_0000364.pkl
+[ collect ] REJECT #166  reason=contact  min_z=-0.016  clip=43.9%
+[ collect ] REJECT #167  reason=floor  min_z=0.364  clip=29.9%
+[ collect ] REJECT #168  reason=contact  min_z=-0.001  clip=62.3%
+[ collect ] REJECT #169  reason=floor  min_z=0.079  clip=60.3%
+[ collect ] REJECT #170  reason=contact  min_z=0.087  clip=74.0%
+[ collect ] REJECT #171  reason=contact  min_z=0.108  clip=59.7%
+[ collect ] REJECT #172  reason=contact  min_z=0.002  clip=75.7%
+[ collect ] REJECT #173  reason=contact  min_z=0.040  clip=76.7%
+[ collect ] REJECT #174  reason=contact  min_z=-0.000  clip=53.2%
+[ collect ] REJECT #175  reason=contact  min_z=-0.001  clip=74.6%
+[ collect ] REJECT #176  reason=floor  min_z=0.418  clip=30.9%
+[ collect ] REJECT #177  reason=contact  min_z=0.023  clip=64.8%
+[ collect ] REJECT #178  reason=contact  min_z=0.157  clip=74.5%
+[ collect ] REJECT #179  reason=contact  min_z=-0.021  clip=48.4%
+[ collect ] REJECT #180  reason=contact  min_z=-0.009  clip=75.6%
+[ collect ] REJECT #181  reason=contact  min_z=0.002  clip=78.4%
+[ collect ] REJECT #182  reason=contact  min_z=0.014  clip=43.2%
+[ collect ] REJECT #183  reason=contact  min_z=0.042  clip=49.3%
+[ collect ] REJECT #184  reason=contact  min_z=0.002  clip=58.2%
+[ collect ] REJECT #185  reason=floor  min_z=-0.001  clip=36.6%
+[ collect ] REJECT #186  reason=contact  min_z=0.021  clip=75.9%
+[ collect ] REJECT #187  reason=contact  min_z=-0.003  clip=78.3%
+[ collect ] REJECT #188  reason=contact  min_z=0.002  clip=50.9%
+[ collect ] REJECT #189  reason=floor  min_z=0.084  clip=60.7%
+[ collect ] REJECT #190  reason=contact  min_z=0.085  clip=73.4%
+[ collect ] REJECT #191  reason=contact  min_z=-0.012  clip=63.0%
+[ collect ] REJECT #192  reason=contact  min_z=0.001  clip=57.9%
+[ collect ] REJECT #193  reason=contact  min_z=0.007  clip=75.8%
+[ collect ] REJECT #194  reason=contact  min_z=0.035  clip=76.1%
+[ collect ] REJECT #195  reason=contact  min_z=-0.002  clip=76.2%
+[ collect ] REJECT #196  reason=contact  min_z=0.000  clip=65.7%
+[ collect ] REJECT #197  reason=floor  min_z=0.085  clip=63.5%
+[ collect ] REJECT #198  reason=floor  min_z=0.407  clip=31.0%
+[ collect ] REJECT #199  reason=contact  min_z=0.031  clip=62.7%
+[ collect ] REJECT #200  reason=floor  min_z=0.075  clip=74.2%
+[ collect ] REJECT #201  reason=floor  min_z=0.078  clip=38.2%
+[ collect ] REJECT #202  reason=contact  min_z=0.002  clip=78.6%
+[ collect ] REJECT #203  reason=contact  min_z=0.028  clip=63.4%
+[ collect ] REJECT #204  reason=contact  min_z=0.091  clip=75.9%
+[ collect ] REJECT #205  reason=contact  min_z=0.017  clip=59.0%
+[ collect ] REJECT #206  reason=contact  min_z=0.084  clip=75.1%
+[ collect ] REJECT #207  reason=contact  min_z=-0.007  clip=74.2%
+[ collect ] saved= 250  rejected=207  t=145s  ~0.58s/ep  ETA≈25s  last→logs/uav_expert_data/pillars/L_L_L/pillars_L_L_L_pid_default_0000456.pkl
+[ collect ] REJECT #208  reason=floor  min_z=0.014  clip=40.5%
+[ collect ] REJECT #209  reason=contact  min_z=0.062  clip=49.2%
+[ collect ] REJECT #210  reason=contact  min_z=0.099  clip=52.1%
+[ collect ] REJECT #211  reason=contact  min_z=0.085  clip=74.6%
+[ collect ] REJECT #212  reason=contact  min_z=0.007  clip=66.5%
+[ collect ] REJECT #213  reason=contact  min_z=-0.001  clip=52.3%
+[ collect ] REJECT #214  reason=contact  min_z=-0.004  clip=51.5%
+[ collect ] REJECT #215  reason=contact  min_z=0.000  clip=77.3%
+[ collect ] REJECT #216  reason=floor  min_z=0.049  clip=47.0%
+[ collect ] REJECT #217  reason=contact  min_z=0.003  clip=55.0%
+[ collect ] REJECT #218  reason=contact  min_z=-0.009  clip=67.7%
+[ collect ] REJECT #219  reason=contact  min_z=0.022  clip=72.7%
+[ collect ] REJECT #220  reason=contact  min_z=0.087  clip=67.3%
+[ collect ] REJECT #221  reason=floor  min_z=0.065  clip=38.1%
+[ collect ] REJECT #222  reason=contact  min_z=0.020  clip=62.2%
+[ collect ] REJECT #223  reason=contact  min_z=0.066  clip=47.8%
+[ collect ] REJECT #224  reason=contact  min_z=-0.002  clip=59.3%
+[ collect ] REJECT #225  reason=floor  min_z=0.086  clip=62.0%
+[ collect ] REJECT #226  reason=floor  min_z=0.083  clip=59.8%
+[ collect ] DONE  saved=274  rejected=226  (45.2% rejected)  elapsed=159s  HISTOGRAM: contact=156  floor=70
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/pillars …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 274
+  Homotopy breakdown  : {'(L,L,L)': 125, '(R,R,R)': 125, '(L,R,L)': 9, '(R,L,R)': 15}
+
+  Speed (m/s):
+    Generated  mean=0.597  median=0.645  p95=1.082
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ✅ OK
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=442  median=449  [335, 533]
+    UAV-Flow   median=38.0 waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0177  p95=0.0319
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/pillars/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/pillars/
+========================================
+JOB END: Fri Jun 12 10:06:38 UTC 2026
+========================================

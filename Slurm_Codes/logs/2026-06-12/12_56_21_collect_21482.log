@@ -1,0 +1,78 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Fri Jun 12 10:56:23 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21482
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=pillars  n_trials=500  gain=pid_default  seed=0  homotopy=all
+[ collect ] scene=pillars  n_trials=500  homotopy_pool=['(L,L,L)', '(L,R,L)', '(R,L,R)', '(R,R,R)']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] saved=   1  rejected=  0  t=0s  ~0.29s/ep  ETA≈142s  last→logs/uav_expert_data/pillars/L_L_L/pillars_L_L_L_pid_default_0000000.pkl
+[ collect ] REJECT #1  reason=contact  min_z=0.084  clip=68.8%
+[ collect ] REJECT #2  reason=contact  min_z=0.002  clip=62.2%
+[ collect ] REJECT #3  reason=floor  min_z=0.000  clip=63.4%
+[ collect ] saved=  50  rejected=  3  t=17s  ~0.33s/ep  ETA≈148s  last→logs/uav_expert_data/pillars/L_L_L/pillars_L_L_L_pid_default_0000052.pkl
+[ collect ] saved= 100  rejected=  3  t=32s  ~0.32s/ep  ETA≈129s  last→logs/uav_expert_data/pillars/R_L_R/pillars_R_L_R_pid_default_0000102.pkl
+[ collect ] REJECT #4  reason=floor  min_z=0.165  clip=66.2%
+[ collect ] REJECT #5  reason=contact  min_z=0.312  clip=52.2%
+[ collect ] REJECT #6  reason=contact  min_z=-0.001  clip=68.6%
+[ collect ] REJECT #7  reason=floor  min_z=0.244  clip=47.1%
+[ collect ] REJECT #8  reason=floor  min_z=0.194  clip=44.4%
+[ collect ] saved= 150  rejected=  8  t=49s  ~0.33s/ep  ETA≈113s  last→logs/uav_expert_data/pillars/L_R_L/pillars_L_R_L_pid_default_0000157.pkl
+[ collect ] REJECT #9  reason=floor  min_z=0.085  clip=65.5%
+[ collect ] REJECT #10  reason=floor  min_z=0.486  clip=42.1%
+[ collect ] REJECT #11  reason=floor  min_z=0.320  clip=47.4%
+[ collect ] saved= 200  rejected= 11  t=66s  ~0.33s/ep  ETA≈96s  last→logs/uav_expert_data/pillars/R_L_R/pillars_R_L_R_pid_default_0000210.pkl
+[ collect ] REJECT #12  reason=floor  min_z=0.237  clip=47.3%
+[ collect ] saved= 250  rejected= 12  t=82s  ~0.33s/ep  ETA≈78s  last→logs/uav_expert_data/pillars/L_R_L/pillars_L_R_L_pid_default_0000261.pkl
+[ collect ] REJECT #13  reason=floor  min_z=0.262  clip=50.7%
+[ collect ] REJECT #14  reason=contact  min_z=0.014  clip=57.8%
+[ collect ] REJECT #15  reason=floor  min_z=0.477  clip=45.7%
+[ collect ] REJECT #16  reason=floor  min_z=0.004  clip=49.1%
+[ collect ] saved= 300  rejected= 16  t=99s  ~0.33s/ep  ETA≈61s  last→logs/uav_expert_data/pillars/R_R_R/pillars_R_R_R_pid_default_0000315.pkl
+[ collect ] REJECT #17  reason=floor  min_z=0.259  clip=48.9%
+[ collect ] saved= 350  rejected= 17  t=115s  ~0.33s/ep  ETA≈44s  last→logs/uav_expert_data/pillars/R_L_R/pillars_R_L_R_pid_default_0000366.pkl
+[ collect ] REJECT #18  reason=floor  min_z=0.451  clip=44.0%
+[ collect ] REJECT #19  reason=floor  min_z=0.313  clip=47.0%
+[ collect ] REJECT #20  reason=floor  min_z=0.102  clip=47.2%
+[ collect ] saved= 400  rejected= 20  t=132s  ~0.33s/ep  ETA≈26s  last→logs/uav_expert_data/pillars/R_R_R/pillars_R_R_R_pid_default_0000419.pkl
+[ collect ] REJECT #21  reason=floor  min_z=0.446  clip=38.7%
+[ collect ] REJECT #22  reason=contact  min_z=0.010  clip=66.5%
+[ collect ] REJECT #23  reason=contact  min_z=-0.005  clip=60.0%
+[ collect ] REJECT #24  reason=floor  min_z=0.054  clip=67.6%
+[ collect ] REJECT #25  reason=floor  min_z=0.413  clip=44.0%
+[ collect ] saved= 450  rejected= 25  t=149s  ~0.33s/ep  ETA≈8s  last→logs/uav_expert_data/pillars/R_L_R/pillars_R_L_R_pid_default_0000474.pkl
+[ collect ] DONE  saved=475  rejected=25  (5.0% rejected)  elapsed=157s  HISTOGRAM: floor=18  contact=7
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Phase 4-α stats not found at /data/home/llim/FMPCC/FM-PCC/logs_in_develop/Gen11/Epoch4_expert_data/phase4_alpha_uavflow_stats.json
+[ validate ] Loading episodes from logs/uav_expert_data/pillars …
+
+============================================================
+  Generated dataset vs UAV-Flow Phase 4-α targets
+============================================================
+  Episodes generated  : 475
+  Homotopy breakdown  : {'(L,L,L)': 125, '(L,R,L)': 112, '(R,L,R)': 113, '(R,R,R)': 125}
+
+  Speed (m/s):
+    Generated  mean=0.671  median=0.702  p95=1.251
+    UAV-Flow   velocity unknown (no timestamps in dataset)
+    Our target 0.30–0.50 m/s  (RESEARCH §3.3)
+    STATUS: ✅ OK
+
+  Episode length (steps at ~33 Hz):
+    Generated  mean=443  median=443  [335, 533]
+    UAV-Flow   median=? waypoints (different Hz — not directly comparable)
+
+  Action Δp_des norm (m per step):
+    Generated  mean=0.0198  p95=0.0361
+    Expected   0.009–0.015 m/step (0.3–0.5 m/s at 33 Hz)
+    STATUS: ✅ OK
+============================================================
+
+[ validate ] Stats saved → logs/uav_expert_data/pillars/dataset_stats.json
+[ sbatch ] Output: logs/uav_expert_data/pillars/
+========================================
+JOB END: Fri Jun 12 10:59:01 UTC 2026
+========================================
