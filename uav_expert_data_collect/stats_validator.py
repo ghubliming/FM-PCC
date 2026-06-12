@@ -31,7 +31,10 @@ def load_episodes(data_dir):
                 path = os.path.join(root, fn)
                 try:
                     with open(path, 'rb') as f:
-                        episodes.append(pickle.load(f))
+                        ep = pickle.load(f)
+                    if ep.get('stress', False):
+                        continue   # E4 U10: skip stress episodes — not training data
+                    episodes.append(ep)
                 except Exception as e:
                     print(f'  [ warn ] Could not load {path}: {e}')
     return episodes

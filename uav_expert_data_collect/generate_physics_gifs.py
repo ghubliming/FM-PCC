@@ -228,8 +228,8 @@ def physics_replay_frames(model, data, renderer, episode, res, frame_stride=3):
     """Re-run original physics from trial_seed and return (frames, n_contact_steps).
 
     Recovers trial_seed from the last token of episode_id (7-digit zero-padded).
-    Re-runs _build_traj_and_init + _make_pid with the same seed, then steps
-    mj_step for the full duration, capturing frames at dataset rate / frame_stride.
+    For stress episodes (episode['stress'] == True), dispatches to
+    stress_trajectories.build_stress_traj instead of _build_traj_and_init.
     """
     ep_id      = episode['episode_id']
     scene      = episode.get('scene',      'unknown')
@@ -239,16 +239,31 @@ def physics_replay_frames(model, data, renderer, episode, res, frame_stride=3):
 
     # Seed is always the last _-separated token of episode_id (7-digit zero-padded)
     trial_seed = int(ep_id.split('_')[-1])
-
     rng = np.random.default_rng(trial_seed)
-    traj_fn, init_pos, dur = _build_traj_and_init(scene, homotopy, rng)
+
+    if episode.get('stress', False):
+        # E5 U4: stress episodes rebuild trajectory via stress_trajectories dispatcher
+        from uav_expert_data_collect.stress_trajectories import build_stress_traj
+        from uav_env_test.flight_controller import CascadedPID
+        stress_case = episode.get('stress_case', homotopy)
+        traj_fn, init_pos, dur, _ = build_stress_traj(stress_case, scene, rng)
+        # Rebuild PID with stored gain scales (gain_extreme variant)
+        kp_scale = episode.get('metadata', {}).get('kp_scale', 1.0)
+        kd_scale = episode.get('metadata', {}).get('kd_scale', 1.0)
+        if kp_scale != 1.0 or kd_scale != 1.0:
+            pid = CascadedPID(model)
+            pid.Kp_pos = pid.Kp_pos * kp_scale
+            pid.Kd_pos = pid.Kd_pos * kd_scale
+        else:
+            pid = _make_pid(model, 'pid_default')
+    else:
+        traj_fn, init_pos, dur = _build_traj_and_init(scene, homotopy, rng)
+        pid = _make_pid(model, controller)
 
     data.qpos[:3]  = init_pos
     data.qpos[3:7] = [1.0, 0.0, 0.0, 0.0]
     data.qvel[:]   = 0.0
     mujoco.mj_forward(model, data)
-
-    pid    = _make_pid(model, controller)
     dt     = float(model.opt.timestep)
     n_step = int(round(dur / dt))
 

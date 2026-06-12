@@ -1723,3 +1723,47 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Validation Complete**: Successfully concluded Gen11 Epoch 5 visual validation, securing 1,952 episodes for the E4 dataset. The generated trajectory (WS-B) and physics (WS-D) GIFs confirm that drone trajectories perfectly respect scene geometry, with zero obstacle clipping/ghosting. The nose-mounted FPV camera fix was also verified correct.
 2. **Stop-and-Go Trajectory Characteristics Observed**: Visual audits flagged a distinct "stop-and-go" behavior in the data: the drone decelerates to zero at every waypoint and pauses. This is due to the 1.0s hover pauses inserted to stabilize the PID controller, and the cosine velocity profile that forces zero velocity at segment endpoints. 
 3. **Policy Implications**: This intentionally conservative behavior means that any downstream FM-PCC model trained on this dataset will inherit the stop-and-go flight style. Smooth, continuous flight remains out of scope for the current dataset, moving instead as an open question for Epoch 6+ generation.
+
+***
+
+## Gen11 Epoch 4 "U9": Smooth Trajectories & Stop-and-Go Elimination (June 12, 2026)
+
+**Keywords**: Gen11, Epoch 4, U9, blended_path, stop-and-go, circular fillet, peak lateral acceleration.
+
+1. **Stop-and-Go Elimination**: Implemented a new `blended_path` primitive in `uav_env_test/trajectories.py` that replaces piecewise linear segments with a globally smoothed cosine speed profile. Interior corners are now cut using circular fillets, completely eliminating the zero-velocity hover pauses that plagued previous Epoch 4 datasets.
+2. **Path Updates**: Migrated `pillar_path` and `s_curve_scene_path` to use the blended chain. Verified using a new numerical verifier (`verify_blends.py`) that strict geometric clearances (e.g. 0.43m for pillars, 0.31m for walls) are flawlessly maintained without requiring the MuJoCo runtime.
+3. **PID Saturation Fix (Fix 1)**: Detected that tight corner fillets in mixed-homotopy pillar scenes (LRL/RLR) demanded up to 8.6 m/s² lateral acceleration, exceeding the cascaded PID limits and causing a >45% rejection rate. Increased `BLEND_RADIUS` from 0.30 m to 0.45 m, reducing peak acceleration to a manageable 5.7 m/s² and restoring >70% acceptance.
+
+***
+
+## Gen11 Epoch 5 "U2" Fix 2: Visual Rendering Dimension Extraction & Selective Inspection (June 12, 2026)
+
+**Keywords**: Gen11, Epoch 5, U2 Fix 2, visual data collection, 12D schema, selective inspection, per-homotopy.
+
+1. **Dimension Extraction Patch**: Fixed visual rendering dimension extraction for U9 compatibility, enabling visual data collection scripts (`collect_camera_images.py`, `generate_trajectory_gifs.py`) to gracefully run on the new 12D schema (3D act, 9D obs) without relying on brittle hardcoded slicers.
+2. **Selective Inspection Strategy**: Introduced a `--per-homotopy N` flag to GIF generation scripts. This drastically reduces diagnostic overhead by rendering only a representative sample (e.g., 1 GIF per homotopy bucket) rather than thousands of episodes, cutting inspection time from hours to seconds.
+
+***
+
+## Gen9 Epoch 2 "U4": Single Camera Avoiding Pipeline All-Bugs Fix Pass (June 12, 2026)
+
+**Keywords**: Gen9, Epoch 2, U4, RGB/BGR, 96x96 render, EMA weights, episode-level split.
+
+1. **RGB Pipeline Parity (B1)**: Removed a redundant `[:, :, ::-1]` BGR-to-RGB flip in both DPCC and FM evaluation scripts, ensuring that visual evaluations receive native RGB frames perfectly matching the training distribution.
+2. **Render Resolution Match (B2)**: Upgraded evaluation cameras to render directly at `96x96` natively, removing a `1024x1024` intermediate step and avoiding `INTER_AREA` downsampling artifacts.
+3. **EMA Weights & Config Wiring (B3, B6, B10)**: 
+   - `load_diffusion_with_override` now correctly returns EMA-smoothed weights (`ema_model`) instead of raw weights for enhanced evaluation performance.
+   - Connected `args.mpc_batch_size` directly to the `VisualAgent` constructor, removing hardcoded defaults. 
+   - Ported the PKL config mismatch warning from DPCC into the FM eval script.
+4. **Data Leakage & Training Stability (B7, B8, B9)**: 
+   - Implemented `episode_split()` in `sequence.py` to enforce strict episode-level train/test splits, preventing window-leakage where near-duplicate frames could appear in both sets.
+   - Enforced an explicit `self.save(self.step)` at the end of training loops to prevent discarding the final 20k steps of progress.
+   - Patched a state-leak bug where validation loops left the model in `.eval()` mode, silently degrading subsequent training steps; the model is now explicitly restored to `.train()` mode.
+
+***
+
+## Documentation Maintenance: Legacy Workspace Cleanup (June 12, 2026)
+
+**Keywords**: Gen11, documentation reorganization, init_0.
+
+1. **Workspace Decluttering**: Performed a mass reorganization of Gen11 logs and documentation. Moved numerous legacy Epoch 4 and Epoch 5 changelogs, execution plans, and methodology files into `init_0` subdirectories to declutter the active workspace. Relocated `U8_Stop_and_Go` to `U8X_Stop_and_Go_Ideas` to reflect its conceptual nature.

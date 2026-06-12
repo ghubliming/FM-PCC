@@ -92,7 +92,7 @@ def discover_episodes(data_dir, scene_filter=None):
         scene_path = os.path.join(data_dir, scene)
         if not os.path.isdir(scene_path):
             continue
-        if scene in ('images', 'gifs'):
+        if scene in ('images', 'gifs', 'gifs_physics'):
             continue
         if scene_filter is not None and scene != scene_filter:
             continue

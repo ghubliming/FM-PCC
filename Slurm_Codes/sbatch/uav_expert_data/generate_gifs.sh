@@ -27,6 +27,7 @@
 #   $3 = "mp4"           (pass "mp4" to also generate MP4 files; default: GIF only)
 #   $4 = frame_stride    (default: 1 — every frame; use 3 for smaller GIFs)
 #   $5 = per_homotopy    (default: all — pass 1 for one GIF per homotopy bucket, 9 total)
+#   $6 = data_dir        (default: logs/uav_expert_data — pass stress root for E5 U4)
 
 set -e
 
@@ -49,6 +50,7 @@ SCENE="${2:-}"
 MP4_FLAG="${3:-}"
 STRIDE="${4:-1}"
 PER_HOMO="${5:-}"
+DATA_DIR="${6:-}"
 
 # Resolve repo root.
 MARKER="d3il/environments/d3il/models/mj/robot/quadrotor/scenes"
@@ -84,7 +86,7 @@ fi
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
 echo "[ sbatch ] Python: $(which python)"
-echo "[ sbatch ] MaxEp: ${MAX_EP:-all}  Scene: ${SCENE:-all}  MP4: ${MP4_FLAG:-no}  Stride: ${STRIDE}  PerHomo: ${PER_HOMO:-all}"
+echo "[ sbatch ] MaxEp: ${MAX_EP:-all}  Scene: ${SCENE:-all}  MP4: ${MP4_FLAG:-no}  Stride: ${STRIDE}  PerHomo: ${PER_HOMO:-all}  DataDir: ${DATA_DIR:-default}"
 
 # Build args
 SCRIPT_ARGS="--frame-stride $STRIDE"
@@ -99,6 +101,9 @@ if [ "$MP4_FLAG" = "mp4" ]; then
 fi
 if [ -n "$PER_HOMO" ]; then
     SCRIPT_ARGS="$SCRIPT_ARGS --per-homotopy $PER_HOMO"
+fi
+if [ -n "$DATA_DIR" ]; then
+    SCRIPT_ARGS="$SCRIPT_ARGS --data-dir $DATA_DIR"
 fi
 
 python uav_expert_data_collect/generate_trajectory_gifs.py $SCRIPT_ARGS
