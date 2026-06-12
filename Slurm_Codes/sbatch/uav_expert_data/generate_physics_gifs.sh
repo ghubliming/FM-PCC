@@ -27,6 +27,7 @@
 #   $2 = scene           (default: all — leave blank for all scenes)
 #   $3 = "mp4"           (pass "mp4" to also save MP4 files; default: GIF only)
 #   $4 = frame_stride    (default: 3 — every 3rd 33-Hz frame; use 1 for full rate)
+#   $5 = per_homotopy    (default: all — pass 1 for one GIF per homotopy bucket, 9 total)
 
 set -e
 
@@ -49,6 +50,7 @@ MAX_EP="${1:-}"
 SCENE="${2:-}"
 MP4_FLAG="${3:-}"
 STRIDE="${4:-3}"
+PER_HOMO="${5:-}"
 
 # Resolve repo root.
 MARKER="d3il/environments/d3il/models/mj/robot/quadrotor/scenes"
@@ -87,7 +89,7 @@ fi
 source activate FMPCC 2>/dev/null || conda activate FMPCC
 
 echo "[ sbatch ] Python: $(which python)"
-echo "[ sbatch ] MaxEp: ${MAX_EP:-all}  Scene: ${SCENE:-all}  MP4: ${MP4_FLAG:-no}  Stride: ${STRIDE}"
+echo "[ sbatch ] MaxEp: ${MAX_EP:-all}  Scene: ${SCENE:-all}  MP4: ${MP4_FLAG:-no}  Stride: ${STRIDE}  PerHomo: ${PER_HOMO:-all}"
 echo "[ sbatch ] EGL device: $MUJOCO_EGL_DEVICE_ID"
 
 # [DEBUG] EGL device-pinning check — uncomment once, submit, verify output, re-comment.
@@ -109,6 +111,9 @@ if [ -n "$SCENE" ]; then
 fi
 if [ "$MP4_FLAG" = "mp4" ]; then
     SCRIPT_ARGS="$SCRIPT_ARGS --mp4"
+fi
+if [ -n "$PER_HOMO" ]; then
+    SCRIPT_ARGS="$SCRIPT_ARGS --per-homotopy $PER_HOMO"
 fi
 
 python uav_expert_data_collect/generate_physics_gifs.py $SCRIPT_ARGS

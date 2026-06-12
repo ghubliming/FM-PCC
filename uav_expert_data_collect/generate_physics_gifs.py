@@ -71,6 +71,9 @@ def parse_args():
                    help='Process only this scene (default: all)')
     p.add_argument('--max-episodes', type=int, default=None,
                    help='Cap total episodes (for smoke tests)')
+    p.add_argument('--per-homotopy', type=int, default=None,
+                   help='Keep at most N episodes per (scene, homotopy) bucket. '
+                        'Use 1 for minimum-coverage inspection (9 GIFs total across all scenes).')
     p.add_argument('--fps',          type=int, default=10,
                    help='GIF framerate. Default: 10')
     p.add_argument('--frame-stride', type=int, default=3,
@@ -301,6 +304,13 @@ def main():
     if not episodes:
         print(f'[ phys-gif ] No episodes found in {args.data_dir}')
         sys.exit(1)
+
+    if args.per_homotopy is not None:
+        from collections import defaultdict
+        buckets = defaultdict(list)
+        for ep in episodes:
+            buckets[(ep[0], ep[1])].append(ep)
+        episodes = [ep for eps in buckets.values() for ep in eps[:args.per_homotopy]]
 
     if args.max_episodes is not None:
         episodes = episodes[:args.max_episodes]
