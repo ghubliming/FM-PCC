@@ -141,6 +141,13 @@ class ParityAvoidingDataset(torch.utils.data.Dataset):
                 indices.append((ep, start, start + self.horizon))
         return np.array(indices, dtype=np.int64)
 
+    def episode_split(self, train_fraction):
+        """Episode-level train/test split (no window leakage across the boundary)."""
+        n_train_eps = max(1, int(train_fraction * self.n_episodes))
+        train_idx = [i for i, (ep, _, _) in enumerate(self.indices) if ep < n_train_eps]
+        test_idx  = [i for i, (ep, _, _) in enumerate(self.indices) if ep >= n_train_eps]
+        return train_idx, test_idx
+
     @staticmethod
     def _load_images(data_dir, cam_name, file_name):
         """Load all frames for one camera / one episode, sorted by frame index."""

@@ -176,8 +176,8 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
         epoch = utils.get_latest_epoch(loadpath)
     trainer.load(epoch)
     losses = utils.load_losses(*loadpath, 'losses.pkl')
-    return utils.DiffusionExperiment(dataset, trainer.model.model,
-                                     trainer.model, trainer, epoch, losses)
+    return utils.DiffusionExperiment(dataset, trainer.ema_model.model,
+                                     trainer.ema_model, trainer, epoch, losses)
 
 
 # ── Main eval loop ────────────────────────────────────────────────────────────
@@ -343,12 +343,9 @@ for exp in exps:
                         device=args.device, solver='scipy')
                     projector = None if variant == 'diffuser' else projector
 
-                    trajectory_selection = 'random'
-                    if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
-                    if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
-
                     agent = VisualAgent(diffusion, obs_normalizer, act_normalizer,
-                                        projector=projector, device=args.device)
+                                        projector=projector, device=args.device,
+                                        plan_batch_size=args.mpc_batch_size)
 
                     fig, ax = plt.subplots(
                         min(n_trials, plot_how_many), 6,
@@ -420,10 +417,8 @@ for exp in exps:
                             # Swap C — visual predict
                             start = time.time()
                             if 'avoiding' in exp:
-                                bp_img_raw = env.bp_cam.get_image(depth=False)
-                                bp_img_raw = cv2.resize(bp_img_raw, (_IMG_W, _IMG_H),
-                                                        interpolation=cv2.INTER_AREA)
-                                bp_image = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
+                                bp_img_raw = env.bp_cam.get_image(width=_IMG_W, height=_IMG_H, depth=False)
+                                bp_image = bp_img_raw.transpose((2, 0, 1)).copy() / 255.
                                 c_xy     = env.robot.current_c_pos[:2].copy()
                                 action, traj_plan = agent.predict(bp_image, obs[:2].copy(), c_xy)
                             avg_time[i] += time.time() - start

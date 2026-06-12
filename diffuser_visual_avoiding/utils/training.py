@@ -71,9 +71,14 @@ class Trainer(object):
                 self.dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
             ))
         else:
-            n_train = int(train_test_split * len(self.dataset))
-            n_test = len(self.dataset) - n_train
-            train_dataset, test_dataset = torch.utils.data.random_split(self.dataset, [n_train, n_test])
+            if hasattr(self.dataset, 'episode_split'):
+                train_idx, test_idx = self.dataset.episode_split(train_test_split)
+                train_dataset = torch.utils.data.Subset(self.dataset, train_idx)
+                test_dataset  = torch.utils.data.Subset(self.dataset, test_idx)
+            else:
+                n_train = int(train_test_split * len(self.dataset))
+                n_test  = len(self.dataset) - n_train
+                train_dataset, test_dataset = torch.utils.data.random_split(self.dataset, [n_train, n_test])
             self.train_dataloader = cycle(torch.utils.data.DataLoader(
                 train_dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
             ))
@@ -195,8 +200,10 @@ class Trainer(object):
             remaining_steps -= steps_this_epoch
             epoch += 1
 
+        self.save(self.step)  # B8: persist final weights (last periodic save is at step 80000)
+
     def test(self, n_test=100):
-        self.model.eval()   # Set the model to evaluation mode
+        self.model.eval()
 
         test_loss = 0
         test_a0_loss = 0
@@ -206,13 +213,14 @@ class Trainer(object):
                 batch = batch_to_device(batch, device=self.device)
                 loss, infos = self.model.loss(*batch)
                 loss /= self.gradient_accumulate_every
-            
+
                 test_loss += loss.item()
                 test_a0_loss += infos['a0_loss'].item() if 'a0_loss' in infos else 0
 
             test_loss /= n_test
             test_a0_loss /= n_test
 
+        self.model.train()  # B9: restore train mode after validation pass
         return test_loss, test_a0_loss
 
     def save(self, epoch):
