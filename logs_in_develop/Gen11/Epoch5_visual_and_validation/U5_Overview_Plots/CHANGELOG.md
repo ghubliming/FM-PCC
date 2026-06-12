@@ -95,7 +95,7 @@ stress case name and gate verdicts. No special code path needed.
 
 ## C2 — `generate_overview_plots.sh`
 
-CPU-only (`MPLBACKEND=agg`, `MUJOCO_GL=disabled`, partition `cpu-1-student`).
+CPU-only (`MPLBACKEND=agg`, `MUJOCO_GL=disabled`, partition `gpu-1-student`, no `--gres`).
 1-hour time limit (scene-summary of 1975 episodes ≈ 2 min).
 
 | `$1` | `$2` | `$3` | `$4` | `$5` |

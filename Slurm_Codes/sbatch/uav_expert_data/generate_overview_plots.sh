@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
 #SBATCH --time=01:00:00
-#SBATCH --partition=cpu-1-student
+#SBATCH --partition=gpu-1-student
 #
 # E5 U5 — 2-D overhead trajectory overview plots.
 # CPU-only: pure matplotlib, no MuJoCo, no GPU.
