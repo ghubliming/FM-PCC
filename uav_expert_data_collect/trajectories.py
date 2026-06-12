@@ -25,8 +25,11 @@ from uav_env_test.trajectories import (  # noqa: F401  (re-exported for collecto
 # analysis, Option A).  Max corner deviation r·(sec(β/2)−1) ≤ 0.13 m at 90°;
 # verified clearances at every blend region (see U9 CHANGELOG):
 #   s_curve Z-corners: ≥ 0.55 m to nearest wall corner (rotor reach 0.31 m)
-#   pillar corners:    blends stay ≥ 0.33 m in x from pillar axes (reach 0.26 m)
-BLEND_RADIUS = 0.30
+#   pillar corners:    blends stay in open space ≥ 0.5 m from every pillar axis
+# Fix_1: raised 0.30 → 0.45 m — LRL/RLR mixed homotopies hit 45% rejection at
+# r=0.30 (peak fillet accel 8.6 m/s² saturated the PID).  At r=0.45 peak accel
+# drops to ~5.7 m/s² (scales 1/r); verify_blends.py confirms 0.43 m gate holds.
+BLEND_RADIUS = 0.45
 
 # ── Pillar scene geometry ─────────────────────────────────────────────────────
 # 6 cylinders: column A at y=-0.6, column B at y=+0.6, x ∈ {-2, 0, +2}
