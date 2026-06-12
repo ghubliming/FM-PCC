@@ -17,8 +17,16 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from uav_env_test.trajectories import (  # noqa: F401  (re-exported for collectors)
     hover_at, step_to, circle,
-    traverse_line, s_curve_path, weave,
+    traverse_line, s_curve_path, weave, blended_path,
 )
+
+# ── U9 smooth trajectories ────────────────────────────────────────────────────
+# Corner-blend radius for pillar_path / s_curve_scene_path (U8 Stop_and_Go
+# analysis, Option A).  Max corner deviation r·(sec(β/2)−1) ≤ 0.13 m at 90°;
+# verified clearances at every blend region (see U9 CHANGELOG):
+#   s_curve Z-corners: ≥ 0.55 m to nearest wall corner (rotor reach 0.31 m)
+#   pillar corners:    blends stay ≥ 0.33 m in x from pillar axes (reach 0.26 m)
+BLEND_RADIUS = 0.30
 
 # ── Pillar scene geometry ─────────────────────────────────────────────────────
 # 6 cylinders: column A at y=-0.6, column B at y=+0.6, x ∈ {-2, 0, +2}
@@ -74,6 +82,15 @@ def pillar_path(homotopy_seq, altitude, duration,
     Time allocation: proportional to Euclidean segment length (not x-distance),
     so diagonal inter-channel segments get proportionally more time.
 
+    U9: the per-segment traverse_line chain (v=0 at all 6 interior waypoints —
+    the stop-and-go behaviour, see U8 analysis) is replaced by blended_path:
+    same 8-waypoint skeleton, circular fillets of radius ≤ BLEND_RADIUS at each
+    non-collinear corner, one global cosine speed profile (v=0 only at episode
+    start/end).  Straight portions near the pillars — where the 8 cm minimum
+    clearance lives — are untouched; fillets only cut corners in open space
+    ≥ 0.5 m in x from every pillar.  Peak speed π·L/(2T) is unchanged from the
+    length-proportional chain.
+
     homotopy_seq : 3-element list, each 'L' or 'R' (one per pillar pair).
     """
     assert len(homotopy_seq) == 3, 'Need exactly 3 homotopy labels (one per pillar pair)'
@@ -84,25 +101,9 @@ def pillar_path(homotopy_seq, altitude, duration,
 
     xs = [x_start, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, x_end]
     ys = [0.0, y_ch[0], y_ch[0], y_ch[1], y_ch[1], y_ch[2], y_ch[2], 0.0]
-    n  = len(xs) - 1  # 7 segments
+    wps = [(x, y, z) for x, y in zip(xs, ys)]
 
-    dists    = [np.sqrt((xs[i+1]-xs[i])**2 + (ys[i+1]-ys[i])**2) for i in range(n)]
-    total_d  = sum(dists)
-    seg_durs = [T * d / total_d for d in dists]
-    t_starts = [sum(seg_durs[:i]) for i in range(n)]
-
-    segs = [
-        traverse_line((xs[i], ys[i], z), (xs[i+1], ys[i+1], z), seg_durs[i], yaw)
-        for i in range(n)
-    ]
-
-    def traj(t):
-        for i in range(n - 1, -1, -1):
-            if t >= t_starts[i]:
-                return segs[i](t - t_starts[i])
-        return segs[0](t)
-
-    return traj
+    return blended_path(wps, BLEND_RADIUS, T, yaw)
 
 
 def corridor_path(homotopy, altitude, duration,
@@ -140,71 +141,31 @@ def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
         All legs parallel to the nearest wall at every pinch point →
         tracking lag is along-path and cannot reduce wall clearance.
 
-    Segment layout (7 phases):
-        Seg A:   (-3.2, y1, z) → (-0.5, y1, z)   2.7 m  pure-x
-        Hov 1:   hover at (-0.5, y1, z)           1.0 s  stabilise
-        Leg B1:  (-0.5, y1, z) → ( 0.0, y1, z)   0.5 m  pure-x, exit corridor 1
-        Leg B2:  ( 0.0, y1, z) → ( 0.0, y2, z)   1.6 m  pure-y, cross on centerline
-        Leg B3:  ( 0.0, y2, z) → (+0.5, y2, z)   0.5 m  pure-x, enter corridor 2
-        Hov 2:   hover at (+0.5, y2, z)           1.0 s  stabilise
-        Seg C:   (+0.5, y2, z) → (+3.2, y2, z)   2.7 m  pure-x
+    U9 — same Z-route skeleton, smooth (U8 Stop_and_Go, Option A):
+        The 7-phase chain (v=0 at every joint + two 1.0 s hovers) is replaced
+        by blended_path over the SAME waypoints.  The (∓0.5, y, z) breakpoints
+        are collinear with their neighbours → no fillet there; the two 90°
+        Z-corners at (0, y1) and (0, y2) get 0.3 m fillets.
 
-    Time allocation: proportional to Euclidean segment distance (no weighting).
+        Fillet clearance (the corner the hovers used to protect is removed
+        rather than paused at): each fillet's closest point to the nearest
+        gap-side wall corner (A=(−0.5,−0.25), B=(+0.5,+0.25)) is ≥ 0.55 m —
+        well above the 0.31 m rotor reach.  The hovers are dropped entirely;
+        v > 0 throughout the episode.
+
+    Waypoint skeleton (unchanged from U7):
+        (-3.2, y1, z) → (-0.5, y1, z) → (0, y1, z) → (0, y2, z)
+                      → (+0.5, y2, z) → (+3.2, y2, z)
     """
     z  = float(altitude)
     T  = float(duration)
     y1 = -0.8 + y_jitter
     y2 =  0.8 + y_jitter
 
-    T_HOVER = 1.0
-    T_move  = T - 2.0 * T_HOVER
+    wps = [(-3.2, y1, z), (-0.5, y1, z), (0.0, y1, z),
+           ( 0.0, y2, z), ( 0.5, y2, z), (3.2, y2, z)]
 
-    d_a  = 2.7
-    d_b1 = 0.5
-    d_b2 = float(abs(y2 - y1))   # ≈ 1.6 m when jitter=0
-    d_b3 = 0.5
-    d_c  = 2.7
-    d_total = d_a + d_b1 + d_b2 + d_b3 + d_c
-
-    t_a  = T_move * d_a  / d_total
-    t_b1 = T_move * d_b1 / d_total
-    t_b2 = T_move * d_b2 / d_total
-    t_b3 = T_move * d_b3 / d_total
-    t_c  = T_move * d_c  / d_total
-
-    seg_a  = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a,  yaw)
-    hov_1  = hover_at((-0.5, y1, z), yaw)
-    leg_b1 = traverse_line((-0.5, y1, z), ( 0.0, y1, z), t_b1, yaw)
-    leg_b2 = traverse_line(( 0.0, y1, z), ( 0.0, y2, z), t_b2, yaw)
-    leg_b3 = traverse_line(( 0.0, y2, z), ( 0.5, y2, z), t_b3, yaw)
-    hov_2  = hover_at(( 0.5, y2, z), yaw)
-    seg_c  = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c,  yaw)
-
-    # Cumulative phase-end times
-    p1 = t_a
-    p2 = p1 + T_HOVER
-    p3 = p2 + t_b1
-    p4 = p3 + t_b2
-    p5 = p4 + t_b3
-    p6 = p5 + T_HOVER
-
-    def traj(t):
-        if t < p1:
-            return seg_a(t)
-        elif t < p2:
-            return hov_1(t)
-        elif t < p3:
-            return leg_b1(t - p2)
-        elif t < p4:
-            return leg_b2(t - p3)
-        elif t < p5:
-            return leg_b3(t - p4)
-        elif t < p6:
-            return hov_2(t)
-        else:
-            return seg_c(t - p6)
-
-    return traj
+    return blended_path(wps, BLEND_RADIUS, T, yaw)
 
 
 def empty_path(p_start, p_end, duration, yaw=0.0):
