@@ -1767,3 +1767,31 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 **Keywords**: Gen11, documentation reorganization, init_0.
 
 1. **Workspace Decluttering**: Performed a mass reorganization of Gen11 logs and documentation. Moved numerous legacy Epoch 4 and Epoch 5 changelogs, execution plans, and methodology files into `init_0` subdirectories to declutter the active workspace. Relocated `U8_Stop_and_Go` to `U8X_Stop_and_Go_Ideas` to reflect its conceptual nature.
+
+***
+
+## Gen9 Epoch 2 "U3": Adversarial Codebase Audit (June 12, 2026)
+
+**Keywords**: Gen9, adversarial audit, bug confirmation, documentation update.
+
+1. **Bug Audits Confirmed**: Completed an exhaustive adversarial audit on the avoiding pipeline against the codebase (`U3_audit_Fable_ADVERSARIAL_RESPONSE.md`), confirming 8 out of 10 bug claims as genuine and 2 as partially correct.
+2. **Key Findings Authenticated**: Validated a critical RGB/BGR channel swap in the evaluation scripts causing a domain gap, a render resolution mismatch (96x96 vs 1024x1024), and overlapping window data leakage during train/test splits. Corrective actions were formulated and subsequently implemented in the Gen9 U4 Fix Pass.
+
+***
+
+## Gen11 Epoch 4 "U10" & Epoch 5 "U4": Stress-Test Collection and Rendering (June 12, 2026)
+
+**Keywords**: Gen11, Epoch 4 U10, Epoch 5 U4, stress test, edge cases, physics replay.
+
+1. **Stress-Test Trajectory Generators (E4 U10)**: Implemented 8 stress cases (e.g., `extreme_speed`, `wall_crossing`, `floor_dive`, `gain_extreme`) via a new `stress_trajectories.py` builder to intentionally push the UAV tracking pipeline into failure modes. Created `collect_stress.py` to drive this collection, bypassing contact rejection to deliberately save failure/collision episodes along with stress metadata.
+2. **Stress Rendering Dispatcher (E5 U4)**: Modified `generate_physics_gifs.py` to support physics replay of stress episodes by explicitly rebuilding trajectories from the stress case functions and recovering modified PID controller gains (`kp_scale`, `kd_scale`) from metadata. This ensures exact dynamic reproduction of the failure scenarios.
+
+***
+
+## Gen11 Epoch 5 "U5": 2-D Overview Plotting Tool (June 12, 2026)
+
+**Keywords**: Gen11, Epoch 5 U5, 2D overview plots, matplotlib, headless rendering.
+
+1. **Standalone 2D Plotter**: Added `generate_overview_plots.py`, a pure matplotlib, CPU-only tool that renders static top-down (XY-plane) trajectory paths without needing MuJoCo or GPU hardware.
+2. **Visualization Modes**: The tool supports a `summary` mode mapping dense trajectory bundles into color-coded heatmaps over scene geometry, and a `per-episode` mode comparing the time-gradient commanded path (`p_des`) against the actual flown path (`p`).
+3. **Slurm Execution**: Integrated `generate_overview_plots.sh` for headless cluster execution and patched a typo across E5 sbatch scripts to correctly use the `gpu-1-student` partition instead of `cpu-1-student`.

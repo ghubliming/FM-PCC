@@ -203,7 +203,30 @@ class Trainer(object):
         self.save(self.step)  # B8: persist final weights (last periodic save is at step 80000)
 
     def test(self, n_test=100):
-        self.model.eval()
+        # Fix1 (U4/Fix_1_revert_part): score self.ema_model instead of self.model (raw).
+        #
+        # What DPCC originally did (the "purity" path):
+        #   self.model.eval()
+        #   loss, infos = self.model.loss(*batch)   # raw weights
+        #   self.model.train()
+        # That was internally self-consistent: state_best selected on raw loss, eval also
+        # deployed raw weights (serialization.py:75 in /workspaces/dpcc).
+        #
+        # What U4 B6 broke: eval was updated to trainer.ema_model (eval_visual_avoiding_dpcc.py:179)
+        # but this function still scored self.model. Result: state_best chosen on raw-model
+        # loss, but at deploy time EMA weights run from that step. Raw-optimal ≠ EMA-optimal.
+        # This is a self-inflicted selection/deployment mismatch — not a paper issue, our bug.
+        #
+        # Fix1 restores self-consistency: score EMA here so the checkpoint chosen as 'best'
+        # is optimal for the same network that eval actually deploys. Needs one retrain to
+        # take effect (state_best on disk was selected under the raw criterion; re-training
+        # with this fix generates a new state_best selected on EMA loss).
+        #
+        # Revert path (DPCC purity, if a reviewer demands it):
+        #   Replace eval_model below with self.model AND revert B6 in the eval script to
+        #   return trainer.model. Never mix: one without the other re-creates the mismatch.
+        eval_model = self.ema_model  # must mirror eval's trainer.ema_model (eval_visual_avoiding_dpcc.py:179)
+        eval_model.eval()
 
         test_loss = 0
         test_a0_loss = 0
@@ -211,7 +234,7 @@ class Trainer(object):
             for step in range(n_test):
                 batch = next(self.test_dataloader)
                 batch = batch_to_device(batch, device=self.device)
-                loss, infos = self.model.loss(*batch)
+                loss, infos = eval_model.loss(*batch)
                 loss /= self.gradient_accumulate_every
 
                 test_loss += loss.item()
@@ -220,7 +243,9 @@ class Trainer(object):
             test_loss /= n_test
             test_a0_loss /= n_test
 
-        self.model.train()  # B9: restore train mode after validation pass
+        # self.model.train() removed (was B9 band-aid for the raw-model path).
+        # self.model is never switched to .eval() above, so no restore is needed.
+        # DPCC had no restore either; B9 was our safety addition that is now irrelevant.
         return test_loss, test_a0_loss
 
     def save(self, epoch):
