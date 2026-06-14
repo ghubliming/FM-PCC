@@ -460,7 +460,17 @@ base = {
         'transition_epochs': 0,
         'loss_type': 'l2',
         'predict_epsilon': True,
-        
+
+        ## U4 imfv2 — training objective selector (see logs_in_develop/Gen3v4_imf/U4)
+        # 'fm_equivalent' (default): legacy finite-diff target = FM baseline arm.
+        # 'meanflow_jvp'           : real MeanFlow-Identity (JVP) objective. For an imfv2 run,
+        #   set this to 'meanflow_jvp' AND drop 'ode_inference_steps_v3' to 1–2 (few-step).
+        'imf_objective': 'fm_equivalent',
+        'meanflow_r_equals_t_frac': 0.25,
+        'meanflow_adaptive_p': 0.5,
+        'meanflow_adaptive_c': 1e-3,
+        'meanflow_aux_weight': 0.0,
+
         ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',

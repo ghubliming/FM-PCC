@@ -111,6 +111,39 @@ eval) is the **only wrong configuration** — never ship numbers from it.
 
 ---
 
+## WARNING — Which fixes are material vs cosmetic
+
+Not all B-series fixes move numbers equally. Before reverting or reporting results, know
+which levers actually matter:
+
+| Fix | Real numbers impact? | When active | Direction if reverted |
+|-----|---------------------|-------------|----------------------|
+| **B6** (EMA eval) | **BIG — active now** | Existing checkpoints | Numbers drop: raw weights are noisier than EMA |
+| **B7** (episode split) | **Significant** | Next retrain only | Leaky window split → optimistic `state_best` selection (near-duplicate train/test windows) |
+| **Fix1** (EMA selection) | **Significant** | Next retrain only | `state_best` chosen at wrong step (raw-optimal ≠ EMA-optimal) |
+| **B8** (terminal save) | **Zero** with `diffusion_epoch:'best'` | Next retrain, but irrelevant | Only matters if someone evals `'latest'` |
+| **B9** (eval-mode restore) | **Zero** | Removed by Fix1 | GroupNorm + manual CFG mask: no layer responds to `.eval()` mode |
+
+### What this means in practice
+
+- **B6 is the sharpest single lever.** EMA smooths gradient noise accumulated over 100k
+  steps. The gap between raw and EMA at deploy time is typically the largest single-source
+  quality difference. If a revert drops success rate noticeably, B6 is the likely cause.
+
+- **Fix1 + B7 together determine which checkpoint wins.** B7 makes the test-loss signal
+  honest (no near-duplicate leakage). Fix1 makes the selection criterion match the deployed
+  network. Both must be active for `state_best` to be meaningful. They only take effect on
+  the next retrain — existing checkpoints carry neither guarantee.
+
+- **B8 and B9 are bookkeeping.** Reverting or keeping them changes zero numbers in the
+  standard eval workflow. Do not spend retrain budget on these.
+
+- **Do not report numbers from the pre-Fix1 state** (U4 B6 active, Fix1 not yet applied):
+  that is the only configuration where selection and deployment are genuinely mismatched.
+  Numbers from that state are neither DPCC-faithful nor Fix1-clean.
+
+---
+
 ## What still needs to happen
 
 1. **Retrain** both `diffuser_visual_avoiding` and `fm_visual_avoiding` with this fix in

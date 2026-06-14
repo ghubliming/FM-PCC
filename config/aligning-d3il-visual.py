@@ -714,6 +714,15 @@ base['imf_visual_aligning'] = {
     'u_loss_weight':  1.0,   # weight on main u-head (mean-flow target)
     'v_loss_weight':  0.1,   # weight on aux v-head (instantaneous velocity)
     'loss_schedule':  'balanced',
+    # U3/imfv2 — training objective selector (see logs_in_develop/Gen8/Epoch_1/U3).
+    # 'fm_equivalent' (default) = legacy finite-diff = FM baseline arm.
+    # 'meanflow_jvp'            = real MeanFlow-Identity (JVP). For an imfv2 run, set this to
+    #   'meanflow_jvp' AND drop the inference steps to 1–2 (few-step); re-tune the projector.
+    'imf_objective': 'fm_equivalent',
+    'meanflow_r_equals_t_frac': 0.25,
+    'meanflow_adaptive_p': 0.5,
+    'meanflow_adaptive_c': 1e-3,
+    'meanflow_aux_weight': 0.0,
     # iMF guardrails against E4 spike (Gen3v4 lesson):
     # lower lr (2e-4 already set via fm_visual_aligning inherit) + smaller action_weight
     'action_weight': 1,

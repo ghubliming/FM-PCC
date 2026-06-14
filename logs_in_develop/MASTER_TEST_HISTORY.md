@@ -1795,3 +1795,41 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Standalone 2D Plotter**: Added `generate_overview_plots.py`, a pure matplotlib, CPU-only tool that renders static top-down (XY-plane) trajectory paths without needing MuJoCo or GPU hardware.
 2. **Visualization Modes**: The tool supports a `summary` mode mapping dense trajectory bundles into color-coded heatmaps over scene geometry, and a `per-episode` mode comparing the time-gradient commanded path (`p_des`) against the actual flown path (`p`).
 3. **Slurm Execution**: Integrated `generate_overview_plots.sh` for headless cluster execution and patched a typo across E5 sbatch scripts to correctly use the `gpu-1-student` partition instead of `cpu-1-student`.
+
+***
+
+## Gen9 Epoch 2 "U4" Fix 1: EMA Selection / Deployment Consistency (June 13, 2026)
+
+**Keywords**: Gen9, EMA selection, deployment consistency, DPCC divergence.
+
+1. **Selection/Deployment Mismatch Fix**: Addressed a critical bug where `test()` was scoring the raw `self.model` weights while evaluation deployed `trainer.ema_model`. Modified `diffuser_visual_avoiding/utils/training.py` and `fm_visual_avoiding/utils/training.py` to correctly score the `ema_model` during validation, ensuring `state_best` is selected on the exact network that will be deployed in evaluation.
+2. **DPCC Comparability Ledger**: Authored `DPCC_DIVERGENCE_AND_COMPARABILITY.md` to document how fixes like B6 (EMA eval), B7 (episode split), B8 (terminal save), and B9 (eval mode) diverge from the published DPCC code. Verified that the critical Gen9 comparison (visual-FM vs visual-DPCC) remains fair (common-mode fixes), and the `diffuser/` state baseline remains untouched and paper-faithful.
+3. **Revert Plan Memo**: Drafted `MEMO_DPCC_REVERT_PLAN.md` to outline how to safely revert to exact DPCC-identical behavior if required by reviewers, while retaining the correctness improvements.
+
+***
+
+## Gen9 Epoch 2 "U5": 1e5 Training Steps Observation (June 13, 2026)
+
+**Keywords**: Gen9, Epoch 2, U5, training extension, loss curves, state_best.
+
+1. **Extended Training Analysis**: Documented observations from extending training from 1e4 to 1e5 steps. Both train and validation loss hit a trough around ~1e4 steps, then slightly rebounded and plateaued through the remaining steps.
+2. **`state_best` Efficacy**: Concluded that `diffusion_epoch: 'best'` functions correctly by capturing the optimal checkpoint at the trough. While the overall curve looks healthier with longer training, the operative checkpoint is naturally captured early, verifying the robustness of the checkpoint selection logic.
+
+***
+
+## Gen3v2: State-Based Pipeline Cross-Check vs Fable Audit (June 13, 2026)
+
+**Keywords**: Gen3v2, state-based avoiding, DPCC baseline, Fable audit, provenance.
+
+1. **Audit Cross-Check**: Executed a comprehensive cross-check (`Gen3v2_FMv3ODE_DPCC_CrossCheck_vs_Fable.md`) mapping the 10 visual-avoiding bugs from the Fable audit back to the state-based DPCC and Gen3v2 pipelines.
+2. **Visual-Only Separation**: Confirmed that the eval-side bugs (B1, B2, B3, B5) are exclusively visual artifacts. The state-based pipeline remains structurally clean and was proven to correctly implement `trajectory_selection` and constraint configurations.
+3. **Provenance Validation**: Confirmed that training and serialization quirks (B6, B7, B8, B9) are inherited verbatim from the published `/workspaces/dpcc` codebase. Concluded these should be preserved in the `diffuser/` baseline for strict comparability but fixed in new Gen3v2 and Gen11 architectures as targeted ablations.
+
+***
+
+## Gen11 Epoch 5 "U5": Overview Plots Explainer (June 13, 2026)
+
+**Keywords**: Gen11, Epoch 5 U5, 2D overview plots, PLOT_EXPLAINER, p_des vs p.
+
+1. **Plot Documentation**: Authored `PLOT_EXPLAINER.md` to formalize the interpretation of the 2D overview plotting tool.
+2. **Commanded vs Actual Tracking**: Detailed the visual distinction between the commanded `p_des` (blue time-gradient dashed line) and actual physical `p` (solid red line). Emphasized that the divergence between these lines serves as a direct indicator of PID tracking error, controller saturation, or contact events.
