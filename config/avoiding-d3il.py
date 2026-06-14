@@ -63,6 +63,16 @@ args_to_watch_fmv3_ode_plan = [
     ('diffusion', 'D'),
 ]
 
+args_to_watch_fmv3_imf_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+    ('imf_objective', 'obj'),   # encodes training objective in folder name (fm_equivalent vs meanflow_jvp)
+]
+
 logbase = 'logs'
 
 base = {
@@ -462,9 +472,8 @@ base = {
         'predict_epsilon': True,
 
         ## U4 imfv2 — training objective selector (see logs_in_develop/Gen3v4_imf/U4)
-        # 'fm_equivalent' (default): legacy finite-diff target = FM baseline arm.
-        # 'meanflow_jvp'           : real MeanFlow-Identity (JVP) objective. For an imfv2 run,
-        #   set this to 'meanflow_jvp' AND drop 'ode_inference_steps_v3' to 1–2 (few-step).
+        # 'fm_equivalent': legacy finite-diff target = FM baseline arm.
+        # 'meanflow_jvp' : real MeanFlow-Identity (JVP). NFE is set in the plan block, not here.
         'imf_objective': 'fm_equivalent',
         'meanflow_r_equals_t_frac': 0.25,
         'meanflow_adaptive_p': 0.5,
@@ -494,15 +503,15 @@ base = {
         'loss_discount': 1.0,              # BUG-02 fix: explicit uniform trajectory weighting
         'gradient_accumulate_every': 2,    # BUG-03 fix: match FMv3ODE effective batch size
         
-        ## ODE inference (match FMv3ODE-style deterministic rollout)
-        'ode_inference_steps_v3': 10,
+        ## ODE inference — NFE is set in the plan block, not here
+        # 'ode_inference_steps_v3': 10,  # dead in training; set flow_steps_v3 in plan block
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
-        
+
         ## serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_imeanflow/',
-        'exp_name': watch(args_to_watch_fmv3_ode_train),
+        'exp_name': watch(args_to_watch_fmv3_imf_train),
     },
 
     'plan': {
@@ -789,7 +798,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}/',
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 imeanflow model
@@ -798,7 +807,7 @@ base = {
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 0.1,
-        'flow_steps_v3': 10,
+        'flow_steps_v3': 10,          # NFE at inference — set to 4 for safe imfv2 test, 1–2 for aggressive
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         'ode_solver_backend_v3': 'legacy_euler',
@@ -806,10 +815,11 @@ base = {
         'ode_solver_rtol_v3': None,
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
-        'diffusion_timestep_threshold': _yaml_threshold,   # encodes T in path so threshold sweeps don't overwrite
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
 
-        ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+        ## loading — path must match args_to_watch_fmv3_imf_train exactly
+        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}',
         'diffusion_epoch': 'best',
     },
 
