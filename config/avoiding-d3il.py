@@ -474,18 +474,20 @@ base = {
         ## U4 imfv2 — training objective selector (see logs_in_develop/Gen3v4_imf/U4)
         # 'fm_equivalent': legacy finite-diff target = FM baseline arm.
         # 'meanflow_jvp' : real MeanFlow-Identity (JVP). NFE is set in the plan block, not here.
-        'imf_objective': 'fm_equivalent',
+        # DEFAULT now = full real iMF (U5). For the FM baseline A/B arm, revert to the commented values.
+        'imf_objective': 'meanflow_jvp',     # was: 'fm_equivalent'
         'meanflow_r_equals_t_frac': 0.25,
         'meanflow_adaptive_p': 0.5,
         'meanflow_adaptive_c': 1e-3,
-        'meanflow_aux_weight': 0.0,
+        'meanflow_aux_weight': 0.05,         # was: 0.0  (now meaningful — shares backbone via dual_head)
 
-        ## U5 Phase 1 — real-iMF on UNet (all default OFF ⇒ unchanged). See Gen3v4_imf/U5.
-        'dual_head': False,          # v-head shares the backbone (vs legacy orphan aux MLP)
-        'interval_cfg': False,       # condition backbone on (omega, t_min, t_max)
-        'meanflow_cfg_omega': 0.0,   # interval-CFG scale ω at sampling (0 = off); needs interval_cfg=True
-        'meanflow_cfg_t_min': 0.0,   # guidance interval lower bound (τ)
-        'meanflow_cfg_t_max': 1.0,   # guidance interval upper bound (τ)
+        ## U5 Phase 1 — real-iMF on UNet (DEFAULT = ON). See Gen3v4_imf/U5.
+        ## Safe-core fallback if a run misbehaves: set interval_cfg=False + meanflow_cfg_omega=0.0.
+        'dual_head': True,           # was: False  — v-head shares the backbone (official u/v split)
+        'interval_cfg': True,        # was: False  — condition backbone on (omega, t_min, t_max)
+        'meanflow_cfg_omega': 4.0,   # was: 0.0    — interval-CFG scale ω
+        'meanflow_cfg_t_min': 0.4,   # was: 0.0    — guidance interval lower bound (τ)
+        'meanflow_cfg_t_max': 0.6,   # was: 1.0    — guidance interval upper bound (τ)
 
         ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
@@ -512,7 +514,9 @@ base = {
         
         ## ODE inference — NFE is set in the plan block, not here
         # 'ode_inference_steps_v3': 10,  # dead in training; set flow_steps_v3 in plan block
-        'time_beta_alpha_v3': 1.5,
+        ## Schedule: Beta(1,1)=Uniform(0,1) for broad (t,r) interval coverage (iMF few-step).
+        ## NOTE: plan block's time_beta_* MUST match (they're in diffusion_loadpath).
+        'time_beta_alpha_v3': 1.0,        # was: 1.5  (uniform for real iMF)
         'time_beta_beta_v3': 1.0,
 
         ## serialization
@@ -814,8 +818,8 @@ base = {
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 0.1,
-        'flow_steps_v3': 10,          # NFE at inference — set to 4 for safe imfv2 test, 1–2 for aggressive
-        'time_beta_alpha_v3': 1.5,
+        'flow_steps_v3': 2,           # was: 10  — low-NFE real-iMF (use 4 to de-risk first, then 1–2)
+        'time_beta_alpha_v3': 1.0,    # was: 1.5  — MUST match training block (in diffusion_loadpath)
         'time_beta_beta_v3': 1.0,
         'ode_solver_backend_v3': 'legacy_euler',
         'ode_solver_method_v3': 'euler',
@@ -823,14 +827,14 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
+        'imf_objective': 'meanflow_jvp',    # was: 'fm_equivalent'  — must match training (in diffusion_loadpath)
 
-        ## U5 Phase 1 — must match the trained checkpoint's flags
-        'dual_head': False,
-        'interval_cfg': False,
-        'meanflow_cfg_omega': 0.0,   # set >0 (with interval_cfg=True) to enable guided sampling
-        'meanflow_cfg_t_min': 0.0,
-        'meanflow_cfg_t_max': 1.0,
+        ## U5 Phase 1 — must match the trained checkpoint's flags (architecture + CFG)
+        'dual_head': True,           # was: False  — MUST equal training (else state_dict mismatch)
+        'interval_cfg': True,        # was: False  — MUST equal training
+        'meanflow_cfg_omega': 4.0,   # was: 0.0    — guided sampling u_cfg=u_unc+ω·(u_cond−u_unc)
+        'meanflow_cfg_t_min': 0.4,   # was: 0.0    — applied only for τ∈[t_min,t_max]
+        'meanflow_cfg_t_max': 0.6,   # was: 1.0
 
         ## loading — path must match args_to_watch_fmv3_imf_train exactly
         'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}',
