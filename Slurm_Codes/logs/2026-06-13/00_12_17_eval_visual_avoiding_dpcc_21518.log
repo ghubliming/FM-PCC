@@ -1,0 +1,518 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Jun 13 11:12:14 UTC 2026
+JOB NAME:  eval_visual_avoiding_dpcc
+JOB ID:    21518
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0951467
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ eval ] Recording mode set to: all
+pybullet build time: Nov 28 2023 23:45:17
+[ utils/setup ] Made savepath: logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4/6
+
+[ eval loading ] logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 15407.72it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:02<00:00, 33.16it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:234: UserWarning: [ pkl/config mismatch ] clip_denoised: pkl=False, .py config=True. The pkl value is used at eval. To fix clip_denoised: run python diffuser_visual_avoiding_test/fix_pkl_clip_denoised.py --find logs/
+  _warn_pkl_config_mismatch(diffusion, args)
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ utils/training ] Restored loss history from checkpoint at step 18000
+
+[ eval pkl values ] (these win over the .py plan config)
+    clip_denoised: False  (config: True)  *** MISMATCH — patch pkl or retrain ***
+    n_diffusion_steps: 20  (config: 20)
+    horizon: 8  (config: 8)
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+--- avoiding-d3il top-right-hard dpcc-r seed=6 ---
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_c1109a3a-6718-11f1-b1d8-d85ed34e311e.xml' with default provider at slot 1
+
+Success rate: 0.500
+Constraints satisfied: 0.500
+Success rate (goal + constraints): 0.500
+Avg steps: 81.00 +- 0.00
+Avg violations: 2.50 +- 2.50
+Avg total violation: 0.013 +- 0.013
+Avg compute time/step: 0.445
+--- avoiding-d3il top-right-hard dpcc-r-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 87.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.528
+--- avoiding-d3il top-right-hard dpcc-c seed=6 ---
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:354: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(
+Success rate: 0.500
+Constraints satisfied: 0.500
+Success rate (goal + constraints): 0.500
+Avg steps: 81.00 +- 0.00
+Avg violations: 2.50 +- 2.50
+Avg total violation: 0.013 +- 0.013
+Avg compute time/step: 0.425
+--- avoiding-d3il top-right-hard dpcc-c-tightened seed=6 ---
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:350: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 87.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.531
+--- avoiding-d3il top-right-hard dpcc-t seed=6 ---
+Success rate: 0.500
+Constraints satisfied: 0.500
+Success rate (goal + constraints): 0.500
+Avg steps: 81.00 +- 0.00
+Avg violations: 2.50 +- 2.50
+Avg total violation: 0.013 +- 0.013
+Avg compute time/step: 0.425
+--- avoiding-d3il top-right-hard dpcc-t-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 87.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.528
+--- avoiding-d3il top-right-hard diffuser seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 73.50 +- 3.50
+Avg violations: 28.00 +- 7.00
+Avg total violation: 11.670 +- 2.880
+Avg compute time/step: 0.239
+Tracking error: 0.021
+--- avoiding-d3il top-right-hard gradient seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 73.50 +- 2.50
+Avg violations: 26.50 +- 8.50
+Avg total violation: 6.972 +- 6.351
+Avg compute time/step: 0.252
+--- avoiding-d3il top-right-hard gradient-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 74.50 +- 3.50
+Avg violations: 26.00 +- 9.00
+Avg total violation: 6.861 +- 6.241
+Avg compute time/step: 0.253
+--- avoiding-d3il top-right-hard post_processing seed=6 ---
+Success rate: 0.500
+Constraints satisfied: 0.500
+Success rate (goal + constraints): 0.500
+Avg steps: 81.00 +- 0.00
+Avg violations: 2.50 +- 2.50
+Avg total violation: 0.013 +- 0.013
+Avg compute time/step: 0.427
+--- avoiding-d3il top-right-hard post_processing-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 87.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.528
+--- avoiding-d3il top-right-hard model_free seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 74.00 +- 2.00
+Avg violations: 36.50 +- 0.50
+Avg total violation: 14.063 +- 0.181
+Avg compute time/step: 0.311
+--- avoiding-d3il top-right-hard model_free-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 74.50 +- 2.50
+Avg violations: 36.50 +- 0.50
+Avg total violation: 13.652 +- 0.427
+Avg compute time/step: 0.338
+--- avoiding-d3il top-right-hard dpcc-c-tightened-dt0p25 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 96.50 +- 12.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.877
+--- avoiding-d3il top-right-hard dpcc-c-tightened-dt0p5 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 83.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.581
+--- avoiding-d3il top-right-hard dpcc-c-tightened-dt2p0 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 69.00 +- 4.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.523
+--- avoiding-d3il top-right-hard dpcc-c-tightened-dt4p0 seed=6 ---
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 86.00 +- 2.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.482
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:217: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
+
+[ eval loading ] logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 16961.03it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 51.59it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:234: UserWarning: [ pkl/config mismatch ] clip_denoised: pkl=False, .py config=True. The pkl value is used at eval. To fix clip_denoised: run python diffuser_visual_avoiding_test/fix_pkl_clip_denoised.py --find logs/
+  _warn_pkl_config_mismatch(diffusion, args)
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_ff56f96c-671b-11f1-b1d8-d85ed34e311e.xml' with default provider at slot 1
+
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ utils/training ] Restored loss history from checkpoint at step 18000
+
+[ eval pkl values ] (these win over the .py plan config)
+    clip_denoised: False  (config: True)  *** MISMATCH — patch pkl or retrain ***
+    n_diffusion_steps: 20  (config: 20)
+    horizon: 8  (config: 8)
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+--- avoiding-d3il top-left-hard dpcc-r seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 86.50 +- 3.50
+Avg violations: 20.50 +- 4.50
+Avg total violation: 0.912 +- 0.140
+Avg compute time/step: 0.680
+--- avoiding-d3il top-left-hard dpcc-r-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 57.00 +- 1.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.408
+--- avoiding-d3il top-left-hard dpcc-c seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 86.50 +- 3.50
+Avg violations: 20.50 +- 4.50
+Avg total violation: 0.912 +- 0.140
+Avg compute time/step: 0.683
+--- avoiding-d3il top-left-hard dpcc-c-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 57.00 +- 1.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.409
+--- avoiding-d3il top-left-hard dpcc-t seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 86.50 +- 3.50
+Avg violations: 20.50 +- 4.50
+Avg total violation: 0.912 +- 0.140
+Avg compute time/step: 0.679
+--- avoiding-d3il top-left-hard dpcc-t-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 57.00 +- 1.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.408
+--- avoiding-d3il top-left-hard diffuser seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 49.00 +- 1.00
+Avg violations: 20.00 +- 4.00
+Avg total violation: 2.735 +- 0.505
+Avg compute time/step: 0.244
+Tracking error: 0.157
+--- avoiding-d3il top-left-hard gradient seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 50.50 +- 2.50
+Avg violations: 20.50 +- 3.50
+Avg total violation: 2.618 +- 0.340
+Avg compute time/step: 0.257
+--- avoiding-d3il top-left-hard gradient-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 51.50 +- 2.50
+Avg violations: 21.00 +- 4.00
+Avg total violation: 2.629 +- 0.315
+Avg compute time/step: 0.256
+--- avoiding-d3il top-left-hard post_processing seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 86.50 +- 3.50
+Avg violations: 20.50 +- 4.50
+Avg total violation: 0.912 +- 0.140
+Avg compute time/step: 0.680
+--- avoiding-d3il top-left-hard post_processing-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 57.00 +- 1.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.411
+--- avoiding-d3il top-left-hard model_free seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 51.50 +- 1.50
+Avg violations: 24.00 +- 2.00
+Avg total violation: 2.683 +- 0.533
+Avg compute time/step: 0.317
+--- avoiding-d3il top-left-hard model_free-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 52.00 +- 2.00
+Avg violations: 22.50 +- 2.50
+Avg total violation: 2.471 +- 0.352
+Avg compute time/step: 0.330
+--- avoiding-d3il top-left-hard dpcc-c-tightened-dt0p25 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 58.50 +- 2.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.510
+--- avoiding-d3il top-left-hard dpcc-c-tightened-dt0p5 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 65.00 +- 7.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.535
+--- avoiding-d3il top-left-hard dpcc-c-tightened-dt2p0 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 54.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.421
+--- avoiding-d3il top-left-hard dpcc-c-tightened-dt4p0 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 77.00 +- 13.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.378
+
+[ eval loading ] logs/avoiding-d3il-visual/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/6
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 16804.57it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 50.45it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/data/home/llim/FMPCC/FM-PCC/diffuser_visual_avoiding_test/eval_visual_avoiding_dpcc.py:234: UserWarning: [ pkl/config mismatch ] clip_denoised: pkl=False, .py config=True. The pkl value is used at eval. To fix clip_denoised: run python diffuser_visual_avoiding_test/fix_pkl_clip_denoised.py --find logs/
+  _warn_pkl_config_mismatch(diffusion, args)
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_b954cfea-671e-11f1-b1d8-d85ed34e311e.xml' with default provider at slot 1
+
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ utils/training ] Restored loss history from checkpoint at step 18000
+
+[ eval pkl values ] (these win over the .py plan config)
+    clip_denoised: False  (config: True)  *** MISMATCH — patch pkl or retrain ***
+    n_diffusion_steps: 20  (config: 20)
+    horizon: 8  (config: 8)
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+--- avoiding-d3il both-hard dpcc-r seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 51.00 +- 0.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.545
+--- avoiding-d3il both-hard dpcc-r-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 52.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.611
+--- avoiding-d3il both-hard dpcc-c seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 51.00 +- 0.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.543
+--- avoiding-d3il both-hard dpcc-c-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 52.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.634
+--- avoiding-d3il both-hard dpcc-t seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 51.00 +- 0.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.545
+--- avoiding-d3il both-hard dpcc-t-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 52.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.612
+--- avoiding-d3il both-hard diffuser seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 49.00 +- 1.00
+Avg violations: 5.50 +- 0.50
+Avg total violation: 0.073 +- 0.016
+Avg compute time/step: 0.243
+Tracking error: 0.157
+--- avoiding-d3il both-hard gradient seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 48.50 +- 0.50
+Avg violations: 3.50 +- 0.50
+Avg total violation: 0.038 +- 0.003
+Avg compute time/step: 0.256
+--- avoiding-d3il both-hard gradient-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 48.50 +- 0.50
+Avg violations: 2.50 +- 0.50
+Avg total violation: 0.031 +- 0.003
+Avg compute time/step: 0.256
+--- avoiding-d3il both-hard post_processing seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 51.00 +- 0.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.545
+--- avoiding-d3il both-hard post_processing-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 52.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.616
+--- avoiding-d3il both-hard model_free seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 50.50 +- 0.50
+Avg violations: 4.50 +- 0.50
+Avg total violation: 0.025 +- 0.011
+Avg compute time/step: 0.333
+--- avoiding-d3il both-hard model_free-tightened seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal + constraints): 0.000
+Avg steps: 50.50 +- 0.50
+Avg violations: 3.50 +- 0.50
+Avg total violation: 0.014 +- 0.005
+Avg compute time/step: 0.346
+--- avoiding-d3il both-hard dpcc-c-tightened-dt0p25 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 55.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 1.175
+--- avoiding-d3il both-hard dpcc-c-tightened-dt0p5 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 54.50 +- 0.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.804
+--- avoiding-d3il both-hard dpcc-c-tightened-dt2p0 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 52.00 +- 0.00
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.541
+--- avoiding-d3il both-hard dpcc-c-tightened-dt4p0 seed=6 ---
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal + constraints): 1.000
+Avg steps: 59.50 +- 1.50
+Avg violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Avg compute time/step: 0.515
+Job completed successfully.

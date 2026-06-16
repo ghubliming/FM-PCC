@@ -13,6 +13,9 @@ chmod +x Slurm_Codes/submit.sh
 squeue -u llim
 squeue -o "%.10i %.10P %.30j %.10u %.2t %.10M %.10D %R"
 
+or 
+squeue -o "%.10i %.12u %.2t %.10M %.6D %.12P %.15R %.15b %.25b %.20T %.30j"
+
 ## shutdown sbatch
 scancel XXXXX
 

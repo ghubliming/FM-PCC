@@ -1,0 +1,78 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV STRESS-TEST COLLECTION (E4 U10)
+DATE:     Fri Jun 12 15:29:29 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21494
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ sbatch ] Cases: all  Scene: all  N_per_case: 3  Seed: 0
+[ stress ] extreme_speed/pillars (3 episodes) …
+  → stress_extreme_speed_pillars_0763207  contact=0.000  min_z=0.002  clip=1.00  gate[contact=False, floor=True]
+  → stress_extreme_speed_pillars_0761632  contact=0.000  min_z=0.003  clip=1.00  gate[contact=False, floor=True]
+  → stress_extreme_speed_pillars_0765266  contact=0.000  min_z=0.005  clip=1.00  gate[contact=False, floor=True]
+[ stress ] extreme_speed/s_curve (3 episodes) …
+  → stress_extreme_speed_s_curve_0764454  contact=0.273  min_z=0.300  clip=0.62  gate[contact=True, floor=True]
+  → stress_extreme_speed_s_curve_0768088  contact=0.400  min_z=0.354  clip=0.62  gate[contact=True, floor=True]
+  → stress_extreme_speed_s_curve_0798385  contact=0.247  min_z=0.321  clip=0.62  gate[contact=True, floor=True]
+[ stress ] extreme_speed/corridor (3 episodes) …
+  → stress_extreme_speed_corridor_0702906  contact=0.000  min_z=0.764  clip=0.29  gate[contact=False, floor=False]
+  → stress_extreme_speed_corridor_0733203  contact=0.000  min_z=0.678  clip=0.29  gate[contact=False, floor=False]
+  → stress_extreme_speed_corridor_0736837  contact=0.000  min_z=0.958  clip=0.29  gate[contact=False, floor=False]
+[ stress ] tight_fillet/pillars (3 episodes) …
+  → stress_tight_fillet_pillars_0764379  contact=0.000  min_z=0.075  clip=0.73  gate[contact=False, floor=True]
+  → stress_tight_fillet_pillars_0762804  contact=0.000  min_z=0.085  clip=0.77  gate[contact=False, floor=True]
+  → stress_tight_fillet_pillars_0798310  contact=0.000  min_z=0.085  clip=0.74  gate[contact=False, floor=True]
+[ stress ] discontinuous/empty (3 episodes) …
+  → stress_discontinuous_empty_0775578  contact=0.000  min_z=0.003  clip=0.67  gate[contact=False, floor=True]
+  → stress_discontinuous_empty_0779212  contact=0.000  min_z=0.067  clip=0.42  gate[contact=False, floor=True]
+  → stress_discontinuous_empty_0777637  contact=0.000  min_z=0.188  clip=0.37  gate[contact=False, floor=True]
+[ stress ] discontinuous/corridor (3 episodes) …
+  → stress_discontinuous_corridor_0791591  contact=0.000  min_z=0.462  clip=0.18  gate[contact=False, floor=True]
+  → stress_discontinuous_corridor_0778713  contact=0.000  min_z=0.527  clip=0.18  gate[contact=False, floor=False]
+  → stress_discontinuous_corridor_0725522  contact=0.000  min_z=0.457  clip=0.18  gate[contact=False, floor=True]
+[ stress ] discontinuous/pillars (3 episodes) …
+  → stress_discontinuous_pillars_0743100  contact=0.027  min_z=0.003  clip=0.67  gate[contact=True, floor=True]
+  → stress_discontinuous_pillars_0741525  contact=0.478  min_z=0.022  clip=0.67  gate[contact=True, floor=True]
+  → stress_discontinuous_pillars_0777031  contact=0.492  min_z=0.004  clip=0.67  gate[contact=True, floor=True]
+[ stress ] wall_crossing/corridor (3 episodes) …
+  → stress_wall_crossing_corridor_0787381  contact=0.072  min_z=-0.003  clip=0.63  gate[contact=True, floor=True]
+  → stress_wall_crossing_corridor_0734190  contact=0.102  min_z=0.011  clip=0.74  gate[contact=True, floor=True]
+  → stress_wall_crossing_corridor_0789440  contact=0.165  min_z=0.002  clip=0.61  gate[contact=True, floor=True]
+[ stress ] wall_crossing/pillars (3 episodes) …
+  → stress_wall_crossing_pillars_0750193  contact=0.719  min_z=1.172  clip=0.62  gate[contact=True, floor=False]
+  → stress_wall_crossing_pillars_0737315  contact=0.719  min_z=1.070  clip=0.62  gate[contact=True, floor=False]
+  → stress_wall_crossing_pillars_0784124  contact=0.719  min_z=1.275  clip=0.62  gate[contact=True, floor=False]
+[ stress ] floor_dive/empty (3 episodes) …
+  → stress_floor_dive_empty_0746276  contact=0.000  min_z=-0.004  clip=0.00  gate[contact=False, floor=True]
+  → stress_floor_dive_empty_0793085  contact=0.000  min_z=-0.000  clip=0.00  gate[contact=False, floor=True]
+  → stress_floor_dive_empty_0748335  contact=0.000  min_z=-0.005  clip=0.00  gate[contact=False, floor=True]
+[ stress ] floor_dive/corridor (3 episodes) …
+  → stress_floor_dive_corridor_0739587  contact=0.000  min_z=-0.003  clip=0.37  gate[contact=False, floor=True]
+  → stress_floor_dive_corridor_0769884  contact=0.000  min_z=-0.003  clip=0.38  gate[contact=False, floor=True]
+  → stress_floor_dive_corridor_0773518  contact=0.000  min_z=-0.001  clip=0.40  gate[contact=False, floor=True]
+[ stress ] ceiling_climb/empty (3 episodes) …
+  → stress_ceiling_climb_empty_0739871  contact=0.000  min_z=1.210  clip=0.00  gate[contact=False, floor=False]
+  → stress_ceiling_climb_empty_0795121  contact=0.000  min_z=1.188  clip=0.00  gate[contact=False, floor=False]
+  → stress_ceiling_climb_empty_0773802  contact=0.000  min_z=1.297  clip=0.00  gate[contact=False, floor=False]
+[ stress ] gain_extreme/corridor (3 episodes) …
+  → stress_gain_extreme_corridor_0745338  contact=0.000  min_z=1.013  clip=0.00  gate[contact=False, floor=False]
+  → stress_gain_extreme_corridor_0743763  contact=0.000  min_z=1.051  clip=0.00  gate[contact=False, floor=False]
+  → stress_gain_extreme_corridor_0747397  contact=0.000  min_z=1.073  clip=0.00  gate[contact=False, floor=False]
+[ stress ] gain_extreme/empty (3 episodes) …
+  → stress_gain_extreme_empty_0797453  contact=0.000  min_z=1.163  clip=0.00  gate[contact=False, floor=False]
+  → stress_gain_extreme_empty_0727750  contact=0.000  min_z=1.091  clip=0.00  gate[contact=False, floor=False]
+  → stress_gain_extreme_empty_0731384  contact=0.000  min_z=1.030  clip=0.00  gate[contact=False, floor=False]
+[ stress ] degenerate_hover/empty (3 episodes) …
+  → stress_degenerate_hover_empty_0700603  contact=0.000  min_z=0.909  clip=0.00  gate[contact=False, floor=False]
+  → stress_degenerate_hover_empty_0730900  contact=0.000  min_z=1.182  clip=0.00  gate[contact=False, floor=False]
+  → stress_degenerate_hover_empty_0734534  contact=0.000  min_z=0.920  clip=0.00  gate[contact=False, floor=False]
+[ stress ] DONE  total_saved=45  elapsed=8s
+[ stress ] Output: /data/home/llim/FMPCC/FM-PCC/logs/uav_expert_data_stress/
+[ stress ] Summary: /data/home/llim/FMPCC/FM-PCC/logs/uav_expert_data_stress/stress_summary.json
+[ sbatch ] Stress collection complete.
+[ sbatch ] Output: logs/uav_expert_data_stress/
+========================================
+JOB END: Fri Jun 12 15:29:38 UTC 2026
+========================================

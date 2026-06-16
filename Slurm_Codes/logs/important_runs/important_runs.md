@@ -177,6 +177,26 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/13_34_25_train_imf_21451.log
 +
 21455
 
+- U4
+1e4
+21547 train
+21553 eval
+
+1e5
+21572/3 train + eval
+
+21575 try 2 NFE from 10 NFE
+
+21576/7/8 - Uniform Scheduling + turn off aux head
+
+still bad
+
+- U5
+21634/5 1e4 trian/eval
+21645 -> K10
+
+1e5 train -> K10
+
 ---
 # Visual 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
@@ -630,7 +650,25 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-09/18_02_22_eval_visual_avoiding_dpcc_2137
 ---
 
 ## U3
+FM
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-12/12_40_24_train_fm_visual_avoiding_21480.log
++
+21481
+
+Diffu.
+21492
+
+from 1e4 to 1e5 train
+21514/5
++
+diffu.
+21517/8
+
+fix1 test revert if affect?
+21530/531 same setup as 21517
+
+---
+
 
 
 # Gen11
@@ -705,6 +743,9 @@ fix1
 
 -> Recollect Gif!  21484 + 21485
 
+## U10 stress Test
+21494 + GIF 21495 + 21496
+
 # E5
 21289
 
@@ -725,6 +766,9 @@ FMPCC/FM-PCC/logs/uav_expert_data/gifs_physics/pillars/L_L_L
 Fix 2 (on Data E4 U7)
 21436
 21437
+
+## U5 2D plot
+21497
 
 # misc
 touched files during rebase(already fixed)

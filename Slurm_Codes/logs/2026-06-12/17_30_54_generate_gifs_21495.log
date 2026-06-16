@@ -1,0 +1,37 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV TRAJECTORY GIF GENERATION (Epoch 5 WS-B)
+DATE:     Fri Jun 12 15:30:54 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21495
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ sbatch ] MaxEp: all  Scene: all  MP4: no  Stride: 5  PerHomo: 1  DataDir: logs/uav_expert_data_stress
+[ gif-gen ] 15 episodes  res=96  fps=10  stride=5  mp4=False  overlay=True
+
+[ gif-gen ] Scene: corridor (5 episodes)
+  corridor:   0%|          | 0/5 [00:00<?, ?it/s]  corridor:  20%|██        | 1/5 [00:00<00:02,  1.63it/s]  corridor:  40%|████      | 2/5 [00:00<00:00,  3.02it/s]  corridor:  60%|██████    | 3/5 [00:01<00:00,  3.31it/s]  corridor:  80%|████████  | 4/5 [00:01<00:00,  2.59it/s]  corridor: 100%|██████████| 5/5 [00:02<00:00,  2.32it/s]  corridor: 100%|██████████| 5/5 [00:02<00:00,  2.45it/s]
+
+[ gif-gen ] Scene: empty (5 episodes)
+  empty:   0%|          | 0/5 [00:00<?, ?it/s]  empty:  20%|██        | 1/5 [00:00<00:00,  7.00it/s]  empty:  40%|████      | 2/5 [00:00<00:00,  7.12it/s]  empty:  60%|██████    | 3/5 [00:00<00:00,  2.80it/s]  empty:  80%|████████  | 4/5 [00:01<00:00,  3.05it/s]  empty: 100%|██████████| 5/5 [00:01<00:00,  2.86it/s]  empty: 100%|██████████| 5/5 [00:01<00:00,  3.19it/s]
+
+[ gif-gen ] Scene: pillars (4 episodes)
+  pillars:   0%|          | 0/4 [00:00<?, ?it/s]  pillars:  25%|██▌       | 1/4 [00:00<00:01,  1.54it/s]  pillars:  50%|█████     | 2/4 [00:00<00:00,  2.51it/s]  pillars:  75%|███████▌  | 3/4 [00:01<00:00,  1.82it/s]  pillars: 100%|██████████| 4/4 [00:02<00:00,  1.66it/s]  pillars: 100%|██████████| 4/4 [00:02<00:00,  1.75it/s]
+
+[ gif-gen ] Scene: s_curve (1 episodes)
+  s_curve:   0%|          | 0/1 [00:00<?, ?it/s]  s_curve: 100%|██████████| 1/1 [00:00<00:00,  3.30it/s]  s_curve: 100%|██████████| 1/1 [00:00<00:00,  3.30it/s]
+
+============================================================
+[ gif-gen ] Done.
+  Generated:   15 GIFs
+  Skipped:     0 (already existed)
+  Errors:      0
+  Output dir:  logs/uav_expert_data_stress/gifs/
+============================================================
+[ sbatch ] GIF generation complete.
+Output: logs/uav_expert_data/gifs/
+========================================
+JOB END: Fri Jun 12 15:31:02 UTC 2026
+========================================
