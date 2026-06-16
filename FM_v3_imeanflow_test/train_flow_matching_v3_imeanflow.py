@@ -157,6 +157,9 @@ if __name__ == '__main__':
                 time_dim=args.time_dim,
                 dropout_rate=args.dropout_rate,
                 device=device,
+                # U5 Phase 1 — real-iMF backbone flags (default OFF)
+                dual_head=getattr(args, 'dual_head', False),
+                interval_cfg=getattr(args, 'interval_cfg', False),
             )
 
             diffusion_config = utils.Config(
@@ -187,6 +190,10 @@ if __name__ == '__main__':
                 meanflow_adaptive_p=getattr(args, 'meanflow_adaptive_p', 0.5),
                 meanflow_adaptive_c=getattr(args, 'meanflow_adaptive_c', 1e-3),
                 meanflow_aux_weight=getattr(args, 'meanflow_aux_weight', 0.0),
+                # U5 Phase 1c — interval-CFG (default off)
+                meanflow_cfg_omega=getattr(args, 'meanflow_cfg_omega', 0.0),
+                meanflow_cfg_t_min=getattr(args, 'meanflow_cfg_t_min', 0.0),
+                meanflow_cfg_t_max=getattr(args, 'meanflow_cfg_t_max', 1.0),
             )
 
             trainer_config = utils.Config(

@@ -32,6 +32,9 @@ class iMeanFlowEngine(nn.Module):
         dropout_rate: float = 0.1,
         device: str = "cuda",
         dtype: torch.dtype = torch.float32,
+        # U5 Phase 1 — real-iMF flags (default OFF), forwarded to the backbone.
+        dual_head: bool = False,
+        interval_cfg: bool = False,
     ):
         """
         Args:
@@ -52,6 +55,8 @@ class iMeanFlowEngine(nn.Module):
         self.device = device
         self.dtype = dtype
         
+        self.dual_head = dual_head
+        self.interval_cfg = interval_cfg
         self.model = iMFTrajectoryModel(
             state_dim=state_dim,
             seq_len=seq_len,
@@ -62,6 +67,8 @@ class iMeanFlowEngine(nn.Module):
             time_dim=time_dim,
             dropout_rate=dropout_rate,
             device=device,
+            dual_head=dual_head,
+            interval_cfg=interval_cfg,
         )
         self.to(dtype).to(device)
     
@@ -146,6 +153,9 @@ class iMeanFlowEngine(nn.Module):
         h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
         force_dropout: bool = False,
+        omega: Optional[torch.Tensor] = None,
+        t_min: Optional[torch.Tensor] = None,
+        t_max: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass for training: return (u, v) predictions.
@@ -156,8 +166,12 @@ class iMeanFlowEngine(nn.Module):
             h: Step-size conditioning [batch] (iMF mean-flow interval)
             cond: Conditioning (optional)
             force_dropout: Force condition dropout for CFG
+            omega, t_min, t_max: U5 interval-CFG knobs (None ⇒ off)
 
         Returns:
             (u, v): Mean flow and instantaneous velocity predictions
         """
-        return self.model(x_noisy, t, h=h, cond=cond, force_dropout=force_dropout)
+        return self.model(
+            x_noisy, t, h=h, cond=cond, force_dropout=force_dropout,
+            omega=omega, t_min=t_min, t_max=t_max,
+        )

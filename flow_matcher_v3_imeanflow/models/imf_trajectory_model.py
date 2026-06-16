@@ -1,8 +1,18 @@
-"""Trajectory iMeanFlow model built on the FMv3-style U-Net.
+"""Trajectory iMeanFlow model — the IMFBackbone for Gen3v4.
 
-The backbone predicts the FM-style flow velocity. A small auxiliary residual
-head remains to preserve the iMF split, but it is intentionally kept near zero
-so it cannot destabilize training or sampling.
+This module is the single `IMFBackbone` swap point (U5 Phase 1a). Its contract is:
+
+    forward(x, t, h, cond, omega, t_min, t_max) -> (u, v)
+
+where `u` is the average-velocity field (deployed) and `v` is the instantaneous
+velocity (auxiliary, dropped at sampling). The current implementation uses the
+FMv3-style U-Net; the official-style DiT dual-head NN is a future drop-in below.
+
+# TODO(real-iMF-NN): implement IMFBackbone with the proposed iMF architecture
+#   (shared transformer blocks → u_heads / v_heads, RoPE, conditions on
+#   h, omega, t_min, t_max, y — see /workspaces/imeanflow/models/imfDiT.py).
+#   It must satisfy the SAME forward(...) -> (u, v) contract so the objective,
+#   JVP, and sampler need no change.
 """
 
 from typing import Optional, Tuple
@@ -25,6 +35,9 @@ class iMFTrajectoryModel(nn.Module):
         time_dim: int = 256,
         dropout_rate: float = 0.1,
         device: str = "cuda",
+        # U5 Phase 1 — real-iMF flags (default OFF ⇒ legacy behaviour unchanged).
+        dual_head: bool = False,     # v shares the backbone (vs the legacy orphan aux MLP)
+        interval_cfg: bool = False,  # condition the backbone on (omega, t_min, t_max)
     ):
         super().__init__()
         self.state_dim = state_dim
@@ -32,6 +45,8 @@ class iMFTrajectoryModel(nn.Module):
         self.freq_dim = freq_dim
         self.depth = depth
         self.device = device
+        self.dual_head = dual_head
+        self.interval_cfg = interval_cfg
 
         self.velocity_net = Flow_matcher_U_Net_v2(
             horizon=seq_len,
@@ -41,14 +56,17 @@ class iMFTrajectoryModel(nn.Module):
             dim_mults=(1, 2, 4, 8),
             returns_condition=False,
             condition_dropout=dropout_rate,
+            dual_head=dual_head,
+            interval_cfg=interval_cfg,
         )
 
+        # Legacy orphan aux head — kept ONLY for dual_head=False back-compat (does not
+        # share the backbone). When dual_head=True, v comes from velocity_net's v-head.
         self.aux_head = nn.Sequential(
             nn.Linear(state_dim, state_dim),
             nn.SiLU(),
             nn.Linear(state_dim, state_dim),
         )
-
         nn.init.zeros_(self.aux_head[-1].weight)
         nn.init.zeros_(self.aux_head[-1].bias)
 
@@ -59,10 +77,24 @@ class iMFTrajectoryModel(nn.Module):
         h: Optional[torch.Tensor] = None,
         cond: Optional[torch.Tensor] = None,
         force_dropout: bool = False,
+        omega: Optional[torch.Tensor] = None,
+        t_min: Optional[torch.Tensor] = None,
+        t_max: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Predict the mean flow velocity u and instantaneous deviation v."""
-        velocity = self.velocity_net(x, cond, t, h=h, force_dropout=force_dropout)
-        aux = self.aux_head(x)  # independent head on input x, not on velocity
+        """Predict the mean-flow velocity u and instantaneous velocity v → (u, v)."""
+        if self.dual_head:
+            # Shared-backbone u + v (official split). CFG knobs are constant w.r.t. the JVP.
+            u, v = self.velocity_net(
+                x, cond, t, h=h, force_dropout=force_dropout,
+                omega=omega, t_min=t_min, t_max=t_max, return_v=True,
+            )
+            return u, v
+        # Legacy path: single u-head + orphan aux MLP on raw x.
+        velocity = self.velocity_net(
+            x, cond, t, h=h, force_dropout=force_dropout,
+            omega=omega, t_min=t_min, t_max=t_max,
+        )
+        aux = self.aux_head(x)
         return velocity, aux
 
     def forward_train(

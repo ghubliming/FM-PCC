@@ -42,7 +42,11 @@ class iMeanFlowODE(nn.Module):
         meanflow_r_equals_t_frac: float = 0.25,   # fraction of batch forced to r==t (FM anchor)
         meanflow_adaptive_p: float = 0.5,         # adaptive-weight exponent  w=(‖Δ‖²+c)^(−p)
         meanflow_adaptive_c: float = 1e-3,        # adaptive-weight epsilon
-        meanflow_aux_weight: float = 0.0,         # optional aux v-head stabilizer (0 = off)
+        meanflow_aux_weight: float = 0.0,         # aux v-head stabilizer (shares backbone iff dual_head)
+        # U5 Phase 1c — interval-CFG (off when omega=0). Needs the engine built with interval_cfg=True.
+        meanflow_cfg_omega: float = 0.0,          # CFG scale ω (0 ⇒ guidance off)
+        meanflow_cfg_t_min: float = 0.0,          # guidance interval lower bound (τ)
+        meanflow_cfg_t_max: float = 1.0,          # guidance interval upper bound (τ)
         time_beta_alpha_v3: float = 1.5,
         time_beta_beta_v3: float = 1.0,
         flow_steps_v3: Optional[int] = None,
@@ -85,6 +89,10 @@ class iMeanFlowODE(nn.Module):
         self.meanflow_adaptive_p = float(meanflow_adaptive_p)
         self.meanflow_adaptive_c = float(meanflow_adaptive_c)
         self.meanflow_aux_weight = float(meanflow_aux_weight)
+        # U5 interval-CFG knobs (inference-time guidance; training conditions on them when ω>0)
+        self.meanflow_cfg_omega = float(meanflow_cfg_omega)
+        self.meanflow_cfg_t_min = float(meanflow_cfg_t_min)
+        self.meanflow_cfg_t_max = float(meanflow_cfg_t_max)
 
         # Keep parameters for backward compatibility with existing configs.
         self.loss_schedule = loss_schedule
@@ -124,10 +132,15 @@ class iMeanFlowODE(nn.Module):
         loss_weights[0, :self.action_dim] = action_weight
         return loss_weights
 
-    def _predict_uv(self, x, cond, t, h=None, returns=None, force_dropout=False):
-        return self.model.forward_train(x, t, h=h, cond=cond, force_dropout=force_dropout)
+    def _predict_uv(self, x, cond, t, h=None, returns=None, force_dropout=False,
+                    omega=None, t_min=None, t_max=None):
+        return self.model.forward_train(
+            x, t, h=h, cond=cond, force_dropout=force_dropout,
+            omega=omega, t_min=t_min, t_max=t_max,
+        )
 
-    def _predict_velocity(self, x, cond, t, h=None, returns=None):
+    def _predict_velocity(self, x, cond, t, h=None, returns=None,
+                          omega=None, t_min=None, t_max=None, cfg_scale=0.0):
         # FIX-3 / Deviation A (per fix_2/REFERENCE_IMF_AUDIT.md §5.3 + §7.1):
         # reference iMF's inference uses ONLY the u (mean-velocity) head and
         # explicitly DISCARDS the v (instantaneous-velocity) head at sampling
@@ -139,10 +152,18 @@ class iMeanFlowODE(nn.Module):
         # mean-flow target is a CONSTANT v_const = x_data − noise. Mixing
         # `sample_aux_weight * aux` into the sampling velocity introduced
         # step-to-step jitter that was the post-fix_1 residual symptom.
-        velocity, _aux = self._predict_uv(x, cond, t, h=h, returns=returns)
+        velocity, _aux = self._predict_uv(x, cond, t, h=h, returns=returns,
+                                          omega=omega, t_min=t_min, t_max=t_max)
         if self.returns_condition and returns is not None and self.condition_guidance_w > 0:
-            uncond_vel, _ = self._predict_uv(x, cond, t, h=h, returns=returns, force_dropout=True)
+            uncond_vel, _ = self._predict_uv(x, cond, t, h=h, returns=returns, force_dropout=True,
+                                             omega=omega, t_min=t_min, t_max=t_max)
             velocity = (1 + self.condition_guidance_w) * velocity - self.condition_guidance_w * uncond_vel
+        # U5 Phase 1c — interval-CFG: u_cfg = u_uncond + ω·(u_cond − u_uncond).
+        # The caller (p_sample_loop) gates cfg_scale>0 to within [t_min, t_max].
+        if cfg_scale > 0:
+            uncond, _ = self._predict_uv(x, cond, t, h=h, returns=returns, force_dropout=True,
+                                         omega=omega, t_min=t_min, t_max=t_max)
+            velocity = uncond + cfg_scale * (velocity - uncond)
         return velocity   # was: velocity + self.sample_aux_weight * aux
 
     def q_sample(self, x_start, t, noise=None):
@@ -179,6 +200,15 @@ class iMeanFlowODE(nn.Module):
         dt = 1.0 / max(flow_steps, 1)
         h_batch = torch.full((batch_size,), dt, device=device, dtype=torch.float32)
 
+        # U5 Phase 1c — interval-CFG setup (active only when ω>0; net ignores knobs if not built
+        # with interval_cfg). omega/t_min/t_max are conditioning inputs to the backbone.
+        cfg_on = self.meanflow_cfg_omega > 0
+        omega_b = t_min_b = t_max_b = None
+        if cfg_on:
+            omega_b = torch.full((batch_size,), self.meanflow_cfg_omega, device=device, dtype=torch.float32)
+            t_min_b = torch.full((batch_size,), self.meanflow_cfg_t_min, device=device, dtype=torch.float32)
+            t_max_b = torch.full((batch_size,), self.meanflow_cfg_t_max, device=device, dtype=torch.float32)
+
         # U3-B1 guardrail: NEVER freeze t for this architecture. Both time_mlp(t)
         # and h_mlp(h) are active and additively combined in the UNet backbone
         # (unet1d_temporal_cond.py:118-123, :249). Training always passed the true
@@ -191,11 +221,17 @@ class iMeanFlowODE(nn.Module):
 
         for i in range(total_steps):
             loop_idx = min(i, flow_steps - 1)
+            tau = loop_idx / max(flow_steps, 1)
             t_i = torch.full(
-                (batch_size,), loop_idx / max(flow_steps, 1),
+                (batch_size,), tau,
                 device=device, dtype=torch.float32,
             )
-            velocity = self._predict_velocity(x, cond, t_i, h=h_batch, returns=returns)
+            # apply guidance only inside the [t_min, t_max] interval (official interval-CFG)
+            step_cfg = self.meanflow_cfg_omega if (cfg_on and self.meanflow_cfg_t_min <= tau <= self.meanflow_cfg_t_max) else 0.0
+            velocity = self._predict_velocity(
+                x, cond, t_i, h=h_batch, returns=returns,
+                omega=omega_b, t_min=t_min_b, t_max=t_max_b, cfg_scale=step_cfg,
+            )
             x = x + velocity * dt
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
@@ -383,9 +419,18 @@ class iMeanFlowODE(nn.Module):
         v_inst = x_start - x_base
         v_inst = apply_conditioning(v_inst, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        # u-head as a pure function of the differentiated inputs (cond/returns held constant).
+        # U5 Phase 1c — interval-CFG conditioning during training (held CONSTANT through the JVP;
+        # these are guidance knobs, not differentiated inputs). Off when omega=0.
+        omega_c = t_min_c = t_max_c = None
+        if self.meanflow_cfg_omega > 0:
+            omega_c = torch.full_like(t, self.meanflow_cfg_omega)
+            t_min_c = torch.full_like(t, self.meanflow_cfg_t_min)
+            t_max_c = torch.full_like(t, self.meanflow_cfg_t_max)
+
+        # u-head as a pure function of the differentiated inputs (cond/returns/cfg held constant).
         def _u_of(z_in, t_in, h_in):
-            u, _aux = self._predict_uv(z_in, cond, t_in, h=h_in, returns=returns)
+            u, _aux = self._predict_uv(z_in, cond, t_in, h=h_in, returns=returns,
+                                       omega=omega_c, t_min=t_min_c, t_max=t_max_c)
             return u
 
         ones = torch.ones_like(r)
@@ -411,9 +456,12 @@ class iMeanFlowODE(nn.Module):
 
         total_loss = main_loss
         info = {}
-        # optional aux v-head stabilizer on the instantaneous velocity (discarded at sampling)
+        # aux v-head stabilizer on the instantaneous velocity (discarded at sampling).
+        # With dual_head=True this v-head SHARES the backbone, so this term now actually
+        # regularizes the trunk that produces u (U5 Phase 1b).
         if self.meanflow_aux_weight > 0:
-            _u2, aux_pred = self._predict_uv(x_r, cond, r, h=h, returns=returns)
+            _u2, aux_pred = self._predict_uv(x_r, cond, r, h=h, returns=returns,
+                                             omega=omega_c, t_min=t_min_c, t_max=t_max_c)
             aux_loss = F.mse_loss(aux_pred, v_inst)
             total_loss = total_loss + self.meanflow_aux_weight * aux_loss
             info['aux_loss'] = aux_loss

@@ -480,6 +480,13 @@ base = {
         'meanflow_adaptive_c': 1e-3,
         'meanflow_aux_weight': 0.0,
 
+        ## U5 Phase 1 — real-iMF on UNet (all default OFF ⇒ unchanged). See Gen3v4_imf/U5.
+        'dual_head': False,          # v-head shares the backbone (vs legacy orphan aux MLP)
+        'interval_cfg': False,       # condition backbone on (omega, t_min, t_max)
+        'meanflow_cfg_omega': 0.0,   # interval-CFG scale ω at sampling (0 = off); needs interval_cfg=True
+        'meanflow_cfg_t_min': 0.0,   # guidance interval lower bound (τ)
+        'meanflow_cfg_t_max': 1.0,   # guidance interval upper bound (τ)
+
         ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',
@@ -817,6 +824,13 @@ base = {
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
         'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
+
+        ## U5 Phase 1 — must match the trained checkpoint's flags
+        'dual_head': False,
+        'interval_cfg': False,
+        'meanflow_cfg_omega': 0.0,   # set >0 (with interval_cfg=True) to enable guided sampling
+        'meanflow_cfg_t_min': 0.0,
+        'meanflow_cfg_t_max': 1.0,
 
         ## loading — path must match args_to_watch_fmv3_imf_train exactly
         'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}',

@@ -1833,3 +1833,25 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Plot Documentation**: Authored `PLOT_EXPLAINER.md` to formalize the interpretation of the 2D overview plotting tool.
 2. **Commanded vs Actual Tracking**: Detailed the visual distinction between the commanded `p_des` (blue time-gradient dashed line) and actual physical `p` (solid red line). Emphasized that the divergence between these lines serves as a direct indicator of PID tracking error, controller saturation, or contact events.
+
+***
+
+## Gen11 Epoch 6: FM-PCC Quadrotor Training Blueprint (June 13, 2026)
+
+**Keywords**: Gen11, Epoch 6, UAV FM-PCC training, mini-FM sanity gate, DPCC projection.
+
+1. **Epoch 6 Training Spine Formalization**: Drafted the `IDEAS.md` blueprint to transition from expert-data collection into fully closed-loop FM-PCC policy training. Outlined a 4-phase rollout: data finalization (Phase 0), mini-FM sanity checks (Phase 1), state-only FM training (Phase 2), and DPCC safety projection integration (Phase 3).
+2. **Prerequisite Gating**: Established strict prerequisites for training initiation, including a mandatory re-collection of the pillars dataset to reduce rejection rates, and a "mini-FM" state-only check to mathematically verify the positional-delta action schema before committing full compute resources.
+3. **Safety Projection Architecture**: Planned the integration of the DPCC SLSQP projector using a differential-flatness unlearned quadrotor model for exact state constraint evaluation against `SCENE_OBSTACLES`, effectively closing the loop on real-time safe motion planning.
+
+***
+
+## Gen3v4 "U4" & Gen8 "U3": iMeanFlow (iMF) MeanFlow-JVP Objective Implementation (June 13 - 14, 2026)
+
+**Keywords**: iMeanFlow, imfv2, MeanFlow-JVP, low-NFE inference, JVP flag-gated, Gen3v4, Gen8 visual.
+
+1. **iMF Objective Math Implementation**: Integrated the exact `MeanFlow-JVP` (imfv2) training target from the official JAX implementation into both the state-based Gen3v4 and visual-aligning Gen8 engines. This restores the missing total derivative term (`d/dt u`) using forward-mode AD (`torch.func.jvp`), anchoring the velocity field at `r=t` with 25% probability and using adaptive weighted MSE loss to prevent bootstrapped outliers. 
+2. **Flag-Gated Surgical Swap (imfv2)**: Decided to keep the existing FM-equivalent objective as the default to ensure existing baseline runs are byte-for-byte unaffected. The true iMF objective is now opted-in via the `imf_objective: 'meanflow_jvp'` configuration flag, establishing a direct A/B testing mechanism against the FM baseline.
+3. **Dual Backbone Support**: The single-flag implementation seamlessly propagates to both Gen3v4 (state) and Gen8 (visual), enabling "real iMF" behavior for both environments without code duplication. For the Gen8 visual pipeline, the JVP was explicitly routed around the image-conditioning to ensure functional purity.
+4. **Train Script Crash Hotfix (Fix 1)**: Resolved a critical startup crash in both the Gen3v4 and Gen8 training scripts caused by a missing attribute access (`ode_inference_steps_v3`) and unforwarded imfv2 parameters. Replaced direct attribute checks with `getattr` safe defaults to ensure robust configuration parsing.
+
