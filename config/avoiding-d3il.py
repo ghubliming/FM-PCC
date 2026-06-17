@@ -71,6 +71,7 @@ args_to_watch_fmv3_imf_train = [
     ('time_beta_beta_v3', 'b'),
     ('action_weight', 'aw'),
     ('imf_objective', 'obj'),   # encodes training objective in folder name (fm_equivalent vs meanflow_jvp)
+    ('imf_backbone', 'bb'),     # U6: encodes backbone (unet vs dit) so checkpoints never collide
 ]
 
 logbase = 'logs'
@@ -489,6 +490,18 @@ base = {
         'meanflow_cfg_t_min': 0.4,   # was: 0.0    — guidance interval lower bound (τ)
         'meanflow_cfg_t_max': 0.6,   # was: 1.0    — guidance interval upper bound (τ)
 
+        ## U6 — backbone selector. 'unet' (default) = U5 behaviour, byte-for-byte.
+        ## 'dit' = faithful official-iMF transformer (IMFDiTTrajectory). Folder name carries
+        ## _bb{imf_backbone}, so unet/dit checkpoints live in separate dirs (no collision).
+        ## NOTE: plan block's imf_backbone + dit_* MUST match (state_dict depends on them).
+        'imf_backbone': 'unet',      # 'unet' | 'dit'
+        'dit_depth': 8,              # total transformer blocks (DiT-only)
+        'dit_hidden_size': 256,      # token width (DiT-only) — keep small for H=8
+        'dit_num_heads': 4,          # attention heads (DiT-only)
+        'dit_aux_head_depth': 2,     # private blocks per u/v head (DiT-only)
+        'dit_patch_size': 1,         # trajectory steps per token; must divide horizon
+        'dit_condition_on_t': False, # official recipe conditions only on h=t−r
+
         ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',
@@ -809,7 +822,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}/',
+        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}/',
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 imeanflow model
@@ -836,8 +849,17 @@ base = {
         'meanflow_cfg_t_min': 0.4,   # was: 0.0    — applied only for τ∈[t_min,t_max]
         'meanflow_cfg_t_max': 0.6,   # was: 1.0
 
-        ## loading — path must match args_to_watch_fmv3_imf_train exactly
-        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}',
+        ## U6 — backbone selector. MUST equal the trained checkpoint (state_dict + loadpath).
+        'imf_backbone': 'unet',      # 'unet' | 'dit'
+        'dit_depth': 8,
+        'dit_hidden_size': 256,
+        'dit_num_heads': 4,
+        'dit_aux_head_depth': 2,
+        'dit_patch_size': 1,
+        'dit_condition_on_t': False,
+
+        ## loading — path must match args_to_watch_fmv3_imf_train exactly (incl. _bb{imf_backbone})
+        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}',
         'diffusion_epoch': 'best',
     },
 

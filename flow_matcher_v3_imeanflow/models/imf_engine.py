@@ -35,6 +35,14 @@ class iMeanFlowEngine(nn.Module):
         # U5 Phase 1 — real-iMF flags (default OFF), forwarded to the backbone.
         dual_head: bool = False,
         interval_cfg: bool = False,
+        # U6 — backbone selector + DiT sizing (forwarded to iMFTrajectoryModel).
+        imf_backbone: str = 'unet',
+        dit_depth: int = 8,
+        dit_hidden_size: int = 256,
+        dit_num_heads: int = 4,
+        dit_aux_head_depth: int = 2,
+        dit_patch_size: int = 1,
+        dit_condition_on_t: bool = False,
     ):
         """
         Args:
@@ -57,6 +65,7 @@ class iMeanFlowEngine(nn.Module):
         
         self.dual_head = dual_head
         self.interval_cfg = interval_cfg
+        self.imf_backbone = imf_backbone
         self.model = iMFTrajectoryModel(
             state_dim=state_dim,
             seq_len=seq_len,
@@ -69,6 +78,13 @@ class iMeanFlowEngine(nn.Module):
             device=device,
             dual_head=dual_head,
             interval_cfg=interval_cfg,
+            imf_backbone=imf_backbone,
+            dit_depth=dit_depth,
+            dit_hidden_size=dit_hidden_size,
+            dit_num_heads=dit_num_heads,
+            dit_aux_head_depth=dit_aux_head_depth,
+            dit_patch_size=dit_patch_size,
+            dit_condition_on_t=dit_condition_on_t,
         )
         self.to(dtype).to(device)
     

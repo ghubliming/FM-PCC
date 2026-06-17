@@ -1855,3 +1855,14 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 3. **Dual Backbone Support**: The single-flag implementation seamlessly propagates to both Gen3v4 (state) and Gen8 (visual), enabling "real iMF" behavior for both environments without code duplication. For the Gen8 visual pipeline, the JVP was explicitly routed around the image-conditioning to ensure functional purity.
 4. **Train Script Crash Hotfix (Fix 1)**: Resolved a critical startup crash in both the Gen3v4 and Gen8 training scripts caused by a missing attribute access (`ode_inference_steps_v3`) and unforwarded imfv2 parameters. Replaced direct attribute checks with `getattr` safe defaults to ensure robust configuration parsing.
 
+***
+
+## Gen3v4 "U5" Phase 1: Real iMeanFlow (iMF) Enhancements on UNet Backbone (June 15 - 16, 2026)
+
+**Keywords**: Gen3v4, U5, iMeanFlow, dual_head, interval-CFG, IMFBackbone, config.
+
+1. **Shared-Backbone Dual Head**: Replaced the detached `aux_head` MLP with a genuine dual-head architecture (`v_final_conv`) that branches off the shared UNet features (`velocity_net`). This ensures that `meanflow_aux_weight` correctly regularizes the main network flow, achieving parity with the official `u_heads`/`v_heads` split.
+2. **Interval Classifier-Free Guidance (CFG)**: Implemented interval-CFG by integrating sinusoidal embeddings for `omega`, `t_min`, and `t_max` into the time/`h` embedding logic. This enables guided sampling restricted strictly to the `[t_min, t_max]` interval, enhancing generation quality exactly as the canonical iMF reference prescribes.
+3. **IMFBackbone Abstraction**: Established an `IMFBackbone` interface around the current UNet, incorporating a clear drop-in placeholder (`# TODO(real-iMF-NN)`) for future substitution with the official DiT-based iMF architecture. This allows continuous testing of the iMF *method* without immediately overhauling the underlying model.
+4. **Configuration Upgrades**: Modified configuration structures to properly expose the new capabilities (`dual_head`, `interval_cfg`, `meanflow_cfg_*`). Configured the repository to default to enabling iMF behavior (`imf_objective='meanflow_jvp'`, `dual_head=True`, `interval_cfg=True`) to streamline upcoming evaluation runs.
+5. **Validation Status**: Phase 1 is code complete and passes local syntax checks (`py_compile`), but remains untested on the cluster runtime. Forward-AD (JVP) stability across the new UNet interval-CFG embeds is pending empirical verification.

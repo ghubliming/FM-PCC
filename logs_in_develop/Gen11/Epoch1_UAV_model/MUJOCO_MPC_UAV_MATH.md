@@ -20,6 +20,8 @@ planning, control, or imitation-learning experiments.
 | Body mass | ≈ 0.645 kg (chassis-only in Menagerie XML; effective hover-mass ≈ 1.32 kg with arms+props) |
 | Hover thrust (per motor) | ≈ 3.25 N (matches MJPC residual: `(m_body + m_arms) · g / 4`) |
 
+**Note on Modeling Source:** MuJoCo MPC (MJPC) is a framework for planning and control algorithms, not hardware modeling. To ensure physical accuracy, MJPC imports its baseline robots from **MuJoCo Menagerie**—DeepMind's official collection of rigorously calibrated, high-fidelity models of real-world robots. For the Quadrotor Racing task, MJPC pulls the base Skydio X2 from Menagerie and simply layers task-specific geometry (waypoints, gates) and an MPC cost function over the pure-physics model.
+
 ---
 
 ## 2. The Mathematical Model (Skydio X2 as Rigid Body + 4 Motors)
@@ -40,9 +42,29 @@ s = [ p ; q ; v ; ω ]
   (`framelinvel` sensor convention).
 - **ω ∈ ℝ³** — angular velocity, **world** frame (`frameangvel`).
 
-The free joint contributes 6 generalized DOF (qpos has 7 components — 3
-position + 4 quaternion — and qvel has 6, with the quaternion's
-constraint folded in).
+The free joint contributes exactly 6 spatial Degrees of Freedom (DoF) to the system (3 translation + 3 rotation). However, the mathematical representation of this state in MuJoCo requires 13 parameters, split between generalized positions (`qpos`) and generalized velocities (`qvel`):
+
+**1. Generalized Positions (`qpos ∈ ℝ⁷`)**
+- **Translation:** 3 components `(x, y, z)` for the position vector `p`.
+- **Rotation:** 4 components `(w, x, y, z)` for the unit quaternion `q`.
+- **Constraint:** A 3D rotation only has 3 DoF. The quaternion uses 4 parameters but is subject to the algebraic unit-norm constraint:
+  `‖q‖² = w² + x² + y² + z² = 1`
+  This constraint removes exactly one degree of freedom (4 parameters − 1 constraint = 3 DoF).
+- **Total `qpos` dimension:** 3 + 4 = 7.
+
+**2. Generalized Velocities (`qvel ∈ ℝ⁶`)**
+- **Linear Velocity:** 3 components `(vx, vy, vz)` for the velocity vector `v`.
+- **Angular Velocity:** 3 components `(ωx, ωy, ωz)` for the angular velocity vector `ω`.
+- **Why 6 and not 7?** Unlike position, velocity lives in the tangent space of the configuration manifold. The derivative of the quaternion constraint is `qᵀ q̇ = 0`, meaning the 4D quaternion derivative `q̇` is strictly confined to a 3D hyperplane. MuJoCo naturally parameterizes this 3D tangent space using the standard 3D angular velocity vector `ω`.
+- **Total `qvel` dimension:** 3 + 3 = 6.
+
+**3. Combined State (`s ∈ ℝ¹³`)**
+The full kinematic state vector `s` concatenates positions and velocities:
+`dim(s) = dim(qpos) + dim(qvel) = 7 + 6 = 13`.
+
+> **Why does MuJoCo Menagerie say "0 DoF"?** 
+> If you look at the Menagerie documentation for the Skydio X2, it lists the model as having **0 DoF**. This is a matter of terminology. Menagerie's DoF count only tallies *internal articulated joints* (like hinges on a robot arm or moving legs on a quadruped). The Skydio X2 has no internal moving parts modeled as joints—even the propellers are fixed geometry with thrust simulated purely as forces applied via site-based actuators. Thus, internally, it has 0 DoF. However, to actually fly in the world, the entire drone is attached to a single **`freejoint`**. This unactuated free joint provides the **6 spatial DoF** (3 translation + 3 rotation) relative to the world frame, which gives rise to the 13-dimensional kinematic state vector (`s`) required by MJPC to compute its trajectory.
+
 
 ### 2.2 Continuous-time dynamics
 

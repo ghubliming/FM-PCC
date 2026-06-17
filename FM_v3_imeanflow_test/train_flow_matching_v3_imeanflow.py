@@ -160,6 +160,14 @@ if __name__ == '__main__':
                 # U5 Phase 1 — real-iMF backbone flags (default OFF)
                 dual_head=getattr(args, 'dual_head', False),
                 interval_cfg=getattr(args, 'interval_cfg', False),
+                # U6 — backbone selector + DiT sizing (default 'unet' ⇒ unchanged)
+                imf_backbone=getattr(args, 'imf_backbone', 'unet'),
+                dit_depth=getattr(args, 'dit_depth', 8),
+                dit_hidden_size=getattr(args, 'dit_hidden_size', 256),
+                dit_num_heads=getattr(args, 'dit_num_heads', 4),
+                dit_aux_head_depth=getattr(args, 'dit_aux_head_depth', 2),
+                dit_patch_size=getattr(args, 'dit_patch_size', 1),
+                dit_condition_on_t=getattr(args, 'dit_condition_on_t', False),
             )
 
             diffusion_config = utils.Config(
