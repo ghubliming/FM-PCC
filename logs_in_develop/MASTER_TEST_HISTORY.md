@@ -1866,3 +1866,24 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 3. **IMFBackbone Abstraction**: Established an `IMFBackbone` interface around the current UNet, incorporating a clear drop-in placeholder (`# TODO(real-iMF-NN)`) for future substitution with the official DiT-based iMF architecture. This allows continuous testing of the iMF *method* without immediately overhauling the underlying model.
 4. **Configuration Upgrades**: Modified configuration structures to properly expose the new capabilities (`dual_head`, `interval_cfg`, `meanflow_cfg_*`). Configured the repository to default to enabling iMF behavior (`imf_objective='meanflow_jvp'`, `dual_head=True`, `interval_cfg=True`) to streamline upcoming evaluation runs.
 5. **Validation Status**: Phase 1 is code complete and passes local syntax checks (`py_compile`), but remains untested on the cluster runtime. Forward-AD (JVP) stability across the new UNet interval-CFG embeds is pending empirical verification.
+
+***
+
+## Documentation Maintenance: Core Dynamics & Architecture Audits (June 16, 2026)
+
+**Keywords**: DPCC, MjRobot, UAV math, dynamic model, code critique.
+
+1. **MjRobot Critique**: Conducted a deep architectural and mathematical critique of the `MjRobot.py` file within the `d3il` stack. Identified critical dormant bugs in the quaternion velocity computation and Jacobian query logic, while confirming that the live avoiding task path remains safe due to bypassing these flawed methods.
+2. **DPCC Dynamics Guide**: Authored a comprehensive guide bridging the 2D kinematic outputs of the DPCC policy to the complex multi-stage physical control (Cartesian Impedance, Inverse Kinematics, Computed Torque Feedforward) executed by the simulated Panda arm.
+3. **UAV Mathematical Model**: Formalized the mathematical representation of the Skydio X2 UAV in MuJoCo MPC, clarifying the 13-dimensional kinematic state vector and how its "0 DoF" internal label translates into 6 spatial degrees of freedom via the unactuated free joint.
+
+***
+
+## Gen3v4 "U6": Config-Switchable Official-iMF DiT Backbone (June 16 - 17, 2026)
+
+**Keywords**: Gen3v4, U6, iMeanFlow, DiT backbone, config-switchable, JVP-safe RoPE, trajectory adaptation.
+
+1. **Official DiT Integration**: Ported the official `/workspaces/imeanflow/models/imfDiT.py` transformer architecture into the `flow_matcher_v3_imeanflow` codebase, adapting it for 1D trajectories (`[B, H, D]`) via a new `TrajPatchEmbedder`. This introduces a native dual-head structure with equal-depth `u_heads` and `v_heads`, addressing the conditioning bottleneck observed in the UNet.
+2. **Config-Switchable Architecture**: Introduced a single configuration flag (`imf_backbone: 'unet' | 'dit'`) to seamlessly dispatch the `velocity_net` implementation at runtime. The default remains `unet`, ensuring byte-for-byte backwards compatibility for existing runs, while the `dit` branch fully conforms to the `IMFBackbone` contract without modifying the MeanFlow-JVP objective, interval-CFG sampler, or DPCC projector.
+3. **JVP-Safe RoPE Adaptation**: Replaced the official complex-number-based Rotary Position Embedding (RoPE) with a mathematically identical, real-valued interleaved rotation. This crucial modification ensures the forward-mode automatic differentiation (`torch.func.jvp`) required by the MeanFlow objective remains functionally pure and differentiable.
+4. **Configuration & State Management**: Plumbed the new `dit_*` hyperparameters through the configuration blocks and appended a `_bb{imf_backbone}` tag to the folder names and `diffusion_loadpath`. This prevents silent checkpoint mismatches and cross-loading errors between disjoint UNet and DiT parameter trees.
