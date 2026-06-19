@@ -7,7 +7,7 @@ metrics are blind to.
 ## Run
 
 ```bash
-python npz_analysis/analyze_npz.py <path-to-dir-or-file> [--out DIR] [--xy-cols 0 1] [--replot] [--no-recursive]
+python npz_analysis/analyze_npz.py <path-to-dir-or-file> [--out DIR] [--xy-cols 0 1] [--replot] [--dump-xy] [--no-recursive]
 ```
 
 - `<path>` — a directory (scanned **recursively** for `*.npz`) or a single `.npz`. Works on paths like
@@ -16,6 +16,8 @@ python npz_analysis/analyze_npz.py <path-to-dir-or-file> [--out DIR] [--xy-cols 
 - `--xy-cols A B` — which `obs` columns are (x, y). **For avoiding use `2 3`** (cols `0 1` are
   `x_des, y_des`; the robot path is `x=2, y=3` per `config/projection_eval.yaml`). Default `0 1`.
 - `--replot` — regenerate the **executed (x,y) trajectory** as a PNG per npz (see below).
+- `--dump-xy` — write the **raw per-step (x,y) points** to `points_<ts>.csv`
+  (`file, variant, trial, step, x, y`) — the actual coordinates, DA-ready.
 - `--no-recursive` — only the top dir.
 
 ## Can it regenerate the *real* plotted path? — yes
@@ -47,7 +49,7 @@ cd ~/FMPCC/FM-PCC
 
 python npz_analysis/analyze_npz.py \
   "logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE/6/results/halfspace_both-hard" \
-  --xy-cols 2 3 --replot       # avoiding x=2,y=3; --replot redraws the real executed paths
+  --xy-cols 2 3 --replot --dump-xy    # avoiding x=2,y=3; --replot=PNG paths, --dump-xy=raw points
 ```
 
 A **new `_npz_analysis/` folder is created *inside* the folder you pointed at** (the default `--out`),
@@ -56,6 +58,7 @@ and a table prints to your SSH terminal. So everything lands here:
 logs/.../results/halfspace_both-hard/_npz_analysis/
     files_summary_20260619_150240.csv     # <ts> = real timestamp
     per_trial_20260619_150240.csv
+    points_20260619_150240.csv             # raw per-step (x,y): file,variant,trial,step,x,y
     diffuser_replot.png                    # regenerated real path, one per .npz in the folder
     dpcc-r_replot.png
 ```

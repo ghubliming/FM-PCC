@@ -233,6 +233,35 @@ def replot_trajectories(npz_path, out_dir, cols, rel):
     return out_png
 
 
+def dump_xy_rows(npz_path, cols, rel, variant):
+    """Raw per-step (x,y) of every executed trajectory in obs_all → list of row dicts."""
+    rows = []
+    try:
+        data = np.load(npz_path, allow_pickle=True)
+    except Exception:
+        return rows
+    if 'obs_all' not in data.files:
+        data.close(); return rows
+    obs = data['obs_all']
+    try:
+        n = len(obs)
+    except TypeError:
+        data.close(); return rows
+    for i in range(n):
+        try:
+            a = np.asarray(obs[i], dtype=float)
+        except Exception:
+            continue
+        if a.ndim != 2 or a.shape[0] < 1:
+            continue
+        c = [x for x in cols if x < a.shape[1]] or [0, min(1, a.shape[1] - 1)]
+        for s in range(a.shape[0]):
+            rows.append({'file': rel, 'variant': variant, 'trial': i, 'step': s,
+                         'x': float(a[s, c[0]]), 'y': float(a[s, c[1]])})
+    data.close()
+    return rows
+
+
 def write_csv(path, rows):
     if not rows:
         return 0
@@ -287,6 +316,9 @@ def main():
     ap.add_argument('--replot', action='store_true',
                     help='Regenerate the executed (x,y) trajectory plot from obs_all into a PNG per npz '
                          '(the same path drawn as the black line in the eval figure).')
+    ap.add_argument('--dump-xy', action='store_true',
+                    help='Write the RAW per-step (x,y) points of every trajectory to points_<ts>.csv '
+                         '(columns: file, variant, trial, step, x, y).')
     ap.add_argument('--no-recursive', action='store_true', help='Do not recurse into subdirs.')
     args = ap.parse_args()
 
@@ -301,16 +333,19 @@ def main():
     os.makedirs(out, exist_ok=True)
 
     print(f'[npz-analyze] scanning {len(files)} file(s) under {root}')
-    file_rows, trial_rows = [], []
+    file_rows, trial_rows, point_rows = [], [], []
     replots = []
     for p in files:
         fr, tr = process_file(p, base, args.xy_cols)
         file_rows.append(fr)
         trial_rows.extend(tr)
+        rel = fr.get('file', os.path.basename(p))
         if args.replot:
-            png = replot_trajectories(p, out, args.xy_cols, fr.get('file', os.path.basename(p)))
+            png = replot_trajectories(p, out, args.xy_cols, rel)
             if png:
                 replots.append(png)
+        if args.dump_xy:
+            point_rows.extend(dump_xy_rows(p, args.xy_cols, rel, fr.get('variant', '')))
 
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     fsum = os.path.join(out, f'files_summary_{stamp}.csv')
@@ -322,6 +357,10 @@ def main():
     print(f'[npz-analyze] per_trial:     {n2} rows -> {ftri}')
     if args.replot:
         print(f'[npz-analyze] replot:        {len(replots)} png(s) -> {out}')
+    if args.dump_xy:
+        fpts = os.path.join(out, f'points_{stamp}.csv')
+        n3 = write_csv(fpts, point_rows)
+        print(f'[npz-analyze] points (xy):   {n3} rows -> {fpts}')
     errs = [r['file'] for r in file_rows if '_load_error' in r]
     if errs:
         print(f'[npz-analyze] WARNING: {len(errs)} file(s) failed to load (see _load_error col).')

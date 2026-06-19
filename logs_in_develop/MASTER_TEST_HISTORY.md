@@ -1887,3 +1887,24 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 2. **Config-Switchable Architecture**: Introduced a single configuration flag (`imf_backbone: 'unet' | 'dit'`) to seamlessly dispatch the `velocity_net` implementation at runtime. The default remains `unet`, ensuring byte-for-byte backwards compatibility for existing runs, while the `dit` branch fully conforms to the `IMFBackbone` contract without modifying the MeanFlow-JVP objective, interval-CFG sampler, or DPCC projector.
 3. **JVP-Safe RoPE Adaptation**: Replaced the official complex-number-based Rotary Position Embedding (RoPE) with a mathematically identical, real-valued interleaved rotation. This crucial modification ensures the forward-mode automatic differentiation (`torch.func.jvp`) required by the MeanFlow objective remains functionally pure and differentiable.
 4. **Configuration & State Management**: Plumbed the new `dit_*` hyperparameters through the configuration blocks and appended a `_bb{imf_backbone}` tag to the folder names and `diffusion_loadpath`. This prevents silent checkpoint mismatches and cross-loading errors between disjoint UNet and DiT parameter trees.
+
+***
+
+## Gen3v4 "U6" DiT Debugging & Architecture Tutorials (June 18, 2026)
+
+**Keywords**: Gen3v4, U6, DiT, trajectory explosion, fake convergence, interval-CFG, tutorials.
+
+1. **Trajectory Explosion Diagnosis**: Investigated a paradoxical issue where the iMeanFlow DiT backbone exhibited clean training convergence but produced "exploded" or chaotic trajectories during evaluation. Discovered that the evaluation metric logs remained superficially healthy because task-success metrics (like goal-reaching and discrete obstacle checks) are blind to continuous motion quality (e.g., jerkiness).
+2. **Interval-CFG Amplification (H1)**: Identified the primary culprit: interval-CFG with `ω=4.0` was amplifying a meaningless null-class token during the final integration step. Because the DiT lacked the real ImageNet class labels used in the official implementation, the CFG extrapolation injected noise rather than sharpening the conditioning signal.
+3. **Training Objective vs. Smoothness (H2 & §4B)**: Analyzed how the DiT's lack of a structural smoothness prior (unlike the UNet's convolutions) combined with a purely step-0-weighted velocity MSE loss led to compounding errors in multi-step generation. Diagnosed the "fake convergence" phenomenon where a self-referential bootstrapped objective minimizes a reweighted proxy loss without improving generated trajectory quality. Recommended a regime shift: higher effective batch size, lower LR, warmup, and disabled CFG (`ω=0.0`) during evaluation.
+4. **DiT Operational Tutorials**: Authored comprehensive guides (`HOW_TO_TEST_DiT.md`, `DiT_Explained_For_Beginners.md`, `Eval_Call_Chain_Traj_to_Plot.md`) detailing how to properly toggle the Config-Switchable DiT backbone, execute a cluster smoke test for JVP/AD safety, and correctly interpret the generated plots versus the executing receding-horizon MPC path.
+
+***
+
+## Data Analysis Tool v3: `npz_analysis` Trajectory Quality Auditing (June 19, 2026)
+
+**Keywords**: npz_analysis, trajectory quality, jerk, motion smoothness, CSV aggregation, replotting.
+
+1. **Motion Quality Deficit Addressed**: Recognizing that existing discrete "success/violation" metrics could falsely validate chaotic models (as proven in the U6 DiT debug), developed the `analyze_npz.py` tool. This tool explicitly computes dynamic trajectory quality metrics—including `traj_straightness`, `traj_roughness`, and `traj_max_jerk`—from the `obs_all` executed path.
+2. **CSV Aggregation Engine**: Built a schema-generic Python utility that recursively scans for `.npz` evaluation files across both the state-based (avoiding) and visual-aligning pipelines. Automatically aggregates per-trial means/stddevs and trajectory quality scores, exporting them into structured `files_summary_<ts>.csv` and `per_trial_<ts>.csv` reports without requiring pandas.
+3. **Execution Path Replotting**: Implemented a `--replot` feature allowing users to retroactively visualize the true closed-loop physical execution path directly from the stored `.npz` coordinates. This completely bypasses the need for costly MuJoCo simulator reruns while validating the numerical quality scores visually.
