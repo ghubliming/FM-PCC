@@ -42,6 +42,17 @@ computed on the executed path `obs_all`.
   `traj_straightness` / `traj_roughness` / `traj_max_jerk` correctly separated smooth from chaotic paths;
   both files summarized into the union-column CSV; per-trial rows produced.
 
+## Update — `--replot` (regenerate the real path from the npz)
+- `obs_all` is the **real executed trajectory** (the exact `(x,y)` drawn as the black line in
+  `<variant>.png`), so it *is* recoverable. Added **`--replot`**: redraws the executed path per npz to a
+  PNG (all trials overlaid, green start), straight from the npz — no eval rerun.
+- **Avoiding columns:** the robot path is `x=col 2, y=col 3` (cols 0,1 are `x_des, y_des`, per
+  `config/projection_eval.yaml`), so use `--xy-cols 2 3`. (Default stays `0 1` for generality.)
+- Limitation: only the executed (black) path is in the avoiding npz; the open-loop **plans** (blue) are
+  not saved there, so they can't be regenerated. Visual-aligning saves `sampled_trajectories_all`, but
+  `--replot` does not draw those yet.
+- matplotlib imported **lazily** (only under `--replot`), so the CSV path has no extra dependency.
+
 ## Not done / future
 - Open-loop **plan** quality (visual-aligning's `sampled_trajectories_all`) is loaded but not yet scored —
   could add a `plan_*` quality block to expose the open-loop explosion directly.

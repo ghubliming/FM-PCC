@@ -191,6 +191,48 @@ def process_file(npz_path, root, cols):
     return file_row, trial_rows
 
 
+def replot_trajectories(npz_path, out_dir, cols, rel):
+    """Regenerate the executed (x,y) trajectory plot from obs_all — the SAME data drawn as the
+    black path in the eval's <variant>.png. Returns the saved png path, or None."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    try:
+        data = np.load(npz_path, allow_pickle=True)
+    except Exception:
+        return None
+    if 'obs_all' not in data.files:
+        data.close(); return None
+    obs_all = data['obs_all']
+    try:
+        n = len(obs_all)
+    except TypeError:
+        data.close(); return None
+    fig, ax = plt.subplots(figsize=(7, 7))
+    drawn = 0
+    for i in range(n):
+        try:
+            a = np.asarray(obs_all[i], dtype=float)
+        except Exception:
+            continue
+        if a.ndim != 2 or a.shape[0] < 1:
+            continue
+        c = [x for x in cols if x < a.shape[1]] or [0, min(1, a.shape[1] - 1)]
+        ax.plot(a[:, c[0]], a[:, c[1]], lw=1.2, alpha=0.8, label=f'trial {i}')
+        ax.plot(a[0, c[0]], a[0, c[1]], 'go', ms=5)  # start dot
+        drawn += 1
+    if drawn == 0:
+        plt.close(fig); data.close(); return None
+    ax.set_title(f'{rel}\nexecuted path · obs cols (x={cols[0]}, y={cols[1]})')
+    ax.set_xlabel(f'obs[{cols[0]}]'); ax.set_ylabel(f'obs[{cols[1]}]')
+    ax.set_aspect('equal', 'datalim')
+    name = rel.replace(os.sep, '__').replace('.npz', '') + '_replot.png'
+    out_png = os.path.join(out_dir, name)
+    fig.savefig(out_png, dpi=120, bbox_inches='tight')
+    plt.close(fig); data.close()
+    return out_png
+
+
 def write_csv(path, rows):
     if not rows:
         return 0
@@ -240,7 +282,11 @@ def main():
     ap.add_argument('path', help='Directory (scanned recursively) or a single .npz file.')
     ap.add_argument('--out', default=None, help='Output dir (default: <path>/_npz_analysis).')
     ap.add_argument('--xy-cols', type=int, nargs=2, default=[0, 1],
-                    help='Observation columns treated as (x, y) for trajectory metrics.')
+                    help='Observation columns treated as (x, y). AVOIDING executed path = "2 3" '
+                         '(cols 0,1 are x_des,y_des); default 0 1.')
+    ap.add_argument('--replot', action='store_true',
+                    help='Regenerate the executed (x,y) trajectory plot from obs_all into a PNG per npz '
+                         '(the same path drawn as the black line in the eval figure).')
     ap.add_argument('--no-recursive', action='store_true', help='Do not recurse into subdirs.')
     args = ap.parse_args()
 
@@ -256,10 +302,15 @@ def main():
 
     print(f'[npz-analyze] scanning {len(files)} file(s) under {root}')
     file_rows, trial_rows = [], []
+    replots = []
     for p in files:
         fr, tr = process_file(p, base, args.xy_cols)
         file_rows.append(fr)
         trial_rows.extend(tr)
+        if args.replot:
+            png = replot_trajectories(p, out, args.xy_cols, fr.get('file', os.path.basename(p)))
+            if png:
+                replots.append(png)
 
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     fsum = os.path.join(out, f'files_summary_{stamp}.csv')
@@ -269,6 +320,8 @@ def main():
     print_table(file_rows)
     print(f'[npz-analyze] files_summary: {n1} rows -> {fsum}')
     print(f'[npz-analyze] per_trial:     {n2} rows -> {ftri}')
+    if args.replot:
+        print(f'[npz-analyze] replot:        {len(replots)} png(s) -> {out}')
     errs = [r['file'] for r in file_rows if '_load_error' in r]
     if errs:
         print(f'[npz-analyze] WARNING: {len(errs)} file(s) failed to load (see _load_error col).')
