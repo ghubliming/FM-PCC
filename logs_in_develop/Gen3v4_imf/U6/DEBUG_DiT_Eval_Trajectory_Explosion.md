@@ -115,6 +115,16 @@ conditioning enters as a summed real bias and (b) its conv smoothness damps per-
 '`diffuser`' does **not** disable this — it only nulls the *projector* (`eval:241`); interval-CFG is
 internal to `p_sample_loop` and stays on.
 
+**Why the official repo gets away with the very same CFG (and we don't):** the official imfDiT runs CFG at
+even *higher* `ω≈8–10.5` and it *helps* — because the signal it **drops** is a **real ImageNet class label
+`y`** (`imfDiT.py` `y_embedder` / `class_tokens`). Dropping `y` genuinely changes the prediction, so
+`(u_cond − u_uncond)` points in a *meaningful* "more like class y" direction; amplifying it sharpens the
+sample. **Our port has no real label** — the trajectory's actual conditioning (the start observation) is
+pinned into `x` *outside* the network, and the class token is a **dummy** (one class + a null). So our
+`(u_cond − u_uncond)` is **noise, not signal**, and the same machinery that *sharpens* images *explodes*
+our trajectories. The difference is not the DiT or CFG itself — it is that **we kept the CFG knob but
+removed the thing it guides on.**
+
 **This is the prime amplifier and the cheapest to confirm (diag D1).**
 
 ### H2 — The DiT has no horizon-smoothness prior, and the loss is velocity-only + heavily step-0-weighted
@@ -133,18 +143,233 @@ internal to `p_sample_loop` and stays on.
 This explains **why the DiT explodes where the UNet doesn't despite a better loss.**
 
 ### H3 — Constant-h, t-blind few-step stepping (`dit_condition_on_t=False`)
-At inference, every step uses `h = dt` constant and the DiT **ignores `t`** (official recipe;
-`imf_dit_trajectory.py` only adds the `t` token if `condition_on_t=True`). So for a 2-step rollout, both
-steps query `u(x, h=0.5)` with **no signal for "which half-interval am I in"** except the value of `x`
-itself. The UNet's sampler explicitly conditions on **both** `t` and `h` and warns *never to freeze t*
-(the U3-B1 guardrail in `p_sample_loop:212–220`) precisely because t-blindness is OOD for *it*. The DiT
-trains t-blind too, so it's *self-consistent*, but it is **more fragile**: the tail waypoints have the
-least `x`-information to localize the interval, compounding H2.
+
+> #### Primer — what "DiT conditioning" is, and why `t` matters here
+> **"Conditioning" = the side-information you *tell* the network about the current generation step**, on
+> top of the trajectory itself. In the **DiT** each conditioning signal is turned into its **own token**
+> (a learned vector) and **prepended** to the trajectory tokens; attention then lets every trajectory
+> step "read" them (`imf_dit_trajectory.py`, the prefix tokens). Our conditioning signals are:
+> - **`h = t − r`** — the *interval size* the average-velocity `u` is being asked to cover (the step size);
+> - **`ω, t_min, t_max`** — the CFG knobs (the §4 primer);
+> - a **class token** — used only as the CFG on/off switch;
+> - **`t`** — *where we currently are* along the noise→data flow (τ=0 pure noise … τ=1 data). **Optional**:
+>   added only if `dit_condition_on_t=True`.
+> (Contrast the **UNet**, which doesn't tokenize — it *sums* all of these into one bias vector.)
+>
+> **Why `t` matters:** sampling walks `τ` from 0→1 in `N` steps. The correct `u` at an **early** step
+> (mostly noise) is *different* from the correct `u` at a **late** step (near data). If the DiT is **not
+> told `t`**, it must infer "how far along am I?" purely from the statistics of `x` — a weak, indirect cue.
+
+> #### ⚠ Rebuttal from the official repo — H3 is WEAK, do not lead with it
+> **The official imfDiT is `t`-blind on purpose** ("We don't explicitly condition on time t, only on
+> h = t − r", `/workspaces/imeanflow/models/imfDiT.py:370`) and still achieves **SOTA 1–2-NFE generation**.
+> So **`t`-blindness by itself is not broken** — the MeanFlow method is *designed* to need only `h`, and a
+> well-trained t-blind DiT integrates fine. Our DiT is `t`-blind in the **same** way. Therefore H3 is
+> **demoted to "probably not the cause"** — we keep it only as a cheap A/B (D-toggle below), not as a
+> suspect. (The UNet's "never freeze t" guardrail is about the **UNet**, which was *trained* with `t`;
+> it does not imply a t-blind DiT is wrong.)
+
+At inference every step uses `h = dt` constant and the DiT ignores `t` (official recipe;
+`imf_dit_trajectory.py` only adds the `t` token if `condition_on_t=True`) — **identical to the official
+model that works.** The only residual worry is that our few-step *trajectory* setting gives the tail
+waypoints little `x`-information to localize the interval; but since the official is t-blind and fine,
+treat this as a **minor** contributor at most. If you want to rule it in/out, flip `dit_condition_on_t=True`
+and A/B — but **spend your first effort on H1/H2, not here.**
 
 ### H4 — Low-NFE compounding (cross-cutting)
 At `flow_steps_v3=2` the integral is coarse; any per-step velocity error in the tail is integrated with
 `dt=0.5` and not corrected. This is a multiplier on H1–H3, not an independent cause. (Bumping NFE is a
 *diagnostic*, not the fix — iMF's point is low NFE.)
+
+---
+
+## 4B. Is the convergence "fake"? — training-objective & training-setup analysis
+
+> **"Do we have such a saying — fake convergence?"** Not as a standard term, but **the phenomenon is real
+> and well-named.** A loss can converge low while the network is a bad generator, via: **proxy mismatch**
+> (the loss isn't the thing you care about), a **degenerate fixed point of a bootstrapped objective**, or
+> **loss-masking by reweighting**. So "converged val loss + bad model" is **not** a contradiction — it's a
+> known failure mode. For iMF, three mechanisms make our converged loss **necessary but not sufficient**.
+
+### Mechanism 1 — the MeanFlow loss is a SELF-CONSISTENCY target → low loss ≠ correct field
+The target is `u_target = (v_inst + h·du/dr).detach()` (`imf_diffusion.py:444–447`) — it contains the
+network's **own** derivative. Minimizing `‖u_pred − u_target‖` means *"be consistent with my own
+identity,"* **not** *"match a ground-truth average velocity."* Self-referential (bootstrapped) objectives
+have **trivial / degenerate fixed points**: the field can drift toward a self-consistent-but-biased
+solution (or partially collapse toward the instantaneous `v`, ignoring `h`) and **still show low loss**.
+This is the same failure class as **consistency-model collapse**. **Low loss certifies self-consistency,
+not generation quality** — the textbook "fake-good" setup.
+
+### Mechanism 2 — adaptive loss weighting HIDES the hard samples in the reported number
+The loss multiplies each sample by `w = 1/(‖Δ‖² + c)^p`, `p=0.5` (`imf_diffusion.py:454`). That **down-
+weights exactly the high-error samples.** So the printed train/val loss is dominated by the **easy**
+samples; the regions the model is worst at — typically the **long / near-data intervals** the few-step
+sampler most relies on — contribute least to the number. A "best val loss" can literally mean **"best at
+the easy stuff,"** while the hard regime that drives the explosion is unmeasured.
+
+### Mechanism 3 — the loss is velocity-MSE, never integrated-trajectory quality
+Nothing in the objective integrates `u` into a trajectory or penalizes jerk; compounding error at low NFE
+is **invisible** to a per-element velocity loss. (This is H2, seen from the training side: you can drive
+velocity-MSE to its floor and still integrate to a chaotic path.)
+
+### Training-setup suboptimalities vs the official method (the "fake-good" amplifiers)
+The official PyTorch repo is **inference-only** (training is JAX-only — `imf.py:29` asserts inference;
+README points to the JAX MeanFlow for training), so exact hyperparameters aren't copyable. But the
+*method* + our config (`config/avoiding-d3il.py`) expose concrete gaps for a **high-variance bootstrapped
+DiT** objective:
+
+| Knob | Ours | Why it's likely suboptimal for iMF-JVP |
+|---|---|---|
+| `batch_size` | **32** (eff. 64 with `gradient_accumulate_every=2`) | **The single biggest suspect.** The JVP/MeanFlow target is **high-variance**; the method leans on **large batches** to average it. Eff-64 ⇒ noisy gradients ⇒ the net fits a *smoothed/biased* mean velocity (low average loss) but a poorly-estimated field where variance is high. |
+| `learning_rate` | **5e-4** | High for a transformer/DiT (DiTs typically ~1e-4 **with warmup**). High LR on a self-referential target can **lock in a bad fixed point**. |
+| `ema_decay` | **0.995** | Loose — averaging window ≈ 200 steps. Image DiTs use ~**0.9999**. Eval uses the EMA weights, so they may be **noisier** than the raw best. |
+| `warmup_epochs` | **0** | No curriculum. A bootstrapped target benefits from **first learning `v`** (instantaneous) before trusting the JVP; a cold start can settle a **degenerate field**. |
+| `n_train_steps` | **100k** @ eff-batch 64 | ~6.4M samples; the **long-`h` / near-data** regime (rare under the schedule) is plausibly **undertrained** — exactly where Mechanism 2 hides it. |
+
+**Net (the training-side root cause beneath H1/H2):** the DiT can minimize a **reweighted self-consistency
+proxy** (Mechanisms 1+2), under a **small-batch, high-LR, loose-EMA, no-warmup** regime, and report a
+"best ever" converged loss **while being a chaotic generator.** The convergence is real; its *meaning* is
+weak.
+
+### Training diagnostics (do these alongside §5)
+- **T1 — un-mask the loss.** Re-log the **un-weighted** loss (`w≡1`) and the loss **split by `h`-bucket**
+  (small/med/large). If small-`h` is great but large-`h` is bad ⇒ **Mechanism 2 confirmed**; the converged
+  number was hiding the hard regime.
+- **T2 — track a quality metric *during* training**, not just loss: 1-NFE reconstruction error, or the
+  **jerk** of generated plans, logged every N steps. If loss falls but this doesn't ⇒ **fake convergence
+  confirmed**.
+- **T3 — fix the regime and re-eval:** raise effective batch (accum 8–16), drop LR to ~1e-4 **+ warmup**,
+  tighten EMA to ~0.9999. Re-check plan smoothness.
+- **T4 — isolate the bootstrap:** does an `fm_equivalent` **DiT** (plain velocity-MSE, no JVP) also explode?
+  If **yes** ⇒ it's the DiT/training regime, not the JVP. If **only `meanflow_jvp`** explodes ⇒
+  **Mechanism 1** (bootstrap fixed point) is implicated. This cleanly separates objective from architecture.
+
+### "But it really converged — if so, do batch size / LR / EMA even matter?"
+
+**Yes it converged, and yes they still matter — because "converged" and "correct" are different claims.**
+"Converged" means *the loss stopped dropping* = the optimizer reached **a** stable fixed point of **this**
+objective under **this** regime. It does **not** mean that fixed point is the *right* field. Three reasons
+the regime is not neutralized by convergence:
+
+1. **Converged ≠ unique.** Different batch/LR/EMA settings land in **different** stable points. "Loss
+   flat" tells you *where you stopped*, not that it's the best reachable solution.
+
+2. **The objective is bootstrapped, so batch noise is baked INTO the fixed point — not averaged away.**
+   This is the crux, and it's where MeanFlow differs from plain FM:
+   - **Fixed-target regression (`fm_equivalent` / plain FM):** the label `x₁−ε` is **constant**. Small-batch
+     noise mostly affects *speed*; once converged, the solution is ≈ the same regardless of batch. Here
+     *"converged ⇒ done"* is roughly true — **this is the intuition you're applying.**
+   - **Self-referential target (`meanflow_jvp`):** the target **contains the network's own derivative**, so
+     it **moves as the net moves.** Gradient noise perturbs the *target itself*, and the network converges
+     to be self-consistent **with that noisy target** — the bias becomes **part of** the fixed point. A
+     larger batch gives a **less-biased target ⇒ a different, better converged solution.** So here batch
+     size changes the **destination**, not just the speed. **Your fixed-target intuition does not transfer
+     to a bootstrapped objective.**
+
+3. **The converged *number* is a reweighted proxy, and EMA picks the deployed weights.** Adaptive weighting
+   (Mech. 2) can drive the displayed loss low independent of the hard regime; and EMA decides **which**
+   weights you actually evaluate, regardless of whether the *raw* loss converged. A flat, low curve
+   certifies neither field-correctness nor a good deployed snapshot.
+
+> **One line:** convergence proves you found a stable fixed point of a *reweighted self-consistency*
+> objective; **batch / LR / EMA decide *which* fixed point and whether it's a good generator.** For a
+> bootstrapped target they are **not "speed-only" knobs — they move the answer.**
+
+### Final — recommended new training parameters for the iMF DiT (A/B these)
+
+| Param | Current | Recommended | Why |
+|---|---|---|---|
+| **effective batch** | 64 (`bs32 × accum2`) | **256+** (`bs32 × accum8`, or `bs64 × accum4`) | average the **high-variance JVP target** → less-biased fixed point (Mech. 1 / §setup). **Do this first.** |
+| **learning_rate** | 5e-4 | **1e-4** | DiT-stable; high LR on a moving target locks bad fixed points |
+| **lr warmup** | none (`warmup_epochs=0`) | **2–5k steps linear** | let `v`/representation form before the JVP target is trusted |
+| **ema_decay** | 0.995 | **0.9999** | deploy a stabler averaged snapshot (eval uses EMA weights) |
+| **meanflow_aux_weight** | 0.05 | **0.1–0.25** | stronger shared `v`-anchor pulls the bootstrap toward the true instantaneous velocity |
+| **meanflow_r_equals_t_frac** | 0.25 | **0.25–0.50** | more FM-anchor mass (`h=0`) grounds the field; the paper uses up to ~50% |
+| **n_train_steps** | 100k | **200–300k** (keep sample budget after batch↑) | cover the rare **long-`h` / near-data** regime |
+| **meanflow_cfg_omega** (eval) | 4.0 | **0.0** | orthogonal eval fix (H1/D1) — stop amplifying a meaningless signal |
+| `dit_condition_on_t` | False | **False** (leave) | H3 rebutted — official is t-blind; not the lever |
+
+**Order to try:** (1) **batch↑ + LR↓ + warmup** (attacks Mechanism 1 / the biased fixed point), then
+(2) **EMA↑**, then (3) **aux/anchor↑**; (4) **CFG=0** is the independent eval-side fix from D1. Re-judge
+with the **quality metrics (T1–T2, D6)** — *not* the converged loss, which is the very number that misled
+us here.
+
+---
+
+## 4C. Config-semantics gotchas — what each param *actually* does (train vs eval vs path)
+
+The config looks chaotic because a key can live in the **train block**, the **plan block**, or both, and
+its **effective domain** is not obvious from where it sits. Two that genuinely mislead:
+
+### `meanflow_cfg_omega` — split-role, and subtly broken in training
+- **Not eval-only, not fake.** In **training** (`_p_losses_meanflow_jvp:425–433`) `ω>0` feeds the network
+  an **ω-conditioning token** (`omega_c = full_like(t, 4.0)`, held constant through the JVP) — but it does
+  **no guidance** (no cond/uncond mixing). In **eval** (`p_sample_loop:230` → `_predict_velocity:163`) the
+  same value **both** conditions the net **and** is the **guidance scale** in `u_uncond + ω·(u_cond−u_uncond)`.
+- **⇒ train and eval `ω` MUST match** — a different `ω` at eval feeds an OOD token the net never trained on.
+- **The defect:** training feeds a **constant `ω=4` to every sample**, so the net never sees `ω` *vary* and
+  **cannot learn ω-dependence** — the ω token is just a fixed bias. The official **samples `ω` per batch**
+  so the net becomes *guidance-aware*. Ours is not ⇒ at eval, CFG extrapolates along an axis the network
+  treats as constant. **This is a second, independent reason the DiT's CFG is meaningless (on top of the
+  dummy class token in H1).** Fix: either `ω=0` (D1), or **sample ω during training** if you want real CFG.
+
+### `action_weight` — training-only compute, **path-only at eval**
+- Feeds `get_loss_weights:132` (`loss_weights[0,:action_dim]=10`), used **only** in the training loss
+  (`:451`). `p_sample_loop` computes **no loss**, so `action_weight` **never touches the generated
+  trajectory at eval.** The eval script doesn't read `args.action_weight` at all.
+- Its **only** eval role: the `aw{action_weight}` token in `diffusion_loadpath`/`prefix` (`:825,862`) — it
+  must match the trained value so the **checkpoint folder resolves**. (So: yes it "plays a role" in eval —
+  but only **path resolution**, not the math.)
+
+### The effective-domain map (read this before touching the config)
+
+| Param | Train: compute? | Eval: compute? | In loadpath? | Notes |
+|---|---|---|---|---|
+| `imf_objective` | ✅ selects loss | — (model from pickle) | ✅ | path must match trained |
+| `time_beta_alpha_v3` / `_beta_v3` | ✅ samples `t` (`loss()`) | ❌ (sampler uses uniform `τ=i/N`) | ✅ | **train-only math**; at eval it's *path-only* |
+| `flow_steps_v3` | ❌ | ✅ NFE in `p_sample_loop` | ❌ | **eval-only** (set NFE here) |
+| `meanflow_cfg_omega/t_min/t_max` | ✅ conditioning (constant) | ✅ conditioning **+ guidance** | ❌ | **must match**; constant-ω defect above |
+| `dual_head`, `interval_cfg`, `dit_*`, `imf_backbone` | ✅ builds arch | ✅ rebuilds arch | `imf_backbone` ✅ | **must match or `state_dict` fails** |
+| `meanflow_aux_weight`, `_r_equals_t_frac`, `_adaptive_p/c` | ✅ loss | ❌ | ❌ | **train-only** |
+| `action_weight` | ✅ loss weight | ❌ | ✅ `aw{}` | **train-only math; eval = path-only** |
+| `n_train_steps`, `batch_size`, `lr`, `ema_decay`, `warmup` | ✅ | ❌ | ❌ | **train-only** (the §4B knobs) |
+
+**Rule of thumb:** at **eval**, the model architecture + weights come from the **pickled checkpoint**; the
+plan block only (a) sets **sampler** knobs (`flow_steps_v3`, the CFG trio), (b) supplies **arch flags** that
+must equal training (or load fails), and (c) fills the **path** so the right checkpoint is found. Anything
+that's purely a **loss** knob (`action_weight`, `aux_weight`, schedule `time_beta_*`) is **inert at eval
+except where it appears in the path.**
+
+### Practical: ω=0 — eval-only (diagnose) vs both (fix); and `interval_cfg` / `action_weight`
+
+**Setting `meanflow_cfg_omega=0` is the move — the only question is *where*.**
+
+- **Hard rule:** train ω and eval ω must be **equal**. A mismatch feeds the net an ω-token it never
+  trained on → OOD → garbage. The **one sanctioned exception** is the eval-only test below, because you
+  are probing an *already-trained* model whose train-time ω you cannot retroactively change.
+
+- **Eval-only ω=0 — quick DIAGNOSTIC, no retrain.** On the existing ω=4 checkpoint, set
+  `meanflow_cfg_omega: 0.0` in **`plan_fm_v3_imeanflow` only**. Kills the guidance extrapolation
+  instantly; introduces a *tiny* OOD shift (the ω-token moves 4→0) that is acceptable for a test. If the
+  plan de-explodes ⇒ **H1 confirmed**. This is "enough" only in the sense of **confirming the cause**, not
+  as the final state.
+
+- **Both ω=0 — the real FIX, needs a retrain.** Set `meanflow_cfg_omega: 0.0` in **both** the train and
+  plan blocks. Clean, consistent, no OOD. This is the going-forward default for trajectories (there is no
+  real signal to guide on, so CFG only risks H1).
+
+**Do you also need `interval_cfg=False`? No — ω=0 is enough.**
+- `interval_cfg` is an **architecture** flag (it *builds* the ω/t_min/t_max layers, baked into the
+  `state_dict`); **ω=0 makes those layers inert.** `interval_cfg=False` merely *deletes* the now-dead
+  params (cosmetic) and **changes the `state_dict`**.
+- On the **existing checkpoint you cannot flip it** (load would fail) — so ω=0 is your only lever anyway.
+- On a **retrain** it's optional tidy-up; if you do it, set it in **both** blocks. Otherwise skip it.
+
+**`action_weight`: leave it.** It still exists and is used — but **training-only** (weights the first
+action 10× in the loss; at eval it only fills the `aw{}` folder path). It is a deliberate controller
+choice (MPC executes the first action), **not a bug**. Don't touch it until after CFG-off + the §4B
+training-regime fixes; only then consider flattening it (→1) if the tail is still loose — and that needs a
+retrain with both blocks kept matched.
 
 ---
 
