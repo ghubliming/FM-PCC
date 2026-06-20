@@ -7,7 +7,12 @@ import pdb
 from collections import namedtuple
 
 # DiffusionExperiment = namedtuple('Diffusion', 'dataset renderer model diffusion ema trainer epoch')
-DiffusionExperiment = namedtuple('Diffusion', 'dataset model diffusion trainer epoch losses')
+# Fix2 (U6): 'ema' re-added — official iMF defaults to ema=True at sampling
+# (imeanflow/utils/sample_util.py:11,16); the DPCC-legacy baseline this repo was forked from
+# evals raw `trainer.model` (see Gen9 U4 DPCC_DIVERGENCE_AND_COMPARABILITY.md, finding B6).
+# Both weight sets are now loaded; `eval_use_ema` (config switch, default False = legacy) picks
+# which one the eval script actually uses for rollout. See Fix2_CFG&EMA changelog.
+DiffusionExperiment = namedtuple('Diffusion', 'dataset model diffusion ema trainer epoch losses')
 
 def mkdir(savepath):
     """
@@ -72,7 +77,7 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None):
 
     losses = load_losses(*loadpath, 'losses.pkl')
 
-    return DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
+    return DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer.ema_model, trainer, epoch, losses)
 
 def check_compatibility(experiment_1, experiment_2):
     '''

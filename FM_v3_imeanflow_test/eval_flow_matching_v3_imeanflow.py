@@ -131,10 +131,15 @@ for exp in exps:
                         epoch = utils.get_latest_epoch(loadpath)
                     trainer.load(epoch)
                     losses = utils.load_losses(*loadpath, 'losses.pkl')
-                    return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
+                    return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer.ema_model, trainer, epoch, losses)
 
                 fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
-                fm_model = fm_experiment.diffusion
+                # Fix2 (U6): eval_use_ema config switch — default False keeps the DPCC-legacy
+                # raw-weights behavior; True switches to EMA-smoothed weights (official iMF
+                # default). Both are loaded above regardless; this only picks which is used.
+                use_ema = bool(getattr(args, 'eval_use_ema', False))
+                fm_model = fm_experiment.ema if use_ema else fm_experiment.diffusion
+                print(f'[ eval ] weight source: {"EMA (imf-ema)" if use_ema else "raw/live (dpcc-legacy)"}')
                 # Apply plan-time solver selection after loading checkpoint config.
                 fm_model.flow_steps_v3 = int(getattr(args, 'flow_steps_v3', getattr(fm_model, 'flow_steps_v3', 10)))
                 fm_model.ode_inference_steps_v3 = int(getattr(args, 'ode_inference_steps_v3', getattr(fm_model, 'ode_inference_steps_v3', fm_model.flow_steps_v3)))

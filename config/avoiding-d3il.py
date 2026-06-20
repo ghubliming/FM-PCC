@@ -486,9 +486,15 @@ base = {
         ## Safe-core fallback if a run misbehaves: set interval_cfg=False + meanflow_cfg_omega=0.0.
         'dual_head': True,           # was: False  — v-head shares the backbone (official u/v split)
         'interval_cfg': True,        # was: False  — condition backbone on (omega, t_min, t_max)
-        'meanflow_cfg_omega': 4.0,   # was: 0.0    — interval-CFG scale ω
-        'meanflow_cfg_t_min': 0.4,   # was: 0.0    — guidance interval lower bound (τ)
-        'meanflow_cfg_t_max': 0.6,   # was: 1.0    — guidance interval upper bound (τ)
+        ## Fix2 (U6) — CFG is now per-sample randomized at train time (official iMF algorithm),
+        ## not a fixed constant. meanflow_cfg_omega is now the sampling ceiling s_max: each sample
+        ## draws ω~power-law(0,s_max] and (t_min,t_max)~U(0,0.5)xU(0.5,1) independently every step
+        ## (FM-anchor samples get the full [0,1] interval, i.e. no CFG restriction). See
+        ## Gen3v4_imf/U6/Fix2_CFG&EMA/CHANGELOG.md.
+        'meanflow_cfg_omega': 4.0,   # was: 0.0    — train-time sampling ceiling s_max for ω
+        'meanflow_cfg_t_min': 0.4,   # unused when interval_cfg sampling is active (kept for fallback)
+        'meanflow_cfg_t_max': 0.6,   # unused when interval_cfg sampling is active (kept for fallback)
+        'meanflow_cfg_beta': 1.0,    # power-law shape for ω sampling; 1.0 = official iMF default (log-uniform)
 
         ## U6 — backbone selector. 'unet' (default) = U5 behaviour, byte-for-byte.
         ## 'dit' = faithful official-iMF transformer (IMFDiTTrajectory). Folder name carries
@@ -845,9 +851,18 @@ base = {
         ## U5 Phase 1 — must match the trained checkpoint's flags (architecture + CFG)
         'dual_head': True,           # was: False  — MUST equal training (else state_dict mismatch)
         'interval_cfg': True,        # was: False  — MUST equal training
+        ## Fix2 (U6) — at eval/sampling time these are still a FIXED operating point (no
+        ## randomization at inference): u_cfg = u_unc + ω·(u_cond − u_unc), applied only for
+        ## τ∈[t_min,t_max]. This is unchanged from before — only training-time sampling changed.
         'meanflow_cfg_omega': 4.0,   # was: 0.0    — guided sampling u_cfg=u_unc+ω·(u_cond−u_unc)
         'meanflow_cfg_t_min': 0.4,   # was: 0.0    — applied only for τ∈[t_min,t_max]
         'meanflow_cfg_t_max': 0.6,   # was: 1.0
+
+        ## Fix2 (U6) — EMA config switch. Default False = DPCC-legacy (raw/live weights at eval,
+        ## matching the published DPCC baseline's own convention — see Gen9 U4
+        ## DPCC_DIVERGENCE_AND_COMPARABILITY.md finding B6). Official iMF defaults to EMA weights
+        ## at sampling (imeanflow/utils/sample_util.py:11,16: ema=True). Set True to use EMA.
+        'eval_use_ema': False,       # False = dpcc-legacy (raw weights) | True = imf-ema
 
         ## U6 — backbone selector. MUST equal the trained checkpoint (state_dict + loadpath).
         'imf_backbone': 'unet',      # 'unet' | 'dit'

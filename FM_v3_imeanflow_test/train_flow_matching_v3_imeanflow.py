@@ -202,6 +202,7 @@ if __name__ == '__main__':
                 meanflow_cfg_omega=getattr(args, 'meanflow_cfg_omega', 0.0),
                 meanflow_cfg_t_min=getattr(args, 'meanflow_cfg_t_min', 0.0),
                 meanflow_cfg_t_max=getattr(args, 'meanflow_cfg_t_max', 1.0),
+                meanflow_cfg_beta=getattr(args, 'meanflow_cfg_beta', 1.0),
             )
 
             trainer_config = utils.Config(

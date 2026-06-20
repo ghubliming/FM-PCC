@@ -44,9 +44,16 @@ class iMeanFlowODE(nn.Module):
         meanflow_adaptive_c: float = 1e-3,        # adaptive-weight epsilon
         meanflow_aux_weight: float = 0.0,         # aux v-head stabilizer (shares backbone iff dual_head)
         # U5 Phase 1c — interval-CFG (off when omega=0). Needs the engine built with interval_cfg=True.
-        meanflow_cfg_omega: float = 0.0,          # CFG scale ω (0 ⇒ guidance off)
-        meanflow_cfg_t_min: float = 0.0,          # guidance interval lower bound (τ)
-        meanflow_cfg_t_max: float = 1.0,          # guidance interval upper bound (τ)
+        # Fix2 (U6): meanflow_cfg_omega/t_min/t_max are now the EVAL-time operating point only
+        # (the single (ω,τ_min,τ_max) p_sample_loop guides with). At TRAIN time they no longer
+        # fill a constant — ω/t_min/t_max are sampled per-batch-element (see
+        # _sample_cfg_scale/_sample_cfg_interval below, matching official imf.py:140-175), with
+        # meanflow_cfg_omega reused as the training distribution's ceiling (s_max). This is what
+        # lets the eval-time operating point be in-distribution instead of a single overfit point.
+        meanflow_cfg_omega: float = 0.0,          # CFG scale ω: train s_max ceiling AND eval operating point (0 ⇒ off)
+        meanflow_cfg_t_min: float = 0.0,          # guidance interval lower bound (τ) — eval operating point only
+        meanflow_cfg_t_max: float = 1.0,          # guidance interval upper bound (τ) — eval operating point only
+        meanflow_cfg_beta: float = 1.0,           # power-law shape for ω sampling (1.0 = official default branch)
         time_beta_alpha_v3: float = 1.5,
         time_beta_beta_v3: float = 1.0,
         flow_steps_v3: Optional[int] = None,
@@ -89,10 +96,13 @@ class iMeanFlowODE(nn.Module):
         self.meanflow_adaptive_p = float(meanflow_adaptive_p)
         self.meanflow_adaptive_c = float(meanflow_adaptive_c)
         self.meanflow_aux_weight = float(meanflow_aux_weight)
-        # U5 interval-CFG knobs (inference-time guidance; training conditions on them when ω>0)
+        # U5 interval-CFG knobs — meanflow_cfg_omega/t_min/t_max are the EVAL operating point
+        # (p_sample_loop guides with exactly these); meanflow_cfg_omega doubles as the TRAIN
+        # sampling ceiling (s_max) for _sample_cfg_scale. See Fix2 changelog.
         self.meanflow_cfg_omega = float(meanflow_cfg_omega)
         self.meanflow_cfg_t_min = float(meanflow_cfg_t_min)
         self.meanflow_cfg_t_max = float(meanflow_cfg_t_max)
+        self.meanflow_cfg_beta = float(meanflow_cfg_beta)
 
         # Keep parameters for backward compatibility with existing configs.
         self.loss_schedule = loss_schedule
@@ -368,6 +378,33 @@ class iMeanFlowODE(nn.Module):
 
         return total_loss, info
 
+    def _sample_cfg_scale(self, shape: torch.Size, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+        """Per-sample CFG scale ω ~ power-law on (0, s_max], s_max=meanflow_cfg_omega.
+
+        Direct port of the official iMF `sample_cfg_scale` (imeanflow/imf.py:140-159): drawing a
+        FRESH ω per training sample (instead of FM-PCC's old fixed constant) is what lets the
+        network learn the guidance manifold instead of overfitting to one operating point.
+        """
+        s_max = torch.as_tensor(self.meanflow_cfg_omega, device=device, dtype=dtype)
+        u = torch.rand(shape, device=device, dtype=dtype)
+        if self.meanflow_cfg_beta == 1.0:
+            return torch.exp(u * torch.log1p(s_max))
+        beta = torch.as_tensor(self.meanflow_cfg_beta, device=device, dtype=dtype)
+        log_base = (1.0 - beta) * torch.log1p(s_max)
+        log_inner = torch.log1p(u * torch.expm1(log_base))
+        return torch.exp(log_inner / (1.0 - beta))
+
+    def _sample_cfg_interval(self, shape: torch.Size, device: torch.device, dtype: torch.dtype) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Per-sample CFG interval [t_min, t_max] ~ U(0,0.5) x U(0.5,1).
+
+        Direct port of official `sample_cfg_interval` (imeanflow/imf.py:163-178). Caller is
+        responsible for overriding to [0,1] on FM-anchor (r==t) samples, matching the official
+        `fm_mask` special-case ("for flow matching samples, there is no CFG interval").
+        """
+        t_min = torch.rand(shape, device=device, dtype=dtype) * 0.5
+        t_max = 0.5 + torch.rand(shape, device=device, dtype=dtype) * 0.5
+        return t_min, t_max
+
     def _p_losses_meanflow_jvp(
         self,
         x_start: torch.Tensor,
@@ -419,13 +456,20 @@ class iMeanFlowODE(nn.Module):
         v_inst = x_start - x_base
         v_inst = apply_conditioning(v_inst, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        # U5 Phase 1c — interval-CFG conditioning during training (held CONSTANT through the JVP;
-        # these are guidance knobs, not differentiated inputs). Off when omega=0.
+        # U5 Phase 1c / Fix2 (U6) — interval-CFG conditioning during training. ω/t_min/t_max are
+        # SAMPLED PER BATCH ELEMENT (held constant only through the JVP itself — these are
+        # guidance knobs, not differentiated inputs), matching official imf.py's per-sample
+        # sample_cfg_scale/sample_cfg_interval. Previously this filled a literal constant
+        # (meanflow_cfg_omega/t_min/t_max) for every sample, every step — the network only ever
+        # saw one point on the guidance manifold (see Fix2_CFG&EMA changelog). Off when omega=0.
         omega_c = t_min_c = t_max_c = None
         if self.meanflow_cfg_omega > 0:
-            omega_c = torch.full_like(t, self.meanflow_cfg_omega)
-            t_min_c = torch.full_like(t, self.meanflow_cfg_t_min)
-            t_max_c = torch.full_like(t, self.meanflow_cfg_t_max)
+            omega_c = self._sample_cfg_scale(t.shape, t.device, t.dtype)
+            t_min_c, t_max_c = self._sample_cfg_interval(t.shape, t.device, t.dtype)
+            # FM-anchor (r==t) samples get the full interval — no CFG restriction — matching
+            # official `fm_mask`: "for flow matching samples, there is no CFG interval".
+            t_min_c = torch.where(anchor, torch.zeros_like(t_min_c), t_min_c)
+            t_max_c = torch.where(anchor, torch.ones_like(t_max_c), t_max_c)
 
         # u-head as a pure function of the differentiated inputs (cond/returns/cfg held constant).
         def _u_of(z_in, t_in, h_in):

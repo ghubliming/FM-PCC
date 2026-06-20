@@ -1908,3 +1908,22 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Motion Quality Deficit Addressed**: Recognizing that existing discrete "success/violation" metrics could falsely validate chaotic models (as proven in the U6 DiT debug), developed the `analyze_npz.py` tool. This tool explicitly computes dynamic trajectory quality metrics—including `traj_straightness`, `traj_roughness`, and `traj_max_jerk`—from the `obs_all` executed path.
 2. **CSV Aggregation Engine**: Built a schema-generic Python utility that recursively scans for `.npz` evaluation files across both the state-based (avoiding) and visual-aligning pipelines. Automatically aggregates per-trial means/stddevs and trajectory quality scores, exporting them into structured `files_summary_<ts>.csv` and `per_trial_<ts>.csv` reports without requiring pandas.
 3. **Execution Path Replotting**: Implemented a `--replot` feature allowing users to retroactively visualize the true closed-loop physical execution path directly from the stored `.npz` coordinates. This completely bypasses the need for costly MuJoCo simulator reruns while validating the numerical quality scores visually.
+
+***
+
+## D3IL Visual-Aligning Baseline "U2": Paper-Faithful Evaluation Upgrade (June 20, 2026)
+
+**Keywords**: D3IL baseline, behavior entropy, paper-faithful eval, evaluation scale, success rate.
+
+1. **Behavior Entropy Implementation**: Resolved a critical metrics gap (identified in `D3IL_Metrics_SuccessRate_Entropy_Explained.md`) by implementing `compute_behavior_entropy` in the `d3il_visual_aligning_baseline_test` evaluation script. This faithfully ports the official D3IL entropy formula (success-conditioned, base-|B| normalized) to allow direct comparison against the D3IL paper's reported entropy (0.139).
+2. **Paper-Faithful Evaluation Scale**: Added a `--paper` CLI flag and pipeline arguments to scale the evaluation from a fast smoke-test (3x1) to the mathematically required paper scale (60 contexts × 18 trajectories = 1080 rollouts). The SLURM pipeline now seamlessly chains training to paper-faithful evaluation.
+3. **Metric Output**: The baseline now outputs `entropy` and a combined `score` (0.5 * (SR + H)) alongside `success_rate`, fully matching the published benchmarks.
+
+***
+
+## Data Analysis Tool v3: NPZ Capabilities and MPC Selection Documentation (June 20, 2026)
+
+**Keywords**: npz_analysis, open-loop plans, Gen3v4 avoiding, MPC candidate selection, np.savez.
+
+1. **Capability Gap Identified & Resolved**: Documented (`CAPABILITY_GAP_plan_not_saved.md`) that the Gen3v4 avoiding evaluation `.npz` files only saved executed trajectories, preventing offline scoring of open-loop plan explosions (blue fan plots). Fixed this by injecting `sampled_trajectories_all` into the `np.savez` call, unlocking future offline re-plotting and plan-quality measurements (e.g., plan straightness, roughness) without requiring simulator reruns.
+2. **MPC Candidate Selection Explainer**: Authored `MPC_Candidate_Selection_Explained.md` to comprehensively document the receding-horizon control loop, including how a batch of plans is sampled, how the projector/temporal consistency selects exactly one candidate, and how visualization cadence (every H/2 steps) relates to execution. Also detailed a latent indexing inconsistency in `dpcc-c` temporal tracking.
