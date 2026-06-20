@@ -25,6 +25,7 @@ selection.)
 | `d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py` | **G2** add `compute_behavior_entropy()` (paper Eq. 2 / `aligning_sim.py:178-194`); add `entropy` + `score=0.5·(SR+H)` to results, print, and cross-seed aggregate. **G1** add `--n-trajectories` and `--paper` CLI; record `n_contexts`/`n_trajectories_per_context` in output; warn when trajs/ctx is too small for entropy. |
 | `d3il_visual_aligning_baseline_test/d3il_eval_config.yaml` | Document smoke vs **paper-faithful** scale (60×18); annotate the two scale keys. |
 | `Slurm_Codes/sbatch/d3il_visual_aligning_baseline/eval_d3il_baseline.sh` | New `$4="paper"` arg → passes `--paper` (60 ctx × 18 traj) for faithful entropy. |
+| `Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh` | **U2.1** add `$5=eval_scale`, forwarded to the eval job's `$4` — one-shot `submit.sh pipeline_d3il_baseline.sh ... paper` now chains train → paper-faithful eval (previously the pipeline always evaled at smoke 3×1, with no way to request paper scale). |
 
 > **G3 (model selection)** is **documented, not auto-changed** — training still uses val-loss
 > checkpointing; the paper selects best-task-performance every 1/10 training. Noted as a follow-up so we
