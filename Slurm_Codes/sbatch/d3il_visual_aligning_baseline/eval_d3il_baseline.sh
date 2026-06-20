@@ -59,10 +59,12 @@ cd "$REPO"
 # $1 = agent_name   (default: ddpm_encdec_vision)
 # $2 = seed         (optional; if blank → all seeds in d3il_eval_config.yaml)
 # $3 = record_mode  (default: all)
+# $4 = scale        (optional: "paper" → 60 ctx × 18 traj, faithful entropy; else config smoke)
 #
 # Examples:
 #   sbatch eval_d3il_baseline.sh ddpm_encdec_vision 42
 #   sbatch eval_d3il_baseline.sh ddpm_encdec_vision 42 gif
+#   sbatch eval_d3il_baseline.sh ddpm_encdec_vision 42 none paper   # ← paper-faithful (entropy)
 #   sbatch eval_d3il_baseline.sh ddpm_encdec_vision    # all seeds from config
 
 AGENT_NAME="${1:-ddpm_encdec_vision}"
@@ -76,11 +78,19 @@ if [ -n "$2" ]; then
     echo "[ eval ] seed override: $2"
 fi
 
+# U2: paper-faithful eval scale (60 ctx × 18 traj) → meaningful behavior entropy.
+PAPER_ARG=""
+if [ "$4" = "paper" ]; then
+    PAPER_ARG="--paper"
+    echo "[ eval ] --paper preset: 60 contexts x 18 trajectories (faithful entropy)"
+fi
+
 echo "[ eval ] agent=${AGENT_NAME}  record_mode=${RECORD_MODE}"
 
 python d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py \
     $AGENT_ARG \
     $SEED_ARG \
+    $PAPER_ARG \
     --record "${RECORD_MODE}"
 
 echo "Job completed successfully."
