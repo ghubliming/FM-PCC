@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8           # Number of CPU cores per task
 #SBATCH --mem=32G                    # Total memory
 #SBATCH --gres=gpu:1                # Request 1 GPU
-#SBATCH --time=08:00:00             # Time limit (Eval is usually shorter)
+#SBATCH --time=24:00:00             # Time limit (Eval is usually shorter)
 #SBATCH --partition=gpu-1-student   # Updated from sinfo output
 
 # Exit on error
