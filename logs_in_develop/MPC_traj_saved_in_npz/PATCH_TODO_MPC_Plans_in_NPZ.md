@@ -221,12 +221,12 @@ These all follow the same pattern — single-line savez with only metric arrays.
 
 | Category | Count | Files |
 |----------|-------|-------|
-| Eval scripts needing `sampled_trajectories_all` in savez | **6** | Drifting, ODE-sel, IMF-ODE-sel, Visual-avoid-DPCC, Visual-avoid-FM, UAV* |
+| Eval scripts needing `sampled_trajectories_all` in savez | **5** | Drifting, ODE-sel, IMF-ODE-sel, Visual-avoid-DPCC, Visual-avoid-FM |
 | Eval scripts needing `obs_all`/`act_all` + `sampled_trajectories_all` | **5** | FM, FM_v2, FM_Unet_v2, FM_hp_tune, FM_v3 |
-| Eval scripts with tracking ref bug (`observations[0]` → `which_trajectory`) | **10** | All state-only avoiding evals |
-| `policies.py` with `prev_observations` bug | **11** | All `*/sampling/policies.py` |
+| Eval scripts with tracking ref bug (`observations[0]` → `which_trajectory`) | **9** | All state-only avoiding evals (UAV exempt — JSON output) |
+| `policies.py` with `prev_observations` bug | **11** | All `*/sampling/policies.py` (UAV: latent, harmless) |
 | NPZ analyzer extension | **1** | `npz_analysis/analyze_npz.py` |
-| **Total unique files** | **~27** | |
+| **Total unique files** | **~26** | |
 
 ### Recommended Patch Order
 
@@ -235,3 +235,66 @@ These all follow the same pattern — single-line savez with only metric arrays.
 3. **JOB A Priority 2** (5 files) — Requires adding collection logic, more invasive
 4. **JOB B** (10 files) — Requires changing `Policy.__call__` return signature or attaching metadata
 5. **JOB D** (1 file) — Downstream, only useful after JOB A data is available
+
+---
+
+## Gen11 Epoch6 UAV — Per-Job Audit (checked 2026-06-21)
+
+**Files checked:** `FM_v3_uav_test/eval_fm_uav.py` · `flow_matcher_v3_uav/sampling/policies.py`
+
+### Background
+
+Gen11 E6 **rewrote the UAV eval from scratch** (CHANGELOG: *"rewritten from scratch — the source eval
+is 700 lines welded to D3IL/minari — wrong base, undebuggable"*). It mirrors
+`uav_expert_data_collect/generator.run_trial` and swaps the expert trajectory for the FM policy.
+The output paradigm is completely different from every other eval in the repo.
+
+### JOB A — `sampled_trajectories_all` missing from `np.savez` → **NOT APPLICABLE** ✅
+
+`eval_fm_uav.py` has **no `np.savez` call**. Outputs are saved as JSON:
+```python
+with open(os.path.join(out_dir, 'results.json'), 'w') as f:
+    json.dump({'summary': summary, 'rollouts': rollouts}, f, indent=2)
+```
+There is also no plan fan: the eval always calls `policy({0: obs}, batch_size=1, horizon=horizon)` —
+one candidate per step, no `sampled_trajectories` list, no visualization loop. Nothing to persist.
+
+### JOB B — `desired_next_pos` tracking reference → **NOT APPLICABLE** ✅
+
+The UAV eval tracks position error via MuJoCo physics directly:
+```python
+track_err.append(float(np.linalg.norm(data.qpos[:3] - p_des)))
+```
+The `samples.observations[0, 1, ...]` pattern from the avoiding evals does not exist here. No bug.
+
+### JOB C — `prev_observations` in `policies.py` → **LATENT BUT HARMLESS** ⚠️
+
+`flow_matcher_v3_uav/sampling/policies.py:70` has the same bug as all other `policies.py`:
+```python
+self.prev_observations = np.repeat(np.expand_dims(observations[0], axis=0), batch_size, axis=0)
+```
+However, `eval_fm_uav.py` always uses `batch_size=1`, so `which_trajectory` is always `0` and
+`observations[0] == observations[which_trajectory]`. The bug is **inert in practice**.
+
+It would only bite if the UAV eval ever uses `dpcc-c` selection with `batch_size > 1` — the DPCC
+safety projector is explicitly not activated this Epoch (per `EPOCH6_PLAN.md`). Safe to patch for
+consistency, but zero functional impact today.
+
+### JOB D — NPZ analyzer → **NOT APPLICABLE** ✅
+
+UAV eval writes JSON, not NPZ. The analyzer is irrelevant for Gen11.
+
+### JOB E — Missing `obs_all`/`act_all` in early-gen savez → **NOT APPLICABLE** ✅
+
+`eval_fm_uav.py` is a purpose-built new script with its own output schema — not a legacy eval with
+a truncated `np.savez`. The rollout dict already captures all meaningful fields per episode.
+
+### Gen11 U6 Summary
+
+| Job | Status | Reason |
+|-----|--------|--------|
+| A — save plans in npz | ✅ N/A | JSON output; no plan fan; `batch_size=1` |
+| B — `desired_next_pos` tracking ref | ✅ N/A | Tracks MuJoCo `qpos[:3]` directly |
+| C — `prev_observations[0]` bug | ⚠️ Latent, harmless | `batch_size=1` always; `dpcc-c` not activated |
+| D — analyzer extension | ✅ N/A | JSON, not NPZ |
+| E — missing `obs_all`/`act_all` | ✅ N/A | New script, purpose-built JSON schema |

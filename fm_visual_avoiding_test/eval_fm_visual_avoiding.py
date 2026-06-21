@@ -531,7 +531,8 @@ for exp in exps:
                                  collision_free_completed=collision_free_completed,
                                  args=args,
                                  obs_all=np.array(obs_all, dtype=object),
-                                 act_all=np.array(act_all, dtype=object))
+                                 act_all=np.array(act_all, dtype=object),
+                                 sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))  # MPC_NPZ_PATCH
 
                     fig.savefig(f'{save_path}/{variant}.png')
                     plt.close(fig)

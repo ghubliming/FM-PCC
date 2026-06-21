@@ -67,7 +67,7 @@ class Policy:
             which_trajectory = np.argmin(costs_total)
         else:                                                                                                                       # Random selection
             which_trajectory = 0
-        self.prev_observations = np.repeat(np.expand_dims(observations[0], axis=0), batch_size, axis=0)
+        self.prev_observations = np.repeat(np.expand_dims(observations[which_trajectory], axis=0), batch_size, axis=0)  # MPC_NPZ_PATCH
 
         ## Extract or calculate action
         if self.inverse_dynamics:
