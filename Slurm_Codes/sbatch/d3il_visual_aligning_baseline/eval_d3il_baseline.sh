@@ -5,7 +5,10 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --time=04:00:00
+# U2.2: was 04:00:00 — paper-faithful eval is 1080 rollouts/seed (60 ctx x 18 traj) with
+# MuJoCo rendering; 4h killed runs mid-loop before the per-seed summary was written, losing
+# results_seed_*.json. 24h gives generous headroom. See U2/CHANGELOG.md.
+#SBATCH --time=24:00:00
 #SBATCH --partition=gpu-1-student
 
 set -e

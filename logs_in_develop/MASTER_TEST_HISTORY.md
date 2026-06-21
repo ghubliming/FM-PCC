@@ -1927,3 +1927,12 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Capability Gap Identified & Resolved**: Documented (`CAPABILITY_GAP_plan_not_saved.md`) that the Gen3v4 avoiding evaluation `.npz` files only saved executed trajectories, preventing offline scoring of open-loop plan explosions (blue fan plots). Fixed this by injecting `sampled_trajectories_all` into the `np.savez` call, unlocking future offline re-plotting and plan-quality measurements (e.g., plan straightness, roughness) without requiring simulator reruns.
 2. **MPC Candidate Selection Explainer**: Authored `MPC_Candidate_Selection_Explained.md` to comprehensively document the receding-horizon control loop, including how a batch of plans is sampled, how the projector/temporal consistency selects exactly one candidate, and how visualization cadence (every H/2 steps) relates to execution. Also detailed a latent indexing inconsistency in `dpcc-c` temporal tracking.
+
+***
+
+## Gen3v4 "U6" Fix 2: iMF CFG Randomization and EMA Evaluation Switch (June 20, 2026)
+
+**Keywords**: Gen3v4, iMeanFlow, CFG randomization, EMA evaluation, bug fix, divergence.
+
+1. **CFG Randomization Implementation**: Addressed a critical bug where training used a fixed-constant Classifier-Free Guidance (CFG) operating point instead of the official iMeanFlow per-sample randomized CFG distribution. Added `_sample_cfg_scale` and `_sample_cfg_interval` to dynamically sample `omega` and `(t_min, t_max)` for every training sample, properly aligning the training behavior with the official paper's method.
+2. **EMA-at-Eval Config Switch**: Confirmed that evaluating on raw weights (instead of Exponential Moving Average weights) is a legitimate inherited convention from the DPCC baseline, despite diverging from the official iMeanFlow repository. To allow fair A/B testing without breaking baseline compatibility, a config switch `eval_use_ema` was added to toggle between raw and EMA weights during evaluation.

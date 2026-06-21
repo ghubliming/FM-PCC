@@ -107,3 +107,66 @@ entropy isn't trustworthy, and records the scale in every `results_seed_*.json`.
   the existing in-script rollout loop already yields per-rollout `mode`/`success`/`context`, so adding the
   entropy formula on top is lower-risk than swapping the whole eval path. Both give the same metric.
 - No commit/push (per policy).
+
+---
+
+# U2.2 — eval wall-clock fix + partial-results salvage tool
+
+**Date:** 2026-06-21
+**Trigger:** the first paper-faithful sweep
+(`for s in 0 1 2 3 4 42; do submit.sh pipeline_d3il_baseline.sh ddpm_encdec_vision $s 200 all paper; done`)
+self-destructed:
+```
+slurmstepd: error: *** JOB 21761 ON i6-gpu-1 CANCELLED AT 2026-06-20T15:02:49 DUE TO TIME LIMIT ***
+```
+The eval was healthy — it just can't grind 1080 rollouts/seed (60 ctx × 18 traj, MuJoCo rendering) through
+the `eval_d3il_baseline.sh` `--time=04:00:00` cap. It died mid-loop (~57% of contexts), and because the
+per-seed summary (`results_seed_{s}.json`, holding `success_rate`/`entropy`) is only written *after* all
+1080 rollouts (`eval_d3il_visual_aligning.py:536`), every seed's headline numbers were "lost" — even though
+all completed rollouts had already been exported to `diagnostics/rollout_*_stats.json`.
+
+## Files changed
+
+| File | Change |
+|---|---|
+| `Slurm_Codes/sbatch/d3il_visual_aligning_baseline/eval_d3il_baseline.sh` | `--time` **04:00:00 → 24:00:00** (matches the train script). 4h was never enough for paper scale; the cap killed runs before they could write a single summary. Comment added explaining why. |
+| `d3il_visual_aligning_baseline_test/aggregate_analysis/aggregate_partial_results.py` | **NEW** — reconstruct `success_rate` + `entropy` per-seed & cross-seed from partial `diagnostics/rollout_*_stats.json`, so a time-limited sweep is still readable. |
+| `d3il_visual_aligning_baseline_test/aggregate_analysis/README.md` | **NEW** — usage + the partial-data caveats. |
+
+## The salvage tool
+
+`aggregate_partial_results.py` (torch-free, stdlib + numpy, **read-only** on results):
+- Walks `logs/d3il_visual_aligning_baseline/<agent>/seed_*/diagnostics/*_stats.json`.
+- Recovers each rollout's context from `context_info.context_idx` (fallback `rollout_index // n_trajs`,
+  valid because the eval loop is context-major).
+- Recomputes `entropy` with the **exact** paper formula copied from
+  `eval_d3il_visual_aligning.py:compute_behavior_entropy` — the `/n_trajs` factor cancels under the
+  row-normalization, so the per-context number is unchanged on partial data; the only partial-data choice
+  is *which contexts to average over*.
+- Reports two entropy variants: **`H(reach)`** (avg over contexts with ≥1 rollout — headline, feeds
+  `score`) and **`H(compl)`** (avg over only fully-complete 18/18 contexts — stricter). The spread = a
+  confidence band.
+- Prints per-seed coverage (`done/1080`, `% cov`, `ctx reached/complete`, FULL/part flag) and cross-seed
+  `mean ± std` vs paper `0.278 ± 0.071` / `0.139 ± 0.054`.
+- Emits a **bias warning** whenever any seed is partial: context-major order means the *missing* rollouts
+  are the high-index contexts, so a partial aggregate leans on low-index initial states — provisional, not
+  paper-comparable.
+- Writes `<agent_root>/aggregate_partial.json`; `--write-seed-json` also emits each
+  `results_seed_{s}.json` in the real eval schema, flagged `"partial": true`, so the guide's step-4
+  snippet reads them unchanged.
+
+```bash
+# salvage the current cancelled sweep
+python d3il_visual_aligning_baseline_test/aggregate_analysis/aggregate_partial_results.py \
+    --seeds 0 1 2 3 4 42 --write-seed-json
+```
+
+**Verified:** `py_compile` clean; logic self-tested on synthetic partial data (612/1080, 34 ctx) —
+coverage math, context bucketing, both entropy variants, bias warning, and `--write-seed-json` schema all
+correct (even 50/50 modes → entropy ≈ 1.0 as expected). No local GPU/MuJoCo, so no real-data run yet.
+
+## Not done (follow-ups)
+- **Resume-capable eval** (skip contexts whose `rollout_*_stats.json` already exist, so a re-submit picks
+  up where each seed died instead of restarting at rollout 0) — pitched, not yet implemented. This is the
+  *real* fix; the 24h bump + this salvage tool are the stop-gap. Flagged for U2.3.
+- No commit/push (per policy).
