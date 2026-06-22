@@ -27,8 +27,11 @@ GATE="Slurm_Codes/sbatch/uav_fm_data_ready/mini_fm_gate.sh"
 echo "================================================================================"
 echo "UAV-FM COLLECT→READY PIPELINE  $(date)   n_trials=$N_TRIALS  gate=${WITH_GATE:-no}"
 echo "================================================================================"
-echo "[ note ] assumes pillars starts clean — clear the old 274 first if present:"
-echo "         rm -rf logs/uav_expert_data/pillars   (per U9 'do not mix')"
+echo "[ note ] this re-collects ALL 4 scenes — only use it for a FRESH start."
+echo "         If you already have good empty/corridor/s_curve, do NOT run this (it would"
+echo "         add to / mix those dirs). Instead collect only pillars + run prepare."
+echo "[ note ] to keep the old pillars, ARCHIVE (never delete) before a fresh collect:"
+echo "         mv logs/uav_expert_data/pillars logs/uav_expert_data/_archive_pillars_274"
 
 # Unify dated logs across the chained jobs (submit.sh exports SUBMIT_DATE/TIME).
 DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}

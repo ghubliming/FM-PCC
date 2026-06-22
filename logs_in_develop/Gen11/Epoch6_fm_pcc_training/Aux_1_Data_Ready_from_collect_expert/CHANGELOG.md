@@ -29,24 +29,34 @@ collect_to_ready_pipeline.sh
 ## How to run
 
 ```bash
-# A) full one-shot (collect everything + curate + verify), then train:
-rm -rf logs/uav_expert_data/pillars     # clear old 274 first (U9 "do not mix")
+# A) you already have good empty/corridor/s_curve, only pillars to redo (likely case):
+mv logs/uav_expert_data/pillars logs/uav_expert_data/_archive_pillars_274   # ARCHIVE, not delete
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars 500   # fresh pillars only
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/prepare_uav_fm_data.sh # curate all 4 + verify
+
+# B) fresh start (no data) → full one-shot collect+curate+verify:
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/collect_to_ready_pipeline.sh 500
 # (add 'gate' as 2nd arg to also run the mini-FM gate)
-
-# B) collects already done → just make it train-ready:
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/prepare_uav_fm_data.sh
 
 # then, once prepare logs "DATASET READY ✓":
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/train_fm_uav.sh all 5
 ```
 
+## Data safety (no data is ever lost)
+- **Curate COPIES** (`shutil.copy2`) raw → `data/uav_fm/v1/`; it **never moves or deletes** the raw E4
+  tree. `prepare` only copies + read-only-verifies. The collect jobs only write.
+- **No script deletes anything.** The only manual housekeeping is archiving the old pillars, and we
+  **`mv` (archive), never `rm`** — `mv logs/uav_expert_data/pillars logs/uav_expert_data/_archive_pillars_274`.
+- **Don't re-collect scenes you already have:** the full `collect_to_ready_pipeline.sh` re-collects all 4
+  and would mix into existing dirs. If only pillars needs redoing, use Case A above (archive + collect
+  pillars only + prepare), not the full pipeline.
+
 ## Key correctness points
 - **Curate is required, not optional:** raw pkls live in homotopy *subdirs*; the trainer's loader lists a
   scene dir **non-recursively**, so it needs the **flat** `data/uav_fm/v1/<scene>/*.pkl` that curate
   produces (it also drops `run_summary.json`). Manual move must flatten too.
-- **Pillars:** `BLEND_RADIUS=0.45` (U9 fix) is already in `trajectories.py`; clear the old pillars dir
-  before a fresh collect so they don't mix.
+- **Pillars:** `BLEND_RADIUS=0.45` (U9 fix) is already in `trajectories.py`; archive the old pillars dir
+  (don't delete) before a fresh collect so they don't mix.
 - Repo-root resolution + conda-activate mirror `collect.sh`; partition `gpu-1-student`; logs go through
   `submit.sh`'s dated tree.
 
@@ -55,6 +65,7 @@ rm -rf logs/uav_expert_data/pillars     # clear old 274 first (U9 "do not mix")
 - No execution here (Docker has no SLURM/MuJoCo/torch) — runs are cluster-only.
 
 ## Not done / notes
-- `collect.sh` writes to the fixed `logs/uav_expert_data/<scene>/` (no per-run subdir); fresh pillars assumes
-  a cleared dir (the pipeline echoes the reminder, doesn't auto-`rm`).
+- `collect.sh` writes to the fixed `logs/uav_expert_data/<scene>/` (no per-run subdir); a fresh pillars
+  collect assumes the old dir was **archived (`mv`)** first — the pipeline only *echoes* this reminder, it
+  never deletes or moves anything itself.
 - Local only; no commit/push.

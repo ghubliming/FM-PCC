@@ -7,14 +7,24 @@ repo standard wrapper `./Slurm_Codes/submit.sh <script> <args>` (gives dated uni
 
 ## 0. Prerequisite — produce the dataset, then curate it (uses the E4 pipeline)
 
-> **Fully-batched shortcut (recommended — no login-node steps):** one submit does collect→curate→verify:
+> **Nothing here deletes or moves your raw data.** Curate **copies** (`shutil.copy2`) raw pkls into
+> `data/uav_fm/v1/`; `logs/uav_expert_data/` is left untouched. The only manual archive step is the old
+> pillars, and we **`mv` (archive), never `rm`** — so no data is lost.
+>
+> **Case A — you already have good empty/corridor/s_curve, only pillars to redo (likely):**
 > ```bash
-> rm -rf logs/uav_expert_data/pillars   # clear old 274 first (U9 "do not mix")
+> mv logs/uav_expert_data/pillars logs/uav_expert_data/_archive_pillars_274   # archive, don't delete
+> ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars 500   # fresh pillars only
+> ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/prepare_uav_fm_data.sh # curate all 4 + verify
+> ```
+> Do **NOT** run the full pipeline here — it re-collects all 4 scenes and would mix into your good dirs.
+>
+> **Case B — fresh start (no data yet), fully batched, no login-node steps:**
+> ```bash
 > ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/collect_to_ready_pipeline.sh 500
 > ```
-> When the `prepare` job logs `DATASET READY ✓`, go to §1. If collects are already done, just run
-> `…/uav_fm_data_ready/prepare_uav_fm_data.sh`. (Details: Aux-1 CHANGELOG.) The manual steps below remain
-> valid if you prefer to run them yourself.
+> When the `prepare` job logs `DATASET READY ✓`, go to §1. (Details: Aux-1 CHANGELOG.) The manual steps
+> below remain valid if you prefer to run them yourself.
 
 The trainer reads **only** the curated, **flat** tree `data/uav_fm/v1/<scene>/*.pkl`. The raw E4 collection
 is nested (`logs/uav_expert_data/<scene>/<homotopy>/*.pkl` + `run_summary.json`), so the curate step
@@ -30,9 +40,9 @@ Uses `Slurm_Codes/sbatch/uav_expert_data/collect.sh` — headless MuJoCo PID rol
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh s_curve  500
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars  500   # BLEND_RADIUS=0.45 fix is already in trajectories.py
 ```
-- **Pillars:** the U9 fix (`BLEND_RADIUS=0.45`) is already applied, so a fresh collect is clean. **Clear the
-  old 274-episode pillars dir first** so the recollect doesn't mix with it
-  (`rm -rf logs/uav_expert_data/pillars` before submitting), per U9 "do not mix".
+- **Pillars:** the U9 fix (`BLEND_RADIUS=0.45`) is already applied, so a fresh collect is clean. **Archive
+  the old 274-episode pillars dir first (move, never delete)** so the recollect doesn't mix with it:
+  `mv logs/uav_expert_data/pillars logs/uav_expert_data/_archive_pillars_274`, per U9 "do not mix".
 - empty/corridor/s_curve from the U9 run are already clean — re-collect only if you don't have them.
 - Smoke first if unsure: `… collect.sh empty 10`.
 
