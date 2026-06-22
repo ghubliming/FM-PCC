@@ -5,21 +5,66 @@ repo standard wrapper `./Slurm_Codes/submit.sh <script> <args>` (gives dated uni
 
 ---
 
-## 0. Prerequisite — curated dataset must exist
+## 0. Prerequisite — produce the dataset, then curate it (uses the E4 pipeline)
 
-The trainer reads **only** `data/uav_fm/v1/<scene>/` (never the raw E4 tree). Build it once (Phase-0 prep,
-after the pillars recollect):
+> **Fully-batched shortcut (recommended — no login-node steps):** one submit does collect→curate→verify:
+> ```bash
+> rm -rf logs/uav_expert_data/pillars   # clear old 274 first (U9 "do not mix")
+> ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/collect_to_ready_pipeline.sh 500
+> ```
+> When the `prepare` job logs `DATASET READY ✓`, go to §1. If collects are already done, just run
+> `…/uav_fm_data_ready/prepare_uav_fm_data.sh`. (Details: Aux-1 CHANGELOG.) The manual steps below remain
+> valid if you prefer to run them yourself.
+
+The trainer reads **only** the curated, **flat** tree `data/uav_fm/v1/<scene>/*.pkl`. The raw E4 collection
+is nested (`logs/uav_expert_data/<scene>/<homotopy>/*.pkl` + `run_summary.json`), so the curate step
+(which **flattens** the homotopy subdirs and drops `run_summary`) is **required**, not optional.
+
+### 0.1 Collect with the E4 SLURM pipeline (one job per scene)
+Uses `Slurm_Codes/sbatch/uav_expert_data/collect.sh` — headless MuJoCo PID rollouts, no GPU; it runs
+`collect.py` then `stats_validator.py`. Output → `logs/uav_expert_data/<scene>/`.
+```bash
+# args: <scene> <n_trials> [gain] [seed_offset] [homotopy]
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh empty    500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh corridor 500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh s_curve  500
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/collect.sh pillars  500   # BLEND_RADIUS=0.45 fix is already in trajectories.py
+```
+- **Pillars:** the U9 fix (`BLEND_RADIUS=0.45`) is already applied, so a fresh collect is clean. **Clear the
+  old 274-episode pillars dir first** so the recollect doesn't mix with it
+  (`rm -rf logs/uav_expert_data/pillars` before submitting), per U9 "do not mix".
+- empty/corridor/s_curve from the U9 run are already clean — re-collect only if you don't have them.
+- Smoke first if unsure: `… collect.sh empty 10`.
+
+### 0.2 Curate raw → flat training set (`data/uav_fm/v1/`)
+`curate_dataset.py` is pure-stdlib (no GPU/torch) — run it on the **cluster login node** (or anywhere the
+raw pkls are). It recurses the homotopy subdirs, copies only accepted `*.pkl` (skips `run_summary`/stress),
+**flattens** them per scene, and writes a `manifest.json`:
 ```bash
 python uav_expert_data_collect/curate_dataset.py \
     --scenes empty corridor s_curve pillars \
-    --pillars-src logs/uav_expert_data/pillars_v2 \
     --out data/uav_fm/v1
-# → data/uav_fm/v1/<scene>/*.pkl + manifest.json
+# → data/uav_fm/v1/<scene>/*.pkl (flat) + manifest.json
 ```
-If your curated set lives elsewhere, set `export UAV_FM_DATA_ROOT=/abs/path` (loader honours it).
+(If you recollected pillars into a separate dir instead of clearing, add
+`--pillars-src logs/uav_expert_data/<your_pillars_dir>`.)
 
-Optional cheap gate (data-side, not E6 code): `python uav_expert_data_collect/mini_fm_sanity.py
---data-dir data/uav_fm/v1/empty`.
+### 0.3 Manual alternative (if you'd rather move files yourself)
+The loader just needs **flat per-scene pkls**:
+```
+data/uav_fm/v1/<scene>/<episode>.pkl      # NO homotopy subdirs, NO run_summary.json
+```
+So you can skip 0.2 and move them by hand, e.g.
+`mkdir -p data/uav_fm/v1/pillars && find logs/uav_expert_data/pillars -name '*.pkl' -exec cp {} data/uav_fm/v1/pillars/ \;`
+(flatten the homotopy subdirs). Or point the loader elsewhere: `export UAV_FM_DATA_ROOT=/abs/flat/root`.
+
+> ⚠ Don't point `UAV_FM_DATA_ROOT` at the raw `logs/uav_expert_data` — the loader lists a scene dir
+> non-recursively, so it would see the homotopy *subdirs* (not `.pkl`s) and load **zero** episodes.
+
+### 0.4 Optional cheap gate (data-side, not E6 code)
+```bash
+python uav_expert_data_collect/mini_fm_sanity.py --data-dir data/uav_fm/v1/empty
+```
 
 ---
 
