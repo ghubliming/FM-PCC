@@ -194,6 +194,7 @@ def train_step_numerical(model, x1_batch, rng, lr=1e-3, eps=1e-5):
         n_probe = min(len(flat), 200)
         idxs = rng.choice(len(flat), size=n_probe, replace=False) if len(flat) > n_probe else np.arange(len(flat))
         for i in idxs:
+            old = flat[i]
             flat[i] = old + eps
             loss_plus, _, _, _, _ = fm_loss(model, x1_batch, x0, t)
             flat[i] = old - eps
