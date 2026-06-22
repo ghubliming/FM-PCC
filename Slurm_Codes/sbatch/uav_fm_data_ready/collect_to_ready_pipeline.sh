@@ -58,7 +58,7 @@ if [ "$WITH_GATE" = "gate" ]; then
 fi
 
 echo "--------------------------------------------------------------------------------"
-echo "Submitted. When Job $PREP_ID prints 'DATASET READY ✓', run:"
-echo "  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/train_fm_uav.sh all 5"
+echo "Submitted. When Job $PREP_ID prints 'DATASET READY ✓', run (per-scene, see U2):"
+echo "  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh \"empty corridor s_curve pillars\" \"5 6 7\""
 echo "Monitor: squeue -u \$USER"
 echo "================================================================================"

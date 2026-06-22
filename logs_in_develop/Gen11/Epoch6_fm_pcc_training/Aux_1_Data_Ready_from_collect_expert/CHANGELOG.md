@@ -23,7 +23,7 @@ collect_to_ready_pipeline.sh
   └─ collect.sh pillars 500 ─┘
         └─ prepare_uav_fm_data.sh  (curate → flat data/uav_fm/v1/ + verify)  → "DATASET READY ✓"
               └─ [optional] mini_fm_gate.sh
-                    → then: train_fm_uav.sh all 5
+                    → then: fm_uav_all_pipeline.sh (per-scene train→eval→aggregate, see U2)
 ```
 
 ## How to run
@@ -38,8 +38,8 @@ mv logs/uav_expert_data/pillars logs/uav_expert_data/_archive_pillars_274   # AR
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm_data_ready/collect_to_ready_pipeline.sh 500
 # (add 'gate' as 2nd arg to also run the mini-FM gate)
 
-# then, once prepare logs "DATASET READY ✓":
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/train_fm_uav.sh all 5
+# then, once prepare logs "DATASET READY ✓" — per-scene (see U2), NOT pooled "all":
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh "empty corridor s_curve pillars" "5 6 7"
 ```
 
 ## Data safety (no data is ever lost)

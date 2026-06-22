@@ -70,7 +70,7 @@ for s in scenes:
     print(f'  {s:9s} flat_pkls={n:4d}  manifest={rec:4d}  [{flag}]')
 if bad:
     print(f'NOT READY: scenes with zero episodes: {bad}'); sys.exit(2)
-print('DATASET READY ✓  → submit Slurm_Codes/sbatch/uav_fm/train_fm_uav.sh all 5')
+print('DATASET READY ✓  → submit Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh (per-scene, see U2)')
 PY
 
 echo "[ prepare ] done."
