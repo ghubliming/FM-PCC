@@ -183,12 +183,17 @@ def train_step_numerical(model, x1_batch, rng, lr=1e-3, eps=1e-5):
     # Forward: compute loss
     loss_val, _, _, _, _ = fm_loss(model, x1_batch, x0, t)
 
-    # Numerical gradient for each parameter (very slow but correct)
+    # Numerical gradient for each parameter (very slow but correct).
+    # Sample a random subset of indices each step (not always the first 200) —
+    # with most params far larger than the 200 cap, always probing the same
+    # indices freezes the rest at random init forever; random subsets let
+    # coverage accumulate across steps instead.
     for p in params:
         grad = np.zeros_like(p)
         flat = p.ravel()
-        for i in range(min(len(flat), 200)):  # limit gradient computation
-            old = flat[i]
+        n_probe = min(len(flat), 200)
+        idxs = rng.choice(len(flat), size=n_probe, replace=False) if len(flat) > n_probe else np.arange(len(flat))
+        for i in idxs:
             flat[i] = old + eps
             loss_plus, _, _, _, _ = fm_loss(model, x1_batch, x0, t)
             flat[i] = old - eps
