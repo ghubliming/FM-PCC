@@ -117,7 +117,9 @@ parser.add_argument('--eval-on-train', action='store_true')
 args_cli, remaining_argv = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_argv
 
-with open('config/projection_eval.yaml') as f:
+# U4 fix_2: visual avoiding reads its OWN config (rewritten to the avoiding schema), NOT the
+# shared projection_eval.yaml. Same avoiding geometry; visual model comes from the Parser.
+with open('config/visual_avoiding_eval.yaml') as f:
     config = yaml.safe_load(f)
 
 exps               = config['exps']
@@ -125,6 +127,7 @@ seeds              = config['seeds']
 if args_cli.seed is not None:
     seeds = [args_cli.seed]
     print(f'[ eval ] Overriding seeds to: {seeds}')
+print(f'[ eval ] Seed list for this run: {seeds}   (from config/visual_avoiding_eval.yaml)')
 
 projection_variants   = config['projection_variants']
 halfspace_variants    = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']

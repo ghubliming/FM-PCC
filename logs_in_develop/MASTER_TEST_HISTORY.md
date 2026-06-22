@@ -1936,3 +1936,32 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **CFG Randomization Implementation**: Addressed a critical bug where training used a fixed-constant Classifier-Free Guidance (CFG) operating point instead of the official iMeanFlow per-sample randomized CFG distribution. Added `_sample_cfg_scale` and `_sample_cfg_interval` to dynamically sample `omega` and `(t_min, t_max)` for every training sample, properly aligning the training behavior with the official paper's method.
 2. **EMA-at-Eval Config Switch**: Confirmed that evaluating on raw weights (instead of Exponential Moving Average weights) is a legitimate inherited convention from the DPCC baseline, despite diverging from the official iMeanFlow repository. To allow fair A/B testing without breaking baseline compatibility, a config switch `eval_use_ema` was added to toggle between raw and EMA weights during evaluation.
+
+***
+
+## D3IL Visual-Aligning Baseline "U2.2 & U2.3": Eval Time Limits, Salvage Tool, & Root-Cause Audit (June 21, 2026)
+
+**Keywords**: D3IL baseline, evaluation wall-clock, partial results salvage, zero-success audit, checkpoint selection.
+
+1. **Evaluation Wall-Clock & Salvage Tool (U2.2)**: Discovered that the paper-faithful eval scale (1080 rollouts) exceeded the 4-hour SLURM time limit, causing job cancellations before summary JSONs were written. Extended evaluation time limits across all SLURM scripts to 24 hours. Additionally, developed `aggregate_partial_results.py` to retrospectively salvage incomplete run metrics by parsing per-rollout `diagnostics` JSONs, allowing successful recovery of interrupted evaluation sweeps.
+2. **Zero-Success Root-Cause Audit (U2.3)**: Conducted a deep dive into the initial paper-scale sweeps which yielded ~0% success rates. An exhaustive cross-check against the upstream `d3il` repository verified that the evaluation loop, success termination logic, and EMA checkpoint machinery are identical and mathematically sound. The audit isolated the divergence to the **checkpoint selection criterion**: the FM-PCC baseline uses validation-loss selection, whereas `d3il` selects based on best simulation success. It is currently unproven whether this choice directly causes the 0% collapse or if the model inherently struggles with the image modality. An upstream protocol harness run is planned to decisively falsify this hypothesis.
+
+***
+
+## Gen11 Epoch 6: UAV State-Only Flow-Matching Build & Multi-Env Pipeline (June 21, 2026)
+
+**Keywords**: Gen11, Epoch 6, UAV Flow-Matching, multi-env architecture, data curation, closed-loop eval.
+
+1. **Dataset Curation Protocol**: Implemented `curate_dataset.py` to establish a strict separation between raw collection directories (which contain debug and rejected episodes) and the model training data. Accepted episodes are now explicitly manifested into `data/uav_fm/v1/`.
+2. **UAV Flow-Matching Pipeline (`flow_matcher_v3_uav`)**: Forked the `flow_matcher_v3_ode_selectable` stack and retooled it for the quadrotor schema (12D transitions: 3D action `Δp_des` and 9D obs `[p_des|p|v]`). Removed legacy D3IL dependencies and integrated the `UAVSequenceDataset`.
+3. **Multi-Environment Unified Training**: Upgraded the architecture to natively support multi-environment training across the four UAV scenes (`empty`, `corridor`, `s_curve`, `pillars`). Introduced a `--scene` selector that threads through the dataloader to dynamically pool scenes (e.g., `--scene all`) or isolate them, replacing the legacy flat `logs/` directory with a structured `logs/fm_uav/<run_id>/<scene-or-all>/` hierarchy.
+4. **Closed-Loop MPC Evaluation (`eval_fm_uav.py`)**: Rewrote the evaluation script from scratch to mirror the UAV expert generation loop. The model now acts as a receding-horizon policy operating at 33 Hz, emitting `Δp_des` commands that are tracked by a low-level PID controller. Introduced real-time inference timing and JSON-based execution outputs.
+
+***
+
+## System-Wide Patch: MPC Trajectory Persistence & Temporal Consistency Fix (June 21, 2026)
+
+**Keywords**: MPC_NPZ_PATCH, sampled_trajectories_all, np.savez, open-loop plans, temporal consistency, dpcc-c.
+
+1. **Plan Persistence (`sampled_trajectories_all`)**: Fixed a major analytical gap where open-loop MPC trajectory forecasts were computed during evaluation but never saved to `.npz` files. Injected `sampled_trajectories_all` into the `np.savez` call across 10 evaluation scripts (including early-gen `obs_all`/`act_all` retrofits), enabling offline diagnosis of plan explosions and trajectory smoothness.
+2. **Temporal Consistency Reference Fix**: Corrected a latent bug in 11 `policies.py` modules where `self.prev_observations` erroneously hardcoded its reference to the 0th trajectory candidate (`observations[0]`). Updated the assignment to use `observations[which_trajectory]`, ensuring that minimum-cost selection projectors (`dpcc-c`) accurately track the executed action for their temporal consistency window rather than defaulting to candidate 0.
