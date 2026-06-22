@@ -53,6 +53,9 @@ def parse_args():
     p.add_argument('--seed', type=int, default=5, help='Trained-model seed to load.')
     p.add_argument('--n-trials', type=int, default=20, help='Closed-loop rollouts per scene.')
     p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
+    p.add_argument('--projection', type=str, default='fm_only',
+                   help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
+                        "DPCC variants (dpcc-c, …) slot in here when Phase-3 lands.")
     p.add_argument('--device', type=str, default='cuda')
     return p.parse_known_args()
 
@@ -178,12 +181,15 @@ def eval_scene(scene, args):
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'fm_ms_mean': float(np.mean([r['fm_ms_mean'] for r in rollouts])),
         'fm_ms_p95': float(np.max([r['fm_ms_p95'] for r in rollouts])),
+        'projection': args.projection,
     }
-    out_dir = os.path.join(parsed.savepath, 'eval')
+    # scene → … → seed → projection :  <savepath>/eval/<projection>/results.json
+    out_dir = os.path.join(parsed.savepath, 'eval', args.projection)
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, 'results.json'), 'w') as f:
         json.dump({'summary': summary, 'rollouts': rollouts}, f, indent=2)
-    print(f'[ eval ] {scene}: success={succ:.3f}  contact={summary["contact_frac_mean"]:.3f}  '
+    print(f'[ eval ] {scene} seed={args.seed} proj={args.projection}: '
+          f'success={succ:.3f}  contact={summary["contact_frac_mean"]:.3f}  '
           f'fm_ms(mean/p95)={summary["fm_ms_mean"]:.1f}/{summary["fm_ms_p95"]:.1f}  → {out_dir}/results.json')
     return summary
 
@@ -194,7 +200,8 @@ def main():
     summaries = {s: eval_scene(s, args) for s in scenes}
 
     if len(scenes) > 1:
-        roll = os.path.join('logs', 'uav-all', 'SUMMARY.json')
+        # experimental --scene all path; per-scene runs use aggregate_scene_summaries.py instead.
+        roll = os.path.join('logs', 'uav-all', args.projection, 'SUMMARY.json')
         os.makedirs(os.path.dirname(roll), exist_ok=True)
         with open(roll, 'w') as f:
             json.dump(summaries, f, indent=2)

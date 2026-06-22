@@ -54,7 +54,7 @@ base = {
         'preprocess_fns': [],
         'clip_denoised': False,
         'use_padding': True,
-        'max_path_length': 600,        # UAV episodes ~330-530 steps at dataset Hz; generous
+        'max_path_length': 750,        # s_curve up to 22s*33Hz=726 steps; 750 avoids truncating its tail
         'include_returns': False,      # UAV has no reward signal — skip returns machinery
         'returns_scale': 400,          # unused when include_returns=False (kept for API parity)
         'discount': 0.99,

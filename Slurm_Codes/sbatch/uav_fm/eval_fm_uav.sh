@@ -9,10 +9,11 @@
 #SBATCH --partition=gpu-1-student
 set -e
 
-# ---- Args: $1=scene (def all)  $2=seed (def 5)  $3=n_trials (def 20) ----
+# ---- Args: $1=scene (def all)  $2=seed (def 5)  $3=n_trials (def 20)  $4=projection (def fm_only) ----
 SCENE="${1:-all}"
 SEED="${2:-5}"
 NTRIALS="${3:-20}"
+PROJECTION="${4:-fm_only}"
 
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log; fi
@@ -42,6 +43,6 @@ ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
 export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
 
 cd "$REPO"
-echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $SEED --n-trials $NTRIALS"
-python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$SEED" --n-trials "$NTRIALS"
+echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $SEED --n-trials $NTRIALS --projection $PROJECTION"
+python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$SEED" --n-trials "$NTRIALS" --projection "$PROJECTION"
 echo "Job completed successfully."
