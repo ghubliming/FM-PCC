@@ -142,20 +142,16 @@ class TinyFlowModel:
         return [self.W1, self.b1, self.W2, self.b2]
 
 
-def fm_loss(model, x1, rng):
+def fm_loss(model, x1, x0, t):
     """Conditional flow matching loss: ||v_θ(x_t, t) - (x1 - x0)||²
 
     x1: (B, D) data samples
-    x0: (B, D) noise samples ~ N(0, I)
-    t:  (B,) uniform in [0, 1]
+    x0: (B, D) noise samples ~ N(0, I) — passed in, NOT redrawn here, so that
+        finite-difference gradient evals (+eps/-eps) see the same noise sample.
+    t:  (B,) uniform in [0, 1] — same reasoning.
     x_t = (1-t)*x0 + t*x1  (linear interpolation)
     target = x1 - x0
     """
-    B, D = x1.shape
-    x0 = rng.normal(0, 1, x1.shape).astype(np.float32)
-    t = rng.uniform(0, 1, (B,)).astype(np.float32)
-
-    # Interpolate
     t_col = t[:, None]  # (B, 1)
     x_t = (1 - t_col) * x0 + t_col * x1  # (B, D)
     target = x1 - x0                       # (B, D)
@@ -175,9 +171,17 @@ def train_step_numerical(model, x1_batch, rng, lr=1e-3, eps=1e-5):
     use PyTorch — this is just to verify data flow without any framework.
     """
     params = model.parameters()
+    B, D = x1_batch.shape
+
+    # Freeze the random draw for this whole step: every loss eval below
+    # (base, +eps, -eps for every parameter) must see the SAME (x0, t) or the
+    # finite-difference gradient is dominated by noise between draws, not the
+    # true gradient — that noise gets amplified by 1/(2*eps) and explodes.
+    x0 = rng.normal(0, 1, x1_batch.shape).astype(np.float32)
+    t = rng.uniform(0, 1, (B,)).astype(np.float32)
 
     # Forward: compute loss
-    loss_val, _, _, _, _ = fm_loss(model, x1_batch, rng)
+    loss_val, _, _, _, _ = fm_loss(model, x1_batch, x0, t)
 
     # Numerical gradient for each parameter (very slow but correct)
     for p in params:
@@ -186,9 +190,9 @@ def train_step_numerical(model, x1_batch, rng, lr=1e-3, eps=1e-5):
         for i in range(min(len(flat), 200)):  # limit gradient computation
             old = flat[i]
             flat[i] = old + eps
-            loss_plus, _, _, _, _ = fm_loss(model, x1_batch, rng)
+            loss_plus, _, _, _, _ = fm_loss(model, x1_batch, x0, t)
             flat[i] = old - eps
-            loss_minus, _, _, _, _ = fm_loss(model, x1_batch, rng)
+            loss_minus, _, _, _, _ = fm_loss(model, x1_batch, x0, t)
             flat[i] = old
             grad.ravel()[i] = (loss_plus - loss_minus) / (2 * eps)
         p -= lr * grad
