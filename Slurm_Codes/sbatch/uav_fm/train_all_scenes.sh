@@ -13,12 +13,14 @@
 #
 # Usage (from repo root):
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/train_all_scenes.sh
-#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/train_all_scenes.sh "pillars" "5 6 7"
-# Args: $1=scenes (quoted, space-sep) [all 4]   $2=seeds (quoted) ["5 6 7"]
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/train_all_scenes.sh "pillars" "6 7 8 9 10"
+# Args: $1=scenes (quoted, space-sep) [all 4]   $2=seeds (quoted) ["6"]
 set -e
 
 SCENES="${1:-empty corridor s_curve pillars}"
-SEEDS="${2:-5 6 7}"
+# Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10" or uncomment below.
+SEEDS="${2:-6}"
+# SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
 JOB="Slurm_Codes/sbatch/uav_fm/train_fm_uav.sh"
 
 N_SEEDS=$(echo $SEEDS | wc -w)

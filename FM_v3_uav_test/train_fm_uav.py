@@ -13,7 +13,9 @@ import flow_matcher_v3_uav.utils as utils
 
 exp = 'uav'                       # → config.uav, block 'flow_matching_v3_uav'
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
-DEFAULT_SEEDS = [5, 6, 7, 8, 9]
+# Single seed=6 for testing. For the full run use [6, 7, 8, 9, 10] (or the commented line).
+DEFAULT_SEEDS = [6]
+# DEFAULT_SEEDS = [6, 7, 8, 9, 10]   # full run (5 seeds)
 
 def sanitize_wandb_env():
     """Clear malformed W&B service tokens that can crash wandb.init in Colab."""

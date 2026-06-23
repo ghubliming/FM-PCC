@@ -9,11 +9,13 @@
 #SBATCH --partition=gpu-1-student
 set -e
 
-# ---- Args: $1=scene (all|empty|corridor|s_curve|pillars, def all)  $2=seeds (quoted, space-sep, def "5 6 7") ----
+# ---- Args: $1=scene (all|empty|corridor|s_curve|pillars, def all)  $2=seeds (quoted, space-sep, def "6") ----
 # Seeds are looped INSIDE this one job allocation — never submit one sbatch job per seed.
 # If you add seeds, bump --time (above, or via `sbatch --time=...` override) proportionally.
 SCENE="${1:-all}"
-SEEDS="${2:-5 6 7}"
+# Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10" or uncomment below.
+SEEDS="${2:-6}"
+# SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
 
 # ---- Pro-logging ----
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')

@@ -9,11 +9,13 @@
 #SBATCH --partition=gpu-1-student
 set -e
 
-# ---- Args: $1=scene (def all)  $2=seeds (quoted, space-sep, def "5 6 7")  $3=n_trials (def 20)  $4=projection (def fm_only) ----
+# ---- Args: $1=scene (def all)  $2=seeds (quoted, space-sep, def "6")  $3=n_trials (def 20)  $4=projection (def fm_only) ----
 # Seeds are looped INSIDE this one job allocation — never submit one sbatch job per seed.
 # If you add seeds, bump --time (above, or via `sbatch --time=...` override) proportionally.
 SCENE="${1:-all}"
-SEEDS="${2:-5 6 7}"
+# Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10" or uncomment below.
+SEEDS="${2:-6}"
+# SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
 NTRIALS="${3:-20}"
 PROJECTION="${4:-fm_only}"
 

@@ -14,12 +14,14 @@
 #
 # Usage (from repo root):
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh
-#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh "empty corridor s_curve pillars" "5 6 7" 20
-# Args: $1=scenes [all 4]  $2=seeds ["5 6 7"]  $3=n_trials [20]  $4=projection [fm_only]
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh "empty corridor s_curve pillars" "6 7 8 9 10" 20
+# Args: $1=scenes [all 4]  $2=seeds ["6"]  $3=n_trials [20]  $4=projection [fm_only]
 set -e
 
 SCENES="${1:-empty corridor s_curve pillars}"
-SEEDS="${2:-5 6 7}"
+# Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10" or uncomment below.
+SEEDS="${2:-6}"
+# SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
 NTRIALS="${3:-20}"
 PROJ="${4:-fm_only}"
 DIR="Slurm_Codes/sbatch/uav_fm"
