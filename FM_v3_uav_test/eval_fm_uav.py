@@ -87,7 +87,11 @@ def build_policy(scene, seed, epoch, device):
 
 
 def _make_overhead_renderer(mujoco, model, res=360):
-    """Headless overhead renderer; None if rendering is unavailable (no hard dep)."""
+    """Headless overhead renderer; None if rendering is unavailable (no hard dep).
+
+    ONE renderer is created per scene and reused across rollouts — never one per
+    rollout — so we allocate exactly one EGL/GL context instead of leaking N of them.
+    """
     try:
         return mujoco.Renderer(model, height=res, width=res)
     except Exception as exc:                               # pragma: no cover - cluster-only
@@ -95,30 +99,59 @@ def _make_overhead_renderer(mujoco, model, res=360):
         return None
 
 
+def _free_renderer(renderer):
+    """Release the renderer's GL context *now*, while EGL is still initialized.
+
+    MuJoCo's GLContext.__del__ calls eglMakeCurrent; if it runs at interpreter
+    shutdown (after EGL is torn down) it raises EGL_NOT_INITIALIZED. Freeing here —
+    plus reusing a single renderer per scene — prevents both that teardown error and
+    the per-rollout GL-context leak. Tolerant of mujoco versions with/without close().
+    """
+    if renderer is None:
+        return
+    try:
+        if hasattr(renderer, 'close'):        # mujoco >= 3.x
+            renderer.close()
+    except Exception:                         # pragma: no cover
+        pass
+    try:
+        import gc
+        gc.collect()                          # force GLContext.__del__ while EGL is up
+    except Exception:                         # pragma: no cover
+        pass
+
+
 def _render_overhead(mujoco, model, data, renderer):
-    """Single top-down frame (free camera looking straight down at the arena)."""
-    cam = mujoco.MjvCamera()
-    cam.type = mujoco.mjtCamera.mjCAMERA_FREE
-    cam.lookat[:] = [0.0, 0.0, 1.0]
-    cam.distance = 6.0
-    cam.azimuth = 0.0
-    cam.elevation = -90.0
-    renderer.update_scene(data, camera=cam)
-    return renderer.render().copy()
+    """Single top-down frame. Reuses the PROVEN overhead camera from the expert GIF
+    tool (uav_expert_data_collect/generate_trajectory_gifs._render_overhead); falls
+    back to the same camera inline only if that import is unavailable."""
+    try:
+        from uav_expert_data_collect.generate_trajectory_gifs import (
+            _render_overhead as _proven_overhead)
+        return _proven_overhead(model, data, renderer)
+    except Exception:                                      # pragma: no cover
+        cam = mujoco.MjvCamera()
+        cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+        cam.lookat[:] = data.qpos[:3]
+        cam.distance = 5.0
+        cam.azimuth = 0.0
+        cam.elevation = -90.0
+        renderer.update_scene(data, camera=cam)
+        return renderer.render().copy()
 
 
-def rollout_one(scene, homotopy, trial_seed, policy, horizon, record=False, frame_stride=2):
+def rollout_one(model, scene, homotopy, trial_seed, policy, horizon, renderer=None, frame_stride=2):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
-    Buffers obs/action/plan per FM step (U3 npz schema); if `record`, also captures
-    overhead frames for a GIF. Heavy arrays/frames are returned under HEAVY_KEYS and
-    stripped from results.json by eval_artifacts.json_safe_rollouts.
+    `model` and `renderer` are owned by eval_scene and shared across rollouts (one
+    GL context per scene, not per rollout). Buffers obs/action/plan per FM step (U3
+    npz schema); if `renderer` is given, also captures overhead frames for a GIF.
+    Heavy arrays/frames are returned under HEAVY_KEYS and stripped from results.json.
     """
     import mujoco
     import uav_expert_data_collect.generator as gen
 
     rng = np.random.default_rng(trial_seed)
-    model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
     data = mujoco.MjData(model)
 
     traj_fn, init_pos, dur = gen._build_traj_and_init(scene, homotopy, rng)
@@ -135,7 +168,6 @@ def rollout_one(scene, homotopy, trial_seed, policy, horizon, record=False, fram
     decim = max(1, int(round(1.0 / (dt * DATASET_HZ))))    # physics steps per FM query
     n_fm = int(round(dur * DATASET_HZ))
 
-    renderer = _make_overhead_renderer(mujoco, model) if record else None
     frames = []
 
     p_des = np.asarray(init_pos, dtype=float).copy()
@@ -187,9 +219,7 @@ def rollout_one(scene, homotopy, trial_seed, policy, horizon, record=False, fram
                 frames.append(_render_overhead(mujoco, model, data, renderer))
             except Exception as exc:                       # pragma: no cover
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
-                renderer = None
-    if renderer is not None:
-        renderer.close()
+                renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
 
     p_final = data.qpos[:3].copy()
     contact_frac = n_hit / max(n_phys, 1)
@@ -219,8 +249,9 @@ def rollout_one(scene, homotopy, trial_seed, policy, horizon, record=False, fram
 
 
 def eval_scene(scene, args):
-    policy, parsed, horizon = build_policy(scene, args.seed, args.epoch, args.device)
+    import mujoco
     import uav_expert_data_collect.generator as gen
+    policy, parsed, horizon = build_policy(scene, args.seed, args.epoch, args.device)
     homotopies = gen.HOMOTOPY_CLASSES[scene]
 
     variant = args.projection
@@ -229,18 +260,28 @@ def eval_scene(scene, args):
     os.makedirs(out_dir, exist_ok=True)
     record = (args.record != 'none')
 
+    # ONE model + ONE renderer per scene (NOT per rollout) → exactly one GL context.
+    model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
+    renderer = _make_overhead_renderer(mujoco, model) if record else None
+
     rollouts = []
-    for i in range(args.n_trials):
-        homotopy = homotopies[i % len(homotopies)]
-        r = rollout_one(scene, homotopy, 10_000 + i, policy, horizon, record=record)
-        # Per-rollout diagnostics while this rollout's heavy data is still in hand.
-        artifacts.save_rollout_stats(diag_dir, i, r)
-        artifacts.write_pcc_placeholder(diag_dir, i)        # PCC foresight stub (Epoch 7)
-        if record:
-            artifacts.save_rollout_gif(diag_dir, i, r.pop('frames', None))
-        else:
-            r.pop('frames', None)
-        rollouts.append(r)
+    try:
+        for i in range(args.n_trials):
+            homotopy = homotopies[i % len(homotopies)]
+            r = rollout_one(model, scene, homotopy, 10_000 + i, policy, horizon, renderer=renderer)
+            # Per-rollout diagnostics while this rollout's heavy data is still in hand.
+            artifacts.save_rollout_stats(diag_dir, i, r)
+            artifacts.write_pcc_placeholder(diag_dir, i)    # PCC foresight stub (Epoch 7)
+            if record:
+                artifacts.save_rollout_gif(diag_dir, i, r.pop('frames', None))
+            else:
+                r.pop('frames', None)
+            rollouts.append(r)
+    finally:
+        # Free the GL context here, while EGL is still initialized (avoids the
+        # EGL_NOT_INITIALIZED teardown error); renderer is no longer needed below.
+        _free_renderer(renderer)
+        renderer = None
 
     succ = np.mean([r['success'] for r in rollouts])
     summary = {

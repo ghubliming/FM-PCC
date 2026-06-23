@@ -56,6 +56,28 @@ logs/UAV_FM/uav-<scene>/.../<seed>/eval/<projection>/
 - Real GIF + obstacle drawing need MuJoCo → cluster-only; here they degrade
   gracefully (plain plot, GIF skipped) — by design.
 
+## Hotfix 1 — renderer crash + EGL/GL-context leak (job 21952)
+
+`--record gif` crashed with `AttributeError: 'Renderer' object has no attribute
+'close'` and a shutdown `EGLError(EGL_NOT_INITIALIZED)`. Root cause was twofold:
+1. This cluster's mujoco `Renderer` has no `.close()` → the cleanup call crashed.
+2. A **new `mujoco.Renderer` was created per rollout** → one EGL/GL context leaked
+   per rollout, and the contexts' `__del__` ran at interpreter shutdown (after EGL
+   was torn down) → `EGL_NOT_INITIALIZED`. This is the GPU/context-leak class we've
+   been bitten by before.
+
+Fix:
+- **One renderer per scene**, created in `eval_scene` and shared across rollouts
+  (exactly one GL context, not N). `rollout_one` now takes `model`/`renderer` as
+  args instead of building them.
+- New `_free_renderer()` releases the context in a `finally` **while EGL is still
+  initialized** (guarded `close()` if the mujoco version has it, then `gc.collect()`
+  to force `GLContext.__del__` before shutdown) → no leak, no teardown error.
+- Removed the unconditional `renderer.close()` from `rollout_one`.
+
+`py_compile` clean. Render path is cluster-only (needs MuJoCo+EGL); the no-record
+path is unaffected.
+
 ## Scope / notes
 - **Diffuser baseline only.** Every constraint/PCC metric, the foresight SVG, and
   the per-variant loop are placeholders sized for Epoch-7 DPCC.
