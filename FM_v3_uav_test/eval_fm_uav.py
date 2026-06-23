@@ -40,6 +40,7 @@ sys.path.insert(0, _REPO)
 
 import flow_matcher_v3_uav.utils as utils
 from flow_matcher_v3_uav.sampling.policies import Policy
+import FM_v3_uav_test.eval_artifacts as artifacts
 
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 DATASET_HZ = 33                      # must match uav_expert_data_collect/dataset_writer.py
@@ -56,6 +57,9 @@ def parse_args():
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
                         "DPCC variants (dpcc-c, …) slot in here when Phase-3 lands.")
+    p.add_argument('--record', type=str, default='none', choices=['none', 'gif', 'all'],
+                   help="Overhead-render GIFs per rollout. 'none' (default, fast) adds ~0 overhead; "
+                        "'gif'/'all' render frames and write diagnostics/rollout_<r>.gif.")
     p.add_argument('--device', type=str, default='cuda')
     return p.parse_known_args()
 
@@ -82,8 +86,34 @@ def build_policy(scene, seed, epoch, device):
     return policy, args, int(getattr(args, 'horizon', 8))
 
 
-def rollout_one(scene, homotopy, trial_seed, policy, horizon):
-    """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn."""
+def _make_overhead_renderer(mujoco, model, res=360):
+    """Headless overhead renderer; None if rendering is unavailable (no hard dep)."""
+    try:
+        return mujoco.Renderer(model, height=res, width=res)
+    except Exception as exc:                               # pragma: no cover - cluster-only
+        print(f'[ eval ] render unavailable ({exc}); GIF skipped')
+        return None
+
+
+def _render_overhead(mujoco, model, data, renderer):
+    """Single top-down frame (free camera looking straight down at the arena)."""
+    cam = mujoco.MjvCamera()
+    cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+    cam.lookat[:] = [0.0, 0.0, 1.0]
+    cam.distance = 6.0
+    cam.azimuth = 0.0
+    cam.elevation = -90.0
+    renderer.update_scene(data, camera=cam)
+    return renderer.render().copy()
+
+
+def rollout_one(scene, homotopy, trial_seed, policy, horizon, record=False, frame_stride=2):
+    """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
+
+    Buffers obs/action/plan per FM step (U3 npz schema); if `record`, also captures
+    overhead frames for a GIF. Heavy arrays/frames are returned under HEAVY_KEYS and
+    stripped from results.json by eval_artifacts.json_safe_rollouts.
+    """
     import mujoco
     import uav_expert_data_collect.generator as gen
 
@@ -105,23 +135,36 @@ def rollout_one(scene, homotopy, trial_seed, policy, horizon):
     decim = max(1, int(round(1.0 / (dt * DATASET_HZ))))    # physics steps per FM query
     n_fm = int(round(dur * DATASET_HZ))
 
+    renderer = _make_overhead_renderer(mujoco, model) if record else None
+    frames = []
+
     p_des = np.asarray(init_pos, dtype=float).copy()
     n_hit = 0
     n_phys = 0
     min_z = float('inf')
     track_err = []
     fm_ms = []
+    obs_traj = []        # realized [p_des|p|v] per FM step  → npz obs_all
+    act_traj = []        # FM Δp_des per FM step             → npz act_all
+    plans = []           # FM H-step predicted obs plan      → npz sampled_trajectories_all
 
-    for _ in range(n_fm):
+    for k in range(n_fm):
         p = data.qpos[:3].copy()
         v = data.qvel[:3].copy()
         obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
 
         t0 = time.perf_counter()
-        action, _ = policy({0: obs}, batch_size=1, horizon=horizon)
+        action, traj = policy({0: obs}, batch_size=1, horizon=horizon)
         fm_ms.append((time.perf_counter() - t0) * 1e3)
 
         action = np.asarray(action, dtype=float).reshape(-1)[:3]  # first Δp_des
+        obs_traj.append(obs)
+        act_traj.append(action.astype(np.float32))
+        # traj.observations = FM's unnormalized H-step plan in obs space (the foresight).
+        plan = getattr(traj, 'observations', None)
+        if plan is not None:
+            plans.append(np.asarray(plan, dtype=np.float32))
+
         p_des = p_des + action
         v_des = action / dt_fm
 
@@ -138,6 +181,15 @@ def rollout_one(scene, homotopy, trial_seed, policy, horizon):
                 n_hit += 1
             min_z = min(min_z, float(data.qpos[2]))
             track_err.append(float(np.linalg.norm(data.qpos[:3] - p_des)))
+
+        if renderer is not None and (k % frame_stride == 0):
+            try:
+                frames.append(_render_overhead(mujoco, model, data, renderer))
+            except Exception as exc:                       # pragma: no cover
+                print(f'[ eval ] frame render failed ({exc}); stopping capture')
+                renderer = None
+    if renderer is not None:
+        renderer.close()
 
     p_final = data.qpos[:3].copy()
     contact_frac = n_hit / max(n_phys, 1)
@@ -158,6 +210,11 @@ def rollout_one(scene, homotopy, trial_seed, policy, horizon):
         'fm_ms_mean': float(np.mean(fm_ms)) if fm_ms else float('nan'),
         'fm_ms_p95': float(np.percentile(fm_ms, 95)) if fm_ms else float('nan'),
         'n_fm_steps': n_fm, 'decim': decim, 'dt': dt,
+        # ── heavy (npz / gif only; stripped from results.json) ──
+        'obs_traj': np.asarray(obs_traj),
+        'act_traj': np.asarray(act_traj),
+        'plans': plans,
+        'frames': frames,
     }
 
 
@@ -166,10 +223,24 @@ def eval_scene(scene, args):
     import uav_expert_data_collect.generator as gen
     homotopies = gen.HOMOTOPY_CLASSES[scene]
 
+    variant = args.projection
+    out_dir = os.path.join(parsed.savepath, 'eval', variant)
+    diag_dir = os.path.join(out_dir, 'diagnostics')
+    os.makedirs(out_dir, exist_ok=True)
+    record = (args.record != 'none')
+
     rollouts = []
     for i in range(args.n_trials):
         homotopy = homotopies[i % len(homotopies)]
-        rollouts.append(rollout_one(scene, homotopy, 10_000 + i, policy, horizon))
+        r = rollout_one(scene, homotopy, 10_000 + i, policy, horizon, record=record)
+        # Per-rollout diagnostics while this rollout's heavy data is still in hand.
+        artifacts.save_rollout_stats(diag_dir, i, r)
+        artifacts.write_pcc_placeholder(diag_dir, i)        # PCC foresight stub (Epoch 7)
+        if record:
+            artifacts.save_rollout_gif(diag_dir, i, r.pop('frames', None))
+        else:
+            r.pop('frames', None)
+        rollouts.append(r)
 
     succ = np.mean([r['success'] for r in rollouts])
     summary = {
@@ -181,16 +252,22 @@ def eval_scene(scene, args):
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'fm_ms_mean': float(np.mean([r['fm_ms_mean'] for r in rollouts])),
         'fm_ms_p95': float(np.max([r['fm_ms_p95'] for r in rollouts])),
-        'projection': args.projection,
+        'projection': variant,
     }
-    # scene → … → seed → projection :  <savepath>/eval/<projection>/results.json
-    out_dir = os.path.join(parsed.savepath, 'eval', args.projection)
-    os.makedirs(out_dir, exist_ok=True)
+
+    # ── Artifacts (legacy schema): results.json (summary) + npz + log + 2-D overview ──
+    json_rollouts = artifacts.json_safe_rollouts(rollouts)
     with open(os.path.join(out_dir, 'results.json'), 'w') as f:
-        json.dump({'summary': summary, 'rollouts': rollouts}, f, indent=2)
-    print(f'[ eval ] {scene} seed={args.seed} proj={args.projection}: '
+        json.dump({'summary': summary, 'rollouts': json_rollouts}, f, indent=2)
+    npz_path = artifacts.save_npz(out_dir, variant, rollouts, vars(args))
+    artifacts.write_eval_log(out_dir, variant, summary, rollouts)
+    png_path = artifacts.plot_overview(out_dir, variant, scene, rollouts)
+
+    print(f'[ eval ] {scene} seed={args.seed} proj={variant}: '
           f'success={succ:.3f}  contact={summary["contact_frac_mean"]:.3f}  '
-          f'fm_ms(mean/p95)={summary["fm_ms_mean"]:.1f}/{summary["fm_ms_p95"]:.1f}  → {out_dir}/results.json')
+          f'fm_ms(mean/p95)={summary["fm_ms_mean"]:.1f}/{summary["fm_ms_p95"]:.1f}\n'
+          f'         → {out_dir}/  (results.json, {os.path.basename(npz_path)}, '
+          f'{os.path.basename(png_path)}, eval_{variant}.log, diagnostics/)')
     return summary
 
 

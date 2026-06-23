@@ -9,7 +9,7 @@
 #SBATCH --partition=gpu-1-student
 set -e
 
-# ---- Args: $1=scene (def all)  $2=seeds (quoted, space-sep, def "6")  $3=n_trials (def 20)  $4=projection (def fm_only) ----
+# ---- Args: $1=scene (def all)  $2=seeds (quoted, def "6")  $3=n_trials (def 20)  $4=projection (def fm_only)  $5=record (none|gif|all, def none) ----
 # Seeds are looped INSIDE this one job allocation — never submit one sbatch job per seed.
 # If you add seeds, bump --time (above, or via `sbatch --time=...` override) proportionally.
 SCENE="${1:-all}"
@@ -18,6 +18,7 @@ SEEDS="${2:-6}"
 # SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
 NTRIALS="${3:-20}"
 PROJECTION="${4:-fm_only}"
+RECORD="${5:-none}"          # 'gif'/'all' → overhead GIFs per rollout (slower); 'none' = fast
 
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log; fi
@@ -62,7 +63,7 @@ cd "$REPO"
 for seed in $SEEDS; do
     echo "--------------------------------------------------------------------------------"
     echo "[ uav_fm_eval ] scene=$SCENE seed=$seed  $(date)"
-    echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $seed --n-trials $NTRIALS --projection $PROJECTION"
-    python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$seed" --n-trials "$NTRIALS" --projection "$PROJECTION"
+    echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $seed --n-trials $NTRIALS --projection $PROJECTION --record $RECORD"
+    python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$seed" --n-trials "$NTRIALS" --projection "$PROJECTION" --record "$RECORD"
 done
 echo "Job completed successfully. Evaluated scene=$SCENE for seeds=[$SEEDS]"
