@@ -195,7 +195,11 @@ def eval_scene(scene, args):
 
 
 def main():
-    args, _ = parse_args()
+    args, remaining = parse_args()
+    # utils.Parser.parse_args() (called inside build_policy) re-parses sys.argv with its
+    # own argparse that only knows --config/--seed — strip our already-consumed flags
+    # first or it chokes on --scene/--n-trials/--projection/--device (mirrors train_fm_uav.py).
+    sys.argv = [sys.argv[0], *remaining]
     scenes = SCENES if args.scene == 'all' else [args.scene]
     summaries = {s: eval_scene(s, args) for s in scenes}
 

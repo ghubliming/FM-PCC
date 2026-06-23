@@ -1965,3 +1965,31 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Plan Persistence (`sampled_trajectories_all`)**: Fixed a major analytical gap where open-loop MPC trajectory forecasts were computed during evaluation but never saved to `.npz` files. Injected `sampled_trajectories_all` into the `np.savez` call across 10 evaluation scripts (including early-gen `obs_all`/`act_all` retrofits), enabling offline diagnosis of plan explosions and trajectory smoothness.
 2. **Temporal Consistency Reference Fix**: Corrected a latent bug in 11 `policies.py` modules where `self.prev_observations` erroneously hardcoded its reference to the 0th trajectory candidate (`observations[0]`). Updated the assignment to use `observations[which_trajectory]`, ensuring that minimum-cost selection projectors (`dpcc-c`) accurately track the executed action for their temporal consistency window rather than defaulting to candidate 0.
+
+***
+
+## Gen9 Epoch 2 "U4" Fix 2: Visual Avoiding Eval YAML Fix & Seed Fix (June 22, 2026)
+
+**Keywords**: Gen9, U4, visual avoiding, projection_eval.yaml, visual_avoiding_eval.yaml.
+
+1. **Config Decoupling**: Discovered that the visual-avoiding evaluation was erroneously reading the globally shared `projection_eval.yaml` instead of its own dedicated config, causing only a single seed to run. Rewrote `config/visual_avoiding_eval.yaml` to faithfully mirror the avoiding schema (half-spaces, obstacles, bounds, dims) independently of the visual-aligning configuration.
+2. **Script Repointing**: Reactivated the dedicated config by repointing all four active visual-avoiding scripts (`eval_visual_avoiding_dpcc.py`, `eval_fm_visual_avoiding.py`, etc.) to use `visual_avoiding_eval.yaml`. Added explicit seed list logging to end configuration ambiguity.
+
+***
+
+## Gen11 Epoch 6 "Aux-1": Batched "Collect → Data-Ready" SLURM Pipeline (June 22, 2026)
+
+**Keywords**: Gen11, Epoch 6, Aux-1, data curation, mini_fm_sanity, SLURM orchestrator.
+
+1. **Automated Pipeline Orchestration**: Wrapped the fragile manual curation steps (raw → flat dataset) into a fully unattended batched SLURM pipeline (`collect_to_ready_pipeline.sh`). This eliminates the risk of login-session timeouts disrupting the data preparation process.
+2. **Data Safety Guarantees**: Enforced strict copy-only (`shutil.copy2`) and read-only verification operations within the curation script `prepare_uav_fm_data.sh`. The pipeline never moves or deletes raw expert data, ensuring a safe fallback.
+3. **Mini-FM Sanity Gate**: Introduced an optional `mini_fm_gate.sh` step that trains a tiny Flow Matching model on the curated data to check held-out RMS error, catching action-convention or shape mismatches cheaply before committing full compute resources. Included fixes to `mini_fm_sanity.py` to correctly sample random parameter indices and compute the numerical gradient of `fm_loss`.
+
+***
+
+## Gen11 Epoch 6 "U2 & F1": Per-Scene FM Models & SLURM Submission Refactor (June 22, 2026)
+
+**Keywords**: Gen11, Epoch 6, U2, per-scene FM models, scene-keyed run, SLURM orchestrator, sbatch-storm fix.
+
+1. **Per-Scene FM Allocation (U2)**: Implemented an architecture where one Flow Matching model is trained per-scene (e.g., `empty`, `corridor`, `s_curve`, `pillars`). A state-only universal model was deemed underdetermined across different geometries. Created cross-scene aggregation scripts (`aggregate_scene_summaries.py`) to roll up evaluation metrics.
+2. **Submission Logic Optimization (F1)**: Addressed an "sbatch-storm" risk where the `fm_uav_all_pipeline.sh` orchestrator previously spawned an unconstrained number of SLURM jobs (e.g., 25 jobs for 4 scenes × 3 seeds). Moved the seed loop *inside* the execution scripts (`train_fm_uav.sh`, `eval_fm_uav.sh`). Total job count now strictly scales as `2 * num_scenes + 1`, drastically reducing cluster impact while mathematically extending the per-job wall-clock limits appropriately.
