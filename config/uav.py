@@ -8,7 +8,7 @@ from `config.avoiding-d3il`.
 Scene selection is NOT a separate config: the `--scene` CLI flag sets the dataset string
 to `uav-<scene>` (e.g. `uav-all`, `uav-empty`), which both selects the data branch in
 `datasets/d4rl.py:sequence_dataset` and segregates the output path
-(`logs/uav-<scene>/<exp_name>/<seed>/`).
+(`logs/UAV_FM/uav-<scene>/<exp_name>/<seed>/`).
 
 UAV schema (authoritative): obs=9 [p_des|p|v], action=3 Δp_des, transition=12, H=8.
 Dims are derived from the data at runtime (train script:
@@ -24,7 +24,11 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
-logbase = 'logs'
+# All UAV-FM outputs live under logs/UAV_FM/ (NOT scattered at the top of logs/).
+# savepath = <logbase>/<dataset>/<exp_name>/<seed> = logs/UAV_FM/uav-<scene>/flow_matching_v3_uav/.../<seed>
+# NOTE: the dataset string stays 'uav-<scene>' — the data loader keys on it
+# (flow_matcher_v3_uav/datasets/d4rl.py: env.startswith('uav')); only the logbase moved.
+logbase = 'logs/UAV_FM'
 
 base = {
     'flow_matching_v3_uav': {
@@ -50,7 +54,11 @@ base = {
 
         # dataset — generic SequenceDataset; the UAV branch lives in datasets/d4rl.py.
         'loader': 'datasets.SequenceDataset',
-        'normalizer': 'LimitsNormalizer',
+        # SafeLimitsNormalizer, NOT LimitsNormalizer: some scenes (e.g. pillars) have a
+        # constant feature column (zero range) → plain LimitsNormalizer does (x-min)/(max-min)
+        # = 0/0 = NaN, which poisons the whole net (all losses NaN from epoch 0). The Safe
+        # variant widens only the constant dim and is identical to Limits when no dim is constant.
+        'normalizer': 'SafeLimitsNormalizer',
         'preprocess_fns': [],
         'clip_denoised': False,
         'use_padding': True,

@@ -41,8 +41,20 @@ export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+# GPU-leak guard (same as all FMPCC jobs): pin EGL to the Slurm-allocated GPU and abort if they diverge.
 ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
 export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
+echo "[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  MUJOCO_EGL_DEVICE_ID=$MUJOCO_EGL_DEVICE_ID"
+if [ "$MUJOCO_EGL_DEVICE_ID" != "${CUDA_VISIBLE_DEVICES%%,*}" ]; then
+    echo "[ GPU-LEAK ] EGL device ($MUJOCO_EGL_DEVICE_ID) != CUDA (${CUDA_VISIBLE_DEVICES%%,*}) -- aborting"
+    exit 1
+fi
+
+# W&B Login (key file on the cluster) — eval_fm_uav.py doesn't log to W&B today, kept for parity.
+if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
+    export WANDB_API_KEY=$(cat $HOME/FMPCC/.wandb_api_key)
+    export WANDB_MODE="online"
+fi
 
 cd "$REPO"
 for seed in $SEEDS; do

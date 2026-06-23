@@ -187,8 +187,11 @@ class SafeLimitsNormalizer(LimitsNormalizer):
                     [ utils/normalization ] Constant data in dimension {i} | '''
                     f'''max = min = {self.maxs[i]}'''
                 )
-                self.mins -= eps
-                self.maxs += eps
+                # Widen ONLY this constant dimension so it maps to the midpoint (0)
+                # instead of 0/0=NaN. Must index [i] — adjusting the whole mins/maxs
+                # array would corrupt every other (non-constant) dimension's scale.
+                self.mins[i] -= eps
+                self.maxs[i] += eps
 
 #-----------------------------------------------------------------------------#
 #------------------------------- CDF normalizer ------------------------------#

@@ -205,7 +205,7 @@ def main():
 
     if len(scenes) > 1:
         # experimental --scene all path; per-scene runs use aggregate_scene_summaries.py instead.
-        roll = os.path.join('logs', 'uav-all', args.projection, 'SUMMARY.json')
+        roll = os.path.join('logs', 'UAV_FM', 'uav-all', args.projection, 'SUMMARY.json')
         os.makedirs(os.path.dirname(roll), exist_ok=True)
         with open(roll, 'w') as f:
             json.dump(summaries, f, indent=2)

@@ -1,8 +1,8 @@
 """Aggregate per-(scene,seed) UAV FM eval results into per-scene + cross-scene summaries.
 
-Reads every  logs/uav-<scene>/<exp_name>/<seed>/eval/<projection>/results.json  produced by
-eval_fm_uav.py, rolls up mean±std across seeds per scene → logs/uav-<scene>/SCENE_SUMMARY.json,
-and a top-level logs/fm_uav_ALL_SCENES_SUMMARY.json across the 4 scenes.
+Reads every  logs/UAV_FM/uav-<scene>/<exp_name>/<seed>/eval/<projection>/results.json  produced
+by eval_fm_uav.py, rolls up mean±std across seeds per scene → logs/UAV_FM/uav-<scene>/SCENE_SUMMARY.json,
+and a top-level logs/UAV_FM/fm_uav_ALL_SCENES_SUMMARY.json across the 4 scenes.
 
 Pure stdlib (no numpy/torch) — runs anywhere, including the cluster login node.
 
@@ -63,7 +63,7 @@ def main():
     p = argparse.ArgumentParser(description='Roll up per-scene + cross-scene UAV FM eval summaries.')
     p.add_argument('--scenes', nargs='+', default=SCENES, choices=SCENES)
     p.add_argument('--projection', default='fm_only')
-    p.add_argument('--logbase', default='logs')
+    p.add_argument('--logbase', default='logs/UAV_FM')   # matches config/uav.py logbase
     args = p.parse_args()
 
     all_scenes = {}

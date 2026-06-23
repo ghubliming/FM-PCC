@@ -46,5 +46,5 @@ done
 AGG_ID=$(sbatch --parsable $LOG_OPTS --dependency="$DEP" "$AGG" "$SCENES" "$PROJ")
 echo "  aggregate (after all evals)  → Job $AGG_ID"
 echo "--------------------------------------------------------------------------------"
-echo "Read: logs/uav-<scene>/SCENE_SUMMARY.json  +  logs/fm_uav_ALL_SCENES_SUMMARY.json"
+echo "Read: logs/UAV_FM/uav-<scene>/SCENE_SUMMARY.json  +  logs/UAV_FM/fm_uav_ALL_SCENES_SUMMARY.json"
 echo "================================================================================"

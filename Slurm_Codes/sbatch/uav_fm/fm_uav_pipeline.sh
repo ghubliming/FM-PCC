@@ -33,5 +33,5 @@ EVAL_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:${TRAIN_ID} \
     "${SBATCH_DIR}/eval_fm_uav.sh" "$SCENE" "$SEED" "$NTRIALS")
 echo "Step 2: eval scheduled (afterok:${TRAIN_ID}) — Job $EVAL_ID"
 echo "--------------------------------------------------------------------------------"
-echo "Outputs: logs/uav-${SCENE}/flow_matching_v3_uav/.../${SEED}/{weights,eval}"
+echo "Outputs: logs/UAV_FM/uav-${SCENE}/flow_matching_v3_uav/.../${SEED}/{weights,eval}"
 echo "================================================================================"

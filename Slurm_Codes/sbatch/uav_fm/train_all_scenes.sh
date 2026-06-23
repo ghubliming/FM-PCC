@@ -40,6 +40,6 @@ for scene in $SCENES; do
 done
 echo "--------------------------------------------------------------------------------"
 echo "Submitted $n train jobs (one per scene; seeds run sequentially inside each job)."
-echo "Outputs: logs/uav-<scene>/flow_matching_v3_uav.../<seed>/weights/"
+echo "Outputs: logs/UAV_FM/uav-<scene>/flow_matching_v3_uav.../<seed>/weights/"
 echo "Then eval:  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/eval_all_scenes.sh \"$SCENES\" \"$SEEDS\""
 echo "================================================================================"

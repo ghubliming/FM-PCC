@@ -55,5 +55,5 @@ echo "  aggregate (after all evals)  → Job $AGG_ID"
 echo "--------------------------------------------------------------------------------"
 N_SCENES=$(echo $SCENES | wc -w)
 echo "Total jobs submitted: $((2*N_SCENES+1))  (was up to $((2*N_SCENES*N_SEEDS+1)) under the old per-seed-job scheme)"
-echo "When done: logs/uav-<scene>/SCENE_SUMMARY.json + logs/fm_uav_ALL_SCENES_SUMMARY.json"
+echo "When done: logs/UAV_FM/uav-<scene>/SCENE_SUMMARY.json + logs/UAV_FM/fm_uav_ALL_SCENES_SUMMARY.json"
 echo "================================================================================"
