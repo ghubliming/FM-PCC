@@ -22,8 +22,23 @@ metrics are built from. It exposes the "smooth vs exploded/chaotic" quality the 
 numbers are blind to (path length, straightness, step spikes, jerk). See
 logs_in_develop/Gen3v4_imf/U6/DEBUG_DiT_Eval_Trajectory_Explosion.md for why this matters.
 
+MPC plan-fan analysis (`sampled_trajectories_all`, the candidate foresight trajectories), when present:
+  • plan_*  columns — quality of the OPEN-LOOP plans (not the executed path): plan_path_len,
+    plan_straightness, plan_roughness, plan_max_jerk, plan_max_step.
+  • plan_max_abs — largest |coordinate| over all plan waypoints → a direct EXPLOSION detector
+    (e.g. UAV altitude plans diving to −227 m show up as a huge plan_max_abs while the executed
+    path looks tame).
+  • plan_cand_spread — candidate diversity per snapshot (mean pairwise endpoint distance; NaN when
+    batch=1, e.g. UAV).
+  • plan_exec_div / plan_exec_div_best — how far the foresight plans are from what was actually
+    executed (candidate-0 and best-candidate) → quantifies plan-vs-reality divergence (the runaway).
+  • --replot-plans — per trial, overlay the candidate fan (blue) on the executed path (black).
+
 Usage:
-    python npz_analysis/analyze_npz.py <path-to-dir-or-file> [--out DIR] [--xy-cols 0 1] [--no-recursive]
+    python npz_analysis/analyze_npz.py <path-to-dir-or-file> [--out DIR] [--xy-cols 0 1]
+        [--replot] [--replot-plans] [--dump-xy] [--no-recursive]
+    # UAV: position x,y live in obs cols 3,4 (obs = [p_des(0:3) | p(3:6) | v(6:9)]):
+    python npz_analysis/analyze_npz.py logs/UAV_FM/uav-pillars/plans --xy-cols 3 4 --replot-plans
 """
 
 import argparse
@@ -99,13 +114,16 @@ def analyze_traj(traj, cols):
     nan = float('nan')
     blank = dict(points=0, path_len=nan, net_disp=nan, straightness=nan,
                  mean_step=nan, max_step=nan, std_step=nan,
-                 mean_jerk=nan, max_jerk=nan, roughness=nan)
+                 mean_jerk=nan, max_jerk=nan, roughness=nan, max_abs=nan)
     try:
         a = np.asarray(traj, dtype=float)
     except Exception:
         return blank
     if a.ndim != 2 or a.shape[0] < 2:
         return dict(blank, points=int(a.shape[0]) if a.ndim >= 1 else 0)
+    # explosion detector: largest |value| over ALL dims (not just xy) — catches a blow-up
+    # on any axis (e.g. UAV altitude p_des_z → −227 while the xy plane looks tame).
+    max_abs = float(np.nanmax(np.abs(a))) if a.size else nan
     cols = [c for c in cols if c < a.shape[1]] or list(range(min(2, a.shape[1])))
     xy = a[:, cols]
     diffs = np.diff(xy, axis=0)
@@ -128,12 +146,115 @@ def analyze_traj(traj, cols):
         mean_step=float(step.mean()), max_step=float(step.max()), std_step=float(step.std()),
         mean_jerk=mean_jerk, max_jerk=max_jerk,
         roughness=(float(step.max()) / med) if med and med > 1e-9 else nan,  # spike index
+        max_abs=max_abs,                                                     # explosion (all dims)
     )
 
 
 def mean_ignore_nan(vals):
     arr = np.array([v for v in vals if v == v], dtype=float)  # drop NaN
     return float(arr.mean()) if arr.size else float('nan')
+
+
+# ── MPC plan-fan (candidate trajectory) analysis ─────────────────────────────
+# `sampled_trajectories_all[trial]` = a sequence of plan SNAPSHOTS; each snapshot is
+# the model's open-loop foresight as [batch, horizon, dim] (batch = # candidates).
+# Schemas vary: avoiding snapshots every horizon//2 steps with batch>1; UAV snapshots
+# every step with batch=1. We normalise both to a list of [batch, horizon, dim].
+PLAN_METRIC_NAMES = ['plan_n_snap', 'plan_batch', 'plan_path_len', 'plan_straightness',
+                     'plan_roughness', 'plan_max_jerk', 'plan_max_step', 'plan_max_abs',
+                     'plan_cand_spread', 'plan_exec_div', 'plan_exec_div_best']
+
+
+def _plan_snapshots(entry):
+    """Normalise one trial's plan payload to a list of [batch, horizon, dim] float arrays."""
+    snaps = []
+    try:
+        seq = list(entry)
+    except TypeError:
+        return snaps
+    for s in seq:
+        try:
+            a = np.asarray(s, dtype=float)
+        except Exception:
+            continue
+        if a.ndim == 2:        # [horizon, dim] → single candidate
+            a = a[None, ...]
+        if a.ndim == 3 and a.shape[1] >= 1:   # [batch, horizon, dim]
+            snaps.append(a)
+    return snaps
+
+
+def _plan_exec_divergence(snaps, executed, cols):
+    """How far each foresight plan is from what was actually executed (the runaway lens).
+
+    Returns (mean over candidate-0, mean over best candidate). Aligns snapshot s to
+    executed step round(s·(T-1)/(n_snap-1)); plan waypoint k → executed step start+k.
+    """
+    nan = float('nan')
+    try:
+        ex = np.asarray(executed, dtype=float)
+    except Exception:
+        return nan, nan
+    if ex.ndim != 2 or ex.shape[0] < 1 or not snaps:
+        return nan, nan
+    T = ex.shape[0]
+    nsnap = len(snaps)
+    ecols = [c for c in cols if c < ex.shape[1]] or list(range(min(2, ex.shape[1])))
+    exy = ex[:, ecols]
+    first, best = [], []
+    for si, s in enumerate(snaps):
+        start = int(round(si * (T - 1) / max(nsnap - 1, 1)))
+        pcols = [c for c in cols if c < s.shape[2]] or list(range(min(2, s.shape[2])))
+        cand = []
+        for b in range(s.shape[0]):
+            pxy = s[b][:, pcols]
+            idx = np.clip(np.arange(start, start + pxy.shape[0]), 0, T - 1)
+            cand.append(float(np.nanmean(np.linalg.norm(pxy - exy[idx], axis=1))))
+        if cand:
+            first.append(cand[0])
+            best.append(min(cand))
+    return mean_ignore_nan(first), mean_ignore_nan(best)
+
+
+def analyze_plans(plan_entry, cols, executed=None):
+    """Quality + explosion + candidate-spread + executed-divergence for one trial's plan fan."""
+    nan = float('nan')
+    out = {k: nan for k in PLAN_METRIC_NAMES}
+    out['plan_n_snap'], out['plan_batch'] = 0, 0
+    snaps = _plan_snapshots(plan_entry)
+    if not snaps:
+        return out
+    qual = {m: [] for m in ('path_len', 'straightness', 'roughness', 'max_jerk', 'max_step')}
+    spreads, max_abs = [], 0.0
+    batch = max(s.shape[0] for s in snaps)
+    for s in snaps:                                   # s = [batch, horizon, dim]
+        pcols = [c for c in cols if c < s.shape[2]] or list(range(min(2, s.shape[2])))
+        ends = []
+        for b in range(s.shape[0]):
+            q = analyze_traj(s[b], cols)              # reuse executed-path quality metrics
+            for m in qual:
+                qual[m].append(q[m])
+            if q['max_abs'] == q['max_abs']:          # all-dim explosion (not NaN)
+                max_abs = max(max_abs, q['max_abs'])
+            xy = s[b][:, pcols]
+            if xy.size:
+                ends.append(xy[-1])
+        if len(ends) > 1:                             # candidate diversity (batch>1 only)
+            e = np.asarray(ends)
+            pair = [np.linalg.norm(e[a] - e[b]) for a in range(len(e)) for b in range(a + 1, len(e))]
+            spreads.append(float(np.mean(pair)))
+    out['plan_n_snap'] = len(snaps)
+    out['plan_batch'] = int(batch)
+    out['plan_path_len'] = mean_ignore_nan(qual['path_len'])
+    out['plan_straightness'] = mean_ignore_nan(qual['straightness'])
+    out['plan_roughness'] = mean_ignore_nan(qual['roughness'])
+    out['plan_max_jerk'] = mean_ignore_nan(qual['max_jerk'])
+    out['plan_max_step'] = mean_ignore_nan(qual['max_step'])
+    out['plan_max_abs'] = max_abs                     # ← explosion detector (e.g. UAV p_des→ −227)
+    out['plan_cand_spread'] = mean_ignore_nan(spreads) if spreads else nan
+    if executed is not None:
+        out['plan_exec_div'], out['plan_exec_div_best'] = _plan_exec_divergence(snaps, executed, cols)
+    return out
 
 
 def process_file(npz_path, root, cols):
@@ -158,7 +279,7 @@ def process_file(npz_path, root, cols):
 
     # executed-trajectory quality (obs_all)
     traj_metric_names = ['path_len', 'net_disp', 'straightness', 'mean_step', 'max_step',
-                         'std_step', 'mean_jerk', 'max_jerk', 'roughness', 'points']
+                         'std_step', 'mean_jerk', 'max_jerk', 'roughness', 'max_abs', 'points']
     per_traj = []
     if 'obs_all' in data.files:
         obs_all = data['obs_all']
@@ -172,11 +293,28 @@ def process_file(npz_path, root, cols):
             file_row[f'traj_{name}__mean'] = mean_ignore_nan([t[name] for t in per_traj])
         file_row['n_traj'] = len(per_traj)
 
+    # MPC plan-fan quality (sampled_trajectories_all) — the candidate foresight trajectories.
+    # plan_max_abs / plan_exec_div expose a plan explosion the executed-path metrics miss.
+    per_plan = []
+    if 'sampled_trajectories_all' in data.files:
+        plans_all = data['sampled_trajectories_all']
+        try:
+            npn = len(plans_all)
+        except TypeError:
+            npn = 0
+        obs_for_div = data['obs_all'] if 'obs_all' in data.files else None
+        for i in range(npn):
+            ex_i = obs_for_div[i] if (obs_for_div is not None and i < len(obs_for_div)) else None
+            per_plan.append(analyze_plans(plans_all[i], cols, executed=ex_i))
+        for name in PLAN_METRIC_NAMES:
+            file_row[f'{name}__mean'] = mean_ignore_nan([p[name] for p in per_plan])
+        file_row['n_plan'] = len(per_plan)
+
     # args metadata
     file_row.update({f'arg_{k}': v for k, v in load_args_meta(data).items()})
 
-    # per-trial rows (join scalar metrics + traj metrics by index)
-    n_rows = max([file_row.get('n_trials', 0), len(per_traj)])
+    # per-trial rows (join scalar metrics + traj + plan metrics by index)
+    n_rows = max([file_row.get('n_trials', 0), len(per_traj), len(per_plan)])
     for i in range(n_rows):
         row = {'file': rel, 'variant': variant, 'trial': i}
         for k, m in metrics.items():
@@ -185,6 +323,9 @@ def process_file(npz_path, root, cols):
         if i < len(per_traj):
             for name in traj_metric_names:
                 row[f'traj_{name}'] = per_traj[i][name]
+        if i < len(per_plan):
+            for name in PLAN_METRIC_NAMES:
+                row[name] = per_plan[i][name]
         trial_rows.append(row)
 
     data.close()
@@ -231,6 +372,61 @@ def replot_trajectories(npz_path, out_dir, cols, rel):
     fig.savefig(out_png, dpi=120, bbox_inches='tight')
     plt.close(fig); data.close()
     return out_png
+
+
+def replot_with_plans(npz_path, out_dir, cols, rel, max_snaps=60, max_cand=4):
+    """Per trial: executed path (black) + the MPC candidate plan fan (blue) + plan starts.
+
+    This is the figure that makes a plan explosion visible — the foresight plans peel
+    away from the executed path (e.g. UAV altitude plans diving to −227 m). Returns the
+    list of saved PNGs (one per trial), or None if the npz lacks plan data."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    try:
+        data = np.load(npz_path, allow_pickle=True)
+    except Exception:
+        return None
+    if 'sampled_trajectories_all' not in data.files or 'obs_all' not in data.files:
+        data.close(); return None
+    obs_all, plans_all = data['obs_all'], data['sampled_trajectories_all']
+    try:
+        n = min(len(obs_all), len(plans_all))
+    except TypeError:
+        data.close(); return None
+    saved = []
+    for i in range(n):
+        try:
+            ex = np.asarray(obs_all[i], dtype=float)
+        except Exception:
+            continue
+        if ex.ndim != 2 or ex.shape[0] < 1:
+            continue
+        ecols = [c for c in cols if c < ex.shape[1]] or [0, min(1, ex.shape[1] - 1)]
+        snaps = _plan_snapshots(plans_all[i])
+        if not snaps:
+            continue
+        fig, ax = plt.subplots(figsize=(7, 7))
+        stride = max(1, len(snaps) // max_snaps)
+        for si in range(0, len(snaps), stride):
+            s = snaps[si]
+            pcols = [c for c in cols if c < s.shape[2]] or [0, min(1, s.shape[2] - 1)]
+            for b in range(min(s.shape[0], max_cand)):
+                pxy = s[b][:, pcols]
+                ax.plot(pxy[:, 0], pxy[:, 1], 'b', lw=0.6, alpha=0.35)
+                ax.plot(pxy[0, 0], pxy[0, 1], 'g.', ms=3)
+        ax.plot(ex[:, ecols[0]], ex[:, ecols[1]], 'k', lw=1.6, label='executed')
+        ax.plot(ex[0, ecols[0]], ex[0, ecols[1]], 'go', ms=6)
+        ax.set_title(f'{rel} · trial {i}\nexecuted (black) + plan fan (blue) · cols (x={cols[0]}, y={cols[1]})')
+        ax.set_xlabel(f'obs[{cols[0]}]'); ax.set_ylabel(f'obs[{cols[1]}]')
+        ax.set_aspect('equal', 'datalim')
+        name = rel.replace(os.sep, '__').replace('.npz', '') + f'_trial{i}_plans.png'
+        out_png = os.path.join(out_dir, name)
+        fig.savefig(out_png, dpi=120, bbox_inches='tight')
+        plt.close(fig)
+        saved.append(out_png)
+    data.close()
+    return saved
 
 
 def dump_xy_rows(npz_path, cols, rel, variant):
@@ -284,14 +480,17 @@ def write_csv(path, rows):
 
 
 def print_table(file_rows):
-    """Compact stdout summary of headline numbers + trajectory roughness."""
-    cols = [('variant', 22), ('n_trials', 8), ('n_success__mean', 11), ('success_rate__mean', 12),
-            ('collision_free_completed__mean', 9), ('n_steps__mean', 9),
-            ('traj_straightness__mean', 11), ('traj_max_jerk__mean', 11), ('traj_roughness__mean', 10)]
-    hdr = {'n_success__mean': 'success', 'success_rate__mean': 'succ_rate',
-           'collision_free_completed__mean': 'collfree', 'n_steps__mean': 'steps',
-           'traj_straightness__mean': 'straight', 'traj_max_jerk__mean': 'maxjerk',
-           'traj_roughness__mean': 'rough'}
+    """Compact stdout summary of headline numbers + trajectory + plan-fan quality."""
+    cols = [('variant', 22), ('n_trials', 8), ('success_rate__mean', 12), ('n_steps__mean', 9),
+            ('traj_straightness__mean', 11), ('traj_max_abs__mean', 11)]
+    hdr = {'success_rate__mean': 'succ_rate', 'n_steps__mean': 'steps',
+           'traj_straightness__mean': 'straight', 'traj_max_abs__mean': 'exec_maxabs'}
+    # only show plan columns if at least one file has plan data
+    if any('plan_max_abs__mean' in r for r in file_rows):
+        cols += [('plan_max_abs__mean', 12), ('plan_exec_div__mean', 11),
+                 ('plan_cand_spread__mean', 10), ('plan_batch__mean', 6)]
+        hdr.update({'plan_max_abs__mean': 'plan_maxabs', 'plan_exec_div__mean': 'plan_exdiv',
+                    'plan_cand_spread__mean': 'cand_sprd', 'plan_batch__mean': 'ncand'})
     line = '  '.join(f'{hdr.get(k, k):>{w}.{w}}' for k, w in cols)
     print('\n' + line)
     print('-' * len(line))
@@ -316,6 +515,9 @@ def main():
     ap.add_argument('--replot', action='store_true',
                     help='Regenerate the executed (x,y) trajectory plot from obs_all into a PNG per npz '
                          '(the same path drawn as the black line in the eval figure).')
+    ap.add_argument('--replot-plans', action='store_true',
+                    help='Per trial, overlay the MPC candidate plan fan (blue) on the executed path '
+                         '(black) from sampled_trajectories_all — makes a plan explosion visible.')
     ap.add_argument('--dump-xy', action='store_true',
                     help='Write the RAW per-step (x,y) points of every trajectory to points_<ts>.csv '
                          '(columns: file, variant, trial, step, x, y).')
@@ -344,6 +546,10 @@ def main():
             png = replot_trajectories(p, out, args.xy_cols, rel)
             if png:
                 replots.append(png)
+        if args.replot_plans:
+            pngs = replot_with_plans(p, out, args.xy_cols, rel)
+            if pngs:
+                replots.extend(pngs)
         if args.dump_xy:
             point_rows.extend(dump_xy_rows(p, args.xy_cols, rel, fr.get('variant', '')))
 
@@ -355,7 +561,7 @@ def main():
     print_table(file_rows)
     print(f'[npz-analyze] files_summary: {n1} rows -> {fsum}')
     print(f'[npz-analyze] per_trial:     {n2} rows -> {ftri}')
-    if args.replot:
+    if args.replot or args.replot_plans:
         print(f'[npz-analyze] replot:        {len(replots)} png(s) -> {out}')
     if args.dump_xy:
         fpts = os.path.join(out, f'points_{stamp}.csv')
