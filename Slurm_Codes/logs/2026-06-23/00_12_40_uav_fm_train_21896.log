@@ -1,0 +1,129 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 23 08:23:46 UTC 2026  |  uav_fm_train  |  ID 21896  |  NODE i6-gpu-1
+SCENE: s_curve   SEED: 7
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+GIT REV:   73c19e9
+================================================================================
+[ uav_fm_train ] python FM_v3_uav_test/train_fm_uav.py --scene s_curve --seed 7
+/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/datasets/normalization.py:159: RuntimeWarning: invalid value encountered in divide
+  x = (x - self.mins) / (self.maxs - self.mins)
+[ train ] UAV scene: s_curve  (dataset string: uav-s_curve)
+[ train ] Seed source: cli --seed
+[ train ] Training seeds: [7]
+[ utils/setup ] Made savepath: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7
+[ train ] Saved seed manifest to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/seeds_config.json
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: uav-s_curve
+    horizon: 8
+    include_returns: False
+    max_path_length: 750
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 750
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 9)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 9)
+    normed_actions: (500, 750, 3)
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.models.unet1d_temporal_cond.Flow_matcher_U_Net_v2'>
+    cond_dim: 9
+    condition_dropout: 0.25
+    dim: 32
+    dim_mults: (1, 2, 4, 8)
+    horizon: 8
+    returns_condition: False
+    transition_dim: 12
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/model_config.pkl
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.models.diffusion.FlowMatchingODE'>
+    action_dim: 3
+    action_weight: 1
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_type: l2
+    n_timesteps: 20
+    observation_dim: 9
+    ode_inference_steps_v3: 10
+    predict_epsilon: True
+    returns_condition: False
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/diffusion_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000.0
+    results_folder: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7
+    train_batch_size: 8
+    train_lr: 0.0001
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/7/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0: 100%|██████████| 1000/1000 [01:38<00:00, 10.17it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=0.0001, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:38<00:00, 10.17it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=0.0001, step=999]
+Initial test loss:      nan, a0 loss:      nan
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:37<00:00, 10.23it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=0.0001, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:37<00:00, 10.23it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=0.0001, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:34<00:00, 10.62it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.99e-5, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:34<00:00, 10.62it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.99e-5, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:37<00:00, 10.30it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.98e-5, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:37<00:00, 10.30it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.98e-5, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [01:23<00:00, 12.00it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.96e-5, step=4999]Epoch 4: 100%|██████████| 1000/1000 [01:23<00:00, 12.00it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.96e-5, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:32<00:00, 10.81it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.94e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:32<00:00, 10.81it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.94e-5, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:39<00:00, 10.04it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.91e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:39<00:00, 10.04it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.91e-5, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:37<00:00, 10.21it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.88e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:37<00:00, 10.21it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.88e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:35<00:00, 10.46it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.84e-5, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:35<00:00, 10.46it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.84e-5, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:37<00:00, 10.24it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.8e-5, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:37<00:00, 10.24it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.8e-5, step=9999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 10: 100%|██████████| 1000/1000 [01:26<00:00, 11.56it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.75e-5, step=10999]Epoch 10: 100%|██████████| 1000/1000 [01:26<00:00, 11.56it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.75e-5, step=10999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 11: 100%|██████████| 1000/1000 [01:36<00:00, 10.36it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.7e-5, step=11999]Epoch 11: 100%|██████████| 1000/1000 [01:36<00:00, 10.36it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.7e-5, step=11999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 12: 100%|██████████| 1000/1000 [01:36<00:00, 10.35it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.64e-5, step=12999]Epoch 12: 100%|██████████| 1000/1000 [01:36<00:00, 10.35it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.64e-5, step=12999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 13: 100%|██████████| 1000/1000 [01:34<00:00, 10.61it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.58e-5, step=13999]Epoch 13: 100%|██████████| 1000/1000 [01:34<00:00, 10.61it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.58e-5, step=13999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [01:22<00:00, 12.10it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.51e-5, step=14999]Epoch 14: 100%|██████████| 1000/1000 [01:22<00:00, 12.10it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.51e-5, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [01:36<00:00, 10.40it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.44e-5, step=15999]Epoch 15: 100%|██████████| 1000/1000 [01:36<00:00, 10.40it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.44e-5, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [01:36<00:00, 10.39it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.37e-5, step=16999]Epoch 16: 100%|██████████| 1000/1000 [01:36<00:00, 10.39it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.37e-5, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [01:28<00:00, 11.27it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.29e-5, step=17999]Epoch 17: 100%|██████████| 1000/1000 [01:28<00:00, 11.27it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.29e-5, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [01:38<00:00, 10.14it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.21e-5, step=18999]Epoch 18: 100%|██████████| 1000/1000 [01:38<00:00, 10.14it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.21e-5, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [01:37<00:00, 10.25it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.12e-5, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [01:37<00:00, 10.25it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.12e-5, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [01:38<00:00, 10.19it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.03e-5, step=20999]Epoch 20: 100%|██████████| 1000/1000 [01:38<00:00, 10.19it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=9.03e-5, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [01:37<00:00, 10.23it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.93e-5, step=21999]Epoch 21: 100%|██████████| 1000/1000 [01:37<00:00, 10.23it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.93e-5, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [01:38<00:00, 10.12it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.83e-5, step=22999]Epoch 22: 100%|██████████| 1000/1000 [01:38<00:00, 10.12it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.83e-5, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.73e-5, step=23999]Epoch 23: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.73e-5, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [01:38<00:00, 10.19it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.62e-5, step=24999]Epoch 24: 100%|██████████| 1000/1000 [01:38<00:00, 10.19it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.62e-5, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [01:38<00:00, 10.20it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.51e-5, step=25999]Epoch 25: 100%|██████████| 1000/1000 [01:38<00:00, 10.20it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.51e-5, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [01:33<00:00, 10.67it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.39e-5, step=26999]Epoch 26: 100%|██████████| 1000/1000 [01:33<00:00, 10.67it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.39e-5, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.27e-5, step=27999]Epoch 27: 100%|██████████| 1000/1000 [01:38<00:00, 10.15it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.27e-5, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [01:38<00:00, 10.12it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.15e-5, step=28999]Epoch 28: 100%|██████████| 1000/1000 [01:38<00:00, 10.12it/s, a0_loss=nan, a0_loss_test=nan, diffusion_loss=nan, loss=nan, loss_test=nan, lr=8.15e-5, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]slurmstepd-i6-gpu-1: error: *** JOB 21896 ON i6-gpu-1 CANCELLED AT 2026-06-23T09:10:14 ***
+JOB END: Tue Jun 23 09:10:14 UTC 2026

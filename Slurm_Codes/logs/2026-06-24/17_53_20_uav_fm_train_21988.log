@@ -1,0 +1,112 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jun 24 15:53:21 UTC 2026  |  uav_fm_train  |  ID 21988  |  NODE i6-gpu-1
+SCENE: empty   SEEDS: 6
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+GIT REV:   0780777
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_fm_train ] scene=empty seed=6  Wed Jun 24 15:53:22 UTC 2026
+[ uav_fm_train ] python FM_v3_uav_test/train_fm_uav.py --scene empty --seed 6 --use-wandb --wandb-project FM-PCC-uav-fm --wandb-group uav-empty
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260624_155325-4c8ntiz2
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run uav-empty-flow_matching_v3_uav-H8_DFlowMatchingODE-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-fm
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-fm/runs/4c8ntiz2
+[ train ] UAV scene: empty  (dataset string: uav-empty)
+[ train ] Seed source: cli --seed
+[ train ] Training seeds: [6]
+[ utils/setup ] Made savepath: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+[ train ] Saved seed manifest to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/seeds_config.json
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: uav-empty
+    horizon: 8
+    include_returns: False
+    max_path_length: 750
+    normalizer: SafeLimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 750
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dataset_config.json
+
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 9)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 9)
+    normed_actions: (500, 750, 3)
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.models.unet1d_temporal_cond.Flow_matcher_U_Net_v2'>
+    cond_dim: 9
+    condition_dropout: 0.25
+    dim: 32
+    dim_mults: (1, 2, 4, 8)
+    horizon: 8
+    returns_condition: False
+    transition_dim: 12
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.models.diffusion.FlowMatchingODE'>
+    action_dim: 3
+    action_weight: 1
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_type: l2
+    n_timesteps: 20
+    observation_dim: 9
+    ode_inference_steps_v3: 10
+    predict_epsilon: True
+    returns_condition: False
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_uav.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000.0
+    results_folder: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+    train_batch_size: 8
+    train_lr: 0.0001
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0: 100%|██████████| 1000/1000 [01:30<00:00, 11.08it/s, a0_loss=0.534, a0_loss_test=1.32, diffusion_loss=1.01, loss=0.507, loss_test=0.629, lr=0.0001, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:30<00:00, 11.08it/s, a0_loss=0.534, a0_loss_test=1.32, diffusion_loss=1.01, loss=0.507, loss_test=0.629, lr=0.0001, step=999]
+Initial test loss:   0.6291, a0 loss:   1.3152
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]

@@ -196,6 +196,26 @@ still bad
 21645 -> K10
 
 1e5 train -> K10
+21658
+21659/21660
+
+- U6 DiT 
+21665 (1e4)
+21666/67
+
+(1e5)
+21673/4 K10
+21706 K2
+
+21724 kill cfg in eval reeval K1, chaotic
+21726 K20
+21727 K40
+
+21736 rk4 K20
+21740 rk4 K2 
+
+21744 - TRAIN MAX & other enhanced parameters
+21753 eval(submit as dependency)
 
 ---
 # Visual 
@@ -575,6 +595,9 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/16_32_56_eval_d3il_baseline_20894.log
 
 ---
 
+U2 20/06/2026
+21760-21771
+
 ---
 # Gen8 iMF Visual Aligning
 
@@ -669,7 +692,23 @@ fix1 test revert if affect?
 
 ---
 
+20/06
+Try redo full FM eval
+21782
 
+& Diffu Piepline
+21783
+
+bug is .sh time 4h limit... reeval FM and Diffu
+FM 21822/3
+
+Diffu. 21824/5
+
+---
+
+seed 78910
+21969 FM
+21970 Diffu
 
 # Gen11
 # E2 
@@ -783,3 +822,27 @@ Slurm_Codes/sbatch/diffuser_visual_avoiding/train_visual_avoiding_dpcc.sh
 Slurm_Codes/sbatch/fm_visual_aligning/eval_fm_visual_aligning.sh
 
 Slurm_Codes/sbatch/iMF/train_imf.sh
+
+
+# E6
+check prepare UAV FM data 21873
+fm gate 21874/ fix -> 21875 -> hotfix again 21876
+21877 keep testing
+21878 still bug, but go full tests
+
+21879 - TRAIN 
+21880 to 21904 all our train & eval
+serveal seveve bugs
+
+Debug
+21925-6,7,8
+
+U3
+21952/3
+
+other sence tests
+21988/89
+
+21990-unkown jobs
+
+21991-
