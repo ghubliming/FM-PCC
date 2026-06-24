@@ -255,7 +255,12 @@ def eval_scene(scene, args):
     homotopies = gen.HOMOTOPY_CLASSES[scene]
 
     variant = args.projection
-    out_dir = os.path.join(parsed.savepath, 'eval', variant)
+    # Eval outputs go under a sibling `plans/` tree (like the other FM-PCC models),
+    # NOT nested inside the train model folder. Train weights stay at parsed.savepath;
+    # eval lands at  <logbase>/<dataset>/plans/<exp_name>/<seed>/<projection>/ .
+    scene_root = os.path.join(parsed.logbase, parsed.dataset)        # logs/UAV_FM/uav-<scene>
+    sub = os.path.relpath(parsed.savepath, scene_root)               # flow_matching_v3_uav/<exp>/<seed>
+    out_dir = os.path.join(scene_root, 'plans', sub, variant)        # …/plans/…/<seed>/<projection>
     diag_dir = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
     record = (args.record != 'none')
@@ -323,7 +328,7 @@ def main():
 
     if len(scenes) > 1:
         # experimental --scene all path; per-scene runs use aggregate_scene_summaries.py instead.
-        roll = os.path.join('logs', 'UAV_FM', 'uav-all', args.projection, 'SUMMARY.json')
+        roll = os.path.join('logs', 'UAV_FM', 'uav-all', 'plans', args.projection, 'SUMMARY.json')
         os.makedirs(os.path.dirname(roll), exist_ok=True)
         with open(roll, 'w') as f:
             json.dump(summaries, f, indent=2)

@@ -125,16 +125,16 @@ class FlowMatchingODE(nn.Module):
 
     #------------------------------------------ sampling ------------------------------------------#
 
-    def predict_start_from_noise(self, x_t, t, noise):
+    def predict_start_from_noise(self, x_t, t, noise):  # x_t: current pos, t: time driven, noise: velocity
         '''
             if self.predict_epsilon, model output is (scaled) noise;
             otherwise, model predicts x0 directly
         '''
         # In Flow Matching with linear interpolation, x_t = x_0 + t * v where v = x_1 - x_0.
-        t_cont = self._time_from_timestep(t)
-        while t_cont.ndim < x_t.ndim:
-            t_cont = t_cont.unsqueeze(-1)
-        return x_t - t_cont * noise
+        t_cont = self._time_from_timestep(t)  # convert time into a clean decimal (0.0 to 1.0)
+        while t_cont.ndim < x_t.ndim:  # if time is a 1D number and trajectory is 3D...
+            t_cont = t_cont.unsqueeze(-1)  # ...pad time with dummy dimensions so PyTorch can multiply them
+        return x_t - t_cont * noise  # Rewind the clock: Starting Pos = Current Pos - (Time * Velocity)
 
     def q_posterior(self, x_start, x_t, t):
         # Flow Matching has deterministic dynamics under the ODE sampler.

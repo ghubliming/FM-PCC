@@ -1993,3 +1993,43 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Per-Scene FM Allocation (U2)**: Implemented an architecture where one Flow Matching model is trained per-scene (e.g., `empty`, `corridor`, `s_curve`, `pillars`). A state-only universal model was deemed underdetermined across different geometries. Created cross-scene aggregation scripts (`aggregate_scene_summaries.py`) to roll up evaluation metrics.
 2. **Submission Logic Optimization (F1)**: Addressed an "sbatch-storm" risk where the `fm_uav_all_pipeline.sh` orchestrator previously spawned an unconstrained number of SLURM jobs (e.g., 25 jobs for 4 scenes × 3 seeds). Moved the seed loop *inside* the execution scripts (`train_fm_uav.sh`, `eval_fm_uav.sh`). Total job count now strictly scales as `2 * num_scenes + 1`, drastically reducing cluster impact while mathematically extending the per-job wall-clock limits appropriately.
+
+***
+
+## Gen11 Epoch 6 "U2" Fixes: Output Namespacing & Argument Parsing (June 23, 2026)
+
+**Keywords**: Gen11, Epoch 6, UAV-FM, output path, namespace, argument parsing, logs/UAV_FM.
+
+1. **Output Namespacing (Fix 3)**: Relocated UAV-FM evaluation outputs to be properly namespaced under `logs/UAV_FM/` (e.g. `logs/UAV_FM/uav-<scene>`) instead of cluttering the root `logs/` directory. Unified the base output path logic across configurations and aggregation scripts.
+2. **Argument Parsing Fix**: Updated argument parsing in `eval_fm_uav.py` to prevent conflicts with re-parsed flags.
+
+***
+
+## Gen11 Epoch 6 "F3": Train NaN Resolution & SafeLimitsNormalizer (June 23, 2026)
+
+**Keywords**: Gen11, Epoch 6, F3, UAV-FM, NaN, SafeLimitsNormalizer, constant feature column.
+
+1. **Bug Diagnosis**: Investigated a training failure where all losses hit NaN at epoch 0 for the `pillars` scene (Job 21898). Identified that the `LimitsNormalizer` was performing `0/0` divisions on constant-feature columns (e.g., fixed altitude or zero-velocity components in the dataset).
+2. **Resolution**: Transitioned `config/uav.py` to use `SafeLimitsNormalizer`, which intelligently maps constant dimensions to their midpoint (0.0) without corrupting the scaling of other dimensions.
+3. **Verification**: Confirmed clean training on the `empty` scene up to step 1e5 without NaN occurrences.
+
+***
+
+## Gen11 Epoch 6 "U3": Legacy Evaluation Artifacts & EGL/GL Leak Hotfix (June 23, 2026)
+
+**Keywords**: Gen11, Epoch 6, U3, artifacts, npz, GIF, EGL leak, renderer crash.
+
+1. **Artifact Restoration**: Re-implemented pure-IO and matplotlib artifact writers in `eval_artifacts.py` without requiring MuJoCo or GPU access. Restored legacy `.npz` logging with DPCC placeholders for Epoch 7, 2D top-down and altitude overview PNG plots, per-rollout statistics, and opt-in GIF generation.
+2. **Evaluation Pipeline Integration**: Upgraded `eval_fm_uav.py` to buffer heavy trajectory arrays and generate diagnostics under the new `logs/UAV_FM/` path.
+3. **EGL/GL Leak Hotfix (Commit 6293c02)**: Resolved a critical context leak and renderer crash during GIF generation (`EGLError`). Consolidated to a single shared `mujoco.Renderer` per scene instead of per rollout, and implemented a guaranteed context release sequence (`_free_renderer()`) before interpreter teardown.
+4. **W&B and GPU-Leak Guard Parity (Fix 3)**: Restored W&B logging and the EGL GPU-leak guard parity to the SLURM batch scripts `train_fm_uav.sh` and `eval_fm_uav.sh`.
+
+***
+
+## Gen11 Epoch 6 "U2" Close-out: Pillars Evaluation Analysis (June 23, 2026)
+
+**Keywords**: Gen11, Epoch 6, pillars, evaluation, success rate, constant dims.
+
+1. **Pillars Analysis**: Analyzed evaluation results for `pillars` seed 6. While the pipeline plumbing (training to eval) executed cleanly, the Flow-Matching policy failed with a 0% success rate.
+2. **Failure Mode**: The drone never took off (resting height remained ~0.087m), generating extreme tracking errors (~92m) due to runaway commanded positions (`p_des`).
+3. **Diagnosis**: Identified that action dimensions 0 and 2 were flagged as constant during evaluation, indicating the FM only learned 1 degree of freedom from the training data. This suggests a dataset-level deficiency rather than a pipeline fault.

@@ -1,7 +1,7 @@
 """Aggregate per-(scene,seed) UAV FM eval results into per-scene + cross-scene summaries.
 
-Reads every  logs/UAV_FM/uav-<scene>/<exp_name>/<seed>/eval/<projection>/results.json  produced
-by eval_fm_uav.py, rolls up mean±std across seeds per scene → logs/UAV_FM/uav-<scene>/SCENE_SUMMARY.json,
+Reads every  logs/UAV_FM/uav-<scene>/plans/<exp_name>/<seed>/<projection>/results.json  produced
+by eval_fm_uav.py, rolls up mean±std across seeds per scene → logs/UAV_FM/uav-<scene>/plans/SCENE_SUMMARY.json,
 and a top-level logs/UAV_FM/fm_uav_ALL_SCENES_SUMMARY.json across the 4 scenes.
 
 Pure stdlib (no numpy/torch) — runs anywhere, including the cluster login node.
@@ -29,8 +29,9 @@ def _mean_std(xs):
 
 
 def aggregate_scene(scene, projection, logbase):
-    pat = os.path.join(logbase, f'uav-{scene}', '*', '*', 'eval', projection, 'results.json')
-    files = sorted(glob.glob(pat))
+    # Eval results live under the plans/ tree (any depth): <logbase>/uav-<scene>/plans/**/<proj>/results.json
+    pat = os.path.join(logbase, f'uav-{scene}', 'plans', '**', projection, 'results.json')
+    files = sorted(glob.glob(pat, recursive=True))
     per_seed = []
     for fp in files:
         try:
@@ -50,7 +51,7 @@ def aggregate_scene(scene, projection, logbase):
         agg[f'{m}_mean'] = mean
         agg[f'{m}_std'] = std
     agg['per_seed'] = per_seed
-    out = os.path.join(logbase, f'uav-{scene}', 'SCENE_SUMMARY.json')
+    out = os.path.join(logbase, f'uav-{scene}', 'plans', 'SCENE_SUMMARY.json')
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, 'w') as f:
         json.dump(agg, f, indent=2)
