@@ -34,11 +34,11 @@ def json_safe_rollouts(rollouts):
 # ── npz (legacy FMv3-ODE schema) ─────────────────────────────────────────────
 
 def save_npz(out_dir, variant, rollouts, args_dict):
-    """Write `<variant>.npz` matching the legacy schema analysis scripts expect.
+    """Write `<variant>.npz` matching the legacy FMv3ODE schema analysis scripts expect.
 
-    Real keys: n_success, n_steps, obs_all, act_all, sampled_trajectories_all, args.
-    PCC placeholders (zero-filled, Epoch 7): n_success_and_constraints, n_violations,
-    total_violations.
+    Real keys: n_success, n_success_and_constraints, n_steps, n_violations, total_violations,
+    obs_all, act_all, sampled_trajectories_all, args. (E7: constraint metrics are now taken
+    from the rollouts; with dynamics-only they are clean/zero — per-scene geometry fills them.)
     """
     n = len(rollouts)
     n_success = np.array([1.0 if r.get('success') else 0.0 for r in rollouts])
@@ -47,10 +47,11 @@ def save_npz(out_dir, variant, rollouts, args_dict):
     act_all = np.array([np.asarray(r.get('act_traj', [])) for r in rollouts], dtype=object)
     plans_all = np.array([np.asarray(r.get('plans', [])) for r in rollouts], dtype=object)
 
-    # ── PCC / constraint placeholders — Epoch 7 DPCC fills these; zeroed for now ──
-    n_success_and_constraints = np.zeros(n)
-    n_violations = np.zeros(n)
-    total_violations = np.zeros(n)
+    # ── Constraint-aware metrics (from rollouts; dynamics-only → trivially clean) ──
+    n_success_and_constraints = np.array(
+        [1.0 if r.get('success_and_constraints') else 0.0 for r in rollouts])
+    n_violations = np.array([r.get('n_violations', 0) for r in rollouts], dtype=float)
+    total_violations = np.array([r.get('total_violations', 0.0) for r in rollouts], dtype=float)
 
     path = os.path.join(out_dir, f'{variant}.npz')
     np.savez(
@@ -188,7 +189,10 @@ def write_eval_log(out_dir, variant, summary, rollouts):
                 f"track_err={r.get('track_err_mean', float('nan')):.2f}\n")
         f.write('-' * 70 + '\n')
         f.write(f"  success_rate (goal+safe): {summary['success_rate']:.3f}\n")
+        f.write(f"  success_and_constraints : {summary.get('success_and_constraints_rate', float('nan')):.3f}\n")
         f.write(f"  safe_rate (contact-free+airborne): {summary.get('safe_rate', float('nan')):.3f}\n")
+        f.write(f"  collision_free_rate     : {summary.get('collision_free_rate', float('nan')):.3f}  "
+                f"(violations mean: {summary.get('n_violations_mean', 0):.2f})\n")
         f.write(f"  contact_frac_mean     : {summary['contact_frac_mean']:.3f}\n")
         f.write(f"  goal_dist_mean        : {summary['goal_dist_mean']:.3f}\n")
         f.write(f"  goal_reached_rate     : {summary['goal_reached_rate']:.3f}\n")

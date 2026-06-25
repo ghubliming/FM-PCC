@@ -83,5 +83,21 @@ base = {
         'train_test_split': 0.9,
         'device': 'cuda',
         'seed': 0,
+
+        # ── Epoch-7 PCC/MPC eval block (mirrors fm_visual_aligning config shape) ──
+        # Variants: diffuser (no projector) + dpcc-r/-c/-t (projector ON, selection differs).
+        'projection_variants': ['diffuser', 'dpcc-r', 'dpcc-c', 'dpcc-t'],
+        # ONLY 'dynamics' is really projected this epoch. bounds/halfspace/obstacles are
+        # wired in the projector builder but their geometry is an EMPTY PLACEHOLDER and their
+        # constraint_types keys are OFF → never built, never run (per-scene design later).
+        'constraint_types': ['dynamics'],
+        'pcc_batch_size': 4,                 # MPC candidate-fan size (was 1 in E6 diffuser baseline)
+        'pcc_dt': 1.0 / 33,                  # FM step rate (33 Hz) — action is Δp_des per FM step
+        'diffusion_timestep_threshold': 0.5,
+        'enlarge_constraints': 0.0,
+        # ── PLACEHOLDERS (empty until per-scene geometry is designed; not run this epoch) ──
+        'workspace_bounds': None,            # {'lb':[x,y,z], 'ub':[x,y,z]} arena box — placeholder
+        'halfspace_constraints': [],         # corridor / s_curve walls — placeholder
+        'obstacle_constraints': [],          # pillars (cylinders) — placeholder
     },
 }

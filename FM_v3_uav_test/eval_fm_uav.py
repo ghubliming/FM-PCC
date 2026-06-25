@@ -73,8 +73,8 @@ def parse_args():
     return p.parse_known_args()
 
 
-def build_policy(scene, seed, epoch, device):
-    """Resolve the trained model dir via the same Parser wiring as train, then load it."""
+def build_experiment(scene, seed, epoch, device):
+    """Resolve + load the trained model & dataset (the per-variant Policy is built later)."""
     class Parser(utils.Parser):
         dataset: str = 'uav'              # overridden on the instance below
         config: str = 'config.uav'
@@ -84,15 +84,93 @@ def build_policy(scene, seed, epoch, device):
 
     ep = epoch if epoch == 'latest' else int(epoch)
     experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device)
-    fm_model = experiment.diffusion
-    dataset = experiment.dataset
-    policy = Policy(
-        model=fm_model,
-        normalizer=dataset.normalizer,
-        preprocess_fns=getattr(args, 'preprocess_fns', []),
-        test_ret=getattr(args, 'test_ret', 0),
+    return experiment.diffusion, experiment.dataset, args, int(getattr(args, 'horizon', 8))
+
+
+def _pcc_config(args):
+    """Pull the Epoch-7 PCC fields out of the resolved config (set in config/uav.py)."""
+    return {
+        'projection_variants': list(getattr(args, 'projection_variants', ['diffuser'])),
+        'constraint_types': list(getattr(args, 'constraint_types', ['dynamics'])),
+        'pcc_batch_size': int(getattr(args, 'pcc_batch_size', 4)),
+        'pcc_dt': float(getattr(args, 'pcc_dt', 1.0 / DATASET_HZ)),
+        'diffusion_timestep_threshold': float(getattr(args, 'diffusion_timestep_threshold', 0.5)),
+        'enlarge_constraints': float(getattr(args, 'enlarge_constraints', 0.0) or 0.0),
+        'workspace_bounds': getattr(args, 'workspace_bounds', None),
+        'halfspace_constraints': getattr(args, 'halfspace_constraints', []) or [],
+        'obstacle_constraints': getattr(args, 'obstacle_constraints', []) or [],
+    }
+
+
+# ── DPCC projector — copied from fm_visual_aligning_test/eval_fm_visual_aligning.py and
+#    adapted to the UAV 12-D transition. Only the DYNAMICS constraint is active this epoch;
+#    bounds/halfspace/obstacle blocks are kept verbatim as PLACEHOLDERS (fire only if their
+#    config keys are enabled — they are not this epoch). ────────────────────────────────────
+
+class ProjectorNormalizer:
+    """Wrap obs + act LimitsNormalizers into the dict Projector('states_actions') expects
+    (verbatim from the visual-aligning eval)."""
+    def __init__(self, obs_normalizer, act_normalizer):
+        self.normalizers = {'observations': obs_normalizer, 'actions': act_normalizer}
+
+
+def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12):
+    """Build the DPCC SLSQP projector (mirrors visual-aligning `setup_dpcc_projector`).
+
+    UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
+    The dynamics `deriv` binds **p_des (3,4,5)** to the action (0,1,2) — NOT the actual p —
+    because p_des is the exact integrator of the action (`p_des[t+1]=p_des[t]+act`), while
+    the drone's p lags. (Visual-aligning binds c_pos because its arm tracks perfectly.)
+    """
+    from flow_matcher_v3_uav.sampling.projection import Projector
+
+    _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'x': 6, 'y': 7, 'z': 8}   # x,y,z = actual position p
+    pad = trajectory_dim - 9
+    constraint_list = []
+
+    if 'bounds' in config.get('constraint_types', []):                 # PLACEHOLDER — not run
+        ws = config['workspace_bounds']
+        ws_lb = np.array(ws['lb']); ws_ub = np.array(ws['ub'])
+        lb = np.concatenate([np.full(6, -np.inf), ws_lb, np.full(pad, -np.inf)])
+        ub = np.concatenate([np.full(6,  np.inf), ws_ub, np.full(pad,  np.inf)])
+        constraint_list += [['lb', lb], ['ub', ub]]
+
+    if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
+        constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # bind p_des
+
+    if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run
+        _hs = {'x': _DIM['x'], 'y': _DIM['y']}
+        for hs in config.get('halfspace_constraints', []):
+            C_row, d = utils.formulate_halfspace_constraints(hs, 0.0, trajectory_dim, _hs)
+            constraint_list.append(('ineq', (C_row, d)))
+
+    if 'obstacles' in config.get('constraint_types', []):              # PLACEHOLDER — not run
+        for obs in config.get('obstacle_constraints', []):
+            dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
+            constraint_list.append((obs['type'], dims, obs['center'], obs['radius']))
+
+    return Projector(
+        horizon=int(getattr(args, 'horizon', 8)),
+        transition_dim=trajectory_dim,
+        action_dim=3,
+        goal_dim=0,
+        constraint_list=constraint_list,
+        normalizer=ProjectorNormalizer(obs_normalizer, act_normalizer),
+        diffusion_timestep_threshold=config.get('diffusion_timestep_threshold', 0.5),
+        variant='states_actions',
+        dt=config.get('pcc_dt', 1.0 / DATASET_HZ),
+        solver='scipy',
+        device=getattr(args, 'device', 'cuda'),
     )
-    return policy, args, int(getattr(args, 'horizon', 8))
+
+
+def _selection_for(variant):
+    """FMv3ODE variant → trajectory_selection (verbatim semantics)."""
+    if 'dpcc-t' in variant:
+        return 'temporal_consistency'
+    if 'dpcc-c' in variant:
+        return 'minimum_projection_cost'
+    return 'random'
 
 
 def _make_overhead_renderer(mujoco, model, res=360):
@@ -150,12 +228,14 @@ def _render_overhead(mujoco, model, data, renderer):
 
 
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
-                renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS):
+                renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
-    GL context per scene, not per rollout). Buffers obs/action/plan per FM step (U3
-    npz schema); if `renderer` is given, also captures overhead frames for a GIF.
+    GL context per scene, not per rollout). `batch_size` = MPC candidate-fan size: the
+    policy samples a batch and (per its trajectory_selection) returns the chosen
+    candidate's first action; `plans` stores the whole fan. Buffers obs/action/plan per
+    FM step (U3 npz schema); if `renderer` is given, also captures overhead frames.
     Heavy arrays/frames are returned under HEAVY_KEYS and stripped from results.json.
     """
     import mujoco
@@ -196,7 +276,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
 
         t0 = time.perf_counter()
-        action, traj = policy({0: obs}, batch_size=1, horizon=horizon)
+        action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
         fm_ms.append((time.perf_counter() - t0) * 1e3)
 
         action = np.asarray(action, dtype=float).reshape(-1)[:3]  # first Δp_des
@@ -247,13 +327,25 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     else:                                                 # empty (random goal): stay stable
         success = bool(safe)
 
+    # Constraint-aware metrics (FMv3ODE schema). Only the DYNAMICS constraint is active this
+    # epoch — there are NO obstacle/halfspace/bounds (free-space) constraints to violate, so
+    # these are trivially clean. They populate the schema; per-scene geometry fills them later.
+    collision_free = True
+    n_violations = 0
+    total_violations = 0.0
+    success_and_constraints = bool(success and collision_free)
+
     return {
         'scene': scene, 'homotopy': homotopy,
         'success': success,
+        'success_and_constraints': success_and_constraints,
         'safe': safe,
         'contact_frac': contact_frac,
         'goal_dist': goal_dist,
         'goal_reached': goal_reached,
+        'collision_free': collision_free,
+        'n_violations': n_violations,
+        'total_violations': total_violations,
         'min_z': min_z,
         'final_z': float(p_final[2]),
         'track_err_mean': float(np.mean(track_err)) if track_err else float('nan'),
@@ -268,52 +360,63 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     }
 
 
-def eval_scene(scene, args):
-    import mujoco
-    import uav_expert_data_collect.generator as gen
-    policy, parsed, horizon = build_policy(scene, args.seed, args.epoch, args.device)
-    homotopies = gen.HOMOTOPY_CLASSES[scene]
+def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, args,
+                 mj_model, mujoco, homotopies):
+    """Run all trials for ONE projection variant → write its plans/<variant>/ artifacts.
 
-    variant = args.projection
-    # Eval outputs go under a sibling `plans/` tree (like the other FM-PCC models),
-    # NOT nested inside the train model folder. Train weights stay at parsed.savepath;
-    # eval lands at  <logbase>/<dataset>/plans/<exp_name>/<seed>/<projection>/ .
-    scene_root = os.path.join(parsed.logbase, parsed.dataset)        # logs/UAV_FM/uav-<scene>
-    sub = os.path.relpath(parsed.savepath, scene_root)               # flow_matching_v3_uav/<exp>/<seed>
-    out_dir = os.path.join(scene_root, 'plans', sub, variant)        # …/plans/…/<seed>/<projection>
+    Mirrors the FMv3ODE per-variant block: `projector = None` for `diffuser`, else the DPCC
+    projector; `trajectory_selection` per variant; one Policy built per variant (persists
+    across trials, exactly as FMv3ODE)."""
+    projector = None
+    if variant != 'diffuser':
+        traj_dim = int(dataset.observation_dim + dataset.action_dim)        # 12 = act(3)+obs(9)
+        projector = setup_dpcc_projector(
+            parsed, config,
+            dataset.normalizer.normalizers['observations'],
+            dataset.normalizer.normalizers['actions'],
+            variant, trajectory_dim=traj_dim)
+    policy = Policy(model=model_fm, normalizer=dataset.normalizer,
+                    preprocess_fns=getattr(parsed, 'preprocess_fns', []),
+                    test_ret=getattr(parsed, 'test_ret', 0),
+                    projector=projector, trajectory_selection=_selection_for(variant))
+
+    # Outputs under the sibling plans/ tree, one subfolder per variant (FMv3ODE convention).
+    scene_root = os.path.join(parsed.logbase, parsed.dataset)              # logs/UAV_FM/uav-<scene>
+    sub = os.path.relpath(parsed.savepath, scene_root)                     # flow_matching_v3_uav/<exp>/<seed>
+    out_dir = os.path.join(scene_root, 'plans', sub, variant)              # …/plans/…/<seed>/<variant>
     diag_dir = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
-    record = (args.record != 'none')
 
-    # ONE model + ONE renderer per scene (NOT per rollout) → exactly one GL context.
-    model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
-    renderer = _make_overhead_renderer(mujoco, model) if record else None
+    record = (args.record != 'none')
+    renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
+    batch_size = config['pcc_batch_size']
 
     rollouts = []
     try:
         for i in range(args.n_trials):
             homotopy = homotopies[i % len(homotopies)]
-            r = rollout_one(model, scene, homotopy, 10_000 + i, policy, horizon,
-                            renderer=renderer, goal_radius=args.goal_radius)
-            # Per-rollout diagnostics while this rollout's heavy data is still in hand.
+            r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
+                            renderer=renderer, goal_radius=args.goal_radius, batch_size=batch_size)
             artifacts.save_rollout_stats(diag_dir, i, r)
-            artifacts.write_pcc_placeholder(diag_dir, i)    # PCC foresight stub (Epoch 7)
+            artifacts.write_pcc_placeholder(diag_dir, i)    # MPC foresight stub (per-scene geom later)
             if record:
                 artifacts.save_rollout_gif(diag_dir, i, r.pop('frames', None))
             else:
                 r.pop('frames', None)
             rollouts.append(r)
     finally:
-        # Free the GL context here, while EGL is still initialized (avoids the
-        # EGL_NOT_INITIALIZED teardown error); renderer is no longer needed below.
         _free_renderer(renderer)
         renderer = None
 
     succ = np.mean([r['success'] for r in rollouts])
     summary = {
-        'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts),
-        'success_rate': float(succ),                       # task success: goal_reached AND safe
-        'safe_rate': float(np.mean([r['safe'] for r in rollouts])),  # old proxy: contact-free + airborne
+        'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts), 'variant': variant,
+        'success_rate': float(succ),                                       # task success: goal+safe (scene-aware)
+        'success_and_constraints_rate': float(np.mean([r['success_and_constraints'] for r in rollouts])),
+        'safe_rate': float(np.mean([r['safe'] for r in rollouts])),        # contact-free + airborne
+        'collision_free_rate': float(np.mean([r['collision_free'] for r in rollouts])),
+        'n_violations_mean': float(np.mean([r['n_violations'] for r in rollouts])),
+        'total_violations_mean': float(np.mean([r['total_violations'] for r in rollouts])),
         'contact_frac_mean': float(np.mean([r['contact_frac'] for r in rollouts])),
         'goal_dist_mean': float(np.mean([r['goal_dist'] for r in rollouts])),
         'goal_reached_rate': float(np.mean([r['goal_reached'] for r in rollouts])),
@@ -323,27 +426,43 @@ def eval_scene(scene, args):
         'projection': variant,
     }
 
-    # ── Artifacts (legacy schema): results.json (summary) + npz + log + 2-D overview ──
+    # ── Artifacts (legacy schema): results.json + npz + log + 2-D overview ──
     json_rollouts = artifacts.json_safe_rollouts(rollouts)
     with open(os.path.join(out_dir, 'results.json'), 'w') as f:
         json.dump({'summary': summary, 'rollouts': json_rollouts}, f, indent=2)
     npz_path = artifacts.save_npz(out_dir, variant, rollouts, vars(args))
     artifacts.write_eval_log(out_dir, variant, summary, rollouts)
-    png_path = artifacts.plot_overview(out_dir, variant, scene, rollouts)
+    artifacts.plot_overview(out_dir, variant, scene, rollouts)
 
-    print(f'[ eval ] {scene} seed={args.seed} proj={variant}: '
-          f'success={succ:.3f} (goal+safe)  safe={summary["safe_rate"]:.3f}  '
-          f'goal_reached={summary["goal_reached_rate"]:.3f}  goal_dist={summary["goal_dist_mean"]:.2f}m  '
-          f'contact={summary["contact_frac_mean"]:.3f}  '
-          f'fm_ms(mean/p95)={summary["fm_ms_mean"]:.1f}/{summary["fm_ms_p95"]:.1f}\n'
-          f'         → {out_dir}/  (results.json, {os.path.basename(npz_path)}, '
-          f'{os.path.basename(png_path)}, eval_{variant}.log, diagnostics/)')
+    print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '
+          f'sel={_selection_for(variant)}): success={succ:.3f}  safe={summary["safe_rate"]:.3f}  '
+          f'goal_reached={summary["goal_reached_rate"]:.3f}  track_err={summary["track_err_mean"]:.3f}  '
+          f'→ {os.path.dirname(npz_path)}/')
     return summary
+
+
+def eval_scene(scene, args):
+    """Run EVERY projection variant (diffuser, dpcc-r/-c/-t) for one scene; returns
+    {variant: summary}. Model+dataset loaded once; a Policy is built per variant."""
+    import mujoco
+    import uav_expert_data_collect.generator as gen
+    model_fm, dataset, parsed, horizon = build_experiment(scene, args.seed, args.epoch, args.device)
+    config = _pcc_config(parsed)
+    homotopies = gen.HOMOTOPY_CLASSES[scene]
+    mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
+
+    print(f'[ eval ] {scene}: variants={config["projection_variants"]}  '
+          f'constraints={config["constraint_types"]}  batch_size={config["pcc_batch_size"]}')
+    summaries = {}
+    for variant in config['projection_variants']:
+        summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+                                          config, args, mj_model, mujoco, homotopies)
+    return summaries
 
 
 def main():
     args, remaining = parse_args()
-    # utils.Parser.parse_args() (called inside build_policy) re-parses sys.argv with its
+    # utils.Parser.parse_args() (called inside build_experiment) re-parses sys.argv with its
     # own argparse that only knows --config/--seed — strip our already-consumed flags
     # first or it chokes on --scene/--n-trials/--projection/--device (mirrors train_fm_uav.py).
     sys.argv = [sys.argv[0], *remaining]
