@@ -2,60 +2,57 @@
 
 **Date:** 2026-06-25.
 
-## What changed
-`eval_artifacts.write_pcc_placeholder` (static stub SVG) is replaced by
-**`write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6)`** — a faithful copy
-of Gen7 `fm_visual_aligning_test`'s proven `_mpc_foresight` plot.
+## Final design — XY top-down + XZ altitude (UAV-specific)
 
-Now that Epoch 7's `_run_variant`/`rollout_one` capture the full per-FM-step candidate
-batch in `rollout['plans']` (shape `(batch, horizon, obs_dim)` per FM step — see
-`Epoch7_fm_pcc_FULL_PCC_MPC/CHANGELOG.md`), there's real data to plot.
+`eval_artifacts.write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6)`
 
-### What it draws — copied from Gen7 `fm_visual_aligning_test/_mpc_foresight`
-- **Two panels**: XY top-down (left) + XYZ true 3D (right). Same as Gen7.
-- **Green fan**: candidate p_des trajectories (cols 0,1,2 of each plan), every
-  `stride` FM steps (default 6, matches Gen7's `mpc_foresight_stride` default).
-- **Black line**: commanded p_des path (`obs_traj[:,0:3]`) — "des (commanded)".
-- **Red line**: actual drone position p (`obs_traj[:,3:6]`) — "actual (p)".
-  Maps to Gen7's `c_pos_hist`/`c_arr` (arm actual position).
-- **Black dot**: replan anchor = actual `p` at that FM step (same as Gen7 anchor).
-- **Lime ★ / Red ■**: start / end markers following actual `p` (same as Gen7).
-- **Full `Line2D` legend** with all 6 elements — copied from Gen7.
-- Constraint geometry blocks (bounds/halfspace/obstacles) gated on `constraint_types`
-  — empty this epoch, ready for per-scene geometry without a rewrite.
+### Panel layout
+```
+LEFT  — XY top-down  : horizontal navigation, obstacle avoidance
+RIGHT — XZ altitude  : Z profile, airborne gate, p_des-z explosion
+```
 
-**UAV vs Gen7 mapping:**
+Both panels use the **Gen7 dual-path convention** (copied from
+`fm_visual_aligning_test/_mpc_foresight`):
+- **green** = MPC candidate p_des fan (obs cols 0,1,2), every `stride` FM steps
+- **black** = commanded p_des path (`obs_traj[:,0:3]`)
+- **red**   = actual drone position p (`obs_traj[:,3:6]`)
+- **black dot** = replan anchor at actual `p` (Gen7 convention: anchor follows where
+  the drone physically IS, not where p_des commanded it to be)
+- **lime ★ / red ■** = start / end (follow actual `p`)
+
+### Why XZ not 3D
+Gen7 uses XY + XYZ-3D because the arm workspace is inherently 3D and matplotlib's
+projection gives useful spatial intuition.  For UAV, a static SVG 3D projection is
+worse: altitude (Z) gets compressed into perspective, the candidate fan becomes a
+clutter of overlapping green lines, and there's no way to rotate the view.  Replacing
+3D with a dedicated **XZ altitude panel** reads the key UAV-specific stories clearly:
+- Did `p_des_z` explode? (visible as red/black line diving to −228 m)
+- Is the drone airborne? (orange dashed `AIRBORNE_Z` gate)
+- Do dpcc candidates keep Z sane vs diffuser explosion?
+
+### Bug history (three iterations)
+1. **v1** — used `p` (cols 3,4,5) for BOTH candidates and executed path → candidates
+   span whole arena, executed `p` is a tiny static cluster → "exploded green lines."
+2. **v2** — "copy Gen7 exactly": XY + 3D, Gen7 dual-path convention added. Correct
+   colors/anchors, but 3D panel is worse than v1 for UAV — Z buried in perspective.
+3. **v3 (final)** — XY + XZ: keeps Gen7's dual-path/anchor/legend convention; replaces
+   3D with the altitude panel that makes UAV's Z story readable.
+
+## UAV vs Gen7 mapping
 | Gen7 | UAV |
 |---|---|
 | `real_pos` (commanded des) | `obs_traj[:, 0:3]` (p_des) |
 | `c_arr` / `c_pos_hist` (actual arm pos) | `obs_traj[:, 3:6]` (actual drone p) |
-| `cands[b,:,0:3]` (3D arm candidates) | `plan[b,:,0:3]` (p_des cols of candidate) |
-| anchor = `c_arr[env_step]` | anchor = `c_arr[step_i]` (spr=1, 1:1 alignment) |
-| `spr = n_steps // n_replans` | `spr = 1` (FM step = replan step for UAV) |
+| `cands[b,:,0:3]` | `plan[b,:,0:3]` (p_des cols of candidate) |
+| anchor = `c_arr[env_step]` | anchor = `act[step_i]` (spr=1) |
+| XY + XYZ-3D | XY + XZ (altitude) |
 
-### Bug history
-**First version** (wrong): used `p` (cols 3,4,5) for BOTH candidates and executed path
-→ candidates span whole arena (multi-modal FM proposals in absolute coords) while
-executed `p` is a tiny static cluster → "exploded/nonsensical green lines."
+## Call site
+`eval_fm_uav.py:_run_variant` — `write_mpc_foresight(diag_dir, i, r, scene)` called
+while `r['plans']`/`r['obs_traj']` are still attached (before json_safe strip).
 
-**Second version** (still wrong): switched to `p_des` (cols 0,1,2) for both — single
-executed p_des line only, no dual black/red overlay → dropped Gen7's key insight of
-showing commanded vs actual separation.
-
-**Final version** (this): faithful Gen7 copy — dual black (p_des) + red (p) overlay
-with p_des candidate fan. Now shows: candidates anchor to where drone IS (actual p),
-commanded p_des path (may explode for diffuser), actual drone path (stays sane even
-when p_des explodes since PID can't track). This separation is the core diagnostic.
-
-### Call site
-`eval_fm_uav.py:_run_variant` — called while `r['plans']`/`r['obs_traj']` are still
-attached (before `save_npz`/json_safe strip). No change to call order needed.
-
-### Degenerate case
-No candidate-fan data (early-exit rollout) → writes a one-line text SVG, no crash.
-
-## Output
-Same path/filename — no schema change:
+## Output path (unchanged)
 ```
 …/plans/<variant>/diagnostics/rollout_<i>_mpc_foresight.svg
 ```
