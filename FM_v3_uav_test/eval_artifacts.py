@@ -154,73 +154,122 @@ def save_rollout_gif(diag_dir, idx, frames, fps=10):
 
 
 def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
-    """Real MPC candidate-fan foresight SVG (Epoch 7 — replaces the Epoch-6 placeholder
-    now that `rollout['plans']` carries the full per-FM-step candidate batch).
+    """Real MPC candidate-fan foresight SVG — copied from Gen7 fm_visual_aligning_test.
 
-    Mirrors `fm_visual_aligning_test`'s `_mpc_foresight` decision-point plot — green
-    candidate fan + black replan-point dot, every `stride` FM steps, overlaid on the
-    executed path with start/end markers — adapted to the UAV's top-down + altitude
-    2-panel convention (`plot_overview`) instead of a 3D axis: x/y/z is all there is
-    to show here, no orientation, so two 2-D panels read cleaner than one 3-D one.
-    Uses the same position columns (P_X,P_Y,P_Z = actual p, not p_des) as
-    `plot_overview` so the fan is directly comparable to the executed-path plot.
+    Two panels (XY top-down + XYZ 3D), same as Gen7's proven _mpc_foresight plot:
+      green = MPC candidate fan (p_des cols 0,1,2 of each candidate plan)
+      black = commanded p_des path (des)    → obs_traj cols 0:3
+      red   = actual drone path (c_pos/p)   → obs_traj cols 3:6
+      black dot = replan decision-point anchor (actual p at that step)
+      lime*/red sq = start/end markers
+    Stride: every `stride` FM steps shown (default 6, matches Gen7 default).
+    Constraint geometry blocks (bounds/halfspace/obstacles) copied from Gen7 verbatim
+    and gated on constraint_types — empty this epoch, ready for per-scene geometry.
     """
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D as _Line2D
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 — registers 3D projection
 
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}_mpc_foresight.svg')
 
-    plans = rollout.get('plans', [])
+    plans    = rollout.get('plans', [])
     obs_traj = np.asarray(rollout.get('obs_traj', []))
     if not plans or obs_traj.ndim != 2 or obs_traj.shape[0] == 0:
         fig, ax = plt.subplots(figsize=(4, 1.2))
         ax.axis('off')
         ax.text(0.02, 0.5, 'no candidate-fan data for this rollout',
-                 fontsize=10, color='#888888')
+                fontsize=10, color='#888888')
         fig.savefig(path)
         plt.close(fig)
         return path
 
-    x, y, z = obs_traj[:, P_X], obs_traj[:, P_Y], obs_traj[:, P_Z]
-    n_cands = np.asarray(plans[0]).shape[0] if np.asarray(plans[0]).ndim == 3 else 1
+    # UAV obs = [p_des(0:3) | p(3:6) | v(6:9)].
+    # Mirrors Gen7: real_pos = commanded (p_des), c_arr = actual drone position (p).
+    real_pos = obs_traj[:, 0:3]   # p_des — black, "des (commanded)"
+    c_arr    = obs_traj[:, 3:6]   # p     — red,   "actual (p)"
+    n_cands  = np.asarray(plans[0]).shape[0] if np.asarray(plans[0]).ndim == 3 else 1
+    n_steps  = len(real_pos)
+    _ref     = c_arr              # start/end markers follow actual position (Gen7 uses c_arr)
 
-    fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(16, 8))
+    fig_mpc = plt.figure(figsize=(26, 11))
+    fig_mpc.suptitle(
+        f'Rollout {idx} — MPC Decision Points  '
+        f'(success={int(bool(rollout.get("success")))},  {n_cands} candidates/step,  '
+        f'every {stride} replans shown)',
+        fontsize=13)
+    ax_xy = fig_mpc.add_subplot(1, 2, 1)
+    ax_3d = fig_mpc.add_subplot(1, 2, 2, projection='3d')
+
+    # ── candidate fan (both panels) ────────────────────────────────────────────
+    # UAV: plans[step_i] shape (batch, horizon, obs_dim=9);
+    #      candidate p_des = cols 0,1,2 (same space as real_pos / c_arr).
+    # plans[] and obs_traj[] are aligned 1:1 per FM step (spr=1 for UAV).
     for step_i, plan in enumerate(plans):
         if step_i % stride != 0:
             continue
-        cand = np.asarray(plan)
+        cand   = np.asarray(plan)
         if cand.ndim != 3:
             continue
-        anchor = obs_traj[min(step_i, obs_traj.shape[0] - 1)]
+        anchor = c_arr[min(step_i, n_steps - 1)]      # actual position at decision point
         for b in range(cand.shape[0]):
-            ax_xy.plot(cand[b, :, P_X], cand[b, :, P_Y], color='green', lw=0.6, alpha=0.7, zorder=4)
-            ax_xz.plot(cand[b, :, P_X], cand[b, :, P_Z], color='green', lw=0.6, alpha=0.7, zorder=4)
-        ax_xy.scatter([anchor[P_X]], [anchor[P_Y]], color='black', s=24, zorder=8)
-        ax_xz.scatter([anchor[P_X]], [anchor[P_Z]], color='black', s=24, zorder=8)
+            ax_xy.plot(cand[b, :, 0], cand[b, :, 1],
+                       color='green', linewidth=0.6, alpha=0.7, zorder=4)
+            ax_3d.plot(cand[b, :, 0], cand[b, :, 1], cand[b, :, 2],
+                       color='green', linewidth=0.6, alpha=0.7)
+        ax_xy.scatter([anchor[0]], [anchor[1]],
+                      color='black', s=30, zorder=8, linewidths=0)
+        ax_3d.scatter([anchor[0]], [anchor[1]], [anchor[2]],
+                      color='black', s=30)
 
-    ax_xy.plot(x, y, color='red', lw=1.3, zorder=7, label='executed (p)')
-    ax_xy.scatter([x[0]], [y[0]], color='lime', marker='*', s=160, zorder=12, label='start')
-    ax_xy.scatter([x[-1]], [y[-1]], color='red', marker='s', s=70, zorder=12, label='end')
-    ax_xy.set_title(f'{scene} — MPC candidate fan, top-down (every {stride} FM steps)')
-    ax_xy.set_xlabel('x [m]'); ax_xy.set_ylabel('y [m]')
-    ax_xy.set_aspect('equal', 'box'); ax_xy.grid(True, alpha=0.3); ax_xy.legend(fontsize=8)
+    # ── XY panel — paths + start/end ──────────────────────────────────────────
+    ax_xy.plot(c_arr[:, 0],    c_arr[:, 1],    color='red',   linewidth=1.2, zorder=9)
+    ax_xy.plot(real_pos[:, 0], real_pos[:, 1], color='black', linewidth=1.2, zorder=7)
+    ax_xy.scatter([_ref[0, 0]],  [_ref[0, 1]],
+                  color='lime', marker='*', s=180, zorder=12, linewidths=0)
+    ax_xy.scatter([_ref[-1, 0]], [_ref[-1, 1]],
+                  color='red',  marker='s', s=80,  zorder=12, linewidths=0)
+    _lgd = [
+        _Line2D([0],[0], color='green', lw=0.8, label=f'MPC candidates ({n_cands}/step)'),
+        _Line2D([0],[0], color='black', lw=1.2, label='des (p_des commanded)'),
+        _Line2D([0],[0], color='red',   lw=1.2, label='actual (p)'),
+        _Line2D([0],[0], marker='o', color='w', markerfacecolor='black',
+                markersize=7, label='replan decision point'),
+        _Line2D([0],[0], marker='*', color='w', markerfacecolor='lime',
+                markersize=10, label='start'),
+        _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
+                markersize=7,  label='end'),
+    ]
+    ax_xy.legend(handles=_lgd, fontsize=9)
+    ax_xy.set_title(f'XY — MPC Decision Points  (every {stride} replans)', fontsize=12)
+    ax_xy.set_xlabel('X (m)', fontsize=11); ax_xy.set_ylabel('Y (m)', fontsize=11)
+    ax_xy.set_aspect('equal', adjustable='datalim')
+    ax_xy.grid(True, alpha=0.3)
 
-    ax_xz.plot(x, z, color='red', lw=1.3, zorder=7)
-    ax_xz.axhline(AIRBORNE_Z, ls='--', color='orange', lw=1.0,
-                  label=f'airborne gate z={AIRBORNE_Z} m')
-    ax_xz.scatter([x[0]], [z[0]], color='lime', marker='*', s=160, zorder=12)
-    ax_xz.scatter([x[-1]], [z[-1]], color='red', marker='s', s=70, zorder=12)
-    ax_xz.set_title(f'side (x, z): altitude  —  {n_cands} candidates/step')
-    ax_xz.set_xlabel('x [m]'); ax_xz.set_ylabel('z [m]')
-    ax_xz.grid(True, alpha=0.3); ax_xz.legend(fontsize=8)
+    # ── constraint geometry on XY — gated, empty this epoch ───────────────────
+    # Copied verbatim from Gen7; gated on constraint_types so nothing draws now.
+    # Fill these when per-scene geometry is designed (no rewrite needed).
 
-    fig.suptitle(f'MPC foresight — rollout {idx} — success={int(bool(rollout.get("success")))}',
-                 fontsize=13)
-    fig.tight_layout()
-    fig.savefig(path, bbox_inches='tight')
-    plt.close(fig)
+    # ── 3D XYZ panel — paths + start/end ─────────────────────────────────────
+    ax_3d.plot(c_arr[:, 0],    c_arr[:, 1],    c_arr[:, 2],
+               color='red',   linewidth=1.2, label='actual (p)')
+    ax_3d.plot(real_pos[:, 0], real_pos[:, 1], real_pos[:, 2],
+               color='black', linewidth=1.2, label='des (p_des commanded)')
+    ax_3d.scatter([_ref[0, 0]],  [_ref[0, 1]],  [_ref[0, 2]],
+                  color='lime', marker='*', s=180, zorder=12)
+    ax_3d.scatter([_ref[-1, 0]], [_ref[-1, 1]], [_ref[-1, 2]],
+                  color='red',  marker='s', s=80,  zorder=12)
+    ax_3d.set_title('XYZ — MPC Decision Points (3D)', fontsize=12)
+    ax_3d.set_xlabel('X (m)', fontsize=9)
+    ax_3d.set_ylabel('Y (m)', fontsize=9)
+    ax_3d.set_zlabel('Z (m)', fontsize=9)
+    ax_3d.legend(fontsize=9)
+
+    fig_mpc.tight_layout()
+    fig_mpc.savefig(path, bbox_inches='tight')
+    plt.close(fig_mpc)
     return path
 
 

@@ -3,55 +3,59 @@
 **Date:** 2026-06-25.
 
 ## What changed
-`eval_artifacts.write_pcc_placeholder` (which only wrote a static "PLACEHOLDER —
-constraint projection lands in Epoch 7" SVG) is replaced by
-**`write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6)`**.
+`eval_artifacts.write_pcc_placeholder` (static stub SVG) is replaced by
+**`write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6)`** — a faithful copy
+of Gen7 `fm_visual_aligning_test`'s proven `_mpc_foresight` plot.
 
 Now that Epoch 7's `_run_variant`/`rollout_one` capture the full per-FM-step candidate
 batch in `rollout['plans']` (shape `(batch, horizon, obs_dim)` per FM step — see
-`Epoch7_fm_pcc_FULL_PCC_MPC/CHANGELOG.md`), there's real data to plot, so the stub is
-no longer needed.
+`Epoch7_fm_pcc_FULL_PCC_MPC/CHANGELOG.md`), there's real data to plot.
 
-### What it draws
-Reuses the decision-point convention from `fm_visual_aligning_test`'s
-`_mpc_foresight` plot (green candidate fan + black replan-point dot, every `stride`
-FM steps, overlaid on the executed path with start/end markers) — copied in spirit,
-not code, since the visual-aligning version is 2-D-XY+3-D-XYZ and laced with
-halfspace/obstacle constraint-drawing specific to that task. The UAV version instead
-reuses **this codebase's own** top-down + altitude 2-panel convention
-(`eval_artifacts.plot_overview`), since x/y/z is all there is to show — two 2-D panels
-read cleaner than a 3-D one and match the existing `<variant>.png` overview style:
-- top-down (x, y): every candidate in the batch, every `stride`-th FM step, in green;
-  black dot at the anchor (actual position at that step); executed path in red;
-  start (lime star) / end (red square) markers.
-- side (x, z): same fan + executed path, plus the `AIRBORNE_Z` gate line (reused from
-  `plot_overview`) so altitude collapse is visible in the foresight plot too.
-- Uses the **same position columns** (`P_X,P_Y,P_Z` = actual `p`, not `p_des`) as
-  `plot_overview`, so the candidate fan is directly comparable to the executed-path
-  plot rather than showing the open-loop-integrated `p_des` candidates.
+### What it draws — copied from Gen7 `fm_visual_aligning_test/_mpc_foresight`
+- **Two panels**: XY top-down (left) + XYZ true 3D (right). Same as Gen7.
+- **Green fan**: candidate p_des trajectories (cols 0,1,2 of each plan), every
+  `stride` FM steps (default 6, matches Gen7's `mpc_foresight_stride` default).
+- **Black line**: commanded p_des path (`obs_traj[:,0:3]`) — "des (commanded)".
+- **Red line**: actual drone position p (`obs_traj[:,3:6]`) — "actual (p)".
+  Maps to Gen7's `c_pos_hist`/`c_arr` (arm actual position).
+- **Black dot**: replan anchor = actual `p` at that FM step (same as Gen7 anchor).
+- **Lime ★ / Red ■**: start / end markers following actual `p` (same as Gen7).
+- **Full `Line2D` legend** with all 6 elements — copied from Gen7.
+- Constraint geometry blocks (bounds/halfspace/obstacles) gated on `constraint_types`
+  — empty this epoch, ready for per-scene geometry without a rewrite.
+
+**UAV vs Gen7 mapping:**
+| Gen7 | UAV |
+|---|---|
+| `real_pos` (commanded des) | `obs_traj[:, 0:3]` (p_des) |
+| `c_arr` / `c_pos_hist` (actual arm pos) | `obs_traj[:, 3:6]` (actual drone p) |
+| `cands[b,:,0:3]` (3D arm candidates) | `plan[b,:,0:3]` (p_des cols of candidate) |
+| anchor = `c_arr[env_step]` | anchor = `c_arr[step_i]` (spr=1, 1:1 alignment) |
+| `spr = n_steps // n_replans` | `spr = 1` (FM step = replan step for UAV) |
+
+### Bug history
+**First version** (wrong): used `p` (cols 3,4,5) for BOTH candidates and executed path
+→ candidates span whole arena (multi-modal FM proposals in absolute coords) while
+executed `p` is a tiny static cluster → "exploded/nonsensical green lines."
+
+**Second version** (still wrong): switched to `p_des` (cols 0,1,2) for both — single
+executed p_des line only, no dual black/red overlay → dropped Gen7's key insight of
+showing commanded vs actual separation.
+
+**Final version** (this): faithful Gen7 copy — dual black (p_des) + red (p) overlay
+with p_des candidate fan. Now shows: candidates anchor to where drone IS (actual p),
+commanded p_des path (may explode for diffuser), actual drone path (stays sane even
+when p_des explodes since PID can't track). This separation is the core diagnostic.
 
 ### Call site
-`eval_fm_uav.py:_run_variant` — `artifacts.write_pcc_placeholder(diag_dir, i)` →
-`artifacts.write_mpc_foresight(diag_dir, i, r, scene)`. Called before `save_npz`/
-`plot_overview`, while `r['plans']`/`r['obs_traj']` (heavy keys) are still attached to
-the rollout dict — no change needed to when/where it's called.
+`eval_fm_uav.py:_run_variant` — called while `r['plans']`/`r['obs_traj']` are still
+attached (before `save_npz`/json_safe strip). No change to call order needed.
 
 ### Degenerate case
-If a rollout has no candidate-fan data (e.g. `batch_size=1` or an early-exit rollout),
-writes a one-line "no candidate-fan data for this rollout" SVG instead of crashing.
+No candidate-fan data (early-exit rollout) → writes a one-line text SVG, no crash.
 
 ## Output
-Same path/filename as before — no schema change for downstream tooling:
+Same path/filename — no schema change:
 ```
 …/plans/<variant>/diagnostics/rollout_<i>_mpc_foresight.svg
 ```
-
-## Not changed (scope)
-- No constraint-geometry overlay (workspace bounds / halfspace / obstacle) — those
-  stay empty placeholders this epoch per `PLAN.md`/`CHANGELOG.md`; the plot itself has
-  no gating for them yet since there's nothing to draw. Adding it later is the same
-  pattern as `plot_overview`'s scene-aware obstacle drawing, not a rewrite.
-- `diffuser` rollouts (`batch_size` config value, default 4 for all variants including
-  `diffuser` per `config/uav_eval.yaml`) still get a real multi-candidate fan plotted
-  even though no projector/selection runs — useful as the "before" comparison against
-  `dpcc-r/-c/-t`.
