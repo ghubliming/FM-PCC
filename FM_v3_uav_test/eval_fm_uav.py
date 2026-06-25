@@ -15,14 +15,16 @@ Per FM step:
   obs = [p_des | p | v]  (9-D, raw) → policy → first Δp_des (3-D) → p_des += Δp_des →
   PID tracks p_des for `decim` physics steps → obs updated from new (p, v).
 
-SUCCESS CRITERION — DESIGN DECISION (please confirm):
-  The state-only FM is conditioned on obs[0]=[p_des,p,v] only, so for the random-goal
-  `empty` scene it is NOT goal-conditioned → "reach the goal" is ill-defined there. We
-  therefore default `success` to the expert's OWN acceptance gate — **contact-free +
-  airborne** (contact_frac < scene limit AND airborne) — which is well-defined for every
-  scene. For the geometry-constrained scenes we ALSO report distance to the expert path
-  endpoint (`goal_dist`). If you want goal-reaching as the headline metric, the FM must be
-  made goal-conditioned first (next Epoch / Gen7).
+SUCCESS CRITERION (Fix2_metrics, scene-aware):
+  • GOAL-PATH scenes (corridor, s_curve, pillars — fixed start + geometry route):
+      `success = goal_reached AND safe` — must REACH the route endpoint (final position
+      within `--goal-radius`) AND fly cleanly (contact-free + airborne, `min_z > 0.2`).
+  • `empty` (RANDOM per-episode start→goal the state-only FM is never told → goal-reaching
+      ill-defined): `success = safe` — just stay stable (contact-free + airborne).
+  The old contact-free+airborne proxy is always reported as `safe` / `safe_rate`, and
+  `goal_reached` / `goal_dist` are reported for every scene regardless. A drone that flies
+  around a goal-path scene without reaching the target is NOT a success (the prior global
+  definition scored that as success — a bug).
 
 No torch/MuJoCo in the Docker dev env — this is cluster-only; here it is syntax-checked.
 """
@@ -43,6 +45,11 @@ from flow_matcher_v3_uav.sampling.policies import Policy
 import FM_v3_uav_test.eval_artifacts as artifacts
 
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
+# Scenes with a FIXED start + geometry-determined route endpoint → success REQUIRES reaching
+# the goal. `empty` is excluded: it has a RANDOM per-episode start→goal that the state-only FM
+# is never told (generator._build_traj_and_init), so goal-reaching is ill-defined there — its
+# success is stable/safe flight only (Fix2_metrics scene-aware refinement).
+GOAL_PATH_SCENES = {'corridor', 's_curve', 'pillars'}
 DATASET_HZ = 33                      # must match uav_expert_data_collect/dataset_writer.py
 GOAL_RADIUS = 0.30                   # m — secondary goal-reach tolerance (constrained scenes)
 
@@ -53,6 +60,8 @@ def parse_args():
                    help="Scene(s) to eval: 'all' runs each scene and rolls up SUMMARY.json.")
     p.add_argument('--seed', type=int, default=5, help='Trained-model seed to load.')
     p.add_argument('--n-trials', type=int, default=20, help='Closed-loop rollouts per scene.')
+    p.add_argument('--goal-radius', type=float, default=GOAL_RADIUS,
+                   help='Goal-reach tolerance (m). success now REQUIRES goal_dist < this (Fix2_metrics).')
     p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
@@ -140,7 +149,8 @@ def _render_overhead(mujoco, model, data, renderer):
         return renderer.render().copy()
 
 
-def rollout_one(model, scene, homotopy, trial_seed, policy, horizon, renderer=None, frame_stride=2):
+def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
+                renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -225,15 +235,25 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon, renderer=No
     contact_frac = n_hit / max(n_phys, 1)
     limit = gen.SCENE_MAX_CONTACT_FRACTION.get(scene, gen.MAX_CONTACT_FRACTION)
     airborne = bool(min_z > 0.2)                           # crude floor gate
-    success = bool(contact_frac <= limit and airborne)
     goal_dist = float(np.linalg.norm(p_final - goal))
+    goal_reached = bool(goal_dist < goal_radius)
+    safe = bool(contact_frac <= limit and airborne)       # contact-free + airborne
+    # Scene-aware success (Fix2_metrics): fixed-route scenes must REACH the goal AND be safe;
+    # `empty` has a RANDOM goal the unconditioned FM can't be expected to hit, so there
+    # success = stable/safe flight only. A goal-path drone that flies around without reaching
+    # the target is NOT a success.
+    if scene in GOAL_PATH_SCENES:
+        success = bool(goal_reached and safe)
+    else:                                                 # empty (random goal): stay stable
+        success = bool(safe)
 
     return {
         'scene': scene, 'homotopy': homotopy,
         'success': success,
+        'safe': safe,
         'contact_frac': contact_frac,
         'goal_dist': goal_dist,
-        'goal_reached': bool(goal_dist < GOAL_RADIUS),
+        'goal_reached': goal_reached,
         'min_z': min_z,
         'final_z': float(p_final[2]),
         'track_err_mean': float(np.mean(track_err)) if track_err else float('nan'),
@@ -273,7 +293,8 @@ def eval_scene(scene, args):
     try:
         for i in range(args.n_trials):
             homotopy = homotopies[i % len(homotopies)]
-            r = rollout_one(model, scene, homotopy, 10_000 + i, policy, horizon, renderer=renderer)
+            r = rollout_one(model, scene, homotopy, 10_000 + i, policy, horizon,
+                            renderer=renderer, goal_radius=args.goal_radius)
             # Per-rollout diagnostics while this rollout's heavy data is still in hand.
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_pcc_placeholder(diag_dir, i)    # PCC foresight stub (Epoch 7)
@@ -291,7 +312,8 @@ def eval_scene(scene, args):
     succ = np.mean([r['success'] for r in rollouts])
     summary = {
         'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts),
-        'success_rate': float(succ),
+        'success_rate': float(succ),                       # task success: goal_reached AND safe
+        'safe_rate': float(np.mean([r['safe'] for r in rollouts])),  # old proxy: contact-free + airborne
         'contact_frac_mean': float(np.mean([r['contact_frac'] for r in rollouts])),
         'goal_dist_mean': float(np.mean([r['goal_dist'] for r in rollouts])),
         'goal_reached_rate': float(np.mean([r['goal_reached'] for r in rollouts])),
@@ -310,7 +332,9 @@ def eval_scene(scene, args):
     png_path = artifacts.plot_overview(out_dir, variant, scene, rollouts)
 
     print(f'[ eval ] {scene} seed={args.seed} proj={variant}: '
-          f'success={succ:.3f}  contact={summary["contact_frac_mean"]:.3f}  '
+          f'success={succ:.3f} (goal+safe)  safe={summary["safe_rate"]:.3f}  '
+          f'goal_reached={summary["goal_reached_rate"]:.3f}  goal_dist={summary["goal_dist_mean"]:.2f}m  '
+          f'contact={summary["contact_frac_mean"]:.3f}  '
           f'fm_ms(mean/p95)={summary["fm_ms_mean"]:.1f}/{summary["fm_ms_p95"]:.1f}\n'
           f'         → {out_dir}/  (results.json, {os.path.basename(npz_path)}, '
           f'{os.path.basename(png_path)}, eval_{variant}.log, diagnostics/)')

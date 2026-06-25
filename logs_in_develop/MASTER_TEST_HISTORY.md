@@ -2033,3 +2033,35 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Pillars Analysis**: Analyzed evaluation results for `pillars` seed 6. While the pipeline plumbing (training to eval) executed cleanly, the Flow-Matching policy failed with a 0% success rate.
 2. **Failure Mode**: The drone never took off (resting height remained ~0.087m), generating extreme tracking errors (~92m) due to runaway commanded positions (`p_des`).
 3. **Diagnosis**: Identified that action dimensions 0 and 2 were flagged as constant during evaluation, indicating the FM only learned 1 degree of freedom from the training data. This suggests a dataset-level deficiency rather than a pipeline fault.
+
+***
+
+## Gen11 Epoch 6 "U2" Trajectory Diagnosis: OOD Compounding & Missing Stabilizers (June 24, 2026)
+
+**Keywords**: Gen11, Epoch 6, trajectory diagnosis, compounding error, OOD observation, tracking, goal-conditioning, absolute frame.
+
+1. **Failure Mechanism Confirmed**: Analyzed the npz traces for the UAV pillars evaluation and confirmed that the model is **not** badly trained (it performs perfectly in early steps). The catastrophic failure (`p_des_z` runaway to -227m causing the drone to dive into the floor) is caused by **compounding error in the open-loop integration**.
+2. **Missing Stabilizers**: Diagnosed that while the evaluation logic is identical to the working D3IL visual-aligning code, the UAV setup lacks the two features that keep working tasks in-distribution:
+   - **Tight Tracking**: A position-controlled arm stays near its command, keeping the observation `[p_des, p]` on the trained diagonal. A 2nd-order quadrotor under gravity diverges from `p_des`, creating an out-of-distribution (OOD) observation the network never saw.
+   - **Goal-Conditioning**: Visual-aligning models are anchored by images, allowing recovery. The current state-only UAV model has no goal reference to pull it back from a drift.
+3. **Corrective Direction**: Next steps must restore these stabilizers. Proposed adding explicit goal-conditioning (the principled E7 direction) and re-grounding the prediction to the actual physical state (e.g., via a local/body-frame reformulation) so that the network input stays within the training distribution.
+
+***
+
+## Gen11 Epoch 6 "U3" Fix 1: Evaluation Output Migration & Diffusion Documentation (June 24, 2026)
+
+**Keywords**: Gen11, Epoch 6, U3 Fix 1, plans directory, evaluation migration, API documentation.
+
+1. **Evaluation Output Namespacing**: Relocated all UAV-FM evaluation outputs (e.g., `results.json`, `.npz`, `.png`) from inside the trained model's parameter directory (`<seed>/eval/`) into a dedicated sibling `plans/` hierarchy (e.g., `logs/UAV_FM/uav-<scene>/plans/...`). This establishes structural parity with legacy FM-PCC pipelines and cleanly separates model weights from inference artifacts.
+2. **Cross-Scene Aggregation Robustness**: Fixed a brittle path globbing bug in `aggregate_scene_summaries.py` that failed to reach the evaluation data due to deeper internal folder structures. Aggregations now write the `SCENE_SUMMARY.json` into the `plans/` directory.
+3. **Legacy API Translation Guide**: Authored `logs_in_develop/API_UPDATE/diffuser.py_Update/Table of Func Update Advice` mapping legacy DDPM function names (`p_mean_variance`, `q_sample`) to their true deterministic Flow Matching equivalents (`euler_integration_step`, `interpolate_flow_path`), clarifying the calculus-vs-probability paradigm shift without breaking inheritance.
+
+***
+
+## Data Analysis Tool v3: npz_analysis "JOB D" Plan-Candidate Analysis (June 24, 2026)
+
+**Keywords**: npz_analysis, JOB D, open-loop plans, trajectory explosion, sampled_trajectories_all, replot-plans.
+
+1. **Foresight Plan Processing**: Upgraded the `analyze_npz.py` tool to consume the `sampled_trajectories_all` arrays (the open-loop foresight plans) alongside the actual executed path (`obs_all`), unlocking analysis of the internal planner candidate fan for both DPCC avoiding and UAV tasks.
+2. **Trajectory Explosion & Divergence Metrics**: Introduced new robust metrics: `plan_max_abs` and `traj_max_abs` (axis-agnostic explosion detectors that expose non-xy blowups like `p_des_z`), `plan_cand_spread` (measuring candidate diversity), and `plan_exec_div` (quantifying the deviation between the FM prediction and the PID's actual physical execution).
+3. **Visual Plan Diagnostics**: Added a `--replot-plans` flag that overlays the foresight plan fan (blue) onto the executed trajectory (black) directly from the `.npz` files. Using this, confirmed that the UAV's predicted plans often remain bounded (~3m) while the executed command integrates into a runaway, isolating the fault to the action-channel scaling loop rather than pure model prediction failure.

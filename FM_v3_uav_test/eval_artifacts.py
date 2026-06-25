@@ -187,7 +187,8 @@ def write_eval_log(out_dir, variant, summary, rollouts):
                 f"goal_dist={r.get('goal_dist', float('nan')):.3f}  "
                 f"track_err={r.get('track_err_mean', float('nan')):.2f}\n")
         f.write('-' * 70 + '\n')
-        f.write(f"  success_rate          : {summary['success_rate']:.3f}\n")
+        f.write(f"  success_rate (goal+safe): {summary['success_rate']:.3f}\n")
+        f.write(f"  safe_rate (contact-free+airborne): {summary.get('safe_rate', float('nan')):.3f}\n")
         f.write(f"  contact_frac_mean     : {summary['contact_frac_mean']:.3f}\n")
         f.write(f"  goal_dist_mean        : {summary['goal_dist_mean']:.3f}\n")
         f.write(f"  goal_reached_rate     : {summary['goal_reached_rate']:.3f}\n")

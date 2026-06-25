@@ -31,9 +31,24 @@ python npz_analysis/analyze_npz.py <path> --replot --xy-cols 2 3      # avoiding
 # → <out>/<...>__<variant>_replot.png  (all trials overlaid, green = start)
 ```
 
-Caveat — **only the executed (black) path is recoverable** from the avoiding npz. The **open-loop plans**
-(the blue `ax[i,5]` lines) are **not** saved there (avoiding stores only `obs_all` / `act_all`).
-Visual-aligning npz *does* save `sampled_trajectories_all` (plans), but `--replot` does not draw those yet.
+## Plan-fan (MPC candidate) analysis — `sampled_trajectories_all`
+
+When the npz stores the candidate foresight plans (visual-aligning, visual-avoiding once patched, and
+Gen11 UAV), the tool also analyzes those (JOB D — see
+`logs_in_develop/npz_analysis_tool/CHANGELOG_JobD_plan_candidate_analysis.md`):
+
+- **`plan_*` CSV columns** — quality of the open-loop plans (`plan_straightness`, `plan_roughness`,
+  `plan_max_jerk`, …), an all-axis **explosion detector `plan_max_abs`**, candidate diversity
+  `plan_cand_spread` (`batch>1` only), and plan-vs-executed divergence `plan_exec_div` /
+  `plan_exec_div_best`. `traj_max_abs` is the same explosion detector on the executed path.
+- **`--replot-plans`** — per trial, overlay the candidate fan (blue) on the executed path (black).
+
+```bash
+python npz_analysis/analyze_npz.py <path> --xy-cols 2 3 --replot --replot-plans --dump-xy
+```
+
+If a `plan_*` column is missing/empty, that eval did not persist `sampled_trajectories_all` (e.g.
+plain avoiding stores only `obs_all` / `act_all`); the executed-path analysis still works.
 
 ## Example — remote SSH, peek a results folder, output in place
 
