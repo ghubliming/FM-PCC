@@ -197,6 +197,15 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
     n_cands = np.asarray(plans[0]).shape[0] if np.asarray(plans[0]).ndim == 3 else 1
     n_steps = len(des)
 
+    # ── obstacle geometry (reuse proven helpers from generate_overview_plots) ──
+    try:
+        from uav_expert_data_collect.generate_overview_plots import _draw_obstacles
+        import uav_expert_data_collect.generator as _gen
+        obstacles = _gen.SCENE_OBSTACLES.get(scene, [])
+    except Exception:
+        obstacles = []
+        _draw_obstacles = None
+
     fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(22, 9))
     fig.suptitle(
         f'Rollout {idx} — MPC Decision Points  '
@@ -211,7 +220,7 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
         cand = np.asarray(plan)
         if cand.ndim != 3:
             continue
-        anchor = act[min(step_i, n_steps - 1)]   # anchor at actual p (Gen7 convention)
+        anchor = act[min(step_i, n_steps - 1)]
         for b in range(cand.shape[0]):
             ax_xy.plot(cand[b, :, 0], cand[b, :, 1],
                        color='green', lw=0.6, alpha=0.7, zorder=4)
@@ -220,7 +229,10 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
         ax_xy.scatter([anchor[0]], [anchor[1]], color='black', s=30, zorder=8, linewidths=0)
         ax_xz.scatter([anchor[0]], [anchor[2]], color='black', s=30, zorder=8, linewidths=0)
 
-    # ── XY panel ──────────────────────────────────────────────────────────────
+    # ── XY panel — obstacles + paths ─────────────────────────────────────────
+    if _draw_obstacles is not None:
+        _draw_obstacles(ax_xy, obstacles)          # proven: circles for cylinders, rects for boxes
+
     ax_xy.plot(act[:, 0], act[:, 1], color='red',   lw=1.2, zorder=9)
     ax_xy.plot(des[:, 0], des[:, 1], color='black', lw=1.2, zorder=7)
     ax_xy.scatter([act[0, 0]],  [act[0, 1]],  color='lime', marker='*', s=180, zorder=12, linewidths=0)
@@ -237,20 +249,40 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
                 markersize=7,  label='end'),
     ]
     ax_xy.legend(handles=_lgd, fontsize=9)
-    ax_xy.set_title(f'XY top-down — horizontal navigation (every {stride} steps)', fontsize=12)
+    ax_xy.set_title(f'XY top-down + obstacles  (every {stride} steps)', fontsize=12)
     ax_xy.set_xlabel('X (m)', fontsize=11); ax_xy.set_ylabel('Y (m)', fontsize=11)
     ax_xy.set_aspect('equal', adjustable='datalim')
     ax_xy.grid(True, alpha=0.3)
 
-    # ── XZ altitude panel ────────────────────────────────────────────────────
-    ax_xz.plot(act[:, 0], act[:, 2], color='red',    lw=1.2, zorder=9, label='actual (p)')
-    ax_xz.plot(des[:, 0], des[:, 2], color='black',  lw=1.2, zorder=7, label='des (p_des)')
+    # ── XZ altitude panel — obstacle silhouettes + paths ─────────────────────
+    import matplotlib.patches as _mpa
+    for obs in obstacles:
+        cx = float(obs['center'][0])
+        cz = float(obs['center'][2]) if len(obs['center']) > 2 else 0.75
+        otype = obs.get('type', '')
+        if otype == 'cylinder':
+            r  = float(obs['radius'])
+            hh = float(obs.get('half_height', 1.0))
+            ax_xz.add_patch(_mpa.Rectangle(
+                (cx - r, 0.0), 2 * r, cz + hh,
+                facecolor='#555555', edgecolor='#222222',
+                lw=1.2, alpha=0.65, zorder=3))
+        elif otype == 'box':
+            hx = float(obs['half_extents'][0])
+            hz = float(obs['half_extents'][2])
+            ax_xz.add_patch(_mpa.Rectangle(
+                (cx - hx, cz - hz), 2 * hx, 2 * hz,
+                facecolor='#555555', edgecolor='#222222',
+                lw=1.2, alpha=0.65, zorder=3))
+
+    ax_xz.plot(act[:, 0], act[:, 2], color='red',   lw=1.2, zorder=9, label='actual (p)')
+    ax_xz.plot(des[:, 0], des[:, 2], color='black', lw=1.2, zorder=7, label='des (p_des)')
     ax_xz.axhline(AIRBORNE_Z, ls='--', color='orange', lw=1.2,
                   label=f'airborne gate z={AIRBORNE_Z} m', zorder=5)
     ax_xz.scatter([act[0, 0]],  [act[0, 2]],  color='lime', marker='*', s=180, zorder=12, linewidths=0)
     ax_xz.scatter([act[-1, 0]], [act[-1, 2]], color='red',  marker='s', s=80,  zorder=12, linewidths=0)
     ax_xz.legend(fontsize=9)
-    ax_xz.set_title('XZ altitude — Z profile  (p_des explosion visible here)', fontsize=12)
+    ax_xz.set_title('XZ altitude + obstacle silhouettes', fontsize=12)
     ax_xz.set_xlabel('X (m)', fontsize=11); ax_xz.set_ylabel('Z (m)', fontsize=11)
     ax_xz.grid(True, alpha=0.3)
 
