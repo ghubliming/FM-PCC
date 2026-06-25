@@ -5,9 +5,11 @@ per-(scene,seed,projection) `<variant>.npz` + `eval_<variant>.log` + 2-D overvie
 `<variant>.png`/`all.png` + per-rollout `diagnostics/rollout_<r>_stats.json` +
 optional `rollout_<r>.gif`.
 
-SCOPE (see U3 PLAN): only the `fm_only` / diffuser baseline is implemented.
-Constraint/PCC fields are scaffolded as **placeholders** (zero-filled npz keys,
-stub foresight SVG) so the Epoch-7 DPCC work is a drop-in with no schema change.
+SCOPE (see U3 PLAN): originally only the `fm_only` / diffuser baseline, with
+constraint/PCC fields scaffolded as placeholders so the Epoch-7 DPCC work would be a
+drop-in with no schema change. Epoch 7 (`Epoch7_fm_pcc_FULL_PCC_MPC/U1`) has since
+filled those placeholders in: `n_success_and_constraints`/`n_violations` are real, and
+`write_mpc_foresight` draws the actual per-step MPC candidate fan instead of a stub.
 
 Pure IO + matplotlib; no torch/MuJoCo here (rendering frames are produced by the
 caller, which holds the MuJoCo model/data). Importable, syntax-checked in Docker.
@@ -151,21 +153,74 @@ def save_rollout_gif(diag_dir, idx, frames, fps=10):
     return path
 
 
-def write_pcc_placeholder(diag_dir, idx):
-    """Stub MPC/PCC foresight SVG — real projection viz lands in Epoch 7 (DPCC)."""
+def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
+    """Real MPC candidate-fan foresight SVG (Epoch 7 — replaces the Epoch-6 placeholder
+    now that `rollout['plans']` carries the full per-FM-step candidate batch).
+
+    Mirrors `fm_visual_aligning_test`'s `_mpc_foresight` decision-point plot — green
+    candidate fan + black replan-point dot, every `stride` FM steps, overlaid on the
+    executed path with start/end markers — adapted to the UAV's top-down + altitude
+    2-panel convention (`plot_overview`) instead of a 3D axis: x/y/z is all there is
+    to show here, no orientation, so two 2-D panels read cleaner than one 3-D one.
+    Uses the same position columns (P_X,P_Y,P_Z = actual p, not p_des) as
+    `plot_overview` so the fan is directly comparable to the executed-path plot.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}_mpc_foresight.svg')
-    svg = (
-        '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="120">'
-        '<rect width="100%" height="100%" fill="#f5f5f5" stroke="#cccccc"/>'
-        '<text x="20" y="55" font-size="14" fill="#888888">'
-        'PLACEHOLDER — MPC/PCC foresight</text>'
-        '<text x="20" y="80" font-size="12" fill="#aaaaaa">'
-        'constraint projection lands in Epoch 7 (DPCC)</text>'
-        '</svg>'
-    )
-    with open(path, 'w') as f:
-        f.write(svg)
+
+    plans = rollout.get('plans', [])
+    obs_traj = np.asarray(rollout.get('obs_traj', []))
+    if not plans or obs_traj.ndim != 2 or obs_traj.shape[0] == 0:
+        fig, ax = plt.subplots(figsize=(4, 1.2))
+        ax.axis('off')
+        ax.text(0.02, 0.5, 'no candidate-fan data for this rollout',
+                 fontsize=10, color='#888888')
+        fig.savefig(path)
+        plt.close(fig)
+        return path
+
+    x, y, z = obs_traj[:, P_X], obs_traj[:, P_Y], obs_traj[:, P_Z]
+    n_cands = np.asarray(plans[0]).shape[0] if np.asarray(plans[0]).ndim == 3 else 1
+
+    fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(16, 8))
+    for step_i, plan in enumerate(plans):
+        if step_i % stride != 0:
+            continue
+        cand = np.asarray(plan)
+        if cand.ndim != 3:
+            continue
+        anchor = obs_traj[min(step_i, obs_traj.shape[0] - 1)]
+        for b in range(cand.shape[0]):
+            ax_xy.plot(cand[b, :, P_X], cand[b, :, P_Y], color='green', lw=0.6, alpha=0.7, zorder=4)
+            ax_xz.plot(cand[b, :, P_X], cand[b, :, P_Z], color='green', lw=0.6, alpha=0.7, zorder=4)
+        ax_xy.scatter([anchor[P_X]], [anchor[P_Y]], color='black', s=24, zorder=8)
+        ax_xz.scatter([anchor[P_X]], [anchor[P_Z]], color='black', s=24, zorder=8)
+
+    ax_xy.plot(x, y, color='red', lw=1.3, zorder=7, label='executed (p)')
+    ax_xy.scatter([x[0]], [y[0]], color='lime', marker='*', s=160, zorder=12, label='start')
+    ax_xy.scatter([x[-1]], [y[-1]], color='red', marker='s', s=70, zorder=12, label='end')
+    ax_xy.set_title(f'{scene} — MPC candidate fan, top-down (every {stride} FM steps)')
+    ax_xy.set_xlabel('x [m]'); ax_xy.set_ylabel('y [m]')
+    ax_xy.set_aspect('equal', 'box'); ax_xy.grid(True, alpha=0.3); ax_xy.legend(fontsize=8)
+
+    ax_xz.plot(x, z, color='red', lw=1.3, zorder=7)
+    ax_xz.axhline(AIRBORNE_Z, ls='--', color='orange', lw=1.0,
+                  label=f'airborne gate z={AIRBORNE_Z} m')
+    ax_xz.scatter([x[0]], [z[0]], color='lime', marker='*', s=160, zorder=12)
+    ax_xz.scatter([x[-1]], [z[-1]], color='red', marker='s', s=70, zorder=12)
+    ax_xz.set_title(f'side (x, z): altitude  —  {n_cands} candidates/step')
+    ax_xz.set_xlabel('x [m]'); ax_xz.set_ylabel('z [m]')
+    ax_xz.grid(True, alpha=0.3); ax_xz.legend(fontsize=8)
+
+    fig.suptitle(f'MPC foresight — rollout {idx} — success={int(bool(rollout.get("success")))}',
+                 fontsize=13)
+    fig.tight_layout()
+    fig.savefig(path, bbox_inches='tight')
+    plt.close(fig)
     return path
 
 

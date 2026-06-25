@@ -417,7 +417,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
                             renderer=renderer, goal_radius=args.goal_radius, batch_size=batch_size)
             artifacts.save_rollout_stats(diag_dir, i, r)
-            artifacts.write_pcc_placeholder(diag_dir, i)    # MPC foresight stub (per-scene geom later)
+            artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
                 artifacts.save_rollout_gif(diag_dir, i, r.pop('frames', None))
             else:
