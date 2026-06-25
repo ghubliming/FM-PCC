@@ -1,0 +1,36 @@
+# UAV-FM PCC/MPC eval config (Epoch 7) — mirrors config/visual_aligning_eval.yaml.
+# Loaded by FM_v3_uav_test/eval_fm_uav.py via yaml.safe_load. Run scope (scene / seed /
+# n_trials / record) still comes from the CLI / submit .sh; THIS file is the PCC bone config.
+
+write_to_file: True
+
+# ── Policy / MPC ──────────────────────────────────────────────────────────────
+diffusion_timestep_threshold: 0.5
+batch_size: 4                 # MPC candidate-fan size (was 1 in the E6 diffuser baseline)
+
+# ── Projection variants (exact FMv3ODE/visual-aligning semantics) ─────────────
+#   trajectory_selection = 'random'                (diffuser, dpcc-r)
+#   'dpcc-t' in variant → 'temporal_consistency'
+#   'dpcc-c' in variant → 'minimum_projection_cost'
+#   'diffuser' → projector OFF (pure ML); dpcc-* → projector ON
+projection_variants: [
+  'diffuser',
+  'dpcc-r',
+  'dpcc-c',
+  'dpcc-t',
+]
+
+# ── Constraints ───────────────────────────────────────────────────────────────
+# ONLY 'dynamics' is really projected this epoch. The dynamics Euler constraint binds
+# p_des (trajectory dims 3,4,5) to the action (0,1,2): p_des[t+1] = p_des[t] + dt*act[t].
+# dt = 1.0 because the action IS the position delta Δp_des (NOT velocity × physics-dt).
+constraint_types: ['dynamics']
+dt: 1.0
+enlarge_constraints: 0.0
+
+# ── PLACEHOLDERS (empty until per-scene geometry is designed; NOT run this epoch) ──
+# bounds / halfspace / obstacles stay off because they are absent from constraint_types
+# above; these keys are the slots the per-scene design will fill (no eval rewrite needed).
+workspace_bounds: null        # {lb: [x, y, z], ub: [x, y, z]}  — arena box
+halfspace_constraints: []     # corridor / s_curve walls  (formulate_halfspace_constraints fmt)
+obstacle_constraints: []      # pillars → [{type: sphere_outside, dimensions: [x, y], center: [..], radius: ..}]

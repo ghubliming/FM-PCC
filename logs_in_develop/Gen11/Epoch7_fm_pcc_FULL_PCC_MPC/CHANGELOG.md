@@ -6,11 +6,17 @@ bounds/halfspace/obstacle are **empty placeholders** (wired, not run). Copied th
 
 ## What changed
 
-### `config/uav.py` — PCC block added (mirrors visual-aligning config shape)
-`projection_variants = ['diffuser','dpcc-r','dpcc-c','dpcc-t']`,
-`constraint_types = ['dynamics']`, `pcc_batch_size = 4`, `pcc_dt = 1/33` (FM rate),
-`diffusion_timestep_threshold`, `enlarge_constraints`, and **empty placeholders**
-`workspace_bounds=None`, `halfspace_constraints=[]`, `obstacle_constraints=[]`.
+### `config/uav_eval.yaml` — NEW, the PCC eval config (mirrors `config/visual_aligning_eval.yaml`)
+Loaded by the eval via `yaml.safe_load` (same pattern as the FMv3ODE/visual evals — those read
+`config/projection_eval.yaml` / `config/visual_aligning_eval.yaml`). Contains
+`projection_variants=['diffuser','dpcc-r','dpcc-c','dpcc-t']`, `constraint_types=['dynamics']`,
+`batch_size=4`, `dt=1.0`, `diffusion_timestep_threshold`, `enlarge_constraints`, and **empty
+placeholders** `workspace_bounds=null`, `halfspace_constraints=[]`, `obstacle_constraints=[]`.
+`config/uav.py` only carries a NOTE pointing here (no PCC fields).
+
+**`dt=1.0`** (corrected): the action IS the position delta `Δp_des`, so the Euler dynamics
+constraint is `p_des[t+1]=p_des[t]+1.0·act` — NOT `act×(1/33)`. (Same convention the
+visual-aligning yaml documents.)
 
 ### `FM_v3_uav_test/eval_fm_uav.py` — the bone
 - **`ProjectorNormalizer` + `setup_dpcc_projector(...)`** — copied near-verbatim from the

@@ -87,19 +87,28 @@ def build_experiment(scene, seed, epoch, device):
     return experiment.diffusion, experiment.dataset, args, int(getattr(args, 'horizon', 8))
 
 
-def _pcc_config(args):
-    """Pull the Epoch-7 PCC fields out of the resolved config (set in config/uav.py)."""
-    return {
-        'projection_variants': list(getattr(args, 'projection_variants', ['diffuser'])),
-        'constraint_types': list(getattr(args, 'constraint_types', ['dynamics'])),
-        'pcc_batch_size': int(getattr(args, 'pcc_batch_size', 4)),
-        'pcc_dt': float(getattr(args, 'pcc_dt', 1.0 / DATASET_HZ)),
-        'diffusion_timestep_threshold': float(getattr(args, 'diffusion_timestep_threshold', 0.5)),
-        'enlarge_constraints': float(getattr(args, 'enlarge_constraints', 0.0) or 0.0),
-        'workspace_bounds': getattr(args, 'workspace_bounds', None),
-        'halfspace_constraints': getattr(args, 'halfspace_constraints', []) or [],
-        'obstacle_constraints': getattr(args, 'obstacle_constraints', []) or [],
-    }
+def load_pcc_config():
+    """Load the Epoch-7 PCC eval config from config/uav_eval.yaml (mirrors how the
+    FMv3ODE/visual evals load config/projection_eval.yaml). Falls back to a diffuser-only
+    config if the yaml is missing."""
+    import yaml
+    path = os.path.join(_REPO, 'config', 'uav_eval.yaml')
+    try:
+        with open(path) as f:
+            cfg = yaml.safe_load(f) or {}
+    except FileNotFoundError:
+        print(f'[ eval ] {path} not found → diffuser-only fallback')
+        cfg = {}
+    cfg.setdefault('projection_variants', ['diffuser'])
+    cfg.setdefault('constraint_types', ['dynamics'])
+    cfg.setdefault('batch_size', 4)
+    cfg.setdefault('dt', 1.0)
+    cfg.setdefault('diffusion_timestep_threshold', 0.5)
+    cfg.setdefault('enlarge_constraints', 0.0)
+    cfg.setdefault('workspace_bounds', None)
+    cfg.setdefault('halfspace_constraints', [])
+    cfg.setdefault('obstacle_constraints', [])
+    return cfg
 
 
 # ── DPCC projector — copied from fm_visual_aligning_test/eval_fm_visual_aligning.py and
@@ -158,7 +167,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
         normalizer=ProjectorNormalizer(obs_normalizer, act_normalizer),
         diffusion_timestep_threshold=config.get('diffusion_timestep_threshold', 0.5),
         variant='states_actions',
-        dt=config.get('pcc_dt', 1.0 / DATASET_HZ),
+        dt=config.get('dt', 1.0),                   # action IS Δp_des → Euler dt=1.0 (NOT 1/33)
         solver='scipy',
         device=getattr(args, 'device', 'cuda'),
     )
@@ -389,7 +398,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
 
     record = (args.record != 'none')
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
-    batch_size = config['pcc_batch_size']
+    batch_size = config['batch_size']
 
     rollouts = []
     try:
@@ -447,12 +456,12 @@ def eval_scene(scene, args):
     import mujoco
     import uav_expert_data_collect.generator as gen
     model_fm, dataset, parsed, horizon = build_experiment(scene, args.seed, args.epoch, args.device)
-    config = _pcc_config(parsed)
+    config = load_pcc_config()
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 
     print(f'[ eval ] {scene}: variants={config["projection_variants"]}  '
-          f'constraints={config["constraint_types"]}  batch_size={config["pcc_batch_size"]}')
+          f'constraints={config["constraint_types"]}  batch_size={config["batch_size"]}')
     summaries = {}
     for variant in config['projection_variants']:
         summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
