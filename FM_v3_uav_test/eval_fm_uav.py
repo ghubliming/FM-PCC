@@ -378,7 +378,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     across trials, exactly as FMv3ODE)."""
     projector = None
     if variant != 'diffuser':
-        traj_dim = int(dataset.observation_dim + dataset.action_dim)        # 12 = act(3)+obs(9)
+        # 12 = act(3)+obs(9), MINUS model_fm.goal_dim: diffusion.py's p_sample_loop calls
+        # `projector.project(x[:, :, :-self.goal_dim], ...)` — it slices off the trailing
+        # goal_dim columns BEFORE handing the trajectory to the projector, so the projector's
+        # Q/A/C matrices must be built for that same (smaller) width or `project()` shape-errors
+        # (seen on the cluster: "4x88 and 96x96" when goal_dim=1 was left out of this count).
+        # goal_dim itself comes from SequenceDataset.get_goal_dim()'s constant-column heuristic
+        # (real D3IL goal columns are appended/constant at the end of obs; for UAV it can
+        # false-positive on an incidentally-constant channel) — harmless here since the
+        # dynamics constraint only touches indices 0-5 (act, p_des), never the trailing columns.
+        goal_dim = int(getattr(model_fm, 'goal_dim', 0))
+        traj_dim = int(dataset.observation_dim + dataset.action_dim) - goal_dim
         projector = setup_dpcc_projector(
             parsed, config,
             dataset.normalizer.normalizers['observations'],
