@@ -57,7 +57,7 @@ class BehaviorLogger:
     """
 
     def __init__(self, episode_id, variant, scene, homotopy, system='Gen11E7_UAV_FMPCC',
-                 control_hz=33, batch_size=1, horizon=8, node=None):
+                 control_hz=33, batch_size=1, horizon=8, node=None, text_log=True):
         self.episode_id = episode_id
         self.variant = variant
         self.scene = scene
@@ -68,6 +68,10 @@ class BehaviorLogger:
         self.batch_size = batch_size
         self.horizon = horizon
         self.node = node or os.environ.get('SLURMD_NODENAME') or os.environ.get('HOSTNAME', 'unknown')
+        # text_log=False: skip per-step string formatting (the only loop-path overhead).
+        # Raw timing stats (fm_ms/proj_ms/total_ms) are always collected — they land in
+        # results.json regardless. text_log only gates the .log file and per-step text blocks.
+        self.text_log = text_log
 
         self._lines = []
         self.fm_ms = []
@@ -81,7 +85,12 @@ class BehaviorLogger:
     def step(self, t, obs, fm_horizon, fm_ms, proj_ms, proj_cost,
              proj_active, state_p, state_v, contact, track_err,
              constraint='dynamics', step_idx=None):
-        """Record one FM control step. `contact` is a truthy contact descriptor or falsy/None."""
+        """Record one FM control step. `contact` is a truthy contact descriptor or falsy/None.
+
+        Raw timing stats are ALWAYS collected (they land in results.json regardless of
+        text_log). Per-step string formatting is skipped when text_log=False — this is the
+        only loop-path overhead that could add noise to timing measurements.
+        """
         total = float(fm_ms) + float(proj_ms)
         self.fm_ms.append(float(fm_ms))
         self.proj_ms.append(float(proj_ms))
@@ -90,6 +99,11 @@ class BehaviorLogger:
             self.track_errs.append(float(track_err))
         if proj_active:
             self.proj_active_steps += 1
+        if contact:
+            self.n_contacts += 1
+
+        if not self.text_log:
+            return   # skip all string formatting — stats already recorded above
 
         verdict = '✅' if total <= self.budget_ms else '❌ OVER'
         sidx = '' if step_idx is None else f'step={step_idx}  '
@@ -109,7 +123,6 @@ class BehaviorLogger:
             block.append('PCC       proj_ms=0.0  status=OFF (no projector)')
         ct = 'NONE'
         if contact:
-            self.n_contacts += 1
             ct = str(contact)
             self._contact_lines.append(f'  T={t:.3f}s  contact={ct}  fm_horizon0={_fmt_horizon(fm_horizon, 1)}  track_err={track_err:.3f}m')
         block.append(f'STATE     p={_fmt_vec(state_p)}  v={_fmt_vec(state_v)}  contact={ct}')
@@ -169,6 +182,8 @@ class BehaviorLogger:
         return '\n'.join(L)
 
     def save(self, path, behaviour=None):
+        if not self.text_log:
+            return None   # stats still live in summary_dict(); no file written
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:
             f.write('\n'.join(self._lines))

@@ -60,6 +60,45 @@ auto-writes its `.log`. `--record` still gates only the expensive GIF.
 
 ---
 
+## Hotfixes applied after first cluster run (2026-06-26)
+
+### Bug 1 — `gradient` variant shape crash (`tensor a (12) must match tensor b (11)`)
+Pre-existing latent bug in `p_mean_variance` and the torchdiffeq branch of `p_sample_loop`:
+`grad` was computed on `x[:,:,:-goal_dim]` (11 dims) but added to the full `x` (12 dims).
+Never triggered before because `gradient` wasn't in `projection_variants` until U3.
+
+Fix: apply gradient only to the non-goal slice in both locations:
+```python
+# before (both p_mean_variance and p_sample_loop torchdiffeq branch):
+x = x + grad                           # 12 + 11 → crash
+
+# after:
+x[:, :, :-self.goal_dim] = x[:, :, :-self.goal_dim] + grad   # 11 + 11 → OK
+```
+
+### Bug 2 — `behavior_log` flag added; `budget_ms` / `control_hz` moved to config
+`control_hz=DATASET_HZ` was hardcoded in `rollout_one`. User-reported: should come from
+`uav_eval.yaml` so it can be changed without touching code.
+
+**`behavior_log` flag** — per-step string formatting inside the control loop can add noise to
+timing measurements. New `behavior_log: true` key in `uav_eval.yaml`:
+
+| `behavior_log` | per-step `.log` file | string formatting in loop | timing stats in `results.json` |
+|---|---|---|---|
+| `true` (default) | ✅ written | ✅ runs | ✅ always |
+| `false` | ✗ skipped | ✗ skipped (early return in `step()`) | ✅ always |
+
+Raw timing stats (`fm_ms`, `proj_ms`, `total_ms`, `total_over_budget`) are **always**
+collected and land in `results.json` regardless of the flag — only the string formatting
+and file I/O are gated. Set `behavior_log: false` when timing accuracy is critical.
+
+**`control_hz` + `budget_ms` from config** — was hardcoded as `DATASET_HZ=33`:
+- Added `control_hz: 33` to `config/uav_eval.yaml`
+- `rollout_one(..., control_hz=DATASET_HZ, text_log=True)` — new params with safe defaults
+- `_run_variant` passes `config.get('control_hz', DATASET_HZ)` and `config.get('behavior_log', True)`
+
+---
+
 ## Verification (Docker, no cluster/GPU)
 - `python -m py_compile` on all 4 changed files → OK.
 - Isolated logger smoke test (numpy only): per-step blocks + `# SUMMARY` render correctly;

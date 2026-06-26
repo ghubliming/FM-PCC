@@ -50,3 +50,9 @@ enlarge_constraints: 0.025   # tightening margin (matches DPCC paper); active on
 workspace_bounds: null        # {lb: [x, y, z], ub: [x, y, z]}  — arena box
 halfspace_constraints: []     # corridor / s_curve walls  (formulate_halfspace_constraints fmt)
 obstacle_constraints: []      # pillars → [{type: sphere_outside, dimensions: [x, y], center: [..], radius: ..}]
+
+# ── Real-time budget ──────────────────────────────────────────────────────────
+# UAV PID control loop rate. BehaviorLogger computes budget_ms = 1000/control_hz
+# and flags per-step TIMING: OVER vs SAFE accordingly in the .log files.
+control_hz: 33               # Hz — must match uav_expert_data_collect/dataset_writer.py (DATASET_HZ)
+behavior_log: true           # write per-step .log files (digital-twin audit); false = stats only (no string fmt overhead)

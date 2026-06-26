@@ -253,7 +253,7 @@ def _render_overhead(mujoco, model, data, renderer):
 
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
-                variant='diffuser', log_dir=None):
+                variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -290,7 +290,8 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     from FM_v3_uav_test.behavior_logger import BehaviorLogger
     episode_id = f'{scene}_{homotopy}_{trial_seed}'
     blog = BehaviorLogger(episode_id, variant, scene, homotopy,
-                          control_hz=DATASET_HZ, batch_size=batch_size, horizon=horizon)
+                          control_hz=control_hz, batch_size=batch_size, horizon=horizon,
+                          text_log=text_log)
     proj_on = (variant != 'diffuser')
 
     p_des = np.asarray(init_pos, dtype=float).copy()
@@ -480,7 +481,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             homotopy = homotopies[i % len(homotopies)]
             r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
                             renderer=renderer, goal_radius=args.goal_radius, batch_size=batch_size,
-                            variant=variant, log_dir=out_dir)
+                            variant=variant, log_dir=out_dir,
+                            control_hz=config.get('control_hz', DATASET_HZ),
+                            text_log=config.get('behavior_log', True))
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
