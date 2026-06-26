@@ -261,6 +261,11 @@ for seed in selected_seeds:
         u_loss_weight=getattr(args, 'u_loss_weight', 1.0),
         v_loss_weight=getattr(args, 'v_loss_weight', 0.1),
         loss_schedule=getattr(args, 'loss_schedule', 'balanced'),
+        imf_objective=getattr(args, 'imf_objective', 'fm_equivalent'),
+        meanflow_r_equals_t_frac=getattr(args, 'meanflow_r_equals_t_frac', 0.25),
+        meanflow_adaptive_p=getattr(args, 'meanflow_adaptive_p', 0.5),
+        meanflow_adaptive_c=getattr(args, 'meanflow_adaptive_c', 1e-3),
+        meanflow_aux_weight=getattr(args, 'meanflow_aux_weight', 0.0),
         if_vision=_if_vision,
         device=args.device,
     )

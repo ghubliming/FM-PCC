@@ -49,7 +49,7 @@ sys.path.insert(0, _REPO)
 from uav_expert_data_collect.generator import SCENE_XMLS
 
 _DEFAULT_DATA_DIR = os.path.join(_REPO, 'logs', 'uav_expert_data')
-_TRACK_CAM_NAME = 'track'
+_TRACK_CAM_NAME = 'fpv'
 
 
 def parse_args():
@@ -63,6 +63,9 @@ def parse_args():
                    help='Process only this scene (default: all)')
     p.add_argument('--max-episodes', type=int, default=None,
                    help='Cap number of episodes (for smoke tests).')
+    p.add_argument('--per-homotopy', type=int, default=None,
+                   help='Keep at most N episodes per (scene, homotopy) bucket. '
+                        'Use 1 for minimum-coverage inspection (9 GIFs total across all scenes).')
     p.add_argument('--fps', type=int, default=10,
                    help='GIF/MP4 framerate. Default: 10')
     p.add_argument('--frame-stride', type=int, default=1,
@@ -89,7 +92,7 @@ def discover_episodes(data_dir, scene_filter=None):
         scene_path = os.path.join(data_dir, scene)
         if not os.path.isdir(scene_path):
             continue
-        if scene in ('images', 'gifs'):
+        if scene in ('images', 'gifs', 'gifs_physics'):
             continue
         if scene_filter is not None and scene != scene_filter:
             continue
@@ -173,7 +176,7 @@ def replay_to_frames(model, data, renderer, episode, resolution,
             track_bgr = cv2.cvtColor(track_rgb, cv2.COLOR_RGB2BGR)
             label = f'{scene}/{homotopy} t={t}/{T}'
             _burn_overlay(bp_bgr, label)
-            _burn_overlay(track_bgr, 'FPV')
+            _burn_overlay(track_bgr, 'FPV-onboard')
             bp_rgb = cv2.cvtColor(bp_bgr, cv2.COLOR_BGR2RGB)
             track_rgb = cv2.cvtColor(track_bgr, cv2.COLOR_BGR2RGB)
 
@@ -195,6 +198,13 @@ def main():
     if not episodes:
         print(f'[ gif-gen ] No episodes found in {args.data_dir}')
         sys.exit(1)
+
+    if args.per_homotopy is not None:
+        from collections import defaultdict
+        buckets = defaultdict(list)
+        for ep in episodes:
+            buckets[(ep[0], ep[1])].append(ep)
+        episodes = [ep for eps in buckets.values() for ep in eps[:args.per_homotopy]]
 
     if args.max_episodes is not None:
         episodes = episodes[:args.max_episodes]

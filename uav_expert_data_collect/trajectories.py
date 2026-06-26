@@ -17,8 +17,19 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from uav_env_test.trajectories import (  # noqa: F401  (re-exported for collectors)
     hover_at, step_to, circle,
-    traverse_line, s_curve_path, weave,
+    traverse_line, s_curve_path, weave, blended_path,
 )
+
+# ── U9 smooth trajectories ────────────────────────────────────────────────────
+# Corner-blend radius for pillar_path / s_curve_scene_path (U8 Stop_and_Go
+# analysis, Option A).  Max corner deviation r·(sec(β/2)−1) ≤ 0.13 m at 90°;
+# verified clearances at every blend region (see U9 CHANGELOG):
+#   s_curve Z-corners: ≥ 0.55 m to nearest wall corner (rotor reach 0.31 m)
+#   pillar corners:    blends stay in open space ≥ 0.5 m from every pillar axis
+# Fix_1: raised 0.30 → 0.45 m — LRL/RLR mixed homotopies hit 45% rejection at
+# r=0.30 (peak fillet accel 8.6 m/s² saturated the PID).  At r=0.45 peak accel
+# drops to ~5.7 m/s² (scales 1/r); verify_blends.py confirms 0.43 m gate holds.
+BLEND_RADIUS = 0.45
 
 # ── Pillar scene geometry ─────────────────────────────────────────────────────
 # 6 cylinders: column A at y=-0.6, column B at y=+0.6, x ∈ {-2, 0, +2}
@@ -74,6 +85,15 @@ def pillar_path(homotopy_seq, altitude, duration,
     Time allocation: proportional to Euclidean segment length (not x-distance),
     so diagonal inter-channel segments get proportionally more time.
 
+    U9: the per-segment traverse_line chain (v=0 at all 6 interior waypoints —
+    the stop-and-go behaviour, see U8 analysis) is replaced by blended_path:
+    same 8-waypoint skeleton, circular fillets of radius ≤ BLEND_RADIUS at each
+    non-collinear corner, one global cosine speed profile (v=0 only at episode
+    start/end).  Straight portions near the pillars — where the 8 cm minimum
+    clearance lives — are untouched; fillets only cut corners in open space
+    ≥ 0.5 m in x from every pillar.  Peak speed π·L/(2T) is unchanged from the
+    length-proportional chain.
+
     homotopy_seq : 3-element list, each 'L' or 'R' (one per pillar pair).
     """
     assert len(homotopy_seq) == 3, 'Need exactly 3 homotopy labels (one per pillar pair)'
@@ -84,25 +104,9 @@ def pillar_path(homotopy_seq, altitude, duration,
 
     xs = [x_start, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, x_end]
     ys = [0.0, y_ch[0], y_ch[0], y_ch[1], y_ch[1], y_ch[2], y_ch[2], 0.0]
-    n  = len(xs) - 1  # 7 segments
+    wps = [(x, y, z) for x, y in zip(xs, ys)]
 
-    dists    = [np.sqrt((xs[i+1]-xs[i])**2 + (ys[i+1]-ys[i])**2) for i in range(n)]
-    total_d  = sum(dists)
-    seg_durs = [T * d / total_d for d in dists]
-    t_starts = [sum(seg_durs[:i]) for i in range(n)]
-
-    segs = [
-        traverse_line((xs[i], ys[i], z), (xs[i+1], ys[i+1], z), seg_durs[i], yaw)
-        for i in range(n)
-    ]
-
-    def traj(t):
-        for i in range(n - 1, -1, -1):
-            if t >= t_starts[i]:
-                return segs[i](t - t_starts[i])
-        return segs[0](t)
-
-    return traj
+    return blended_path(wps, BLEND_RADIUS, T, yaw)
 
 
 def corridor_path(homotopy, altitude, duration,
@@ -117,50 +121,54 @@ def corridor_path(homotopy, altitude, duration,
 
 
 def s_curve_scene_path(altitude, duration, y_jitter=0.0, yaw=0.0):
-    """S-curve path with duration allocated proportional to segment distance.
+    """S-curve path: corridor 1 → gap crossing (Z-route) → corridor 2.
 
-    Scene geometry (two corridor segments):
+    Scene geometry:
         Seg 1: x ∈ [-3, -0.5], corridor centred at y=-0.8
         Seg 2: x ∈ [+0.5, +3], corridor centred at y=+0.8
+        Gap:   x ∈ [-0.5, +0.5], open (no walls)
 
-    Fix_5: replaced tanh continuous trajectory (peak lateral speed 1.17 m/s →
-    47% rejection) with 3-segment piecewise traverse_line where each segment's
-    duration is proportional to its Euclidean length.  All segments run at the
-    same peak speed (~0.55 m/s at T=20s), matching the corridor scene which
-    achieves 87% pass rate at 0.72 m/s.
+    U7 C1 — replaced the Seg B diagonal with a 3-leg Z-route through x=0:
 
-    Segment layout:
-        Seg A: (-3.2, y1) → (-0.5, y1)  distance 2.7 m   (pure x, inside seg1)
-        Seg B: (-0.5, y1) → (+0.5, y2)  distance 1.89 m  (diagonal gap crossing)
-        Seg C: (+0.5, y2) → (+3.2, y2)  distance 2.7 m   (pure x, inside seg2)
+    WHY the diagonal was infeasible (all prior fixes were misdiagnosed):
+        Gap-side wall corners: A=(−0.5,−0.25) on seg1_wall_pos,
+                               B=(+0.5,+0.25) on seg2_wall_neg.
+        Diagonal (−0.5,y1)→(+0.5,y2) passes 0.291 m from both corners —
+        INSIDE the 0.31 m rotor reach on the nominal path alone (0.019 m
+        penetration before any tracking error). No speed or gain change
+        can resolve a geometric infeasibility.
+
+    Z-route clearances (verified):
+        Leg B1 and B3 (pure-x): ≥ 0.55 m from both corners.
+        Leg B2 (pure-y at x=0): 0.50 m from both corners.
+        All legs parallel to the nearest wall at every pinch point →
+        tracking lag is along-path and cannot reduce wall clearance.
+
+    U9 — same Z-route skeleton, smooth (U8 Stop_and_Go, Option A):
+        The 7-phase chain (v=0 at every joint + two 1.0 s hovers) is replaced
+        by blended_path over the SAME waypoints.  The (∓0.5, y, z) breakpoints
+        are collinear with their neighbours → no fillet there; the two 90°
+        Z-corners at (0, y1) and (0, y2) get 0.3 m fillets.
+
+        Fillet clearance (the corner the hovers used to protect is removed
+        rather than paused at): each fillet's closest point to the nearest
+        gap-side wall corner (A=(−0.5,−0.25), B=(+0.5,+0.25)) is ≥ 0.55 m —
+        well above the 0.31 m rotor reach.  The hovers are dropped entirely;
+        v > 0 throughout the episode.
+
+    Waypoint skeleton (unchanged from U7):
+        (-3.2, y1, z) → (-0.5, y1, z) → (0, y1, z) → (0, y2, z)
+                      → (+0.5, y2, z) → (+3.2, y2, z)
     """
     z  = float(altitude)
     T  = float(duration)
     y1 = -0.8 + y_jitter
     y2 =  0.8 + y_jitter
 
-    d_a = 2.7
-    d_b = float(np.sqrt(1.0**2 + (y2 - y1)**2))   # ≈ 1.89 m when jitter=0
-    d_c = 2.7
-    d_total = d_a + d_b + d_c
+    wps = [(-3.2, y1, z), (-0.5, y1, z), (0.0, y1, z),
+           ( 0.0, y2, z), ( 0.5, y2, z), (3.2, y2, z)]
 
-    t_a = T * d_a / d_total
-    t_b = T * d_b / d_total
-    t_c = T * d_c / d_total
-
-    seg_a = traverse_line((-3.2, y1, z), (-0.5, y1, z), t_a, yaw)
-    seg_b = traverse_line((-0.5, y1, z), ( 0.5, y2, z), t_b, yaw)
-    seg_c = traverse_line(( 0.5, y2, z), ( 3.2, y2, z), t_c, yaw)
-
-    def traj(t):
-        if t < t_a:
-            return seg_a(t)
-        elif t < t_a + t_b:
-            return seg_b(t - t_a)
-        else:
-            return seg_c(t - t_a - t_b)
-
-    return traj
+    return blended_path(wps, BLEND_RADIUS, T, yaw)
 
 
 def empty_path(p_start, p_end, duration, yaw=0.0):

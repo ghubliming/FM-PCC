@@ -128,6 +128,8 @@ for exp in exps:
                 fig.suptitle(f'{exp} - {variant}')
                 save_samples_every = args.horizon // 2
                 sampled_trajectories_all = []
+                obs_all = []  # MPC_NPZ_PATCH
+                act_all = []  # MPC_NPZ_PATCH
                 n_success = np.zeros(n_trials)
                 n_success_and_constraints = np.zeros(n_trials)
                 n_steps = np.zeros(n_trials)
@@ -207,6 +209,8 @@ for exp in exps:
                             if success and collision_free_completed[i]: n_success_and_constraints[i] = 1
                             break
                     sampled_trajectories_all.append(sampled_trajectories)
+                    obs_all.append(np.array(obs_buffer))   # MPC_NPZ_PATCH
+                    act_all.append(np.array(action_buffer))  # MPC_NPZ_PATCH
                     if i >= plot_how_many: continue
                     plot_states = ['x', 'y', 'x_des', 'y_des']
                     for j in range(len(plot_states)):
@@ -246,7 +250,7 @@ for exp in exps:
                 save_path = f'{args.savepath}/results/halfspace_{halfspace_variant}' if 'avoiding' in exp else f'{args.savepath}/results'
                 os.makedirs(save_path, exist_ok=True)
                 if config['write_to_file']:
-                    np.savez(f'{save_path}/{variant}.npz', n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args)
+                    np.savez(f'{save_path}/{variant}.npz', n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))  # MPC_NPZ_PATCH
                 fig.savefig(f'{save_path}/{variant}.png')
                 plt.close(fig)
                 ax_all[0, variant_idx].set_title(variant)

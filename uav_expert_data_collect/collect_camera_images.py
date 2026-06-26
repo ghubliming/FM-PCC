@@ -54,10 +54,9 @@ from uav_expert_data_collect.generator import SCENE_XMLS
 _DEFAULT_DATA_DIR = os.path.join(_REPO, 'logs', 'uav_expert_data')
 
 # Camera names in the MuJoCo model.
-# "track" is body-mounted (mode=trackcom) and ships with quadrotor_modified.xml.
-# "bp_overhead" is a fixed world-frame camera that we add programmatically
-# at runtime (no XML modification needed).
-_TRACK_CAM_NAME = 'track'
+# "fpv" is nose-mounted, looks along +x body axis (Fix_1: replaces old "track" chase cam).
+# "bp_overhead" is a fixed world-frame camera added programmatically at runtime.
+_TRACK_CAM_NAME = 'fpv'
 
 
 def parse_args():

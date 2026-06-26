@@ -1,0 +1,11 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-FM ALL PIPELINE (per-scene)  Tue Jun 23 10:32:23 UTC 2026
+scenes=[pillars]  seeds=[6]  n_trials=20  proj=fm_only
+[ note ] requires the curated dataset (data/uav_fm/v1/) — run Aux-1 prepare first.
+================================================================================
+  scene=pillars seed=6   train=21912 → eval=21913
+  aggregate (after all evals)  → Job 21914
+--------------------------------------------------------------------------------
+When done: logs/uav-<scene>/SCENE_SUMMARY.json + logs/fm_uav_ALL_SCENES_SUMMARY.json
+================================================================================

@@ -72,6 +72,10 @@ class CascadedPID:
         # Safety floor on total thrust (avoid free fall during recovery)
         self.thrust_floor = 0.1 * self.mass * GRAVITY_MAG
 
+        # Saturation telemetry — updated every compute() call (read by generator.py C3)
+        self.last_raw_saturated = False
+        self.last_torque_scale  = 1.0
+
     def compute(self, p, q, v, omega_body,
                 p_des, v_des=None, a_des=None, yaw_des=0.0):
         p = np.asarray(p, dtype=float)
@@ -129,7 +133,28 @@ class CascadedPID:
         # ── allocation: solve M u = [T; τ_x; τ_y; τ_z] ─────────────────────
         wrench = np.array([T, tau[0], tau[1], tau[2]])
         u = self.M_inv @ wrench
-        u = np.clip(u, self.u_min, self.u_max)
+
+        # U6 C2: thrust-priority with exact analytic scale + torque floor.
+        # U5's binary search over-cut torque by up to 2× (needed 0.49 → got 0.25),
+        # starving attitude authority on cross-channel diagonals → pillar regression.
+        # Fix: compute the exact largest scale that keeps every motor in bounds,
+        # then enforce a 0.5 floor so attitude authority is never more than halved.
+        self.last_raw_saturated = bool(u.max() > self.u_max or u.min() < self.u_min)
+        if self.last_raw_saturated:
+            thrust_cmd  = u.mean()
+            torque_comp = u - thrust_cmd
+            caps = []
+            for tc in torque_comp:
+                if tc > 1e-9:
+                    caps.append((self.u_max - thrust_cmd) / tc)
+                elif tc < -1e-9:
+                    caps.append((thrust_cmd - self.u_min) / (-tc))
+            scale = max(min(1.0, min(caps)) if caps else 1.0, 0.5)
+            u = np.clip(thrust_cmd + scale * torque_comp, self.u_min, self.u_max)
+            self.last_torque_scale = scale
+        else:
+            self.last_torque_scale = 1.0
+
         return u
 
 

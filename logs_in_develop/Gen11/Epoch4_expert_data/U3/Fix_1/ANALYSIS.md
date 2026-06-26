@@ -170,8 +170,44 @@ above zero, and the PID at these gains tracks y better than 2 cm in steady state
 
 ---
 
-## 7. Next Step
+## 7. Rerun — Second Crash (Job 21354)
 
-Re-run SLURM pillar collection with the updated `trajectories.py`.  
+The rerun (job 21354, 2026-06-09) crashed immediately with:
+
+```
+AttributeError: 'NoneType' object has no attribute 'glGetError'
+  File ".../mujoco/gl_context.py", line 38, in <module>
+      from mujoco.osmesa import GLContext as _GLContext
+```
+
+**Cause:** the Group C EGL cleanup (SLURM GPU IT fix) had removed `export MUJOCO_GL=egl`
+from `collect.sh`. Without it, MuJoCo 2.3.7 auto-detects osmesa as a fallback — osmesa is
+not installed on i6-gpu-1 → crash at import, 0 episodes run.
+
+**Why `MUJOCO_GL=egl` is also wrong here:**  
+`mujoco/egl/__init__.py:65` calls `eglInitialize()` at module import time (not lazily at
+`Renderer` creation). A no-GPU-allocation job setting `MUJOCO_GL=egl` would open GPU 0 at
+import → same IT violation.
+
+**Correct fix:** `MUJOCO_GL="disabled"` — MuJoCo 2.3.7 `gl_context.py:25` guards the entire
+GL backend block behind `if _MUJOCO_GL not in ('disable','disabled',...)`. With `disabled`,
+neither osmesa nor EGL is imported. Physics APIs (`MjModel`, `MjData`, `mj_step`) work without
+any GL backend. See `COLLECT_SH_GL_FIX.md` for full source-verified analysis.
+
+**File changed:** `Slurm_Codes/sbatch/uav_expert_data/collect.sh`
+- `export MUJOCO_GL="disabled"` (was `egl`, then removed, now `disabled`)
+- `export PYOPENGL_PLATFORM=egl` removed (unnecessary when GL disabled)
+- Debug GPU-leak check added as commented-out line (uncomment once to verify, then remove)
+
+---
+
+## 8. Next Step
+
+Re-run SLURM pillar collection with `trajectories.py` (8-waypoint fix) and `collect.sh`
+(`MUJOCO_GL=disabled`).
+
+To verify no GPU leak on first run: uncomment the `[DEBUG]` line in `collect.sh`, check
+SLURM output for `[ GPU-LEAK CHECK ] DRI fds: NONE — clean`, then comment it back out.
+
 Expected outcome: rejection rate ≈ 0–5% (any residual from PID tracking noise,
 not trajectory geometry).

@@ -1,0 +1,10 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 23 03:27:51 UTC 2026  |  uav_fm_eval  |  ID 21887  |  NODE i6-gpu-1
+SCENE: corridor   SEED: 5   N_TRIALS: 20
+GIT REV:   73c19e9
+================================================================================
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene corridor --seed 5 --n-trials 20 --projection fm_only
+usage: eval_fm_uav.py [-h] [--config CONFIG] [--seed SEED]
+eval_fm_uav.py: error: unrecognized arguments: --scene corridor --n-trials 20 --projection fm_only
+JOB END: Tue Jun 23 03:27:55 UTC 2026

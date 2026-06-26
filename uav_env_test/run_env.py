@@ -91,7 +91,10 @@ def build_task(name):
             'traj': trajs.traverse_line([-2.5, 0.0, 0.75], [2.5, 0.0, 0.75], duration=8.0),
         }
     if name == 's_curve':
-        # 3-leg path through the s_curve scene's two corridor segments.
+        # 5-leg Z-route: pure-x into gap, pure-y across centerline, pure-x out.
+        # Fix_2: old 3-leg diagonal (-0.5,-0.8)→(+0.5,+0.8) passed 0.019 m inside
+        # the rotor-contact zone of both gap-side wall corners — geometrically infeasible.
+        # Z-route clearance: 0.50 m from both corners on every leg (rotor reach = 0.31 m).
         return {
             'label': 'task_s_curve',
             'init_pos': np.array([-3.0, -0.8, 0.75]),
@@ -99,9 +102,11 @@ def build_task(name):
             'traj': trajs.s_curve_path(
                 waypoints=[(-3.0, -0.8, 0.75),
                            (-0.5, -0.8, 0.75),
+                           ( 0.0, -0.8, 0.75),
+                           ( 0.0,  0.8, 0.75),
                            ( 0.5,  0.8, 0.75),
                            ( 3.0,  0.8, 0.75)],
-                segment_duration=5.0,
+                segment_duration=3.0,
             ),
         }
     if name == 'weave':
@@ -122,9 +127,10 @@ def build_task(name):
 
 
 def _resolve_camera(model):
-    for i in range(model.ncam):
-        if model.camera(i).name == 'track':
-            return 'track'
+    for name in ('fpv', 'track'):
+        for i in range(model.ncam):
+            if model.camera(i).name == name:
+                return name
     return -1
 
 

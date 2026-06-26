@@ -97,6 +97,9 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
         condition_dropout=0.1,
         calc_energy=False,
         kernel_size=5,
+        # U5 Phase 1 — real-iMF additions (both default OFF ⇒ byte-for-byte unchanged):
+        dual_head=False,     # add a v-head sharing the backbone trunk (official u_heads/v_heads split)
+        interval_cfg=False,  # condition on (omega, t_min, t_max) for interval-CFG
     ):
         super().__init__()
 
@@ -178,7 +181,38 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             nn.Conv1d(dim, transition_dim, 1),
         )
 
-    def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False, h=None):
+        # U5 Phase 1b — shared-backbone v-head (official imfDiT u_heads/v_heads split).
+        # Mirrors final_conv; reads the SAME post-up trunk feature, so v shares the backbone.
+        self.dual_head = dual_head
+        if dual_head:
+            self.v_final_conv = nn.Sequential(
+                Conv1dBlock(dim, dim, kernel_size=kernel_size),
+                nn.Conv1d(dim, transition_dim, 1),
+            )
+
+        # U5 Phase 1c — interval-CFG conditioning (omega, t_min, t_max), summed into the
+        # time/h embedding exactly like h_mlp. Off by default.
+        self.interval_cfg = interval_cfg
+        if interval_cfg:
+            def _scalar_mlp():
+                return nn.Sequential(
+                    SinusoidalPosEmb(dim), nn.Linear(dim, dim * 4), nn.Mish(), nn.Linear(dim * 4, dim),
+                )
+            self.omega_mlp = _scalar_mlp()
+            self.tmin_mlp = _scalar_mlp()
+            self.tmax_mlp = _scalar_mlp()
+
+    def _embed_scalar(self, mlp, val, x):
+        """Broadcast a scalar/[B] conditioning value through `mlp` to a [B, dim] embedding."""
+        if not torch.is_tensor(val):
+            val = torch.tensor([val], dtype=torch.float32, device=x.device)
+        elif torch.is_tensor(val) and len(val.shape) == 0:
+            val = val[None].to(x.device)
+        val = val.float() * torch.ones(x.shape[0], dtype=torch.float32, device=x.device)
+        return mlp(val)
+
+    def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False, h=None,
+                omega=None, t_min=None, t_max=None, return_v=False):
         '''
             x : [ batch x horizon x transition ]
             returns : [batch x horizon]
@@ -209,6 +243,15 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             h = h.float()
             h = h * torch.ones(x.shape[0], dtype=h.dtype, device=h.device)
             t = t + self.h_mlp(h)
+
+        # U5 Phase 1c — interval-CFG conditioning, additive like h_mlp (held constant in the JVP).
+        if self.interval_cfg:
+            if omega is not None:
+                t = t + self._embed_scalar(self.omega_mlp, omega, x)
+            if t_min is not None:
+                t = t + self._embed_scalar(self.tmin_mlp, t_min, x)
+            if t_max is not None:
+                t = t + self._embed_scalar(self.tmax_mlp, t_max, x)
 
         if self.returns_condition:
             assert returns is not None
@@ -241,17 +284,23 @@ class Flow_matcher_U_Net_v2(ModelMixin, ConfigMixin):
             x = resnet2(x, t)
             x = upsample(x)
 
-        x = self.final_conv(x)
-
-        x = einops.rearrange(x, 'b t h -> b h t')
+        # `trunk` is the shared post-up feature; u and (optional) v both read it ⇒ shared backbone.
+        trunk = x
+        u = self.final_conv(trunk)
+        u = einops.rearrange(u, 'b t h -> b h t')
 
         if self.calc_energy:
             # Energy function
-            energy = ((x - x_inp)**2).mean()
+            energy = ((u - x_inp)**2).mean()
             grad = torch.autograd.grad(outputs=energy, inputs=x_inp, create_graph=True)
             return grad[0]
-        else:
-            return x
+
+        # U5 Phase 1b — return the shared v-head alongside u when requested.
+        if return_v and self.dual_head:
+            v = self.v_final_conv(trunk)
+            v = einops.rearrange(v, 'b t h -> b h t')
+            return u, v
+        return u
 
     def get_pred(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False):
         '''

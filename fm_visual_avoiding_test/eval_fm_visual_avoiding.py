@@ -117,7 +117,9 @@ parser.add_argument('--eval-on-train', action='store_true')
 args_cli, remaining_argv = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_argv
 
-with open('config/projection_eval.yaml') as f:
+# U4 fix_2: visual avoiding reads its OWN config (rewritten to the avoiding schema), NOT the
+# shared projection_eval.yaml. Same avoiding geometry; visual model comes from the Parser.
+with open('config/visual_avoiding_eval.yaml') as f:
     config = yaml.safe_load(f)
 
 exps               = config['exps']
@@ -125,6 +127,7 @@ seeds              = config['seeds']
 if args_cli.seed is not None:
     seeds = [args_cli.seed]
     print(f'[ eval ] Overriding seeds to: {seeds}')
+print(f'[ eval ] Seed list for this run: {seeds}   (from config/visual_avoiding_eval.yaml)')
 
 projection_variants   = config['projection_variants']
 halfspace_variants    = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
@@ -132,6 +135,31 @@ n_trials              = config['n_trials']
 plot_how_many         = config['plot_how_many']
 constraint_types      = config['constraint_types']
 diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
+
+
+def _warn_pkl_config_mismatch(diffusion, args):
+    """Surface frozen pkl values; FM counterpart of the DPCC pkl banner."""
+    import warnings
+    checks = [
+        ('horizon',           getattr(diffusion, 'horizon',       None), getattr(args, 'horizon',           None)),
+        ('n_diffusion_steps', getattr(diffusion, 'n_timesteps',   None), getattr(args, 'n_diffusion_steps', None)),
+        ('clip_denoised',     getattr(diffusion, 'clip_denoised', None), getattr(args, 'clip_denoised',     None)),
+    ]
+    print('\n[ eval pkl values ] (these win over the .py plan config)')
+    for key, pkl_v, cfg_v in checks:
+        if pkl_v is None and cfg_v is None:
+            continue
+        mismatch = (pkl_v is not None and cfg_v is not None and pkl_v != cfg_v)
+        tag = '  *** MISMATCH — patch pkl or retrain ***' if mismatch else ''
+        print(f'    {key}: {pkl_v!r}  (config: {cfg_v!r}){tag}')
+    print()
+    for key, pkl_v, cfg_v in checks:
+        if pkl_v is not None and cfg_v is not None and pkl_v != cfg_v:
+            warnings.warn(
+                f'[ pkl/config mismatch ] {key}: pkl={pkl_v!r}, .py config={cfg_v!r}. '
+                f'The pkl value is used at eval.',
+                stacklevel=2,
+            )
 
 
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
@@ -162,8 +190,8 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
         epoch = utils.get_latest_epoch(loadpath)
     trainer.load(epoch)
     losses = utils.load_losses(*loadpath, 'losses.pkl')
-    return utils.DiffusionExperiment(dataset, trainer.model.model,
-                                     trainer.model, trainer, epoch, losses)
+    return utils.DiffusionExperiment(dataset, trainer.ema_model.model,
+                                     trainer.ema_model, trainer, epoch, losses)
 
 
 # ── Main eval loop ────────────────────────────────────────────────────────────
@@ -217,6 +245,7 @@ for exp in exps:
                     args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
                     target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
                 fm_model = fm_experiment.diffusion
+                _warn_pkl_config_mismatch(fm_model, args)
 
                 # Load normalizers saved by train script
                 ckpt_dir = os.path.join(args.loadbase, args.dataset,
@@ -331,12 +360,9 @@ for exp in exps:
                         diffusion_timestep_threshold=diffusion_timestep_threshold)
                     projector = None if variant == 'diffuser' else projector
 
-                    trajectory_selection = 'random'
-                    if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
-                    if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
-
                     agent = VisualAgent(fm_model, obs_normalizer, act_normalizer,
-                                        projector=projector, device=args.device)
+                                        projector=projector, device=args.device,
+                                        plan_batch_size=args.mpc_batch_size)
 
                     fig, ax = plt.subplots(
                         min(n_trials, plot_how_many), 6,
@@ -408,10 +434,8 @@ for exp in exps:
                             # Swap C — visual predict
                             start = time.time()
                             if 'avoiding' in exp:
-                                bp_img_raw = env.bp_cam.get_image(depth=False)
-                                bp_img_raw = cv2.resize(bp_img_raw, (_IMG_W, _IMG_H),
-                                                        interpolation=cv2.INTER_AREA)
-                                bp_image = bp_img_raw[:, :, ::-1].transpose((2, 0, 1)).copy() / 255.
+                                bp_img_raw = env.bp_cam.get_image(width=_IMG_W, height=_IMG_H, depth=False)
+                                bp_image = bp_img_raw.transpose((2, 0, 1)).copy() / 255.
                                 c_xy     = env.robot.current_c_pos[:2].copy()
                                 action, traj_plan = agent.predict(bp_image, obs[:2].copy(), c_xy)
                             avg_time[i] += time.time() - start
@@ -510,7 +534,8 @@ for exp in exps:
                                  collision_free_completed=collision_free_completed,
                                  args=args,
                                  obs_all=np.array(obs_all, dtype=object),
-                                 act_all=np.array(act_all, dtype=object))
+                                 act_all=np.array(act_all, dtype=object),
+                                 sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))  # MPC_NPZ_PATCH
 
                     fig.savefig(f'{save_path}/{variant}.png')
                     plt.close(fig)

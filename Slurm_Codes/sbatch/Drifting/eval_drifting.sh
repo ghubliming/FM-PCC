@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --time=04:00:00
+#SBATCH --time=24:00:00
 #SBATCH --partition=gpu-1-student
 
 set -e
@@ -41,6 +41,11 @@ export MPLBACKEND="agg"
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
 ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
 export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
+echo "[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  MUJOCO_EGL_DEVICE_ID=$MUJOCO_EGL_DEVICE_ID"
+if [ "$MUJOCO_EGL_DEVICE_ID" != "${CUDA_VISIBLE_DEVICES%%,*}" ]; then
+    echo "[ GPU-LEAK ] EGL device ($MUJOCO_EGL_DEVICE_ID) != CUDA (${CUDA_VISIBLE_DEVICES%%,*}) -- aborting"
+    exit 1
+fi
 
 # W&B Login
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then

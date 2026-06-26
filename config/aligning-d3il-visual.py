@@ -78,6 +78,19 @@ args_to_watch_fm_visual_plan = [
     ('mpc_batch_size', 'mpc'),       # MPC candidate pool size in plan folder name (mpc4)
 ]
 
+args_to_watch_imf_visual_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+    ('if_vision', 'V'),
+    ('max_path_length', 'steps'),
+    ('batch_size', 'bs'),
+    ('imf_objective', 'obj'),   # encodes training objective in folder name
+]
+
 logbase = 'logs'
 
 base = {
@@ -709,11 +722,19 @@ base['imf_visual_aligning'] = {
     'model':     'imf_visual_aligning.models.imf_engine.iMeanFlowEngine',
     'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
     'prefix':    'imf_visual_aligning/',
-    'exp_name':  watch(args_to_watch_fm_visual_train),
+    'exp_name':  watch(args_to_watch_imf_visual_train),
     # iMF-specific loss mixing weights (inherited by VisualIMF from iMeanFlowODE)
     'u_loss_weight':  1.0,   # weight on main u-head (mean-flow target)
     'v_loss_weight':  0.1,   # weight on aux v-head (instantaneous velocity)
     'loss_schedule':  'balanced',
+    # U3/imfv2 — training objective selector (see logs_in_develop/Gen8/Epoch_1/U3).
+    # 'fm_equivalent': legacy finite-diff = FM baseline arm.
+    # 'meanflow_jvp' : real MeanFlow-Identity (JVP). NFE is set in the plan block, not here.
+    'imf_objective': 'fm_equivalent',
+    'meanflow_r_equals_t_frac': 0.25,
+    'meanflow_adaptive_p': 0.5,
+    'meanflow_adaptive_c': 1e-3,
+    'meanflow_aux_weight': 0.0,
     # iMF guardrails against E4 spike (Gen3v4 lesson):
     # lower lr (2e-4 already set via fm_visual_aligning inherit) + smaller action_weight
     'action_weight': 1,
@@ -724,14 +745,16 @@ base['imf_visual_aligning'] = {
 base['plan_imf_visual_aligning'] = {
     **base['plan_fm_visual_aligning'],
     'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
+    'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
     'prefix': (
         'f:plans/imf_visual_aligning/'
         'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}/'
     ),
+    # diffusion_loadpath MUST match args_to_watch_imf_visual_train exactly
     'diffusion_loadpath': (
         'f:imf_visual_aligning/'
         'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}'
     ),
 }

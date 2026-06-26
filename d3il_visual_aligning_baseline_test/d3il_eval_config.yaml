@@ -15,9 +15,13 @@ checkpoint_root: "logs/d3il_visual_aligning_baseline"
 d3il_config_dir: "d3il/configs"
 
 # ── Eval settings ──────────────────────────────────────────────────────────────
+# SCALE: behavior entropy is only meaningful with many trajectories per context.
+#   smoke (fast):   n_contexts=3,  n_trajectories_per_context=1   (success_rate only; entropy ~0/noisy)
+#   paper-faithful: n_contexts=60, n_trajectories_per_context=18  (D3IL Table 4 → valid entropy)
+#   → pass `--paper` (CLI) or "paper" (sbatch $4) to set 60×18 without editing this file.
 seeds:                       [42]
-n_contexts:                  3       # smoke: 3  |  full: 30
-n_trajectories_per_context:  1
+n_contexts:                  3       # smoke: 3  |  paper: 60
+n_trajectories_per_context:  1       # smoke: 1  |  paper: 18  (needed for entropy, paper Eq. 2)
 eval_on_train:               false
 max_episode_length:          400
 if_vision:                   true    # true = capture bp_cam frames for video

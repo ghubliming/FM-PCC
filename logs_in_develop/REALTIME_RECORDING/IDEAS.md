@@ -192,6 +192,73 @@ GIF = intuition. Text log = evidence.
 
 ---
 
+## Can we load existing outputs, or must we re-eval?
+
+A natural shortcut: we already have eval outputs for past generations (`.npz` result
+files, episode `.pkl` trajectories, GIFs). Can we just **load** them and produce this
+digital-twin log retroactively, or do we have to **re-run evaluation** with the logger
+attached?
+
+The answer splits by field category, and the split is hard:
+
+### Timing fields — ALWAYS require re-eval (cannot ever be loaded)
+
+`fm_ms`, `qp_ms`, `total_ms` are **wall-clock measurements**. They exist only at the
+instant the model runs. A saved trajectory records *what* the model produced, never *how
+long it took*. There is no field in any `.npz` or `.pkl` from which latency can be
+recovered — it was never a number, it was a duration that elapsed and was discarded.
+
+> **Timing is the primary product of this framework, and timing is the one thing that
+> can never be reconstructed offline.** Every generation, no exceptions, must be re-run
+> with the logger to get its timing block.
+
+This also means timing is **hardware-bound**: a re-eval on the cluster GPU gives cluster
+latency, not the latency of the target deployment hardware. To answer "will it fit the
+real drone's 30 ms budget" the re-eval must run on representative hardware (or the result
+must be explicitly labelled with the machine it was measured on).
+
+### Behaviour / geometry fields — loadable IF the generation saved them
+
+`p`, `p_des`, `v`, `q`, `contacts`, `track_err` are geometric quantities the simulator
+already wrote into the episode pickle (`obs=(T,9)`, `q`, `contact_fraction`, …). For any
+generation whose eval persisted full trajectories, these can be **loaded directly** and
+the `OBS` / `STATE` / `CONTACT` lines reconstructed without re-running physics.
+
+### Decision / intermediate fields — loadable ONLY if explicitly logged at eval time
+
+`fm_horizon` (the full H-step prediction), `dpcc status=ACTIVE/IDLE`, `constraint_margin`,
+and the `fm_cmd → qp_cmd` override delta are **intermediate values inside the control
+loop**. Standard eval saves the *executed* action, not the full predicted horizon nor the
+QP's internal status. Unless the original run dumped them, they are gone — the only way to
+recover them is to re-run inference (which is deterministic for a fixed seed, so the
+*values* are reproducible even though the *timing* of that re-run is fresh).
+
+### Per-generation reality
+
+| Generation | Timing | Behaviour (p, contacts) | FM horizon / DPCC status | Verdict |
+|---|---|---|---|---|
+| **Gen3v4** (iMF, state) | re-eval only | loadable from saved trajs | re-eval (not dumped) | **re-eval** for timing+horizon |
+| **Gen5/6** (visual DDPM) | re-eval only | loadable | re-eval | **re-eval** |
+| **Gen7** (visual FM) | re-eval only | loadable | re-eval | **re-eval** |
+| **Gen9** (visual avoiding) | re-eval only | loadable | re-eval | **re-eval** (currently training — wait for stable ckpt) |
+| **Gen11** (drone expert data) | re-eval only | already in `.pkl` (`obs`, `q`, contacts) | re-eval (collection logs PID, not FM/QP) | **re-eval** for FM-PCC timing |
+| **DPCC baseline** | re-eval only | loadable | `qp_*` re-eval | **re-eval** |
+
+> Per-gen specifics should be confirmed against each generation's actual output schema
+> before relying on the "loadable" column — this table reflects the standard eval format,
+> not a guarantee that a given run dumped intermediate fields.
+
+### Bottom line
+
+There is **no shortcut**. Because timing is the headline metric and timing can only be
+measured live, every generation we want to audit must be **re-evaluated once** with the
+`BehaviorLogger` attached. Loading old outputs can at best fill the geometric context
+lines — never the numbers the framework exists to produce. The practical cost is one extra
+instrumented eval pass per generation; the logger is designed to wrap that pass with near-
+zero added latency (timing is captured around existing calls, not by inserting new work).
+
+---
+
 ## Implementation approach
 
 The logger wraps any evaluation loop. At each step, each component passes its outputs
@@ -241,3 +308,13 @@ are always populated. For FMv3Ode, `fm_horizon` is populated. For Visual Alignin
 
 **GIF + text log should be the standard output of every evaluation run.** The GIF tells
 you if it looks right. The text log tells you if it actually is.
+
+---
+
+## Adoption status
+
+- **Gen11 E7 (Drone FM-PCC)** — IN PROGRESS. Plan to apply this framework to the Gen11 E7
+  UAV eval (`FM_v3_uav_test/eval_fm_uav.py`):
+  [`../Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/Real_Time_eval_loggging/PLAN.md`](../Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/Real_Time_eval_loggging/PLAN.md).
+  Notes the one architectural divergence (our PCC projects *inside* the FM ODE loop, not as
+  a post-FM QP filter) and scaffolds spatial-constraint fields for when scene geometry lands.

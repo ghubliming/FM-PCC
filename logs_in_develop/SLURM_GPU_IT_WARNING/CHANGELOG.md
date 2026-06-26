@@ -80,20 +80,23 @@ One CPU-only script had its unused EGL exports removed entirely.
 
 ---
 
-## Group C — Unused EGL exports removed (1 file)
+## Group C — EGL replaced with `disabled` (1 file)
 
-**File:** `Slurm_Codes/sbatch/uav_expert_data/collect.sh`
+**File:** `Slurm_Codes/sbatch/uav_expert_data/collect.sh`  
+**Detail:** `logs_in_develop/Gen11/Epoch4_expert_data/U3/Fix_1/COLLECT_SH_GL_FIX.md`
 
-| Original line № | Removed content |
-|----------------|-----------------|
-| 74 | `# No GPU needed for headless MuJoCo rollouts, but set EGL in case render is added.` |
-| 75 | `export MUJOCO_GL=egl` |
-| 76 | `export PYOPENGL_PLATFORM=egl` |
+`MUJOCO_GL=egl` is unsafe for a no-GPU-allocation script: `mujoco/egl/__init__.py:65` calls
+`eglInitialize()` at module import time (not at `Renderer` creation), opening GPU 0 → leak.
+`MUJOCO_GL=disabled` skips the entire `gl_context.py` backend block, preventing both the
+osmesa crash and the EGL device open.
 
-The comment on line 74 was also updated to:  
-`# No GPU needed — CPU-only MuJoCo rollouts, no rendering.`
+| Original line № | Original content | New content |
+|----------------|-----------------|-------------|
+| 74 | `# No GPU needed for headless MuJoCo rollouts, but set EGL in case render is added.` | updated comment |
+| 75 | `export MUJOCO_GL=egl` | `export MUJOCO_GL="disabled"` |
+| 76 | `export PYOPENGL_PLATFORM=egl` | *(removed — not needed when GL disabled)* |
 
-**Revert:** restore the original comment and the two `export` lines at the original positions.
+**Revert:** restore lines 74-76 to their original content.
 
 ---
 

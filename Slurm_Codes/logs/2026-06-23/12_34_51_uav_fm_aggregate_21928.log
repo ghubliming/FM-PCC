@@ -1,0 +1,6 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ aggregate ] Tue Jun 23 12:57:17 UTC 2026  scenes=[pillars]  proj=fm_only
+[ agg ] pillars: no eval results found (skipped)
+[ agg ] cross-scene roll-up (0 scene(s)) → logs/UAV_FM/fm_uav_ALL_SCENES_SUMMARY.json
+[ aggregate ] done.
+JOB END: Tue Jun 23 12:57:17 UTC 2026

@@ -63,6 +63,17 @@ args_to_watch_fmv3_ode_plan = [
     ('diffusion', 'D'),
 ]
 
+args_to_watch_fmv3_imf_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+    ('imf_objective', 'obj'),   # encodes training objective in folder name (fm_equivalent vs meanflow_jvp)
+    ('imf_backbone', 'bb'),     # U6: encodes backbone (unet vs dit) so checkpoints never collide
+]
+
 logbase = 'logs'
 
 base = {
@@ -460,7 +471,43 @@ base = {
         'transition_epochs': 0,
         'loss_type': 'l2',
         'predict_epsilon': True,
-        
+
+        ## U4 imfv2 — training objective selector (see logs_in_develop/Gen3v4_imf/U4)
+        # 'fm_equivalent': legacy finite-diff target = FM baseline arm.
+        # 'meanflow_jvp' : real MeanFlow-Identity (JVP). NFE is set in the plan block, not here.
+        # DEFAULT now = full real iMF (U5). For the FM baseline A/B arm, revert to the commented values.
+        'imf_objective': 'meanflow_jvp',     # was: 'fm_equivalent'
+        'meanflow_r_equals_t_frac': 0.25,
+        'meanflow_adaptive_p': 0.5,
+        'meanflow_adaptive_c': 1e-3,
+        'meanflow_aux_weight': 0.05,         # was: 0.0  (now meaningful — shares backbone via dual_head)
+
+        ## U5 Phase 1 — real-iMF on UNet (DEFAULT = ON). See Gen3v4_imf/U5.
+        ## Safe-core fallback if a run misbehaves: set interval_cfg=False + meanflow_cfg_omega=0.0.
+        'dual_head': True,           # was: False  — v-head shares the backbone (official u/v split)
+        'interval_cfg': True,        # was: False  — condition backbone on (omega, t_min, t_max)
+        ## Fix2 (U6) — CFG is now per-sample randomized at train time (official iMF algorithm),
+        ## not a fixed constant. meanflow_cfg_omega is now the sampling ceiling s_max: each sample
+        ## draws ω~power-law(0,s_max] and (t_min,t_max)~U(0,0.5)xU(0.5,1) independently every step
+        ## (FM-anchor samples get the full [0,1] interval, i.e. no CFG restriction). See
+        ## Gen3v4_imf/U6/Fix2_CFG&EMA/CHANGELOG.md.
+        'meanflow_cfg_omega': 4.0,   # was: 0.0    — train-time sampling ceiling s_max for ω
+        'meanflow_cfg_t_min': 0.4,   # unused when interval_cfg sampling is active (kept for fallback)
+        'meanflow_cfg_t_max': 0.6,   # unused when interval_cfg sampling is active (kept for fallback)
+        'meanflow_cfg_beta': 1.0,    # power-law shape for ω sampling; 1.0 = official iMF default (log-uniform)
+
+        ## U6 — backbone selector. 'unet' (default) = U5 behaviour, byte-for-byte.
+        ## 'dit' = faithful official-iMF transformer (IMFDiTTrajectory). Folder name carries
+        ## _bb{imf_backbone}, so unet/dit checkpoints live in separate dirs (no collision).
+        ## NOTE: plan block's imf_backbone + dit_* MUST match (state_dict depends on them).
+        'imf_backbone': 'unet',      # 'unet' | 'dit'
+        'dit_depth': 8,              # total transformer blocks (DiT-only)
+        'dit_hidden_size': 256,      # token width (DiT-only) — keep small for H=8
+        'dit_num_heads': 4,          # attention heads (DiT-only)
+        'dit_aux_head_depth': 2,     # private blocks per u/v head (DiT-only)
+        'dit_patch_size': 1,         # trajectory steps per token; must divide horizon
+        'dit_condition_on_t': False, # official recipe conditions only on h=t−r
+
         ## dataset (inherited from FMv3ODE)
         'loader': 'datasets.SequenceDataset',
         'normalizer': 'LimitsNormalizer',
@@ -484,15 +531,17 @@ base = {
         'loss_discount': 1.0,              # BUG-02 fix: explicit uniform trajectory weighting
         'gradient_accumulate_every': 2,    # BUG-03 fix: match FMv3ODE effective batch size
         
-        ## ODE inference (match FMv3ODE-style deterministic rollout)
-        'ode_inference_steps_v3': 10,
-        'time_beta_alpha_v3': 1.5,
+        ## ODE inference — NFE is set in the plan block, not here
+        # 'ode_inference_steps_v3': 10,  # dead in training; set flow_steps_v3 in plan block
+        ## Schedule: Beta(1,1)=Uniform(0,1) for broad (t,r) interval coverage (iMF few-step).
+        ## NOTE: plan block's time_beta_* MUST match (they're in diffusion_loadpath).
+        'time_beta_alpha_v3': 1.0,        # was: 1.5  (uniform for real iMF)
         'time_beta_beta_v3': 1.0,
-        
+
         ## serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_imeanflow/',
-        'exp_name': watch(args_to_watch_fmv3_ode_train),
+        'exp_name': watch(args_to_watch_fmv3_imf_train),
     },
 
     'plan': {
@@ -779,7 +828,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}/',
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 imeanflow model
@@ -788,18 +837,44 @@ base = {
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 0.1,
-        'flow_steps_v3': 10,
-        'time_beta_alpha_v3': 1.5,
+        'flow_steps_v3': 2,           # was: 10  — low-NFE real-iMF (use 4 to de-risk first, then 1–2)
+        'time_beta_alpha_v3': 1.0,    # was: 1.5  — MUST match training block (in diffusion_loadpath)
         'time_beta_beta_v3': 1.0,
         'ode_solver_backend_v3': 'legacy_euler',
         'ode_solver_method_v3': 'euler',
         'ode_solver_rtol_v3': None,
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
-        'diffusion_timestep_threshold': _yaml_threshold,   # encodes T in path so threshold sweeps don't overwrite
+        'diffusion_timestep_threshold': _yaml_threshold,
+        'imf_objective': 'meanflow_jvp',    # was: 'fm_equivalent'  — must match training (in diffusion_loadpath)
 
-        ## loading
-        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+        ## U5 Phase 1 — must match the trained checkpoint's flags (architecture + CFG)
+        'dual_head': True,           # was: False  — MUST equal training (else state_dict mismatch)
+        'interval_cfg': True,        # was: False  — MUST equal training
+        ## Fix2 (U6) — at eval/sampling time these are still a FIXED operating point (no
+        ## randomization at inference): u_cfg = u_unc + ω·(u_cond − u_unc), applied only for
+        ## τ∈[t_min,t_max]. This is unchanged from before — only training-time sampling changed.
+        'meanflow_cfg_omega': 4.0,   # was: 0.0    — guided sampling u_cfg=u_unc+ω·(u_cond−u_unc)
+        'meanflow_cfg_t_min': 0.4,   # was: 0.0    — applied only for τ∈[t_min,t_max]
+        'meanflow_cfg_t_max': 0.6,   # was: 1.0
+
+        ## Fix2 (U6) — EMA config switch. Default False = DPCC-legacy (raw/live weights at eval,
+        ## matching the published DPCC baseline's own convention — see Gen9 U4
+        ## DPCC_DIVERGENCE_AND_COMPARABILITY.md finding B6). Official iMF defaults to EMA weights
+        ## at sampling (imeanflow/utils/sample_util.py:11,16: ema=True). Set True to use EMA.
+        'eval_use_ema': False,       # False = dpcc-legacy (raw weights) | True = imf-ema
+
+        ## U6 — backbone selector. MUST equal the trained checkpoint (state_dict + loadpath).
+        'imf_backbone': 'unet',      # 'unet' | 'dit'
+        'dit_depth': 8,
+        'dit_hidden_size': 256,
+        'dit_num_heads': 4,
+        'dit_aux_head_depth': 2,
+        'dit_patch_size': 1,
+        'dit_condition_on_t': False,
+
+        ## loading — path must match args_to_watch_fmv3_imf_train exactly (incl. _bb{imf_backbone})
+        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}',
         'diffusion_epoch': 'best',
     },
 

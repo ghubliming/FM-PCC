@@ -10,7 +10,7 @@ import yaml
 
 import fm_visual_avoiding.utils as utils
 
-with open('config/projection_eval.yaml') as f:
+with open('config/visual_avoiding_eval.yaml') as f:   # U4 fix_2: visual avoiding's own config
     config = yaml.safe_load(f)
 
 projection_variants       = config['projection_variants']

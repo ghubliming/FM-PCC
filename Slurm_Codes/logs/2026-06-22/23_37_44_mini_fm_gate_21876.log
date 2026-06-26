@@ -1,0 +1,47 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-FM MINI GATE (Aux-1)  Mon Jun 22 21:37:45 UTC 2026  | JOB 21876 | NODE i6-gpu-1
+scene=empty  n_episodes=100  n_steps=1000
+================================================================================
+[ mini-gate ] python uav_expert_data_collect/mini_fm_sanity.py --data-dir data/uav_fm/v1/empty
+[ mini-fm ] Loading episodes from data/uav_fm/v1/empty …
+[ mini-fm ] Loaded 100 episodes
+[ mini-fm ] 18527 chunks of shape (H=8, D=12)
+[ mini-fm ] Chunk tensor shape: (18527, 8, 12)
+[ mini-fm ] Shape check: expected (8, 12), got (8, 12) → ✅ PASS
+[ mini-fm ] Train: 14821, Eval: 3706
+[ mini-fm ] Action Δp_des norm: mean=0.01210, p95=0.01877
+[ mini-fm ] Training 1000 steps (B=32, lr=0.001) …
+  step     1/1000  loss=2.12519
+  step   100/1000  loss=1.98559
+  step   200/1000  loss=1.99770
+  step   300/1000  loss=1.98669
+  step   400/1000  loss=1.98561
+  step   500/1000  loss=2.00133
+  step   600/1000  loss=2.02337
+  step   700/1000  loss=1.99806
+  step   800/1000  loss=2.02064
+  step   900/1000  loss=1.99243
+  step  1000/1000  loss=2.01292
+[ mini-fm ] Evaluating on held-out chunks …
+
+============================================================
+  MINI-FM SANITY GATE RESULTS
+============================================================
+  Episodes loaded:       100
+  Training chunks:       14821
+  Eval chunks:           3706
+  Tensor shape:          (18527, 8, 12) → (N, H=8, D=12)
+  Shape check:           ✅ PASS
+
+  RMS position error:    0.97639 m  (threshold < 0.1 m) → ❌ FAIL
+  GT action norm mean:   0.00740 m/step
+  Pred action norm mean: 0.01195 m/step
+  Action norm ratio:     1.615  (threshold 0.5–2.0) → ✅ PASS
+
+  OVERALL VERDICT:       ❌ NO-GO — fix data pipeline
+  Elapsed:               71.4s
+============================================================
+[ mini-fm ] Results saved → data/uav_fm/v1/empty/mini_fm_results.json
+[ mini-gate ] done — review held-out RMS in the log (< 0.1 m = pass).
+JOB END: Mon Jun 22 21:38:57 UTC 2026

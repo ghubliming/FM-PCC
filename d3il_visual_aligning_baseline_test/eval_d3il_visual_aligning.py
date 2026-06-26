@@ -326,6 +326,43 @@ def build_agent(d3il_config_dir, agent_cfg_group, device, seed):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# U2: paper-faithful behavior entropy
+# ─────────────────────────────────────────────────────────────────────────────
+
+def compute_behavior_entropy(records, n_contexts, n_trajs, n_modes=2):
+    """Conditional behavior entropy — the D3IL paper diversity metric (Eq. 2).
+
+    Faithful re-implementation of d3il `simulation/aligning_sim.py:178-194`:
+      • per context c, among the SUCCESSFUL rollouts, count how many used each mode;
+      • divide by n_trajs (NOT by #successes) → p̃(m|c);
+      • row-normalize (+1e-12) → p(m|c);
+      • entropy_c = −Σ_m p(m|c)·log(p(m|c)) / log(n_modes)   (base-|B| ⇒ ∈[0,1]);
+      • average over the n_contexts initial states (Monte-Carlo estimate of E_{s0}[H]).
+
+    `records` is the list of per-rollout dicts (each has 'context', 'mode', 'success').
+    Returns a float in [0, 1]; 1 = even use of all modes, 0 = mode collapse.
+    """
+    if n_contexts <= 0 or n_trajs <= 0:
+        return 0.0
+    # bucket modes of SUCCESSFUL rollouts per context
+    counts = np.zeros((n_contexts, n_modes), dtype=np.float64)
+    for r in records:
+        c = int(r.get('context', -1))
+        if not (0 <= c < n_contexts):
+            continue
+        if not bool(r.get('success', False)):
+            continue                      # success-conditioned (paper: successes[c,:]==1)
+        m = int(r.get('mode', -1))
+        if 0 <= m < n_modes:
+            counts[c, m] += 1.0
+    probs = counts / float(n_trajs)                       # p̃(m|c)
+    probs = probs / (probs.sum(axis=1, keepdims=True) + 1e-12)   # normalize rows
+    ent_per_ctx = -(probs * np.log(probs + 1e-12)
+                    / np.log(n_modes)).sum(axis=1)        # ∈[0,1] each
+    return float(ent_per_ctx.mean())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Per-seed eval
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -459,11 +496,18 @@ def run_eval_seed(seed, cfg_eval, record_mode):
     final_angles = [r['context_info'].get('final_box_angle_deg', float('nan')) for r in all_rec]
 
     success_rate = float(np.mean(successes))
+    # U2: paper-faithful behavior entropy (matches d3il aligning_sim.py:178-194 / paper Eq. 2).
+    entropy = compute_behavior_entropy(all_rec, n_contexts, n_trajs, n_modes=2)
+    score   = 0.5 * (success_rate + entropy)   # the paper's headline 'score'
     results = {
         'agent_name':           agent_name,
         'seed':                 int(seed),
         'n_rollouts':           len(all_rec),
+        'n_contexts':           int(n_contexts),
+        'n_trajectories_per_context': int(n_trajs),
         'success_rate':         success_rate,
+        'entropy':              entropy,            # ← U2: the paper diversity metric
+        'score':                score,              # ← U2: 0.5*(success_rate + entropy)
         'mean_distance_mean':   float(np.nanmean(mean_dists)),
         'mean_distance_std':    float(np.nanstd(mean_dists)),
         'final_xy_dist_mean':   float(np.nanmean(final_xydist)),
@@ -476,12 +520,17 @@ def run_eval_seed(seed, cfg_eval, record_mode):
     }
 
     print(f'\n{"─" * 60}')
-    print(f'[ Seed {seed} Summary ]')
+    print(f'[ Seed {seed} Summary ]  ({n_contexts} ctx × {n_trajs} traj = {len(all_rec)} rollouts)')
     print(f'  success_rate:       {success_rate:.3f}')
+    print(f'  entropy:            {entropy:.3f}')
+    print(f'  score (0.5·SR+H):   {score:.3f}')
     print(f'  mean_distance:      {results["mean_distance_mean"]:.4f} ± {results["mean_distance_std"]:.4f}')
     print(f'  final_xy_dist:      {results["final_xy_dist_mean"]:.4f} ± {results["final_xy_dist_std"]:.4f} m')
     print(f'  n_steps:            {results["n_steps_mean"]:.1f} ± {results["n_steps_std"]:.1f}')
     print(f'  mode_0_rate:        {results["mode_0_rate"]:.3f}')
+    if n_trajs < 8:
+        print(f'  [ note ] entropy needs many trajs/context to be meaningful '
+              f'(paper uses 18); current = {n_trajs}.')
     print(f'{"─" * 60}')
 
     result_file = os.path.join(save_path, f'results_seed_{seed}.json')
@@ -503,6 +552,10 @@ def parse_args():
     p.add_argument('--agent-name',  default=None, help='override agent_name in config')
     p.add_argument('--seed',        type=int, default=None, help='single seed override')
     p.add_argument('--n-contexts',  type=int, default=None, help='override n_contexts')
+    p.add_argument('--n-trajectories', type=int, default=None,
+                   help='override n_trajectories_per_context (paper uses 18; needed for entropy)')
+    p.add_argument('--paper', action='store_true',
+                   help='paper-faithful eval preset: n_contexts=60, n_trajectories_per_context=18')
     p.add_argument('--record',      default=None, choices=['all', 'gif', 'video', 'none'],
                    help='recording mode override')
     p.add_argument('--eval-on-train', action='store_true', help='eval on training contexts')
@@ -520,8 +573,14 @@ def main():
     if args.agent_name:
         cfg['agent_name']      = args.agent_name
         cfg['agent_cfg_group'] = f'{args.agent_name}_agent'  # derive Hydra group from name
+    if args.paper:                                  # U2: paper-faithful eval scale
+        cfg['n_contexts'] = 60
+        cfg['n_trajectories_per_context'] = 18
+        print('[ eval ] --paper preset: n_contexts=60, n_trajectories_per_context=18')
     if args.n_contexts is not None:
         cfg['n_contexts'] = args.n_contexts
+    if args.n_trajectories is not None:
+        cfg['n_trajectories_per_context'] = args.n_trajectories
     if args.record is not None:
         cfg['record_mode'] = args.record
     if args.eval_on_train:
@@ -541,7 +600,7 @@ def main():
     # ── cross-seed aggregate ───────────────────────────────────────────────────
     if len(all_results) > 1:
         agg_keys = [
-            'success_rate', 'mean_distance_mean', 'final_xy_dist_mean',
+            'success_rate', 'entropy', 'score', 'mean_distance_mean', 'final_xy_dist_mean',
             'final_angle_deg_mean', 'n_steps_mean', 'mode_0_rate',
         ]
         aggregate = {

@@ -20,7 +20,7 @@ import pickle
 
 import torch
 
-# Standard FM-PCC imports
+# Standard FM-PCC imports (Note: importing from diffuser.utils is maybe not ideal/optimal?)
 import diffuser.utils as utils
 
 
@@ -157,6 +157,17 @@ if __name__ == '__main__':
                 time_dim=args.time_dim,
                 dropout_rate=args.dropout_rate,
                 device=device,
+                # U5 Phase 1 — real-iMF backbone flags (default OFF)
+                dual_head=getattr(args, 'dual_head', False),
+                interval_cfg=getattr(args, 'interval_cfg', False),
+                # U6 — backbone selector + DiT sizing (default 'unet' ⇒ unchanged)
+                imf_backbone=getattr(args, 'imf_backbone', 'unet'),
+                dit_depth=getattr(args, 'dit_depth', 8),
+                dit_hidden_size=getattr(args, 'dit_hidden_size', 256),
+                dit_num_heads=getattr(args, 'dit_num_heads', 4),
+                dit_aux_head_depth=getattr(args, 'dit_aux_head_depth', 2),
+                dit_patch_size=getattr(args, 'dit_patch_size', 1),
+                dit_condition_on_t=getattr(args, 'dit_condition_on_t', False),
             )
 
             diffusion_config = utils.Config(
@@ -181,7 +192,17 @@ if __name__ == '__main__':
                 time_beta_alpha_v3=getattr(args, 'time_beta_alpha_v3', 1.5),
                 time_beta_beta_v3=getattr(args, 'time_beta_beta_v3', 1.0),
                 flow_steps_v3=getattr(args, 'flow_steps_v3', getattr(args, 'ode_inference_steps_v3', 10)),
-                ode_inference_steps_v3=args.ode_inference_steps_v3,
+                ode_inference_steps_v3=getattr(args, 'ode_inference_steps_v3', getattr(args, 'flow_steps_v3', 10)),
+                imf_objective=getattr(args, 'imf_objective', 'fm_equivalent'),
+                meanflow_r_equals_t_frac=getattr(args, 'meanflow_r_equals_t_frac', 0.25),
+                meanflow_adaptive_p=getattr(args, 'meanflow_adaptive_p', 0.5),
+                meanflow_adaptive_c=getattr(args, 'meanflow_adaptive_c', 1e-3),
+                meanflow_aux_weight=getattr(args, 'meanflow_aux_weight', 0.0),
+                # U5 Phase 1c — interval-CFG (default off)
+                meanflow_cfg_omega=getattr(args, 'meanflow_cfg_omega', 0.0),
+                meanflow_cfg_t_min=getattr(args, 'meanflow_cfg_t_min', 0.0),
+                meanflow_cfg_t_max=getattr(args, 'meanflow_cfg_t_max', 1.0),
+                meanflow_cfg_beta=getattr(args, 'meanflow_cfg_beta', 1.0),
             )
 
             trainer_config = utils.Config(

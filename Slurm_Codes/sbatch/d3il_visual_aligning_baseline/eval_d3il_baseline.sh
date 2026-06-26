@@ -5,7 +5,10 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --time=04:00:00
+# U2.2: was 04:00:00 — paper-faithful eval is 1080 rollouts/seed (60 ctx x 18 traj) with
+# MuJoCo rendering; 4h killed runs mid-loop before the per-seed summary was written, losing
+# results_seed_*.json. 24h gives generous headroom. See U2/CHANGELOG.md.
+#SBATCH --time=24:00:00
 #SBATCH --partition=gpu-1-student
 
 set -e
@@ -47,6 +50,11 @@ export MPLBACKEND="agg"
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
 ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
 export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
+echo "[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  MUJOCO_EGL_DEVICE_ID=$MUJOCO_EGL_DEVICE_ID"
+if [ "$MUJOCO_EGL_DEVICE_ID" != "${CUDA_VISIBLE_DEVICES%%,*}" ]; then
+    echo "[ GPU-LEAK ] EGL device ($MUJOCO_EGL_DEVICE_ID) != CUDA (${CUDA_VISIBLE_DEVICES%%,*}) -- aborting"
+    exit 1
+fi
 
 cd "$REPO"
 
@@ -54,10 +62,12 @@ cd "$REPO"
 # $1 = agent_name   (default: ddpm_encdec_vision)
 # $2 = seed         (optional; if blank → all seeds in d3il_eval_config.yaml)
 # $3 = record_mode  (default: all)
+# $4 = scale        (optional: "paper" → 60 ctx × 18 traj, faithful entropy; else config smoke)
 #
 # Examples:
 #   sbatch eval_d3il_baseline.sh ddpm_encdec_vision 42
 #   sbatch eval_d3il_baseline.sh ddpm_encdec_vision 42 gif
+#   sbatch eval_d3il_baseline.sh ddpm_encdec_vision 42 none paper   # ← paper-faithful (entropy)
 #   sbatch eval_d3il_baseline.sh ddpm_encdec_vision    # all seeds from config
 
 AGENT_NAME="${1:-ddpm_encdec_vision}"
@@ -71,11 +81,19 @@ if [ -n "$2" ]; then
     echo "[ eval ] seed override: $2"
 fi
 
+# U2: paper-faithful eval scale (60 ctx × 18 traj) → meaningful behavior entropy.
+PAPER_ARG=""
+if [ "$4" = "paper" ]; then
+    PAPER_ARG="--paper"
+    echo "[ eval ] --paper preset: 60 contexts x 18 trajectories (faithful entropy)"
+fi
+
 echo "[ eval ] agent=${AGENT_NAME}  record_mode=${RECORD_MODE}"
 
 python d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py \
     $AGENT_ARG \
     $SEED_ARG \
+    $PAPER_ARG \
     --record "${RECORD_MODE}"
 
 echo "Job completed successfully."

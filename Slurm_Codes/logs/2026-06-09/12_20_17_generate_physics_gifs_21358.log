@@ -1,0 +1,29 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV PHYSICS REPLAY GIF GENERATION (Epoch 5 WS-D)
+DATE:     Tue Jun  9 11:05:36 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21358
+GPU:      2
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ sbatch ] MaxEp: 3  Scene: pillars  MP4: no  Stride: 3
+[ sbatch ] EGL device: 2
+[ phys-gif ] 3 episodes  res=96  fps=10  stride=3  mp4=False  skip=True
+
+[ phys-gif ] Scene: pillars (3 episodes)
+  pillars:   0%|          | 0/3 [00:00<?, ?it/s]  pillars:  33%|███▎      | 1/3 [00:01<00:03,  1.78s/it]  pillars:  67%|██████▋   | 2/3 [00:03<00:01,  1.88s/it]  pillars: 100%|██████████| 3/3 [00:06<00:00,  2.16s/it]  pillars: 100%|██████████| 3/3 [00:06<00:00,  2.07s/it]
+
+============================================================
+[ phys-gif ] Done.
+  Generated:  3 GIFs
+  Skipped:    0 (already existed)
+  Errors:     0
+  Output:     /data/home/llim/FMPCC/FM-PCC/logs/uav_expert_data/gifs_physics/
+============================================================
+[ sbatch ] Physics GIF generation complete.
+[ sbatch ] Output: logs/uav_expert_data/gifs_physics/
+========================================
+JOB END: Tue Jun  9 11:05:44 UTC 2026
+========================================

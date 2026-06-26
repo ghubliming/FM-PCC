@@ -1,0 +1,146 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Jun 12 10:40:24 UTC 2026
+JOB NAME:  train_fm_visual_avoiding
+JOB ID:    21480
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   5581c84
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.27.2 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260612_104028-sciky7zx
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run avoiding-d3il-visual-fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64-S6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM/runs/sciky7zx
+[ train ] Seeds: [6]  (source: cli --seeds)
+[ utils/setup ] Made savepath: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+[ train ] dataset=ParityAvoidingDataset (visual, 6D trajectory)
+
+[utils/config ] Config: <class 'fm_visual_avoiding.datasets.sequence.ParityAvoidingDataset'>
+    dataset_path: environments/dataset/data/avoiding/all_data/train_files.pkl
+    horizon: 8
+    max_n_episodes: 200
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/dataset_config.json
+
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 13725.65it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:02<00:00, 33.48it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, single-camera)
+[ train ] Saved obs_normalizer → logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/obs_normalizer.pkl
+[ train ] Saved act_normalizer → logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/act_normalizer.pkl
+[ train ] obs_normalizer [ Normalizer ] dim: 4
+    -: [ 0.23 -0.28  0.21 -0.28]
+    +: [0.82 0.49 0.77 0.49]
+
+[ train ] act_normalizer [ Normalizer ] dim: 2
+    -: [-0.01  0.  ]
+    +: [0.01 0.01]
+
+
+[utils/config ] Config: <class 'fm_visual_avoiding.models.visual_unet.VisualUNet'>
+    config: Namespace(config='config.avoiding-d3il-visual', seed=6, dataset='avoiding-d3il-visual', model='fm_visual_avoiding.models.visual_unet.VisualUNet', diffusion='fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching', action_dim=2, obs_dim=4, if_vision=True, horizon=8, time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, action_weight=1, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), condition_dropout=0.1, returns_condition=False, max_path_length=200, logbase='logs', prefix='fm_visual_avoiding/', exp_name='fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64', batch_size=64, learning_rate=0.0002, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=10000.0, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', savepath='logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6')
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized (SINGLE-CAM) — LATENT_DIM=64, imagenet_norm=True
+[ train ] n_timesteps (legacy buffer size) = 100  (FM uses continuous time; this value does not affect training dynamics)
+
+[utils/config ] Config: <class 'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching'>
+    action_dim: 2
+    action_weight: 1
+    clip_denoised: False
+    flow_steps_v3: 100
+    goal_dim: 0
+    horizon: 8
+    loss_type: l2
+    n_timesteps: 100
+    observation_dim: 4
+    ode_solver_backend_v3: legacy_euler
+    ode_solver_method_v3: euler
+    predict_epsilon: True
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'fm_visual_avoiding.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 10000.0
+    results_folder: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6
+    train_batch_size: 64
+    train_lr: 0.0002
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il-visual/fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64/6/trainer_config.json
+
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.6539, a0 loss:   1.6901
+Epoch 0: 100%|██████████| 1000/1000 [01:45<00:00,  9.47it/s, a0_loss=0.476, a0_loss_test=1.69, diffusion_loss=0.245, loss=0.123, loss_test=0.654, lr=0.0002, step=999]Epoch 0: 100%|██████████| 1000/1000 [01:45<00:00,  9.47it/s, a0_loss=0.476, a0_loss_test=1.69, diffusion_loss=0.245, loss=0.123, loss_test=0.654, lr=0.0002, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [01:47<00:00,  9.28it/s, a0_loss=0.251, a0_loss_test=0.395, diffusion_loss=0.151, loss=0.0755, loss_test=0.108, lr=0.000194, step=1999]Epoch 1: 100%|██████████| 1000/1000 [01:47<00:00,  9.28it/s, a0_loss=0.251, a0_loss_test=0.395, diffusion_loss=0.151, loss=0.0755, loss_test=0.108, lr=0.000194, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [01:53<00:00,  8.78it/s, a0_loss=0.244, a0_loss_test=0.306, diffusion_loss=0.0961, loss=0.0481, loss_test=0.0738, lr=0.000177, step=2999]Epoch 2: 100%|██████████| 1000/1000 [01:53<00:00,  8.78it/s, a0_loss=0.244, a0_loss_test=0.306, diffusion_loss=0.0961, loss=0.0481, loss_test=0.0738, lr=0.000177, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [01:47<00:00,  9.31it/s, a0_loss=0.148, a0_loss_test=0.303, diffusion_loss=0.0928, loss=0.0464, loss_test=0.0603, lr=0.00015, step=3999]Epoch 3: 100%|██████████| 1000/1000 [01:47<00:00,  9.31it/s, a0_loss=0.148, a0_loss_test=0.303, diffusion_loss=0.0928, loss=0.0464, loss_test=0.0603, lr=0.00015, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [02:00<00:00,  8.31it/s, a0_loss=0.192, a0_loss_test=0.24, diffusion_loss=0.102, loss=0.0508, loss_test=0.0572, lr=0.000117, step=4999]Epoch 4: 100%|██████████| 1000/1000 [02:00<00:00,  8.31it/s, a0_loss=0.192, a0_loss_test=0.24, diffusion_loss=0.102, loss=0.0508, loss_test=0.0572, lr=0.000117, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [01:56<00:00,  8.56it/s, a0_loss=0.114, a0_loss_test=0.221, diffusion_loss=0.053, loss=0.0265, loss_test=0.0533, lr=8.26e-5, step=5999]Epoch 5: 100%|██████████| 1000/1000 [01:56<00:00,  8.56it/s, a0_loss=0.114, a0_loss_test=0.221, diffusion_loss=0.053, loss=0.0265, loss_test=0.0533, lr=8.26e-5, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [01:57<00:00,  8.49it/s, a0_loss=0.185, a0_loss_test=0.234, diffusion_loss=0.0627, loss=0.0314, loss_test=0.0607, lr=5e-5, step=6999]Epoch 6: 100%|██████████| 1000/1000 [01:57<00:00,  8.49it/s, a0_loss=0.185, a0_loss_test=0.234, diffusion_loss=0.0627, loss=0.0314, loss_test=0.0607, lr=5e-5, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [01:47<00:00,  9.29it/s, a0_loss=0.0534, a0_loss_test=0.236, diffusion_loss=0.0412, loss=0.0206, loss_test=0.0633, lr=2.34e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [01:47<00:00,  9.29it/s, a0_loss=0.0534, a0_loss_test=0.236, diffusion_loss=0.0412, loss=0.0206, loss_test=0.0633, lr=2.34e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [01:44<00:00,  9.54it/s, a0_loss=0.0412, a0_loss_test=0.271, diffusion_loss=0.0381, loss=0.0191, loss_test=0.0748, lr=6.03e-6, step=8999]Epoch 8: 100%|██████████| 1000/1000 [01:44<00:00,  9.54it/s, a0_loss=0.0412, a0_loss_test=0.271, diffusion_loss=0.0381, loss=0.0191, loss_test=0.0748, lr=6.03e-6, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [01:50<00:00,  9.09it/s, a0_loss=0.0377, a0_loss_test=0.285, diffusion_loss=0.0534, loss=0.0267, loss_test=0.0816, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [01:50<00:00,  9.09it/s, a0_loss=0.0377, a0_loss_test=0.285, diffusion_loss=0.0534, loss=0.0267, loss_test=0.0816, lr=0, step=9999]
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.017 MB of 0.026 MB uploaded (0.004 MB deduped)wandb: \ 0.037 MB of 0.037 MB uploaded (0.004 MB deduped)wandb: | 0.037 MB of 0.037 MB uploaded (0.004 MB deduped)wandb: / 0.037 MB of 0.037 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 9.7%
+wandb: 
+wandb: Run history:
+wandb:  test/a0_loss █▂▁▁▁▁▁▁▁▁
+wandb:     test/loss █▂▁▁▁▁▁▁▁▁
+wandb: train/a0_loss █▂▂▂▁▂▁▁▁▁
+wandb:    train/loss █▂▂▂▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:  final_test_loss 0.08165
+wandb: final_train_loss 0.02587
+wandb:             seed 6
+wandb:           status completed
+wandb:     test/a0_loss 0.28474
+wandb:        test/loss 0.08165
+wandb:    train/a0_loss 0.10123
+wandb:       train/loss 0.02587
+wandb: 
+wandb: 🚀 View run avoiding-d3il-visual-fm_visual_avoiding/H8_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64-S6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM/runs/sciky7zx
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-avoiding-FM
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260612_104028-sciky7zx/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Visual-FM (Gen7) training completed.
+Job completed successfully.

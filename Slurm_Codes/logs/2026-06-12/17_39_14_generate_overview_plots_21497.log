@@ -1,0 +1,36 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV OVERVIEW PLOT GENERATION (E5 U5)
+DATE:     Fri Jun 12 15:39:15 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21497
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ sbatch ] Mode: per-episode  Scene: all  PerHomo: 1  DataDir: default  DPI: 150
+[ plot ] 13 episodes  mode=per-episode  dpi=150  out=/data/home/llim/FMPCC/FM-PCC/logs/uav_expert_data/plots
+
+[ plot ] Scene: corridor  (3 episodes)
+  [ plot ] corridor_C_pid_default_0000001 → logs/uav_expert_data/plots/corridor/C/corridor_C_pid_default_0000001_plot.png
+  [ plot ] corridor_L_pid_default_0000000 → logs/uav_expert_data/plots/corridor/L/corridor_L_pid_default_0000000_plot.png
+  [ plot ] corridor_R_pid_default_0000002 → logs/uav_expert_data/plots/corridor/R/corridor_R_pid_default_0000002_plot.png
+
+[ plot ] Scene: empty  (1 episodes)
+
+[ plot ] Scene: pillars  (4 episodes)
+
+[ plot ] Scene: pillars(bf_fix1)  (4 episodes)
+
+[ plot ] Scene: s_curve  (1 episodes)
+
+============================================================
+[ plot ] Done.
+  Episodes generated  : 13
+  Episodes skipped    : 0
+  Output              : /data/home/llim/FMPCC/FM-PCC/logs/uav_expert_data/plots/
+============================================================
+[ sbatch ] Plot generation complete.
+[ sbatch ] Output: logs/uav_expert_data/plots/
+========================================
+JOB END: Fri Jun 12 15:39:21 UTC 2026
+========================================

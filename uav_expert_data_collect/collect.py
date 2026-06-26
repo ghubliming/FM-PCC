@@ -23,6 +23,7 @@ import json
 import os
 import sys
 import time
+from collections import Counter
 
 import numpy as np
 
@@ -71,9 +72,11 @@ def main():
                      if args.homotopy == 'all'
                      else [args.homotopy])
 
-    saved    = 0
-    rejected = 0
-    t0       = time.time()
+    saved              = 0
+    rejected           = 0
+    reject_counter     = Counter()   # U5 Step 1: reason → count
+    accepted_clip_list = []          # U7 C2: clip% of saved episodes
+    t0                 = time.time()
 
     print(f'[ collect ] scene={args.scene}  n_trials={args.n_trials}  '
           f'homotopy_pool={homotopy_pool}  gain={args.gain_variant}  '
@@ -90,13 +93,22 @@ def main():
             seed=trial_seed,
         )
 
-        if rollout is None:
+        # U5 Step 1: run_trial now returns a reject dict instead of None
+        if rollout is None or rollout.get('rejected'):
             rejected += 1
+            reason = rollout.get('reason', 'unknown') if rollout else 'unknown'
+            reject_counter[reason] += 1
+            min_z_str = (f'  min_z={rollout["min_z"]:.3f}'
+                         if rollout and 'min_z' in rollout else '')
+            clip_str  = (f'  clip={rollout["motor_clip_frac"]:.1%}'
+                         if rollout and 'motor_clip_frac' in rollout else '')
+            print(f'[ collect ] REJECT #{rejected}  reason={reason}{min_z_str}{clip_str}')
             total = rejected + saved
             if total > 20 and rejected / total > args.reject_limit:
+                hist = '  '.join(f'{k}={v}' for k, v in reject_counter.most_common())
                 print(f'[ collect ] ABORT: rejection rate '
                       f'{rejected/total:.1%} > limit {args.reject_limit:.1%}. '
-                      f'Check PID stability (Decision 2 fix applied?).')
+                      f'HISTOGRAM: {hist}')
                 break
             continue
 
@@ -111,6 +123,7 @@ def main():
         ep_dir  = os.path.join(out_root, _safe_dir(homotopy))
         path    = save_episode(episode, ep_dir)
         saved  += 1
+        accepted_clip_list.append(rollout.get('motor_clip_frac', 0.0))
 
         if saved % 50 == 0 or saved == 1:
             elapsed = time.time() - t0
@@ -122,24 +135,31 @@ def main():
 
     elapsed = time.time() - t0
     total   = saved + rejected
+    acc_clip_mean = (sum(accepted_clip_list) / len(accepted_clip_list)
+                     if accepted_clip_list else 0.0)
+    acc_clip_max  = max(accepted_clip_list) if accepted_clip_list else 0.0
     summary = {
-        'scene':          args.scene,
-        'gain_variant':   args.gain_variant,
-        'seed':           args.seed,
-        'n_trials':       args.n_trials,
-        'saved':          saved,
-        'rejected':       rejected,
-        'rejection_rate': round(rejected / max(total, 1), 4),
-        'elapsed_s':      round(elapsed, 1),
-        'sec_per_episode': round(elapsed / max(saved, 1), 3),
+        'scene':                args.scene,
+        'gain_variant':         args.gain_variant,
+        'seed':                 args.seed,
+        'n_trials':             args.n_trials,
+        'saved':                saved,
+        'rejected':             rejected,
+        'rejection_rate':       round(rejected / max(total, 1), 4),
+        'reject_histogram':     dict(reject_counter),
+        'accepted_clip_mean':   round(acc_clip_mean, 4),
+        'accepted_clip_max':    round(acc_clip_max,  4),
+        'elapsed_s':            round(elapsed, 1),
+        'sec_per_episode':      round(elapsed / max(saved, 1), 3),
     }
     os.makedirs(out_root, exist_ok=True)
     with open(os.path.join(out_root, 'run_summary.json'), 'w') as f:
         json.dump(summary, f, indent=2)
 
+    hist = '  '.join(f'{k}={v}' for k, v in reject_counter.most_common()) or 'none'
     print(f'[ collect ] DONE  saved={saved}  rejected={rejected}  '
           f'({summary["rejection_rate"]:.1%} rejected)  '
-          f'elapsed={elapsed:.0f}s')
+          f'elapsed={elapsed:.0f}s  HISTOGRAM: {hist}')
 
 
 if __name__ == '__main__':

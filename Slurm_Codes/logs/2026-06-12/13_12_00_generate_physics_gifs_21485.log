@@ -1,0 +1,42 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV PHYSICS REPLAY GIF GENERATION (Epoch 5 WS-D)
+DATE:     Fri Jun 12 11:13:08 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21485
+GPU:      6
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+[ sbatch ] Python: /u/home/llim/miniconda3/envs/FMPCC/bin/python
+[ sbatch ] MaxEp: all  Scene: all  MP4: no  Stride: 5  PerHomo: 10
+[ sbatch ] EGL device: 6
+[ phys-gif ] 129 episodes  res=96  fps=10  stride=5  mp4=False  skip=True
+
+[ phys-gif ] Scene: corridor (30 episodes)
+  corridor:   0%|          | 0/30 [00:00<?, ?it/s]  corridor:   3%|▎         | 1/30 [00:00<00:19,  1.46it/s]  corridor:   7%|▋         | 2/30 [00:01<00:21,  1.29it/s]  corridor:  10%|█         | 3/30 [00:02<00:20,  1.29it/s]  corridor:  13%|█▎        | 4/30 [00:03<00:20,  1.28it/s]  corridor:  17%|█▋        | 5/30 [00:03<00:19,  1.25it/s]  corridor:  20%|██        | 6/30 [00:04<00:17,  1.37it/s]  corridor:  23%|██▎       | 7/30 [00:05<00:16,  1.40it/s]  corridor:  27%|██▋       | 8/30 [00:05<00:15,  1.46it/s]  corridor:  30%|███       | 9/30 [00:06<00:14,  1.47it/s]  corridor:  33%|███▎      | 10/30 [00:07<00:14,  1.36it/s]  corridor:  37%|███▋      | 11/30 [00:08<00:13,  1.38it/s]  corridor:  40%|████      | 12/30 [00:08<00:12,  1.41it/s]  corridor:  43%|████▎     | 13/30 [00:09<00:12,  1.40it/s]  corridor:  47%|████▋     | 14/30 [00:10<00:11,  1.42it/s]  corridor:  50%|█████     | 15/30 [00:11<00:11,  1.28it/s]  corridor:  53%|█████▎    | 16/30 [00:11<00:11,  1.23it/s]  corridor:  57%|█████▋    | 17/30 [00:12<00:10,  1.21it/s]  corridor:  60%|██████    | 18/30 [00:13<00:09,  1.21it/s]  corridor:  63%|██████▎   | 19/30 [00:14<00:08,  1.25it/s]  corridor:  67%|██████▋   | 20/30 [00:15<00:07,  1.30it/s]  corridor:  70%|███████   | 21/30 [00:15<00:06,  1.34it/s]  corridor:  73%|███████▎  | 22/30 [00:16<00:06,  1.27it/s]  corridor:  77%|███████▋  | 23/30 [00:17<00:05,  1.19it/s]  corridor:  80%|████████  | 24/30 [00:18<00:04,  1.22it/s]  corridor:  83%|████████▎ | 25/30 [00:19<00:03,  1.26it/s]  corridor:  87%|████████▋ | 26/30 [00:19<00:02,  1.34it/s]  corridor:  90%|█████████ | 27/30 [00:20<00:02,  1.33it/s]  corridor:  93%|█████████▎| 28/30 [00:21<00:01,  1.28it/s]  corridor:  97%|█████████▋| 29/30 [00:22<00:00,  1.33it/s]  corridor: 100%|██████████| 30/30 [00:22<00:00,  1.32it/s]  corridor: 100%|██████████| 30/30 [00:22<00:00,  1.31it/s]
+
+[ phys-gif ] Scene: empty (10 episodes)
+  empty:   0%|          | 0/10 [00:00<?, ?it/s]  empty:  10%|█         | 1/10 [00:00<00:05,  1.51it/s]  empty:  20%|██        | 2/10 [00:01<00:03,  2.00it/s]  empty:  30%|███       | 3/10 [00:01<00:03,  2.27it/s]  empty:  40%|████      | 4/10 [00:02<00:03,  1.92it/s]  empty:  50%|█████     | 5/10 [00:02<00:02,  2.00it/s]  empty:  60%|██████    | 6/10 [00:03<00:02,  1.91it/s]  empty:  70%|███████   | 7/10 [00:03<00:01,  1.91it/s]  empty:  80%|████████  | 8/10 [00:04<00:01,  1.73it/s]  empty:  90%|█████████ | 9/10 [00:04<00:00,  1.81it/s]  empty: 100%|██████████| 10/10 [00:05<00:00,  1.93it/s]  empty: 100%|██████████| 10/10 [00:05<00:00,  1.91it/s]
+
+[ phys-gif ] Scene: pillars (40 episodes)
+  pillars:   0%|          | 0/40 [00:00<?, ?it/s]  pillars:   2%|▎         | 1/40 [00:01<00:48,  1.24s/it]  pillars:   5%|▌         | 2/40 [00:02<00:45,  1.20s/it]  pillars:   8%|▊         | 3/40 [00:03<00:48,  1.31s/it]  pillars:  10%|█         | 4/40 [00:05<00:49,  1.38s/it]  pillars:  12%|█▎        | 5/40 [00:06<00:46,  1.32s/it]  pillars:  15%|█▌        | 6/40 [00:07<00:44,  1.31s/it]  pillars:  18%|█▊        | 7/40 [00:09<00:42,  1.29s/it]  pillars:  20%|██        | 8/40 [00:10<00:43,  1.36s/it]  pillars:  22%|██▎       | 9/40 [00:11<00:41,  1.35s/it]  pillars:  25%|██▌       | 10/40 [00:13<00:39,  1.32s/it]  pillars:  28%|██▊       | 11/40 [00:14<00:40,  1.40s/it]  pillars:  30%|███       | 12/40 [00:16<00:39,  1.43s/it]  pillars:  32%|███▎      | 13/40 [00:17<00:36,  1.36s/it]  pillars:  35%|███▌      | 14/40 [00:18<00:36,  1.41s/it]  pillars:  38%|███▊      | 15/40 [00:20<00:35,  1.40s/it]  pillars:  40%|████      | 16/40 [00:21<00:33,  1.38s/it]  pillars:  42%|████▎     | 17/40 [00:23<00:31,  1.38s/it]  pillars:  45%|████▌     | 18/40 [00:24<00:30,  1.39s/it]  pillars:  48%|████▊     | 19/40 [00:25<00:29,  1.42s/it]  pillars:  50%|█████     | 20/40 [00:27<00:27,  1.39s/it]  pillars:  52%|█████▎    | 21/40 [00:28<00:25,  1.34s/it]  pillars:  55%|█████▌    | 22/40 [00:29<00:23,  1.31s/it]  pillars:  57%|█████▊    | 23/40 [00:30<00:21,  1.26s/it]  pillars:  60%|██████    | 24/40 [00:32<00:20,  1.26s/it]  pillars:  62%|██████▎   | 25/40 [00:33<00:19,  1.32s/it]  pillars:  65%|██████▌   | 26/40 [00:34<00:17,  1.27s/it]  pillars:  68%|██████▊   | 27/40 [00:35<00:16,  1.25s/it]  pillars:  70%|███████   | 28/40 [00:37<00:15,  1.26s/it]  pillars:  72%|███████▎  | 29/40 [00:38<00:14,  1.35s/it]  pillars:  75%|███████▌  | 30/40 [00:40<00:13,  1.30s/it]  pillars:  78%|███████▊  | 31/40 [00:41<00:11,  1.26s/it]  pillars:  80%|████████  | 32/40 [00:42<00:10,  1.34s/it]  pillars:  82%|████████▎ | 33/40 [00:44<00:09,  1.33s/it]  pillars:  85%|████████▌ | 34/40 [00:45<00:08,  1.38s/it]  pillars:  88%|████████▊ | 35/40 [00:47<00:07,  1.43s/it]  pillars:  90%|█████████ | 36/40 [00:48<00:05,  1.41s/it]  pillars:  92%|█████████▎| 37/40 [00:49<00:04,  1.35s/it]  pillars:  95%|█████████▌| 38/40 [00:50<00:02,  1.25s/it]  pillars:  98%|█████████▊| 39/40 [00:51<00:01,  1.26s/it]  pillars: 100%|██████████| 40/40 [00:53<00:00,  1.28s/it]  pillars: 100%|██████████| 40/40 [00:53<00:00,  1.33s/it]
+
+[ phys-gif ] Scene: pillars(bf_fix1) (39 episodes)
+[ phys-gif ] WARN: XML not found for "pillars(bf_fix1)", skipping.
+
+[ phys-gif ] Scene: s_curve (10 episodes)
+  s_curve:   0%|          | 0/10 [00:00<?, ?it/s]  s_curve:  10%|█         | 1/10 [00:01<00:13,  1.45s/it]  s_curve:  20%|██        | 2/10 [00:02<00:11,  1.46s/it]  s_curve:  30%|███       | 3/10 [00:04<00:11,  1.65s/it]  s_curve:  40%|████      | 4/10 [00:06<00:10,  1.79s/it]  s_curve:  50%|█████     | 5/10 [00:08<00:09,  1.91s/it]  s_curve:  60%|██████    | 6/10 [00:10<00:07,  1.88s/it]  s_curve:  70%|███████   | 7/10 [00:12<00:05,  1.85s/it]  s_curve:  80%|████████  | 8/10 [00:14<00:03,  1.90s/it]  s_curve:  90%|█████████ | 9/10 [00:16<00:01,  1.85s/it]  s_curve: 100%|██████████| 10/10 [00:18<00:00,  1.86s/it]  s_curve: 100%|██████████| 10/10 [00:18<00:00,  1.82s/it]
+
+============================================================
+[ phys-gif ] Done.
+  Generated:  90 GIFs
+  Skipped:    0 (already existed)
+  Errors:     0
+  Output:     /data/home/llim/FMPCC/FM-PCC/logs/uav_expert_data/gifs_physics/
+============================================================
+[ sbatch ] Physics GIF generation complete.
+[ sbatch ] Output: logs/uav_expert_data/gifs_physics/
+========================================
+JOB END: Fri Jun 12 11:14:49 UTC 2026
+========================================

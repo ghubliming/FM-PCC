@@ -1,0 +1,57 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 23 14:54:32 UTC 2026  |  eval_fm_uav  |  ID 21952  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 4
+GIT REV:   a30ace3
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Tue Jun 23 14:54:33 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6 --n-trials 4 --projection fm_only --record gif
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 750, 9)
+    actions: (475, 750, 3)
+    rewards: (475, 750, 1)
+    terminals: (475, 750, 1)
+    normed_observations: (475, 750, 9)
+    normed_actions: (475, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 294, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 281, in main
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 281, in <dictcomp>
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 235, in eval_scene
+    r = rollout_one(scene, homotopy, 10_000 + i, policy, horizon, record=record)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 192, in rollout_one
+    renderer.close()
+AttributeError: 'Renderer' object has no attribute 'close'
+Exception ignored in: <function GLContext.__del__ at 0x7f5810897f40>
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 130, in __del__
+    self.free()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 123, in free
+    EGL.eglMakeCurrent(EGL_DISPLAY, EGL.EGL_NO_SURFACE,
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglMakeCurrent,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f5810540740>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f58111faac0>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f58111faac0>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f58111faa40>,
+	),
+	result = 0
+)
+JOB END: Tue Jun 23 14:55:12 UTC 2026

@@ -8,6 +8,9 @@ import minari
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+# WARNING: Architectural mismatch! This script is in FM_v3_imeanflow_test but is importing
+# from 'flow_matcher_v3_ode_selectable'. De facto it works perfectly because the code in 
+# both variants is functionally identical, but this should ideally import from 'flow_matcher_v3_imeanflow'.
 import flow_matcher_v3_ode_selectable.utils as utils
 from flow_matcher_v3_ode_selectable.sampling.policies import Policy
 from flow_matcher_v3_ode_selectable.sampling.projection import Projector
@@ -383,7 +386,8 @@ for exp in exps:
                                  collision_free_completed=collision_free_completed, 
                                  args=args,
                                  obs_all=np.array(obs_all, dtype=object),
-                                 act_all=np.array(act_all, dtype=object))
+                                 act_all=np.array(act_all, dtype=object),
+                                 sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))  # MPC_NPZ_PATCH
                     fig.savefig(f'{save_path}/{variant}.png')
                     plt.close(fig)
                     ax_all[0, variant_idx].set_title(variant)

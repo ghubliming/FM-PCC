@@ -37,4 +37,7 @@ temp/*
 .claude_history_backup
 
 # Scratch directory
-scratch/
+scratch/
+
+# Gen11 E6 — ignore all root-level data/ (curated UAV FM dataset, regenerable from raw collect)
+/data/

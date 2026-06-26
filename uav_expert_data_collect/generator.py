@@ -79,6 +79,12 @@ GAIN_VARIANTS = {
 # Trials with more than this fraction of obstacle-contact steps are rejected.
 MAX_CONTACT_FRACTION = 0.02
 
+# Fix_2 (E4 U3): floor crashes were silently accepted because _is_obstacle_contact
+# excludes floor contacts.  Reject any episode where the drone body drops below this
+# altitude (normal hover z = 0.7–1.1 m; floor at z = 0; 0.50 m gives 0.36 m margin
+# above the minimum physical floor-contact height of ~0.14 m rotor radius).
+Z_FLOOR_MARGIN = 0.50
+
 # Fix_4: s_curve has narrow wall end-faces at x=±0.5 that the drone briefly
 # grazes even on good trajectories.  Raise threshold to 0.08 for that scene
 # so brief end-face clips don't reject otherwise valid episodes.
@@ -115,7 +121,7 @@ def _make_pid(model, gain_variant):
 
 def _build_traj_and_init(scene, homotopy, rng):
     """Return (traj_fn, init_pos_array, duration_s) for the given scene + homotopy."""
-    z = float(rng.uniform(0.70, 1.10))
+    z = float(rng.uniform(0.90, 1.30))  # U5 Step 2: +0.20 m altitude headroom
 
     if scene == 'empty':
         # Random start/end with minimum separation 1.0 m.
@@ -141,8 +147,9 @@ def _build_traj_and_init(scene, homotopy, rng):
 
     elif scene == 's_curve':
         y_jitter = float(rng.uniform(-0.04, 0.04))
-        # Fix_4: revert duration [22,30]→[16,22]s to match the Fix_2 config that
-        # achieved 61.9% rejection (best so far).  Longer duration worsened things.
+        # U4 Fix A raised [16,22]→[18,24]s as budget for two 1.0 s hover pauses.
+        # U9: hovers removed (smooth blended_path) → revert to [16,22]s so the
+        # manoeuvre time, and hence the validated speed regime, stays the same.
         dur      = float(rng.uniform(16.0, 22.0))
         p_s = np.array([-3.2, -0.8 + y_jitter, z])
         return trajs.s_curve_scene_path(z, dur, y_jitter=y_jitter), p_s, dur
@@ -155,6 +162,8 @@ def _build_traj_and_init(scene, homotopy, rng):
         # safe.  weave also mislabelled (L,R,L)/(R,L,R): amplitude=0 flew centre
         # every time, giving those homotopies the wrong label.  pillar_path routes
         # the drone through the correct channel at each pillar pair explicitly.
+        # U9: pillar_path is now blended (no zero-velocity stops); same waypoint
+        # skeleton and channel margins, corners cut by ≤0.3 m fillets in open space.
         _seq_map = {
             '(L,L,L)': ['L', 'L', 'L'],
             '(L,R,L)': ['L', 'R', 'L'],
@@ -191,7 +200,10 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         init_pos        : list[float]
         obstacles       : list[dict]  (from SCENE_OBSTACLES)
         contact_fraction: float
-    or None if obstacle contact fraction exceeds MAX_CONTACT_FRACTION.
+        motor_clip_frac : float  — fraction of steps where any motor hit u_max/u_min
+    or a reject dict {'rejected': True, 'reason': str, 'min_z': float,
+                      'contact_frac': float, 'motor_clip_frac': float}
+    if a quality threshold is exceeded.
     """
     rng = np.random.default_rng(seed)
     model = mujoco.MjModel.from_xml_path(SCENE_XMLS[scene])
@@ -210,8 +222,9 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
     dt     = float(model.opt.timestep)
     n_step = int(round(dur / dt))
 
-    steps    = []
-    n_hit    = 0
+    steps       = []
+    n_hit       = 0
+    n_clip      = 0   # U5 Step 1: motor-saturation step counter
 
     for k in range(n_step):
         t = k * dt
@@ -223,6 +236,10 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         om = data.qvel[3:6].copy()
 
         u = pid.compute(p, q, v, om, p_des, v_des, a_des, yaw_des)
+        # U6 C3: count raw saturation events (pre-allocation demand exceeded bounds),
+        # not boundary-touching output — U5's boundary check gave 0% for thrust-priority
+        # output which never touches u_max, hiding real saturation.
+        n_clip += int(pid.last_raw_saturated)
         data.ctrl[:4] = u
         mujoco.mj_step(model, data)
 
@@ -233,10 +250,23 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         steps.append({'p': p, 'v': v, 'p_des': np.asarray(p_des, dtype=float),
                       'q': q.astype(np.float32)})  # D-prep: actual quaternion for attitude rendering
 
-    contact_frac  = n_hit / max(n_step, 1)
-    contact_limit = SCENE_MAX_CONTACT_FRACTION.get(scene, MAX_CONTACT_FRACTION)
+    contact_frac     = n_hit / max(n_step, 1)
+    motor_clip_frac  = n_clip / max(n_step, 1)
+    contact_limit    = SCENE_MAX_CONTACT_FRACTION.get(scene, MAX_CONTACT_FRACTION)
+    min_z            = min(s['p'][2] for s in steps)
+
+    # U5 Step 1: return named reject dicts instead of bare None so collect.py
+    # can build a reject histogram and distinguish the two failure modes.
     if contact_frac > contact_limit:
-        return None
+        return {'rejected': True, 'reason': 'contact',
+                'contact_frac': contact_frac, 'min_z': min_z,
+                'motor_clip_frac': motor_clip_frac}
+
+    # Fix_2: reject floor crashes (not caught by contact_frac — see Fix_2/ANALYSIS.md)
+    if min_z < Z_FLOOR_MARGIN:
+        return {'rejected': True, 'reason': 'floor',
+                'min_z': min_z, 'contact_frac': contact_frac,
+                'motor_clip_frac': motor_clip_frac}
 
     return {
         'steps':            steps,
@@ -248,6 +278,7 @@ def run_trial(scene, homotopy, gain_variant, seed, duration=None):
         'init_pos':         init_pos.tolist(),
         'obstacles':        SCENE_OBSTACLES[scene],
         'contact_fraction': contact_frac,
+        'motor_clip_frac':  motor_clip_frac,
     }
 
 

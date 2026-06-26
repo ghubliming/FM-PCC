@@ -94,7 +94,7 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/17_55_00_eval_drifting_20662.log
 
 ---
 
-- iMF
+# iMF
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
 
 finished, by loss curve is bad
@@ -168,8 +168,57 @@ K10
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
 (Still Exploded)
 
+- U3
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/11_53_09_eval_imf_21448.log
+
+U3.2/final
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/13_34_25_train_imf_21451.log
++
+21455
+
+- U4
+1e4
+21547 train
+21553 eval
+
+1e5
+21572/3 train + eval
+
+21575 try 2 NFE from 10 NFE
+
+21576/7/8 - Uniform Scheduling + turn off aux head
+
+still bad
+
+- U5
+21634/5 1e4 trian/eval
+21645 -> K10
+
+1e5 train -> K10
+21658
+21659/21660
+
+- U6 DiT 
+21665 (1e4)
+21666/67
+
+(1e5)
+21673/4 K10
+21706 K2
+
+21724 kill cfg in eval reeval K1, chaotic
+21726 K20
+21727 K40
+
+21736 rk4 K20
+21740 rk4 K2 
+
+21744 - TRAIN MAX & other enhanced parameters
+21753 eval(submit as dependency)
+
 ---
-- Visual 
+# Visual 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
 
 Interrupt, the loss curve looks wrong in WandB
@@ -546,6 +595,9 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/16_32_56_eval_d3il_baseline_20894.log
 
 ---
 
+U2 20/06/2026
+21760-21771
+
 ---
 # Gen8 iMF Visual Aligning
 
@@ -558,6 +610,12 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-03/18_00_01_train_imf_visual_aligning_2116
 
 fix2.5 eval run
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-04/12_50_31_eval_imf_visual_aligning_21196.log
+
+- U2
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/12_02_36_eval_imf_visual_aligning_21450.log
+
+U2.2/final
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-11/13_38_13_train_imf_visual_aligning_21452.log
 
 # Gen 9 Visual Avoiding (Camera Data Collection)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-29/16_14_33_collect_visual_avoiding_20940.log
@@ -603,6 +661,54 @@ Fix 3
 21317,18 
 - [ ] Pending to read the reuslts
 
+fix again Fix3(.2)
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-09/18_02_22_eval_visual_avoiding_dpcc_21376.log
++
+21457 Eval
++
+21462 Eval
++
+21472
+
+---
+
+## U3
+FM
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-12/12_40_24_train_fm_visual_avoiding_21480.log
++
+21481
+
+Diffu.
+21492
+
+from 1e4 to 1e5 train
+21514/5
++
+diffu.
+21517/8
+
+fix1 test revert if affect?
+21530/531 same setup as 21517
+
+---
+
+20/06
+Try redo full FM eval
+21782
+
+& Diffu Piepline
+21783
+
+bug is .sh time 4h limit... reeval FM and Diffu
+FM 21822/3
+
+Diffu. 21824/5
+
+---
+
+seed 78910
+21969 FM
+21970 Diffu
 
 # Gen11
 # E2 
@@ -650,6 +756,35 @@ Fix1
 ## U3
 21339 -> 21342
 
+## U3F1 & GPU Leak Test
+21356
+
+F2
+21368-21371
+
+## U4
+21398 - 21401
+
+## U5
+21408 - 21411
+
+## U6
+21415 - 21418
+
+## U7
+21419 - 21422
+
+## U8,9
+21474 - 21477
+
+fix1
+21482
+
+-> Recollect Gif!  21484 + 21485
+
+## U10 stress Test
+21494 + GIF 21495 + 21496
+
 # E5
 21289
 
@@ -660,3 +795,54 @@ Fix1
 ## U2
 21329 (too long!)
 21330 (./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_expert_data/generate_gifs.sh "" "" "" 3)
+
+## U3
+21358
+werid behaviors
+FMPCC/FM-PCC/logs/uav_expert_data/gifs_physics/pillars/L_L_L
+21367
+
+Fix 2 (on Data E4 U7)
+21436
+21437
+
+## U5 2D plot
+21497
+
+# misc
+touched files during rebase(already fixed)
+~~Slurm_Codes/sbatch/Drifting/train_drifting.sh~~
+
+Slurm_Codes/sbatch/diffuser_visual_aligning/eval_visual_aligning_dpcc.sh
+
+Slurm_Codes/sbatch/diffuser_visual_aligning/train_visual_aligning_dpcc.sh
+
+Slurm_Codes/sbatch/diffuser_visual_avoiding/train_visual_avoiding_dpcc.sh
+
+Slurm_Codes/sbatch/fm_visual_aligning/eval_fm_visual_aligning.sh
+
+Slurm_Codes/sbatch/iMF/train_imf.sh
+
+
+# E6
+check prepare UAV FM data 21873
+fm gate 21874/ fix -> 21875 -> hotfix again 21876
+21877 keep testing
+21878 still bug, but go full tests
+
+21879 - TRAIN 
+21880 to 21904 all our train & eval
+serveal seveve bugs
+
+Debug
+21925-6,7,8
+
+U3
+21952/3
+
+other sence tests
+21988/89
+
+21990-unkown jobs
+
+21991-

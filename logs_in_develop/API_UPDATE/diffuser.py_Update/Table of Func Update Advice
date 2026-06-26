@@ -1,0 +1,30 @@
+Viewed diffusion.py:124-171
+
+Here is a translation table mapping the legacy DDPM (Denoising Diffusion Probabilistic Model) function names to what they *should* be called in a pure Flow Matching (FM) paradigm.
+
+Because this codebase evolved from an older diffusion repo (`d3il`/`diffuser`), the scaffolding kept the old DDPM names so that the parent classes wouldn't break. Here is how you should mentally translate them:
+
+### Sampling Functions
+
+| Current Name (Legacy DDPM) | True FM Name (Mental Model) | Why the difference? (DDPM $\rightarrow$ FM) |
+| :--- | :--- | :--- |
+| `predict_start_from_noise` | `calc_base_noise` | **DDPM:** Rewinds from noise ($x_t$) to predict the clean data ($x_0$).<br>**FM:** Rewinds the current position ($x_t$) using the velocity ($v$) to find the initial **base noise** ($x_0$). The flow is reversed! |
+| `q_posterior` | *(Remove entirely)* | **DDPM:** Calculates the "fuzziness" (variance) of taking a step backward.<br>**FM:** Flow matching is based on deterministic ODEs. There is no variance or fuzziness. The math is exact. |
+| `p_mean_variance` | `euler_integration_step` | **DDPM:** Predicts the probability bubble (mean and variance) for the next step.<br>**FM:** Predicts a velocity vector and takes a hard, deterministic math step forward ($x + v \cdot dt$). |
+| `p_sample` | `take_ode_step` | **DDPM:** Actually samples a random point from the probability bubble.<br>**FM:** Executes the exact math step. No random sampling occurs here. |
+| `p_sample_loop` | `ode_solver_loop` | **DDPM:** The backward loop iteratively stripping noise away.<br>**FM:** A forward loop integrating an ODE from $t=0$ (noise) to $t=1$ (data). |
+| `conditional_sample` | `generate_trajectory` | Just a high-level wrapper, but "sampling" implies randomness, whereas ODE generation is deterministic. |
+
+### Training Functions
+
+| Current Name (Legacy DDPM) | True FM Name (Mental Model) | Why the difference? (DDPM $\rightarrow$ FM) |
+| :--- | :--- | :--- |
+| `q_sample` | `interpolate_flow_path` | **DDPM:** Slowly adds random Gaussian noise to a clean image based on a variance schedule.<br>**FM:** Just draws a straight line between noise and data, and picks a point on that line. |
+| `p_losses` | `velocity_matching_loss` | **DDPM:** Tries to predict how much noise ($\epsilon$) was added to the data.<br>**FM:** Tries to predict the straight-line velocity ($v = Data - Noise$) vector. |
+
+### The Core Paradigm Shift
+When you read DDPM code, you are reading **Probabilistic Math**. Everything is about *Noise*, *Means*, *Variances*, and *Probability Distributions*.
+
+When you read Flow Matching code, you are reading **Physics/Calculus Math**. Everything is about *Positions*, *Velocities*, *Time*, and *Vectors*. 
+
+The reason this codebase uses DDPM names is simply for software compatibility. The `Trainer` class was originally written for DDPMs, and it expects a model that has a `p_losses` and a `conditional_sample` function. To save time during research, the developers just hollowed out the DDPM math inside those functions and replaced it with FM calculus, without renaming the functions themselves.

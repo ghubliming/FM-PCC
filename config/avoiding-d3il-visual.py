@@ -189,7 +189,11 @@ base = {
         'returns_condition': False,
         'predict_epsilon':  True,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'clip_denoised':    False,
+        # U3-C1: must be True — False lets VisualGaussianDiffusion run unclamped, compounding
+        # x_recon errors across K denoising steps → exploded trajectories at eval.
+        # NOTE: this .py value is NEVER read at eval — the frozen diffusion_config.pkl wins.
+        # For in-flight checkpoints run: python diffuser_visual_avoiding_test/fix_pkl_clip_denoised.py --find logs/
+        'clip_denoised':    True,
         'diffusion_loadpath': (
             'f:visual_avoiding_dpcc/'
             'H{horizon}_K{n_diffusion_steps}_D{diffusion}'

@@ -1,0 +1,41 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================
+UAV EXPERT DATA COLLECTION (Epoch 4)
+DATE:     Wed Jun 10 13:45:45 UTC 2026
+NODE:     i6-gpu-1
+JOB_ID:   21418
+ARRAY_ID: none
+========================================
+[ sbatch ] Repo: /u/home/llim/FMPCC/FM-PCC
+[ sbatch ] scene=s_curve  n_trials=500  gain=pid_default  seed=0  homotopy=all
+[ collect ] scene=s_curve  n_trials=500  homotopy_pool=['default']  gain=pid_default  seed=0  noise_sigma=0.02
+[ collect ] REJECT #1  reason=contact  min_z=0.004  clip=20.8%
+[ collect ] REJECT #2  reason=floor  min_z=0.004  clip=33.1%
+[ collect ] REJECT #3  reason=contact  min_z=0.741  clip=30.3%
+[ collect ] REJECT #4  reason=contact  min_z=0.015  clip=56.2%
+[ collect ] REJECT #5  reason=floor  min_z=0.337  clip=21.5%
+[ collect ] REJECT #6  reason=contact  min_z=0.001  clip=20.2%
+[ collect ] REJECT #7  reason=contact  min_z=0.959  clip=23.6%
+[ collect ] REJECT #8  reason=floor  min_z=0.023  clip=18.6%
+[ collect ] REJECT #9  reason=floor  min_z=0.030  clip=17.9%
+[ collect ] REJECT #10  reason=contact  min_z=0.160  clip=54.8%
+[ collect ] REJECT #11  reason=contact  min_z=0.323  clip=60.2%
+[ collect ] REJECT #12  reason=floor  min_z=0.016  clip=16.6%
+[ collect ] REJECT #13  reason=floor  min_z=0.034  clip=17.2%
+[ collect ] REJECT #14  reason=contact  min_z=0.018  clip=33.5%
+[ collect ] REJECT #15  reason=floor  min_z=0.107  clip=19.9%
+[ collect ] REJECT #16  reason=floor  min_z=0.007  clip=21.4%
+[ collect ] REJECT #17  reason=floor  min_z=0.005  clip=17.8%
+[ collect ] REJECT #18  reason=contact  min_z=0.036  clip=44.4%
+[ collect ] REJECT #19  reason=floor  min_z=0.010  clip=19.7%
+[ collect ] REJECT #20  reason=floor  min_z=0.012  clip=17.2%
+[ collect ] REJECT #21  reason=floor  min_z=0.018  clip=17.7%
+[ collect ] ABORT: rejection rate 100.0% > limit 60.0%. HISTOGRAM: floor=12  contact=9
+[ collect ] DONE  saved=0  rejected=21  (100.0% rejected)  elapsed=10s  HISTOGRAM: floor=12  contact=9
+[ sbatch ] Collection done. Running stats validator …
+[ validate ] Loading episodes from logs/uav_expert_data/s_curve …
+[ validate ] No episodes found. Run collect.py first.
+[ sbatch ] Output: logs/uav_expert_data/s_curve/
+========================================
+JOB END: Wed Jun 10 13:45:56 UTC 2026
+========================================

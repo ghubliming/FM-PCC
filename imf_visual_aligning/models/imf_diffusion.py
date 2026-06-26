@@ -35,6 +35,14 @@ class iMeanFlowODE(nn.Module):
         loss_schedule: str = "balanced",
         warmup_epochs: int = 0,
         transition_epochs: int = 0,
+        # ── U3/imfv2: flag-gated training objective (see logs_in_develop/Gen8/Epoch_1/U3) ──
+        # 'fm_equivalent' : legacy finite-difference target (collapses to FM, the A/B baseline)
+        # 'meanflow_jvp'  : real MeanFlow-Identity target via JVP (the imfv2 objective)
+        imf_objective: str = 'fm_equivalent',
+        meanflow_r_equals_t_frac: float = 0.25,   # fraction of batch forced to r==t (FM anchor)
+        meanflow_adaptive_p: float = 0.5,         # adaptive-weight exponent  w=(‖Δ‖²+c)^(−p)
+        meanflow_adaptive_c: float = 1e-3,        # adaptive-weight epsilon
+        meanflow_aux_weight: float = 0.0,         # optional aux v-head stabilizer (0 = off)
         time_beta_alpha_v3: float = 1.5,
         time_beta_beta_v3: float = 1.0,
         flow_steps_v3: Optional[int] = None,
@@ -70,6 +78,13 @@ class iMeanFlowODE(nn.Module):
         self.ode_solver_rtol_v3 = ode_solver_rtol_v3
         self.ode_solver_atol_v3 = ode_solver_atol_v3
         self.ode_solver_step_size_v3 = ode_solver_step_size_v3
+
+        # U3/imfv2: training-objective selector + MeanFlow-JVP hyperparameters.
+        self.imf_objective = str(imf_objective)
+        self.meanflow_r_equals_t_frac = float(meanflow_r_equals_t_frac)
+        self.meanflow_adaptive_p = float(meanflow_adaptive_p)
+        self.meanflow_adaptive_c = float(meanflow_adaptive_c)
+        self.meanflow_aux_weight = float(meanflow_aux_weight)
 
         # Keep parameters for backward compatibility with existing configs.
         self.loss_schedule = loss_schedule
@@ -164,35 +179,23 @@ class iMeanFlowODE(nn.Module):
         dt = 1.0 / max(flow_steps, 1)
         h_batch = torch.full((batch_size,), dt, device=device, dtype=torch.float32)
 
-        # FIX-3 / Deviation B (per fix_2/REFERENCE_IMF_AUDIT.md §7.2): reference
-        # iMF (imeanflow/models/imfDiT.py:370-372) explicitly conditions ONLY on
-        # `h` and ignores `t`, citing the iMeanFlow paper (Kaiming He et al.,
-        # arXiv:2502.13129). For a linear interpolant the mean-flow target is
-        # v_const = x_data − noise, INDEPENDENT of t. Conditioning on t risks
-        # the model overfitting a spurious t-dependence (especially since
-        # training had correlated (t,h) but inference has constant h=1/N
-        # decoupled from t).
-        #
-        # Our model architecturally has both `time_mlp(t)` and `h_mlp(h)`
-        # contributions (unet1d_temporal_cond.py:202,211). We can't remove
-        # time_mlp without retraining, so we freeze its contribution by passing
-        # a CONSTANT t to the model at every sampling step. This makes the
-        # time_mlp output a fixed bias term that affects all steps identically
-        # — effectively converting our (t, h)-conditioned model into a
-        # h-only-conditioned model at inference.
-        #
-        # Chosen constant: 0.5 (midpoint of training's t distribution, which is
-        # 1 - Beta(1.5, 1.0) with mean ≈ 0.4). Close to the training mean so the
-        # time_mlp output is on-distribution.
-        T_CONST_INFERENCE = 0.5
-        t_const = torch.full(
-            (batch_size,), T_CONST_INFERENCE,
-            device=device, dtype=torch.float32,
-        )
+        # U2-B1 guardrail: NEVER freeze t for this architecture. Both time_mlp(t)
+        # and h_mlp(h) are active and additively combined in the UNet backbone
+        # (unet1d_temporal_cond.py:118-123, :249). Training always passed the true
+        # t at each step, so the learned weights encode u(x, t, h). A frozen t at
+        # inference converts that into a biased h-only function; every step receives
+        # (x@t_i, t=constant), which is out-of-distribution and produces chaotic
+        # rollouts. (This was Deviation B from fix_3 — reverted here.)
+        # Use t_i = loop_idx / flow_steps: the position the sampler is currently AT.
+        # See Gen8E1F2_Problem&Solution_Fable.md §B1 for the full derivation.
 
         for i in range(total_steps):
             loop_idx = min(i, flow_steps - 1)
-            velocity = self._predict_velocity(x, cond, t_const, h=h_batch, returns=returns)
+            t_i = torch.full(
+                (batch_size,), loop_idx / max(flow_steps, 1),
+                device=device, dtype=torch.float32,
+            )
+            velocity = self._predict_velocity(x, cond, t_i, h=h_batch, returns=returns)
             x = x + velocity * dt
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
@@ -274,6 +277,11 @@ class iMeanFlowODE(nn.Module):
         t: torch.Tensor,
         returns: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, Dict]:
+        # U3/imfv2 dispatch: 'meanflow_jvp' runs the real MeanFlow-Identity objective;
+        # 'fm_equivalent' (default) keeps the legacy finite-difference path below unchanged.
+        if self.imf_objective == 'meanflow_jvp':
+            return self._p_losses_meanflow_jvp(x_start, cond, t, returns=returns)
+
         # Sample noise with sigma=1.0 (matches q_sample training distribution at t=0)
         x_base = torch.randn_like(x_start)
         x_base = apply_conditioning(x_base, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
@@ -283,25 +291,21 @@ class iMeanFlowODE(nn.Module):
         h = t - r  # step size h = t - r > 0
 
         # Interpolants at times t and r (DATA-AT-1: t=0 is noise, t=1 is data)
-        x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)
-        x_t = apply_conditioning(x_t, cond, self.action_dim, goal_dim=self.goal_dim)
-
-        x_r = self.q_sample(x_start=x_start, t=r, noise=x_base)
+        x_t = self.q_sample(x_start=x_start, t=t, noise=x_base)   # data-biased (target side)
+        x_r = self.q_sample(x_start=x_start, t=r, noise=x_base)   # noise-biased (model input)
+        # U2-B2: condition on x_r (noise-side endpoint) — matches the sampler, which presents
+        # the current noise-side x at each step. Old code conditioned on x_t (data-side), which
+        # the sampler never has access to at inference. apply_conditioning moves to x_r.
+        x_r = apply_conditioning(x_r, cond, self.action_dim, goal_dim=self.goal_dim)
 
         # Expand h for broadcasting against [batch, horizon, dim] tensors
         h_expand = h
         while h_expand.ndim < x_start.ndim:
             h_expand = h_expand.unsqueeze(-1)
 
-        # Mean flow target: (x_t - x_r) / h  — average instantaneous velocity over interval [r, t].
-        # For the linear interpolant q_sample(τ) = (1−τ)·noise + τ·x_data this equals
-        # the constant v = x_data − noise (since dx/dτ is constant for a linear path),
-        # which matches the iMeanFlow definition u(x_t, t, h) := (1/h) ∫_{t−h}^t v dτ.
-        # FIX-1: previous code had (x_start − x_r)/h = ((1−r)/h)·v, which over-scales
-        # the target by ~N at small t for N-step Euler sampling and causes the trained
-        # model to output velocities so large that the first sampling Euler step lands
-        # outside the data manifold (chaotic-straight-line rollouts). See
-        # logs_in_develop/Gen3v4_imf/Gen3v4u2_Major_Upgrade_direct/fix_1/INVESTIGATION.md
+        # Mean flow target: (x_t - x_r) / h — average velocity over interval [r, t].
+        # For the linear interpolant this equals the constant v = x_data − noise,
+        # independent of which endpoint we condition on. Target direction unchanged.
         u_target = (x_t - x_r) / (h_expand + 1e-8)
         u_target = apply_conditioning(u_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
@@ -309,7 +313,8 @@ class iMeanFlowODE(nn.Module):
         v_target = x_start - x_base
         v_target = apply_conditioning(v_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
-        velocity_pred, aux_pred = self._predict_uv(x_t, cond, t, h=h, returns=returns)
+        # U2-B2: predict from x_r at time r (noise-side) — consistent with inference.
+        velocity_pred, aux_pred = self._predict_uv(x_r, cond, r, h=h, returns=returns)
         if not self.predict_epsilon:
             velocity_pred = apply_conditioning(velocity_pred, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
 
@@ -325,6 +330,93 @@ class iMeanFlowODE(nn.Module):
         info['v_weight'] = torch.tensor(self.v_mix, device=x_start.device)
         info['total_loss'] = total_loss
 
+        return total_loss, info
+
+    def _p_losses_meanflow_jvp(
+        self,
+        x_start: torch.Tensor,
+        cond: Dict,
+        t: torch.Tensor,
+        returns: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Real iMF objective — MeanFlow Identity via a forward-mode JVP (imfv2, visual).
+
+        Identical math to the Gen3v4 state version (DATA-AT-1, START-anchored):
+
+            u_target = v_inst + h·(d/dr u)   with JVP tangents (∂z=v_inst, ∂time_r=+1, ∂h=−1)
+
+        VISUAL NOTE (Gen8): the JVP differentiates ONLY the trajectory inputs (z, r, h). The
+        camera images live inside `cond` and are held CONSTANT (captured in the closure, not a
+        JVP primal), so the visual embedding does not move under the tangent — exactly the
+        "hold the image embedding constant through the JVP" requirement from the plan. (Compute
+        is slightly higher because the encoder is re-run in the linearized pass; a precompute-
+        the-embedding optimization is a later refinement, not required for correctness.)
+
+        NOTE (no local runtime): verify on the cluster with a 1-NFE reconstruction check; if it
+        diverges, prime suspects are the JVP sign, the h-tangent, or forward-mode AD support in
+        the visual encoder (e.g. BatchNorm in train mode).
+        """
+        try:
+            from torch.func import jvp as _jvp
+        except ImportError:  # older torch
+            from functorch import jvp as _jvp
+
+        x_base = torch.randn_like(x_start)
+        x_base = apply_conditioning(x_base, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+
+        # interval [r, t]; force a fraction to r==t so those samples anchor to the FM velocity
+        r = t * torch.rand_like(t)
+        anchor = torch.rand_like(t) < self.meanflow_r_equals_t_frac
+        r = torch.where(anchor, t, r)
+        h = (t - r)
+
+        # anchor point z_r at time r (noise-side) — matches the inference query convention
+        x_r = self.q_sample(x_start=x_start, t=r, noise=x_base)
+        x_r = apply_conditioning(x_r, cond, self.action_dim, goal_dim=self.goal_dim)
+
+        # instantaneous (FM) velocity = both the identity's v(z_r,r) and the z-tangent
+        v_inst = x_start - x_base
+        v_inst = apply_conditioning(v_inst, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+
+        # u-head as a pure function of the trajectory inputs; cond (images) held constant.
+        def _u_of(z_in, t_in, h_in):
+            u, _aux = self._predict_uv(z_in, cond, t_in, h=h_in, returns=returns)
+            return u
+
+        ones = torch.ones_like(r)
+        u_pred, du_dr = _jvp(_u_of, (x_r, r, h), (v_inst, ones, -ones))
+
+        h_expand = h
+        while h_expand.ndim < x_start.ndim:
+            h_expand = h_expand.unsqueeze(-1)
+
+        # MeanFlow-Identity target (START-anchored): u = v + h·du/dr ; stop-gradient.
+        u_target = v_inst + h_expand * du_dr
+        u_target = apply_conditioning(u_target, cond, self.action_dim, goal_dim=self.goal_dim, noise=True)
+        u_target = u_target.detach()
+
+        delta = u_pred - u_target
+        sq = delta.pow(2) * self.loss_fn.weights
+        reduce_dims = tuple(range(1, sq.ndim))
+        per_sample = sq.mean(dim=reduce_dims)
+        w = 1.0 / (per_sample.detach() + self.meanflow_adaptive_c).pow(self.meanflow_adaptive_p)
+        main_loss = (w * per_sample).mean()
+
+        total_loss = main_loss
+        info = {}
+        if self.meanflow_aux_weight > 0:
+            _u2, aux_pred = self._predict_uv(x_r, cond, r, h=h, returns=returns)
+            aux_loss = F.mse_loss(aux_pred, v_inst)
+            total_loss = total_loss + self.meanflow_aux_weight * aux_loss
+            info['aux_loss'] = aux_loss
+
+        a0_loss = delta[:, 0, :self.action_dim].pow(2).mean() if self.action_dim > 0 \
+            else torch.tensor(0.0, device=x_start.device)
+        info['diffusion_loss'] = main_loss
+        info['a0_loss'] = a0_loss
+        info['total_loss'] = total_loss
+        info['u_weight'] = torch.tensor(1.0, device=x_start.device)
+        info['v_weight'] = torch.tensor(self.meanflow_aux_weight, device=x_start.device)
         return total_loss, info
 
     def forward(self, cond, *args, **kwargs):

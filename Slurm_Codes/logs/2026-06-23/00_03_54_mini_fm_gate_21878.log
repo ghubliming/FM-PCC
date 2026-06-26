@@ -1,0 +1,187 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-FM MINI GATE (Aux-1)  Mon Jun 22 22:03:55 UTC 2026  | JOB 21878 | NODE i6-gpu-1
+scene=empty  n_episodes=100  n_steps=15000  lr=0.3
+================================================================================
+[ mini-gate ] python uav_expert_data_collect/mini_fm_sanity.py --data-dir data/uav_fm/v1/empty --n-steps 15000 --lr 0.3
+[ mini-fm ] Loading episodes from data/uav_fm/v1/empty …
+[ mini-fm ] Loaded 100 episodes
+[ mini-fm ] 18527 chunks of shape (H=8, D=12)
+[ mini-fm ] Chunk tensor shape: (18527, 8, 12)
+[ mini-fm ] Shape check: expected (8, 12), got (8, 12) → ✅ PASS
+[ mini-fm ] Train: 14821, Eval: 3706
+[ mini-fm ] Action Δp_des norm: mean=0.01210, p95=0.01877
+[ mini-fm ] Training 15000 steps (B=64, lr=0.3) …
+  step     1/15000  loss=2.06621
+  step   100/15000  loss=1.90329
+  step   200/15000  loss=1.56688
+  step   300/15000  loss=1.44116
+  step   400/15000  loss=1.40460
+  step   500/15000  loss=1.40010
+  step   600/15000  loss=1.35190
+  step   700/15000  loss=1.34649
+  step   800/15000  loss=1.30984
+  step   900/15000  loss=1.30430
+  step  1000/15000  loss=1.28879
+  step  1100/15000  loss=1.24169
+  step  1200/15000  loss=1.24675
+  step  1300/15000  loss=1.22834
+  step  1400/15000  loss=1.22803
+  step  1500/15000  loss=1.22141
+  step  1600/15000  loss=1.20922
+  step  1700/15000  loss=1.21244
+  step  1800/15000  loss=1.20405
+  step  1900/15000  loss=1.20487
+  step  2000/15000  loss=1.19845
+  step  2100/15000  loss=1.19304
+  step  2200/15000  loss=1.18125
+  step  2300/15000  loss=1.18577
+  step  2400/15000  loss=1.18055
+  step  2500/15000  loss=1.18826
+  step  2600/15000  loss=1.19144
+  step  2700/15000  loss=1.16934
+  step  2800/15000  loss=1.17961
+  step  2900/15000  loss=1.18255
+  step  3000/15000  loss=1.17347
+  step  3100/15000  loss=1.16811
+  step  3200/15000  loss=1.16828
+  step  3300/15000  loss=1.16267
+  step  3400/15000  loss=1.18839
+  step  3500/15000  loss=1.16837
+  step  3600/15000  loss=1.16224
+  step  3700/15000  loss=1.16542
+  step  3800/15000  loss=1.16769
+  step  3900/15000  loss=1.17097
+  step  4000/15000  loss=1.16481
+  step  4100/15000  loss=1.14599
+  step  4200/15000  loss=1.17180
+  step  4300/15000  loss=1.16124
+  step  4400/15000  loss=1.16546
+  step  4500/15000  loss=1.15832
+  step  4600/15000  loss=1.18148
+  step  4700/15000  loss=1.17019
+  step  4800/15000  loss=1.14310
+  step  4900/15000  loss=1.15118
+  step  5000/15000  loss=1.15366
+  step  5100/15000  loss=1.16192
+  step  5200/15000  loss=1.14747
+  step  5300/15000  loss=1.15868
+  step  5400/15000  loss=1.15532
+  step  5500/15000  loss=1.15461
+  step  5600/15000  loss=1.14210
+  step  5700/15000  loss=1.15377
+  step  5800/15000  loss=1.14843
+  step  5900/15000  loss=1.15241
+  step  6000/15000  loss=1.12976
+  step  6100/15000  loss=1.15655
+  step  6200/15000  loss=1.15009
+  step  6300/15000  loss=1.15376
+  step  6400/15000  loss=1.13965
+  step  6500/15000  loss=1.15205
+  step  6600/15000  loss=1.14951
+  step  6700/15000  loss=1.13884
+  step  6800/15000  loss=1.15048
+  step  6900/15000  loss=1.15150
+  step  7000/15000  loss=1.14963
+  step  7100/15000  loss=1.14257
+  step  7200/15000  loss=1.13684
+  step  7300/15000  loss=1.13992
+  step  7400/15000  loss=1.14614
+  step  7500/15000  loss=1.14293
+  step  7600/15000  loss=1.14725
+  step  7700/15000  loss=1.12941
+  step  7800/15000  loss=1.13950
+  step  7900/15000  loss=1.13750
+  step  8000/15000  loss=1.13672
+  step  8100/15000  loss=1.14409
+  step  8200/15000  loss=1.14159
+  step  8300/15000  loss=1.14276
+  step  8400/15000  loss=1.13810
+  step  8500/15000  loss=1.13914
+  step  8600/15000  loss=1.13427
+  step  8700/15000  loss=1.13957
+  step  8800/15000  loss=1.14061
+  step  8900/15000  loss=1.13739
+  step  9000/15000  loss=1.13958
+  step  9100/15000  loss=1.14336
+  step  9200/15000  loss=1.13946
+  step  9300/15000  loss=1.12488
+  step  9400/15000  loss=1.14116
+  step  9500/15000  loss=1.14423
+  step  9600/15000  loss=1.13955
+  step  9700/15000  loss=1.14201
+  step  9800/15000  loss=1.13840
+  step  9900/15000  loss=1.12907
+  step 10000/15000  loss=1.13587
+  step 10100/15000  loss=1.14472
+  step 10200/15000  loss=1.13025
+  step 10300/15000  loss=1.12611
+  step 10400/15000  loss=1.14322
+  step 10500/15000  loss=1.14416
+  step 10600/15000  loss=1.14296
+  step 10700/15000  loss=1.12819
+  step 10800/15000  loss=1.12789
+  step 10900/15000  loss=1.14086
+  step 11000/15000  loss=1.13558
+  step 11100/15000  loss=1.12871
+  step 11200/15000  loss=1.11438
+  step 11300/15000  loss=1.12609
+  step 11400/15000  loss=1.13201
+  step 11500/15000  loss=1.13333
+  step 11600/15000  loss=1.12870
+  step 11700/15000  loss=1.13039
+  step 11800/15000  loss=1.12508
+  step 11900/15000  loss=1.13421
+  step 12000/15000  loss=1.13334
+  step 12100/15000  loss=1.14554
+  step 12200/15000  loss=1.14183
+  step 12300/15000  loss=1.11412
+  step 12400/15000  loss=1.13485
+  step 12500/15000  loss=1.14146
+  step 12600/15000  loss=1.12514
+  step 12700/15000  loss=1.12912
+  step 12800/15000  loss=1.14359
+  step 12900/15000  loss=1.11638
+  step 13000/15000  loss=1.11503
+  step 13100/15000  loss=1.13739
+  step 13200/15000  loss=1.12479
+  step 13300/15000  loss=1.13878
+  step 13400/15000  loss=1.13722
+  step 13500/15000  loss=1.12114
+  step 13600/15000  loss=1.11217
+  step 13700/15000  loss=1.12484
+  step 13800/15000  loss=1.11923
+  step 13900/15000  loss=1.12609
+  step 14000/15000  loss=1.14427
+  step 14100/15000  loss=1.12546
+  step 14200/15000  loss=1.13248
+  step 14300/15000  loss=1.12428
+  step 14400/15000  loss=1.11381
+  step 14500/15000  loss=1.12882
+  step 14600/15000  loss=1.12810
+  step 14700/15000  loss=1.12486
+  step 14800/15000  loss=1.12535
+  step 14900/15000  loss=1.12787
+  step 15000/15000  loss=1.13433
+[ mini-fm ] Evaluating on held-out chunks …
+
+============================================================
+  MINI-FM SANITY GATE RESULTS
+============================================================
+  Episodes loaded:       100
+  Training chunks:       14821
+  Eval chunks:           3706
+  Tensor shape:          (18527, 8, 12) → (N, H=8, D=12)
+  Shape check:           ✅ PASS
+
+  RMS position error:    0.97043 m  (threshold < 0.1 m) → ❌ FAIL
+  GT action norm mean:   0.00740 m/step
+  Pred action norm mean: 0.01172 m/step
+  Action norm ratio:     1.584  (threshold 0.5–2.0) → ✅ PASS
+
+  OVERALL VERDICT:       ❌ NO-GO — fix data pipeline
+  Elapsed:               3.0s
+============================================================
+[ mini-fm ] Results saved → data/uav_fm/v1/empty/mini_fm_results.json
+[ mini-gate ] done — review held-out RMS in the log (< 0.1 m = pass).
+JOB END: Mon Jun 22 22:03:59 UTC 2026
