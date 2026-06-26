@@ -19,12 +19,12 @@ The GIF/SVG stays as-is (intuition). The text log is the **evidence / digital tw
 
 ## Why this is cheap for us: half of it already exists
 
-`rollout_one` (`eval_fm_uav.py:297–384`) already:
+`rollout_one` (`FM_v3_uav_test/eval_fm_uav.py:254`) already:
 
-- runs at the real control rate (`DATASET_HZ = 33` → budget = `1000/33 = 30.3 ms`)
-- times the policy call per FM step: `t0 = time.perf_counter(); policy(...); fm_ms.append(...)` (lines 302–304)
+- runs at the real control rate (`DATASET_HZ` imported from `uav_expert_data_collect/dataset_writer.py:31` → budget = `1000/33 = 30.3 ms`)
+- times the policy call per FM step (`eval_fm_uav.py:316–321`)
 - buffers `obs_traj`, `act_traj`, `plans` (the FM H-step foresight) per step
-- tracks `track_err`, `min_z`, contact (`n_hit`), and already emits `fm_ms_mean` / `fm_ms_p95` in the summary (lines 376–377)
+- tracks `track_err`, `min_z`, contact (`n_hit`), and already emits `fm_ms_mean` / `fm_ms_p95` in the summary
 
 So we are NOT building timing from scratch — we are **splitting, structuring, and emitting**
 what the loop already measures.
@@ -40,7 +40,7 @@ obs → FM infer (fm_ms) → DPCC/QP solve (qp_ms) → fm_cmd OVERRIDDEN to qp_c
 ```
 
 That is the classic DPCC architecture. **Our FM-PCC is different:** the projector runs
-**inside** the flow-matching ODE sampling loop (`flow_matcher_v3_uav/models/diffusion.py:263–269`
+**inside** the flow-matching ODE sampling loop (`flow_matcher_v3_uav/models/diffusion.py:270–277`
 calls `projector.project()` on the tail FM ODE steps), not as a separate filter on the
 executed action. Consequences for the log:
 
@@ -48,7 +48,7 @@ executed action. Consequences for the log:
 |---|---|---|
 | `fm_ms` (inference only) | bundled with projection inside `policy(...)` | **split required** — see Phase 1 |
 | `qp_ms` (separate QP) | projection is interleaved into ODE steps | sum of per-`project()` wall-times within the step |
-| `fm_cmd → qp_cmd` override delta | no post-hoc override exists; projection reshapes the *sampled trajectory*, not a final action | log **projection cost** (`projection_costs` already returned by `project()`) + raw-vs-projected first-action delta captured inside sampling |
+| `fm_cmd → qp_cmd` override delta | no post-hoc override exists; projection reshapes the *sampled trajectory*, not a final action | log **projection cost** (`projection_costs` returned by `project()`) + raw-vs-projected first-action delta captured inside sampling |
 | DPCC `status=ACTIVE/IDLE`, `nearest_constraint`, `margin` | only the **dynamics** constraint is active this epoch; no spatial geometry (U3) → no obstacle margins yet | log `constraint=dynamics status=ALWAYS_ON`; spatial margins become real only when geometry is designed (future epoch) |
 
 **Bottom line:** the timing block (the headline product) ports cleanly. The
@@ -99,23 +99,21 @@ STATE     p=(−3.149,0.001,0.901)  v=(0.45,0.01,0.00)  contact=NONE
 - Emits `<episode>.log` next to the existing artifacts in `plans/<variant>/`.
 
 ### Phase 1 — split `fm_ms` into `fm_ms` + `proj_ms` (the only real plumbing)
-- Today line 302–304 times the whole `policy(...)` call (FM + projection bundled).
-- Add an optional timing hook so `Projector.project()` accumulates its own wall-time per
-  policy call (a counter on the projector reset each `policy()` invocation), returned via
-  the `infos`/`traj` already passed back from `policy(...)`.
-- `fm_ms_pure = fm_ms_bundled − proj_ms`. No behaviour change; purely instrumentation.
+- `eval_fm_uav.py:316–321` times the whole `policy(...)` call (FM + projection bundled).
+- Added a `proj_ms = 0.0` accumulator in `diffusion.py:190`, wrapping every `projector.project()` (`diffusion.py:270–277`) and `projector.compute_gradient()` (`diffusion.py:252–259`) call.
+- Result exposed via `infos['projection_ms']` (`diffusion.py:288`).
+- `fm_ms_pure = fm_ms_bundled − proj_ms` (`eval_fm_uav.py:318`). No behaviour change; purely instrumentation.
 
 ### Phase 2 — capture raw-vs-projected first action + projection cost
-- `project()` already returns `projection_costs` (`diffusion.py:265`). Thread it out to
-  `rollout_one` alongside the chosen action.
+- `project()` already returns `projection_costs` (`diffusion.py:272,275`). Thread it out to
+  `rollout_one` via `policy.last_proj_cost` (`policies.py:105`).
 - Capture the FM's pre-projection first action vs post-projection first action to populate
   the `act_raw → act_proj` line (the closest honest analog to IDEAS.md's override delta).
 
 ### Phase 3 — wire logger into `rollout_one`
-- Instantiate `BehaviorLogger(episode_id, variant, scene, homotopy)` at the top of the loop.
-- Call `logger.step(...)` each FM step with obs / horizon / timings / state / contact.
-- `logger.save(...)` after the loop; attach summary fields into the existing return dict so
-  they also land in `results.json` (alongside `fm_ms_mean`/`fm_ms_p95` already there).
+- Instantiate `BehaviorLogger` at `eval_fm_uav.py:292–294`.
+- Call `blog.step(...)` at `eval_fm_uav.py:358–365` each FM step.
+- `blog.save(...)` at `eval_fm_uav.py:405`; timing fields added to return dict at `eval_fm_uav.py:426–427`.
 
 #### Activation — ALWAYS ON, no `.sh` change required
 - The text log is **unconditional** — it is NOT gated behind `--record`. Per IDEAS.md it is
@@ -127,10 +125,7 @@ STATE     p=(−3.149,0.001,0.901)  v=(0.45,0.01,0.00)  contact=NONE
   `python eval_fm_uav.py ...`, and every rollout will now also write its `.log`.
 - **Output location:** `logs/UAV_FM/<scene>/plans/<...>/<seed>/<variant>/<episode>.log`,
   i.e. right next to the existing `results.json` / `.npz` / GIF for that variant.
-- **SLURM stdout** (e.g. `temp/Gen11E7/output1`): keep the existing one-line per-variant
-  print; additionally echo the compact `# SUMMARY TIMING` block to stdout so the
-  over-budget verdict is visible in the job log without opening the `.log` file. Per-step
-  lines go to the `.log` file only (too verbose for stdout).
+- **SLURM stdout:** compact `TIMING:` line echoed per variant at `eval_fm_uav.py:536–540`.
 
 ### Phase 4 — baseline comparison + grep one-liners
 - After all variants run, emit the `vs diffuser baseline` overhead line per variant
@@ -166,72 +161,77 @@ STATE     p=(−3.149,0.001,0.901)  v=(0.45,0.01,0.00)  contact=NONE
 ## What was actually implemented — porting reference for other models
 
 This section documents the **exact pattern we shipped** so it can be copied faithfully to
-FMv3ODE, Visual Aligning, DPCC baseline, and any future model. Each step below names the
-file, the function, and the minimal change required.
+FMv3ODE, Visual Aligning, DPCC baseline, and any future model. Each step names the exact
+file and line so an agent can jump directly to the live code.
 
 ### Step 1 — time the projector INSIDE the model sampling loop
 
-**File:** `flow_matcher_v3_uav/models/diffusion.py` → `p_sample_loop`
-
-Add a `proj_ms = 0.0` accumulator before the ODE loop. Wrap every `projector.project()` and
-`projector.compute_gradient()` call with `time.perf_counter()` and accumulate the delta.
-Return it in `infos`:
+**File:** `flow_matcher_v3_uav/models/diffusion.py`
+- `proj_ms = 0.0` accumulator: **line 190** (in `p_sample_loop` before the ODE loop)
+- `compute_gradient()` timing (gradient variant, torchdiffeq branch): **lines 252–259**
+- `project()` timing (SLSQP, main branch): **lines 270–277**
+- `infos['projection_ms'] = proj_ms` exposed before return: **line 288**
 
 ```python
-costs = {}
-proj_ms = 0.0                     # ← add this
+# diffusion.py:190
+proj_ms = 0.0   # wall-clock ms spent inside projector calls this sample
 
-# inside the loop, around the project() call:
+# diffusion.py:270–277 (around projector.project):
 _t_proj = time.perf_counter()
-x, projection_costs = projector.project(x, constraints)
+if self.goal_dim > 0:
+    x[:, :, :-self.goal_dim], projection_costs = projector.project(x[:, :, :-self.goal_dim], constraints)
+else:
+    x, projection_costs = projector.project(x, constraints)
 proj_ms += (time.perf_counter() - _t_proj) * 1e3
 
-# at the end, before return:
-infos['projection_ms'] = proj_ms  # ← add this
+# diffusion.py:288
+infos['projection_ms'] = proj_ms
 ```
 
 **Why inside the model:** our PCC projects during ODE integration, not as a post-FM filter.
 The outer `policy(...)` timer therefore bundles FM + projection. The only way to split them
 is to time from inside the model and expose the split via `infos`.
 
-**Goal-dim shape fix (UAV-specific):** when `self.goal_dim > 0`, apply gradient only to the
-non-goal slice — `x[:,:,:-goal_dim] += grad` not `x += grad`. The full `x` is 12-D but
-`grad` is computed on the 11-D slice → shape crash without this.
+**Goal-dim shape fix (UAV-specific, `diffusion.py:157–161` and `253–259`):**
+when `self.goal_dim > 0`, apply gradient only to the non-goal slice —
+`x[:,:,:-goal_dim] += grad` not `x += grad`. The full `x` is 12-D but `grad` is computed
+on the 11-D slice → shape crash (`tensor a (12) vs b (11)`) without this.
 
 ---
 
 ### Step 2 — expose per-call diagnostics on the Policy object
 
-**File:** `flow_matcher_v3_uav/sampling/policies.py` → `Policy.__call__`
-
-No signature change. After each call, store read-by-eval attributes:
+**File:** `flow_matcher_v3_uav/sampling/policies.py` → `Policy`
+- Attribute declarations: **lines 38–41** (`__init__`)
+- Population after each call: **lines 97–107** (`__call__`)
 
 ```python
-self.last_proj_ms = float(infos.get('projection_ms', 0.0))
-self.last_proj_cost = float(total_projection_cost_of_selected_candidate)
-self.last_which_trajectory = int(which_trajectory)
+# policies.py:38–41  (__init__)
+self.last_infos = {}
+self.last_proj_ms = 0.0
+self.last_proj_cost = 0.0
+self.last_which_trajectory = 0
+
+# policies.py:97–107  (__call__, after model returns infos)
 self.last_infos = infos
+self.last_proj_ms = float(infos.get('projection_ms', 0.0))
+self.last_which_trajectory = int(which_trajectory)
+# last_proj_cost = cost of the selected candidate (0.0 if no projector)
 ```
 
-The eval rollout reads these after `action, traj = policy(...)` — no return-value change.
+No signature change on `__call__`. The eval rollout reads these attributes after
+`action, traj = policy(...)` — no return-value change required.
 
 ---
 
 ### Step 3 — split bundled timing in the eval rollout
 
-**File:** `<model>_test/eval_<model>.py` → rollout loop
+**File:** `FM_v3_uav_test/eval_fm_uav.py` → `rollout_one` loop body
+- Three-way timing split: **lines 316–321**
 
-Replace:
 ```python
-t0 = time.perf_counter()
-action, traj = policy({0: obs}, ...)
-fm_ms.append((time.perf_counter() - t0) * 1e3)
-```
-With:
-```python
-t0 = time.perf_counter()
-action, traj = policy({0: obs}, ...)
-step_total_ms = (time.perf_counter() - t0) * 1e3
+# eval_fm_uav.py:316–321
+step_total_ms = (time.perf_counter() - t0) * 1e3         # bundled FM + projection
 step_proj_ms  = float(getattr(policy, 'last_proj_ms', 0.0))
 step_fm_ms    = max(step_total_ms - step_proj_ms, 0.0)   # PURE inference
 fm_ms.append(step_fm_ms)
@@ -246,33 +246,44 @@ For models without a projector (`diffuser` / plain FMv3ODE): `last_proj_ms` is a
 
 ### Step 4 — instantiate BehaviorLogger at top of rollout
 
-**File:** `<model>_test/eval_<model>.py` → rollout function signature + body
-
-Add params: `variant='diffuser', log_dir=None, control_hz=33, text_log=True`
+**File:** `FM_v3_uav_test/eval_fm_uav.py` → `rollout_one`
+- Signature (new params `variant`, `log_dir`, `control_hz`, `text_log`): **line 254–256**
+- `BehaviorLogger` import (deferred, inside function): **line 290**
+- Instantiation: **lines 292–294**
 
 ```python
+# eval_fm_uav.py:290
 from FM_v3_uav_test.behavior_logger import BehaviorLogger
 
-episode_id = f'{scene}_{homotopy}_{trial_seed}'
+# eval_fm_uav.py:292–294
 blog = BehaviorLogger(episode_id, variant, scene, homotopy,
                       control_hz=control_hz, batch_size=batch_size, horizon=horizon,
                       text_log=text_log)
-proj_on = (variant != 'diffuser')
 ```
 
-`BehaviorLogger` lives in `FM_v3_uav_test/behavior_logger.py` and is system-agnostic —
+**`BehaviorLogger` lives in `FM_v3_uav_test/behavior_logger.py`** and is system-agnostic —
 import it from there for all models. No copy needed.
+
+Key internals of `BehaviorLogger` (`behavior_logger.py`):
+- Class declaration: **line 45**
+- `__init__` (params incl. `text_log`, `budget_ms = 1000/control_hz`): **line 60–74**
+- `step()` — raw stat collection always; string formatting gated on `text_log`: **line 85–131**
+- `summary_dict()` — returns dict with `fm_ms_mean/max/p95`, `proj_ms_*`, `total_ms_*`, `total_over_budget`, `budget_ms`: **line 140–155**
+- `summary_block()` — renders `# SUMMARY` text block: **line 158–179**
+- `save()` — returns None if `text_log=False`: **line 184–185**
 
 ---
 
 ### Step 5 — call `blog.step()` once per control step
 
-At the END of each FM control step (after physics), call:
+**File:** `FM_v3_uav_test/eval_fm_uav.py` → `rollout_one` loop body
+- `blog.step()` call: **lines 358–365**
 
 ```python
+# eval_fm_uav.py:358–365
 blog.step(
-    t=k / control_hz, step_idx=f'{k}/{n_fm}', obs=obs,
-    fm_horizon=<H-step action array of executed candidate>,
+    t=k / DATASET_HZ, step_idx=f'{k}/{n_fm}', obs=obs,
+    fm_horizon=fm_horizon,
     fm_ms=step_fm_ms, proj_ms=step_proj_ms,
     proj_cost=float(getattr(policy, 'last_proj_cost', 0.0)),
     proj_active=proj_on,
@@ -281,57 +292,74 @@ blog.step(
 )
 ```
 
-**`text_log=False` path:** `step()` records raw stats and returns immediately — no string
-formatting, no memory growth. Timing numbers are still accurate and land in `results.json`.
+**`text_log=False` path:** `step()` records raw stats and returns immediately at
+`behavior_logger.py:105` — no string formatting, no memory growth. Timing numbers still land
+in `results.json`.
 
 ---
 
 ### Step 6 — save log + add timing to return dict
 
-After the rollout loop:
+**File:** `FM_v3_uav_test/eval_fm_uav.py` → `rollout_one` after loop
+- `blog.summary_dict()`: **line 403**
+- `blog.save(...)`: **line 405**
+- Return dict additions: **lines 426–427**
 
 ```python
+# eval_fm_uav.py:403–405
 blog_summary = blog.summary_dict()
 if log_dir is not None:
-    blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour_dict)
-```
+    blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour)
 
-Add to the rollout return dict:
-```python
-'proj_ms_mean':        blog_summary['proj_ms_mean'],
-'total_ms_mean':       blog_summary['total_ms_mean'],
-'total_ms_p95':        blog_summary['total_ms_p95'],
-'total_over_budget':   blog_summary['total_over_budget'],
-'budget_ms':           blog_summary['budget_ms'],
-# fm_ms_mean now means PURE inference (projection subtracted)
+# eval_fm_uav.py:426–427 (return dict)
+'total_over_budget': int(blog_summary['total_over_budget']),
+'budget_ms':         blog_summary['budget_ms'],
+# fm_ms_mean in the return dict now means PURE inference (projection subtracted)
 ```
 
 ---
 
 ### Step 7 — wire from `_run_variant` and echo to SLURM stdout
 
-Pass `variant`, `log_dir`, `control_hz`, `text_log` from `_run_variant` to the rollout.
-After all rollouts, echo the timing verdict:
+**File:** `FM_v3_uav_test/eval_fm_uav.py`
+- `_run_variant` signature: **line 437**
+- Passes `control_hz` and `text_log` to `rollout_one`: **lines 485–486**
+- `TIMING:` echo to SLURM stdout: **lines 536–540**
 
 ```python
-print(f'[ eval ] {scene} variant={variant} TIMING: fm_ms={fm_ms_mean:.1f} '
-      f'proj_ms={proj_ms_mean:.1f} total_ms={total_ms_mean:.1f} '
-      f'(p95={total_ms_p95:.1f}) budget={budget_ms}ms → real_time_{verdict}')
+# eval_fm_uav.py:485–486
+control_hz=config.get('control_hz', DATASET_HZ),
+text_log=config.get('behavior_log', True)
+
+# eval_fm_uav.py:536–540
+_rt = 'SAFE' if summary['total_over_budget'] == 0 else f'OVER×{summary["total_over_budget"]}'
+print(f'[ eval ] {scene} variant={variant} TIMING: fm_ms={summary["fm_ms_mean"]:.1f} '
+      f'proj_ms={summary["proj_ms_mean"]:.1f} total_ms={summary["total_ms_mean"]:.1f} '
+      f'(p95={summary["total_ms_p95"]:.1f}) budget={summary["budget_ms"]}ms → real_time_{_rt}')
 ```
 
 ---
 
 ### Step 8 — add config keys to the model's yaml
 
+**File:** `config/uav_eval.yaml:54–58`
+
 ```yaml
+# control_hz: override only; default comes from dataset_writer.DATASET_HZ (authoritative)
 control_hz: 33        # Hz; budget_ms = 1000/control_hz computed by BehaviorLogger
 behavior_log: true    # false = timing stats only (no string fmt in loop, no .log file)
 ```
 
-Read in `_run_variant`:
+Read in `_run_variant` at `eval_fm_uav.py:485–486`:
 ```python
-control_hz = config.get('control_hz', 33)
+control_hz = config.get('control_hz', DATASET_HZ)   # DATASET_HZ from dataset_writer.py:31
 text_log   = config.get('behavior_log', True)
+```
+
+**Authoritative Hz source:** `uav_expert_data_collect/dataset_writer.py:31`
+(`DATASET_HZ = 33`) — imported directly in `eval_fm_uav.py:46`:
+```python
+from uav_expert_data_collect.dataset_writer import DATASET_HZ
 ```
 
 ---
@@ -340,7 +368,7 @@ text_log   = config.get('behavior_log', True)
 
 | Model | Sampling | Projector location | Key difference from UAV |
 |---|---|---|---|
-| **UAV FM-PCC** (this) | ODE | inside `p_sample_loop` | proj bundled with FM; split via `infos['projection_ms']` |
+| **UAV FM-PCC** (this) | ODE | inside `p_sample_loop` (`diffusion.py:180`) | proj bundled with FM; split via `infos['projection_ms']` at line 288 |
 | **FMv3ODE** (visual aligning) | ODE | same pattern | same Steps 1–8; `control_hz` from its yaml |
 | **DPCC baseline** | DDPM/ODE | same projection.py | `fm_ms` is near-zero or absent; `proj_ms` is the whole cost |
 | **Gen3v4 iMF** (state FM) | — | no projector | `proj_ms=0` always; Steps 1–2 not needed; Steps 3–8 still apply |
@@ -352,8 +380,25 @@ loop and is activated by the yaml config, not the shell.
 
 ## References
 
-- Idea source: [`../../../REALTIME_RECORDING/IDEAS.md`](../../../REALTIME_RECORDING/IDEAS.md)
-- Target loop: `FM_v3_uav_test/eval_fm_uav.py:297–384` (`rollout_one`)
-- Projection call site: `flow_matcher_v3_uav/models/diffusion.py:263–269`
-- Variant suite this builds on: [`../U3/CHANGELOG.md`](../U3/CHANGELOG.md)
-- Why dynamics-only this epoch: [`../U1&2/WHY_PCC_WORKS_PILLARS.md`](../U1&2/WHY_PCC_WORKS_PILLARS.md)
+| Resource | Path / location |
+|---|---|
+| Idea source | [`logs_in_develop/REALTIME_RECORDING/IDEAS.md`](../../../REALTIME_RECORDING/IDEAS.md) |
+| Logger class | `FM_v3_uav_test/behavior_logger.py:45` |
+| Eval rollout | `FM_v3_uav_test/eval_fm_uav.py:254` (`rollout_one`) |
+| Timing split | `FM_v3_uav_test/eval_fm_uav.py:316–321` |
+| `blog.step()` call | `FM_v3_uav_test/eval_fm_uav.py:358–365` |
+| `blog.save()` + return dict | `FM_v3_uav_test/eval_fm_uav.py:403–427` |
+| SLURM `TIMING:` echo | `FM_v3_uav_test/eval_fm_uav.py:536–540` |
+| `_run_variant` wiring | `FM_v3_uav_test/eval_fm_uav.py:485–486` |
+| proj_ms accumulator | `flow_matcher_v3_uav/models/diffusion.py:190` |
+| `project()` timing site | `flow_matcher_v3_uav/models/diffusion.py:270–277` |
+| `compute_gradient()` timing site | `flow_matcher_v3_uav/models/diffusion.py:252–259` |
+| `infos['projection_ms']` exposed | `flow_matcher_v3_uav/models/diffusion.py:288` |
+| Goal-dim shape fix | `flow_matcher_v3_uav/models/diffusion.py:157–161, 253–259` |
+| Policy attrs | `flow_matcher_v3_uav/sampling/policies.py:38–41, 97–107` |
+| Authoritative Hz | `uav_expert_data_collect/dataset_writer.py:31` |
+| Hz import in eval | `FM_v3_uav_test/eval_fm_uav.py:46` |
+| yaml config keys | `config/uav_eval.yaml:54–58` |
+| Variant suite (U3) | [`../U3/CHANGELOG.md`](../U3/CHANGELOG.md) |
+| Why dynamics-only | [`../U1&2/WHY_PCC_WORKS_PILLARS.md`](../U1&2/WHY_PCC_WORKS_PILLARS.md) |
+| Example log analysis | [`data_example_anlysis/ANALYSIS.md`](data_example_anlysis/ANALYSIS.md) |

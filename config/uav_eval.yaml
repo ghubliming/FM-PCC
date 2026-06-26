@@ -52,7 +52,7 @@ halfspace_constraints: []     # corridor / s_curve walls  (formulate_halfspace_c
 obstacle_constraints: []      # pillars → [{type: sphere_outside, dimensions: [x, y], center: [..], radius: ..}]
 
 # ── Real-time budget ──────────────────────────────────────────────────────────
-# UAV PID control loop rate. BehaviorLogger computes budget_ms = 1000/control_hz
-# and flags per-step TIMING: OVER vs SAFE accordingly in the .log files.
-control_hz: 33               # Hz — must match uav_expert_data_collect/dataset_writer.py (DATASET_HZ)
+# Override the FM outer-loop rate for budget_ms computation. When absent, eval falls back
+# to DATASET_HZ imported from uav_expert_data_collect/dataset_writer.py (33 Hz, authoritative).
+control_hz: 33               # Hz — override only; default comes from dataset_writer.DATASET_HZ
 behavior_log: true           # write per-step .log files (digital-twin audit); false = stats only (no string fmt overhead)

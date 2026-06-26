@@ -7,7 +7,7 @@ trajectory for the trained FM policy. One scene at a time, receding-horizon (MPC
 
 Multi-rate control (IMPORTANT):
   • physics + PID run every `dt = model.opt.timestep`
-  • the FM predicts Δp_des at the DATASET rate (DATASET_HZ = 33 Hz)
+  • the FM predicts Δp_des at the DATASET rate (DATASET_HZ from dataset_writer.py)
   → the FM is queried every `decim = round(1/(dt·33))` physics steps; p_des is zero-order
     held between queries while the PID tracks it. This matches how the data was recorded.
 
@@ -43,6 +43,7 @@ sys.path.insert(0, _REPO)
 import flow_matcher_v3_uav.utils as utils
 from flow_matcher_v3_uav.sampling.policies import Policy
 import FM_v3_uav_test.eval_artifacts as artifacts
+from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
 
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 # Scenes with a FIXED start + geometry-determined route endpoint → success REQUIRES reaching
@@ -50,7 +51,6 @@ SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 # is never told (generator._build_traj_and_init), so goal-reaching is ill-defined there — its
 # success is stable/safe flight only (Fix2_metrics scene-aware refinement).
 GOAL_PATH_SCENES = {'corridor', 's_curve', 'pillars'}
-DATASET_HZ = 33                      # must match uav_expert_data_collect/dataset_writer.py
 GOAL_RADIUS = 0.30                   # m — secondary goal-reach tolerance (constrained scenes)
 
 
