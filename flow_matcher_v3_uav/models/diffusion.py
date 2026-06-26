@@ -186,6 +186,7 @@ class FlowMatchingODE(nn.Module):
         if return_diffusion:
             diffusion = [x]
         costs = {}
+        proj_ms = 0.0   # wall-clock ms spent inside projector calls this sample (CPU SLSQP/gradient)
 
         use_torchdiffeq = self.ode_solver_backend_v3 == 'torchdiffeq'
         if use_torchdiffeq and torchdiffeq_odeint is None:
@@ -247,10 +248,12 @@ class FlowMatchingODE(nn.Module):
                 )[-1]
 
                 if projector is not None and projector.gradient and near_end:
+                    _t_proj = time.perf_counter()
                     if self.goal_dim > 0:
                         grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints)
                     else:
                         grad = projector.compute_gradient(x, constraints)
+                    proj_ms += (time.perf_counter() - _t_proj) * 1e3
                     x = x + grad
             else:
                 if projector is not None and projector.gradient and near_end:
@@ -261,12 +264,14 @@ class FlowMatchingODE(nn.Module):
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
             if projector is not None and not projector.gradient and near_end:
+                _t_proj = time.perf_counter()
                 if self.goal_dim > 0:
                     x[:, :, :-self.goal_dim], projection_costs = projector.project(x[:, :, :-self.goal_dim], constraints)
                     costs[i] = projection_costs
                 else:
                     x, projection_costs = projector.project(x, constraints)
                     costs[i] = projection_costs
+                proj_ms += (time.perf_counter() - _t_proj) * 1e3
 
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
@@ -277,6 +282,7 @@ class FlowMatchingODE(nn.Module):
         if return_diffusion:
             infos['diffusion'] = torch.stack(diffusion, dim=1)
         infos['projection_costs'] = costs
+        infos['projection_ms'] = proj_ms   # real-time logging: CPU projection wall-time this sample
 
         return x, infos
 

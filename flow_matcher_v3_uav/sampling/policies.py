@@ -34,6 +34,12 @@ class Policy:
         # Previous observations
         self.prev_observations = None
 
+        # Real-time logging: last-call diagnostics (set every __call__; read by eval rollout)
+        self.last_infos = {}            # raw infos from the model (projection_ms, projection_costs, ...)
+        self.last_proj_ms = 0.0         # CPU projection wall-time for the last sample (ms)
+        self.last_proj_cost = 0.0       # projection cost of the SELECTED trajectory (0.0 if no projector)
+        self.last_which_trajectory = 0  # index of the executed candidate in the batch
+
     def __call__(self, conditions, batch_size=1, horizon=16, test_ret=None, constraints=None, disable_projection=False):
         conditions = {k: self.preprocess_fn(v) for k, v in conditions.items()}
         conditions = self._format_conditions(conditions, batch_size)
@@ -86,6 +92,19 @@ class Policy:
             action = actions[which_trajectory, 0]
 
         trajectories = Trajectories(actions, observations)
+
+        # Real-time logging diagnostics for the eval rollout (no signature change; read via attrs).
+        self.last_infos = infos
+        self.last_proj_ms = float(infos.get('projection_ms', 0.0))
+        self.last_which_trajectory = int(which_trajectory)
+        proj_costs = infos.get('projection_costs', {})       # {fm_step: per-batch cost array}
+        if proj_costs:
+            total = np.zeros(batch_size)
+            for _, cost in proj_costs.items():
+                total += cost
+            self.last_proj_cost = float(total[which_trajectory])
+        else:
+            self.last_proj_cost = 0.0
 
         return action, trajectories
 

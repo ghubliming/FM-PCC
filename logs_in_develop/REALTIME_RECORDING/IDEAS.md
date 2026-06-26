@@ -308,3 +308,13 @@ are always populated. For FMv3Ode, `fm_horizon` is populated. For Visual Alignin
 
 **GIF + text log should be the standard output of every evaluation run.** The GIF tells
 you if it looks right. The text log tells you if it actually is.
+
+---
+
+## Adoption status
+
+- **Gen11 E7 (Drone FM-PCC)** — IN PROGRESS. Plan to apply this framework to the Gen11 E7
+  UAV eval (`FM_v3_uav_test/eval_fm_uav.py`):
+  [`../Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/Real_Time_eval_loggging/PLAN.md`](../Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/Real_Time_eval_loggging/PLAN.md).
+  Notes the one architectural divergence (our PCC projects *inside* the FM ODE loop, not as
+  a post-FM QP filter) and scaffolds spatial-constraint fields for when scene geometry lands.

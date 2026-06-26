@@ -252,7 +252,8 @@ def _render_overhead(mujoco, model, data, renderer):
 
 
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
-                renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1):
+                renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
+                variant='diffuser', log_dir=None):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -284,12 +285,22 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
 
     frames = []
 
+    # Real-time behaviour logger (digital-twin audit). ALWAYS ON — independent of --record;
+    # near-zero cost (wraps timings the loop already takes). See Real_Time_eval_loggging/PLAN.md.
+    from FM_v3_uav_test.behavior_logger import BehaviorLogger
+    episode_id = f'{scene}_{homotopy}_{trial_seed}'
+    blog = BehaviorLogger(episode_id, variant, scene, homotopy,
+                          control_hz=DATASET_HZ, batch_size=batch_size, horizon=horizon)
+    proj_on = (variant != 'diffuser')
+
     p_des = np.asarray(init_pos, dtype=float).copy()
     n_hit = 0
     n_phys = 0
     min_z = float('inf')
     track_err = []
-    fm_ms = []
+    fm_ms = []           # PURE FM inference ms (projection time subtracted out — Real_Time logging)
+    proj_ms = []         # PCC projector wall-time ms per FM step
+    total_ms = []        # fm_ms + proj_ms  → the real-time budget number
     obs_traj = []        # realized [p_des|p|v] per FM step  → npz obs_all
     act_traj = []        # FM Δp_des per FM step             → npz act_all
     plans = []           # FM H-step predicted obs plan      → npz sampled_trajectories_all
@@ -301,7 +312,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
-        fm_ms.append((time.perf_counter() - t0) * 1e3)
+        step_total_ms = (time.perf_counter() - t0) * 1e3         # bundled FM + projection
+        step_proj_ms = float(getattr(policy, 'last_proj_ms', 0.0))
+        step_fm_ms = max(step_total_ms - step_proj_ms, 0.0)      # PURE inference
+        fm_ms.append(step_fm_ms)
+        proj_ms.append(step_proj_ms)
+        total_ms.append(step_total_ms)
 
         action = np.asarray(action, dtype=float).reshape(-1)[:3]  # first Δp_des
         obs_traj.append(obs)
@@ -310,10 +326,18 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         plan = getattr(traj, 'observations', None)
         if plan is not None:
             plans.append(np.asarray(plan, dtype=np.float32))
+        # FM Δp_des H-step foresight of the EXECUTED candidate (for the log's `horizon=` field).
+        which = int(getattr(policy, 'last_which_trajectory', 0))
+        fm_horizon = None
+        if getattr(traj, 'actions', None) is not None:
+            acts = np.asarray(traj.actions)
+            if acts.ndim == 3 and which < acts.shape[0]:
+                fm_horizon = acts[which]
 
         p_des = p_des + action
         v_des = action / dt_fm
 
+        hit_before = n_hit
         for _ in range(decim):
             p = data.qpos[:3].copy()
             v = data.qvel[:3].copy()
@@ -327,6 +351,16 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 n_hit += 1
             min_z = min(min_z, float(data.qpos[2]))
             track_err.append(float(np.linalg.norm(data.qpos[:3] - p_des)))
+
+        # ── one structured log line per FM control step ──
+        te_step = float(np.linalg.norm(data.qpos[:3] - p_des))
+        blog.step(
+            t=k / DATASET_HZ, step_idx=f'{k}/{n_fm}', obs=obs, fm_horizon=fm_horizon,
+            fm_ms=step_fm_ms, proj_ms=step_proj_ms,
+            proj_cost=float(getattr(policy, 'last_proj_cost', 0.0)), proj_active=proj_on,
+            state_p=data.qpos[:3].copy(), state_v=data.qvel[:3].copy(),
+            contact='obstacle' if n_hit > hit_before else None, track_err=te_step,
+        )
 
         if renderer is not None and (k % frame_stride == 0):
             try:
@@ -359,6 +393,16 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     total_violations = 0.0
     success_and_constraints = bool(success and collision_free)
 
+    # ── persist the real-time behaviour log + capture its timing summary ──
+    behaviour = {
+        'result': 'SUCCESS' if success else ('FAIL(goal)' if (scene in GOAL_PATH_SCENES and safe and not goal_reached) else 'FAIL'),
+        'goal_dist': f'{goal_dist:.3f}m', 'safe': safe, 'min_z': f'{min_z:.3f}',
+        'contact_frac': f'{contact_frac:.3f}',
+    }
+    blog_summary = blog.summary_dict()
+    if log_dir is not None:
+        blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour)
+
     return {
         'scene': scene, 'homotopy': homotopy,
         'success': success,
@@ -373,8 +417,13 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         'min_z': min_z,
         'final_z': float(p_final[2]),
         'track_err_mean': float(np.mean(track_err)) if track_err else float('nan'),
-        'fm_ms_mean': float(np.mean(fm_ms)) if fm_ms else float('nan'),
+        'fm_ms_mean': float(np.mean(fm_ms)) if fm_ms else float('nan'),      # PURE inference (proj subtracted)
         'fm_ms_p95': float(np.percentile(fm_ms, 95)) if fm_ms else float('nan'),
+        'proj_ms_mean': float(np.mean(proj_ms)) if proj_ms else 0.0,
+        'total_ms_mean': float(np.mean(total_ms)) if total_ms else float('nan'),
+        'total_ms_p95': float(np.percentile(total_ms, 95)) if total_ms else float('nan'),
+        'total_over_budget': int(blog_summary['total_over_budget']),
+        'budget_ms': blog_summary['budget_ms'],
         'n_fm_steps': n_fm, 'decim': decim, 'dt': dt,
         # ── heavy (npz / gif only; stripped from results.json) ──
         'obs_traj': np.asarray(obs_traj),
@@ -430,7 +479,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         for i in range(args.n_trials):
             homotopy = homotopies[i % len(homotopies)]
             r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
-                            renderer=renderer, goal_radius=args.goal_radius, batch_size=batch_size)
+                            renderer=renderer, goal_radius=args.goal_radius, batch_size=batch_size,
+                            variant=variant, log_dir=out_dir)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
@@ -457,6 +507,11 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'fm_ms_mean': float(np.mean([r['fm_ms_mean'] for r in rollouts])),
         'fm_ms_p95': float(np.max([r['fm_ms_p95'] for r in rollouts])),
+        'proj_ms_mean': float(np.mean([r['proj_ms_mean'] for r in rollouts])),
+        'total_ms_mean': float(np.mean([r['total_ms_mean'] for r in rollouts])),
+        'total_ms_p95': float(np.max([r['total_ms_p95'] for r in rollouts])),
+        'total_over_budget': int(np.sum([r['total_over_budget'] for r in rollouts])),
+        'budget_ms': rollouts[0]['budget_ms'] if rollouts else float('nan'),
         'projection': variant,
     }
 
@@ -472,6 +527,12 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
           f'sel={_selection_for(variant)}): success={succ:.3f}  safe={summary["safe_rate"]:.3f}  '
           f'goal_reached={summary["goal_reached_rate"]:.3f}  track_err={summary["track_err_mean"]:.3f}  '
           f'→ {os.path.dirname(npz_path)}/')
+    # Real-time timing verdict echoed to stdout (per-step detail stays in the .log files).
+    _budget = summary['budget_ms']
+    _rt = 'SAFE' if summary['total_over_budget'] == 0 else f'OVER×{summary["total_over_budget"]}'
+    print(f'[ eval ] {scene} variant={variant} TIMING: fm_ms={summary["fm_ms_mean"]:.1f} '
+          f'proj_ms={summary["proj_ms_mean"]:.1f} total_ms={summary["total_ms_mean"]:.1f} '
+          f'(p95={summary["total_ms_p95"]:.1f}) budget={_budget}ms → real_time_{_rt}')
     return summary
 
 
