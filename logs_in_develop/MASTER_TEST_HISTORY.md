@@ -2065,3 +2065,62 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Foresight Plan Processing**: Upgraded the `analyze_npz.py` tool to consume the `sampled_trajectories_all` arrays (the open-loop foresight plans) alongside the actual executed path (`obs_all`), unlocking analysis of the internal planner candidate fan for both DPCC avoiding and UAV tasks.
 2. **Trajectory Explosion & Divergence Metrics**: Introduced new robust metrics: `plan_max_abs` and `traj_max_abs` (axis-agnostic explosion detectors that expose non-xy blowups like `p_des_z`), `plan_cand_spread` (measuring candidate diversity), and `plan_exec_div` (quantifying the deviation between the FM prediction and the PID's actual physical execution).
 3. **Visual Plan Diagnostics**: Added a `--replot-plans` flag that overlays the foresight plan fan (blue) onto the executed trajectory (black) directly from the `.npz` files. Using this, confirmed that the UAV's predicted plans often remain bounded (~3m) while the executed command integrates into a runaway, isolating the fault to the action-channel scaling loop rather than pure model prediction failure.
+
+***
+
+## Gen11 Epoch 6 "U3" Fix 2: Evaluation Metrics Update & Honest Success (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 6, evaluation metrics, success_rate, goal_reached, safe_rate, fixed-route.
+
+1. **Success Metric Redefinition**: Addressed a bug where the `success` metric originally only checked if the drone was airborne and contact-free, leading to misleading 100% success rates on empty scenes where the drone never reached the goal.
+2. **Honest Goal-Reaching Rate**: Updated the `success` definition to strictly require reaching the goal (`goal_dist < goal_radius`) in addition to flying safely. Re-evaluation yields a 0% honest task success rate across all scenes, confirming that a goal-conditioning signal is fundamentally required (Epoch 7 focus).
+3. **Scene-Aware Evaluation**: Adjusted evaluation so `success` requires reaching the goal only for fixed-route scenes (`corridor`, `s_curve`, `pillars`). For `empty` scenes with random unobservable goals, it rightly scores based only on stability (safe flight).
+
+***
+
+## Gen11 Epoch 6 "U3": Homotopy Ambiguity & Diffuser Baseline Coherence (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 6, diffuser baseline, homotopy ambiguity, mode oscillation, trajectory explosion.
+
+1. **Pure-ML Baseline Verification**: Evaluated the pure-ML `diffuser` baseline (batch_size=1, no candidate selection, no projector) and found it successfully produces clean, well-tracked trajectories on single-mode scenes.
+2. **Multi-Mode Trajectory Explosion**: Confirmed that on multi-mode scenes (corridor, pillars), the un-selected sample oscillates between different expert modes at each step. This open-loop drift creates an unstable, runaway command sequence that the 2nd-order quadrotor cannot absorb, leading to inevitable crashes.
+3. **PCC/MPC Motivation**: Established that this multi-mode coherence gap is not a training bug but rather the expected limitation of a pure generative baseline. It perfectly motivates the introduction of candidate selection and constraint projection (the Epoch 7 PCC pipeline) to commit to a single coherent mode.
+
+***
+
+## Gen11 Epoch 7: Full PCC/MPC Implementation for UAV (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 7, PCC, MPC, dynamics constraint, uav_eval.yaml, p_des.
+
+1. **PCC Bone Restoration**: Migrated and restored the full PCC/MPC architecture from the Gen7 visual-aligning pipeline into the UAV task in a single comprehensive pass, supporting `diffuser`, `dpcc-r`, `dpcc-c`, and `dpcc-t` variants.
+2. **Dynamics Constraint Definition**: Configured a genuine Euler `dynamics` constraint with `dt=1.0` that strictly binds `p_des` (desired position) rather than the physical position `p`, correctly enforcing the `Δp_des` action semantic and preventing set-point drifting.
+3. **Evaluation Configuration Migration**: Relocated the PCC evaluation configuration out of code defaults into a standalone `config/uav_eval.yaml` that includes empty placeholders for future geometry bounds, halfspace, and obstacle constraints. Added constraint-aware evaluation metrics.
+
+***
+
+## Gen11 Epoch 7 "Hotfix 1": Goal Dimension Shape Crash (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 7, Hotfix 1, projector shape mismatch, goal_dim.
+
+1. **Projector Shape Crash Resolution**: Fixed a `mat1 and mat2 shapes cannot be multiplied (4x88 and 96x96)` error that crashed `dpcc-*` variants during the SLSQP projection on the corridor scene.
+2. **Dynamic Dimension Subtraction**: Diagnosed that the `get_goal_dim()` heuristic incorrectly flagged an incidentally-constant observation column as a goal dimension, reducing the active trajectory width passed into the projector. Resolved by dynamically subtracting `model_fm.goal_dim` from `trajectory_dim` in `setup_dpcc_projector`, ensuring correct dimensionality without requiring a model retrain.
+
+***
+
+## Gen11 Epoch 7 "U1 & U2": MPC Foresight Visualization & UAV-Specific Panels (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 7, MPC foresight, candidate fan, XY top-down, XZ altitude.
+
+1. **Candidate-Fan Visualization**: Replaced the placeholder foresight rendering with actual real-time candidate-fan visualization in `eval_artifacts.py` using the Gen7 dual-path convention (green fan for MPC candidates, black for commanded path, red for physical execution).
+2. **UAV-Specific Panel Layout**: Transitioned the plot layout from a generic 3D view to a tailored "XY top-down + XZ altitude" setup. The dedicated XZ panel isolates the Z-axis profile, explicitly highlighting `p_des_z` trajectory explosions and altitude gates for improved diagnostic clarity.
+3. **Contextual Additions**: Augmented the visualization by plotting scene obstacles and altitude silhouettes directly into the eval artifact outputs.
+
+***
+
+## Gen11 Epoch 7 "U1 & U2": Why PCC Works on Pillars (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 7, pillars, PCC efficacy, mode-blend, open-loop integration.
+
+1. **PCC vs Diffuser Discrepancy**: Documented how the `diffuser` baseline fails immediately on the multi-modal `pillars` scene (drone sinks to the floor as `p_des_z` integrates to -228m), while `dpcc-*` variants fly cleanly through the maze.
+2. **Dynamics Constraint Mechanism**: Explained that the 24 linear equality constraints solved by the SLSQP projector force the initially unconstrained `act[0]` output to mathematically align with the model's coherent `p_des` sequence, effectively neutralizing mode-oscillation before execution.
+3. **Goal-Seeking Distiction**: Acknowledged that while PCC solves the coherence crisis, it still stops ~1m short of the endpoint because the policy is not explicitly goal-conditioned (a target for future epochs).

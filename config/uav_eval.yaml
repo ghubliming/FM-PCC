@@ -9,24 +9,40 @@ diffusion_timestep_threshold: 0.5
 batch_size: 4                 # MPC candidate-fan size (was 1 in the E6 diffuser baseline)
 
 # ── Projection variants (exact FMv3ODE/visual-aligning semantics) ─────────────
-#   trajectory_selection = 'random'                (diffuser, dpcc-r)
-#   'dpcc-t' in variant → 'temporal_consistency'
-#   'dpcc-c' in variant → 'minimum_projection_cost'
-#   'diffuser' → projector OFF (pure ML); dpcc-* → projector ON
+#   trajectory_selection:  random (diffuser/dpcc-r), minimum_projection_cost (dpcc-c), temporal_consistency (dpcc-t)
+#   gradient in variant  → gradient-based projection (not SLSQP)
+#   post_processing      → threshold=0.0 (project at ALL FM steps, not just last 50%)
+#   model_free           → spatial constraints only, NO dynamics (no-op until spatial constraints designed)
+#   tightened            → enlarge_constraints margin applied to spatial constraints (no-op until spatial designed)
+#   diffuser             → projector OFF (pure ML baseline)
 projection_variants: [
+  # ── DPCC paper Table 1 baselines ──
   'diffuser',
+  'gradient',
+  'gradient-tightened',
+  'post_processing',
+  'post_processing-tightened',
+  'model_free',               # spatial-only: no-op until obstacle/halfspace/bounds constraints designed
+  'model_free-tightened',     # spatial-only + tightening: no-op until spatial constraints designed
+  # ── DPCC paper Table 1 main results ──
   'dpcc-r',
+  'dpcc-r-tightened',
   'dpcc-c',
+  'dpcc-c-tightened',
   'dpcc-t',
+  'dpcc-t-tightened',
 ]
 
 # ── Constraints ───────────────────────────────────────────────────────────────
-# ONLY 'dynamics' is really projected this epoch. The dynamics Euler constraint binds
+# ONLY 'dynamics' is active this epoch. The dynamics Euler constraint binds
 # p_des (trajectory dims 3,4,5) to the action (0,1,2): p_des[t+1] = p_des[t] + dt*act[t].
 # dt = 1.0 because the action IS the position delta Δp_des (NOT velocity × physics-dt).
+# Spatial constraint types (halfspace, obstacles, bounds) are listed as PLACEHOLDERS:
+# slots are wired in setup_dpcc_projector but lists are empty — no effect until per-scene
+# geometry is designed in a future epoch.
 constraint_types: ['dynamics']
 dt: 1.0
-enlarge_constraints: 0.0
+enlarge_constraints: 0.025   # tightening margin (matches DPCC paper); active only for -tightened variants
 
 # ── PLACEHOLDERS (empty until per-scene geometry is designed; NOT run this epoch) ──
 # bounds / halfspace / obstacles stay off because they are absent from constraint_types

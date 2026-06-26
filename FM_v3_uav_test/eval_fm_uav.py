@@ -124,39 +124,52 @@ class ProjectorNormalizer:
 
 
 def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12):
-    """Build the DPCC SLSQP projector (mirrors visual-aligning `setup_dpcc_projector`).
+    """Build the DPCC projector (mirrors visual-aligning `setup_dpcc_projector`).
 
     UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
     The dynamics `deriv` binds **p_des (3,4,5)** to the action (0,1,2) — NOT the actual p —
     because p_des is the exact integrator of the action (`p_des[t+1]=p_des[t]+act`), while
     the drone's p lags. (Visual-aligning binds c_pos because its arm tracks perfectly.)
+
+    Variant semantics (mirrors FMv3ODE/visual-aligning eval):
+      gradient       → gradient-based projection (not SLSQP)
+      post_processing→ threshold=0.0 (project at ALL FM steps, not just last 50%)
+      model_free     → spatial constraints only; dynamics skipped (no-op until spatial designed)
+      tightened      → enlarge_constraints margin applied to spatial constraints
     """
     from flow_matcher_v3_uav.sampling.projection import Projector
 
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'x': 6, 'y': 7, 'z': 8}   # x,y,z = actual position p
     pad = trajectory_dim - 9
+    is_tightened = 'tightened' in variant
+    tightening   = float(config.get('enlarge_constraints') or 0.0)
+    enlarge      = tightening if is_tightened else 0.0
     constraint_list = []
 
-    if 'bounds' in config.get('constraint_types', []):                 # PLACEHOLDER — not run
+    if 'bounds' in config.get('constraint_types', []):                 # PLACEHOLDER — not run this epoch
         ws = config['workspace_bounds']
         ws_lb = np.array(ws['lb']); ws_ub = np.array(ws['ub'])
-        lb = np.concatenate([np.full(6, -np.inf), ws_lb, np.full(pad, -np.inf)])
-        ub = np.concatenate([np.full(6,  np.inf), ws_ub, np.full(pad,  np.inf)])
+        lb = np.concatenate([np.full(6, -np.inf), ws_lb - enlarge, np.full(pad, -np.inf)])
+        ub = np.concatenate([np.full(6,  np.inf), ws_ub + enlarge, np.full(pad,  np.inf)])
         constraint_list += [['lb', lb], ['ub', ub]]
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
         constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # bind p_des
 
-    if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run
+    if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
         _hs = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
-            C_row, d = utils.formulate_halfspace_constraints(hs, 0.0, trajectory_dim, _hs)
+            C_row, d = utils.formulate_halfspace_constraints(hs, enlarge, trajectory_dim, _hs)
             constraint_list.append(('ineq', (C_row, d)))
 
-    if 'obstacles' in config.get('constraint_types', []):              # PLACEHOLDER — not run
+    if 'obstacles' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
-            constraint_list.append((obs['type'], dims, obs['center'], obs['radius']))
+            constraint_list.append((obs['type'], dims, obs['center'], obs['radius'] + enlarge))
+
+    is_gradient      = 'gradient' in variant
+    is_post_proc     = 'post_processing' in variant
+    threshold        = 0.0 if is_post_proc else config.get('diffusion_timestep_threshold', 0.5)
 
     return Projector(
         horizon=int(getattr(args, 'horizon', 8)),
@@ -165,9 +178,11 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
         goal_dim=0,
         constraint_list=constraint_list,
         normalizer=ProjectorNormalizer(obs_normalizer, act_normalizer),
-        diffusion_timestep_threshold=config.get('diffusion_timestep_threshold', 0.5),
+        diffusion_timestep_threshold=threshold,
         variant='states_actions',
         dt=config.get('dt', 1.0),                   # action IS Δp_des → Euler dt=1.0 (NOT 1/33)
+        gradient=is_gradient,
+        gradient_weights=[1, 0.5, 2] if is_gradient else None,
         solver='scipy',
         device=getattr(args, 'device', 'cuda'),
     )
