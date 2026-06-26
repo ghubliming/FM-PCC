@@ -156,9 +156,10 @@ class FlowMatchingODE(nn.Module):
         if projector is not None and projector.gradient:
             if self.goal_dim > 0:
                 grad = projector.compute_gradient(model_mean[:, :, :-self.goal_dim], constraints)
+                model_mean[:, :, :-self.goal_dim] = model_mean[:, :, :-self.goal_dim] + grad
             else:
                 grad = projector.compute_gradient(model_mean, constraints)
-            model_mean = model_mean + grad
+                model_mean = model_mean + grad
 
         zeros = torch.zeros_like(x)
         return model_mean, zeros, zeros
@@ -251,10 +252,12 @@ class FlowMatchingODE(nn.Module):
                     _t_proj = time.perf_counter()
                     if self.goal_dim > 0:
                         grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints)
+                        proj_ms += (time.perf_counter() - _t_proj) * 1e3
+                        x[:, :, :-self.goal_dim] = x[:, :, :-self.goal_dim] + grad
                     else:
                         grad = projector.compute_gradient(x, constraints)
-                    proj_ms += (time.perf_counter() - _t_proj) * 1e3
-                    x = x + grad
+                        proj_ms += (time.perf_counter() - _t_proj) * 1e3
+                        x = x + grad
             else:
                 if projector is not None and projector.gradient and near_end:
                     x = self.p_sample(x, cond, t_cont, returns, projector=projector, constraints=constraints)
