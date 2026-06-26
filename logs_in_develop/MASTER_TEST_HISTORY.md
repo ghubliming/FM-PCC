@@ -2124,3 +2124,35 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **PCC vs Diffuser Discrepancy**: Documented how the `diffuser` baseline fails immediately on the multi-modal `pillars` scene (drone sinks to the floor as `p_des_z` integrates to -228m), while `dpcc-*` variants fly cleanly through the maze.
 2. **Dynamics Constraint Mechanism**: Explained that the 24 linear equality constraints solved by the SLSQP projector force the initially unconstrained `act[0]` output to mathematically align with the model's coherent `p_des` sequence, effectively neutralizing mode-oscillation before execution.
 3. **Goal-Seeking Distiction**: Acknowledged that while PCC solves the coherence crisis, it still stops ~1m short of the endpoint because the policy is not explicitly goal-conditioned (a target for future epochs).
+
+***
+
+## Gen11 Epoch 7 "U3": Full DPCC Variant Suite Restoration (June 25, 2026)
+
+**Keywords**: Gen11, Epoch 7, U3, DPCC variant suite, gradient, post_processing, model_free, tightened.
+
+1. **Variant Restoration**: Restored the full suite of 13 DPCC paper Table 1 projection variants in `config/uav_eval.yaml` (expanding from the 4 initial `dpcc-*` variants). Scaffolded new variants including `gradient`, `post_processing`, `model_free`, and their `-tightened` counterparts.
+2. **Projector Logic Updates**: Updated `setup_dpcc_projector` in `eval_fm_uav.py` to correctly parse and configure the new variant flags, ensuring exact functional parity with the original `fm_visual_aligning` reference. Dynamics constraints are bypassed for `model_free` and enforced at all steps for `post_processing`.
+3. **Future Spatial Scaling**: Structured `model_free` and `tightened` variants to function cleanly as no-ops while spatial constraints (obstacles/halfspaces/bounds) remain pending.
+
+***
+
+## Gen11 Epoch 7: Real-Time Behaviour Text Logging (June 26, 2026)
+
+**Keywords**: Gen11, Epoch 7, real-time logging, BehaviorLogger, inference timing, total_ms, budget_ms.
+
+1. **Digital-Twin Timing Audit**: Implemented a comprehensive `BehaviorLogger` in `FM_v3_uav_test/behavior_logger.py` to quantify whether the FM-PCC pipeline can close the 33 Hz (30.3 ms budget) control loop. The logger emits per-step structured text logs capturing purely separated FM inference time (`fm_ms`), projector overhead (`proj_ms`), and total latency, directly isolating hardware bottlenecks.
+2. **Model Internal Split**: Refactored the core `p_sample_loop` in `diffusion.py` to time the internal `projector.project()` and `projector.compute_gradient()` calls. This accurately unbundles projection time from FM inference time without breaking the integrated ODE generation loop.
+3. **Data Source Consolidation**: Hardened the configuration flow by wiring `DATASET_HZ=33` as an authoritative import from `dataset_writer.py`, while exposing `behavior_log` toggle and `control_hz` as user-configurable keys in `uav_eval.yaml`.
+4. **Gradient Shape Crash Fix**: Resolved a latent shape-mismatch bug in the `gradient` variant by ensuring the gradient update is only applied to the non-goal 11-D slice of the trajectory tensor (`x[:, :, :-self.goal_dim] = x[:, :, :-self.goal_dim] + grad`), preventing a crash when `goal_dim > 0`.
+
+***
+
+## Gen11 Epoch 7 "ANALYSIS": UAV Trajectory Explosion Diagnostics (June 26, 2026)
+
+**Keywords**: Gen11, Epoch 7, crash diagnosis, self-referential observation, projection cost, p_des divergence, hardware timing.
+
+1. **Real-Time Bottleneck Identification**: Evaluated the new real-time logging on the `corridor_C` task. Concluded that the cluster hardware (i6-gpu-1) is insufficient for real-time control, as FM inference alone requires ~85 ms against the 30.3 ms budget, resulting in 100% of steps exceeding the budget.
+2. **Proj_Cost as Early Warning**: Discovered that `proj_cost` spikes (from ~1 to >10,000) serve as a highly accurate leading indicator of trajectory crash, firing ~0.5 seconds before the drone actually makes contact with an obstacle. This validates the DPCC projector's constraint-fighting metric as a real-time safety signal.
+3. **Self-Referential Divergence Proof**: Diagnosed why the FM policy continues to plan wildly (accumulating 2.5m of track error) after the physical drone crashes and freezes. Because the model conditions on its own integrated `p_des` output rather than actual drone position `p`—and the dynamics constraint only checks internal plan consistency—the system enters an out-of-distribution positive feedback loop when tracking errors spike.
+4. **Actionable Fixes Established**: Outlined mandatory structural fixes including spatial halfspace/bounds constraints, a hard evaluation episode-termination switch (`track_err > 0.5 m`), and future tracking constraints inside the projector to re-anchor `p_des` to real `p`.
