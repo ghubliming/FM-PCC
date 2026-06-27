@@ -58,7 +58,12 @@ class VisualUNet(nn.Module):
             latent_dim = 0
 
         # ── 2. Temporal U-Net backbone ────────────────────────────────────────
-        from fm_visual_aligning.models.unet1d_temporal_cond import UNet1DTemporalCondModel
+        # film_mode selects the conditioning backbone (default 'v1' = current behavior):
+        #   'v1' → UNet1DTemporalCondModel  (Fake FiLM: additive bias via time-embed concat)
+        #   'v2' → UNet1DTemporalFiLMModel  (True FiLM: per-block γ scale + β shift, opt-in)
+        # Absence of the key defaults to 'v1', so all existing configs/checkpoints
+        # run byte-identically. v2 is only constructed when explicitly requested.
+        self.film_mode = getattr(config, 'film_mode', 'v1')
 
         self.target_horizon  = config.horizon
         # U-Net needs temporal dim divisible by 8 (3 levels of stride-2 downsampling)
@@ -73,7 +78,7 @@ class VisualUNet(nn.Module):
             obs_dim = getattr(config, 'obs_dim', 20)
             transition_dim = config.action_dim + obs_dim
 
-        self.backbone = UNet1DTemporalCondModel(
+        backbone_kwargs = dict(
             horizon=self.padded_horizon,
             transition_dim=transition_dim,
             cond_dim=latent_dim,
@@ -81,8 +86,15 @@ class VisualUNet(nn.Module):
             dim_mults=getattr(config, 'dim_mults', (1, 2, 4, 8)),
             returns_condition=getattr(config, 'returns_condition', False),
             condition_dropout=getattr(config, 'condition_dropout', 0.1),
-            use_cond_projection=self.if_vision,   # FiLM gates enabled for visual mode
-        ).to(self.device)
+            use_cond_projection=self.if_vision,   # conditioning enabled for visual mode
+        )
+        if self.film_mode == 'v2':
+            from fm_visual_aligning.models.unet1d_temporal_film import UNet1DTemporalFiLMModel
+            self.backbone = UNet1DTemporalFiLMModel(**backbone_kwargs).to(self.device)
+            print('[ VisualUNet ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE')
+        else:
+            from fm_visual_aligning.models.unet1d_temporal_cond import UNet1DTemporalCondModel
+            self.backbone = UNet1DTemporalCondModel(**backbone_kwargs).to(self.device)
 
         # Expose action_dim so diffusion engine can reference it
         self.action_dim = getattr(config, 'action_dim', 3)

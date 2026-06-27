@@ -356,6 +356,14 @@ base = {
         'condition_dropout': 0.1,
         'returns_condition': False,
 
+        # FiLM backbone selector (FiLM_V2 upgrade, 2026-06-27). OPTIONAL knob.
+        #   'v1' (default) → UNet1DTemporalCondModel (current Fake-FiLM additive-bias). Unchanged.
+        #   'v2'           → UNet1DTemporalFiLMModel (True FiLM: per-block γ scale + β shift).
+        # v2 is OPT-IN and requires fresh training. To avoid overwriting v1 checkpoints,
+        # when setting 'v2' ALSO change 'prefix' below to 'visual_aligning_dpcc_filmv2/'
+        # and the matching plan block's diffusion_loadpath to '...visual_aligning_dpcc_filmv2/...'.
+        'film_mode': 'v1',
+
         # ======================================================================================
         # 📊 DATASET
         # ParityAligningDataset loads 9D trajectories from raw pkl files.
@@ -429,6 +437,14 @@ base = {
         'dim_mults': (1, 2, 4, 8),
         'condition_dropout': 0.1,
         'returns_condition': False,
+
+        # FiLM backbone selector (FiLM_V2 upgrade, 2026-06-27). OPTIONAL knob.
+        #   'v1' (default) → UNet1DTemporalCondModel (current Fake-FiLM additive-bias). Unchanged.
+        #   'v2'           → UNet1DTemporalFiLMModel (True FiLM: per-block γ scale + β shift).
+        # v2 is OPT-IN and requires fresh training. To avoid overwriting v1 checkpoints,
+        # when setting 'v2' ALSO change 'prefix' below to 'fm_visual_aligning_filmv2/'
+        # and the matching plan block's diffusion_loadpath to '...fm_visual_aligning_filmv2/...'.
+        'film_mode': 'v1',
 
         # ======================================================================================
         # 📊 DATASET
@@ -598,6 +614,10 @@ base = {
         'exp_name': watch(args_to_watch_dpcc_plan),
         'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
+        # MUST match the training block's film_mode (the model architecture must agree
+        # with the checkpoint being loaded). 'v1' loads current checkpoints; 'v2' loads
+        # a True-FiLM checkpoint (and requires the matching v2 prefix/loadpath override).
+        'film_mode': 'v1',
         'predict_epsilon': True,
         'diffusion_timestep_threshold': _yaml_threshold,
         # D1: original DPCC always evaluates with clip_denoised=False (cosine schedule ~9.4× amplification
@@ -678,6 +698,10 @@ base = {
         'exp_name': watch(args_to_watch_fm_visual_plan),
         'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'returns_condition': False,
+        # MUST match the training block's film_mode (the model architecture must agree
+        # with the checkpoint being loaded). 'v1' loads current checkpoints; 'v2' loads
+        # a True-FiLM checkpoint (and requires the matching v2 prefix/loadpath override).
+        'film_mode': 'v1',
         'predict_epsilon': True,
         'diffusion_timestep_threshold': _yaml_threshold,
         # D1: FM ODE does not use a denoising schedule, so clip_denoised has no effect on the chain.
