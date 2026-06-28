@@ -9,14 +9,16 @@
 #SBATCH --partition=gpu-1-student
 set -e
 
-# ---- Args: $1=scene (def all)  $2=seeds (quoted, def "6")  $3=n_trials (def 20)  $4=projection (def fm_only)  $5=record (none|gif|all, def none) ----
+# ---- Args: $1=scene (def all)  $2=seeds (quoted, def "6")  $3=n_trials (omit → yaml default)  $4=projection (def fm_only)  $5=record (none|gif|all, def none) ----
 # Seeds are looped INSIDE this one job allocation — never submit one sbatch job per seed.
 # If you add seeds, bump --time (above, or via `sbatch --time=...` override) proportionally.
+# n_trials: omit $3 (or pass "") → reads n_trials from config/uav_projection.yaml.
+#           pass an int          → CLI override wins over yaml.
 SCENE="${1:-all}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10" or uncomment below.
 SEEDS="${2:-6}"
 # SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
-NTRIALS="${3:-20}"
+NTRIALS="${3:-}"             # empty = let config/uav_projection.yaml n_trials apply
 PROJECTION="${4:-fm_only}"
 RECORD="${5:-none}"          # 'gif'/'all' → overhead GIFs per rollout (slower); 'none' = fast
 
@@ -63,7 +65,8 @@ cd "$REPO"
 for seed in $SEEDS; do
     echo "--------------------------------------------------------------------------------"
     echo "[ uav_fm_eval ] scene=$SCENE seed=$seed  $(date)"
-    echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $seed --n-trials $NTRIALS --projection $PROJECTION --record $RECORD"
-    python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$seed" --n-trials "$NTRIALS" --projection "$PROJECTION" --record "$RECORD"
+    echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $seed ${NTRIALS:+--n-trials $NTRIALS} --projection $PROJECTION --record $RECORD"
+    python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$seed" \
+        ${NTRIALS:+--n-trials "$NTRIALS"} --projection "$PROJECTION" --record "$RECORD"
 done
 echo "Job completed successfully. Evaluated scene=$SCENE for seeds=[$SEEDS]"

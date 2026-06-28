@@ -9,14 +9,15 @@
 set -e
 
 # One-shot: train → eval (eval runs only if train succeeds).
-# Args: $1=scene (def all)  $2=seed (def 5)  $3=n_trials (def 20)
+# Args: $1=scene (def all)  $2=seed (def 6)  $3=n_trials (omit → yaml default)
+# n_trials: omit $3 → reads from config/uav_projection.yaml; pass int → CLI override.
 SCENE="${1:-all}"
-SEED="${2:-5}"
-NTRIALS="${3:-20}"
+SEED="${2:-6}"
+NTRIALS="${3:-}"   # empty = let config/uav_projection.yaml n_trials apply
 SBATCH_DIR="Slurm_Codes/sbatch/uav_fm"
 
 echo "================================================================================"
-echo "UAV-FM PIPELINE START: $(date)  scene=$SCENE seed=$SEED n_trials=$NTRIALS"
+echo "UAV-FM PIPELINE START: $(date)  scene=$SCENE seed=$SEED n_trials=${NTRIALS:-'yaml default'}"
 echo "================================================================================"
 
 # Unify dated logs across the chained jobs (submit.sh exports SUBMIT_DATE/TIME).
@@ -30,7 +31,7 @@ TRAIN_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/train_fm_uav.sh" "$SCENE" 
 echo "Step 1: train submitted — Job $TRAIN_ID"
 
 EVAL_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:${TRAIN_ID} \
-    "${SBATCH_DIR}/eval_fm_uav.sh" "$SCENE" "$SEED" "$NTRIALS")
+    "${SBATCH_DIR}/eval_fm_uav.sh" "$SCENE" "$SEED" "${NTRIALS}")
 echo "Step 2: eval scheduled (afterok:${TRAIN_ID}) — Job $EVAL_ID"
 echo "--------------------------------------------------------------------------------"
 echo "Outputs: logs/UAV_FM/uav-${SCENE}/flow_matching_v3_uav/.../${SEED}/{weights,eval}"

@@ -15,14 +15,15 @@
 # Usage (from repo root):
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_fm/fm_uav_all_pipeline.sh "empty corridor s_curve pillars" "6 7 8 9 10" 20
-# Args: $1=scenes [all 4]  $2=seeds ["6"]  $3=n_trials [20]  $4=projection [fm_only]
+# Args: $1=scenes [all 4]  $2=seeds ["6"]  $3=n_trials [omit → yaml default]  $4=projection [fm_only]
+# n_trials: omit $3 → reads from config/uav_projection.yaml; pass int → CLI override.
 set -e
 
 SCENES="${1:-empty corridor s_curve pillars}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10" or uncomment below.
 SEEDS="${2:-6}"
 # SEEDS="${2:-6 7 8 9 10}"   # full run (5 seeds)
-NTRIALS="${3:-20}"
+NTRIALS="${3:-}"   # empty = let config/uav_projection.yaml n_trials apply
 PROJ="${4:-fm_only}"
 DIR="Slurm_Codes/sbatch/uav_fm"
 
@@ -34,7 +35,7 @@ EVAL_HOURS=$((N_SEEDS * 8))
 
 echo "================================================================================"
 echo "UAV-FM ALL PIPELINE (per-scene, seed-loop internal)  $(date)"
-echo "scenes=[$SCENES]  seeds=[$SEEDS] (x$N_SEEDS)  n_trials=$NTRIALS  proj=$PROJ"
+echo "scenes=[$SCENES]  seeds=[$SEEDS] (x$N_SEEDS)  n_trials=${NTRIALS:-'yaml default'}  proj=$PROJ"
 echo "train --time=${TRAIN_HOURS}:00:00   eval --time=${EVAL_HOURS}:00:00   (scaled by seed count)"
 echo "[ note ] requires the curated dataset (data/uav_fm/v1/) — run Aux-1 prepare first."
 echo "================================================================================"
