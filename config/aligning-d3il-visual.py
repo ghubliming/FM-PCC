@@ -98,6 +98,7 @@ args_to_watch_imf_visual_train = [
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),
     ('imf_objective', 'obj'),   # encodes training objective in folder name
+    ('t_schedule', 'ts'),       # U7: time-schedule selector (logit_normal | beta | uniform)
 ]
 
 logbase = 'logs'
@@ -772,6 +773,11 @@ base['imf_visual_aligning'] = {
     'meanflow_adaptive_p': 0.5,
     'meanflow_adaptive_c': 1e-3,
     'meanflow_aux_weight': 0.0,
+    # U7: time-schedule. 'logit_normal' = canonical iMF default (reference imf.py, DEFAULT).
+    # 'beta' = legacy 1-Beta(α,β). NOTE: plan block diffusion_loadpath must match.
+    't_schedule': 'logit_normal',     # U7 DEFAULT
+    'p_mean': -0.4,                   # logit-normal P_mean (sigmoid median ≈ 0.40)
+    'p_std': 1.0,                     # logit-normal P_std
     # iMF guardrails against E4 spike (Gen3v4 lesson):
     # lower lr (2e-4 already set via fm_visual_aligning inherit) + smaller action_weight
     'action_weight': 1,
@@ -783,15 +789,19 @@ base['plan_imf_visual_aligning'] = {
     **base['plan_fm_visual_aligning'],
     'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
     'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
+    # U7: MUST match training block. Set 'beta' to load pre-U7 checkpoints.
+    't_schedule': 'logit_normal',       # U7 DEFAULT
+    'p_mean': -0.4,
+    'p_std': 1.0,
     'prefix': (
         'f:plans/imf_visual_aligning/'
         'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}/'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}/'
     ),
     # diffusion_loadpath MUST match args_to_watch_imf_visual_train exactly
     'diffusion_loadpath': (
         'f:imf_visual_aligning/'
         'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}'
     ),
 }

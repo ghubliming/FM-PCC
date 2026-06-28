@@ -72,6 +72,7 @@ args_to_watch_fmv3_imf_train = [
     ('action_weight', 'aw'),
     ('imf_objective', 'obj'),   # encodes training objective in folder name (fm_equivalent vs meanflow_jvp)
     ('imf_backbone', 'bb'),     # U6: encodes backbone (unet vs dit) so checkpoints never collide
+    ('t_schedule', 'ts'),       # U7: time-schedule selector (logit_normal | beta | uniform)
 ]
 
 logbase = 'logs'
@@ -533,9 +534,13 @@ base = {
         
         ## ODE inference — NFE is set in the plan block, not here
         # 'ode_inference_steps_v3': 10,  # dead in training; set flow_steps_v3 in plan block
-        ## Schedule: Beta(1,1)=Uniform(0,1) for broad (t,r) interval coverage (iMF few-step).
-        ## NOTE: plan block's time_beta_* MUST match (they're in diffusion_loadpath).
-        'time_beta_alpha_v3': 1.0,        # was: 1.5  (uniform for real iMF)
+        ## U7: time-schedule. 'logit_normal' = canonical iMF default (reference imf.py, DEFAULT).
+        ## 'beta' = legacy 1-Beta(α,β); set α=β=1 for uniform. NOTE: plan block must match.
+        't_schedule': 'logit_normal',     # U7 DEFAULT — was: 'beta' (implicit, pre-U7)
+        'p_mean': -0.4,                   # logit-normal P_mean (sigmoid median ≈ 0.40)
+        'p_std': 1.0,                     # logit-normal P_std
+        ## Beta params kept for backward-compat / ablation ('beta' schedule only — ignored otherwise).
+        'time_beta_alpha_v3': 1.0,        # was: 1.5
         'time_beta_beta_v3': 1.0,
 
         ## serialization
@@ -828,7 +833,7 @@ base = {
         ## serialization
         'loadbase': None,
         'logbase': logbase,
-        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}/',
+        'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}_ts{t_schedule}/',
         'exp_name': watch(args_to_watch_fmv3_ode_plan),
 
         ## flow matching v3 imeanflow model
@@ -838,7 +843,11 @@ base = {
         'u_loss_weight': 1.0,
         'v_loss_weight': 0.1,
         'flow_steps_v3': 2,           # was: 10  — low-NFE real-iMF (use 4 to de-risk first, then 1–2)
-        'time_beta_alpha_v3': 1.0,    # was: 1.5  — MUST match training block (in diffusion_loadpath)
+        ## U7: MUST match training block (in diffusion_loadpath).
+        't_schedule': 'logit_normal',     # U7 DEFAULT — set 'beta' to load pre-U7 checkpoints
+        'p_mean': -0.4,
+        'p_std': 1.0,
+        'time_beta_alpha_v3': 1.0,        # ignored when t_schedule='logit_normal'; kept for beta ablation
         'time_beta_beta_v3': 1.0,
         'ode_solver_backend_v3': 'legacy_euler',
         'ode_solver_method_v3': 'euler',
@@ -874,7 +883,7 @@ base = {
         'dit_condition_on_t': False,
 
         ## loading — path must match args_to_watch_fmv3_imf_train exactly (incl. _bb{imf_backbone})
-        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}',
+        'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}_ts{t_schedule}',
         'diffusion_epoch': 'best',
     },
 

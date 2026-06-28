@@ -45,6 +45,11 @@ class iMeanFlowODE(nn.Module):
         meanflow_aux_weight: float = 0.0,         # optional aux v-head stabilizer (0 = off)
         time_beta_alpha_v3: float = 1.5,
         time_beta_beta_v3: float = 1.0,
+        # U7: time-schedule selector. 'logit_normal' = canonical iMF (reference imf.py L120-124).
+        # 'beta' = legacy 1-Beta(α,β) — keep for A-B ablation (uniform = beta with α=β=1).
+        t_schedule: str = 'logit_normal',   # DEFAULT: logit-normal (iMF paper default)
+        p_mean: float = -0.4,               # logit-normal: mean in logit space (sigmoid median ≈ 0.40)
+        p_std: float = 1.0,                 # logit-normal: std in logit space
         flow_steps_v3: Optional[int] = None,
         ode_inference_steps_v3: int = 50,
         ode_solver_backend_v3: str = 'legacy_euler',
@@ -70,6 +75,9 @@ class iMeanFlowODE(nn.Module):
 
         self.time_beta_alpha_v3 = float(time_beta_alpha_v3)
         self.time_beta_beta_v3 = float(time_beta_beta_v3)
+        self.t_schedule = str(t_schedule)   # U7
+        self.p_mean = float(p_mean)         # U7
+        self.p_std = float(p_std)           # U7
         resolved_flow_steps = flow_steps_v3 if flow_steps_v3 is not None else ode_inference_steps_v3
         self.flow_steps_v3 = int(resolved_flow_steps)
         self.ode_inference_steps_v3 = int(self.flow_steps_v3)
@@ -264,10 +272,16 @@ class iMeanFlowODE(nn.Module):
     ) -> Tuple[torch.Tensor, Dict]:
         """Trainer entrypoint matching FM-PCC's expected `model.loss(*batch)` contract."""
         batch_size = x.shape[0]
-        alpha = torch.tensor(self.time_beta_alpha_v3, device=x.device)
-        beta = torch.tensor(self.time_beta_beta_v3, device=x.device)
-        beta_dist = torch.distributions.Beta(alpha, beta)
-        t = 1.0 - beta_dist.sample((batch_size,))
+        # U7: time-schedule selector (t_schedule set in config / __init__).
+        if self.t_schedule == 'logit_normal':
+            # Canonical iMF schedule — matches reference imf.py L120-124:
+            #   sigmoid(randn * P_std + P_mean), P_mean=-0.4, P_std=1.0 → median ≈ 0.40
+            t = torch.sigmoid(torch.randn(batch_size, device=x.device) * self.p_std + self.p_mean)
+        else:  # 'beta' — legacy 1-Beta(α,β). Set α=β=1 for uniform. (pre-U7 default)
+            alpha = torch.tensor(self.time_beta_alpha_v3, device=x.device)
+            beta = torch.tensor(self.time_beta_beta_v3, device=x.device)
+            beta_dist = torch.distributions.Beta(alpha, beta)
+            t = 1.0 - beta_dist.sample((batch_size,))
         return self.p_losses(x, cond, t, returns=returns)
     
     def p_losses(
