@@ -58,8 +58,10 @@ def parse_args():
     p = argparse.ArgumentParser(description='Closed-loop UAV FM evaluation.')
     p.add_argument('--scene', type=str, default='all', choices=['all', *SCENES],
                    help="Scene(s) to eval: 'all' runs each scene and rolls up SUMMARY.json.")
-    p.add_argument('--seed', type=int, default=5, help='Trained-model seed to load.')
-    p.add_argument('--n-trials', type=int, default=20, help='Closed-loop rollouts per scene.')
+    p.add_argument('--seed', type=int, default=None,
+                   help='Trained-model checkpoint seed to load. Default: seed from config/uav_projection.yaml.')
+    p.add_argument('--n-trials', type=int, default=None,
+                   help='Closed-loop rollouts per scene. Default: n_trials from config/uav_projection.yaml.')
     p.add_argument('--goal-radius', type=float, default=GOAL_RADIUS,
                    help='Goal-reach tolerance (m). success now REQUIRES goal_dist < this (Fix2_metrics).')
     p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
@@ -614,6 +616,25 @@ def eval_scene(scene, args):
 
 def main():
     args, remaining = parse_args()
+
+    # ── Resolve seed and n_trials: CLI wins; else read from config/uav_projection.yaml ──
+    # We do this BEFORE stripping sys.argv so the yaml path is resolved cleanly.
+    import yaml as _yaml
+    _yaml_path = os.path.join(_REPO, 'config', 'uav_projection.yaml')
+    try:
+        with open(_yaml_path) as _fh:
+            _proj_defaults = _yaml.safe_load(_fh) or {}
+    except FileNotFoundError:
+        _proj_defaults = {}
+
+    _seed_from_cli = args.seed is not None
+    args.seed = args.seed if _seed_from_cli else int(_proj_defaults.get('seed', 6))
+    print(f'[ eval ] seed={args.seed}  (source: {"--seed CLI" if _seed_from_cli else _yaml_path})')
+
+    _trials_from_cli = args.n_trials is not None
+    args.n_trials = args.n_trials if _trials_from_cli else int(_proj_defaults.get('n_trials', 20))
+    print(f'[ eval ] n_trials={args.n_trials}  (source: {"--n-trials CLI" if _trials_from_cli else _yaml_path})')
+
     # utils.Parser.parse_args() (called inside build_experiment) re-parses sys.argv with its
     # own argparse that only knows --config/--seed — strip our already-consumed flags
     # first or it chokes on --scene/--n-trials/--projection/--device (mirrors train_fm_uav.py).

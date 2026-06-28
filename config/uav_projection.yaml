@@ -9,6 +9,12 @@
 #                     are eval control params that live in the plan_flow_matching_v3_uav block
 #                     of config/uav.py (same pattern as avoiding-d3il.py).
 
+# ── Eval run config (CLI overrides these; eval_fm_uav.py main() prints the source) ──
+# seed     : which trained-model checkpoint seed to evaluate (matches train_fm_uav.py DEFAULT_SEEDS[0])
+# n_trials : closed-loop rollouts per scene
+seed: 6
+n_trials: 20
+
 # ── Policy threshold ─────────────────────────────────────────────────────────
 # Used by plan block in config/uav.py as _yaml_threshold (same as avoiding-d3il.py
 # reading from projection_eval.yaml); also read directly by eval_fm_uav.py.
