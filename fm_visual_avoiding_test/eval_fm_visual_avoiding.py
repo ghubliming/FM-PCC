@@ -22,6 +22,9 @@ import yaml
 import fm_visual_avoiding.utils as utils
 from fm_visual_avoiding.sampling.projection import Projector
 from fm_visual_avoiding.models.visual_gaussian_diffusion import VisualFlowMatching
+# REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware. NB: total_ms bundles vision-encoder + FM + projection (agent.predict).
 
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 import argparse
@@ -400,6 +403,13 @@ for exp in exps:
                         sampled_trajectories = []
                         disable_projection = False
                         desired_next_pos   = obs[obs_indices['x']:obs_indices['y'] + 1].copy()
+                        # REAL_TIME_RECORDING_UPDATE — one recorder per rollout episode.
+                        rt_rec = RTRecorder(episode_id=f'{exp}_{variant}_seed{seed}_trial{i}',
+                                            variant=variant, scene=exp,
+                                            system='VisualAvoiding_FM',
+                                            control_hz=RT_CONTROL_HZ,
+                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            text_log=config.get('write_to_file', True))
 
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
@@ -438,7 +448,13 @@ for exp in exps:
                                 bp_image = bp_img_raw.transpose((2, 0, 1)).copy() / 255.
                                 c_xy     = env.robot.current_c_pos[:2].copy()
                                 action, traj_plan = agent.predict(bp_image, obs[:2].copy(), c_xy)
-                            avg_time[i] += time.time() - start
+                            _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled encoder+FM+projection
+                            avg_time[i] += _rt_total_ms / 1e3
+                            # REAL_TIME_RECORDING_UPDATE — record per-step timing.
+                            rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
+                                        action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
+                                        proj_active=(variant != 'diffuser' and not disable_projection),
+                                        contact=bool(violated_this_timestep), step_idx=_)
 
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
@@ -469,6 +485,12 @@ for exp in exps:
 
                         obs_all.append(np.array(obs_buffer))
                         act_all.append(np.array(action_buffer))
+                        # REAL_TIME_RECORDING_UPDATE — write per-episode realtime_<variant>_trial<i>.log + SUMMARY.
+                        if config['write_to_file']:
+                            rt_rec.save(f'{save_path}/realtime_{variant}_trial{i}.log',
+                                        behaviour={'success': int(n_success[i]),
+                                                   'n_steps': int(n_steps[i]),
+                                                   'violations': int(n_violations[i])})
                         sampled_trajectories_all.append(sampled_trajectories)
 
                         if i >= plot_how_many:

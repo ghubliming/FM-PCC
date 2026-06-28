@@ -53,6 +53,12 @@ from omegaconf import OmegaConf
 # D3IL imports — PYTHONPATH set by SLURM: D3IL_ROOT, D3IL_ENV_ROOT
 from envs.gym_aligning_env.gym_aligning.envs.aligning import Robot_Push_Env
 from agents.utils.sim_path import sim_framework_path
+# REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING).
+# D3IL is the DPCC-free BASELINE: fm_ms=total (no projector), proj_ms=0 — the reference every
+# FM-PCC fm_overhead is measured against (IDEAS.md §Priority: do the baseline first).
+import time as _time
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
 
 OmegaConf.register_new_resolver("add", lambda *numbers: sum(numbers), replace=True)
 
@@ -432,6 +438,13 @@ def run_eval_seed(seed, cfg_eval, record_mode):
 
             obs  = env.reset(random=False, context=ctx_pool[ctx_idx])
             done = False
+            # REAL_TIME_RECORDING_UPDATE — one recorder per rollout (no projector → proj=0).
+            rt_rec = RTRecorder(episode_id=f'{agent_name}_ctx{ctx_idx}_traj{traj_i}',
+                                variant='baseline', scene='aligning',
+                                system='D3IL_VisualAligning_baseline',
+                                control_hz=RT_CONTROL_HZ, batch_size=1,
+                                horizon=getattr(agent, 'horizon', 1), text_log=True)
+            rt_k = 0   # REAL_TIME_RECORDING_UPDATE — per-rollout step counter
 
             if if_vision:
                 env_state, bp_image, inhand_image = obs
@@ -443,10 +456,17 @@ def run_eval_seed(seed, cfg_eval, record_mode):
                 while not done:
                     frame_bgr = bp_image   # capture before step
 
+                    _rt_t0 = _time.time()   # REAL_TIME_RECORDING_UPDATE
                     pred_action = agent.predict(
                         (bp_proc, inh_proc, des_robot_pos), if_vision=True
                     )
+                    _rt_ms = (_time.time() - _rt_t0) * 1e3   # REAL_TIME_RECORDING_UPDATE — pure agent inference (no projector)
                     pred_xyz = pred_action[0] + des_robot_pos
+                    rt_rec.step(t=rt_k / RT_CONTROL_HZ, total_ms=_rt_ms,   # REAL_TIME_RECORDING_UPDATE
+                                obs=des_robot_pos, action=np.asarray(pred_action[0]).reshape(-1),
+                                pos=np.asarray(des_robot_pos).reshape(-1)[:2],
+                                proj_active=False, step_idx=rt_k)
+                    rt_k += 1
                     obs, reward, done, info = env.step(
                         np.concatenate((pred_xyz, [0, 1, 0, 0]))
                     )
@@ -466,15 +486,27 @@ def run_eval_seed(seed, cfg_eval, record_mode):
                 pred_action = env.robot_state()
                 while not done:
                     obs_full = np.concatenate((pred_action[:3], obs))
+                    _rt_t0 = _time.time()   # REAL_TIME_RECORDING_UPDATE
                     pred_action = agent.predict(obs_full)
+                    _rt_ms = (_time.time() - _rt_t0) * 1e3   # REAL_TIME_RECORDING_UPDATE — pure agent inference (no projector)
                     pred_xyz    = pred_action[0] + obs_full[:3]
                     obs, reward, done, info = env.step(
                         np.concatenate((pred_xyz, [0, 1, 0, 0]))
                     )
+                    rt_rec.step(t=rt_k / RT_CONTROL_HZ, total_ms=_rt_ms,   # REAL_TIME_RECORDING_UPDATE
+                                obs=obs_full[:6], action=np.asarray(pred_action[0]).reshape(-1),
+                                pos=np.asarray(pred_xyz).reshape(-1)[:2], proj_active=False,
+                                track_err=float(info.get('mean_distance', 0.0)), step_idx=rt_k)
+                    rt_k += 1
                     wrapper.record_step(
                         pred_xyz, None,
                         float(info.get('mean_distance', 0.0)),
                     )
+
+            # REAL_TIME_RECORDING_UPDATE — write per-rollout realtime baseline log + SUMMARY.
+            rt_rec.save(os.path.join(save_path, f'realtime_baseline_ctx{ctx_idx}_traj{traj_i}.log'),
+                        behaviour={'success': int(bool(info.get('success', False))),
+                                   'mean_distance': round(float(info.get('mean_distance', 0.0)), 4)})
 
             # UF-16.4 hook: read final box state directly from MuJoCo
             _fbox_pos  = env.scene.get_obj_pos(env.push_box)

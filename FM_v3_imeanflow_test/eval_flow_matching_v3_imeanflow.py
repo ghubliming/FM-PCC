@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import flow_matcher_v3_imeanflow.utils as utils
 from flow_matcher_v3_imeanflow.sampling.policies import Policy
 from flow_matcher_v3_imeanflow.sampling.projection import Projector
+# REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 import sys
 import argparse
@@ -285,6 +288,13 @@ for exp in exps:
                         action_buffer = []
                         sampled_trajectories = []
                         disable_projection = False
+                        # REAL_TIME_RECORDING_UPDATE — one recorder per rollout episode.
+                        rt_rec = RTRecorder(episode_id=f'{exp}_{variant}_seed{seed}_trial{i}',
+                                            variant=variant, scene=exp,
+                                            system='FMv3_iMeanFlow',
+                                            control_hz=RT_CONTROL_HZ,
+                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            text_log=config.get('write_to_file', True))
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
                             if 'halfspace' in constraint_types:
@@ -308,7 +318,13 @@ for exp in exps:
                             n_violations[i] += violated_this_timestep
                             start = time.time()
                             action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
-                            avg_time[i] += time.time() - start
+                            _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
+                            avg_time[i] += _rt_total_ms / 1e3
+                            # REAL_TIME_RECORDING_UPDATE — record per-step timing (proj bundled inside policy()).
+                            rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
+                                        action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
+                                        proj_active=(variant != 'diffuser' and not disable_projection),
+                                        contact=bool(violated_this_timestep), step_idx=_)
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
                                 obs, rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
@@ -339,7 +355,13 @@ for exp in exps:
                         
                         obs_all.append(np.array(obs_buffer))
                         act_all.append(np.array(action_buffer))
-                        
+                        # REAL_TIME_RECORDING_UPDATE — write per-episode realtime_<variant>_trial<i>.log + SUMMARY.
+                        if config.get('write_to_file', True):
+                            rt_rec.save(f'{save_path}/realtime_{variant}_trial{i}.log',
+                                        behaviour={'success': int(n_success[i]),
+                                                   'n_steps': int(n_steps[i]),
+                                                   'violations': int(n_violations[i])})
+
                         sampled_trajectories_all.append(sampled_trajectories)
                         if i >= plot_how_many: continue
                         plot_states = ['x', 'y', 'x_des', 'y_des']

@@ -49,6 +49,9 @@ os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
 
 import imf_visual_aligning.utils as utils
 from imf_visual_aligning.sampling.projection import Projector
+# REAL_TIME_RECORDING_UPDATE — per-replan timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware. total_ms = per-replan iMF+projection wall-time (bundled). NB: this eval's source is incomplete (ported per user request).
 
 import d3il
 print(f'[ eval ] Using d3il from: {d3il.__file__}')
@@ -827,6 +830,13 @@ class VisualAgentWrapper:
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
         self._plan_post_viol_rates.clear()   # UF-16.3
+        # REAL_TIME_RECORDING_UPDATE — fresh per-rollout timing recorder.
+        self.rt_rec = RTRecorder(
+            episode_id=f'{self.variant}_rollout{self.rollout_counter}',
+            variant=self.variant, scene='aligning', system='VisualAligning_iMF',
+            control_hz=RT_CONTROL_HZ, batch_size=self.batch_size,
+            horizon=getattr(self.model, 'horizon', self.action_seq_size),
+            text_log=bool(self.save_path))
 
     def update_rollout_info(self, info):
         """Called by Aligning_Sim at rollout end. Mirrors ddpm_encdec verbose format."""
@@ -896,6 +906,12 @@ class VisualAgentWrapper:
 
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
+        # REAL_TIME_RECORDING_UPDATE — write per-rollout realtime_<variant>_rollout<ridx>.log + SUMMARY.
+        if getattr(self, 'rt_rec', None) is not None and self.save_path:
+            self.rt_rec.save(
+                os.path.join(self.save_path, f'realtime_{self.variant}_rollout{ridx}.log'),
+                behaviour={'success': int(bool(success)), 'steps': int(self.step_counter),
+                           'mean_distance': round(float(mean_dist), 4)})
         self.history_rollout_mean_dist.append(float(mean_dist))              # Fix 9
         self.history_pos_tracking_errors.append(
             np.array(self.curr_rollout_tracking_errors))
@@ -1627,7 +1643,14 @@ class VisualAgentWrapper:
 
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
-            self.curr_rollout_time += time.time() - t_replan   # Fix 12: accumulate per-replan time
+            _rt_replan_ms = (time.time() - t_replan) * 1e3   # REAL_TIME_RECORDING_UPDATE — per-replan iMF+projection wall-time
+            self.curr_rollout_time += _rt_replan_ms / 1e3   # Fix 12: accumulate per-replan time
+            # REAL_TIME_RECORDING_UPDATE — record this replan's timing (proj bundled in model call).
+            if getattr(self, 'rt_rec', None) is not None:
+                self.rt_rec.step(t=self.step_counter / RT_CONTROL_HZ, total_ms=_rt_replan_ms,
+                                 obs=np.concatenate([des_robot_pos_np, robot_pos_np]),
+                                 pos=robot_pos_np[:2], proj_active=(self.projector is not None),
+                                 track_err=phys_err, step_idx=self._replan_count)
 
         next_action    = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy().squeeze(0)   # (3,)

@@ -2178,3 +2178,42 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 2. **Zero-Initialized Opt-In Deployment**: Designed the upgrade as a strict opt-in via a new configuration key (`film_mode: 'v2'`), leaving `v1` as the default. To preserve learning stability, the new `film_proj` dense layers are zero-initialized, ensuring the network acts as an identity block for the visual signal at step 0. 
 3. **Cross-Pipeline Integration & Automation**: Deployed the `FiLMv2` backbone symmetrically across both the state-of-the-art Flow Matching pipeline (`fm_visual_aligning`) and the Diffuser baseline (`diffuser_visual_aligning`). Automated the routing logic within `visual_unet.py` to seamlessly instantiate either the `v1` or `v2` backbone based on the configuration key, guaranteeing 100% backward compatibility for all existing checkpoints.
 4. **Comprehensive Upgrade Documentation**: Authored a suite of documentation (`CHANGELOG_FiLM_V2.md`, `PLAN_FiLM_V2.md`, `Ideas.md`, and `MEMO_FiLM_code_to_math.md`) detailing the exact mathematical deltas, usage instructions for isolating `v2` checkpoints, and fallback plans.
+
+***
+
+## Gen11 Epoch 7 "U4" & "F5": Anchor-P Integration & UAV Grounding Modes (June 28, 2026)
+
+**Keywords**: Gen11, Epoch 7, U4, F5, anchor_to_p, real-position grounding, trajectory explosion, DPCC.
+
+1. **Trajectory Drift Diagnosis**: Identified that the dynamics constraint (`p_des[t+1] = p_des[t] + action[t]`) caused unbounded trajectory divergence because it blindly projected action feasibility from commanded setpoints (`p_des`) instead of the drone's actual lagging position (`p`).
+2. **Anchor-P Integration**: Implemented the `anchor_to_p` evaluation mode to directly ground the PID setpoint and DPCC dynamics constraint into the real drone position (`p_des = p + action`). This strictly corrects the integration loop and physically re-anchors the planning observation without requiring any model retraining.
+3. **Deprecated Blending**: Initially experimented with `cond_mode='real_p'` (retraining) and `reanchor_alpha` blending, but removed them in favor of the mathematically robust `anchor_to_p` logic which safely preserves existing checkpoints.
+
+***
+
+## Gen11 Epoch 7 Config Refactor: Projection & Eval Decoupling (June 28, 2026)
+
+**Keywords**: Gen11, Epoch 7, config split, uav_projection.yaml, uav.py, evaluation configuration.
+
+1. **Architecture Migration**: Restructured the UAV configuration logic to match the robust `avoiding-d3il.py` pattern. Created a dedicated `config/uav_projection.yaml` exclusively for projection parameters (variants, geometry, thresholds), deprecating the over-stuffed `config/uav_eval.yaml`.
+2. **Unified Planning Block**: Consolidated evaluation-specific control parameters (`batch_size`, `control_hz`, `anchor_to_p`) into a `plan_flow_matching_v3_uav` block inside `config/uav.py`. `eval_fm_uav.py` now seamlessly merges this block with `uav_projection.yaml` at runtime.
+3. **Run-Quantity Centralization**: Moved `seed` and `n_trials` settings from hardcoded magic numbers in `parse_args()` to the new `uav_projection.yaml`. This fixes a silent bug where evaluation defaulted to `seed=5` instead of the required UAV `seed=6`.
+
+***
+
+## Gen11 Epoch 7: CLI Overrides & SLURM Orchestration Fix (June 28, 2026)
+
+**Keywords**: Gen11, Epoch 7, SLURM scripts, bash parameter expansion, n_trials, CLI override.
+
+1. **Bash Override Hotfix**: Identified that four SLURM batch scripts (`eval_fm_uav.sh`, `fm_uav_pipeline.sh`, etc.) were hardcoding `NTRIALS="${3:-20}"`, forcefully injecting `--n-trials 20` to Python and preventing the `uav_projection.yaml` configuration from ever being read.
+2. **Conditional Flag Passing**: Updated all orchestrator scripts to use conditional expansion (`${NTRIALS:+--n-trials "$NTRIALS"}`). If the user omits the trial argument, the bash scripts simply pass no flag, allowing Python to cleanly fall back to the YAML defaults.
+3. **Pipeline Seed Correction**: Corrected `fm_uav_pipeline.sh` to default to `SEED=6` rather than the legacy D3IL `5`, properly aligning cluster workflows with the UAV training standards.
+
+***
+
+## Gen11 Epoch 7 Misc: Buffer Optimization & Projector Performance (June 28, 2026)
+
+**Keywords**: Gen11, Epoch 7, max_path_length, replay buffer, projector performance, tightened variants.
+
+1. **Per-Scene Buffer Allocation**: Implemented a `MAX_PATH_LENGTH_PER_SCENE` dictionary in `config/uav.py` to dynamically size the training replay buffer based on actual scene duration limits (e.g., `corridor=360`, `empty=450` vs the blanket `750`). This prevents massive memory overallocation and waste across shorter scenes.
+2. **Redundant Projection Bypass**: Optimized evaluation performance by explicitly skipping "tightened" projection variants (`dpcc-*-tightened`) when spatial constraints are inactive, eliminating redundant SLSQP solving cycles.
