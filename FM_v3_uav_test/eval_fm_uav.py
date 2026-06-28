@@ -477,6 +477,10 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     Mirrors the FMv3ODE per-variant block: `projector = None` for `diffuser`, else the DPCC
     projector; `trajectory_selection` per variant; one Policy built per variant (persists
     across trials, exactly as FMv3ODE)."""
+    # fix_5 anchor-p knob — must be resolved before setup_dpcc_projector is called.
+    anchor_to_p = bool(config.get('anchor_to_p', False))
+    eval_tag = '_anchorP' if anchor_to_p else ''
+
     projector = None
     if variant != 'diffuser':
         # 12 = act(3)+obs(9), MINUS model_fm.goal_dim: diffusion.py's p_sample_loop calls
@@ -499,11 +503,6 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                     preprocess_fns=getattr(parsed, 'preprocess_fns', []),
                     test_ret=getattr(parsed, 'test_ret', 0),
                     projector=projector, trajectory_selection=_selection_for(variant))
-
-    # fix_5 anchor-p knob — tags the output folder so default and anchored runs
-    # never collide on the same checkpoint.
-    anchor_to_p = bool(config.get('anchor_to_p', False))
-    eval_tag = '_anchorP' if anchor_to_p else ''
 
     # Outputs under the sibling plans/ tree, one subfolder per variant (FMv3ODE convention).
     scene_root = os.path.join(parsed.logbase, parsed.dataset)              # logs/UAV_FM/uav-<scene>
