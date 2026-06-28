@@ -12,8 +12,9 @@ Multi-rate control (IMPORTANT):
     held between queries while the PID tracks it. This matches how the data was recorded.
 
 Per FM step:
-  obs = [p_des | p | v]  (9-D, raw) → policy → first Δp_des (3-D) → p_des += Δp_des →
-  PID tracks p_des for `decim` physics steps → obs updated from new (p, v).
+  obs = [p_des | p | v]  (9-D, raw) → policy → first Δp_des (3-D)
+  → p_des = p + Δp_des  (anchor_to_p=True, fix_5) or  p_des += Δp_des  (default)
+  → PID tracks p_des for `decim` physics steps → obs updated from new (p, v).
 
 SUCCESS CRITERION (Fix2_metrics, scene-aware):
   • GOAL-PATH scenes (corridor, s_curve, pillars — fixed start + geometry route):
@@ -125,8 +126,7 @@ def load_pcc_config(scene, seed):
     plan_args = pp.parse_args(experiment='plan_flow_matching_v3_uav', seed=seed)
     cfg['batch_size']                   = int(getattr(plan_args, 'batch_size', 4))
     cfg['diffusion_timestep_threshold'] = float(getattr(plan_args, 'diffusion_timestep_threshold', 0.5))
-    cfg['reanchor_alpha']               = float(getattr(plan_args, 'reanchor_alpha', 0.0))
-    cfg['lead_gain']                    = float(getattr(plan_args, 'lead_gain', 1.0))
+    cfg['anchor_to_p']                  = bool(getattr(plan_args, 'anchor_to_p', False))
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
     cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
     cfg['write_to_file']                = bool(getattr(plan_args, 'write_to_file', True))
@@ -146,7 +146,7 @@ class ProjectorNormalizer:
         self.normalizers = {'observations': obs_normalizer, 'actions': act_normalizer}
 
 
-def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12):
+def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12, anchor_to_p=False):
     """Build the DPCC projector (mirrors visual-aligning `setup_dpcc_projector`).
 
     UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
@@ -177,11 +177,14 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
         constraint_list += [['lb', lb], ['ub', ub]]
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        # deriv binds traj dims 3,4,5 ↔ action 0,1,2. The dim layout makes this the right
-        # channel in BOTH modes: cond_mode='p_des' → [act|p_des|p|v] so 3–5 = p_des (echo,
-        # tautology); cond_mode='real_p' → [act|p|v] so 3–5 = REAL p (feasible because action
-        # is now Δp ⇒ p=∫act is the tautology; skip_initial_state then pins p[0]=measured).
-        constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]
+        if anchor_to_p:
+            # fix_5: bind to real p (dims 6,7,8 in [act|p_des|p|v]).
+            # Projector geo-calibrates action from actual drone position, not drifted p_des.
+            # Paired with p_des = p + action integration in rollout_one().
+            constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]
+        else:
+            # default: bind to p_des (dims 3,4,5) — Euler in commanded space.
+            constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]
 
     if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
         _hs = {'x': _DIM['x'], 'y': _DIM['y']}
@@ -281,7 +284,7 @@ def _render_overhead(mujoco, model, data, renderer):
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
-                cond_mode='p_des', reanchor_alpha=0.0, lead_gain=1.0):
+                anchor_to_p=False):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -337,10 +340,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     for k in range(n_fm):
         p = data.qpos[:3].copy()
         v = data.qvel[:3].copy()
-        if cond_mode == 'real_p':
-            obs = np.concatenate([p, v]).astype(np.float32)      # U4: [p | v] (6,) — plan in real position
-        else:
-            obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
+        obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
@@ -366,15 +366,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             if acts.ndim == 3 and which < acts.shape[0]:
                 fm_horizon = acts[which]
 
-        # U4 — how the PID setpoint p_des is formed from the FM action:
-        #   real_p : setpoint rebuilt from the MEASURED position each step (structurally α=1)
-        #            → command cannot run away from the lagging drone. lead_gain>1 leads it.
-        #   p_des  : free-running accumulation (today) when reanchor_alpha=0; reanchor_alpha>0
-        #            bleeds the command back toward measured p (no retrain) so it can't run away.
-        if cond_mode == 'real_p':
-            p_des = p + lead_gain * action
+        # fix_5 anchor-p: p_des = p + action (grounded to real position every step).
+        # Default: free-running Euler (p_des += action, commanded space only).
+        if anchor_to_p:
+            p_des = p + action
         else:
-            p_des = (1.0 - reanchor_alpha) * (p_des + action) + reanchor_alpha * p
+            p_des = p_des + action
         v_des = action / dt_fm
 
         hit_before = n_hit
@@ -497,27 +494,16 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             parsed, config,
             dataset.normalizer.normalizers['observations'],
             dataset.normalizer.normalizers['actions'],
-            variant, trajectory_dim=traj_dim)
+            variant, trajectory_dim=traj_dim, anchor_to_p=anchor_to_p)
     policy = Policy(model=model_fm, normalizer=dataset.normalizer,
                     preprocess_fns=getattr(parsed, 'preprocess_fns', []),
                     test_ret=getattr(parsed, 'test_ret', 0),
                     projector=projector, trajectory_selection=_selection_for(variant))
 
-    # U4 — grounding knobs. cond_mode comes from config.uav training block (args → parsed;
-    # already in the checkpoint/savepath via args_to_watch). The per-mode eval knobs come
-    # from the plan_flow_matching_v3_uav block in config/uav.py (via config dict).
-    cond_mode = getattr(parsed, 'cond_mode', 'p_des')
-    reanchor_alpha = float(config.get('reanchor_alpha', 0.0))
-    lead_gain = float(config.get('lead_gain', 1.0))
-    # Tag the EVAL output folder with the active (non-default) eval knob so sweeps (e.g.
-    # reanchor 0.0 vs 0.5 vs 1.0 on the SAME checkpoint) don't overwrite each other.
-    # cond_mode itself is already separated via savepath (`sub`).
-    eval_tag = ''
-    if cond_mode == 'real_p':
-        if lead_gain != 1.0:
-            eval_tag = f'_lead{lead_gain:g}'
-    elif reanchor_alpha != 0.0:
-        eval_tag = f'_reanchor{reanchor_alpha:g}'
+    # fix_5 anchor-p knob — tags the output folder so default and anchored runs
+    # never collide on the same checkpoint.
+    anchor_to_p = bool(config.get('anchor_to_p', False))
+    eval_tag = '_anchorP' if anchor_to_p else ''
 
     # Outputs under the sibling plans/ tree, one subfolder per variant (FMv3ODE convention).
     scene_root = os.path.join(parsed.logbase, parsed.dataset)              # logs/UAV_FM/uav-<scene>
@@ -539,7 +525,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             variant=variant, log_dir=out_dir,
                             control_hz=config.get('control_hz', DATASET_HZ),
                             text_log=config.get('behavior_log', True),
-                            cond_mode=cond_mode, reanchor_alpha=reanchor_alpha, lead_gain=lead_gain)
+                            anchor_to_p=anchor_to_p)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:

@@ -13,7 +13,7 @@
 # seed     : which trained-model checkpoint seed to evaluate (matches train_fm_uav.py DEFAULT_SEEDS[0])
 # n_trials : closed-loop rollouts per scene
 seed: 6
-n_trials: 20
+n_trials: 10
 
 # ── Policy threshold ─────────────────────────────────────────────────────────
 # Used by plan block in config/uav.py as _yaml_threshold (same as avoiding-d3il.py

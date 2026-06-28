@@ -59,9 +59,8 @@ args_to_watch = [
     ('prefix', ''),
     ('horizon', 'H'),
     ('diffusion', 'D'),
-    # U4: conditioning frame → folder fragment 'condp_des' / 'condreal_p' so the two
-    # modes' checkpoints save in PARALLEL dirs and never collide. Read by BOTH train
-    # (dataset build) and eval (rollout obs/integration + which checkpoint to load).
+    # Conditioning frame → folder fragment 'condp_des'; baked into checkpoint path.
+    # Keep in args_to_watch so eval can resolve the correct savepath.
     ('cond_mode', 'cond'),
 ]
 
@@ -90,14 +89,9 @@ base = {
         'condition_dropout': 0.25,
         'condition_guidance_w': 1.2,
 
-        # U4 — conditioning frame (Gen11 E6/E7; see logs_in_develop/.../U4_cond/PLAN_U4_cond_real_p.md).
-        #   'p_des'  (default) → obs=[p_des|p|v] (9D), action=Δp_des, transition=12 — current behavior.
-        #   'real_p' (opt-in)  → obs=[p|v] (6D),       action=Δp,     transition=9  — plan in real
-        #                        position so the command can't run away from the lagging drone.
-        # Read by BOTH train (dataset) and eval (rollout); baked into the folder path via
-        # args_to_watch ('cond_mode','cond'). 'real_p' requires a fresh retrain (different dims).
-        # ⚠ Adding it to the path renames future 'p_des' dirs to '..._condp_des'; a pre-U4
-        #   checkpoint must have its folder renamed to add '_condp_des' (no retrain) to be found.
+        # Conditioning frame — always 'p_des': obs=[p_des|p|v] (9D), action=Δp_des, transition=12.
+        # Baked into the checkpoint folder path via args_to_watch so eval finds the right dir.
+        # Real-position grounding is handled at eval time by anchor_to_p (fix_5), no retrain.
         'cond_mode': 'p_des',
 
         # v3 SafeFlow-style time sampling parameters (unchanged from source).
@@ -171,15 +165,13 @@ base = {
         'behavior_log': True,                # write per-step .log files; False = stats only
         'control_hz': 33,                    # override FM outer-loop rate; default = DATASET_HZ
 
-        # ── U4 grounding knobs (eval-only; see U4_cond/PLAN_U4_cond_real_p.md) ──
-        # cond_mode (above) selects the mode; only one knob applies per mode:
-        #   reanchor_alpha — ONLY in cond_mode='p_des' (NO retrain).
-        #     p_des = (1-alpha)*(p_des+action) + alpha*p_measured.
-        #     0.0 = current behavior; 1.0 = hard reset to measured p each step.
-        #   lead_gain      — ONLY in cond_mode='real_p'. setpoint = p_measured + lead_gain*Δp.
-        #     1.0 = pure grounded (may under-track); >1 leads the drone to fight controller lag.
-        'reanchor_alpha': 0.0,
-        'lead_gain': 1.0,
+        # ── fix_5 anchor-p (eval-only, no retrain) ───────────────────────────
+        # anchor_to_p=True: p_des = p_real + action each step.
+        #   Dynamics constraint rebinds to real p (dims 6,7,8) so the projector
+        #   geo-calibrates the action from actual drone position, not drifted p_des.
+        #   When False (default): free-running Euler (p_des += action). See:
+        #   logs_in_develop/.../U4_cond/fix_5_train_eval_cond_p_redesign_patch/
+        'anchor_to_p': False,
 
         # ── Standard plan fields ──────────────────────────────────────────────
         'device': 'cuda',
