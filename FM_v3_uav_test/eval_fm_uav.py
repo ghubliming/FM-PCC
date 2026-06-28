@@ -605,6 +605,19 @@ def eval_scene(scene, args):
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 
+    # Tightened variants only differ from their base siblings when spatial constraints
+    # (bounds/halfspace/obstacles) are active — enlarge_constraints is applied there.
+    # With only 'dynamics' in constraint_types the enlarge margin is computed but never
+    # used, so tightened == non-tightened == wasted compute. Skip them and say why.
+    _spatial = {'bounds', 'halfspace', 'obstacles'}
+    _has_spatial = bool(_spatial & set(config.get('constraint_types', [])))
+    if not _has_spatial:
+        _skip = [v for v in config['projection_variants'] if 'tightened' in v]
+        if _skip:
+            print(f'[ eval ] {scene}: skipping {len(_skip)} tightened variants '
+                  f'(no spatial constraints in constraint_types — enlarge has no effect): {_skip}')
+        config['projection_variants'] = [v for v in config['projection_variants'] if 'tightened' not in v]
+
     print(f'[ eval ] {scene}: variants={config["projection_variants"]}  '
           f'constraints={config["constraint_types"]}  batch_size={config["batch_size"]}')
     summaries = {}
