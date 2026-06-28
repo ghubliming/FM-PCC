@@ -59,9 +59,6 @@ args_to_watch = [
     ('prefix', ''),
     ('horizon', 'H'),
     ('diffusion', 'D'),
-    # Conditioning frame → folder fragment 'condp_des'; baked into checkpoint path.
-    # Keep in args_to_watch so eval can resolve the correct savepath.
-    ('cond_mode', 'cond'),
 ]
 
 # All UAV-FM outputs live under logs/UAV_FM/ (NOT scattered at the top of logs/).
@@ -88,11 +85,6 @@ base = {
         'attention': False,
         'condition_dropout': 0.25,
         'condition_guidance_w': 1.2,
-
-        # Conditioning frame — always 'p_des': obs=[p_des|p|v] (9D), action=Δp_des, transition=12.
-        # Baked into the checkpoint folder path via args_to_watch so eval finds the right dir.
-        # Real-position grounding is handled at eval time by anchor_to_p (fix_5), no retrain.
-        'cond_mode': 'p_des',
 
         # v3 SafeFlow-style time sampling parameters (unchanged from source).
         'time_beta_alpha_v3': 1.5,
@@ -143,19 +135,13 @@ base = {
         'horizon': 8,
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
-        # cond_mode must equal the training block value (same checkpoint is loaded).
-        # eval_fm_uav.py reads cond_mode from the TRAINING block args (build_experiment),
-        # not from here — kept for completeness and future direct plan-block loading.
-        'cond_mode': 'p_des',
 
         # ── Checkpoint loading ────────────────────────────────────────────────
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_uav/',
         'exp_name': watch(args_to_watch),
-        # diffusion_loadpath points at the TRAINING folder (used if the eval is ever
-        # refactored to load via plan-block savepath + diffusion_loadpath).
-        'diffusion_loadpath': 'f:flow_matching_v3_uav/H{horizon}_D{diffusion}_cond{cond_mode}',
+        'diffusion_loadpath': 'f:flow_matching_v3_uav/H{horizon}_D{diffusion}',
         'diffusion_epoch': 'latest',
 
         # ── Eval control ──────────────────────────────────────────────────────
