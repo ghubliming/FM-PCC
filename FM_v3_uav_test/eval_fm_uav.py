@@ -87,29 +87,48 @@ def build_experiment(scene, seed, epoch, device):
     return experiment.diffusion, experiment.dataset, args, int(getattr(args, 'horizon', 8))
 
 
-def load_pcc_config():
-    """Load the Epoch-7 PCC eval config from config/uav_eval.yaml (mirrors how the
-    FMv3ODE/visual evals load config/projection_eval.yaml). Falls back to a diffuser-only
-    config if the yaml is missing."""
+def load_pcc_config(scene, seed):
+    """Merged eval config matching the avoiding-d3il.py pattern:
+      - Projection params (variants, constraints, geometry) from config/uav_projection.yaml
+      - Eval control params (batch_size, thresholds, U4 knobs, logging) from the
+        plan_flow_matching_v3_uav block in config/uav.py
+
+    Both sources are merged into one dict so downstream code (_run_variant, rollout_one,
+    setup_dpcc_projector) needs no structural changes."""
     import yaml
-    path = os.path.join(_REPO, 'config', 'uav_eval.yaml')
+
+    # ── 1. Projection-only (variants, constraints, geometry) ─────────────────
+    yaml_path = os.path.join(_REPO, 'config', 'uav_projection.yaml')
     try:
-        with open(path) as f:
+        with open(yaml_path) as f:
             cfg = yaml.safe_load(f) or {}
     except FileNotFoundError:
-        print(f'[ eval ] {path} not found → diffuser-only fallback')
+        print(f'[ eval ] {yaml_path} not found → diffuser-only fallback')
         cfg = {}
     cfg.setdefault('projection_variants', ['diffuser'])
     cfg.setdefault('constraint_types', ['dynamics'])
-    cfg.setdefault('batch_size', 4)
     cfg.setdefault('dt', 1.0)
     cfg.setdefault('diffusion_timestep_threshold', 0.5)
     cfg.setdefault('enlarge_constraints', 0.0)
     cfg.setdefault('workspace_bounds', None)
     cfg.setdefault('halfspace_constraints', [])
     cfg.setdefault('obstacle_constraints', [])
-    cfg.setdefault('reanchor_alpha', 0.0)   # U4: p_des-mode re-anchor blend (eval-only)
-    cfg.setdefault('lead_gain', 1.0)        # U4: real_p-mode setpoint lead/overdrive (eval-only)
+
+    # ── 2. Eval control params from plan_flow_matching_v3_uav block ──────────
+    class PlanParser(utils.Parser):
+        dataset: str = 'uav'
+        config: str = 'config.uav'
+    pp = PlanParser()
+    pp.dataset = f'uav-{scene}'
+    plan_args = pp.parse_args(experiment='plan_flow_matching_v3_uav', seed=seed)
+    cfg['batch_size']                   = int(getattr(plan_args, 'batch_size', 4))
+    cfg['diffusion_timestep_threshold'] = float(getattr(plan_args, 'diffusion_timestep_threshold', 0.5))
+    cfg['reanchor_alpha']               = float(getattr(plan_args, 'reanchor_alpha', 0.0))
+    cfg['lead_gain']                    = float(getattr(plan_args, 'lead_gain', 1.0))
+    cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
+    cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
+    cfg['write_to_file']                = bool(getattr(plan_args, 'write_to_file', True))
+
     return cfg
 
 
@@ -482,8 +501,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                     test_ret=getattr(parsed, 'test_ret', 0),
                     projector=projector, trajectory_selection=_selection_for(variant))
 
-    # U4 — grounding knobs. cond_mode comes from config.uav (args → parsed; already in the
-    # checkpoint/savepath via args_to_watch). The per-mode eval knobs come from uav_eval.yaml.
+    # U4 — grounding knobs. cond_mode comes from config.uav training block (args → parsed;
+    # already in the checkpoint/savepath via args_to_watch). The per-mode eval knobs come
+    # from the plan_flow_matching_v3_uav block in config/uav.py (via config dict).
     cond_mode = getattr(parsed, 'cond_mode', 'p_des')
     reanchor_alpha = float(config.get('reanchor_alpha', 0.0))
     lead_gain = float(config.get('lead_gain', 1.0))
@@ -579,7 +599,7 @@ def eval_scene(scene, args):
     import mujoco
     import uav_expert_data_collect.generator as gen
     model_fm, dataset, parsed, horizon = build_experiment(scene, args.seed, args.epoch, args.device)
-    config = load_pcc_config()
+    config = load_pcc_config(scene, args.seed)
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 

@@ -1,71 +1,13 @@
-# UAV-FM PCC/MPC eval config (Epoch 7) — mirrors config/visual_aligning_eval.yaml.
-# Loaded by FM_v3_uav_test/eval_fm_uav.py via yaml.safe_load. Run scope (scene / seed /
-# n_trials / record) still comes from the CLI / submit .sh; THIS file is the PCC bone config.
-
-write_to_file: True
-
-# ── Policy / MPC ──────────────────────────────────────────────────────────────
-diffusion_timestep_threshold: 0.5
-batch_size: 4                 # MPC candidate-fan size (was 1 in the E6 diffuser baseline)
-
-# ── U4 grounding knobs (eval-only; see U4_cond/PLAN_U4_cond_real_p.md) ─────────
-# The conditioning MODE itself (cond_mode='p_des'|'real_p') lives in config/uav.py — it
-# determines the checkpoint AND the dataset, so it must be shared, not duplicated here.
-# These two are the per-mode EVAL knobs, mutually exclusive (only one applies per cond_mode):
-#   reanchor_alpha — ONLY in cond_mode='p_des' (NO retrain, uses the existing checkpoint).
-#     setpoint p_des = (1-alpha)*(p_des+action) + alpha*p_measured.
-#     0.0 = current behavior; 1.0 = hard reset to measured p each step (command can't run away).
-#   lead_gain      — ONLY in cond_mode='real_p'. setpoint = p_measured + lead_gain*Δp.
-#     1.0 = pure grounded (may under-track); >1 leads the drone to fight controller lag.
-# Both are tagged into the eval output folder so sweeps don't overwrite each other.
-reanchor_alpha: 0.0
-lead_gain: 1.0
-
-# ── Projection variants (exact FMv3ODE/visual-aligning semantics) ─────────────
-#   trajectory_selection:  random (diffuser/dpcc-r), minimum_projection_cost (dpcc-c), temporal_consistency (dpcc-t)
-#   gradient in variant  → gradient-based projection (not SLSQP)
-#   post_processing      → threshold=0.0 (project at ALL FM steps, not just last 50%)
-#   model_free           → spatial constraints only, NO dynamics (no-op until spatial constraints designed)
-#   tightened            → enlarge_constraints margin applied to spatial constraints (no-op until spatial designed)
-#   diffuser             → projector OFF (pure ML baseline)
-projection_variants: [
-  # ── DPCC paper Table 1 baselines ──
-  'diffuser',
-  'gradient',
-  'gradient-tightened',
-  'post_processing',
-  'post_processing-tightened',
-  'model_free',               # spatial-only: no-op until obstacle/halfspace/bounds constraints designed
-  'model_free-tightened',     # spatial-only + tightening: no-op until spatial constraints designed
-  # ── DPCC paper Table 1 main results ──
-  'dpcc-r',
-  'dpcc-r-tightened',
-  'dpcc-c',
-  'dpcc-c-tightened',
-  'dpcc-t',
-  'dpcc-t-tightened',
-]
-
-# ── Constraints ───────────────────────────────────────────────────────────────
-# ONLY 'dynamics' is active this epoch. The dynamics Euler constraint binds
-# p_des (trajectory dims 3,4,5) to the action (0,1,2): p_des[t+1] = p_des[t] + dt*act[t].
-# dt = 1.0 because the action IS the position delta Δp_des (NOT velocity × physics-dt).
-# Spatial constraint types (halfspace, obstacles, bounds) are listed as PLACEHOLDERS:
-# slots are wired in setup_dpcc_projector but lists are empty — no effect until per-scene
-# geometry is designed in a future epoch.
-constraint_types: ['dynamics']
-dt: 1.0
-enlarge_constraints: 0.025   # tightening margin (matches DPCC paper); active only for -tightened variants
-
-# ── PLACEHOLDERS (empty until per-scene geometry is designed; NOT run this epoch) ──
-# bounds / halfspace / obstacles stay off because they are absent from constraint_types
-# above; these keys are the slots the per-scene design will fill (no eval rewrite needed).
-workspace_bounds: null        # {lb: [x, y, z], ub: [x, y, z]}  — arena box
-halfspace_constraints: []     # corridor / s_curve walls  (formulate_halfspace_constraints fmt)
-obstacle_constraints: []      # pillars → [{type: sphere_outside, dimensions: [x, y], center: [..], radius: ..}]
-
-# ── Real-time budget ──────────────────────────────────────────────────────────
-# Override the FM outer-loop rate for budget_ms computation. When absent, eval falls back
-# to DATASET_HZ imported from uav_expert_data_collect/dataset_writer.py (33 Hz, authoritative).
-control_hz: 33               # Hz — override only; default comes from dataset_writer.DATASET_HZ
-behavior_log: true           # write per-step .log files (digital-twin audit); false = stats only (no string fmt overhead)
+# ⚠ DEPRECATED — fix_2_Config (2026-06-28)
+#
+# This file has been split into two files that match the avoiding-d3il.py pattern:
+#
+#   config/uav_projection.yaml          ← projection-only params (variants, constraints, geometry)
+#   config/uav.py plan_flow_matching_v3_uav block  ← eval control params (batch_size, control_hz,
+#                                                     behavior_log, reanchor_alpha, lead_gain, etc.)
+#
+# eval_fm_uav.py no longer reads this file. It calls load_pcc_config(scene, seed) which reads
+# from both new sources above.
+#
+# This stub is kept so that any Slurm job that references it explicitly gets a clear error
+# rather than a silent wrong-path. Safe to delete once all cluster jobs have been updated.

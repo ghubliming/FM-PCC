@@ -1,0 +1,53 @@
+# UAV FM projection config — PROJECTION-ONLY params (Gen11 Epoch 7).
+# Mirrors config/projection_eval.yaml (avoiding-d3il pattern).
+# Loaded by eval_fm_uav.py via load_pcc_config(); also imported at the top of
+# config/uav.py so that diffusion_timestep_threshold is available to the plan block.
+#
+# WHAT BELONGS HERE:  projection variants, constraint types, geometry (halfspace / obstacle /
+#                     bounds coords), dt, enlarge margin.
+# WHAT DOES NOT:      batch_size, control_hz, behavior_log, reanchor_alpha, lead_gain — those
+#                     are eval control params that live in the plan_flow_matching_v3_uav block
+#                     of config/uav.py (same pattern as avoiding-d3il.py).
+
+# ── Policy threshold ─────────────────────────────────────────────────────────
+# Used by plan block in config/uav.py as _yaml_threshold (same as avoiding-d3il.py
+# reading from projection_eval.yaml); also read directly by eval_fm_uav.py.
+diffusion_timestep_threshold: 0.5
+
+# ── Projection variants ───────────────────────────────────────────────────────
+# Exact same set as FMv3ODE / visual-aligning (DPCC paper Table 1).
+projection_variants: [
+  # ── DPCC paper Table 1 baselines ──
+  'diffuser',
+  'gradient',
+  'gradient-tightened',
+  'post_processing',
+  'post_processing-tightened',
+  'model_free',               # spatial-only: no-op until obstacle/halfspace/bounds constraints designed
+  'model_free-tightened',     # spatial-only + tightening: no-op until spatial constraints designed
+  # ── DPCC paper Table 1 main results ──
+  'dpcc-r',
+  'dpcc-r-tightened',
+  'dpcc-c',
+  'dpcc-c-tightened',
+  'dpcc-t',
+  'dpcc-t-tightened',
+]
+
+# ── Constraints ───────────────────────────────────────────────────────────────
+# ONLY 'dynamics' is active this epoch. The dynamics Euler constraint binds
+# p_des (trajectory dims 3,4,5) to the action (0,1,2): p_des[t+1] = p_des[t] + dt*act[t].
+# dt = 1.0 because the action IS the position delta Δp_des (NOT velocity × physics-dt).
+# Spatial constraint types (halfspace, obstacles, bounds) are listed as PLACEHOLDERS:
+# slots are wired in setup_dpcc_projector but lists are empty — no effect until per-scene
+# geometry is designed in a future epoch.
+constraint_types: ['dynamics']
+dt: 1.0
+enlarge_constraints: 0.025   # tightening margin (matches DPCC paper); active only for -tightened variants
+
+# ── PLACEHOLDERS (empty until per-scene geometry is designed; NOT run this epoch) ──
+# bounds / halfspace / obstacles stay off because they are absent from constraint_types
+# above; these keys are the slots the per-scene design will fill (no eval rewrite needed).
+workspace_bounds: null        # {lb: [x, y, z], ub: [x, y, z]}  — arena box
+halfspace_constraints: []     # corridor / s_curve walls  (formulate_halfspace_constraints fmt)
+obstacle_constraints: []      # pillars → [{type: sphere_outside, dimensions: [x, y], center: [..], radius: ..}]
