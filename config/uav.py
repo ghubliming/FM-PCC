@@ -17,6 +17,23 @@ Dims are derived from the data at runtime (train script:
 
 from diffuser.utils import watch
 
+# Per-scene episode buffer sizes (steps at DATASET_HZ=33 Hz).
+# train_fm_uav.py resolves max_path_length from this dict when scene != 'all',
+# avoiding large per-episode padding for short scenes.
+# Derivation (from generator.py _build_traj_and_init):
+#   empty    : dur = max(4.0, dist/0.4), max dist ≈ 5.1 m → max ≈ 12.8s → 421 steps → 450 buffer
+#   corridor : dur ∈ [6, 10] s → 330 steps max → 360 buffer
+#   s_curve  : dur ∈ [16, 22] s → 726 steps max → 750 buffer
+#   pillars  : dur ∈ [10, 16] s → 528 steps max → 560 buffer
+#   all      : pooled, bounded by s_curve → 750
+MAX_PATH_LENGTH_PER_SCENE = {
+    'empty':    450,
+    'corridor': 360,
+    's_curve':  750,
+    'pillars':  560,
+    'all':      750,
+}
+
 # minimal exp-name label (folder name); mirrors the source's args_to_watch pattern
 args_to_watch = [
     ('prefix', ''),
@@ -76,7 +93,7 @@ base = {
         'preprocess_fns': [],
         'clip_denoised': False,
         'use_padding': True,
-        'max_path_length': 750,        # s_curve up to 22s*33Hz=726 steps; 750 avoids truncating its tail
+        'max_path_length': 750,        # fallback (scene='all', bounded by s_curve); per-scene: see MAX_PATH_LENGTH_PER_SCENE above
         'include_returns': False,      # UAV has no reward signal — skip returns machinery
         'returns_scale': 400,          # unused when include_returns=False (kept for API parity)
         'discount': 0.99,

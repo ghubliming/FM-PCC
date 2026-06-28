@@ -199,6 +199,12 @@ for seed in selected_seeds:
     parser_obj = Parser()
     parser_obj.dataset = f'uav-{cli_args.scene}'   # → data branch + output path segregation
     args = parser_obj.parse_args(experiment='flow_matching_v3_uav', seed=seed)
+    # Resolve per-scene max_path_length (avoid over-allocating replay buffer for short scenes).
+    from config.uav import MAX_PATH_LENGTH_PER_SCENE
+    resolved_max_path = MAX_PATH_LENGTH_PER_SCENE.get(cli_args.scene, args.max_path_length)
+    if resolved_max_path != args.max_path_length:
+        print(f'[ train ] max_path_length: {args.max_path_length} → {resolved_max_path} (scene={cli_args.scene})')
+        args.max_path_length = resolved_max_path
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
