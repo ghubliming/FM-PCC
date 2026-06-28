@@ -14,13 +14,16 @@ ValueBatch = namedtuple('ValueBatch', 'trajectories conditions values')
 
 class SequenceDataset(torch.utils.data.Dataset):
 
-    def __init__(self, env='hopper-medium-replay', horizon=64, normalizer='LimitsNormalizer', 
+    def __init__(self, env='hopper-medium-replay', horizon=64, normalizer='LimitsNormalizer',
                  max_path_length=100, max_n_episodes=100000, termination_penalty=0, preprocess_fns=[],
-                 use_padding=False, discount=0.99, returns_scale=100, include_returns=False):
+                 use_padding=False, discount=0.99, returns_scale=100, include_returns=False,
+                 cond_mode='p_des'):
         self.preprocess_fn = get_preprocess_fn(preprocess_fns, env)
         self.horizon = horizon
         self.max_path_length = max_path_length
         self.use_padding = use_padding
+        # U4: 'p_des' (default, obs=[p_des|p|v], action=Δp_des) | 'real_p' (obs=[p|v], action=Δp).
+        self.cond_mode = cond_mode
 
         # Rewards
         self.returns_scale = returns_scale
@@ -28,7 +31,7 @@ class SequenceDataset(torch.utils.data.Dataset):
         self.discounts = self.discount ** np.arange(self.max_path_length)[:, None]
         self.include_returns = include_returns
 
-        itr = sequence_dataset(env, self.preprocess_fn)
+        itr = sequence_dataset(env, self.preprocess_fn, cond_mode=cond_mode)
 
         fields = ReplayBuffer(max_n_episodes, max_path_length, termination_penalty)
         for i, episode in enumerate(itr):

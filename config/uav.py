@@ -22,6 +22,10 @@ args_to_watch = [
     ('prefix', ''),
     ('horizon', 'H'),
     ('diffusion', 'D'),
+    # U4: conditioning frame → folder fragment 'condp_des' / 'condreal_p' so the two
+    # modes' checkpoints save in PARALLEL dirs and never collide. Read by BOTH train
+    # (dataset build) and eval (rollout obs/integration + which checkpoint to load).
+    ('cond_mode', 'cond'),
 ]
 
 # All UAV-FM outputs live under logs/UAV_FM/ (NOT scattered at the top of logs/).
@@ -47,6 +51,16 @@ base = {
         'attention': False,
         'condition_dropout': 0.25,
         'condition_guidance_w': 1.2,
+
+        # U4 — conditioning frame (Gen11 E6/E7; see logs_in_develop/.../U4_cond/PLAN_U4_cond_real_p.md).
+        #   'p_des'  (default) → obs=[p_des|p|v] (9D), action=Δp_des, transition=12 — current behavior.
+        #   'real_p' (opt-in)  → obs=[p|v] (6D),       action=Δp,     transition=9  — plan in real
+        #                        position so the command can't run away from the lagging drone.
+        # Read by BOTH train (dataset) and eval (rollout); baked into the folder path via
+        # args_to_watch ('cond_mode','cond'). 'real_p' requires a fresh retrain (different dims).
+        # ⚠ Adding it to the path renames future 'p_des' dirs to '..._condp_des'; a pre-U4
+        #   checkpoint must have its folder renamed to add '_condp_des' (no retrain) to be found.
+        'cond_mode': 'p_des',
 
         # v3 SafeFlow-style time sampling parameters (unchanged from source).
         'time_beta_alpha_v3': 1.5,

@@ -2156,3 +2156,25 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 2. **Proj_Cost as Early Warning**: Discovered that `proj_cost` spikes (from ~1 to >10,000) serve as a highly accurate leading indicator of trajectory crash, firing ~0.5 seconds before the drone actually makes contact with an obstacle. This validates the DPCC projector's constraint-fighting metric as a real-time safety signal.
 3. **Self-Referential Divergence Proof**: Diagnosed why the FM policy continues to plan wildly (accumulating 2.5m of track error) after the physical drone crashes and freezes. Because the model conditions on its own integrated `p_des` output rather than actual drone position `p`—and the dynamics constraint only checks internal plan consistency—the system enters an out-of-distribution positive feedback loop when tracking errors spike.
 4. **Actionable Fixes Established**: Outlined mandatory structural fixes including spatial halfspace/bounds constraints, a hard evaluation episode-termination switch (`track_err > 0.5 m`), and future tracking constraints inside the projector to re-anchor `p_des` to real `p`.
+
+***
+
+## Documentation Maintenance: Deep Analysis and Architecture Guides (June 26, 2026)
+
+**Keywords**: DPCC, trajectory origin, planning oscillation, architecture guide, visual-aligning expansion.
+
+1. **Model Architecture Formalization**: Authored the `MODEL_ARCHITECTURE_GUIDE.md` to map the complex multi-stage DPCC inference pipeline (from raw images to ResNet18 embeddings, down to U-Net generation). This provides a single source of truth for the dimensionality, routing, and data structures used across the `diffuser` and Flow Matching visual pipelines.
+2. **Analysis of Receding-Horizon Oscillation**: Published `WHY_FM_KEEPS_PLANNING.md` containing a rigorous audit of the internal candidate generation process. Documented why unconstrained FM and Diffuser baselines experience "mode oscillation" across consecutive plans, providing theoretical justification for the temporal consistency enforced by the PCC projector.
+3. **Tensor Origin Tracing**: Authored `DPCC_TENSOR_ORIGIN.md` to forensically trace exactly where every tensor (e.g., `p`, `p_des`, images) originates inside the `d3il` simulation framework and how it reaches the generative backbone, ensuring correct coordinate scaling and referencing.
+4. **Visual-Aligning Environment Expansion**: Outlined the theoretical bounds and required codebase additions in `ALIGNING_EXPANSION.md` to safely transition the aligning framework toward generalizing across novel object locations.
+
+***
+
+## Gen7 & Gen6v4: True-FiLM (FiLMv2) Temporal U-Net Upgrade (June 27, 2026)
+
+**Keywords**: Gen7, Gen6v4, True-FiLM, FiLMv2, visual conditioning, U-Net, per-channel scale and shift.
+
+1. **True-FiLM Architecture Implemented**: Replaced the legacy "Fake FiLM" (where visual embeddings were merely concatenated to time embeddings) with a genuine Feature-wise Linear Modulation (FiLM) bottleneck (`UNet1DTemporalFiLMModel`). Visual conditioning is now injected per-block via learned per-channel scale (`γ`) and shift (`β`) parameters, decoupling it from the temporal positional embedding.
+2. **Zero-Initialized Opt-In Deployment**: Designed the upgrade as a strict opt-in via a new configuration key (`film_mode: 'v2'`), leaving `v1` as the default. To preserve learning stability, the new `film_proj` dense layers are zero-initialized, ensuring the network acts as an identity block for the visual signal at step 0. 
+3. **Cross-Pipeline Integration & Automation**: Deployed the `FiLMv2` backbone symmetrically across both the state-of-the-art Flow Matching pipeline (`fm_visual_aligning`) and the Diffuser baseline (`diffuser_visual_aligning`). Automated the routing logic within `visual_unet.py` to seamlessly instantiate either the `v1` or `v2` backbone based on the configuration key, guaranteeing 100% backward compatibility for all existing checkpoints.
+4. **Comprehensive Upgrade Documentation**: Authored a suite of documentation (`CHANGELOG_FiLM_V2.md`, `PLAN_FiLM_V2.md`, `Ideas.md`, and `MEMO_FiLM_code_to_math.md`) detailing the exact mathematical deltas, usage instructions for isolating `v2` checkpoints, and fallback plans.

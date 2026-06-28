@@ -246,6 +246,10 @@ for seed in selected_seeds:
         include_returns=args.include_returns,
         returns_scale=args.max_path_length,
         discount=args.discount,
+        # U4: 'p_des' (default → obs=[p_des|p|v] 9D, action=Δp_des, transition=12) or
+        #     'real_p' (→ obs=[p|v] 6D, action=Δp, transition=9). Model auto-sizes from
+        #     observation_dim+action_dim below, so no model edit is needed.
+        cond_mode=getattr(args, 'cond_mode', 'p_des'),
     )
     dataset = dataset_config()
     observation_dim = dataset.observation_dim

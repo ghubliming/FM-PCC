@@ -65,12 +65,19 @@ def _iter_episode_files(scenes):
             yield os.path.join(scene_dir, fn)
 
 
-def sequence_dataset(env, preprocess_fn):
+def sequence_dataset(env, preprocess_fn, cond_mode='p_des'):
     """Yield per-episode dicts {observations, actions, rewards, terminals}.
 
     Mirrors the source avoiding-d3il branch exactly: obs/actions aligned to length
     T-1, dummy rewards, terminal flag on the last step. preprocess_fn kept in the
     signature for API parity (identity for UAV, preprocess_fns=[]).
+
+    cond_mode (U4 — see logs_in_develop/Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/U4_cond):
+      'p_des'  (default) → obs=[p_des|p|v] (9D), action=Δp_des  — current behavior.
+      'real_p' (opt-in)  → obs=[p|v]      (6D), action=Δp (real displacement).
+                           Plans in REAL position so the command can't run away from
+                           the lagging drone. The real p is already stored in the pkl
+                           (obs cols 3:6), so NO data regeneration is needed.
     """
     scenes = _scenes_for(env)
     n = 0
@@ -79,7 +86,13 @@ def sequence_dataset(env, preprocess_fn):
             ep = pickle.load(f)
 
         obs = np.asarray(ep['obs'], dtype=np.float32)          # (T, 9) [p_des|p|v]
-        actions = np.asarray(ep['actions'], dtype=np.float32)  # (T-1, 3) Δp_des
+        if cond_mode == 'real_p':
+            # Drop the command channel; plan in real position. action = Δp = diff(real p).
+            p_real = obs[:, 3:6]                                # (T, 3) measured position
+            actions = np.diff(p_real, axis=0).astype(np.float32)   # (T-1, 3) Δp
+            obs = obs[:, 3:9]                                   # (T, 6) [p|v]
+        else:
+            actions = np.asarray(ep['actions'], dtype=np.float32)  # (T-1, 3) Δp_des
         valid_len = len(actions)
         if valid_len < 2:
             continue

@@ -108,6 +108,8 @@ def load_pcc_config():
     cfg.setdefault('workspace_bounds', None)
     cfg.setdefault('halfspace_constraints', [])
     cfg.setdefault('obstacle_constraints', [])
+    cfg.setdefault('reanchor_alpha', 0.0)   # U4: p_des-mode re-anchor blend (eval-only)
+    cfg.setdefault('lead_gain', 1.0)        # U4: real_p-mode setpoint lead/overdrive (eval-only)
     return cfg
 
 
@@ -154,7 +156,11 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
         constraint_list += [['lb', lb], ['ub', ub]]
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # bind p_des
+        # deriv binds traj dims 3,4,5 ↔ action 0,1,2. The dim layout makes this the right
+        # channel in BOTH modes: cond_mode='p_des' → [act|p_des|p|v] so 3–5 = p_des (echo,
+        # tautology); cond_mode='real_p' → [act|p|v] so 3–5 = REAL p (feasible because action
+        # is now Δp ⇒ p=∫act is the tautology; skip_initial_state then pins p[0]=measured).
+        constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]
 
     if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
         _hs = {'x': _DIM['x'], 'y': _DIM['y']}
@@ -253,7 +259,8 @@ def _render_overhead(mujoco, model, data, renderer):
 
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
-                variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True):
+                variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
+                cond_mode='p_des', reanchor_alpha=0.0, lead_gain=1.0):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -309,7 +316,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     for k in range(n_fm):
         p = data.qpos[:3].copy()
         v = data.qvel[:3].copy()
-        obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
+        if cond_mode == 'real_p':
+            obs = np.concatenate([p, v]).astype(np.float32)      # U4: [p | v] (6,) — plan in real position
+        else:
+            obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
@@ -335,7 +345,15 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             if acts.ndim == 3 and which < acts.shape[0]:
                 fm_horizon = acts[which]
 
-        p_des = p_des + action
+        # U4 — how the PID setpoint p_des is formed from the FM action:
+        #   real_p : setpoint rebuilt from the MEASURED position each step (structurally α=1)
+        #            → command cannot run away from the lagging drone. lead_gain>1 leads it.
+        #   p_des  : free-running accumulation (today) when reanchor_alpha=0; reanchor_alpha>0
+        #            bleeds the command back toward measured p (no retrain) so it can't run away.
+        if cond_mode == 'real_p':
+            p_des = p + lead_gain * action
+        else:
+            p_des = (1.0 - reanchor_alpha) * (p_des + action) + reanchor_alpha * p
         v_des = action / dt_fm
 
         hit_before = n_hit
@@ -464,10 +482,25 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                     test_ret=getattr(parsed, 'test_ret', 0),
                     projector=projector, trajectory_selection=_selection_for(variant))
 
+    # U4 — grounding knobs. cond_mode comes from config.uav (args → parsed; already in the
+    # checkpoint/savepath via args_to_watch). The per-mode eval knobs come from uav_eval.yaml.
+    cond_mode = getattr(parsed, 'cond_mode', 'p_des')
+    reanchor_alpha = float(config.get('reanchor_alpha', 0.0))
+    lead_gain = float(config.get('lead_gain', 1.0))
+    # Tag the EVAL output folder with the active (non-default) eval knob so sweeps (e.g.
+    # reanchor 0.0 vs 0.5 vs 1.0 on the SAME checkpoint) don't overwrite each other.
+    # cond_mode itself is already separated via savepath (`sub`).
+    eval_tag = ''
+    if cond_mode == 'real_p':
+        if lead_gain != 1.0:
+            eval_tag = f'_lead{lead_gain:g}'
+    elif reanchor_alpha != 0.0:
+        eval_tag = f'_reanchor{reanchor_alpha:g}'
+
     # Outputs under the sibling plans/ tree, one subfolder per variant (FMv3ODE convention).
     scene_root = os.path.join(parsed.logbase, parsed.dataset)              # logs/UAV_FM/uav-<scene>
     sub = os.path.relpath(parsed.savepath, scene_root)                     # flow_matching_v3_uav/<exp>/<seed>
-    out_dir = os.path.join(scene_root, 'plans', sub, variant)              # …/plans/…/<seed>/<variant>
+    out_dir = os.path.join(scene_root, 'plans', sub, variant + eval_tag)   # …/plans/…/<seed>/<variant>[_knob]
     diag_dir = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
 
@@ -483,7 +516,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             renderer=renderer, goal_radius=args.goal_radius, batch_size=batch_size,
                             variant=variant, log_dir=out_dir,
                             control_hz=config.get('control_hz', DATASET_HZ),
-                            text_log=config.get('behavior_log', True))
+                            text_log=config.get('behavior_log', True),
+                            cond_mode=cond_mode, reanchor_alpha=reanchor_alpha, lead_gain=lead_gain)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
