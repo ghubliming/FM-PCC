@@ -4,7 +4,7 @@ For SLURM jobs history, refer to [important_runs.md](../Slurm_Codes/logs/importa
 
 Purpose: Concise record of what was tested across all generations/versions. Master logging markdown.
 
-## 🗺️ Master Trace Map: Workspace Architecture (Gen1 - Gen7)
+## 🗺️ Master Trace Map: Workspace Architecture (Gen1 - Gen11)
 
 Below is the definitive index mapping every research generation (internal index) to its corresponding isolated sibling folders inside the workspace. This maps out how the codebase transitioned from **State-Only** models to the state-of-the-art **Visual Flow Matching** models:
 
@@ -28,10 +28,11 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen6v3 (Non-Visual Aligning)** | [diffuser/](../diffuser) | [diffuser_test/](../diffuser_test) | May 18, 2026 | **State-only non-visual aligning pipeline** for Gen6. Fixed 17D vs 20D proprioceptive mismatch. | |
 | **Gen6v4 (Visual DPCC 9D)** | [diffuser_visual_aligning/](../diffuser_visual_aligning) | [diffuser_visual_aligning_test/](../diffuser_visual_aligning_test) | May 18, 2026 | **New Principle**: Migrated from the `ddpmact d3il base` (imitation) to the robust physical `dpcc base` using a unified 9D joint representation `[act(3) \| des_c_pos(3) \| c_pos(3)]` to enforce safety cage constraints directly on the simulator physics. | working on |
 | **Gen7 (Visual Flow Matching)** | [fm_visual_aligning/](../fm_visual_aligning) | [fm_visual_aligning_test/](../fm_visual_aligning_test) | May 20, 2026 | **Continuous-time visual Flow Matching (FMv3ODE)**. Clean copy-modify sibling transition from proofed Gen6V4 to continuous-time FM ODE engine with Beta(1.5, 1.0) time sampling and velocity target training. | working on |
-| **Gen8 (iMeanFlow Visual Engine)** | Pending | Pending | Planned | **Planned Extension**: Add the iMeanFlow (iMF) engine as an alternative to the Gen7/Gen6v4 visual aligning pipelines. **Key Milestone**: ~~This represents a major leap in making the core ML engine completely switchable, effectively merging the architectural capabilities of Gen6v4 and Gen7, and now seamlessly integrating iMF.~~ (Maybe too complex and causing hidden bugs, so keep current in diff folders entry. i.e. no more implement pending, low ranking) | planning |
-| **Gen9 (Visual Avoiding Env)** | Partial | Partial | In Progress | **PARTIAL COMPLETION (30 May 2026): Camera Environment Capture Confirmed**. Created a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. **COMPLETED**: Camera capture pipeline. **PENDING**: Modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present. | in progress |
+| **Gen8 (iMeanFlow Visual Engine)** | ~~Pending~~ <br>[imf_visual_aligning/](../imf_visual_aligning) | ~~Pending~~ <br>[imf_visual_aligning_test/](../imf_visual_aligning_test) | ~~Planned~~ <br>June 2026 | ~~**Planned Extension**: Add the iMeanFlow (iMF) engine as an alternative to the Gen7/Gen6v4 visual aligning pipelines. **Key Milestone**: This represents a major leap in making the core ML engine completely switchable, effectively merging the architectural capabilities of Gen6v4 and Gen7, and now seamlessly integrating iMF. (Maybe too complex and causing hidden bugs, so keep current in diff folders entry. i.e. no more implement pending, low ranking)~~ <br><br> **COMPLETED**: iMeanFlow (iMF) Visual Engine. Successfully added the iMeanFlow (iMF) engine. Merged architectural capabilities of Gen6v4 and Gen7 into a unified iMeanFlow ODE inference engine. Supports Official DiT backbone, MeanFlow-JVP objective, and Interval-CFG. | ~~planning~~ <br>working on |
+| **Gen9 (Visual Avoiding Env)** | ~~Partial~~ <br>[fm_visual_avoiding/](../fm_visual_avoiding) | ~~Partial~~ <br>[fm_visual_avoiding_test/](../fm_visual_avoiding_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): Camera Environment Capture Confirmed**. Created a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. **COMPLETED**: Camera capture pipeline. **PENDING**: Modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present.~~ <br><br> **COMPLETED**: Visual Avoiding Pipeline. DPCC and FM visual models ported to avoiding tasks with single-camera observations and 6-D trajectories. Includes FiLM v2 true architecture updates. | ~~in progress~~ <br>working on |
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
-| **Gen11 (UAV Vis-Traj in MuJoCo)** | Partial | Partial | In Progress | **PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone. | in progress |
+| **Gen11 (UAV Vis-Traj in MuJoCo)** | ~~Partial~~ <br>[flow_matcher_v3_uav/](../flow_matcher_v3_uav) | ~~Partial~~ <br>[FM_v3_uav_test/](../FM_v3_uav_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone.~~ <br><br> **COMPLETED**: UAV Flow-Matching & DPCC. Full closed-loop 33 Hz receding-horizon control for UAV trajectory planning in MuJoCo. Includes Cascaded PID trackers, MJPC thrust control, real-time logging, and DPCC safety projection on constraint spaces. | ~~in progress~~ <br>working on |
+| **Gen11+ / X** | [/workspaces/HardFlow](/workspaces/HardFlow) | Pending | June 2026 | Integrating /workspaces/HardFlow into FMPCC. | |
 
 ***
 
@@ -43,10 +44,10 @@ In addition to the main model training/evaluation pipelines, the repository host
 | :--- | :--- | :--- | :--- |
 | **ODE Solver Benchmarks** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) (and scripts inside) | Comparative precision analysis of Euler, RK4, and Oracle (Dopri5) solvers on a locked noise basis (`global_x_init`). | Gen3v2 (Late April 2026) |
 | **Trajectory Quality Visualizer** | `traj_gen_script_for_v4.py` (inside [flow_matcher_v3_ode_selectable_test/](../FM_v3_ode_selectable_test)) | Overlays unnormalized latent robotic plans on environmental half-space/obstacle constraints for visual precision-drift auditing. | Gen3v2 U4.1 (April 22, 2026) |
-| **Data Analysis & Plotting** | [Data_Analysis/](../Data_Analysis) | Dynamic plotting scripts for generating thesis-ready success rate heatmaps and latency charts. | Ongoing (April - May 2026) |
+| **Data Analysis & Plotting** | [Data_Analysis/](../Data_Analysis) | Dynamic plotting scripts for generating thesis-ready success rate heatmaps and latency charts. <br><br> **UPDATE (June 2026):** Includes v3 cross-experiment combined analysis via comma-separated pathing. | Ongoing (April - May 2026) |
 | **Colab Plotting Suites** | [Results_and_Data_Analysis_Colab_T4/](../Results_and_Data_Analysis_Colab_T4) & [ipynbs_Colab/](../ipynbs_Colab) | Plotting pipelines and Google Colab T4 GPU integration scripts. | Ongoing (April - May 2026) |
 | **Cluster Job Orchestrators** | [Slurm_Codes/](../Slurm_Codes) | Pipeline runner scripts (SBATCH shell scripts) for GPU cluster node dispatch (e.g. `Visual_Aligning/` pipeline). | Gen3v2 Remote Migration & Gen5/Gen7 Visual Aligning (Ongoing) |
-| **Real-Time Simulation Recording Ideas** | [REALTIME_RECORDING/IDEAS.md](REALTIME_RECORDING/IDEAS.md) | Need to analyze real-time recordings (not only GIFs, just ideas!) | Pending / Working on (June 2026) |
+| **Real-Time Simulation Recording Ideas** | ~~[REALTIME_RECORDING/IDEAS.md](REALTIME_RECORDING/IDEAS.md)~~ <br>[realtime_recording/](../realtime_recording/) | ~~Need to analyze real-time recordings (not only GIFs, just ideas!)~~ <br><br> **COMPLETED**: Portable `RTRecorder` implemented across 10 evaluation pipelines logging `total_ms`, `fm_ms`, `proj_ms`, and track errors to `realtime_*.log`. | ~~Pending~~ <br>working on |
 
 ***
 
@@ -2238,3 +2239,51 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Canonical Time Schedule Integration**: Integrated the official iMeanFlow logit-normal time sampling schedule (`t = sigmoid(randn * p_std + p_mean)`) as the new default across both the state-based (`flow_matcher_v3_imeanflow`) and visual-aligning (`imf_visual_aligning`) pipelines. This mathematically aligns training with the reference implementation (which targets a median `t` near 0.40).
 2. **Backward Compatibility**: Preserved the legacy `1 - Beta(α, β)` schedule as an explicit `t_schedule='beta'` configuration option (which seamlessly supports a uniform `Beta(1,1)` schedule as well). This maintains backward compatibility for older checkpoints and enables direct A/B schedule ablations.
 3. **Configuration & Path Tracking**: Wired the `t_schedule` parameter into `args_to_watch` (appending `_tslogit_normal` or `_tsbeta` to checkpoint directories), ensuring transparent model loading without path collisions between differently scheduled models.
+
+***
+
+## Gen11 Epoch 8: UAV MJPC Thrust Control & Multiple Controllers Implementation (June 29, 2026)
+
+**Keywords**: Gen11, Epoch 8, MJPC, thrust control, pid_stopgo, pid_const_v, 9D position planner, cond_mode.
+
+1. **MJPC Thrust Control**: Implemented an optional FM→MJPC path using a strict-DPCC 9D position planner (`[action|p_des|p]`, velocity dropped) alongside an MJPC optimal-control thrust tracker. The new `MJPCTracker` class mirrors the existing `CascadedPID` interface for controller-agnostic inner loops, reusing the existing `mujoco_mpc` cartpole architecture. 
+2. **PID Stop-and-Go (`pid_stopgo`)**: Added a controller option that reuses the cascaded PID but sets `v_des = 0`, forcing the UAV to actively brake to zero velocity at each timestep. 
+3. **PID Constant Velocity (`pid_const_v`)**: Added a controller option that auto-derives a consistent flight speed (`v_des_magnitude = mean(|action|) × DATASET_HZ`) from the training dataset, enabling timing-free continuous flight without hardcoded velocity scalars.
+4. **Configuration Robustness & Path Decoding (Fix 4)**: Resolved bugs in experiment path generation where prefixes were missing and controller suffixes polluted trained model directories. Cleaned up config resolution to auto-derive `cond_mode` directly from checkpoint metadata rather than the volatile plan block, preventing `ValueError` shape mismatches during evaluation.
+
+***
+
+## Gen11 Epoch 8 "Fix 5": MuJoCo MPC Package Bundling & ODE Step Correction (June 29, 2026)
+
+**Keywords**: Gen11, Epoch 8, Fix 5, mujoco_mpc, gRPC, flow_steps_v3, ODE inference.
+
+1. **MuJoCo MPC Bundling**: Addressed a `ModuleNotFoundError` during cluster evaluation by bundling the pure-Python `mujoco_mpc` package (including gRPC stubs) directly into `third_party/mujoco_mpc/`. Generated proto files locally to eliminate Docker-environment dependencies, providing clear instructions for compiling the C++ `agent_server` binary on cluster nodes.
+2. **ODE Inference Step Correction**: Discovered a silent omission where `flow_steps_v3` was never set in the UAV config, forcing `FlowMatchingODE` to fall back to the default 1000 Euler ODE steps per inference call instead of the intended 20. Pushed the fix to the evaluation configuration to reduce inference latency by ~50× without invalidating existing mathematical results.
+
+***
+
+## Gen9 Epoch 2 "U5": FiLM v2 Port for Single Camera Avoiding (June 29, 2026)
+
+**Keywords**: Gen9, Epoch 2, U5, FiLM v2, visual avoiding, UNet1DTemporalFiLMModel.
+
+1. **True FiLM Architecture Port**: Ported the true-FiLM per-block γ/β architecture (`UNet1DTemporalFiLMModel`) from Gen7 visual-aligning directly into the Gen9 visual-avoiding pipeline.
+2. **Unified Configuration Toggle**: Replaced duplicate branching logic with a clean `film_mode` parameter in `config/avoiding-d3il-visual.py`. Setting `film_mode: 'v2'` dynamically swaps the backbone to the new architecture and routes checkpoints to dedicated `_filmv2/` directories without disrupting baseline operations.
+
+***
+
+## Data Analysis Tool v3: Cross-Experiment Combined Analysis (June 29, 2026)
+
+**Keywords**: DA Code v3, combined analysis, cross-experiment, comma-separated paths.
+
+1. **Cross-Domain Path Support**: Upgraded `main_da_batch.py` to accept comma-separated directories in the `--parent-path` argument. This seamlessly extends the batch pipeline to simultaneously discover, merge, and compare candidates across both state-only avoiding (`logs/avoiding-d3il`) and visual avoiding (`logs/avoiding-d3il-visual`) experiments in a single unified run.
+2. **Pipeline Wrapper Integration**: Added a dedicated `run_da_batch_avoiding_combined.sh` SLURM script to automate this cross-domain evaluation workflow.
+
+***
+
+## Gen11 Epoch 8 "Eval": Performance Insights on Pillars (June 29, 2026)
+
+**Keywords**: Gen11, Epoch 8, evaluation, pid_stopgo, anchor_p, MJPC, pillars.
+
+1. **MJPC Status**: The MJPC optimal-control tracker implementation is currently a work in progress and its evaluation runs are still ongoing.
+2. **PID Stop-and-Go Success**: The `pid_stopgo` controller demonstrated exceptional performance, yielding really great, paper-ready results specifically in the complex multi-modal `pillars` scene.
+3. **Anchor-P on Legacy 12D Performance**: The `anchor_to_p` feature successfully provided a measurable performance improvement on the 12D state using the legacy velocity-based PID controller. However, despite the improvements, its overall performance still remains noticeably inferior when compared directly against the robust results achieved by `pid_stopgo`.
