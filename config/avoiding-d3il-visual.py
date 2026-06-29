@@ -134,6 +134,10 @@ base = {
     },
 
     # ─── 2. FM Visual AVOIDING (training) ───
+    # film_mode: 'v1' (default) = additive-bias FiLM
+    #            'v2'           = true FiLM per-block γ/β  (U5, opt-in)
+    # watch() appends '_filmv1' / '_filmv2' → separate checkpoint folders per mode.
+    # To switch: change film_mode here AND in plan_fm_visual_avoiding. That's it.
     'fm_visual_avoiding': {
         'model':            'fm_visual_avoiding.models.visual_unet.VisualUNet',
         'diffusion':        'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching',
@@ -162,6 +166,7 @@ base = {
         'train_test_split': 0.9,
         'device':           'cuda',
         'seed':             0,
+        'film_mode':        'v1',
     },
 
     # ─── 3. Visual-DPCC AVOIDING (planning) ───
@@ -245,92 +250,13 @@ base = {
         'diffusion_loadpath': (
             'f:fm_visual_avoiding/'
             'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
-        ),
-        'diffusion_epoch':  'best',
-        'verbose':          False,
-        'suffix':           '0',
-        'constraint_list':  list(_AVOIDING_OBSTACLES),
-    },
-
-    # ─── 5. FM Visual AVOIDING — FiLM v2 (training) ───
-    # Identical to fm_visual_avoiding but with film_mode='v2' (true FiLM per-block γ/β).
-    # watch() appends '_filmv2' → separate checkpoint folder; v1 checkpoints untouched.
-    'fm_visual_avoiding_filmv2': {
-        'model':            'fm_visual_avoiding.models.visual_unet.VisualUNet',
-        'diffusion':        'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching',
-        'action_dim':       2,
-        'obs_dim':          4,
-        'if_vision':        True,
-        'horizon':          8,
-        'time_beta_alpha_v3': 1.5,
-        'time_beta_beta_v3':  1.0,
-        'action_weight':    1,
-        'loss_type':        'l2',
-        'dim':              32,
-        'dim_mults':        (1, 2, 4, 8),
-        'condition_dropout': 0.1,
-        'returns_condition': False,
-        'max_path_length':  200,
-        'logbase':          logbase,
-        'prefix':           'fm_visual_avoiding/',
-        'exp_name':         watch(args_to_watch_fm_visual_train),
-        'batch_size':       64,
-        'learning_rate':    2e-4,
-        'ema_decay':        0.995,
-        'n_steps_per_epoch': 1000,
-        'n_train_steps':    1e5,
-        'gradient_accumulate_every': 2,
-        'train_test_split': 0.9,
-        'device':           'cuda',
-        'seed':             0,
-        'film_mode':        'v2',
-    },
-
-    # ─── 6. FM Visual AVOIDING — FiLM v2 (planning) ───
-    # diffusion_loadpath points to the v2 train folder (appended with _filmv2).
-    'plan_fm_visual_avoiding_filmv2': {
-        'horizon':          8,
-        'flow_steps_v3':    100,
-        'ode_solver_backend_v3': 'legacy_euler',
-        'ode_solver_method_v3':  'euler',
-        'ode_solver_rtol_v3':    None,
-        'ode_solver_atol_v3':    None,
-        'ode_solver_step_size_v3': None,
-        'time_beta_alpha_v3': 1.5,
-        'time_beta_beta_v3':  1.0,
-        'max_episode_length': 200,
-        'max_path_length':  200,
-        'action_weight':    1,
-        'window_size':      1,
-        'obs_seq_len':      1,
-        'if_vision':        True,
-        'mpc_batch_size':   4,
-        'train_batch_size': 64,
-        'preprocess_fns':   [],
-        'device':           'cuda',
-        'seed':             0,
-        'loadbase':         None,
-        'logbase':          logbase,
-        'prefix': (
-            'f:plans/fm_visual_avoiding/'
-            'H{horizon}_K{flow_steps_v3}_M{ode_solver_method_v3}_T{diffusion_timestep_threshold}_D{diffusion}/'
-        ),
-        'exp_name':         watch(args_to_watch_fm_visual_plan),
-        'diffusion':        'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching',
-        'returns_condition': False,
-        'predict_epsilon':  True,
-        'diffusion_timestep_threshold': _yaml_threshold,
-        'clip_denoised':    False,
-        'diffusion_loadpath': (
-            'f:fm_visual_avoiding/'
-            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}'
         ),
         'diffusion_epoch':  'best',
         'verbose':          False,
         'suffix':           '0',
         'constraint_list':  list(_AVOIDING_OBSTACLES),
-        'film_mode':        'v2',
+        'film_mode':        'v1',
     },
+
 }
