@@ -291,7 +291,8 @@ def _render_overhead(mujoco, model, data, renderer):
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
-                anchor_to_p=False, controller='pid', cond_mode='p_des', mjpc_kwargs=None):
+                anchor_to_p=False, controller='pid', cond_mode='p_des', mjpc_kwargs=None,
+                v_des_magnitude=0.4):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -316,10 +317,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     mujoco.mj_forward(model, data)
 
     # E8: tracker selection.
-    #   'pid'         (default) — E7 cascaded PID, v_des = action/dt_fm (continuous).
+    #   'pid'         (default) — E7 cascaded PID, v_des = action/dt_fm.
     #   'pid_stopgo'  (U2)      — same CascadedPID, v_des = 0 (strict stop-and-go).
+    #   'pid_const_v' (U3)      — same CascadedPID, v_des = unit(action)*v_des_magnitude (constant speed).
     #   'mjpc'                  — MJPC optimal-control thrust tracker (cluster-only).
-    # All three expose the same .compute(p,q,v,om,p_des,v_des) API.
+    # All four expose the same .compute(p,q,v,om,p_des,v_des) API.
     pid = gen._make_pid(model, 'pid_default')
     tracker = pid                              # pid_stopgo also uses CascadedPID (v_des differs)
     if controller == 'mjpc':
@@ -395,9 +397,18 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             p_des = p + action
         else:
             p_des = p_des + action
-        # U2: pid_stopgo forces v_des=0 → PID brakes to zero each FM step (strict stop-and-go).
-        # All other controllers use the action-derived feedforward (E7 default).
-        v_des = np.zeros(3) if controller == 'pid_stopgo' else action / dt_fm
+        # v_des feedforward to PID — source depends on controller:
+        #   pid         (default): action / dt_fm  (E7, timing-derived).
+        #   pid_stopgo  (U2):      zero → PID brakes to zero each FM step (stop-and-go).
+        #   pid_const_v (U3):      unit(action)*v_des_magnitude → constant speed, timing-free.
+        #   mjpc:                  v_des accepted for API parity but ignored internally.
+        if controller == 'pid_stopgo':
+            v_des = np.zeros(3)
+        elif controller == 'pid_const_v':
+            norm = float(np.linalg.norm(action))
+            v_des = (action / norm) * v_des_magnitude if norm > 1e-6 else np.zeros(3)
+        else:                                    # 'pid' default (and 'mjpc')
+            v_des = action / dt_fm
 
         hit_before = n_hit
         for _ in range(decim):
@@ -509,8 +520,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # fix_5 anchor-p knob — must be resolved before setup_dpcc_projector is called.
     anchor_to_p = bool(config.get('anchor_to_p', False))
     # E8: tracker + obs-layout selection (defaults preserve E7).
-    controller = str(config.get('controller', 'pid'))
-    cond_mode  = str(config.get('cond_mode', 'p_des'))
+    controller      = str(config.get('controller', 'pid'))
+    cond_mode       = str(config.get('cond_mode', 'p_des'))
+    v_des_magnitude = float(config.get('v_des_magnitude', 0.4))  # U3: pid_const_v speed (m/s)
     mjpc_kwargs = {
         'task_id':       config.get('mjpc_task_id', 'Quadrotor'),
         'n_trajectories': config.get('mjpc_trajectories', 16),
@@ -564,7 +576,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             control_hz=config.get('control_hz', DATASET_HZ),
                             text_log=config.get('behavior_log', True),
                             anchor_to_p=anchor_to_p,
-                            controller=controller, cond_mode=cond_mode, mjpc_kwargs=mjpc_kwargs)
+                            controller=controller, cond_mode=cond_mode, mjpc_kwargs=mjpc_kwargs,
+                            v_des_magnitude=v_des_magnitude)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:

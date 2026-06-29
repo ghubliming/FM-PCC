@@ -112,9 +112,10 @@ base = {
         # E8 (optional) — observation layout + tracker. Defaults preserve E7 exactly.
         #   cond_mode='p_des'    → obs=[p_des|p|v] 9D, transition 12D (E7 default).
         #   cond_mode='pos_only' → obs=[p_des|p] 6D, transition 9D (velocity dropped).
-        #   controller='pid'     → cascaded PID, v_des=action/dt_fm (E7 default, continuous).
+        #   controller='pid'        → cascaded PID, v_des=action/dt_fm (E7 default, continuous).
         #   controller='pid_stopgo' → cascaded PID, v_des=0 (U2, strict stop-and-go).
-        #   controller='mjpc'    → MJPC optimal-control thrust tracker (E8, cluster-only).
+        #   controller='pid_const_v'→ cascaded PID, v_des=unit(action)*v_des_magnitude (U3, constant speed).
+        #   controller='mjpc'       → MJPC optimal-control thrust tracker (E8, cluster-only).
         # All are path discriminators via _uav_exp_name (non-default → folder suffix).
         'cond_mode': 'p_des',
         'controller': 'pid',
@@ -170,7 +171,9 @@ base = {
         # E8 (optional) — MUST match the training block so build_experiment resolves the
         # same savepath. cond_mode sets the obs layout the eval feeds the FM; controller
         # selects the inner-loop tracker and segregates the eval output folder.
-        # controller='pid_stopgo' (U2): same checkpoint as pos_only+pid, v_des=0 at eval only.
+        # controller='pid_stopgo'  (U2): v_des=0 at eval only — same checkpoint as pid with same cond_mode.
+        # controller='pid_const_v' (U3): v_des=unit(action)*v_des_magnitude — eval-only, tune v_des_magnitude.
+        'v_des_magnitude': 0.4,          # U3 pid_const_v only: constant flight speed (m/s); ignored by other controllers
         'cond_mode': 'p_des',
         'controller': 'pid',
 
