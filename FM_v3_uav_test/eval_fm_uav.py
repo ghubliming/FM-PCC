@@ -643,6 +643,12 @@ def eval_scene(scene, args):
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 
+    # cond_mode is a MODEL property (obs layout baked into the normalizer at train time).
+    # Lock it to what the checkpoint was actually trained with — ignore the plan block value,
+    # which is user-editable and can silently mismatch (crash: shapes (9,) vs (6,) at normalize).
+    config['cond_mode'] = str(getattr(parsed, 'cond_mode', config.get('cond_mode', 'p_des')))
+    print(f'[ eval ] cond_mode={config["cond_mode"]}  (source: train checkpoint args)')
+
     # Tightened variants only differ from their base siblings when spatial constraints
     # (bounds/halfspace/obstacles) are active — enlarge_constraints is applied there.
     # With only 'dynamics' in constraint_types the enlarge margin is computed but never

@@ -61,24 +61,37 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
-# E8 (Epoch8_UAV_Mjpc_thrust_control): conditional exp_name so the checkpoint/savepath
-# carries the E8 discriminators ONLY when non-default — existing E7 checkpoints keep their
-# exact path `H{horizon}_D{diffusion}` (no suffix) and are NOT orphaned.
-#   cond_mode != 'p_des'  → append _cm{cond_mode}   (tensor shape: 'pos_only' = 9D, vel dropped)
-#   controller != 'pid'   → append _ctrl{controller} (tracker: 'mjpc' optimal-control thrust)
-# Both train & eval resolve the model via this same exp_name (eval_fm_uav.build_experiment
-# loads from the TRAIN block's savepath), so train/eval paths always agree. The controller is
-# a path discriminator only — training ignores its value; it segregates the pos_only+mjpc
-# checkpoint from the default. See Epoch8 PLAN §5 + §3.5.
+# Path discriminator — dimension-based (Fix_4 + Fix_4b):
+#
+#   Only cond_mode determines the checkpoint path; controller is runtime-only and
+#   NEVER appears in the path (all controllers share the same trained weights).
+#
+#   cond_mode='p_des'    → no suffix   → 'flow_matching_v3_uav/H{h}_D{d}'       (12D, E7 compat)
+#   cond_mode='pos_only' → '_9D'       → 'flow_matching_v3_uav/H{h}_D{d}_9D'    (9D, vel dropped)
+#
+#   Why dimension not cond_mode string? Clearer at a glance; if a new cond_mode
+#   still produces 9D it maps to the same checkpoint without renaming.
+#
+#   Bug fixes (Fix_4):
+#     - prefix included so savepath gets 'flow_matching_v3_uav/' parent folder
+#       (utils.Parser: savepath = logbase/dataset/exp_name/seed — prefix NOT joined
+#        separately; watch() built it into exp_name via ('prefix','') entry)
+#     - _ctrl{controller} suffix removed (controller ≠ model weights)
+_COND_MODE_DIM = {
+    'p_des':    None,   # 12D default — no suffix (E7 backward compat)
+    'pos_only': '9D',   # 9D — velocity dropped from obs
+}
+
 def _uav_exp_name(args):
-    name = f'H{args.horizon}_D{args.diffusion}'
+    prefix    = getattr(args, 'prefix', '')
+    name      = f'H{args.horizon}_D{args.diffusion}'
     cond_mode = getattr(args, 'cond_mode', 'p_des')
-    if cond_mode != 'p_des':
-        name += f'_cm{cond_mode}'
-    controller = getattr(args, 'controller', 'pid')
-    if controller != 'pid':
-        name += f'_ctrl{controller}'
-    return name
+    dim_tag   = _COND_MODE_DIM.get(cond_mode, f'cm{cond_mode}')  # fallback for unknown modes
+    if dim_tag:
+        name += f'_{dim_tag}'
+    # Replicate watch()'s join: [prefix, name] → '_'.join → '/_'→'/' cleanup
+    parts = [p for p in [prefix, name] if p]
+    return '_'.join(parts).replace('/_', '/')
 
 # All UAV-FM outputs live under logs/UAV_FM/ (NOT scattered at the top of logs/).
 # savepath = <logbase>/<dataset>/<exp_name>/<seed> = logs/UAV_FM/uav-<scene>/flow_matching_v3_uav/.../<seed>

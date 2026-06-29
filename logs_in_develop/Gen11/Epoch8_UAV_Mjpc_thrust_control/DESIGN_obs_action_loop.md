@@ -223,6 +223,101 @@ anchor_to_p:
 
 ---
 
+## 9 The Zero-Latency Assumption — Fundamental Design Flaw
+
+**Short answer: yes, you are correct.**
+
+The entire obs/action loop works *only if FM inference is instantaneous*. The design implicitly assumes Δt_infer = 0. In reality it is not.
+
+### What the assumption looks like
+
+```
+ideal (Δt_infer = 0):
+  t=0:  obs ← [p_des | p(0) | v(0)]
+        action = FM(obs)           ← takes 0 ms
+        p_des updated, v_des set
+        PID uses p(0), v(0), v_des — all fresh
+
+real (Δt_infer > 0, e.g. 10 ms):
+  t=0:  obs ← [p_des | p(0) | v(0)]   ← snapshot
+  t=10ms: action = FM(obs)             ← computed from 10ms-old obs
+        p_des updated, v_des set
+        PID uses p(0), v(0) from obs — STALE
+        real drone is now at p(10ms), v(10ms) — never seen by FM
+```
+
+FM gave an action based on where the drone *was*, not where it *is*. The PID then chases a goal computed from stale state.
+
+### Three compounding problems
+
+**1. Obs staleness.** `v` and `p` sampled at t=0 are fed to the PID at t=Δt_infer. The drone has moved during FM inference. The obs the FM saw no longer reflects reality when its action is applied.
+
+**2. `v_des` frozen for the entire substep window.** Whether using `action/dt_fm` (pid) or `unit(action)*v_des_magnitude` (pid_const_v), `v_des` is held constant for the full 30ms FM step (3 physics substeps). The drone's actual velocity changes continuously during those 30ms. The PID velocity error `e_v = v_real - v_des` accumulates drift within the window.
+
+**3. Expert collection had neither problem.** During expert data collection:
+```python
+p_des, v_des, a_des = traj_fn(t)   # evaluated at exact current time t — always fresh
+u = pid.compute(p, q, v, ω, p_des, v_des, a_des)   # per-physics-step, 100 Hz
+```
+- `v_des` updated at 100 Hz from an analytic function — never stale, never frozen
+- No inference latency — trajectory is a closed-form formula
+- `a_des` feedforward cancels inertia exactly
+
+At eval, `v_des` updates at 33 Hz (FM rate) and is stale by Δt_infer on top of that. This is a **third dimension of train/eval mismatch**, on top of the `p` tracking error mismatch (§3.5) and the v_des formula mismatch (§3.5).
+
+### When does the design hold?
+
+Only when Δt_infer << dt_physics = 10ms. For a small UAV-FM network on GPU this might be 1–3ms — marginal. On CPU or with larger models it breaks down clearly.
+
+### What a correct design would require
+
+| Fix | What it means |
+|---|---|
+| Predict-ahead obs | At t=0, predict p(t+Δt_infer), v(t+Δt_infer) using physics model; feed predicted state to FM |
+| Async FM thread | PID runs at 100Hz independently; FM computes in background; PID uses latest available action |
+| Online Δt_infer measurement | Measure actual FM wall-clock time each step; use it in v_des formula (if using pid default) |
+| Retrain with latency | Inject artificial latency during data collection so FM trains on stale obs |
+
+None of these are implemented. The current design is **zero-latency–only**. It works to the extent that GPU inference is fast and the drone dynamics are slow enough that 10ms staleness doesn't destabilize the PID.
+
+---
+
+## 10 Why SafeFlow MPC Can Track `v_des` and `a_des` — The Wasted H-Step Plan
+
+The FM does NOT output only one action. It outputs an **H-step trajectory plan** — all H future Δp_des at once:
+
+```python
+action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
+# action          = traj.actions[which][0]    ← only step 0, what we execute
+# traj.actions[which]  shape: (H, 3)          ← ALL H future Δp_des, already computed
+```
+
+**We currently throw away `traj.actions[which][1:]` entirely.**
+
+From consecutive plan steps you can reconstruct exactly what the expert collection had:
+
+```python
+acts = traj.actions[which]           # (H, 3)
+v_des      = acts[0] / dt_fm         # velocity for this step
+v_des_next = acts[1] / dt_fm         # velocity for NEXT step (free — already computed by FM)
+a_des      = (v_des_next - v_des) / dt_fm   # acceleration feedforward
+```
+
+| Source | v_des | a_des | Latency-safe? |
+|---|---|---|---|
+| Expert (`traj_fn`) | analytic derivative at each 100Hz PID step | analytic 2nd derivative | Yes (zero latency, continuous) |
+| `pid` (E7) | `acts[0] / dt_fm` — single step finite diff | None (a_des=0) | No — dt_fm jitter |
+| `pid_const_v` (U3) | `unit(acts[0]) * 0.4` — constant magnitude | None | No — magnitude is wrong |
+| **H-step plan** (not yet implemented) | `acts[0] / dt_fm` — from FM's own plan | `(v[1]-v[0])/dt_fm` — from FM's own plan | Partial — lookahead covers latency window |
+
+The H-step plan also **partially mitigates the zero-latency flaw** (§9): while the PID executes step k for 30ms (3 substeps), the plan already knows step k+1's Δp_des. The latency Δt_infer is spent executing step k while step k+1 is already planned — so the next obs snapshot is already pre-answered.
+
+This is what SafeFlow MPC exploits: the FM's receding-horizon plan is not just for collision avoidance — it gives a smooth sequence of `v_des` and `a_des` feedforward **for free**, matching the expert collection structure.
+
+**Current status: unimplemented.** This would require reading `traj.actions[which][1]` in `rollout_one` and passing `a_des` to the PID. The PID already accepts `a_des` (see `tracker.compute(p, q, v, om, p_des, v_des, a_des=a_des)`).
+
+---
+
 ## 8 One-Line Summary Per Variable
 
 | Variable | Source | Notes |
