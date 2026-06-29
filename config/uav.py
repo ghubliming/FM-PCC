@@ -203,7 +203,11 @@ base = {
         'diffusion_epoch': 'latest',
 
         # ── Eval control ──────────────────────────────────────────────────────
-        'batch_size': 4,                     # MPC candidate-fan size
+        # mpc_batch_size: MPC candidate-fan size (eval only).
+        # Mirrors aligning-d3il-visual.py naming (mpc_batch_size vs train batch_size).
+        # Appears in the eval output path as 'mpc{B}' (e.g. mpc4).
+        # diffuser variant always uses mpc=1 effectively (random selection, no competition).
+        'mpc_batch_size': 4,
         'diffusion_timestep_threshold': _yaml_threshold,   # from uav_projection.yaml
         'write_to_file': True,
         'behavior_log': True,                # write per-step .log files; False = stats only

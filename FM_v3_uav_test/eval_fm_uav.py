@@ -46,6 +46,25 @@ from flow_matcher_v3_uav.sampling.policies import Policy
 import FM_v3_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
 
+def _uav_eval_tag(config, controller, anchor_to_p):
+    """Eval-parameter folder name — mirrors args_to_watch_fm_visual_plan style.
+
+    Format:  mpc{B}_{controller}[_anchorP]_T{thresh}
+    Aligning analogue: K{flow_steps}_M{solver}_T{thresh}_mpc{B}_film{mode}
+
+    Sits BETWEEN the train-identity folder (H8_D...ODE_9D) and the seed,
+    so the projection variant (diffuser / dpcc-c) remains a pure leaf name.
+    e.g.  flow_matching_v3_uav/H8_D...ODE_9D / mpc4_pid_stopgo_T0.5 / 0 / diffuser /
+    """
+    mpc_b  = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
+    thresh = config.get('diffusion_timestep_threshold', 0.5)
+    parts  = [f'mpc{mpc_b}', controller]
+    if anchor_to_p:
+        parts.append('anchorP')
+    parts.append(f'T{thresh:g}')
+    return '_'.join(parts)
+
+
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 # Scenes with a FIXED start + geometry-determined route endpoint → success REQUIRES reaching
 # the goal. `empty` is excluded: it has a RANDOM per-episode start→goal that the state-only FM
@@ -124,7 +143,7 @@ def load_pcc_config(scene, seed):
     pp = PlanParser()
     pp.dataset = f'uav-{scene}'
     plan_args = pp.parse_args(experiment='plan_flow_matching_v3_uav', seed=seed)
-    cfg['batch_size']                   = int(getattr(plan_args, 'batch_size', 4))
+    cfg['mpc_batch_size']               = int(getattr(plan_args, 'mpc_batch_size', getattr(plan_args, 'batch_size', 4)))
     cfg['diffusion_timestep_threshold'] = float(getattr(plan_args, 'diffusion_timestep_threshold', 0.5))
     cfg['anchor_to_p']                  = bool(getattr(plan_args, 'anchor_to_p', False))
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
@@ -541,8 +560,10 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         'horizon':       config.get('mjpc_horizon', 0.3),
         'planner_steps': config.get('mjpc_planner_steps', 10),
     } if controller == 'mjpc' else None
-    # E8: segregate eval output by controller so PID and MJPC results never overwrite.
-    eval_tag = ('_anchorP' if anchor_to_p else '') + (f'_ctrl{controller}' if controller != 'pid' else '')
+    # Eval-parameter folder — mirrors args_to_watch_fm_visual_plan naming convention.
+    # Sits BETWEEN train-identity and seed; keeps variant name pure.
+    # e.g.  flow_matching_v3_uav/H8_D..._9D / mpc4_pid_stopgo_T0.5 / 0 / diffuser /
+    eval_params_dir = _uav_eval_tag(config, controller, anchor_to_p)
 
     projector = None
     if variant != 'diffuser':
@@ -567,16 +588,18 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                     test_ret=getattr(parsed, 'test_ret', 0),
                     projector=projector, trajectory_selection=_selection_for(variant))
 
-    # Outputs under the sibling plans/ tree, one subfolder per variant (FMv3ODE convention).
-    scene_root = os.path.join(parsed.logbase, parsed.dataset)              # logs/UAV_FM/uav-<scene>
-    sub = os.path.relpath(parsed.savepath, scene_root)                     # flow_matching_v3_uav/<exp>/<seed>
-    out_dir = os.path.join(scene_root, 'plans', sub, variant + eval_tag)   # …/plans/…/<seed>/<variant>[_knob]
-    diag_dir = os.path.join(out_dir, 'diagnostics')
+    # Path: scene_root / plans / <model_exp_noseed> / <eval_params> / <seed> / <variant> /
+    # savepath = scene_root / flow_matching_v3_uav / H8_...9D / <seed>
+    scene_root  = os.path.join(parsed.logbase, parsed.dataset)
+    _model_dir  = os.path.relpath(os.path.dirname(parsed.savepath), scene_root)  # strip seed
+    _seed_str   = os.path.basename(parsed.savepath)
+    out_dir     = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str, variant)
+    diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
 
     record = (args.record != 'none')
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
-    batch_size = config['batch_size']
+    batch_size = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
 
     rollouts = []
     try:
