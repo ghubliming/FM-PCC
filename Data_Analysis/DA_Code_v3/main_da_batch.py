@@ -175,7 +175,18 @@ def main():
         if args.seeds:
             seeds = [int(s.strip()) for s in args.seeds.split(',')]
         
-        candidates = discover_candidates_recursive(args.parent_path, seed_list=seeds, max_depth=10)
+        # Support comma-separated parent paths so multiple experiment trees can be
+        # compared in one run (e.g. "logs/avoiding-d3il/plans,logs/avoiding-d3il-visual/plans").
+        _parent_paths = [p.strip() for p in args.parent_path.split(',')]
+        if len(_parent_paths) == 1:
+            candidates = discover_candidates_recursive(_parent_paths[0], seed_list=seeds, max_depth=10)
+        else:
+            _all_infos = []
+            for _p in _parent_paths:
+                _c = discover_candidates_recursive(_p, seed_list=seeds, max_depth=10)
+                _all_infos.extend(_c.values())
+            _all_infos.sort(key=lambda x: x['path'])   # stable ordering across runs
+            candidates = {chr(ord('A') + i): info for i, info in enumerate(_all_infos)}
         
         if not candidates:
             logger.error("No candidates found. Exiting.")
