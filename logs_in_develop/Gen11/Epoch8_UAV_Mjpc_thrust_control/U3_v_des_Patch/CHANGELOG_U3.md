@@ -28,11 +28,22 @@ else:   # 'pid' default (and 'mjpc' — which ignores v_des)
     v_des = action / dt_fm
 ```
 
-**`_run_variant`** — added:
+**`_run_variant`** — `v_des_magnitude` is now **auto-derived** from the dataset (U3-rev):
 ```python
-v_des_magnitude = float(config.get('v_des_magnitude', 0.4))
+# auto-derived: mean(|action|) × DATASET_HZ  ≡  mean(action / dt_fm)
+if controller == 'pid_const_v':
+    _all_acts  = dataset.actions.reshape(-1, 3)
+    _act_norms = np.linalg.norm(_all_acts, axis=-1)
+    _valid     = _act_norms > 1e-4          # filter zero-padding
+    v_des_magnitude = float(np.mean(_act_norms[_valid])) * DATASET_HZ if _valid.any() else 0.4
+else:
+    v_des_magnitude = 0.0   # unused
 ```
+
 Passes `v_des_magnitude=v_des_magnitude` into `rollout_one`.
+
+**`rollout_one` signature** — default changed from `v_des_magnitude=0.4` → `v_des_magnitude=0.0`
+(always set by `_run_variant`; 0.0 default makes stale callers obvious).
 
 ---
 
@@ -43,11 +54,18 @@ Passes `v_des_magnitude=v_des_magnitude` into `rollout_one`.
 #   controller='pid_const_v'→ cascaded PID, v_des=unit(action)*v_des_magnitude (U3, constant speed).
 ```
 
-**Plan block** — added config key:
-```python
-'v_des_magnitude': 0.4,   # U3 pid_const_v only: constant flight speed (m/s)
-```
-Also updated controller comment with all 4 options.
+**Plan block** — `v_des_magnitude` key **removed**. Speed is auto-derived from dataset; no manual knob.
+Comment updated to document the derivation formula.
+
+---
+
+## Why Auto-Derive?
+
+`v_des_magnitude = 0.4` was the correct value only because the dataset generator uses 0.4 m/s nominal speed.
+But it obscures the coupling: any change in dataset speed → wrong hardcoded value → silently wrong eval.
+
+The derivation `mean(|action|) × DATASET_HZ` is the algebraic mean of `action/dt_fm` — exactly what the
+default `pid` controller produces. `pid_const_v` at this speed is dataset-consistent with no magic numbers.
 
 ---
 
@@ -55,19 +73,18 @@ Also updated controller comment with all 4 options.
 
 - FM model architecture, training code, dataset, normalizer — untouched
 - `pid` and `pid_stopgo` branches — unchanged
-- `_uav_exp_name`: `pid_const_v` → `_ctrlpid_const_v` suffix (non-default → new output folder, same checkpoint)
 
 ---
 
 ## Usage
 
 ```python
-# config/uav.py plan block — change these two keys:
-'controller':      'pid_const_v',
-'v_des_magnitude': 0.4,     # tune: lower → smoother, higher → faster
+# config/uav.py plan block — set only:
+'controller': 'pid_const_v',
+# v_des_magnitude is NOT set — derived automatically from the dataset at eval time
 ```
 
-Keep train block `controller='pid'` so the checkpoint path resolves to the existing `pid` model.
+Keep train block `controller='pid'` so the checkpoint path resolves to the existing model.
 
 ---
 

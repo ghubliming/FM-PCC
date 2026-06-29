@@ -130,8 +130,8 @@ base = {
         #   controller='pid_const_v'→ cascaded PID, v_des=unit(action)*v_des_magnitude (U3, constant speed).
         #   controller='mjpc'       → MJPC optimal-control thrust tracker (E8, cluster-only).
         # All are path discriminators via _uav_exp_name (non-default → folder suffix).
-        'cond_mode': 'p_des',
-        'controller': 'pid',
+        'cond_mode': 'pos_only',
+        'controller': 'pid_stopgo',
 
         # dataset — generic SequenceDataset; the UAV branch lives in datasets/d4rl.py.
         'loader': 'datasets.SequenceDataset',
@@ -185,10 +185,10 @@ base = {
         # same savepath. cond_mode sets the obs layout the eval feeds the FM; controller
         # selects the inner-loop tracker and segregates the eval output folder.
         # controller='pid_stopgo'  (U2): v_des=0 at eval only — same checkpoint as pid with same cond_mode.
-        # controller='pid_const_v' (U3): v_des=unit(action)*v_des_magnitude — eval-only, tune v_des_magnitude.
-        'v_des_magnitude': 0.4,          # U3 pid_const_v only: constant flight speed (m/s); ignored by other controllers
-        'cond_mode': 'p_des',
-        'controller': 'pid',
+        # controller='pid_const_v' (U3): v_des=unit(action)*v_des_magnitude — speed auto-derived from dataset
+        #   (mean(|action|)×DATASET_HZ ≡ mean(action/dt_fm)); no manual knob needed.
+        'cond_mode': 'pos_only',
+        'controller': 'pid_stopgo',
 
         # ── Checkpoint loading ────────────────────────────────────────────────
         'loadbase': None,

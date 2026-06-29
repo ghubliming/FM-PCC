@@ -292,7 +292,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
                 anchor_to_p=False, controller='pid', cond_mode='p_des', mjpc_kwargs=None,
-                v_des_magnitude=0.4):
+                v_des_magnitude=0.0):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -522,7 +522,19 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # E8: tracker + obs-layout selection (defaults preserve E7).
     controller      = str(config.get('controller', 'pid'))
     cond_mode       = str(config.get('cond_mode', 'p_des'))
-    v_des_magnitude = float(config.get('v_des_magnitude', 0.4))  # U3: pid_const_v speed (m/s)
+    # U3: pid_const_v speed — auto-derived from dataset so it self-calibrates to any
+    # dataset/scene without a magic number.  mean(|action|) × DATASET_HZ ≡ mean(action/dt_fm)
+    # i.e. the same value the default 'pid' controller produces on average.
+    # Zero-padding (at-goal steps) is filtered before averaging.
+    if controller == 'pid_const_v':
+        _all_acts = dataset.actions.reshape(-1, 3)
+        _act_norms = np.linalg.norm(_all_acts, axis=-1)
+        _valid = _act_norms > 1e-4
+        v_des_magnitude = float(np.mean(_act_norms[_valid])) * DATASET_HZ if _valid.any() else 0.4
+        print(f'[ eval ] pid_const_v: v_des_magnitude={v_des_magnitude:.3f} m/s '
+              f'(mean_act={np.mean(_act_norms[_valid]):.4f} m × {DATASET_HZ} Hz)')
+    else:
+        v_des_magnitude = 0.0   # unused by other controllers
     mjpc_kwargs = {
         'task_id':       config.get('mjpc_task_id', 'Quadrotor'),
         'n_trajectories': config.get('mjpc_trajectories', 16),
