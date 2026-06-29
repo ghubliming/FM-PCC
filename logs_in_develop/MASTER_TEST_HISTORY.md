@@ -2238,25 +2238,3 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Canonical Time Schedule Integration**: Integrated the official iMeanFlow logit-normal time sampling schedule (`t = sigmoid(randn * p_std + p_mean)`) as the new default across both the state-based (`flow_matcher_v3_imeanflow`) and visual-aligning (`imf_visual_aligning`) pipelines. This mathematically aligns training with the reference implementation (which targets a median `t` near 0.40).
 2. **Backward Compatibility**: Preserved the legacy `1 - Beta(α, β)` schedule as an explicit `t_schedule='beta'` configuration option (which seamlessly supports a uniform `Beta(1,1)` schedule as well). This maintains backward compatibility for older checkpoints and enables direct A/B schedule ablations.
 3. **Configuration & Path Tracking**: Wired the `t_schedule` parameter into `args_to_watch` (appending `_tslogit_normal` or `_tsbeta` to checkpoint directories), ensuring transparent model loading without path collisions between differently scheduled models.
-
-***
-
-## Gen11 Epoch 8: UAV MJPC Thrust Control & Novel Controllers (June 29, 2026)
-
-**Keywords**: Gen11, Epoch 8, MJPC, thrust control, cond_mode, pos_only, pid_stopgo, pid_const_v.
-
-1. **MJPC Optimal-Control Tracker (`mjpc`)**: Implemented an optional FM→MJPC pathway featuring a strict-DPCC **9D** position planner (`[action|p_des|p]`, dropping velocity) combined with an MJPC optimal-control thrust tracker. The MJPC driving loop mirrors the repository's `cartpole.py` setup and is fully switchable via the `controller` config.
-2. **Stop-and-Go Controller (`pid_stopgo`)**: Added a `pid_stopgo` controller option that reuses the `CascadedPID` architecture but actively sets the desired velocity (`v_des`) to zero at each FM step. This actively brakes the drone, preventing the continuous integration of positional errors during trajectory execution.
-3. **Constant Velocity Controller (`pid_const_v`)**: Introduced a `pid_const_v` controller for timing-free flight, where the speed magnitude (`v_des_magnitude`) is automatically derived from the mean magnitude of actions within the dataset (`mean(|action|) × DATASET_HZ`), completely removing the reliance on hardcoded scaling factors.
-4. **Configuration Safety Locks**: Resolved a dimension mismatch crash (e.g., `ValueError: operands could not be broadcast together with shapes (9,) (6,)`) by locking the evaluation's `cond_mode` strictly to the training checkpoint's metadata rather than user-editable plan blocks. This prevents silent shape drift between the saved 6D normalizer (`pos_only`) and dynamic evaluation configurations.
-5. **Path Output Segregation**: Centralized output naming rules allowing evaluation variants to automatically sort themselves into dedicated directories using the `_ctrl{controller}` suffix and locking `cond_mode` inside the checkpoint signature (e.g., `_cmpos_only_ctrlmjpc`). 
-
-***
-
-## Gen11 Epoch 8 Analysis: Controller Tracking Performance (June 29, 2026)
-
-**Keywords**: Gen11, Epoch 8, pillars, pid_stopgo, 12D pid tracking error, anchor_to_p.
-
-1. **Past 12D PID Failure**: Diagnosed that the most recent legacy 12D PID is failing on the complex `pillars` scene, even when applying the `anchor_to_p` fix intended to resolve tracking error. The compounding errors overwhelmed the controller, causing extreme degradation.
-2. **Stop-and-Go Recovery**: With the newly implemented `pid_stopgo` controller, even without relying on `anchor_to_p`, the system experiences very little tracking error and can successfully reach the goal.
-3. **12D Performance Under DPCC**: Although tracking error is indeed mild in the 12D representation, overall execution performance remains remarkably poor. While the system could technically finish the goal using `diffuser` and `dpcc-r`, the trajectory and control efficiency are significantly worse compared to the older configurations, making the new baseline nearly unusable without structural fixes like stop-and-go.

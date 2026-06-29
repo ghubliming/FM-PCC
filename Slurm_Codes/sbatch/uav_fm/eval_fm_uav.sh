@@ -40,7 +40,9 @@ source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
 
 export FMPCC="$REPO"
-export PYTHONPATH="$REPO:$PYTHONPATH"
+# third_party/mujoco_mpc: bundled Python package + generated proto stubs (Fix_5).
+# The compiled agent_server binary must be at third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server.
+export PYTHONPATH="$REPO:$REPO/third_party/mujoco_mpc:$PYTHONPATH"
 # Eval rolls out in MuJoCo on a headless node → EGL required.
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"

@@ -203,6 +203,11 @@ base = {
         'diffusion_epoch': 'latest',
 
         # ── Eval control ──────────────────────────────────────────────────────
+        # flow_steps_v3: ODE Euler steps at inference (eval only — never in train folder name).
+        # Without this, FlowMatchingODE falls back to n_timesteps=1000 (extremely slow).
+        # aligning-d3il-visual uses 16 (default) or 100; 20 is a sensible UAV default.
+        # Appears in the eval output path as 'K{n}' via _uav_eval_tag.
+        'flow_steps_v3': 20,
         # mpc_batch_size: MPC candidate-fan size (eval only).
         # Mirrors aligning-d3il-visual.py naming (mpc_batch_size vs train batch_size).
         # Appears in the eval output path as 'mpc{B}' (e.g. mpc4).

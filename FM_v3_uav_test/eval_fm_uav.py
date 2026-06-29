@@ -49,16 +49,17 @@ from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 
 def _uav_eval_tag(config, controller, anchor_to_p):
     """Eval-parameter folder name — mirrors args_to_watch_fm_visual_plan style.
 
-    Format:  mpc{B}_{controller}[_anchorP]_T{thresh}
+    Format:  K{flow_steps}_mpc{B}_{controller}[_anchorP]_T{thresh}
     Aligning analogue: K{flow_steps}_M{solver}_T{thresh}_mpc{B}_film{mode}
 
     Sits BETWEEN the train-identity folder (H8_D...ODE_9D) and the seed,
     so the projection variant (diffuser / dpcc-c) remains a pure leaf name.
-    e.g.  flow_matching_v3_uav/H8_D...ODE_9D / mpc4_pid_stopgo_T0.5 / 0 / diffuser /
+    e.g.  flow_matching_v3_uav/H8_D...ODE_9D / K20_mpc4_pid_stopgo_T0.5 / 0 / diffuser /
     """
+    k      = int(config.get('flow_steps_v3', 20))
     mpc_b  = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
     thresh = config.get('diffusion_timestep_threshold', 0.5)
-    parts  = [f'mpc{mpc_b}', controller]
+    parts  = [f'K{k}', f'mpc{mpc_b}', controller]
     if anchor_to_p:
         parts.append('anchorP')
     parts.append(f'T{thresh:g}')

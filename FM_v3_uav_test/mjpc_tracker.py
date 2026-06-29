@@ -61,8 +61,11 @@ class MJPCTracker:
             from mujoco_mpc import agent as agent_lib
         except ImportError as e:                              # pragma: no cover - cluster-only
             raise RuntimeError(
-                'MJPCTracker requires the `mujoco_mpc` Python package + compiled agent_server. '
-                'Install from /workspaces/mujoco_mpc (see its README). This path is cluster-only.'
+                'MJPCTracker: mujoco_mpc Python package not found. '
+                'Ensure PYTHONPATH includes FM-PCC/third_party/mujoco_mpc. '
+                'Also place the compiled agent_server binary at '
+                'third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server '
+                '(see third_party/mujoco_mpc/mujoco_mpc/mjpc/PLACE_BINARY_HERE.txt).'
             ) from e
 
         self.agent = agent_lib.Agent(task_id=task_id, model=model)
