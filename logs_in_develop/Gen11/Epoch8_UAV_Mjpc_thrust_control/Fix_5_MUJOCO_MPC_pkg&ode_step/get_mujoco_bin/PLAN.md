@@ -1,109 +1,140 @@
-# MuJoCo MPC Build Plan for SLURM
+# Build `agent_server` on Cluster — Safe Plan
 
-Because building the MuJoCo MPC `agent_server` with gRPC can be resource-intensive, submitting it as a SLURM job is the smartest way to do it. It will run in the background on a compute node, utilize multiple CPU cores for a fast compile, and avoid locking up the login node.
-
-This plan uses the **Isolated Conda Build** strategy to prevent any changes to your cluster's module environment.
-
-## The Strategy
-1. **Submit an SBATCH script** that requests 8 CPUs and 16GB of RAM.
-2. **Create a temporary Conda environment** (`temp_mjpc_build`) populated with `cmake`, `gcc/g++` from `conda-forge`, and `ninja`.
-3. **Download and Build** the `agent_server` binary from source using the temporary compilers.
-4. **Deploy** the compiled binary directly into your `FM-PCC` repository at the correct location.
-5. **Auto-Cleanup** by automatically deleting the temporary Conda environment when the build finishes.
+**Only needed when `controller='mjpc'`. Current default is `pid_stopgo` — not blocking.**
 
 ---
 
-## Step 1: Create the SBATCH Build Script
-Create a new file in your cluster workspace named `build_mjpc.sh` (e.g. in your `Slurm_Codes/sbatch/` folder) and paste the following code:
+## The One Risk to Avoid
+
+`third_party/mujoco_mpc/mujoco_mpc/` already exists (our bundled Python package).
+NEVER clone or run cmake inside `third_party/`. Build source goes to a scratch temp dir;
+only the final binary is copied into the repo.
+
+---
+
+## SBATCH Script
+
+Save as `Slurm_Codes/sbatch/uav_fm/build_mjpc_agent_server.sh`:
 
 ```bash
 #!/bin/bash
 #SBATCH --job-name=build_mjpc
-#SBATCH --output=build_mjpc_%j.log
-#SBATCH --error=build_mjpc_%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=16G
-#SBATCH --time=00:45:00
-#SBATCH --partition=compute  # <-- Adjust this to your cluster's partition name!
+#SBATCH --time=06:00:00
+#SBATCH --partition=gpu-1-student
+#SBATCH --output=Slurm_Codes/logs/build_mjpc_%j.log
+set -e
 
-# NOTE: Adjust the PROJECT_ROOT to the absolute path of your FM-PCC repo on the cluster
-PROJECT_ROOT="/path/to/your/FM-PCC"
-MUJOCO_MPC_DIR="$PROJECT_ROOT/third_party/mujoco_mpc/mujoco_mpc"
-TARGET_BIN_DIR="$MUJOCO_MPC_DIR/mjpc"
+FMPCC_ROOT="$HOME/FMPCC"
+REPO="$FMPCC_ROOT/FM-PCC"
+TARGET="$REPO/third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server"
 
-echo "=========================================="
-echo "Starting MuJoCo MPC SLURM Build"
-echo "Time: $(date)"
-echo "=========================================="
+# Build source goes to scratch — NEVER inside third_party/
+BUILD_DIR="/tmp/mjpc_build_${SLURM_JOB_ID}"
 
-# 1. Initialize Conda (Assuming Conda is set up in your ~/.bashrc)
-source ~/.bashrc
+echo "========================================================"
+echo "BUILD START: $(date)  |  Job $SLURM_JOB_ID  |  $(hostname)"
+echo "Build dir : $BUILD_DIR"
+echo "Binary target: $TARGET"
+echo "========================================================"
 
-# 2. Create the temporary build environment
-echo "[1/5] Creating temporary Conda build environment..."
-conda create -n temp_mjpc_build -c conda-forge cmake c-compiler cxx-compiler ninja -y
+# ── Isolated build env (never touches FMPCC env) ─────────────────────────────
+CONDA_DIR="$HOME/miniconda3"
+source "$CONDA_DIR/etc/profile.d/conda.sh"
+conda create -n _mjpc_build -c conda-forge cmake c-compiler cxx-compiler ninja -y
+conda activate _mjpc_build
 
-# 3. Activate the environment
-# Note: In shell scripts, 'conda activate' sometimes requires 'source activate'
-source activate temp_mjpc_build
+# ── Clone to scratch ─────────────────────────────────────────────────────────
+mkdir -p "$BUILD_DIR"
+git clone https://github.com/google-deepmind/mujoco_mpc.git "$BUILD_DIR/mujoco_mpc"
+cd "$BUILD_DIR/mujoco_mpc"
 
-# 4. Clone mujoco_mpc if not already present
-echo "[2/5] Preparing source directory..."
-mkdir -p "$PROJECT_ROOT/third_party/mujoco_mpc"
-cd "$PROJECT_ROOT/third_party/mujoco_mpc"
-
-if [ ! -d "mujoco_mpc" ]; then
-    echo "Cloning mujoco_mpc repository..."
-    git clone https://github.com/google-deepmind/mujoco_mpc.git
-fi
-
-cd mujoco_mpc
-
-# 5. Build the agent_server
-echo "[3/5] Configuring CMake and building..."
-# Clean previous build if it exists
-rm -rf build
+# ── Build ─────────────────────────────────────────────────────────────────────
 mkdir build && cd build
+cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build . --target agent_server -j${SLURM_CPUS_PER_TASK}
 
-# Configure CMake with gRPC enabled, using Ninja for fast compilation
-cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release -G Ninja
+# ── Deploy binary only ────────────────────────────────────────────────────────
+cp bin/agent_server "$TARGET"
+chmod +x "$TARGET"
 
-# Compile using all allocated SBATCH cores
-cmake --build . --target agent_server -j$SLURM_CPUS_PER_TASK
+# ── Cleanup scratch + temp env ───────────────────────────────────────────────
+cd "$REPO"
+conda deactivate
+conda env remove -n _mjpc_build -y
+rm -rf "$BUILD_DIR"
 
-# 6. Deploy the Binary
-echo "[4/5] Deploying binary to target location..."
-mkdir -p "$TARGET_BIN_DIR"
-cp bin/agent_server "$TARGET_BIN_DIR/agent_server"
-chmod +x "$TARGET_BIN_DIR/agent_server"
-
-# 7. Clean up
-echo "[5/5] Cleaning up..."
-cd "$PROJECT_ROOT"
-source deactivate
-conda env remove -n temp_mjpc_build -y
-
-echo "=========================================="
-echo "Build Complete! Binary deployed to:"
-echo "$TARGET_BIN_DIR/agent_server"
-echo "Time: $(date)"
-echo "=========================================="
+echo "========================================================"
+echo "BUILD COMPLETE: $(date)"
+echo "Binary at: $TARGET"
+echo "========================================================"
 ```
 
-## Step 2: Customize the Script
-Before submitting, you must change two variables at the top of the script:
-1. `PROJECT_ROOT`: Change this to the absolute path of your `FM-PCC` directory on the SLURM cluster.
-2. `#SBATCH --partition=compute`: Change `compute` to whatever partition/queue you normally use for standard CPU jobs.
+## Submit
 
-## Step 3: Submit the Job
-Once the script is saved and customized on the cluster, submit it using:
 ```bash
-sbatch build_mjpc.sh
+sbatch Slurm_Codes/sbatch/uav_fm/build_mjpc_agent_server.sh
 ```
 
-## Step 4: Monitor the Build
-You can monitor the progress by looking at the generated log file:
+## Monitor
+
 ```bash
-tail -f build_mjpc_<JOB_ID>.log
+tail -f Slurm_Codes/logs/build_mjpc_<JOB_ID>.log
 ```
-The job will take approximately 10 to 15 minutes, primarily because it has to download and statically link the large `gRPC` and `MuJoCo` libraries. Once it says "Build Complete!", you are ready to run your evaluations!
+
+## Verify
+
+```bash
+ls -lh third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server
+file third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server   # should say ELF 64-bit
+```
+
+---
+
+## After Build Finishes — What To Do
+
+### 1. Confirm binary is real
+```bash
+ls -lh third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server
+# expect: ~50–150 MB ELF binary
+file third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server
+# expect: ELF 64-bit LSB executable, x86-64
+```
+
+### 2. Switch config to mjpc controller
+In `config/uav.py` plan block:
+```python
+'controller': 'mjpc',
+```
+
+### 3. Run eval
+```bash
+sbatch Slurm_Codes/sbatch/uav_fm/eval_fm_uav.sh pillars 6
+```
+
+---
+
+## What To Expect If Binary Works
+
+When `controller='mjpc'` and the binary is in place:
+
+- Log will print: `[ MJPCTracker ] ...` on init — no `RuntimeError` about missing binary
+- `agent_server` spawns as a background gRPC subprocess (visible in `ps aux` during the job)
+- Each FM waypoint is handed to MJPC which optimizes thrust over a short horizon
+- The eval output folder will be `K20_mpc4_mjpc_T0.5/` (controller name in path)
+- Success rate on pillars should be higher than `pid_stopgo` if MJPC tracking is tighter
+
+If the binary is wrong architecture or corrupt:
+- Python will throw `OSError` or `subprocess.CalledProcessError` when spawning `agent_server`
+- No data loss — just a clear error at the start of the first rollout
+
+---
+
+## Notes
+
+- Build takes ~1–3 h (gRPC downloads and compiles ~200 MB of C++ from source via CMake FetchContent)
+- `third_party/` is never touched during build — only the final binary is written there
+- The binary is NOT committed to git (too large, arch-specific) — must be rebuilt after cluster wipe
