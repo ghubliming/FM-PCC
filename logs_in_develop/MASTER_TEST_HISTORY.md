@@ -2217,3 +2217,24 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Per-Scene Buffer Allocation**: Implemented a `MAX_PATH_LENGTH_PER_SCENE` dictionary in `config/uav.py` to dynamically size the training replay buffer based on actual scene duration limits (e.g., `corridor=360`, `empty=450` vs the blanket `750`). This prevents massive memory overallocation and waste across shorter scenes.
 2. **Redundant Projection Bypass**: Optimized evaluation performance by explicitly skipping "tightened" projection variants (`dpcc-*-tightened`) when spatial constraints are inactive, eliminating redundant SLSQP solving cycles.
+
+***
+
+## Cross-Gen Enhancement: Real-Time Behavior Recording Rollout (June 28, 2026)
+
+**Keywords**: real-time recording, RTRecorder, inference timing, total_ms, bundled timing, behaviour logging, 10 evals.
+
+1. **Global Recording Infrastructure**: Extracted the Gen11 UAV `BehaviorLogger` into a standalone, portable `realtime_recording.behavior_logger.RTRecorder` module. This module provides an observation-layout-agnostic framework to record per-step timings (e.g., `total_ms`, `fm_ms`, `proj_ms`) and behavioral contexts (e.g., `track_err`).
+2. **System-Wide Rollout (10 Evals)**: Deployed the new recorder across all 10 active evaluation pipelines, including the DPCC baseline, state-only FM/DPCC, visual-aligning (via `VisualAgentWrapper`), and visual-avoiding pipelines. Each rollout now automatically generates a `realtime_*.log` file.
+3. **Summary Audit Block**: Every log concludes with a summary block that answers deployment-critical questions, explicitly calculating whether the system can close the control loop within the hardware budget (e.g., 30 Hz/33 ms) and identifying the computation ratio between FM inference and DPCC projection.
+4. **Bundled Timing Design**: Acknowledged that non-UAV legacy policies do not expose isolated projection times. The logger honestly bundles FM and projection times under `total_ms`, allowing architectural comparisons (e.g., Diffuser vs DPCC) to extract the projection overhead at the aggregate level.
+
+***
+
+## Gen3v4 "U7": iMeanFlow Logit-Normal Time Schedule (June 28, 2026)
+
+**Keywords**: Gen3v4, U7, iMeanFlow, logit-normal, time schedule, p_mean, p_std.
+
+1. **Canonical Time Schedule Integration**: Integrated the official iMeanFlow logit-normal time sampling schedule (`t = sigmoid(randn * p_std + p_mean)`) as the new default across both the state-based (`flow_matcher_v3_imeanflow`) and visual-aligning (`imf_visual_aligning`) pipelines. This mathematically aligns training with the reference implementation (which targets a median `t` near 0.40).
+2. **Backward Compatibility**: Preserved the legacy `1 - Beta(α, β)` schedule as an explicit `t_schedule='beta'` configuration option (which seamlessly supports a uniform `Beta(1,1)` schedule as well). This maintains backward compatibility for older checkpoints and enables direct A/B schedule ablations.
+3. **Configuration & Path Tracking**: Wired the `t_schedule` parameter into `args_to_watch` (appending `_tslogit_normal` or `_tsbeta` to checkpoint directories), ensuring transparent model loading without path collisions between differently scheduled models.

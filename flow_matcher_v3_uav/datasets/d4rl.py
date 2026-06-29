@@ -73,11 +73,17 @@ def sequence_dataset(env, preprocess_fn, cond_mode='p_des'):
     signature for API parity (identity for UAV, preprocess_fns=[]).
 
     cond_mode (U4 — see logs_in_develop/Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/U4_cond):
-      'p_des'  (default) → obs=[p_des|p|v] (9D), action=Δp_des  — current behavior.
-      'real_p' (opt-in)  → obs=[p|v]      (6D), action=Δp (real displacement).
-                           Plans in REAL position so the command can't run away from
-                           the lagging drone. The real p is already stored in the pkl
-                           (obs cols 3:6), so NO data regeneration is needed.
+      'p_des'    (default) → obs=[p_des|p|v] (9D), action=Δp_des  — current behavior.
+      'real_p'   (opt-in)  → obs=[p|v]      (6D), action=Δp (real displacement).
+                             Plans in REAL position so the command can't run away from
+                             the lagging drone. The real p is already stored in the pkl
+                             (obs cols 3:6), so NO data regeneration is needed.
+      'pos_only' (E8 opt-in) → obs=[p_des|p] (6D), action=Δp_des — strict-DPCC position
+                             planner with VELOCITY DROPPED (transition 9D = act(3)+obs(6)).
+                             For the FM→MJPC tracker path (velocity recovered by MJPC from
+                             MuJoCo state, not carried in the tensor). The pkl already stores
+                             [p_des|p|v]; this slices cols 0:6, so NO data regeneration is
+                             needed (mirrors 'real_p'). See Epoch8_UAV_Mjpc_thrust_control.
     """
     scenes = _scenes_for(env)
     n = 0
@@ -91,6 +97,11 @@ def sequence_dataset(env, preprocess_fn, cond_mode='p_des'):
             p_real = obs[:, 3:6]                                # (T, 3) measured position
             actions = np.diff(p_real, axis=0).astype(np.float32)   # (T-1, 3) Δp
             obs = obs[:, 3:9]                                   # (T, 6) [p|v]
+        elif cond_mode == 'pos_only':
+            # E8: drop velocity. obs=[p_des|p] (6D); action=Δp_des unchanged (already stored).
+            # Pure column slice of the 9D pkl → NO data regeneration.
+            actions = np.asarray(ep['actions'], dtype=np.float32)  # (T-1, 3) Δp_des
+            obs = obs[:, 0:6]                                   # (T, 6) [p_des|p], drop v (cols 6:9)
         else:
             actions = np.asarray(ep['actions'], dtype=np.float32)  # (T-1, 3) Δp_des
         valid_len = len(actions)

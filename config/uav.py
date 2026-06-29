@@ -61,6 +61,25 @@ args_to_watch = [
     ('diffusion', 'D'),
 ]
 
+# E8 (Epoch8_UAV_Mjpc_thrust_control): conditional exp_name so the checkpoint/savepath
+# carries the E8 discriminators ONLY when non-default — existing E7 checkpoints keep their
+# exact path `H{horizon}_D{diffusion}` (no suffix) and are NOT orphaned.
+#   cond_mode != 'p_des'  → append _cm{cond_mode}   (tensor shape: 'pos_only' = 9D, vel dropped)
+#   controller != 'pid'   → append _ctrl{controller} (tracker: 'mjpc' optimal-control thrust)
+# Both train & eval resolve the model via this same exp_name (eval_fm_uav.build_experiment
+# loads from the TRAIN block's savepath), so train/eval paths always agree. The controller is
+# a path discriminator only — training ignores its value; it segregates the pos_only+mjpc
+# checkpoint from the default. See Epoch8 PLAN §5 + §3.5.
+def _uav_exp_name(args):
+    name = f'H{args.horizon}_D{args.diffusion}'
+    cond_mode = getattr(args, 'cond_mode', 'p_des')
+    if cond_mode != 'p_des':
+        name += f'_cm{cond_mode}'
+    controller = getattr(args, 'controller', 'pid')
+    if controller != 'pid':
+        name += f'_ctrl{controller}'
+    return name
+
 # All UAV-FM outputs live under logs/UAV_FM/ (NOT scattered at the top of logs/).
 # savepath = <logbase>/<dataset>/<exp_name>/<seed> = logs/UAV_FM/uav-<scene>/flow_matching_v3_uav/.../<seed>
 # NOTE: the dataset string stays 'uav-<scene>' — the data loader keys on it
@@ -90,6 +109,14 @@ base = {
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
 
+        # E8 (optional) — observation layout + tracker. Defaults preserve E7 exactly.
+        #   cond_mode='p_des'  → obs=[p_des|p|v] 9D, transition 12D (E7 default).
+        #   cond_mode='pos_only' → obs=[p_des|p] 6D, transition 9D (velocity dropped; FM→MJPC).
+        #   controller='pid'   → cascaded PID (E7 default). 'mjpc' → MJPC thrust tracker (E8).
+        # Both are path discriminators via _uav_exp_name (non-default → folder suffix).
+        'cond_mode': 'p_des',
+        'controller': 'pid',
+
         # dataset — generic SequenceDataset; the UAV branch lives in datasets/d4rl.py.
         'loader': 'datasets.SequenceDataset',
         # SafeLimitsNormalizer, NOT LimitsNormalizer: some scenes (e.g. pillars) have a
@@ -109,7 +136,9 @@ base = {
         # serialization
         'logbase': logbase,
         'prefix': 'flow_matching_v3_uav/',
-        'exp_name': watch(args_to_watch),
+        # E8: conditional exp_name (default = watch(args_to_watch) output 'H{h}_D{d}';
+        # non-default cond_mode/controller append a suffix — see _uav_exp_name above).
+        'exp_name': _uav_exp_name,
 
         # training (unchanged from source)
         'n_steps_per_epoch': 1000,
@@ -136,11 +165,21 @@ base = {
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
 
+        # E8 (optional) — MUST match the training block so build_experiment resolves the
+        # same savepath. cond_mode sets the obs layout the eval feeds the FM; controller
+        # selects the inner-loop tracker (pid|mjpc) and segregates the eval output folder.
+        'cond_mode': 'p_des',
+        'controller': 'pid',
+
         # ── Checkpoint loading ────────────────────────────────────────────────
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_uav/',
-        'exp_name': watch(args_to_watch),
+        # E8: conditional exp_name (same helper as training → train/eval paths agree).
+        'exp_name': _uav_exp_name,
+        # NOTE: eval_fm_uav.build_experiment loads the model from the TRAIN block's savepath
+        # (via exp_name), so this diffusion_loadpath is vestigial for that script; kept for
+        # API parity / external tooling. Default path only — the live load is exp_name-driven.
         'diffusion_loadpath': 'f:flow_matching_v3_uav/H{horizon}_D{diffusion}',
         'diffusion_epoch': 'latest',
 

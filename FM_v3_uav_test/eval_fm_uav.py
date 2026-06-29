@@ -130,6 +130,13 @@ def load_pcc_config(scene, seed):
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
     cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
     cfg['write_to_file']                = bool(getattr(plan_args, 'write_to_file', True))
+    # E8 (Epoch8) — observation layout + tracker selection. Defaults = E7 (p_des / pid).
+    cfg['cond_mode']                    = str(getattr(plan_args, 'cond_mode', 'p_des'))
+    cfg['controller']                   = str(getattr(plan_args, 'controller', 'pid'))
+    cfg['mjpc_task_id']                 = str(getattr(plan_args, 'mjpc_task_id', 'Quadrotor'))
+    cfg['mjpc_trajectories']            = int(getattr(plan_args, 'mjpc_trajectories', 16))
+    cfg['mjpc_horizon']                 = float(getattr(plan_args, 'mjpc_horizon', 0.3))
+    cfg['mjpc_planner_steps']           = int(getattr(plan_args, 'mjpc_planner_steps', 10))
 
     return cfg
 
@@ -284,7 +291,7 @@ def _render_overhead(mujoco, model, data, renderer):
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
-                anchor_to_p=False):
+                anchor_to_p=False, controller='pid', cond_mode='p_des', mjpc_kwargs=None):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -308,7 +315,15 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     data.qvel[:] = 0.0
     mujoco.mj_forward(model, data)
 
+    # E8: tracker selection. 'pid' (default) = E7 cascaded PID; 'mjpc' = optimal-control
+    # thrust tracker (FM→MJPC). Both expose the same .compute(p,q,v,om,p_des,v_des) API so
+    # the inner physics loop is controller-agnostic.
     pid = gen._make_pid(model, 'pid_default')
+    tracker = pid
+    if controller == 'mjpc':
+        from FM_v3_uav_test.mjpc_tracker import MJPCTracker
+        mjpc_kwargs = mjpc_kwargs or {}
+        tracker = MJPCTracker(model, scene=scene, **mjpc_kwargs)
     dt = float(model.opt.timestep)
     dt_fm = 1.0 / DATASET_HZ
     decim = max(1, int(round(1.0 / (dt * DATASET_HZ))))    # physics steps per FM query
@@ -340,7 +355,13 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     for k in range(n_fm):
         p = data.qpos[:3].copy()
         v = data.qvel[:3].copy()
-        obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
+        # E8: obs layout MUST match how the model was trained (dataset cond_mode).
+        #   'pos_only' → [p_des|p] (6D, velocity dropped → 9D transition; FM→MJPC).
+        #   'p_des' (default) → [p_des|p|v] (9D → 12D transition; E7 PID).
+        if cond_mode == 'pos_only':
+            obs = np.concatenate([p_des, p]).astype(np.float32)      # [p_des | p] (6,) raw
+        else:
+            obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
@@ -380,7 +401,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             v = data.qvel[:3].copy()
             q = data.qpos[3:7].copy()
             om = data.qvel[3:6].copy()
-            u = pid.compute(p, q, v, om, p_des, v_des)
+            u = tracker.compute(p, q, v, om, p_des, v_des)   # E8: pid OR mjpc (same API)
             data.ctrl[:4] = u
             mujoco.mj_step(model, data)
             n_phys += 1
@@ -405,6 +426,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             except Exception as exc:                       # pragma: no cover
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
                 renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
+
+    # E8: release the MJPC gRPC agent server (no-op for the PID path).
+    if controller == 'mjpc' and hasattr(tracker, 'close'):
+        tracker.close()
 
     p_final = data.qpos[:3].copy()
     contact_frac = n_hit / max(n_phys, 1)
@@ -479,7 +504,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     across trials, exactly as FMv3ODE)."""
     # fix_5 anchor-p knob — must be resolved before setup_dpcc_projector is called.
     anchor_to_p = bool(config.get('anchor_to_p', False))
-    eval_tag = '_anchorP' if anchor_to_p else ''
+    # E8: tracker + obs-layout selection (defaults preserve E7).
+    controller = str(config.get('controller', 'pid'))
+    cond_mode  = str(config.get('cond_mode', 'p_des'))
+    mjpc_kwargs = {
+        'task_id':       config.get('mjpc_task_id', 'Quadrotor'),
+        'n_trajectories': config.get('mjpc_trajectories', 16),
+        'horizon':       config.get('mjpc_horizon', 0.3),
+        'planner_steps': config.get('mjpc_planner_steps', 10),
+    } if controller == 'mjpc' else None
+    # E8: segregate eval output by controller so PID and MJPC results never overwrite.
+    eval_tag = ('_anchorP' if anchor_to_p else '') + (f'_ctrl{controller}' if controller != 'pid' else '')
 
     projector = None
     if variant != 'diffuser':
@@ -524,7 +559,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             variant=variant, log_dir=out_dir,
                             control_hz=config.get('control_hz', DATASET_HZ),
                             text_log=config.get('behavior_log', True),
-                            anchor_to_p=anchor_to_p)
+                            anchor_to_p=anchor_to_p,
+                            controller=controller, cond_mode=cond_mode, mjpc_kwargs=mjpc_kwargs)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
