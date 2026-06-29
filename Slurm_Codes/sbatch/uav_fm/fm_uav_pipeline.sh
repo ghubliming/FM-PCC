@@ -10,10 +10,13 @@ set -e
 
 # One-shot: train → eval (eval runs only if train succeeds).
 # Args: $1=scene (def all)  $2=seed (def 6)  $3=n_trials (omit → yaml default)
-# n_trials: omit $3 → reads from config/uav_projection.yaml; pass int → CLI override.
+#        $4=projection (def fm_only)  $5=record (none|gif|all, def none)
+# n_trials: omit $3 (or pass "") → reads from config/uav_projection.yaml; pass int → CLI override.
 SCENE="${1:-all}"
 SEED="${2:-6}"
-NTRIALS="${3:-}"   # empty = let config/uav_projection.yaml n_trials apply
+NTRIALS="${3:-}"          # empty = let config/uav_projection.yaml n_trials apply
+PROJECTION="${4:-fm_only}"
+RECORD="${5:-none}"
 SBATCH_DIR="Slurm_Codes/sbatch/uav_fm"
 
 echo "================================================================================"
@@ -31,7 +34,7 @@ TRAIN_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/train_fm_uav.sh" "$SCENE" 
 echo "Step 1: train submitted — Job $TRAIN_ID"
 
 EVAL_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:${TRAIN_ID} \
-    "${SBATCH_DIR}/eval_fm_uav.sh" "$SCENE" "$SEED" "${NTRIALS}")
+    "${SBATCH_DIR}/eval_fm_uav.sh" "$SCENE" "$SEED" "${NTRIALS}" "$PROJECTION" "$RECORD")
 echo "Step 2: eval scheduled (afterok:${TRAIN_ID}) — Job $EVAL_ID"
 echo "--------------------------------------------------------------------------------"
 echo "Outputs: logs/UAV_FM/uav-${SCENE}/flow_matching_v3_uav/.../${SEED}/{weights,eval}"
