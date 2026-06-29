@@ -315,11 +315,13 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     data.qvel[:] = 0.0
     mujoco.mj_forward(model, data)
 
-    # E8: tracker selection. 'pid' (default) = E7 cascaded PID; 'mjpc' = optimal-control
-    # thrust tracker (FM→MJPC). Both expose the same .compute(p,q,v,om,p_des,v_des) API so
-    # the inner physics loop is controller-agnostic.
+    # E8: tracker selection.
+    #   'pid'         (default) — E7 cascaded PID, v_des = action/dt_fm (continuous).
+    #   'pid_stopgo'  (U2)      — same CascadedPID, v_des = 0 (strict stop-and-go).
+    #   'mjpc'                  — MJPC optimal-control thrust tracker (cluster-only).
+    # All three expose the same .compute(p,q,v,om,p_des,v_des) API.
     pid = gen._make_pid(model, 'pid_default')
-    tracker = pid
+    tracker = pid                              # pid_stopgo also uses CascadedPID (v_des differs)
     if controller == 'mjpc':
         from FM_v3_uav_test.mjpc_tracker import MJPCTracker
         mjpc_kwargs = mjpc_kwargs or {}
@@ -393,7 +395,9 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             p_des = p + action
         else:
             p_des = p_des + action
-        v_des = action / dt_fm
+        # U2: pid_stopgo forces v_des=0 → PID brakes to zero each FM step (strict stop-and-go).
+        # All other controllers use the action-derived feedforward (E7 default).
+        v_des = np.zeros(3) if controller == 'pid_stopgo' else action / dt_fm
 
         hit_before = n_hit
         for _ in range(decim):

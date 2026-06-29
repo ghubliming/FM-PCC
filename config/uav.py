@@ -110,10 +110,12 @@ base = {
         'time_beta_beta_v3': 1.0,
 
         # E8 (optional) — observation layout + tracker. Defaults preserve E7 exactly.
-        #   cond_mode='p_des'  → obs=[p_des|p|v] 9D, transition 12D (E7 default).
-        #   cond_mode='pos_only' → obs=[p_des|p] 6D, transition 9D (velocity dropped; FM→MJPC).
-        #   controller='pid'   → cascaded PID (E7 default). 'mjpc' → MJPC thrust tracker (E8).
-        # Both are path discriminators via _uav_exp_name (non-default → folder suffix).
+        #   cond_mode='p_des'    → obs=[p_des|p|v] 9D, transition 12D (E7 default).
+        #   cond_mode='pos_only' → obs=[p_des|p] 6D, transition 9D (velocity dropped).
+        #   controller='pid'     → cascaded PID, v_des=action/dt_fm (E7 default, continuous).
+        #   controller='pid_stopgo' → cascaded PID, v_des=0 (U2, strict stop-and-go).
+        #   controller='mjpc'    → MJPC optimal-control thrust tracker (E8, cluster-only).
+        # All are path discriminators via _uav_exp_name (non-default → folder suffix).
         'cond_mode': 'p_des',
         'controller': 'pid',
 
@@ -167,7 +169,8 @@ base = {
 
         # E8 (optional) — MUST match the training block so build_experiment resolves the
         # same savepath. cond_mode sets the obs layout the eval feeds the FM; controller
-        # selects the inner-loop tracker (pid|mjpc) and segregates the eval output folder.
+        # selects the inner-loop tracker and segregates the eval output folder.
+        # controller='pid_stopgo' (U2): same checkpoint as pos_only+pid, v_des=0 at eval only.
         'cond_mode': 'p_des',
         'controller': 'pid',
 
