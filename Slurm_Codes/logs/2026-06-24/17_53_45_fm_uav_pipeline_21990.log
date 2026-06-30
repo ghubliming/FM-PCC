@@ -1,0 +1,9 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-FM PIPELINE START: Wed Jun 24 18:23:11 UTC 2026  scene=corridor seed=6 n_trials=20
+================================================================================
+Step 1: train submitted — Job 21995
+Step 2: eval scheduled (afterok:21995) — Job 21996
+--------------------------------------------------------------------------------
+Outputs: logs/UAV_FM/uav-corridor/flow_matching_v3_uav/.../6/{weights,eval}
+================================================================================

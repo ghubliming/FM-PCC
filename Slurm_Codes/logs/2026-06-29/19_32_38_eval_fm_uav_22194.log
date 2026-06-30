@@ -1,0 +1,73 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Jun 29 17:32:38 UTC 2026  |  eval_fm_uav  |  ID 22194  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 
+GIT REV:   9007b76
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Mon Jun 29 17:32:39 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars: skipping 6 tightened variants (no spatial constraints in constraint_types — enlarge has no effect): ['gradient-tightened', 'post_processing-tightened', 'model_free-tightened', 'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened']
+[ eval ] pillars: variants=['diffuser', 'gradient', 'post_processing', 'model_free', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/mjpc_tracker.py", line 61, in __init__
+    from mujoco_mpc import agent as agent_lib
+ModuleNotFoundError: No module named 'mujoco_mpc'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 713, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 700, in main
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 700, in <dictcomp>
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 669, in eval_scene
+    summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 573, in _run_variant
+    r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 330, in rollout_one
+    tracker = MJPCTracker(model, scene=scene, **mjpc_kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/mjpc_tracker.py", line 63, in __init__
+    raise RuntimeError(
+RuntimeError: MJPCTracker requires the `mujoco_mpc` Python package + compiled agent_server. Install from /workspaces/mujoco_mpc (see its README). This path is cluster-only.
+Exception ignored in: <function GLContext.__del__ at 0x7f9b338937f0>
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 130, in __del__
+    self.free()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 123, in free
+    EGL.eglMakeCurrent(EGL_DISPLAY, EGL.EGL_NO_SURFACE,
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglMakeCurrent,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f9b33845dc0>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f9b338441c0>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f9b338441c0>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f9b343af9c0>,
+	),
+	result = 0
+)
+JOB END: Mon Jun 29 17:32:43 UTC 2026

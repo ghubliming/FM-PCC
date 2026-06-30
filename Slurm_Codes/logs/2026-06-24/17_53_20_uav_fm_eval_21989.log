@@ -1,0 +1,28 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jun 24 18:18:14 UTC 2026  |  uav_fm_eval  |  ID 21989  |  NODE i6-gpu-1
+SCENE: empty   SEEDS: 6   N_TRIALS: 20
+GIT REV:   f512dbf
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=empty seed=6  Wed Jun 24 18:18:14 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene empty --seed 6 --n-trials 20 --projection fm_only --record none
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-empty/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 9)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 9)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] empty seed=6 proj=fm_only: success=1.000  contact=0.000  fm_ms(mean/p95)=83.1/83.8
+         → logs/UAV_FM/uav-empty/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/fm_only/  (results.json, fm_only.npz, fm_only.png, eval_fm_only.log, diagnostics/)
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=empty for seeds=[6]
+JOB END: Wed Jun 24 18:23:10 UTC 2026

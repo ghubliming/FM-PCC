@@ -94,7 +94,7 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/17_55_00_eval_drifting_20662.log
 
 ---
 
-# iMF
+# iMF Gen3v4
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
 
 finished, by loss curve is bad
@@ -216,6 +216,9 @@ still bad
 
 21744 - TRAIN MAX & other enhanced parameters
 21753 eval(submit as dependency)
+
+- U7
+22154
 
 ---
 # Visual 
@@ -599,6 +602,14 @@ U2 20/06/2026
 21760-21771
 
 ---
+
+FiLM v2 real FiLM 28/06
+22118 (only model free and post proccessing)
++
+22126
+
+
+
 # Gen8 iMF Visual Aligning
 
 Fix1.2
@@ -709,6 +720,18 @@ Diffu. 21824/5
 seed 78910
 21969 FM
 21970 Diffu
+
+---
+- 30/06 U3
+22210 piepline - train work
+22212
+debug
+->
+22231
+->
+22234/6 run eval cancel rerun 22238
+
+---
 
 # Gen11
 # E2 
@@ -843,6 +866,72 @@ U3
 other sence tests
 21988/89
 
-21990-unkown jobs
+21993,4,5,6
+test with Gif the scurve 22016 (killed, resutls to bad)
 
-21991-
+# E7
+22019 first run test on empty
+22033 test the corridor behaviour
+22036 rerun, fix bug
+22037 pillar run with MPC. -> exploede MPC lines
+- U2
+pillar
+22039
+
+pillar
+22041 U2.2
+
+- U3 metrics like model_free bring back
+& the real time eval logging
+22093/4
+
+---
+
+- U4
+Fix3
+Test 22128
+Still buggy math -> 
+
+Fix5
+22131
+22137 scurve
+
+22139 empty
+22150 pillars
+
+## U8
+pillars
+22176 + 7 (9D train)
+7 - eval Failed!
+
+22188 (success pid stop and go, good results!)
+-> genenrate some gif 22195
+
+
+before is ODE 100
+
+---
+22207 FM Scurve train + eval (ODE20)
+
+try the mjpc
+22194 - need debug 
+
+---
+build the cpp bin for mjpc solver
+22209
+fail, debug
+22235
+-> debug 
+22237
+->
+22239
+->
+22240
+
+# REAL TIME EVAL test
+tried on the Gen11 E7U3
+then implent to all codes!
+
+# DA run 
+22208 -> all avoiding incl visual
+fail, debug
