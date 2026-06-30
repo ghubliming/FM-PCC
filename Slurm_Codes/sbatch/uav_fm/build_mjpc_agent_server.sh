@@ -49,12 +49,24 @@ cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release \
     -DMUJOCO_BUILD_EXAMPLES=OFF
 cmake --build . --target agent_server -j${SLURM_CPUS_PER_TASK}
 
-# ── Deploy binary + libmujoco ────────────────────────────────────────────────
+# ── Deploy binary + ALL conda runtime libs (env is deleted after this step) ──
 LIB_DIR="$(dirname "$TARGET")"
 cp bin/agent_server "$TARGET"
 chmod +x "$TARGET"
+
+# libmujoco itself
 find . -name "libmujoco.so*" ! -type l | xargs -I{} cp {} "$LIB_DIR/"
-echo "Libs deployed: $(ls "$LIB_DIR"/libmujoco.so* 2>/dev/null)"
+
+# Every shared lib agent_server links against that lives inside the conda env
+# (libstdc++, libgcc_s, libGL, libX11, etc. — gone when env is removed)
+ldd bin/agent_server \
+    | awk -v prefix="$CONDA_PREFIX" '$3 ~ prefix {print $3}' \
+    | while read lib; do
+        [ -f "$lib" ] && cp "$lib" "$LIB_DIR/" && echo "  + $(basename $lib)"
+      done
+
+echo "Libs deployed to $LIB_DIR:"
+ls "$LIB_DIR"/*.so* 2>/dev/null | xargs -I{} basename {}
 
 # ── Cleanup scratch + temp env ────────────────────────────────────────────────
 cd "$REPO"
