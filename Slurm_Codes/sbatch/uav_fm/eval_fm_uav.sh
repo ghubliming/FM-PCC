@@ -43,6 +43,8 @@ export FMPCC="$REPO"
 # third_party/mujoco_mpc: bundled Python package + generated proto stubs (Fix_5).
 # The compiled agent_server binary must be at third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server.
 export PYTHONPATH="$REPO:$REPO/third_party/mujoco_mpc:$PYTHONPATH"
+# libmujoco.so.3.2.3 lives next to agent_server; agent_server subprocess inherits this.
+export LD_LIBRARY_PATH="$REPO/third_party/mujoco_mpc/mujoco_mpc/mjpc${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 # Eval rolls out in MuJoCo on a headless node → EGL required.
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"

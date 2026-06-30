@@ -72,6 +72,7 @@ platformdirs==4.2.2
 portion==2.4.2
 proto-plus==1.23.0
 protobuf==4.25.3
+grpcio>=1.50.0
 proxsuite==0.6.6
 psutil==5.9.8
 pyarrow==16.1.0

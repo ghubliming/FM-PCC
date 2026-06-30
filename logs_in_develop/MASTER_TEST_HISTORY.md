@@ -2299,6 +2299,36 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 ***
 
+## D3IL Visual-Aligning Baseline "U3": Simulation Evaluation Fixes (June 30, 2026)
+
+**Keywords**: D3IL baseline, simulation evaluation, ValueError, unpacking crash, U3 checkpoint.
+
+1. **State Tuple Unpacking Bug (Fix 1)**: Addressed a crash in `d3il/agents/ddpm_encdec_vision_agent.py` caused by a strict 3-unpack receiving a 4-tuple state `(bp_image, inhand_image, des_robot_pos, robot_pos)`. This 4th element was added during Gen6V4 DPCC. Refactored the agent to safely index the required 3 dimensions without breaking backward compatibility.
+2. **Simulation Result Unpacking Bug (Fix 1.2)**: Fixed a subsequent crash in `train_d3il_visual_aligning.py` where `aligning_sim.test_agent()` returned 4 values instead of the expected 2. Updated the unpacking logic to discard the unused metrics, allowing the epoch loop to run to completion and save the correct U3 best-success checkpoints.
+3. **Changelog Documentation**: Published a targeted `CHANGELOG.md` inside `D3IL_Visual_Aligning_RUN/U3_train&other_d3il_direct_call/fix_1/` mapping the exact bug causes and testing commands.
+
+***
+
+## Gen11 Epoch 8 "Design Audit": MuJoCo Simulation vs IRL Latency (June 30, 2026)
+
+**Keywords**: Gen11, Epoch 8, sim vs irl latency, v_real, MuJoCo frozen time, 12D obs, zero-latency problem.
+
+1. **12D Observation Clarification**: Authored `DESIGN_sim_vs_irl_latency.md` detailing that the `v` in the 12D observation tensor is exclusively the real physics engine velocity (`v_real`), and `v_des` is strictly a post-inference derivative used by the PID.
+2. **Simulation Time-Freeze Verification**: Audited the MuJoCo execution loop to confirm that simulation time halts entirely during Flow Matching inference. `mj_step` is correctly isolated, meaning the "zero-latency problem" (sensor staleness) is purely a real-robot artifact, making simulation results slightly optimistic.
+3. **v_des Override Critique**: Conducted a theoretical analysis comparing expert dataset `v_des` replays versus `pid_const_v`. Concluded that `pid_const_v` effectively replicates the global dataset mean, whereas per-step expert overrides are flawed because the FM generates its own divergent waypoints, causing spatial mismatch.
+
+***
+
+## Data Analysis & Infrastructure Hotfixes (June 30, 2026)
+
+**Keywords**: DA visualizer, visual avoiding, pandas DtypeWarning, mjpc compile, mpc_batch_size.
+
+1. **DA Visualizer Support**: Upgraded `Data_Analysis/Visualizer/index.html` to support the rendering of visual avoiding results alongside state results, and resolved a pandas `DtypeWarning` by explicitly setting `low_memory=False` during CSV parsing.
+2. **MuJoCo MPC Build Script**: Updated `Slurm_Codes/sbatch/uav_fm/build_mjpc_agent_server.sh` to accommodate recent dependency changes for compiling the C++ `agent_server` binary.
+3. **Gen9 Epoch 2 "U5" Hotfix**: Refactored `fm_visual_avoiding_test/eval_fm_visual_avoiding.py` to correctly map the evaluation batch size to the new `mpc_batch_size` parameter, ensuring consistent tensor sizing in visual avoiding rollouts.
+
+***
+
 ## Gen9 Epoch 2 "U5" Hotfix: FiLM Configuration Unification (June 29, 2026)
 
 **Keywords**: Gen9, Epoch 2, U5, FiLM v2, avoiding-d3il-visual.py, config refactor.
