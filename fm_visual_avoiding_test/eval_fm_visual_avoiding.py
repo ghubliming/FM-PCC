@@ -408,7 +408,7 @@ for exp in exps:
                                             variant=variant, scene=exp,
                                             system='VisualAvoiding_FM',
                                             control_hz=RT_CONTROL_HZ,
-                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            batch_size=args.mpc_batch_size, horizon=args.horizon,
                                             text_log=config.get('write_to_file', True))
 
                         for _ in range(args.max_episode_length):
