@@ -48,6 +48,7 @@ In addition to the main model training/evaluation pipelines, the repository host
 | **Colab Plotting Suites** | [Results_and_Data_Analysis_Colab_T4/](../Results_and_Data_Analysis_Colab_T4) & [ipynbs_Colab/](../ipynbs_Colab) | Plotting pipelines and Google Colab T4 GPU integration scripts. | Ongoing (April - May 2026) |
 | **Cluster Job Orchestrators** | [Slurm_Codes/](../Slurm_Codes) | Pipeline runner scripts (SBATCH shell scripts) for GPU cluster node dispatch (e.g. `Visual_Aligning/` pipeline). | Gen3v2 Remote Migration & Gen5/Gen7 Visual Aligning (Ongoing) |
 | **Real-Time Simulation Recording Ideas** | ~~[REALTIME_RECORDING/IDEAS.md](REALTIME_RECORDING/IDEAS.md)~~ <br>[realtime_recording/](../realtime_recording/) | ~~Need to analyze real-time recordings (not only GIFs, just ideas!)~~ <br><br> **COMPLETED**: Portable `RTRecorder` implemented across 10 evaluation pipelines logging `total_ms`, `fm_ms`, `proj_ms`, and track errors to `realtime_*.log`. | ~~Pending~~ <br>working on |
+| **Remote Log Sync Pipeline** | [Slurm_Codes/download_remote_logs/](../Slurm_Codes/download_remote_logs/) | Automated bash pipeline (`export_to_laptop.sh`) using `rsync`/`scp` to cleanly package and download evaluation artifacts and cluster logs to a local machine. | Ongoing |
 
 ***
 
