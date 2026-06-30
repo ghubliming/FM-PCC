@@ -35,7 +35,7 @@ cd "$BUILD_DIR/mujoco_mpc"
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 mkdir build && cd build
-cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release
+cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 cmake --build . --target agent_server -j${SLURM_CPUS_PER_TASK}
 
 # ── Deploy binary only ────────────────────────────────────────────────────────
