@@ -1,0 +1,12 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jun 25 09:55:05 UTC 2026  |  eval_fm_uav  |  ID 22016  |  NODE i6-gpu-1
+SCENE: s_curve   SEEDS: 6   N_TRIALS: 20
+GIT REV:   f512dbf
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=s_curve seed=6  Thu Jun 25 09:55:06 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene s_curve --seed 6 --n-trials 20 --projection fm_only --record gif
+slurmstepd-i6-gpu-1: error: *** JOB 22016 ON i6-gpu-1 CANCELLED AT 2026-06-25T10:08:49 ***
+JOB END: Thu Jun 25 10:08:49 UTC 2026

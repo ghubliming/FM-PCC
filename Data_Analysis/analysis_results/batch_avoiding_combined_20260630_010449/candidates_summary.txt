@@ -1,0 +1,193 @@
+======================================================================
+CROSS-CANDIDATE COMPARISON SUMMARY
+======================================================================
+
+CANDIDATES DISCOVERED
+----------------------------------------------------------------------
+  A: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+  B: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+  C: H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+  D: H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+  E: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+  F: H8_K1_T0.5_Dmodels.GaussianDiffusion
+  G: H8_K20_T0.5_Dmodels.GaussianDiffusion
+  H: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+  I: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+  J: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+  K: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+  L: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  M: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  N: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  O: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  P: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  Q: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  R: (legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  S: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  T: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  U: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  V: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  W: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  X: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  Y: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  Z: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  [: H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  \: H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  ]: H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  ^: H8_K10_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  _: H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion
+  `: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  a: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  b: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  c: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  d: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  e: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  f: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+  g: H8_K10_Dmodels.diffusion.GaussianDiffusion
+  h: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+  i: H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+  j: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+  k: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+  l: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+  m: H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+
+RANKINGS BY MAJOR VARIANT ACCURACY (DPCC average)
+----------------------------------------------------------------------
+  1. Candidate h: 79.44%, Avg Time: 0.9ms
+      Breakdown: dpcc-r: 56.7%, dpcc-r-tightened: 100.0%, dpcc-c: 53.3%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  2. Candidate A: 75.00%, Avg Time: 9.2ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  3. Candidate C: 75.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  4. Candidate H: 75.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  5. Candidate J: 75.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  6. Candidate g: 70.56%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 90.0%, dpcc-c: 63.3%, dpcc-c-tightened: 100.0%, dpcc-t: 43.3%, dpcc-t-tightened: 100.0%
+  7. Candidate j: 69.44%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 30.0%, dpcc-r-tightened: 93.3%, dpcc-c: 36.7%, dpcc-c-tightened: 100.0%, dpcc-t: 56.7%, dpcc-t-tightened: 100.0%
+  8. Candidate i: 68.33%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 40.0%, dpcc-r-tightened: 100.0%, dpcc-c: 36.7%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  9. Candidate l: 68.33%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 100.0%, dpcc-c: 46.7%, dpcc-c-tightened: 100.0%, dpcc-t: 40.0%, dpcc-t-tightened: 100.0%
+  10. Candidate k: 67.78%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 93.3%, dpcc-c: 53.3%, dpcc-c-tightened: 100.0%, dpcc-t: 36.7%, dpcc-t-tightened: 100.0%
+  11. Candidate I: 66.67%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 100.0%, dpcc-c: 36.7%, dpcc-c-tightened: 96.7%, dpcc-t: 46.7%, dpcc-t-tightened: 96.7%
+  12. Candidate L: 66.67%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  13. Candidate M: 66.67%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  14. Candidate X: 63.89%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 66.7%, dpcc-t-tightened: 83.3%
+  15. Candidate E: 63.33%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 20.0%, dpcc-r-tightened: 90.0%, dpcc-c: 30.0%, dpcc-c-tightened: 100.0%, dpcc-t: 40.0%, dpcc-t-tightened: 100.0%
+  16. Candidate B: 61.62%, Avg Time: 8.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 90.9%, dpcc-c: 31.8%, dpcc-c-tightened: 90.9%, dpcc-t: 31.8%, dpcc-t-tightened: 90.9%
+  17. Candidate K: 58.33%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%
+  18. Candidate N: 58.33%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 66.7%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  19. Candidate D: 56.67%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 90.0%, dpcc-c: 23.3%, dpcc-c-tightened: 90.0%, dpcc-t: 23.3%, dpcc-t-tightened: 90.0%
+  20. Candidate T: 55.56%, Avg Time: 1.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  21. Candidate O: 52.78%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 66.7%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  22. Candidate f: 50.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 66.7%, dpcc-t: 50.0%, dpcc-t-tightened: 66.7%
+  23. Candidate S: 47.22%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 100.0%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  24. Candidate V: 47.22%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 50.0%, dpcc-c: 50.0%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  25. Candidate W: 47.22%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  26. Candidate b: 47.22%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 50.0%, dpcc-t: 33.3%, dpcc-t-tightened: 66.7%
+  27. Candidate e: 47.22%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%
+  28. Candidate Q: 44.44%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  29. Candidate U: 44.44%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 50.0%, dpcc-t: 33.3%, dpcc-t-tightened: 66.7%
+  30. Candidate R: 41.67%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  31. Candidate Z: 41.67%, Avg Time: 1.4ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 16.7%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%
+  32. Candidate [: 38.89%, Avg Time: 1.6ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 16.7%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  33. Candidate Y: 36.11%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  34. Candidate c: 36.11%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  35. Candidate F: 33.33%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 6.7%, dpcc-r-tightened: 60.0%, dpcc-c: 6.7%, dpcc-c-tightened: 66.7%, dpcc-t: 0.0%, dpcc-t-tightened: 60.0%
+  36. Candidate ]: 30.56%, Avg Time: 2.8ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 16.7%, dpcc-c-tightened: 33.3%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  37. Candidate P: 30.56%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  38. Candidate \: 25.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 16.7%, dpcc-c-tightened: 16.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  39. Candidate d: 25.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 16.7%, dpcc-c-tightened: 16.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  40. Candidate _: 16.67%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 33.3%, dpcc-c: 0.0%, dpcc-c-tightened: 33.3%, dpcc-t: 0.0%, dpcc-t-tightened: 33.3%
+  41. Candidate G: 0.00%
+  42. Candidate ^: 0.00%
+  43. Candidate `: 0.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 0.0%
+  44. Candidate a: 0.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 0.0%
+  45. Candidate m: 0.00%
+
+AUXILIARY VARIANT PERFORMANCE
+----------------------------------------------------------------------
+  Candidate A: 42.86% (Auxiliary Avg)
+  Candidate B: 53.46% (Auxiliary Avg)
+  Candidate C: 28.57% (Auxiliary Avg)
+  Candidate D: 42.58% (Auxiliary Avg)
+  Candidate E: 42.73% (Auxiliary Avg)
+  Candidate F: 20.91% (Auxiliary Avg)
+  Candidate H: 43.64% (Auxiliary Avg)
+  Candidate I: 42.73% (Auxiliary Avg)
+  Candidate J: 43.64% (Auxiliary Avg)
+  Candidate K: 42.42% (Auxiliary Avg)
+  Candidate L: 46.97% (Auxiliary Avg)
+  Candidate M: 54.55% (Auxiliary Avg)
+  Candidate N: 39.39% (Auxiliary Avg)
+  Candidate O: 39.39% (Auxiliary Avg)
+  Candidate P: 31.82% (Auxiliary Avg)
+  Candidate Q: 25.76% (Auxiliary Avg)
+  Candidate R: 31.82% (Auxiliary Avg)
+  Candidate S: 37.88% (Auxiliary Avg)
+  Candidate T: 40.91% (Auxiliary Avg)
+  Candidate U: 42.42% (Auxiliary Avg)
+  Candidate V: 33.33% (Auxiliary Avg)
+  Candidate W: 50.00% (Auxiliary Avg)
+  Candidate X: 33.33% (Auxiliary Avg)
+  Candidate Y: 25.76% (Auxiliary Avg)
+  Candidate Z: 30.30% (Auxiliary Avg)
+  Candidate [: 11.90% (Auxiliary Avg)
+  Candidate \: 19.05% (Auxiliary Avg)
+  Candidate ]: 34.85% (Auxiliary Avg)
+  Candidate _: 10.61% (Auxiliary Avg)
+  Candidate `: 1.52% (Auxiliary Avg)
+  Candidate a: 1.52% (Auxiliary Avg)
+  Candidate b: 39.39% (Auxiliary Avg)
+  Candidate c: 25.76% (Auxiliary Avg)
+  Candidate d: 28.79% (Auxiliary Avg)
+  Candidate e: 14.29% (Auxiliary Avg)
+  Candidate f: 16.67% (Auxiliary Avg)
+  Candidate g: 48.79% (Auxiliary Avg)
+  Candidate h: 52.42% (Auxiliary Avg)
+  Candidate i: 47.88% (Auxiliary Avg)
+  Candidate j: 48.48% (Auxiliary Avg)
+  Candidate k: 49.39% (Auxiliary Avg)
+  Candidate l: 47.88% (Auxiliary Avg)
+
+RECOMMENDATIONS
+----------------------------------------------------------------------
+  Overall Best (Major): Candidate h
+  Major Accuracy: 79.44%
+
+======================================================================

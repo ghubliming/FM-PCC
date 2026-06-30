@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Jun 29 17:30:17 UTC 2026  |  eval_fm_uav  |  ID 22192  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: gif
+GIT REV:   9007b76
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Mon Jun 29 17:30:18 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6 --n-trials gif --projection fm_only --record none
+usage: eval_fm_uav.py [-h] [--scene {all,empty,corridor,s_curve,pillars}]
+                      [--seed SEED] [--n-trials N_TRIALS]
+                      [--goal-radius GOAL_RADIUS] [--epoch EPOCH]
+                      [--projection PROJECTION] [--record {none,gif,all}]
+                      [--device DEVICE]
+eval_fm_uav.py: error: argument --n-trials: invalid int value: 'gif'
+JOB END: Mon Jun 29 17:30:21 UTC 2026

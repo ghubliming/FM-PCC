@@ -1,0 +1,125 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 30 05:57:46 UTC 2026
+JOB NAME:  train_d3il_baseline
+JOB ID:    22228
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   276ec34
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+[ train ] agent=ddpm_encdec_vision  seed=42  config=aligning_vision_config
+[ train ] epoch=200  eval_every=20
+[ train ] weights will be saved to: /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/defaults_list.py:251: UserWarning: In 'aligning_vision_config': Defaults list is missing `_self_`. See https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order for more information
+  warnings.warn(msg, UserWarning)
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights/wandb/run-20260630_055751-2kvrn63b
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run ddpm_encdec_vision_seed42
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline/runs/2kvrn63b
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ train ] agent=ddpm_encdec_vision  seed=42  epochs=200  save_dir=/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/weights
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[2026-06-30 05:57:59,994][agents.models.diffusion.diffusion_models][INFO] - number of parameters: 3.749790e+05
+[2026-06-30 05:58:00,026][root][INFO] - Loading Robot Push Dataset
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.09it/s]100%|██████████| 3/3 [00:00<00:00, 16.98it/s]
+[2026-06-30 05:58:00,206][root][INFO] - Loading Robot Push Dataset
+  0%|          | 0/3 [00:00<?, ?it/s] 67%|██████▋   | 2/3 [00:00<00:00, 18.83it/s]100%|██████████| 3/3 [00:00<00:00, 17.51it/s]
+[2026-06-30 05:58:00,380][agents.utils.scaler][INFO] - Datset Info: state min: [-2.11611752 -1.9385157  -0.97139735] and max: [1.65030038 1.22006127 2.20369843], action min: [-2.39178454 -2.66525925 -3.51553528] and max: [2.26779489 1.01813854 0.28445203]
+[2026-06-30 05:58:00,380][agents.utils.scaler][INFO] - Training dataset size: input (521, 3) target (521, 3)
+[2026-06-30 05:58:00,381][agents.base_agent][INFO] - The model has a total amount of 22769155 parameters
+[2026-06-30 05:58:00,518][OpenGL.acceleratesupport][INFO] - No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+[2026-06-30 05:58:00,623][environments.d3il.d3il_sim.sims.mujoco][INFO] - No module named 'mujoco_py'
+[2026-06-30 05:58:00,623][environments.d3il.d3il_sim.sims.mujoco][INFO] - No mujoco py installed. Mujoco simulation is not available.
+pybullet build time: Nov 28 2023 23:45:17
+[2026-06-30 05:58:00,626][environments.d3il.d3il_sim.sims.sl][INFO] - No module named 'py_at_broker'
+[2026-06-30 05:58:00,626][environments.d3il.d3il_sim.sims.sl][INFO] - No SL installed. SL simulation and control is not available.
+[ train ] visual path → _train_vision() loop x200 epochs (sim checkpoint: n_ctx=1, n_traj=1)
+  0%|          | 0/200 [00:00<?, ?it/s]  0%|          | 1/200 [00:04<14:30,  4.37s/it]  1%|          | 2/200 [00:05<08:48,  2.67s/it]  2%|▏         | 3/200 [00:07<06:57,  2.12s/it]  2%|▏         | 4/200 [00:08<06:12,  1.90s/it]  2%|▎         | 5/200 [00:10<05:45,  1.77s/it]  3%|▎         | 6/200 [00:12<05:32,  1.71s/it]  4%|▎         | 7/200 [00:13<05:21,  1.66s/it]  4%|▍         | 8/200 [00:15<05:09,  1.61s/it]  4%|▍         | 9/200 [00:16<04:59,  1.57s/it]  5%|▌         | 10/200 [00:18<04:50,  1.53s/it]  6%|▌         | 11/200 [00:19<04:45,  1.51s/it]  6%|▌         | 12/200 [00:21<04:46,  1.52s/it]  6%|▋         | 13/200 [00:22<04:42,  1.51s/it]  7%|▋         | 14/200 [00:23<04:40,  1.51s/it]  8%|▊         | 15/200 [00:25<04:35,  1.49s/it]  8%|▊         | 16/200 [00:26<04:35,  1.50s/it]  8%|▊         | 17/200 [00:28<04:34,  1.50s/it]  9%|▉         | 18/200 [00:29<04:31,  1.49s/it] 10%|▉         | 19/200 [00:31<04:32,  1.50s/it][2026-06-30 05:58:33,574][simulation.aligning_sim][INFO] - Starting trained model evaluation
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_ba38a756-7448-11f1-af50-d85ed34e311e.xml' with default provider at slot 1
+
+ 10%|▉         | 19/200 [00:33<05:21,  1.78s/it]
+there are cpus:  64
+2401464 {0}
+Process 2401464 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+Error executing job with overrides: ['agents=ddpm_encdec_vision_agent', 'agent_name=ddpm_encdec_vision', 'seed=42', 'epoch=200', 'eval_every_n_epochs=20']
+An error occurred during Hydra's exception formatting:
+TypeError("print_exception() got an unexpected keyword argument 'etype'")
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 283, in run_and_report
+    print_exception(etype=None, value=ex, tb=final_tb)  # type: ignore
+TypeError: print_exception() got an unexpected keyword argument 'etype'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 114, in <module>
+    main()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/main.py", line 48, in decorated_main
+    _run_hydra(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 377, in _run_hydra
+    run_and_report(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 294, in run_and_report
+    raise ex
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 211, in run_and_report
+    return func()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/utils.py", line 378, in <lambda>
+    lambda: hydra.run(
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 111, in run
+    _ = ret.return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 233, in return_value
+    raise self._return_value
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/hydra/core/utils.py", line 160, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 104, in main
+    _train_vision(agent, train_sim)
+  File "/data/home/llim/FMPCC/FM-PCC/d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py", line 58, in _train_vision
+    successrate, _ = train_sim.test_agent(agent)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 216, in test_agent
+    self.eval_agent(agent, contexts, self.n_trajectories_per_context, mode_encoding, successes, mean_distance, 0, cpu_set=set([0]))
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/simulation/aligning_sim.py", line 102, in eval_agent
+    pred_action = agent.predict((bp_image, inhand_image, des_robot_pos, robot_pos), if_vision=self.if_vision)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/u/home/llim/FMPCC/FM-PCC/d3il/agents/ddpm_encdec_vision_agent.py", line 340, in predict
+    bp_image, inhand_image, des_robot_pos = state
+ValueError: too many values to unpack (expected 3)
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.030 MB uploadedwandb: \ 0.024 MB of 0.030 MB uploadedwandb: 
+wandb: Run history:
+wandb: model parameters ▁
+wandb:       train_loss █▆▆▄▄▄▃▃▂▃▃▃▃▂▂▃▃▄▂▃▂▂▃▃▂▃▃▃▂▃▁▂▂▃▃▁▂▂▁▂
+wandb: 
+wandb: Run summary:
+wandb: model parameters 22769155
+wandb:       train_loss 0.36529
+wandb: 
+wandb: 🚀 View run ddpm_encdec_vision_seed42 at: https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline/runs/2kvrn63b
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/d3il-baseline
+wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260630_055751-2kvrn63b/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
