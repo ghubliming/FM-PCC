@@ -43,8 +43,6 @@ export FMPCC="$REPO"
 # third_party/mujoco_mpc: bundled Python package + generated proto stubs (Fix_5).
 # The compiled agent_server binary must be at third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server.
 export PYTHONPATH="$REPO:$REPO/third_party/mujoco_mpc:$PYTHONPATH"
-# libmujoco.so.3.2.3 lives next to agent_server; agent_server subprocess inherits this.
-export LD_LIBRARY_PATH="$REPO/third_party/mujoco_mpc/mujoco_mpc/mjpc${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 # Eval rolls out in MuJoCo on a headless node → EGL required.
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
@@ -66,21 +64,6 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
 fi
 
 cd "$REPO"
-
-# ── agent_server startup diagnostic (runs before eval, appears in the log) ───
-echo "[ DIAG ] Probing agent_server startup for 5 seconds..."
-AGENT_BIN="$REPO/third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server"
-if [ -x "$AGENT_BIN" ]; then
-    "$AGENT_BIN" --mjpc_port=19997 2>&1 &
-    _AGENT_PID=$!
-    sleep 5
-    kill $_AGENT_PID 2>/dev/null; wait $_AGENT_PID 2>/dev/null || true
-    echo "[ DIAG ] probe done"
-else
-    echo "[ DIAG ] binary not found: $AGENT_BIN"
-fi
-echo "────────────────────────────────────────────────────────────────────────────"
-
 for seed in $SEEDS; do
     echo "--------------------------------------------------------------------------------"
     echo "[ uav_fm_eval ] scene=$SCENE seed=$seed  $(date)"
