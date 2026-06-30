@@ -699,7 +699,7 @@ def eval_scene(scene, args):
         config['projection_variants'] = [v for v in config['projection_variants'] if 'tightened' not in v]
 
     print(f'[ eval ] {scene}: variants={config["projection_variants"]}  '
-          f'constraints={config["constraint_types"]}  batch_size={config["batch_size"]}')
+          f'constraints={config["constraint_types"]}  batch_size={config.get("mpc_batch_size", config.get("batch_size", 4))}')
     summaries = {}
     for variant in config['projection_variants']:
         summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,

@@ -49,9 +49,12 @@ cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release \
     -DMUJOCO_BUILD_EXAMPLES=OFF
 cmake --build . --target agent_server -j${SLURM_CPUS_PER_TASK}
 
-# ── Deploy binary only ────────────────────────────────────────────────────────
+# ── Deploy binary + libmujoco ────────────────────────────────────────────────
+LIB_DIR="$(dirname "$TARGET")"
 cp bin/agent_server "$TARGET"
 chmod +x "$TARGET"
+find . -name "libmujoco.so*" ! -type l | xargs -I{} cp {} "$LIB_DIR/"
+echo "Libs deployed: $(ls "$LIB_DIR"/libmujoco.so* 2>/dev/null)"
 
 # ── Cleanup scratch + temp env ────────────────────────────────────────────────
 cd "$REPO"
