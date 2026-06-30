@@ -174,12 +174,12 @@ async def load_data(event=None):
         if not response.ok:
             raise Exception(f"HTTP {response.status}")
         csv_text = await response.text()
-        df_agg = pd.read_csv(io.StringIO(csv_text))
+        df_agg = pd.read_csv(io.StringIO(csv_text), low_memory=False)
         
         # Try fetch raw (silent fail if not found)
         resp_raw = await fetch(path_raw)
         if resp_raw.ok:
-            df_raw = pd.read_csv(io.StringIO(await resp_raw.text()))
+            df_raw = pd.read_csv(io.StringIO(await resp_raw.text()), low_memory=False)
         else:
             df_raw = None
 
