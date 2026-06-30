@@ -55,7 +55,7 @@ def _train_vision(agent, train_sim) -> None:
         agent.train_vision_agent()
 
         if not (num_epoch + 1) % agent.eval_every_n_epochs:
-            successrate, _ = train_sim.test_agent(agent)
+            successrate, _, _, _ = train_sim.test_agent(agent)
             log.info(f"Epoch {num_epoch}: train_sim success = {successrate:.4f}")
             wandb.log({"train_sim_success": successrate, "epoch": num_epoch})
 

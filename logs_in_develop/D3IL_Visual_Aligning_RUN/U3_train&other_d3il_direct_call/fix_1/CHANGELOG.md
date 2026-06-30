@@ -1,75 +1,58 @@
-# fix_1 — `ValueError: too many values to unpack (expected 3)`
+# fix_1 — Two `ValueError: too many values to unpack` bugs
 
-**Crash:** All 6 seeds failed at the FIRST simulation eval call (epoch 20), so NO best-checkpoint
-was ever saved. Training completed 200 epochs but best_success was never updated → saved
-checkpoint = last epoch, not best simulation-success. U3's core fix was entirely bypassed.
-
----
-
-## Root Cause
-
-`aligning_sim.py` was intentionally modified in **Gen6V4 FIX8** (commit `7ba1f07`) to pass a
-**4-tuple** `(bp_image, inhand_image, des_robot_pos, robot_pos)` to `agent.predict()`.
-
-The Gen6V4 DPCC agent (`diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py:1429`)
-was updated in that same commit to unpack all 4 elements — it uses `robot_pos` internally
-to track the actual robot position.
-
-However, the d3il standard agent `ddpm_encdec_vision_agent.py` was **never updated** —
-it still expected exactly 3 elements:
-
-```python
-# ddpm_encdec_vision_agent.py:340 — OLD (CRASH with 4-tuple):
-bp_image, inhand_image, des_robot_pos = state   # ValueError when state has 4 elements
-```
-
-Gen6V4 worked because it uses its own DPCC agent (4-tuple aware).
-The d3il baseline broke because it uses the standard d3il agent (3-tuple only).
+**Crash:** All seeds failed at the FIRST simulation eval call (epoch 20). U3's core
+simulation-success checkpoint saving never ran.
 
 ---
 
-## Files Changed
+## Bug A — `aligning_sim.py` passes 4-tuple; standard agent expects 3
 
-### `d3il/simulation/aligning_sim.py`
-**Unchanged** — the 4-tuple `(bp_image, inhand_image, des_robot_pos, robot_pos)` is kept.
-Reverting it would break Gen6V4's DPCC agent which needs `robot_pos`.
+**File:** `d3il/agents/ddpm_encdec_vision_agent.py` line 340
 
-### `d3il/agents/ddpm_encdec_vision_agent.py` line 340
+`aligning_sim.py:102` passes `(bp_image, inhand_image, des_robot_pos, robot_pos)` — 4 elements.
+This was added in Gen6V4 FIX8 for the DPCC agent which uses `robot_pos`. The standard d3il agent
+was never updated.
 
 ```python
-# before (CRASH when sim passes 4 elements):
+# before (CRASH — strict 3-unpack):
 bp_image, inhand_image, des_robot_pos = state
 
-# after (safe — takes first 3 regardless of tuple length):
+# after (safe — index, ignores 4th element):
 bp_image, inhand_image, des_robot_pos = state[0], state[1], state[2]
 ```
 
-This is the minimal fix: `ddpm_encdec_vision_agent` never used `robot_pos`; indexing
-instead of unpacking means a 4-element tuple works without touching `aligning_sim.py`.
+`aligning_sim.py` stays unchanged (4-tuple preserved for Gen6V4 DPCC agent).
 
 ---
 
-## Why Gen6V4 Still Works
+## Bug B — `test_agent()` returns 4 values; our code unpacked 2
 
-Gen6V4 DPCC agent at `eval_visual_aligning_dpcc.py:1429`:
+**File:** `d3il_visual_aligning_baseline_test/train_d3il_visual_aligning.py` line 58
+
+`aligning_sim.test_agent()` returns `(success_rate, mode_encoding, successes, mean_distance)` — 4 values.
+
 ```python
-bp_np, inhand_np, des_robot_pos_np, robot_pos_np = state  # C4: unpack actual robot_pos
+# before (CRASH — expected 2):
+successrate, _ = train_sim.test_agent(agent)
+
+# after:
+successrate, _, _, _ = train_sim.test_agent(agent)
 ```
-`aligning_sim.py` still passes 4 elements → Gen6V4 unaffected.
+
+Only `successrate` is used for checkpoint selection; the other 3 are discarded.
 
 ---
 
-## Impact Summary
+## Impact
 
-| Component | Before fix_1 | After fix_1 |
-|---|---|---|
-| d3il baseline eval | CRASH — ValueError at epoch 20 | Works — unpacks state[0:3] |
-| Gen6V4 DPCC eval | Works — unpacks all 4 | Works — aligning_sim unchanged |
+Both bugs hit the same call site (`test_agent` at epoch 20). Bug A was fixed first,
+Bug B surfaced immediately after. After both fixes, the epoch loop can run to completion
+and save best-success checkpoints as U3 intended.
 
 ---
 
-## Resubmit All Seeds
+## Resubmit
 
 ```bash
-sbatch Slurm_Codes/sbatch/d3il_visual_aligning_baseline/run_all_seeds_d3il_baseline.sh
+sbatch Slurm_Codes/sbatch/d3il_visual_aligning_baseline/pipeline_d3il_baseline.sh ddpm_encdec_vision 42 200 all paper
 ```
