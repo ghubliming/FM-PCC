@@ -68,7 +68,11 @@ class MJPCTracker:
                 '(see third_party/mujoco_mpc/mujoco_mpc/mjpc/PLACE_BINARY_HERE.txt).'
             ) from e
 
-        self.agent = agent_lib.Agent(task_id=task_id, model=model)
+        import subprocess, sys
+        self.agent = agent_lib.Agent(
+            task_id=task_id, model=model,
+            subprocess_kwargs={'stdout': sys.stdout, 'stderr': sys.stderr},
+        )
 
         # Push sampling knobs into the planner if the task exposes them (best-effort —
         # these are the same names as quadrotor/task.xml's <custom> numerics).
