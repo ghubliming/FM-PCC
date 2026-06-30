@@ -128,7 +128,7 @@ async def init_manifest():
         if response.ok:
             html = await response.text()
             # Find all links that look like batch_v3_ folders
-            batches = re.findall(r'href="(batch_v3_[^/"]+)/?"', html)
+            batches = re.findall(r'href="(batch_[^/"]+)/?"', html)
             # Remove duplicates and sort descending
             batches = sorted(list(set(batches)), reverse=True)
             
