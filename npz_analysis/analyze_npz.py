@@ -430,7 +430,7 @@ def replot_with_plans(npz_path, out_dir, cols, rel, max_snaps=60, max_cand=4):
 
 
 def dump_xy_rows(npz_path, cols, rel, variant):
-    """Raw per-step (x,y) of every executed trajectory in obs_all → list of row dicts."""
+    """Raw per-step (x,y) of every executed trajectory in obs_all (and act_all) → list of row dicts."""
     rows = []
     try:
         data = np.load(npz_path, allow_pickle=True)
@@ -439,6 +439,7 @@ def dump_xy_rows(npz_path, cols, rel, variant):
     if 'obs_all' not in data.files:
         data.close(); return rows
     obs = data['obs_all']
+    acts = data['act_all'] if 'act_all' in data.files else None
     try:
         n = len(obs)
     except TypeError:
@@ -446,14 +447,22 @@ def dump_xy_rows(npz_path, cols, rel, variant):
     for i in range(n):
         try:
             a = np.asarray(obs[i], dtype=float)
+            act_a = np.asarray(acts[i], dtype=float) if (acts is not None and i < len(acts)) else None
         except Exception:
             continue
         if a.ndim != 2 or a.shape[0] < 1:
             continue
         c = [x for x in cols if x < a.shape[1]] or [0, min(1, a.shape[1] - 1)]
         for s in range(a.shape[0]):
-            rows.append({'file': rel, 'variant': variant, 'trial': i, 'step': s,
-                         'x': float(a[s, c[0]]), 'y': float(a[s, c[1]])})
+            row = {'file': rel, 'variant': variant, 'trial': i, 'step': s,
+                   'x': float(a[s, c[0]]), 'y': float(a[s, c[1]])}
+            if act_a is not None and s < act_a.shape[0]:
+                row['act_x'] = float(act_a[s, 0]) if act_a.shape[1] > 0 else float('nan')
+                row['act_y'] = float(act_a[s, 1]) if act_a.shape[1] > 1 else float('nan')
+            else:
+                row['act_x'] = float('nan')
+                row['act_y'] = float('nan')
+            rows.append(row)
     data.close()
     return rows
 
