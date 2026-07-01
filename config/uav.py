@@ -128,7 +128,7 @@ base = {
         #   controller='pid'        → cascaded PID, v_des=action/dt_fm (E7 default, continuous).
         #   controller='pid_stopgo' → cascaded PID, v_des=0 (U2, strict stop-and-go).
         #   controller='pid_const_v'→ cascaded PID, v_des=unit(action)*v_des_magnitude (U3, constant speed).
-        #   controller='mjpc'       → MJPC optimal-control thrust tracker (E8, cluster-only).
+        #   controller='mjpc'       → MJX predictive-sampling tracker (E8 U6, cluster-only; pip install "jax[cuda12]" mujoco-mjx).
         # All are path discriminators via _uav_exp_name (non-default → folder suffix).
         'cond_mode': 'pos_only',
         'controller': 'pid_stopgo',
@@ -217,6 +217,12 @@ base = {
 
         'behavior_log': True,                # write per-step .log files; False = stats only
         'control_hz': 33,                    # override FM outer-loop rate; default = DATASET_HZ
+
+        # ── MJX predictive-sampling knobs (controller='mjpc' only, U6) ───────
+        # mjx_n_samples: parallel candidate trajectories per improve_policy() call.
+        # mjx_horizon:   planning window in seconds → converted to MuJoCo steps in MJPCTracker.
+        'mjx_n_samples': 16,
+        'mjx_horizon':   0.3,
 
         # ── Standard plan fields ──────────────────────────────────────────────
         'device': 'cuda',

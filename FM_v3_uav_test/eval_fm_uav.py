@@ -152,10 +152,9 @@ def load_pcc_config(scene, seed):
     # E8 (Epoch8) — observation layout + tracker selection. Defaults = E7 (p_des / pid).
     cfg['cond_mode']                    = str(getattr(plan_args, 'cond_mode', 'p_des'))
     cfg['controller']                   = str(getattr(plan_args, 'controller', 'pid'))
-    cfg['mjpc_task_id']                 = str(getattr(plan_args, 'mjpc_task_id', 'Quadrotor'))
-    cfg['mjpc_trajectories']            = int(getattr(plan_args, 'mjpc_trajectories', 16))
-    cfg['mjpc_horizon']                 = float(getattr(plan_args, 'mjpc_horizon', 0.3))
-    cfg['mjpc_planner_steps']           = int(getattr(plan_args, 'mjpc_planner_steps', 10))
+    # U6: MJX predictive-sampling params (replaces gRPC mjpc_task_id/planner_steps).
+    cfg['mjx_n_samples']                = int(getattr(plan_args, 'mjx_n_samples', 16))
+    cfg['mjx_horizon']                  = float(getattr(plan_args, 'mjx_horizon', 0.3))
 
     return cfg
 
@@ -543,11 +542,10 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
               f'(mean_act={np.mean(_act_norms[_valid]):.4f} m × {DATASET_HZ} Hz)')
     else:
         v_des_magnitude = 0.0   # unused by other controllers
+    # U6: MJX predictive-sampling kwargs (task_id/planner_steps removed — MJX needs neither).
     mjpc_kwargs = {
-        'task_id':       config.get('mjpc_task_id', 'Quadrotor'),
-        'n_trajectories': config.get('mjpc_trajectories', 16),
-        'horizon':       config.get('mjpc_horizon', 0.3),
-        'planner_steps': config.get('mjpc_planner_steps', 10),
+        'n_trajectories': config.get('mjx_n_samples', 16),
+        'horizon':        config.get('mjx_horizon', 0.3),
     } if controller == 'mjpc' else None
     # Eval-parameter folder — mirrors args_to_watch_fm_visual_plan naming convention.
     # Sits BETWEEN train-identity and seed; keeps variant name pure.

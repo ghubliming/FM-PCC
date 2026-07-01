@@ -1,32 +1,21 @@
-"""MJPC optimal-control thrust tracker for the UAV (Epoch 8).
+"""MJX predictive-sampling tracker for the UAV (Gen11 E8 U6).
 
-Drop-in alternative to `uav_env_test.flight_controller.CascadedPID`: same `.compute(...)`
-signature, so `rollout_one`'s inner physics loop calls either polymorphically. Where the
-PID converts (p_des, v_des) → 4 motor thrusts via cascaded position/attitude PD, this
-hands a POSITION GOAL to MuJoCo MPC, which optimizes the 4 motor thrusts over a short
-physics-rollout horizon — inferring the required velocity profile internally from the
-MuJoCo state (NOT from the FM tensor). This is the FM→MJPC "IK-style UAV" path.
+Replaces the gRPC agent_server approach (C++ binary — aborted, see
+logs_in_develop/Gen11/Epoch8_UAV_Mjpc_thrust_control/Fix_5_MUJOCO_MPC_pkg&ode_step/).
 
-  Design basis : logs_in_develop/Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/U4_cond/
-                 DESIGN_control_chain_arm_vs_UAV.md §6 (IK-style UAV) + §4 (MJPC API)
-  Plan         : logs_in_develop/Gen11/Epoch8_UAV_Mjpc_thrust_control/PLAN_MJPC_Thrust_Control.md §4
+Uses DeepMind's predictive_sampling.py (mujoco_mpc.mjx) verbatim — zero translation.
+JAX + MJX run nsample parallel physics rollouts on GPU per improve_policy() call.
+No gRPC. No subprocess. No binary.
 
-This mirrors the PROVEN driving loop from the repo's own example
-`mujoco_mpc/python/mujoco_mpc/demos/agent/cartpole.py` (set_state → N× planner_step →
-get_action), rather than inventing one — only the goal-setting (mocap_pos = p_des) and the
-PID-compatible signature are adapted.
+Dependencies (cluster one-time install):
+    pip install "jax[cuda12]" mujoco-mjx
+    (brax NOT required — mpc_rollout stripped from our predictive_sampling copy)
 
-MJPC API used (mujoco_mpc/python/mujoco_mpc/agent.py + cartpole.py L84-101):
-  Agent(task_id, model)               — spawn the gRPC planner server for `task_id`
-  set_state(qpos, qvel, mocap_pos=…)  — set drone state + the position GOAL (mocap_pos)
-  planner_step()  ×N                  — run the sampling optimizer N times (cartpole: N=10)
-  get_action()                        — latest 4 motor thrusts
+API is identical to the old gRPC MJPCTracker: same .compute(p, q, v, om, p_des, ...)
+signature, so rollout_one in eval_fm_uav.py is unchanged.
 
-OPEN QUESTION (see PLAN §4.3): the stock 'Quadrotor' task carries its own gate waypoints
-+ TransitionLocked auto-advance. For a PURE tracker we override `mocap_pos = p_des` every
-step; if the stock task re-advances its own goal, point `mjpc_task_id` at a minimal
-position-tracking task instead. This module does NOT build that task — it consumes whatever
-`task_id` is configured. Cluster-only (no mujoco_mpc in the Docker dev env); syntax-checked here.
+Design ref: logs_in_develop/Gen11/Epoch8_UAV_Mjpc_thrust_control/
+            Fix_5_MUJOCO_MPC_pkg&ode_step/MEMO_python_mirror_plan.md
 """
 
 import time
@@ -34,79 +23,100 @@ import numpy as np
 
 
 class MJPCTracker:
-    """Wrap a MuJoCo MPC agent as a position→thrust tracker with a PID-compatible API."""
+    """MJX predictive-sampling position tracker. Drop-in for CascadedPID."""
 
-    def __init__(self, model, scene='', task_id='Quadrotor',
-                 n_trajectories=16, horizon=0.3, planner_steps=10):
+    def __init__(self, model, scene='', task_id=None,
+                 n_trajectories=16, horizon=0.3, **_):
         """
         Args:
-          model         : mujoco.MjModel of the UAV scene (same one the eval steps).
-          scene         : scene name (diagnostics only).
-          task_id       : MJPC task identifier (must exist in the compiled agent_server).
-          n_trajectories: sampling fan size (tune for the 33 Hz budget — PLAN §4.4).
-          horizon       : MJPC prediction horizon in seconds (tune for budget).
-          planner_steps : planner_step() iterations per compute() — the sampling optimizer
-                          needs several passes to converge (cartpole.py uses 10). Lower for
-                          the real-time budget (PLAN §4.4).
+          model:          mujoco.MjModel of the UAV scene (same one the eval steps).
+          scene:          scene name (diagnostics only).
+          n_trajectories: parallel sampled action sequences per improve_policy() call.
+          horizon:        planning horizon in seconds → converted to MuJoCo timesteps.
+          task_id:        ignored (was gRPC task name, no longer used).
+          **_:            absorbs deprecated kwargs (planner_steps, etc.).
         """
-        self.scene = scene
-        self.task_id = task_id
-        self.n_trajectories = int(n_trajectories)
-        self.horizon = float(horizon)
-        self.planner_steps = int(planner_steps)
-        self.last_plan_ms = 0.0          # wall-time of the last compute()'s planning (real-time logging)
-
-        # Lazy import — mujoco_mpc is a cluster-only dependency (gRPC + compiled server).
         try:
-            from mujoco_mpc import agent as agent_lib
-        except ImportError as e:                              # pragma: no cover - cluster-only
+            import jax
+            import jax.numpy as jnp
+            from mujoco import mjx
+            from mujoco_mpc.mjx import predictive_sampling as ps
+        except ImportError as e:
             raise RuntimeError(
-                'MJPCTracker: mujoco_mpc Python package not found. '
-                'Ensure PYTHONPATH includes FM-PCC/third_party/mujoco_mpc. '
-                'Also place the compiled agent_server binary at '
-                'third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server '
-                '(see third_party/mujoco_mpc/mujoco_mpc/mjpc/PLACE_BINARY_HERE.txt).'
+                'MJPCTracker (MJX): missing dependency. '
+                'Run: pip install "jax[cuda12]" mujoco-mjx\n'
+                f'Original error: {e}'
             ) from e
 
-        import subprocess, sys
-        self.agent = agent_lib.Agent(
-            task_id=task_id, model=model,
-            subprocess_kwargs={'stdout': sys.stdout, 'stderr': sys.stderr},
-        )
+        self._jax = jax
+        self._jnp = jnp
+        self._mjx = mjx
+        self._ps  = ps
+        self.scene = scene
+        self.last_plan_ms = 0.0
 
-        # Push sampling knobs into the planner if the task exposes them (best-effort —
-        # these are the same names as quadrotor/task.xml's <custom> numerics).
-        try:
-            self.agent.set_task_parameters({
-                'sampling_trajectories': float(self.n_trajectories),
-                'agent_horizon': self.horizon,
-            })
-        except Exception as exc:                              # pragma: no cover - cluster-only
-            print(f'[ MJPCTracker ] set_task_parameters skipped ({exc}); using task defaults')
+        dt = float(model.opt.timestep)
+        horizon_steps = max(4, int(round(horizon / dt)))
+        nu = int(model.nu)
+
+        # ── UAV position-tracking cost ────────────────────────────────────────
+        # instruction = p_des (jnp array [3]) passed directly to improve_policy.
+        # Cost = squared Euclidean distance to goal at every rollout step.
+        def uav_pos_cost(mx_model, mx_data, p_des):
+            pos = mx_data.qpos[:3]   # free-joint: qpos = [x, y, z, qw, qx, qy, qz]
+            return jnp.sum((pos - p_des) ** 2), ()
+
+        # instruction_fn only called by mpc_rollout (offline eval) — not our path.
+        dummy_instruction_fn = lambda m, d: (jnp.zeros(3), jnp.zeros(0))
+
+        mx_model = mjx.put_model(model)
+        self._mx_model = mx_model
+        self._planner = ps.Planner(
+            model=mx_model,
+            cost=uav_pos_cost,
+            noise_scale=0.3,
+            horizon=horizon_steps,
+            nspline=horizon_steps,   # one spline knot per step (zero-order hold)
+            nsample=n_trajectories,
+            interp='zero',
+            instruction_fn=dummy_instruction_fn,
+        )
+        self._policy = jnp.zeros((horizon_steps, nu))
+        self._rng    = jax.random.PRNGKey(0)
+        # JIT once — first compute() call takes ~5–10 s compile; afterwards ~1–5 ms on GPU.
+        self._improve_jit = jax.jit(ps.improve_policy)
+        print(f'[ MJPCTracker ] init: scene={scene} horizon={horizon_steps} steps '
+              f'({horizon:.2f}s @ dt={dt}s) n_samples={n_trajectories} nu={nu}')
+        print('[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)')
 
     def compute(self, p, q, v, om, p_des, v_des=None, a_des=None, yaw_des=0.0):
-        """Return 4 motor thrusts that drive the drone toward p_des.
+        """Return 4 motor thrusts toward p_des.
 
-        Signature mirrors CascadedPID.compute so the eval inner loop is controller-agnostic.
-        v_des / a_des / yaw_des are accepted for API parity but UNUSED — MJPC recovers the
-        velocity profile internally from the MuJoCo state (the whole point of E8). The drone's
-        real velocity enters MJPC via set_state(qvel=…), never through the FM tensor.
+        v_des / a_des / yaw_des accepted for API parity with CascadedPID but unused —
+        MJX recovers the velocity profile from MuJoCo state internally.
         """
-        qpos = np.concatenate([np.asarray(p, float), np.asarray(q, float)])     # 7D free joint
-        qvel = np.concatenate([np.asarray(v, float), np.asarray(om, float)])    # 6D
-        # ── mirror cartpole.py L85-101: set_state → N× planner_step → get_action ──
-        # Goal is set via mocap_pos = p_des (the quadrotor task's position residual targets it).
-        self.agent.set_state(qpos=qpos, qvel=qvel, mocap_pos=np.asarray(p_des, float))
+        jnp  = self._jnp
+        mjx  = self._mjx
+        ps   = self._ps
+
+        # Build MJX data from current drone state
+        qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+        qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+        p_des_j = jnp.array(p_des, dtype=jnp.float64)
+
+        mx_data = mjx.make_data(self._mx_model)
+        mx_data = mx_data.replace(qpos=qpos, qvel=qvel)
+
+        self._rng, rng = self._jax.random.split(self._rng)
         t0 = time.perf_counter()
-        for _ in range(self.planner_steps):                   # run planner for num_steps (proven)
-            self.agent.planner_step()
+        self._policy, _ = self._improve_jit(
+            self._planner, mx_data, p_des_j, self._policy, rng
+        )
         self.last_plan_ms = (time.perf_counter() - t0) * 1e3
-        u = np.asarray(self.agent.get_action(), dtype=float)  # latest 4 motor thrusts
-        return u[:4]
+
+        action = np.array(self._policy[0])
+        self._policy = ps.resample(self._planner, self._policy, 1)
+        return action[:4]
 
     def close(self):
-        """Release the gRPC agent server (kills the subprocess)."""
-        try:
-            self.agent.close()
-        except Exception:                                      # pragma: no cover - cluster-only
-            pass
+        pass  # no subprocess to kill (contrast with old gRPC tracker)
