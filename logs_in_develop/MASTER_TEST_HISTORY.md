@@ -2334,3 +2334,21 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 **Keywords**: Gen9, Epoch 2, U5, FiLM v2, avoiding-d3il-visual.py, config refactor.
 
 1. **Config Deduplication**: Refactored `config/avoiding-d3il-visual.py` to eliminate duplicate model blocks for FiLM v1 and v2. Consolidated them into a single, unified configuration definition controlled dynamically via the `film_mode` switch, streamlining the configuration surface and preventing divergence.
+
+***
+
+## Data Analysis Tool v3: Candidate Identification Refactor (June 30, 2026)
+
+**Keywords**: DA Code v3, candidate identification, numeric indices, alphabetical labels.
+
+1. **Numeric Candidate Indices**: Transitioned candidate identification in the Data Analysis (DA) code from alphabetical labels (e.g., A, B, C) to numeric indices (e.g., 1, 2, 3) across all analysis modules. This standardizes the naming convention and improves clarity in candidate tracking.
+
+***
+
+## Gen11 Epoch 8 "Fix 6": MJPC `agent_server` Compilation and Debugging (June 30, 2026)
+
+**Keywords**: Gen11, Epoch 8, MJPC, agent_server, segmentation fault, subprocess streaming, build script.
+
+1. **Build Process Optimization**: Iteratively updated the build script for the MJPC `agent_server` to configure correct environment paths and include missing dependencies, successfully achieving compilation on the cluster.
+2. **Debugging Diagnostics Enhancement**: Added subprocess output streaming to `MJPCTracker` in `mjpc_tracker.py` and a startup diagnostic probe in the `eval_fm_uav.sh` script to improve visibility into the agent's initialization process.
+3. **Deployment Segfault & Pipeline Revert**: Documented a critical deployment failure in `STATUS_agent_server_segfault.md`. While the compiled binary runs successfully in the golden build environment, it crashes with a segmentation fault (`si_addr=0x4`) during early initialization when deployed in the FMPCC evaluation environment. Consequently, the MJPC controller installation has been aborted and paused. The evaluation pipeline has been cleanly reverted to use the stable `pid_stopgo` controller.

@@ -177,9 +177,13 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
     """Build the DPCC projector (mirrors visual-aligning `setup_dpcc_projector`).
 
     UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
-    The dynamics `deriv` binds **p_des (3,4,5)** to the action (0,1,2) — NOT the actual p —
-    because p_des is the exact integrator of the action (`p_des[t+1]=p_des[t]+act`), while
-    the drone's p lags. (Visual-aligning binds c_pos because its arm tracks perfectly.)
+    Both position channels are real and must be anchored (6 rows), mirroring DPCC avoiding.
+    p_des(3,4,5): commanded setpoint. p(6,7,8): actual drone position from qpos[:3].
+
+    NOTE: anchor_to_p (cond_on_p) mode is DEPRECATED. Its original rationale — binding only
+    one channel to avoid projection conflicts — was based on the bug of constraining only 3 rows
+    instead of the correct 6. With both channels anchored, anchor_to_p provides no benefit for
+    constraint setup and should not be used to select constraint rows.
 
     Variant semantics (mirrors FMv3ODE/visual-aligning eval):
       gradient       → gradient-based projection (not SLSQP)
@@ -204,14 +208,11 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
         constraint_list += [['lb', lb], ['ub', ub]]
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        if anchor_to_p:
-            # fix_5: bind to real p (dims 6,7,8 in [act|p_des|p|v]).
-            # Projector geo-calibrates action from actual drone position, not drifted p_des.
-            # Paired with p_des = p + action integration in rollout_one().
-            constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]
-        else:
-            # default: bind to p_des (dims 3,4,5) — Euler in commanded space.
-            constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]
+        # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
+        # Traj layout: [act(0,1,2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)]
+        # anchor_to_p (cond_on_p) no longer controls constraint rows; both channels always anchored.
+        constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # DC_FIX p_des ← act
+        constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]  # DC_FIX p     ← act
 
     if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
         _hs = {'x': _DIM['x'], 'y': _DIM['y']}
@@ -411,8 +412,8 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             if acts.ndim == 3 and which < acts.shape[0]:
                 fm_horizon = acts[which]
 
-        # fix_5 anchor-p: p_des = p + action (grounded to real position every step).
-        # Default: free-running Euler (p_des += action, commanded space only).
+        # anchor_to_p (cond_on_p) DEPRECATED for constraint selection — both channels now always
+        # anchored with 6 rows. Retained here only for rollout integration behavior.
         if anchor_to_p:
             p_des = p + action
         else:

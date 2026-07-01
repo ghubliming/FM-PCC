@@ -119,9 +119,15 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list.append(['ub', ub])
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        constraint_list.append(('deriv', [6, 0]))
-        constraint_list.append(('deriv', [7, 1]))
-        constraint_list.append(('deriv', [8, 2]))
+        # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
+        # Traj layout: [act(0,1,2) | des_c_pos(3,4,5) | real c_pos(6,7,8)]
+        # des_c_pos(3,4,5): commanded position (real, from D3IL). c_pos(6,7,8): actual TCP (real, C4 fix).
+        constraint_list.append(('deriv', [3, 0]))   # DC_FIX des_x[t+1] = des_x[t] + act_x[t]
+        constraint_list.append(('deriv', [4, 1]))   # DC_FIX des_y[t+1] = des_y[t] + act_y[t]
+        constraint_list.append(('deriv', [5, 2]))   # DC_FIX des_z[t+1] = des_z[t] + act_z[t]
+        constraint_list.append(('deriv', [6, 0]))   # c_pos_x[t+1] = c_pos_x[t] + act_x[t]
+        constraint_list.append(('deriv', [7, 1]))   # c_pos_y[t+1] = c_pos_y[t] + act_y[t]
+        constraint_list.append(('deriv', [8, 2]))   # c_pos_z[t+1] = c_pos_z[t] + act_z[t]
 
     if 'halfspace' in config.get('constraint_types', []):
         tightening = config.get('enlarge_constraints') or 0.0
