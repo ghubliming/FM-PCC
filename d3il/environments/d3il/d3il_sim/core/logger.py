@@ -7,7 +7,7 @@ import numpy as np
 
 try:
     import wandb
-except Exception:
+except ImportError:
     wandb = None
 
 
