@@ -180,9 +180,10 @@ class Parser(argparse.ArgumentParser):
             if mkdir(args.savepath):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
 
-            # Smart Config Snapshot
-            self.snapshot_configs(args)
             if save:
+                # Config snapshot only during training (save=True).
+                # Eval writes the snapshot explicitly at the eval-tag-aware seed dir instead.
+                self.snapshot_configs(args)
                 self.save(args)
     def snapshot_configs(self, args):
         if not hasattr(args, 'config'):

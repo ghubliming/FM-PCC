@@ -582,9 +582,19 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     scene_root  = os.path.join(parsed.logbase, parsed.dataset)
     _model_dir  = os.path.relpath(os.path.dirname(parsed.savepath), scene_root)  # strip seed
     _seed_str   = os.path.basename(parsed.savepath)
-    out_dir     = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str, variant)
+    seed_dir    = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str)
+    out_dir     = os.path.join(seed_dir, variant)
     diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
+
+    # Write config snapshot at the correct eval-tag-aware seed dir (once, on first variant).
+    # setup.py's mkdir() no longer auto-snapshots during eval (save=False path); we do it here
+    # where eval_params_dir is known, so the snapshot lands next to the variant subdirs.
+    _snap_dir = os.path.join(seed_dir, f'config_snapshot_{parsed.config.split(".")[-1]}')
+    if not os.path.exists(_snap_dir):
+        import types as _t
+        _snap_args = _t.SimpleNamespace(config=parsed.config, savepath=seed_dir)
+        utils.Parser().snapshot_configs(_snap_args)
 
     record = (args.record != 'none')
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
