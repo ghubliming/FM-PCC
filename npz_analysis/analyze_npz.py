@@ -62,6 +62,8 @@ ARG_KEYS = [
     'meanflow_cfg_omega', 'meanflow_cfg_t_min', 'meanflow_cfg_t_max',
     'dual_head', 'interval_cfg', 'action_weight', 'seed', 'diffusion_loadpath',
 ]
+# Additional headline keys added for dynamics checking
+HEADLINE_KEYS += ['traj_dyn_gap_max', 'plan_dyn_gap_max']
 # object-array keys that are trajectory payloads, not per-trial scalars.
 TRAJ_KEYS = {'obs_all', 'act_all', 'sampled_trajectories_all', 'plans_all',
              'physical_tracking_errors', 'mode_encoding'}
@@ -149,6 +151,30 @@ def analyze_traj(traj, cols):
         max_abs=max_abs,                                                     # explosion (all dims)
     )
 
+def analyze_dynamics_gap_traj(traj, acts, p_cols):
+    """Check P[t+1] - P[t] = Act[t] on the executed trajectory."""
+    try:
+        a = np.asarray(traj, dtype=float)
+        act_a = np.asarray(acts, dtype=float)
+    except Exception:
+        return float('nan')
+    if a.ndim != 2 or a.shape[0] < 2 or act_a.ndim != 2:
+        return float('nan')
+        
+    c = [x for x in p_cols if x < a.shape[1]] or list(range(min(2, a.shape[1])))
+    # Compare up to the minimum length (act_a might be 1 step shorter in some schemas)
+    n_steps = min(a.shape[0] - 1, act_a.shape[0])
+    if n_steps <= 0:
+        return float('nan')
+        
+    p_t = a[:n_steps, c]
+    p_next = a[1:n_steps+1, c]
+    act_t = act_a[:n_steps, :len(c)]
+    
+    gap = np.abs((p_next - p_t) - act_t)
+    return float(np.nanmax(gap))
+
+
 
 def mean_ignore_nan(vals):
     arr = np.array([v for v in vals if v == v], dtype=float)  # drop NaN
@@ -162,7 +188,7 @@ def mean_ignore_nan(vals):
 # every step with batch=1. We normalise both to a list of [batch, horizon, dim].
 PLAN_METRIC_NAMES = ['plan_n_snap', 'plan_batch', 'plan_path_len', 'plan_straightness',
                      'plan_roughness', 'plan_max_jerk', 'plan_max_step', 'plan_max_abs',
-                     'plan_cand_spread', 'plan_exec_div', 'plan_exec_div_best']
+                     'plan_cand_spread', 'plan_exec_div', 'plan_exec_div_best', 'plan_dyn_gap_max']
 
 
 def _plan_snapshots(entry):
@@ -256,6 +282,31 @@ def analyze_plans(plan_entry, cols, executed=None):
         out['plan_exec_div'], out['plan_exec_div_best'] = _plan_exec_divergence(snaps, executed, cols)
     return out
 
+def analyze_dynamics_gap_plan(plan_entry, p_cols, act_cols):
+    """Check P[h+1] - P[h] = Act[h] inside the MPC candidate plan fan."""
+    snaps = _plan_snapshots(plan_entry)
+    if not snaps:
+        return float('nan')
+        
+    max_gap_overall = 0.0
+    valid = False
+    for s in snaps:
+        # s is [batch, horizon, dim]
+        if s.shape[1] < 2:
+            continue
+        p = s[:, :, p_cols]
+        act = s[:, :, act_cols]
+        # P[h+1] - P[h] vs Act[h]
+        p_t = p[:, :-1, :]
+        p_next = p[:, 1:, :]
+        act_t = act[:, :-1, :]
+        gap = np.abs((p_next - p_t) - act_t)
+        max_gap_overall = max(max_gap_overall, float(np.nanmax(gap)))
+        valid = True
+        
+    return max_gap_overall if valid else float('nan')
+
+
 
 def process_file(npz_path, root, cols):
     rel = os.path.relpath(npz_path, root) if os.path.isdir(root) else os.path.basename(npz_path)
@@ -281,16 +332,39 @@ def process_file(npz_path, root, cols):
     traj_metric_names = ['path_len', 'net_disp', 'straightness', 'mean_step', 'max_step',
                          'std_step', 'mean_jerk', 'max_jerk', 'roughness', 'max_abs', 'points']
     per_traj = []
+    traj_dyn_gaps = []
+    
+    # Determine the columns based on the environment (avoiding vs uav)
+    env = getattr(sys, '_npz_env', 'unknown')
+    if env == 'uav':
+        obs_p_cols = [0, 1]  # In obs_all, p_des is at 0, 1, 2
+        plan_p_cols = [3, 4] # In plans, actions are prepended, so p_des is 3, 4, 5
+        plan_act_cols = [0, 1]
+    elif env == 'avoiding':
+        obs_p_cols = [0, 1]  # In obs_all, state is at 0, 1
+        plan_p_cols = [2, 3] # In plans, actions are prepended (dim 2)
+        plan_act_cols = [0, 1]
+    else:
+        # Fallback to the provided CLI cols
+        obs_p_cols = cols
+        plan_p_cols = [c + 2 for c in cols] # Guessing action dim=2
+        plan_act_cols = [0, 1]
+        
     if 'obs_all' in data.files:
         obs_all = data['obs_all']
+        act_all = data['act_all'] if 'act_all' in data.files else None
         try:
             n = len(obs_all)
         except TypeError:
             n = 0
         for i in range(n):
-            per_traj.append(analyze_traj(obs_all[i], cols))
+            per_traj.append(analyze_traj(obs_all[i], obs_p_cols))
+            if act_all is not None and i < len(act_all):
+                traj_dyn_gaps.append(analyze_dynamics_gap_traj(obs_all[i], act_all[i], obs_p_cols))
         for name in traj_metric_names:
             file_row[f'traj_{name}__mean'] = mean_ignore_nan([t[name] for t in per_traj])
+        if traj_dyn_gaps:
+            file_row['traj_dyn_gap_max'] = float(np.nanmax(traj_dyn_gaps))
         file_row['n_traj'] = len(per_traj)
 
     # MPC plan-fan quality (sampled_trajectories_all) — the candidate foresight trajectories.
@@ -305,9 +379,15 @@ def process_file(npz_path, root, cols):
         obs_for_div = data['obs_all'] if 'obs_all' in data.files else None
         for i in range(npn):
             ex_i = obs_for_div[i] if (obs_for_div is not None and i < len(obs_for_div)) else None
-            per_plan.append(analyze_plans(plans_all[i], cols, executed=ex_i))
+            plan_metrics = analyze_plans(plans_all[i], plan_p_cols, executed=ex_i)
+            # Add dynamic gap checking for the plan
+            plan_metrics['plan_dyn_gap_max'] = analyze_dynamics_gap_plan(plans_all[i], plan_p_cols, plan_act_cols)
+            per_plan.append(plan_metrics)
+            
         for name in PLAN_METRIC_NAMES:
             file_row[f'{name}__mean'] = mean_ignore_nan([p[name] for p in per_plan])
+        if per_plan:
+            file_row['plan_dyn_gap_max'] = float(np.nanmax([p['plan_dyn_gap_max'] for p in per_plan]))
         file_row['n_plan'] = len(per_plan)
 
     # args metadata
@@ -429,40 +509,93 @@ def replot_with_plans(npz_path, out_dir, cols, rel, max_snaps=60, max_cand=4):
     return saved
 
 
-def dump_xy_rows(npz_path, cols, rel, variant):
-    """Raw per-step (x,y) of every executed trajectory in obs_all (and act_all) → list of row dicts."""
+def dump_xy_rows(npz_path, cols, rel, variant, env='unknown'):
+    """Raw per-step (x,y) of every executed trajectory AND predicted plan → list of row dicts."""
     rows = []
     try:
         data = np.load(npz_path, allow_pickle=True)
     except Exception:
         return rows
-    if 'obs_all' not in data.files:
-        data.close(); return rows
-    obs = data['obs_all']
-    acts = data['act_all'] if 'act_all' in data.files else None
-    try:
-        n = len(obs)
-    except TypeError:
-        data.close(); return rows
-    for i in range(n):
-        try:
-            a = np.asarray(obs[i], dtype=float)
-            act_a = np.asarray(acts[i], dtype=float) if (acts is not None and i < len(acts)) else None
-        except Exception:
-            continue
-        if a.ndim != 2 or a.shape[0] < 1:
-            continue
-        c = [x for x in cols if x < a.shape[1]] or [0, min(1, a.shape[1] - 1)]
-        for s in range(a.shape[0]):
-            row = {'file': rel, 'variant': variant, 'trial': i, 'step': s,
-                   'x': float(a[s, c[0]]), 'y': float(a[s, c[1]])}
-            if act_a is not None and s < act_a.shape[0]:
-                row['act_x'] = float(act_a[s, 0]) if act_a.shape[1] > 0 else float('nan')
-                row['act_y'] = float(act_a[s, 1]) if act_a.shape[1] > 1 else float('nan')
-            else:
-                row['act_x'] = float('nan')
-                row['act_y'] = float('nan')
-            rows.append(row)
+        
+    if env == 'uav':
+        obs_p_cols = [0, 1]
+        plan_p_cols = [3, 4]
+        plan_act_cols = [0, 1]
+    elif env == 'avoiding':
+        obs_p_cols = [0, 1]
+        plan_p_cols = [2, 3]
+        plan_act_cols = [0, 1]
+    else:
+        obs_p_cols = cols
+        plan_p_cols = [c + 2 for c in cols]
+        plan_act_cols = [0, 1]
+
+    # Dump executed path
+    if 'obs_all' in data.files:
+        obs = data['obs_all']
+        acts = data['act_all'] if 'act_all' in data.files else None
+        n = len(obs) if isinstance(obs, (list, tuple, np.ndarray)) else 0
+        for i in range(n):
+            try:
+                a = np.asarray(obs[i], dtype=float)
+                act_a = np.asarray(acts[i], dtype=float) if (acts is not None and i < len(acts)) else None
+            except Exception:
+                continue
+            if a.ndim != 2 or a.shape[0] < 1:
+                continue
+            c = [x for x in obs_p_cols if x < a.shape[1]] or [0, min(1, a.shape[1] - 1)]
+            for s in range(a.shape[0]):
+                row = {'file': rel, 'variant': variant, 'source': 'executed', 'trial': i, 'step': s,
+                       'x': float(a[s, c[0]]), 'y': float(a[s, c[1]])}
+                if act_a is not None and s < act_a.shape[0]:
+                    act_x = float(act_a[s, 0]) if act_a.shape[1] > 0 else float('nan')
+                    act_y = float(act_a[s, 1]) if act_a.shape[1] > 1 else float('nan')
+                    row['act_x'] = act_x
+                    row['act_y'] = act_y
+                    
+                    # Gap calc for executed
+                    if s + 1 < a.shape[0]:
+                        x_next = float(a[s+1, c[0]])
+                        y_next = float(a[s+1, c[1]])
+                        row['gap_x'] = (x_next - row['x']) - act_x
+                        row['gap_y'] = (y_next - row['y']) - act_y
+                        status_x = 'Correct' if abs(row['gap_x']) < 1e-4 else f"Gap: {row['gap_x']:.5f}"
+                        status_y = 'Correct' if abs(row['gap_y']) < 1e-4 else f"Gap: {row['gap_y']:.5f}"
+                        row['status'] = 'Correct' if status_x == 'Correct' and status_y == 'Correct' else 'Gap'
+                rows.append(row)
+
+    # Dump predicted plans
+    if 'sampled_trajectories_all' in data.files:
+        plans = data['sampled_trajectories_all']
+        n = len(plans) if isinstance(plans, (list, tuple, np.ndarray)) else 0
+        for i in range(n):
+            snaps = _plan_snapshots(plans[i])
+            for snap_idx, snap in enumerate(snaps):
+                for b in range(snap.shape[0]):
+                    plan = snap[b]
+                    for h in range(plan.shape[0]):
+                        try:
+                            x = float(plan[h, plan_p_cols[0]])
+                            y = float(plan[h, plan_p_cols[1]])
+                            act_x = float(plan[h, plan_act_cols[0]])
+                            act_y = float(plan[h, plan_act_cols[1]])
+                        except IndexError:
+                            continue
+                            
+                        row = {'file': rel, 'variant': variant, 'source': 'plan', 'trial': i, 
+                               'snapshot': snap_idx, 'candidate': b, 'step': h,
+                               'x': x, 'y': y, 'act_x': act_x, 'act_y': act_y}
+                               
+                        if h + 1 < plan.shape[0]:
+                            x_next = float(plan[h+1, plan_p_cols[0]])
+                            y_next = float(plan[h+1, plan_p_cols[1]])
+                            row['gap_x'] = (x_next - x) - act_x
+                            row['gap_y'] = (y_next - y) - act_y
+                            status_x = 'Correct' if abs(row['gap_x']) < 1e-4 else f"Gap: {row['gap_x']:.5f}"
+                            status_y = 'Correct' if abs(row['gap_y']) < 1e-4 else f"Gap: {row['gap_y']:.5f}"
+                            row['status'] = 'Correct' if status_x == 'Correct' and status_y == 'Correct' else 'Gap'
+                        rows.append(row)
+                        
     data.close()
     return rows
 
@@ -491,15 +624,13 @@ def write_csv(path, rows):
 def print_table(file_rows):
     """Compact stdout summary of headline numbers + trajectory + plan-fan quality."""
     cols = [('variant', 22), ('n_trials', 8), ('success_rate__mean', 12), ('n_steps__mean', 9),
-            ('traj_straightness__mean', 11), ('traj_max_abs__mean', 11)]
+            ('traj_straightness__mean', 11), ('traj_dyn_gap_max', 11)]
     hdr = {'success_rate__mean': 'succ_rate', 'n_steps__mean': 'steps',
-           'traj_straightness__mean': 'straight', 'traj_max_abs__mean': 'exec_maxabs'}
+           'traj_straightness__mean': 'straight', 'traj_dyn_gap_max': 'exec_dyngap'}
     # only show plan columns if at least one file has plan data
     if any('plan_max_abs__mean' in r for r in file_rows):
-        cols += [('plan_max_abs__mean', 12), ('plan_exec_div__mean', 11),
-                 ('plan_cand_spread__mean', 10), ('plan_batch__mean', 6)]
-        hdr.update({'plan_max_abs__mean': 'plan_maxabs', 'plan_exec_div__mean': 'plan_exdiv',
-                    'plan_cand_spread__mean': 'cand_sprd', 'plan_batch__mean': 'ncand'})
+        cols += [('plan_max_abs__mean', 12), ('plan_dyn_gap_max', 12), ('plan_exec_div__mean', 11)]
+        hdr.update({'plan_max_abs__mean': 'plan_maxabs', 'plan_dyn_gap_max': 'plan_dyngap', 'plan_exec_div__mean': 'plan_exdiv'})
     line = '  '.join(f'{hdr.get(k, k):>{w}.{w}}' for k, w in cols)
     print('\n' + line)
     print('-' * len(line))
@@ -530,8 +661,13 @@ def main():
     ap.add_argument('--dump-xy', action='store_true',
                     help='Write the RAW per-step (x,y) points of every trajectory to points_<ts>.csv '
                          '(columns: file, variant, trial, step, x, y).')
+    ap.add_argument('--env', choices=['avoiding', 'uav', 'unknown'], default='unknown',
+                    help='Environment layout to use for mapping action/position columns in plans.')
     ap.add_argument('--no-recursive', action='store_true', help='Do not recurse into subdirs.')
     args = ap.parse_args()
+    
+    # Store env on sys so it can be accessed in process_file without altering signature
+    sys._npz_env = args.env
 
     root = os.path.abspath(args.path)
     files = find_npz(root, recursive=not args.no_recursive)
@@ -560,7 +696,7 @@ def main():
             if pngs:
                 replots.extend(pngs)
         if args.dump_xy:
-            point_rows.extend(dump_xy_rows(p, args.xy_cols, rel, fr.get('variant', '')))
+            point_rows.extend(dump_xy_rows(p, args.xy_cols, rel, fr.get('variant', ''), env=args.env))
 
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     fsum = os.path.join(out, f'files_summary_{stamp}.csv')
