@@ -13,7 +13,7 @@ Multi-rate control (IMPORTANT):
 
 Per FM step:
   obs = [p_des | p | v]  (9-D, raw) → policy → first Δp_des (3-D)
-  → p_des = p + Δp_des  (anchor_to_p=True, fix_5) or  p_des += Δp_des  (default)
+  → p_des += Δp_des  (free-running Euler in commanded space)
   → PID tracks p_des for `decim` physics steps → obs updated from new (p, v).
 
 SUCCESS CRITERION (Fix2_metrics, scene-aware):
@@ -46,10 +46,10 @@ from flow_matcher_v3_uav.sampling.policies import Policy
 import FM_v3_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
 
-def _uav_eval_tag(config, controller, anchor_to_p):
+def _uav_eval_tag(config, controller):
     """Eval-parameter folder name — mirrors args_to_watch_fm_visual_plan style.
 
-    Format:  K{flow_steps}_mpc{B}_{controller}[_anchorP]_T{thresh}
+    Format:  K{flow_steps}_mpc{B}_{controller}_T{thresh}
     Aligning analogue: K{flow_steps}_M{solver}_T{thresh}_mpc{B}_film{mode}
 
     Sits BETWEEN the train-identity folder (H8_D...ODE_9D) and the seed,
@@ -60,8 +60,6 @@ def _uav_eval_tag(config, controller, anchor_to_p):
     mpc_b  = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
     thresh = config.get('diffusion_timestep_threshold', 0.5)
     parts  = [f'K{k}', f'mpc{mpc_b}', controller]
-    if anchor_to_p:
-        parts.append('anchorP')
     parts.append(f'T{thresh:g}')
     return '_'.join(parts)
 
@@ -128,6 +126,7 @@ def load_pcc_config(scene, seed):
     except FileNotFoundError:
         print(f'[ eval ] {yaml_path} not found → diffuser-only fallback')
         cfg = {}
+    cfg.setdefault('write_to_file', True)
     cfg.setdefault('projection_variants', ['diffuser'])
     cfg.setdefault('constraint_types', ['dynamics'])
     cfg.setdefault('dt', 1.0)
@@ -146,10 +145,10 @@ def load_pcc_config(scene, seed):
     plan_args = pp.parse_args(experiment='plan_flow_matching_v3_uav', seed=seed)
     cfg['mpc_batch_size']               = int(getattr(plan_args, 'mpc_batch_size', getattr(plan_args, 'batch_size', 4)))
     cfg['diffusion_timestep_threshold'] = float(getattr(plan_args, 'diffusion_timestep_threshold', 0.5))
-    cfg['anchor_to_p']                  = bool(getattr(plan_args, 'anchor_to_p', False))
+
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
     cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
-    cfg['write_to_file']                = bool(getattr(plan_args, 'write_to_file', True))
+
     # E8 (Epoch8) — observation layout + tracker selection. Defaults = E7 (p_des / pid).
     cfg['cond_mode']                    = str(getattr(plan_args, 'cond_mode', 'p_des'))
     cfg['controller']                   = str(getattr(plan_args, 'controller', 'pid'))
@@ -173,17 +172,12 @@ class ProjectorNormalizer:
         self.normalizers = {'observations': obs_normalizer, 'actions': act_normalizer}
 
 
-def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12, anchor_to_p=False):
+def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12):
     """Build the DPCC projector (mirrors visual-aligning `setup_dpcc_projector`).
 
     UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
-    Both position channels are real and must be anchored (6 rows), mirroring DPCC avoiding.
+    Both position channels are real and anchored with 6 rows (DC_FIX), mirroring DPCC avoiding.
     p_des(3,4,5): commanded setpoint. p(6,7,8): actual drone position from qpos[:3].
-
-    NOTE: anchor_to_p (cond_on_p) mode is DEPRECATED. Its original rationale — binding only
-    one channel to avoid projection conflicts — was based on the bug of constraining only 3 rows
-    instead of the correct 6. With both channels anchored, anchor_to_p provides no benefit for
-    constraint setup and should not be used to select constraint rows.
 
     Variant semantics (mirrors FMv3ODE/visual-aligning eval):
       gradient       → gradient-based projection (not SLSQP)
@@ -210,7 +204,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
         # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
         # Traj layout: [act(0,1,2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)]
-        # anchor_to_p (cond_on_p) no longer controls constraint rows; both channels always anchored.
+        # DC_FIX: both channels always anchored. anchor_to_p/cond_on_p removed.
         constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # DC_FIX p_des ← act
         constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]  # DC_FIX p     ← act
 
@@ -312,7 +306,7 @@ def _render_overhead(mujoco, model, data, renderer):
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
-                anchor_to_p=False, controller='pid', cond_mode='p_des', mjpc_kwargs=None,
+                controller='pid', cond_mode='p_des', mjpc_kwargs=None,
                 v_des_magnitude=0.0):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
@@ -412,12 +406,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             if acts.ndim == 3 and which < acts.shape[0]:
                 fm_horizon = acts[which]
 
-        # anchor_to_p (cond_on_p) DEPRECATED for constraint selection — both channels now always
-        # anchored with 6 rows. Retained here only for rollout integration behavior.
-        if anchor_to_p:
-            p_des = p + action
-        else:
-            p_des = p_des + action
+        p_des = p_des + action
         # v_des feedforward to PID — source depends on controller:
         #   pid         (default): action / dt_fm  (E7, timing-derived).
         #   pid_stopgo  (U2):      zero → PID brakes to zero each FM step (stop-and-go).
@@ -538,8 +527,6 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     Mirrors the FMv3ODE per-variant block: `projector = None` for `diffuser`, else the DPCC
     projector; `trajectory_selection` per variant; one Policy built per variant (persists
     across trials, exactly as FMv3ODE)."""
-    # fix_5 anchor-p knob — must be resolved before setup_dpcc_projector is called.
-    anchor_to_p = bool(config.get('anchor_to_p', False))
     # E8: tracker + obs-layout selection (defaults preserve E7).
     controller      = str(config.get('controller', 'pid'))
     cond_mode       = str(config.get('cond_mode', 'p_des'))
@@ -565,7 +552,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # Eval-parameter folder — mirrors args_to_watch_fm_visual_plan naming convention.
     # Sits BETWEEN train-identity and seed; keeps variant name pure.
     # e.g.  flow_matching_v3_uav/H8_D..._9D / mpc4_pid_stopgo_T0.5 / 0 / diffuser /
-    eval_params_dir = _uav_eval_tag(config, controller, anchor_to_p)
+    eval_params_dir = _uav_eval_tag(config, controller)
 
     projector = None
     if variant != 'diffuser':
@@ -584,7 +571,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             parsed, config,
             dataset.normalizer.normalizers['observations'],
             dataset.normalizer.normalizers['actions'],
-            variant, trajectory_dim=traj_dim, anchor_to_p=anchor_to_p)
+            variant, trajectory_dim=traj_dim)
     policy = Policy(model=model_fm, normalizer=dataset.normalizer,
                     preprocess_fns=getattr(parsed, 'preprocess_fns', []),
                     test_ret=getattr(parsed, 'test_ret', 0),
@@ -612,7 +599,6 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             variant=variant, log_dir=out_dir,
                             control_hz=config.get('control_hz', DATASET_HZ),
                             text_log=config.get('behavior_log', True),
-                            anchor_to_p=anchor_to_p,
                             controller=controller, cond_mode=cond_mode, mjpc_kwargs=mjpc_kwargs,
                             v_des_magnitude=v_des_magnitude)
             artifacts.save_rollout_stats(diag_dir, i, r)

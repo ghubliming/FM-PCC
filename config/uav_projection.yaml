@@ -1,3 +1,5 @@
+write_to_file: True
+
 # UAV FM projection config — PROJECTION-ONLY params (Gen11 Epoch 7).
 # Mirrors config/projection_eval.yaml (avoiding-d3il pattern).
 # Loaded by eval_fm_uav.py via load_pcc_config(); also imported at the top of

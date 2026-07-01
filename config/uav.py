@@ -214,17 +214,9 @@ base = {
         # diffuser variant always uses mpc=1 effectively (random selection, no competition).
         'mpc_batch_size': 4,
         'diffusion_timestep_threshold': _yaml_threshold,   # from uav_projection.yaml
-        'write_to_file': True,
+
         'behavior_log': True,                # write per-step .log files; False = stats only
         'control_hz': 33,                    # override FM outer-loop rate; default = DATASET_HZ
-
-        # ── fix_5 anchor-p (eval-only, no retrain) ───────────────────────────
-        # anchor_to_p=True: p_des = p_real + action each step.
-        #   Dynamics constraint rebinds to real p (dims 6,7,8) so the projector
-        #   geo-calibrates the action from actual drone position, not drifted p_des.
-        #   When False (default): free-running Euler (p_des += action). See:
-        #   logs_in_develop/.../U4_cond/fix_5_train_eval_cond_p_redesign_patch/
-        'anchor_to_p': False,
 
         # ── Standard plan fields ──────────────────────────────────────────────
         'device': 'cuda',

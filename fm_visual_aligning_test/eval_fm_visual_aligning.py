@@ -40,8 +40,18 @@ import cv2
 
 try:
     import wandb as _wandb
-except ImportError:
+except Exception:
     _wandb = None
+    # Stub wandb in sys.modules so D3IL's 30+ bare 'import wandb' calls don't crash
+    # when wandb's protobuf files are out of sync on the cluster node.
+    import types as _types
+    _wandb_stub = _types.ModuleType('wandb')
+    _wandb_stub.init   = lambda **kw: None
+    _wandb_stub.log    = lambda *a, **kw: None
+    _wandb_stub.finish = lambda **kw: None
+    _wandb_stub.run    = None
+    import sys as _sys
+    _sys.modules['wandb'] = _wandb_stub
 
 sys.path.insert(0, os.path.abspath('d3il'))
 sys.path.insert(0, os.path.abspath('d3il/environments/d3il'))
