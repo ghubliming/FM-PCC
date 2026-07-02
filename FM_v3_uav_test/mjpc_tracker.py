@@ -77,7 +77,19 @@ class MJPCTracker:
         # instruction_fn only called by mpc_rollout (offline eval) — not our path.
         dummy_instruction_fn = lambda m, d: (jnp.zeros(3), jnp.zeros(0))
 
-        mx_model = mjx.put_model(model)
+        # MJX doesn't implement all collision pairs (e.g. CYLINDER-BOX in pillars scene).
+        # Disable collisions on the model before put_model; the MJX planner only needs
+        # UAV dynamics (gravity + thrust), not obstacle collisions — those are handled
+        # by the FM policy's projection step. Restore afterward so MuJoCo rollout is intact.
+        _orig_contype      = model.geom_contype.copy()
+        _orig_conaffinity  = model.geom_conaffinity.copy()
+        model.geom_contype[:]     = 0
+        model.geom_conaffinity[:] = 0
+        try:
+            mx_model = mjx.put_model(model)
+        finally:
+            model.geom_contype[:]     = _orig_contype
+            model.geom_conaffinity[:] = _orig_conaffinity
         self._mx_model = mx_model
         self._planner = ps.Planner(
             model=mx_model,

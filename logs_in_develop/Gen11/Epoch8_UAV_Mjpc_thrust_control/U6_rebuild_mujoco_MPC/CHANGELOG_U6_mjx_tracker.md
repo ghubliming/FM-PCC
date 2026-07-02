@@ -186,3 +186,32 @@ if not hasattr(_jax_eb, 'backends'):
 `jax.devices()` is a stable long-term API; `.platform` returns `'cuda'`/`'cpu'`.
 The set comprehension replicates the dict-key check `'cuda' in backends()` correctly.
 Shim is a no-op on JAX 0.4.x where `backends()` already exists.
+
+### MJX CYLINDER-BOX collision not implemented (job 22962)
+
+**Error** (pillars eval, same node):
+```
+NotImplementedError: (mjtGeom.mjGEOM_CYLINDER, mjtGeom.mjGEOM_BOX) collisions not implemented.
+  in mujoco/mjx/_src/io.py → put_model → _put_model_jax
+```
+
+**Root cause**: MJX's JAX backend only implements a subset of collision pair types.
+The pillars scene UAV XML has cylindrical pillar geoms; MJX can't upload that model.
+
+**Fix** (`FM_v3_uav_test/mjpc_tracker.py`, before `mjx.put_model`):
+```python
+_orig_contype     = model.geom_contype.copy()
+_orig_conaffinity = model.geom_conaffinity.copy()
+model.geom_contype[:]     = 0
+model.geom_conaffinity[:] = 0
+try:
+    mx_model = mjx.put_model(model)
+finally:
+    model.geom_contype[:]     = _orig_contype
+    model.geom_conaffinity[:] = _orig_conaffinity
+```
+
+Collisions are disabled only for the MJX model snapshot. The MJX planner needs UAV
+dynamics (gravity + rotor thrust) only — obstacle avoidance is handled upstream by
+the FM policy's DPCC projection step. The MuJoCo `model` object is restored in the
+`finally` block so the actual rollout simulation remains unaffected.
