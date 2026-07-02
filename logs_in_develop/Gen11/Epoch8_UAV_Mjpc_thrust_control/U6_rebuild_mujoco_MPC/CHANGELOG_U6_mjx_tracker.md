@@ -158,3 +158,31 @@ python3 -c "from mujoco import mjx; import jax; print('MJX OK, JAX', jax.__versi
 - **JIT warmup**: first `compute()` call compiles the JAX graph (~5–10 s). All subsequent calls: ~1–5 ms on GPU.
 - **Tuning**: `mjx_n_samples=16`, `mjx_horizon=0.3` are starting points. Profile against the 33 Hz budget (~30 ms). Drop `mjx_n_samples` to 8 if over budget.
 - **float64**: MJX defaults to float32; `jax[cuda12]` enables float64 via `jax.config.update("jax_enable_x64", True)` if needed (add to top of `mjpc_tracker.py`).
+
+---
+
+## Post-U6 Fixes
+
+### JAX 0.5+ compatibility shim (job 22958)
+
+**Error** (pillars eval, node i6-gpu-1):
+```
+AttributeError: module 'jax.extend.backend' has no attribute 'backends'
+  in mujoco/mjx/_src/io.py → has_cuda_gpu_device() → backend.backends()
+```
+
+**Root cause**: `pip install "jax[cuda12]" mujoco-mjx` pulled JAX 0.5+ which removed
+`jax.extend.backend.backends()`. mujoco-mjx's `has_cuda_gpu_device()` calls it to check
+for CUDA, crashing at `mjx.put_model()` before any JAX computation starts.
+
+**Fix** (`FM_v3_uav_test/mjpc_tracker.py`, inside `__init__` before `from mujoco import mjx`):
+```python
+import jax.extend.backend as _jax_eb
+if not hasattr(_jax_eb, 'backends'):
+    _jax_local = jax
+    _jax_eb.backends = lambda: {d.platform for d in _jax_local.devices()}
+```
+
+`jax.devices()` is a stable long-term API; `.platform` returns `'cuda'`/`'cpu'`.
+The set comprehension replicates the dict-key check `'cuda' in backends()` correctly.
+Shim is a no-op on JAX 0.4.x where `backends()` already exists.

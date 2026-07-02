@@ -39,6 +39,14 @@ class MJPCTracker:
         try:
             import jax
             import jax.numpy as jnp
+
+            # mujoco-mjx calls jax.extend.backend.backends() to detect CUDA devices.
+            # JAX 0.5+ removed this attribute; shim it with jax.devices() which is stable.
+            import jax.extend.backend as _jax_eb
+            if not hasattr(_jax_eb, 'backends'):
+                _jax_local = jax
+                _jax_eb.backends = lambda: {d.platform for d in _jax_local.devices()}
+
             from mujoco import mjx
             from mujoco_mpc.mjx import predictive_sampling as ps
         except ImportError as e:
