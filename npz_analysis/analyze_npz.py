@@ -364,11 +364,14 @@ def process_file(npz_path, root, cols):
         plan_p_cols = [2, 3]
         plan_act_cols = None   # None = actions not stored in plans → NaN for plan_dyn_gap_max
     else:
-        # Fallback to the provided CLI cols
+        # Fallback to the provided CLI cols.
+        # plan_act_cols=None: without knowing the schema we cannot identify which columns
+        # are actions vs observations. Guessing [0,1] would silently pick whatever is at
+        # those columns (e.g. x_des ≈ ±3.2 in avoiding) and produce nonsense gap values.
         obs_p_cols = cols
-        plan_p_cols = [c + 2 for c in cols] # Guessing action dim=2
-        plan_act_cols = [0, 1]
-        
+        plan_p_cols = [c + 2 for c in cols]  # best guess: action_dim=2 prepended
+        plan_act_cols = None
+
     if 'obs_all' in data.files:
         obs_all = data['obs_all']
         act_all = data['act_all'] if 'act_all' in data.files else None
@@ -556,7 +559,7 @@ def dump_xy_rows(npz_path, cols, rel, variant, env='unknown'):
     else:
         obs_p_cols = cols
         plan_p_cols = [c + 2 for c in cols]
-        plan_act_cols = [0, 1]
+        plan_act_cols = None  # unknown schema: don't guess action cols, avoid nonsense gaps
 
     # Dump executed path
     if 'obs_all' in data.files:
