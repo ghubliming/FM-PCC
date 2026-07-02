@@ -221,8 +221,14 @@ base = {
         # ── MJX predictive-sampling knobs (controller='mjpc' only, U6) ───────
         # mjx_n_samples: parallel candidate trajectories per improve_policy() call.
         # mjx_horizon:   planning window in seconds → converted to MuJoCo steps in MJPCTracker.
-        'mjx_n_samples': 16,
-        'mjx_horizon':   0.3,
+        # mjx_n_improve: improve_policy iterations per compute() call. More = smoother,
+        #                each adds ~1 ms on GPU. 5 rounds × 16 samples = 80 traj evals.
+        # mjx_vel_weight: velocity-penalty weight in MJX cost. Mirrors PID Kd damping —
+        #                 without it the planner charges at the setpoint at full thrust.
+        'mjx_n_samples':  16,
+        'mjx_horizon':    0.3,
+        'mjx_n_improve':  5,
+        'mjx_vel_weight': 0.1,
 
         # ── Standard plan fields ──────────────────────────────────────────────
         'device': 'cuda',

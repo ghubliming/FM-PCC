@@ -155,6 +155,8 @@ def load_pcc_config(scene, seed):
     # U6: MJX predictive-sampling params (replaces gRPC mjpc_task_id/planner_steps).
     cfg['mjx_n_samples']                = int(getattr(plan_args, 'mjx_n_samples', 16))
     cfg['mjx_horizon']                  = float(getattr(plan_args, 'mjx_horizon', 0.3))
+    cfg['mjx_n_improve']                = int(getattr(plan_args, 'mjx_n_improve', 5))
+    cfg['mjx_vel_weight']               = float(getattr(plan_args, 'mjx_vel_weight', 0.1))
 
     return cfg
 
@@ -546,6 +548,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     mjpc_kwargs = {
         'n_trajectories': config.get('mjx_n_samples', 16),
         'horizon':        config.get('mjx_horizon', 0.3),
+        'n_improve':      config.get('mjx_n_improve', 5),
+        'vel_weight':     config.get('mjx_vel_weight', 0.1),
     } if controller == 'mjpc' else None
     # Eval-parameter folder — mirrors args_to_watch_fm_visual_plan naming convention.
     # Sits BETWEEN train-identity and seed; keeps variant name pure.

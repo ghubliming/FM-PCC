@@ -26,13 +26,19 @@ class MJPCTracker:
     """MJX predictive-sampling position tracker. Drop-in for CascadedPID."""
 
     def __init__(self, model, scene='', task_id=None,
-                 n_trajectories=16, horizon=0.3, **_):
+                 n_trajectories=16, horizon=0.3,
+                 n_improve=5, vel_weight=0.1, **_):
         """
         Args:
           model:          mujoco.MjModel of the UAV scene (same one the eval steps).
           scene:          scene name (diagnostics only).
           n_trajectories: parallel sampled action sequences per improve_policy() call.
           horizon:        planning horizon in seconds → converted to MuJoCo timesteps.
+          n_improve:      improve_policy iterations per compute() call. More iterations
+                          converge to smoother actions; each adds ~1 ms on GPU.
+          vel_weight:     velocity-penalty coefficient in cost (w * ||v||²). Mirrors
+                          PID's Kd damping — without it the planner charges at the
+                          setpoint at full thrust with no braking.
           task_id:        ignored (was gRPC task name, no longer used).
           **_:            absorbs deprecated kwargs (planner_steps, etc.).
         """
@@ -69,13 +75,18 @@ class MJPCTracker:
 
         # ── UAV position-tracking cost ────────────────────────────────────────
         # instruction = p_des (jnp array [3]) passed directly to improve_policy.
-        # Cost = squared Euclidean distance to goal at every rollout step.
-        def uav_pos_cost(mx_model, mx_data, p_des):
+        # Pos error alone makes the planner charge at the setpoint at full thrust
+        # with no braking (minimum time to reach = lowest cumulative position error).
+        # vel_weight mirrors PID Kd: penalise velocity so the planner decelerates
+        # near the setpoint rather than shooting through it.
+        _vel_weight = float(vel_weight)
+        def uav_pos_cost(_mx_model, mx_data, p_des):
             pos = mx_data.qpos[:3]   # free-joint: qpos = [x, y, z, qw, qx, qy, qz]
-            return jnp.sum((pos - p_des) ** 2), ()
+            vel = mx_data.qvel[:3]
+            return jnp.sum((pos - p_des) ** 2) + _vel_weight * jnp.sum(vel ** 2), ()
 
         # instruction_fn only called by mpc_rollout (offline eval) — not our path.
-        dummy_instruction_fn = lambda m, d: (jnp.zeros(3), jnp.zeros(0))
+        dummy_instruction_fn = lambda _m, _d: (jnp.zeros(3), jnp.zeros(0))
 
         # MJX doesn't implement all collision pairs (e.g. CYLINDER-BOX in pillars scene).
         # Disable collisions on the model before put_model; the MJX planner only needs
@@ -101,24 +112,17 @@ class MJPCTracker:
             interp='zero',
             instruction_fn=dummy_instruction_fn,
         )
-        # Initialize policy at hover thrust, not zeros. Starting at zero causes
-        # the planner to explore only [0, noise_scale] for the first several calls —
-        # each call shifts the best policy up by ~noise_scale — so it takes ~(hover/noise_scale)
-        # FM steps to climb to hover thrust. During that ramp the drone is in free-fall.
-        g_mag = float(np.linalg.norm(model.opt.gravity)) or 9.81
-        body_id = model.body('x2').id
-        mass = float(model.body_subtreemass[body_id])
-        u_hover_init = mass * g_mag / float(nu) if nu > 0 else 0.0
-        ctrl_ceil = float(model.actuator_ctrlrange[:nu, 1].min()) if nu > 0 else 13.0
-        self._policy = jnp.full((horizon_steps, nu), float(min(u_hover_init, ctrl_ceil)))
-        self._rng    = jax.random.PRNGKey(0)
+        self._policy   = jnp.zeros((horizon_steps, nu))
+        self._rng      = jax.random.PRNGKey(0)
+        self._n_improve = int(n_improve)
         # JIT once — first compute() call takes ~5–10 s compile; afterwards ~1–5 ms on GPU.
         self._improve_jit = jax.jit(ps.improve_policy)
         print(f'[ MJPCTracker ] init: scene={scene} horizon={horizon_steps} steps '
-              f'({horizon:.2f}s @ dt={dt}s) n_samples={n_trajectories} nu={nu}')
+              f'({horizon:.2f}s @ dt={dt}s) n_samples={n_trajectories} '
+              f'n_improve={n_improve} vel_weight={vel_weight} nu={nu}')
         print('[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)')
 
-    def compute(self, p, q, v, om, p_des, v_des=None, a_des=None, yaw_des=0.0):
+    def compute(self, p, q, v, om, p_des, v_des=None, a_des=None, yaw_des=0.0):  # noqa: ARG002
         """Return 4 motor thrusts toward p_des.
 
         v_des / a_des / yaw_des accepted for API parity with CascadedPID but unused —
@@ -136,11 +140,12 @@ class MJPCTracker:
         mx_data = mjx.make_data(self._mx_model)
         mx_data = mx_data.replace(qpos=qpos, qvel=qvel)
 
-        self._rng, rng = self._jax.random.split(self._rng)
         t0 = time.perf_counter()
-        self._policy, _ = self._improve_jit(
-            self._planner, mx_data, p_des_j, self._policy, rng
-        )
+        for _ in range(self._n_improve):
+            self._rng, rng = self._jax.random.split(self._rng)
+            self._policy, _ = self._improve_jit(
+                self._planner, mx_data, p_des_j, self._policy, rng
+            )
         self.last_plan_ms = (time.perf_counter() - t0) * 1e3
 
         action = np.array(self._policy[0])

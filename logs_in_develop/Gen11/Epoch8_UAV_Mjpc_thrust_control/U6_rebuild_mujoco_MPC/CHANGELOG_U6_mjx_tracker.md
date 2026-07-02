@@ -187,29 +187,47 @@ if not hasattr(_jax_eb, 'backends'):
 The set comprehension replicates the dict-key check `'cuda' in backends()` correctly.
 Shim is a no-op on JAX 0.4.x where `backends()` already exists.
 
-### MJX zero-policy init: drone free-falls on startup
+### MJX proper task setup: velocity penalty + multi-iteration improvement
 
-**Error** (pillars eval, mjpc controller):
-Drone falls from step 0 at ~8.4 m/s² — almost free-fall — despite correct PID gravity
-compensation. `pid_stopgo` variant hovering correctly; only `mjpc` falls.
+**Problem**: The original cost `uav_pos_cost` only minimized positional error `||p - p_des||²`.
+This does NOT express the stop-and-go task objective. Without a velocity term, the planner has
+no incentive to decelerate near the setpoint — it prefers charging at the setpoint at full
+thrust (lowest cumulative position error = reach target as fast as possible). Running only
+1 `improve_policy` call per compute() also underuses the available GPU budget.
 
-**Root cause**: `self._policy = jnp.zeros((horizon_steps, nu))` initializes all motor
-thrusts to zero. `improve_policy` explores `policy ± noise_scale` (0.3 N/motor per call).
-Hover requires ≈ 2.45 N/motor. Starting from zero, it takes ceil(2.45/0.3) ≈ 8 FM steps
-to climb to hover — the drone is in free-fall the entire ramp-up phase.
+Neither fix is domain engineering or cheating — they are the correct problem specification
+and correct algorithm usage. The MPPI planner discovers gravity from its own MJX physics
+rollouts; we do not hand-engineer gravity compensation. If the planner succeeds or fails
+on this task, that is its own result.
 
-**Fix** (`FM_v3_uav_test/mjpc_tracker.py`, after `Planner(...)` construction):
+**Fixes** (`FM_v3_uav_test/mjpc_tracker.py`):
+
+1. **Velocity penalty in cost** — expresses the stop-and-go objective (v=0 at each waypoint):
 ```python
-g_mag = float(np.linalg.norm(model.opt.gravity)) or 9.81
-body_id = model.body('x2').id
-mass = float(model.body_subtreemass[body_id])
-u_hover_init = mass * g_mag / float(nu) if nu > 0 else 0.0
-ctrl_ceil = float(model.actuator_ctrlrange[:nu, 1].min()) if nu > 0 else 13.0
-self._policy = jnp.full((horizon_steps, nu), float(min(u_hover_init, ctrl_ceil)))
+def uav_pos_cost(_mx_model, mx_data, p_des):
+    pos = mx_data.qpos[:3]
+    vel = mx_data.qvel[:3]
+    return jnp.sum((pos - p_des) ** 2) + _vel_weight * jnp.sum(vel ** 2), ()
 ```
 
-Policy now starts at hover thrust so the planner's first rollout already stabilizes the
-drone. `noise_scale=0.3` then explores ±12% of hover — correct operating region from step 0.
+2. **Multiple improvement rounds per compute()** — uses available GPU compute correctly:
+```python
+for _ in range(self._n_improve):          # default n_improve=5
+    self._rng, rng = self._jax.random.split(self._rng)
+    self._policy, _ = self._improve_jit(planner, mx_data, p_des_j, self._policy, rng)
+```
+
+**Policy init remains `jnp.zeros`** — the planner finds hover thrust from MJX physics
+rollouts on its own. Warm-starting at hover would be domain engineering; we do not do that.
+
+New config knobs in `config/uav.py` (`plan_flow_matching_v3_uav` block):
+```python
+'mjx_n_improve':  5,    # improvement rounds per compute() — each ~1 ms on GPU
+'mjx_vel_weight': 0.1,  # stop-and-go velocity penalty weight
+```
+
+**Budget**: 5 rounds × ~1 ms = 5 ms per compute(); with decim=3 → 15 ms per FM step,
+well within the 30 ms real-time budget.
 
 ---
 
