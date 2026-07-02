@@ -101,7 +101,16 @@ class MJPCTracker:
             interp='zero',
             instruction_fn=dummy_instruction_fn,
         )
-        self._policy = jnp.zeros((horizon_steps, nu))
+        # Initialize policy at hover thrust, not zeros. Starting at zero causes
+        # the planner to explore only [0, noise_scale] for the first several calls —
+        # each call shifts the best policy up by ~noise_scale — so it takes ~(hover/noise_scale)
+        # FM steps to climb to hover thrust. During that ramp the drone is in free-fall.
+        g_mag = float(np.linalg.norm(model.opt.gravity)) or 9.81
+        body_id = model.body('x2').id
+        mass = float(model.body_subtreemass[body_id])
+        u_hover_init = mass * g_mag / float(nu) if nu > 0 else 0.0
+        ctrl_ceil = float(model.actuator_ctrlrange[:nu, 1].min()) if nu > 0 else 13.0
+        self._policy = jnp.full((horizon_steps, nu), float(min(u_hover_init, ctrl_ceil)))
         self._rng    = jax.random.PRNGKey(0)
         # JIT once — first compute() call takes ~5–10 s compile; afterwards ~1–5 ms on GPU.
         self._improve_jit = jax.jit(ps.improve_policy)

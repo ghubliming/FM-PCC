@@ -187,6 +187,32 @@ if not hasattr(_jax_eb, 'backends'):
 The set comprehension replicates the dict-key check `'cuda' in backends()` correctly.
 Shim is a no-op on JAX 0.4.x where `backends()` already exists.
 
+### MJX zero-policy init: drone free-falls on startup
+
+**Error** (pillars eval, mjpc controller):
+Drone falls from step 0 at ~8.4 m/s² — almost free-fall — despite correct PID gravity
+compensation. `pid_stopgo` variant hovering correctly; only `mjpc` falls.
+
+**Root cause**: `self._policy = jnp.zeros((horizon_steps, nu))` initializes all motor
+thrusts to zero. `improve_policy` explores `policy ± noise_scale` (0.3 N/motor per call).
+Hover requires ≈ 2.45 N/motor. Starting from zero, it takes ceil(2.45/0.3) ≈ 8 FM steps
+to climb to hover — the drone is in free-fall the entire ramp-up phase.
+
+**Fix** (`FM_v3_uav_test/mjpc_tracker.py`, after `Planner(...)` construction):
+```python
+g_mag = float(np.linalg.norm(model.opt.gravity)) or 9.81
+body_id = model.body('x2').id
+mass = float(model.body_subtreemass[body_id])
+u_hover_init = mass * g_mag / float(nu) if nu > 0 else 0.0
+ctrl_ceil = float(model.actuator_ctrlrange[:nu, 1].min()) if nu > 0 else 13.0
+self._policy = jnp.full((horizon_steps, nu), float(min(u_hover_init, ctrl_ceil)))
+```
+
+Policy now starts at hover thrust so the planner's first rollout already stabilizes the
+drone. `noise_scale=0.3` then explores ±12% of hover — correct operating region from step 0.
+
+---
+
 ### MJX CYLINDER-BOX collision not implemented (job 22962)
 
 **Error** (pillars eval, same node):
