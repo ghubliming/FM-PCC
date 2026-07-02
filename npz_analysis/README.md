@@ -163,3 +163,22 @@ Prior to this fix, the script used `plan_act_cols=[0,1]` thinking those were act
 but they are actually `x_des` (~-3.2). The formula evaluated to `(x[h+1]-x[h]) - x_des[h]`
 ≈ `0.02 - (-3.2) = 3.22` — a pure artifact, reported for every variant including unconstrained ones.
 This **did not indicate a DPCC failure**; the dynamics constraints were working correctly.
+
+### `plan_dyn_gap_max` for UAV (NaN — same schema limitation as avoiding)
+UAV plans (`sampled_trajectories_all`, from `eval_fm_uav.py`) store `traj.observations` only —
+shape `(B, H, 6)` = `[p_des(0:3) | p(3:6)]` for `cond_mode='pos_only'`.
+The action (Δp_des) is available inside the FM rollout but **not saved to the plan tensor**.
+`plan_dyn_gap_max` is therefore reported as **NaN** — the same situation as avoiding.
+
+### UAV column layout (`--env uav`)
+```
+obs_all:                [p_des_x, p_des_y, p_des_z, p_x, p_y, p_z, v_x, v_y, v_z]  (9D)
+                         cols 0,1,2             cols 3,4,5         cols 6,7,8
+sampled_trajectories_all: [p_des_x, p_des_y, p_des_z, p_x, p_y, p_z]  (6D, pos_only)
+```
+`--env uav` uses `obs_p_cols=[3,4]` (actual drone x,y) and `plan_p_cols=[3,4]`.
+
+### Out-of-bounds guard
+If `--xy-cols` produces plan column indices beyond the plan's actual width (e.g. passing
+`--xy-cols 6 7` without `--env uav` when plans have 6 columns), the script now skips those
+snapshots gracefully and returns NaN rather than crashing with `IndexError`.

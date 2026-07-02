@@ -287,12 +287,16 @@ def analyze_dynamics_gap_plan(plan_entry, p_cols, act_cols):
     snaps = _plan_snapshots(plan_entry)
     if not snaps:
         return float('nan')
-        
+
     max_gap_overall = 0.0
     valid = False
     for s in snaps:
         # s is [batch, horizon, dim]
         if s.shape[1] < 2:
+            continue
+        dim = s.shape[2]
+        if any(c >= dim for c in p_cols) or any(c >= dim for c in act_cols):
+            # columns out of range for this plan schema — skip rather than crash
             continue
         p = s[:, :, p_cols]
         act = s[:, :, act_cols]
@@ -337,9 +341,15 @@ def process_file(npz_path, root, cols):
     # Determine the columns based on the environment (avoiding vs uav)
     env = getattr(sys, '_npz_env', 'unknown')
     if env == 'uav':
-        obs_p_cols = [0, 1]  # In obs_all, p_des is at 0, 1, 2
-        plan_p_cols = [3, 4] # In plans, actions are prepended, so p_des is 3, 4, 5
-        plan_act_cols = [0, 1]
+        # obs_all layout: [p_des(0:3) | p(3:6) | v(6:9)] (9D, always stored in full).
+        # Actual drone x,y are at cols 3,4 (p_des_x,p_des_y are 0,1 — the setpoint, not the path).
+        obs_p_cols = [3, 4]
+        # Plans store traj.observations (obs-only): [p_des(0:3) | p(3:6)] = 6 cols.
+        # Actual x,y in plans also at cols 3,4.
+        plan_p_cols = [3, 4]
+        # Plans store NO action columns (same as avoiding: obs-only).
+        # plan_act_cols=[0,1] would pick p_des_x/y — not Δp_des — giving garbage gap values.
+        plan_act_cols = None
     elif env == 'avoiding':
         # obs_all layout: [x_des(0), y_des(1), x(2), y(3)]
         # traj_dyn_gap_max uses x_des cols [0,1] + act_all (Δx_des):
@@ -534,9 +544,11 @@ def dump_xy_rows(npz_path, cols, rel, variant, env='unknown'):
         return rows
         
     if env == 'uav':
-        obs_p_cols = [0, 1]
+        # obs_all: [p_des(0:3) | p(3:6) | v(6:9)] (9D). Actual drone x,y at cols 3,4.
+        obs_p_cols = [3, 4]
+        # Plans: obs-only [p_des(0:3) | p(3:6)] (6D). Actual x,y at cols 3,4.
         plan_p_cols = [3, 4]
-        plan_act_cols = [0, 1]
+        plan_act_cols = None  # UAV plans store obs-only; actions (Δp_des) not in plan tensor
     elif env == 'avoiding':
         obs_p_cols = [0, 1]
         plan_p_cols = [2, 3]
