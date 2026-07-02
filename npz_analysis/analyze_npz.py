@@ -416,7 +416,8 @@ def process_file(npz_path, root, cols):
         for name in PLAN_METRIC_NAMES:
             file_row[f'{name}__mean'] = mean_ignore_nan([p[name] for p in per_plan])
         if per_plan:
-            file_row['plan_dyn_gap_max'] = float(np.nanmax([p['plan_dyn_gap_max'] for p in per_plan]))
+            _gaps = [p['plan_dyn_gap_max'] for p in per_plan if not np.isnan(p['plan_dyn_gap_max'])]
+            file_row['plan_dyn_gap_max'] = float(max(_gaps)) if _gaps else float('nan')
         file_row['n_plan'] = len(per_plan)
 
     # args metadata

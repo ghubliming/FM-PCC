@@ -2384,3 +2384,24 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Config Snapshot Scoping**: Moved the configuration snapshotting logic from the global `setup.py` directly into the evaluation script (`eval_fm_uav.py`). This prevents path collisions and ensures that `uav_projection.yaml` snapshots are strictly scoped within their respective seed directories.
 2. **W&B Dependency Robustness**: Replaced broad exception handling with specific `ImportError` checks in logger stubs across the codebase, resolving a silent failure caused by a protobuf mismatch with the `wandb` package.
 3. **NPZ Analysis Upgrades**: Expanded the `analyze_npz.py` utility to calculate trajectory and plan dynamics gaps. Added action data extraction to `dump_xy_rows` for more comprehensive trajectory forensic analysis.
+
+***
+
+## Gen11 Epoch 8 "U6" Post-Rebuild Hotfixes (July 2, 2026)
+
+**Keywords**: Gen11, Epoch 8, U6, MJX, JAX, policy improvement, hover thrust, corridor bug.
+
+1. **JAX 0.5+ Compatibility Shim**: Added a compatibility shim for `jax.extend.backend.backends` to support JAX 0.5+ in `mjx_tracker.py`, resolving an `AttributeError` crash on cluster nodes when attempting to check for CUDA devices.
+2. **CYLINDER-BOX Collision Bypass**: Disabled geometric collisions (`geom_contype` and `geom_conaffinity`) during `mjx.put_model()` to bypass an unsupported CYLINDER-BOX collision error in MJX. This restores the rollout simulation for the `pillars` scene while upstream DPCC handles obstacle avoidance.
+3. **MJX Policy Improvement & Velocity Penalty**: Enhanced `MJPCTracker` with a velocity cost penalty (`mjx_vel_weight`) to properly enforce the stop-and-go task objective (preventing high-speed overshoot) and enabled configurable multi-iteration policy improvement (`mjx_n_improve`) to fully utilize the GPU compute budget. Explicitly restored `jnp.zeros` policy initialization to avoid domain-engineered hover warm-starting.
+4. **Corridor Bug & False-Positive Goal Dim**: Fixed a false-positive `goal_dim` calculation in the UAV evaluation script to prevent out-of-bounds projector index errors specifically on the `corridor` scene.
+5. **Parser Ghost Directory Fix**: Updated `Parser` savepath logic to handle `plan`/`eval` experiments cleanly without creating empty ghost directories in the workspace root.
+
+***
+
+## Data Analysis Tool v3: NPZ Analysis Updates (July 2, 2026)
+
+**Keywords**: npz_analysis, trajectory dynamics gap, out-of-bounds safety, coordinate mapping.
+
+1. **Dynamics Gap Metric Context**: Disabled the invalid `plan_dyn_gap_max` calculation specifically for the visual avoiding task (where physics constraints do not neatly map to the 9D representation) and updated `README.md` documentation to clarify metric validity across different environments.
+2. **UAV Coordinate Mapping & Safety**: Updated UAV coordinate columns in the NPZ analysis tool for accurate extraction and introduced out-of-bounds safety checks when processing plan snapshots.

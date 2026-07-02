@@ -104,6 +104,67 @@ scp 'user@cluster:~/FMPCC/FM-PCC/logs/.../halfspace_both-hard/_npz_analysis/file
 - **`per_trial_<ts>.csv`** — one row per (file, trial): per-trial metric + per-trajectory quality.
 - A compact table to stdout.
 
+## Reading the stdout table
+
+The terminal table is a compact view of the most diagnostic columns. Example (UAV pillars, `--env uav`):
+
+```
+               variant  n_trials  succ_rate      steps    straight  exec_dyngap  plan_maxabs  plan_dyngap  plan_exdiv
+              diffuser         5              423.000       0.882        0.056        3.201          nan       0.180
+                dpcc-c         5              423.000       0.884        0.020        3.200          nan       0.046
+                dpcc-r         5              423.000       0.883        0.020        3.200          nan       0.044
+                dpcc-t         5              423.000       0.878        0.019        3.200          nan       0.046
+              gradient         5              423.000       0.424        0.222        3.201          nan       3.558
+            model_free         5              423.000       0.890        0.048        3.201          nan       0.188
+       post_processing         5              423.000       0.880        0.020        3.200          nan       0.037
+```
+
+### Quick Example Interpretation (Dynamics Constraints)
+If you want to know **"Did my dynamics constraints actually apply?"**, look directly at `exec_dyngap` and `plan_exdiv`:
+*   **The "Constraints Applied" Winners (`dpcc-c`, `dpcc-r`, `post_processing`):** `exec_dyngap` is extremely low (`~0.020`). This proves the generated commands are physically valid and the drone can fly them. `plan_exdiv` is also low (`~0.046`), meaning the drone went exactly where the plan predicted.
+*   **The "No Constraints" Baselines (`diffuser`, `model_free`):** `exec_dyngap` is higher (`0.056`). Without constraints, they generate trajectories that are physically harder for the drone to execute smoothly.
+*   **The "Constraints Failed" Loser (`gradient`):** `exec_dyngap` is massive (`0.222`). The model hallucinated physically impossible commands. `plan_exdiv` is astronomically high (`3.558`), meaning the drone completely ran away and diverged from the plan.
+
+### Column reference
+
+| Table header | Full CSV column | What it measures |
+|---|---|---|
+| `variant` | `variant` | npz file stem — one row per evaluated policy variant |
+| `n_trials` | `n_trials` | number of episodes in this npz |
+| `succ_rate` | `success_rate__mean` | mean success rate across trials; blank = metric not stored |
+| `steps` | `n_steps__mean` | mean steps per trial (lower = more direct path to goal) |
+| `straight` | `traj_straightness__mean` | net displacement ÷ path length on the **executed** trajectory; 1.0 = perfectly straight, → 0.0 = wandering/exploded |
+| `exec_dyngap` | `traj_dyn_gap_max` | max `\|p[t+1]−p[t]−act[t]\|` on the executed path — see below |
+| `plan_maxabs` | `plan_max_abs__mean` | largest absolute coordinate ever seen in any plan waypoint (explosion detector for the open-loop fan) |
+| `plan_dyngap` | `plan_dyn_gap_max` | max dynamics gap inside the plan fan; NaN when plans are obs-only (UAV, avoiding) |
+| `plan_exdiv` | `plan_exec_div__mean` | mean distance between where plans predicted the agent would be vs where it actually went — the "runaway" signal |
+
+### What to look for
+
+**`straight` (trajectory straightness)**
+- Near `1.0`: agent goes directly toward the goal.
+- Near `0.0`: agent loops, wanders, or explodes. `gradient` above (0.424) is a red flag.
+
+**`exec_dyngap` (executed dynamics gap)**
+- **Avoiding env**: always ~0 by construction — the simulator applies `x_des += act` exactly. Not informative.
+- **UAV env**: measures how much the drone's actual flight deviated from the commanded setpoint step `Δp_des`. DPCC variants (0.020) track tighter than unconstrained diffuser (0.056). `gradient` (0.222) shows poor tracking.
+
+**`plan_maxabs` (plan explosion detector)**
+- Should stay close to the environment's coordinate range (e.g. ~3.2 for a ±3.2 m arena).
+- If it shoots to hundreds, the FM is hallucinating waypoints far outside the scene — even if the executed path looks fine (the low-level controller may have clipped it back).
+
+**`plan_dyngap`**
+- NaN for UAV and avoiding: plans store observations only, no action columns. This is expected — not a bug.
+- Non-NaN only when the plan tensor explicitly stores `[act | obs]` (e.g. some visual-aligning variants).
+
+**`plan_exdiv` (plan–execution divergence)**
+- Low (~0.04): the FM's open-loop predictions closely match what the agent actually does → the model has a good internal world model.
+- High (~3.5): plans diverge rapidly from reality → the controller is flying blind, correcting every step. `gradient`'s 3.558 above vs `post_processing`'s 0.037 is a stark contrast.
+
+### What "blank" means in `succ_rate`
+
+The metric is read from the npz by name (`success_rate`). If the eval script stores it under a different key (or doesn't store it at all), the column is blank. Check `list(np.load('variant.npz', allow_pickle=True).files)` on the cluster to see what keys are present.
+
 ## How to Interpret the Results
 
 The tool produces a wealth of metrics beyond standard success rates. Here is a guide on how to interpret the key columns in the resulting CSVs to diagnose model behavior.
