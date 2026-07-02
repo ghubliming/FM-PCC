@@ -33,6 +33,7 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
 | **Gen11 (UAV Vis-Traj in MuJoCo)** | ~~Partial~~ <br>[flow_matcher_v3_uav/](../flow_matcher_v3_uav) | ~~Partial~~ <br>[FM_v3_uav_test/](../FM_v3_uav_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone.~~ <br><br> **IN PROGRESS (Partial)**: UAV Flow-Matching & DPCC. Full closed-loop 33 Hz receding-horizon control for UAV trajectory planning in MuJoCo. Includes Cascaded PID trackers, MJPC thrust control, real-time logging, and DPCC safety projection on constraint spaces. | ~~in progress~~ <br>working on |
 | **Gen11+ / X** | [/workspaces/HardFlow](/workspaces/HardFlow) | Pending | June 2026 | Integrating /workspaces/HardFlow into FMPCC. | |
+| **Gen11+ / X  (HF + iMF)** | [/workspaces/HardFlow](/workspaces/HardFlow) | Pending | July 2026 | A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. | |
 
 ***
 
@@ -2405,3 +2406,23 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 
 1. **Dynamics Gap Metric Context**: Disabled the invalid `plan_dyn_gap_max` calculation specifically for the visual avoiding task (where physics constraints do not neatly map to the 9D representation) and updated `README.md` documentation to clarify metric validity across different environments.
 2. **UAV Coordinate Mapping & Safety**: Updated UAV coordinate columns in the NPZ analysis tool for accurate extraction and introduced out-of-bounds safety checks when processing plan snapshots.
+3. **Unknown Schema Gap Fix**: Fixed a bug where an unknown coordinate schema would cause incorrect plan dynamics gap calculations by safely setting `plan_act_cols` to `None`, preventing out-of-bounds array access.
+
+***
+
+## HardFlow & iMeanFlow (HF·iMF) Architectural Blend Theory (July 2, 2026)
+
+**Keywords**: HardFlow, iMeanFlow, HF-iMF, constrained sampling, average-velocity flows, terminal prediction.
+
+1. **Architectural Blend Conceptualization**: Authored comprehensive theoretical and engineering documentation (`BLEND_HardFlow_iMeanFlow.md`, `THEORY_DeepMix_HF_iMF.md`) to evaluate blending the HardFlow (HF) hard-constrained sampling framework with the iMeanFlow (iMF) average-velocity flows architecture. 
+2. **Complementary Strengths**: Established that the two methods fix each other's central weaknesses. HardFlow relies on a biased first-order Euler extrapolation (`x̂1 = z + (1−τ)·v`), which iMF's average-velocity field exactly replaces without additional NFE cost. Meanwhile, iMF lacks hard constraint capabilities, which HardFlow provides via its algebraic Prox-NLP and pull-back mechanism. 
+3. **Proposed K-step iMF-HardFlow Algorithm**: Formalized a K-step (K=2-4) solver that reduces the required NLP solves from 20 (in stock HardFlow) to just a few, cutting sampling cost drastically while substituting HardFlow's structural Euler bias with a τ-uniform network error. 
+4. **Implementation Roadmap**: Outlined a clear integration plan requiring the retraining of an iMF-recipe model on the avoiding trajectory domain (using HardFlow's UNet1D and terminal-anchored interval sampling) followed by a targeted call-site substitution in the HardFlow constraint solver.
+
+***
+
+## Infrastructure Maintenance: Legacy MJPC Cleanup (July 2, 2026)
+
+**Keywords**: MJPC, cleanup, gRPC, cpp, archive.
+
+1. **Archive Old MJPC C++ Code**: Moved the obsolete C++ and gRPC binary assets for the old `mujoco_mpc` agent server into an `Archived_Codes` folder. This formally completes the pivot to the pure-Python MJX predictive sampling architecture and removes unused binary dependencies from the active workspace.

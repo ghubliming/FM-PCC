@@ -536,7 +536,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # i.e. the same value the default 'pid' controller produces on average.
     # Zero-padding (at-goal steps) is filtered before averaging.
     if controller == 'pid_const_v':
-        _all_acts = dataset.actions.reshape(-1, 3)
+        _all_acts = dataset.fields.actions.reshape(-1, 3)
         _act_norms = np.linalg.norm(_all_acts, axis=-1)
         _valid = _act_norms > 1e-4
         v_des_magnitude = float(np.mean(_act_norms[_valid])) * DATASET_HZ if _valid.any() else 0.4
