@@ -79,10 +79,20 @@ class Parser(argparse.ArgumentParser):
         self.set_loadbase(args)
         self.generate_exp_name(args)
         
-        # Only save args if we are training. In evaluation, we want to avoid 
+        # Only save args if we are training. In evaluation, we want to avoid
         # creating redundant and confusing 'args_resume_X.json' files.
         save = (experiment == 'train')
-        self.mkdir(args, save=save)
+        if experiment is not None and experiment.startswith('plan_'):
+            # Plan/eval experiments: compute savepath for reference but do NOT create
+            # the directory. The actual output inserts eval_params_dir before the seed;
+            # creating the base plan dir here produces a ghost folder (e.g.
+            # plans/.../H8_.../6) that is never the real output path.
+            if 'logbase' in dir(args) and 'dataset' in dir(args) and 'exp_name' in dir(args):
+                args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name, str(args.seed))
+                self.savepath = args.savepath
+                self._dict['savepath'] = args.savepath
+        else:
+            self.mkdir(args, save=save)
         return args
 
     def read_config(self, args, experiment):

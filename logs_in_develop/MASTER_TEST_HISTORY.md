@@ -2352,3 +2352,35 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Build Process Optimization**: Iteratively updated the build script for the MJPC `agent_server` to configure correct environment paths and include missing dependencies, successfully achieving compilation on the cluster.
 2. **Debugging Diagnostics Enhancement**: Added subprocess output streaming to `MJPCTracker` in `mjpc_tracker.py` and a startup diagnostic probe in the `eval_fm_uav.sh` script to improve visibility into the agent's initialization process.
 3. **Deployment Segfault & Pipeline Revert**: Documented a critical deployment failure in `STATUS_agent_server_segfault.md`. While the compiled binary runs successfully in the golden build environment, it crashes with a segmentation fault (`si_addr=0x4`) during early initialization when deployed in the FMPCC evaluation environment. Consequently, the MJPC controller installation has been aborted and paused. The evaluation pipeline has been cleanly reverted to use the stable `pid_stopgo` controller.
+
+***
+
+## Gen11 Epoch 8 "U6": MJPC Tracker JAX/MJX Rebuild (July 1, 2026)
+
+**Keywords**: Gen11, Epoch 8, U6, MJPC, MJX, JAX, predictive sampling, python solver.
+
+1. **Architecture Pivot**: Abandoned the C++ gRPC `agent_server` architecture due to untraceable segmentation faults on the cluster. Pivoted to a pure Python implementation using MuJoCo's JAX backend (MJX).
+2. **DeepMind Solver Integration**: Integrated DeepMind's `predictive_sampling.py` solver directly into `third_party/mujoco_mpc/mujoco_mpc/mjx/`. This solver performs vectorized rollouts via `jax.vmap` on the GPU, removing all subprocess and binary dependencies.
+3. **MJPCTracker Rewrite**: Completely rewrote the `MJPCTracker` class in `FM_v3_uav_test/mjpc_tracker.py` to wrap the new MJX planner. Maintained the identical external `.compute()` API, ensuring zero disruption to the `eval_fm_uav.py` rollout loop. Implemented a custom JAX-compatible UAV position-tracking cost function.
+4. **Configuration Transition**: Updated `config/uav.py` and `eval_fm_uav.py` to replace legacy gRPC parameters (`mjpc_planner_steps`, etc.) with MJX-native knobs (`mjx_n_samples`, `mjx_horizon`). Deleted the obsolete `build_mjpc_agent_server.sh` script.
+
+***
+
+## Cross-Gen "DC_FIX": Dynamics Constraint Rectification (July 1, 2026)
+
+**Keywords**: DC_FIX, dynamics constraints, anchor_to_p, cond_on_p, hallucination.
+
+1. **Constraint Dimensionality Bug Resolved**: Discovered and fixed a critical bug where all ported evaluation scripts were missing half of the required dynamics constraint rows. Specifically, the projectors were only constraining either real position (`p`) or desired position (`p_des`), leaving the other free to hallucinate.
+2. **Global Implementation**: Updated `eval_fm_visual_aligning.py`, `eval_imf_visual_aligning.py`, `eval_visual_aligning_dpcc.py`, and `eval_fm_uav.py` to correctly construct all 6 rows for 3D tasks, anchoring both channels strictly.
+3. **Deprecation of `anchor_to_p`**: Formally deprecated the `anchor_to_p` (cond_on_p) mechanism for constraint selection, identifying it as a symptom-level workaround for the missing constraint rows rather than a mathematically robust solution. 
+4. **Documentation**: Published comprehensive analysis and changelogs under the `DC_FIX` flag documenting the shift from 3-row to 6-row dynamics constraints.
+
+***
+
+## Evaluation Logging & Configuration Hotfixes (July 1, 2026)
+
+**Keywords**: config snapshot, wandb, logging, npz analysis, dynamics gap.
+
+1. **Config Snapshot Scoping**: Moved the configuration snapshotting logic from the global `setup.py` directly into the evaluation script (`eval_fm_uav.py`). This prevents path collisions and ensures that `uav_projection.yaml` snapshots are strictly scoped within their respective seed directories.
+2. **W&B Dependency Robustness**: Replaced broad exception handling with specific `ImportError` checks in logger stubs across the codebase, resolving a silent failure caused by a protobuf mismatch with the `wandb` package.
+3. **NPZ Analysis Upgrades**: Expanded the `analyze_npz.py` utility to calculate trajectory and plan dynamics gaps. Added action data extraction to `dump_xy_rows` for more comprehensive trajectory forensic analysis.
