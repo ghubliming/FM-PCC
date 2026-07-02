@@ -104,29 +104,62 @@ scp 'user@cluster:~/FMPCC/FM-PCC/logs/.../halfspace_both-hard/_npz_analysis/file
 - **`per_trial_<ts>.csv`** — one row per (file, trial): per-trial metric + per-trajectory quality.
 - A compact table to stdout.
 
-## Columns that matter
+## How to Interpret the Results
 
-**Task metrics** (means; success-type means == rates): `n_success`, `success_rate`,
-`n_success_and_constraints`, `collision_free_completed`, `n_steps`, `n_violations`, `total_violations`,
-`avg_time`, `mean_distance`, `entropy` (whatever the file contains — keys are auto-detected).
+The tool produces a wealth of metrics beyond standard success rates. Here is a guide on how to interpret the key columns in the resulting CSVs to diagnose model behavior.
 
-**Trajectory quality** (computed on the executed closed-loop path `obs_all`):
+### 1. Task Success & Efficiency
+**Columns:** `success_rate`, `n_violations`, `n_steps`, `avg_time`, `collision_free_completed`
+These represent the headline performance of the model. 
+- **High `success_rate` / Low `n_violations`**: The model achieved the objective while respecting obstacles.
+- **`n_steps`**: Indicates how directly the model reached the goal. Unusually high steps paired with a high success rate might indicate overly cautious or looping behaviors.
 
-| Column | Meaning | Smooth | Exploded/chaotic |
+### 2. Trajectory Quality (Smoothness vs. Chaos)
+These metrics are computed on the **executed closed-loop path** (`traj_*` columns). They quantify the "smooth vs jerky/exploded" quality that binary success checks cannot see. Context: [DEBUG_DiT_Eval_Trajectory_Explosion.md](../logs_in_develop/Gen3v4_imf/U6/DEBUG_DiT_Eval_Trajectory_Explosion.md).
+
+| Column | Meaning | Smooth Behavior | Exploded / Chaotic |
 |---|---|---|---|
-| `traj_straightness` | net displacement ÷ path length | →1 | →0 |
-| `traj_roughness` | max step ÷ median step (spike index) | ~1–2 | large |
-| `traj_max_jerk` / `traj_mean_jerk` | curvature (2nd difference of the path) | small | large |
-| `traj_path_len`, `traj_mean_step`, `traj_max_step` | length / step stats | — | inflated |
+| `traj_straightness` | Net displacement ÷ path length | Near `1.0` | Close to `0.0` |
+| `traj_roughness` | Max step ÷ median step (spike index) | ~`1.0` – `2.0` | Very large |
+| `traj_max_jerk` | Curvature (2nd difference of path) | Small | Large |
+| `traj_max_abs` | Largest absolute coordinate | Bound to env limits | Huge (e.g., `-227`) |
 
-These quantify the "smooth vs jerky/exploded" quality that binary success + discrete obstacle checks
-**cannot** see. Context:
-[logs_in_develop/Gen3v4_imf/U6/DEBUG_DiT_Eval_Trajectory_Explosion.md](../logs_in_develop/Gen3v4_imf/U6/DEBUG_DiT_Eval_Trajectory_Explosion.md).
+- **Why it matters:** A model might technically "succeed" but fly in erratic, jagged patterns. Low `traj_straightness` or high `traj_roughness` indicates poor trajectory conditioning or noisy diffusion outputs.
+
+### 3. Dynamics Compliance (Physical Hallucinations)
+**Columns:** `traj_dyn_gap_max`, `plan_dyn_gap_max`
+These evaluate whether the model respects kinematic constraints by calculating the gap $P_{t+1} - P_t - Act_t$.
+- **Near 0.0:** The model's actions perfectly explain its state transitions. It learned the underlying physics.
+- **Large Gap (e.g., > 1e-3):** The model is **hallucinating physical states**. It is moving in ways that its actions do not support (e.g., relying heavily on post-hoc environmental projections rather than internalizing the dynamics). 
+
+### 4. MPC Plan Divergence (The "Runaway" Effect)
+**Columns:** `plan_exec_div`, `plan_max_abs`, `plan_cand_spread`
+These evaluate the model's **open-loop foresight** (the `sampled_trajectories_all` candidate fan) against reality.
+- **`plan_exec_div` (Plan-Execution Divergence):** Measures how far the planned foresight deviated from the path actually executed. High divergence means the model's predictions are rapidly breaking down across the horizon, causing the controller to constantly correct (the "runaway" effect).
+- **`plan_max_abs` vs `traj_max_abs`:** If the open-loop plans explode (huge `plan_max_abs`) but the executed path does not, it means the low-level controller or environment clipping saved the run from a catastrophic model failure.
+- **`plan_cand_spread`:** Measures the diversity of the candidate trajectory batch.
 
 ## Notes
 - **Schema-generic:** any 1-D numeric array is auto-treated as a per-trial metric, so renamed/new keys
   are picked up. `obs_all`/`act_all`/`sampled_trajectories_all` are special-cased as trajectories.
-- Quality is on the **executed** path (`obs_all`) — the only trajectory both schemas store. (Avoiding does
-  not save open-loop plans; visual-aligning saves `sampled_trajectories_all` but it is not analyzed here.)
+- Both executed paths (`obs_all`) and open-loop plans (`sampled_trajectories_all`) are analyzed if present in the `.npz` file.
 - `args` is read best-effort (Namespace or dict); if a checkpoint's custom args class can't unpickle, the
   row still works (an `_args_error` column flags it).
+
+## Dynamics gap metrics — schema limitations
+
+### `traj_dyn_gap_max` for avoiding (always ~0)
+The executed-path gap checks `(x_des[t+1] - x_des[t]) - act[t]` (columns `[0,1]` of `obs_all`).
+This is trivially 0 for **all** variants because the eval simulator applies `x_des += act` exactly.
+It does NOT distinguish DPCC from non-DPCC models — expected behavior, not a bug.
+
+### `plan_dyn_gap_max` for avoiding (NaN — not computable)
+The avoiding plan schema (`sampled_trajectories_all`, from `eval_flow_matching_v3_imeanflow.py`)
+stores `samples.observations` only — shape `(B, H, 4)` = `[x_des, y_des, x, y]`.
+**Actions are not stored inside the plan tensor.** The dynamics gap formula `P[h+1]-P[h]-Act[h]`
+requires explicit action columns; without them, `plan_dyn_gap_max` is reported as **NaN**.
+
+Prior to this fix, the script used `plan_act_cols=[0,1]` thinking those were action columns,
+but they are actually `x_des` (~-3.2). The formula evaluated to `(x[h+1]-x[h]) - x_des[h]`
+≈ `0.02 - (-3.2) = 3.22` — a pure artifact, reported for every variant including unconstrained ones.
+This **did not indicate a DPCC failure**; the dynamics constraints were working correctly.

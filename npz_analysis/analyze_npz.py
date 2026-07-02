@@ -341,9 +341,18 @@ def process_file(npz_path, root, cols):
         plan_p_cols = [3, 4] # In plans, actions are prepended, so p_des is 3, 4, 5
         plan_act_cols = [0, 1]
     elif env == 'avoiding':
-        obs_p_cols = [0, 1]  # In obs_all, state is at 0, 1
-        plan_p_cols = [2, 3] # In plans, actions are prepended (dim 2)
-        plan_act_cols = [0, 1]
+        # obs_all layout: [x_des(0), y_des(1), x(2), y(3)]
+        # traj_dyn_gap_max uses x_des cols [0,1] + act_all (Δx_des):
+        #   gap = (x_des[t+1]-x_des[t]) - act[t] = 0 always (simulator is exact).
+        #   Trivially 0 for ALL variants — not informative, but not wrong.
+        obs_p_cols = [0, 1]
+        # plan schema (sampled_trajectories_all, from eval_flow_matching_v3_imeanflow.py):
+        #   stores samples.observations only → shape (B, H, 4) = [x_des, y_des, x, y].
+        #   NO action columns are stored in the plan.  plan_act_cols = [0,1] would pick
+        #   x_des (~-3.2) as the "action", giving gap = 0.02 - (-3.2) ≈ 3.22 — nonsense.
+        #   plan_dyn_gap_max cannot be computed from this schema; mark it NaN.
+        plan_p_cols = [2, 3]
+        plan_act_cols = None   # None = actions not stored in plans → NaN for plan_dyn_gap_max
     else:
         # Fallback to the provided CLI cols
         obs_p_cols = cols
@@ -380,8 +389,15 @@ def process_file(npz_path, root, cols):
         for i in range(npn):
             ex_i = obs_for_div[i] if (obs_for_div is not None and i < len(obs_for_div)) else None
             plan_metrics = analyze_plans(plans_all[i], plan_p_cols, executed=ex_i)
-            # Add dynamic gap checking for the plan
-            plan_metrics['plan_dyn_gap_max'] = analyze_dynamics_gap_plan(plans_all[i], plan_p_cols, plan_act_cols)
+            # plan_dyn_gap_max: requires action columns inside the plan tensor.
+            # plan_act_cols=None means actions are not stored in this schema (e.g. avoiding
+            # plans store obs-only); computing the gap would index the wrong columns and
+            # give nonsense (e.g. ~3.2 from treating x_des as the action). Use NaN instead.
+            if plan_act_cols is not None:
+                plan_metrics['plan_dyn_gap_max'] = analyze_dynamics_gap_plan(
+                    plans_all[i], plan_p_cols, plan_act_cols)
+            else:
+                plan_metrics['plan_dyn_gap_max'] = float('nan')
             per_plan.append(plan_metrics)
             
         for name in PLAN_METRIC_NAMES:
@@ -524,7 +540,7 @@ def dump_xy_rows(npz_path, cols, rel, variant, env='unknown'):
     elif env == 'avoiding':
         obs_p_cols = [0, 1]
         plan_p_cols = [2, 3]
-        plan_act_cols = [0, 1]
+        plan_act_cols = None  # avoiding plans store obs-only; [0,1] would be x_des, not actions
     else:
         obs_p_cols = cols
         plan_p_cols = [c + 2 for c in cols]
@@ -577,12 +593,19 @@ def dump_xy_rows(npz_path, cols, rel, variant, env='unknown'):
                         try:
                             x = float(plan[h, plan_p_cols[0]])
                             y = float(plan[h, plan_p_cols[1]])
-                            act_x = float(plan[h, plan_act_cols[0]])
-                            act_y = float(plan[h, plan_act_cols[1]])
                         except IndexError:
                             continue
-                            
-                        row = {'file': rel, 'variant': variant, 'source': 'plan', 'trial': i, 
+                        # plan_act_cols=None: actions not stored in plans (e.g. avoiding obs-only)
+                        if plan_act_cols is not None:
+                            try:
+                                act_x = float(plan[h, plan_act_cols[0]])
+                                act_y = float(plan[h, plan_act_cols[1]])
+                            except IndexError:
+                                act_x = act_y = float('nan')
+                        else:
+                            act_x = act_y = float('nan')
+
+                        row = {'file': rel, 'variant': variant, 'source': 'plan', 'trial': i,
                                'snapshot': snap_idx, 'candidate': b, 'step': h,
                                'x': x, 'y': y, 'act_x': act_x, 'act_y': act_y}
                                
