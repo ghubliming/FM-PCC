@@ -35,7 +35,22 @@ trap on_exit EXIT
 FMPCC_ROOT="$HOME/FMPCC"
 REPO="$FMPCC_ROOT/FM-PCC"
 CONDA_DIR="$HOME/miniconda3"
-CONDA_ENV_NAME="FMPCC"
+
+# Auto-select conda env from config/uav.py's eval-block 'controller' value — no manual
+# flag needed. controller='mjpc' needs mujoco>=3.x / mujoco.mjx, which conflicts with
+# the mujoco==2.3.7 pin the rest of the repo (e.g. d3il/avoiding) needs, so it lives in
+# an isolated clone env (`conda create -n FMPCC_mjx --clone FMPCC && pip install
+# "jax[cuda12]" mujoco-mjx`). Every other controller uses the default FMPCC env.
+# See CHANGELOG_U6_mjx_tracker.md.
+DETECTED_CONTROLLER=$(awk "/'plan_flow_matching_v3_uav': \{/,0" "$REPO/config/uav.py" \
+    | grep -m1 "'controller':" | sed -E "s/.*'controller':[[:space:]]*'([^']*)'.*/\1/")
+if [ "$DETECTED_CONTROLLER" = "mjpc" ]; then
+    CONDA_ENV_NAME="FMPCC_mjx"
+else
+    CONDA_ENV_NAME="FMPCC"
+fi
+echo "[ env-select ] config/uav.py controller='$DETECTED_CONTROLLER' -> conda env '$CONDA_ENV_NAME'"
+
 source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV_NAME"
 
