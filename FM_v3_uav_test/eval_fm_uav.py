@@ -554,17 +554,18 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
 
     projector = None
     if variant != 'diffuser':
-        # 12 = act(3)+obs(9), MINUS model_fm.goal_dim: diffusion.py's p_sample_loop calls
-        # `projector.project(x[:, :, :-self.goal_dim], ...)` — it slices off the trailing
-        # goal_dim columns BEFORE handing the trajectory to the projector, so the projector's
-        # Q/A/C matrices must be built for that same (smaller) width or `project()` shape-errors
-        # (seen on the cluster: "4x88 and 96x96" when goal_dim=1 was left out of this count).
-        # goal_dim itself comes from SequenceDataset.get_goal_dim()'s constant-column heuristic
-        # (real D3IL goal columns are appended/constant at the end of obs; for UAV it can
-        # false-positive on an incidentally-constant channel) — harmless here since the
-        # dynamics constraint only touches indices 0-5 (act, p_des), never the trailing columns.
-        goal_dim = int(getattr(model_fm, 'goal_dim', 0))
-        traj_dim = int(dataset.observation_dim + dataset.action_dim) - goal_dim
+        # UAV has no semantic goal columns. SequenceDataset.get_goal_dim() can false-positive
+        # on incidentally-constant channels (e.g. corridor altitude, constant p_des).
+        # DC_FIX dynamics constraints touch p indices 6,7,8 — if goal_dim>0 shrinks traj_dim
+        # below 9, those indices go out-of-bounds in build_matrices (IndexError: index 64).
+        # Fix: always force goal_dim=0 for UAV and patch the loaded model so p_sample_loop
+        # doesn't slice the trajectory before handing it to the projector.
+        _detected_goal_dim = int(getattr(model_fm, 'goal_dim', 0))
+        if _detected_goal_dim != 0:
+            print(f'[ eval ] UAV: overriding model_fm.goal_dim {_detected_goal_dim} → 0 '
+                  f'(false-positive constant channel; UAV has no goal dims)')
+            model_fm.goal_dim = 0
+        traj_dim = int(dataset.observation_dim + dataset.action_dim)
         projector = setup_dpcc_projector(
             parsed, config,
             dataset.normalizer.normalizers['observations'],
