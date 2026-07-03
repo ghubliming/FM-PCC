@@ -186,7 +186,13 @@ def main():
                 _c = discover_candidates_recursive(_p, seed_list=seeds, max_depth=10)
                 _all_infos.extend(_c.values())
             _all_infos.sort(key=lambda x: x['path'])   # stable ordering across runs
-            candidates = {chr(ord('A') + i): info for i, info in enumerate(_all_infos)}
+            # Integer keys (1-based), matching discover_candidates_recursive's own
+            # convention (multi_candidate_discovery.py: cand_idx = letter_index + 1).
+            # The old chr(ord('A') + i) scheme overflowed past 'Z' (26 letters) into raw
+            # ASCII punctuation for combined runs with >26 candidates, producing
+            # filesystem-unsafe labels (e.g. a literal '\') that broke BatchDataLoader/
+            # BatchVisualizer once those were migrated to expect int keys (8c20b7d).
+            candidates = {i + 1: info for i, info in enumerate(_all_infos)}
         
         if not candidates:
             logger.error("No candidates found. Exiting.")
