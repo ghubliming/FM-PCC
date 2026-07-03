@@ -31,8 +31,11 @@ export MPLBACKEND="agg"
 # 4) Run DA Batch Analysis (v3)
 cd "$REPO"
 
+# Extra args forwarded (e.g. `sbatch run_da_batch_v3.sh --no-plots` to skip the slow
+# matplotlib PNGs — the CSVs the HTML visualizer needs are written either way).
 python Data_Analysis/DA_Code_v3/main_da_batch.py \
     --parent-path logs/avoiding-d3il/plans \
-    --output-path Data_Analysis/analysis_results/batch_v3_$(date +%Y%m%d_%H%M%S)
+    --output-path Data_Analysis/analysis_results/batch_v3_$(date +%Y%m%d_%H%M%S) \
+    "$@"
 
 echo "DA Batch Analysis v3 job completed successfully."

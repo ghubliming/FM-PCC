@@ -33,8 +33,11 @@ export MPLBACKEND="agg"
 # merged (re-lettered A, B, C... sorted by path) into a single comparison run.
 cd "$REPO"
 
+# Extra args forwarded (e.g. `sbatch run_da_batch_avoiding_combined.sh --no-plots` to
+# skip the slow matplotlib PNGs — the CSVs the HTML visualizer needs are written either way).
 python Data_Analysis/DA_Code_v3/main_da_batch.py \
     --parent-path "logs/avoiding-d3il/plans,logs/avoiding-d3il-visual/plans" \
-    --output-path Data_Analysis/analysis_results/batch_avoiding_combined_$(date +%Y%m%d_%H%M%S)
+    --output-path Data_Analysis/analysis_results/batch_avoiding_combined_$(date +%Y%m%d_%H%M%S) \
+    "$@"
 
 echo "DA Batch Analysis (avoiding combined) job completed successfully."

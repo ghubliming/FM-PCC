@@ -11,10 +11,13 @@ set -e
 
 # Pass args:  $1 = parent path (folder containing candidate subfolders)
 #             $2 = source: 'json' (default, pre-U10.2) or 'npz' (U10.2+)
+#             $3+ = forwarded to main_da_batch.py (e.g. --no-plots to skip the slow
+#                   matplotlib PNGs — va_candidates_dynamic.csv is written either way)
 # Example:
-#   sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json
+#   sbatch run_da_batch_visual_aligning.sh logs/aligning-d3il-visual/plans/fm_visual_aligning json --no-plots
 PARENT_PATH=${1:-"logs/aligning-d3il-visual/plans/fm_visual_aligning"}
 SOURCE=${2:-"json"}
+if [ "$#" -ge 2 ]; then shift 2; else shift "$#"; fi   # drop $1/$2, keep the rest for passthrough
 
 # 1) Workspace paths
 FMPCC_ROOT="$HOME/FMPCC"
@@ -38,6 +41,7 @@ python Data_Analysis/DA_Visual_Aligning/main_da_batch.py \
     --parent-path "$PARENT_PATH" \
     --seed 6 \
     --source "$SOURCE" \
-    --output-path Data_Analysis/analysis_results/va_batch_$(date +%Y%m%d_%H%M%S)
+    --output-path Data_Analysis/analysis_results/va_batch_$(date +%Y%m%d_%H%M%S) \
+    "$@"
 
 echo "DA Visual Aligning batch analysis completed."
