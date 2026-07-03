@@ -54,21 +54,50 @@ conda activate FMPCC_mjx
 pip install "jax[cuda12]" mujoco-mjx
 ```
 
-This upgrades `mujoco` to `3.x` and `numpy` to `2.x` — but only inside `FMPCC_mjx`.
+This upgrades `mujoco` to `3.x` inside `FMPCC_mjx` (`numpy` may or may not be touched
+depending on what pip resolves — it stayed at `1.26.4` in our validated run, since
+`jax`'s `numpy>=1.22` bound was already satisfied). Either way this only happens inside
+`FMPCC_mjx`, not `FMPCC`.
+
+You will likely see a pip resolver warning like:
+```
+ERROR: pip's dependency resolver does not currently take into account all the packages
+that are installed. ... gymnasium-robotics 1.2.4 requires mujoco<3.0,>=2.3.3, but you
+have mujoco 3.10.0 which is incompatible.
+```
+**This is harmless — ignore it.** `gymnasium_robotics` is leftover baggage from cloning
+`FMPCC`; nothing in the UAV/`mjpc` code path (`FM_v3_uav_test/`, `flow_matcher_v3_uav/`)
+imports it, so the version conflict never actually triggers.
 
 ---
 
 ## 4. Verify
 
+> [!CAUTION]
+> **Do not run the `import mujoco` check on the login node.** MuJoCo 3.x's
+> `mujoco/__init__.py` unconditionally sets up a renderer at import time. With
+> `MUJOCO_GL` unset (as it is on an interactive login shell — only the sbatch script
+> exports it) it falls back to software OSMesa rendering, which needs a native
+> `libOSMesa` binding that login nodes typically don't have. You'll get:
+> ```
+> AttributeError: 'NoneType' object has no attribute 'glGetError'
+> ```
+> This looks like a broken install but isn't — it's a rendering-backend probe failing
+> on a machine with no GPU/EGL context, nothing to do with whether `mujoco-mjx`
+> installed correctly. Verify inside a real GPU allocation instead:
+
 ```bash
-python -c "import mujoco; print('mujoco', mujoco.__version__)"
-python -c "from mujoco import mjx; print('mjx OK')"
-python -c "import jax; print('jax', jax.__version__, jax.devices())"
+srun --partition=gpu-1-student --gres=gpu:1 --pty bash
+conda activate FMPCC_mjx
+MUJOCO_GL=egl MUJOCO_EGL_DEVICE_ID=0 python -c "import mujoco; print('mujoco', mujoco.__version__)"
+MUJOCO_GL=egl MUJOCO_EGL_DEVICE_ID=0 python -c "from mujoco import mjx; print('mjx OK')"
+MUJOCO_GL=egl MUJOCO_EGL_DEVICE_ID=0 python -c "import jax; print('jax', jax.__version__, jax.devices())"
+exit   # release the interactive allocation when done
 ```
 
-`jax.devices()` should list a `cuda` device on a GPU node. If it prints `[CpuDevice(...)]`
-only, you're likely running this check outside a GPU-allocated Slurm session — that's
-fine for a syntax check, but the actual eval job needs a `--gres=gpu:1` allocation.
+`jax.devices()` should list a `cuda` device. If this all passes here, the real
+`mjpc` eval job (which sets these same env vars itself — see `eval_fm_uav.sh`) will
+work too; that job is ultimately the real test.
 
 ---
 

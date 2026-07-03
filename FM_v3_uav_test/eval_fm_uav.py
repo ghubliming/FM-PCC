@@ -27,6 +27,17 @@ SUCCESS CRITERION (Fix2_metrics, scene-aware):
   around a goal-path scene without reaching the target is NOT a success (the prior global
   definition scored that as success — a bug).
 
+SUCCESS_RELAXED (U7): episodes never terminate early on goal-reach — they always run the
+  full fixed FM-step budget. So `success` (which only checks the FINAL position) scores an
+  outright FAIL for a rollout that reaches the goal and then drifts/overshoots for the rest
+  of a fixed-length episode, identical to one that never got close. `success_relaxed` fixes
+  this by treating the goal like a race finish line: a vertical plane (xy line, any z)
+  through the goal, oriented perpendicular to the expert path's final approach heading.
+  `crossed_line` latches true the first time the drone is EVER on the goal side of that
+  line, regardless of what happens afterward. `success_relaxed = crossed_line AND safe`
+  (goal-path scenes); `success ⇒ success_relaxed` always. See
+  logs_in_develop/Gen11/Epoch8_UAV_Mjpc_thrust_control/U7_Succes_realaxed/.
+
 No torch/MuJoCo in the Docker dev env — this is cluster-only; here it is syntax-checked.
 """
 
@@ -326,6 +337,15 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
 
     traj_fn, init_pos, dur = gen._build_traj_and_init(scene, homotopy, rng)
     goal = np.asarray(traj_fn(dur)[0], dtype=float)        # expert path endpoint (secondary metric)
+    # U7: finish-line crossing test (success_relaxed) — a vertical plane (xy line, any z)
+    # through `goal`, oriented perpendicular to the expert path's final approach heading.
+    # `crossed_line` latches true the first time the drone's xy position is ever on the
+    # goal side of that line, independent of where it ends up afterward.
+    _p_before_goal = np.asarray(traj_fn(max(dur - 0.1, 0.0))[0], dtype=float)
+    _line_dir_xy = (goal - _p_before_goal)[:2]
+    _line_norm = np.linalg.norm(_line_dir_xy)
+    line_dir_xy = _line_dir_xy / _line_norm if _line_norm > 1e-9 else np.array([1.0, 0.0])
+    crossed_line = False
 
     data.qpos[:3] = init_pos
     data.qpos[3:7] = [1.0, 0.0, 0.0, 0.0]
@@ -435,6 +455,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 n_hit += 1
             min_z = min(min_z, float(data.qpos[2]))
             track_err.append(float(np.linalg.norm(data.qpos[:3] - p_des)))
+            # U7: one-way latch — true the instant the drone is ever on the goal side
+            # of the finish line, regardless of what it does for the rest of the episode.
+            _side = float(np.dot(data.qpos[:2] - goal[:2], line_dir_xy))
+            crossed_line = crossed_line or (_side >= 0.0)
 
         # ── one structured log line per FM control step ──
         te_step = float(np.linalg.norm(data.qpos[:3] - p_des))
@@ -473,6 +497,16 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     else:                                                 # empty (random goal): stay stable
         success = bool(safe)
 
+    # U7 (success_relaxed): "crossed the finish line" instead of "ended exactly on it".
+    # Episodes never terminate early on goal-reach, so a rollout that arrives and then
+    # drifts/overshoots for the rest of a fixed-length episode fails `success` outright —
+    # identical to one that never got close. `crossed_line` only requires the drone's xy
+    # path to have ever passed the goal at some point; `success ⇒ success_relaxed` always.
+    if scene in GOAL_PATH_SCENES:
+        success_relaxed = bool(crossed_line and safe)
+    else:                                                  # empty: no fixed goal to cross
+        success_relaxed = success
+
     # Constraint-aware metrics (FMv3ODE schema). Only the DYNAMICS constraint is active this
     # epoch — there are NO obstacle/halfspace/bounds (free-space) constraints to violate, so
     # these are trivially clean. They populate the schema; per-scene geometry fills them later.
@@ -480,10 +514,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     n_violations = 0
     total_violations = 0.0
     success_and_constraints = bool(success and collision_free)
+    success_and_constraints_relaxed = bool(success_relaxed and collision_free)
 
     # ── persist the real-time behaviour log + capture its timing summary ──
     behaviour = {
         'result': 'SUCCESS' if success else ('FAIL(goal)' if (scene in GOAL_PATH_SCENES and safe and not goal_reached) else 'FAIL'),
+        'result_relaxed': 'SUCCESS' if success_relaxed else 'FAIL',
         'goal_dist': f'{goal_dist:.3f}m', 'safe': safe, 'min_z': f'{min_z:.3f}',
         'contact_frac': f'{contact_frac:.3f}',
     }
@@ -494,7 +530,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     return {
         'scene': scene, 'homotopy': homotopy,
         'success': success,
+        'success_relaxed': success_relaxed,
         'success_and_constraints': success_and_constraints,
+        'success_and_constraints_relaxed': success_and_constraints_relaxed,
+        'crossed_line': crossed_line,
         'safe': safe,
         'contact_frac': contact_frac,
         'goal_dist': goal_dist,
@@ -629,7 +668,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     summary = {
         'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts), 'variant': variant,
         'success_rate': float(succ),                                       # task success: goal+safe (scene-aware)
+        'success_relaxed_rate': float(np.mean([r['success_relaxed'] for r in rollouts])),  # U7: crossed finish line
         'success_and_constraints_rate': float(np.mean([r['success_and_constraints'] for r in rollouts])),
+        'success_and_constraints_relaxed_rate': float(np.mean([r['success_and_constraints_relaxed'] for r in rollouts])),
         'safe_rate': float(np.mean([r['safe'] for r in rollouts])),        # contact-free + airborne
         'collision_free_rate': float(np.mean([r['collision_free'] for r in rollouts])),
         'n_violations_mean': float(np.mean([r['n_violations'] for r in rollouts])),
@@ -657,9 +698,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     artifacts.plot_overview(out_dir, variant, scene, rollouts)
 
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '
-          f'sel={_selection_for(variant)}): success={succ:.3f}  safe={summary["safe_rate"]:.3f}  '
-          f'goal_reached={summary["goal_reached_rate"]:.3f}  track_err={summary["track_err_mean"]:.3f}  '
-          f'→ {os.path.dirname(npz_path)}/')
+          f'sel={_selection_for(variant)}): success={succ:.3f}  success_relaxed={summary["success_relaxed_rate"]:.3f}  '
+          f'safe={summary["safe_rate"]:.3f}  goal_reached={summary["goal_reached_rate"]:.3f}  '
+          f'track_err={summary["track_err_mean"]:.3f}  → {os.path.dirname(npz_path)}/')
     # Real-time timing verdict echoed to stdout (per-step detail stays in the .log files).
     _budget = summary['budget_ms']
     _rt = 'SAFE' if summary['total_over_budget'] == 0 else f'OVER×{summary["total_over_budget"]}'

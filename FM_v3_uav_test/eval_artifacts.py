@@ -44,6 +44,7 @@ def save_npz(out_dir, variant, rollouts, args_dict):
     """
     n = len(rollouts)
     n_success = np.array([1.0 if r.get('success') else 0.0 for r in rollouts])
+    n_success_relaxed = np.array([1.0 if r.get('success_relaxed') else 0.0 for r in rollouts])
     n_steps = np.array([r.get('n_fm_steps', 0) for r in rollouts], dtype=float)
     obs_all = np.array([np.asarray(r.get('obs_traj', [])) for r in rollouts], dtype=object)
     act_all = np.array([np.asarray(r.get('act_traj', [])) for r in rollouts], dtype=object)
@@ -59,6 +60,7 @@ def save_npz(out_dir, variant, rollouts, args_dict):
     np.savez(
         path,
         n_success=n_success,
+        n_success_relaxed=n_success_relaxed,
         n_success_and_constraints=n_success_and_constraints,
         n_steps=n_steps,
         n_violations=n_violations,
@@ -306,12 +308,15 @@ def write_eval_log(out_dir, variant, summary, rollouts):
             f.write(
                 f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  "
                 f"success={int(bool(r.get('success')))}  "
+                f"success_relaxed={int(bool(r.get('success_relaxed')))}  "
                 f"contact={r.get('contact_frac', float('nan')):.3f}  "
                 f"min_z={r.get('min_z', float('nan')):.3f}  "
                 f"goal_dist={r.get('goal_dist', float('nan')):.3f}  "
                 f"track_err={r.get('track_err_mean', float('nan')):.2f}\n")
         f.write('-' * 70 + '\n')
         f.write(f"  success_rate (goal+safe): {summary['success_rate']:.3f}\n")
+        f.write(f"  success_relaxed_rate (crossed finish line): "
+                f"{summary.get('success_relaxed_rate', float('nan')):.3f}\n")
         f.write(f"  success_and_constraints : {summary.get('success_and_constraints_rate', float('nan')):.3f}\n")
         f.write(f"  safe_rate (contact-free+airborne): {summary.get('safe_rate', float('nan')):.3f}\n")
         f.write(f"  collision_free_rate     : {summary.get('collision_free_rate', float('nan')):.3f}  "

@@ -2426,3 +2426,25 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 **Keywords**: MJPC, cleanup, gRPC, cpp, archive.
 
 1. **Archive Old MJPC C++ Code**: Moved the obsolete C++ and gRPC binary assets for the old `mujoco_mpc` agent server into an `Archived_Codes` folder. This formally completes the pivot to the pure-Python MJX predictive sampling architecture and removes unused binary dependencies from the active workspace.
+
+***
+
+## Gen11 Epoch 8: UAV Sim2Real Timing & IK Analysis (July 2, 2026)
+
+**Keywords**: Gen11, Epoch 8, Sim2Real, UAV, timing analysis, IK, MJPC latency, REALTIME_RECORDING.
+
+1. **Sim2Real Timing Budget Audit**: Authored `REALTIME_RECORDING/U1/ideas.md` to analyze the measurement gap in the `avg_time` metric, which currently excludes MuJoCo Inverse Kinematics (IK), PID/MJPC control loops, and physics simulation. 
+2. **Latency Bottleneck Identification**: Established that while IK and low-level numerical controllers take a negligible amount of time (< 1-15 ms), the heavy generative inference (`fm_ms` + `proj_ms`) operates at around 1 Hz, which heavily violates the real-time budget (typically 10-50 Hz) for a dynamic UAV.
+3. **Catastrophic State Drift Diagnostics**: Concluded that deploying a 1 Hz planner directly to a UAV causes "super lag" leading to catastrophic failures due to state drift (the UAV flies blind on a 1-second-old observation) and waypoint starvation.
+4. **Future Mitigation Strategy**: Identified that achieving Sim2Real viability requires model compression (e.g., fewer diffusion steps), projection-free constraints, and asynchronous control loop architectures (running PID at 50Hz+ while FM guides asynchronously).
+
+***
+
+## Gen11 Epoch 8 "U7": MJX Conda Environment Isolation & Auto-Selection (July 2, 2026)
+
+**Keywords**: Gen11, Epoch 8, U7, conda, environment isolation, mujoco-mjx, sbatch auto-select.
+
+1. **Dependency Crisis Resolution**: Addressed a critical environment crisis where installing `mujoco-mjx` (which requires MuJoCo 3.x) into the main `FMPCC` conda environment broke D3IL's XML scene parsing and caused segfaults due to library collisions (D3IL relies on MuJoCo 2.3.7).
+2. **Isolated MJX Environment Setup**: Created an isolated cloned environment (`FMPCC_mjx`) dedicated exclusively to the UAV `mjpc` controller, ensuring that the new dependencies do not pollute the core training and evaluation baselines. Authored `install_UAV_mjpc_mjx_env.md` for reproducible cluster deployment.
+3. **Automatic SBATCH Environment Selection**: Implemented transparent environment switching in `Slurm_Codes/sbatch/uav_fm/eval_fm_uav.sh`. The orchestrator now reads `plan_flow_matching_v3_uav['controller']` from `config/uav.py` and automatically activates the correct conda environment (`FMPCC_mjx` for MJPC, `FMPCC` for standard PID controllers) prior to execution, eliminating manual environment management errors.
+4. **PID Constant Velocity Fix (`F1`)**: Resolved an `AttributeError` in the `pid_const_v` controller by correctly accessing the dataset's action `fields` attribute, ensuring that stable dataset-derived flight velocities can be correctly simulated.
