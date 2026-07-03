@@ -2,10 +2,16 @@
 
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple
+import warnings
 
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+try:
+    from torchdiffeq import odeint as torchdiffeq_odeint
+except ImportError:
+    torchdiffeq_odeint = None
 
 from .imf_engine import iMeanFlowEngine
 from .helpers import apply_conditioning, Losses
@@ -218,6 +224,26 @@ class iMeanFlowODE(nn.Module):
         dt = 1.0 / max(flow_steps, 1)
         h_batch = torch.full((batch_size,), dt, device=device, dtype=torch.float32)
 
+        # U8 — torchdiffeq dispatch (recovered from FMv3ODE / this file's own sibling
+        # diffusion.py:FlowMatchingIMF, which already has it working). No flow_steps floor:
+        # every sub-stage query computes h dynamically (see ode_rhs below) as the remaining
+        # distance to the current macro step's own declared end t1, so every query stays inside
+        # the (t,h) domain the model was actually trained on (t,h∈[0,1], t+h<=1 — see
+        # _p_losses_meanflow_jvp's JVP primal (x_r, r, h) with h=t-r, t<=1). This has nothing to
+        # do with the constraint projector below (which runs once per macro step, after this
+        # entire block, and never sees sub-stage internals) — it's purely about keeping the
+        # network's own query domain valid, independent of whether a projector/constraint exists
+        # at all. Whether treating u(x,t,h) as a stand-in for the instantaneous derivative
+        # RK4/dopri5 expect at each sub-stage gives a GOOD estimate at small flow_steps_v3 is a
+        # separate, genuinely empirical question (depends on how much the true velocity field
+        # curves over an interval of that size) — no numeric cutoff is hard-coded for it.
+        use_torchdiffeq = self.ode_solver_backend_v3 == 'torchdiffeq'
+        if use_torchdiffeq and torchdiffeq_odeint is None:
+            raise RuntimeError(
+                "ode_solver_backend_v3='torchdiffeq' but torchdiffeq is not installed. "
+                "Install torchdiffeq or switch backend to 'legacy_euler'."
+            )
+
         # U5 Phase 1c — interval-CFG setup (active only when ω>0; net ignores knobs if not built
         # with interval_cfg). omega/t_min/t_max are conditioning inputs to the backbone.
         cfg_on = self.meanflow_cfg_omega > 0
@@ -246,11 +272,60 @@ class iMeanFlowODE(nn.Module):
             )
             # apply guidance only inside the [t_min, t_max] interval (official interval-CFG)
             step_cfg = self.meanflow_cfg_omega if (cfg_on and self.meanflow_cfg_t_min <= tau <= self.meanflow_cfg_t_max) else 0.0
-            velocity = self._predict_velocity(
-                x, cond, t_i, h=h_batch, returns=returns,
-                omega=omega_b, t_min=t_min_b, t_max=t_max_b, cfg_scale=step_cfg,
-            )
-            x = x + velocity * dt
+
+            if use_torchdiffeq:
+                # "Homing missile": h is recomputed PER SUB-STAGE as the remaining distance to
+                # this macro step's own declared end t1, NOT held fixed at dt. Fixed multi-stage
+                # methods (rk4, etc.) evaluate the RHS at interior points within [t0,t1] (e.g.
+                # rk4: t0, t0+dt/2, t0+dt/2, t1); holding h=dt for all of them would ask
+                # u(x, t0+dt/2, h=dt) — "average velocity over [t0+dt/2, t0+1.5dt]" — a (t,h)
+                # pair with t+h>t1 (and, on the final macro step, t+h>1) that the model never
+                # saw in training. h_sub = t1 - t_scalar keeps every sub-stage's query at
+                # (t_scalar, h_sub) with t_scalar+h_sub = t1 exactly, always in-domain, for any
+                # solver, any flow_steps_v3 — including flow_steps_v3=1. At the first sub-stage
+                # h_sub=dt (matches Euler); at t_scalar=t1, h_sub=0, the valid base case
+                # u(x,t,h=0)=v(x,t), not an out-of-domain query.
+                t0, t1 = float(loop_idx) * dt, float(loop_idx) * dt + dt
+                t_span = torch.tensor([t0, t1], device=device, dtype=torch.float32)
+
+                def ode_rhs(t_scalar, state):
+                    # t_scalar is a 0-dim tensor from torchdiffeq; multiply rather than
+                    # torch.full(..., fill_value=t_scalar), which some torch versions reject.
+                    ones = torch.ones(batch_size, device=device, dtype=torch.float32)
+                    t_batch = ones * t_scalar
+                    h_sub = ones * (t1 - t_scalar)
+                    return self._predict_velocity(
+                        state, cond, t_batch, h=h_sub, returns=returns,
+                        omega=omega_b, t_min=t_min_b, t_max=t_max_b, cfg_scale=step_cfg,
+                    )
+
+                odeint_kwargs = {'method': self.ode_solver_method_v3}
+                if self.ode_solver_rtol_v3 is not None:
+                    odeint_kwargs['rtol'] = float(self.ode_solver_rtol_v3)
+                if self.ode_solver_atol_v3 is not None:
+                    odeint_kwargs['atol'] = float(self.ode_solver_atol_v3)
+                if self.ode_solver_step_size_v3 is not None:
+                    fixed_step_methods = {
+                        'euler', 'midpoint', 'heun2', 'heun3', 'rk4',
+                        'explicit_adams', 'fixed_adams',
+                    }
+                    if self.ode_solver_method_v3 in fixed_step_methods:
+                        odeint_kwargs['options'] = {'step_size': float(self.ode_solver_step_size_v3)}
+                    else:
+                        warnings.warn(
+                            f"Ignoring ode_solver_step_size_v3 for method '{self.ode_solver_method_v3}' "
+                            "because it is not a fixed-step solver method.",
+                            RuntimeWarning,
+                        )
+
+                x = torchdiffeq_odeint(ode_rhs, x, t_span, **odeint_kwargs)[-1]
+            else:
+                velocity = self._predict_velocity(
+                    x, cond, t_i, h=h_batch, returns=returns,
+                    omega=omega_b, t_min=t_min_b, t_max=t_max_b, cfg_scale=step_cfg,
+                )
+                x = x + velocity * dt
+
             x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
 
             if projector is not None:
