@@ -175,11 +175,19 @@ async def load_data(event=None):
             raise Exception(f"HTTP {response.status}")
         csv_text = await response.text()
         df_agg = pd.read_csv(io.StringIO(csv_text), low_memory=False)
-        
+        # Checkbox values from the DOM are always JS strings (get_checked()), but
+        # pandas infers 'Candidate' as int64 for the new numeric-labeled batches
+        # (was object/str for the old A/B/C batches). Force str here so .isin()
+        # against checked_cands matches either labeling scheme identically —
+        # without this, numeric-candidate batches load fine but every plot filters
+        # down to an empty dataframe (silently — no error, nothing to redraw).
+        df_agg['Candidate'] = df_agg['Candidate'].astype(str)
+
         # Try fetch raw (silent fail if not found)
         resp_raw = await fetch(path_raw)
         if resp_raw.ok:
             df_raw = pd.read_csv(io.StringIO(await resp_raw.text()), low_memory=False)
+            df_raw['Candidate'] = df_raw['Candidate'].astype(str)
         else:
             df_raw = None
 
@@ -202,7 +210,10 @@ def populate_dynamic_filters():
     document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
     vars_list = sorted(df_agg['variant'].unique())
     document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
-    cands_list = sorted(df_agg['Candidate'].unique())
+    # numeric-labeled batches (Candidate = "1".."48") must sort as numbers, not
+    # lexicographically ("1","10","11",...,"2",...) — alphabetic labels ("A","B",...)
+    # are untouched since they never match .isdigit().
+    cands_list = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
     document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
 
 async def trigger_plot(event=None):
@@ -354,7 +365,12 @@ def render_path_map():
     cols_to_get = ['Candidate', p_col]
     if has_missing: cols_to_get.append('Missing_Seeds')
     
-    mapping = df_agg[cols_to_get].drop_duplicates().sort_values('Candidate')
+    # same numeric-vs-lexicographic concern as populate_dynamic_filters() above.
+    _dedup = df_agg[cols_to_get].drop_duplicates()
+    try:
+        mapping = _dedup.sort_values('Candidate', key=lambda s: s.astype(int))
+    except ValueError:
+        mapping = _dedup.sort_values('Candidate')
     
     html = '<table><thead><tr><th style="width:100px">ID</th>'
     if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'

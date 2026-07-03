@@ -299,6 +299,12 @@ async def load_data(event=None):
         if not resp.ok:
             raise Exception(f"HTTP {resp.status}")
         df_agg = pd.read_csv(io.StringIO(await resp.text()))
+        # Checkbox values from the DOM are always JS strings (get_checked()); force
+        # 'Candidate' to str too so .isin(checked_cands) matches regardless of whether
+        # this pipeline ever adopts numeric labels (pandas would otherwise infer int64
+        # for all-numeric labels, silently emptying every filtered plot — see the
+        # sibling Visualizer/index.html fix for the incident this pre-empts).
+        df_agg['Candidate'] = df_agg['Candidate'].astype(str)
         console.log(f"[ loader ] va_candidates_dynamic.csv: {len(df_agg)} rows")
     except Exception as e:
         document.getElementById("engine-status").innerText = "LOAD_ERROR"
@@ -334,7 +340,8 @@ async def load_data(event=None):
 def populate_filters():
     metrics  = sorted(df_agg['metric'].unique())
     variants = sorted(df_agg['variant'].unique())
-    cands    = sorted(df_agg['Candidate'].unique())
+    # numeric-vs-lexicographic guard (see Visualizer/index.html's populate_dynamic_filters)
+    cands    = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
 
     document.getElementById("metric-select").innerHTML = "".join(
         [f'<option value="{m}">{m.upper()}</option>' for m in metrics])
@@ -559,7 +566,11 @@ def update_scorecard(subset, metric):
 def render_path_map():
     if df_agg is None: return
     p_col = 'FullPath' if 'FullPath' in df_agg.columns else 'FolderName'
-    mapping = df_agg[['Candidate', p_col, 'FolderName']].drop_duplicates().sort_values('Candidate')
+    _dedup = df_agg[['Candidate', p_col, 'FolderName']].drop_duplicates()
+    try:
+        mapping = _dedup.sort_values('Candidate', key=lambda s: s.astype(int))
+    except ValueError:
+        mapping = _dedup.sort_values('Candidate')
     html = '<table style="border-collapse:collapse;width:100%;font-size:11px;"><thead><tr><th style="background:#000;color:#fff;padding:8px;width:80px">ID</th><th style="background:#000;color:#fff;padding:8px">Source Path</th></tr></thead><tbody>'
     for _, row in mapping.iterrows():
         segs  = str(row[p_col]).split('/')
