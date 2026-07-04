@@ -13,8 +13,7 @@ set -e
 # Set to the experiment folder path (relative to $HOME or absolute).
 # Pass the OLD folder name. If the folder name contains no legacy tokens the
 # script exits immediately without touching anything (safe to re-run).
-TARGET_PATH="FMPCC/FM-PCC/logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10"
-
+TARGET_PATH="FMPCC/FM-PCC/logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10"
 # Optional flags: --dry-run  --backup  (space-separated if both needed)
 EXTRA_FLAGS=""
 # ─────────────────────────────────────────────────────────────────────────────

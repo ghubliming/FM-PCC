@@ -1,0 +1,47 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jul  1 12:27:24 UTC 2026  |  eval_fm_uav  |  ID 22380  |  NODE i6-gpu-1
+SCENE: s_curve   SEEDS: 6   N_TRIALS: 
+GIT REV:   7ed3b4d
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=s_curve seed=6  Wed Jul  1 12:27:24 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene s_curve --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=5  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ utils/setup ] Made savepath: logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve: variants=['diffuser', 'gradient', 'post_processing', 'model_free', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+[ eval ] s_curve variant=diffuser (B=4, proj=off, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=164.534  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/diffuser/
+[ eval ] s_curve variant=diffuser TIMING: fm_ms=84.0 proj_ms=0.0 total_ms=84.0 (p95=85.3) budget=30.3ms → real_time_OVER×3219
+[ eval ] s_curve variant=gradient (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=4.643  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/gradient/
+[ eval ] s_curve variant=gradient TIMING: fm_ms=87.9 proj_ms=0.0 total_ms=87.9 (p95=88.7) budget=30.3ms → real_time_OVER×3219
+[ eval ] s_curve variant=post_processing (B=4, proj=on, sel=random): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.280  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/post_processing/
+[ eval ] s_curve variant=post_processing TIMING: fm_ms=84.1 proj_ms=9.4 total_ms=93.5 (p95=94.5) budget=30.3ms → real_time_OVER×3219
+[ eval ] s_curve variant=model_free (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=169.900  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/model_free/
+[ eval ] s_curve variant=model_free TIMING: fm_ms=84.5 proj_ms=34.4 total_ms=118.9 (p95=144.5) budget=30.3ms → real_time_OVER×3219
+[ eval ] s_curve variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  safe=0.800  goal_reached=0.000  track_err=0.399  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/dpcc-r/
+[ eval ] s_curve variant=dpcc-r TIMING: fm_ms=84.4 proj_ms=45.9 total_ms=130.3 (p95=131.2) budget=30.3ms → real_time_OVER×3219
+[ eval ] s_curve variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.000  safe=0.800  goal_reached=0.000  track_err=0.385  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/dpcc-c/
+[ eval ] s_curve variant=dpcc-c TIMING: fm_ms=84.2 proj_ms=46.1 total_ms=130.3 (p95=130.9) budget=30.3ms → real_time_OVER×3219
+[ eval ] s_curve variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  safe=0.800  goal_reached=0.000  track_err=3.933  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/dpcc-t/
+[ eval ] s_curve variant=dpcc-t TIMING: fm_ms=84.2 proj_ms=62.9 total_ms=147.0 (p95=439.1) budget=30.3ms → real_time_OVER×3219
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=s_curve for seeds=[6]
+JOB END: Wed Jul  1 13:16:27 UTC 2026

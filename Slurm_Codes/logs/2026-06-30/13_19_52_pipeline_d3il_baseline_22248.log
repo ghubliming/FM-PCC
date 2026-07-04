@@ -1,0 +1,19 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Tue Jun 30 14:12:08 UTC 2026
+JOB ID:    22248
+================================================================================
+D3IL Baseline Pipeline: agent=ddpm_encdec_vision  seed=42  epoch=200  record=all  eval_scale=paper
+Step 1: Training submitted. Job ID: 22254
+Step 2: Evaluation scheduled (afterok:22254). Job ID: 22255
+--------------------------------------------------------------------------------
+D3IL Baseline Pipeline submitted.
+  Train job: 22254
+  Eval  job: 22255 (blocked until train succeeds)
+Use 'squeue -u $USER' to monitor.
+Outputs: logs/d3il_visual_aligning_baseline/ddpm_encdec_vision/seed_42/
+  Epoch:  200
+================================================================================
+================================================================================
+PIPELINE END: Tue Jun 30 14:12:08 UTC 2026
+================================================================================

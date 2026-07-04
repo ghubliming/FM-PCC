@@ -45,6 +45,13 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_eval_19922.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_load_results_19923.log
 
+-> aw10 but K20 full seeds!
+02/07
+22989 fix log path
+22990 debug
+22991 fix the mujuco pip bug, cause by mujoco mjx
+22992 the numpy also destroed by mujoco mjx. RUN, fixed
+
 - fmv3ode aw1 ode20
 eval
 
@@ -608,7 +615,25 @@ FiLM v2 real FiLM 28/06
 +
 22126
 
+---
+- U3 baseline train update
 
+22210 piepline - train work
+22212
+debug
+->
+22231
+32 train stil bug
+
+-> 22248 try
+
+
+---
+
+**DC-FIX**
+22396 (film v2!) TIME LIMIT KILLED
+
+22485 (film v1)
 
 # Gen8 iMF Visual Aligning
 
@@ -722,12 +747,7 @@ seed 78910
 21970 Diffu
 
 ---
-- 30/06 U3
-22210 piepline - train work
-22212
-debug
-->
-22231
+- 30/06 U5 film v2
 ->
 22234/6 run eval cancel rerun 22238
 
@@ -881,6 +901,8 @@ pillar
 pillar
 22041 U2.2
 
+
+
 - U3 metrics like model_free bring back
 & the real time eval logging
 22093/4
@@ -912,12 +934,39 @@ before is ODE 100
 
 ---
 22207 FM Scurve train + eval (ODE20)
+eval fail/debug fixed
+22247 scurves tracking error acculation! try the anchorP!
+anchorP -> 22287
 
-try the mjpc
-22194 - need debug 
+**DC-FIX**
+22295 / Disk full rerun
+22380 sucess, with dynamic correction is good. scurve
+
+try the pillars (the empty and the corridor need retrain 9D)
+22245 (Good)
+
+trian + eval on corridor 22296
+
+- try the pid_const_v
+22980 debug -> 984
+
+- train the 9D 22983
+22983
+
+empty trained, -> eval
+pid_stopgo
+23031
 
 ---
-build the cpp bin for mjpc solver
+## MJPC
+try the mjpc
+22194 - need debug 
+22266 / 7/  8 / 9 / 22270(with debug)
+SIG error from nowher, fail
+
+
+---
+- build the cpp bin for mjpc solver
 22209
 fail, debug
 22235
@@ -927,6 +976,42 @@ fail, debug
 22239
 ->
 22240
+22241
+22242
+22243
+22244
+22245
+PASS
+lib fix
+22246
++
+fix .so
+22265
+
+---
+add smoke test
+22271 smoke 2 fail
+22272
+
+---
+
+OK, run eval mjpc in scurve 22257
+lack pkg 
+install pip install grpcio grpcio-tools
+22261 + 2 + 3 
+
+---
+
+U6 JAX mjpc Solver
+22958 pillars
+22962
+22963
+fail, drifting badly
+22964 killed, same as 63, and maybe cheating
+22966 (set up mjpc faithfully)
+
+******
+---
 
 # REAL TIME EVAL test
 tried on the Gen11 E7U3
@@ -935,3 +1020,6 @@ then implent to all codes!
 # DA run 
 22208 -> all avoiding incl visual
 fail, debug
+
+23032, 03/07 DA combined
+debug -> 23033
