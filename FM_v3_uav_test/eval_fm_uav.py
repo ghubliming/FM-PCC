@@ -149,23 +149,35 @@ def load_pcc_config(scene, seed):
     cfg.setdefault('inflation', {'r_drone': 0.0, 'margin_base': 0.0})
     cfg.setdefault('action_bounds', None)
 
-    # ── E9: resolve per-scene geometry (visual-aligning geo_constraint_variants pattern) ──
-    # The entry whose `name` == scene overwrites constraint_types + geometry. `active_geo_variants`
-    # gates which scenes run PCC at all (a scene absent from it → globals/fallback = dynamics-only).
-    # Activation (which families fire) lives entirely in the yaml, exactly like visual-aligning.
-    _geo_variants = {g['name']: g for g in (cfg.get('geo_constraint_variants') or []) if 'name' in g}
+    # ── E9: resolve per-scene geometry — SELECTABLE variants (Fix_4, visual-aligning pattern) ──
+    # `geo_constraint_variants` is a flat list of NAMED entries; each is tied to a scene via its
+    # own `scene:` field (falls back to `name` for any entry that omits it — backward compat).
+    # A scene may have several named entries (ablations, alternates — mirrors visual-aligning's
+    # `bounds_only_1`/`combined_4`/`combined_5` all belonging to one task); exactly ONE of them
+    # may be listed in `active_geo_variants` at a time, since the eval runs one geo config per
+    # scene per invocation. `active_geo_variants=None` activates every entry (whichever matches
+    # this scene, expected to still be exactly one in that case).
+    _all_geo = [g for g in (cfg.get('geo_constraint_variants') or []) if 'name' in g]
     _active = cfg.get('active_geo_variants')
-    if scene in _geo_variants and (_active is None or scene in _active):
-        _entry = _geo_variants[scene]
+    _matches = [g for g in _all_geo
+                if g.get('scene', g['name']) == scene and (_active is None or g['name'] in _active)]
+    if len(_matches) > 1:
+        raise ValueError(
+            f"E9: scene '{scene}' matches MULTIPLE active geo_constraint_variants "
+            f"({[g['name'] for g in _matches]}) — only one may be active per scene at a time. "
+            f"Narrow active_geo_variants in config/uav_projection.yaml to exactly one of them.")
+    if _matches:
+        _entry = _matches[0]
         cfg['constraint_types']      = list(_entry.get('constraint_types', cfg['constraint_types']))
         cfg['workspace_bounds']      = _entry.get('workspace_bounds', None)
         cfg['halfspace_constraints'] = _entry.get('halfspace_constraints', [])
         cfg['obstacle_constraints']  = _entry.get('obstacle_constraints', [])
-        print(f"[ eval ] E9 geo '{scene}': constraint_types={cfg['constraint_types']} "
+        print(f"[ eval ] E9 geo '{scene}' ← variant '{_entry['name']}': "
+              f"constraint_types={cfg['constraint_types']} "
               f"(bounds={cfg['workspace_bounds'] is not None}, "
               f"hs={len(cfg['halfspace_constraints'])}, obs={len(cfg['obstacle_constraints'])})")
-    elif _geo_variants:
-        print(f"[ eval ] E9: scene '{scene}' not in active geo variants → dynamics-only fallback")
+    elif _all_geo:
+        print(f"[ eval ] E9: scene '{scene}' has no active geo variant → dynamics-only fallback")
 
     # E9 fix1: `geo_tag` — a second, swappable output-path axis mirroring the old avoiding-task
     # `results/halfspace_<halfspace_variant>/` folder level. Encodes WHICH geometry/constraint
@@ -486,7 +498,10 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         is never touched.
       - `bounds` builds TWO orthogonal row-sets (§2.2): the workspace box on p AND the shared
         action-magnitude bound on the action dims (0,1,2 = Δp_des). The action bound is NOT
-        inflated (it is a dataset-range cap, not a spatial surface).
+        inflated (it is a dataset-range cap, not a spatial surface). SETTABLE via
+        `config['action_bounds']` (Fix_3): `'auto'` (default, recommended) self-derives from
+        `act_normalizer.mins/maxs` (this dataset's own observed action range); an explicit
+        `{lb,ub}` dict overrides it; `None` disables the action bound entirely.
       - Inflation (r_drone + margin_base) offsets every spatial surface so the BODY clears,
         always-on; the -tightened enlarge is added on top.
       - Halfspaces may carry `x_active` (s_curve): a wall is included only if `current_x` is
@@ -517,10 +532,32 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
             ub = np.concatenate([np.full(6,  np.inf), ws_ub - margin, np.full(pad,  np.inf)])
             constraint_list += [['lb', lb], ['ub', ub]]
         # (b) shared action-magnitude bound on the ACTION dims (0,1,2) — NOT inflated (§2.2).
-        ab = config.get('action_bounds')
-        if ab is not None:
-            a_lb = np.concatenate([np.array(ab['lb'], dtype=float), np.full(trajectory_dim - 3, -np.inf)])
-            a_ub = np.concatenate([np.array(ab['ub'], dtype=float), np.full(trajectory_dim - 3,  np.inf)])
+        # SETTABLE in the yaml (`action_bounds`), default `'auto'` (Fix_3):
+        #   'auto' (RECOMMENDED, default) → SELF-DERIVE from act_normalizer.mins/.maxs, the
+        #     dataset's OWN observed Δp_des range (LimitsNormalizer: mins/maxs = X.min/max
+        #     over the training data, fit at load time). This is what DPCC-avoiding's
+        #     hardcoded ['vx','vy'] bound approximated BY HAND for ITS OWN dataset ("need to
+        #     be within the limits of the dataset due to the normalization") — copying
+        #     avoiding's NUMBER would be wrong here (different robot, different workspace
+        #     scale, different expert speed); reusing the SAME METHOD (derive from THIS
+        #     dataset's own action range) is the faithful equivalent, and it's already
+        #     computed by code that runs at eval time — no placeholder, no cluster-side
+        #     manual measurement needed. Mirrors the `pid_const_v` self-calibration precedent
+        #     (`_run_variant`: `v_des_magnitude` derived from `dataset.fields.actions`).
+        #   explicit {lb: [...], ub: [...]} → override with a hand-picked cap (e.g. to test a
+        #     tighter/looser action limit than the dataset's own range) instead of 'auto'.
+        ab = config.get('action_bounds', 'auto')
+        if ab is None:
+            a_lb = a_ub = None
+        elif ab == 'auto':
+            a_lb = np.asarray(act_normalizer.mins, dtype=float)
+            a_ub = np.asarray(act_normalizer.maxs, dtype=float)
+        else:
+            a_lb = np.array(ab['lb'], dtype=float)
+            a_ub = np.array(ab['ub'], dtype=float)
+        if a_lb is not None:
+            a_lb = np.concatenate([a_lb, np.full(trajectory_dim - 3, -np.inf)])
+            a_ub = np.concatenate([a_ub, np.full(trajectory_dim - 3,  np.inf)])
             constraint_list += [['lb', a_lb], ['ub', a_ub]]
 
     if 'dynamics' in ctypes and 'model_free' not in variant:
