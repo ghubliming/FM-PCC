@@ -205,6 +205,16 @@ geo_constraint_variants:
   - name: dynamics_only
     constraint_types: ['dynamics']
 
+  # ── dynamics + bounds (NEW, Patch_Constraints_C3) ─────────────────────────────
+  # Pairs with `dynamics_only` for an A/B test of the restored action-magnitude bound:
+  # same Euler consistency link, PLUS the action-magnitude cap (self-derived via
+  # `action_bounds: 'auto'` above). No geo box, no obstacles, no halfspace — isolates
+  # exactly what adding 'bounds' changes on top of 'dynamics' alone.
+  # To run the comparison: set `active_geo_variants: [dynamics_only, dynamics_bounds_only]`
+  # (leaving this out of the active list for now — combined_5 stays the default).
+  - name: dynamics_bounds_only
+    constraint_types: ['dynamics', 'bounds']
+
   # ── geo bounds only (renamed from bounds_only_1/2, Patch_Constraints_C3) ──────
   # Workspace box on EE position (dims 6-8).  No kinematic link.
   # 2D vs 3D: '2D' means only x-y are bounded; z = -.inf/+.inf (unconstrained).

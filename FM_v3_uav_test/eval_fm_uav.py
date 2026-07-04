@@ -235,7 +235,7 @@ def _exec_constraint_violations(obs_traj, config):
     magnitude sum accumulates every family's penetration depth (metres).
     """
     ctypes = config.get('constraint_types', []) or []
-    spatial = {'bounds', 'halfspace', 'obstacles'} & set(ctypes)
+    spatial = {'geo_bounds', 'halfspace', 'obstacles'} & set(ctypes)
     if not spatial or not obs_traj:
         return True, 0, 0.0
     P = np.asarray(obs_traj, dtype=float)[:, 3:6]          # executed p, (T,3)
@@ -248,7 +248,7 @@ def _exec_constraint_violations(obs_traj, config):
     obstacles  = config.get('obstacle_constraints', [])  if 'obstacles'  in spatial else []
     for p in P:
         step_pen = 0.0
-        if 'bounds' in spatial and ws is not None:
+        if 'geo_bounds' in spatial and ws is not None:
             lb = np.array(ws['lb'], dtype=float); ub = np.array(ws['ub'], dtype=float)
             # physical box is raw lb/ub; body clears when p ∈ [lb+r, ub-r]
             below = (lb + r_drone) - p; above = p - (ub - r_drone)
@@ -321,7 +321,7 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
     enlarge = float(config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
     margin = inflation_base + enlarge          # the TRUE enforced offset (matches setup_dpcc_projector)
 
-    has_bounds = 'bounds' in ctypes and config.get('workspace_bounds') is not None
+    has_bounds = 'geo_bounds' in ctypes and config.get('workspace_bounds') is not None
     ws_lb = ws_ub = lb_d = ub_d = None
     _Z_DISP = (0.0, 2.0)        # UAV flight band default display when z is unconstrained
     if has_bounds:
@@ -523,15 +523,22 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     ctypes = config.get('constraint_types', [])
     constraint_list = []
 
-    if 'bounds' in ctypes:
-        # (a) workspace box on ACTUAL p (6,7,8), shrunk inward by the spatial margin.
+    if 'geo_bounds' in ctypes:
+        # Workspace box on ACTUAL p (6,7,8), shrunk inward by the spatial margin.
+        # Patch_Constraints_C3: renamed from 'bounds' — this flag now ONLY means the geo box;
+        # 'bounds' below is a SEPARATE, independent family (the restored DPCC action limit).
         ws = config.get('workspace_bounds')
         if ws is not None:
             ws_lb = np.array(ws['lb'], dtype=float); ws_ub = np.array(ws['ub'], dtype=float)
             lb = np.concatenate([np.full(6, -np.inf), ws_lb + margin, np.full(pad, -np.inf)])
             ub = np.concatenate([np.full(6,  np.inf), ws_ub - margin, np.full(pad,  np.inf)])
             constraint_list += [['lb', lb], ['ub', ub]]
-        # (b) shared action-magnitude bound on the ACTION dims (0,1,2) — NOT inflated (§2.2).
+
+    if 'bounds' in ctypes:
+        # Shared action-magnitude bound on the ACTION dims (0,1,2) — NOT inflated (§2.2).
+        # Patch_Constraints_C3: independent of 'geo_bounds' above (was conflated under one
+        # 'bounds' flag until this split; mirrors the same fix applied to visual-aligning's
+        # eval scripts — see logs_in_develop/Gen7_FMPCC_Viusal_Aligning/Patch_Constraints_C3/).
         # SETTABLE in the yaml (`action_bounds`), default `'auto'` (Fix_3):
         #   'auto' (RECOMMENDED, default) → SELF-DERIVE from act_normalizer.mins/.maxs, the
         #     dataset's OWN observed Δp_des range (LimitsNormalizer: mins/maxs = X.min/max
@@ -1128,10 +1135,12 @@ def eval_scene(scene, args):
     print(f'[ eval ] cond_mode={config["cond_mode"]}  (source: train checkpoint args)')
 
     # Tightened variants only differ from their base siblings when spatial constraints
-    # (bounds/halfspace/obstacles) are active — enlarge_constraints is applied there.
-    # With only 'dynamics' in constraint_types the enlarge margin is computed but never
-    # used, so tightened == non-tightened == wasted compute. Skip them and say why.
-    _spatial = {'bounds', 'halfspace', 'obstacles'}
+    # (geo_bounds/halfspace/obstacles) are active — enlarge_constraints is applied there.
+    # 'bounds' (the action-magnitude family, Patch_Constraints_C3) is NEVER tightened — it's a
+    # dataset-range cap, not a spatial surface — so it's excluded from this set on purpose.
+    # With only 'dynamics'+'bounds' in constraint_types the enlarge margin is computed but
+    # never used, so tightened == non-tightened == wasted compute. Skip them and say why.
+    _spatial = {'geo_bounds', 'halfspace', 'obstacles'}
     _has_spatial = bool(_spatial & set(config.get('constraint_types', [])))
     if not _has_spatial:
         _skip = [v for v in config['projection_variants'] if 'tightened' in v]
