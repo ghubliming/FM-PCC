@@ -2448,3 +2448,32 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 2. **Isolated MJX Environment Setup**: Created an isolated cloned environment (`FMPCC_mjx`) dedicated exclusively to the UAV `mjpc` controller, ensuring that the new dependencies do not pollute the core training and evaluation baselines. Authored `install_UAV_mjpc_mjx_env.md` for reproducible cluster deployment.
 3. **Automatic SBATCH Environment Selection**: Implemented transparent environment switching in `Slurm_Codes/sbatch/uav_fm/eval_fm_uav.sh`. The orchestrator now reads `plan_flow_matching_v3_uav['controller']` from `config/uav.py` and automatically activates the correct conda environment (`FMPCC_mjx` for MJPC, `FMPCC` for standard PID controllers) prior to execution, eliminating manual environment management errors.
 4. **PID Constant Velocity Fix (`F1`)**: Resolved an `AttributeError` in the `pid_const_v` controller by correctly accessing the dataset's action `fields` attribute, ensuring that stable dataset-derived flight velocities can be correctly simulated.
+
+***
+
+## Gen11 Epoch 8 "U7": `success_relaxed` Finish-Line Crossing Metric (July 3, 2026)
+
+**Keywords**: Gen11, Epoch 8, U7, success_relaxed, finish-line crossing, evaluation metric.
+
+1. **Evaluation Metric Redefinition**: Addressed the issue where the `success` metric scored an outright `FAIL` for rollouts that reached the goal but subsequently drifted/overshot during the remaining fixed-length physics steps.
+2. **`success_relaxed` Implementation**: Implemented a new `success_relaxed` metric in `eval_fm_uav.py` that treats the goal as a race finish line. It uses a one-way `crossed_line` latch triggered when the drone crosses a vertical plane at the goal, oriented perpendicular to the final approach heading.
+3. **Artifact Integration**: Added `n_success_relaxed` to the legacy npz schema in `eval_artifacts.py` and incorporated it into the per-rollout diagnostics and `results.json`. The original strict `success` metric remains untouched and strictly additive.
+
+***
+
+## Data Analysis Tool v3: Batch Indexing and CLI Passthrough Updates (July 3, 2026)
+
+**Keywords**: DA Code v3, batch analysis, argument passthrough, candidate indexing, numeric sorting.
+
+1. **Candidate Indexing Normalization**: Updated `main_da_batch` candidate indexing from alphanumeric to integer keys to correctly match downstream pipeline expectations. Modified the DA Visualizer to normalize the Candidate column to a string type, implementing smart sorting for mixed numeric/alphabetic IDs.
+2. **CLI Argument Passthrough**: Enabled argument passthrough in the SLURM DA batch analysis scripts (`run_da_batch_avoiding_combined.sh`, `run_da_batch_v3.sh`, `run_da_batch_visual_aligning.sh`), supporting native DA flags like `--no-plots` to streamline workflow executions directly from the cluster orchestrator.
+
+***
+
+## Gen3v4 "U8": iMeanFlowODE `torchdiffeq` Solver Integration (July 3, 2026)
+
+**Keywords**: Gen3v4, U8, iMeanFlowODE, torchdiffeq, homing missile, h_sub, interval-aware step sizing.
+
+1. **Solver Silent-Failure Fix**: Diagnosed a bug where `iMeanFlowODE.p_sample_loop` silently ignored `ode_solver_backend_v3` configurations (like `Mrk4`) and always fell back to legacy Euler integration, invalidating prior solver-comparison data.
+2. **`torchdiffeq` Integration**: Ported the `torchdiffeq` dispatch logic from the sibling `FlowMatchingIMF` to correctly support higher-order integrators (RK4, Midpoint) within `iMeanFlowODE`.
+3. **"Homing Missile" `h_sub` Sizing**: Implemented a dynamic sub-stage step sizing (`h_sub = t1 - t_scalar`) mechanism to strictly preserve the iMeanFlow mathematical formulation. This ensures that every sub-stage query inside a macro-step always targets the macro-step's exact end (`t1`), keeping network queries inside their trained interval domain `[t, t+h]` regardless of the solver backend.
