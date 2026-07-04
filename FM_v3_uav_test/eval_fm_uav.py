@@ -269,6 +269,197 @@ def _exec_constraint_violations(obs_traj, config):
     return (n_steps_viol == 0), int(n_steps_viol), float(total)
 
 
+def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename='constraint_overview'):
+    """E9 U2: constraint-geometry schematic — the UAV equivalent of the visual-aligning
+    `constraint_overview.png` (`fm_visual_aligning_test/eval_fm_visual_aligning.py
+    plot_geo_constraints`), which we were missing entirely (not a faithful port).
+
+    3-panel: 3D wireframe | XY top-down | XZ side. Shows the workspace box (steelblue),
+    halfspace boundaries + feasible-side arrow (darkorange; x_active segments drawn only
+    over their live x-range, s_curve), obstacle balls (tomato). Boundaries are drawn at the
+    TRUE enforced margin (r_drone + margin_base [+ enlarge if tightened]) — the same `margin`
+    setup_dpcc_projector uses — not the raw scene geometry, so the figure shows what the
+    projector actually believes, not just the XML.
+
+    Saved as BOTH <basename>.png (raster, quick viewing) AND .svg (vector — the visual-aligning
+    original only had .png; added here since a vector schematic is what a paper/thesis figure
+    actually wants). Idempotent (skipped if both files already exist).
+
+    `basename` distinguishes the tightened twin: unlike visual-aligning (where `-tightened`
+    is baked into a whole separate NAMED geo entry with its own results/<name>/ folder), UAV's
+    `-tightened` is a per-VARIANT margin modifier sharing the same geo_tag/geo_dir as its base
+    sibling (matching the older DPCC-avoiding convention) — so the two margins need two
+    filenames (`constraint_overview.png` vs `constraint_overview_tightened.png`) inside the
+    SAME folder, not two folders.
+    """
+    out_png = os.path.join(out_dir, f'{basename}.png')
+    out_svg = os.path.join(out_dir, f'{basename}.svg')
+    if os.path.exists(out_png) and os.path.exists(out_svg):
+        return
+
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as _mpa
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection as _P3C
+
+    ctypes = config.get('constraint_types', [])
+    _infl = config.get('inflation') or {}
+    inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
+    enlarge = float(config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
+    margin = inflation_base + enlarge          # the TRUE enforced offset (matches setup_dpcc_projector)
+
+    has_bounds = 'bounds' in ctypes and config.get('workspace_bounds') is not None
+    ws_lb = ws_ub = lb_d = ub_d = None
+    _Z_DISP = (0.0, 2.0)        # UAV flight band default display when z is unconstrained
+    if has_bounds:
+        ws_lb = np.array(config['workspace_bounds']['lb'], dtype=float)
+        ws_ub = np.array(config['workspace_bounds']['ub'], dtype=float)
+        ws_lb = ws_lb + margin; ws_ub = ws_ub - margin
+        lb_d = ws_lb.copy(); ub_d = ws_ub.copy()
+        lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
+        # y may be ±inf too (e.g. a scene relying purely on halfspace walls for y) — clamp display
+        for _i, _fallback in ((0, (-3.5, 3.5)), (1, (-2.0, 2.0))):
+            if np.isinf(lb_d[_i]): lb_d[_i] = _fallback[0]
+            if np.isinf(ub_d[_i]): ub_d[_i] = _fallback[1]
+
+    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
+    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+
+    def _xlim(): return (lb_d[0]-0.3, ub_d[0]+0.3) if lb_d is not None else (-3.5, 3.5)
+    def _ylim(): return (lb_d[1]-0.3, ub_d[1]+0.3) if lb_d is not None else (-2.0, 2.0)
+    def _zlim(): return (lb_d[2]-0.1, ub_d[2]+0.2) if lb_d is not None else (_Z_DISP[0]-0.1, _Z_DISP[1]+0.2)
+
+    def _wall_xy(hs):
+        """Resolve a halfspace to (p1, p2, side) clipped to its x_active range (if any)."""
+        triple, x_active = _normalize_halfspace(hs)
+        (x1, y1), (x2, y2), side = triple
+        if x_active is not None:
+            lo, hi = x_active
+            if abs(x2 - x1) > 1e-9:
+                t0 = (lo - x1) / (x2 - x1); t1 = (hi - x1) / (x2 - x1)
+                t0, t1 = sorted((max(0.0, min(1.0, t0)), max(0.0, min(1.0, t1))))
+                y1n = y1 + t0 * (y2 - y1); y2n = y1 + t1 * (y2 - y1)
+                x1n = x1 + t0 * (x2 - x1); x2n = x1 + t1 * (x2 - x1)
+                return (x1n, y1n), (x2n, y2n), side, (lo, hi)
+        return (x1, y1), (x2, y2), side, None
+
+    fig = plt.figure(figsize=(16, 5))
+    _tstr = ' [tightened]' if is_tightened else ''
+    fig.suptitle(f'{geo_name}{_tstr}  |  types: {ctypes}  |  margin(r_drone+base'
+                 f'{"+" + str(enlarge) if enlarge else ""})={margin:.3f} m',
+                 fontsize=11, fontweight='bold', y=0.98)
+
+    # ── 3D panel ──────────────────────────────────────────────────────────────
+    ax3 = fig.add_subplot(131, projection='3d')
+    ax3.set_title('3D view', fontsize=9)
+    ax3.set_xlabel('x (m)', fontsize=7); ax3.set_ylabel('y (m)', fontsize=7); ax3.set_zlabel('z (m)', fontsize=7)
+    ax3.tick_params(labelsize=6)
+    if lb_d is not None:
+        x0, y0, z0 = lb_d; x1v, y1v, z1v = ub_d
+        for xs, ys, zs in [
+            ([x0,x1v],[y0,y0],[z0,z0]), ([x0,x1v],[y1v,y1v],[z0,z0]),
+            ([x0,x1v],[y0,y0],[z1v,z1v]), ([x0,x1v],[y1v,y1v],[z1v,z1v]),
+            ([x0,x0],[y0,y1v],[z0,z0]), ([x1v,x1v],[y0,y1v],[z0,z0]),
+            ([x0,x0],[y0,y1v],[z1v,z1v]), ([x1v,x1v],[y0,y1v],[z1v,z1v]),
+            ([x0,x0],[y0,y0],[z0,z1v]), ([x1v,x1v],[y0,y0],[z0,z1v]),
+            ([x0,x0],[y1v,y1v],[z0,z1v]), ([x1v,x1v],[y1v,y1v],[z0,z1v]),
+        ]:
+            ax3.plot(xs, ys, zs, color='steelblue', alpha=0.7, lw=1.2)
+    for obs in obstacle_list:
+        dims = obs.get('dimensions', ['x', 'y'])
+        cx, cy = float(obs['center'][0]), float(obs['center'][1])
+        cz = float(obs['center'][2]) if ('z' in dims and len(obs['center']) > 2) else (
+            (lb_d[2]+ub_d[2])/2 if lb_d is not None else 1.0)
+        r = obs['radius'] + margin
+        u = np.linspace(0, 2*np.pi, 20); v = np.linspace(0, np.pi, 10)
+        ax3.plot_surface(cx + r*np.outer(np.cos(u), np.sin(v)), cy + r*np.outer(np.sin(u), np.sin(v)),
+                          cz + r*np.outer(np.ones_like(u), np.cos(v)), color='tomato', alpha=0.25, linewidth=0)
+    _hs_zlo, _hs_zhi = (lb_d[2], ub_d[2]) if lb_d is not None else _Z_DISP
+    for hs in halfspace_list:
+        (hx1, hy1), (hx2, hy2), side, _ = _wall_xy(hs)
+        ax3.add_collection3d(_P3C([[
+            [hx1, hy1, _hs_zlo], [hx2, hy2, _hs_zlo], [hx2, hy2, _hs_zhi], [hx1, hy1, _hs_zhi],
+        ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
+    if not has_bounds and not obstacle_list and not halfspace_list:
+        ax3.text2D(0.5, 0.5, 'no geometric\nconstraints', ha='center', va='center',
+                   transform=ax3.transAxes, fontsize=9, color='gray')
+    ax3.set_xlim(*_xlim()); ax3.set_ylim(*_ylim()); ax3.set_zlim(*_zlim())
+
+    # ── XY top-down panel ────────────────────────────────────────────────────
+    ax_xy = fig.add_subplot(132)
+    ax_xy.set_title('XY top-down (z projected)', fontsize=9)
+    ax_xy.set_xlabel('x (m)', fontsize=7); ax_xy.set_ylabel('y (m)', fontsize=7)
+    ax_xy.set_aspect('equal'); ax_xy.grid(True, linestyle='--', alpha=0.4); ax_xy.tick_params(labelsize=6)
+    if lb_d is not None:
+        ax_xy.add_patch(_mpa.Rectangle((lb_d[0], lb_d[1]), ub_d[0]-lb_d[0], ub_d[1]-lb_d[1],
+                                        lw=1.5, edgecolor='steelblue', facecolor='steelblue',
+                                        alpha=0.12, label='bounds (enforced)'))
+    else:
+        ax_xy.text(0.5, 0.5, 'no bounds', ha='center', va='center', transform=ax_xy.transAxes,
+                   fontsize=9, color='gray')
+    for hs in halfspace_list:
+        (hx1, hy1), (hx2, hy2), side, x_active = _wall_xy(hs)
+        ax_xy.plot([hx1, hx2], [hy1, hy2], color='darkorange', lw=2.0,
+                   label='halfspace wall' if hs is halfspace_list[0] else None)
+        dx, dy = hx2-hx1, hy2-hy1; nrm = np.hypot(dx, dy) or 1.0
+        nx, ny = (-dy/nrm, dx/nrm) if side == 'above' else (dy/nrm, -dx/nrm)
+        mx, my = (hx1+hx2)/2, (hy1+hy2)/2
+        ax_xy.annotate('', xy=(mx+nx*0.2, my+ny*0.2), xytext=(mx, my),
+                       arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.3))
+        if x_active is not None:
+            ax_xy.text(mx, my, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=5,
+                       color='saddlebrown', ha='center', va='bottom')
+    for obs in obstacle_list:
+        ax_xy.add_patch(_mpa.Circle((float(obs['center'][0]), float(obs['center'][1])),
+                                     obs['radius']+margin, lw=1.5, edgecolor='tomato',
+                                     facecolor='tomato', alpha=0.2, label='obstacle (enforced)'))
+        ax_xy.plot(float(obs['center'][0]), float(obs['center'][1]), 'r+', ms=6)
+    ax_xy.set_xlim(*_xlim()); ax_xy.set_ylim(*_ylim())
+    _handles, _labels = ax_xy.get_legend_handles_labels()
+    if _handles:
+        _seen = dict(zip(_labels, _handles))
+        ax_xy.legend(_seen.values(), _seen.keys(), fontsize=6, loc='upper right')
+
+    # ── XZ side panel ────────────────────────────────────────────────────────
+    ax_xz = fig.add_subplot(133)
+    ax_xz.set_title('XZ side (y projected)', fontsize=9)
+    ax_xz.set_xlabel('x (m)', fontsize=7); ax_xz.set_ylabel('z (m)', fontsize=7)
+    ax_xz.grid(True, linestyle='--', alpha=0.4); ax_xz.tick_params(labelsize=6)
+    if lb_d is not None:
+        ax_xz.add_patch(_mpa.Rectangle((lb_d[0], lb_d[2]), ub_d[0]-lb_d[0], ub_d[2]-lb_d[2],
+                                        lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12))
+        ax_xz.axhline(lb_d[2], color='steelblue', ls='--', lw=0.9, alpha=0.7, label=f'floor z={lb_d[2]:.2f} m')
+        ax_xz.axhline(ub_d[2], color='steelblue', ls='--', lw=0.9, alpha=0.7, label=f'ceiling z={ub_d[2]:.2f} m')
+        ax_xz.legend(fontsize=6, loc='upper right')
+    else:
+        ax_xz.text(0.5, 0.5, 'no bounds', ha='center', va='center', transform=ax_xz.transAxes,
+                   fontsize=9, color='gray')
+    for obs in obstacle_list:
+        cz_mid = (lb_d[2]+ub_d[2])/2 if lb_d is not None else 1.0
+        ax_xz.add_patch(_mpa.Circle((float(obs['center'][0]), cz_mid), obs['radius']+margin,
+                                     lw=1.2, edgecolor='tomato', facecolor='tomato',
+                                     alpha=0.25, linestyle='--'))
+    for hs in halfspace_list:
+        (hx1, hy1), (hx2, hy2), side, x_active = _wall_xy(hs)
+        xb_lo, xb_hi = sorted((hx1, hx2))
+        ax_xz.axvspan(xb_lo, xb_hi, color='darkorange', alpha=0.13, zorder=1)
+        ax_xz.axvline(xb_lo, color='darkorange', lw=1.0, ls='--', alpha=0.8, zorder=2)
+        ax_xz.axvline(xb_hi, color='darkorange', lw=1.0, ls='--', alpha=0.8, zorder=2)
+    ax_xz.set_xlim(*_xlim()); ax_xz.set_ylim(*_zlim())
+
+    if 'dynamics' in ctypes:
+        fig.text(0.5, 0.01, 'Dynamics: p_des[t+1]=p_des[t]+act[t], p[t+1]=p[t]+act[t]  '
+                 '(Euler link — no geometric shape)', ha='center', fontsize=7,
+                 color='dimgray', style='italic')
+
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+    fig.savefig(out_png, dpi=120, bbox_inches='tight')
+    fig.savefig(out_svg, bbox_inches='tight')
+    plt.close(fig)
+    print(f'[ geo ] Constraint overview → {out_png} (+ .svg)')
+
+
 def _normalize_halfspace(hs):
     """E9: accept both halfspace formats and return (constraint_triple, x_active).
       - list form  [[x1,y1], [x2,y2], 'side']                     → x_active=None (always live)
@@ -600,7 +791,13 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
 
         if renderer is not None and (k % frame_stride == 0):
             try:
-                frames.append(_render_overhead(mujoco, model, data, renderer))
+                frame = _render_overhead(mujoco, model, data, renderer)
+                # U2b: GIF step-count overlay ('sK', top-left) — ported from visual-aligning's
+                # Aligning_Sim.capture_frame (`cv2.putText(frame, f's{self.step_counter}', ...)`),
+                # which the UAV GIFs were missing entirely. Same style: yellow, top-left, FONT_HERSHEY_PLAIN.
+                import cv2
+                cv2.putText(frame, f's{k}', (5, 18), cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 0), 1)
+                frames.append(frame)
             except Exception as exc:                       # pragma: no cover
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
                 renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
@@ -776,6 +973,23 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     out_dir     = os.path.join(geo_dir, variant)
     diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
+
+    # E9 U2: constraint-geometry schematic (constraint_overview.png + .svg), mirroring
+    # visual-aligning's `plot_geo_constraints` call site — once per geo_dir, before any
+    # trajectory rollouts. `plot_geo_constraints` itself is idempotent (skips once both
+    # files exist), so it's safe to call once per (base, tightened) margin encountered.
+    # UAV's `-tightened` is a per-variant margin modifier sharing this geo_dir with its base
+    # sibling (not a separate named geo entry as in visual-aligning) — so the base and
+    # tightened schematics get distinct filenames in the SAME folder (see docstring).
+    _variants = config['projection_variants']
+    _is_this_tightened = 'tightened' in variant
+    _first_of_kind = variant == next(
+        (v for v in _variants if ('tightened' in v) == _is_this_tightened), variant)
+    if _first_of_kind:
+        os.makedirs(geo_dir, exist_ok=True)
+        _basename = 'constraint_overview_tightened' if _is_this_tightened else 'constraint_overview'
+        plot_geo_constraints(config.get('geo_tag', scene), config, geo_dir,
+                             is_tightened=_is_this_tightened, basename=_basename)
 
     # Write config snapshot at the eval-tag-aware seed dir (once, on first variant/geo_tag).
     # setup.py's mkdir() no longer auto-snapshots during eval (save=False path); we do it here
