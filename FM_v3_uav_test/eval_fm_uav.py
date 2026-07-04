@@ -167,6 +167,15 @@ def load_pcc_config(scene, seed):
     elif _geo_variants:
         print(f"[ eval ] E9: scene '{scene}' not in active geo variants → dynamics-only fallback")
 
+    # E9 fix1: `geo_tag` — a second, swappable output-path axis mirroring the old avoiding-task
+    # `results/halfspace_<halfspace_variant>/` folder level. Encodes WHICH geometry/constraint
+    # combo produced a run (resolved geo entry name + its actually-active constraint_types),
+    # so re-running the same scene under a different constraint_types subset (e.g. an ablation
+    # like obstacles-only vs the full stack) lands in a DIFFERENT folder instead of overwriting
+    # the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
+    _ctypes = cfg.get('constraint_types') or []
+    cfg['geo_tag'] = f'{scene}_unconstrained' if not _ctypes else f"{scene}_{'+'.join(sorted(_ctypes))}"
+
     # ── 2. Eval control params from plan_flow_matching_v3_uav block ──────────
     class PlanParser(utils.Parser):
         dataset: str = 'uav'
@@ -753,19 +762,25 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                 dataset.normalizer.normalizers['actions'],
                 variant, trajectory_dim=_tdim, current_x=current_x)
 
-    # Path: scene_root / plans / <model_exp_noseed> / <eval_params> / <seed> / <variant> /
+    # Path: scene_root / plans / <model_exp_noseed> / <eval_params> / <seed> / <geo_tag> / <variant> /
     # savepath = scene_root / flow_matching_v3_uav / H8_...9D / <seed>
+    # E9 fix1: `<geo_tag>` restores the old avoiding-task `results/halfspace_<variant>/` path
+    # level — a second, swappable axis (which geometry/constraint-combo produced this run)
+    # alongside the projection `<variant>` folder. Without it, two runs of the SAME scene under
+    # different constraint_types (e.g. an ablation subset) would collide in one output folder.
     scene_root  = os.path.join(parsed.logbase, parsed.dataset)
     _model_dir  = os.path.relpath(os.path.dirname(parsed.savepath), scene_root)  # strip seed
     _seed_str   = os.path.basename(parsed.savepath)
     seed_dir    = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str)
-    out_dir     = os.path.join(seed_dir, variant)
+    geo_dir     = os.path.join(seed_dir, config.get('geo_tag', scene))
+    out_dir     = os.path.join(geo_dir, variant)
     diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
 
-    # Write config snapshot at the correct eval-tag-aware seed dir (once, on first variant).
+    # Write config snapshot at the eval-tag-aware seed dir (once, on first variant/geo_tag).
     # setup.py's mkdir() no longer auto-snapshots during eval (save=False path); we do it here
-    # where eval_params_dir is known, so the snapshot lands next to the variant subdirs.
+    # where eval_params_dir is known. Kept ABOVE geo_dir (model/eval-param snapshot, not
+    # geometry-specific) so it's written once per seed regardless of how many geo_tags run.
     _snap_dir = os.path.join(seed_dir, f'config_snapshot_{parsed.config.split(".")[-1]}')
     if not os.path.exists(_snap_dir):
         import types as _t
