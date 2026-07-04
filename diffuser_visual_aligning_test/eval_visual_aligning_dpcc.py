@@ -86,6 +86,18 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     Non-visual (23D): same first 9 dims + obs_20D trailing dims (9-22, unconstrained).
 
     trajectory_dim=9 for visual, 23 for non-visual (UF-17).
+
+    Patch_Constraints_C3 (dangerous rename — see logs_in_develop/Gen7_FMPCC_Viusal_Aligning/
+    Patch_Constraints_C3/; this file is Gen6V4's live eval script, sharing
+    config/visual_aligning_eval.yaml with fm_visual_aligning_test/eval_fm_visual_aligning.py,
+    so it carries the identical fix): 'bounds' and the geo/workspace box used to be the SAME
+    constraint_types flag, silently dropping DPCC-avoiding's action-magnitude guard. Split:
+      - 'geo_bounds' → the Cartesian workspace box on ACTUAL position (dims 6,7,8), reading
+        `config['workspace_bounds']`. This is what 'bounds' used to mean here.
+      - 'bounds' → RESTORED to its true DPCC meaning: an action-magnitude limit on dims
+        0,1,2 (dx,dy,dz). SELF-DERIVED from `act_normalizer.mins/.maxs` by default (this
+        dataset's own observed action range), settable via `config['action_bounds']`:
+        `'auto'` (default) / explicit `{lb,ub}` / `null`.
     """
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
             'x': 6, 'y': 7, 'z': 8}
@@ -106,7 +118,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     pad = trajectory_dim - 9
     constraint_list = []
 
-    if 'bounds' in config.get('constraint_types', []):
+    if 'geo_bounds' in config.get('constraint_types', []):
         tightening = config.get('enlarge_constraints') or 0.0
         ws_lb = np.array(config['workspace_bounds']['lb'])
         ws_ub = np.array(config['workspace_bounds']['ub'])
@@ -117,6 +129,25 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         ub = np.concatenate([np.full(6,  np.inf), ws_ub, np.full(pad,  np.inf)])
         constraint_list.append(['lb', lb])
         constraint_list.append(['ub', ub])
+
+    if 'bounds' in config.get('constraint_types', []):
+        # RESTORED DPCC action-magnitude bound (dims 0,1,2 = dx,dy,dz) — see docstring.
+        # NOT tightened by `enlarge_constraints`: it's a dataset-range cap, not a spatial
+        # surface (only geo_bounds/halfspace/obstacles get the tightening margin).
+        ab = config.get('action_bounds', 'auto')
+        if ab == 'auto':
+            a_lb = np.asarray(act_normalizer.mins, dtype=float)
+            a_ub = np.asarray(act_normalizer.maxs, dtype=float)
+        elif ab is not None:
+            a_lb = np.array(ab['lb'], dtype=float)
+            a_ub = np.array(ab['ub'], dtype=float)
+        else:
+            a_lb = a_ub = None
+        if a_lb is not None:
+            lb = np.concatenate([a_lb, np.full(trajectory_dim - 3, -np.inf)])
+            ub = np.concatenate([a_ub, np.full(trajectory_dim - 3,  np.inf)])
+            constraint_list.append(['lb', lb])
+            constraint_list.append(['ub', ub])
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
         # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
@@ -261,7 +292,7 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
     enlarge = (geo_config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
 
     # ── Workspace bounds (tighten + clamp inf for display) ───────────────────
-    has_bounds = 'bounds' in constraint_types
+    has_bounds = 'geo_bounds' in constraint_types
     ws_lb = ws_ub = lb_d = ub_d = None
     _Z_DISP = (0.0, 0.50)   # default z display when z is unconstrained (±inf)
     if has_bounds and 'workspace_bounds' in geo_config:
@@ -369,7 +400,7 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
     if lb_d is not None:
         ax_xy.add_patch(_mpa.Rectangle(
             (lb_d[0], lb_d[1]), ub_d[0]-lb_d[0], ub_d[1]-lb_d[1],
-            lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12, label='bounds'))
+            lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12, label='geo bounds'))
     else:
         ax_xy.text(0.5, 0.5, 'no bounds', ha='center', va='center',
                    transform=ax_xy.transAxes, fontsize=9, color='gray')
@@ -507,7 +538,7 @@ def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
     ob_margin = np.full(T, np.inf)
 
     # ── Bounds ────────────────────────────────────────────────────────────────
-    if 'bounds' in ct and 'workspace_bounds' in geo_config:
+    if 'geo_bounds' in ct and 'workspace_bounds' in geo_config:
         wb = geo_config['workspace_bounds']
         lb = np.where(np.isinf(np.array(wb['lb'], dtype=float)), -1e9,
                       np.array(wb['lb'], dtype=float)) + enlarge
@@ -559,7 +590,7 @@ def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
 
     # ── Constraint margin (mean min-distance to boundary at non-violated steps)
     m_all = np.full(T, np.inf)
-    if 'bounds'    in ct: m_all = np.minimum(m_all, b_margin)
+    if 'geo_bounds' in ct: m_all = np.minimum(m_all, b_margin)
     if 'halfspace' in ct: m_all = np.minimum(m_all, hs_margin)
     if 'obstacles' in ct: m_all = np.minimum(m_all, ob_margin)
     valid_m   = m_all[(~any_viol) & np.isfinite(m_all)]
@@ -616,7 +647,7 @@ def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
     viol  = np.zeros(B * H, dtype=bool)
     _DIM  = {'x': 0, 'y': 1, 'z': 2}
 
-    if 'bounds' in ct and 'workspace_bounds' in geo_config:
+    if 'geo_bounds' in ct and 'workspace_bounds' in geo_config:
         wb = geo_config['workspace_bounds']
         lb = np.where(np.isinf(np.array(wb['lb'], dtype=float)), -1e9,
                       np.array(wb['lb'], dtype=float)) + enlarge
@@ -1245,7 +1276,7 @@ class VisualAgentWrapper:
                     import matplotlib.patches as _mpa_uf15
                     for _cl_e, _cl_dash in _c_layers:
                         _cl_ls = '--' if _cl_dash else '-'
-                        if 'bounds' in _ct and 'workspace_bounds' in _gc:
+                        if 'geo_bounds' in _ct and 'workspace_bounds' in _gc:
                             _wb    = _gc['workspace_bounds']
                             _lb_xy = np.array(_wb['lb'][:2], dtype=float) + _cl_e
                             _ub_xy = np.array(_wb['ub'][:2], dtype=float) - _cl_e
@@ -1304,7 +1335,7 @@ class VisualAgentWrapper:
 
                 # UF-15.2 / UF-16: workspace box wireframe on 3D panel
                 # For tightened variants: solid nominal box + dashed inner planning box
-                if _gc and 'bounds' in _ct and 'workspace_bounds' in _gc:
+                if _gc and 'geo_bounds' in _ct and 'workspace_bounds' in _gc:
                     for _cl_e, _cl_dash in _c_layers:
                         _wb  = _gc['workspace_bounds']
                         _x0, _y0, _z0 = np.array(_wb['lb'], dtype=float) + _cl_e
@@ -1827,7 +1858,7 @@ if __name__ == '__main__':
         # loop body needs no indentation change.
         _geo_specs = config.get('geo_constraint_variants', [
             {'name': 'combined_2',
-             'constraint_types': config.get('constraint_types', ['bounds', 'dynamics']),
+             'constraint_types': config.get('constraint_types', ['geo_bounds', 'dynamics']),
              'workspace_bounds': {'lb': [0.30, -0.35, 0.05], 'ub': [0.70, 0.35, 0.40]}}
         ])
         # enlarge_constraints: None when yaml sets null → no tightened twin generated
@@ -1845,7 +1876,7 @@ if __name__ == '__main__':
             if 'workspace_bounds'      in _gs: _gc['workspace_bounds']      = _gs['workspace_bounds']
             if 'obstacle_constraints'  in _gs: _gc['obstacle_constraints']  = _gs['obstacle_constraints']
             if 'halfspace_constraints' in _gs: _gc['halfspace_constraints'] = _gs['halfspace_constraints']
-            _has_geo = any(t in _gc['constraint_types'] for t in ('bounds', 'halfspace', 'obstacles'))
+            _has_geo = any(t in _gc['constraint_types'] for t in ('geo_bounds', 'halfspace', 'obstacles'))
             for _v in projection_variants:
                 _run_items.append((_gs['name'], _gc, _v, False))
             # auto-generate tightened twin for entries with bounds/obstacles

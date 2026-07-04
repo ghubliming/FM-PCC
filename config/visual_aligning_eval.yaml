@@ -34,7 +34,10 @@ seeds: [6]
 # action_indices: {
 #   'avoiding': {'vx': 0, 'vy': 1},
 # } # NOT IN USE: Same reason — action dims 0-2 are hardcoded in setup_dpcc_projector().
-#   # workspace_bounds (below) replaces the old 'bounds' dict for Cartesian safety limits.
+#   # workspace_bounds (below) is the Cartesian safety-limits box, gated by 'geo_bounds' in
+#   # constraint_types (Patch_Constraints_C3) — NOT 'bounds'. 'bounds' was restored to DPCC's
+#   # true meaning: an action-magnitude limit (see action_bounds below), which this eval had
+#   # silently dropped when it repurposed the 'bounds' name for the position box.
 # -----------------------------------------------------------------------------
 
 # D3IL simulation parameters
@@ -95,7 +98,11 @@ projection_variants: [
 #   'avoiding-d3il': [
 #     {'type': 'lower', 'dimensions': ['vx', 'vy'], 'values': [-0.01, 0]},
 #   ],
-# } # NOT NEEDED: Replaced by 'workspace_bounds' below, which enforces safe physical Cartesian ranges.
+# } # Patch_Constraints_C3: this avoiding-task action-magnitude bound is NOT superseded by
+#   # 'workspace_bounds' (that's an orthogonal Cartesian POSITION box, gated by 'geo_bounds').
+#   # RESTORED below as `action_bounds` — self-derived from this dataset's own action range
+#   # by default ('auto'), not copied from avoiding's hardcoded ['vx','vy'] values (wrong
+#   # scale/robot/speed for this task — see action_bounds comment below).
 #
 # plot_how_many: 10
 # ax_limits: {
@@ -111,10 +118,12 @@ projection_variants: [
 # enlarge_constraints: tightening margin δ (metres) for the auto-generated tightened twin.
 #
 #   PLANNING (projector) — uses δ, makes constraints HARDER:
-#     Bounds:    ws_lb += δ, ws_ub -= δ     → smaller workspace box
-#     Obstacles: radius += δ                → larger exclusion sphere
-#     Halfspace: boundary shifts +δ·n inward → less usable xy area
-#     Dynamics:  unchanged (equality constraint, no boundary to move)
+#     Geo bounds: ws_lb += δ, ws_ub -= δ    → smaller workspace box
+#     Obstacles:  radius += δ               → larger exclusion sphere
+#     Halfspace:  boundary shifts +δ·n inward → less usable xy area
+#     Dynamics:   unchanged (equality constraint, no boundary to move)
+#     Action bounds ('bounds'): UNCHANGED by δ — it's a dataset-range action-magnitude
+#       cap, not a spatial surface, so tightening doesn't apply to it (Patch_Constraints_C3).
 #
 #   EXECUTION METRICS — always checked against NOMINAL (δ=0) for all variants.
 #     This matches the original DPCC paper convention so that nominal vs tightened
@@ -123,10 +132,22 @@ projection_variants: [
 #     boundary, absorbing execution noise up to δ metres.
 #
 #   Non-null → geo loop auto-generates a '{geo_name}-tightened' sibling run for every
-#   active geo entry whose constraint_types includes 'bounds', 'obstacles', or 'halfspace'.
-#   dynamics_only and no_constraint entries are unaffected.
+#   active geo entry whose constraint_types includes 'geo_bounds', 'obstacles', or 'halfspace'.
+#   dynamics_only, action_bounds_only, and no_constraint entries are unaffected.
 #   null → tightening disabled; no -tightened folders are created.
 enlarge_constraints: 0.03
+
+# ── Action-magnitude bound (Patch_Constraints_C3) ─────────────────────────────
+# RESTORED DPCC 'bounds' semantics — a limit on the ACTION dims (0,1,2 = dx,dy,dz), distinct
+# from the Cartesian position box ('geo_bounds'/`workspace_bounds` below). DPCC-avoiding had
+# this (hardcoded on ['vx','vy']); this eval had silently dropped it when 'bounds' got
+# repurposed for the position box (see Patch_Constraints_C3/PROBLEM_bounds_velocity_vs_geo.md).
+#   'auto' (DEFAULT, RECOMMENDED) — self-derives lb/ub from act_normalizer.mins/.maxs (this
+#     dataset's own observed action range, fit at eval load time). Copying avoiding's NUMBER
+#     would be wrong (different robot/scale/speed); 'auto' reuses the SAME METHOD instead.
+#   {lb: [.,.,.], ub: [.,.,.]} — explicit override.
+#   null — disables the action-magnitude bound entirely.
+action_bounds: 'auto'
 
 # ── Which geo entries to run ──────────────────────────────────────────────────
 # Change this list to select which named entries from geo_constraint_variants below
@@ -135,7 +156,10 @@ enlarge_constraints: 0.03
 #
 # All available entries (defined below — add any to the list to run it):
 #   no_constraint | dynamics_only
-#   bounds_only_1 | bounds_only_2
+#   geo_bounds_only_1 | geo_bounds_only_2   (renamed from bounds_only_1/2, Patch_Constraints_C3
+#                                            — these ablate the POSITION box, not action limits)
+#   action_bounds_only                       (NEW, Patch_Constraints_C3 — ablates the restored
+#                                            DPCC action-magnitude 'bounds' in isolation)
 #   obstacle_only_1 | obstacle_only_2   ← PLACEHOLDER geometry, tune before real use
 #   halfspace_only_1
 #   combined_1 | combined_2 | combined_3 | combined_4 | combined_5
@@ -181,7 +205,7 @@ geo_constraint_variants:
   - name: dynamics_only
     constraint_types: ['dynamics']
 
-  # ── bounds only ───────────────────────────────────────────────────────────
+  # ── geo bounds only (renamed from bounds_only_1/2, Patch_Constraints_C3) ──────
   # Workspace box on EE position (dims 6-8).  No kinematic link.
   # 2D vs 3D: '2D' means only x-y are bounded; z = -.inf/+.inf (unconstrained).
   #           '3D' extends the box to include z (floor + ceiling).
@@ -197,18 +221,25 @@ geo_constraint_variants:
   #     z: 0.05–0.40 m — 0.05 m floor prevents table collision;
   #                       0.40 m ceiling stops upward EE escape during push
   #   Effect: DPCC projector clips c_pos waypoints (dims 6-8) to this box.
-  #   If projection is too aggressive (robot stalls), widen lb/ub or disable 'bounds'.
-  - name: bounds_only_1
-    constraint_types: ['bounds']
+  #   If projection is too aggressive (robot stalls), widen lb/ub or disable 'geo_bounds'.
+  - name: geo_bounds_only_1
+    constraint_types: ['geo_bounds']
     workspace_bounds:
       lb: [0.30, -0.35,  -.inf]  # 2D: x-y constrained, z unconstrained
       ub: [0.70,  0.35,   .inf]
 
-  - name: bounds_only_2
-    constraint_types: ['bounds']
+  - name: geo_bounds_only_2
+    constraint_types: ['geo_bounds']
     workspace_bounds:
       lb: [0.30, -0.35, 0.05]   # 3D: x-y-z all constrained (floor=0.05, ceiling=0.40)
       ub: [0.70,  0.35, 0.40]
+
+  # ── action bounds only (NEW, Patch_Constraints_C3) ────────────────────────────
+  # The RESTORED DPCC action-magnitude limit in isolation — no geo box, no kinematic link.
+  # No geometry to declare here: lb/ub come from `action_bounds` ('auto' by default),
+  # applied to the action dims (0,1,2) regardless of this entry's own fields.
+  - name: action_bounds_only
+    constraint_types: ['bounds']
 
   # ── obstacle only ─────────────────────────────────────────────────────────
   # Sphere exclusion zone only, no other constraints.
@@ -275,18 +306,21 @@ geo_constraint_variants:
         center: [0.50, 0.00]   # PLACEHOLDER
         radius: 0.06           # PLACEHOLDER
 
-  # combined_2: dynamics + bounds  [defined; not currently active — see active_geo_variants]
-  # Uses 3D bounds (x-y-z all constrained) intentionally — the combination config
-  # is the full physical model; ablation (bounds_only_1) uses 2D.
+  # combined_2: dynamics + geo_bounds  [defined; not currently active — see active_geo_variants]
+  # Uses 3D geo bounds (x-y-z all constrained) intentionally — the combination config
+  # is the full physical model; ablation (geo_bounds_only_1) uses 2D.
+  # (renamed 'bounds'→'geo_bounds', Patch_Constraints_C3 — this entry never claimed to be the
+  # full DPCC set, so no action-bounds restoration needed here.)
   - name: combined_2
-    constraint_types: ['dynamics', 'bounds']
+    constraint_types: ['dynamics', 'geo_bounds']
     workspace_bounds:
       lb: [0.30, -0.35, 0.05]   # 3D: floor=0.05 prevents table collision
       ub: [0.70,  0.35, 0.40]   # 3D: ceiling=0.40 stops upward EE escape
 
-  # combined_3: dynamics + bounds + obstacle  [PLACEHOLDER obstacle geometry — tune before real use]
+  # combined_3: dynamics + geo_bounds + obstacle  [PLACEHOLDER obstacle geometry — tune before real use]
+  # (renamed 'bounds'→'geo_bounds', Patch_Constraints_C3)
   - name: combined_3
-    constraint_types: ['dynamics', 'bounds', 'obstacles']
+    constraint_types: ['dynamics', 'geo_bounds', 'obstacles']
     workspace_bounds:
       lb: [0.30, -0.35, 0.05]
       ub: [0.70,  0.35, 0.40]
@@ -296,13 +330,18 @@ geo_constraint_variants:
         center: [0.50, 0.00]   # PLACEHOLDER
         radius: 0.06           # PLACEHOLDER
 
-  # combined_4: dynamics + bounds + halfspace + obstacles  [defined; not currently active — see active_geo_variants]
+  # combined_4: dynamics + geo_bounds + halfspace + obstacles + bounds  [defined; not currently
+  # active — see active_geo_variants]
   # Full DPCC constraint set (matches avoiding paper: ['halfspace','obstacles','dynamics','bounds']).
-  # Uses RELAXED bounds and halfspace for debug/test (UF-16.1); obstacle geometry is still PLACEHOLDER.
-  # Swap to nominal bounds/halfspace once scene geometry is confirmed (commented originals below).
+  # Patch_Constraints_C3: 'bounds' RESTORED alongside the renamed 'geo_bounds' — this entry
+  # claims to be the full DPCC set, so it must carry the action-magnitude limit DPCC actually
+  # had (self-derived via `action_bounds: 'auto'`, not the position box alone).
+  # Uses RELAXED geo_bounds and halfspace for debug/test (UF-16.1); obstacle geometry is still
+  # PLACEHOLDER. Swap to nominal bounds/halfspace once scene geometry is confirmed (commented
+  # originals below).
   - name: combined_4
-    constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
-    # ── bounds: relaxed for test purpose (wider box, more room for EE) ─────────
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    # ── geo_bounds: relaxed for test purpose (wider box, more room for EE) ─────
     workspace_bounds:
       lb: [0.20, -0.45, 0.02]   # relaxed: ±0.10 wider in x, ±0.10 wider in y, z floor lowered
       ub: [0.80,  0.45, 0.50]   # relaxed: ceiling raised to 0.50
@@ -320,14 +359,17 @@ geo_constraint_variants:
         center: [0.50, 0.00]   # tune to measured obstacle position
         radius: 0.06
 
-  # combined_5: dynamics + bounds + halfspace + obstacles  [CURRENTLY ACTIVE — see active_geo_variants]
+  # combined_5: dynamics + geo_bounds + halfspace + obstacles + bounds  [CURRENTLY ACTIVE — see
+  # active_geo_variants]
   # Same constraint set as combined_4 but with a '\'-shaped halfspace on the right side of the workspace.
   # The halfspace line (top-left → bottom-right) cuts off the upper-right region, keeping the EE
   # to the left/lower side — simulates a diagonal wall on the right.
-  # Bounds and obstacle geometry identical to combined_4 (relaxed bounds, PLACEHOLDER obstacle).
+  # Geo bounds and obstacle geometry identical to combined_4 (relaxed bounds, PLACEHOLDER obstacle).
+  # Patch_Constraints_C3: 'bounds' RESTORED here too (this is the CURRENTLY ACTIVE entry) — the
+  # action-magnitude guard DPCC had is back, self-derived via `action_bounds: 'auto'` above.
   - name: combined_5
-    constraint_types: ['dynamics', 'bounds', 'halfspace', 'obstacles']
-    # ── bounds: kept identical to combined_4 ───────────────────────────────────
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    # ── geo_bounds: kept identical to combined_4 ───────────────────────────────
     workspace_bounds:
       lb: [0.20, -0.45, 0.02]
       ub: [0.80,  0.45, 0.50]
