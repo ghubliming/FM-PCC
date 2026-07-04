@@ -2,22 +2,53 @@ import numpy as np
 import matplotlib
 
 def formulate_halfspace_constraints(constraint, enlarge_constraints, trajectory_dim, act_obs_indices):
-    m = (constraint[1][1] - constraint[0][1]) / (constraint[1][0] - constraint[0][0])
-    n = [-1, 1/m] / np.linalg.norm([-1, 1/m])
-    if (m > 0 and constraint[2] == 'below') or (m < 0 and constraint[2] == 'above'):
-        n *= -1
-    points_enlarged = [constraint[0] + enlarge_constraints * n, constraint[1] + enlarge_constraints * n]
-    d = points_enlarged[0][1] - m * points_enlarged[0][0]
-    # d = constraint[0][1] - m * constraint[0][0]
+    # E9 robustness fix: the original slope-based formulation divides by the slope
+    # (`n = [-1, 1/m]`), so it blows up for a horizontal wall (m = 0, e.g. the UAV corridor
+    # walls that run along x) and is undefined for a vertical wall (dx = 0, m = inf).
+    # The SLOPED branch below is byte-identical to the original for every non-degenerate line
+    # (dx != 0 and dy != 0) — i.e. all avoiding-task / arm inputs are unaffected. Two extra
+    # branches handle the axis-aligned degenerate walls the UAV scenes introduce. The
+    # horizontal branch equals the m->0 limit of the sloped formula (verified by hand); the
+    # vertical branch defines 'above' = larger-x feasible, 'below' = smaller-x feasible.
+    p0 = np.asarray(constraint[0], dtype=float)
+    p1 = np.asarray(constraint[1], dtype=float)
+    side = constraint[2]
+    ix, iy = act_obs_indices['x'], act_obs_indices['y']
+    dx = p1[0] - p0[0]
+    dy = p1[1] - p0[1]
     C_row = np.zeros(trajectory_dim)
-    if constraint[2] == 'below':
-        C_row[act_obs_indices['x']] = -m
-        C_row[act_obs_indices['y']] = 1
-    elif constraint[2] == 'above':
-        C_row[act_obs_indices['x']] = m
-        C_row[act_obs_indices['y']] = -1
-        d *= -1
-    return C_row, d
+
+    if dx != 0.0 and dy != 0.0:
+        # ── ORIGINAL sloped path — unchanged output for all existing (arm) inputs ──
+        m = dy / dx
+        n = np.array([-1.0, 1.0 / m]); n = n / np.linalg.norm(n)
+        if (m > 0 and side == 'below') or (m < 0 and side == 'above'):
+            n = -n
+        p0e = p0 + enlarge_constraints * n
+        d = p0e[1] - m * p0e[0]
+        if side == 'below':
+            C_row[ix] = -m; C_row[iy] = 1.0
+        elif side == 'above':
+            C_row[ix] = m;  C_row[iy] = -1.0; d = -d
+        return C_row, d
+
+    if dy == 0.0 and dx != 0.0:
+        # ── horizontal wall (m = 0): feasible +y ('above') / -y ('below'); tighten shrinks ──
+        if side == 'above':
+            C_row[iy] = -1.0; d = -(p0[1] + enlarge_constraints)
+        else:                                    # 'below'
+            C_row[iy] =  1.0; d =  (p0[1] - enlarge_constraints)
+        return C_row, d
+
+    if dx == 0.0 and dy != 0.0:
+        # ── vertical wall (m = inf): feasible +x ('above') / -x ('below'); tighten shrinks ──
+        if side == 'above':
+            C_row[ix] = -1.0; d = -(p0[0] + enlarge_constraints)
+        else:                                    # 'below'
+            C_row[ix] =  1.0; d =  (p0[0] - enlarge_constraints)
+        return C_row, d
+
+    raise ValueError(f'degenerate halfspace constraint: p0 == p1 ({p0.tolist()})')
 
 def formulate_bounds_constraints(constraint_types, bounds, trajectory_dim, act_obs_indices):
     lower_bound = -np.inf * np.ones(trajectory_dim)

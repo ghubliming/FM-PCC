@@ -146,6 +146,26 @@ def load_pcc_config(scene, seed):
     cfg.setdefault('workspace_bounds', None)
     cfg.setdefault('halfspace_constraints', [])
     cfg.setdefault('obstacle_constraints', [])
+    cfg.setdefault('inflation', {'r_drone': 0.0, 'margin_base': 0.0})
+    cfg.setdefault('action_bounds', None)
+
+    # ── E9: resolve per-scene geometry (visual-aligning geo_constraint_variants pattern) ──
+    # The entry whose `name` == scene overwrites constraint_types + geometry. `active_geo_variants`
+    # gates which scenes run PCC at all (a scene absent from it → globals/fallback = dynamics-only).
+    # Activation (which families fire) lives entirely in the yaml, exactly like visual-aligning.
+    _geo_variants = {g['name']: g for g in (cfg.get('geo_constraint_variants') or []) if 'name' in g}
+    _active = cfg.get('active_geo_variants')
+    if scene in _geo_variants and (_active is None or scene in _active):
+        _entry = _geo_variants[scene]
+        cfg['constraint_types']      = list(_entry.get('constraint_types', cfg['constraint_types']))
+        cfg['workspace_bounds']      = _entry.get('workspace_bounds', None)
+        cfg['halfspace_constraints'] = _entry.get('halfspace_constraints', [])
+        cfg['obstacle_constraints']  = _entry.get('obstacle_constraints', [])
+        print(f"[ eval ] E9 geo '{scene}': constraint_types={cfg['constraint_types']} "
+              f"(bounds={cfg['workspace_bounds'] is not None}, "
+              f"hs={len(cfg['halfspace_constraints'])}, obs={len(cfg['obstacle_constraints'])})")
+    elif _geo_variants:
+        print(f"[ eval ] E9: scene '{scene}' not in active geo variants → dynamics-only fallback")
 
     # ── 2. Eval control params from plan_flow_matching_v3_uav block ──────────
     class PlanParser(utils.Parser):
@@ -184,18 +204,95 @@ class ProjectorNormalizer:
         self.normalizers = {'observations': obs_normalizer, 'actions': act_normalizer}
 
 
-def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, trajectory_dim=12):
+def _exec_constraint_violations(obs_traj, config):
+    """E9 exec-time violation metrics: check the FLOWN path against the RAW geometry ⊕ r_drone
+    (physical collision truth — NOT the planning margin, which includes margin_base + enlarge).
+
+    obs layout is [p_des | p | (v)] in both cond_modes → actual position p is cols 3:6.
+    Returns (collision_free: bool, n_violations: int, total_violations: float).
+    A step counts once toward n_violations if it violates ANY active spatial family; the
+    magnitude sum accumulates every family's penetration depth (metres).
+    """
+    ctypes = config.get('constraint_types', []) or []
+    spatial = {'bounds', 'halfspace', 'obstacles'} & set(ctypes)
+    if not spatial or not obs_traj:
+        return True, 0, 0.0
+    P = np.asarray(obs_traj, dtype=float)[:, 3:6]          # executed p, (T,3)
+    r_drone = float((config.get('inflation') or {}).get('r_drone', 0.0))
+
+    n_steps_viol = 0
+    total = 0.0
+    ws = config.get('workspace_bounds')
+    halfspaces = config.get('halfspace_constraints', []) if 'halfspace' in spatial else []
+    obstacles  = config.get('obstacle_constraints', [])  if 'obstacles'  in spatial else []
+    for p in P:
+        step_pen = 0.0
+        if 'bounds' in spatial and ws is not None:
+            lb = np.array(ws['lb'], dtype=float); ub = np.array(ws['ub'], dtype=float)
+            # physical box is raw lb/ub; body clears when p ∈ [lb+r, ub-r]
+            below = (lb + r_drone) - p; above = p - (ub - r_drone)
+            step_pen += float(np.clip(below, 0, None)[np.isfinite(lb)].sum())
+            step_pen += float(np.clip(above, 0, None)[np.isfinite(ub)].sum())
+        for hs in halfspaces:
+            triple, x_active = _normalize_halfspace(hs)
+            if x_active is not None and not (x_active[0] <= p[0] <= x_active[1]):
+                continue                                    # wall not live at this x
+            (x1, y1), (x2, y2), side = triple[0], triple[1], triple[2]
+            dx, dy = x2 - x1, y2 - y1
+            nrm = np.hypot(dx, dy)
+            if nrm < 1e-9:
+                continue
+            nx, ny = (-dy / nrm, dx / nrm)                  # left normal of the segment
+            signed = nx * (p[0] - x1) + ny * (p[1] - y1)    # + on the 'above'/left side
+            feasible = signed if side == 'above' else -signed
+            step_pen += max(0.0, r_drone - feasible)        # clear when feasible >= r_drone
+        for ob in obstacles:
+            dims = ob['dimensions']; c = ob['center']
+            didx = [{'x': 0, 'y': 1, 'z': 2}[d] if isinstance(d, str) else int(d) for d in dims]
+            dist = float(np.linalg.norm(p[didx] - np.asarray(c, dtype=float)))
+            if ob['type'] == 'sphere_outside':
+                step_pen += max(0.0, (ob['radius'] + r_drone) - dist)
+            else:                                            # sphere_inside
+                step_pen += max(0.0, dist - (ob['radius'] - r_drone))
+        if step_pen > 1e-9:
+            n_steps_viol += 1
+            total += step_pen
+    return (n_steps_viol == 0), int(n_steps_viol), float(total)
+
+
+def _normalize_halfspace(hs):
+    """E9: accept both halfspace formats and return (constraint_triple, x_active).
+      - list form  [[x1,y1], [x2,y2], 'side']                     → x_active=None (always live)
+      - dict form  {line: [[..],[..]], side: '..', x_active: [lo,hi]}  → per-segment switching
+    `constraint_triple` is the [p0, p1, side] that formulate_halfspace_constraints consumes.
+    """
+    if isinstance(hs, dict):
+        line = hs['line']
+        return [line[0], line[1], hs['side']], hs.get('x_active')
+    return [hs[0], hs[1], hs[2]], None
+
+
+def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
+                         trajectory_dim=12, current_x=None):
     """Build the DPCC projector (mirrors visual-aligning `setup_dpcc_projector`).
 
     UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
     Both position channels are real and anchored with 6 rows (DC_FIX), mirroring DPCC avoiding.
     p_des(3,4,5): commanded setpoint. p(6,7,8): actual drone position from qpos[:3].
 
-    Variant semantics (mirrors FMv3ODE/visual-aligning eval):
-      gradient       → gradient-based projection (not SLSQP)
-      post_processing→ threshold=0.0 (project at ALL FM steps, not just last 50%)
-      model_free     → spatial constraints only; dynamics skipped (no-op until spatial designed)
-      tightened      → enlarge_constraints margin applied to spatial constraints
+    E9 additions:
+      - GEOMETRIC constraints (halfspace, obstacles, workspace box) bind to ACTUAL p (6,7,8)
+        ONLY — DPCC-faithful (see STUDY_DPCC_constraint_dim_binding.md). Velocity (9,10,11)
+        is never touched.
+      - `bounds` builds TWO orthogonal row-sets (§2.2): the workspace box on p AND the shared
+        action-magnitude bound on the action dims (0,1,2 = Δp_des). The action bound is NOT
+        inflated (it is a dataset-range cap, not a spatial surface).
+      - Inflation (r_drone + margin_base) offsets every spatial surface so the BODY clears,
+        always-on; the -tightened enlarge is added on top.
+      - Halfspaces may carry `x_active` (s_curve): a wall is included only if `current_x` is
+        inside its interval; `current_x=None` → all walls active (build-time fallback).
+
+    Variant semantics (unchanged): gradient / post_processing / model_free / tightened.
     """
     from flow_matcher_v3_uav.sampling.projection import Projector
 
@@ -204,32 +301,48 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant, 
     is_tightened = 'tightened' in variant
     tightening   = float(config.get('enlarge_constraints') or 0.0)
     enlarge      = tightening if is_tightened else 0.0
+    # E9 inflation: always-on offset so the drone body (not just its center) clears geometry.
+    _infl = config.get('inflation') or {}
+    inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
+    margin = inflation_base + enlarge                 # total spatial offset (surfaces only)
+    ctypes = config.get('constraint_types', [])
     constraint_list = []
 
-    if 'bounds' in config.get('constraint_types', []):                 # PLACEHOLDER — not run this epoch
-        ws = config['workspace_bounds']
-        ws_lb = np.array(ws['lb']); ws_ub = np.array(ws['ub'])
-        lb = np.concatenate([np.full(6, -np.inf), ws_lb - enlarge, np.full(pad, -np.inf)])
-        ub = np.concatenate([np.full(6,  np.inf), ws_ub + enlarge, np.full(pad,  np.inf)])
-        constraint_list += [['lb', lb], ['ub', ub]]
+    if 'bounds' in ctypes:
+        # (a) workspace box on ACTUAL p (6,7,8), shrunk inward by the spatial margin.
+        ws = config.get('workspace_bounds')
+        if ws is not None:
+            ws_lb = np.array(ws['lb'], dtype=float); ws_ub = np.array(ws['ub'], dtype=float)
+            lb = np.concatenate([np.full(6, -np.inf), ws_lb + margin, np.full(pad, -np.inf)])
+            ub = np.concatenate([np.full(6,  np.inf), ws_ub - margin, np.full(pad,  np.inf)])
+            constraint_list += [['lb', lb], ['ub', ub]]
+        # (b) shared action-magnitude bound on the ACTION dims (0,1,2) — NOT inflated (§2.2).
+        ab = config.get('action_bounds')
+        if ab is not None:
+            a_lb = np.concatenate([np.array(ab['lb'], dtype=float), np.full(trajectory_dim - 3, -np.inf)])
+            a_ub = np.concatenate([np.array(ab['ub'], dtype=float), np.full(trajectory_dim - 3,  np.inf)])
+            constraint_list += [['lb', a_lb], ['ub', a_ub]]
 
-    if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
+    if 'dynamics' in ctypes and 'model_free' not in variant:
         # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
         # Traj layout: [act(0,1,2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)]
-        # DC_FIX: both channels always anchored. anchor_to_p/cond_on_p removed.
         constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # DC_FIX p_des ← act
         constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]  # DC_FIX p     ← act
 
-    if 'halfspace' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
+    if 'halfspace' in ctypes:
         _hs = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
-            C_row, d = utils.formulate_halfspace_constraints(hs, enlarge, trajectory_dim, _hs)
+            triple, x_active = _normalize_halfspace(hs)
+            if x_active is not None and current_x is not None:
+                if not (x_active[0] <= float(current_x) <= x_active[1]):
+                    continue                              # wall not live in this x-segment
+            C_row, d = utils.formulate_halfspace_constraints(triple, margin, trajectory_dim, _hs)
             constraint_list.append(('ineq', (C_row, d)))
 
-    if 'obstacles' in config.get('constraint_types', []):              # PLACEHOLDER — not run this epoch
+    if 'obstacles' in ctypes:
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
-            constraint_list.append((obs['type'], dims, obs['center'], obs['radius'] + enlarge))
+            constraint_list.append((obs['type'], dims, obs['center'], obs['radius'] + margin))
 
     is_gradient      = 'gradient' in variant
     is_post_proc     = 'post_processing' in variant
@@ -319,7 +432,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
                 controller='pid', cond_mode='p_des', mjpc_kwargs=None,
-                v_des_magnitude=0.0):
+                v_des_magnitude=0.0, geo_config=None, rebuild_projector=None):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -402,6 +515,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             obs = np.concatenate([p_des, p]).astype(np.float32)      # [p_des | p] (6,) raw
         else:
             obs = np.concatenate([p_des, p, v]).astype(np.float32)   # [p_des | p | v] (9,) raw
+
+        # E9 s_curve: re-select the active wall set from the drone's current x before this
+        # replan (only when the scene declares x_active halfspaces — else rebuild_projector
+        # is None and this is skipped, preserving the build-once path exactly).
+        if rebuild_projector is not None:
+            policy.projector = rebuild_projector(float(p[0]))
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
@@ -507,12 +626,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     else:                                                  # empty: no fixed goal to cross
         success_relaxed = success
 
-    # Constraint-aware metrics (FMv3ODE schema). Only the DYNAMICS constraint is active this
-    # epoch — there are NO obstacle/halfspace/bounds (free-space) constraints to violate, so
-    # these are trivially clean. They populate the schema; per-scene geometry fills them later.
-    collision_free = True
-    n_violations = 0
-    total_violations = 0.0
+    # Constraint-aware metrics (FMv3ODE schema). E9: computed from the FLOWN path against the
+    # scene's RAW spatial geometry ⊕ r_drone (physical collision truth). Dynamics-only /
+    # unconstrained (`empty`) scenes have no spatial families → trivially clean.
+    collision_free, n_violations, total_violations = _exec_constraint_violations(obs_traj, geo_config or {})
     success_and_constraints = bool(success and collision_free)
     success_and_constraints_relaxed = bool(success_relaxed and collision_free)
 
@@ -619,6 +736,23 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                     test_ret=getattr(parsed, 'test_ret', 0),
                     projector=projector, trajectory_selection=_selection_for(variant))
 
+    # E9 s_curve: per-replan active-set switching. If the scene declares any `x_active`
+    # halfspaces, the active wall set depends on the drone's current x, so the projector must
+    # be rebuilt each FM step. This closure does that (cheap matrix rebuild, small H×T); it is
+    # passed to rollout_one only for such scenes — every other scene builds ONCE (rebuild=None,
+    # behaviour byte-identical to before). Non-switching walls (no x_active) are unaffected.
+    _has_x_active = (variant != 'diffuser') and any(
+        isinstance(hs, dict) and hs.get('x_active') is not None
+        for hs in (config.get('halfspace_constraints') or []))
+    rebuild_projector = None
+    if _has_x_active:
+        def rebuild_projector(current_x, _tdim=int(dataset.observation_dim + dataset.action_dim)):
+            return setup_dpcc_projector(
+                parsed, config,
+                dataset.normalizer.normalizers['observations'],
+                dataset.normalizer.normalizers['actions'],
+                variant, trajectory_dim=_tdim, current_x=current_x)
+
     # Path: scene_root / plans / <model_exp_noseed> / <eval_params> / <seed> / <variant> /
     # savepath = scene_root / flow_matching_v3_uav / H8_...9D / <seed>
     scene_root  = os.path.join(parsed.logbase, parsed.dataset)
@@ -652,7 +786,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             control_hz=config.get('control_hz', DATASET_HZ),
                             text_log=config.get('behavior_log', True),
                             controller=controller, cond_mode=cond_mode, mjpc_kwargs=mjpc_kwargs,
-                            v_des_magnitude=v_des_magnitude)
+                            v_des_magnitude=v_des_magnitude, geo_config=config,
+                            rebuild_projector=rebuild_projector)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
