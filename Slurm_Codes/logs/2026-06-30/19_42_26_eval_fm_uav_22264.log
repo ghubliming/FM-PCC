@@ -1,0 +1,71 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 30 17:42:26 UTC 2026  |  eval_fm_uav  |  ID 22264  |  NODE i6-gpu-1
+SCENE: s_curve   SEEDS: 6   N_TRIALS: 
+GIT REV:   f292369
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=s_curve seed=6  Tue Jun 30 17:42:27 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene s_curve --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=20  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve: variants=['diffuser', 'gradient', 'post_processing', 'model_free', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 749, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 736, in main
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 736, in <dictcomp>
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 705, in eval_scene
+    summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 609, in _run_variant
+    r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 350, in rollout_one
+    tracker = MJPCTracker(model, scene=scene, **mjpc_kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/mjpc_tracker.py", line 72, in __init__
+    self.agent = agent_lib.Agent(
+  File "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/agent.py", line 114, in __init__
+    grpc.channel_ready_future(self.channel).result(timeout=30)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/grpc/_utilities.py", line 160, in result
+    self._block(timeout)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/grpc/_utilities.py", line 105, in _block
+    raise grpc.FutureTimeoutError()
+grpc.FutureTimeoutError
+Exception ignored in: <function GLContext.__del__ at 0x7f86c4fb3b50>
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 130, in __del__
+    self.free()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 123, in free
+    EGL.eglMakeCurrent(EGL_DISPLAY, EGL.EGL_NO_SURFACE,
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglMakeCurrent,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f86c4f52440>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f86c4f500c0>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f86c4f500c0>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f86c4f507c0>,
+	),
+	result = 0
+)
+JOB END: Tue Jun 30 17:43:01 UTC 2026

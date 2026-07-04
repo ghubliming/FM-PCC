@@ -1,0 +1,10 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 30 20:23:56 UTC 2026  |  eval_fm_uav  |  ID 22267  |  NODE i6-gpu-1
+SCENE: s_curve   SEEDS: 6   N_TRIALS: 
+GIT REV:   8979141
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+[ DIAG ] Probing agent_server startup for 5 seconds...
+/var/lib/slurm/slurmd/job22267/slurm_script: line 81: 2743383 Segmentation fault      (core dumped) "$AGENT_BIN" --mjpc_port=19997 2>&1
+JOB END: Tue Jun 30 20:24:02 UTC 2026

@@ -1,0 +1,107 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jun 30 21:00:25 UTC 2026  |  eval_fm_uav  |  ID 22270  |  NODE i6-gpu-1
+SCENE: s_curve   SEEDS: 6   N_TRIALS: 
+GIT REV:   8979141
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ DIAG ] strace (file access + signals)
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/glibc-hwcaps/x86-64-v3/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/glibc-hwcaps/x86-64-v2/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/tls/x86_64/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/tls/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/tls/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/tls/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/x86_64/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/envs/_mjpc_build/lib/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/glibc-hwcaps/x86-64-v3/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/glibc-hwcaps/x86-64-v2/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/tls/x86_64/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/tls/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/tls/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/tls/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/x86_64/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/tmp/mjpc_build_22265/mujoco_mpc/build/lib/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/glibc-hwcaps/x86-64-v3/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/glibc-hwcaps/x86-64-v2/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/tls/x86_64/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/tls/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/tls/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/tls/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/x86_64/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/x86_64/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libmujoco.so.3.2.3", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libz.so.1", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/glibc-hwcaps/x86-64-v3/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/glibc-hwcaps/x86-64-v2/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/tls/x86_64/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/tls/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/tls/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/tls/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/x86_64/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v3/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v2/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libstdc++.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v3/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v2/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./glibc-hwcaps/x86-64-v3/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./glibc-hwcaps/x86-64-v2/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./tls/x86_64/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./tls/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./tls/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./tls/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./x86_64/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/./libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/u/home/llim/miniconda3/lib/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v3/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v2/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "tls/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "x86_64/libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libdl.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/sys/devices/system/cpu", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+rt_sigaction(SIGRT_1, {sa_handler=0x7f56c816b870, sa_mask=[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x7f56c811c520}, NULL, 8) = 0
+--- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=0x4} ---
++++ killed by SIGSEGV (core dumped) +++
+/var/lib/slurm/slurmd/job22270/slurm_script: line 75: 2767557 Segmentation fault      (core dumped) strace -e trace=openat,open,access,stat,statx,rt_sigaction "$AGENT_BIN" --mjpc_port=19997 2>&1
+JOB END: Tue Jun 30 21:00:30 UTC 2026
