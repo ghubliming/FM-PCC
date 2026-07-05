@@ -119,17 +119,53 @@ def build_experiment(scene, seed, epoch, device):
     return experiment.diffusion, experiment.dataset, args, int(getattr(args, 'horizon', 8))
 
 
-def load_pcc_config(scene, seed):
-    """Merged eval config matching the avoiding-d3il.py pattern:
-      - Projection params (variants, constraints, geometry) from config/uav_projection.yaml
-      - Eval control params (batch_size, thresholds, U4 knobs, logging) from the
-        plan_flow_matching_v3_uav block in config/uav.py
+def _resolve_active_geo_matches(scene, cfg):
+    """All `geo_constraint_variants` entries active for this scene (Fix_4 pattern): matched by
+    `scene:` field (falls back to `name`) AND listed in `active_geo_variants` (or all, if that
+    key is null). Returns a list — 0 (no active geo for this scene), 1 (the common case), or
+    many (Fix_6: eval_scene runs every one of them in a single job)."""
+    _all_geo = [g for g in (cfg.get('geo_constraint_variants') or []) if 'name' in g]
+    _active = cfg.get('active_geo_variants')
+    return [g for g in _all_geo
+            if g.get('scene', g['name']) == scene and (_active is None or g['name'] in _active)]
 
-    Both sources are merged into one dict so downstream code (_run_variant, rollout_one,
-    setup_dpcc_projector) needs no structural changes."""
+
+def _apply_geo_entry(cfg, scene, entry):
+    """Return a COPY of cfg with one geo_constraint_variants entry's constraint_types/geometry
+    applied (or the dynamics-only global fallback if entry is None), plus its geo_tag (Fix_1).
+    Shared by load_pcc_config (single-match) and eval_scene's multi-match loop (Fix_6)."""
+    cfg = dict(cfg)
+    if entry is not None:
+        cfg['constraint_types']      = list(entry.get('constraint_types', cfg['constraint_types']))
+        cfg['workspace_bounds']      = entry.get('workspace_bounds', None)
+        cfg['halfspace_constraints'] = entry.get('halfspace_constraints', [])
+        cfg['obstacle_constraints']  = entry.get('obstacle_constraints', [])
+        print(f"[ eval ] E9 geo '{scene}' ← variant '{entry['name']}': "
+              f"constraint_types={cfg['constraint_types']} "
+              f"(bounds={cfg['workspace_bounds'] is not None}, "
+              f"hs={len(cfg['halfspace_constraints'])}, obs={len(cfg['obstacle_constraints'])})")
+    elif cfg.get('geo_constraint_variants'):
+        print(f"[ eval ] E9: scene '{scene}' has no active geo variant → dynamics-only fallback")
+
+    # E9 fix1: `geo_tag` — a second, swappable output-path axis mirroring the old avoiding-task
+    # `results/halfspace_<halfspace_variant>/` folder level. Encodes WHICH geometry/constraint
+    # combo produced a run (resolved geo entry name + its actually-active constraint_types),
+    # so re-running the same scene under a different constraint_types subset (e.g. an ablation
+    # like obstacles-only vs the full stack) lands in a DIFFERENT folder instead of overwriting
+    # the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
+    _ctypes = cfg.get('constraint_types') or []
+    cfg['geo_tag'] = f'{scene}_unconstrained' if not _ctypes else f"{scene}_{'+'.join(sorted(_ctypes))}"
+    return cfg
+
+
+def _load_base_cfg(scene, seed):
+    """Build the merged config WITHOUT resolving per-scene geometry (Fix_6): yaml load +
+    defaults + eval control params (batch_size, thresholds, U4 knobs, logging) from the
+    plan_flow_matching_v3_uav block in config/uav.py. Geo resolution is a separate step
+    (`_resolve_active_geo_matches` + `_apply_geo_entry`) so callers can run it once
+    (`load_pcc_config`, single-match) or in a loop (`eval_scene`, Fix_6, possibly multi-match)."""
     import yaml
 
-    # ── 1. Projection-only (variants, constraints, geometry) ─────────────────
     yaml_path = os.path.join(_REPO, 'config', 'uav_projection.yaml')
     try:
         with open(yaml_path) as f:
@@ -149,46 +185,6 @@ def load_pcc_config(scene, seed):
     cfg.setdefault('inflation', {'r_drone': 0.0, 'margin_base': 0.0})
     cfg.setdefault('action_bounds', None)
 
-    # ── E9: resolve per-scene geometry — SELECTABLE variants (Fix_4, visual-aligning pattern) ──
-    # `geo_constraint_variants` is a flat list of NAMED entries; each is tied to a scene via its
-    # own `scene:` field (falls back to `name` for any entry that omits it — backward compat).
-    # A scene may have several named entries (ablations, alternates — mirrors visual-aligning's
-    # `bounds_only_1`/`combined_4`/`combined_5` all belonging to one task); exactly ONE of them
-    # may be listed in `active_geo_variants` at a time, since the eval runs one geo config per
-    # scene per invocation. `active_geo_variants=None` activates every entry (whichever matches
-    # this scene, expected to still be exactly one in that case).
-    _all_geo = [g for g in (cfg.get('geo_constraint_variants') or []) if 'name' in g]
-    _active = cfg.get('active_geo_variants')
-    _matches = [g for g in _all_geo
-                if g.get('scene', g['name']) == scene and (_active is None or g['name'] in _active)]
-    if len(_matches) > 1:
-        raise ValueError(
-            f"E9: scene '{scene}' matches MULTIPLE active geo_constraint_variants "
-            f"({[g['name'] for g in _matches]}) — only one may be active per scene at a time. "
-            f"Narrow active_geo_variants in config/uav_projection.yaml to exactly one of them.")
-    if _matches:
-        _entry = _matches[0]
-        cfg['constraint_types']      = list(_entry.get('constraint_types', cfg['constraint_types']))
-        cfg['workspace_bounds']      = _entry.get('workspace_bounds', None)
-        cfg['halfspace_constraints'] = _entry.get('halfspace_constraints', [])
-        cfg['obstacle_constraints']  = _entry.get('obstacle_constraints', [])
-        print(f"[ eval ] E9 geo '{scene}' ← variant '{_entry['name']}': "
-              f"constraint_types={cfg['constraint_types']} "
-              f"(bounds={cfg['workspace_bounds'] is not None}, "
-              f"hs={len(cfg['halfspace_constraints'])}, obs={len(cfg['obstacle_constraints'])})")
-    elif _all_geo:
-        print(f"[ eval ] E9: scene '{scene}' has no active geo variant → dynamics-only fallback")
-
-    # E9 fix1: `geo_tag` — a second, swappable output-path axis mirroring the old avoiding-task
-    # `results/halfspace_<halfspace_variant>/` folder level. Encodes WHICH geometry/constraint
-    # combo produced a run (resolved geo entry name + its actually-active constraint_types),
-    # so re-running the same scene under a different constraint_types subset (e.g. an ablation
-    # like obstacles-only vs the full stack) lands in a DIFFERENT folder instead of overwriting
-    # the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
-    _ctypes = cfg.get('constraint_types') or []
-    cfg['geo_tag'] = f'{scene}_unconstrained' if not _ctypes else f"{scene}_{'+'.join(sorted(_ctypes))}"
-
-    # ── 2. Eval control params from plan_flow_matching_v3_uav block ──────────
     class PlanParser(utils.Parser):
         dataset: str = 'uav'
         config: str = 'config.uav'
@@ -211,6 +207,25 @@ def load_pcc_config(scene, seed):
     cfg['mjx_vel_weight']               = float(getattr(plan_args, 'mjx_vel_weight', 0.1))
 
     return cfg
+
+
+def load_pcc_config(scene, seed):
+    """Merged eval config matching the avoiding-d3il.py pattern (single-geo-match convenience
+    wrapper around `_load_base_cfg` + `_resolve_active_geo_matches` + `_apply_geo_entry`).
+
+    Raises if the scene has MORE THAN ONE active geo_constraint_variants entry — that case is
+    handled by `eval_scene`'s Fix_6 loop, which runs every active entry in one invocation
+    instead of erroring. Use `eval_scene` (not this function) when a scene may have several
+    active variants (e.g. testing dynamics_only vs dynamics_bounds_only vs combined_1)."""
+    cfg = _load_base_cfg(scene, seed)
+    _matches = _resolve_active_geo_matches(scene, cfg)
+    if len(_matches) > 1:
+        raise ValueError(
+            f"E9: scene '{scene}' matches MULTIPLE active geo_constraint_variants "
+            f"({[g['name'] for g in _matches]}) — load_pcc_config() only resolves ONE. "
+            f"eval_scene() runs all of them in one job (Fix_6) — call that instead, or narrow "
+            f"active_geo_variants in config/uav_projection.yaml to exactly one for this scene.")
+    return _apply_geo_entry(cfg, scene, _matches[0] if _matches else None)
 
 
 # ── DPCC projector — copied from fm_visual_aligning_test/eval_fm_visual_aligning.py and
@@ -1119,43 +1134,69 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
 
 
 def eval_scene(scene, args):
-    """Run EVERY projection variant (diffuser, dpcc-r/-c/-t) for one scene; returns
-    {variant: summary}. Model+dataset loaded once; a Policy is built per variant."""
+    """Run EVERY projection variant (diffuser, dpcc-r/-c/-t) for EVERY active geo variant of
+    one scene (Fix_6). A scene may have several active `geo_constraint_variants` entries at
+    once (e.g. `active_geo_variants` listing `s_curve_dynamics_only`,
+    `s_curve_dynamics_bounds_only`, AND `s_curve_combined_1` together — exactly the case that
+    used to raise in `load_pcc_config`) — this now runs ALL of them in one job submission,
+    each writing to its own `geo_tag`-named output folder (Fix_1), instead of erroring.
+
+    Model+dataset loaded ONCE and shared across geo variants (constraint geometry doesn't
+    change them); a Policy is (re)built per (geo variant, projection variant) pair, same as
+    before. Returns {variant: summary} when exactly one geo variant is active for this scene
+    (the common case, byte-identical to the pre-Fix_6 return shape) — else
+    {geo_variant_name: {variant: summary}}."""
     import mujoco
     import uav_expert_data_collect.generator as gen
     model_fm, dataset, parsed, horizon = build_experiment(scene, args.seed, args.epoch, args.device)
-    config = load_pcc_config(scene, args.seed)
+    base_cfg = _load_base_cfg(scene, args.seed)
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 
-    # cond_mode is a MODEL property (obs layout baked into the normalizer at train time).
-    # Lock it to what the checkpoint was actually trained with — ignore the plan block value,
-    # which is user-editable and can silently mismatch (crash: shapes (9,) vs (6,) at normalize).
-    config['cond_mode'] = str(getattr(parsed, 'cond_mode', config.get('cond_mode', 'p_des')))
-    print(f'[ eval ] cond_mode={config["cond_mode"]}  (source: train checkpoint args)')
+    _matches = _resolve_active_geo_matches(scene, base_cfg)
+    _entries = _matches if _matches else [None]   # None → dynamics-only global fallback (unchanged)
+    if len(_entries) > 1:
+        print(f"[ eval ] {scene}: {len(_entries)} active geo variants in one job (Fix_6): "
+              f"{[e['name'] for e in _entries]}")
 
-    # Tightened variants only differ from their base siblings when spatial constraints
-    # (geo_bounds/halfspace/obstacles) are active — enlarge_constraints is applied there.
-    # 'bounds' (the action-magnitude family, Patch_Constraints_C3) is NEVER tightened — it's a
-    # dataset-range cap, not a spatial surface — so it's excluded from this set on purpose.
-    # With only 'dynamics'+'bounds' in constraint_types the enlarge margin is computed but
-    # never used, so tightened == non-tightened == wasted compute. Skip them and say why.
-    _spatial = {'geo_bounds', 'halfspace', 'obstacles'}
-    _has_spatial = bool(_spatial & set(config.get('constraint_types', [])))
-    if not _has_spatial:
-        _skip = [v for v in config['projection_variants'] if 'tightened' in v]
-        if _skip:
-            print(f'[ eval ] {scene}: skipping {len(_skip)} tightened variants '
-                  f'(no spatial constraints in constraint_types — enlarge has no effect): {_skip}')
-        config['projection_variants'] = [v for v in config['projection_variants'] if 'tightened' not in v]
+    all_summaries = {}
+    for entry in _entries:
+        config = _apply_geo_entry(base_cfg, scene, entry)
 
-    print(f'[ eval ] {scene}: variants={config["projection_variants"]}  '
-          f'constraints={config["constraint_types"]}  batch_size={config.get("mpc_batch_size", config.get("batch_size", 4))}')
-    summaries = {}
-    for variant in config['projection_variants']:
-        summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
-                                          config, args, mj_model, mujoco, homotopies)
-    return summaries
+        # cond_mode is a MODEL property (obs layout baked into the normalizer at train time).
+        # Lock it to what the checkpoint was actually trained with — ignore the plan block
+        # value, which is user-editable and can silently mismatch (crash: shapes (9,) vs (6,)).
+        config['cond_mode'] = str(getattr(parsed, 'cond_mode', config.get('cond_mode', 'p_des')))
+        print(f'[ eval ] cond_mode={config["cond_mode"]}  (source: train checkpoint args)')
+
+        # Tightened variants only differ from their base siblings when spatial constraints
+        # (geo_bounds/halfspace/obstacles) are active — enlarge_constraints is applied there.
+        # 'bounds' (the action-magnitude family, Patch_Constraints_C3) is NEVER tightened — it's
+        # a dataset-range cap, not a spatial surface — so it's excluded from this set on purpose.
+        # With only 'dynamics'+'bounds' in constraint_types the enlarge margin is computed but
+        # never used, so tightened == non-tightened == wasted compute. Skip them and say why.
+        _spatial = {'geo_bounds', 'halfspace', 'obstacles'}
+        _has_spatial = bool(_spatial & set(config.get('constraint_types', [])))
+        if not _has_spatial:
+            _skip = [v for v in config['projection_variants'] if 'tightened' in v]
+            if _skip:
+                print(f'[ eval ] {scene}: skipping {len(_skip)} tightened variants '
+                      f'(no spatial constraints in constraint_types — enlarge has no effect): {_skip}')
+            config['projection_variants'] = [v for v in config['projection_variants'] if 'tightened' not in v]
+
+        print(f'[ eval ] {scene} [geo_tag={config["geo_tag"]}]: variants={config["projection_variants"]}  '
+              f'constraints={config["constraint_types"]}  batch_size={config.get("mpc_batch_size", config.get("batch_size", 4))}')
+        summaries = {}
+        for variant in config['projection_variants']:
+            summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+                                              config, args, mj_model, mujoco, homotopies)
+        all_summaries[entry['name'] if entry is not None else config['geo_tag']] = summaries
+
+    # Preserve the pre-Fix_6 flat {variant: summary} shape for the single-geo-variant case
+    # (the overwhelming common case, and what any external caller/aggregator expects).
+    if len(_entries) == 1:
+        return next(iter(all_summaries.values()))
+    return all_summaries
 
 
 def main():
