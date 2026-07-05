@@ -217,12 +217,18 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-        # 2. Copy associated yaml configs (e.g. projection_eval.yaml)
-        # We look in the 'config/' directory relative to the current working directory
-        yaml_path = 'config/projection_eval.yaml'
+        # 2. Copy associated yaml configs (e.g. uav_projection.yaml)
+        # We look in the 'config/' directory relative to the current working directory.
+        # BUG FIX: this was hardcoded to 'config/projection_eval.yaml' (the AVOIDING task's
+        # yaml, copy-pasted from that package's utils/setup.py) — that file always exists
+        # repo-wide regardless of which package is running, so it silently snapshotted the
+        # WRONG yaml into every UAV run's config_snapshot_uav/ folder (never the UAV eval's
+        # real config/uav_projection.yaml). This is the UAV-specific copy of setup.py, so it
+        # must always snapshot the UAV's own yaml.
+        yaml_path = 'config/uav_projection.yaml'
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'projection_eval.yaml')
+                dest = os.path.join(snapshot_dir, 'uav_projection.yaml')
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:

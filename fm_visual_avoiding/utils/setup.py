@@ -207,12 +207,17 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-        # 2. Copy associated yaml configs — visual_aligning_eval.yaml is the live
+        # 2. Copy associated yaml configs — visual_avoiding_eval.yaml is the live
         # eval config read by eval_fm_visual_avoiding.py at runtime.
-        yaml_path = 'config/visual_aligning_eval.yaml'
+        # BUG FIX: this was hardcoded to 'config/visual_aligning_eval.yaml' (visual-ALIGNING's
+        # yaml, a different task/package) — copy-paste artifact from that package's
+        # utils/setup.py, never updated for visual-avoiding. Confirmed
+        # fm_visual_avoiding_test/eval_fm_visual_avoiding.py actually reads
+        # config/visual_avoiding_eval.yaml (line ~125), not visual_aligning_eval.yaml.
+        yaml_path = 'config/visual_avoiding_eval.yaml'
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'visual_aligning_eval.yaml')
+                dest = os.path.join(snapshot_dir, 'visual_avoiding_eval.yaml')
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:

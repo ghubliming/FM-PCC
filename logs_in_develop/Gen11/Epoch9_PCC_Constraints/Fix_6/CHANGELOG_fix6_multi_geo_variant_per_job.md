@@ -77,3 +77,63 @@ each in its own `geo_tag`-named subfolder (Fix_1), each running the full
 - `FM_v3_uav_test/eval_fm_uav.py` — `_load_base_cfg`, `_resolve_active_geo_matches`,
   `_apply_geo_entry` extracted; `load_pcc_config` simplified to a single-match wrapper;
   `eval_scene` rewritten with the multi-geo-variant loop.
+
+---
+
+## Addendum — config-snapshot was saving the WRONG yaml (unrelated bug, found while auditing a run)
+
+**Reported symptom:** a UAV run's saved config snapshot was
+`.../6/config_snapshot_uav/projection_eval.yaml` — i.e. **avoiding-d3il's** yaml, not the UAV's
+own `uav_projection.yaml`. This makes it impossible to use the snapshot to determine which
+`constraint_types`/`action_bounds`/etc. actually produced a given run (exactly the provenance
+question that came up while auditing a `pillars_bounds+dynamics+halfspace+obstacles` folder
+earlier in this thread).
+
+### Root cause
+
+`flow_matcher_v3_uav/utils/setup.py::snapshot_configs` hardcoded:
+```python
+yaml_path = 'config/projection_eval.yaml'   # WRONG — this is avoiding-d3il's yaml
+```
+`config/projection_eval.yaml` exists **repo-wide** (it's avoiding's own yaml, sitting in the
+shared `config/` directory used by every package), so `os.path.exists(yaml_path)` always
+succeeded — the snapshot silently copied avoiding's yaml into every UAV run's
+`config_snapshot_uav/` folder, every time, regardless of what the UAV eval actually used. This
+is a copy-paste artifact: `flow_matcher_v3_uav/utils/setup.py` is a per-package copy of a
+shared template, and this one line was never updated to point at `uav_projection.yaml`.
+
+Checked the sibling per-package copies for the same mistake — both already correct:
+`fm_visual_aligning/utils/setup.py` and `imf_visual_aligning/utils/setup.py` both have
+`yaml_path = 'config/visual_aligning_eval.yaml'`. Only the UAV copy had the leftover
+avoiding-task hardcoding.
+
+### Fix
+
+```python
+yaml_path = 'config/uav_projection.yaml'   # the UAV's own real yaml
+...
+dest = os.path.join(snapshot_dir, 'uav_projection.yaml')   # matching destination filename
+```
+This file (`flow_matcher_v3_uav/utils/setup.py`) is UAV-specific — it should always snapshot
+the UAV's own yaml, never any other package's. No generic/parameterized fix needed since each
+package owns its own copy of this function.
+
+### Practical consequence
+
+Every past UAV run's `config_snapshot_uav/projection_eval.yaml` was never useful for
+provenance (it's a copy of a file the UAV eval never even reads) — the actual config that
+produced a run has to be reconstructed from the git commit hash printed in the SLURM job
+header (`GIT REV: <hash>`) instead, for any run predating this fix. Going forward, the
+snapshot will contain the real `uav_projection.yaml` as actually loaded at eval time.
+
+### Verification
+- `py_compile` clean on `flow_matcher_v3_uav/utils/setup.py`.
+- Confirmed `config/projection_eval.yaml` and `config/uav_projection.yaml` are two distinct,
+  independently-existing files (not aliases), so this was a genuine wrong-file bug, not a
+  naming coincidence.
+- Confirmed sibling packages' `setup.py` copies do NOT have this bug (already point to their
+  own correct yaml).
+
+### Files touched
+- `flow_matcher_v3_uav/utils/setup.py` — `snapshot_configs`'s hardcoded yaml path + destination
+  filename corrected from `projection_eval.yaml` to `uav_projection.yaml`.
