@@ -633,11 +633,17 @@ def _selection_for(variant):
     return 'random'
 
 
-def _make_overhead_renderer(mujoco, model, res=360):
+def _make_overhead_renderer(mujoco, model, res=200):
     """Headless overhead renderer; None if rendering is unavailable (no hard dep).
 
     ONE renderer is created per scene and reused across rollouts — never one per
     rollout — so we allocate exactly one EGL/GL context instead of leaking N of them.
+
+    Fix_7: res lowered 360→200 (~3x fewer pixels/frame). This render is ONLY used for the
+    debug/visualization GIF — never fed to a policy (unlike the arm's bp_cam/inhand_cam,
+    which render at 96x96 because that resolution IS the trained vision-model input) — so
+    there is no accuracy tradeoff from shrinking it, only a smaller file. See
+    logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_7_Gif_lower_size/.
     """
     try:
         return mujoco.Renderer(model, height=res, width=res)

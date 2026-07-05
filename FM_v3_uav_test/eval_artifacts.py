@@ -145,13 +145,23 @@ def save_rollout_stats(diag_dir, idx, rollout):
 
 
 def save_rollout_gif(diag_dir, idx, frames, fps=10):
-    """Write an overhead GIF from caller-rendered RGB frames (opt-in)."""
+    """Write an overhead GIF from caller-rendered RGB frames (opt-in).
+
+    Fix_7: encode with a reduced/optimized palette + delta-frame compression when the
+    installed imageio's GIF writer supports it — background (scene/obstacles) is static
+    across frames, only the drone moves, so `subrectangles` alone typically shrinks file
+    size substantially with no visible quality loss. Falls back to the plain call if the
+    active imageio backend/version rejects these kwargs (never fails the save outright).
+    """
     if not frames:
         return None
     import imageio
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}.gif')
-    imageio.mimsave(path, frames, fps=fps)
+    try:
+        imageio.mimsave(path, frames, fps=fps, subrectangles=True, palettesize=128)
+    except TypeError:
+        imageio.mimsave(path, frames, fps=fps)
     return path
 
 

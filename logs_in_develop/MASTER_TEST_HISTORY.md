@@ -2477,3 +2477,68 @@ Keywords: sibling directories, visual U-Net FiLM projection, Beta sampling noise
 1. **Solver Silent-Failure Fix**: Diagnosed a bug where `iMeanFlowODE.p_sample_loop` silently ignored `ode_solver_backend_v3` configurations (like `Mrk4`) and always fell back to legacy Euler integration, invalidating prior solver-comparison data.
 2. **`torchdiffeq` Integration**: Ported the `torchdiffeq` dispatch logic from the sibling `FlowMatchingIMF` to correctly support higher-order integrators (RK4, Midpoint) within `iMeanFlowODE`.
 3. **"Homing Missile" `h_sub` Sizing**: Implemented a dynamic sub-stage step sizing (`h_sub = t1 - t_scalar`) mechanism to strictly preserve the iMeanFlow mathematical formulation. This ensures that every sub-stage query inside a macro-step always targets the macro-step's exact end (`t1`), keeping network queries inside their trained interval domain `[t, t+h]` regardless of the solver backend.
+
+***
+
+## Gen11 Epoch 9: Full PCC Constraint Geometry — Planning & Architecture Audit (July 4, 2026)
+
+**Keywords**: Gen11, Epoch 9, E9, PCC constraints, per-scene geometry, halfspace, obstacles, bounds, geo_bounds, DPCC-faithful, UAV.
+
+### Motivation
+
+E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, constraint metrics) but ran **dynamics-only** — the spatial constraint slots (`halfspace_constraints`, `obstacle_constraints`, `workspace_bounds`) were wired but gated off. E6-U2 had left the `pillars` scene at **0% success** with the raw FM policy. E9's objective is to bring in real per-scene geometry and validate that DPCC projection lifts that failure, following the Gen7 visual-aligning lineage precisely.
+
+### Forensic Audit: DPCC Constraint Dimensionality (Pre-E9)
+
+1. **DPCC Constraint Binding Audit**: Before any code was written, authored `PLAN_E9_PCC_constraints.md` and `STUDY_DPCC_constraint_dim_binding.md` to definitively settle the question of which trajectory dimensions each constraint family binds to. Verified against the canonical avoiding-task config/eval pair: halfspace and obstacle constraints bind to **actual position `p` only** (dims 6,7,8 in the UAV 12D tensor); the `dynamics` rows couple `p_des` and `p` through the action; `bounds` in avoiding binds to **action dims** (velocity), not position. Gen7 visual-aligning's `_DIM` mapping was confirmed correct, not a bug.
+2. **Identified the `bounds` Conflation Bug (Cross-Repo)**: Discovered that visual-aligning had silently **repurposed** the `bounds` constraint_types flag to mean a Cartesian workspace position box, dropping DPCC-avoiding's original action-magnitude limit. This was documented in `PROBLEM_bounds_velocity_vs_geo.md` and immediately scheduled for a cross-repo fix (Gen7 C3 patch, below).
+3. **UAV Tensor Invariant**: Established that the UAV `p` slice sits at dims 6–8 in **both** the 12D (E7/PID) and 9D (E8/MJPC) layouts, meaning one geometry config serves both controllers with no branching.
+
+### Gen11 Epoch 9 Init — Per-Scene Constraint Geometry Implementation (July 4, 2026)
+
+1. **Per-Scene DPCC Constraint Resolution**: Restructured `config/uav_projection.yaml` from a flat global-placeholder format to a `geo_constraint_variants` named-entry list (mirroring `visual_aligning_eval.yaml`), with one full-stack geometry block per scene (`empty`, `corridor`, `pillars`, `s_curve`). An `active_geo_variants` selector controls which scenes run — editable in the YAML without any code change.
+2. **`empty` Baseline**: Explicitly configured `constraint_types: []` for the `empty` scene, making it a deliberate no-op raw-FM baseline (the denominator every other scene is measured against).
+3. **`corridor` Geometry**: Encoded the two corridor walls as halfspace planes (`formulate_halfspace_constraints`), since a box-exclusion in DPCC-native form is halfspace faces. Added workspace bounds on `p` and the action-magnitude bound.
+4. **`pillars` Geometry**: Represented the 6 full-height pillars as `sphere_outside` constraints on `[x, y]` only — the exact cross-section of an infinite vertical cylinder in DPCC's quadratic primitive. Also added an outer envelope halfspace and workspace bounds.
+5. **`s_curve` Per-Segment Constraint Switching**: Implemented a declarative `x_active: [lo, hi]` field on halfspace entries to enable per-replan active-set selection. This addresses the non-convex geometry of the S-curve (whose two wall segments have an empty intersection globally), resolving the constraint at each MPC step based on the drone's current `x` position.
+6. **Halfspace Helper Robustness Fix (`constraints_helpers.py`)**: Fixed a divide-by-zero in `formulate_halfspace_constraints` where horizontal walls (slope `m = 0`, i.e., corridor walls) caused `1/m = inf`. Replaced the slope-intercept normal with the perpendicular construction (`n = (-dy, dx)`) already used by the plotting code, validated for numeric equivalence on existing avoiding-task inputs.
+7. **`geo_tag` Output Axis (Fix 1)**: Added a `geo_tag` dimension to UAV eval output paths (e.g., `pillars_bounds+dynamics+halfspace+obstacles/`) to prevent result collisions when running multiple geometry configurations under the same scene in a single sweep.
+
+***
+
+## Gen7 C3 / Gen6V4 C3 — `bounds` Constraint Split: Restoring DPCC Action-Magnitude Guard (July 4, 2026)
+
+**Keywords**: Gen7, Gen6V4, C3, `bounds`, `geo_bounds`, action-magnitude, DPCC-faithful, constraint_types rename.
+
+1. **Root Cause**: The `bounds` `constraint_types` flag in `config/visual_aligning_eval.yaml` had been silently redefined to mean a Cartesian position box on actual position (`workspace_bounds`), which **dropped** the DPCC-paper's original meaning: a normalized action-magnitude limit on action dims 0,1,2 (`dx, dy, dz`). This left all `combined_*` constraint entries missing one of the Table-1 DPCC constraint families.
+2. **Rename to `geo_bounds`**: All ~9 call sites per file that gated the position box on `'bounds'` were renamed to `'geo_bounds'` in both `fm_visual_aligning_test/eval_fm_visual_aligning.py` (Gen7) and `diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py` (Gen6V4). Both files share one YAML and carry structurally identical copies of `setup_dpcc_projector` — both needed the identical fix to remain consistent.
+3. **Restored `bounds` (Action-Magnitude)**: Added a new `if 'bounds' in constraint_types:` block that self-derives action limits from `act_normalizer.mins/.maxs` (the dataset's own normalized `dx,dy,dz` range) by default (`action_bounds: 'auto'`), eliminating the need to hardcode task-specific velocity limits. This mirrors the E9 Fix_3 pattern applied on the UAV.
+4. **YAML Updates**: Added `action_bounds: 'auto'` top-level key; renamed `bounds_only_1/2` entries to `geo_bounds_only_1/2`; added a new `action_bounds_only` ablation entry; upgraded `combined_4`/`combined_5` (the currently active entries) to carry **both** `geo_bounds` and `bounds`, making them genuinely match the full DPCC constraint set. The `combined_5` entry — the active default — now enforces the restored action-magnitude cap on the next cluster run.
+5. **Tightening Exclusion**: The restored action bound is correctly excluded from the `-tightened` enlarge margin (it is a dataset-range cap, not a spatial surface), matching the avoiding-task convention.
+
+***
+
+## Gen11 Epoch 9 — Constraint Geometry Refinements (Fixes 2–6, July 4, 2026)
+
+**Keywords**: Gen11, Epoch 9, E9, selectable geo variants, ablation tiers, geo_bounds split, multi-geo loop, config snapshot.
+
+### Fix 2: Action-Magnitude Bounds Auto-Derivation (E9 Fix 3)
+1. **Self-Derived Action Bounds**: Implemented an `action_bounds: 'auto'` mode in `eval_fm_uav.py` that derives the action-magnitude bound (lb/ub on dims 0,1,2 = Δp_des) directly from the action normalizer's `mins/maxs`, exactly matching the C3 approach above. Prevents hardcoding a per-task magic number.
+
+### Fix 3: Selectable Per-Scene Geometry Configurations (E9 Fix 4)
+1. **Per-Scene Geo Variant Selection**: Extended `uav_projection.yaml` with the `active_geo_variants` selector and the ability to have multiple named entries per scene, identified by a `scene` field. Added `load_pcc_config` resolution logic that raises a `ValueError` on ambiguity (> 1 match) as a safety guard — later promoted to the multi-loop pattern in Fix 6.
+2. **Selectable Ablation Tiers**: Added `<scene>_dynamics_only` and `<scene>_dynamics_bounds_only` entries alongside the `<scene>_combined_1` full-stack entries for `corridor`, `pillars`, and `s_curve`. Switching the active tier requires only editing `active_geo_variants` in the YAML, no code change — identical to the visual-aligning mechanism.
+
+### Fix 4: Diagnostic Observability Parity (E9 U2)
+1. **Constraint Geometry Schematic Plot**: Ported `plot_geo_constraints` from Gen7 visual-aligning into the UAV eval. The 3-panel figure (3D wireframe / XY top-down / XZ side) is generated once per geometry configuration before any rollout, rendering the **true enforced boundary** (including `r_drone + margin_base` inflation, and `+ enlarge_constraints` for tightened variants). The UAV-specific `x_active` halfspace segments (s_curve) are clipped and rendered over their live x-range only, not as infinite lines. Output saved as both `.png` and `.svg` for thesis/paper use.
+2. **GIF Step-Counter Overlay**: Added a per-frame `sK` step counter burned into overhead-camera GIF frames (yellow text, top-left, `cv2.putText`), matching visual-aligning's diagnostic convention. Allows cross-referencing visible events in recordings against per-step structured logs without re-deriving the frame index.
+
+### Fix 5: `geo_bounds`/`bounds` Split Propagated to UAV (E9 Fix 5)
+1. **Consistent Naming**: Applied the same `geo_bounds`/`bounds` split from Gen7 C3 to the UAV eval codebase. All five call sites in `eval_fm_uav.py` that gated the workspace-box on `'bounds'` were renamed to `'geo_bounds'`; the action-magnitude block (Fix 3) now sits behind the independent `if 'bounds' in ctypes:` gate. The repo's naming convention for these two orthogonal constraint families is now fully unified.
+2. **Ablation Entry Consistency**: Updated `uav_projection.yaml`'s `*_combined_1` entries to list `['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']`, making the distinction between the position box and the action cap explicit in the config.
+
+### Fix 6: Multi-Geo-Variant Loop + Config Snapshot Wrong-YAML Bug (E9 Fix 6 / July 5, 2026)
+1. **Multi-Geo-Variant Loop**: Resolved a `ValueError` triggered by the Fix 4 ambiguity guard when multiple geo entries for the same scene (e.g., `s_curve_dynamics_only`, `s_curve_dynamics_bounds_only`, `s_curve_combined_1`) were simultaneously listed in `active_geo_variants`. The fix refactors `eval_scene` to loop over all matching entries rather than raising — mirroring how Gen7's eval already loops over `_geo_specs` in a single invocation. Extracted `_load_base_cfg`, `_resolve_active_geo_matches`, and `_apply_geo_entry` as reusable helpers; `load_pcc_config` retained its single-match contract for any caller that still requires it.
+2. **Config Snapshot Wrong-YAML Bug**: Discovered that `flow_matcher_v3_uav/utils/setup.py::snapshot_configs` was hardcoding `'config/projection_eval.yaml'` (the avoiding-task YAML) as the snapshot target, so every UAV run's `config_snapshot_uav/` folder silently contained avoiding's config instead of the UAV's own `uav_projection.yaml`. Fixed by correcting the hardcoded path and destination filename. Extended the same audit to `diffuser_visual_avoiding/utils/setup.py` and `fm_visual_avoiding/utils/setup.py` — both also corrected. All past UAV runs before this fix carry an invalid provenance snapshot; the git commit hash in the SLURM job header is the authoritative config reference for those runs.
+
+***
