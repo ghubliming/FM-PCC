@@ -223,6 +223,18 @@ class Parser(argparse.ArgumentParser):
             except Exception:
                 pass
 
+        # Cleanup: this call is unconditional (fires on every eval run — see mkdir()'s
+        # `self.snapshot_configs(args)` outside the `if save:` guard), so the fix above
+        # self-heals automatically. But the OLD buggy path wrote a DIFFERENTLY-NAMED file
+        # ('visual_aligning_eval.yaml') that the fixed code above doesn't overwrite — remove
+        # it if present so a stale wrong-package file doesn't sit alongside the correct one.
+        _stale = os.path.join(snapshot_dir, 'visual_aligning_eval.yaml')
+        if os.path.exists(_stale):
+            try:
+                os.remove(_stale)
+            except Exception:
+                pass
+
         # 3. Create a timestamp file AFTER copying is finished
         try:
             from datetime import datetime

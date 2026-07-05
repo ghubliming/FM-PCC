@@ -83,6 +83,11 @@ SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 GOAL_PATH_SCENES = {'corridor', 's_curve', 'pillars'}
 GOAL_RADIUS = 0.30                   # m — secondary goal-reach tolerance (constrained scenes)
 
+# Fix_8: tracks which seed_dirs have been config-snapshotted THIS PROCESS (not "ever on disk").
+# See _run_variant's snapshot call — a filesystem-existence check would let a stale, wrong-yaml
+# snapshot from before a `snapshot_configs` fix persist forever across job re-runs.
+_SNAPSHOTTED_DIRS = set()
+
 
 def parse_args():
     p = argparse.ArgumentParser(description='Closed-loop UAV FM evaluation.')
@@ -1074,15 +1079,35 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         plot_geo_constraints(config.get('geo_tag', scene), config, geo_dir,
                              is_tightened=_is_this_tightened, basename=_basename)
 
-    # Write config snapshot at the eval-tag-aware seed dir (once, on first variant/geo_tag).
-    # setup.py's mkdir() no longer auto-snapshots during eval (save=False path); we do it here
-    # where eval_params_dir is known. Kept ABOVE geo_dir (model/eval-param snapshot, not
-    # geometry-specific) so it's written once per seed regardless of how many geo_tags run.
+    # Write config snapshot at the eval-tag-aware seed dir (once per PROCESS, on first
+    # variant/geo_tag — Fix_8). setup.py's mkdir() no longer auto-snapshots during eval
+    # (save=False path); we do it here where eval_params_dir is known. Kept ABOVE geo_dir
+    # (model/eval-param snapshot, not geometry-specific) so it's written once per seed
+    # regardless of how many geo_tags run.
+    #
+    # Fix_8: guard on an in-memory set, NOT `os.path.exists(_snap_dir)`. The old filesystem
+    # check meant a snapshot folder created by an OLDER run — e.g. before
+    # yaml_config_snapshot_patch fixed snapshot_configs's hardcoded wrong yaml path — would
+    # never be touched again by any LATER run, permanently freezing the stale/wrong file in
+    # place. The in-memory set still avoids redundant re-copies WITHIN this run's
+    # variant/geo_tag loop, but a fresh process (i.e. every new job submission) always
+    # re-snapshots and `shutil.copy` naturally overwrites whatever was there before.
     _snap_dir = os.path.join(seed_dir, f'config_snapshot_{parsed.config.split(".")[-1]}')
-    if not os.path.exists(_snap_dir):
+    if _snap_dir not in _SNAPSHOTTED_DIRS:
         import types as _t
         _snap_args = _t.SimpleNamespace(config=parsed.config, savepath=seed_dir)
         utils.Parser().snapshot_configs(_snap_args)
+        # Fix_8 cleanup: delete the leftover 'projection_eval.yaml' the OLD (pre-
+        # yaml_config_snapshot_patch) bug wrote here — different filename than the fixed
+        # code's 'uav_projection.yaml', so it isn't overwritten, just left as confusing
+        # clutter. Safe ONLY here (config_snapshot_uav/ is UAV-specific — that file is never
+        # legitimately correct content for a UAV run, unlike avoiding-family packages where
+        # projection_eval.yaml IS the right file).
+        _stale = os.path.join(_snap_dir, 'projection_eval.yaml')
+        if os.path.exists(_stale):
+            os.remove(_stale)
+            print(f'[ eval ] Fix_8: removed stale wrong-package snapshot {_stale}')
+        _SNAPSHOTTED_DIRS.add(_snap_dir)
 
     record = (args.record != 'none')
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None

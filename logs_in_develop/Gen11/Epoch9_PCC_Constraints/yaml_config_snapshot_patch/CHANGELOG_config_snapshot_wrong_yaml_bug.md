@@ -121,3 +121,89 @@ Any past run's `config_snapshot_<name>/` folder from these three packages contai
 yaml and cannot be used for provenance — reconstruct the actual config from the git commit
 hash printed in the job's SLURM log header (`GIT REV: <hash>`) instead, for anything predating
 this fix. Snapshots taken from here on will contain the correct file.
+
+---
+
+## Addendum — the UAV fix didn't actually take effect (found by the user re-checking)
+
+**Reported symptom:** after the fix above, a UAV run's snapshot folder still showed the OLD
+avoiding-d3il yaml, not `uav_projection.yaml`. The fix to `snapshot_configs` itself was
+correct — but its caller in `FM_v3_uav_test/eval_fm_uav.py` (`_run_variant`) never invoked it:
+
+```python
+_snap_dir = os.path.join(seed_dir, f'config_snapshot_{parsed.config.split(".")[-1]}')
+if not os.path.exists(_snap_dir):          # ← the bug
+    ...
+    utils.Parser().snapshot_configs(_snap_args)
+```
+
+**Root cause:** this guard checks the **filesystem**, not the process. Once
+`config_snapshot_uav/` exists on disk — including from a run that predates the
+`snapshot_configs` fix, when it still contained the wrong yaml — this check is `True`
+forever, and `snapshot_configs` is never called again for that `seed_dir`. The fixed function
+was correct; it just never got a chance to run for any seed_dir whose folder already existed.
+**Why only UAV had this:** `flow_matcher_v3_uav/utils/setup.py::mkdir()` gates
+`snapshot_configs` inside `if save:` ("Config snapshot only during training... Eval writes the
+snapshot explicitly" — comment in that file), so the UAV eval script re-implements its own
+snapshot call — with this bug. Checked every other eval script for the same custom
+re-implementation (`grep` for `_snap_dir`/`os.path.exists(_snap_dir)` repo-wide) — UAV is the
+**only** one; every other package's `mkdir()` calls `snapshot_configs` **unconditionally**
+(not gated by `save` at all — see the visual_avoiding finding below), so they don't have this
+specific bug.
+
+### Fix
+Replaced the filesystem-existence check with an in-memory, per-process guard:
+```python
+_SNAPSHOTTED_DIRS = set()   # module-level
+...
+if _snap_dir not in _SNAPSHOTTED_DIRS:
+    ...
+    utils.Parser().snapshot_configs(_snap_args)
+    _SNAPSHOTTED_DIRS.add(_snap_dir)
+```
+Still avoids redundant re-copies within one job's variant/geo_tag loop (the original intent),
+but a **fresh process** (i.e. every new job submission) always re-snapshots, and `shutil.copy`
+naturally overwrites whatever stale content was there before.
+
+### Leftover-clutter cleanup
+The pre-fix bug wrote a file named `projection_eval.yaml`; the fixed code writes
+`uav_projection.yaml` — a **different filename**, so simply re-running doesn't overwrite the
+old one, it just adds the correct file alongside the stale one. Added an explicit cleanup:
+after snapshotting, delete `config_snapshot_uav/projection_eval.yaml` if present — safe here
+specifically because that filename is never legitimately correct content for a UAV run.
+
+## Addendum 2 — audited visual_avoiding for the same class of bug (per user's follow-up ask)
+
+Checked whether `fm_visual_avoiding`/`diffuser_visual_avoiding` (fixed for the wrong-yaml-path
+bug earlier in this changelog) have the SAME "never re-runs" problem UAV had. **They don't** —
+their `mkdir()` calls `self.snapshot_configs(args)` **unconditionally**, outside any `if save:`
+guard, so it fires on every single eval run regardless of `os.path.exists`. Confirmed via
+`parse_args`: `save = (experiment == 'train')`, so eval always passes `save=False`, but
+`snapshot_configs` isn't gated by that flag at all for these packages — only the separate
+`args_resume_X.json` write is. **These self-heal automatically on the very next eval run.**
+
+They do have the same **leftover-clutter** issue as UAV, though, for the same reason (fixed
+destination filename changed from `visual_aligning_eval.yaml` to `visual_avoiding_eval.yaml`,
+so the old file isn't overwritten, just left alongside the new correct one). Added the
+equivalent cleanup to both `fm_visual_avoiding/utils/setup.py` and
+`diffuser_visual_avoiding/utils/setup.py`: delete `visual_aligning_eval.yaml` from the
+snapshot dir if present, after writing the correct `visual_avoiding_eval.yaml`.
+
+`fm_visual_aligning`/`diffuser_visual_aligining`/`imf_visual_aligining` need no equivalent
+check — they never had the wrong-yaml-path bug in the first place (confirmed in the original
+audit above), so there's no stale/mismatched-filename file to clean up there.
+
+### Verification
+- `py_compile` clean on all 4 touched files
+  (`FM_v3_uav_test/eval_fm_uav.py`, `flow_matcher_v3_uav/utils/setup.py`,
+  `fm_visual_avoiding/utils/setup.py`, `diffuser_visual_avoiding/utils/setup.py`).
+- Repo-wide `grep` for `_snap_dir`/`os.path.exists(_snap_dir)` confirms UAV is the only eval
+  script with a custom, filesystem-guarded snapshot re-implementation.
+- Confirmed (by reading `parse_args`/`mkdir` in `fm_visual_avoiding/utils/setup.py`) that
+  `snapshot_configs` there is unconditional, unlike UAV's `if save:`-gated version.
+
+### Files touched (this addendum)
+- `FM_v3_uav_test/eval_fm_uav.py` — `_SNAPSHOTTED_DIRS` process-scoped guard replacing the
+  `os.path.exists(_snap_dir)` filesystem check; stale `projection_eval.yaml` cleanup.
+- `fm_visual_avoiding/utils/setup.py`, `diffuser_visual_avoiding/utils/setup.py` — stale
+  `visual_aligning_eval.yaml` cleanup after the correct snapshot is written.
