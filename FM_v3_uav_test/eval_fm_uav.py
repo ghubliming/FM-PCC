@@ -522,7 +522,17 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
       - Halfspaces may carry `x_active` (s_curve): a wall is included only if `current_x` is
         inside its interval; `current_x=None` → all walls active (build-time fallback).
 
-    Variant semantics (unchanged): gradient / post_processing / model_free / tightened.
+    Variant semantics: gradient / post_processing / model_free / tightened (unchanged), plus
+    U8's `bounds_free` and `geo_free` (new) — three independent, composable variant-name
+    toggles, one per constraint "group": `model_free`→no dynamics, `bounds_free`→no action
+    bound, `geo_free`→no geo_bounds+halfspace+obstacles (the three geometric families move
+    together as one group, same as `model_free` already grouped nothing since dynamics was
+    already singular). Combine by substring, e.g. `dpcc-c-geo_free-bounds_free` = dynamics-only
+    projection with selection `dpcc-c`. This REPLACES the earlier per-scene
+    `<scene>_dynamics_only`/`<scene>_dynamics_bounds_only` geo_constraint_variants entries
+    (Fix_5) — those are removed; the SAME ablations are now variant-level toggles on the one
+    remaining full-stack geo entry per scene. See
+    logs_in_develop/Gen11/Epoch9_PCC_Constraints/U_8_new_projection_var_upgrade/.
     """
     from flow_matcher_v3_uav.sampling.projection import Projector
 
@@ -538,10 +548,13 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     ctypes = config.get('constraint_types', [])
     constraint_list = []
 
-    if 'geo_bounds' in ctypes:
+    if 'geo_bounds' in ctypes and 'geo_free' not in variant:
         # Workspace box on ACTUAL p (6,7,8), shrunk inward by the spatial margin.
         # Patch_Constraints_C3: renamed from 'bounds' — this flag now ONLY means the geo box;
         # 'bounds' below is a SEPARATE, independent family (the restored DPCC action limit).
+        # U8: 'geo_free' (variant-level, mirrors 'model_free') skips this + halfspace +
+        # obstacles TOGETHER — the "geometric/spatial" group — same pattern as 'model_free'
+        # skipping 'dynamics' alone. See U_8_new_projection_var_upgrade changelog.
         ws = config.get('workspace_bounds')
         if ws is not None:
             ws_lb = np.array(ws['lb'], dtype=float); ws_ub = np.array(ws['ub'], dtype=float)
@@ -549,11 +562,16 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
             ub = np.concatenate([np.full(6,  np.inf), ws_ub - margin, np.full(pad,  np.inf)])
             constraint_list += [['lb', lb], ['ub', ub]]
 
-    if 'bounds' in ctypes:
+    if 'bounds' in ctypes and 'bounds_free' not in variant:
         # Shared action-magnitude bound on the ACTION dims (0,1,2) — NOT inflated (§2.2).
         # Patch_Constraints_C3: independent of 'geo_bounds' above (was conflated under one
         # 'bounds' flag until this split; mirrors the same fix applied to visual-aligning's
         # eval scripts — see logs_in_develop/Gen7_FMPCC_Viusal_Aligning/Patch_Constraints_C3/).
+        # U8: 'bounds_free' (variant-level) skips just this family, mirroring 'model_free'
+        # (skips 'dynamics') and 'geo_free' (skips geo_bounds+halfspace+obstacles). The three
+        # toggles are independent and composable in the variant name (e.g.
+        # 'geo_free-bounds_free' = dynamics alone; 'geo_free-model_free' = bounds alone) — see
+        # U_8_new_projection_var_upgrade changelog for the full truth table.
         # SETTABLE in the yaml (`action_bounds`), default `'auto'` (Fix_3):
         #   'auto' (RECOMMENDED, default) → SELF-DERIVE from act_normalizer.mins/.maxs, the
         #     dataset's OWN observed Δp_des range (LimitsNormalizer: mins/maxs = X.min/max
@@ -588,7 +606,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list += [('deriv', [3, 0]), ('deriv', [4, 1]), ('deriv', [5, 2])]  # DC_FIX p_des ← act
         constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]  # DC_FIX p     ← act
 
-    if 'halfspace' in ctypes:
+    if 'halfspace' in ctypes and 'geo_free' not in variant:
         _hs = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
             triple, x_active = _normalize_halfspace(hs)
@@ -598,7 +616,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
             C_row, d = utils.formulate_halfspace_constraints(triple, margin, trajectory_dim, _hs)
             constraint_list.append(('ineq', (C_row, d)))
 
-    if 'obstacles' in ctypes:
+    if 'obstacles' in ctypes and 'geo_free' not in variant:
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
             constraint_list.append((obs['type'], dims, obs['center'], obs['radius'] + margin))

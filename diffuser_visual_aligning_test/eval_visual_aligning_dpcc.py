@@ -118,7 +118,10 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     pad = trajectory_dim - 9
     constraint_list = []
 
-    if 'geo_bounds' in config.get('constraint_types', []):
+    if 'geo_bounds' in config.get('constraint_types', []) and 'geo_free' not in variant:
+        # U8: 'geo_free' (variant-level, mirrors 'model_free') skips this + halfspace +
+        # obstacles TOGETHER — the "geometric/spatial" group. See
+        # logs_in_develop/Gen7_FMPCC_Viusal_Aligning/Patch_Constraints_C3/Gen11E9U8_Sync/.
         tightening = config.get('enlarge_constraints') or 0.0
         ws_lb = np.array(config['workspace_bounds']['lb'])
         ws_ub = np.array(config['workspace_bounds']['ub'])
@@ -130,10 +133,13 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list.append(['lb', lb])
         constraint_list.append(['ub', ub])
 
-    if 'bounds' in config.get('constraint_types', []):
+    if 'bounds' in config.get('constraint_types', []) and 'bounds_free' not in variant:
         # RESTORED DPCC action-magnitude bound (dims 0,1,2 = dx,dy,dz) — see docstring.
         # NOT tightened by `enlarge_constraints`: it's a dataset-range cap, not a spatial
         # surface (only geo_bounds/halfspace/obstacles get the tightening margin).
+        # U8: 'bounds_free' (variant-level) skips just this family — independent of and
+        # composable with 'model_free'/'geo_free': 'geo_free-bounds_free' = dynamics alone,
+        # 'geo_free-model_free' = bounds alone. See Gen11E9U8_Sync changelog.
         ab = config.get('action_bounds', 'auto')
         if ab == 'auto':
             a_lb = np.asarray(act_normalizer.mins, dtype=float)
@@ -160,7 +166,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list.append(('deriv', [7, 1]))   # c_pos_y[t+1] = c_pos_y[t] + act_y[t]
         constraint_list.append(('deriv', [8, 2]))   # c_pos_z[t+1] = c_pos_z[t] + act_z[t]
 
-    if 'halfspace' in config.get('constraint_types', []):
+    if 'halfspace' in config.get('constraint_types', []) and 'geo_free' not in variant:
         tightening = config.get('enlarge_constraints') or 0.0
         _hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
@@ -168,7 +174,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
             C_row, d = utils.formulate_halfspace_constraints(hs, margin, trajectory_dim, _hs_indices)
             constraint_list.append(('ineq', (C_row, d)))
 
-    if 'obstacles' in config.get('constraint_types', []):
+    if 'obstacles' in config.get('constraint_types', []) and 'geo_free' not in variant:
         tightening = config.get('enlarge_constraints') or 0.0
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]

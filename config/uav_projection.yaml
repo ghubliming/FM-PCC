@@ -23,7 +23,19 @@ n_trials: 10
 diffusion_timestep_threshold: 0.5
 
 # ── Projection variants ───────────────────────────────────────────────────────
-# Exact same set as FMv3ODE / visual-aligning (DPCC paper Table 1).
+# Exact same set as FMv3ODE / visual-aligning (DPCC paper Table 1), PLUS U8's three
+# independent, composable constraint-group toggles (U_8_new_projection_var_upgrade):
+#   model_free  → skip 'dynamics'                              (existing)
+#   bounds_free → skip 'bounds' (the action-magnitude limit)    (new)
+#   geo_free    → skip 'geo_bounds'+'halfspace'+'obstacles' AS A GROUP (new — the three
+#                 "geometric/spatial" families move together, same as 'model_free' already
+#                 gates the lone 'dynamics' family)
+# These make per-scene single-family ablation ENTRIES unnecessary — every combination below
+# runs against the ONE full-stack geo entry per scene (see geo_constraint_variants), so e.g.
+# "dynamics only" is now `geo_free-bounds_free` on that one entry, not a separate geo variant.
+# `-tightened` siblings are omitted for these three: tightening only affects
+# geo_bounds/halfspace/obstacles, which the -free toggles above may already remove, so a
+# tightened sibling would be redundant/no-op whenever geo_free is active (see changelog).
 projection_variants: [
   # ── DPCC paper Table 1 baselines ──
   'diffuser',
@@ -31,8 +43,13 @@ projection_variants: [
   'gradient-tightened',
   'post_processing',
   'post_processing-tightened',
-  'model_free',               # spatial-only: no-op until obstacle/halfspace/bounds constraints designed
-  'model_free-tightened',     # spatial-only + tightening: no-op until spatial constraints designed
+  'model_free',               # dynamics OFF, rest ON
+  'model_free-tightened',
+  # ── U8: constraint-group ablation toggles (composable, see docstring above) ──
+  'bounds_free',               # action-bound OFF, rest ON
+  'geo_free',                  # geo_bounds+halfspace+obstacles OFF, rest ON (dynamics+bounds only)
+  'geo_free-bounds_free',      # dynamics ALONE (no bounds, no geometric constraints)
+  'geo_free-model_free',       # bounds ALONE (no dynamics, no geometric constraints)
   # ── DPCC paper Table 1 main results ──
   'dpcc-r',
   'dpcc-r-tightened',
@@ -86,37 +103,21 @@ inflation: {r_drone: 0.36, margin_base: 0.05}
 #                        halfspace + obstacles still apply if listed in constraint_types).
 action_bounds: 'auto'
 
-# ── E9 per-scene geometry — SELECTABLE, visual-aligning `geo_constraint_variants` pattern
-#    (Fix_4) ────────────────────────────────────────────────────────────────────────────
-# Same mechanism as `config/visual_aligning_eval.yaml`: a FLAT list of NAMED variants, each
-# tied to one scene via its own `scene:` field (decoupled from `name`, so a scene can carry
-# several named variants — ablations, alternates — same as visual-aligning's `bounds_only_1`/
-# `obstacle_only_1`/`combined_4`/`combined_5` all being variants of ONE task). `name` follows
-# visual-aligning's own naming convention: `<scene>_combined_1` for a full-stack entry
-# (mirrors `combined_4`/`combined_5`), `<scene>_no_constraint` for the unconstrained baseline
-# (mirrors visual-aligning's own `no_constraint`). Only ONE entry per scene may be listed in
-# `active_geo_variants` at a time (the eval runs exactly one geo config per scene per
-# invocation) — `load_pcc_config` raises if more than one active entry resolves to the same
-# scene, so adding a new ablation variant below is always safe: it simply isn't picked up
-# until you add its name to `active_geo_variants` (and remove/comment its sibling).
+# ── E9 per-scene geometry — ONE full-stack entry per scene (U8 simplification) ────────────
+# U_8_new_projection_var_upgrade: the per-scene single-family ablation entries from Fix_5
+# (`<scene>_dynamics_only`, `<scene>_dynamics_bounds_only`) are REMOVED — they're redundant
+# now that `bounds_free`/`geo_free` (projection_variants above) express the same ablations
+# as variant-name toggles on this ONE entry. Naming simplified back to plain `<scene>` (no
+# more `_combined_1` suffix — there's nothing left to disambiguate it from).
 #
-# CURRENT DEFAULT SELECTION = the full per-scene constraint stack (unchanged content/values
-# from before this reorganization) — `*_combined_1` for corridor/pillars/s_curve,
-# `empty_no_constraint` for empty. Nothing about WHAT runs by default has changed; only HOW
-# it's selected (named + listed, instead of implicitly name==scene).
-#
-# To add an ablation (e.g. `corridor_geo_bounds_only`, mirroring visual-aligning's
-# `geo_bounds_only_1`): copy a `*_combined_1` block, set `scene: corridor`, narrow
-# `constraint_types` to the one family under test, and swap it into `active_geo_variants` in
-# place of `corridor_combined_1` (only one may be active per scene at a time — see above).
-# Per-scene `<scene>_dynamics_only` / `<scene>_dynamics_bounds_only` are ALREADY defined below
-# (mirroring visual-aligning's own `dynamics_only`/`dynamics_bounds_only` A/B pair) — not
-# active by default; add a scene's pair to `active_geo_variants` in place of its `combined_1`
-# to run that comparison.
+# The underlying mechanism (Fix_4: named entries + `scene:` field; Fix_6: eval_scene can run
+# several active entries for one scene in a single job) is UNCHANGED and still available if a
+# scene ever needs a genuinely different GEOMETRY (not just a different family subset) — e.g.
+# an alternate arena size — but is not needed for constraint-family ablation anymore.
 #
 # Altitude band (z floor/ceiling) and exact arena extents are first-cut values — CONFIRM the
 # flight altitude on the cluster from the expert trajectories; pillars/walls span z∈[0,2].
-active_geo_variants: ['empty_no_constraint', 'corridor_combined_1', 'pillars_combined_1', 's_curve_combined_1']
+active_geo_variants: ['empty_no_constraint', 'corridor', 'pillars', 's_curve']
 
 geo_constraint_variants:
 
@@ -125,20 +126,11 @@ geo_constraint_variants:
     scene: empty
     constraint_types: []          # projector is a no-op; raw FM. MARKED: not a failed run.
 
-  # ── corridor ──────────────────────────────────────────────────────────────────
-  - name: corridor_dynamics_only
-    scene: corridor
-    constraint_types: ['dynamics']
-
-  - name: corridor_dynamics_bounds_only    # dynamics + action bound — A/B pair with the above
-    scene: corridor
-    constraint_types: ['dynamics', 'bounds']
-
-  # box bounds + 2 wall halfspaces (m=0) + wall-end cap balls
+  # ── corridor — box bounds + 2 wall halfspaces (m=0) + wall-end cap balls ─────
   # XML: walls at y=±0.5 (half-thick 0.05 → inner faces y=∓0.45), x∈[-2,2].
-  # Patch_Constraints_C3: 'bounds' (action limit) RESTORED alongside the renamed 'geo_bounds'
-  # (workspace box) — this is the "full stack" entry, so it must carry both bounds families.
-  - name: corridor_combined_1
+  # Full stack: all 5 families declared; ablations now come from projection_variants
+  # (model_free/bounds_free/geo_free toggles), not from a separate geo entry.
+  - name: corridor
     scene: corridor
     constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
     workspace_bounds:             # x-extent + altitude; y handled by the wall halfspaces
@@ -153,18 +145,9 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
 
-  # ── pillars ───────────────────────────────────────────────────────────────────
-  - name: pillars_dynamics_only
-    scene: pillars
-    constraint_types: ['dynamics']
-
-  - name: pillars_dynamics_bounds_only
-    scene: pillars
-    constraint_types: ['dynamics', 'bounds']
-
-  # box bounds + envelope halfspace + 6 cylinder balls
+  # ── pillars — box bounds + envelope halfspace + 6 cylinder balls ─────────────
   # XML: 6 pillars, y=±0.6, x∈{-2,0,2}, radius 0.12, full-height → 2D sphere_outside on [x,y].
-  - name: pillars_combined_1
+  - name: pillars
     scene: pillars
     constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
     workspace_bounds:
@@ -181,20 +164,11 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0,  0.6], radius: 0.12}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.6], radius: 0.12}
 
-  # ── s_curve ───────────────────────────────────────────────────────────────────
-  - name: s_curve_dynamics_only
-    scene: s_curve
-    constraint_types: ['dynamics']
-
-  - name: s_curve_dynamics_bounds_only
-    scene: s_curve
-    constraint_types: ['dynamics', 'bounds']
-
-  # box bounds + per-segment switched wall halfspaces + corner balls
+  # ── s_curve — box bounds + per-segment switched wall halfspaces + corner balls ─
   # XML: seg1 walls y∈{-1.3,-0.3} x∈[-3,-0.5]; seg2 walls y∈{0.3,1.3} x∈[0.5,3].
   # Feasible set is NON-CONVEX; each wall halfspace is live only over its x-range (`x_active`),
   # selected per replan from the drone's current x (setup handles None = all-active fallback).
-  - name: s_curve_combined_1
+  - name: s_curve
     scene: s_curve
     constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
     workspace_bounds:
