@@ -16,8 +16,24 @@ import json
 import os
 
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
-METRICS = ['success_rate', 'contact_frac_mean', 'goal_dist_mean', 'goal_reached_rate',
-           'track_err_mean', 'fm_ms_mean', 'fm_ms_p95']
+# Fix_10 (2/2): (output_name, group, key) — `results.json`'s `summary` is now grouped into
+# physical/constraint/goal/success/timing (see eval_fm_uav.py::rollout_one); `group=None`
+# means the field stayed top-level (track_err_mean). output_name follows the same
+# group-prefixed leaf-name convention as the source schema, so this rollup's own output
+# keys stay consistent with what produced them.
+METRICS = [
+    ('success_strict_rate', 'success', 'strict_rate'),
+    ('phys_contact_frac_mean', 'physical', 'contact_frac_mean'),
+    ('goal_dist_mean', 'goal', 'dist_mean'),
+    ('goal_reached_rate', 'goal', 'reached_rate'),
+    ('track_err_mean', None, 'track_err_mean'),
+    ('fm_ms_mean', 'timing', 'fm_ms_mean'),
+    ('fm_ms_p95', 'timing', 'fm_ms_p95'),
+]
+
+
+def _extract(summ, group, key):
+    return summ.get(group, {}).get(key) if group else summ.get(key)
 
 
 def _mean_std(xs):
@@ -40,23 +56,23 @@ def aggregate_scene(scene, projection, logbase):
             continue
         # seed = the <seed> path component (…/<seed>/eval/<proj>/results.json)
         seed = summ.get('seed', os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(fp)))))
-        per_seed.append({'seed': seed, **{m: summ.get(m) for m in METRICS}})
+        per_seed.append({'seed': seed, **{name: _extract(summ, group, key) for name, group, key in METRICS}})
     if not per_seed:
         return None
     agg = {'scene': scene, 'projection': projection, 'n_seeds': len(per_seed),
            'seeds': [s['seed'] for s in per_seed]}
-    for m in METRICS:
-        vals = [s[m] for s in per_seed if isinstance(s.get(m), (int, float))]
+    for name, group, key in METRICS:
+        vals = [s[name] for s in per_seed if isinstance(s.get(name), (int, float))]
         mean, std = _mean_std(vals)
-        agg[f'{m}_mean'] = mean
-        agg[f'{m}_std'] = std
+        agg[f'{name}_mean'] = mean
+        agg[f'{name}_std'] = std
     agg['per_seed'] = per_seed
     out = os.path.join(logbase, f'uav-{scene}', 'plans', 'SCENE_SUMMARY.json')
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, 'w') as f:
         json.dump(agg, f, indent=2)
     print(f'[ agg ] {scene}: {len(per_seed)} seed(s)  '
-          f'success={agg.get("success_rate_mean")}  → {out}')
+          f'success={agg.get("success_strict_rate_mean")}  → {out}')
     return agg
 
 

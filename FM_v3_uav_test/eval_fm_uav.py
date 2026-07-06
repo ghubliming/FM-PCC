@@ -866,8 +866,21 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             track_err.append(float(np.linalg.norm(data.qpos[:3] - p_des)))
             # U7: one-way latch — true the instant the drone is ever on the goal side
             # of the finish line, regardless of what it does for the rest of the episode.
+            # Fix_10: the directional half-plane alone is NOT guaranteed to fire whenever the
+            # drone ends up within goal_radius of the goal — its orientation is fixed from the
+            # EXPERT's final approach heading, computed once upfront, and a rough rollout
+            # (high track_err / obstacle contacts, e.g. s_curve under load) can arrive at the
+            # goal from a genuinely different bearing that never crosses that specific
+            # fixed-orientation plane, even while ending up physically adjacent to the goal.
+            # Observed: success=True (goal_reached + safe) but crossed_line=False forever,
+            # violating the documented "success ⇒ success_relaxed" invariant. Fix: ALSO latch
+            # on raw proximity — this uses the exact same qpos/goal/threshold `goal_reached`
+            # uses on the final step, so goal_reached ⇒ crossed_line is now guaranteed by
+            # construction (the final step's proximity check runs in THIS loop, same as every
+            # other step), not just true for the common/typical-approach case.
             _side = float(np.dot(data.qpos[:2] - goal[:2], line_dir_xy))
-            crossed_line = crossed_line or (_side >= 0.0)
+            _dist_now = float(np.linalg.norm(data.qpos[:3] - goal))
+            crossed_line = crossed_line or (_side >= 0.0) or (_dist_now < goal_radius)
 
         # ── one structured log line per FM control step ──
         te_step = float(np.linalg.norm(data.qpos[:3] - p_des))
@@ -940,30 +953,49 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     if log_dir is not None:
         blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour)
 
+    # Fix_10 (2/2): grouped schema — replaces the old flat dict where near-synonymous names
+    # (`safe` vs `collision_free`) sat side by side with no signal that they measure different
+    # things (physical MuJoCo contact truth vs. the projector's own softer declared-constraint
+    # margin), and the 4 success booleans were an unlabelled 2×2 matrix. See
+    # logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_10_json_metrics/PLAN_fix10_2_json_schema_redesign.md
     return {
         'scene': scene, 'homotopy': homotopy,
-        'success': success,
-        'success_relaxed': success_relaxed,
-        'success_and_constraints': success_and_constraints,
-        'success_and_constraints_relaxed': success_and_constraints_relaxed,
-        'crossed_line': crossed_line,
-        'safe': safe,
-        'contact_frac': contact_frac,
-        'goal_dist': goal_dist,
-        'goal_reached': goal_reached,
-        'collision_free': collision_free,
-        'n_violations': n_violations,
-        'total_violations': total_violations,
-        'min_z': min_z,
-        'final_z': float(p_final[2]),
+        # Axis A — physical ground truth (hard MuJoCo mesh contact detection).
+        'physical': {
+            'safe': safe,
+            'contact_frac': contact_frac,
+            'min_z': min_z,
+            'final_z': float(p_final[2]),
+        },
+        # Axis B — declared-constraint margin truth (softer than physical; the flown path vs.
+        # the projector's own inflated geo_bounds/halfspace/obstacles boundary).
+        'constraint': {
+            'collision_free': collision_free,
+            'n_violations': n_violations,
+            'total_violations': total_violations,
+        },
+        'goal': {
+            'reached': goal_reached,
+            'dist': goal_dist,
+            'crossed_line': crossed_line,
+        },
+        # 2x2 matrix: {strict, relaxed} goal-reach x {with, without} Axis-B compliance.
+        'success': {
+            'strict': success,
+            'relaxed': success_relaxed,
+            'strict_and_constraints': success_and_constraints,
+            'relaxed_and_constraints': success_and_constraints_relaxed,
+        },
+        'timing': {
+            'fm_ms_mean': float(np.mean(fm_ms)) if fm_ms else float('nan'),   # PURE inference (proj subtracted)
+            'fm_ms_p95': float(np.percentile(fm_ms, 95)) if fm_ms else float('nan'),
+            'proj_ms_mean': float(np.mean(proj_ms)) if proj_ms else 0.0,
+            'total_ms_mean': float(np.mean(total_ms)) if total_ms else float('nan'),
+            'total_ms_p95': float(np.percentile(total_ms, 95)) if total_ms else float('nan'),
+            'total_over_budget': int(blog_summary['total_over_budget']),
+            'budget_ms': blog_summary['budget_ms'],
+        },
         'track_err_mean': float(np.mean(track_err)) if track_err else float('nan'),
-        'fm_ms_mean': float(np.mean(fm_ms)) if fm_ms else float('nan'),      # PURE inference (proj subtracted)
-        'fm_ms_p95': float(np.percentile(fm_ms, 95)) if fm_ms else float('nan'),
-        'proj_ms_mean': float(np.mean(proj_ms)) if proj_ms else 0.0,
-        'total_ms_mean': float(np.mean(total_ms)) if total_ms else float('nan'),
-        'total_ms_p95': float(np.percentile(total_ms, 95)) if total_ms else float('nan'),
-        'total_over_budget': int(blog_summary['total_over_budget']),
-        'budget_ms': blog_summary['budget_ms'],
         'n_fm_steps': n_fm, 'decim': decim, 'dt': dt,
         # ── heavy (npz / gif only; stripped from results.json) ──
         'obs_traj': np.asarray(obs_traj),
@@ -1138,28 +1170,40 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         _free_renderer(renderer)
         renderer = None
 
-    succ = np.mean([r['success'] for r in rollouts])
+    # Fix_10 (2/2): summary mirrors rollout_one's grouped schema — same group names, `_rate`/
+    # `_mean` suffixes inside each group instead of flat top-level keys.
+    succ = np.mean([r['success']['strict'] for r in rollouts])
     summary = {
         'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts), 'variant': variant,
-        'success_rate': float(succ),                                       # task success: goal+safe (scene-aware)
-        'success_relaxed_rate': float(np.mean([r['success_relaxed'] for r in rollouts])),  # U7: crossed finish line
-        'success_and_constraints_rate': float(np.mean([r['success_and_constraints'] for r in rollouts])),
-        'success_and_constraints_relaxed_rate': float(np.mean([r['success_and_constraints_relaxed'] for r in rollouts])),
-        'safe_rate': float(np.mean([r['safe'] for r in rollouts])),        # contact-free + airborne
-        'collision_free_rate': float(np.mean([r['collision_free'] for r in rollouts])),
-        'n_violations_mean': float(np.mean([r['n_violations'] for r in rollouts])),
-        'total_violations_mean': float(np.mean([r['total_violations'] for r in rollouts])),
-        'contact_frac_mean': float(np.mean([r['contact_frac'] for r in rollouts])),
-        'goal_dist_mean': float(np.mean([r['goal_dist'] for r in rollouts])),
-        'goal_reached_rate': float(np.mean([r['goal_reached'] for r in rollouts])),
+        'physical': {
+            'safe_rate': float(np.mean([r['physical']['safe'] for r in rollouts])),          # contact-free + airborne
+            'contact_frac_mean': float(np.mean([r['physical']['contact_frac'] for r in rollouts])),
+        },
+        'constraint': {
+            'collision_free_rate': float(np.mean([r['constraint']['collision_free'] for r in rollouts])),
+            'n_violations_mean': float(np.mean([r['constraint']['n_violations'] for r in rollouts])),
+            'total_violations_mean': float(np.mean([r['constraint']['total_violations'] for r in rollouts])),
+        },
+        'goal': {
+            'dist_mean': float(np.mean([r['goal']['dist'] for r in rollouts])),
+            'reached_rate': float(np.mean([r['goal']['reached'] for r in rollouts])),
+        },
+        'success': {
+            'strict_rate': float(succ),                                                       # task success: goal+safe (scene-aware)
+            'relaxed_rate': float(np.mean([r['success']['relaxed'] for r in rollouts])),        # U7: crossed finish line
+            'strict_and_constraints_rate': float(np.mean([r['success']['strict_and_constraints'] for r in rollouts])),
+            'relaxed_and_constraints_rate': float(np.mean([r['success']['relaxed_and_constraints'] for r in rollouts])),
+        },
+        'timing': {
+            'fm_ms_mean': float(np.mean([r['timing']['fm_ms_mean'] for r in rollouts])),
+            'fm_ms_p95': float(np.max([r['timing']['fm_ms_p95'] for r in rollouts])),
+            'proj_ms_mean': float(np.mean([r['timing']['proj_ms_mean'] for r in rollouts])),
+            'total_ms_mean': float(np.mean([r['timing']['total_ms_mean'] for r in rollouts])),
+            'total_ms_p95': float(np.max([r['timing']['total_ms_p95'] for r in rollouts])),
+            'total_over_budget': int(np.sum([r['timing']['total_over_budget'] for r in rollouts])),
+            'budget_ms': rollouts[0]['timing']['budget_ms'] if rollouts else float('nan'),
+        },
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
-        'fm_ms_mean': float(np.mean([r['fm_ms_mean'] for r in rollouts])),
-        'fm_ms_p95': float(np.max([r['fm_ms_p95'] for r in rollouts])),
-        'proj_ms_mean': float(np.mean([r['proj_ms_mean'] for r in rollouts])),
-        'total_ms_mean': float(np.mean([r['total_ms_mean'] for r in rollouts])),
-        'total_ms_p95': float(np.max([r['total_ms_p95'] for r in rollouts])),
-        'total_over_budget': int(np.sum([r['total_over_budget'] for r in rollouts])),
-        'budget_ms': rollouts[0]['budget_ms'] if rollouts else float('nan'),
         'projection': variant,
     }
 
@@ -1172,8 +1216,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     artifacts.plot_overview(out_dir, variant, scene, rollouts)
 
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '
-          f'sel={_selection_for(variant)}): success={succ:.3f}  success_relaxed={summary["success_relaxed_rate"]:.3f}  '
-          f'safe={summary["safe_rate"]:.3f}  goal_reached={summary["goal_reached_rate"]:.3f}  '
+          f'sel={_selection_for(variant)}): success={succ:.3f}  success_relaxed={summary["success"]["relaxed_rate"]:.3f}  '
+          f'safe={summary["physical"]["safe_rate"]:.3f}  goal_reached={summary["goal"]["reached_rate"]:.3f}  '
           f'track_err={summary["track_err_mean"]:.3f}  → {os.path.dirname(npz_path)}/')
     # Real-time timing verdict echoed to stdout (per-step detail stays in the .log files).
     _budget = summary['budget_ms']

@@ -64,6 +64,17 @@ ARG_KEYS = [
 ]
 # Additional headline keys added for dynamics checking
 HEADLINE_KEYS += ['traj_dyn_gap_max', 'plan_dyn_gap_max']
+# Fix_10 (2/2): UAV's own npz writer (eval_artifacts.py::save_npz) renamed/added array keys
+# with group prefixes (phys_*/constraint_*/goal_*/success_*) to match its per-rollout JSON
+# schema — see logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_10_json_metrics/. Appended
+# (not replacing the old names above, which avoiding/visual-aligining still produce) so UAV's
+# npz files still get "printed first" headline treatment under their new names.
+HEADLINE_KEYS += [
+    'success_strict', 'success_relaxed', 'success_strict_and_constraints',
+    'success_relaxed_and_constraints', 'phys_safe', 'phys_contact_frac',
+    'constraint_collision_free', 'constraint_n_violations', 'constraint_total_violations',
+    'goal_reached', 'goal_dist',
+]
 # object-array keys that are trajectory payloads, not per-trial scalars.
 TRAJ_KEYS = {'obs_all', 'act_all', 'sampled_trajectories_all', 'plans_all',
              'physical_tracking_errors', 'mode_encoding'}

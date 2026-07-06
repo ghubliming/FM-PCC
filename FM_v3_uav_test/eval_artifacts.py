@@ -38,33 +38,74 @@ def json_safe_rollouts(rollouts):
 def save_npz(out_dir, variant, rollouts, args_dict):
     """Write `<variant>.npz` matching the legacy FMv3ODE schema analysis scripts expect.
 
-    Real keys: n_success, n_success_and_constraints, n_steps, n_violations, total_violations,
-    obs_all, act_all, sampled_trajectories_all, args. (E7: constraint metrics are now taken
-    from the rollouts; with dynamics-only they are clean/zero — per-scene geometry fills them.)
+    Fix_10 (2/2): array names are group-prefixed to match rollout_one's nested JSON schema
+    (`physical`/`constraint`/`goal`/`success` groups), and the physical/goal metrics that were
+    always computed but never persisted to NPZ (only the constraint-axis ones were) are now
+    saved too — the same "share metrics between the per-rollout JSON and the aggregate-across-
+    trials NPZ" mapping, e.g. JSON `physical.safe` <-> NPZ `phys_safe`, JSON
+    `constraint.n_violations` <-> NPZ `constraint_n_violations`, JSON `success.strict` <-> NPZ
+    `success_strict`. NPZ itself stays flat (np.savez has no native nesting); only the key
+    names + the added arrays changed. See
+    logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_10_json_metrics/PLAN_fix10_2_json_schema_redesign.md
+    This is a UAV-only rename/addition — avoiding/visual-aligining's own npz writers untouched.
+
+    Real keys: success_strict, success_relaxed, success_strict_and_constraints,
+    success_relaxed_and_constraints, n_steps, phys_safe, phys_contact_frac, phys_min_z,
+    phys_final_z, constraint_collision_free, constraint_n_violations,
+    constraint_total_violations, goal_reached, goal_dist, goal_crossed_line, obs_all, act_all,
+    sampled_trajectories_all, args.
     """
-    n = len(rollouts)
-    n_success = np.array([1.0 if r.get('success') else 0.0 for r in rollouts])
-    n_success_relaxed = np.array([1.0 if r.get('success_relaxed') else 0.0 for r in rollouts])
+    def _f(r, group, key, default=0.0):
+        return float(r.get(group, {}).get(key, default))
+
+    def _b(r, group, key):
+        return 1.0 if r.get(group, {}).get(key) else 0.0
+
     n_steps = np.array([r.get('n_fm_steps', 0) for r in rollouts], dtype=float)
     obs_all = np.array([np.asarray(r.get('obs_traj', [])) for r in rollouts], dtype=object)
     act_all = np.array([np.asarray(r.get('act_traj', [])) for r in rollouts], dtype=object)
     plans_all = np.array([np.asarray(r.get('plans', [])) for r in rollouts], dtype=object)
 
-    # ── Constraint-aware metrics (from rollouts; dynamics-only → trivially clean) ──
-    n_success_and_constraints = np.array(
-        [1.0 if r.get('success_and_constraints') else 0.0 for r in rollouts])
-    n_violations = np.array([r.get('n_violations', 0) for r in rollouts], dtype=float)
-    total_violations = np.array([r.get('total_violations', 0.0) for r in rollouts], dtype=float)
+    # ── success (2x2 matrix, same 4 fields as the JSON `success` group) ──────────
+    success_strict = np.array([_b(r, 'success', 'strict') for r in rollouts])
+    success_relaxed = np.array([_b(r, 'success', 'relaxed') for r in rollouts])
+    success_strict_and_constraints = np.array([_b(r, 'success', 'strict_and_constraints') for r in rollouts])
+    success_relaxed_and_constraints = np.array([_b(r, 'success', 'relaxed_and_constraints') for r in rollouts])
+
+    # ── physical (Axis A, hard MuJoCo contact truth) — NEW, was never persisted before ──
+    phys_safe = np.array([_b(r, 'physical', 'safe') for r in rollouts])
+    phys_contact_frac = np.array([_f(r, 'physical', 'contact_frac') for r in rollouts])
+    phys_min_z = np.array([_f(r, 'physical', 'min_z') for r in rollouts])
+    phys_final_z = np.array([_f(r, 'physical', 'final_z') for r in rollouts])
+
+    # ── constraint (Axis B, declared-margin truth; dynamics-only → trivially clean) ──
+    constraint_collision_free = np.array([_b(r, 'constraint', 'collision_free') for r in rollouts])
+    constraint_n_violations = np.array([_f(r, 'constraint', 'n_violations') for r in rollouts])
+    constraint_total_violations = np.array([_f(r, 'constraint', 'total_violations') for r in rollouts])
+
+    # ── goal — NEW, was never persisted before ───────────────────────────────────
+    goal_reached = np.array([_b(r, 'goal', 'reached') for r in rollouts])
+    goal_dist = np.array([_f(r, 'goal', 'dist') for r in rollouts])
+    goal_crossed_line = np.array([_b(r, 'goal', 'crossed_line') for r in rollouts])
 
     path = os.path.join(out_dir, f'{variant}.npz')
     np.savez(
         path,
-        n_success=n_success,
-        n_success_relaxed=n_success_relaxed,
-        n_success_and_constraints=n_success_and_constraints,
+        success_strict=success_strict,
+        success_relaxed=success_relaxed,
+        success_strict_and_constraints=success_strict_and_constraints,
+        success_relaxed_and_constraints=success_relaxed_and_constraints,
         n_steps=n_steps,
-        n_violations=n_violations,
-        total_violations=total_violations,
+        phys_safe=phys_safe,
+        phys_contact_frac=phys_contact_frac,
+        phys_min_z=phys_min_z,
+        phys_final_z=phys_final_z,
+        constraint_collision_free=constraint_collision_free,
+        constraint_n_violations=constraint_n_violations,
+        constraint_total_violations=constraint_total_violations,
+        goal_reached=goal_reached,
+        goal_dist=goal_dist,
+        goal_crossed_line=goal_crossed_line,
         obs_all=obs_all,
         act_all=act_all,
         sampled_trajectories_all=plans_all,
@@ -317,26 +358,29 @@ def write_eval_log(out_dir, variant, summary, rollouts):
                 f"variant={variant}\n")
         f.write('=' * 70 + '\n')
         for i, r in enumerate(rollouts):
+            phys = r.get('physical', {}); goal = r.get('goal', {}); succ = r.get('success', {})
             f.write(
                 f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  "
-                f"success={int(bool(r.get('success')))}  "
-                f"success_relaxed={int(bool(r.get('success_relaxed')))}  "
-                f"contact={r.get('contact_frac', float('nan')):.3f}  "
-                f"min_z={r.get('min_z', float('nan')):.3f}  "
-                f"goal_dist={r.get('goal_dist', float('nan')):.3f}  "
+                f"success={int(bool(succ.get('strict')))}  "
+                f"success_relaxed={int(bool(succ.get('relaxed')))}  "
+                f"contact={phys.get('contact_frac', float('nan')):.3f}  "
+                f"min_z={phys.get('min_z', float('nan')):.3f}  "
+                f"goal_dist={goal.get('dist', float('nan')):.3f}  "
                 f"track_err={r.get('track_err_mean', float('nan')):.2f}\n")
         f.write('-' * 70 + '\n')
-        f.write(f"  success_rate (goal+safe): {summary['success_rate']:.3f}\n")
+        _s = summary.get('success', {}); _p = summary.get('physical', {})
+        _c = summary.get('constraint', {}); _g = summary.get('goal', {}); _t = summary.get('timing', {})
+        f.write(f"  success_rate (goal+safe): {_s.get('strict_rate', float('nan')):.3f}\n")
         f.write(f"  success_relaxed_rate (crossed finish line): "
-                f"{summary.get('success_relaxed_rate', float('nan')):.3f}\n")
-        f.write(f"  success_and_constraints : {summary.get('success_and_constraints_rate', float('nan')):.3f}\n")
-        f.write(f"  safe_rate (contact-free+airborne): {summary.get('safe_rate', float('nan')):.3f}\n")
-        f.write(f"  collision_free_rate     : {summary.get('collision_free_rate', float('nan')):.3f}  "
-                f"(violations mean: {summary.get('n_violations_mean', 0):.2f})\n")
-        f.write(f"  contact_frac_mean     : {summary['contact_frac_mean']:.3f}\n")
-        f.write(f"  goal_dist_mean        : {summary['goal_dist_mean']:.3f}\n")
-        f.write(f"  goal_reached_rate     : {summary['goal_reached_rate']:.3f}\n")
+                f"{_s.get('relaxed_rate', float('nan')):.3f}\n")
+        f.write(f"  success_and_constraints : {_s.get('strict_and_constraints_rate', float('nan')):.3f}\n")
+        f.write(f"  safe_rate (contact-free+airborne): {_p.get('safe_rate', float('nan')):.3f}\n")
+        f.write(f"  collision_free_rate     : {_c.get('collision_free_rate', float('nan')):.3f}  "
+                f"(violations mean: {_c.get('n_violations_mean', 0):.2f})\n")
+        f.write(f"  contact_frac_mean     : {_p.get('contact_frac_mean', float('nan')):.3f}\n")
+        f.write(f"  goal_dist_mean        : {_g.get('dist_mean', float('nan')):.3f}\n")
+        f.write(f"  goal_reached_rate     : {_g.get('reached_rate', float('nan')):.3f}\n")
         f.write(f"  track_err_mean        : {summary['track_err_mean']:.3f}\n")
-        f.write(f"  fm_ms mean/p95        : {summary['fm_ms_mean']:.1f}/{summary['fm_ms_p95']:.1f}\n")
+        f.write(f"  fm_ms mean/p95        : {_t.get('fm_ms_mean', float('nan')):.1f}/{_t.get('fm_ms_p95', float('nan')):.1f}\n")
         f.write('  [ PCC constraint metrics: placeholder — Epoch 7 ]\n')
     return path
