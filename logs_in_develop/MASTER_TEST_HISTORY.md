@@ -2542,3 +2542,45 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Config Snapshot Wrong-YAML Bug**: Discovered that `flow_matcher_v3_uav/utils/setup.py::snapshot_configs` was hardcoding `'config/projection_eval.yaml'` (the avoiding-task YAML) as the snapshot target, so every UAV run's `config_snapshot_uav/` folder silently contained avoiding's config instead of the UAV's own `uav_projection.yaml`. Fixed by correcting the hardcoded path and destination filename. Extended the same audit to `diffuser_visual_avoiding/utils/setup.py` and `fm_visual_avoiding/utils/setup.py` — both also corrected. All past UAV runs before this fix carry an invalid provenance snapshot; the git commit hash in the SLURM job header is the authoritative config reference for those runs.
 
 ***
+
+## Gen11 Epoch 9 Fix 7: UAV Rollout Render Optimization (July 5, 2026)
+
+**Keywords**: Gen11, Epoch 9, E9 Fix 7, UAV, gif, resolution reduction, delta-frame encoding, storage footprint.
+
+1. **UAV Visual Asset Profiling**: Investigated a massive storage footprint discrepancy where UAV evaluation GIFs were ~7x larger than the visual-aligning arm GIFs. Established that the arm's low resolution (96x96) is structurally tied to its vision policy input, whereas the UAV's high-resolution (360x360) overhead render was a purely arbitrary debug artifact since its policy is state-only.
+2. **Resolution Downscaling**: Reduced the default `_make_overhead_renderer` resolution from 360x360 to 200x200, achieving a ~3.2x reduction in per-frame pixel count without degrading visual utility or impacting the training pipeline.
+3. **Delta-Frame Encoding Integration**: Optimized `save_rollout_gif` by injecting `subrectangles=True` to the `imageio.mimsave` writer, enforcing delta encoding that only stores pixels changing between frames. This is highly synergistic with MuJoCo's static backgrounds (floors/pillars). Additionally added a reduced color palette constraint (`palettesize=128`), fully enveloped in a fallback `try/except` guard against backend incompatibilities.
+
+***
+
+## Gen11 Epoch 9 U8: Variant-Level Constraint Ablation Toggles (July 5, 2026)
+
+**Keywords**: Gen11, Epoch 9, U8, constraint ablation, geo_free, bounds_free, variant toggle, projection_variants.
+
+1. **Ablation Paradigm Shift**: Refactored the constraint ablation methodology away from proliferating redundant per-scene geometry configurations (e.g., `<scene>_dynamics_only`). The new design aligns with the pre-existing `model_free` toggle by utilizing orthogonal variant-level substring gates.
+2. **Implementation of `geo_free` and `bounds_free`**: Introduced `geo_free` to collectively disable spatial constraints (`geo_bounds`, `halfspace`, `obstacles`) and `bounds_free` to specifically bypass action-magnitude limits.
+3. **Combinatorial Expressiveness**: Enabled pure substring composition (e.g., `geo_free-bounds_free` safely equates to `dynamics_only`, and `geo_free-model_free` equates to `action_bounds_only`) to run distinct ablations without redefining the underlying physical `geo_constraint_variants` in the YAML.
+4. **YAML Simplification**: Cleaned `config/uav_projection.yaml` by pruning 6 redundant ablation geometries. `active_geo_variants` now strictly mandates exactly one definitive entry per scene, significantly reducing configuration surface area and cognitive overhead.
+
+***
+
+## Gen7 & Gen6V4: U8 Sync for Visual-Aligning Projection Ablations (July 5, 2026)
+
+**Keywords**: Gen7, Gen6V4, U8 sync, visual-aligning, projection_variants, geo_free, bounds_free.
+
+1. **Cross-Project Consistency**: Synchronized the new U8 constraint ablation architecture (variant-level toggles) backward into the original `visual-aligning` pipeline where the pattern originated with `model_free`.
+2. **DPCC Projector Patching**: Updated the live `setup_dpcc_projector` dispatch logic identically across both the Flow Matching engine (`fm_visual_aligning_test/eval_fm_visual_aligning.py`) and the baseline DDPM engine (`diffuser_visual_aligning_test/eval_visual_aligning_dpcc.py`).
+3. **YAML Pruning**: Removed legacy and redundant ablation structures (`dynamics_only`, `dynamics_bounds_only`, `action_bounds_only`) from `config/visual_aligning_eval.yaml`, replacing them entirely with the combinatorial `geo_free` and `bounds_free` flags within `projection_variants`. Maintained non-redundant experimental entries (e.g., specific 2D vs 3D test scenarios) to preserve full benchmarking fidelity.
+
+***
+
+## Infrastructure Hotfix: Config Snapshot Persistence & Stale YAML Cleanup (July 5, 2026)
+
+**Keywords**: config snapshot, provenance drift, process-level guard, stale YAML, filesystem check.
+
+1. **Snapshot Guard Bug Discovery**: Identified that the previously implemented configuration snapshot fix was failing to execute during subsequent runs. The root cause was traced to a filesystem-based existence check (`os.path.exists(_snap_dir)`) in the evaluation script, which permanently skipped the snapshot update once an older (potentially incorrect) snapshot directory existed.
+2. **Process-Level Memory Set Implementation**: Replaced the flawed filesystem check with an in-memory, process-scoped set (`_SNAPSHOTTED_DIRS`). This ensures that every new job execution (fresh process) unconditionally re-snapshots the active configuration, naturally overwriting stale contents, while still preventing redundant disk I/O within the same job's internal loops.
+3. **Stale Artifact Eradication**: Added explicit cleanup logic post-snapshot to detect and delete wrongly named legacy files (e.g., `projection_eval.yaml` inside UAV snapshots or `visual_aligning_eval.yaml` inside visual-avoiding snapshots) left over from the earlier hardcoded-path bugs, completely eliminating config provenance drift.
+4. **Scope of Fix**: Successfully deployed to `eval_fm_uav.py`, with corresponding cleanup logic patched into the setup utilities for both `fm_visual_avoiding` and `diffuser_visual_avoiding` packages.
+
+***
