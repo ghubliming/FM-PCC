@@ -152,6 +152,8 @@ def save_rollout_gif(diag_dir, idx, frames, fps=10):
     across frames, only the drone moves, so `subrectangles` alone typically shrinks file
     size substantially with no visible quality loss. Falls back to the plain call if the
     active imageio backend/version rejects these kwargs (never fails the save outright).
+    Fix_9: palettesize lowered 128→64 (still ample for a steelblue/tomato/drone overhead
+    scene — a handful of flat colors, not a photo) for a further ~2x on the color-table side.
     """
     if not frames:
         return None
@@ -159,7 +161,7 @@ def save_rollout_gif(diag_dir, idx, frames, fps=10):
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}.gif')
     try:
-        imageio.mimsave(path, frames, fps=fps, subrectangles=True, palettesize=128)
+        imageio.mimsave(path, frames, fps=fps, subrectangles=True, palettesize=64)
     except TypeError:
         imageio.mimsave(path, frames, fps=fps)
     return path

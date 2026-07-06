@@ -656,17 +656,19 @@ def _selection_for(variant):
     return 'random'
 
 
-def _make_overhead_renderer(mujoco, model, res=200):
+def _make_overhead_renderer(mujoco, model, res=140):
     """Headless overhead renderer; None if rendering is unavailable (no hard dep).
 
     ONE renderer is created per scene and reused across rollouts — never one per
     rollout — so we allocate exactly one EGL/GL context instead of leaking N of them.
 
-    Fix_7: res lowered 360→200 (~3x fewer pixels/frame). This render is ONLY used for the
+    Fix_7: res lowered 360→200 (~3x fewer pixels/frame). Fix_9: lowered again 200→140
+    (~2x more on top, ~5x total vs the original 360). This render is ONLY used for the
     debug/visualization GIF — never fed to a policy (unlike the arm's bp_cam/inhand_cam,
     which render at 96x96 because that resolution IS the trained vision-model input) — so
-    there is no accuracy tradeoff from shrinking it, only a smaller file. See
-    logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_7_Gif_lower_size/.
+    there is no accuracy tradeoff from shrinking it, only a smaller file. 140px is close to
+    the arm's own 96px scale while staying legible for a multi-obstacle overhead scene. See
+    logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_7_Gif_lower_size/ and .../Fix_9_.../.
     """
     try:
         return mujoco.Renderer(model, height=res, width=res)
@@ -717,7 +719,7 @@ def _render_overhead(mujoco, model, data, renderer):
 
 
 def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
-                renderer=None, frame_stride=2, goal_radius=GOAL_RADIUS, batch_size=1,
+                renderer=None, frame_stride=3, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
                 controller='pid', cond_mode='p_des', mjpc_kwargs=None,
                 v_des_magnitude=0.0, geo_config=None, rebuild_projector=None):
