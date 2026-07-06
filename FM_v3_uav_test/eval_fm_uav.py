@@ -1220,11 +1220,14 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
           f'safe={summary["physical"]["safe_rate"]:.3f}  goal_reached={summary["goal"]["reached_rate"]:.3f}  '
           f'track_err={summary["track_err_mean"]:.3f}  → {os.path.dirname(npz_path)}/')
     # Real-time timing verdict echoed to stdout (per-step detail stays in the .log files).
-    _budget = summary['budget_ms']
-    _rt = 'SAFE' if summary['total_over_budget'] == 0 else f'OVER×{summary["total_over_budget"]}'
-    print(f'[ eval ] {scene} variant={variant} TIMING: fm_ms={summary["fm_ms_mean"]:.1f} '
-          f'proj_ms={summary["proj_ms_mean"]:.1f} total_ms={summary["total_ms_mean"]:.1f} '
-          f'(p95={summary["total_ms_p95"]:.1f}) budget={_budget}ms → real_time_{_rt}')
+    # Fix_10 follow-up: these were left reading the old flat top-level keys after the
+    # nested-schema migration moved everything under summary['timing'] — KeyError on
+    # 'budget_ms' at runtime. Updated to match the print statement just above.
+    _budget = summary['timing']['budget_ms']
+    _rt = 'SAFE' if summary['timing']['total_over_budget'] == 0 else f'OVER×{summary["timing"]["total_over_budget"]}'
+    print(f'[ eval ] {scene} variant={variant} TIMING: fm_ms={summary["timing"]["fm_ms_mean"]:.1f} '
+          f'proj_ms={summary["timing"]["proj_ms_mean"]:.1f} total_ms={summary["timing"]["total_ms_mean"]:.1f} '
+          f'(p95={summary["timing"]["total_ms_p95"]:.1f}) budget={_budget}ms → real_time_{_rt}')
     return summary
 
 
