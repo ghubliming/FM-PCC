@@ -2584,3 +2584,49 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 4. **Scope of Fix**: Successfully deployed to `eval_fm_uav.py`, with corresponding cleanup logic patched into the setup utilities for both `fm_visual_avoiding` and `diffuser_visual_avoiding` packages.
 
 ***
+
+## SLURM Infrastructure: UAV Eval Timing Logging (July 6, 2026)
+
+**Keywords**: SLURM, eval_fm_uav.sh, timing.
+
+1. **Job Execution Tracking**: Added evaluation job timing logs to the UAV `eval_fm_uav.sh` SLURM script to improve workflow execution observability.
+
+***
+
+## Gen11 Epoch 9 Fix 9: UAV Visualization GIF Aggressive Size Reduction (July 6, 2026)
+
+**Keywords**: Gen11, Epoch 9, E9 Fix 9, UAV, gif size, resolution, frame stride, palette.
+
+1. **Aggressive Footprint Reduction**: Iterated on previous visual asset optimizations to further reduce the storage footprint of debug UAV rollouts.
+2. **Quality-for-Size Tradeoff**: Shrunk the overhead renderer resolution from 200x200 down to 140x140, increased the frame stride from 2 to 3, and halved the color palette size to 64. This explicit quality-for-size tradeoff yields GIFs roughly 10-15x smaller than the original baseline.
+
+***
+
+## Gen11 Epoch 9 Fix 10: Nested Metric Schema & Success Invariant Fix (July 6, 2026)
+
+**Keywords**: Gen11, Epoch 9, E9 Fix 10, success_relaxed, crossed_line, json schema, npz metrics.
+
+1. **Success Invariant Violation Fixed**: Addressed a bug where degraded UAV trajectories with high tracking error could trigger `success` (by physical proximity to the goal) but fail `success_relaxed` because they approached from an un-modeled angle. The `crossed_line` latch now safely triggers based on proximity as well, restoring the strict `success ⇒ success_relaxed` mathematical invariant.
+2. **Artifact Schema Unification**: Entirely redesigned the evaluation metrics schema for both `.json` and `.npz` outputs. Outputs are now neatly nested under logical groupings (`physical`, `constraint`, `goal`, `success`, `timing`). 
+3. **Metric Extraction Pipeline Upgrade**: Updated downstream metric processing scripts, including `analyze_npz.py` and `aggregate_scene_summaries.py`, to natively extract and report from the new structured metrics format while preserving backward compatibility.
+
+***
+
+## Gen7 & Gen6V4 C4: Visual Aligning Metric Schema Unification & Contact Tracking (July 6, 2026)
+
+**Keywords**: Gen7, Gen6V4, C4, metric schema, success_relaxed, contact tracking, visual aligning.
+
+1. **Cross-Architecture Schema Alignment**: Synchronized the visual-aligning evaluation scripts for both Gen7 (Flow Matching) and Gen6V4 (Diffuser) pipelines to adopt the exact same grouped JSON/NPZ structure introduced in UAV's Fix 10 (`success`, `outcome`, `timing`, `context`, `contact`, `constraint`).
+2. **First/Last Contact Tracking**: Implemented new metrics capturing the step index and physical `XY` coordinates for both the first and last recorded contacts during an evaluation rollout. 
+3. **Diagnostic Plotting Enrichment**: Automatically rendered first-contact (blue star) and last-contact (purple X) markers directly onto the MPC foresight SVG plots for instant visual debugging of collision dynamics.
+4. **`success_relaxed` Integration**: Ported the `success_relaxed` concept into the visual-aligning domain, evaluating outcome solely on terminal distance thresholding.
+
+***
+
+## Gen11 Epoch 9 Hotfix: Timing Aggregation KeyError (July 6, 2026)
+
+**Keywords**: Gen11, Epoch 9, hotfix, timing dictionary, KeyError.
+
+1. **Nested Key Access Fix**: Resolved a `KeyError` within the evaluation summary generation caused by the transition to the nested timing dictionary structure. The script now correctly navigates the nested paths to extract timing data.
+
+***

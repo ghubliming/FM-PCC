@@ -54,7 +54,7 @@ fi
 cd "$REPO"
 
 python diffuser_visual_avoiding_test/train_visual_avoiding_dpcc.py \
-    --seeds 5 6 7 8 9 \
+    --seeds 6 \
     --use-wandb \
     --wandb-project FMPCC-visual-avoiding-dpcc
 

@@ -57,7 +57,7 @@ fi
 cd "$REPO"
 
 python FM_v3_drifting_test/train_flow_matching_v3_drifting.py \
-    --seeds 6 7 8 9 10 \
+    --seeds 6 \
     --use-wandb \
     --wandb-project FMPCC-knoll
 
