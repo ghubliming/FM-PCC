@@ -75,6 +75,21 @@ HEADLINE_KEYS += [
     'constraint_collision_free', 'constraint_n_violations', 'constraint_total_violations',
     'goal_reached', 'goal_dist',
 ]
+# Json_Orgnize_Success_relaxed_C4: Gen7/Gen6V4 visual-aligining's npz writers
+# (eval_fm_visual_aligining.py / eval_visual_aligining_dpcc.py) gained new group-prefixed
+# arrays mirroring their reorganized per-rollout stats JSON schema — see
+# logs_in_develop/Gen7_FMPCC_Viusal_Aligining/Json_Orgnize_Success_relaxed_C4/. `success_strict`
+# and `success_relaxed` are already covered by the UAV block above (same key names, same
+# convention, deliberately not re-added). Appended (not replacing `n_success`/existing
+# `exec_*`/`plan_*`-named arrays elsewhere, which are unaffected by this rename).
+HEADLINE_KEYS += [
+    'outcome_max_physical_tracking_error',
+    'contact_first_step', 'contact_last_step',
+    'constraint_exec_n_violated_steps', 'constraint_exec_sat_rate',
+    'constraint_exec_zero_violation', 'constraint_exec_bounds_viol_count',
+    'constraint_exec_halfspace_viol_count', 'constraint_exec_obstacle_viol_count',
+    'constraint_plan_post_viol_rate_mean',
+]
 # object-array keys that are trajectory payloads, not per-trial scalars.
 TRAJ_KEYS = {'obs_all', 'act_all', 'sampled_trajectories_all', 'plans_all',
              'physical_tracking_errors', 'mode_encoding'}

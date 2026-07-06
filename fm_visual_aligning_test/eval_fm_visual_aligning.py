@@ -679,6 +679,46 @@ def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
     return float(viol.mean())
 
 
+def _nest_constraint_metrics(cm):
+    """Json_Orgnize_C4 (Findings #2/#3): reshape check_trajectory_constraints' flat exec_*/
+    plan_* dict (see its own docstring) into grouped {exec: {..., by_family: {...}},
+    plan: {...}} — used both for the per-rollout stats JSON and for constraint_metrics.json's
+    aggregate `per_rollout` list, so both artifacts share one nesting convention. Does NOT
+    change what's measured — purely a presentation reshape of the same numbers.
+    `cm` may be {} (no geo_config / empty rollout) — returns empty groups in that case.
+    """
+    if not cm:
+        return {'exec': {}, 'plan': {}}
+    exec_group = {
+        'n_violated_steps':       cm.get('exec_n_violated_steps', 0),
+        'constraint_sat_rate':    cm.get('exec_constraint_sat_rate', 1.0),
+        'zero_violation_rollout': cm.get('exec_zero_violation_rollout', True),
+        'by_family': {
+            'bounds':    {'viol_count': cm.get('exec_bounds_viol_count', 0),
+                          'max_viol_m': cm.get('exec_max_bounds_viol_m', 0.0)},
+            'halfspace': {'viol_count': cm.get('exec_halfspace_viol_count', 0),
+                          'max_viol_m': cm.get('exec_max_halfspace_viol_m', 0.0)},
+            'obstacles': {'viol_count': cm.get('exec_obstacle_viol_count', 0),
+                          'max_viol_m': cm.get('exec_max_obstacle_penetration_m', 0.0)},
+        },
+        'margin_mean_m':        cm.get('exec_constraint_margin_mean_m', 0.0),
+        'first_violation_step': cm.get('exec_first_violation_step', -1),
+        'longest_safe_streak':  cm.get('exec_longest_safe_streak', 0),
+        'dynamics_consistency_error': {
+            'mean': cm.get('exec_dynamics_consistency_error_mean', 0.0),
+            'max':  cm.get('exec_dynamics_consistency_error_max', 0.0),
+        },
+    }
+    plan_group = {}
+    if 'plan_post_viol_rate_mean' in cm:
+        plan_group = {
+            'post_viol_rate_mean': cm.get('plan_post_viol_rate_mean', 0.0),
+            'post_viol_rate_max':  cm.get('plan_post_viol_rate_max', 0.0),
+            'n_replan_steps':      cm.get('plan_n_replan_steps', 0),
+        }
+    return {'exec': exec_group, 'plan': plan_group}
+
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 class Tee:
@@ -830,8 +870,14 @@ class VisualAgentWrapper:
         self.curr_rollout_all_candidates  = []  # Fix 8: per-rollout accumulator (Fix 9: stores c_pos dims)
         self.curr_rollout_selected_idx    = []  # Fix 8: per-rollout accumulator
         self.curr_rollout_c_pos           = []  # Fix 9: actual robot position per step
+        self.curr_rollout_mode_history     = []  # Json_Orgnize_C4: per-step proximity mode (0=within 5.1cm of box)
         self.curr_context_info            = {}  # Fix 10: set by record_context_info each rollout
         self.history_context_info         = []  # Fix 10: per-rollout context records
+        self.history_success_relaxed      = []  # Json_Orgnize_C4: position-only success per rollout
+        self.history_contact_first_step   = []  # Json_Orgnize_C4
+        self.history_contact_last_step    = []
+        self.history_contact_first_pos_xy = []
+        self.history_contact_last_pos_xy  = []
         self.curr_rollout_time           = 0
         self.master_rollout_history      = {}
         self.video_frames                = []
@@ -861,6 +907,7 @@ class VisualAgentWrapper:
         self.curr_rollout_time  = 0
         self.curr_rollout_tracking_errors.clear()
         self.curr_rollout_c_pos.clear()            # Fix 9
+        self.curr_rollout_mode_history.clear()     # Json_Orgnize_C4
         self.curr_context_info = {}                # Fix 10
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
@@ -912,6 +959,34 @@ class VisualAgentWrapper:
                 'final_xy_dist':       _final_xy_dist,
             })
 
+        # Json_Orgnize_C4 (Finding #5): success_relaxed — position-only, ignore final angle.
+        # pos_min_dist is threaded through `info` from the live env (aligning_sim.py); fall
+        # back to the env's own hardcoded default (aligining.py:198) only if an older
+        # aligining_sim.py without the threading fix is ever used, so this never hard-fails.
+        _pos_min_dist = float(info.get('pos_min_dist', 0.018))
+        _final_xy_dist_for_relax = self.curr_context_info.get('final_xy_dist')
+        success_relaxed = (bool(_final_xy_dist_for_relax <= _pos_min_dist)
+                            if _final_xy_dist_for_relax is not None else False)
+
+        # Json_Orgnize_C4 (Finding #6): first/last-contact step+position — a proximity proxy
+        # (robot-box XY dist < aligining.py's robot_box_dist=0.051m via check_mode()'s `mode`),
+        # NOT verified MuJoCo mesh contact (no such API exists for this env). `-1`/None sentinel
+        # when the robot never got close during the whole rollout.
+        contact_first_step = contact_last_step = -1
+        contact_first_pos_xy = contact_last_pos_xy = None
+        if self.curr_rollout_mode_history and self.curr_rollout_c_pos:
+            _contact_idx = [i for i, m in enumerate(self.curr_rollout_mode_history) if m == 0]
+            if _contact_idx:
+                contact_first_step = int(_contact_idx[0])
+                contact_last_step  = int(_contact_idx[-1])
+                _n_pos = len(self.curr_rollout_c_pos)
+                if contact_first_step < _n_pos:
+                    contact_first_pos_xy = [float(self.curr_rollout_c_pos[contact_first_step][0]),
+                                             float(self.curr_rollout_c_pos[contact_first_step][1])]
+                if contact_last_step < _n_pos:
+                    contact_last_pos_xy = [float(self.curr_rollout_c_pos[contact_last_step][0]),
+                                            float(self.curr_rollout_c_pos[contact_last_step][1])]
+
         self.master_rollout_history[f'rollout_{ridx}'] = {
             'real_robot_pos':      np.array(self.history_real_pos),
             'c_pos_history':       np.array(self.curr_rollout_c_pos),         # Fix 9
@@ -929,6 +1004,11 @@ class VisualAgentWrapper:
             'dist_to_target':     list(self.curr_rollout_dist_to_target),
             'clamp_events':       list(self.curr_rollout_clamp_events),
             'context_info':       dict(self.curr_context_info),              # Fix 10
+            'success_relaxed':        success_relaxed,                       # Json_Orgnize_C4
+            'contact_first_step':     contact_first_step,
+            'contact_last_step':      contact_last_step,
+            'contact_first_pos_xy':   contact_first_pos_xy,
+            'contact_last_pos_xy':    contact_last_pos_xy,
         }
 
         # UF-16.3: compute constraint satisfaction metrics for this rollout.
@@ -967,6 +1047,13 @@ class VisualAgentWrapper:
         self.history_dist_to_target.append(list(self.curr_rollout_dist_to_target))
         self.history_clamp_events.append(list(self.curr_rollout_clamp_events))
         self.history_context_info.append(dict(self.curr_context_info))      # Fix 10
+        self.history_success_relaxed.append(success_relaxed)                # Json_Orgnize_C4
+        self.history_contact_first_step.append(contact_first_step)
+        self.history_contact_last_step.append(contact_last_step)
+        self.history_contact_first_pos_xy.append(
+            contact_first_pos_xy if contact_first_pos_xy is not None else [float('nan'), float('nan')])
+        self.history_contact_last_pos_xy.append(
+            contact_last_pos_xy if contact_last_pos_xy is not None else [float('nan'), float('nan')])
 
         ctx_type = 'Seen Training Context' if self.eval_on_train else 'Unseen Test Context'
         ci = self.curr_context_info
@@ -995,10 +1082,14 @@ class VisualAgentWrapper:
             self._export_rollout_realtime(ridx)   # Fix 9: handles PNG+JSON+pkl+video, no separate _save_diagnostics
 
     def record_step_info(self, info):
-        """Called by Aligning_Sim after each env.step() — accumulates per-step mean_distance."""
+        """Called by Aligning_Sim after each env.step() — accumulates per-step mean_distance
+        and (Json_Orgnize_C4) the proximity `mode` (0 = EE within robot_box_dist of the box),
+        used at rollout-end to derive first/last-contact step+position. `mode` is a distance
+        proxy (aligining.py's check_mode()), not verified MuJoCo mesh contact."""
         d = info.get('mean_distance')
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
+        self.curr_rollout_mode_history.append(int(info.get('mode', 1)))
 
     def capture_frame(self, bp_np, inhand_np):
         """Non-visual GIF hook. Receives (C,H,W) float[0,1] BGR images from
@@ -1060,36 +1151,55 @@ class VisualAgentWrapper:
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_data.pkl'), 'wb') as f:
                 pickle.dump(data, f)
 
-            # Fix 9: JSON only (no .txt duplicate); Fix 10: context_info added
-            stats = {
-                'rollout_index':                  int(rollout_idx),
-                'success':                        bool(data.get('success', False)),
-                'steps':                          int(data.get('steps', 0)),
-                'mean_distance':                  float(data.get('mean_distance', 0.0)),
-                'mode':                           int(data.get('mode', 0)),
-                'avg_inference_time_per_replan':  float(data.get('avg_time', 0.0)),  # Fix 12
-                'max_physical_tracking_error':    float(data.get('max_physical_tracking_error', 0.0)),
-                'context_info':                   data.get('context_info', {}),
-                'constraint_metrics':             data.get('constraint_metrics', {}),  # UF-16.3
-            }
+            # Json_Orgnize_C4: grouped schema replacing the old flat/chaotic layout.
+            # `exec_n_steps` (Finding #1, was a literal duplicate of `steps`) is dropped —
+            # `timing.steps` is the single canonical step count now.
             _cm = data.get('constraint_metrics', {})
+            _nested_cm = _nest_constraint_metrics(_cm)
+            _ci = data.get('context_info', {})
+            _contact_note = ('proximity proxy (robot-box XY dist < 0.051m), '
+                              'not physical mesh contact')
+            stats = {
+                'rollout_index': int(rollout_idx),
+                'mode':          int(data.get('mode', 0)),
+                'success': {
+                    'strict':  bool(data.get('success', False)),
+                    'relaxed': bool(data.get('success_relaxed', False)),
+                },
+                'outcome': {
+                    'mean_distance':               float(data.get('mean_distance', 0.0)),
+                    'max_physical_tracking_error':  float(data.get('max_physical_tracking_error', 0.0)),
+                },
+                'timing': {
+                    'steps':                          int(data.get('steps', 0)),
+                    'avg_inference_time_per_replan':   float(data.get('avg_time', 0.0)),  # Fix 12
+                },
+                'context': dict(_ci),
+                'contact': {
+                    'first_step':    (int(data['contact_first_step'])
+                                       if data.get('contact_first_step', -1) >= 0 else None),
+                    'first_pos_xy':  data.get('contact_first_pos_xy'),
+                    'last_step':     (int(data['contact_last_step'])
+                                       if data.get('contact_last_step', -1) >= 0 else None),
+                    'last_pos_xy':   data.get('contact_last_pos_xy'),
+                    'note':          _contact_note,
+                },
+                'constraint': _nested_cm,
+            }
             if _cm:
-                _sat = _cm.get('exec_constraint_sat_rate', 1.0)
-                _nviol = _cm.get('exec_n_violated_steps', 0)
-                _bv = _cm.get('exec_bounds_viol_count', 0)
-                _hv = _cm.get('exec_halfspace_viol_count', 0)
-                _ov = _cm.get('exec_obstacle_viol_count', 0)
-                _fv = _cm.get('exec_first_violation_step', -1)
-                _ls = _cm.get('exec_longest_safe_streak', 0)
-                _mg = _cm.get('exec_constraint_margin_mean_m', 0.0)
-                _dy = _cm.get('exec_dynamics_consistency_error_mean', 0.0)
-                _pv = _cm.get('plan_post_viol_rate_mean', 0.0)
-                _zv = _cm.get('exec_zero_violation_rollout', False)
-                print(f'  [ constraints ] sat={_sat:.3f}  violated={_nviol}steps'
-                      f'  (bounds={_bv} hs={_hv} obs={_ov})')
-                print(f'    first_viol_step={_fv}  longest_safe={_ls}  '
-                      f'margin={_mg:.4f}m  dyn_err={_dy:.4f}m')
-                print(f'    plan_post_viol_rate={_pv:.4f}  zero_viol={_zv}')
+                _ex = _nested_cm['exec']
+                print(f'  [ constraints ] sat={_ex["constraint_sat_rate"]:.3f}  '
+                      f'violated={_ex["n_violated_steps"]}steps'
+                      f'  (bounds={_ex["by_family"]["bounds"]["viol_count"]} '
+                      f'hs={_ex["by_family"]["halfspace"]["viol_count"]} '
+                      f'obs={_ex["by_family"]["obstacles"]["viol_count"]})')
+                print(f'    first_viol_step={_ex["first_violation_step"]}  '
+                      f'longest_safe={_ex["longest_safe_streak"]}  '
+                      f'margin={_ex["margin_mean_m"]:.4f}m  '
+                      f'dyn_err={_ex["dynamics_consistency_error"]["mean"]:.4f}m')
+                _pv = _nested_cm['plan'].get('post_viol_rate_mean', 0.0)
+                print(f'    plan_post_viol_rate={_pv:.4f}  '
+                      f'zero_viol={_ex["zero_violation_rollout"]}')
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_stats.json'), 'w') as sf:
                 json.dump(stats, sf, indent=4)
 
@@ -1248,6 +1358,20 @@ class VisualAgentWrapper:
                     _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
                             markersize=7,  label='end'),
                 ]
+                # Json_Orgnize_C4 (Finding #7): first/last-contact markers, XY panel only —
+                # proximity proxy (see contact.note in the stats JSON), not mesh contact.
+                _cfs = data.get('contact_first_step', -1)
+                _cls = data.get('contact_last_step', -1)
+                if _cfs is not None and _cfs >= 0 and _cfs < len(_ref):
+                    ax_xy.scatter([_ref[_cfs, 0]], [_ref[_cfs, 1]], marker='*', s=140,
+                                  color='blue', zorder=15, linewidths=0)
+                    _lgd.append(_Line2D([0],[0], marker='*', color='w', markerfacecolor='blue',
+                                         markersize=10, label='first contact'))
+                if _cls is not None and _cls >= 0 and _cls < len(_ref):
+                    ax_xy.scatter([_ref[_cls, 0]], [_ref[_cls, 1]], marker='X', s=140,
+                                  color='purple', zorder=15, linewidths=0)
+                    _lgd.append(_Line2D([0],[0], marker='X', color='w', markerfacecolor='purple',
+                                         markersize=9, label='last contact'))
                 if self.is_tightened and _enlarge > 0:
                     _lgd += [
                         _Line2D([0],[0], color='steelblue', lw=1.5, linestyle='-',
@@ -2079,11 +2203,22 @@ if __name__ == '__main__':
                     _ctx_box_ang  = np.array([c.get('box_init_angle_deg', 0.0) for c in _ci], dtype=np.float32)
                     _ctx_tgt_ang  = np.array([c.get('target_angle_deg',   0.0) for c in _ci], dtype=np.float32)
                     _ctx_xy_dist  = np.array([c.get('init_xy_dist',       0.0) for c in _ci], dtype=np.float32)
+
+                    # Json_Orgnize_C4: constraint-axis arrays, previously absent from NPZ
+                    # entirely (only ever lived in the two JSON files) — group-prefixed to
+                    # match the reorganized stats-JSON schema (constraint.exec.*/plan.*).
+                    _hcm_for_npz = agent.history_constraint_metrics
+
+                    def _cm_npz(key, default=0.0):
+                        return np.array([m.get(key, default) for m in _hcm_for_npz], dtype=np.float32)
+
                     np.savez(f'{save_path}/{variant}.npz',
                              success_rate=success_rate, entropy=entropy,
                              mode_encoding=mode_encoding.numpy(),
                              elapsed_seconds=elapsed, seed=seed,
                              n_success=successes.flatten().numpy(),
+                             success_strict=successes.flatten().numpy(),        # Json_Orgnize_C4 (same data, schema-consistent name)
+                             success_relaxed=np.array(agent.history_success_relaxed),  # Json_Orgnize_C4
                              n_steps=np.array(agent.history_n_steps),
                              avg_time=np.array(agent.history_avg_time),
                              mean_distance=mean_dist.flatten().numpy(),
@@ -2091,11 +2226,33 @@ if __name__ == '__main__':
                              physical_tracking_errors=np.array(
                                  agent.history_pos_tracking_errors, dtype=object),
                              max_phys_error_per_rollout=_max_phys,
+                             outcome_max_physical_tracking_error=_max_phys,     # Json_Orgnize_C4 (schema-consistent alias)
                              context_box_init_xy=_ctx_box_xy,
                              context_target_xy=_ctx_tgt_xy,
                              context_box_angle_deg=_ctx_box_ang,
                              context_target_angle_deg=_ctx_tgt_ang,
                              context_init_xy_dist=_ctx_xy_dist,
+                             contact_first_step=np.array(agent.history_contact_first_step, dtype=np.int32),
+                             contact_last_step=np.array(agent.history_contact_last_step, dtype=np.int32),
+                             contact_first_pos_xy=np.array(agent.history_contact_first_pos_xy, dtype=np.float32),
+                             contact_last_pos_xy=np.array(agent.history_contact_last_pos_xy, dtype=np.float32),
+                             constraint_exec_n_violated_steps=_cm_npz('exec_n_violated_steps'),
+                             constraint_exec_sat_rate=_cm_npz('exec_constraint_sat_rate', 1.0),
+                             constraint_exec_zero_violation=_cm_npz('exec_zero_violation_rollout'),
+                             constraint_exec_bounds_viol_count=_cm_npz('exec_bounds_viol_count'),
+                             constraint_exec_halfspace_viol_count=_cm_npz('exec_halfspace_viol_count'),
+                             constraint_exec_obstacle_viol_count=_cm_npz('exec_obstacle_viol_count'),
+                             constraint_exec_max_bounds_viol_m=_cm_npz('exec_max_bounds_viol_m'),
+                             constraint_exec_max_halfspace_viol_m=_cm_npz('exec_max_halfspace_viol_m'),
+                             constraint_exec_max_obstacle_penetration_m=_cm_npz('exec_max_obstacle_penetration_m'),
+                             constraint_exec_margin_mean_m=_cm_npz('exec_constraint_margin_mean_m'),
+                             constraint_exec_first_violation_step=_cm_npz('exec_first_violation_step', -1),
+                             constraint_exec_longest_safe_streak=_cm_npz('exec_longest_safe_streak'),
+                             constraint_exec_dyn_err_mean=_cm_npz('exec_dynamics_consistency_error_mean'),
+                             constraint_exec_dyn_err_max=_cm_npz('exec_dynamics_consistency_error_max'),
+                             constraint_plan_post_viol_rate_mean=_cm_npz('plan_post_viol_rate_mean'),
+                             constraint_plan_post_viol_rate_max=_cm_npz('plan_post_viol_rate_max'),
+                             constraint_plan_n_replan_steps=_cm_npz('plan_n_replan_steps'),
                              obs_all=np.array(obs_all, dtype=object),
                              act_all=np.array(act_all, dtype=object),
                              sampled_trajectories_all=np.array(plans_all, dtype=object),
@@ -2225,25 +2382,35 @@ if __name__ == '__main__':
                     print(f'  Zero-violation rollouts:        {_zv_cnt} / {n_r}  '
                           f'({100*_zv_cnt/max(1,n_r):.1f}%)')
 
+                    # Json_Orgnize_C4 (Open Q3, resolved: yes): nest the aggregate the same
+                    # way as the per-rollout stats JSON (exec/plan/by_family groups), so both
+                    # artifacts share one convention. `per_rollout` now holds the SAME nested
+                    # shape (via _nest_constraint_metrics) rather than the old flat dicts.
                     _cm_summary = {
                         'variant': variant, 'geo_name': geo_name, 'seed': int(seed),
                         'n_rollouts': n_r,
-                        'exec_constraint_sat_rate':         {'mean': float(_sat_arr.mean()), 'std': float(_sat_arr.std())},
-                        'exec_n_violated_steps':            {'mean': float(_nviol.mean()),   'std': float(_nviol.std())},
-                        'exec_bounds_viol_count':           {'mean': float(_bv.mean()),      'std': float(_bv.std())},
-                        'exec_halfspace_viol_count':        {'mean': float(_hv.mean()),      'std': float(_hv.std())},
-                        'exec_obstacle_viol_count':         {'mean': float(_ov.mean()),      'std': float(_ov.std())},
-                        'exec_max_bounds_viol_m':           {'mean': float(_bmx.mean()),     'std': float(_bmx.std())},
-                        'exec_max_halfspace_viol_m':        {'mean': float(_hmx.mean()),     'std': float(_hmx.std())},
-                        'exec_max_obstacle_penetration_m':  {'mean': float(_omx.mean()),     'std': float(_omx.std())},
-                        'exec_constraint_margin_mean_m':    {'mean': float(_mg.mean()),      'std': float(_mg.std())},
-                        'exec_first_violation_step':        {'mean': float(_fv[_fv>=0].mean()) if (_fv>=0).any() else -1,
-                                                             'n_rollouts_with_violation': int((_fv>=0).sum())},
-                        'exec_longest_safe_streak':         {'mean': float(_ls.mean()),      'std': float(_ls.std())},
-                        'exec_dynamics_consistency_error':  {'mean': float(_dy.mean()),      'std': float(_dy.std())},
-                        'plan_post_viol_rate':              {'mean': float(_pv.mean()),      'std': float(_pv.std())},
-                        'exec_zero_violation_rollouts':     _zv_cnt,
-                        'per_rollout':                      _hcm,
+                        'exec': {
+                            'constraint_sat_rate':    {'mean': float(_sat_arr.mean()), 'std': float(_sat_arr.std())},
+                            'n_violated_steps':       {'mean': float(_nviol.mean()),  'std': float(_nviol.std())},
+                            'by_family': {
+                                'bounds':    {'viol_count':  {'mean': float(_bv.mean()),  'std': float(_bv.std())},
+                                              'max_viol_m':  {'mean': float(_bmx.mean()), 'std': float(_bmx.std())}},
+                                'halfspace': {'viol_count':  {'mean': float(_hv.mean()),  'std': float(_hv.std())},
+                                              'max_viol_m':  {'mean': float(_hmx.mean()), 'std': float(_hmx.std())}},
+                                'obstacles': {'viol_count':  {'mean': float(_ov.mean()),  'std': float(_ov.std())},
+                                              'max_viol_m':  {'mean': float(_omx.mean()), 'std': float(_omx.std())}},
+                            },
+                            'margin_mean_m':        {'mean': float(_mg.mean()), 'std': float(_mg.std())},
+                            'first_violation_step': {'mean': float(_fv[_fv>=0].mean()) if (_fv>=0).any() else -1,
+                                                      'n_rollouts_with_violation': int((_fv>=0).sum())},
+                            'longest_safe_streak':  {'mean': float(_ls.mean()), 'std': float(_ls.std())},
+                            'dynamics_consistency_error': {'mean': float(_dy.mean()), 'std': float(_dy.std())},
+                            'zero_violation_rollouts': _zv_cnt,
+                        },
+                        'plan': {
+                            'post_viol_rate': {'mean': float(_pv.mean()), 'std': float(_pv.std())},
+                        },
+                        'per_rollout': [_nest_constraint_metrics(m) for m in _hcm],
                     }
                     _cm_path = os.path.join(save_path, 'constraint_metrics.json')
                     with open(_cm_path, 'w') as _cmf:
