@@ -2630,3 +2630,21 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Nested Key Access Fix**: Resolved a `KeyError` within the evaluation summary generation caused by the transition to the nested timing dictionary structure. The script now correctly navigates the nested paths to extract timing data.
 
 ***
+
+## Infrastructure Refactor: SLURM Seed Standardization (July 6, 2026)
+
+**Keywords**: SLURM, seed, pipeline standardization, visual aligning, visual avoiding.
+
+1. **Seed Consolidation**: Updated all major training and evaluation SLURM batch scripts across multiple pipelines (visual aligning, visual avoiding, drifting) to standardize on `seed=6` as the default execution seed.
+
+***
+
+## Gen11 Epoch 9 & Gen7/Gen6V4 C4: Evaluation Progress Logging & ETA (July 7, 2026)
+
+**Keywords**: Gen11, Epoch 9, Fix 11, C4, progress tracking, ETA, breadcrumbs, SLURM timeout, job monitoring.
+
+1. **UAV Pipeline Progress Breadcrumbs**: Addressed the issue where long-running UAV evaluation jobs provided insufficient logs before a potential 24h SLURM timeout. Added detailed nesting breadcrumbs (`scene` → `geo_entry` → `variant` → `trial`) and per-rollout timing/ETA prints inside the execution loops of `eval_fm_uav.py`, without altering any model behavior or outputs.
+2. **Visual Aligning Pipeline Parity**: Synchronized identical progress-tracking logic into the visual-aligning pipelines (both Gen7 `eval_fm_visual_aligning.py` and Gen6V4 `eval_visual_aligning_dpcc.py`). The existing per-rollout debug info was preserved, with a new index/total and elapsed/ETA summary appended at the bottom.
+3. **SLURM Script Visibility**: Updated the outer wrapper SLURM scripts to explicitly print the current seed being evaluated out of the multi-seed list, ensuring complete job provenance visibility directly from the `.log` files.
+
+***
