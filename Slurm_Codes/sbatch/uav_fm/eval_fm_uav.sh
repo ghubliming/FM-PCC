@@ -79,9 +79,16 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
 fi
 
 cd "$REPO"
+# Fix_11: seed x/N breadcrumb — if this 24h job gets killed by the time limit, the last
+# "seed X/N" line printed (plus eval_fm_uav.py's own scene/variant/trial progress lines)
+# tells you where, instead of the log just going silent with no indication of progress.
+read -ra SEED_ARR <<< "$SEEDS"
+N_SEEDS=${#SEED_ARR[@]}
+SEED_IDX=0
 for seed in $SEEDS; do
+    SEED_IDX=$((SEED_IDX+1))
     echo "--------------------------------------------------------------------------------"
-    echo "[ uav_fm_eval ] scene=$SCENE seed=$seed  $(date)"
+    echo "[ uav_fm_eval ] seed $SEED_IDX/$N_SEEDS: scene=$SCENE seed=$seed  $(date)"
     echo "[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene $SCENE --seed $seed ${NTRIALS:+--n-trials $NTRIALS} --projection $PROJECTION --record $RECORD"
     python FM_v3_uav_test/eval_fm_uav.py --scene "$SCENE" --seed "$seed" \
         ${NTRIALS:+--n-trials "$NTRIALS"} --projection "$PROJECTION" --record "$RECORD"

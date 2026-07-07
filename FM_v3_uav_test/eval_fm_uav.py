@@ -1148,6 +1148,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     batch_size = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
 
     rollouts = []
+    _variant_t0 = time.time()   # Fix_11: per-trial progress/ETA, so a killed job shows where
     try:
         for i in range(args.n_trials):
             homotopy = homotopies[i % len(homotopies)]
@@ -1166,6 +1167,13 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             else:
                 r.pop('frames', None)
             rollouts.append(r)
+            # Fix_11: one line per completed trial — elapsed/ETA lets you tell, from the log
+            # alone, whether a variant/scene will finish before the SLURM time limit.
+            _elapsed = time.time() - _variant_t0
+            _avg = _elapsed / (i + 1)
+            _eta = _avg * (args.n_trials - (i + 1))
+            print(f'[ eval ] {scene} variant={variant}: trial {i + 1}/{args.n_trials} done  '
+                  f'({_elapsed:.1f}s elapsed this variant, ~{_eta:.1f}s to go)')
     finally:
         _free_renderer(renderer)
         renderer = None
@@ -1258,7 +1266,10 @@ def eval_scene(scene, args):
               f"{[e['name'] for e in _entries]}")
 
     all_summaries = {}
-    for entry in _entries:
+    for _gi, entry in enumerate(_entries):
+        if len(_entries) > 1:
+            print(f'[ eval ] {scene}: geo entry {_gi + 1}/{len(_entries)}: '
+                  f'\'{entry["name"] if entry is not None else "(none)"}\'')
         config = _apply_geo_entry(base_cfg, scene, entry)
 
         # cond_mode is a MODEL property (obs layout baked into the normalizer at train time).
@@ -1285,7 +1296,12 @@ def eval_scene(scene, args):
         print(f'[ eval ] {scene} [geo_tag={config["geo_tag"]}]: variants={config["projection_variants"]}  '
               f'constraints={config["constraint_types"]}  batch_size={config.get("mpc_batch_size", config.get("batch_size", 4))}')
         summaries = {}
-        for variant in config['projection_variants']:
+        _n_variants = len(config['projection_variants'])
+        for _vi, variant in enumerate(config['projection_variants']):
+            # Fix_11: this is the line to grep for after a 24h-timeout job — the LAST one
+            # printed tells you which variant was running (or just-finished) when it got cut.
+            print(f'[ eval ] {scene} [geo_tag={config["geo_tag"]}] '
+                  f'>>> variant {_vi + 1}/{_n_variants}: \'{variant}\'  (n_trials={args.n_trials})')
             summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
                                               config, args, mj_model, mujoco, homotopies)
         all_summaries[entry['name'] if entry is not None else config['geo_tag']] = summaries
@@ -1323,7 +1339,15 @@ def main():
     # first or it chokes on --scene/--n-trials/--projection/--device (mirrors train_fm_uav.py).
     sys.argv = [sys.argv[0], *remaining]
     scenes = SCENES if args.scene == 'all' else [args.scene]
-    summaries = {s: eval_scene(s, args) for s in scenes}
+    # Fix_11: progress breadcrumb — with `--scene all` this is the outermost of 4 nested
+    # loops (scene → geo entry → projection variant → trial); if a 24h SLURM job gets killed
+    # mid-run, this line (plus the ones added in eval_scene/_run_variant) is what tells you
+    # WHERE, instead of the log just going silent after the last completed variant.
+    summaries = {}
+    for _si, _s in enumerate(scenes):
+        if len(scenes) > 1:
+            print(f'[ eval ] ══ scene {_si + 1}/{len(scenes)}: \'{_s}\' ══')
+        summaries[_s] = eval_scene(_s, args)
 
     if len(scenes) > 1:
         # experimental --scene all path; per-scene runs use aggregate_scene_summaries.py instead.

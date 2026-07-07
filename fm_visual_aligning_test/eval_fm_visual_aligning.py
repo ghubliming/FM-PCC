@@ -826,7 +826,8 @@ class VisualAgentWrapper:
                  max_action_delta=None,
                  mpc_foresight_stride=6,
                  geo_config=None,
-                 is_tightened=False):
+                 is_tightened=False,
+                 total_rollouts=None):
 
         self.model              = diffusion_model
         self.device             = device
@@ -885,6 +886,10 @@ class VisualAgentWrapper:
         self.mpc_foresight_stride        = mpc_foresight_stride
         self.geo_config                  = geo_config or {}
         self.is_tightened                = is_tightened
+        # Fix_11 (Gen7/Gen6V4): progress/ETA for this (geo, variant) item's rollout loop —
+        # n_contexts*n_trajectories, known at construction time; None disables the line.
+        self.total_rollouts              = total_rollouts
+        self._item_t0                    = time.time()
         self.curr_rollout_act_magnitudes = []
         self.curr_rollout_dist_to_target = []
         self.curr_rollout_clamp_events   = []
@@ -1076,6 +1081,17 @@ class VisualAgentWrapper:
         print(f'  - Max Physical Tracking Error: {max_phys_err:.6f} m')     # Fix 9: now meaningful
         print(f'  - Avg Inference Time: {avg_time:.4f} seconds/replan')
         print(f'  - Clamp events: {len(self.curr_rollout_clamp_events)}')
+        # Fix_11: progress/ETA within this (geo, variant) item — the debug block above was
+        # already good, it just never said how many rollouts are left or how long that'll
+        # take. `rollout_counter` is 0-based and already incremented by this rollout's own
+        # reset(), so +1 is the count completed so far.
+        if self.total_rollouts:
+            _done = self.rollout_counter + 1
+            _elapsed = time.time() - self._item_t0
+            _avg = _elapsed / _done
+            _eta = _avg * (self.total_rollouts - _done)
+            print(f'  - Progress: rollout {_done}/{self.total_rollouts}  '
+                  f'({_elapsed:.1f}s elapsed this item, ~{_eta:.1f}s to go)')
         print('-' * 80 + '\n')
 
         if self.save_path is not None:
@@ -1891,8 +1907,9 @@ if __name__ == '__main__':
     n_contexts          = config.get('n_contexts', 30)
     n_trajectories      = config.get('n_trajectories_per_context', 1)
 
-    for seed in seeds:
-        print(f'\n=== Evaluating seed {seed} ===')
+    for _seed_i, seed in enumerate(seeds):
+        # Fix_11: seed X/N — the outermost breadcrumb level (mirrors UAV's Fix_11).
+        print(f'\n=== Evaluating seed {_seed_i + 1}/{len(seeds)} (seed={seed}) ===')
         args = Parser().parse_args(experiment='plan_fm_visual_aligning', seed=seed)
 
         diffusion_model = None
@@ -2018,7 +2035,12 @@ if __name__ == '__main__':
                 for _v in projection_variants:
                     _run_items.append((_gs['name'] + '-tightened', _gc, _v, True))
 
-        for geo_name, geo_config, geo_variant, is_tightened in _run_items:
+        _n_run_items = len(_run_items)
+        for _item_i, (geo_name, geo_config, geo_variant, is_tightened) in enumerate(_run_items):
+            # Fix_11: this is the line to grep for after a killed/timed-out job — the LAST
+            # one printed is the (geo, variant) combo that was running when it got cut.
+            print(f'[ eval ] >>> item {_item_i + 1}/{_n_run_items}: geo={geo_name}  '
+                  f'variant={geo_variant}  tightened={is_tightened}')
             if geo_variant == projection_variants[0]:
                 print(f'\n[ geo ] ── Constraint variant: {geo_name}  '
                       f'types={geo_config["constraint_types"]} ──')
@@ -2125,6 +2147,7 @@ if __name__ == '__main__':
                     mpc_foresight_stride=geo_config.get('mpc_foresight_stride', 6),
                     geo_config=geo_config,
                     is_tightened=is_tightened,
+                    total_rollouts=n_contexts * n_trajectories,   # Fix_11
                 )
 
                 _if_vision_config = getattr(args, 'if_vision', True)
