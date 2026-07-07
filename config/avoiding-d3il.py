@@ -531,6 +531,9 @@ base = {
         'action_weight': 10,
         'loss_discount': 1.0,              # BUG-02 fix: explicit uniform trajectory weighting
         'gradient_accumulate_every': 2,    # BUG-03 fix: match FMv3ODE effective batch size
+        ## U9: was missing here — validation ran only via the train script's silent
+        ## getattr(..., 0.9) fallback, so the split never appeared in the W&B run config.
+        'train_test_split': 0.9,
         
         ## ODE inference — NFE is set in the plan block, not here
         # 'ode_inference_steps_v3': 10,  # dead in training; set flow_steps_v3 in plan block

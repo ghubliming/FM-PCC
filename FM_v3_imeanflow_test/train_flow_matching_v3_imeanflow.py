@@ -41,23 +41,44 @@ def sanitize_wandb_env():
             os.environ.pop(env_key, None)
 
 
-def log_wandb_from_losses(losses_path, run):
-    """Reconstruct W&B logs from losses.pkl (standard FM-PCC pattern)."""
+def log_wandb_from_losses(losses_path, run, after_step=-1):
+    """Replay losses.pkl into W&B (standard FM-PCC pattern).
+
+    U9: only logs steps > after_step and returns the last step logged, so it can be
+    called incrementally per epoch — curves now appear during training and survive
+    SLURM timeouts, instead of only after a seed fully completes.
+    """
     if not os.path.exists(losses_path):
-        return
-    
+        return after_step
+
     with open(losses_path, 'rb') as f:
         losses_data = pickle.load(f)
-    
+
     training_losses = losses_data.get('training_losses', [])
     test_losses = losses_data.get('test_losses', [])
+    raw_mse_losses = losses_data.get('test_raw_mse_losses', [])
     test_by_step = {step: value for step, value in test_losses}
-    
+    raw_by_step = {step: value for step, value in raw_mse_losses}
+
+    last_step = after_step
     for step, train_loss in training_losses:
+        if step <= after_step:
+            continue
         log_dict = {'train/loss': train_loss}
         if step in test_by_step:
             log_dict['test/loss'] = test_by_step[step]
+        if step in raw_by_step:
+            # U9: adaptive-weight-free held-out MSE — comparable across runs/objectives,
+            # unlike test/loss under meanflow_jvp (self-referential + adaptively reweighted)
+            log_dict['val/raw_mse'] = raw_by_step[step]
         run.log(log_dict, step=step)
+        last_step = max(last_step, step)
+
+    if test_losses:
+        run.summary['final_test_loss'] = test_losses[-1][1]
+    if raw_mse_losses:
+        run.summary['final_val_raw_mse'] = raw_mse_losses[-1][1]
+    return last_step
 
 
 def upload_wandb_artifact(run, seed, savepath):
@@ -241,11 +262,20 @@ if __name__ == '__main__':
 
             # Train
             print(f"[ train ] Starting training (steps: {trainer.n_train_steps})")
-            trainer.train()
+            # U9: flush losses.pkl to W&B after every epoch (live curves; timeout-safe)
+            losses_path = os.path.join(args.savepath, 'losses.pkl')
+            wandb_cursor = {'last_step': -1}
 
-            # Log to W&B
+            def _flush_wandb(epoch):
+                if run is not None:
+                    wandb_cursor['last_step'] = log_wandb_from_losses(
+                        losses_path, run, after_step=wandb_cursor['last_step'])
+
+            trainer.train(on_epoch_end=_flush_wandb)
+
+            # Log to W&B (final flush catches anything after the last epoch boundary)
             if run is not None:
-                log_wandb_from_losses(os.path.join(args.savepath, 'losses.pkl'), run)
+                log_wandb_from_losses(losses_path, run, after_step=wandb_cursor['last_step'])
                 upload_wandb_artifact(run, seed, args.savepath)
                 run.finish()
 

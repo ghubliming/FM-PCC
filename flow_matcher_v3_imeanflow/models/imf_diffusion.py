@@ -460,6 +460,9 @@ class iMeanFlowODE(nn.Module):
 
         info['diffusion_loss'] = main_loss
         info['a0_loss'] = info.get('a0_loss', torch.tensor(0.0, device=x_start.device))
+        # U9: no adaptive reweighting on this path — main_loss already is the raw
+        # (loss_weights-applied) MSE; exposed under the same key for cross-objective parity.
+        info['raw_mse'] = main_loss.detach()
         info['aux_loss'] = aux_loss
         info['u_weight'] = torch.tensor(self.u_mix, device=x_start.device)
         info['v_weight'] = torch.tensor(self.v_mix, device=x_start.device)
@@ -603,6 +606,9 @@ class iMeanFlowODE(nn.Module):
             else torch.tensor(0.0, device=x_start.device)
         info['diffusion_loss'] = main_loss
         info['a0_loss'] = a0_loss
+        # U9: adaptive-weight-free MSE (loss_weights applied, no 1/(mse+c)^p rescale) —
+        # a scale-stable companion metric; main_loss compresses ≈ sqrt(mse) at p=0.5.
+        info['raw_mse'] = per_sample.detach().mean()
         info['total_loss'] = total_loss
         info['u_weight'] = torch.tensor(1.0, device=x_start.device)
         info['v_weight'] = torch.tensor(self.meanflow_aux_weight, device=x_start.device)

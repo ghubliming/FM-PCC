@@ -36,6 +36,7 @@ class Trainer(object):
         diffusion_model,
         dataset,
         train_test_split=1.0,
+        split_seed=42,
         ema_decay=0.995,
         train_batch_size=32,
         train_lr=2e-5,
@@ -73,7 +74,13 @@ class Trainer(object):
         else:
             n_train = int(train_test_split * len(self.dataset))
             n_test = len(self.dataset) - n_train
-            train_dataset, test_dataset = torch.utils.data.random_split(self.dataset, [n_train, n_test])
+            # U9: seeded generator — unseeded split re-splits differently on resume,
+            # leaking old test trajectories into training and making best_test_loss
+            # compare across different test sets.
+            train_dataset, test_dataset = torch.utils.data.random_split(
+                self.dataset, [n_train, n_test],
+                generator=torch.Generator().manual_seed(split_seed),
+            )
             self.train_dataloader = cycle(torch.utils.data.DataLoader(
                 train_dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
             ))
@@ -85,6 +92,7 @@ class Trainer(object):
         self.test_losses = []
         self.train_a0_losses = []
         self.test_a0_losses = []
+        self.test_raw_mse_losses = []  # U9: adaptive-weight-free companion val metric
         self.current_test_loss = None
         self.current_test_a0_loss = None
 
@@ -144,9 +152,10 @@ class Trainer(object):
                     self.train_a0_losses.append([self.step, infos['a0_loss'].item()])
 
                 if self.train_test_split < 1:
-                    test_loss, test_a0_loss = self.test()
+                    test_loss, test_a0_loss, test_raw_mse = self.test()
                     self.test_losses.append([self.step, test_loss])
                     self.test_a0_losses.append([self.step, test_a0_loss])
+                    self.test_raw_mse_losses.append([self.step, test_raw_mse])
                     self.current_test_loss = test_loss
                     self.current_test_a0_loss = test_a0_loss
                     if test_loss < self.best_test_loss:
@@ -187,7 +196,7 @@ class Trainer(object):
 
             self.step += 1
 
-    def train(self):
+    def train(self, on_epoch_end=None):
         if self.step >= self.n_train_steps:
             return
 
@@ -199,26 +208,38 @@ class Trainer(object):
             self.train_epoch(steps_this_epoch, epoch)
             remaining_steps -= steps_this_epoch
             epoch += 1
+            # U9: lets callers flush losses to W&B per epoch instead of only at the end
+            if on_epoch_end is not None:
+                on_epoch_end(epoch)
 
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
 
         test_loss = 0
         test_a0_loss = 0
+        test_raw_mse = 0
         with torch.no_grad():
             for step in range(n_test):
                 batch = next(self.test_dataloader)
                 batch = batch_to_device(batch, device=self.device)
                 loss, infos = self.model.loss(*batch)
                 loss /= self.gradient_accumulate_every
-            
+
                 test_loss += loss.item()
                 test_a0_loss += infos['a0_loss'].item() if 'a0_loss' in infos else 0
+                test_raw_mse += infos['raw_mse'].item() if 'raw_mse' in infos else 0
 
             test_loss /= n_test
             test_a0_loss /= n_test
+            test_raw_mse /= n_test
 
-        return test_loss, test_a0_loss
+        # U9: restore train mode — eval() above was never undone, leaving the model
+        # in eval mode for all training after step 0 (inherited from DPCC upstream).
+        # No effect on current backbones (mask-based condition dropout only), but any
+        # future nn.Dropout/BatchNorm layer would silently train wrong without this.
+        self.model.train()
+
+        return test_loss, test_a0_loss, test_raw_mse
 
     def save(self, epoch):
         '''
@@ -233,6 +254,7 @@ class Trainer(object):
             'test_losses': self.test_losses,
             'train_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
+            'test_raw_mse_losses': self.test_raw_mse_losses,
         }
         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
         torch.save(data, savepath)
@@ -251,6 +273,7 @@ class Trainer(object):
             'test_losses': self.test_losses,
             'train_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
+            'test_raw_mse_losses': self.test_raw_mse_losses,
         }
         savepath = os.path.join(self.logdir, f'state_best.pt')
         torch.save(data, savepath)
@@ -262,6 +285,7 @@ class Trainer(object):
             'test_losses': self.test_losses,
             'training_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
+            'test_raw_mse_losses': self.test_raw_mse_losses,
         }
         savepath = os.path.join(self.logdir, 'losses.pkl')
 

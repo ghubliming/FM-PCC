@@ -14,6 +14,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 3. **This repo is under heavy active development** — code is unfinished and buggy in places. Treat everything below as guidance, not fixed truth. Always check the development logs and recent git history for the current state before making assumptions.
 
+## Claude Code persistent memory lives in this repo
+
+Claude's memory files are stored at `.claude/memory/` **in this repo** (so they survive container rebuilds via git). The Claude Code harness reads them from `~/.claude/projects/-workspaces-FM-PCC/memory/`, which is a **symlink** into the repo. After a container rebuild, restore it:
+
+```bash
+rm -rf ~/.claude/projects/-workspaces-FM-PCC/memory
+ln -s /workspaces/FM-PCC/.claude/memory ~/.claude/projects/-workspaces-FM-PCC/memory
+```
+
+If memories seem missing at session start, check this symlink first.
+
 ## Where to find the current state (most important)
 
 - **`logs_in_develop/MASTER_TEST_HISTORY.md`** — the master index. Its "Master Trace Map" table maps every research generation (Gen0–Gen11+) to its model folder, test folder, and status (`working on` / `finished` / abandoned). Start here. (Not 100% accurate — cross-check with git history.)
