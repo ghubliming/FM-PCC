@@ -355,6 +355,7 @@ class Trainer(object):
             self.test_losses = data.get('test_losses', [])
             self.train_a0_losses = data.get('train_a0_losses', [])
             self.test_a0_losses = data.get('test_a0_losses', [])
+            self.test_raw_mse_losses = data.get('test_raw_mse_losses', [])  # U9
             print(f'[ utils/training ] Restored loss history from checkpoint at step {self.step}')
         else:
             # Fallback to losses.pkl if not in checkpoint
@@ -367,6 +368,7 @@ class Trainer(object):
                     self.test_losses = losses.get('test_losses', [])
                     self.train_a0_losses = losses.get('training_a0_losses', [])
                     self.test_a0_losses = losses.get('test_a0_losses', [])
+                    self.test_raw_mse_losses = losses.get('test_raw_mse_losses', [])  # U9
                     print(f'[ utils/training ] Restored loss history from {losses_path}')
                 except Exception as e:
                     print(f'[ utils/training ] Error loading losses from {losses_path}: {e}')

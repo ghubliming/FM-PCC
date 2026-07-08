@@ -2648,3 +2648,24 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **SLURM Script Visibility**: Updated the outer wrapper SLURM scripts to explicitly print the current seed being evaluated out of the multi-seed list, ensuring complete job provenance visibility directly from the `.log` files.
 
 ***
+
+## Gen3v4 iMF Condition Analysis & AI Coding Guardrails (July 7, 2026)
+
+**Keywords**: Gen3v4, iMF, conditioning mechanism, theory vs code audit, CLAUDE.md.
+
+1. **Theoretical Deep-Dive (Conditioning)**: Authored `thought&theory.md` mapping exactly how the Flow Matching and iMeanFlow (iMF) architectures achieve location-awareness. Clarified that the starting state and goal `c = (s_0, s_goal)` are injected cleanly via concatenated tokens, ensuring that the integration trajectory is anchored to the true robot position without injecting location data into the pure noise tensor `z_t`.
+2. **Code vs. Theory Audit**: Conducted a comprehensive audit (`AUDIT_thought&theory_vs_code.md`) verifying that the actual codebase accurately implements the mathematical derivations of iMF conditioning.
+3. **AI Coding Guidelines**: Introduced `CLAUDE.md` and related `.claude` memory files to establish concrete architectural guidelines and repository guardrails for future AI-assisted development.
+
+***
+
+## Gen3v4 U9: Validation Loss Stability & Incremental W&B Logging (July 7, 2026)
+
+**Keywords**: Gen3v4, U9, validation loss, W&B syncing, seeded train/test split, eval mode fix, raw_mse.
+
+1. **Incremental W&B Flushing**: Fixed an issue where Weights & Biases logs were only uploaded after a full training run finished, leaving data permanently lost if SLURM killed the job via timeout. Training loops (`utils/training.py` and `train_flow_matching_v3_imeanflow.py`) now incrementally sync logs and validation losses at the end of every epoch.
+2. **Seeded Dataset Split**: Seeded the PyTorch `random_split` generator (`split_seed=42`) used for separating training and validation data. This ensures consistent data partitioning across paused/resumed runs and multi-seed trials, preventing validation data from leaking back into the training set.
+3. **Eval-Mode Restored**: Fixed a critical legacy bug inherited from DPCC where the model's `.eval()` state was never reverted back to `.train()` after the first validation pass. While current backbones were unaffected, this future-proofs the system for components like Dropout and BatchNorm.
+4. **`raw_mse` Exposure**: Added a scale-invariant `val/raw_mse` metric to W&B that captures the unweighted reconstruction loss, providing a stable baseline comparison point across runs that is immune to adaptive loss reweighting schemas.
+
+***

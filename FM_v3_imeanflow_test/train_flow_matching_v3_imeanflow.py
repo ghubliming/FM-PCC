@@ -22,6 +22,10 @@ import torch
 
 # Standard FM-PCC imports (Note: importing from diffuser.utils is maybe not ideal/optimal?)
 import diffuser.utils as utils
+# U9 fix: the Trainer must be the iMF package's own (it carries the U9 val-loss edits:
+# on_epoch_end callback, 3-tuple test(), seeded split, raw_mse). diffuser.utils.Trainer
+# is the shared DPCC one and does NOT have them — using it crashes on train(on_epoch_end=).
+from flow_matcher_v3_imeanflow.utils.training import Trainer as iMFTrainer
 
 
 class Parser(utils.Parser):
@@ -227,7 +231,7 @@ if __name__ == '__main__':
             )
 
             trainer_config = utils.Config(
-                utils.Trainer,
+                iMFTrainer,   # U9 fix: iMF-package Trainer, not diffuser.utils.Trainer
                 savepath=(args.savepath, 'trainer_config.pkl'),
                 train_test_split=getattr(args, 'train_test_split', 0.9),
                 ema_decay=args.ema_decay,
