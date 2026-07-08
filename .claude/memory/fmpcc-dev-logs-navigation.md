@@ -12,7 +12,7 @@ FM-PCC is under heavy active development (unfinished, buggy in places; as of Jul
 - `logs_in_develop/MASTER_TEST_HISTORY.md` — master index with a Gen0–Gen11+ trace map (model folder ↔ test folder ↔ status). Not 100% accurate; cross-check git history.
 - `logs_in_develop/` — full per-generation dev logs (too many MDs to read blindly; navigate via the master file).
 - Commit messages carry generation tags like `(Gen11 Fix11 & Sync to Gen7/Gen6V4 C4)`; fixes are often mirrored across sibling generations.
-- Repo is majorly based on DPCC at `/workspaces/aux_repo/dpcc`, mixed with other repos in `/workspaces/aux_repo/` (d3il, diffuser, imeanflow, mujoco_mpc, SafeFlowMPC, UAV-Flow, drifting_policy).
+- Repo is majorly based on DPCC at `/workspaces/aux_repo/dpcc`, mixed with other upstream reference repos in `/workspaces/aux_repo/`. Current contents (July 2026): d3il, diffuser, dpcc, drifting, drifting_policy, HardFlow, imeanflow, mujoco_mpc, SafeFlowMPC, UAV-Flow — **this is a DYNAMIC, growing list; new reference repos get added over time, so always `ls /workspaces/aux_repo/` for the live set rather than trusting this snapshot.**
 
 **Why:** README.md is intentionally minimal, and user prompts can be inaccurate or forget details — verify against logs and git history.
 

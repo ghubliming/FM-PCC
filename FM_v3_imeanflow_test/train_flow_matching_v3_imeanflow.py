@@ -59,25 +59,42 @@ def log_wandb_from_losses(losses_path, run, after_step=-1):
         losses_data = pickle.load(f)
 
     training_losses = losses_data.get('training_losses', [])
-    test_losses = losses_data.get('test_losses', [])
-    raw_mse_losses = losses_data.get('test_raw_mse_losses', [])
-    test_by_step = {step: value for step, value in test_losses}
-    raw_by_step = {step: value for step, value in raw_mse_losses}
+
+    # U9 metric-parity pass: full DPCC/Gen0 set (a0 curves) + imeanflow analogs
+    # (train/raw_mse ≙ their loss_u, aux_loss ≙ their loss_v). val/raw_mse is the
+    # held-out raw MSE — adaptive-weight-free, comparable across runs/objectives,
+    # unlike test/loss under meanflow_jvp (self-referential + adaptively reweighted).
+    # Missing pkl keys (old runs, or objectives without an aux head) just skip.
+    companion_keys = {
+        'test_losses': 'test/loss',
+        'training_a0_losses': 'train/a0_loss',
+        'test_a0_losses': 'test/a0_loss',
+        'training_raw_mse_losses': 'train/raw_mse',
+        'test_raw_mse_losses': 'val/raw_mse',
+        'training_aux_losses': 'train/aux_loss',
+        'test_aux_losses': 'test/aux_loss',
+        'lr_history': 'train/lr',
+    }
+    by_step = {
+        wandb_key: dict(losses_data.get(pkl_key, []))
+        for pkl_key, wandb_key in companion_keys.items()
+    }
 
     last_step = after_step
     for step, train_loss in training_losses:
         if step <= after_step:
             continue
         log_dict = {'train/loss': train_loss}
-        if step in test_by_step:
-            log_dict['test/loss'] = test_by_step[step]
-        if step in raw_by_step:
-            # U9: adaptive-weight-free held-out MSE — comparable across runs/objectives,
-            # unlike test/loss under meanflow_jvp (self-referential + adaptively reweighted)
-            log_dict['val/raw_mse'] = raw_by_step[step]
+        for wandb_key, series in by_step.items():
+            if step in series:
+                log_dict[wandb_key] = series[step]
         run.log(log_dict, step=step)
         last_step = max(last_step, step)
 
+    if training_losses:
+        run.summary['final_train_loss'] = training_losses[-1][1]
+    test_losses = losses_data.get('test_losses', [])
+    raw_mse_losses = losses_data.get('test_raw_mse_losses', [])
     if test_losses:
         run.summary['final_test_loss'] = test_losses[-1][1]
     if raw_mse_losses:

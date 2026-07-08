@@ -161,6 +161,57 @@ to pure imeanflow style (no val loss at all — strictly less information).
 - [ ] Smoke-test `torch.func.jvp` inside `torch.no_grad()` with the `meanflow_jvp` objective (one forward of `test()`); also just check step-0 of any past `.log` for the `Initial test loss:` line — its presence proves the JVP-under-no_grad path works.
 - [ ] After applying §5.1–5.3: one short training run, confirm `test/loss`, `val/raw_mse`, and `train_test_split` all appear in W&B live.
 
+## 7. Addendum (July 8): what `test/loss` actually is & how to compare against DPCC W&B numbers
+
+Answers to the follow-up "what is really the old test loss / is it the same as dpcc/imeanflow / how do I compare?", after the U9 fixes landed (see `CHANGELOG_U9_validation_loss_fix.md`).
+
+### 7.1 The old `test/loss` — identity (U9 did NOT change it)
+
+`test/loss` = **the current generation's own training objective, evaluated on the 10% held-out split** (100 batches every 1000 steps). The *mechanism* is DPCC's verbatim (§1); the *quantity* is whatever `model.loss()` computes in that generation:
+
+| Runs (W&B) | `train/loss` & `test/loss` are… | Prediction target | Scale character |
+|---|---|---|---|
+| DPCC baseline / Gen0 (`scripts/train.py`) | weighted L2 on **ε-prediction** (`predict_epsilon=True`, `action_weight=10`) | true noise ε ~ N(0,1) per element; model-independent | plain MSE, starts ≈1 |
+| Gen1–3v3 FM | weighted MSE on **velocity** | `x_start − noise`; model-independent | plain MSE, data-scale |
+| Gen3v4 iMF, `meanflow_jvp` (active) | **adaptively reweighted** MeanFlow consistency loss: `mean(w·per_sample)`, `w = 1/(per_sample+c)^0.5` (`imf_diffusion.py:587-591`) | `v + h·du/dr` via JVP **through the current model** (self-referential, §3) | compressed ≈ √MSE |
+| Gen3v4 iMF, `fm_equivalent` | weighted MSE on finite-difference target (no adaptive reweighting) | `(x_t−x_r)/h` = `x_start−noise`; model-independent | plain MSE |
+
+So: **same name and pipeline as DPCC, different mathematical quantity.** Note DPCC upstream itself never logs to W&B at all (its `logs` dict only feeds the tqdm postfix, `dpcc/diffuser/utils/training.py:169-181`) — the `train/loss`/`test/loss` W&B keys are FM-PCC's own replay convention (`scripts/train.py:135-165` and siblings), which is *why* the names look identical across generations while the quantities are not.
+
+Vs. the **imeanflow reference repo**: same adaptive trick (`loss / sg((loss+eps)^p)`, `imeanflow/imf.py:380-393`) — so the *form* of our `meanflow_jvp` loss is faithful — but their per-sample reduction is a **sum over pixels** (ours: `mean` over horizon×dims, with `loss_weights`), it's images not trajectories, and they log **no validation loss at all** (§4: train loss + FID only). Their absolute numbers are meaningless for us too.
+
+### 7.2 Consequence: the three W&B curves and what each is for
+
+- `train/loss` / `test/loss` — the adaptive-weighted objective on train / held-out batches. Same quantity as each other → the **train–test gap and its trend** are meaningful (overfit/divergence monitor within a run). Still selects `state_best.pt`.
+- `val/raw_mse` (new in U9) — same held-out batches, `per_sample.mean()` **before** the `1/(mse+c)^p` reweighting. Removes the scale compression → comparable across iMF runs, seeds, and hyperparameter variants. **Honest caveat:** under `meanflow_jvp` it does *not* remove self-referentiality — the JVP target still moves with the model (except the r==t anchor samples, whose target is the model-independent `v_inst`). It is a scale-stable consistency metric, not a pure data-fit metric; the fully model-independent option (`val/fm_equiv` on the same batches, §5.3) was not implemented.
+
+### 7.3 How to compare against DPCC W&B numbers — the rules
+
+1. **Never compare absolute loss values across engines.** DPCC ε-MSE vs FM velocity-MSE vs iMF adaptive-consistency are different targets, different scales, one of them √-compressed. Overlaying `test/loss` panels from the DPCC project and `FMPCC-iMF` and reading off "lower = better" is invalid. (Same for `a0_loss`: ε-space vs u-space.)
+2. **Within the iMF family** (seeds, U-variants, hyperparams): compare `val/raw_mse` first (scale-stable), `test/loss` second (continuity + best-ckpt semantics). `run.summary['final_val_raw_mse']` / `['final_test_loss']` support table views.
+3. **Across engines, from training curves you may only compare shapes**: convergence speed (steps to plateau, relative decrease from step 0), train–test gap trend, divergence events. If overlay is needed, normalize (e.g. loss ÷ its step-0/step-1k value) or use log-scale and read slopes.
+4. **The only apples-to-apples DPCC-vs-iMF numbers are downstream eval metrics** — success rate / trajectory & a0 MSE / constraint-violation from the actual eval rollout pipeline. That, not training loss, is the cross-engine scoreboard; the deferred sampling-validation (§5.5, 1-NFE held-out trajectory MSE) would bring a proxy of it into training-time W&B.
+
+### 7.4 Metric inventory: do we log more than dpcc / imeanflow now? (post-U9 state)
+
+Short answer: **more than both upstreams on the loss side; still less than imeanflow on the generation-quality side.**
+
+| Training-time metric | DPCC upstream | Gen0 (FM-PCC dpcc baseline) | imeanflow repo | Gen3v4 iMF post-U9 |
+|---|---|---|---|---|
+| train objective loss | pkl + tqdm only (**no W&B at all**) | pkl + W&B `train/loss` (post-hoc replay) | logged (adaptive `loss`) | pkl + W&B `train/loss`, **live per epoch** |
+| held-out objective loss | pkl + tqdm | pkl + W&B `test/loss` (post-hoc) | **none** | pkl + W&B `test/loss`, live |
+| raw (un-reweighted) companion | n/a (loss already raw MSE) | n/a | `loss_u`/`loss_v` raw components (train only) | **`val/raw_mse` on held-out** — new in U9, exists in neither upstream |
+| a0 / first-action loss | pkl + tqdm | pkl + W&B `train/a0_loss`, `test/a0_loss` | n/a | pkl + tqdm only — **not replayed to W&B** (Gen0's replay does; ours doesn't) |
+| aux v-head loss | n/a | n/a | `loss_v` logged | in `info['aux_loss']` only — not persisted, not in W&B |
+| run summaries | none | `final_train_loss`, `final_test_loss` | none | `final_test_loss`, `final_val_raw_mse` (no `final_train_loss`) |
+| sampling-quality check | none | none | **FID + sample grids** every N epochs | **none** — the §5.5 gap, still open |
+
+So vs **DPCC**: strictly more — same split/test machinery plus `val/raw_mse`, live (per-epoch) W&B instead of end-of-seed replay, and summary keys. Vs **imeanflow**: more on validation (they have zero held-out loss) but less on generation quality (no sampling/FID analog yet — §5.5).
+
+Two small W&B parity gaps left on our side, both replay-only (data already in `losses.pkl`/`info`): the a0 curves (Gen0 logs them, iMF replay doesn't) and the aux v-head loss (imeanflow logs its `loss_v`, we drop `info['aux_loss']`). Trivial adds if wanted.
+
+> **Update (July 8, same day):** all loss-side gaps in this table are now closed — a0 curves, train-side raw MSE (`loss_u` analog), and aux loss (`loss_v` analog) on both splits are tracked, persisted, and uploaded to W&B. See `CHANGELOG_U9_metric_parity_wandb.md`. The only remaining row is the sampling-quality check (§5.5), still deferred.
+
 ## Files read for this investigation
 
 - `flow_matcher_v3_imeanflow/utils/training.py` (Trainer: split/test/save/log paths)

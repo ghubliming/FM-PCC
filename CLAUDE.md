@@ -39,7 +39,7 @@ If memories seem missing at session start, check this symlink first.
 - **Generative brain**: U-Net predicts a velocity field; an ODE solver generates an unconstrained reference trajectory.
 - **Physical brakes (MPC/DPCC projection)**: filters the trajectory to enforce physical/environmental constraints.
 
-The codebase is **majorly based on DPCC at `/workspaces/aux_repo/dpcc`**, mixed with other upstream repos in `/workspaces/aux_repo/` (`d3il`, `diffuser`, `imeanflow`, `mujoco_mpc`, `SafeFlowMPC`, `UAV-Flow`, `drifting_policy`). When behavior is unclear, compare against those upstreams.
+The codebase is **majorly based on DPCC at `/workspaces/aux_repo/dpcc`**, mixed with other upstream reference repos in `/workspaces/aux_repo/`. As of July 2026 that folder holds `d3il`, `diffuser`, `dpcc`, `drifting`, `drifting_policy`, `HardFlow`, `imeanflow`, `mujoco_mpc`, `SafeFlowMPC`, `UAV-Flow`, etc. — **this list is dynamic and grows as new upstreams are pulled in, so run `ls /workspaces/aux_repo/` to see the current set rather than relying on this snapshot.** When behavior is unclear, compare against those upstreams.
 
 ## Repo structure convention: generation siblings
 
