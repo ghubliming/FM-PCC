@@ -301,6 +301,73 @@ def _exec_constraint_violations(obs_traj, config):
     return (n_steps_viol == 0), int(n_steps_viol), float(total)
 
 
+def _realized_homotopy(scene, obs_traj):
+    """Fix_12: the homotopy class the drone ACTUALLY flew (pillars only; None elsewhere).
+
+    The `homotopy` label cycled through trials is the EXPERT route's class, but the FM
+    policy is unconditioned and never tracks that route — for pillars all four classes even
+    share the same start/goal (pillar_path begins/ends on the centreline), so the commanded
+    label says nothing about the flown path. This reads it off the flown positions instead:
+    at each pillar column x∈{-2,0,2}, which side (y<0 → 'L', matching trajectories._Y_L<0)
+    the path crossed on, interpolated at the first crossing. '?' = never reached that x.
+    """
+    if scene != 'pillars' or not obs_traj:
+        return None
+    P = np.asarray(obs_traj, dtype=float)[:, 3:5]          # flown (x, y)
+    labels = []
+    for px in (-2.0, 0.0, 2.0):
+        cross = np.where(np.diff(np.sign(P[:, 0] - px)) != 0)[0]
+        if cross.size == 0:
+            labels.append('?')
+            continue
+        i = int(cross[0])
+        (x0, y0), (x1, y1) = P[i], P[i + 1]
+        t = 0.0 if x1 == x0 else (px - x0) / (x1 - x0)
+        y = y0 + t * (y1 - y0)
+        labels.append('L' if y < 0 else 'R')
+    return '(' + ','.join(labels) + ')'
+
+
+def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
+    """Fix_12: cheap sanity gate, run once per geo entry BEFORE any rollout.
+
+    Samples each homotopy's expert reference route and checks it against the PLANNING
+    constraint set (surfaces at the full r_drone+margin_base offset — reuses
+    `_exec_constraint_violations` by substituting the planning margin for its r_drone).
+    A warning here means the projector will fight the trained behavior on every replan —
+    exactly the failure mode Fix_12 diagnosed (pillars: both trained channels closed by
+    over-inflation; boxes excluding start/goal). Base-variant margin only; `-tightened`
+    adds enlarge_constraints on top, so treat a near-zero-slack PASS here as a tightened
+    FAIL. Print-only: never blocks the run (ablation variants may relax the violated
+    family anyway).
+    """
+    ctypes = set(config.get('constraint_types') or [])
+    if not ({'geo_bounds', 'halfspace', 'obstacles'} & ctypes):
+        return
+    import uav_expert_data_collect.generator as gen
+    _infl = config.get('inflation') or {}
+    margin = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
+    probe_cfg = dict(config, inflation={'r_drone': margin, 'margin_base': 0.0})
+    rng = np.random.default_rng(0)                         # deterministic probe routes
+    for h in homotopies:
+        traj_fn, _init, dur = gen._build_traj_and_init(scene, h, rng)
+        ts = np.linspace(0.0, dur, n_samples)
+        obs_like = []
+        for t in ts:
+            p = np.asarray(traj_fn(t)[0], dtype=float)
+            obs_like.append(np.concatenate([p, p, np.zeros(3)]))   # p in cols 3:6
+        ok, n_bad, total = _exec_constraint_violations(obs_like, probe_cfg)
+        if ok:
+            print(f'[ eval ] {scene} feasibility check: homotopy={h} expert route OK '
+                  f'under planning margin {margin:.2f} m')
+        else:
+            print(f'[ eval ] WARNING {scene} homotopy={h}: expert route violates the '
+                  f'PLANNING constraint set at {n_bad}/{n_samples} samples '
+                  f'(total penetration {total:.2f} m·samples, margin {margin:.2f} m) — the '
+                  f'projector will fight the trained behavior; check geometry/inflation in '
+                  f'config/uav_projection.yaml (Fix_12).')
+
+
 def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename='constraint_overview'):
     """E9 U2: constraint-geometry schematic — the UAV equivalent of the visual-aligning
     `constraint_overview.png` (`fm_visual_aligning_test/eval_fm_visual_aligning.py
@@ -960,6 +1027,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     # logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_10_json_metrics/PLAN_fix10_2_json_schema_redesign.md
     return {
         'scene': scene, 'homotopy': homotopy,
+        # Fix_12: the class the drone ACTUALLY flew (pillars; None elsewhere). `homotopy`
+        # above is only the expert route's label — the unconditioned FM picks its own route,
+        # and for pillars all four labels share the same start/goal, so they must not be
+        # read as the flown route (they were being, via results.json/plot colors).
+        'homotopy_flown': _realized_homotopy(scene, obs_traj),
         # Axis A — physical ground truth (hard MuJoCo mesh contact detection).
         'physical': {
             'safe': safe,
@@ -1295,6 +1367,10 @@ def eval_scene(scene, args):
 
         print(f'[ eval ] {scene} [geo_tag={config["geo_tag"]}]: variants={config["projection_variants"]}  '
               f'constraints={config["constraint_types"]}  batch_size={config.get("mpc_batch_size", config.get("batch_size", 4))}')
+
+        # Fix_12: sanity-gate the geometry BEFORE burning GPU time — warn if any expert
+        # route is infeasible under the planning margin (the bug class this fix repaired).
+        _warn_expert_route_infeasibility(scene, config, homotopies)
         summaries = {}
         _n_variants = len(config['projection_variants'])
         for _vi, variant in enumerate(config['projection_variants']):

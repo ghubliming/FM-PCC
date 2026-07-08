@@ -146,7 +146,10 @@ def plot_overview(out_dir, variant, scene, rollouts):
         if obs.ndim != 2 or obs.shape[0] == 0:
             continue
         x, y, z = obs[:, P_X], obs[:, P_Y], obs[:, P_Z]
-        color = _homotopy_color(r.get('homotopy', '?'), palette) if _homotopy_color else None
+        # Fix_12: color by the class ACTUALLY flown when available (pillars) — the commanded
+        # `homotopy` label is only the expert route's tag; the unconditioned FM picks its own.
+        _hlabel = r.get('homotopy_flown') or r.get('homotopy', '?')
+        color = _homotopy_color(_hlabel, palette) if _homotopy_color else None
         ax_xy.plot(x, y, color=color, lw=1.5, alpha=0.8)
         ax_xy.plot(x[0], y[0], 'o', color='#2ca02c', ms=5, zorder=5)   # start
         ax_xz.plot(x, z, color=color, lw=1.5, alpha=0.8)
@@ -235,6 +238,11 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}_mpc_foresight.svg')
 
+    # Fix_12: `success` became a nested group in the Fix_10 schema — bool(dict) was always
+    # True, so every foresight title read success=1. Read the strict field, tolerate both.
+    _succ = rollout.get('success')
+    _succ = _succ.get('strict') if isinstance(_succ, dict) else _succ
+
     plans    = rollout.get('plans', [])
     obs_traj = np.asarray(rollout.get('obs_traj', []))
     if not plans or obs_traj.ndim != 2 or obs_traj.shape[0] == 0:
@@ -264,7 +272,7 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
     fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(22, 9))
     fig.suptitle(
         f'Rollout {idx} — MPC Decision Points  '
-        f'(success={int(bool(rollout.get("success")))},  {n_cands} cands/step,  '
+        f'(success={int(bool(_succ))},  {n_cands} cands/step,  '
         f'every {stride} FM steps shown)',
         fontsize=13)
 
@@ -359,8 +367,11 @@ def write_eval_log(out_dir, variant, summary, rollouts):
         f.write('=' * 70 + '\n')
         for i, r in enumerate(rollouts):
             phys = r.get('physical', {}); goal = r.get('goal', {}); succ = r.get('success', {})
+            # Fix_12: show the flown class next to the commanded label (pillars only).
+            _flown = r.get('homotopy_flown')
+            _flown_str = f"flown={_flown:<10}  " if _flown else ''
             f.write(
-                f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  "
+                f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  {_flown_str}"
                 f"success={int(bool(succ.get('strict')))}  "
                 f"success_relaxed={int(bool(succ.get('relaxed')))}  "
                 f"contact={phys.get('contact_frac', float('nan')):.3f}  "
