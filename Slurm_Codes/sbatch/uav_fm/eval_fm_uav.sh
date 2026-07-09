@@ -62,6 +62,13 @@ export PYTHONPATH="$REPO:$REPO/third_party/mujoco_mpc:$PYTHONPATH"
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
+# Fix_11 follow-up: force UNBUFFERED stdout/stderr. Under SLURM, python's stdout is a file
+# (not a TTY) → block-buffered (~4-8KB), so print() breadcrumbs sit in the buffer and never
+# reach the .log until it fills or the process exits. That silences Fix_11's whole progress
+# trail on a running (or SIGKILL-timed-out) job — the log looks frozen with "nothing shown"
+# even while the eval is progressing fine. This makes every print appear live. Equivalent to
+# `python -u`; set as an env var so it also covers any child python the script spawns.
+export PYTHONUNBUFFERED=1
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
 # GPU-leak guard (same as all FMPCC jobs): pin EGL to the Slurm-allocated GPU and abort if they diverge.
 ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
