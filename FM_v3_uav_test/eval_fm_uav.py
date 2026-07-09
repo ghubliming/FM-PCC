@@ -83,6 +83,28 @@ SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 GOAL_PATH_SCENES = {'corridor', 's_curve', 'pillars'}
 GOAL_RADIUS = 0.30                   # m — secondary goal-reach tolerance (constrained scenes)
 
+# U_13: FIXED per-scene episode budget (steps), replacing the per-trial RANDOM
+# n_fm = round(dur * DATASET_HZ). The old random `dur` (generator._build_traj_and_init,
+# e.g. corridor U(6,10)s) made the step budget — and therefore whether a fixed-speed policy
+# could reach the goal in time — vary trial-to-trial for reasons unrelated to policy quality
+# (see logs_in_develop/Gen11/Epoch9_PCC_Constraints/U_13/). This mirrors DPCC d3il-avoiding's
+# single fixed `max_episode_length` (aux_repo/dpcc/config/avoiding-d3il.py:68 = 200) + its
+# early-terminate-on-success loop (aux_repo/dpcc/scripts/eval.py:203-268).
+#
+# Value = ceil(scene_max_expert_dur * DATASET_HZ * SAFETY), SAFETY=1.2 so a policy flying up
+# to 1.2x SLOWER than the SLOWEST expert of that scene can still finish. The budget is already
+# keyed to the SLOWEST (max-dur) expert, so 1.2x is ample headroom without ballooning compute
+# on the many rollouts that miss and run the FULL budget (jobs already brush the 24h SLURM
+# limit — Fix_11). `dur` is still sampled (for the fixed goal endpoint + initial pose) but NO
+# LONGER sets the budget. CLI --max-episode-length overrides all scenes with one value
+# (DPCC-style single knob); yaml `max_episode_length` (scalar or per-scene dict) also overrides.
+SCENE_MAX_EPISODE_LENGTH = {
+    'empty':    504,   # dur = max(4, sep/0.4) ≤ ~12.7s → 419 * 1.2
+    'corridor': 396,   # dur U(6,10)s,  max 10s → 330 * 1.2
+    'pillars':  634,   # dur U(10,16)s, max 16s → 528 * 1.2
+    's_curve':  871,   # dur U(16,22)s, max 22s → 726 * 1.2
+}
+
 # Fix_8: tracks which seed_dirs have been config-snapshotted THIS PROCESS (not "ever on disk").
 # See _run_variant's snapshot call — a filesystem-existence check would let a stale, wrong-yaml
 # snapshot from before a `snapshot_configs` fix persist forever across job re-runs.
@@ -99,6 +121,11 @@ def parse_args():
                    help='Closed-loop rollouts per scene. Default: n_trials from config/uav_projection.yaml.')
     p.add_argument('--goal-radius', type=float, default=GOAL_RADIUS,
                    help='Goal-reach tolerance (m). success now REQUIRES goal_dist < this (Fix2_metrics).')
+    p.add_argument('--max-episode-length', type=int, default=None,
+                   help='U_13: FIXED step budget for ALL scenes/trials (overrides the per-scene '
+                        'SCENE_MAX_EPISODE_LENGTH defaults). Mirrors DPCC avoiding max_episode_length. '
+                        'Episodes early-stop on goal-reach; goal-path scenes that never reach run the '
+                        'full budget. Default: per-scene value.')
     p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
@@ -302,30 +329,54 @@ def _exec_constraint_violations(obs_traj, config):
 
 
 def _realized_homotopy(scene, obs_traj):
-    """Fix_12: the homotopy class the drone ACTUALLY flew (pillars only; None elsewhere).
+    """Fix_12: the homotopy class the drone ACTUALLY flew, read off the flown path.
 
     The `homotopy` label cycled through trials is the EXPERT route's class, but the FM
-    policy is unconditioned and never tracks that route — for pillars all four classes even
-    share the same start/goal (pillar_path begins/ends on the centreline), so the commanded
-    label says nothing about the flown path. This reads it off the flown positions instead:
-    at each pillar column x∈{-2,0,2}, which side (y<0 → 'L', matching trajectories._Y_L<0)
-    the path crossed on, interpolated at the first crossing. '?' = never reached that x.
+    policy is unconditioned and never tracks that route, so the commanded label need not
+    match what was flown — this reads the realized class from the flown positions instead.
+
+    Returns None only for scenes whose homotopy set has a SINGLE class, where there is
+    nothing to disambiguate: s_curve (['default']) and empty (['N/A']). For those the
+    commanded `homotopy` already tells the whole story, so a `homotopy_flown` field would be
+    noise (Fix_12 follow-up: earlier this returned None for corridor too, leaving a
+    confusing `homotopy_flown: null` next to a meaningful `homotopy: L/C/R`).
+
+    pillars ((L/R)³): at each pillar column x∈{-2,0,2}, which side (y<0 → 'L' matching
+        trajectories._Y_L<0, else 'R') the path crossed, interpolated at the first crossing;
+        '?' if the column was never reached.
+    corridor (L/C/R): nearest expert channel (trajectories.CORRIDOR_CHANNELS
+        L=-0.12/C=0/R=+0.12) to the MEDIAN flown y over the walled section x∈[-2,2] (median,
+        not mean, so a transient at entry/exit doesn't swing the label). '?' if the drone
+        never entered the walled section.
     """
-    if scene != 'pillars' or not obs_traj:
+    if not obs_traj:
         return None
-    P = np.asarray(obs_traj, dtype=float)[:, 3:5]          # flown (x, y)
-    labels = []
-    for px in (-2.0, 0.0, 2.0):
-        cross = np.where(np.diff(np.sign(P[:, 0] - px)) != 0)[0]
-        if cross.size == 0:
-            labels.append('?')
-            continue
-        i = int(cross[0])
-        (x0, y0), (x1, y1) = P[i], P[i + 1]
-        t = 0.0 if x1 == x0 else (px - x0) / (x1 - x0)
-        y = y0 + t * (y1 - y0)
-        labels.append('L' if y < 0 else 'R')
-    return '(' + ','.join(labels) + ')'
+    xy = np.asarray(obs_traj, dtype=float)[:, 3:5]         # flown (x, y)
+
+    if scene == 'pillars':
+        labels = []
+        for px in (-2.0, 0.0, 2.0):
+            cross = np.where(np.diff(np.sign(xy[:, 0] - px)) != 0)[0]
+            if cross.size == 0:
+                labels.append('?')
+                continue
+            i = int(cross[0])
+            (x0, y0), (x1, y1) = xy[i], xy[i + 1]
+            t = 0.0 if x1 == x0 else (px - x0) / (x1 - x0)
+            y = y0 + t * (y1 - y0)
+            labels.append('L' if y < 0 else 'R')
+        return '(' + ','.join(labels) + ')'
+
+    if scene == 'corridor':
+        in_walls = (xy[:, 0] >= -2.0) & (xy[:, 0] <= 2.0)  # x-span of the corridor walls (XML)
+        ys = xy[in_walls, 1] if in_walls.any() else np.empty(0)
+        if ys.size == 0:
+            return '?'
+        y_med = float(np.median(ys))
+        channels = {'L': -0.12, 'C': 0.0, 'R': 0.12}       # trajectories.CORRIDOR_CHANNELS
+        return min(channels, key=lambda k: abs(channels[k] - y_med))
+
+    return None                                             # single-class scenes (s_curve, empty)
 
 
 def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
@@ -789,7 +840,8 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 renderer=None, frame_stride=3, goal_radius=GOAL_RADIUS, batch_size=1,
                 variant='diffuser', log_dir=None, control_hz=DATASET_HZ, text_log=True,
                 controller='pid', cond_mode='p_des', mjpc_kwargs=None,
-                v_des_magnitude=0.0, geo_config=None, rebuild_projector=None):
+                v_des_magnitude=0.0, geo_config=None, rebuild_projector=None,
+                max_episode_length=None):
     """One closed-loop MuJoCo rollout. Mirrors generator.run_trial; FM replaces traj_fn.
 
     `model` and `renderer` are owned by eval_scene and shared across rollouts (one
@@ -798,6 +850,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     candidate's first action; `plans` stores the whole fan. Buffers obs/action/plan per
     FM step (U3 npz schema); if `renderer` is given, also captures overhead frames.
     Heavy arrays/frames are returned under HEAVY_KEYS and stripped from results.json.
+
+    U_13: `max_episode_length` is the FIXED step budget (same for every trial of a scene),
+    replacing the old per-trial random `n_fm = round(dur*DATASET_HZ)`. Goal-path scenes
+    EARLY-STOP the instant the drone reaches within `goal_radius` of the goal (DPCC
+    avoiding pattern); a run that never reaches uses the full budget. So `n_fm_steps` is now
+    a deterministic time-to-goal (success) or the full budget (miss), not a random draw.
     """
     import mujoco
     import uav_expert_data_collect.generator as gen
@@ -837,7 +895,9 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     dt = float(model.opt.timestep)
     dt_fm = 1.0 / DATASET_HZ
     decim = max(1, int(round(1.0 / (dt * DATASET_HZ))))    # physics steps per FM query
-    n_fm = int(round(dur * DATASET_HZ))
+    # U_13: FIXED budget (not the per-trial random round(dur*DATASET_HZ)). Falls back to the
+    # old behaviour only if no budget was passed (defensive; callers always pass one now).
+    n_fm = int(max_episode_length) if max_episode_length else int(round(dur * DATASET_HZ))
 
     frames = []
 
@@ -861,6 +921,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     obs_traj = []        # realized [p_des|p|v] per FM step  → npz obs_all
     act_traj = []        # FM Δp_des per FM step             → npz act_all
     plans = []           # FM H-step predicted obs plan      → npz sampled_trajectories_all
+
+    # U_13: goal-reach latch (goal-path scenes only) + the FM step the episode actually
+    # stopped on. `empty` has a random ill-defined goal → never early-stops (runs full budget).
+    goal_reached_latch = False
+    steps_run = n_fm     # overwritten at an early break; == full budget on a miss
 
     for k in range(n_fm):
         p = data.qpos[:3].copy()
@@ -948,6 +1013,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             _side = float(np.dot(data.qpos[:2] - goal[:2], line_dir_xy))
             _dist_now = float(np.linalg.norm(data.qpos[:3] - goal))
             crossed_line = crossed_line or (_side >= 0.0) or (_dist_now < goal_radius)
+            # U_13: strict goal-reach latch (within goal_radius of the actual goal) — the
+            # early-stop trigger for goal-path scenes. Same qpos/goal/threshold the final
+            # `goal_reached` uses, so it is exactly "reached the goal at some step".
+            if scene in GOAL_PATH_SCENES and _dist_now < goal_radius:
+                goal_reached_latch = True
 
         # ── one structured log line per FM control step ──
         te_step = float(np.linalg.norm(data.qpos[:3] - p_des))
@@ -972,6 +1042,15 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
                 renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
 
+        # U_13: DPCC avoiding-style early termination (aux_repo/dpcc/scripts/eval.py:264) —
+        # stop the instant the goal is reached (goal-path scenes) or the fixed budget is
+        # exhausted. `steps_run` (the FM step count at stop) is the deterministic time-to-goal
+        # on success / the full budget on a miss — no longer a random draw. `empty` never
+        # latches (no goal) so it always runs the full budget.
+        if goal_reached_latch or k == n_fm - 1:
+            steps_run = k + 1
+            break
+
     # E8: release the MJPC gRPC agent server (no-op for the PID path).
     if controller == 'mjpc' and hasattr(tracker, 'close'):
         tracker.close()
@@ -981,7 +1060,14 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     limit = gen.SCENE_MAX_CONTACT_FRACTION.get(scene, gen.MAX_CONTACT_FRACTION)
     airborne = bool(min_z > 0.2)                           # crude floor gate
     goal_dist = float(np.linalg.norm(p_final - goal))
-    goal_reached = bool(goal_dist < goal_radius)
+    # U_13: for goal-path scenes, goal_reached is the early-stop latch (reached within
+    # goal_radius at SOME step — identical trigger to the break), so a rollout that reaches
+    # then would-have-drifted is no longer scored a miss (the old final-position-only check).
+    # `empty` (random, ill-defined goal; reported only) keeps the final-position check.
+    if scene in GOAL_PATH_SCENES:
+        goal_reached = bool(goal_reached_latch)
+    else:
+        goal_reached = bool(goal_dist < goal_radius)
     safe = bool(contact_frac <= limit and airborne)       # contact-free + airborne
     # Scene-aware success (Fix2_metrics): fixed-route scenes must REACH the goal AND be safe;
     # `empty` has a RANDOM goal the unconditioned FM can't be expected to hit, so there
@@ -993,10 +1079,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         success = bool(safe)
 
     # U7 (success_relaxed): "crossed the finish line" instead of "ended exactly on it".
-    # Episodes never terminate early on goal-reach, so a rollout that arrives and then
-    # drifts/overshoots for the rest of a fixed-length episode fails `success` outright —
-    # identical to one that never got close. `crossed_line` only requires the drone's xy
-    # path to have ever passed the goal at some point; `success ⇒ success_relaxed` always.
+    # U_13 note: episodes now DO early-stop on strict goal-reach, so the drift-after-arrival
+    # case `success` used to miss can no longer happen for goal-reaching rollouts. crossed_line
+    # is retained (it also latches on the half-plane crossing, so it still catches a rollout
+    # that grazed past the finish line but stopped just outside goal_radius). success ⇒
+    # success_relaxed still holds by construction.
     if scene in GOAL_PATH_SCENES:
         success_relaxed = bool(crossed_line and safe)
     else:                                                  # empty: no fixed goal to cross
@@ -1068,7 +1155,9 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             'budget_ms': blog_summary['budget_ms'],
         },
         'track_err_mean': float(np.mean(track_err)) if track_err else float('nan'),
-        'n_fm_steps': n_fm, 'decim': decim, 'dt': dt,
+        # U_13: actual FM steps executed (deterministic time-to-goal on success, full budget
+        # on a miss) — was the random round(dur*HZ) budget. `max_episode_length` = the budget.
+        'n_fm_steps': steps_run, 'max_episode_length': n_fm, 'decim': decim, 'dt': dt,
         # ── heavy (npz / gif only; stripped from results.json) ──
         'obs_traj': np.asarray(obs_traj),
         'act_traj': np.asarray(act_traj),
@@ -1219,6 +1308,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
     batch_size = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
 
+    # U_13: FIXED episode budget for every trial of this scene — CLI --max-episode-length
+    # wins, else the yaml `max_episode_length` (scalar-all or per-scene dict), else the
+    # per-scene SCENE_MAX_EPISODE_LENGTH default. Replaces the per-trial random round(dur*HZ).
+    _cli_mel = getattr(args, 'max_episode_length', None)
+    _yaml_mel = config.get('max_episode_length')
+    if isinstance(_yaml_mel, dict):
+        _yaml_mel = _yaml_mel.get(scene)
+    max_episode_length = int(_cli_mel or _yaml_mel or SCENE_MAX_EPISODE_LENGTH.get(scene, 500))
+    print(f'[ eval ] {scene} variant={variant}: max_episode_length={max_episode_length} '
+          f'(U_13 fixed budget; source: {"CLI" if _cli_mel else ("yaml" if _yaml_mel else "SCENE default")})')
+
     rollouts = []
     _variant_t0 = time.time()   # Fix_11: per-trial progress/ETA, so a killed job shows where
     try:
@@ -1231,7 +1331,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             text_log=config.get('behavior_log', True),
                             controller=controller, cond_mode=cond_mode, mjpc_kwargs=mjpc_kwargs,
                             v_des_magnitude=v_des_magnitude, geo_config=config,
-                            rebuild_projector=rebuild_projector)
+                            rebuild_projector=rebuild_projector,
+                            max_episode_length=max_episode_length)
             artifacts.save_rollout_stats(diag_dir, i, r)
             artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
             if record:
@@ -1268,6 +1369,15 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'dist_mean': float(np.mean([r['goal']['dist'] for r in rollouts])),
             'reached_rate': float(np.mean([r['goal']['reached'] for r in rollouts])),
         },
+        # U_13: DPCC-style step accounting (eval.py:315 "Avg number of steps"). steps_mean over
+        # ALL trials; steps_to_goal_mean over reaching trials only (the true time-to-goal, since
+        # misses run the full budget and would otherwise dominate the average).
+        'steps': {
+            'mean': float(np.mean([r['n_fm_steps'] for r in rollouts])),
+            'to_goal_mean': (float(np.mean([r['n_fm_steps'] for r in rollouts if r['goal']['reached']]))
+                             if any(r['goal']['reached'] for r in rollouts) else float('nan')),
+            'max_episode_length': max_episode_length,
+        },
         'success': {
             'strict_rate': float(succ),                                                       # task success: goal+safe (scene-aware)
             'relaxed_rate': float(np.mean([r['success']['relaxed'] for r in rollouts])),        # U7: crossed finish line
@@ -1295,9 +1405,11 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     artifacts.write_eval_log(out_dir, variant, summary, rollouts)
     artifacts.plot_overview(out_dir, variant, scene, rollouts)
 
+    _steps_tg = summary['steps']['to_goal_mean']
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '
           f'sel={_selection_for(variant)}): success={succ:.3f}  success_relaxed={summary["success"]["relaxed_rate"]:.3f}  '
           f'safe={summary["physical"]["safe_rate"]:.3f}  goal_reached={summary["goal"]["reached_rate"]:.3f}  '
+          f'steps_to_goal={_steps_tg:.0f}/{max_episode_length}  '
           f'track_err={summary["track_err_mean"]:.3f}  → {os.path.dirname(npz_path)}/')
     # Real-time timing verdict echoed to stdout (per-step detail stays in the .log files).
     # Fix_10 follow-up: these were left reading the old flat top-level keys after the

@@ -391,6 +391,11 @@ def write_eval_log(out_dir, variant, summary, rollouts):
         f.write(f"  contact_frac_mean     : {_p.get('contact_frac_mean', float('nan')):.3f}\n")
         f.write(f"  goal_dist_mean        : {_g.get('dist_mean', float('nan')):.3f}\n")
         f.write(f"  goal_reached_rate     : {_g.get('reached_rate', float('nan')):.3f}\n")
+        # U_13: DPCC-style step accounting (early-stop on goal-reach; miss = full budget).
+        _st = summary.get('steps', {})
+        f.write(f"  steps_mean            : {_st.get('mean', float('nan')):.1f}  "
+                f"(to_goal {_st.get('to_goal_mean', float('nan')):.1f} / "
+                f"budget {_st.get('max_episode_length', '?')})\n")
         f.write(f"  track_err_mean        : {summary['track_err_mean']:.3f}\n")
         f.write(f"  fm_ms mean/p95        : {_t.get('fm_ms_mean', float('nan')):.1f}/{_t.get('fm_ms_p95', float('nan')):.1f}\n")
         f.write('  [ PCC constraint metrics: placeholder — Epoch 7 ]\n')

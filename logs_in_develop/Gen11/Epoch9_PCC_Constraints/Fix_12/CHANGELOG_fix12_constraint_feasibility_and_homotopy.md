@@ -37,12 +37,21 @@ phantom step-0 violation that forced `constraint.collision_free=False` /
 
 ## 2. `FM_v3_uav_test/eval_fm_uav.py`
 
-- **`_realized_homotopy(scene, obs_traj)`** (new): pillars-only — reads the class the
-  drone ACTUALLY flew from the flown path (side of y=0 at each pillar column x∈{-2,0,2},
-  interpolated at first crossing; `?` if a column was never reached). Result dict (and
-  therefore `results.json`, `rollout_<i>_stats.json`) gains **`homotopy_flown`** next to
-  the commanded `homotopy` label (which, per the report, controls nothing physical in the
-  pillars eval — same start/goal for all four classes, policy unconditioned).
+- **`_realized_homotopy(scene, obs_traj)`** (new): reads the class the drone ACTUALLY flew
+  from the flown path. Result dict (and therefore `results.json`, `rollout_<i>_stats.json`)
+  gains **`homotopy_flown`** next to the commanded `homotopy` label (which the FM policy,
+  being unconditioned, need not obey).
+  - pillars: side of y=0 at each pillar column x∈{-2,0,2}, interpolated at first crossing;
+    `?` if a column was never reached (per the report, the commanded label controls nothing
+    physical here — same start/goal for all four classes).
+  - corridor: nearest expert channel (L=-0.12/C=0/R=+0.12) to the MEDIAN flown y over the
+    walled section x∈[-2,2]; `?` if the drone never entered it.
+  - **Fix_12 follow-up (2026-07-09):** first cut was pillars-only and returned `null` for
+    every other scene, so corridor rollouts logged a confusing `homotopy_flown: null` next
+    to a meaningful `homotopy: L/C/R`. Corridor now computes it (its commanded label is a
+    real start-channel bias but still not guaranteed to be the channel flown). Returns
+    `None` ONLY for single-class scenes — s_curve (`['default']`) and empty (`['N/A']`) —
+    where there is nothing to disambiguate and the field would be pure noise.
 - **`_warn_expert_route_infeasibility(...)`** (new) + call in `eval_scene` per geo entry:
   samples each homotopy's expert route (200 pts, seeded rng) and checks it against the
   PLANNING constraint set (reuses `_exec_constraint_violations` with the planning margin

@@ -2669,3 +2669,43 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 4. **`raw_mse` Exposure**: Added a scale-invariant `val/raw_mse` metric to W&B that captures the unweighted reconstruction loss, providing a stable baseline comparison point across runs that is immune to adaptive loss reweighting schemas.
 
 ***
+
+## Gen3v4 U9 Hotfix: Trainer Import Correction & W&B Crash Resolution (July 8, 2026)
+
+**Keywords**: Gen3v4, U9 hotfix, TypeError, Trainer import, diffuser.utils, raw_mse.
+
+1. **Bug Diagnosis**: Investigated a training crash at step 0 (`TypeError: Trainer.train() got an unexpected keyword argument 'on_epoch_end'`). Found that the train script was importing the legacy DPCC `diffuser.utils.Trainer` instead of the newly updated iMF-specific Trainer.
+2. **Import Resolution**: Updated `train_flow_matching_v3_imeanflow.py` to import `Trainer` from `flow_matcher_v3_imeanflow.utils.training`, aligning the training script with the evaluation script and giving it access to the U9 callbacks and metrics.
+3. **Loss Restoration**: Updated the `load()` function in the iMF Trainer to restore `test_raw_mse_losses` on resume, ensuring the raw MSE metric history is not reset when training is paused and restarted.
+
+***
+
+## Gen3v4 U9.3: Comprehensive Metric-Parity for W&B (July 8, 2026)
+
+**Keywords**: Gen3v4, U9.3, metric-parity, W&B, a0_loss, aux_loss, raw_mse, lr_history, debugging.
+
+1. **Objective Parity**: Closed the visibility gap between DPCC, Gen0, and iMeanFlow logging. Implemented tracking and uploading for `train/a0_loss`, `test/a0_loss`, `train/raw_mse`, `train/aux_loss`, `test/aux_loss`, and `train/lr` (learning rate).
+2. **Trainer Aggregation Upgrade**: Expanded the `test()` method to return a 4-tuple including `aux_loss` when available. Tracked the learning rate history dynamically from the cosine scheduler to detect proper warmups on resume.
+3. **W&B Upload Revamp**: Rewrote the upload logic in `train_flow_matching_v3_imeanflow.py` to use a declarative dictionary map (`companion_keys`), cleanly piping all metrics from `losses.pkl` into W&B while silently skipping missing keys on older checkpoints.
+
+***
+
+## Documentation Maintenance: U-Net & Horizon Cross-Study Audit (July 8, 2026)
+
+**Keywords**: TemporalUnet, horizon adaptability, dim_mults, CasADi flattening.
+
+1. **Default vs Runtime Correction**: Re-audited the `TemporalUnet` architectures across HardFlow, DPCC, and FM-PCC. Corrected previous misconceptions by confirming that all active models override defaults to run at `dim=32`, with the primary differences lying in `dim_mults` downsampling levels and conditioning mechanisms.
+2. **CasADi Dimensionality Impact**: Documented how horizon length directly dictates the NLP solver complexity in `WrappedFlowUnet`. A smaller horizon (H=8 vs H=16) drastically reduces the degrees of freedom for the CasADi decision variables.
+
+***
+
+## Gen11 Epoch 9 Fix 12: Constraint Feasibility & Realized Homotopy (July 8, 2026)
+
+**Keywords**: Gen11, Epoch 9, Fix 12, constraint feasibility, inflation margin, homotopy_flown, phantom violation, pillars, s_curve.
+
+1. **Infeasible Geometry Rectification**: Investigated 0% success rates on `pillars` and discovered the inflated constraints (r=0.53m) were mathematically near-infeasible, closing off all expert training routes. Reduced `r_drone` inflation from worst-case 0.36m to accurate lateral 0.31m and `margin_base` from 0.05m to 0.02m.
+2. **Synthetic Constraint Purge**: Removed synthetic envelope halfspaces from the `pillars` scene and expanded the workspace boxes across all scenes (pillars, s_curve, corridor) to physically contain the start and goal positions, eliminating structural phantom violations on step 0.
+3. **Realized Homotopy Logging**: Addressed the misleading nature of the commanded `homotopy` label (e.g., LLL, LRL) in unconditioned policies by implementing `_realized_homotopy()`. The evaluation script now physically analyzes the flown path to determine the true route taken (`homotopy_flown`) and records it in the JSON artifacts.
+4. **Pre-Flight Feasibility Check**: Added an upfront `_warn_expert_route_infeasibility()` diagnostic in `eval_fm_uav.py`. This checks the dataset's expert route against the instantiated DPCC projection geometry before rolling out, loudly warning if the constraint set is impossible to solve.
+
+***
