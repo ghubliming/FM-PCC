@@ -1,6 +1,12 @@
 # C5 (TODO / not yet implemented) — consolidate visual-aligning per-rollout pkl into the npz
 
-**Status:** PLAN ONLY. No code written yet. Author to implement later.
+**Status:** ✅ IMPLEMENTED (2026-07-09) for `fm_visual_aligning_test/` — see
+`CHANGELOG_C5_npz_pkl_consolidation.md` in this folder. Decisions taken: widen `obs_all` to
+6-D `[des|c_pos]` (no rename); full fan → `sampled_trajectories_all` + add `selected_idx_all`;
+drop both pkls; crash-safety via incremental `<variant>.partial.npz` sidecar (deleted on
+completion). Siblings deferred pending cluster validation. Original plan preserved below.
+
+**Status (original):** PLAN ONLY. No code written yet. Author to implement later.
 **Motivation:** The visual-aligning eval artifact layout is chaotic — raw trajectory data
 is split across a per-variant `.npz` AND per-rollout `_data.pkl` files, with overlapping,
 misleadingly-named, and partially-orphaned content. Consolidate onto the **cleaner UAV

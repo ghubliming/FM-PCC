@@ -12,12 +12,18 @@
 # Output:  logs/aligning-d3il-visual/plan_fm_visual_aligning/<exp>/results/<seed>/
 #          ├── expert_references/expert_rollout_<r>.{mp4,gif}   (generated once before variant loop)
 #          └── <variant>/
-#              ├── <variant>.npz
+#              ├── <variant>.npz     ← C5: SINGLE source of raw truth (UAV-style schema).
+#              │                        obs_all is 6-D [des_c_pos(0:3) | c_pos(3:6)];
+#              │                        sampled_trajectories_all is the FULL MPC fan;
+#              │                        selected_idx_all is per-replan chosen index.
 #              ├── <variant>.png     (6-panel rollout grid)
-#              ├── results_seed_<s>.pkl
 #              ├── eval_<variant>.log
 #              ├── diag_first_replan.txt
-#              └── diagnostics/rollout_<r>.{mp4,gif,_data.pkl,_stats.json,_report.png,_mpc_foresight.png}
+#              └── diagnostics/rollout_<r>.{mp4,gif,_stats.json,_report.png,_mpc_foresight.png}
+#          C5 removed the per-rollout `_data.pkl` and per-variant `results_seed_<s>.pkl`
+#          (all their raw arrays now live in <variant>.npz; JSONs stay metrics-only). A
+#          transient `<variant>.partial.npz` crash-safety sidecar is written every N rollouts
+#          and deleted on successful variant completion (see _save_partial_npz).
 
 import gc
 import json
@@ -719,6 +725,131 @@ def _nest_constraint_metrics(cm):
     return {'exec': exec_group, 'plan': plan_group}
 
 
+# ── C5: consolidated NPZ payload (single source of raw truth) ──────────────────
+
+def _collect_per_rollout_arrays(agent):
+    """C5 consolidation: build the per-rollout raw + metric arrays for the variant NPZ from
+    agent state ONLY (no dependency on Aligning_Sim.test_agent's aggregate return), so the
+    identical payload can be written both at variant end AND incrementally as a crash-safety
+    partial. Returns a kwargs dict for np.savez.
+
+    Schema notes (C5 — mirrors FM_v3_uav_test/eval_artifacts.py):
+      - `obs_all` is now 6-D per step: [des_c_pos(0:3) | c_pos(3:6)] — the model's actual
+        6-D input and the UAV obs layout. Cols 0:3 are the commanded position (byte-identical
+        to the OLD 3-D `obs_all`, so any consumer slicing [:, :3] is unaffected); cols 3:6
+        are the ACTUAL executed path (was the pkl-only `c_pos_history`).
+      - `sampled_trajectories_all` is now the FULL MPC candidate fan (per replan step a
+        (B,H,3) array) — was the SELECTED plan only; the fan was the pkl-only `all_candidates`.
+      - `selected_idx_all` is NEW (was pkl-only): which candidate index executed per replan.
+    All other keys are unchanged from the pre-C5 npz (same construction, same names).
+    """
+    obs_all, act_all, cand_all, selidx_all = [], [], [], []
+    for r in range(agent.rollout_counter + 1):
+        d = agent.master_rollout_history.get(f'rollout_{r}')
+        if not d:
+            continue
+        des  = np.asarray(d.get('real_robot_pos'))       # (T,3) commanded (des_c_pos)
+        cpos = np.asarray(d.get('c_pos_history'))         # (T,3) actual executed path
+        if des.ndim == 2 and cpos.ndim == 2 and des.shape == cpos.shape:
+            obs_all.append(np.concatenate([des, cpos], axis=1))   # (T,6) [des | c_pos]
+        else:
+            obs_all.append(des)                           # fallback: des-only on shape mismatch
+        act_all.append(np.asarray(d.get('desired_actions')))
+        cand_all.append(list(d.get('all_candidates', [])))         # list of (B,H,3) — full fan
+        selidx_all.append(np.asarray(d.get('selected_idx', []), dtype=np.int32))
+
+    _ci = agent.history_context_info
+    _max_phys = np.array([float(np.max(e)) if len(e) else 0.0
+                          for e in agent.history_pos_tracking_errors], dtype=np.float32)
+    _hcm = agent.history_constraint_metrics
+
+    def _cm(key, default=0.0):
+        return np.array([m.get(key, default) for m in _hcm], dtype=np.float32)
+
+    return dict(
+        obs_all=np.array(obs_all, dtype=object),
+        act_all=np.array(act_all, dtype=object),
+        sampled_trajectories_all=np.array(cand_all, dtype=object),
+        selected_idx_all=np.array(selidx_all, dtype=object),
+        success_relaxed=np.array(agent.history_success_relaxed),
+        n_steps=np.array(agent.history_n_steps),
+        avg_time=np.array(agent.history_avg_time),
+        mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist),
+        physical_tracking_errors=np.array(agent.history_pos_tracking_errors, dtype=object),
+        max_phys_error_per_rollout=_max_phys,
+        outcome_max_physical_tracking_error=_max_phys,
+        context_box_init_xy=np.array([[c.get('box_init_xy', [0.0, 0.0])[0],
+                                       c.get('box_init_xy', [0.0, 0.0])[1]] for c in _ci],
+                                     dtype=np.float32),
+        context_target_xy=np.array([[c.get('target_xy', [0.0, 0.0])[0],
+                                     c.get('target_xy', [0.0, 0.0])[1]] for c in _ci],
+                                   dtype=np.float32),
+        context_box_angle_deg=np.array([c.get('box_init_angle_deg', 0.0) for c in _ci],
+                                       dtype=np.float32),
+        context_target_angle_deg=np.array([c.get('target_angle_deg', 0.0) for c in _ci],
+                                          dtype=np.float32),
+        context_init_xy_dist=np.array([c.get('init_xy_dist', 0.0) for c in _ci],
+                                      dtype=np.float32),
+        contact_first_step=np.array(agent.history_contact_first_step, dtype=np.int32),
+        contact_last_step=np.array(agent.history_contact_last_step, dtype=np.int32),
+        contact_first_pos_xy=np.array(agent.history_contact_first_pos_xy, dtype=np.float32),
+        contact_last_pos_xy=np.array(agent.history_contact_last_pos_xy, dtype=np.float32),
+        constraint_exec_n_violated_steps=_cm('exec_n_violated_steps'),
+        constraint_exec_sat_rate=_cm('exec_constraint_sat_rate', 1.0),
+        constraint_exec_zero_violation=_cm('exec_zero_violation_rollout'),
+        constraint_exec_bounds_viol_count=_cm('exec_bounds_viol_count'),
+        constraint_exec_halfspace_viol_count=_cm('exec_halfspace_viol_count'),
+        constraint_exec_obstacle_viol_count=_cm('exec_obstacle_viol_count'),
+        constraint_exec_max_bounds_viol_m=_cm('exec_max_bounds_viol_m'),
+        constraint_exec_max_halfspace_viol_m=_cm('exec_max_halfspace_viol_m'),
+        constraint_exec_max_obstacle_penetration_m=_cm('exec_max_obstacle_penetration_m'),
+        constraint_exec_margin_mean_m=_cm('exec_constraint_margin_mean_m'),
+        constraint_exec_first_violation_step=_cm('exec_first_violation_step', -1),
+        constraint_exec_longest_safe_streak=_cm('exec_longest_safe_streak'),
+        constraint_exec_dyn_err_mean=_cm('exec_dynamics_consistency_error_mean'),
+        constraint_exec_dyn_err_max=_cm('exec_dynamics_consistency_error_max'),
+        constraint_plan_post_viol_rate_mean=_cm('plan_post_viol_rate_mean'),
+        constraint_plan_post_viol_rate_max=_cm('plan_post_viol_rate_max'),
+        constraint_plan_n_replan_steps=_cm('plan_n_replan_steps'),
+    )
+
+
+def _save_partial_npz(path, agent, seed, args_dict):
+    """C5 crash-safety: atomically write a `<variant>.partial.npz` snapshot of every raw
+    per-rollout array gathered so far.
+
+    Deliberately a SIDECAR, not `<variant>.npz`: the DA pipeline only ever reads
+    `<variant>.npz`, which is written exactly once, atomically, at variant END. So a
+    completed run's analysis never sees partial data, and today's clean "missing npz =>
+    variant didn't finish" semantics are preserved. This file is pure raw-data insurance
+    against a mid-variant SLURM kill and is deleted on successful completion. Aggregate
+    scalars that require test_agent's return (entropy, per-context mode_encoding) are not
+    available mid-run, so they are best-effort (`complete=False` flags this).
+    """
+    done = [r for r in range(agent.rollout_counter + 1)
+            if agent.master_rollout_history.get(f'rollout_{r}')]
+    strict = np.array([bool(agent.master_rollout_history[f'rollout_{r}'].get('success', False))
+                       for r in done], dtype=bool)
+    modes  = np.array([int(agent.master_rollout_history[f'rollout_{r}'].get('mode', 0))
+                       for r in done], dtype=np.int32)
+    mdist  = np.array([float(agent.master_rollout_history[f'rollout_{r}'].get('mean_distance', 0.0))
+                       for r in done], dtype=np.float32)
+    payload = _collect_per_rollout_arrays(agent)
+    payload.update(
+        success_rate=float(strict.mean()) if strict.size else 0.0,
+        entropy=float('nan'),
+        n_success=strict, success_strict=strict,
+        mode_per_rollout=modes,
+        mean_distance=mdist,
+        seed=seed, complete=False,
+        n_rollouts_done=int(strict.size),
+        args=args_dict,
+    )
+    tmp = f'{path}.tmp{os.getpid()}.npz'
+    np.savez(tmp, **payload)
+    os.replace(tmp, path)   # atomic on same filesystem
+
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 class Tee:
@@ -827,7 +958,10 @@ class VisualAgentWrapper:
                  mpc_foresight_stride=6,
                  geo_config=None,
                  is_tightened=False,
-                 total_rollouts=None):
+                 total_rollouts=None,
+                 seed=None,
+                 npz_args=None,
+                 partial_npz_every=5):
 
         self.model              = diffusion_model
         self.device             = device
@@ -842,6 +976,10 @@ class VisualAgentWrapper:
         self.save_path          = save_path
         self.record_mode        = record_mode
         self.variant            = variant
+        # C5: crash-safety partial-npz sidecar (see _save_partial_npz).
+        self._seed              = seed
+        self._npz_args          = npz_args if npz_args is not None else {}
+        self._partial_npz_every = partial_npz_every
 
         model_horizon = getattr(self.model, 'horizon', window_size)
         self.action_seq_size = min(action_seq_size, model_horizon)
@@ -1164,8 +1302,10 @@ class VisualAgentWrapper:
                     except Exception as e:
                         print(f'[ WARNING ] GIF failed: {e}')
 
-            with open(os.path.join(diag_path, f'rollout_{rollout_idx}_data.pkl'), 'wb') as f:
-                pickle.dump(data, f)
+            # C5: per-rollout `_data.pkl` removed — every raw array it held (c_pos_history,
+            # all_candidates, selected_idx, …) now lives in <variant>.npz. Crash-safety is
+            # provided instead by the incremental <variant>.partial.npz sidecar written at the
+            # end of this method every `partial_npz_every` rollouts.
 
             # Json_Orgnize_C4: grouped schema replacing the old flat/chaotic layout.
             # `exec_n_steps` (Finding #1, was a literal duplicate of `steps`) is dropped —
@@ -1590,6 +1730,20 @@ class VisualAgentWrapper:
 
         except Exception as e:
             print(f'[ diag ] Real-time export failed for rollout {rollout_idx}: {e}')
+
+        # C5: incremental crash-safety snapshot every `partial_npz_every` rollouts. Kept
+        # outside the plotting try/except above so a plot failure never skips the snapshot
+        # (and a snapshot failure is reported distinctly rather than masked). Sidecar file;
+        # see _save_partial_npz for why it is not <variant>.npz.
+        if (self._partial_npz_every and self.save_path and self.geo_config
+                and self.geo_config.get('write_to_file', True)
+                and (self.rollout_counter + 1) % self._partial_npz_every == 0):
+            try:
+                _save_partial_npz(
+                    os.path.join(self.save_path, f'{self.variant}.partial.npz'),
+                    self, self._seed, self._npz_args)
+            except Exception as e:
+                print(f'[ diag ] partial NPZ snapshot failed at rollout {rollout_idx}: {e}')
 
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
@@ -2148,6 +2302,9 @@ if __name__ == '__main__':
                     geo_config=geo_config,
                     is_tightened=is_tightened,
                     total_rollouts=n_contexts * n_trajectories,   # Fix_11
+                    seed=seed,                                    # C5: partial-npz sidecar
+                    npz_args=vars(args),                          # C5
+                    partial_npz_every=geo_config.get('partial_npz_every', 5),  # C5
                 )
 
                 _if_vision_config = getattr(args, 'if_vision', True)
@@ -2200,104 +2357,52 @@ if __name__ == '__main__':
                 entropy = -(m_norm * torch.log(m_norm + 1e-12) /
                             torch.log(torch.tensor(float(n_modes)))).sum(1).mean().item()
 
-                obs_all, act_all, plans_all = [], [], []
+                # C5: DESIRED-only per-rollout path list for the legacy PNG grid below.
+                # (The npz payload — incl. the 6-D obs_all and the full MPC fan — is built
+                # separately by _collect_per_rollout_arrays so the grid's plotting stays 3-D.)
+                obs_des_all = []
                 for r in range(agent.rollout_counter + 1):
                     d = agent.master_rollout_history.get(f'rollout_{r}')
                     if d:
-                        obs_all.append(d['real_robot_pos'])
-                        act_all.append(d['desired_actions'])
-                        plans_all.append(d['full_plans'])
+                        obs_des_all.append(d['real_robot_pos'])
 
-                # ── NPZ save (legacy-compatible) ─────────────────────────────
+                # ── NPZ save (C5: single source of raw truth; UAV-style schema) ──────
+                # _collect_per_rollout_arrays supplies every per-rollout array (raw + metrics),
+                # incl. the widened 6-D obs_all, the full fan (sampled_trajectories_all) and
+                # selected_idx_all. Only the aggregate scalars that need Aligning_Sim's return
+                # (success_rate/entropy/mode_encoding/n_success/mean_distance) are added here.
                 if geo_config.get('write_to_file', True):
-                    # U10.2: flatten context_info + clean tracking error into NPZ
-                    # so DA code can load per-rollout arrays directly (same pattern as avoiding).
-                    _ci = agent.history_context_info   # list of dicts, one per rollout
-                    _max_phys = np.array([
-                        float(np.max(e)) if len(e) else 0.0
-                        for e in agent.history_pos_tracking_errors
-                    ], dtype=np.float32)
-                    _ctx_box_xy   = np.array([[c.get('box_init_xy',  [0.0, 0.0])[0],
-                                               c.get('box_init_xy',  [0.0, 0.0])[1]]
-                                              for c in _ci], dtype=np.float32)
-                    _ctx_tgt_xy   = np.array([[c.get('target_xy',    [0.0, 0.0])[0],
-                                               c.get('target_xy',    [0.0, 0.0])[1]]
-                                              for c in _ci], dtype=np.float32)
-                    _ctx_box_ang  = np.array([c.get('box_init_angle_deg', 0.0) for c in _ci], dtype=np.float32)
-                    _ctx_tgt_ang  = np.array([c.get('target_angle_deg',   0.0) for c in _ci], dtype=np.float32)
-                    _ctx_xy_dist  = np.array([c.get('init_xy_dist',       0.0) for c in _ci], dtype=np.float32)
-
-                    # Json_Orgnize_C4: constraint-axis arrays, previously absent from NPZ
-                    # entirely (only ever lived in the two JSON files) — group-prefixed to
-                    # match the reorganized stats-JSON schema (constraint.exec.*/plan.*).
-                    _hcm_for_npz = agent.history_constraint_metrics
-
-                    def _cm_npz(key, default=0.0):
-                        return np.array([m.get(key, default) for m in _hcm_for_npz], dtype=np.float32)
-
-                    np.savez(f'{save_path}/{variant}.npz',
-                             success_rate=success_rate, entropy=entropy,
-                             mode_encoding=mode_encoding.numpy(),
-                             elapsed_seconds=elapsed, seed=seed,
-                             n_success=successes.flatten().numpy(),
-                             success_strict=successes.flatten().numpy(),        # Json_Orgnize_C4 (same data, schema-consistent name)
-                             success_relaxed=np.array(agent.history_success_relaxed),  # Json_Orgnize_C4
-                             n_steps=np.array(agent.history_n_steps),
-                             avg_time=np.array(agent.history_avg_time),
-                             mean_distance=mean_dist.flatten().numpy(),
-                             mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist),
-                             physical_tracking_errors=np.array(
-                                 agent.history_pos_tracking_errors, dtype=object),
-                             max_phys_error_per_rollout=_max_phys,
-                             outcome_max_physical_tracking_error=_max_phys,     # Json_Orgnize_C4 (schema-consistent alias)
-                             context_box_init_xy=_ctx_box_xy,
-                             context_target_xy=_ctx_tgt_xy,
-                             context_box_angle_deg=_ctx_box_ang,
-                             context_target_angle_deg=_ctx_tgt_ang,
-                             context_init_xy_dist=_ctx_xy_dist,
-                             contact_first_step=np.array(agent.history_contact_first_step, dtype=np.int32),
-                             contact_last_step=np.array(agent.history_contact_last_step, dtype=np.int32),
-                             contact_first_pos_xy=np.array(agent.history_contact_first_pos_xy, dtype=np.float32),
-                             contact_last_pos_xy=np.array(agent.history_contact_last_pos_xy, dtype=np.float32),
-                             constraint_exec_n_violated_steps=_cm_npz('exec_n_violated_steps'),
-                             constraint_exec_sat_rate=_cm_npz('exec_constraint_sat_rate', 1.0),
-                             constraint_exec_zero_violation=_cm_npz('exec_zero_violation_rollout'),
-                             constraint_exec_bounds_viol_count=_cm_npz('exec_bounds_viol_count'),
-                             constraint_exec_halfspace_viol_count=_cm_npz('exec_halfspace_viol_count'),
-                             constraint_exec_obstacle_viol_count=_cm_npz('exec_obstacle_viol_count'),
-                             constraint_exec_max_bounds_viol_m=_cm_npz('exec_max_bounds_viol_m'),
-                             constraint_exec_max_halfspace_viol_m=_cm_npz('exec_max_halfspace_viol_m'),
-                             constraint_exec_max_obstacle_penetration_m=_cm_npz('exec_max_obstacle_penetration_m'),
-                             constraint_exec_margin_mean_m=_cm_npz('exec_constraint_margin_mean_m'),
-                             constraint_exec_first_violation_step=_cm_npz('exec_first_violation_step', -1),
-                             constraint_exec_longest_safe_streak=_cm_npz('exec_longest_safe_streak'),
-                             constraint_exec_dyn_err_mean=_cm_npz('exec_dynamics_consistency_error_mean'),
-                             constraint_exec_dyn_err_max=_cm_npz('exec_dynamics_consistency_error_max'),
-                             constraint_plan_post_viol_rate_mean=_cm_npz('plan_post_viol_rate_mean'),
-                             constraint_plan_post_viol_rate_max=_cm_npz('plan_post_viol_rate_max'),
-                             constraint_plan_n_replan_steps=_cm_npz('plan_n_replan_steps'),
-                             obs_all=np.array(obs_all, dtype=object),
-                             act_all=np.array(act_all, dtype=object),
-                             sampled_trajectories_all=np.array(plans_all, dtype=object),
-                             args=vars(args))
-
-                pkl_name = (f'results_seed_{seed}_train_set.pkl'
-                            if args_cli.eval_on_train else f'results_seed_{seed}.pkl')
-                with open(os.path.join(save_path, pkl_name), 'wb') as f:
-                    pickle.dump({'success_rate': success_rate,
-                                 'entropy': entropy, 'elapsed': elapsed}, f)
+                    _npz_payload = _collect_per_rollout_arrays(agent)
+                    np.savez(
+                        f'{save_path}/{variant}.npz',
+                        success_rate=success_rate, entropy=entropy,
+                        mode_encoding=mode_encoding.numpy(),
+                        elapsed_seconds=elapsed, seed=seed,
+                        n_success=successes.flatten().numpy(),
+                        success_strict=successes.flatten().numpy(),   # schema-consistent name
+                        mean_distance=mean_dist.flatten().numpy(),
+                        complete=True,                                # C5: full/authoritative run
+                        args=vars(args),
+                        **_npz_payload,
+                    )
+                    # C5: variant finished → drop the now-redundant crash-safety sidecar.
+                    _partial = os.path.join(save_path, f'{variant}.partial.npz')
+                    if os.path.exists(_partial):
+                        try:
+                            os.remove(_partial)
+                        except OSError:
+                            pass
 
                 # ── Legacy PNG rollout grid (mirrors ddpm_encdec) ────────────
                 print(f'[ eval ] Generating PNG rollout grid for {variant}...')
-                n_plot = min(len(obs_all), 5)
+                n_plot = min(len(obs_des_all), 5)
                 if n_plot > 0:
                     fig, axes = plt.subplots(n_plot, 6, figsize=(30, 5 * n_plot),
                                              squeeze=False)
                     fig.suptitle(f'Visual-DPCC — {variant} (Seed {seed})')
 
                     for i in range(n_plot):
-                        obs_traj   = obs_all[i]    # (T, 3) des_robot_pos
-                        plans_list = plans_all[i]  # list of (H, 3) action arrays
+                        obs_traj   = obs_des_all[i]   # (T, 3) des_robot_pos
                         rollout_data = agent.master_rollout_history.get(f'rollout_{i}', {})
                         c_pos_hist   = rollout_data.get('c_pos_history', None)  # Fix 9: actual positions
 
