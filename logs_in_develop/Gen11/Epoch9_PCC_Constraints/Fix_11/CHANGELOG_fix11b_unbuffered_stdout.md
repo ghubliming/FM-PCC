@@ -36,6 +36,10 @@ Verified there was **no** `python -u`, `PYTHONUNBUFFERED`, or `flush=True` anywh
   disk in real time.
 - Did not touch other sbatch scripts (train, aligning, avoiding). Same one-liner applies if
   their logs ever look "frozen"; left out of this fix to stay scoped to the reported UAV eval.
+  - **Follow-up (2026-07-09):** the visual-aligning **eval** launchers (Gen7 FM +
+    Gen6V4 diffuser) were later given the same one-liner on request — see
+    `logs_in_develop/Gen7_FMPCC_Viusal_Aligning/CHANGELOG_fix11b_unbuffered_stdout_sync.md`.
+    Train/pipeline/avoiding/imf scripts remain untouched.
 
 ## Verification / next step
 - `bash -n Slurm_Codes/sbatch/uav_fm/eval_fm_uav.sh` — **run on cluster** (Docker dev env has

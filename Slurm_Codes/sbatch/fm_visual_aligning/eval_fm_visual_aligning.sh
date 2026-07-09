@@ -44,6 +44,13 @@ export PYTHONPATH="$FMPCC:$D3IL_ROOT:$D3IL_ENV_ROOT:$PYTHONPATH"
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 export MPLBACKEND="agg"
+# Fix_11b (sync from UAV): force UNBUFFERED stdout/stderr. Under SLURM python's stdout is a
+# file (not a TTY) → block-buffered (~4-8KB), so progress prints sit in the buffer and never
+# reach the .log until it fills or the process exits — the log looks frozen while eval runs
+# fine, and a SIGKILL at the --time limit loses the buffered trail. Equivalent to `python -u`;
+# an env var so it also covers any child python. See
+# logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_11/CHANGELOG_fix11b_unbuffered_stdout.md.
+export PYTHONUNBUFFERED=1
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
 ALLOCATED_GPU="${CUDA_VISIBLE_DEVICES%%,*}"
 export MUJOCO_EGL_DEVICE_ID="$ALLOCATED_GPU"
