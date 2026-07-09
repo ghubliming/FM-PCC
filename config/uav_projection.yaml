@@ -50,6 +50,12 @@ projection_variants: [
   'geo_free',                  # geo_bounds+halfspace+obstacles OFF, rest ON (dynamics+bounds only)
   'geo_free-bounds_free',      # dynamics ALONE (no bounds, no geometric constraints)
   'geo_free-model_free',       # bounds ALONE (no dynamics, no geometric constraints)
+  'model_free-bounds_free',    # geometry ALONE (no dynamics, no action bound) — U8b: the
+                               #   missing 3rd of the "X alone" trilogy. Complements bounds-alone
+                               #   (geo_free-model_free) & dynamics-alone (geo_free-bounds_free);
+                               #   isolates geometry-without-dynamics for the U_13 study.
+                               #   NOTE: unlike the other -free composites, a -tightened sibling
+                               #   WOULD be meaningful here (geometry is kept) — omitted for now.
   # ── DPCC paper Table 1 main results ──
   'dpcc-r',
   'dpcc-r-tightened',
