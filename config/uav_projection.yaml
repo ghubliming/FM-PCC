@@ -33,9 +33,14 @@ diffusion_timestep_threshold: 0.5
 # These make per-scene single-family ablation ENTRIES unnecessary — every combination below
 # runs against the ONE full-stack geo entry per scene (see geo_constraint_variants), so e.g.
 # "dynamics only" is now `geo_free-bounds_free` on that one entry, not a separate geo variant.
-# `-tightened` siblings are omitted for these three: tightening only affects
-# geo_bounds/halfspace/obstacles, which the -free toggles above may already remove, so a
-# tightened sibling would be redundant/no-op whenever geo_free is active (see changelog).
+# `-tightened` rule (U8c): tightening (`enlarge_constraints`) only shifts
+# geo_bounds/halfspace/obstacles boundaries. So a `-tightened` sibling is meaningful iff the
+# variant KEEPS geometry, and a no-op whenever `geo_free` removed it. Therefore:
+#   • geometry-KEEPING variants get a `-tightened` sibling: model_free, bounds_free,
+#     model_free-bounds_free (all leave geo_bounds/halfspace/obstacles ON).
+#   • `geo_free*` variants get NONE — geometry is already gone, tightening touches nothing.
+# (Unlike visual-aligning, where the geo loop AUTO-generates the tightened twin for every
+# variant, this UAV yaml enumerates each `-tightened` explicitly — so they must be listed.)
 projection_variants: [
   # ── DPCC paper Table 1 baselines ──
   'diffuser',
@@ -46,7 +51,8 @@ projection_variants: [
   'model_free',               # dynamics OFF, rest ON
   'model_free-tightened',
   # ── U8: constraint-group ablation toggles (composable, see docstring above) ──
-  'bounds_free',               # action-bound OFF, rest ON
+  'bounds_free',               # action-bound OFF, rest ON — geometry KEPT
+  'bounds_free-tightened',     # U8c: geometry kept → tightening is meaningful (mirrors model_free-tightened)
   'geo_free',                  # geo_bounds+halfspace+obstacles OFF, rest ON (dynamics+bounds only)
   'geo_free-bounds_free',      # dynamics ALONE (no bounds, no geometric constraints)
   'geo_free-model_free',       # bounds ALONE (no dynamics, no geometric constraints)
@@ -54,8 +60,7 @@ projection_variants: [
                                #   missing 3rd of the "X alone" trilogy. Complements bounds-alone
                                #   (geo_free-model_free) & dynamics-alone (geo_free-bounds_free);
                                #   isolates geometry-without-dynamics for the U_13 study.
-                               #   NOTE: unlike the other -free composites, a -tightened sibling
-                               #   WOULD be meaningful here (geometry is kept) — omitted for now.
+  'model_free-bounds_free-tightened',  # U8c: geometry KEPT → tightening meaningful (the sibling U8b flagged)
   # ── DPCC paper Table 1 main results ──
   'dpcc-r',
   'dpcc-r-tightened',

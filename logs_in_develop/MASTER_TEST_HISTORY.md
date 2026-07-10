@@ -2709,3 +2709,40 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 4. **Pre-Flight Feasibility Check**: Added an upfront `_warn_expert_route_infeasibility()` diagnostic in `eval_fm_uav.py`. This checks the dataset's expert route against the instantiated DPCC projection geometry before rolling out, loudly warning if the constraint set is impossible to solve.
 
 ***
+
+## Gen11 Epoch 9 U13: Deterministic Episode Length & DPCC-style Goal Stop (July 9, 2026)
+
+**Keywords**: Gen11, Epoch 9, U13, deterministic episode length, fixed step budget, early stop, goal-reach latch.
+
+1. **Deterministic Episode Budgets**: Replaced the per-trial random sampling duration with a fixed, per-scene step budget (`SCENE_MAX_EPISODE_LENGTH`). This eliminates trial-to-trial randomness and ensures uniform execution length across tests, resolving issues where trajectories were cut off prematurely or overshot the goal.
+2. **DPCC-Style Early Termination**: Integrated a `goal_reached_latch` in the physics inner loop and adopted an early-stop mechanism that terminates the evaluation exactly when the goal radius is breached. Time-to-goal measurements (`n_fm_steps`) are now perfectly deterministic functions of policy quality rather than being coupled to the execution budget.
+3. **CLI & Config Overrides**: Added a `--max-episode-length` CLI argument and yaml support, providing identical precedence and parity with the legacy DPCC testing infrastructure for setting global or per-scene step limits.
+
+***
+
+## Gen7 & Gen6V4 C5: Consolidate Visual-Aligning Artifacts & Crash-Safety (July 9, 2026)
+
+**Keywords**: Gen7, Gen6V4, C5, npz_pkl_consolidation, raw truth, crash-safety, partial saves, MPC fan.
+
+1. **Single Source of Raw Truth**: Consolidated the fragmented per-rollout `.pkl` arrays into a single `<variant>.npz` file for visual-aligning eval scripts, strictly mirroring the UAV pipeline schema.
+2. **Schema Upgrades**: Widened `obs_all` from 3-D to 6-D to store both the commanded and executed paths seamlessly. Upgraded `sampled_trajectories_all` to store the full candidate fan matrix (`(B,H,3)`) for each replanning step, rather than only the selected trajectory.
+3. **Incremental Crash-Safety Saves**: Implemented a best-effort, crash-safe sidecar mechanism (`<variant>.partial.npz`) that atomically flushes aggregated data every 5 rollouts. This safeguards partial rollout data against abrupt SLURM kills or 24h timeouts without polluting the authoritative single-write completion semantics expected by downstream Data Analysis pipelines.
+
+***
+
+## Gen11 E9 U8b & Gen7/Gen6V4 C3: Geometry-Alone Projection Variant (July 9, 2026)
+
+**Keywords**: Gen11, Epoch 9, U8b, Gen7, Gen6V4, C3, model_free-bounds_free, geometry-alone ablation.
+
+1. **Trilogy Completion**: Added the `model_free-bounds_free` projection variant to `config/uav_projection.yaml` and `config/visual_aligning_eval.yaml`. This variant cleanly projects spatial geometry without the constraints of dynamics or action limits.
+2. **Ablation Clarity**: This addition fulfills the gap in the subset "X alone" ablation tests. It explicitly enables direct analysis into why pure-geometry projection worsens behavior, confirming hypotheses regarding the necessity of coupled dynamics anchoring (`diffuser` performance) versus geometry-only constraint corruption.
+
+***
+
+## Infrastructure Refactor: Realtime SLURM Log Streaming (July 9, 2026)
+
+**Keywords**: SLURM, real-time logging, PYTHONUNBUFFERED, stdout streaming, Fix 11b.
+
+1. **Unbuffered Stdout**: Exported `PYTHONUNBUFFERED=1` across the visual-aligning (`eval_fm_visual_aligning.sh`, `eval_visual_aligning_dpcc.sh`) and UAV flow-matching (`eval_fm_uav.sh`) evaluation sbatch scripts. This prevents Python's native IO buffering from retaining stdout prints, ensuring immediate visibility into real-time rollout progress and ETA logs on the cluster.
+
+***
