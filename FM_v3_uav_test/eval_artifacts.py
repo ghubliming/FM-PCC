@@ -2,8 +2,8 @@
 
 Restores the FMv3-ODE-style output set for the UAV closed-loop eval:
 per-(scene,seed,projection) `<variant>.npz` + `eval_<variant>.log` + 2-D overview
-`<variant>.png`/`all.png` + per-rollout `diagnostics/rollout_<r>_stats.json` +
-optional `rollout_<r>.gif`.
+`<variant>.png` + per-rollout `diagnostics/rollout_<r>_stats.json` +
+optional `rollout_<r>.gif`. (Fix_14 dropped the redundant per-variant `all.png` duplicate.)
 
 SCOPE (see U3 PLAN): originally only the `fm_only` / diffuser baseline, with
 constraint/PCC fields scaffolded as placeholders so the Epoch-7 DPCC work would be a
@@ -171,7 +171,10 @@ def plot_overview(out_dir, variant, scene, rollouts):
     fig.tight_layout()
     main = os.path.join(out_dir, f'{variant}.png')
     fig.savefig(main, dpi=130)
-    fig.savefig(os.path.join(out_dir, 'all.png'), dpi=130)   # aggregate alias (single-seed)
+    # Fix_14: dropped the `all.png` alias — `out_dir` is the PER-VARIANT folder
+    # (results/<geo_tag>/<variant>/), so `all.png` was a byte-identical duplicate of
+    # `<variant>.png`, not the "all variants, this seed" aggregate its name promised (that would
+    # have to live one level up at <geo_tag>/). Nothing consumes it; removed to stop the confusion.
     plt.close(fig)
     return main
 
@@ -211,7 +214,112 @@ def save_rollout_gif(diag_dir, idx, frames, fps=10):
     return path
 
 
-def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
+# ── projector constraint-geometry overlay (Fix_14) ───────────────────────────
+
+def _fs_normalize_halfspace(hs):
+    """Foresight-local copy of eval_fm_uav._normalize_halfspace (kept here to avoid a
+    circular import back into the __main__ eval module). Returns (triple, x_active)."""
+    if isinstance(hs, dict):
+        line = hs['line']
+        return [line[0], line[1], hs['side']], hs.get('x_active')
+    return [hs[0], hs[1], hs[2]], None
+
+
+def _fs_wall_xy(hs):
+    """Resolve a halfspace to (p1, p2, side, x_active), clipped to its live x-range so the
+    s_curve per-segment walls are drawn only where they are actually enforced."""
+    triple, x_active = _fs_normalize_halfspace(hs)
+    (x1, y1), (x2, y2), side = triple
+    if x_active is not None and abs(x2 - x1) > 1e-9:
+        lo, hi = x_active
+        t0 = (lo - x1) / (x2 - x1); t1 = (hi - x1) / (x2 - x1)
+        t0, t1 = sorted((max(0.0, min(1.0, t0)), max(0.0, min(1.0, t1))))
+        x1n = x1 + t0 * (x2 - x1); x2n = x1 + t1 * (x2 - x1)
+        y1n = y1 + t0 * (y2 - y1); y2n = y1 + t1 * (y2 - y1)
+        return (x1n, y1n), (x2n, y2n), side, (lo, hi)
+    return (x1, y1), (x2, y2), side, x_active
+
+
+def draw_projector_geometry(ax_xy, ax_xz, geo_config, variant=''):
+    """Fix_14: overlay the ENFORCED projector constraint surfaces onto the foresight panels.
+
+    Without this the foresight SVG only showed the raw scene obstacles (SCENE_OBSTACLES), so on
+    e.g. s_curve/dpcc-r there was nothing to read the green candidate fan against — you couldn't
+    tell whether the projector actually solved the corner halfspaces and re-routed the plan.
+
+    Mirrors eval_fm_uav.plot_geo_constraints (same colours, same TRUE enforced margin
+    r_drone+margin_base [+enlarge if -tightened]) but paints onto the caller's existing axes.
+    Respects the per-variant toggles so the overlay is what THIS variant's QP saw:
+      • `geo_free`  → geometric families removed (drawn as an explicit 'NOT enforced' note)
+      • `-tightened`→ margin += enlarge_constraints
+    Returns matplotlib legend handles for the caller to merge into its legend.
+    """
+    import matplotlib.patches as _mpa
+    from matplotlib.lines import Line2D as _Line2D
+
+    if not geo_config:
+        return []
+    ctypes  = list(geo_config.get('constraint_types', []))
+    geo_off = 'geo_free' in (variant or '')
+    _infl   = geo_config.get('inflation') or {}
+    inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
+    enlarge = float(geo_config.get('enlarge_constraints') or 0.0) if 'tightened' in (variant or '') else 0.0
+    margin  = inflation_base + enlarge
+
+    show_box = (not geo_off) and 'geo_bounds' in ctypes and geo_config.get('workspace_bounds') is not None
+    hs_list  = geo_config.get('halfspace_constraints', []) if ((not geo_off) and 'halfspace' in ctypes) else []
+    obs_list = geo_config.get('obstacle_constraints', [])  if ((not geo_off) and 'obstacles' in ctypes) else []
+
+    lb_d = ub_d = None
+    if show_box:
+        lb_d = np.array(geo_config['workspace_bounds']['lb'], dtype=float) + margin
+        ub_d = np.array(geo_config['workspace_bounds']['ub'], dtype=float) - margin
+        for _i, _fb in ((0, (-3.6, 3.6)), (1, (-2.0, 2.0)), (2, (0.0, 2.0))):   # clamp ±inf for display
+            if np.isinf(lb_d[_i]): lb_d[_i] = _fb[0]
+            if np.isinf(ub_d[_i]): ub_d[_i] = _fb[1]
+        ax_xy.add_patch(_mpa.Rectangle((lb_d[0], lb_d[1]), ub_d[0]-lb_d[0], ub_d[1]-lb_d[1],
+                                       lw=1.4, edgecolor='steelblue', facecolor='none',
+                                       ls='--', alpha=0.85, zorder=2))
+        ax_xz.axhline(lb_d[2], color='steelblue', ls='--', lw=1.0, alpha=0.7, zorder=2)
+        ax_xz.axhline(ub_d[2], color='steelblue', ls='--', lw=1.0, alpha=0.7, zorder=2)
+
+    cz_mid = (lb_d[2] + ub_d[2]) / 2 if lb_d is not None else 0.9
+    for hs in hs_list:
+        (hx1, hy1), (hx2, hy2), side, x_active = _fs_wall_xy(hs)
+        ax_xy.plot([hx1, hx2], [hy1, hy2], color='darkorange', lw=2.2, zorder=6)
+        dx, dy = hx2 - hx1, hy2 - hy1; nrm = np.hypot(dx, dy) or 1.0
+        nx, ny = (-dy/nrm, dx/nrm) if side == 'above' else (dy/nrm, -dx/nrm)  # arrow → feasible side
+        mx, my = (hx1 + hx2) / 2, (hy1 + hy2) / 2
+        ax_xy.annotate('', xy=(mx + nx*0.25, my + ny*0.25), xytext=(mx, my),
+                       arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.4), zorder=6)
+        if x_active is not None:
+            ax_xy.text(mx, my, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=6,
+                       color='saddlebrown', ha='center', va='bottom', zorder=7)
+        xb_lo, xb_hi = sorted((hx1, hx2))
+        ax_xz.axvspan(xb_lo, xb_hi, color='darkorange', alpha=0.08, zorder=1)
+    for obs in obs_list:
+        cx, cy = float(obs['center'][0]), float(obs['center'][1])
+        ax_xy.add_patch(_mpa.Circle((cx, cy), float(obs['radius']) + margin, lw=1.5,
+                                    edgecolor='tomato', facecolor='tomato', alpha=0.18, zorder=5))
+        ax_xy.plot(cx, cy, '+', color='tomato', ms=7, zorder=6)
+        ax_xz.add_patch(_mpa.Circle((cx, cz_mid), float(obs['radius']) + margin, lw=1.0,
+                                    edgecolor='tomato', facecolor='none', ls='--', alpha=0.6, zorder=2))
+
+    handles = []
+    if show_box:
+        handles.append(_Line2D([0], [0], color='steelblue', ls='--', lw=1.4, label='workspace box (enforced)'))
+    if hs_list:
+        handles.append(_Line2D([0], [0], color='darkorange', lw=2.2, label='halfspace wall (enforced)'))
+    if obs_list:
+        handles.append(_Line2D([0], [0], marker='o', color='w', markerfacecolor='tomato',
+                               markersize=9, alpha=0.6, label='obstacle+margin (enforced)'))
+    if geo_off and any(t in ctypes for t in ('geo_bounds', 'halfspace', 'obstacles')):
+        ax_xy.text(0.02, 0.98, 'geo_free: geometry NOT enforced\n(surfaces hidden)',
+                   transform=ax_xy.transAxes, fontsize=8, color='crimson', va='top', ha='left', zorder=13)
+    return handles
+
+
+def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None, variant=''):
     """MPC candidate-fan foresight SVG — UAV-specific two-panel design.
 
     Panel layout (UAV is a 3D flight task; altitude deserves its own axis):
@@ -224,6 +332,13 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
       red solid   = actual drone position (obs_traj cols 3:6)
       black dot   = replan anchor at actual p position
       lime ★ / red ■ = start / end
+
+    Fix_14: when `geo_config` (+ `variant`) is supplied the ENFORCED projector surfaces are
+    overlaid via `draw_projector_geometry` — steelblue workspace box, darkorange halfspace walls
+    (s_curve segments clipped to their live x-range, with a feasible-side arrow), tomato
+    obstacle balls, all at the TRUE margin r_drone+margin_base [+enlarge if -tightened]. This is
+    what lets you see whether the candidate fan actually solved the corner (dpcc-r on s_curve).
+    Raw SCENE_OBSTACLES are still drawn underneath (physical collision truth vs planning surface).
 
     Why NOT the Gen7 3D panel: matplotlib 3D SVG is a static projection — can't
     rotate, altitude (Z) is compressed into perspective, candidate fan becomes a
@@ -295,6 +410,9 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
     # ── XY panel — obstacles + paths ─────────────────────────────────────────
     if _draw_obstacles is not None:
         _draw_obstacles(ax_xy, obstacles)          # proven: circles for cylinders, rects for boxes
+    # Fix_14: overlay the ENFORCED projector surfaces (walls/balls/box at the true margin) so the
+    # green candidate fan can be read against what the QP constrained — not just raw geometry.
+    _geo_handles = draw_projector_geometry(ax_xy, ax_xz, geo_config, variant)
 
     ax_xy.plot(act[:, 0], act[:, 1], color='red',   lw=1.2, zorder=9)
     ax_xy.plot(des[:, 0], des[:, 1], color='black', lw=1.2, zorder=7)
@@ -311,8 +429,8 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
         _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
                 markersize=7,  label='end'),
     ]
-    ax_xy.legend(handles=_lgd, fontsize=9)
-    ax_xy.set_title(f'XY top-down + obstacles  (every {stride} steps)', fontsize=12)
+    ax_xy.legend(handles=_lgd + _geo_handles, fontsize=9)
+    ax_xy.set_title(f'XY top-down + enforced constraints  (every {stride} steps)', fontsize=12)
     ax_xy.set_xlabel('X (m)', fontsize=11); ax_xy.set_ylabel('Y (m)', fontsize=11)
     ax_xy.set_aspect('equal', adjustable='datalim')
     ax_xy.grid(True, alpha=0.3)

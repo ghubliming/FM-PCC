@@ -1334,7 +1334,8 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                             rebuild_projector=rebuild_projector,
                             max_episode_length=max_episode_length)
             artifacts.save_rollout_stats(diag_dir, i, r)
-            artifacts.write_mpc_foresight(diag_dir, i, r, scene)   # real candidate-fan plot (E7)
+            artifacts.write_mpc_foresight(diag_dir, i, r, scene,   # real candidate-fan plot (E7)
+                                          geo_config=config, variant=variant)   # Fix_14: overlay enforced constraints
             if record:
                 artifacts.save_rollout_gif(diag_dir, i, r.pop('frames', None))
             else:
