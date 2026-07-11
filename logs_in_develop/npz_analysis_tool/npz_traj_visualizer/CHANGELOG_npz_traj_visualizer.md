@@ -45,6 +45,27 @@ DA_Code-style checkbox layers (default empty) plus built-in quantitative panels.
 symlog axis, edge-arrow clip markers, INSPECT fan popup table, view-state URL hash, per-layer opacity,
 UAV pillar geometry, visual-aligning env, multi-trial layers.
 
+## Update (same day) — path/URL loader
+
+Added a sidebar **path/URL box** (Load group) alongside the file picker: types/pastes a relative path
+or full URL, fetches it via `fetch()`, loads that `scene.json`. Motivated by the OS-native file-picker
+opening Windows Explorer when the browser runs on the host but data lives in the container/WSL
+filesystem — awkward to navigate. Requires an HTTP server (browsers block `fetch()` over `file://`);
+shows a clear banner with the `python3 -m http.server` fix if it fails. The file picker is unaffected
+and still works with no server. Both existing viewers (avoiding + UAV, all 17 variants) re-exported
+with the updated template; JS re-verified with `node --check`. See `USAGE.md` for the exact flow.
+
+## Fix (same day) — path/URL loader 404'd on plain relative paths
+
+User-reported: typing `temp/scene/.../scene.json` into the path box gave `HTTP 404`. Root cause: a
+relative `fetch()` path with no leading `/` resolves against the **current page's folder**
+(`.../_traj_viz/`), not the http-server root — so the request became a doubled, nonexistent path
+(`.../_traj_viz/temp/scene/.../scene.json`). Confirmed with `node`'s `URL` resolver before fixing.
+`USAGE.md`'s original guidance ("relative to server root") was wrong for this reason.
+Fix: `loadFromPath()` now **auto-retries once with a leading `/`** prepended if the first fetch fails,
+and the error banner shows the exact resolved URL(s) attempted so a genuine miss is easy to diagnose.
+`USAGE.md` corrected to recommend a leading `/` from the start. Both viewers re-exported; JS re-checked.
+
 ## Run
 ```bash
 python npz_analysis/npz_traj_visualizer/npz_traj_export.py <scene_dir> [--env uav] [--variants a,b,c]

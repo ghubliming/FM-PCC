@@ -35,7 +35,8 @@
   input[type=range]{width:100%}
   button{padding:5px 8px;border:1px solid #000;background:#fff;cursor:pointer;font:inherit}
   button:hover{background:#eee}
-  #banner{display:none;background:#ffebee;color:#b71c1c;border:1px solid #b71c1c;padding:8px;margin:6px}
+  #banner{display:none;background:#ffebee;color:#b71c1c;border:1px solid #b71c1c;padding:8px;margin:6px;
+          white-space:pre-wrap;font-family:monospace;font-size:11px;max-height:160px;overflow-y:auto}
   #statbox{max-height:150px;overflow:auto;font-size:11px}
   table{border-collapse:collapse;width:100%}
   th,td{border:1px solid var(--line);padding:2px 4px;text-align:right;white-space:nowrap}
@@ -50,7 +51,10 @@
   <div id="scene-head" class="hint"></div>
   <div class="grp"><label class="hd">Load</label>
     <input type="file" id="file" accept=".json"/>
-    <div class="hint">Data may be inlined; else drop a scene.json.</div>
+    <div class="hint">Data may be inlined; else pick a scene.json, or fetch by path/URL below
+      (requires an http server — see USAGE.md — does not work over file://).</div>
+    <div class="row"><input type="text" id="path-input" placeholder="e.g. temp/scene/_traj_viz/scene.json or http://host:8000/..."/>
+      <button id="path-load">Load</button></div>
   </div>
   <div class="grp"><label class="hd">Trial</label><select id="trial"></select></div>
   <div class="grp"><label class="hd">Panels</label><div id="panel-toggles" class="row"></div></div>
@@ -72,6 +76,10 @@
     <select id="scale"><option value="fit_exec">fit executed</option>
       <option value="fit_vis">fit visible</option><option value="fit_all">fit all</option>
       <option value="robust">robust (1–99%)</option></select></div>
+  <div class="grp"><label class="hd">View</label>
+    <div class="row"><button id="btn-redraw">Redraw</button><button id="btn-recenter">Recenter</button></div>
+    <div class="hint">Recenter resets pan/zoom to fit on every panel (double-click one panel to reset just that panel).</div>
+  </div>
   <div class="grp"><label class="hd">Charts</label><div id="chart-toggles" class="grp"></div></div>
   <div class="grp"><label class="hd">Export</label>
     <div class="row"><button onclick="exportPNG()">PNG</button>
@@ -91,7 +99,7 @@ window.SCENE_DATA=/*__SCENE_DATA__*/null;
 const S = {
   data:null, trial:0,
   layers:{env:false, bone:false, dots:false, fan:false, mean:false, viol:false, hend:false},
-  cands:{0:false,1:false,2:false,3:false, mean:true},
+  cands:{0:false,1:false,2:false,3:false},   // which candidates fan/mean use; none ticked = all
   variants:{},                 // name -> bool
   panelsOn:{},                 // panel id -> bool
   chartsOn:{drift:false, explosion:false, viol:false, track:false, stat:false, spread:false},
@@ -118,14 +126,48 @@ window.addEventListener('DOMContentLoaded',()=>{
     r.onload=()=>{ try{loadScene(JSON.parse(r.result));}catch(err){banner('Bad JSON: '+err);} };
     r.readAsText(f);
   });
+  document.getElementById('path-load').addEventListener('click',loadFromPath);
+  document.getElementById('path-input').addEventListener('keydown',e=>{if(e.key==='Enter')loadFromPath();});
 });
+
+async function fetchJson(p){ const r=await fetch(p); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+
+function buildPathCandidates(raw){
+  if(/^([a-z]+:)?\/\//i.test(raw)) return [raw];   // full URL -- use verbatim, never mangle
+  const segs=raw.split('/').filter(Boolean);
+  if(!segs.length) return ['/'+raw];
+  // Try longest (closest to what was typed) first, shrinking from the FRONT down to just the
+  // filename. This is what makes pasting a full OS filesystem path work no matter where the http
+  // server's root actually is: e.g. typed "/workspaces/FM-PCC/temp/x/_traj_viz/scene.json" with a
+  // server started at "/workspaces/FM-PCC" succeeds on the 3rd try ("/temp/x/_traj_viz/scene.json").
+  return segs.map((_,i)=>'/'+segs.slice(i).join('/'));
+}
+
+async function loadFromPath(){
+  const val=document.getElementById('path-input').value.trim();
+  if(!val)return;
+  banner('');
+  const candidates=buildPathCandidates(val);
+  const tried=[];
+  for(const c of candidates){
+    try{ const data=await fetchJson(c); loadScene(data); console.log('[viz] loaded via',c); return; }
+    catch(err){ tried.push(c+'  ->  '+err.message); }
+  }
+  banner('Could not fetch scene.json. Tried, longest match first:\n  '+tried.join('\n  ')+
+    '\n\nNeeds an HTTP server (fetch is blocked over file://) — run `python3 -m http.server PORT` '+
+    'from the directory you want as the SERVER ROOT. Pasting a full filesystem path is fine: this box '+
+    'automatically shrinks it from the front until one matches your server root. If NONE matched, '+
+    'either no server is running, or this file is not under any ancestor of that path relative to the '+
+    'server. Or use the file picker above instead — that always works, no server needed.');
+}
 
 function buildStaticUI(){
   const lt=document.getElementById('layer-toggles');
   LAYER_DEFS.forEach(([k,lbl])=>{ lt.appendChild(chk('L_'+k,lbl,false,()=>{S.layers[k]=ev(k,'L_');render();}));});
+  // candidates 0-3 = which candidates the fan/mean layers use (none ticked => all). "mean" is a
+  // LAYER toggle now (Layers list), not a candidate -- see fix_1 changelog for why this was split.
   const ct=document.getElementById('cand-toggles');
   [0,1,2,3].forEach(k=>ct.appendChild(chk('C_'+k,''+k,false,()=>{S.cands[k]=document.getElementById('C_'+k).checked;render();})));
-  ct.appendChild(chk('C_mean','mean',true,()=>{S.cands.mean=document.getElementById('C_mean').checked;render();}));
   const gt=document.getElementById('chart-toggles');
   CHART_DEFS.forEach(([k,lbl])=>gt.appendChild(chk('G_'+k,lbl,false,()=>{S.chartsOn[k]=document.getElementById('G_'+k).checked;buildCharts();render();})));
   // step / play / misc
@@ -135,6 +177,8 @@ function buildStaticUI(){
   document.getElementById('scale').addEventListener('change',e=>{S.scale=e.target.value;S.views={};render();});
   document.getElementById('play').addEventListener('click',togglePlay);
   document.getElementById('speed');
+  document.getElementById('btn-redraw').addEventListener('click',()=>render());
+  document.getElementById('btn-recenter').addEventListener('click',()=>{S.views={};render();});
 }
 function chk(id,lbl,on,fn){const d=document.createElement('label');d.className='chk';
   d.innerHTML=`<input type="checkbox" id="${id}" ${on?'checked':''}><span>${lbl}</span>`;
@@ -292,14 +336,17 @@ function drawPanel(panel){
       const idxs=stepList(tr);
       idxs.forEach(i=>{
         const fan=tr.plans[i]; if(!fan)return;
+        // candidates 0-3 SELECT which candidates are used (fan lines AND mean); none ticked = ALL.
+        // fan/mean are now independent LAYER toggles -- fixes "fan checkbox does nothing" (previously
+        // gated on S.cands.mean, which defaults checked, so the raw-fan fallback below never fired).
         const wantC=[0,1,2,3].filter(k=>S.cands[k]&&k<fan.length);
+        const useC=wantC.length?wantC.map(k=>fan[k]):fan;
         if(S.layers.fan){ ctx.strokeStyle=col;ctx.lineWidth=0.7;ctx.globalAlpha=fanAlpha;
-          wantC.forEach(k=>drawPoly(ctx,T,fan[k],ax,ay));
-          if(!wantC.length&&!S.cands.mean) fan.forEach(c=>drawPoly(ctx,T,c,ax,ay)); // fan with none picked = all
+          useC.forEach(c=>drawPoly(ctx,T,c,ax,ay));
           ctx.globalAlpha=1; }
-        if(S.cands.mean&&(S.layers.fan||S.layers.mean)){ const m=meanFan(fan);
+        if(S.layers.mean){ const m=meanFan(useC);
           ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.globalAlpha=.9;drawPoly(ctx,T,m,ax,ay);ctx.globalAlpha=1; }
-        if(S.layers.hend){ const m=meanFan(fan);const p=m[m.length-1];
+        if(S.layers.hend){ const m=meanFan(useC);const p=m[m.length-1];
           ctx.fillStyle=col;ctx.beginPath();ctx.rect(T.X(p[ax])-2.5,T.Y(p[ay])-2.5,5,5);ctx.fill(); }
         if(S.layers.viol&&hasGeo()){ drawViol(ctx,T,fan,ax,ay); }
       });
