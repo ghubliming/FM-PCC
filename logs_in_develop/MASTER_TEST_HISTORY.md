@@ -2775,3 +2775,20 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Redundant `all.png` Removal**: Removed the writing of a byte-identical duplicate image (`all.png`) from `plot_overview`, as it was erroneously saving per-variant data under an aggregate alias name.
 
 ***
+
+## NPZ Analysis Tool v4: Horizon Plan Comparison & Interactive Trajectory Visualizer (July 11, 2026)
+
+**Keywords**: npz_analysis, compare_horizon_plans, horizon comparison, MPC fan, npz_traj_visualizer, HTML visualizer, interactive, fix_1.
+
+1. **Horizontal Plan Comparison (`compare_horizon_plans.py`)**: Implemented a standalone tool for horizontal (across-method) H-step plan comparison. Unlike `analyze_npz.py` which is vertical (aggregates per file), this tool extracts the K-candidate MPC foresight fan and candidate-mean across all methods for a specific `[trial, snapshot]` coordinate, quantifying divergence (`div_ref`) from a baseline. Includes physical violation overlays mapping executed trajectory versus constraints.
+2. **Interactive HTML Trajectory Visualizer (`npz_traj_visualizer.html`)**: Built an offline, self-contained HTML visualizer to reconstruct entire evaluation scenes from `.npz` files. Features include:
+    - Interactive scrubbable timeline with playback.
+    - Full representation of executed paths, receding-horizon MPC fans, mean candidate lines, and violation markers over a 2D environment (avoiding halfspaces/obstacles).
+    - Synchronized quantitative analytics panels (drift, explosion, tracking error) linked directly to the scrubber.
+3. **Robust Exporter (`npz_traj_export.py`)**: Implemented the backend exporter which safely parses nested/flat `.npz` schemas (avoiding and UAV pipelines), decimated sampling (`plan_every`), and metric pre-computation to inline data securely into the viewer template without a server dependency.
+4. **Visualizer UX Hotfixes (Fix 1)**: 
+    - **MPC Fan Decoupling**: Resolved a bug where the MPC candidate fan visualization was hidden by default due to coupled selection logic. Candidates and layers (fan/mean) are now completely decoupled.
+    - **Path/URL Loader**: Improved the path loader to iteratively fallback through path suffixes when loading absolute filesystem paths, correctly resolving HTTP server roots.
+    - **View Controls**: Added explicit Redraw and Recenter view controls for better user navigation.
+
+***

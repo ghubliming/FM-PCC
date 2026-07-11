@@ -1,6 +1,24 @@
+import os
+import time
 import numpy as np
 import torch
 from scipy.optimize import minimize, Bounds
+
+# Fix_15: per-solve wall-clock guard against projection cost-explosion.
+# A single SLSQP projection on a nonconvex obstacle QCQP (esp. the `bounds_free`
+# constraint set, where the box bounds that regularize the QP sub-problem are
+# removed) can thrash toward maxiter and take >100 s per solve. An eval that
+# should run at 33 Hz (~30 ms/step) then burns hours and gets killed by the SLURM
+# time limit before finishing (see JOB 23265). Cap each solve; on overrun, keep
+# the unprojected (FM) trajectory for that sample and flag it, so a runaway
+# variant degrades gracefully instead of starving the whole job.
+# Budget in seconds; <=0 disables the guard. Override via env FMPCC_PROJ_SOLVE_BUDGET_S.
+_PROJ_SOLVE_BUDGET_S = float(os.environ.get('FMPCC_PROJ_SOLVE_BUDGET_S', '2.0'))
+
+
+class _SolveBudgetExceeded(Exception):
+    """Raised from the SLSQP callback when one solve overruns the wall-clock budget."""
+    pass
 
 class Projector:
 
@@ -132,14 +150,34 @@ class Projector:
             # Cost
             cost_fun = lambda x: 0.5 * x @ Q @ x + r_np_double[i] @ x # + (A_double @ x - b_double) @ (A_double @ x - b_double)
             jac_cost_fun = lambda x: Q @ x + r_np_double[i]
-            res = minimize(fun=cost_fun, 
-                            x0=trajectory_np_double[i],
-                            constraints=constraints, 
-                            method='SLSQP', 
-                            jac=jac_cost_fun, 
-                            bounds=Bounds(-5 * np.ones_like(trajectory_np_double[i]), 5 * np.ones_like(trajectory_np_double[i])),
-                            tol=1e-6,
-                            options={'maxiter': 1000, 'disp': False})
+            # Fix_15: abort a runaway solve. SLSQP calls the callback each iteration;
+            # raising there unwinds cleanly out of minimize().
+            _t0 = time.perf_counter()
+            def _deadline_cb(xk, _t0=_t0):
+                if _PROJ_SOLVE_BUDGET_S > 0 and time.perf_counter() - _t0 > _PROJ_SOLVE_BUDGET_S:
+                    raise _SolveBudgetExceeded()
+            try:
+                res = minimize(fun=cost_fun,
+                                x0=trajectory_np_double[i],
+                                constraints=constraints,
+                                method='SLSQP',
+                                jac=jac_cost_fun,
+                                bounds=Bounds(-5 * np.ones_like(trajectory_np_double[i]), 5 * np.ones_like(trajectory_np_double[i])),
+                                tol=1e-6,
+                                callback=_deadline_cb,
+                                options={'maxiter': 1000, 'disp': False})
+            except _SolveBudgetExceeded:
+                # COST EXPLODED: keep the unprojected (FM) trajectory for this sample and
+                # flag it with inf cost so trajectory-selection never prefers it. Loud,
+                # greppable marker to stdout so it lands in the real .log outputs.
+                sol_np[i] = trajectory_np_double[i]
+                projection_costs[i] = np.inf
+                self._cost_exploded_count = getattr(self, '_cost_exploded_count', 0) + 1
+                print(f'[ projector ] COST EXPLODED: SLSQP solve exceeded '
+                      f'{_PROJ_SOLVE_BUDGET_S:.1f}s budget ({time.perf_counter() - _t0:.1f}s) — '
+                      f'kept unprojected trajectory (batch {i}); total exploded='
+                      f'{self._cost_exploded_count}', flush=True)
+                continue
 
             sol_np[i] = res.x
             projection_costs[i] = 0.5 * sol_np[i] @ Q @ sol_np[i] + r_np[i] @ sol_np[i] + 0.5 * trajectory_np[i] @ Q @ trajectory_np[i]
