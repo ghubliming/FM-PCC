@@ -2746,3 +2746,32 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Unbuffered Stdout**: Exported `PYTHONUNBUFFERED=1` across the visual-aligning (`eval_fm_visual_aligning.sh`, `eval_visual_aligning_dpcc.sh`) and UAV flow-matching (`eval_fm_uav.sh`) evaluation sbatch scripts. This prevents Python's native IO buffering from retaining stdout prints, ensuring immediate visibility into real-time rollout progress and ETA logs on the cluster.
 
 ***
+
+## Gen11 Epoch 9 U13: Investigation: s_curve Geometry Destabilization & Ordering Flip (July 10, 2026)
+
+**Keywords**: Gen11, Epoch 9, U13, investigation, s_curve, non-convex geometry, ordering flip, bounds_free.
+
+1. **Ablation Ordering Flip**: Investigated a dramatic reversal in ablation performance on the `s_curve` scene where geometry-keeping variants (e.g., `dpcc-*`, `post_processing`) perform significantly worse than geometry-free variants (`geo_free-bounds_free`), opposite to the findings on the `corridor` scene.
+2. **Root Cause (Non-Convex Feasible Set)**: Traced the failure to the `s_curve`'s narrow (~24 cm), non-convex, per-segment switching constraints. The aggressive state corrections required to satisfy this geometry cause destabilization of the action command, particularly at the crossover corner where `x_active` switches walls.
+3. **Action-Bound Importance**: Found that removing the action bound (`bounds_free`) when geometry and dynamics are active causes an immediate step-0 crash, confirming that the action bound is a critical load-bearing stability cap against large dynamics-coupled geometry corrections on tight scenes.
+4. **Long-Horizon Dynamics Anchoring**: Concluded that on a long 750-step horizon, keeping dynamics active while stripping geometry (`geo_free-bounds_free`) produces the best results. The repeated re-anchoring to the measured state smooths out the raw policy drift enough to almost reach the goal safely.
+
+***
+
+## Gen11 Epoch 9 U8c: Missing Tightened Siblings for Geometry-Keeping Variants (July 10, 2026)
+
+**Keywords**: Gen11, Epoch 9, U8c, tightened, bounds_free, geometry-keeping, visual-aligning sync.
+
+1. **UAV Missing Tightened Twins**: Identified an inconsistency in `config/uav_projection.yaml` where the newly added geometry-keeping ablation variants (`bounds_free`, `model_free-bounds_free`) were missing their explicit `-tightened` counterparts. Added `bounds_free-tightened` and `model_free-bounds_free-tightened` to ensure the ablation suite is complete, following the rule that tightening is only meaningful (and should only be applied) if the variant actually retains spatial geometry.
+2. **Visual-Aligning Sync Check**: Confirmed no changes were needed for the visual-aligning pipeline configurations (`config/visual_aligning_eval.yaml`) because that codebase automatically generates tightened permutations via a programmatic outer loop rather than static YAML enumeration. Both pipelines now reach the identical end state where all geometry-keeping variants evaluate a tightened ablation.
+
+***
+
+## Gen11 Epoch 9 Fix 14: MPC Foresight SVG Enforced Constraints Overlay (July 10, 2026)
+
+**Keywords**: Gen11, Epoch 9, Fix 14, UAV, foresight SVG, enforced constraints, all.png.
+
+1. **Foresight SVG Constraint Overlay**: Updated `write_mpc_foresight` in `FM_v3_uav_test/eval_artifacts.py` to draw the actual enforced geometric surfaces (workspace bounds, halfspace walls with their `x_active` clipping, obstacle balls) at their true inflated margin onto the MPC candidate fan visualization. This allows for direct validation of whether the DPCC projector successfully solved constraints like the non-convex corners on `s_curve`.
+2. **Redundant `all.png` Removal**: Removed the writing of a byte-identical duplicate image (`all.png`) from `plot_overview`, as it was erroneously saving per-variant data under an aggregate alias name.
+
+***
