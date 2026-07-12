@@ -1623,6 +1623,50 @@ class VisualAgentWrapper:
                                     ax_xy.plot(float(_obs['center'][0]), float(_obs['center'][1]),
                                                'r+', ms=6, zorder=2)
 
+                # U_19 (Gen7/Gen6V4): draw the physical push-box footprint on the XY
+                # panel so its position relative to the obstacle/constraints is visible
+                # (the box may overlap the added obstacle). The aligning push-box is a
+                # 0.10×0.10 m square (MuJoCo half-extent 0.05 in robot_push_box.xml);
+                # box/target poses carry a yaw angle in degrees (box_space samples
+                # [x, y, angle∈[-90,90]]). Drawn as rotated squares: init = solid
+                # saddlebrown (filled), final = dashed saddlebrown, target = goldenrod.
+                if _ci:
+                    import matplotlib.patches as _mpa_box
+                    _BOX_HALF = 0.05  # m — aligning push-box half-extent (robot_push_box.xml)
+                    def _draw_box_xy(_cx, _cy, _ang_deg, _ec, _ls, _fill):
+                        _a = np.radians(_ang_deg)
+                        _R = np.array([[np.cos(_a), -np.sin(_a)],
+                                       [np.sin(_a),  np.cos(_a)]])
+                        _corners = np.array([[-_BOX_HALF, -_BOX_HALF], [_BOX_HALF, -_BOX_HALF],
+                                             [_BOX_HALF,  _BOX_HALF], [-_BOX_HALF,  _BOX_HALF]])
+                        _pts = _corners @ _R.T + np.array([_cx, _cy])
+                        ax_xy.add_patch(_mpa_box.Polygon(
+                            _pts, closed=True, lw=1.8, linestyle=_ls, edgecolor=_ec,
+                            facecolor=_ec if _fill else 'none',
+                            alpha=0.18 if _fill else 0.95, zorder=3))
+                    _bi = _ci.get('box_init_xy')
+                    if _bi is not None:
+                        _draw_box_xy(float(_bi[0]), float(_bi[1]),
+                                     float(_ci.get('box_init_angle_deg', 0.0)),
+                                     'saddlebrown', '-', True)
+                        _lgd.append(_Line2D([0], [0], color='saddlebrown', lw=1.8,
+                                            label='push-box (init)'))
+                    _bf = _ci.get('final_box_xy')
+                    if _bf is not None:
+                        _draw_box_xy(float(_bf[0]), float(_bf[1]),
+                                     float(_ci.get('final_box_angle_deg', 0.0)),
+                                     'saddlebrown', '--', False)
+                        _lgd.append(_Line2D([0], [0], color='saddlebrown', lw=1.8,
+                                            linestyle='--', label='push-box (final)'))
+                    _tt = _ci.get('target_xy')
+                    if _tt is not None:
+                        _draw_box_xy(float(_tt[0]), float(_tt[1]),
+                                     float(_ci.get('target_angle_deg', 0.0)),
+                                     'goldenrod', '-', False)
+                        _lgd.append(_Line2D([0], [0], color='goldenrod', lw=1.8,
+                                            label='target box'))
+                    ax_xy.legend(handles=_lgd, fontsize=9)
+
                 # ── 3D XYZ panel ──────────────────────────────────────────────
                 for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
                     if step_i % _STRIDE != 0:

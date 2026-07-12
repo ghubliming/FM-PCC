@@ -2825,3 +2825,16 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 5. **Local Exporter Execution**: Documented that local `/usr/local/bin/python3` can successfully run the exporter pipeline locally without spinning up a SLURM node.
 
 ***
+
+## Gen11 Epoch 9 Fix 15.3 & Gen7/Gen6V4 C6: Circuit-Breaker Artifact Marking (July 12, 2026)
+
+**Keywords**: Gen11, Epoch 9, Fix 15.3, Gen7, Gen6V4, circuit breaker, artifact marking, cb_tripped, fallback unprojected.
+
+1. **Persistent Circuit-Breaker Traces**: Recognized that while the sliding-window circuit breaker (Fix 15.2) successfully stopped SLSQP thrashing, it silently saved unprojected trajectories as final outputs, making them indistinguishable from successful projections. Implemented persistent marking across all evaluation artifacts.
+2. **Projector Call Tracking**: The `Projector` now tracks skipped states via a `last_proj_skipped` flag, which is checked and aggregated across replan loops without altering the solver API.
+3. **Artifact-Wide Banners & Sentinels**: A tripped circuit breaker now physically marks the output:
+    - **Visual**: Paints red warning banners directly onto the MPC foresight `.svg` and rollout-grid `.png` images.
+    - **Metrics**: Injects `projection_cb_tripped` and `projection_cb_skipped_steps` into the `.npz` archive and rollout stats `.json`.
+    - **Logs**: Leaves a greppable `PROJECTION_CB_TRIPPED.txt` sentinel file in the variant directory and injects prominent `!!!` markers in `eval_*.log`.
+
+***
