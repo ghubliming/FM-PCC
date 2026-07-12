@@ -126,8 +126,10 @@ class Projector:
                 self._cb_state = 'half_open'          # next call probes one real solve
                 self._cb_skips = 0
             self.last_proj_ms = 0.0
+            self.last_proj_skipped = True     # Fix_15.3: this step's trajectory is UNPROJECTED
             return trajectory, np.full(dims[0], np.inf, dtype=np.float32)
         _call_t0 = time.perf_counter()
+        self.last_proj_skipped = False        # Fix_15.3: real solve ran this step
 
         # Reshape the trajectory to a batch of vectors (from B x H x T to B x (HT)
         batch_size = trajectory.shape[0]

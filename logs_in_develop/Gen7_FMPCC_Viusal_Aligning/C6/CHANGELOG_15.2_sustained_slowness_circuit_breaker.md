@@ -32,3 +32,11 @@ diff-identical).
 Re-run `dpcc-r × combined_5`: expect one early `COST EXPLODED (sustained)` line, then near-zero
 projection time, and the job progressing past item 2/24 within the time limit. Confirm a healthy
 variant never trips.
+
+## Follow-up — Fix_15.3 (artifact marking)
+The breaker OPENS silently and returns the UNPROJECTED trajectory, so a tripped run still writes
+all artifacts, previously unmarked. **Fix_15.3** now persists the trip into `eval_fm_visual_aligning.py`
+outputs (npz `projection_cb_tripped`/`projection_cb_skipped_steps`, red banners on the foresight `.svg`
+and rollout-grid `.png`, per-rollout `projection_health`, and a `PROJECTION_CB_TRIPPED.txt` sentinel in
+the variant dir). Note this supersedes the "no eval-script changes" scope above for 15.3. Full write-up:
+`logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_15_projection_cost_explosion_guard/Fix_15.3_circuit_breaker_artifact_marking/CHANGELOG.md`.

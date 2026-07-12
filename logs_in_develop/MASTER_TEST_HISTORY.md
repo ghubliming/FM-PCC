@@ -2792,3 +2792,36 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
     - **View Controls**: Added explicit Redraw and Recenter view controls for better user navigation.
 
 ***
+
+## Gen11 Epoch 9 Fix 15 & Gen7/Gen6V4 C6: Projection Cost-Explosion Wall-Clock Guard (July 11, 2026)
+
+**Keywords**: Gen11, Epoch 9, Fix 15, Gen7, Gen6V4, C6, projection cost explosion, SLSQP, wall-clock guard, bounds_free.
+
+1. **Wall-Clock Deadline Guard**: Investigated multi-hour evaluation stalls (e.g., `bounds_free` variants on non-convex UAV `pillars` geometry or Gen7 `dpcc-r` taking hours for single runs). Identified that the DPCC upstream solver lacked a wall-clock limit, allowing SLSQP to thrash on non-converging QCQP formulations. Implemented a strict per-solve budget (`FMPCC_PROJ_SOLVE_BUDGET_S`, default 2.0s) as a callback within `Projector.project()`.
+2. **Graceful Fallback**: If a solve exceeds the budget, an exception (`_SolveBudgetExceeded`) is raised, the sample falls back to the unprojected Flow-Matching trajectory, its projection cost is set to infinity (preventing selection), and a loud `COST EXPLODED` marker is logged.
+3. **Cross-Pipeline Sync**: Applied this guard identically across all active projection engines: `flow_matcher_v3_uav` (Gen11), `fm_visual_aligning` (Gen7), and `diffuser_visual_aligning` (Gen6V4).
+
+***
+
+## Gen11 Epoch 9 Fix 15.2 & Gen7/Gen6V4 C6: Sustained-Slowness Circuit Breaker (July 12, 2026)
+
+**Keywords**: Gen11, Epoch 9, Fix 15.2, Gen7, Gen6V4, circuit breaker, sliding window, sustained slowness.
+
+1. **Circuit Breaker Strategy (Superseding Fix 15)**: Discovered that the per-solve 2s hard cap from Fix 15 was punishing legitimate rare spikes and silently corrupting the outputs of pathologically slow variants (falling back to unprojected trajectories 6,000+ times per trial). Replaced the rigid cap with a "sliding-window circuit breaker" that only trips on *sustained* solver slowness.
+2. **Generous Backstop & Sliding Window**: Raised the per-solve backstop to 60s to allow healthy but tough solves to finish cleanly. The projector now monitors the last `N` steps (default 40); if a high fraction (e.g. 90%) of recent steps take longer than `SLOW_MS` (default 1000ms), the breaker trips OPEN.
+3. **OPEN-State Skips & Half-Open Probing**: Once tripped, subsequent `project()` calls skip SLSQP entirely, saving time on a hopeless episode. A cooldown timer eventually allows a "HALF-OPEN" probe to re-test the solver. If fast, it CLOSES and resumes normal behavior, smoothly transitioning between hard and easy episodes.
+4. **Cross-Pipeline Parity**: Identically deployed across the `flow_matcher_v3_uav`, `fm_visual_aligning`, and `diffuser_visual_aligning` projectors, all natively overridable via environment variables.
+
+***
+
+## NPZ Analysis Tool v4: Trajectory Visualizer Fix 2 & UI Refinements (July 12, 2026)
+
+**Keywords**: npz_traj_export, npz_traj_visualizer, fix_2, recording-phase misalignment, offset detection, candidate UI.
+
+1. **Recording-Phase Misalignment Detection**: Addressed an off-by-one visual bug where receding-horizon MPC fans did not connect cleanly to the executed path. Traced the root cause to evaluation scripts appending the `obs_buffer` post-step vs. pre-step, creating a consistent +1 offset in certain environments (e.g. avoiding/iMeanFlow) compared to offset-0 logic (e.g. UAV). 
+2. **Data-Driven Offset Correction**: Implemented an automated offset detector (`_recording_offset`) inside the exporter (`npz_traj_export.py`) that aligns the `h=0` root of the MPC candidate fans perfectly with the actual executed trajectory points.
+3. **Browser Hot-Patch Script**: Created a stopgap `resnap_plan_steps.js` to realign existing `scene.json` files and embedded HTML viewers without requiring costly cluster re-exports.
+4. **Viewer Candidate UI Enhancement**: Refined the visualizer's candidate-selection checkboxes to automatically populate based on the loaded variant's fan size and default to checked, clarifying that "unticking all" hides the layer.
+5. **Local Exporter Execution**: Documented that local `/usr/local/bin/python3` can successfully run the exporter pipeline locally without spinning up a SLURM node.
+
+***

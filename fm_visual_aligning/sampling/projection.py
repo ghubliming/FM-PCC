@@ -134,6 +134,7 @@ class Projector:
         # empty constraint matrices and bounds [-5,5] corrupts healthy trajectories via the QP cost.
         if self.A.shape[0] == 0 and self.C.shape[0] == 0 and len(self.obstacle_constraints.P_list) == 0:
             batch_size = trajectory.shape[0]
+            self.last_proj_skipped = False    # Fix_15.3: no-constraint fast path, not a breaker skip
             return trajectory, np.zeros(batch_size, dtype=np.float32)
 
         dims = trajectory.shape
@@ -151,8 +152,10 @@ class Projector:
                 self._cb_state = 'half_open'          # next call probes one real solve
                 self._cb_skips = 0
             self.last_proj_ms = 0.0
+            self.last_proj_skipped = True     # Fix_15.3: this step's trajectory is UNPROJECTED
             return trajectory, np.full(dims[0], np.inf, dtype=np.float32)
         _call_t0 = time.perf_counter()
+        self.last_proj_skipped = False        # Fix_15.3: real solve ran this step
 
         # Reshape the trajectory to a batch of vectors (from B x H x T to B x (HT)
         batch_size = trajectory.shape[0]

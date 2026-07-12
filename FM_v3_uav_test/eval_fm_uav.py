@@ -918,6 +918,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     fm_ms = []           # PURE FM inference ms (projection time subtracted out — Real_Time logging)
     proj_ms = []         # PCC projector wall-time ms per FM step
     total_ms = []        # fm_ms + proj_ms  → the real-time budget number
+    proj_cb_skipped_steps = 0   # Fix_15.3: FM steps whose projection was SKIPPED by the tripped breaker
     obs_traj = []        # realized [p_des|p|v] per FM step  → npz obs_all
     act_traj = []        # FM Δp_des per FM step             → npz act_all
     plans = []           # FM H-step predicted obs plan      → npz sampled_trajectories_all
@@ -952,6 +953,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         fm_ms.append(step_fm_ms)
         proj_ms.append(step_proj_ms)
         total_ms.append(step_total_ms)
+        # Fix_15.3: the projector marks each call it SKIPS while its sustained-slowness circuit
+        # breaker is OPEN (this step's trajectory is UNPROJECTED). Count them so the artifacts
+        # can flag that projection was abandoned for high SLSQP cost (see projection.py Fix_15.2).
+        if getattr(getattr(policy, 'projector', None), 'last_proj_skipped', False):
+            proj_cb_skipped_steps += 1
 
         action = np.asarray(action, dtype=float).reshape(-1)[:3]  # first Δp_des
         obs_traj.append(obs)
@@ -1155,6 +1161,19 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             'budget_ms': blog_summary['budget_ms'],
         },
         'track_err_mean': float(np.mean(track_err)) if track_err else float('nan'),
+        # Fix_15.3: projection-circuit-breaker health for THIS rollout. `cb_tripped` means the
+        # sustained-slowness breaker (projection.py Fix_15.2) OPENED and projection was SKIPPED
+        # for `cb_skipped_steps` FM steps — those steps ran on the UNPROJECTED trajectory, so the
+        # constraint results for this rollout are NOT trustworthy (high SLSQP cost bailout).
+        # `cb_trips`/`backstop_hits` read the projector's cumulative counters (may under-count on
+        # x_active/s_curve scenes where the projector is rebuilt each step and its state resets).
+        'projection_health': {
+            'cb_tripped': bool(proj_cb_skipped_steps > 0),
+            'cb_skipped_steps': int(proj_cb_skipped_steps),
+            'cb_trips': int(getattr(getattr(policy, 'projector', None), '_cb_trips', 0)),
+            'backstop_hits': int(getattr(getattr(policy, 'projector', None), '_cost_exploded_count', 0)),
+            'n_proj_steps': int(len(proj_ms)),
+        },
         # U_13: actual FM steps executed (deterministic time-to-goal on success, full budget
         # on a miss) — was the random round(dur*HZ) budget. `max_episode_length` = the budget.
         'n_fm_steps': steps_run, 'max_episode_length': n_fm, 'decim': decim, 'dt': dt,
@@ -1396,6 +1415,15 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         },
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'projection': variant,
+        # Fix_15.3: variant-level projection-circuit-breaker rollup. `n_tripped_trials` > 0 means
+        # the sustained-slowness breaker (projection.py Fix_15.2) OPENED on some trials, which ran
+        # (partly) UNPROJECTED — treat this variant as "projection broken for this geometry", not a
+        # valid result. Also dropped as a PROJECTION_CB_TRIPPED.txt sentinel in the variant dir.
+        'projection_health': {
+            'n_tripped_trials': int(sum(1 for r in rollouts if r.get('projection_health', {}).get('cb_tripped'))),
+            'total_skipped_steps': int(sum(r.get('projection_health', {}).get('cb_skipped_steps', 0) for r in rollouts)),
+            'tripped_trials': [i for i, r in enumerate(rollouts) if r.get('projection_health', {}).get('cb_tripped')],
+        },
     }
 
     # ── Artifacts (legacy schema): results.json + npz + log + 2-D overview ──
@@ -1405,6 +1433,24 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     npz_path = artifacts.save_npz(out_dir, variant, rollouts, vars(args))
     artifacts.write_eval_log(out_dir, variant, summary, rollouts)
     artifacts.plot_overview(out_dir, variant, scene, rollouts)
+
+    # Fix_15.3: drop a greppable sentinel in the variant dir when the projection circuit breaker
+    # tripped, so a tripped (UNPROJECTED, invalid-constraint) result is obvious from the file tree
+    # alone without opening the npz/log. The artifacts themselves are still written (partial run is
+    # kept), just clearly marked. See projection.py Fix_15.2.
+    _ph = summary['projection_health']
+    if _ph['n_tripped_trials'] > 0:
+        with open(os.path.join(out_dir, 'PROJECTION_CB_TRIPPED.txt'), 'w') as _f:
+            _f.write(f"PROJECTION CIRCUIT-BREAKER TRIPPED — {scene} variant={variant}\n")
+            _f.write(f"tripped_trials={_ph['tripped_trials']}  "
+                     f"({_ph['n_tripped_trials']}/{len(rollouts)})\n")
+            _f.write(f"total_skipped_steps={_ph['total_skipped_steps']}\n")
+            _f.write("Cause: sustained SLSQP slowness (projection.py Fix_15.2 breaker OPENED).\n")
+            _f.write("These trials ran (partly) UNPROJECTED — constraint metrics are NOT valid;\n")
+            _f.write("treat this variant as 'projection broken for this geometry'.\n")
+        print(f'[ eval ] {scene} variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
+              f'{_ph["n_tripped_trials"]}/{len(rollouts)} trials ({_ph["total_skipped_steps"]} '
+              f'steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.', flush=True)
 
     _steps_tg = summary['steps']['to_goal_mean']
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '

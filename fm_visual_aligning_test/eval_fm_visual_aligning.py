@@ -811,6 +811,11 @@ def _collect_per_rollout_arrays(agent):
         constraint_plan_post_viol_rate_mean=_cm('plan_post_viol_rate_mean'),
         constraint_plan_post_viol_rate_max=_cm('plan_post_viol_rate_max'),
         constraint_plan_n_replan_steps=_cm('plan_n_replan_steps'),
+        # Fix_15.3: projection-circuit-breaker flags per rollout. cb_tripped==1 → that rollout ran
+        # (partly) UNPROJECTED (sustained SLSQP slowness); its constraint_exec_* metrics are INVALID.
+        projection_cb_tripped=np.array([1 if s > 0 else 0 for s in agent.history_cb_skipped_steps],
+                                       dtype=np.int32),
+        projection_cb_skipped_steps=np.array(agent.history_cb_skipped_steps, dtype=np.int32),
     )
 
 
@@ -1038,6 +1043,12 @@ class VisualAgentWrapper:
         # UF-16.3: constraint metrics
         self.history_constraint_metrics  = []
         self._plan_post_viol_rates       = []
+        # Fix_15.3: projection-circuit-breaker accounting (projection.py Fix_15.2). Counts FM
+        # steps whose projection was SKIPPED because the sustained-slowness breaker was OPEN —
+        # those steps ran UNPROJECTED, so the rollout's constraint metrics are NOT trustworthy.
+        self.curr_rollout_cb_skipped_steps = 0
+        self.history_cb_skipped_steps      = []
+        self.history_cb_trips              = []
 
     def reset(self):
         self.mental_robot_pos   = None
@@ -1066,6 +1077,7 @@ class VisualAgentWrapper:
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
         self._plan_post_viol_rates.clear()   # UF-16.3
+        self.curr_rollout_cb_skipped_steps = 0   # Fix_15.3
         # REAL_TIME_RECORDING_UPDATE — fresh per-rollout timing recorder.
         self.rt_rec = RTRecorder(
             episode_id=f'{self.variant}_rollout{self.rollout_counter}',
@@ -1152,6 +1164,13 @@ class VisualAgentWrapper:
             'contact_last_step':      contact_last_step,
             'contact_first_pos_xy':   contact_first_pos_xy,
             'contact_last_pos_xy':    contact_last_pos_xy,
+            # Fix_15.3: projection circuit-breaker health for this rollout.
+            'projection_health': {
+                'cb_tripped':       bool(self.curr_rollout_cb_skipped_steps > 0),
+                'cb_skipped_steps': int(self.curr_rollout_cb_skipped_steps),
+                'cb_trips':         int(getattr(self.projector, '_cb_trips', 0)),
+                'backstop_hits':    int(getattr(self.projector, '_cost_exploded_count', 0)),
+            },
         }
 
         # UF-16.3: compute constraint satisfaction metrics for this rollout.
@@ -1175,6 +1194,8 @@ class VisualAgentWrapper:
 
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
+        self.history_cb_skipped_steps.append(int(self.curr_rollout_cb_skipped_steps))   # Fix_15.3
+        self.history_cb_trips.append(int(getattr(self.projector, '_cb_trips', 0)))       # Fix_15.3
         # REAL_TIME_RECORDING_UPDATE — write per-rollout realtime_<variant>_rollout<ridx>.log + SUMMARY.
         if getattr(self, 'rt_rec', None) is not None and self.save_path:
             self.rt_rec.save(
@@ -1219,6 +1240,9 @@ class VisualAgentWrapper:
         print(f'  - Max Physical Tracking Error: {max_phys_err:.6f} m')     # Fix 9: now meaningful
         print(f'  - Avg Inference Time: {avg_time:.4f} seconds/replan')
         print(f'  - Clamp events: {len(self.curr_rollout_clamp_events)}')
+        if self.curr_rollout_cb_skipped_steps > 0:   # Fix_15.3
+            print(f'  - ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED: {self.curr_rollout_cb_skipped_steps} '
+                  f'step(s) UNPROJECTED (sustained SLSQP slowness) — constraint metrics NOT valid')
         # Fix_11: progress/ETA within this (geo, variant) item — the debug block above was
         # already good, it just never said how many rollouts are left or how long that'll
         # take. `rollout_counter` is 0-based and already incremented by this rollout's own
@@ -1471,6 +1495,15 @@ class VisualAgentWrapper:
                     f'(success={data.get("success")},  {n_cands} candidates/step,  '
                     f'every {_STRIDE} replans shown)',
                     fontsize=13)
+                # Fix_15.3: loud banner when this rollout's projection circuit breaker tripped —
+                # the candidate fan is (partly) UNPROJECTED, so it is NOT constraint-valid.
+                _ph = data.get('projection_health', {}) or {}
+                if _ph.get('cb_tripped'):
+                    fig_mpc.text(0.5, 0.955,
+                                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED — {int(_ph.get("cb_skipped_steps", 0))} '
+                                 f'step(s) UNPROJECTED (sustained SLSQP slowness). Fan NOT constraint-valid.',
+                                 color='white', backgroundcolor='crimson', fontsize=12, fontweight='bold',
+                                 ha='center', va='center')
                 ax_xy = fig_mpc.add_subplot(1, 2, 1)
                 ax_3d = fig_mpc.add_subplot(1, 2, 2, projection='3d')
 
@@ -1848,6 +1881,10 @@ class VisualAgentWrapper:
 
             if self.projector is not None:
                 trajectory, infos = self.model(cond, projector=self.projector)
+                # Fix_15.3: the projector marks each call it SKIPS while its sustained-slowness
+                # circuit breaker is OPEN (unprojected step). Count them for artifact marking.
+                if getattr(self.projector, 'last_proj_skipped', False):
+                    self.curr_rollout_cb_skipped_steps += 1
             else:
                 trajectory, infos = self.model(cond)
 
@@ -2393,6 +2430,27 @@ if __name__ == '__main__':
                         except OSError:
                             pass
 
+                # Fix_15.3: drop a greppable sentinel + warn when the projection circuit breaker
+                # tripped on any rollout of this variant — those rollouts ran (partly) UNPROJECTED
+                # (sustained SLSQP slowness, projection.py Fix_15.2), so their constraint metrics are
+                # NOT valid. Artifacts are still written (partial run kept), just clearly marked.
+                _cb_skips = getattr(agent, 'history_cb_skipped_steps', [])
+                _cb_tripped_idx = [i for i, s in enumerate(_cb_skips) if s > 0]
+                if _cb_tripped_idx:
+                    _tot_skipped = int(sum(_cb_skips))
+                    with open(os.path.join(save_path, 'PROJECTION_CB_TRIPPED.txt'), 'w') as _f:
+                        _f.write(f"PROJECTION CIRCUIT-BREAKER TRIPPED — aligning variant={variant}\n")
+                        _f.write(f"tripped_rollouts={_cb_tripped_idx}  "
+                                 f"({len(_cb_tripped_idx)}/{len(_cb_skips)})\n")
+                        _f.write(f"total_skipped_steps={_tot_skipped}\n")
+                        _f.write("Cause: sustained SLSQP slowness (projection.py Fix_15.2 breaker OPENED).\n")
+                        _f.write("These rollouts ran (partly) UNPROJECTED — constraint metrics are NOT\n")
+                        _f.write("valid; treat this variant as 'projection broken for this geometry'.\n")
+                    print(f'[ eval ] variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
+                          f'{len(_cb_tripped_idx)}/{len(_cb_skips)} rollouts ({_tot_skipped} steps '
+                          f'skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.',
+                          flush=True)
+
                 # ── Legacy PNG rollout grid (mirrors ddpm_encdec) ────────────
                 print(f'[ eval ] Generating PNG rollout grid for {variant}...')
                 n_plot = min(len(obs_des_all), 5)
@@ -2400,6 +2458,13 @@ if __name__ == '__main__':
                     fig, axes = plt.subplots(n_plot, 6, figsize=(30, 5 * n_plot),
                                              squeeze=False)
                     fig.suptitle(f'Visual-DPCC — {variant} (Seed {seed})')
+                    if _cb_tripped_idx:   # Fix_15.3
+                        fig.text(0.5, 0.965,
+                                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on {len(_cb_tripped_idx)}/'
+                                 f'{len(_cb_skips)} rollouts — those paths are UNPROJECTED '
+                                 f'(sustained SLSQP slowness)',
+                                 color='white', backgroundcolor='crimson', fontsize=11,
+                                 fontweight='bold', ha='center', va='center')
 
                     for i in range(n_plot):
                         obs_traj   = obs_des_all[i]   # (T, 3) des_robot_pos

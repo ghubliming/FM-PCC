@@ -88,6 +88,13 @@ def save_npz(out_dir, variant, rollouts, args_dict):
     goal_dist = np.array([_f(r, 'goal', 'dist') for r in rollouts])
     goal_crossed_line = np.array([_b(r, 'goal', 'crossed_line') for r in rollouts])
 
+    # ── projection health (Fix_15.3) — flag rollouts whose projection was ABANDONED ──
+    # by the sustained-slowness circuit breaker (projection.py Fix_15.2). A tripped rollout
+    # ran (partly) on the UNPROJECTED trajectory, so its constraint metrics are NOT valid —
+    # downstream analysis MUST treat projection_cb_tripped==1 rows as "projection broken".
+    projection_cb_tripped = np.array([_b(r, 'projection_health', 'cb_tripped') for r in rollouts])
+    projection_cb_skipped_steps = np.array([_f(r, 'projection_health', 'cb_skipped_steps') for r in rollouts])
+
     path = os.path.join(out_dir, f'{variant}.npz')
     np.savez(
         path,
@@ -106,6 +113,8 @@ def save_npz(out_dir, variant, rollouts, args_dict):
         goal_reached=goal_reached,
         goal_dist=goal_dist,
         goal_crossed_line=goal_crossed_line,
+        projection_cb_tripped=projection_cb_tripped,               # Fix_15.3
+        projection_cb_skipped_steps=projection_cb_skipped_steps,   # Fix_15.3
         obs_all=obs_all,
         act_all=act_all,
         sampled_trajectories_all=plans_all,
@@ -168,6 +177,14 @@ def plot_overview(out_dir, variant, scene, rollouts):
 
     fig.suptitle(f'UAV FM eval — {scene} — variant={variant} — {len(rollouts)} trials',
                  fontsize=13)
+    # Fix_15.3: flag if the projection circuit breaker tripped on ANY trial of this variant.
+    _n_tripped = sum(1 for r in rollouts if (r.get('projection_health') or {}).get('cb_tripped'))
+    if _n_tripped:
+        fig.text(0.5, 0.95,
+                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on {_n_tripped}/{len(rollouts)} trials '
+                 f'— those paths are UNPROJECTED (sustained SLSQP slowness)',
+                 color='white', backgroundcolor='crimson', fontsize=11, fontweight='bold',
+                 ha='center', va='center')
     fig.tight_layout()
     main = os.path.join(out_dir, f'{variant}.png')
     fig.savefig(main, dpi=130)
@@ -390,6 +407,16 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None
         f'(success={int(bool(_succ))},  {n_cands} cands/step,  '
         f'every {stride} FM steps shown)',
         fontsize=13)
+    # Fix_15.3: loud banner when the projection circuit breaker tripped for this rollout —
+    # the green candidate fan below is (partly) UNPROJECTED, so it does NOT reflect the
+    # enforced constraints. See projection.py Fix_15.2 (sustained SLSQP slowness).
+    _ph = rollout.get('projection_health', {}) or {}
+    if _ph.get('cb_tripped'):
+        fig.text(0.5, 0.955,
+                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED — {int(_ph.get("cb_skipped_steps", 0))} step(s) '
+                 f'UNPROJECTED (sustained SLSQP slowness). Candidate fan is NOT constraint-valid.',
+                 color='white', backgroundcolor='crimson', fontsize=12, fontweight='bold',
+                 ha='center', va='center')
 
     # ── candidate fan ─────────────────────────────────────────────────────────
     for step_i, plan in enumerate(plans):
@@ -483,11 +510,23 @@ def write_eval_log(out_dir, variant, summary, rollouts):
         f.write(f"UAV FM eval  |  scene={summary['scene']}  seed={summary['seed']}  "
                 f"variant={variant}\n")
         f.write('=' * 70 + '\n')
+        # Fix_15.3: loud banner if the projection circuit breaker tripped on any trial.
+        _tripped = [i for i, r in enumerate(rollouts) if (r.get('projection_health') or {}).get('cb_tripped')]
+        if _tripped:
+            f.write('!' * 70 + '\n')
+            f.write(f"  !!! PROJECTION CIRCUIT-BREAKER TRIPPED on {len(_tripped)}/{len(rollouts)} "
+                    f"trials: {_tripped}\n")
+            f.write("  !!! Those trials ran (partly) UNPROJECTED (sustained SLSQP slowness,\n")
+            f.write("  !!! projection.py Fix_15.2) — their constraint metrics are NOT valid.\n")
+            f.write('!' * 70 + '\n')
         for i, r in enumerate(rollouts):
             phys = r.get('physical', {}); goal = r.get('goal', {}); succ = r.get('success', {})
             # Fix_12: show the flown class next to the commanded label (pillars only).
             _flown = r.get('homotopy_flown')
             _flown_str = f"flown={_flown:<10}  " if _flown else ''
+            # Fix_15.3: per-rollout circuit-breaker marker (skipped-step count when tripped).
+            _ph = r.get('projection_health', {}) or {}
+            _cb_str = f"  cb=TRIPPED({int(_ph.get('cb_skipped_steps', 0))})" if _ph.get('cb_tripped') else ''
             f.write(
                 f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  {_flown_str}"
                 f"success={int(bool(succ.get('strict')))}  "
@@ -495,7 +534,7 @@ def write_eval_log(out_dir, variant, summary, rollouts):
                 f"contact={phys.get('contact_frac', float('nan')):.3f}  "
                 f"min_z={phys.get('min_z', float('nan')):.3f}  "
                 f"goal_dist={goal.get('dist', float('nan')):.3f}  "
-                f"track_err={r.get('track_err_mean', float('nan')):.2f}\n")
+                f"track_err={r.get('track_err_mean', float('nan')):.2f}{_cb_str}\n")
         f.write('-' * 70 + '\n')
         _s = summary.get('success', {}); _p = summary.get('physical', {})
         _c = summary.get('constraint', {}); _g = summary.get('goal', {}); _t = summary.get('timing', {})
