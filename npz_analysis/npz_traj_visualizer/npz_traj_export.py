@@ -132,18 +132,74 @@ def mean_plan(snap, dims):
     return snap[:, :, dims].mean(axis=0)
 
 
+_CLEAN_TOL = 1e-2   # ‖h0 - executed‖ below this ⇒ the fan's h=0 lies ON the executed path
+
+
+def _nearest_executed(m, ex, guess):
+    """Nearest executed sample to the plan's h=0 within ±2 of `guess`; returns (index, residual).
+
+    Ties (to 6dp — data is stored at 4dp) break toward `guess` so a stalled robot (many executed
+    samples equal to h=0) does not drift off the nominal step.
+    """
+    T = ex.shape[0]
+    h0 = m[0]
+    lo, hi = max(0, guess - 2), min(T - 1, guess + 2)
+    best = min(range(lo, hi + 1),
+               key=lambda j: (round(float(np.linalg.norm(ex[j] - h0)), 6), abs(j - guess)))
+    return best, float(np.linalg.norm(ex[best] - h0))
+
+
+def _recording_offset(guesses, executed, mlist, dims):
+    """The single structural step-offset between the plan's conditioning and the executed buffer.
+
+    Every plan is conditioned on a specific obs (``conditions={0: obs}`` → h=0 === that obs), but the
+    eval loops record the executed buffer with DIFFERENT phase relative to that conditioning:
+      • avoiding/imf (eval_flow_matching_v3_imeanflow.py): appends obs_buffer AFTER env.step advances
+        it, and never stores the initial reset obs → executed is shifted +1 control step (offset 1).
+      • uav (eval_fm_uav.py): appends obs_traj BEFORE the state update → already aligned (offset 0).
+    We DETECT this rather than hard-code it: for the fans whose h=0 lands cleanly on the executed path
+    (residual < _CLEAN_TOL — verified dist == 0 for projected fans), take the MODE of nominal-minus-
+    matched-index. The offset is a fixed property of the loop, so applying that one value uniformly
+    keeps later divergence (an unprojected raw plan drifting OFF the path) VISIBLE instead of snapping
+    each fan onto whatever dot is nearest. Returns (offset, off_path_fraction) for a caller sanity log.
+    """
+    if executed is None or executed.ndim != 2 or max(dims) >= executed.shape[1]:
+        return 0, 0.0
+    ex = executed[:, dims]
+    clean = []
+    off_path = 0
+    for g, m in zip(guesses, mlist):
+        idx, rd = _nearest_executed(m, ex, g)
+        if rd <= _CLEAN_TOL:
+            clean.append(g - idx)
+        else:
+            off_path += 1
+    frac = off_path / max(1, len(guesses))
+    if not clean:
+        return 0, frac                    # nothing landed on the path (see caller's WARN)
+    vals, cnts = np.unique(clean, return_counts=True)
+    return int(vals[int(np.argmax(cnts))]), frac
+
+
 def snapshot_analytics(snaps, ref_means, executed, dims, all_dims, polys, obsts, xcol_local):
-    """Per-snapshot arrays aligned to snapshot ordinal (executed step = i*save_every)."""
+    """Per-snapshot arrays aligned to the executed step where each fan's h=0 truly starts.
+
+    Nominal step is i*save_every; a single detected recording offset (see ``_recording_offset``) then
+    shifts every fan onto its executed dot. ``offset``/``off_path_frac`` are returned for a sanity log.
+    """
     n = len(snaps)
     save_every = 1
     if executed is not None and executed.ndim == 2 and n > 1:
         save_every = max(1, int(round((executed.shape[0] - 1) / (n - 1))))
+    guesses = [i * save_every for i in range(n)]
+    mlist = [mean_plan(s, dims) for s in snaps]                  # [H, d] per snapshot
+    offset, off_path_frac = _recording_offset(guesses, executed, mlist, dims)
     div_ref, viol, track, spread, expl, steps = [], [], [], [], [], []
     have_geo = bool(polys or obsts)
     for i, s in enumerate(snaps):
-        step = i * save_every
+        m = mlist[i]
+        step = max(0, guesses[i] - offset)                      # executed idx of the fan's h=0
         steps.append(step)
-        m = mean_plan(s, dims)                                   # [H, d]
         # divergence from reference (same ordinal)
         if ref_means is not None and i < len(ref_means) and ref_means[i].shape == m.shape:
             div_ref.append(float(np.linalg.norm(m - ref_means[i], axis=1).mean()))
@@ -158,7 +214,7 @@ def snapshot_analytics(snaps, ref_means, executed, dims, all_dims, polys, obsts,
             spread.append(float(np.mean(pd)) if pd else None)
         else:
             spread.append(None)
-        # tracking error: mean_k ||mean_plan[k] - executed[step+k]|| on exported dims
+        # tracking error: mean_k ||mean_plan[k] - executed[anchor+k]|| on exported dims
         track.append(_track_err(m, executed, dims, step))
         # violation fraction over all candidate waypoints (avoiding geometry)
         if have_geo:
@@ -173,7 +229,7 @@ def snapshot_analytics(snaps, ref_means, executed, dims, all_dims, polys, obsts,
         else:
             viol.append(None)
     return dict(steps=steps, div_ref=div_ref, viol=viol, track=track, spread=spread,
-                explosion=expl, save_every=save_every)
+                explosion=expl, save_every=save_every, offset=offset, off_path_frac=off_path_frac)
 
 
 def _track_err(m, executed, dims, step):
@@ -305,6 +361,18 @@ def build_scene(scene_dir, args):
             exec_maxabs = np.nanmax(np.abs(obs), axis=1)
             an = snapshot_analytics(snaps, ref_means.get(t), obs, dims, list(range(obs.shape[1])),
                                     polys, obsts, 0)
+            # sanity log: detected recording offset + fraction of fans whose h=0 does NOT lie on the
+            # executed path. Expect offset 1 for avoiding/imf (post-step obs), 0 for uav (pre-step obs).
+            # A high off-path fraction is EXPECTED and correct to show — the raw plan of an unprojected
+            # variant, or a projected plan once its solver gives up (s_curve circuit-breaker), really
+            # does diverge from the executed path. The WARN fires only when NO fan's h=0 lands on the
+            # path (off_path_frac ≈ 1): then the offset is undetectable, pointing at a real coord/
+            # conditioning bug rather than mere divergence.
+            off_frac = an.get('off_path_frac', 0.0)
+            flag = '  <-- WARN: no fan h0 on executed path (offset undetectable — coord bug?)' \
+                if off_frac > 0.999 else ''
+            print(f'[export] {v}[t{t}] recording offset={an.get("offset")} '
+                  f'off_path_frac={off_frac:.2f}{flag}')
             # decimate plans + per-snapshot analytics by plan_every
             keep = list(range(0, len(snaps), plan_every))
             plans_out, psteps = [], []

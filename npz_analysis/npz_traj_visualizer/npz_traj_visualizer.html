@@ -59,7 +59,8 @@
   <div class="grp"><label class="hd">Trial</label><select id="trial"></select></div>
   <div class="grp"><label class="hd">Panels</label><div id="panel-toggles" class="row"></div></div>
   <div class="grp"><label class="hd">Layers</label><div id="layer-toggles" class="grp"></div></div>
-  <div class="grp"><label class="hd">Candidates</label><div id="cand-toggles" class="row"></div></div>
+  <div class="grp"><label class="hd">Candidates</label><div id="cand-toggles" class="row"></div>
+    <div class="hint">checked = shown (all on by default; untick all to hide the fan)</div></div>
   <div class="grp"><label class="hd">Variants
       <span class="bulk" onclick="bulkVar(true)">[ALL]</span><span class="bulk" onclick="bulkVar(false)">[NONE]</span>
     </label><div id="variant-list" class="list"></div></div>
@@ -99,7 +100,7 @@ window.SCENE_DATA=/*__SCENE_DATA__*/null;
 const S = {
   data:null, trial:0,
   layers:{env:false, bone:false, dots:false, fan:false, mean:false, viol:false, hend:false},
-  cands:{0:false,1:false,2:false,3:false},   // which candidates fan/mean use; none ticked = all
+  cands:{},                    // candidate index -> bool (checked = shown); built per-scene, all on
   variants:{},                 // name -> bool
   panelsOn:{},                 // panel id -> bool
   chartsOn:{drift:false, explosion:false, viol:false, track:false, stat:false, spread:false},
@@ -164,10 +165,8 @@ async function loadFromPath(){
 function buildStaticUI(){
   const lt=document.getElementById('layer-toggles');
   LAYER_DEFS.forEach(([k,lbl])=>{ lt.appendChild(chk('L_'+k,lbl,false,()=>{S.layers[k]=ev(k,'L_');render();}));});
-  // candidates 0-3 = which candidates the fan/mean layers use (none ticked => all). "mean" is a
-  // LAYER toggle now (Layers list), not a candidate -- see fix_1 changelog for why this was split.
-  const ct=document.getElementById('cand-toggles');
-  [0,1,2,3].forEach(k=>ct.appendChild(chk('C_'+k,''+k,false,()=>{S.cands[k]=document.getElementById('C_'+k).checked;render();})));
+  // Candidate checkboxes are built per-scene in loadScene() (one per candidate in the fan, all
+  // checked = shown by default). "mean" is a LAYER toggle (Layers list), not a candidate.
   const gt=document.getElementById('chart-toggles');
   CHART_DEFS.forEach(([k,lbl])=>gt.appendChild(chk('G_'+k,lbl,false,()=>{S.chartsOn[k]=document.getElementById('G_'+k).checked;buildCharts();render();})));
   // step / play / misc
@@ -202,6 +201,13 @@ function loadScene(data){
     S.panelsOn={};
     data.panels.forEach((p,i)=>{ S.panelsOn[p.id]=(i===0);
       pt.appendChild(chk('P_'+p.id,p.id,i===0,()=>{S.panelsOn[p.id]=document.getElementById('P_'+p.id).checked;buildPanels();render();}));});
+    // candidates: one checkbox per candidate in the fan, ALL CHECKED = shown by default.
+    // Checked = shown; unticking all shows no fan (intuitive — was "none ticked => all" before).
+    const ct=document.getElementById('cand-toggles'); ct.innerHTML=''; S.cands={};
+    const fan0=anyV&&anyV.trials.length?(anyV.trials[0].plans||[]).find(f=>f):null;
+    const nCand=fan0?fan0.length:0;
+    for(let k=0;k<nCand;k++){ S.cands[k]=true;
+      ct.appendChild(chk('C_'+k,''+k,true,()=>{S.cands[k]=document.getElementById('C_'+k).checked;render();})); }
     // variants
     const vl=document.getElementById('variant-list'); vl.innerHTML=''; S.variants={};
     Object.keys(data.variants).sort().forEach(v=>{ S.variants[v]=false;
@@ -336,17 +342,15 @@ function drawPanel(panel){
       const idxs=stepList(tr);
       idxs.forEach(i=>{
         const fan=tr.plans[i]; if(!fan)return;
-        // candidates 0-3 SELECT which candidates are used (fan lines AND mean); none ticked = ALL.
-        // fan/mean are now independent LAYER toggles -- fixes "fan checkbox does nothing" (previously
-        // gated on S.cands.mean, which defaults checked, so the raw-fan fallback below never fired).
-        const wantC=[0,1,2,3].filter(k=>S.cands[k]&&k<fan.length);
-        const useC=wantC.length?wantC.map(k=>fan[k]):fan;
-        if(S.layers.fan){ ctx.strokeStyle=col;ctx.lineWidth=0.7;ctx.globalAlpha=fanAlpha;
+        // Candidate checkboxes SELECT which candidates draw (fan lines AND mean): checked = shown.
+        // Unticking every candidate shows no fan/mean/hend. fan/mean are independent LAYER toggles.
+        const useC=fan.filter((c,k)=>S.cands[k]);
+        if(S.layers.fan&&useC.length){ ctx.strokeStyle=col;ctx.lineWidth=0.7;ctx.globalAlpha=fanAlpha;
           useC.forEach(c=>drawPoly(ctx,T,c,ax,ay));
           ctx.globalAlpha=1; }
-        if(S.layers.mean){ const m=meanFan(useC);
+        if(S.layers.mean&&useC.length){ const m=meanFan(useC);
           ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.globalAlpha=.9;drawPoly(ctx,T,m,ax,ay);ctx.globalAlpha=1; }
-        if(S.layers.hend){ const m=meanFan(useC);const p=m[m.length-1];
+        if(S.layers.hend&&useC.length){ const m=meanFan(useC);const p=m[m.length-1];
           ctx.fillStyle=col;ctx.beginPath();ctx.rect(T.X(p[ax])-2.5,T.Y(p[ay])-2.5,5,5);ctx.fill(); }
         if(S.layers.viol&&hasGeo()){ drawViol(ctx,T,fan,ax,ay); }
       });
