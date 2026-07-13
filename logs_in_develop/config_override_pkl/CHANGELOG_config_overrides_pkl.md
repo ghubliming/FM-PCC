@@ -1,7 +1,7 @@
 # CONFIG-OVERRIDES-PKL — eval config precedence fix across all live generations
 
 **Date:** 2026-07-13 · **Scope:** repo-wide (all `working on` generations per MASTER_TEST_HISTORY Master Trace Map)
-**Trigger:** Gen3v4_imf U9 kill-table investigation (`logs_in_develop/Gen3v4_imf/U9/debug_notes/INVESTIGATION_new_vs_upstreams_KILL_TABLE.md`) — the eval-time CFG poisoning could not be disabled from the config because pickled train-time values silently won at eval.
+**Trigger:** Gen3v4_imf U10 kill-table investigation (`logs_in_develop/Gen3v4_imf/U10/debug_notes/INVESTIGATION_new_vs_upstreams_KILL_TABLE.md`) — the eval-time CFG poisoning could not be disabled from the config because pickled train-time values silently won at eval.
 
 ---
 
@@ -9,7 +9,28 @@
 
 Every eval reconstructs the diffusion wrapper from the checkpoint's pickled `diffusion_config.pkl` and instantiates it with the **pickled kwargs verbatim**. Editing the `.py` config plan block changed **nothing** except the output folder name. The repo *knew*: Gen7's own "Fix 5" comment ("Without this, the checkpoint's baked-in value is always used"), Gen7 "D1" (`clip_denoised`), and Gen9's `_warn_pkl_config_mismatch` banner ("[ eval pkl values ] (these win over the .py plan config) … *** MISMATCH — patch pkl or retrain ***") — each generation patched one victim key at a time instead of fixing the precedence.
 
-## The fix (uniform semantics)
+## Why the old fixes were wrong (per-key post-load stamping)
+
+The repo's prior answer to "pkl wins" was to **stamp one attribute at a time, AFTER instantiation**:
+
+```python
+# Gen7 "Fix 5"
+diffusion_model.flow_steps_v3 = int(getattr(args, 'flow_steps_v3', ...))
+# Gen7/Gen8 "D1"
+diffusion_model.clip_denoised = getattr(args, 'clip_denoised', False)
+# imf eval solver knobs
+fm_model.ode_solver_method_v3 = getattr(args, 'ode_solver_method_v3', ...)
+```
+
+This is not a fix of the precedence — it is a **manual allow-list**, and it was wrong for three reasons:
+
+1. **Enumeration by hand ⇒ silent gaps.** Only the handful of keys someone remembered to stamp were config-driven. Everything else — `condition_guidance_w`, `meanflow_cfg_omega`, `returns_condition`, `predict_epsilon`, `action_weight`, … — silently kept its pickled value. This is *exactly* how the U9/U10 kill-table CFG poisoning became undisableable from the config: those keys were never on anyone's allow-list, so editing `config/avoiding-d3il.py` did nothing (only renamed the output folder). The bug wasn't "the wrong value" — it was "no mechanism reaches that value at all."
+
+2. **AFTER instantiation is too late for constructor-effect kwargs.** A post-load `setattr` only works for values read *live at sampling time* (a bare `self.x = x`). Any kwarg whose effect happens **in `__init__`** — buffers registered from it, sub-modules sized by it, derived attributes computed once (e.g. `self.transition_dim`, loss-weight tensors, `u_mix/v_mix` from `u_loss_weight/v_loss_weight`, the interval-CFG/dual-head wiring) — is **already baked** by the time you stamp the attribute. Stamping the surface attribute then leaves the model in an *inconsistent* state (attribute says X, internals built for Y). Overriding the value **inside `diffusion_config._dict` BEFORE `diffusion_config(model)`** is the only place that is correct for *both* kinds of kwarg, because the constructor then runs with the intended value.
+
+3. **No visibility.** The stamps were silent, so you could never tell from a log whether a config value actually reached the model or was ignored. (Gen9's `_warn_pkl_config_mismatch` printed a banner but explicitly told you the *pkl* won — "these win over the .py plan config" — i.e. it documented the bug rather than fixing it.)
+
+## How it is fixed this time (override the config dict before construction, warn on every change)
 
 In every live eval loader, **immediately before `diffusion = diffusion_config(model)`**:
 
@@ -52,7 +73,7 @@ Old post-load stamps (imf eval solver lines, Gen7 Fix 5/D1) are left in place �
 3. **Pre-existing train/plan divergences now become live overrides.** Scan flagged in `config/avoiding-d3il-visual.py` (Gen9): `clip_denoised` True(train)/False(plan) and `action_weight` 10/1 — on the next Gen9 eval these will warn and apply the plan value. `clip_denoised=False` at eval matches the D1/DPCC-reference convention (likely intended); `action_weight` only affects the loss (unused at eval; the buffer is restored from the checkpoint). **Check the first eval log of every generation for unexpected `[WARNING] config-overrides-pkl` lines.**
 4. `model_config` / `dataset_config` / `trainer_config` remain pkl-authoritative (architecture & data must match the checkpoint).
 
-## What to do next (the U9 test)
+## What to do next (the U10 test)
 
 1. Sync to cluster; make sure `plan_fm_v3_imeanflow` has `imf_backbone: 'dit'` (+ matching `dit_*`) for the failing bbdit checkpoint.
 2. Run the imf eval. Expect exactly these console lines:
