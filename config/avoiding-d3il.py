@@ -473,15 +473,21 @@ base = {
         'loss_type': 'l2',
         'predict_epsilon': True,
 
-        ## U4 imfv2 — training objective selector (see logs_in_develop/Gen3v4_imf/U4)
+        ## U4/U10 — training objective selector (see logs_in_develop/Gen3v4_imf/U4, U10)
         # 'fm_equivalent': legacy finite-diff target = FM baseline arm.
-        # 'meanflow_jvp' : real MeanFlow-Identity (JVP). NFE is set in the plan block, not here.
-        # DEFAULT now = full real iMF (U5). For the FM baseline A/B arm, revert to the commented values.
-        'imf_objective': 'meanflow_jvp',     # was: 'fm_equivalent'
-        'meanflow_r_equals_t_frac': 0.25,
-        'meanflow_adaptive_p': 0.5,
-        'meanflow_adaptive_c': 1e-3,
-        'meanflow_aux_weight': 0.05,         # was: 0.0  (now meaningful — shares backbone via dual_head)
+        # 'meanflow_jvp' : ORIGINAL MeanFlow (analytic-v JVP tangent, unguided) — NOT faithful iMF.
+        # 'imf_official' : U10 FAITHFUL improved-MeanFlow — predicted-v_c tangent + guided v_g +
+        #                  cond_drop + 2×logit-normal + official loss. THE "one last shot".
+        #                  See U10/PLAN_faithful_imf_replication.md. Requires dit backbone.
+        'imf_objective': 'imf_official',     # was: 'meanflow_jvp' (kept as A/B arm; auto-separates by prefix)
+        'meanflow_r_equals_t_frac': 0.25,    # legacy meanflow_jvp only (imf_official uses meanflow_data_proportion)
+        'meanflow_adaptive_p': 0.5,          # legacy meanflow_jvp only (imf_official hard-codes official p=1.0)
+        'meanflow_adaptive_c': 1e-3,         # legacy meanflow_jvp only (imf_official hard-codes official eps=0.01)
+        'meanflow_aux_weight': 0.05,         # legacy meanflow_jvp only (imf_official uses official loss_u+loss_v)
+        ## U10 imf_official knobs (faithful iMF)
+        'meanflow_cfg_smax': 7.0,            # TRAIN CFG scale ceiling s_max (official default 7.0) — decoupled from eval ω
+        'meanflow_data_proportion': 0.5,     # 50% FM anchors (official data_proportion)
+        'meanflow_class_dropout_prob': 0.1,  # cond_drop prob — trains the null token (official 0.1)
 
         ## U5 Phase 1 — real-iMF on UNet (DEFAULT = ON). See Gen3v4_imf/U5.
         ## Safe-core fallback if a run misbehaves: set interval_cfg=False + meanflow_cfg_omega=0.0.
@@ -501,7 +507,7 @@ base = {
         ## 'dit' = faithful official-iMF transformer (IMFDiTTrajectory). Folder name carries
         ## _bb{imf_backbone}, so unet/dit checkpoints live in separate dirs (no collision).
         ## NOTE: plan block's imf_backbone + dit_* MUST match (state_dict depends on them).
-        'imf_backbone': 'unet',      # 'unet' | 'dit'
+        'imf_backbone': 'dit',       # 'unet' | 'dit' — U10 imf_official REQUIRES dit (unet no-ops cond_drop)
         'dit_depth': 8,              # total transformer blocks (DiT-only)
         'dit_hidden_size': 256,      # token width (DiT-only) — keep small for H=8
         'dit_num_heads': 4,          # attention heads (DiT-only)
@@ -858,35 +864,32 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
-        'imf_objective': 'meanflow_jvp',    # was: 'fm_equivalent'  — must match training (in diffusion_loadpath)
+        'imf_objective': 'imf_official',    # U10 — MUST match training (in diffusion_loadpath)
 
         ## U5 Phase 1 — must match the trained checkpoint's flags (architecture + CFG)
         'dual_head': True,           # was: False  — MUST equal training (else state_dict mismatch)
         'interval_cfg': True,        # was: False  — MUST equal training
-        ## Fix2 (U6) — at eval/sampling time these are still a FIXED operating point (no
-        ## randomization at inference): u_cfg = u_unc + ω·(u_cond − u_unc), applied only for
-        ## τ∈[t_min,t_max]. This is unchanged from before — only training-time sampling changed.
-        ## U9 KILL-TABLE falsification (2026-07-13): both sampling-time CFG mixings contrast
-        ## against an UNTRAINED force_dropout branch (null class token gets zero gradients in
-        ## training — bites the DiT backbone; the UNet arm no-ops force_dropout). Gates OFF.
-        ## These now reach the loaded model via CONFIG-OVERRIDES-PKL in the eval loader.
-        ## See logs_in_develop/Gen3v4_imf/U9/debug_notes/INVESTIGATION_new_vs_upstreams_KILL_TABLE.md
-        'meanflow_cfg_omega': 0.0,   # was: 4.0    — gate #2 (interval-CFG output mixing) OFF
-        'meanflow_cfg_t_min': 0.0,   # inert while omega=0
-        'meanflow_cfg_t_max': 1.0,   # inert while omega=0
-        'condition_guidance_w': 0.0, # NEW (U9) — gate #1 (returns-CFG mixing) OFF; pkl has 1.2
-        'returns_condition': False,  # NEW (U9) — returns conditioning is fictional in this gen
-                                     # (returns never reach the backbone); pkl has True, which
-                                     # only served to arm gate #1
+        ## U10 imf_official — CFG is a NET INPUT baked into the trained weights (official iMF), NOT
+        ## an output-space mix. At eval, feed a CONSTANT operating point (ω, t_min, t_max); the net
+        ## applies the interval internally. ω=1.0 ⇒ guidance OFF (w_arg=1−1/1=0). Set ω∈(1,1+smax]
+        ## + an interval to guide. condition_guidance_w stays 0 (returns-CFG path is deleted for
+        ## this objective). See U10/PLAN_faithful_imf_replication.md §W8.
+        'meanflow_cfg_omega': 1.0,   # EVAL operating point — 1.0 = guidance OFF (was 0.0 legacy-off)
+        'meanflow_cfg_t_min': 0.0,   # eval guidance interval (official s-convention), inert while ω=1
+        'meanflow_cfg_t_max': 1.0,
+        'condition_guidance_w': 0.0, # returns-CFG output-mix OFF (deleted path for imf_official)
+        'returns_condition': False,  # returns conditioning is fictional in this gen
+        ## Train-time-only knobs — MUST equal training so config-overrides-pkl is a no-op (unused at eval)
+        'meanflow_cfg_smax': 7.0,
+        'meanflow_data_proportion': 0.5,
+        'meanflow_class_dropout_prob': 0.1,
 
-        ## Fix2 (U6) — EMA config switch. Default False = DPCC-legacy (raw/live weights at eval,
-        ## matching the published DPCC baseline's own convention — see Gen9 U4
-        ## DPCC_DIVERGENCE_AND_COMPARABILITY.md finding B6). Official iMF defaults to EMA weights
-        ## at sampling (imeanflow/utils/sample_util.py:11,16: ema=True). Set True to use EMA.
-        'eval_use_ema': False,       # False = dpcc-legacy (raw weights) | True = imf-ema
+        ## EMA switch. Official iMF samples with EMA weights (imeanflow/utils/sample_util.py ema=True).
+        ## U10: default True for imf_official (few-step MeanFlow is EMA-sensitive). False = dpcc-legacy raw.
+        'eval_use_ema': True,        # was: False — imf-ema (official). Set False for the raw-weights A/B.
 
         ## U6 — backbone selector. MUST equal the trained checkpoint (state_dict + loadpath).
-        'imf_backbone': 'unet',      # 'unet' | 'dit'
+        'imf_backbone': 'dit',       # 'unet' | 'dit' — U10 imf_official REQUIRES dit (unet no-ops cond_drop)
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,

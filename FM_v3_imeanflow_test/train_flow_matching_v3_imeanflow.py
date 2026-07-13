@@ -245,6 +245,10 @@ if __name__ == '__main__':
                 meanflow_cfg_t_min=getattr(args, 'meanflow_cfg_t_min', 0.0),
                 meanflow_cfg_t_max=getattr(args, 'meanflow_cfg_t_max', 1.0),
                 meanflow_cfg_beta=getattr(args, 'meanflow_cfg_beta', 1.0),
+                # U10 imf_official (faithful iMF) — see U10/PLAN_faithful_imf_replication.md
+                meanflow_cfg_smax=getattr(args, 'meanflow_cfg_smax', 7.0),
+                meanflow_data_proportion=getattr(args, 'meanflow_data_proportion', 0.5),
+                meanflow_class_dropout_prob=getattr(args, 'meanflow_class_dropout_prob', 0.1),
             )
 
             trainer_config = utils.Config(
