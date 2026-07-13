@@ -120,6 +120,22 @@ for exp in exps:
                                 print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
                                 del diffusion_config._dict[k]
 
+                    # CONFIG-OVERRIDES-PKL (2026-07-13): the CURRENT config plan block is
+                    # authoritative over the pickled train-time diffusion config. Every pickled
+                    # kwarg that also exists in the parsed plan args is applied BEFORE
+                    # instantiation; a console warning is printed for every value that changes.
+                    # See logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
+                    for _k in list(diffusion_config._dict.keys()):
+                        if hasattr(args, _k):
+                            _new, _old = getattr(args, _k), diffusion_config._dict[_k]
+                            try:
+                                _changed = bool(_new != _old)
+                            except Exception:
+                                _changed = True
+                            if _changed:
+                                print(f"[WARNING] config-overrides-pkl: '{_k}': {_old!r} (pkl) -> {_new!r} (config)", file=sys.stderr)
+                                diffusion_config._dict[_k] = _new
+
                     import inspect
                     print(f"\n[INFO] Instantiating Diffusion Model from:", file=sys.stderr)
                     print(f"       -> {inspect.getfile(diffusion_config._class)}\n", file=sys.stderr)

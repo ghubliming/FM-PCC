@@ -866,9 +866,18 @@ base = {
         ## Fix2 (U6) — at eval/sampling time these are still a FIXED operating point (no
         ## randomization at inference): u_cfg = u_unc + ω·(u_cond − u_unc), applied only for
         ## τ∈[t_min,t_max]. This is unchanged from before — only training-time sampling changed.
-        'meanflow_cfg_omega': 4.0,   # was: 0.0    — guided sampling u_cfg=u_unc+ω·(u_cond−u_unc)
-        'meanflow_cfg_t_min': 0.4,   # was: 0.0    — applied only for τ∈[t_min,t_max]
-        'meanflow_cfg_t_max': 0.6,   # was: 1.0
+        ## U9 KILL-TABLE falsification (2026-07-13): both sampling-time CFG mixings contrast
+        ## against an UNTRAINED force_dropout branch (null class token gets zero gradients in
+        ## training — bites the DiT backbone; the UNet arm no-ops force_dropout). Gates OFF.
+        ## These now reach the loaded model via CONFIG-OVERRIDES-PKL in the eval loader.
+        ## See logs_in_develop/Gen3v4_imf/U9/debug_notes/INVESTIGATION_new_vs_upstreams_KILL_TABLE.md
+        'meanflow_cfg_omega': 0.0,   # was: 4.0    — gate #2 (interval-CFG output mixing) OFF
+        'meanflow_cfg_t_min': 0.0,   # inert while omega=0
+        'meanflow_cfg_t_max': 1.0,   # inert while omega=0
+        'condition_guidance_w': 0.0, # NEW (U9) — gate #1 (returns-CFG mixing) OFF; pkl has 1.2
+        'returns_condition': False,  # NEW (U9) — returns conditioning is fictional in this gen
+                                     # (returns never reach the backbone); pkl has True, which
+                                     # only served to arm gate #1
 
         ## Fix2 (U6) — EMA config switch. Default False = DPCC-legacy (raw/live weights at eval,
         ## matching the published DPCC baseline's own convention — see Gen9 U4

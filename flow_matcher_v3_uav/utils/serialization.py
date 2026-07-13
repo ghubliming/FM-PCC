@@ -48,7 +48,7 @@ def load_losses(*loadpath):
         # print(f'[ utils/serialization ] File {loadpath} does not exist')
         return None
 
-def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None):
+def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None, override_args=None):
     print(f'\n[ utils/serialization ] Loading model from {os.path.join(*loadpath)}\n')
 
     dataset_config = load_config(*loadpath, 'dataset_config.pkl')
@@ -57,6 +57,23 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None):
     trainer_config = load_config(*loadpath, 'trainer_config.pkl')
 
     trainer_config._dict['results_folder'] = os.path.join(*loadpath)
+
+    # CONFIG-OVERRIDES-PKL (2026-07-13): the CURRENT config block is authoritative over
+    # the pickled train-time diffusion config. Every pickled kwarg that also exists in the
+    # parsed args is applied BEFORE instantiation; a console warning is printed for every
+    # value that changes.
+    # See logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
+    if override_args is not None:
+        for _k in list(diffusion_config._dict.keys()):
+            if hasattr(override_args, _k):
+                _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+                try:
+                    _changed = bool(_new != _old)
+                except Exception:
+                    _changed = True
+                if _changed:
+                    print(f"[WARNING] config-overrides-pkl: '{_k}': {_old!r} (pkl) -> {_new!r} (config)")
+                    diffusion_config._dict[_k] = _new
 
     dataset = dataset_config()
     model = model_config().to(device)

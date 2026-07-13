@@ -2838,3 +2838,13 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
     - **Logs**: Leaves a greppable `PROJECTION_CB_TRIPPED.txt` sentinel file in the variant directory and injects prominent `!!!` markers in `eval_*.log`.
 
 ***
+
+## Gen7 U19 & Gen6V4: Visual Push-Box Footprint in Foresight Diagnostics (July 12, 2026)
+
+**Keywords**: Gen7, Gen6V4, U19, push-box footprint, foresight SVG, diagnostic plots, aligning.
+
+1. **Push-Box Footprint Visualization**: Enhanced the MPC foresight `.svg` diagnostic plots (XY panel) to explicitly render the 0.10 × 0.10 m physical push-box footprint. This resolves ambiguity regarding whether the aligning push-box overlaps with newly added obstacle constraints during trajectory execution.
+2. **Comprehensive Pose Tracking**: The plot now visually distinguishes the initial pose (filled saddlebrown), the final recorded pose (dashed saddlebrown outline), and the target pose (solid goldenrod outline) using dynamic `context_info` coordinates.
+3. **Cross-Architecture Implementation**: Deployed the exact same rendering logic block to both the `fm_visual_aligning` (Gen7) and `diffuser_visual_aligning` (Gen6V4) evaluation scripts, operating safely as a pure diagnostic addition without modifying any planning or metric code.
+
+***

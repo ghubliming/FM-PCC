@@ -2105,7 +2105,7 @@ class VisualAgentWrapper:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', override_args=None):
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Loading from {lp}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -2116,6 +2116,23 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
 
     if target_class is not None:
         diffusion_config._class = utils.config.import_class(target_class)
+
+    # CONFIG-OVERRIDES-PKL (2026-07-13): the CURRENT config plan block is authoritative over
+    # the pickled train-time diffusion config. Every pickled kwarg that also exists in the
+    # parsed plan args is applied BEFORE instantiation; a console warning is printed for
+    # every value that changes.
+    # See logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
+    if override_args is not None:
+        for _k in list(diffusion_config._dict.keys()):
+            if hasattr(override_args, _k):
+                _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+                try:
+                    _changed = bool(_new != _old)
+                except Exception:
+                    _changed = True
+                if _changed:
+                    print(f"[WARNING] config-overrides-pkl: '{_k}': {_old!r} (pkl) -> {_new!r} (config)")
+                    diffusion_config._dict[_k] = _new
 
     dataset   = dataset_config()
     model     = model_config()
@@ -2160,7 +2177,7 @@ if __name__ == '__main__':
             exp = load_diffusion_with_override(
                 args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
                 target_class=args.diffusion, epoch=args.diffusion_epoch,
-                device=args.device,
+                device=args.device, override_args=args,
             )
             diffusion_model = exp.diffusion
             # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule

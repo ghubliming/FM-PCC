@@ -132,7 +132,11 @@ def _warn_pkl_config_mismatch(diffusion, args):
         ('n_diffusion_steps', getattr(diffusion, 'n_timesteps',  None),  getattr(args, 'n_diffusion_steps', None)),
         ('horizon',          getattr(diffusion, 'horizon',       None),  getattr(args, 'horizon',           None)),
     ]
-    print('\n[ eval pkl values ] (these win over the .py plan config)')
+    # CONFIG-OVERRIDES-PKL (2026-07-13): same-named kwargs are now overridden by the .py plan
+    # config BEFORE instantiation (see load_diffusion_with_override). Only differently-named
+    # keys (n_diffusion_steps ↔ pkl 'n_timesteps') remain pkl-authoritative — this banner
+    # still covers those.
+    print('\n[ eval pkl values ] (config-overrides-pkl active: same-named keys take the .py config; n_diffusion_steps stays pkl)')
     for key, pkl_v, cfg_v in checks:
         mismatch = (pkl_v is not None and cfg_v is not None and pkl_v != cfg_v)
         tag = '  *** MISMATCH — patch pkl or retrain ***' if mismatch else ''
@@ -150,7 +154,7 @@ def _warn_pkl_config_mismatch(diffusion, args):
 
 
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
-                                 device='cuda:0', seed=None):
+                                 device='cuda:0', seed=None, override_args=None):
     import inspect
     print(f'\n[ eval loading ] {os.path.join(*loadpath)}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -172,6 +176,23 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
             valid = set(inspect.signature(target_cls.__init__).parameters)
             for k in [k for k in diffusion_config._dict if k not in valid]:
                 del diffusion_config._dict[k]
+
+    # CONFIG-OVERRIDES-PKL (2026-07-13): the CURRENT config plan block is authoritative over
+    # the pickled train-time diffusion config. Every pickled kwarg that also exists in the
+    # parsed plan args is applied BEFORE instantiation; a console warning is printed for
+    # every value that changes.
+    # See logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
+    if override_args is not None:
+        for _k in list(diffusion_config._dict.keys()):
+            if hasattr(override_args, _k):
+                _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+                try:
+                    _changed = bool(_new != _old)
+                except Exception:
+                    _changed = True
+                if _changed:
+                    print(f"[WARNING] config-overrides-pkl: '{_k}': {_old!r} (pkl) -> {_new!r} (config)")
+                    diffusion_config._dict[_k] = _new
 
     dataset   = dataset_config()
     model     = model_config().to(device)
@@ -235,7 +256,8 @@ for exp in exps:
             if not args_cli.aggregate_only:
                 diff_experiment = load_diffusion_with_override(
                     args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
-                    target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+                    target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device,
+                    override_args=args)
                 diffusion = diff_experiment.diffusion
                 _warn_pkl_config_mismatch(diffusion, args)
 

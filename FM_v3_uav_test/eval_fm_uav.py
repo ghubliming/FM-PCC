@@ -147,7 +147,10 @@ def build_experiment(scene, seed, epoch, device):
     args = p.parse_args(experiment='flow_matching_v3_uav', seed=seed)
 
     ep = epoch if epoch == 'latest' else int(epoch)
-    experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device)
+    # CONFIG-OVERRIDES-PKL (2026-07-13): pass parsed config args so same-named pickled
+    # diffusion kwargs are overridden by the current config (warn-on-change). See
+    # logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
+    experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device, override_args=args)
     return experiment.diffusion, experiment.dataset, args, int(getattr(args, 'horizon', 8))
 
 
