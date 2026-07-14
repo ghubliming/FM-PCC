@@ -2887,3 +2887,15 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **MPC Foresight Decoupling (`diffuser` on UAV)**: Investigated why foresight heading misaligns with executed backbones on UAV tasks. Proved the decoupling is a real data phenomenon (Cause A) rather than a visualization artifact. This confirms that `diffuser`'s unprojected observation-head predictions (plans) operate fundamentally uncoupled from the action-head predictions (execution), requiring projection to dynamically re-pin the plan to reality.
 
 ***
+
+## Repo-Wide Fix 1: Two-Tier Config Reconciliation (July 14, 2026)
+
+**Keywords**: config_pkl_FIX1, two-tier config reconciliation, INFO vs WARNING, checkpoint architecture parameters, eval loaders.
+
+1. **Problem (Warning Fatigue)**: Evaluated the runtime config-override mechanism introduced on July 13 and found it generated excessive `[WARNING]` logs for intended operational changes (e.g., modifying `flow_steps_v3` at evaluation). This noise masked genuine architectural mismatches between the checkpoint and the evaluation configuration.
+2. **Two-Tier Reconciliation Strategy**: Upgraded the override logic across all 9 evaluation loaders (Gen3v4, Gen7, Gen6V4, Gen8/9, Gen11) to distinguish between safe sampling adjustments and critical structural parameters:
+    - **Sampling Knobs** (e.g., ODE steps, CFG scales, thresholds): The evaluation configuration safely overrides the pickled value, logging a clear `[ config->pkl ] INFO`.
+    - **Architecture/Identity Keys** (e.g., `dual_head`, `imf_objective`, `horizon`): The script now strictly retains the pickled training value to protect the model's `state_dict` structure from crashing. It only emits a `[ config->pkl ] WARNING` if the evaluation configuration explicitly disagrees, providing a high-signal alert of a mismatch.
+3. **Cross-Architecture Parity**: Ensured this two-tier logic governs all active Flow Matching and DPCC pipelines, neutralizing false-positive warnings while preserving checkpoint structural integrity.
+
+***

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-npz_traj_export.py — rebuild a whole eval scene from its .npz files into a compact scene.json
-and a self-contained interactive viewer HTML (npz_traj_visualizer).
+npz_traj_export.py — rebuild a whole eval scene from its .npz files into a compact scene.json.
+View it by opening the reusable app npz_traj_visualizer.html and loading the scene.json through
+its file picker / path box (the app is NOT stamped out per scene — one HTML, many scenes).
 
 See PLAN_npz_traj_visualizer.md (this folder) for the full design. In short: for one scene
 (a results dir holding <variant>.npz flat, or <variant>/<variant>.npz nested), it extracts —
 per variant, per trial — the executed closed-loop path (obs_all), the H-step receding-horizon
 MPC plan fan at (decimated) steps, and PRECOMPUTES the analytics the browser shouldn't
 (violation fraction, divergence-from-reference, tracking error, explosion max, candidate spread,
-plus the npz scalar-metric stat row). Output: <scene_dir>/_traj_viz/{scene.json, viewer_<scene>.html}.
+plus the npz scalar-metric stat row). Output: <scene_dir>/_traj_viz/scene.json (or --out DIR).
 
 Reuses npz_analysis/compare_horizon_plans.py (find_variant_npz, plan_snapshots,
 load_task_constraints, halfspace/obstacle violation maths). numpy + pyyaml only — never draws.
@@ -17,7 +18,7 @@ Usage:
     python npz_traj_export.py <scene_dir> [--env avoiding|uav|unknown] [--trials 0|all|0,3,7]
         [--plan-every N] [--variants a,b,c] [--reference diffuser]
         [--halfspace-variant both-hard|top-left-hard|top-right-hard]
-        [--config config/projection_eval.yaml] [--out DIR] [--no-embed]
+        [--config config/projection_eval.yaml] [--out DIR]
 
 Column conventions (col_map = ACTUAL position; see D11 in the plan):
   avoiding: obs=[x_des,y_des,x,y]        → x,y = cols 2,3          (2D)
@@ -42,7 +43,31 @@ if _NPZ_ANALYSIS not in sys.path:
     sys.path.insert(0, _NPZ_ANALYSIS)
 import compare_horizon_plans as chp  # noqa: E402  (argparse guarded under __main__ → safe import)
 
-_TEMPLATE = os.path.join(_HERE, 'npz_traj_visualizer.html')
+# ── TEMP DEBUG (--debug-visual-avoiding-temp) ────────────────────────────────
+# Old visual-avoiding evals stored the MPC plan fan as position-ONLY (last dim = 2: x,y),
+# whereas this exporter assumes plans share the obs 4-col layout ([x_des,y_des,x,y] → x,y at
+# cols 2,3). That mismatch makes the standard avoiding col_map (dims=[2,3]) index out of bounds
+# on the width-2 plan tensor. When this flag is on we remap each width-2 snapshot into a width-4
+# array with x,y placed at cols [2,3] (cols 0,1 zero-padded) so ALL existing [2,3]/pos_cols slices
+# work unchanged — no other code path changes. OFF by default; delete this block + its 3 call sites
+# (grep _DEBUG_VISUAL_AVOIDING) to remove. See logs_in_develop/config_override_pkl/temp_update_1.
+_DEBUG_VISUAL_AVOIDING = False
+
+
+def _maybe_patch_avoiding_plans(snaps):
+    """When --debug-visual-avoiding-temp is set, widen old position-only (dim=2) plan snapshots
+    to the 4-col avoiding layout with x,y at cols [2,3]. No-op otherwise / on already-wide plans."""
+    if not _DEBUG_VISUAL_AVOIDING:
+        return snaps
+    out = []
+    for s in snaps:
+        if getattr(s, 'ndim', 0) == 3 and s.shape[-1] == 2:
+            wide = np.zeros(s.shape[:-1] + (4,), dtype=float)
+            wide[..., 2:4] = s
+            out.append(wide)
+        else:
+            out.append(s)
+    return out
 
 # Extended, stable palette (sorted-name assignment → stable colours across sessions).
 _PALETTE = ['#000000', '#e6194B', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4',
@@ -121,7 +146,7 @@ def load_variant(path, trials):
             except Exception:
                 rec['obs'] = None
         if plans_all is not None and t < len(plans_all):
-            rec['plans'] = chp.plan_snapshots(plans_all[t])
+            rec['plans'] = _maybe_patch_avoiding_plans(chp.plan_snapshots(plans_all[t]))
         out['trials'][t] = rec
     data.close()
     return out
@@ -246,6 +271,10 @@ def _track_err(m, executed, dims, step):
 
 
 def build_scene(scene_dir, args):
+    global _DEBUG_VISUAL_AVOIDING
+    _DEBUG_VISUAL_AVOIDING = getattr(args, 'debug_visual_avoiding_temp', False)
+    if _DEBUG_VISUAL_AVOIDING:
+        print('[export] DEBUG --debug-visual-avoiding-temp ON: widening width-2 plan fans → cols [2,3]')
     variant_map = chp.find_variant_npz(scene_dir)
     if not variant_map:
         print(f'[export] no .npz under {scene_dir}', file=sys.stderr)
@@ -405,33 +434,21 @@ def build_scene(scene_dir, args):
     return scene, spot
 
 
-def write_outputs(scene, out_dir, embed):
+def write_outputs(scene, out_dir):
+    """Write scene.json only. Open npz_traj_visualizer.html and load this file via its file
+    picker / path box — the viewer is a single reusable app, not one HTML stamped per scene."""
     os.makedirs(out_dir, exist_ok=True)
     scene_path = os.path.join(out_dir, 'scene.json')
     payload = json.dumps(scene, separators=(',', ':'))
     with open(scene_path, 'w') as f:
         f.write(payload)
     size_mb = len(payload) / 1e6
-    viewer_path = None
-    if embed:
-        if not os.path.isfile(_TEMPLATE):
-            print(f'[export] WARNING template not found at {_TEMPLATE}; wrote scene.json only.')
-        else:
-            with open(_TEMPLATE) as f:
-                html = f.read()
-            marker = '/*__SCENE_DATA__*/null'
-            if marker not in html:
-                print('[export] WARNING template missing /*__SCENE_DATA__*/null marker; scene.json only.')
-            else:
-                html = html.replace(marker, 'window.SCENE_DATA=' + payload + ';/*__END__*/')
-                viewer_path = os.path.join(out_dir, f'viewer_{scene["scene"]}.html')
-                with open(viewer_path, 'w') as f:
-                    f.write(html)
-    return scene_path, viewer_path, size_mb
+    return scene_path, size_mb
 
 
 def main():
-    ap = argparse.ArgumentParser(description='Export an eval scene to scene.json + viewer HTML.')
+    ap = argparse.ArgumentParser(description='Export an eval scene to scene.json '
+                                             '(view via npz_traj_visualizer.html).')
     ap.add_argument('scene_dir')
     ap.add_argument('--env', choices=['avoiding', 'uav', 'unknown'], default='unknown')
     ap.add_argument('--trials', default='0')
@@ -442,13 +459,15 @@ def main():
     ap.add_argument('--exp', default='avoiding-d3il')
     ap.add_argument('--config', default=os.path.join(_REPO, 'config', 'projection_eval.yaml'))
     ap.add_argument('--out', default=None)
-    ap.add_argument('--no-embed', action='store_true')
+    ap.add_argument('--debug-visual-avoiding-temp', action='store_true',
+                    help='TEMP: widen old visual-avoiding position-only (dim=2) plan fans to the '
+                         '4-col layout (x,y at cols 2,3) so legacy npz render. Off by default.')
     args = ap.parse_args()
 
     scene_dir = os.path.abspath(args.scene_dir)
     scene, spot = build_scene(scene_dir, args)
     out_dir = args.out or os.path.join(scene_dir, '_traj_viz')
-    scene_path, viewer_path, size_mb = write_outputs(scene, out_dir, not args.no_embed)
+    scene_path, size_mb = write_outputs(scene, out_dir)
 
     # summary table
     print('\n[export] SUMMARY')
@@ -461,9 +480,8 @@ def main():
                   f'fans={len(tr["plans"]):4d} (every {scene["plan_every"]})')
             break
     print(f'  scene.json  : {size_mb:.2f} MB -> {scene_path}')
-    if viewer_path:
-        print(f'  viewer      : {viewer_path}')
-        print('               (open directly in a browser — data is inlined)')
+    print(f'  open        : npz_analysis/npz_traj_visualizer/npz_traj_visualizer.html '
+          f'-> load this scene.json (file picker or path box)')
     if spot:
         print('  spot-checks : ' + ' | '.join(spot))
 

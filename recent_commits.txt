@@ -1,0 +1,49 @@
+commit 19935220910897f9295fbbabc3039516f52f8768
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Tue Jul 14 11:32:31 2026 +0000
+
+    (config_pkl_FIX1 update)plement two-tier config reconciliation to prevent accidental overrides of checkpoint-specific architecture parameters during evaluation.
+
+ .../eval_flow_matching_v3_drifting.py              | 43 ++++++++++++-------
+ .../eval_flow_matching_v3_imeanflow.py             | 43 ++++++++++++-------
+ .../eval_flow_matching_v3_ode_selectable.py        | 43 ++++++++++++-------
+ config/avoiding-d3il.py                            |  8 +++-
+ .../eval_visual_aligning_dpcc.py                   | 43 ++++++++++++-------
+ .../eval_visual_avoiding_dpcc.py                   | 43 ++++++++++++-------
+ flow_matcher_v3_uav/utils/serialization.py         | 43 ++++++++++++-------
+ fm_visual_aligning_test/eval_fm_visual_aligning.py | 44 +++++++++++++-------
+ fm_visual_avoiding_test/eval_fm_visual_avoiding.py | 43 ++++++++++++-------
+ .../eval_imf_visual_aligning.py                    | 43 ++++++++++++-------
+ logs_in_develop/MASTER_TEST_HISTORY.md             | 39 ++++++++++++++++++
+ .../CHANGELOG_config_override_pkl_two_tier.md      | 48 ++++++++++++++++++++++
+ 12 files changed, 354 insertions(+), 129 deletions(-)
+
+commit b9fa1c624daaf334efd14be651467fdd5a11bcd5
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Mon Jul 13 15:44:08 2026 +0000
+
+    (Gen3V4 U10)feat: implement faithful iMF objective with decoupled training s_max, independent logit-normal sampling, and gated v-head tangent prediction.
+
+ .../train_flow_matching_v3_imeanflow.py            |   4 +
+ config/avoiding-d3il.py                            |  67 ++++----
+ flow_matcher_v3_imeanflow/models/imf_diffusion.py  | 156 ++++++++++++++++++-
+ .../models/imf_dit_trajectory.py                   |   9 +-
+ .../MPC_foresight_decouple_DISCUSSION.md           | 119 +++++++++++++++
+ .../Gen3v4_imf/U10/CHANGELOG_U10_imf_official.md   |  34 +++++
+ .../U10/PLAN_faithful_imf_replication.md           | 170 +++++++++++++++++++++
+ ...ON_imf_fidelity_vanilla_vs_improved_meanflow.md | 112 ++++++++++++++
+ 8 files changed, 632 insertions(+), 39 deletions(-)
+
+commit 62ac8328ba314ac52d30e72d3d3be866668d291a
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Mon Jul 13 14:00:40 2026 +0000
+
+    (Gen0 U1 MPC traj in npz)feat: fix config precedence by overriding pickled values before construction and add sampled_trajectories to DPCC evaluation output
+
+ .../CHANGELOG_dpcc_npz_add_sampled_trajectories.md |  43 +++++++
+ ...GATION_diffuser_exploding_traj_normalization.md |   0
+ .../INVESTIGATION_new_vs_upstreams_KILL_TABLE.md   | 128 +++++++++++++++++++++
+ .../INVESTIGATION_new_vs_upstreams_KILL_TABLE.md   |  83 -------------
+ .../CHANGELOG_config_overrides_pkl.md              |  27 ++++-
+ scripts/eval.py                                    |   3 +-
+ 6 files changed, 197 insertions(+), 87 deletions(-)
