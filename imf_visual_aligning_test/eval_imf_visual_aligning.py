@@ -1790,22 +1790,37 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     if target_class is not None:
         diffusion_config._class = utils.config.import_class(target_class)
 
-    # CONFIG-OVERRIDES-PKL (2026-07-13): the CURRENT config plan block is authoritative over
-    # the pickled train-time diffusion config. Every pickled kwarg that also exists in the
-    # parsed plan args is applied BEFORE instantiation; a console warning is printed for
-    # every value that changes.
-    # See logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
+    # CONFIG-OVERRIDES-PKL (fix_1, 2026-07-14): the pkl PRESERVES training-time params; the eval
+    # config is compared against it and reconciled in TWO tiers (see
+    # logs_in_develop/config_override_pkl/fix_1/):
+    #   - SAMPLING knobs (operating point, safe to change at eval): eval config OVERRIDES the pkl, [INFO].
+    #   - identity/architecture keys (must match the checkpoint): pkl value is KEPT to protect the
+    #     state_dict; a loud [WARNING] fires if the eval config disagrees.
+    _SAMPLING_OVERRIDE_KEYS = {
+        'flow_steps_v3', 'ode_inference_steps_v3', 'ode_solver_backend_v3',
+        'ode_solver_method_v3', 'ode_solver_rtol_v3', 'ode_solver_atol_v3',
+        'ode_solver_step_size_v3', 'meanflow_cfg_omega', 'meanflow_cfg_t_min',
+        'meanflow_cfg_t_max', 'condition_guidance_w', 'clip_denoised',
+        'diffusion_timestep_threshold',
+    }
     if override_args is not None:
         for _k in list(diffusion_config._dict.keys()):
-            if hasattr(override_args, _k):
-                _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
-                try:
-                    _changed = bool(_new != _old)
-                except Exception:
-                    _changed = True
-                if _changed:
-                    print(f"[WARNING] config-overrides-pkl: '{_k}': {_old!r} (pkl) -> {_new!r} (config)")
-                    diffusion_config._dict[_k] = _new
+            if not hasattr(override_args, _k):
+                continue
+            _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+            try:
+                _same = bool(_new == _old)
+            except Exception:
+                _same = False
+            if _same:
+                continue
+            if _k in _SAMPLING_OVERRIDE_KEYS:
+                print(f"[ config->pkl ] INFO  {_k}: train={_old!r} -> eval={_new!r}  (sampling knob; applied)")
+                diffusion_config._dict[_k] = _new
+            else:
+                print(f"[ config->pkl ] WARNING  {_k}: train-pkl={_old!r} vs eval-config={_new!r} -- "
+                      f"identity/architecture key; KEEPING the train value to protect the checkpoint "
+                      f"(fix the config to match the checkpoint, or retrain).")
 
     dataset   = dataset_config()
     model     = model_config()

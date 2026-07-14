@@ -877,8 +877,12 @@ base = {
         'meanflow_cfg_omega': 1.0,   # EVAL operating point — 1.0 = guidance OFF (was 0.0 legacy-off)
         'meanflow_cfg_t_min': 0.0,   # eval guidance interval (official s-convention), inert while ω=1
         'meanflow_cfg_t_max': 1.0,
-        'condition_guidance_w': 0.0, # returns-CFG output-mix OFF (deleted path for imf_official)
-        'returns_condition': False,  # returns conditioning is fictional in this gen
+        'condition_guidance_w': 0.0, # returns-CFG output-mix OFF (the real neutralizer; sampling knob)
+        ## returns_condition is an IDENTITY key (config-override-pkl fix_1 keeps the pkl value to
+        ## protect the state_dict). It is fictional/inert for this gen anyway — returns never reach
+        ## the backbone, and condition_guidance_w=0 already disables the returns-CFG path. Kept =True
+        ## to MATCH the pkl (include_returns=True) so it does not false-warn every eval.
+        'returns_condition': True,   # match pkl; inert (neutralized by condition_guidance_w=0)
         ## Train-time-only knobs — MUST equal training so config-overrides-pkl is a no-op (unused at eval)
         'meanflow_cfg_smax': 7.0,
         'meanflow_data_proportion': 0.5,

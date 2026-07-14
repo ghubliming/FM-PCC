@@ -2848,3 +2848,42 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Cross-Architecture Implementation**: Deployed the exact same rendering logic block to both the `fm_visual_aligning` (Gen7) and `diffuser_visual_aligning` (Gen6V4) evaluation scripts, operating safely as a pure diagnostic addition without modifying any planning or metric code.
 
 ***
+
+## Repo-Wide: Runtime Config-Override for Diffusion Models (July 13, 2026)
+
+**Keywords**: repo-wide, config-override, pkl precedence, Gen3v4, Gen7, Gen6V4, Gen8, Gen9, Gen11.
+
+1. **Bug Resolution (Pickled Config Precedence)**: Addressed a pervasive bug across all active generations where pickled training configurations (`diffusion_config.pkl`) silently overwrote Python evaluation configurations during model instantiation. Previous ad-hoc, post-load attribute stamps were insufficient and failed to address kwargs that shape model architecture at initialization.
+2. **Runtime Override Mechanism**: Implemented a comprehensive config-override mechanism across 11 files. At evaluation load time, any pickled diffusion kwarg whose name also exists in the parsed Python config args is explicitly overwritten by the config value *before* instantiation.
+3. **Audit Visibility**: Injected console warnings (`[WARNING] config-overrides-pkl`) that explicitly log when a pickled value is overwritten by a config value, ensuring evaluation parameter overrides (e.g., `meanflow_cfg_omega`, `clip_denoised`) are fully transparent and traceable.
+
+***
+
+## Gen3v4 U10: Faithful iMeanFlow (iMF) Objective Replication (July 13, 2026)
+
+**Keywords**: Gen3v4_imf, U10, imf_official, improved-MeanFlow, CFG evaluation bug.
+
+1. **Objective Synchronization**: Implemented the `imf_official` objective to replicate `imeanflow/imf.py` math 1:1, transitioning from the vanilla `meanflow_jvp` legacy arm and ensuring genuine iMF capability.
+2. **Algorithmic Enhancements**: Introduced decoupled training `s_max`, independent logit-normal sampling, and gated v-head tangent prediction using `torch.func.jvp(..., has_aux=True)`.
+3. **Distribution Correction (D3b)**: Resolved a critical sampling distribution bug where mass was incorrectly gathered near noise rather than data, correcting the $\tau$-axis implementation.
+4. **CFG Architecture Fix**: Removed the broken output-space CFG mixes; CFG is now handled strictly as a net input, eliminating the untrained branch that previously poisoned sampling.
+
+***
+
+## Gen0 DPCC Baseline U1: NPZ Trajectory Parity Fix (July 13, 2026)
+
+**Keywords**: Gen0, DPCC, npz trajectory parity, sampled_trajectories_all, MPC plan foresight.
+
+1. **NPZ Schema Alignment**: Discovered that DPCC legacy `.npz` evaluations lacked the `sampled_trajectories_all` array, leaving them structurally incompatible with the `npz_traj_visualizer` tool for plan-vs-executed coupling cross-checks.
+2. **Missing Array Injection**: Updated `scripts/eval.py` to record `sampled_trajectories_all` (MPC plan foresight). This brings DPCC's `.npz` schema into byte-identical parity with FMv3ODE without altering model behavior or other metrics.
+
+***
+
+## Debugging Investigations: Diffuser Divergence and Decoupling (July 13, 2026)
+
+**Keywords**: diffuser, exploding trajectories, normalization, MPC foresight decoupling, UAV, A/B disambiguation.
+
+1. **Exploding Trajectories Analysis**: Investigated unnormalized trajectories exploding across plots in `diffuser` (unprojected) variants. Conclusively ruled out normalization, confirming that `LimitsNormalizer` correctly bounds inputs. Traced the divergence to the unguarded generative ODE lacking a projection safety net, compounded by NaN/Inf passthroughs defeating the limit clamps.
+2. **MPC Foresight Decoupling (`diffuser` on UAV)**: Investigated why foresight heading misaligns with executed backbones on UAV tasks. Proved the decoupling is a real data phenomenon (Cause A) rather than a visualization artifact. This confirms that `diffuser`'s unprojected observation-head predictions (plans) operate fundamentally uncoupled from the action-head predictions (execution), requiring projection to dynamically re-pin the plan to reality.
+
+***
