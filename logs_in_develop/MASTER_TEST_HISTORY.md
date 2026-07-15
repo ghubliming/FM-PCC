@@ -2899,3 +2899,41 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Cross-Architecture Parity**: Ensured this two-tier logic governs all active Flow Matching and DPCC pipelines, neutralizing false-positive warnings while preserving checkpoint structural integrity.
 
 ***
+
+## NPZ Trajectory Visualizer Stability & Architecture (July 14, 2026)
+
+**Keywords**: npz_traj_export, debug-visual-avoiding-temp, html embed drop, scene.json, column-layout mismatch.
+
+1. **Legacy Column-Layout Fix (`temp_update_1`)**: Addressed an `IndexError` when exporting old visual-avoiding outputs where MPC plans (`sampled_trajectories_all`) were stored as 2-column (position-only) arrays instead of the standard 4-column format. Introduced an opt-in `--debug-visual-avoiding-temp` flag that safely zero-pads width-2 plans into 4-column arrays, allowing existing slicing logic to extract the true position coordinates seamlessly.
+2. **HTML Embedding Dropped (`fix_2`)**: Refactored the trajectory exporter to stop stamping out redundant per-scene HTML templates (`viewer_<scene>.html`). The pipeline now emits only a lightweight `scene.json` file, which is loaded into a single, centralized `npz_traj_visualizer.html` application. This massively reduces output clutter while maintaining fully interactive, offline-capable analysis.
+
+***
+
+## MPC Foresight Storage Upgrade & Plotting Decoupling (July 15, 2026)
+
+**Keywords**: MPC foresight, sampled_trajectories_all, npz resolution, save_samples_every, plot_samples_every, fix_1.
+
+1. **Full-Resolution Storage (`fix_1`)**: Diagnosed a major data loss issue where the full MPC candidate fan (`sampled_trajectories_all`) was only persisted to `.npz` files every `H/2` control steps, throwing away the majority of debug data. Updated `save_samples_every = 1` across 10 evaluation scripts, ensuring the entire K-candidate MPC foresight fan is stored at every single replanning step for high-fidelity post-hoc analysis.
+2. **Plotting Cadence Decoupled (`fix_1.2`)**: Resolved a side-effect where full-resolution storage caused diagnostic PNG plots (foresight-fan overlays) to become an unreadable tangle. Introduced `plot_samples_every = max(1, args.horizon // 2)` to decouple the plotting loop from the storage loop. The PNG diagnostic artifacts are now re-strided back to their original visual density while the `.npz` files retain 100% data fidelity.
+
+***
+
+## Repository Hygiene: Formalizing Dead Code (July 15, 2026)
+
+**Keywords**: Archived_Codes, dead code, encoder-decoder vision, repository cleanup.
+
+1. **Archived Legacy Models**: Removed outdated and unused legacy model code—specifically the encoder-decoder vision line (`fm_encdec_vision`, `ddpm_encdec_vision`), which was abandoned in favor of the D3IL DDPM baseline—from the active workspace.
+2. **Consolidation**: Moved these legacy pipelines into the `Archived_Codes/` directory, formalizing them as dead code to prevent confusion, simplify codebase navigation, and streamline future refactoring efforts.
+
+***
+
+## UAV Projection-Variant Analysis on non-convex `s_curve` (July 15, 2026)
+
+**Keywords**: Gen11, Epoch 9, UAV, s_curve, projection-variant analysis, dynamics constraint, ablation, non-convex geometry.
+
+1. **Load-Bearing Dynamics Constraint**: Authored a comprehensive thesis-ready analysis (`PROJECTION_VARIANTS_ANALYSIS_s_curve.md`) benchmarking 18 projection variants on the highly constrained, non-convex UAV `s_curve` scene.
+2. **Geometric Constraints Net-Harmful**: Discovered that keeping geometric constraints (workspace bounds, halfspaces, obstacles) active forces SLSQP into severe real-time violations (770–1240 ms solves vs. 30.3 ms budget), trips circuit breakers, and results in `<10%` physical safety.
+3. **Kinematic Consistency Triumphs**: Proved via strict ablation that dropping geometry entirely and projecting *only* onto the dynamics (kinematic consistency) and cheap linear action bounds achieves the highest performance (`70%` contact-free safety, `~90 ms` solve time).
+4. **Tracking Error Collapse**: Demonstrated via `.npz` trace reading that without dynamics, the raw Flow Matching plan emits an inconsistent, mis-anchored altitude action that causes unbounded integrator windup (`track_err ≈ 250`). Enabling the dynamics equality rectifies this, instantly dropping tracking error to `~15` and establishing that projection is required for *body-trackability*, not just obstacle clearance.
+
+***

@@ -160,8 +160,60 @@ All edits are in `config/avoiding-d3il.py`. "Baseline" = the settings that produ
 
 ---
 
-## 7. Bottom line for the writeup
+## 7. "More K → *more* chaotic" (raw `diffuser`) — is it TRAIN or EVAL?
+
+**Verdict: TRAIN (the field). The eval sampler is faithful — I checked it.** And critically, **expecting iMF to smooth with rising K like DPCC is a category error** — that behavior is *not* what MeanFlow does, so the K-sweep is the wrong lens. Reasoning:
+
+### The sampler is a correct MeanFlow composition (not the bug)
+Eval uses `legacy_euler`/`euler` (`config` L861–862). The loop (`imf_diffusion.py:284–345`) does, per step `i` of `K`:
+```
+τ = i/K ;  h = dt = 1/K
+x += u(x, r=τ, h=dt) · dt
+```
+This is the **textbook MeanFlow multi-step**: anchor the query at the interval *start* `r=i/K`, width `h=dt`, displace by `u·h`. It matches training exactly (in `_p_losses_imf_official` the net is queried at the noise-side anchor `r` with `h=t−r`). Query stays in-domain (`τ+h=(i+1)/K ≤ 1`), final step lands at `τ=1` (data). **So the composition is right — the chaos is not a sampler bug.**
+
+### First, what the iMF paper (arXiv:2512.02012v1) *actually* claims about NFE — I checked
+Its validated results are **only NFE 1 and 2**, on **ImageNet 256²** (FID metric, huge sample):
+
+| NFE | iMF-XL/2 FID |
+|---|---|
+| 1 | 1.72 |
+| 2 | **1.54** (−0.18) |
+
+So the paper does say **2-NFE > 1-NFE** — a *small* refinement — with **one-step as the primary design**, and gives **no results at NFE ≥ 4** (silent beyond 2). The proper reading of iMF is **K-invariance**: a well-fit average-velocity field lands on data in *one* step, a 2nd step refines marginally, and there's no reason to integrate further. It is **not** an ODE integrator that keeps improving with K.
+
+### Correcting my earlier framing
+Two honest corrections to what I wrote above:
+1. **iMF does not predict "monotonically worse with K."** I overstated that. Its prediction is **K-invariant + a tiny 1→2 gain**. Neither DPCC's "smoother with K" nor "worse with K" is the iMF law — a *well-fit* iMF should look **flat** across small NFE. Your K10/K50 chaos is **off-paper** (the paper never tests there), so it neither confirms nor refutes the paper.
+2. **Different metric.** The paper measures **FID over a sample distribution**; you're eyeballing **one raw trajectory's smoothness**. A field can be distributionally acceptable yet emit individually jittery paths. Not the same axis — don't read our single-trajectory jitter as a FID-style refutation.
+
+### Why *our* raw trajectory still degrades as K rises (an **under-fit-field** effect, not an iMF law)
+Given the field is under-fit (§1–§2), the off-paper high-K regime behaves badly for two reasons:
+1. **As K↑, h→0, and `u(x,r,h) → v(x,r)`** — the *instantaneous* velocity, which here is the coarse, JVP-trained, **spiky** object (`aux_loss`/`raw_mse` plateau ≈ 2–3, §1). High-K integrates the model's **roughest** field, many times.
+2. **A non-smooth field surfaces as jitter under many small steps.** K2 samples its kinks twice → coarse-but-smooth; K50 samples them 50× → every kink becomes a visible wiggle. It's the field's **roughness being resolved**, not error magnitude growing.
+
+A **well-fit** iMF would *not* show this (the field would be smooth, so high-K ≈ low-K). So the K-degradation is a **symptom of the under-fit field**, fully consistent with the paper — the paper's clean 1/2-NFE result assumes a field ours hasn't reached on 96 demos (§2b).
+
+### The comparison that actually matches the paper: **K1 vs K2** (you haven't run it)
+Your K2-vs-K10 sweep is **not** the paper's test. The paper's headline is **1-NFE vs 2-NFE**. So run **K1** and compare to **K2**:
+- **K2 sharper than K1** ⇒ you *reproduced the paper's direction* (2>1) — the field is fitting; push it with the §6 retrain and stay at NFE≤2.
+- **K1 ≈ K2, both coarse** ⇒ the field is too under-fit to even show the 1→2 refinement ⇒ §2b data ceiling is binding.
+- **K1 already coarse** ⇒ proves it's **100 % the field (TRAIN)**: one query, no accumulation, no roughness-resolution — any coarseness is the map itself.
+
+Either way, **evaluate iMF at NFE 1–2 (the paper's regime), not at K10/K50.** K1 is a single `u`-query — no accumulation, no roughness-resolution — so it isolates the field cleanly and costs nothing to run alongside your K50.
+
+### What the §6 retrain will / won't do
+- **Will:** target **low-K (K1–2) sharpness** — the *correct* iMF operating regime. More large-`h` mass (`data_proportion↓`, `p_std↑`) directly improves the big-jump average-velocity the one-shot map uses.
+- **Won't:** make **high-K "DPCC-smooth."** Stop chasing high-K for iMF — it's not its regime, and a smoother field will show up as *better K1/K2*, not as a DPCC-style K-convergence curve.
+- **If even K1/K2 stays coarse after retrain** ⇒ §2b data ceiling is binding ⇒ honest call: use iMF as the generative brain behind the DPCC brakes (projected variants already 1.0) and report raw `diffuser` as the method's limitation at this data scale.
+
+> **Judge iMF at K1–K2, not by a K-sweep.** The K-sweep is a diagnostic (it proved the field is rough), not the metric.
+
+---
+
+## 8. Bottom line for the writeup
 
 - **Not a training bug.** K2 stability fix held; a0/raw_mse/aux all dropped; adaptive `loss` is flat *by design*.
-- **The model is genuinely coarse** (raw_mse plateau ≈ 3, per-dim ≈ 0.25) because: interval-sampling starves large-h (§2a), average-velocity is data-starved at 96 demos (§2b), and eval runs CFG-off so trained guidance is dead weight (§2c). K10≈K2 confirms it's field-bias, not discretization.
+- **The model is genuinely coarse** (raw_mse plateau ≈ 3, per-dim ≈ 0.25) because: interval-sampling starves large-h (§2a), average-velocity is data-starved at 96 demos (§2b), and eval runs CFG-off so trained guidance is dead weight (§2c).
+- **On the K-sweep (§7):** the paper (arXiv:2512.02012v1) validates **only NFE 1→2** (FID 1.72→1.54), one-step-primary, silent past 2 — iMF is **K-invariant**, not an ODE integrator. Our K10/K50 "chaos" is **off-paper** and is a symptom of the **under-fit field** (high-K resolves its roughness), *not* a refutation of the paper and *not* an iMF "worse-with-K" law. **The paper's real test is K1 vs K2 — still unrun.** Judge iMF there.
 - **iMF here is faithful but structurally out-matched by UNet-FM/DPCC on this small task** — the honest, fundamental reason, consistent with `../debug_notes/INVESTIGATION_imf_fidelity_vanilla_vs_improved_meanflow.md`.
