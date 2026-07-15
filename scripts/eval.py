@@ -219,6 +219,7 @@ for exp in exps:
                     fig.suptitle(f'{exp} - {variant}')
 
                     save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
+                    plot_samples_every = max(1, args.horizon // 2)  # fix_1.2: keep PLOT readable - draw foresight fan only every H/2 steps (npz still saves every step)
 
                     # Store a few sampled trajectories
                     sampled_trajectories_all = []        
@@ -349,7 +350,7 @@ for exp in exps:
                         axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
                         
                         axes = [ax[i, 5], ax_all[i, variant_idx]]
-                        for __ in range(len(sampled_trajectories_all[i])):          # Iterate over timesteps of sampled trajectories
+                        for __ in range(0, len(sampled_trajectories_all[i]), plot_samples_every):          # Iterate over timesteps of sampled trajectories
                             for ___ in range(min(args.batch_size, 4)):              # Iterate over batch
                                 for curr_ax in axes:
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')

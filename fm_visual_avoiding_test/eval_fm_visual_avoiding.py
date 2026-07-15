@@ -414,6 +414,7 @@ for exp in exps:
                                  10 * min(n_trials, plot_how_many)), squeeze=False)
 
                     save_samples_every          = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
+                    plot_samples_every = max(1, args.horizon // 2)  # fix_1.2: keep PLOT readable - draw foresight fan only every H/2 steps (npz still saves every step)
                     n_success                   = np.zeros(n_trials)
                     n_success_and_constraints   = np.zeros(n_trials)
                     n_steps                     = np.zeros(n_trials)
@@ -553,7 +554,9 @@ for exp in exps:
                             colors[seed % len(colors)], linewidth=2)
 
                         # Col 5: planned c_xy trajectory from FM model at subsampled steps
-                        for traj_np in sampled_trajectories_all[i]:
+                        for _pi, traj_np in enumerate(sampled_trajectories_all[i]):
+                            if _pi % plot_samples_every != 0:   # fix_1.2: subsample plot only
+                                continue
                             if traj_np is None:
                                 continue
                             for k in range(traj_np.shape[0]):

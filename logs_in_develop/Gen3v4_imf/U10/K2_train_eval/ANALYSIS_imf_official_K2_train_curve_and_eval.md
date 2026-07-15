@@ -118,7 +118,49 @@ Caveat on the ceiling: fewer steps saves compute, it does **not** lower the §2b
 
 ---
 
-## 6. Bottom line for the writeup
+## 6. Proposed config for the **next TRAIN + EVAL (K10)** — exact settings
+
+All edits are in `config/avoiding-d3il.py`. "Baseline" = the settings that produced job 23392/23420. Only the **bold** rows change; everything else stays.
+
+### 6A · TRAIN block — iMF (`config/avoiding-d3il.py`, imf train block ≈ L482–550)
+
+| Parameter | Line | Baseline | **Next run** | Leverage / why |
+|---|---|---|---|---|
+| **`meanflow_data_proportion`** | 489 | 0.5 | **0.25** | **HIGH** — fewer `h=0` FM anchors → more large-`h` (interval) supervision that K-step sampling actually queries (§2a). |
+| **`p_std`** | 550 | 1.0 | **1.4** | **HIGH** — widens the `(t,r)` logit-normals so `h∈[0.3,0.7]` (the K2/K10 step size) gets real training mass (§2a). |
+| **`n_train_steps`** | 532 | 100000 | **50000** | compute — ~all useful learning is done by ~ep40; halves the ~12 h wall-clock, 2× faster sweeps (§5). Cosine LR re-anneals to 0 at 50 k automatically. |
+| `meanflow_cfg_smax` | 488 | 7.0 | **3.0** *(optional)* | MED — gentler guided branch; only worth it if you also intend a CFG-on eval (row-set 6B note). Leave at 7.0 if not. |
+| `p_mean` | 549 | −0.4 | −0.4 (keep) | keeps median anchor ≈ 0.40 on the τ axis. |
+| `meanflow_class_dropout_prob` | 490 | 0.1 | 0.1 (keep) | null-token rate; change only in tandem with CFG-on eval. |
+| `imf_objective` / `imf_backbone` | 482 / 510 | `imf_official` / `dit` | keep | identity — DiT is required (unet no-ops cond_drop). |
+| `meanflow_cfg_omega/t_min/t_max` | 501–503 | 4.0 / 0.4 / 0.6 | keep | train-time guidance interval. |
+
+### 6B · EVAL / plan block — running **K10** (`config/avoiding-d3il.py`, imf plan block ≈ L845–896)
+
+| Parameter | Line | **Next eval (K10)** | Note |
+|---|---|---|---|
+| **`flow_steps_v3`** | 854 | **10** | this is the K in K10 (baseline plan block was `2`=K2). Sampling knob → overrides pkl, prints `[ config->pkl ] INFO`. **This is the only knob that sets K.** |
+| ~~`ode_inference_steps_v3`~~ | — | **do NOT set** | **DEAD** — `imf_diffusion.py:104` overwrites it to `=flow_steps_v3` and sampling never reads it (`p_sample_loop` uses `self.flow_steps_v3`, `:223`). The config itself labels it *"DEAD code (compatibility alias)"*. Ignore. |
+| `meanflow_cfg_omega` | 877 | 1.0 (CFG **off**) | baseline eval operating point. *Optional experiment:* sweep `{1.0, 1.3, 1.6}` with the U9/U10 clamp on to test if §2c sharpness is recoverable — no retrain needed. |
+| `meanflow_cfg_t_min` / `t_max` | 878–879 | 0.0 / 1.0 | inert while ω=1; set to the train interval only if you turn CFG on. |
+| `condition_guidance_w` | 880 | 0.0 | the real returns-CFG neutralizer; keep 0. |
+| `returns_condition` | 885 | True | match pkl (inert; neutralized by `condition_guidance_w=0`). |
+
+### 6C · ⚠ Mirror the identity knobs, or eval will WARN
+`meanflow_data_proportion`, `p_std`, `p_mean`, `meanflow_cfg_smax`, `meanflow_class_dropout_prob` are **identity keys** (not in the sampling-override allowlist), so at eval the **pkl value wins** and a `[ config->pkl ] WARNING` fires on any mismatch. They don't affect sampling behavior, but to keep the console clean **copy the new TRAIN values into the plan block too**:
+
+| plan-block line | set to (match new pkl) |
+|---|---|
+| `meanflow_data_proportion` (888) | **0.25** |
+| `p_std` (858) | **1.4** |
+| `meanflow_cfg_smax` (887) | **3.0** *(only if you changed it in 6A)* |
+| `p_mean` (857), `meanflow_class_dropout_prob` (889) | unchanged (−0.4 / 0.1) |
+
+**Read-the-result reminder:** judge the new run by **`val/raw_mse`** plateau height and K10 trajectory smoothness — **not** by `loss`/`test/loss` (flat by construction, §0). Success = `val/raw_mse` settles below ~2 and K10 trajectories look smoother than this run's.
+
+---
+
+## 7. Bottom line for the writeup
 
 - **Not a training bug.** K2 stability fix held; a0/raw_mse/aux all dropped; adaptive `loss` is flat *by design*.
 - **The model is genuinely coarse** (raw_mse plateau ≈ 3, per-dim ≈ 0.25) because: interval-sampling starves large-h (§2a), average-velocity is data-starved at 96 demos (§2b), and eval runs CFG-off so trained guidance is dead weight (§2c). K10≈K2 confirms it's field-bias, not discretization.

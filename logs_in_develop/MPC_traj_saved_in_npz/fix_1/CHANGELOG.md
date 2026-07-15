@@ -6,6 +6,31 @@
 
 ---
 
+## fix_1.2 — Decouple PLOT cadence from npz cadence (2026-07-15)
+
+**Problem introduced by fix_1:** `save_samples_every = 1` fed **both** the npz *and* the diagnostic
+PNG fan-overlay from the same buffer, so the foresight fan was drawn at every control step and the
+`{variant}.png` plots (e.g. `.../results/halfspace_both-hard/diffuser.png`) became an unreadable
+tangle.
+
+**Fix:** keep npz at full resolution (every step) but restore the **old plot density**. Added a
+separate `plot_samples_every = max(1, args.horizon // 2)` and strided only the **plotting** loops
+by it. The npz collection gate (`if _ % save_samples_every == 0`, still `1`) is unchanged, so
+`sampled_trajectories_all` still holds every step.
+
+Since fix_1 makes the buffer index equal the control-step index, striding the plot by
+`args.horizon // 2` reproduces exactly the pre-fix_1 plot cadence.
+
+Applied to the same 12 files:
+- **10 files** (`for __ in range(len(...))`): → `for __ in range(0, len(...), plot_samples_every)`
+- **2 visual-avoiding files** (`for traj_np in ...`): → `enumerate(...)` + `if _pi % plot_samples_every != 0: continue`
+  (`diffuser_visual_avoiding_test`, `fm_visual_avoiding_test`)
+
+Net: **npz = every step (fix_1); PNG fan = every H/2 steps (fix_1.2, = original look).** This
+supersedes the "plots get denser" side-effect noted below.
+
+---
+
 ## Problem
 
 `PATCH_TODO`/JOB A only fixed **whether** `sampled_trajectories_all` reached `np.savez` at
@@ -122,9 +147,8 @@ code — never run, never edited. Not part of this fix and not tracked as work.
 - **npz size / memory:** each rollout now stores `~episode_length` foresight snapshots instead of
   ~2, i.e. roughly `horizon//2 ×` larger `sampled_trajectories_all`. Each snapshot is
   `[batch_size, horizon, obs_dim]`. Expected and intended for full-fidelity debug runs.
-- **Plots get denser:** the blue foresight-fan overlay in `{variant}.png` now draws a plan at
-  every step. Still functional, just busier (the plot loop caps candidates at
-  `min(batch_size, 4)`, so density scales with steps, not batch).
+- **Plots get denser:** ~~the blue foresight-fan overlay in `{variant}.png` now draws a plan at
+  every step~~ → **resolved in fix_1.2** (plot strided to every `H/2` steps; npz stays full).
 - **No savez / schema change:** only the sampling cadence changed; downstream consumers
   (`npz_analysis/`, visualizer) read the same `sampled_trajectories_all` key, now denser in time.
 - **Not run here** (AI-coding container, no Python env) — **run on cluster** to validate npz
