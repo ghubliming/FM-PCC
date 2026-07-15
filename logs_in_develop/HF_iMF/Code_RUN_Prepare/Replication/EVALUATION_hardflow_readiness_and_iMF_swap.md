@@ -153,34 +153,65 @@ A sign slip makes the sampler walk *toward* noise. **Gate:** fix the convention 
 
 ---
 
-# Part 3 — Replication RUN plan: SLURM entries + FMPCC-env bridge (IMPLEMENTATION SPEC)
+# Part 3 — Replication RUN plan: SLURM entries + CLONED-env bridge (IMPLEMENTATION SPEC)
 
-> **This section supersedes the "build a separate `hardflow` conda env" assumption in Part 1** (§1.2/§1.4). The chosen approach is to run the HardFlow repo **UNMODIFIED, inside the existing FMPCC conda env** (which is a 1:1 DPCC + D3IL env). This is the spec another agent should implement — it is a plan, not committed code.
+> **This section supersedes the env assumptions in Part 1** (§1.2/§1.4) **and the earlier "run in the live FMPCC env" draft of this Part.**
 >
-> **User workflow assumed:** the HardFlow repo is `git pull`ed onto the cluster (phase-1: as a sibling of `FM-PCC`; phase-2: pulled *into* `FM-PCC`). The FMPCC conda env already exists. We add **SLURM entries + a thin bridge**, save all HardFlow train/eval outputs into `FM-PCC/logs/`, and touch **no HardFlow source**.
+> **DECISION (locked):** run the HardFlow repo **UNMODIFIED**, inside a **CLONE of the FMPCC conda env** — never the live/working FMPCC. Phase-1: build `conda create --name <clone> --clone FMPCC`, reconcile the clone (see §3.05), and run everything there. Phase-2 (only *after* the clone works end-to-end): optionally fold the reconciled packages back into the real FMPCC env. **In phase-1, nothing installs into the live FMPCC.** This is a plan/spec, not committed code.
+>
+> **Why a clone, not the live env:** there is a genuine version-level mismatch between DPCC (FMPCC) and HardFlow — **numpy 1.26 vs 2.0** and **gym 0.26 vs 0.20** (evidence in §3.1). Reconciling those *in place* could break the working FMPCC. A clone gives an isolated, disposable sandbox that starts from the known-good DPCC base (HardFlow is itself DPCC-derived), so we mutate the clone freely and the live env stays pristine.
+>
+> **User workflow assumed:** HardFlow is `git pull`ed onto the cluster (phase-1: sibling of `FM-PCC`; later: pulled *into* `FM-PCC`). We add **SLURM entries + a thin bridge that activates the CLONE**, save all HardFlow train/eval outputs into `FM-PCC/logs/`, and touch **no HardFlow source**.
 
 ## 3.0 Headline answers
 
-- **Do we modify HardFlow's original code? → NO.** Everything needed is a *bridge* (env vars, PYTHONPATH order, one `logs` symlink, one pip shim). HardFlow stays pristine so `git pull` stays clean.
-- **Do we build a separate `hardflow` conda env? → NO.** Run in the existing FMPCC env. Only **one** package is missing (`tyro`); `d4rl` import flakiness is tolerated by a suppress flag.
+- **Do we modify HardFlow's original code? → NO.** Everything needed is a *bridge* (env vars, PYTHONPATH order, one `logs` symlink, env reconciliation done in the clone). HardFlow stays pristine so `git pull` stays clean.
+- **Which conda env? → a CLONE of FMPCC (phase-1), never the live FMPCC.** The clone is reconciled to HardFlow's needs (§3.05). All SLURM scripts target the clone via `CONDA_ENV_NAME`.
+- **Do we risk the working FMPCC? → NO (phase-1).** No installs/downgrades touch it. Folding into FMPCC is a separate, later, opt-in phase-2 decision.
 - **Where do outputs go? →** `FM-PCC/logs/hardflow/…` (gitignored), via a `logs` symlink so both HardFlow's config-driven paths *and* its one hardcoded path land there.
-- **How thin are the SLURM entries? →** They just set up the bridge and then call **HardFlow's own `run_scripts/*.sh`**, so the paper hyper-parameters stay baked in and nothing is duplicated or re-tuned.
+- **How thin are the SLURM entries? →** They set up the bridge and call **HardFlow's own `run_scripts/*.sh`**, so paper hyper-parameters stay baked in and nothing is duplicated or re-tuned.
 
-## 3.1 Env-gap audit — FMPCC (DPCC+D3IL) env vs what HardFlow imports
+## 3.05 Env strategy — clone FMPCC, then reconcile the clone
 
-Verified by grepping HardFlow's `run/*.py` and `hardflow/**/*.py` imports against a DPCC-class env:
+**Build once (login node, not inside an sbatch):**
+```
+conda create --name hardflow_clone --clone FMPCC      # isolated copy of the known-good DPCC+D3IL env
+conda activate hardflow_clone
+```
 
-| HardFlow needs | In FMPCC env? | Action |
-|---|---|---|
-| `torch`, `numpy`, `gym`, `einops`, `tqdm`, `matplotlib`, `scipy`, `yaml`, `pandas` | ✅ yes (DPCC deps) | none |
-| `d4rl` (`import d4rl` in `datasets/d4rl.py`) | ✅ usually (diffuser lineage) | none; also set `D4RL_SUPPRESS_IMPORT_ERROR=1` so a flaky import can't kill the job |
-| **`tyro`** (arg parser in `run/eval.py`, `run/train.py`) | ❌ likely missing | **one** `pip install tyro` into the FMPCC env (benign; doesn't affect FMPCC jobs) |
-| `hardflow` package | via checkout | put HardFlow repo on **PYTHONPATH** (see §3.3) — do **not** `pip install -e .` |
-| `d3il` (HardFlow's **own bundled** copy, registers `avoiding-v0`) | conflicts w/ FMPCC's d3il | **PYTHONPATH order**, HardFlow first (see §3.3) |
-| `l4casadi` (CUDA) | ❌ | only for `hardflow`/`projection*`; skip for `hardflow_new`+`original`+`oc_flow`+`gradient_guidance` |
-| `tabulate` | for the results notebook only (runs off-cluster) | not needed on the cluster |
+**Reconcile the clone to HardFlow's declared needs (all changes stay in the clone):**
+1. `pip install tyro` — the one genuinely-missing package (DPCC has no tyro).
+2. **gym**: HardFlow's bundled d3il/avoiding env is written against **gym 0.20.0**, the clone has **gym 0.26.2**. This is the highest-risk item (the 0.20↔0.26 step/reset API break). Try `pip install "gym==0.20.0"` in the clone and confirm `gym.make("avoiding-v0")` + a short rollout works. If the downgrade cascades badly, that's a signal to fall back to a *fresh* env from HardFlow's `environment.yml` (§3.06).
+3. **numpy**: HardFlow pins **2.0.2**, the clone has **1.26.4**. Leave 1.26 first and only bump if an import/runtime error demands it (numpy-2-only APIs are unlikely in HardFlow's code). A numpy bump is invasive — treat as last resort.
+4. **torch**: inherited from FMPCC (already CUDA-matched to the cluster) — do **not** touch it. HardFlow leaves torch unpinned precisely so it rides the host's build.
+5. Add `l4casadi` **only** if you need the `hardflow`/`projection*` methods; the l4casadi-free set doesn't.
 
-> **`numpy` note:** HardFlow *pins* `numpy==2.0.2`; the FMPCC env is likely numpy-1.x. HardFlow's runtime code is very unlikely to use numpy-2-only APIs, so 1.x should work — but this is the first thing to check if an import errors at first run.
+**Record the clone's final state** (`conda list > logs/hardflow/clone_env.txt`) so phase-2 (folding into FMPCC) has an exact diff. **Watch-item:** every `pip install` into the clone can perturb *the clone*, which is fine — but log what changed so the phase-2 FMPCC install is a known, minimal set.
+
+## 3.06 Fallback if the clone can't be reconciled
+
+If the gym-0.20 downgrade (or a numpy-2 requirement) breaks the clone, abandon reconciliation and build a **fresh isolated env from HardFlow's own spec** (`conda env create -f environment.yml` + `pip install -r requirements.txt` + a manually-chosen torch+CUDA). Same bridge, same SLURM scripts — only `CONDA_ENV_NAME` changes. This is strictly more isolated but re-fights the unpinned-torch / numpy-2-vs-vintage friction, so it's the fallback, not the default.
+
+## 3.1 Env-gap audit — DPCC/FMPCC pins vs HardFlow pins (measured)
+
+Compared `dpcc/requirements.txt` against HardFlow's `environment.yml`+`requirements.txt`. **This is NOT "DPCC + a few new packages" — two core libraries diverge at a version level, which is the whole reason we clone rather than run in-place.**
+
+| Package | DPCC / FMPCC | HardFlow | Reconcile in the clone? |
+|---|---|---|---|
+| **numpy** | **1.26.4** | **2.0.2** | ⚠️ major-version boundary; can't coexist. **Leave 1.26 first**, bump only if forced (§3.05.3). |
+| **gym** | **0.26.2** (+ gymnasium 0.29.1) | **0.20.0** | ⚠️ API-era break; HardFlow's d3il needs 0.20. **`pip install gym==0.20.0`** in the clone — highest-risk step. |
+| mujoco | 2.3.7 | 2.3.7 | ✅ identical |
+| scipy | 1.13.1 | 1.13.1 | ✅ identical |
+| matplotlib / scikit-learn | 3.9.0 / 1.5.2 | 3.9.4 / 1.6.1 | patch-level, ignore |
+| **tyro** | absent | required | `pip install tyro` (the clean additive one) |
+| torch | CUDA-matched build | unpinned | inherit from clone; do not touch |
+| `d4rl` | present (diffuser lineage) | imported | none; set `D4RL_SUPPRESS_IMPORT_ERROR=1` |
+| `l4casadi` (CUDA) | absent | for `hardflow`/`projection*` only | install only if running those methods |
+| `tabulate` | — | results notebook only (off-cluster) | not needed on cluster |
+
+**Import-resolution (independent of versions):**
+- `hardflow` package → put HardFlow repo on **PYTHONPATH** (see §3.3); do **not** `pip install -e .`.
+- `d3il` → HardFlow ships its **own** bundled copy (registers `avoiding-v0`) that clashes with the clone's d3il → **PYTHONPATH order, HardFlow first** (§3.2.2).
 
 ## 3.2 Two verified facts that DICTATE the bridge design
 
@@ -194,15 +225,16 @@ Verified by grepping HardFlow's `run/*.py` and `hardflow/**/*.py` imports agains
 
 A single sourced shell helper (proposed `Slurm_Codes/sbatch/hardflow/_hardflow_common.sh`) that every hardflow sbatch sources after its `#SBATCH` header. Responsibilities, in order:
 
-1. **Resolve paths** (all overridable by env var so phase-1 sibling / phase-2 in-FMPCC both work):
-   - `FMPCC_ROOT` (default `$HOME/FMPCC`), `REPO=$FMPCC_ROOT/FM-PCC`, `CONDA_DIR`, `CONDA_ENV_NAME=FMPCC`.
-   - `HARDFLOW_REPO` (default `$FMPCC_ROOT/HardFlow`; phase-2 set to `$REPO/HardFlow`).
+1. **Resolve paths** (all overridable by env var so phase-1 sibling / later in-FMPCC both work):
+   - `FMPCC_ROOT` (default `$HOME/FMPCC`), `REPO=$FMPCC_ROOT/FM-PCC`, `CONDA_DIR`.
+   - **`CONDA_ENV_NAME` — MUST default to the CLONE (e.g. `hardflow_clone`), NOT `FMPCC`.** This is the single guard that keeps the live env untouched.
+   - `HARDFLOW_REPO` (default `$FMPCC_ROOT/HardFlow`; later set to `$REPO/HardFlow`).
    - `HARDFLOW_LOG_COLLECT` (default `$REPO/logs/hardflow`).
-   - Abort with a clear message if `HARDFLOW_REPO` doesn't exist.
+   - Abort with a clear message if `HARDFLOW_REPO` doesn't exist, **and abort if `CONDA_ENV_NAME == FMPCC`** (fail closed so a job can never run against the live env in phase-1).
 2. **Pro-logging** (match FMPCC convention): `latest.log` symlink, a JOB START banner (job id/node/GPU + HardFlow git rev), and an EXIT trap printing JOB END.
-3. **Activate the FMPCC conda env** (not a hardflow env).
+3. **Activate the CLONE conda env** (`conda activate "$CONDA_ENV_NAME"` — the clone, never the live FMPCC). Assume the clone is already built + reconciled per §3.05 (the sbatch does not create/mutate the env).
 4. **PYTHONPATH**: `export PYTHONPATH="$HARDFLOW_REPO${PYTHONPATH:+:$PYTHONPATH}"` (HardFlow first — see §3.2.2).
-5. **pip shim**: `python -c "import tyro" || pip install --quiet tyro`.
+5. **Sanity check (do NOT auto-install)**: `python -c "import tyro, gym; print(gym.__version__)"` — if this fails, the clone wasn't reconciled (§3.05); abort with a clear message rather than pip-installing at job time (job-time installs into a shared clone race across concurrent jobs).
 6. **Headless MuJoCo + GPU/EGL isolation** — the FMPCC standing rule (see `logs_in_develop/SLURM_GPU_IT_WARNING`): export `D4RL_SUPPRESS_IMPORT_ERROR=1`, `MUJOCO_GL=egl`, `PYOPENGL_PLATFORM=egl`, `MPLBACKEND=agg`, `CUDA_DEVICE_ORDER=PCI_BUS_ID`, set `MUJOCO_EGL_DEVICE_ID=${CUDA_VISIBLE_DEVICES%%,*}`, and **abort if EGL device ≠ CUDA device** (the GPU-LEAK guard). Keep this even though eval passes `--no-render` (physics is fine without EGL, but rendering — if ever enabled — needs it, and the guard is mandatory here).
 7. **logs symlink**: `mkdir -p $HARDFLOW_LOG_COLLECT`; if `$HARDFLOW_REPO/logs` is already a symlink, refresh it; if it's a **real** dir, abort with a message (don't clobber); else create the symlink. (HardFlow gitignores `logs/`, so a fresh pull won't have one.)
 8. **`cd "$HARDFLOW_REPO"`** so all relative `./logs`, `run/`, `d3il/`, `run_scripts/` resolve.
@@ -230,17 +262,21 @@ Create under `Slurm_Codes/sbatch/hardflow/` (sibling style to `sbatch/iMF/`). Su
 
 ## 3.6 First-run checklist (order matters)
 
-1. `git pull` HardFlow onto the cluster; set `HARDFLOW_REPO` if not the default.
-2. Submit `eval_hardflow.sh` with `METHODS="original"` as a **smoke test** — cheapest path that exercises the bridge (env import, `avoiding-v0` registration via HardFlow's d3il, logs symlink). Requires a checkpoint present (download, or run `train_hardflow.sh` first).
+0. **Build + reconcile the clone** (§3.05), on the login node: `conda create --name hardflow_clone --clone FMPCC`, then `pip install tyro`, `pip install gym==0.20.0`, verify `import tyro, gym; gym.__version__ == 0.20.0`. Record `conda list`. **Live FMPCC is never touched.**
+1. `git pull` HardFlow onto the cluster; set `HARDFLOW_REPO` if not the default. Ensure the sbatch's `CONDA_ENV_NAME` points at the clone.
+2. Submit `eval_hardflow.sh` with `METHODS="original"` as a **smoke test** — cheapest path that exercises the bridge (clone activation, env import, `avoiding-v0` registration via HardFlow's d3il, logs symlink). Requires a checkpoint present (download, or run `train_hardflow.sh` first).
 3. Confirm `logs/hardflow/...` populated and the run didn't silently skip dynamics.
 4. Scale up: full `METHODS`, then `train_hardflow.sh` if training from scratch.
+5. **Phase-2 (opt-in, only after the clone works):** replay the recorded clone diff (`tyro`, `gym==0.20.0`, …) into the real FMPCC env — a separate, deliberate decision, not part of this run.
 
-**Watch-items:** (a) numpy 1.x vs HardFlow's pin (§3.1); (b) `tyro` install succeeded; (c) `import d3il` resolved to HardFlow's copy, not FMPCC's (print `d3il.__file__` if unsure); (d) dynamics `.npz` exists before any `--dynamics_constraint` method.
+**Watch-items:** (a) **gym downgraded to 0.20.0 in the clone** and the avoiding rollout actually steps (highest-risk, §3.05.2); (b) numpy stayed 1.26 and nothing demanded 2.0 (§3.05.3); (c) `import d3il` resolved to HardFlow's copy, not the clone's (print `d3il.__file__` if unsure); (d) dynamics `.npz` exists before any `--dynamics_constraint` method.
 
 ## 3.7 Explicit non-goals / guardrails for the implementing agent
 
+- **Do NOT install/downgrade anything into the live FMPCC env in phase-1.** All env changes happen in the CLONE. The bridge must **abort if `CONDA_ENV_NAME == FMPCC`** (§3.3.1).
 - **Do NOT edit any file under the HardFlow repo.** If something seems to require it, stop and surface it — the whole design is predicated on an unmodified upstream.
-- **Do NOT `pip install -e .`** the HardFlow repo into the FMPCC env (d3il-shadowing risk, §3.2.2). PYTHONPATH only.
+- **Do NOT `pip install -e .`** the HardFlow repo into the clone (d3il-shadowing risk, §3.2.2). PYTHONPATH only.
+- **Do NOT auto-install packages at sbatch job time** — reconcile the clone once, up front (§3.05); job-time installs race across concurrent jobs and mask real env problems.
 - **Do NOT break the GPU/EGL isolation guard** (§3.3.6). It is a hard cluster rule.
 - **Do NOT redirect outputs with `--log_folder`** (misses the hardcoded dynamics path, §3.2.1). Use the symlink.
 - Keep the sbatch bodies thin — orchestration only; all science stays in HardFlow's `run_scripts/*.sh`.
