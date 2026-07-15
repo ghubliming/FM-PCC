@@ -399,7 +399,7 @@ for exp in exps:
                         figsize=(10 * len(projection_variants),
                                  10 * min(n_trials, plot_how_many)), squeeze=False)
 
-                    save_samples_every        = args.horizon // 2
+                    save_samples_every        = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
                     n_success                 = np.zeros(n_trials)
                     n_success_and_constraints = np.zeros(n_trials)
                     n_steps                   = np.zeros(n_trials)

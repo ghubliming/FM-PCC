@@ -126,7 +126,7 @@ for exp in exps:
                 policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
                 fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)))
                 fig.suptitle(f'{exp} - {variant}')
-                save_samples_every = args.horizon // 2
+                save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
                 sampled_trajectories_all = []
                 obs_all = []  # MPC_NPZ_PATCH
                 act_all = []  # MPC_NPZ_PATCH
