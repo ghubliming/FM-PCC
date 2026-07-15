@@ -7,6 +7,20 @@
 
 ---
 
+## Hardcoded env block (update — mjx-style)
+
+Following the `sbatch/uav_fm/eval_fm_uav.sh` (`FMPCC_mjx` clone) precedent, `_hardflow_common.sh` now **hardcodes** the env block instead of `${VAR:-default}` overrides — because the job may be submitted from an already-activated FMPCC shell, where inherited env vars would make dynamic defaults unreliable:
+- `CONDA_ENV_NAME="hardflow_clone"` (hardcoded literal; the reconciled clone, never live FMPCC).
+- `FMPCC_ROOT`/`REPO`/`CONDA_DIR`/`HARDFLOW_REPO`/`HARDFLOW_LOG_COLLECT` hardcoded (only `$HOME` stays dynamic).
+- **`PYTHONPATH` reset FRESH** to `"$HARDFLOW_REPO"` (was appended) — prevents an inherited FMPCC `d3il` path from shadowing HardFlow's bundled `d3il`.
+- Dropped the `CONDA_ENV_NAME==FMPCC` fail-closed guard (moot now the name is a hardcoded literal). The env sanity-check (`import tyro, gym`) stays.
+
+## Vendored HardFlow into FM-PCC (update)
+
+- **Copied** the HardFlow `d3il`/avoiding working tree into **`FM-PCC/HardFlow/`** (~62 MB, 426 files) — `hardflow/`, `run/`, `run_scripts/`, and the `d3il/` sim + 96 avoiding demos. **Excluded `.git`** (upstream history is ~469 MB) and all pycache/egg/pyc. HardFlow is now versioned *with* FM-PCC and reaches the cluster via `git pull` (no separate clone).
+- **Edited `FM-PCC/HardFlow/.gitignore`**: removed the upstream `d3il/`, `datasets/`, `dataset/`, `experiment/` ignore lines so FM-PCC **tracks** the sim + data (upstream ignored them). Kept the rest (`*.pth`, `**/logs/`, `__pycache__`, `**_generated/`, …) so checkpoints/logs still never get committed. Verified: `git add --dry-run` → 426 files, 393 under `d3il/`, 96 demos, **zero** `.pth`/`logs`/`pyc`.
+- **Changed the bridge default** `HARDFLOW_REPO` from `$FMPCC_ROOT/HardFlow` (sibling) to **`$REPO/HardFlow`** (inside FM-PCC), matching the vendored location.
+
 ## What was added
 
 Four new files under `Slurm_Codes/sbatch/hardflow/` (new dir, sibling of `sbatch/iMF/`):
@@ -25,7 +39,7 @@ All four are `chmod +x` and pass `bash -n` syntax check. **None were executed** 
 ## Design decisions realized in code
 
 1. **Runs against a CLONE of FMPCC, never the live env.**
-   `CONDA_ENV_NAME` defaults to `hardflow_clone`. The bridge **fails closed**: it aborts if `CONDA_ENV_NAME=FMPCC`. The env is assumed already built + reconciled by hand (user builds it manually) — the sbatch **never creates or mutates** any conda env.
+   `CONDA_ENV_NAME` is **hardcoded** to `hardflow_clone` (see "Hardcoded env block" update above — the earlier `==FMPCC` fail-closed guard was dropped as moot once the name is a literal). The env is assumed already built + reconciled by hand (user builds it manually) — the sbatch **never creates or mutates** any conda env.
 
 2. **Env is decoupled — one variable.**
    Everything except `conda activate "$CONDA_ENV_NAME"` is env-agnostic. Build the env however you like; point `CONDA_ENV_NAME` at it.

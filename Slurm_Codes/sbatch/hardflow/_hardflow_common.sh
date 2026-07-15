@@ -16,22 +16,23 @@
 # ==============================================================================
 set -e
 
-# ---- 1. Paths + env name ------------------------------------------------------
-FMPCC_ROOT="${FMPCC_ROOT:-$HOME/FMPCC}"
-REPO="${REPO:-$FMPCC_ROOT/FM-PCC}"
-CONDA_DIR="${CONDA_DIR:-$HOME/miniconda3}"
-# The CLONE, never the live FMPCC env.
-CONDA_ENV_NAME="${CONDA_ENV_NAME:-hardflow_clone}"
-# Where HardFlow was pulled (phase-1: sibling of FM-PCC; later: $REPO/HardFlow).
-HARDFLOW_REPO="${HARDFLOW_REPO:-$FMPCC_ROOT/HardFlow}"
+# ---- 1. Paths + env name (HARDCODED, mjx-style) -------------------------------
+# HARDCODED on purpose: this job may be submitted from an already-activated FMPCC
+# shell, so inherited env vars would make `${VAR:-default}` unreliable. Keep these
+# literal (mirrors sbatch/uav_fm/eval_fm_uav.sh's FMPCC_mjx clone pattern).
+# Only $HOME is dynamic (always safe). Edit these lines if your layout differs.
+FMPCC_ROOT="$HOME/FMPCC"
+REPO="$FMPCC_ROOT/FM-PCC"
+CONDA_DIR="$HOME/miniconda3"
+# The reconciled CLONE of FMPCC (gym 0.20 + tyro), never the live FMPCC env.
+# (FMPCC has gym 0.26 -> HardFlow's avoiding rollout would break there.)
+CONDA_ENV_NAME="hardflow_clone"
+# HardFlow is VENDORED into FM-PCC (copied code, tracked by FM-PCC git); it ships
+# to the cluster via `git pull` at $REPO/HardFlow.
+HARDFLOW_REPO="$REPO/HardFlow"
 # Collect ALL HardFlow train/eval outputs here, inside FM-PCC (gitignored logs/*).
-HARDFLOW_LOG_COLLECT="${HARDFLOW_LOG_COLLECT:-$REPO/logs/hardflow}"
+HARDFLOW_LOG_COLLECT="$REPO/logs/hardflow"
 
-# Fail closed: a phase-1 job must NEVER run against the live FMPCC env.
-if [ "$CONDA_ENV_NAME" = "FMPCC" ]; then
-    echo "[ HF-BRIDGE ] ERROR: CONDA_ENV_NAME=FMPCC is forbidden. Point it at the clone (e.g. hardflow_clone)." >&2
-    exit 1
-fi
 if [ ! -d "$HARDFLOW_REPO" ]; then
     echo "[ HF-BRIDGE ] ERROR: HARDFLOW_REPO not found at '$HARDFLOW_REPO'. Git-pull it there or export HARDFLOW_REPO." >&2
     exit 1
@@ -61,10 +62,13 @@ echo "[ HF-BRIDGE ] python: $(which python)"
 export D4RL_SUPPRESS_IMPORT_ERROR=1
 export MPLBACKEND="agg"
 
-# ---- 5. PYTHONPATH: HardFlow FIRST so `import hardflow` and `import d3il` -------
-#        resolve to HardFlow's OWN bundled packages, not the clone's d3il.
-#        (No `pip install -e .` — that would persist HardFlow's d3il into the env.)
-export PYTHONPATH="$HARDFLOW_REPO${PYTHONPATH:+:$PYTHONPATH}"
+# ---- 5. PYTHONPATH: reset FRESH to HardFlow only ------------------------------
+#        so `import hardflow` / `import d3il` resolve to HardFlow's OWN bundled
+#        packages. Set fresh (NOT appended) on purpose: if you submit from an
+#        activated FMPCC shell, an inherited PYTHONPATH could carry FMPCC's d3il
+#        in and shadow HardFlow's. Conda provides all real deps; PYTHONPATH is
+#        only for the HardFlow repo. (No `pip install -e .`.)
+export PYTHONPATH="$HARDFLOW_REPO"
 
 # ---- 6. Sanity-check the clone was reconciled (do NOT auto-install) ------------
 #        Job-time installs race across concurrent jobs and mask real env problems.
