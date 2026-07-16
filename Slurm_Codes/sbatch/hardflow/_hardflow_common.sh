@@ -62,13 +62,15 @@ echo "[ HF-BRIDGE ] python: $(which python)"
 export D4RL_SUPPRESS_IMPORT_ERROR=1
 export MPLBACKEND="agg"
 
-# ---- 5. PYTHONPATH: reset FRESH to HardFlow only ------------------------------
-#        so `import hardflow` / `import d3il` resolve to HardFlow's OWN bundled
-#        packages. Set fresh (NOT appended) on purpose: if you submit from an
-#        activated FMPCC shell, an inherited PYTHONPATH could carry FMPCC's d3il
-#        in and shadow HardFlow's. Conda provides all real deps; PYTHONPATH is
-#        only for the HardFlow repo. (No `pip install -e .`.)
-export PYTHONPATH="$HARDFLOW_REPO"
+# ---- 5. PYTHONPATH: HardFlow repo, then the bridge shims ----------------------
+#        HardFlow FIRST so `import hardflow` / `import d3il` resolve to HardFlow's
+#        OWN bundled packages. Then `shims/` supplies a tiny empty `d4rl` module
+#        (HardFlow imports d4rl but never uses it on the avoiding task; the real
+#        d4rl is absent from the FMPCC clone). See shims/d4rl.py.
+#        Set FRESH (NOT appended) on purpose: if you submit from an activated
+#        FMPCC shell, an inherited PYTHONPATH could carry FMPCC's d3il in and
+#        shadow HardFlow's. Conda provides all real deps. (No `pip install -e .`.)
+export PYTHONPATH="$HARDFLOW_REPO:$REPO/Slurm_Codes/sbatch/hardflow/shims"
 
 # ---- 6. Sanity-check the clone was reconciled (do NOT auto-install) ------------
 #        Job-time installs race across concurrent jobs and mask real env problems.

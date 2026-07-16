@@ -2937,3 +2937,24 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 4. **Tracking Error Collapse**: Demonstrated via `.npz` trace reading that without dynamics, the raw Flow Matching plan emits an inconsistent, mis-anchored altitude action that causes unbounded integrator windup (`track_err ≈ 250`). Enabling the dynamics equality rectifies this, instantly dropping tracking error to `~15` and establishing that projection is required for *body-trackability*, not just obstacle clearance.
 
 ***
+
+## HardFlow Baseline Integration & Cluster Replication (July 15, 2026)
+
+**Keywords**: HardFlow, cluster replication, SLURM bridge, conda clone, environment isolation.
+
+1. **Vendored HardFlow Codebase**: Integrated the unmodified HardFlow avoiding repository (including the `d3il` simulator and dataset) directly into `FM-PCC/HardFlow/`. This ensures the codebase is strictly version-controlled alongside FM-PCC and available on the cluster without requiring a separate `git clone` or editable `pip install`.
+2. **SLURM Orchestration Bridge**: Developed a thin orchestration layer (`Slurm_Codes/sbatch/hardflow/`) including `train_hardflow.sh`, `eval_hardflow.sh`, and `hardflow_pipeline.sh`. These scripts wrap HardFlow's native execution files to preserve original paper hyperparameters while injecting FMPCC cluster standards (e.g., EGL isolation, `MUJOCO_GL=egl`).
+3. **Environment Isolation (FMPCC Clone)**: Established a strict requirement to run HardFlow inside a *clone* of the FMPCC conda environment (`hardflow_clone`). This safely isolates required dependency downgrades (e.g., `gym==0.20.0`) and API mismatches without risking the live FMPCC working environment.
+4. **Symlinked Output Persistence**: Implemented a `logs` directory symlink in the bridge to seamlessly route HardFlow's hardcoded output paths into the centralized `FM-PCC/logs/hardflow/` artifact collection directory.
+
+***
+
+## HF·iMF Deep Mix Mathematical Theory & Validation (July 15, 2026)
+
+**Keywords**: HF·iMF, Deep Mix, HardFlow, MeanFlow, mathematical theory, validate_theory.py.
+
+1. **Theoretical Formalization**: Authored deep mathematical analysis (`THEORY_DeepMix_HF_iMF.md` and `BLEND_HardFlow_iMeanFlow.md`) mapping the structural relationship between HardFlow's constrained sampling framework and MeanFlow's average-velocity ODEs.
+2. **Defect Identification**: Analytically documented key defects in the vanilla HardFlow sampler, particularly the reliance on a biased first-order Euler extrapolation and its associated pull-back gain mechanisms.
+3. **Analytical Validation Script**: Implemented `validate_theory.py` to programmatically verify claims about HardFlow's constraints and the proposed theoretical fixes when migrating to an iMF generative backbone. This sets the foundation for evaluating the combined HF·iMF framework.
+
+***
