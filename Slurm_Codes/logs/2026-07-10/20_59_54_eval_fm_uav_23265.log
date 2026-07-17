@@ -1,0 +1,241 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Jul 10 21:33:38 UTC 2026  |  eval_fm_uav  |  ID 23265  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 
+GIT REV:   6d251f6
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] seed 1/1: scene=pillars seed=6  Fri Jul 10 21:33:38 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] E9 geo 'pillars' ← variant 'pillars': constraint_types=['dynamics', 'geo_bounds', 'obstacles', 'bounds'] (bounds=True, hs=0, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles]: variants=['diffuser', 'gradient', 'gradient-tightened', 'post_processing', 'post_processing-tightened', 'model_free', 'model_free-tightened', 'bounds_free', 'bounds_free-tightened', 'geo_free', 'geo_free-bounds_free', 'geo_free-model_free', 'model_free-bounds_free', 'model_free-bounds_free-tightened', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened']  constraints=['dynamics', 'geo_bounds', 'obstacles', 'bounds']  batch_size=4
+[ eval ] pillars feasibility check: homotopy=(L,L,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(L,R,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,L,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,R,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 1/20: 'diffuser'  (n_trials=10)
+[ geo ] Constraint overview → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview.png (+ .svg)
+[ eval ] pillars variant=diffuser: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=diffuser: trial 1/10 done  (60.3s elapsed this variant, ~542.4s to go)
+[ eval ] pillars variant=diffuser: trial 2/10 done  (120.4s elapsed this variant, ~481.5s to go)
+[ eval ] pillars variant=diffuser: trial 3/10 done  (180.1s elapsed this variant, ~420.3s to go)
+[ eval ] pillars variant=diffuser: trial 4/10 done  (239.5s elapsed this variant, ~359.2s to go)
+[ eval ] pillars variant=diffuser: trial 5/10 done  (300.1s elapsed this variant, ~300.1s to go)
+[ eval ] pillars variant=diffuser: trial 6/10 done  (361.3s elapsed this variant, ~240.8s to go)
+[ eval ] pillars variant=diffuser: trial 7/10 done  (420.7s elapsed this variant, ~180.3s to go)
+[ eval ] pillars variant=diffuser: trial 8/10 done  (480.6s elapsed this variant, ~120.1s to go)
+[ eval ] pillars variant=diffuser: trial 9/10 done  (540.5s elapsed this variant, ~60.1s to go)
+[ eval ] pillars variant=diffuser: trial 10/10 done  (600.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=diffuser (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.665  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/diffuser/
+[ eval ] pillars variant=diffuser TIMING: fm_ms=86.2 proj_ms=0.0 total_ms=86.2 (p95=91.0) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 2/20: 'gradient'  (n_trials=10)
+[ eval ] pillars variant=gradient: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=gradient: trial 1/10 done  (67.1s elapsed this variant, ~603.9s to go)
+[ eval ] pillars variant=gradient: trial 2/10 done  (135.0s elapsed this variant, ~540.2s to go)
+[ eval ] pillars variant=gradient: trial 3/10 done  (201.9s elapsed this variant, ~471.2s to go)
+[ eval ] pillars variant=gradient: trial 4/10 done  (270.2s elapsed this variant, ~405.4s to go)
+[ eval ] pillars variant=gradient: trial 5/10 done  (338.3s elapsed this variant, ~338.3s to go)
+[ eval ] pillars variant=gradient: trial 6/10 done  (405.6s elapsed this variant, ~270.4s to go)
+[ eval ] pillars variant=gradient: trial 7/10 done  (473.1s elapsed this variant, ~202.8s to go)
+[ eval ] pillars variant=gradient: trial 8/10 done  (540.2s elapsed this variant, ~135.1s to go)
+[ eval ] pillars variant=gradient: trial 9/10 done  (607.3s elapsed this variant, ~67.5s to go)
+[ eval ] pillars variant=gradient: trial 10/10 done  (675.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=gradient (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=6.511  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/gradient/
+[ eval ] pillars variant=gradient TIMING: fm_ms=97.6 proj_ms=0.0 total_ms=97.6 (p95=102.8) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 3/20: 'gradient-tightened'  (n_trials=10)
+[ geo ] Constraint overview → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] pillars variant=gradient-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=gradient-tightened: trial 1/10 done  (67.3s elapsed this variant, ~605.7s to go)
+[ eval ] pillars variant=gradient-tightened: trial 2/10 done  (99.0s elapsed this variant, ~396.1s to go)
+[ eval ] pillars variant=gradient-tightened: trial 3/10 done  (166.5s elapsed this variant, ~388.4s to go)
+[ eval ] pillars variant=gradient-tightened: trial 4/10 done  (196.9s elapsed this variant, ~295.3s to go)
+[ eval ] pillars variant=gradient-tightened: trial 5/10 done  (264.2s elapsed this variant, ~264.2s to go)
+[ eval ] pillars variant=gradient-tightened: trial 6/10 done  (331.8s elapsed this variant, ~221.2s to go)
+[ eval ] pillars variant=gradient-tightened: trial 7/10 done  (399.3s elapsed this variant, ~171.1s to go)
+[ eval ] pillars variant=gradient-tightened: trial 8/10 done  (466.1s elapsed this variant, ~116.5s to go)
+[ eval ] pillars variant=gradient-tightened: trial 9/10 done  (534.2s elapsed this variant, ~59.4s to go)
+[ eval ] pillars variant=gradient-tightened: trial 10/10 done  (600.7s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=gradient-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.200  steps_to_goal=288/634  track_err=6.881  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/gradient-tightened/
+[ eval ] pillars variant=gradient-tightened TIMING: fm_ms=97.5 proj_ms=0.0 total_ms=97.5 (p95=101.5) budget=30.3ms → real_time_OVER×5648
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 4/20: 'post_processing'  (n_trials=10)
+[ eval ] pillars variant=post_processing: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=post_processing: trial 1/10 done  (86.4s elapsed this variant, ~777.8s to go)
+[ eval ] pillars variant=post_processing: trial 2/10 done  (374.3s elapsed this variant, ~1497.2s to go)
+[ eval ] pillars variant=post_processing: trial 3/10 done  (806.7s elapsed this variant, ~1882.4s to go)
+[ eval ] pillars variant=post_processing: trial 4/10 done  (1213.9s elapsed this variant, ~1820.9s to go)
+[ eval ] pillars variant=post_processing: trial 5/10 done  (1328.7s elapsed this variant, ~1328.7s to go)
+[ eval ] pillars variant=post_processing: trial 6/10 done  (1411.1s elapsed this variant, ~940.7s to go)
+[ eval ] pillars variant=post_processing: trial 7/10 done  (1609.2s elapsed this variant, ~689.7s to go)
+[ eval ] pillars variant=post_processing: trial 8/10 done  (1724.9s elapsed this variant, ~431.2s to go)
+[ eval ] pillars variant=post_processing: trial 9/10 done  (1793.3s elapsed this variant, ~199.3s to go)
+[ eval ] pillars variant=post_processing: trial 10/10 done  (1923.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=post_processing (B=4, proj=on, sel=random): success=0.100  success_relaxed=0.100  safe=0.100  goal_reached=0.300  steps_to_goal=480/634  track_err=1.068  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/post_processing/
+[ eval ] pillars variant=post_processing TIMING: fm_ms=86.2 proj_ms=220.4 total_ms=306.6 (p95=2886.3) budget=30.3ms → real_time_OVER×5878
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 5/20: 'post_processing-tightened'  (n_trials=10)
+[ eval ] pillars variant=post_processing-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=post_processing-tightened: trial 1/10 done  (461.2s elapsed this variant, ~4151.2s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 2/10 done  (747.0s elapsed this variant, ~2988.0s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 3/10 done  (820.7s elapsed this variant, ~1915.1s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 4/10 done  (1013.4s elapsed this variant, ~1520.1s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 5/10 done  (1152.1s elapsed this variant, ~1152.1s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 6/10 done  (1309.2s elapsed this variant, ~872.8s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 7/10 done  (1570.7s elapsed this variant, ~673.1s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 8/10 done  (1738.9s elapsed this variant, ~434.7s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 9/10 done  (1922.3s elapsed this variant, ~213.6s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 10/10 done  (2060.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=post_processing-tightened (B=4, proj=on, sel=random): success=0.100  success_relaxed=0.100  safe=0.100  goal_reached=0.300  steps_to_goal=473/634  track_err=1.116  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/post_processing-tightened/
+[ eval ] pillars variant=post_processing-tightened TIMING: fm_ms=86.5 proj_ms=254.8 total_ms=341.4 (p95=3843.1) budget=30.3ms → real_time_OVER×5856
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 6/20: 'model_free'  (n_trials=10)
+[ eval ] pillars variant=model_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free: trial 1/10 done  (178.4s elapsed this variant, ~1605.7s to go)
+[ eval ] pillars variant=model_free: trial 2/10 done  (335.2s elapsed this variant, ~1340.9s to go)
+[ eval ] pillars variant=model_free: trial 3/10 done  (511.3s elapsed this variant, ~1193.1s to go)
+[ eval ] pillars variant=model_free: trial 4/10 done  (666.3s elapsed this variant, ~999.4s to go)
+[ eval ] pillars variant=model_free: trial 5/10 done  (821.3s elapsed this variant, ~821.3s to go)
+[ eval ] pillars variant=model_free: trial 6/10 done  (999.3s elapsed this variant, ~666.2s to go)
+[ eval ] pillars variant=model_free: trial 7/10 done  (1155.6s elapsed this variant, ~495.3s to go)
+[ eval ] pillars variant=model_free: trial 8/10 done  (1315.1s elapsed this variant, ~328.8s to go)
+[ eval ] pillars variant=model_free: trial 9/10 done  (1492.3s elapsed this variant, ~165.8s to go)
+[ eval ] pillars variant=model_free: trial 10/10 done  (1671.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.621  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free/
+[ eval ] pillars variant=model_free TIMING: fm_ms=87.1 proj_ms=167.9 total_ms=255.0 (p95=362.7) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 7/20: 'model_free-tightened'  (n_trials=10)
+[ eval ] pillars variant=model_free-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free-tightened: trial 1/10 done  (184.2s elapsed this variant, ~1657.8s to go)
+[ eval ] pillars variant=model_free-tightened: trial 2/10 done  (368.1s elapsed this variant, ~1472.5s to go)
+[ eval ] pillars variant=model_free-tightened: trial 3/10 done  (559.1s elapsed this variant, ~1304.6s to go)
+[ eval ] pillars variant=model_free-tightened: trial 4/10 done  (720.8s elapsed this variant, ~1081.3s to go)
+[ eval ] pillars variant=model_free-tightened: trial 5/10 done  (835.8s elapsed this variant, ~835.8s to go)
+[ eval ] pillars variant=model_free-tightened: trial 6/10 done  (1021.4s elapsed this variant, ~680.9s to go)
+[ eval ] pillars variant=model_free-tightened: trial 7/10 done  (1209.6s elapsed this variant, ~518.4s to go)
+[ eval ] pillars variant=model_free-tightened: trial 8/10 done  (1377.0s elapsed this variant, ~344.3s to go)
+[ eval ] pillars variant=model_free-tightened: trial 9/10 done  (1561.8s elapsed this variant, ~173.5s to go)
+[ eval ] pillars variant=model_free-tightened: trial 10/10 done  (1672.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free-tightened (B=4, proj=on, sel=random): success=0.100  success_relaxed=0.100  safe=0.100  goal_reached=0.200  steps_to_goal=446/634  track_err=0.608  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free-tightened/
+[ eval ] pillars variant=model_free-tightened TIMING: fm_ms=87.5 proj_ms=182.7 total_ms=270.1 (p95=387.8) budget=30.3ms → real_time_OVER×5964
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 8/20: 'bounds_free'  (n_trials=10)
+[ eval ] pillars variant=bounds_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=bounds_free: trial 1/10 done  (884.1s elapsed this variant, ~7956.8s to go)
+[ eval ] pillars variant=bounds_free: trial 2/10 done  (4265.3s elapsed this variant, ~17061.1s to go)
+[ eval ] pillars variant=bounds_free: trial 3/10 done  (6036.9s elapsed this variant, ~14086.0s to go)
+[ eval ] pillars variant=bounds_free: trial 4/10 done  (7485.5s elapsed this variant, ~11228.2s to go)
+[ eval ] pillars variant=bounds_free: trial 5/10 done  (9195.6s elapsed this variant, ~9195.6s to go)
+[ eval ] pillars variant=bounds_free: trial 6/10 done  (10881.0s elapsed this variant, ~7254.0s to go)
+[ eval ] pillars variant=bounds_free: trial 7/10 done  (13638.8s elapsed this variant, ~5845.2s to go)
+[ eval ] pillars variant=bounds_free: trial 8/10 done  (14572.6s elapsed this variant, ~3643.2s to go)
+[ eval ] pillars variant=bounds_free: trial 9/10 done  (20613.5s elapsed this variant, ~2290.4s to go)
+[ eval ] pillars variant=bounds_free: trial 10/10 done  (23897.6s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.300  steps_to_goal=450/634  track_err=2.336  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/bounds_free/
+[ eval ] pillars variant=bounds_free TIMING: fm_ms=87.8 proj_ms=3966.3 total_ms=4054.2 (p95=40665.2) budget=30.3ms → real_time_OVER×5787
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 9/20: 'bounds_free-tightened'  (n_trials=10)
+[ eval ] pillars variant=bounds_free-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=bounds_free-tightened: trial 1/10 done  (4282.6s elapsed this variant, ~38543.4s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 2/10 done  (7211.4s elapsed this variant, ~28845.7s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 3/10 done  (10111.2s elapsed this variant, ~23592.8s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 4/10 done  (13101.2s elapsed this variant, ~19651.8s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 5/10 done  (30171.0s elapsed this variant, ~30171.0s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 6/10 done  (32267.7s elapsed this variant, ~21511.8s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 7/10 done  (33910.0s elapsed this variant, ~14532.9s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 8/10 done  (35642.5s elapsed this variant, ~8910.6s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 9/10 done  (36591.6s elapsed this variant, ~4065.7s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 10/10 done  (39243.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=bounds_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.300  steps_to_goal=446/634  track_err=1.998  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/bounds_free-tightened/
+[ eval ] pillars variant=bounds_free-tightened TIMING: fm_ms=87.6 proj_ms=6402.1 total_ms=6489.7 (p95=112176.7) budget=30.3ms → real_time_OVER×5777
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 10/20: 'geo_free'  (n_trials=10)
+[ eval ] pillars variant=geo_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=geo_free: trial 1/10 done  (94.6s elapsed this variant, ~851.3s to go)
+[ eval ] pillars variant=geo_free: trial 2/10 done  (189.2s elapsed this variant, ~756.7s to go)
+[ eval ] pillars variant=geo_free: trial 3/10 done  (283.9s elapsed this variant, ~662.5s to go)
+[ eval ] pillars variant=geo_free: trial 4/10 done  (378.4s elapsed this variant, ~567.6s to go)
+[ eval ] pillars variant=geo_free: trial 5/10 done  (473.2s elapsed this variant, ~473.2s to go)
+[ eval ] pillars variant=geo_free: trial 6/10 done  (568.1s elapsed this variant, ~378.7s to go)
+[ eval ] pillars variant=geo_free: trial 7/10 done  (662.5s elapsed this variant, ~283.9s to go)
+[ eval ] pillars variant=geo_free: trial 8/10 done  (757.2s elapsed this variant, ~189.3s to go)
+[ eval ] pillars variant=geo_free: trial 9/10 done  (852.0s elapsed this variant, ~94.7s to go)
+[ eval ] pillars variant=geo_free: trial 10/10 done  (946.5s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=geo_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.334  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/geo_free/
+[ eval ] pillars variant=geo_free TIMING: fm_ms=85.2 proj_ms=55.9 total_ms=141.1 (p95=142.1) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 11/20: 'geo_free-bounds_free'  (n_trials=10)
+[ eval ] pillars variant=geo_free-bounds_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=geo_free-bounds_free: trial 1/10 done  (88.5s elapsed this variant, ~796.4s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 2/10 done  (177.2s elapsed this variant, ~708.9s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 3/10 done  (265.9s elapsed this variant, ~620.4s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 4/10 done  (354.4s elapsed this variant, ~531.7s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 5/10 done  (443.1s elapsed this variant, ~443.1s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 6/10 done  (532.1s elapsed this variant, ~354.7s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 7/10 done  (620.8s elapsed this variant, ~266.0s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 8/10 done  (709.9s elapsed this variant, ~177.5s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 9/10 done  (798.3s elapsed this variant, ~88.7s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 10/10 done  (887.8s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=geo_free-bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.333  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/geo_free-bounds_free/
+[ eval ] pillars variant=geo_free-bounds_free TIMING: fm_ms=85.4 proj_ms=46.3 total_ms=131.8 (p95=137.8) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 12/20: 'geo_free-model_free'  (n_trials=10)
+[ eval ] pillars variant=geo_free-model_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=geo_free-model_free: trial 1/10 done  (76.8s elapsed this variant, ~691.6s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 2/10 done  (153.4s elapsed this variant, ~613.7s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 3/10 done  (230.2s elapsed this variant, ~537.2s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 4/10 done  (307.1s elapsed this variant, ~460.6s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 5/10 done  (383.6s elapsed this variant, ~383.6s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 6/10 done  (460.1s elapsed this variant, ~306.7s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 7/10 done  (536.7s elapsed this variant, ~230.0s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 8/10 done  (613.0s elapsed this variant, ~153.3s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 9/10 done  (689.4s elapsed this variant, ~76.6s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 10/10 done  (766.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=geo_free-model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.617  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/geo_free-model_free/
+[ eval ] pillars variant=geo_free-model_free TIMING: fm_ms=86.0 proj_ms=26.6 total_ms=112.6 (p95=128.6) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 13/20: 'model_free-bounds_free'  (n_trials=10)
+[ eval ] pillars variant=model_free-bounds_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free-bounds_free: trial 1/10 done  (166.4s elapsed this variant, ~1498.0s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 2/10 done  (314.2s elapsed this variant, ~1256.8s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 3/10 done  (483.3s elapsed this variant, ~1127.7s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 4/10 done  (628.2s elapsed this variant, ~942.3s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 5/10 done  (774.9s elapsed this variant, ~774.9s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 6/10 done  (941.4s elapsed this variant, ~627.6s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 7/10 done  (1109.1s elapsed this variant, ~475.3s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 8/10 done  (1260.7s elapsed this variant, ~315.2s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 9/10 done  (1431.7s elapsed this variant, ~159.1s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 10/10 done  (1601.3s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free-bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.644  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free-bounds_free/
+[ eval ] pillars variant=model_free-bounds_free TIMING: fm_ms=87.5 proj_ms=156.5 total_ms=244.0 (p95=342.0) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 14/20: 'model_free-bounds_free-tightened'  (n_trials=10)
+[ eval ] pillars variant=model_free-bounds_free-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 1/10 done  (175.3s elapsed this variant, ~1577.7s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 2/10 done  (348.9s elapsed this variant, ~1395.6s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 3/10 done  (503.5s elapsed this variant, ~1174.8s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 4/10 done  (658.5s elapsed this variant, ~987.7s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 5/10 done  (815.5s elapsed this variant, ~815.5s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 6/10 done  (1010.7s elapsed this variant, ~673.8s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 7/10 done  (1185.6s elapsed this variant, ~508.1s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 8/10 done  (1340.3s elapsed this variant, ~335.1s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 9/10 done  (1494.4s elapsed this variant, ~166.0s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 10/10 done  (1669.8s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.780  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free-bounds_free-tightened/
+[ eval ] pillars variant=model_free-bounds_free-tightened TIMING: fm_ms=87.4 proj_ms=167.3 total_ms=254.6 (p95=398.9) budget=30.3ms → real_time_OVER×6340
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 15/20: 'dpcc-r'  (n_trials=10)
+[ eval ] pillars variant=dpcc-r: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+slurmstepd-i6-gpu-1: error: *** JOB 23265 ON i6-gpu-1 CANCELLED AT 2026-07-11T21:33:46 DUE TO TIME LIMIT ***
+JOB END: Sat Jul 11 21:33:46 UTC 2026

@@ -1,0 +1,168 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jul  8 10:30:35 UTC 2026
+JOB NAME:  imf_train
+JOB ID:    23173
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   d3ecc76
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260708_103043-iajpkg4n
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run iMF-seed-6
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/iajpkg4n
+================================================================================
+[ train ] iMeanFlow Training (iMF-PCC)
+[ train ] Engine: Improved Mean Flows (dual-velocity decomposition)
+[ train ] Repo: github.com/Lyy-iiis/imeanflow
+[ train ] Seeds: [6] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-iMF)
+================================================================================
+
+[ train ] Seed 6
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/6/dataset_config_resume_1.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_engine.iMeanFlowEngine'>
+    depth: 8
+    dit_aux_head_depth: 2
+    dit_condition_on_t: False
+    dit_depth: 8
+    dit_hidden_size: 256
+    dit_num_heads: 4
+    dit_patch_size: 1
+    dropout_rate: 0.1
+    dual_head: True
+    freq_dim: 256
+    imf_backbone: dit
+    interval_cfg: True
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/6/model_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.models.imf_diffusion.iMeanFlowODE'>
+    action_dim: 2
+    action_weight: 1
+    clip_denoised: False
+    condition_guidance_w: 1.2
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    imf_objective: meanflow_jvp
+    loss_discount: 1.0
+    loss_schedule: balanced
+    loss_type: l2
+    meanflow_adaptive_c: 0.001
+    meanflow_adaptive_p: 0.5
+    meanflow_aux_weight: 0.05
+    meanflow_cfg_beta: 1.0
+    meanflow_cfg_omega: 4.0
+    meanflow_cfg_t_max: 0.6
+    meanflow_cfg_t_min: 0.4
+    meanflow_r_equals_t_frac: 0.25
+    observation_dim: 4
+    ode_inference_steps_v3: 10
+    predict_epsilon: True
+    returns_condition: True
+    time_beta_alpha_v3: 1.0
+    time_beta_beta_v3: 1.0
+    transition_epochs: 0
+    u_loss_weight: 1.0
+    v_loss_weight: 0.1
+    warmup_epochs: 0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/6/diffusion_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_imeanflow.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    n_steps_per_epoch: 1000
+    n_train_steps: 10000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/6
+    train_batch_size: 64
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/6/trainer_config_resume_1.json
+
+[ train ] Starting training (steps: 10000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Initial test loss:   0.5855, a0 loss:   1.5244
+Epoch 0: 100%|██████████| 1000/1000 [06:34<00:00,  2.54it/s, a0_loss=0.508, a0_loss_test=1.52, diffusion_loss=0.341, loss=0.174, loss_test=0.586, lr=0.0005, step=999]Epoch 0: 100%|██████████| 1000/1000 [06:34<00:00,  2.54it/s, a0_loss=0.508, a0_loss_test=1.52, diffusion_loss=0.341, loss=0.174, loss_test=0.586, lr=0.0005, step=999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 1: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=0.204, a0_loss_test=0.4, diffusion_loss=0.298, loss=0.152, loss_test=0.178, lr=0.000485, step=1999]Epoch 1: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=0.204, a0_loss_test=0.4, diffusion_loss=0.298, loss=0.152, loss_test=0.178, lr=0.000485, step=1999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 2: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=0.11, a0_loss_test=0.233, diffusion_loss=0.234, loss=0.12, loss_test=0.135, lr=0.000442, step=2999]Epoch 2: 100%|██████████| 1000/1000 [06:38<00:00,  2.51it/s, a0_loss=0.11, a0_loss_test=0.233, diffusion_loss=0.234, loss=0.12, loss_test=0.135, lr=0.000442, step=2999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 3: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.101, a0_loss_test=0.175, diffusion_loss=0.228, loss=0.116, loss_test=0.124, lr=0.000375, step=3999]Epoch 3: 100%|██████████| 1000/1000 [06:40<00:00,  2.50it/s, a0_loss=0.101, a0_loss_test=0.175, diffusion_loss=0.228, loss=0.116, loss_test=0.124, lr=0.000375, step=3999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 4: 100%|██████████| 1000/1000 [06:45<00:00,  2.46it/s, a0_loss=0.147, a0_loss_test=0.17, diffusion_loss=0.21, loss=0.106, loss_test=0.125, lr=0.000293, step=4999]Epoch 4: 100%|██████████| 1000/1000 [06:45<00:00,  2.46it/s, a0_loss=0.147, a0_loss_test=0.17, diffusion_loss=0.21, loss=0.106, loss_test=0.125, lr=0.000293, step=4999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 5: 100%|██████████| 1000/1000 [06:36<00:00,  2.52it/s, a0_loss=0.0621, a0_loss_test=0.131, diffusion_loss=0.195, loss=0.0992, loss_test=0.115, lr=0.000207, step=5999]Epoch 5: 100%|██████████| 1000/1000 [06:36<00:00,  2.52it/s, a0_loss=0.0621, a0_loss_test=0.131, diffusion_loss=0.195, loss=0.0992, loss_test=0.115, lr=0.000207, step=5999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 6: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.0915, a0_loss_test=0.115, diffusion_loss=0.205, loss=0.104, loss_test=0.106, lr=0.000125, step=6999]Epoch 6: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.0915, a0_loss_test=0.115, diffusion_loss=0.205, loss=0.104, loss_test=0.106, lr=0.000125, step=6999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 7: 100%|██████████| 1000/1000 [06:45<00:00,  2.47it/s, a0_loss=0.121, a0_loss_test=0.129, diffusion_loss=0.223, loss=0.113, loss_test=0.106, lr=5.85e-5, step=7999]Epoch 7: 100%|██████████| 1000/1000 [06:45<00:00,  2.47it/s, a0_loss=0.121, a0_loss_test=0.129, diffusion_loss=0.223, loss=0.113, loss_test=0.106, lr=5.85e-5, step=7999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 8: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.12, a0_loss_test=0.0864, diffusion_loss=0.234, loss=0.119, loss_test=0.0981, lr=1.51e-5, step=8999]Epoch 8: 100%|██████████| 1000/1000 [06:43<00:00,  2.48it/s, a0_loss=0.12, a0_loss_test=0.0864, diffusion_loss=0.234, loss=0.119, loss_test=0.0981, lr=1.51e-5, step=8999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 9: 100%|██████████| 1000/1000 [06:46<00:00,  2.46it/s, a0_loss=0.0408, a0_loss_test=0.0842, diffusion_loss=0.167, loss=0.0848, loss_test=0.0966, lr=0, step=9999]Epoch 9: 100%|██████████| 1000/1000 [06:46<00:00,  2.46it/s, a0_loss=0.0408, a0_loss_test=0.0842, diffusion_loss=0.167, loss=0.0848, loss_test=0.0966, lr=0, step=9999]
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.020 MB of 0.036 MB uploaded (0.004 MB deduped)wandb: \ 0.034 MB of 0.036 MB uploaded (0.004 MB deduped)wandb: | 0.034 MB of 0.036 MB uploaded (0.004 MB deduped)wandb: / 0.036 MB of 0.036 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 10.3%
+wandb: 
+wandb: Run history:
+wandb:   test/loss █▂▂▁▁▁▁▁▁▁
+wandb:  train/loss █▂▁▂▂▂▂▁▁▁
+wandb: val/raw_mse █▂▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:   final_test_loss 0.09662
+wandb: final_val_raw_mse 0.06129
+wandb:         test/loss 0.09662
+wandb:        train/loss 0.09185
+wandb:       val/raw_mse 0.06129
+wandb: 
+wandb: 🚀 View run iMF-seed-6 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF/runs/iajpkg4n
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-iMF
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260708_103043-iajpkg4n/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+[ train ] Seed 6 complete → logs/avoiding-d3il/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/6
+
+================================================================================
+[ train ] Training complete for all seeds
+================================================================================
+Job completed successfully.
+================================================================================
+JOB END:   Wed Jul  8 11:37:57 UTC 2026
+================================================================================

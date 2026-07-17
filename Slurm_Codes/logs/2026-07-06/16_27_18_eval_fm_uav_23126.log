@@ -1,0 +1,46 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Jul  6 14:27:18 UTC 2026  |  eval_fm_uav  |  ID 23126  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 
+GIT REV:   85ed477
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Mon Jul  6 14:27:19 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] E9 geo 'pillars' ← variant 'pillars': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=2, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'gradient', 'gradient-tightened', 'post_processing', 'post_processing-tightened', 'model_free', 'model_free-tightened', 'bounds_free', 'geo_free', 'geo_free-bounds_free', 'geo_free-model_free', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ geo ] Constraint overview → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] pillars variant=diffuser (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.500  safe=0.800  goal_reached=0.000  track_err=0.488  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 1336, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 1323, in main
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 1323, in <dictcomp>
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 1286, in eval_scene
+    summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 1223, in _run_variant
+    _budget = summary['budget_ms']
+KeyError: 'budget_ms'
+JOB END: Mon Jul  6 14:33:49 UTC 2026

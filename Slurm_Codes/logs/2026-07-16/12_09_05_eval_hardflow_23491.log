@@ -1,0 +1,1134 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jul 16 13:46:24 UTC 2026
+JOB NAME:  eval_hardflow   ID: 23491   NODE: i6-gpu-1
+CONDA ENV: hardflow_clone   (clone of FMPCC — live env untouched)
+HARDFLOW_REPO: /u/home/llim/FMPCC/FM-PCC/HardFlow
+LOG COLLECT:   /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+HARDFLOW GIT: b8ff877
+================================================================================
+[ HF-BRIDGE ] python: /u/home/llim/miniconda3/envs/hardflow_clone/bin/python
+[ HF-BRIDGE ] tyro OK, gym==0.20.0
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ HF-BRIDGE ] /u/home/llim/FMPCC/FM-PCC/HardFlow/logs -> /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+[ HF-BRIDGE ] cwd: /u/home/llim/FMPCC/FM-PCC/HardFlow
+[ HF-EVAL ] dynamics model missing -> python run/fit_dynamics.py
+Output will be saved to: logs/avoiding-v0/dynamics
+Loading data from avoiding-v0...
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 1680.07it/s]
+/u/home/llim/miniconda3/envs/hardflow_clone/lib/python3.10/site-packages/gym/logger.py:34: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  warnings.warn(colorize("%s: %s" % ("WARN", msg % args), "yellow"))
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+
+Generating visualizations...
+All trajectories visualization saved to: logs/avoiding-v0/dynamics/all_trajectories.png
+Fitting linear dynamics model...
+
+=== Linear Dynamics Model Analysis for avoiding-v0 ===
+Dataset: 7209 transitions
+Obs dim: 4, Action dim: 2
+
+=== Model Performance ===
+Overall R²: 0.9998
+Overall RMSE: 0.0072
+
+=== Per-dimension Performance ===
+Dimension 0: R² = 1.0000, MSE = 0.0000
+Dimension 1: R² = 1.0000, MSE = 0.0000
+Dimension 2: R² = 0.9994, MSE = 0.0001
+Dimension 3: R² = 0.9997, MSE = 0.0001
+
+=== State Transition Matrix A (s_{t+1} dependence on s_t) ===
+Shape: (4, 4)
+Spectral radius (max eigenvalue magnitude): 1.0311
+⚠ System may be unstable (spectral radius >= 1.0)
+
+=== Action Influence Matrix B (s_{t+1} dependence on a_t) ===
+Shape: (4, 2)
+Frobenius norm: 0.0663
+Prediction visualization saved to: logs/avoiding-v0/dynamics/linear_model_predictions.png
+
+=== Verifying Linear Dynamics with Real Environment (Single-Step) ===
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+Final IK error (48 iterations):  9.345615260468457e-06
+Final IK error (61 iterations):  8.195980660865112e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (69 iterations):  8.32534399652336e-06
+Final IK error (77 iterations):  6.664630686973146e-06
+Final IK error (112 iterations):  8.42105037713842e-06
+Final IK error (177 iterations):  8.452679316688658e-06
+Final IK error (67 iterations):  8.462775317784403e-06
+Final IK error (76 iterations):  8.006360957844443e-06
+Final IK error (74 iterations):  7.85764470689872e-06
+Final IK error (89 iterations):  7.006036166515022e-06
+Final IK error (65 iterations):  7.854556508235143e-06
+Final IK error (347 iterations):  9.688670821706705e-06
+Final IK error (98 iterations):  8.975968695177937e-06
+Final IK error (75 iterations):  9.695392341324388e-06
+Final IK error (62 iterations):  8.883399190201558e-06
+Final IK error (68 iterations):  7.974384358389356e-06
+Final IK error (79 iterations):  8.185621791935788e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (1000 iterations):  0.010506732460415062
+Final IK error (162 iterations):  8.78556446657988e-06
+Final IK error (65 iterations):  8.6610226359875e-06
+Final IK error (64 iterations):  8.747145004425735e-06
+Final IK error (65 iterations):  9.649279840735659e-06
+Final IK error (52 iterations):  9.282861149178256e-06
+Final IK error (84 iterations):  9.046883433905605e-06
+Final IK error (67 iterations):  7.888059407686969e-06
+Final IK error (80 iterations):  6.477946006152416e-06
+Final IK error (0 iterations):  7.354755280977532e-06
+Final IK error (56 iterations):  9.002605028339386e-06
+Final IK error (69 iterations):  8.744863259960065e-06
+Final IK error (7 iterations):  9.689031933137005e-06
+Final IK error (16 iterations):  9.621556433620756e-06
+Final IK error (83 iterations):  5.919109720688608e-06
+Final IK error (36 iterations):  9.34177306662079e-06
+Final IK error (54 iterations):  8.977447605745424e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (7 iterations):  9.689031933137005e-06
+Final IK error (76 iterations):  9.038245017198132e-06
+Final IK error (67 iterations):  7.670567540555418e-06
+Final IK error (53 iterations):  9.87716842895112e-06
+Final IK error (1000 iterations):  0.010539112417748705
+Final IK error (1000 iterations):  0.010569165234452046
+Final IK error (71 iterations):  8.004879342114664e-06
+Final IK error (61 iterations):  7.466515973648252e-06
+Final IK error (139 iterations):  8.156743437663732e-06
+Final IK error (88 iterations):  9.398943576849862e-06
+Final IK error (104 iterations):  8.933352117919753e-06
+Final IK error (59 iterations):  9.979739588608354e-06
+Final IK error (38 iterations):  9.187790744169503e-06
+Final IK error (114 iterations):  8.219878805960356e-06
+Final IK error (45 iterations):  8.586624378905406e-06
+Final IK error (77 iterations):  6.561284313111377e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (1000 iterations):  0.012290565944403552
+Final IK error (34 iterations):  9.474941615207602e-06
+Final IK error (63 iterations):  7.665507883125804e-06
+Final IK error (65 iterations):  8.607480514983025e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (63 iterations):  9.016448141264933e-06
+Final IK error (57 iterations):  9.70765255754203e-06
+Final IK error (101 iterations):  9.195376987460965e-06
+Final IK error (1000 iterations):  0.012486960844283978
+Final IK error (16 iterations):  9.463548671205846e-06
+Final IK error (1000 iterations):  0.014640747737887426
+Final IK error (59 iterations):  8.466563607101353e-06
+Final IK error (75 iterations):  9.43215694078574e-06
+Final IK error (321 iterations):  8.44755738029371e-06
+Final IK error (65 iterations):  9.420639003368844e-06
+Final IK error (1000 iterations):  0.010778893679348256
+Final IK error (80 iterations):  8.780436287473516e-06
+Final IK error (51 iterations):  8.472233318807198e-06
+Final IK error (30 iterations):  8.89627464509752e-06
+Final IK error (76 iterations):  8.273529561512085e-06
+Final IK error (63 iterations):  8.07982145978167e-06
+Final IK error (136 iterations):  9.852144238105241e-06
+Final IK error (64 iterations):  8.63594484938088e-06
+Final IK error (90 iterations):  7.0283113895255465e-06
+Final IK error (78 iterations):  6.914611488637184e-06
+Final IK error (78 iterations):  8.154113547978725e-06
+Final IK error (66 iterations):  9.226788249950795e-06
+Final IK error (57 iterations):  9.032823540710194e-06
+Final IK error (47 iterations):  8.67700225478873e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (74 iterations):  8.44525542511647e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (60 iterations):  8.177561009672902e-06
+Final IK error (25 iterations):  9.478111913157572e-06
+Final IK error (69 iterations):  7.088634969690792e-06
+Final IK error (190 iterations):  9.112363802730222e-06
+Final IK error (99 iterations):  8.033877765880289e-06
+Final IK error (88 iterations):  9.304193603796377e-06
+Final IK error (28 iterations):  8.847022425860131e-06
+Final IK error (98 iterations):  8.286972294165051e-06
+Final IK error (75 iterations):  6.9251427826301065e-06
+Final IK error (6 iterations):  9.544870259494234e-06
+Final IK error (61 iterations):  9.763140776235176e-06
+Final IK error (77 iterations):  6.331016208373924e-06
+Final IK error (251 iterations):  9.499825806416066e-06
+Final IK error (76 iterations):  6.843873094744439e-06
+Final IK error (52 iterations):  9.965878492543738e-06
+Final IK error (10 iterations):  9.57521418945719e-06
+Final IK error (65 iterations):  8.627157623249741e-06
+Final IK error (50 iterations):  9.656338671437979e-06
+Final IK error (65 iterations):  7.185554743116852e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (77 iterations):  8.082964229152396e-06
+Final IK error (64 iterations):  8.153872238030497e-06
+Final IK error (219 iterations):  9.057837883502138e-06
+Final IK error (57 iterations):  8.481278349792553e-06
+Final IK error (68 iterations):  8.491606541687199e-06
+Final IK error (82 iterations):  6.427725318166368e-06
+Final IK error (1000 iterations):  3.9765621263893686e-05
+Final IK error (147 iterations):  9.475204620325786e-06
+Final IK error (247 iterations):  9.24089334380192e-06
+Final IK error (58 iterations):  9.711606230135501e-06
+Final IK error (0 iterations):  3.3221564577192115e-06
+Final IK error (81 iterations):  5.998717317223094e-06
+Final IK error (66 iterations):  7.803877001794873e-06
+Final IK error (50 iterations):  8.433448846316282e-06
+Final IK error (65 iterations):  8.770195319752743e-06
+Final IK error (90 iterations):  7.930342215721491e-06
+Final IK error (55 iterations):  9.14777311198862e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (72 iterations):  7.810968254518174e-06
+Final IK error (248 iterations):  8.975563854517584e-06
+Final IK error (52 iterations):  9.20392227154251e-06
+Final IK error (91 iterations):  9.512995805721436e-06
+Final IK error (162 iterations):  9.414527265183019e-06
+Final IK error (59 iterations):  8.288977882210053e-06
+Final IK error (305 iterations):  9.410041683955922e-06
+Final IK error (76 iterations):  6.463159543728484e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (78 iterations):  7.500590774817191e-06
+Final IK error (53 iterations):  8.25385434487945e-06
+Final IK error (74 iterations):  6.926365377247325e-06
+Final IK error (59 iterations):  9.98990586529295e-06
+Final IK error (74 iterations):  9.15555801724028e-06
+Final IK error (74 iterations):  8.609053044379393e-06
+Final IK error (65 iterations):  7.234880803748563e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (69 iterations):  9.792713422743538e-06
+Final IK error (90 iterations):  7.977172775458403e-06
+Final IK error (75 iterations):  9.205282895753947e-06
+Final IK error (67 iterations):  9.681991293022861e-06
+Final IK error (74 iterations):  8.411064075082725e-06
+Final IK error (33 iterations):  9.436375932110508e-06
+Final IK error (60 iterations):  8.964193401691964e-06
+Final IK error (64 iterations):  8.534743183053861e-06
+Final IK error (24 iterations):  9.36780528944602e-06
+Final IK error (90 iterations):  6.500046848181426e-06
+Final IK error (67 iterations):  8.852553401118748e-06
+Final IK error (66 iterations):  7.268404316926409e-06
+Final IK error (76 iterations):  7.225103530839723e-06
+Final IK error (57 iterations):  9.003721752877806e-06
+Final IK error (67 iterations):  7.1038333228357446e-06
+Final IK error (65 iterations):  9.443748398445978e-06
+Final IK error (47 iterations):  9.167946188369619e-06
+Final IK error (72 iterations):  6.683242402842685e-06
+Final IK error (63 iterations):  9.508041556856896e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (1000 iterations):  0.01202483822491341
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (58 iterations):  8.599746974388448e-06
+Final IK error (56 iterations):  9.722378513301261e-06
+Final IK error (97 iterations):  9.708478463781301e-06
+Final IK error (68 iterations):  7.1336047930963344e-06
+Final IK error (72 iterations):  7.479038027649666e-06
+Final IK error (60 iterations):  9.853114253926717e-06
+Final IK error (54 iterations):  8.988753952888277e-06
+Final IK error (83 iterations):  6.247942776926962e-06
+Final IK error (52 iterations):  8.7493063933478e-06
+Final IK error (75 iterations):  7.477189464612172e-06
+Final IK error (76 iterations):  9.743277904516366e-06
+Final IK error (57 iterations):  8.927540099952908e-06
+Final IK error (60 iterations):  9.589996788176164e-06
+Final IK error (248 iterations):  9.36769634904206e-06
+Final IK error (89 iterations):  8.857730881965825e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (31 iterations):  8.899081268404345e-06
+Final IK error (73 iterations):  8.609053751730114e-06
+Final IK error (77 iterations):  9.327058929139533e-06
+Final IK error (79 iterations):  7.570596948123779e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (77 iterations):  8.322260655736674e-06
+Final IK error (66 iterations):  8.073444296504634e-06
+Final IK error (276 iterations):  9.268071866895083e-06
+Final IK error (54 iterations):  9.953635905620735e-06
+Final IK error (99 iterations):  6.862388057657331e-06
+Final IK error (67 iterations):  8.412835957426056e-06
+Final IK error (65 iterations):  7.41431639868823e-06
+Final IK error (47 iterations):  9.586074700072235e-06
+Final IK error (88 iterations):  9.178788201908966e-06
+Final IK error (76 iterations):  7.918419703375775e-06
+Final IK error (91 iterations):  6.631202227721329e-06
+Final IK error (49 iterations):  8.37644581100937e-06
+Final IK error (52 iterations):  9.312405385294284e-06
+Final IK error (162 iterations):  8.584951179074882e-06
+Final IK error (176 iterations):  9.672616417859639e-06
+Final IK error (234 iterations):  8.427343333368821e-06
+Final IK error (87 iterations):  7.29855672383895e-06
+Final IK error (75 iterations):  9.43215694078574e-06
+Final IK error (28 iterations):  8.847022425860131e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (99 iterations):  8.805359009026545e-06
+Final IK error (60 iterations):  8.823716925940496e-06
+Final IK error (1000 iterations):  0.012435985412424494
+Final IK error (72 iterations):  9.99629088483417e-06
+Final IK error (77 iterations):  6.7188741963414095e-06
+Final IK error (92 iterations):  7.018235451823239e-06
+Final IK error (74 iterations):  7.31592038577796e-06
+Final IK error (67 iterations):  7.389356340306958e-06
+Final IK error (16 iterations):  9.648457668731858e-06
+Final IK error (98 iterations):  8.463859725077296e-06
+Final IK error (74 iterations):  7.905565536247963e-06
+Final IK error (1000 iterations):  0.01239027764356067
+Final IK error (68 iterations):  7.2586873342296896e-06
+Final IK error (72 iterations):  8.137154092357918e-06
+Final IK error (77 iterations):  7.399675706972181e-06
+Final IK error (60 iterations):  8.92462535260825e-06
+Final IK error (65 iterations):  7.300401328213389e-06
+Final IK error (219 iterations):  8.24410062318546e-06
+Final IK error (73 iterations):  8.303246274712158e-06
+Final IK error (75 iterations):  9.247517576205205e-06
+Final IK error (65 iterations):  7.92456829736864e-06
+Final IK error (135 iterations):  8.38422323094234e-06
+Final IK error (0 iterations):  7.354755280977532e-06
+Final IK error (81 iterations):  7.447453037422111e-06
+Final IK error (63 iterations):  9.180143731585135e-06
+Final IK error (99 iterations):  9.653349160738807e-06
+Final IK error (61 iterations):  9.642127906373645e-06
+Final IK error (75 iterations):  9.967644927928181e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (78 iterations):  6.936369373809815e-06
+Final IK error (71 iterations):  7.629227738772182e-06
+Final IK error (49 iterations):  8.45868522527292e-06
+Final IK error (28 iterations):  9.583053061852648e-06
+Final IK error (219 iterations):  8.485963931114864e-06
+Final IK error (75 iterations):  7.23889581906155e-06
+Final IK error (61 iterations):  9.79075823224434e-06
+Final IK error (79 iterations):  8.846147649728162e-06
+Final IK error (0 iterations):  7.354755280977532e-06
+Final IK error (32 iterations):  9.785878111124816e-06
+Final IK error (62 iterations):  8.311936009818458e-06
+Final IK error (100 iterations):  8.056218498955671e-06
+Final IK error (68 iterations):  7.82209123997095e-06
+Final IK error (64 iterations):  8.63594484938088e-06
+Final IK error (52 iterations):  9.193946084931893e-06
+Final IK error (76 iterations):  7.931346621568319e-06
+Final IK error (99 iterations):  7.59054407190456e-06
+Final IK error (68 iterations):  8.184641294211555e-06
+Final IK error (276 iterations):  8.573605394232989e-06
+Final IK error (319 iterations):  8.6232718867254e-06
+Final IK error (0 iterations):  7.924120302083764e-06
+Final IK error (67 iterations):  8.202627947133016e-06
+Final IK error (99 iterations):  8.220411025786116e-06
+Final IK error (65 iterations):  8.851333959072587e-06
+Final IK error (45 iterations):  8.454846433155451e-06
+Final IK error (66 iterations):  8.234988548836037e-06
+Final IK error (51 iterations):  9.962802665103134e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (68 iterations):  8.122709286204546e-06
+Final IK error (77 iterations):  7.499413816685531e-06
+Final IK error (61 iterations):  8.809350952228733e-06
+Final IK error (277 iterations):  9.520082916067308e-06
+Final IK error (65 iterations):  8.103720589835633e-06
+Final IK error (65 iterations):  7.730400889535873e-06
+Final IK error (100 iterations):  6.74375275335156e-06
+Final IK error (66 iterations):  7.559613474679642e-06
+Final IK error (101 iterations):  7.00079395695814e-06
+Final IK error (74 iterations):  9.11221806385357e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (57 iterations):  8.537088058737138e-06
+Final IK error (140 iterations):  9.932725466233134e-06
+Final IK error (71 iterations):  7.873988199132992e-06
+Final IK error (62 iterations):  9.56317150060972e-06
+Final IK error (54 iterations):  8.787627536896705e-06
+Final IK error (61 iterations):  9.028959258835909e-06
+Final IK error (0 iterations):  3.5369356468150387e-06
+Final IK error (73 iterations):  8.819068373055408e-06
+Final IK error (136 iterations):  9.023354114537142e-06
+Final IK error (33 iterations):  9.749899303116756e-06
+Final IK error (53 iterations):  8.890391531374755e-06
+Final IK error (108 iterations):  9.349903259911951e-06
+Final IK error (91 iterations):  9.682221004025759e-06
+Final IK error (52 iterations):  8.767980987382251e-06
+Final IK error (68 iterations):  7.898014579742429e-06
+Final IK error (56 iterations):  9.982982467558599e-06
+Final IK error (79 iterations):  6.458384852420632e-06
+Final IK error (1000 iterations):  0.011067286368321416
+Final IK error (1000 iterations):  0.010877459634412117
+Final IK error (65 iterations):  9.437319094184914e-06
+Final IK error (32 iterations):  9.815193152750696e-06
+Final IK error (123 iterations):  8.43078159728173e-06
+Final IK error (51 iterations):  8.03545242342735e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (79 iterations):  6.832405840785987e-06
+Final IK error (65 iterations):  9.291767013903544e-06
+Final IK error (50 iterations):  9.638924470878406e-06
+Final IK error (62 iterations):  7.930001627621488e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (1000 iterations):  3.7378128896002386e-05
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (126 iterations):  8.471780989220829e-06
+Final IK error (49 iterations):  8.645450962545778e-06
+Final IK error (73 iterations):  9.442510104192775e-06
+Final IK error (83 iterations):  9.406370992104853e-06
+Final IK error (62 iterations):  8.883399190201558e-06
+Final IK error (67 iterations):  9.005324693323402e-06
+Final IK error (64 iterations):  8.272277240676191e-06
+Final IK error (82 iterations):  6.134634441342146e-06
+Final IK error (71 iterations):  7.98878596754565e-06
+Final IK error (205 iterations):  8.470467364817163e-06
+Final IK error (263 iterations):  9.803358700755614e-06
+Final IK error (66 iterations):  7.404914757209196e-06
+Final IK error (79 iterations):  6.233706836375083e-06
+Final IK error (135 iterations):  9.85674976393366e-06
+Final IK error (51 iterations):  8.445049097967772e-06
+Final IK error (262 iterations):  8.799168167907017e-06
+Final IK error (136 iterations):  9.023354114537142e-06
+Final IK error (76 iterations):  6.4755394200480805e-06
+Final IK error (63 iterations):  7.93652655389716e-06
+Final IK error (52 iterations):  9.965878492543738e-06
+Final IK error (8 iterations):  9.457251430859847e-06
+Final IK error (41 iterations):  9.237141523058734e-06
+Final IK error (18 iterations):  9.171211002465447e-06
+Final IK error (58 iterations):  8.764190171691633e-06
+Final IK error (77 iterations):  6.388619368942028e-06
+Final IK error (70 iterations):  7.230841923185804e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (75 iterations):  6.772574295447809e-06
+Final IK error (77 iterations):  7.145212249956047e-06
+Final IK error (276 iterations):  9.268071866895083e-06
+Final IK error (81 iterations):  7.437238008472009e-06
+Final IK error (71 iterations):  8.25941555519636e-06
+Final IK error (52 iterations):  9.26807249535806e-06
+Final IK error (75 iterations):  7.5958994993396276e-06
+Final IK error (78 iterations):  8.212944422291485e-06
+Final IK error (66 iterations):  7.852226881175382e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (0 iterations):  2.089302520720845e-06
+Final IK error (232 iterations):  9.51377000960892e-06
+Final IK error (69 iterations):  9.882593612443886e-06
+Final IK error (109 iterations):  9.803479125899289e-06
+Final IK error (90 iterations):  8.898548484906936e-06
+Final IK error (64 iterations):  8.024635251049949e-06
+Final IK error (57 iterations):  8.836629939393012e-06
+Final IK error (122 iterations):  9.53815676680419e-06
+Final IK error (71 iterations):  8.624835033341153e-06
+Final IK error (263 iterations):  9.88148846615597e-06
+Final IK error (71 iterations):  9.088442714157097e-06
+Final IK error (65 iterations):  8.920979007585579e-06
+Final IK error (73 iterations):  7.978772776704084e-06
+Final IK error (20 iterations):  9.375632591594592e-06
+Final IK error (90 iterations):  6.88070106178479e-06
+Final IK error (53 iterations):  7.875558816260196e-06
+Final IK error (72 iterations):  9.99629088483417e-06
+Final IK error (9 iterations):  9.579903683714857e-06
+Final IK error (58 iterations):  9.00874395420129e-06
+Final IK error (63 iterations):  9.065480305439158e-06
+Final IK error (90 iterations):  7.036365251269873e-06
+Final IK error (205 iterations):  9.121783997646093e-06
+Final IK error (0 iterations):  5.939947477697855e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (111 iterations):  7.891001936212842e-06
+Final IK error (75 iterations):  7.671200310932705e-06
+Final IK error (74 iterations):  8.731408510488349e-06
+Final IK error (88 iterations):  8.867672999537762e-06
+Final IK error (64 iterations):  9.660536481855677e-06
+Final IK error (247 iterations):  8.515663718854722e-06
+Final IK error (67 iterations):  9.186700517187011e-06
+Final IK error (112 iterations):  9.986492656204539e-06
+Final IK error (51 iterations):  9.397992121786233e-06
+Final IK error (62 iterations):  7.537262958576591e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (98 iterations):  7.90767422886363e-06
+Final IK error (6 iterations):  9.544870259494234e-06
+Final IK error (63 iterations):  8.01469275441766e-06
+Final IK error (59 iterations):  8.369455672247155e-06
+Final IK error (205 iterations):  9.121783997646093e-06
+Final IK error (77 iterations):  6.8958022793415055e-06
+Final IK error (70 iterations):  6.929216942534943e-06
+Final IK error (90 iterations):  7.058918505454304e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (66 iterations):  9.917736908199607e-06
+Final IK error (75 iterations):  9.205282895753947e-06
+Final IK error (1000 iterations):  0.010922382796299033
+Final IK error (80 iterations):  6.477946006152416e-06
+Final IK error (64 iterations):  9.71940497154057e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (108 iterations):  7.769973819918048e-06
+Final IK error (75 iterations):  7.611190739575348e-06
+Final IK error (73 iterations):  8.225445895918196e-06
+Final IK error (83 iterations):  6.9340375273350815e-06
+Final IK error (56 iterations):  8.730788066938102e-06
+Final IK error (23 iterations):  9.332659292382239e-06
+Final IK error (87 iterations):  7.974656803934366e-06
+Final IK error (76 iterations):  8.03270303529426e-06
+Final IK error (43 iterations):  9.236359779965637e-06
+Final IK error (0 iterations):  3.8408564617776485e-06
+Final IK error (70 iterations):  7.670110306585044e-06
+Final IK error (31 iterations):  8.730344104055008e-06
+Final IK error (78 iterations):  8.269783569461624e-06
+Final IK error (190 iterations):  8.365361730497812e-06
+Final IK error (247 iterations):  9.872940431622665e-06
+Final IK error (0 iterations):  6.500762894971658e-06
+Final IK error (65 iterations):  7.2949294729204745e-06
+Final IK error (128 iterations):  8.480466072565995e-06
+Final IK error (75 iterations):  6.772574295447809e-06
+Final IK error (60 iterations):  8.147362398906362e-06
+Final IK error (70 iterations):  8.710491619870431e-06
+Final IK error (123 iterations):  8.297012856347912e-06
+Final IK error (0 iterations):  2.1050596468426626e-06
+Final IK error (65 iterations):  9.649279840735659e-06
+Final IK error (1000 iterations):  0.010951889415277374
+Final IK error (38 iterations):  8.967760709327672e-06
+Final IK error (52 iterations):  9.683992595443707e-06
+Final IK error (63 iterations):  8.065441888427686e-06
+Final IK error (88 iterations):  9.410431202892645e-06
+Final IK error (91 iterations):  6.488934436943756e-06
+Final IK error (98 iterations):  8.975968695177937e-06
+Final IK error (63 iterations):  9.3698910206542e-06
+Final IK error (24 iterations):  9.36780528944602e-06
+Final IK error (72 iterations):  8.137154092357918e-06
+Final IK error (78 iterations):  6.8217471026089365e-06
+Final IK error (140 iterations):  9.932725466233134e-06
+Final IK error (71 iterations):  7.663428549090308e-06
+Final IK error (38 iterations):  9.088096521376924e-06
+Final IK error (78 iterations):  8.967756234559773e-06
+Final IK error (69 iterations):  8.022779530389365e-06
+Final IK error (6 iterations):  9.886481768602578e-06
+Final IK error (75 iterations):  7.5958994993396276e-06
+Final IK error (53 iterations):  8.808236425980613e-06
+Final IK error (190 iterations):  8.736145129433826e-06
+Final IK error (82 iterations):  7.3702999845817045e-06
+Final IK error (55 iterations):  8.280365337739611e-06
+Final IK error (67 iterations):  7.765436978632122e-06
+Final IK error (80 iterations):  6.865441557252253e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (46 iterations):  8.281515222872434e-06
+Final IK error (67 iterations):  7.888059407686969e-06
+Final IK error (37 iterations):  9.961115558334272e-06
+Final IK error (48 iterations):  8.653672062496222e-06
+Final IK error (66 iterations):  9.02708841946998e-06
+Final IK error (61 iterations):  9.258317545701265e-06
+Final IK error (84 iterations):  9.855786749398119e-06
+Final IK error (66 iterations):  9.544967463250634e-06
+Final IK error (82 iterations):  9.444019125279275e-06
+Final IK error (80 iterations):  8.928181317791148e-06
+Final IK error (247 iterations):  8.864167189760683e-06
+Final IK error (91 iterations):  7.59725991210252e-06
+Final IK error (1000 iterations):  0.010250623311841248
+Final IK error (80 iterations):  7.309644639586377e-06
+Final IK error (55 iterations):  9.324285191212987e-06
+Final IK error (76 iterations):  8.273529561512085e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (80 iterations):  6.174933968380429e-06
+Final IK error (73 iterations):  6.8150000266332036e-06
+Final IK error (83 iterations):  7.305438451771059e-06
+Final IK error (143 iterations):  7.832722866508314e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (63 iterations):  8.297822016062427e-06
+Final IK error (51 iterations):  8.147605328767797e-06
+Final IK error (78 iterations):  6.652795579320784e-06
+Final IK error (70 iterations):  8.674048711929e-06
+Final IK error (146 iterations):  7.574102650801766e-06
+Final IK error (75 iterations):  8.34310923672918e-06
+Final IK error (248 iterations):  8.717772932061987e-06
+Final IK error (1000 iterations):  0.0111296279425354
+Final IK error (67 iterations):  7.382224774718259e-06
+Final IK error (66 iterations):  7.662959405820179e-06
+Final IK error (147 iterations):  9.73120988003166e-06
+Final IK error (175 iterations):  9.486281933478823e-06
+Final IK error (75 iterations):  7.298491271095441e-06
+Final IK error (54 iterations):  9.969459097818918e-06
+Final IK error (75 iterations):  6.714414136157056e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (74 iterations):  7.319762019286062e-06
+Final IK error (67 iterations):  7.550308252969422e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (54 iterations):  9.330966265446703e-06
+Final IK error (65 iterations):  8.027795689662516e-06
+Final IK error (76 iterations):  8.710449678616112e-06
+Final IK error (64 iterations):  7.752444984912809e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (63 iterations):  8.82043243124133e-06
+Final IK error (73 iterations):  7.3295823699273876e-06
+Final IK error (75 iterations):  8.27678213361749e-06
+Final IK error (80 iterations):  8.080679084208046e-06
+Final IK error (51 iterations):  8.862560500546921e-06
+Final IK error (218 iterations):  8.529976443549012e-06
+Final IK error (63 iterations):  9.201164050111603e-06
+Final IK error (66 iterations):  8.323759471265814e-06
+Final IK error (66 iterations):  9.092594214897714e-06
+Final IK error (37 iterations):  8.49528389614829e-06
+Final IK error (0 iterations):  5.571939786726827e-06
+Final IK error (74 iterations):  6.9455255943564934e-06
+Final IK error (53 iterations):  9.43547067814141e-06
+Final IK error (76 iterations):  6.56496902414096e-06
+Final IK error (90 iterations):  8.025727529270225e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (190 iterations):  9.582706275531837e-06
+Final IK error (61 iterations):  7.48421774139487e-06
+Final IK error (107 iterations):  9.934027004838278e-06
+Final IK error (50 iterations):  9.30475025047821e-06
+Final IK error (44 iterations):  8.375503939787981e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (66 iterations):  8.869411524545505e-06
+Final IK error (116 iterations):  9.629182309440616e-06
+Final IK error (53 iterations):  8.282930813643095e-06
+Final IK error (64 iterations):  9.801075031556958e-06
+Final IK error (56 iterations):  7.899595331722633e-06
+Final IK error (76 iterations):  8.394358898999171e-06
+Final IK error (63 iterations):  7.714343400371135e-06
+Final IK error (73 iterations):  8.456138704921563e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (13 iterations):  9.763461349254067e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (0 iterations):  7.354755280977532e-06
+Final IK error (319 iterations):  9.581827793086948e-06
+Final IK error (65 iterations):  7.944166204017524e-06
+Final IK error (65 iterations):  8.297941771177662e-06
+Final IK error (63 iterations):  8.94590849787148e-06
+Final IK error (90 iterations):  7.070155689586426e-06
+Final IK error (34 iterations):  9.00138834761334e-06
+Final IK error (71 iterations):  6.992882315798584e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (70 iterations):  9.146237527435416e-06
+Final IK error (73 iterations):  8.590723892078925e-06
+Final IK error (80 iterations):  9.207708478469923e-06
+Final IK error (90 iterations):  7.699266351531598e-06
+Final IK error (88 iterations):  9.110948038107696e-06
+Final IK error (99 iterations):  8.535507547503444e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (83 iterations):  6.9340375273350815e-06
+Final IK error (78 iterations):  8.212944422291485e-06
+Final IK error (76 iterations):  7.941147946199373e-06
+Final IK error (62 iterations):  8.020218957259604e-06
+Final IK error (81 iterations):  7.885995641508743e-06
+Final IK error (55 iterations):  8.127220038610503e-06
+Final IK error (67 iterations):  9.034767825557896e-06
+Final IK error (57 iterations):  8.391978778640182e-06
+Final IK error (75 iterations):  8.624891423951747e-06
+Final IK error (123 iterations):  8.43078159728173e-06
+Final IK error (77 iterations):  7.473641467938666e-06
+Final IK error (60 iterations):  7.708340660760629e-06
+Final IK error (233 iterations):  9.297235711647735e-06
+Final IK error (61 iterations):  8.33448788686024e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (62 iterations):  8.725579213239442e-06
+Final IK error (47 iterations):  8.273888224111424e-06
+Final IK error (112 iterations):  7.86841698400541e-06
+Final IK error (27 iterations):  9.660568385543e-06
+Final IK error (62 iterations):  8.664275249045003e-06
+Final IK error (3 iterations):  9.839459605545283e-06
+Final IK error (70 iterations):  6.953269109142727e-06
+Final IK error (262 iterations):  8.428670189310336e-06
+Final IK error (55 iterations):  9.081301027742967e-06
+Final IK error (75 iterations):  9.157077650624299e-06
+Final IK error (66 iterations):  9.775126336892262e-06
+Final IK error (56 iterations):  7.979198726244286e-06
+Final IK error (64 iterations):  7.991796561798815e-06
+Final IK error (62 iterations):  9.416893302708081e-06
+Final IK error (65 iterations):  7.352661139107201e-06
+Final IK error (68 iterations):  7.547745959185084e-06
+Final IK error (61 iterations):  7.64652455133095e-06
+Final IK error (76 iterations):  9.490754874010987e-06
+Final IK error (99 iterations):  9.652610214899964e-06
+Final IK error (51 iterations):  9.51195639705047e-06
+Final IK error (1000 iterations):  0.011402995184592965
+Final IK error (65 iterations):  9.672146434809414e-06
+Final IK error (60 iterations):  8.17859612940809e-06
+Final IK error (21 iterations):  9.602270947552896e-06
+Final IK error (78 iterations):  6.227845006615771e-06
+Final IK error (90 iterations):  9.115873294426809e-06
+Final IK error (233 iterations):  9.489903302998866e-06
+Final IK error (1000 iterations):  0.010899544771562488
+Final IK error (71 iterations):  8.03914022975215e-06
+Final IK error (52 iterations):  8.690941485043463e-06
+Final IK error (52 iterations):  9.683992595443707e-06
+Final IK error (67 iterations):  7.6929058288104e-06
+Final IK error (1000 iterations):  0.011183958240352681
+Final IK error (1 iterations):  9.630511141259058e-06
+Final IK error (67 iterations):  9.561052808220708e-06
+Final IK error (75 iterations):  9.05975116445563e-06
+Final IK error (54 iterations):  9.627388832330904e-06
+Final IK error (46 iterations):  9.282617094006747e-06
+Final IK error (75 iterations):  6.772574295447809e-06
+Final IK error (64 iterations):  9.85031274457106e-06
+Final IK error (89 iterations):  6.549775787604205e-06
+Final IK error (0 iterations):  4.489858326010543e-06
+Final IK error (82 iterations):  9.241546752687992e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (75 iterations):  7.523756719743178e-06
+Final IK error (44 iterations):  9.026262413604113e-06
+Final IK error (61 iterations):  9.281841429269274e-06
+Final IK error (65 iterations):  9.975856342103895e-06
+Final IK error (89 iterations):  8.857730881965825e-06
+Final IK error (60 iterations):  7.92492666051346e-06
+Final IK error (66 iterations):  7.544636802835633e-06
+Final IK error (233 iterations):  9.524023636190199e-06
+Final IK error (65 iterations):  8.028619323482697e-06
+Final IK error (191 iterations):  9.014497071848513e-06
+Final IK error (70 iterations):  6.953269109142727e-06
+Final IK error (91 iterations):  7.742023111100225e-06
+Final IK error (1000 iterations):  0.010707894033365317
+Final IK error (44 iterations):  8.372028808382202e-06
+Final IK error (53 iterations):  8.019187390207339e-06
+Final IK error (59 iterations):  8.724530819642614e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (51 iterations):  9.720065836490998e-06
+Final IK error (68 iterations):  7.795348944983064e-06
+Final IK error (75 iterations):  9.956595663335396e-06
+Final IK error (73 iterations):  8.013910268115822e-06
+Final IK error (62 iterations):  8.821118422270724e-06
+Final IK error (46 iterations):  8.806011952433875e-06
+Final IK error (205 iterations):  8.415222956708187e-06
+Final IK error (71 iterations):  9.735508234248815e-06
+Final IK error (63 iterations):  8.8284720912091e-06
+Final IK error (72 iterations):  7.902613507290788e-06
+Final IK error (7 iterations):  9.689031933137005e-06
+Final IK error (68 iterations):  9.435640692775147e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (80 iterations):  8.48349448132082e-06
+Final IK error (62 iterations):  8.725579213239442e-06
+Final IK error (34 iterations):  9.68853623455147e-06
+Final IK error (64 iterations):  7.89454084151114e-06
+Final IK error (57 iterations):  9.459906529103168e-06
+Final IK error (75 iterations):  8.600130410263511e-06
+Final IK error (66 iterations):  7.583328451163026e-06
+Final IK error (53 iterations):  9.621920685048196e-06
+Final IK error (1000 iterations):  0.011388424454178285
+Final IK error (80 iterations):  8.18593857729573e-06
+Final IK error (162 iterations):  9.55987215558381e-06
+Final IK error (58 iterations):  9.092670089056444e-06
+Final IK error (278 iterations):  9.055621106388046e-06
+Final IK error (9 iterations):  9.923749423551783e-06
+Final IK error (66 iterations):  8.999135671261241e-06
+Final IK error (82 iterations):  9.056135339850618e-06
+Final IK error (44 iterations):  9.092420960755333e-06
+Final IK error (67 iterations):  8.047933436841855e-06
+Final IK error (36 iterations):  9.668182544674031e-06
+Final IK error (75 iterations):  7.298925288614978e-06
+Final IK error (88 iterations):  6.995697053638457e-06
+Final IK error (48 iterations):  8.99476532966734e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (90 iterations):  7.87462334273062e-06
+Final IK error (73 iterations):  9.723056873849644e-06
+Final IK error (66 iterations):  9.092594214897714e-06
+Final IK error (1000 iterations):  0.011999054495358994
+Final IK error (55 iterations):  8.893023309309438e-06
+Final IK error (30 iterations):  8.89627464509752e-06
+Final IK error (66 iterations):  7.1814464165425485e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (55 iterations):  8.887817912285121e-06
+Final IK error (62 iterations):  9.35097124933135e-06
+Final IK error (44 iterations):  9.89298337209532e-06
+Final IK error (58 iterations):  8.404798466574337e-06
+Final IK error (54 iterations):  8.000269037032516e-06
+Final IK error (53 iterations):  9.195164418058901e-06
+Final IK error (44 iterations):  8.557012148532803e-06
+Final IK error (79 iterations):  6.130382283050374e-06
+Final IK error (319 iterations):  9.186590138896548e-06
+Final IK error (51 iterations):  7.934281170534503e-06
+Final IK error (59 iterations):  8.155256862963846e-06
+Final IK error (33 iterations):  8.929232318543863e-06
+Final IK error (67 iterations):  8.425108403076388e-06
+Final IK error (66 iterations):  8.684907491891494e-06
+Final IK error (75 iterations):  9.437252837082113e-06
+Final IK error (1000 iterations):  0.011199952613897743
+Final IK error (99 iterations):  7.985272380605046e-06
+Final IK error (54 iterations):  9.667394367898342e-06
+Final IK error (66 iterations):  9.060728312914018e-06
+Final IK error (65 iterations):  8.72720437973902e-06
+Final IK error (1000 iterations):  0.010701772766442779
+Final IK error (70 iterations):  9.061635249299353e-06
+Final IK error (73 iterations):  7.995664259342078e-06
+Final IK error (75 iterations):  9.714123516252612e-06
+Final IK error (72 iterations):  9.201056319116736e-06
+Final IK error (76 iterations):  8.138866852732625e-06
+Final IK error (71 iterations):  7.259646733056025e-06
+Final IK error (1 iterations):  9.630511141259058e-06
+Final IK error (69 iterations):  7.592019346013171e-06
+Final IK error (80 iterations):  8.48349448132082e-06
+Final IK error (110 iterations):  9.975688246751965e-06
+Final IK error (67 iterations):  8.235155730040266e-06
+Final IK error (123 iterations):  9.224963999196988e-06
+Final IK error (89 iterations):  7.362597661057425e-06
+Final IK error (73 iterations):  9.012592554132961e-06
+Final IK error (59 iterations):  7.849153996287387e-06
+Final IK error (140 iterations):  8.396359097965208e-06
+Final IK error (219 iterations):  9.057837883502138e-06
+Final IK error (55 iterations):  9.332797938787949e-06
+Final IK error (362 iterations):  8.990899896792929e-06
+Final IK error (65 iterations):  9.798129029876314e-06
+Final IK error (62 iterations):  9.08362976891666e-06
+Final IK error (100 iterations):  8.159186184527769e-06
+Final IK error (73 iterations):  8.6197081987432e-06
+Final IK error (1000 iterations):  2.2656487327340463e-05
+Final IK error (73 iterations):  6.96452613593424e-06
+Final IK error (67 iterations):  8.425108403076388e-06
+Final IK error (76 iterations):  6.625390676454228e-06
+Final IK error (108 iterations):  8.539400760092071e-06
+Final IK error (52 iterations):  9.193946084931893e-06
+Final IK error (75 iterations):  6.6687789784888636e-06
+Final IK error (57 iterations):  9.663071930339118e-06
+Final IK error (149 iterations):  8.689271798039427e-06
+Final IK error (100 iterations):  8.270847652430952e-06
+Final IK error (76 iterations):  8.05747159755238e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (87 iterations):  8.15472668256911e-06
+Final IK error (65 iterations):  8.088839587576179e-06
+Final IK error (87 iterations):  6.765202256041644e-06
+Final IK error (66 iterations):  7.987712928322682e-06
+Final IK error (71 iterations):  7.310940843070905e-06
+Final IK error (75 iterations):  9.048184400506817e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (65 iterations):  9.420639003368844e-06
+Final IK error (77 iterations):  7.389181268511196e-06
+Final IK error (51 iterations):  9.982436078235115e-06
+Final IK error (51 iterations):  9.905629086447857e-06
+Final IK error (100 iterations):  7.294816144837388e-06
+Final IK error (89 iterations):  8.739050760462364e-06
+Final IK error (87 iterations):  9.745462501549858e-06
+Final IK error (73 iterations):  8.814464200279361e-06
+Final IK error (69 iterations):  9.144024572301853e-06
+Final IK error (108 iterations):  8.657015386317302e-06
+Final IK error (68 iterations):  7.395399268658106e-06
+Final IK error (52 iterations):  9.233049217350786e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (79 iterations):  8.166882419576736e-06
+Final IK error (75 iterations):  6.734205351783723e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (62 iterations):  9.823994281391395e-06
+Final IK error (43 iterations):  8.393457598542042e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (73 iterations):  6.802475200338387e-06
+Final IK error (62 iterations):  8.664275249045003e-06
+Final IK error (0 iterations):  5.906880722722957e-06
+Final IK error (74 iterations):  7.85764470689872e-06
+Final IK error (70 iterations):  7.191774957578236e-06
+Final IK error (61 iterations):  9.239983090347365e-06
+Final IK error (82 iterations):  6.203773556804614e-06
+Final IK error (0 iterations):  7.354755280977532e-06
+Final IK error (42 iterations):  9.61258358446264e-06
+Final IK error (74 iterations):  9.756375976484054e-06
+Final IK error (64 iterations):  9.482239231636701e-06
+Final IK error (144 iterations):  8.594356001070048e-06
+Final IK error (66 iterations):  8.551532046577918e-06
+Final IK error (2 iterations):  9.706603554741404e-06
+Final IK error (76 iterations):  8.45402209693841e-06
+Final IK error (69 iterations):  8.137070083437314e-06
+Final IK error (51 iterations):  8.360047195062096e-06
+Final IK error (65 iterations):  9.105023231461847e-06
+Final IK error (88 iterations):  8.72811032336441e-06
+Final IK error (46 iterations):  8.763739671188716e-06
+Final IK error (77 iterations):  6.8454541496519676e-06
+Final IK error (62 iterations):  9.315605938776556e-06
+Final IK error (56 iterations):  9.722378513301261e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (83 iterations):  8.93178244724587e-06
+Final IK error (67 iterations):  9.796482545340993e-06
+Final IK error (40 iterations):  9.74806600620889e-06
+Final IK error (75 iterations):  8.645919545731629e-06
+Final IK error (263 iterations):  9.314975082100216e-06
+Final IK error (84 iterations):  8.687122461851462e-06
+Final IK error (306 iterations):  8.601508440362684e-06
+Final IK error (218 iterations):  9.701431105008423e-06
+Final IK error (79 iterations):  9.843207554573172e-06
+Final IK error (43 iterations):  9.996369666824072e-06
+Final IK error (76 iterations):  6.625390676454228e-06
+Final IK error (102 iterations):  8.333902098850367e-06
+Final IK error (78 iterations):  6.749650553677108e-06
+Final IK error (0 iterations):  5.906880722722957e-06
+Final IK error (0 iterations):  8.296717207827522e-06
+Final IK error (50 iterations):  9.840409044991684e-06
+Final IK error (0 iterations):  5.571939786726827e-06
+Final IK error (92 iterations):  6.673753996894899e-06
+Final IK error (53 iterations):  8.512711819939147e-06
+Final IK error (100 iterations):  8.76568702434383e-06
+Final IK error (69 iterations):  9.972118124573544e-06
+Final IK error (76 iterations):  8.05747159755238e-06
+Final IK error (66 iterations):  8.903290878233854e-06
+Final IK error (59 iterations):  8.664574517018081e-06
+Final IK error (70 iterations):  7.151741997556584e-06
+Final IK error (56 iterations):  8.380578710521784e-06
+Final IK error (63 iterations):  9.957528985974285e-06
+Final IK error (60 iterations):  9.853114253926717e-06
+Final IK error (66 iterations):  7.440448195039787e-06
+Final IK error (67 iterations):  9.5903257333128e-06
+Final IK error (13 iterations):  9.355909965165404e-06
+Final IK error (62 iterations):  9.094247435629538e-06
+Final IK error (75 iterations):  8.88242183342767e-06
+Final IK error (38 iterations):  9.798861749618026e-06
+Final IK error (52 iterations):  9.683992595443707e-06
+Final IK error (88 iterations):  6.8429343143271435e-06
+Final IK error (27 iterations):  9.660568385543e-06
+Final IK error (69 iterations):  9.214229967058732e-06
+Final IK error (90 iterations):  7.023655697276924e-06
+Final IK error (75 iterations):  8.478727411862767e-06
+Final IK error (59 iterations):  7.984368085321072e-06
+Final IK error (71 iterations):  9.118775608166163e-06
+Final IK error (77 iterations):  8.278372294812584e-06
+Final IK error (91 iterations):  9.59278871111926e-06
+Final IK error (65 iterations):  9.651484658086812e-06
+Final IK error (1000 iterations):  1.0770516147644678e-05
+Final IK error (61 iterations):  9.832850291815365e-06
+Final IK error (75 iterations):  8.521432635833808e-06
+Final IK error (75 iterations):  7.187097189265437e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (82 iterations):  5.874217823431609e-06
+Final IK error (61 iterations):  9.16007644575856e-06
+Final IK error (89 iterations):  7.362597661057425e-06
+Final IK error (77 iterations):  8.48001871993408e-06
+Final IK error (37 iterations):  9.682534641736871e-06
+Final IK error (348 iterations):  9.058966223465348e-06
+Final IK error (54 iterations):  9.048111577352349e-06
+Final IK error (70 iterations):  7.428897672653787e-06
+Final IK error (1000 iterations):  0.010561661640356396
+Final IK error (87 iterations):  7.29855672383895e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (100 iterations):  8.370645332034939e-06
+Final IK error (52 iterations):  8.639085792838616e-06
+Final IK error (14 iterations):  9.361250857866744e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (148 iterations):  8.251395440734038e-06
+Final IK error (35 iterations):  9.98380929155187e-06
+Final IK error (72 iterations):  7.058624026101533e-06
+Final IK error (67 iterations):  8.979561875938093e-06
+Final IK error (96 iterations):  8.95301491271563e-06
+Final IK error (1000 iterations):  0.011067286368321416
+Final IK error (111 iterations):  8.71564715933434e-06
+Final IK error (176 iterations):  9.594690531854231e-06
+Final IK error (58 iterations):  9.433567869642022e-06
+Final IK error (69 iterations):  7.576524074452117e-06
+Final IK error (74 iterations):  9.365931923460084e-06
+Final IK error (108 iterations):  8.757731458066918e-06
+Final IK error (65 iterations):  8.534280684765384e-06
+Final IK error (64 iterations):  8.653379644891994e-06
+Final IK error (97 iterations):  8.844119116223541e-06
+Final IK error (60 iterations):  8.654172675054789e-06
+Final IK error (74 iterations):  8.272149750065368e-06
+Final IK error (100 iterations):  8.76568702434383e-06
+Final IK error (28 iterations):  9.312590239453152e-06
+Final IK error (90 iterations):  7.119796548175664e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (47 iterations):  8.446846104950946e-06
+Final IK error (65 iterations):  8.429992256639066e-06
+Final IK error (79 iterations):  8.201699818139825e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (70 iterations):  8.126824006786003e-06
+Final IK error (82 iterations):  8.936208735125497e-06
+Final IK error (71 iterations):  9.17210206836951e-06
+Final IK error (51 iterations):  9.007667804088356e-06
+Final IK error (64 iterations):  7.424093006025613e-06
+Final IK error (68 iterations):  9.274745735065787e-06
+Final IK error (123 iterations):  9.223667905129232e-06
+Final IK error (83 iterations):  7.25533098433848e-06
+Final IK error (72 iterations):  8.569194639175205e-06
+Final IK error (67 iterations):  9.462471904925806e-06
+Final IK error (99 iterations):  9.255483385194514e-06
+Final IK error (54 iterations):  9.714372264228475e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (55 iterations):  8.893023309309438e-06
+Final IK error (306 iterations):  8.601508440362684e-06
+Final IK error (1000 iterations):  0.010882027661912827
+Final IK error (68 iterations):  8.033607984152438e-06
+Final IK error (69 iterations):  8.326484222789662e-06
+Final IK error (291 iterations):  8.945712739338265e-06
+Final IK error (68 iterations):  7.936515597725942e-06
+Final IK error (290 iterations):  8.648547354514904e-06
+Final IK error (76 iterations):  9.0264217715582e-06
+Final IK error (56 iterations):  9.623991091663053e-06
+Final IK error (52 iterations):  8.657586328487078e-06
+Final IK error (1000 iterations):  0.010415677238852674
+Final IK error (64 iterations):  7.751444333290182e-06
+Final IK error (263 iterations):  8.310141018921678e-06
+Final IK error (70 iterations):  8.260190622639408e-06
+Final IK error (66 iterations):  8.688353318579703e-06
+Final IK error (69 iterations):  8.326484222789662e-06
+Final IK error (73 iterations):  8.819068373055408e-06
+Final IK error (0 iterations):  5.571939786726827e-06
+Final IK error (76 iterations):  8.023179161424143e-06
+Final IK error (77 iterations):  6.7601157219672376e-06
+Final IK error (2 iterations):  9.706603554741404e-06
+Final IK error (88 iterations):  8.429099583267332e-06
+Final IK error (67 iterations):  7.869027439987913e-06
+Final IK error (18 iterations):  9.752736819224785e-06
+Final IK error (35 iterations):  8.689892565706537e-06
+Final IK error (64 iterations):  9.600976548546119e-06
+Final IK error (146 iterations):  8.504649816916176e-06
+Final IK error (71 iterations):  9.218812305136852e-06
+Final IK error (137 iterations):  9.51522843072823e-06
+Final IK error (0 iterations):  6.278450821191042e-06
+Final IK error (75 iterations):  6.992251235256754e-06
+Final IK error (63 iterations):  7.65973369186372e-06
+Final IK error (1 iterations):  9.46751167842449e-06
+Final IK error (65 iterations):  8.261226702238763e-06
+Final IK error (51 iterations):  9.720065836490998e-06
+Final IK error (90 iterations):  7.596569858460775e-06
+Final IK error (73 iterations):  7.187867860742915e-06
+Final IK error (43 iterations):  8.285879409793988e-06
+Final IK error (52 iterations):  8.26307215695213e-06
+Final IK error (77 iterations):  6.974075751023459e-06
+Final IK error (204 iterations):  9.355385209120433e-06
+Final IK error (57 iterations):  9.663071930339118e-06
+Final IK error (32 iterations):  9.837893137807868e-06
+Final IK error (76 iterations):  9.969228174401505e-06
+Final IK error (89 iterations):  6.935680288033803e-06
+Final IK error (75 iterations):  9.69383101356999e-06
+Final IK error (74 iterations):  9.610733072030951e-06
+Final IK error (74 iterations):  7.573561182474318e-06
+Final IK error (56 iterations):  9.722378513301261e-06
+Final IK error (35 iterations):  9.352801535252651e-06
+Final IK error (65 iterations):  8.68535566591895e-06
+Final IK error (66 iterations):  7.583328451163026e-06
+Final IK error (60 iterations):  8.906553424611947e-06
+Final IK error (73 iterations):  9.984215868593183e-06
+Final IK error (0 iterations):  5.906880722722957e-06
+Final IK error (90 iterations):  9.041358929908482e-06
+Final IK error (1000 iterations):  1.4411378180341416e-05
+Final IK error (70 iterations):  9.146237527435416e-06
+Final IK error (76 iterations):  7.420645452279177e-06
+Final IK error (0 iterations):  2.312558123341194e-06
+Final IK error (65 iterations):  8.232181847302865e-06
+Final IK error (33 iterations):  9.940765692976146e-06
+Final IK error (74 iterations):  7.2377137658867385e-06
+Final IK error (66 iterations):  9.952697305021296e-06
+Final IK error (1000 iterations):  0.011348080328907875
+Final IK error (115 iterations):  8.286760209458926e-06
+Final IK error (88 iterations):  7.779775125825109e-06
+Final IK error (65 iterations):  7.478486113134088e-06
+Final IK error (108 iterations):  8.657015386317302e-06
+Final IK error (75 iterations):  7.684717400296332e-06
+Final IK error (68 iterations):  9.204973855932328e-06
+Final IK error (47 iterations):  8.843146295977033e-06
+Final IK error (75 iterations):  8.438563620751608e-06
+Final IK error (76 iterations):  8.357065121366985e-06
+Final IK error (71 iterations):  8.098911059817124e-06
+Final IK error (0 iterations):  2.210655072877922e-06
+Final IK error (74 iterations):  6.9455255943564934e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (65 iterations):  9.833282996793292e-06
+Final IK error (59 iterations):  8.512954746652948e-06
+Final IK error (110 iterations):  9.047733566482098e-06
+Final IK error (41 iterations):  9.237141523058734e-06
+Final IK error (56 iterations):  7.979198726244286e-06
+Final IK error (89 iterations):  8.943365858368712e-06
+Final IK error (73 iterations):  7.910938835951091e-06
+Final IK error (70 iterations):  8.609001571361776e-06
+Final IK error (6 iterations):  9.500162633146115e-06
+Final IK error (77 iterations):  6.604115566616519e-06
+Final IK error (247 iterations):  9.501400932449496e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (91 iterations):  7.914269150702288e-06
+Final IK error (73 iterations):  6.839313846298543e-06
+Final IK error (90 iterations):  7.701690484623125e-06
+Final IK error (0 iterations):  5.571939786726827e-06
+Final IK error (0 iterations):  5.490594868135357e-06
+Final IK error (89 iterations):  8.797883835753722e-06
+Final IK error (46 iterations):  8.769442081843885e-06
+Final IK error (0 iterations):  7.354755280977532e-06
+Final IK error (90 iterations):  8.274572004922468e-06
+Final IK error (98 iterations):  9.08852831680222e-06
+Final IK error (89 iterations):  8.799862968651701e-06
+Final IK error (56 iterations):  8.652123078972596e-06
+Final IK error (0 iterations):  5.960673741593139e-06
+Final IK error (16 iterations):  9.452260692213002e-06
+Final IK error (53 iterations):  9.887928390726997e-06
+Final IK error (0 iterations):  1.645108109338604e-06
+Final IK error (88 iterations):  9.880097167208025e-06
+Final IK error (69 iterations):  9.986226789601217e-06
+Final IK error (61 iterations):  9.472881312791893e-06
+Final IK error (60 iterations):  9.408441717665429e-06
+Final IK error (89 iterations):  9.196917250656556e-06
+Final IK error (58 iterations):  9.4865286605894e-06
+Final IK error (72 iterations):  7.490321073117596e-06
+Final IK error (48 iterations):  8.482400845580698e-06
+Final IK error (70 iterations):  9.296528719295684e-06
+Final IK error (73 iterations):  7.331836233153776e-06
+Final IK error (57 iterations):  8.481278349792553e-06
+Final IK error (74 iterations):  9.40894285429179e-06
+Final IK error (65 iterations):  8.6610226359875e-06
+Final IK error (55 iterations):  8.993557123234871e-06
+Final IK error (10 iterations):  9.417498839619666e-06
+Final IK error (59 iterations):  8.603560647446974e-06
+Final IK error (74 iterations):  7.97646794601681e-06
+Final IK error (1000 iterations):  0.011283919837914979
+Final IK error (26 iterations):  9.672477410890366e-06
+Final IK error (74 iterations):  7.03206460706892e-06
+Final IK error (75 iterations):  7.820473206907825e-06
+Final IK error (57 iterations):  8.051747417809899e-06
+Final IK error (80 iterations):  7.337330567217958e-06
+Final IK error (56 iterations):  8.965960441148433e-06
+Final IK error (56 iterations):  7.747269864173973e-06
+Final IK error (74 iterations):  7.97646794601681e-06
+Successful comparisons: 970/1000
+Overall R² (normalized space): 0.9989
+Overall RMSE (normalized space): 0.015936
+Verification visualization saved to: logs/avoiding-v0/dynamics/dynamics_verification.png
+Model saved to: logs/avoiding-v0/dynamics/linear_model.npz
+
+=== Summary ===
+Fitted linear dynamics model for avoiding-v0
+Model form: s_{t+1} = A·s_t + B·a_t + c
+Overall performance: R² = 0.9998, RMSE = 0.0072
+Environment verification R²: 0.9989, RMSE: 0.015936
+Files saved to: logs/avoiding-v0/dynamics/
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_bf9394c8-811c-11f1-be1f-d85ed34e311e.xml' with default provider at slot 1
+
+==============================================================
+[ HF-EVAL ] method=original -> bash run_scripts/eval_original.sh
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== Running Original on avoiding-v0, horizon=16, ode_t_steps=10 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2551.28it/s]
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+No fitted dynamics found, proceeding without dynamics model
+[ models/temporal ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[(6, 32), (32, 128), (128, 256)]
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/HardFlow/run/eval.py", line 702, in <module>
+    evaluate(cfg)
+  File "/data/home/llim/FMPCC/FM-PCC/HardFlow/run/eval.py", line 540, in evaluate
+    torch.load(
+  File "/u/home/llim/miniconda3/envs/hardflow_clone/lib/python3.10/site-packages/torch/serialization.py", line 998, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/u/home/llim/miniconda3/envs/hardflow_clone/lib/python3.10/site-packages/torch/serialization.py", line 445, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/u/home/llim/miniconda3/envs/hardflow_clone/lib/python3.10/site-packages/torch/serialization.py", line 426, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/avoiding-v0/flow/H16_1e6steps/model_ema_20.pth'
+Total runtime: 0h 0m 4s
+[ HF-EVAL ] done. results under logs/avoiding-v0/eval/ :
+total 0
+drwxr-xr-x 3 llim tumuser 51 Jul 16 13:47 .
+drwxr-xr-x 5 llim tumuser 68 Jul 16 13:47 ..
+drwxr-xr-x 2 llim tumuser 25 Jul 16 13:47 H16_1e6steps_original_10steps
+================================================================================
+JOB END: Thu Jul 16 13:47:39 UTC 2026
+================================================================================

@@ -1,0 +1,38 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jul 16 08:43:56 UTC 2026
+JOB NAME:  eval_hardflow   ID: 23486   NODE: i6-gpu-1
+CONDA ENV: hardflow_clone   (clone of FMPCC — live env untouched)
+HARDFLOW_REPO: /u/home/llim/FMPCC/FM-PCC/HardFlow
+LOG COLLECT:   /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+HARDFLOW GIT: 97d9e0e
+================================================================================
+[ HF-BRIDGE ] python: /u/home/llim/miniconda3/envs/hardflow_clone/bin/python
+[ HF-BRIDGE ] tyro OK, gym==0.20.0
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+[ HF-BRIDGE ] /u/home/llim/FMPCC/FM-PCC/HardFlow/logs -> /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+[ HF-BRIDGE ] cwd: /u/home/llim/FMPCC/FM-PCC/HardFlow
+[ HF-EVAL ] dynamics model missing -> python run/fit_dynamics.py
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/HardFlow/run/fit_dynamics.py", line 15, in <module>
+    from hardflow.datasets.sequence import SequenceDataset
+  File "/u/home/llim/FMPCC/FM-PCC/HardFlow/hardflow/datasets/__init__.py", line 1, in <module>
+    from .sequence import *
+  File "/u/home/llim/FMPCC/FM-PCC/HardFlow/hardflow/datasets/sequence.py", line 7, in <module>
+    from .preprocessing import get_preprocess_fn
+  File "/u/home/llim/FMPCC/FM-PCC/HardFlow/hardflow/datasets/preprocessing.py", line 3, in <module>
+    from .d4rl import load_environment
+  File "/u/home/llim/FMPCC/FM-PCC/HardFlow/hardflow/datasets/d4rl.py", line 5, in <module>
+    import d4rl
+ModuleNotFoundError: No module named 'd4rl'
+================================================================================
+JOB END: Thu Jul 16 08:44:00 UTC 2026
+================================================================================
