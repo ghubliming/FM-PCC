@@ -1,7 +1,7 @@
 """Gen13 — iMF eval entry (additive sibling of run/eval.py, which is untouched).
 
-Reuses run.eval's ProxyValueModel and run_env unchanged via import (run/eval.py
-is __main__-guarded, so the import is side-effect free). Only the model build
+Reuses run.eval's ProxyValueModel unchanged via import (run/eval.py is
+__main__-guarded, so the import is side-effect free). Only the model build
 and policy class differ from run.eval.evaluate():
 
   * TemporalImfUnet + ImfFlowPolicy instead of TemporalUnet + FlowPolicy
@@ -13,10 +13,16 @@ and policy class differ from run.eval.evaluate():
 Everything else — dataset/normalizer, fitted dynamics, avoiding-v0 env loop,
 CSV format — mirrors run/eval.py so results are directly comparable with the
 frozen FM baselines.
+
+NOTE (fix_2, quiet console): run.eval.run_env is FORKED (not imported) as
+_run_env_quiet below, purely to fix console-log noise (see its docstring).
+run/eval.py itself is left untouched — Gen13's rule is additive-only, and
+run.eval.run_env is pre-existing (pre-Gen13) code.
 """
 
 import csv
 import os
+import sys
 
 import matplotlib
 
@@ -25,9 +31,11 @@ matplotlib.use("Agg")
 import gym
 import numpy as np
 import torch
+import tqdm
 import tyro
 
 import d3il  # noqa: F401  (registers avoiding-v0)
+import hardflow.utils
 
 from hardflow.datasets.sequence import SequenceDataset
 from hardflow.models_flow.imf import (
@@ -35,8 +43,118 @@ from hardflow.models_flow.imf import (
     ImfFlowPolicy,
     TemporalImfUnet,
 )
-from run.eval import ProxyValueModel, run_env
+from run.eval import ProxyValueModel, check_violation
 from run.utils import deterministic, save_config, set_cuda_visible_device
+
+_IS_TTY = sys.stdout.isatty()
+
+
+def _run_env_quiet(env, policy, cfg, run_id=0):
+    """Fork of run.eval.run_env with QUIET progress reporting (Gen13 fix_2).
+
+    Functionally IDENTICAL to run.eval.run_env — same env stepping, violation
+    counting, image saving, and return values (so CSV numbers stay directly
+    comparable to the frozen FM baselines). Forked rather than imported because
+    run/eval.py is pre-existing HardFlow code and Gen13's rule is additive-only
+    (no edits to existing files).
+
+    WHY: run.eval.run_env calls tqdm's set_postfix() every single timestep.
+    Under SLURM, stdout is redirected to a log FILE, not a real terminal, so
+    tqdm's carriage-return trick never collapses in place — every one of up to
+    100 steps x 50 episodes gets dumped as raw text, producing the
+    thousands-of-characters unreadable log lines seen in practice (job 23565).
+    This fork uses a live tqdm bar only when stdout IS a real terminal
+    (_IS_TTY), and a single compact status line per episode otherwise.
+    """
+    assert env.name == "avoiding-v0", "This script is designed to run avoiding-v0."
+
+    observation = env.reset()
+    conditions = {}
+    rollout = [observation.copy()]
+    computation_times = []
+
+    save_path = os.path.join(cfg.log_folder, cfg.env, "eval", cfg.exp_name)
+
+    success = False
+    total_rewards = 0
+    total_violations = 0
+
+    assert (
+        cfg.replan_steps < cfg.horizon
+    ), f"replan steps ({cfg.replan_steps}) must be smaller than horizon ({cfg.horizon})"
+
+    planned_actions = None
+    action_index = 0
+
+    steps_iter = (
+        tqdm.tqdm(range(cfg.max_episode_length), desc=f"Episode {run_id}")
+        if _IS_TTY
+        else range(cfg.max_episode_length)
+    )
+
+    final_t = 0
+    for t in steps_iter:
+        final_t = t
+
+        if cfg.controller == "rh":  # receding horizon
+            if planned_actions is None or action_index >= cfg.replan_steps:
+                conditions[0] = observation
+                action, samples, _, _, info = policy(
+                    conditions, batch_size=cfg.batch_size
+                )
+                planned_actions = samples.actions[0]
+                action_index = 0
+                if "computation_time" in info:
+                    computation_times.append(info["computation_time"])
+            action = planned_actions[action_index]
+            action_index += 1
+        else:
+            raise NotImplementedError
+
+        observation, reward, terminated, info = env.step(action)
+        success = info[1]
+        total_rewards += reward
+        rollout.append(observation.copy())
+
+        violation = check_violation(observation, cfg.constraint)
+        violation = 1.0 if (violation > 0 or (terminated and not success)) else 0.0
+        total_violations += violation
+
+        if _IS_TTY:
+            steps_iter.set_postfix(
+                {
+                    "reward": f"{reward:.3f}",
+                    "total_rewards": f"{total_rewards:.3f}",
+                    "violations": f"{total_violations:.0f}",
+                }
+            )
+
+        if violation > 0 or terminated or success:
+            break
+
+    outcome = "SUCCESS" if success else "terminated"
+    print(
+        f"[ eval_imf ] episode {run_id}: {outcome}  steps={final_t + 1}  "
+        f"violations={total_violations:.0f}  reward={total_rewards:.3f}"
+    )
+
+    real_trajectory = np.array(rollout)
+    hardflow.utils.save_single_trajectory_image(
+        real_trajectory,
+        os.path.join(save_path, f"{run_id}_real.png"),
+        cfg.constraint,
+        cfg.obstacle_margin,
+        cfg.draw_obstacle_margin,
+    )
+
+    avg_computation_time = np.mean(computation_times) if computation_times else None
+    return (
+        total_rewards,
+        total_violations,
+        np.array(rollout),
+        success,
+        avg_computation_time,
+    )
 
 
 def evaluate_imf(cfg: ImfEvaluationConfig):
@@ -141,7 +259,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
             real_trajectory,
             success,
             avg_computation_time,
-        ) = run_env(env, flow_policy, cfg, run_id=run_id)
+        ) = _run_env_quiet(env, flow_policy, cfg, run_id=run_id)
 
         steps = len(real_trajectory) - 1
         safety = total_violations == 0

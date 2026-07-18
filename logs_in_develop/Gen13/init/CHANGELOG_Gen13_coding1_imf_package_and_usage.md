@@ -50,20 +50,34 @@ export PYTHONPATH="$PWD:$PWD/../Slurm_Codes/sbatch/hardflow/shims"
 python run/imf_gates.py        # CPU, ~2 min. Must print ALL GATES PASSED.
 ```
 
-**2. Train the iMF backbone (~hours; gates run first automatically):**
+**2. Train + Evaluate — ONE-JOB PIPELINE (recommended; added in fix_2):**
 ```bash
 cd /u/home/llim/FMPCC/FM-PCC
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/imf_pipeline_hardflow.sh
+```
+Runs gates → (train, skipped if a checkpoint already exists) → fit_dynamics (skipped if present) → the full E1–E4 eval matrix, all in one submission. Knobs: `N_TRAIN_STEPS`, `IMF_DATA_PROPORTION`, `IMF_P_STD` (train); `IMF_METHODS` (default `"original hardflow_new"`), `IMF_KS` (default `"1 2"`), `IMF_CP` (eval); `SKIP_TRAIN=1` to reuse an existing checkpoint and go straight to eval. → same outputs as steps 2+3 below, produced together.
+
+**2b. OR run train/eval separately (finer control — e.g. inspect the training curve before committing to eval):**
+
+*Train the iMF backbone (~hours; gates run first automatically):*
+```bash
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/train_imf_hardflow.sh
 ```
 → `logs/hardflow/avoiding-v0/flow/H16_imf_100k/model_ema_{0..4}.pth` + `metrics.csv`.
 **Read the curves:** `raw_mse_u` should drop ≥3× and plateau; ignore the flat adaptive `loss`; spikes are normal, divergence is not (G2 gate, plan §4).
 
-**3. Evaluate — the E1–E4 showdown matrix in one job:**
+*Evaluate — the E1–E4 showdown matrix in one job:*
 ```bash
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_imf_hardflow.sh
 # knobs: IMF_METHODS="original hardflow_new"  IMF_KS="1 2"  IMF_CP=4
 ```
-→ CSVs in `logs/hardflow/avoiding-v0/eval/H16_imf_{original,hardflow_new}_K{1,2}/trajectories.csv` (with `nfe_*` columns).
+→ CSVs in `logs/hardflow/avoiding-v0/eval/H16_imf_{original,hardflow_new}_K{1,2}/trajectories.csv` (with `nfe_*` columns). Eval console output is now quiet by default (one line/episode instead of a raw tqdm dump — fix_2).
+
+**2c. Gate-only smoke test (no training, <1 min, minimal footprint):**
+```bash
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/test_imf_gates.sh
+```
+Useful to re-verify the sign/convention gates on the cluster's real env without allocating the full training job.
 
 **4. Verdict (plan §5):** compare `H16_imf_hardflow_new_K2` (E3) against frozen B2 (FM hardflow_new: 100%/100%, 0.847 s/step, K=10). **iMF superior iff** safety 100% + 0 violations AND lower NFE/compute AND success/steps not degraded. Unguided E1/E2 vs B1 (4%/4%) is secondary/reported-only.
 
