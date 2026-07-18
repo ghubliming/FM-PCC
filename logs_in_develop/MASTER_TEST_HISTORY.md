@@ -33,7 +33,7 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
 | **Gen11 (UAV Vis-Traj in MuJoCo)** | ~~Partial~~ <br>[flow_matcher_v3_uav/](../flow_matcher_v3_uav) | ~~Partial~~ <br>[FM_v3_uav_test/](../FM_v3_uav_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone.~~ <br><br> **IN PROGRESS (Partial)**: UAV Flow-Matching & DPCC. Full closed-loop 33 Hz receding-horizon control for UAV trajectory planning in MuJoCo. Includes Cascaded PID trackers, MJPC thrust control, real-time logging, and DPCC safety projection on constraint spaces. | ~~in progress~~ <br>working on |
 | **Gen11+ / X** | [/workspaces/HardFlow](/workspaces/HardFlow) | Pending | June 2026 | Integrating /workspaces/HardFlow into FMPCC. | |
-| **Gen11+ / X  (HF + iMF)** | [/workspaces/HardFlow](/workspaces/HardFlow) | Pending | July 2026 | A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. | |
+| **Gen13  (HF + iMF)** | [/workspaces/HardFlow](/workspaces/HardFlow) | Started | July 2026 | A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. (Notes on Gen13v1: Based on/build on HF code)| |
 
 ***
 
@@ -2958,3 +2958,63 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Analytical Validation Script**: Implemented `validate_theory.py` to programmatically verify claims about HardFlow's constraints and the proposed theoretical fixes when migrating to an iMF generative backbone. This sets the foundation for evaluating the combined HF·iMF framework.
 
 ***
+
+## HardFlow Replication Fix 1: `d4rl` Shim (July 16, 2026)
+
+**Keywords**: HardFlow, cluster replication, d4rl, shim, ModuleNotFoundError, PYTHONPATH.
+
+1. **Missing Dependency Crash**: Identified a `ModuleNotFoundError: No module named 'd4rl'` during the first cluster test of the HardFlow evaluation bridge (`eval_hardflow.sh`), occurring because the FMPCC clone environment lacks the `d4rl` package.
+2. **Zero-Touch Shim Fix**: Verified that the avoiding task paths in HardFlow contain dead `import d4rl` code inherited from Diffuser but never actually call any `d4rl` functions. Rather than performing a heavy and brittle installation of real `d4rl`, created an empty dummy module (`Slurm_Codes/sbatch/hardflow/shims/d4rl.py`).
+3. **PYTHONPATH Isolation**: Appended the new `shims/` directory to the `PYTHONPATH` in `_hardflow_common.sh`, neatly satisfying the import requirement without modifying any HardFlow source code or polluting the broader environment.
+
+***
+
+
+## SLURM Logs and DA Batch Update (July 17, 2026)
+
+**Keywords**: SLURM, Data Analysis, batch_avoiding_combined, automated sync.
+
+1. **Regular Sync**: Automated synchronization of recent SLURM execution logs across UAV, visual-aligning, and iMF pipelines.
+2. **DA Batch Analysis Update**: Pushed the results for `batch_avoiding_combined_20260717_104253`, including multi-candidate aggregation tables and logs, providing thesis-ready batch analysis data for recent evaluation sweeps.
+
+***
+
+## iMF Official K2 Train & Eval Analysis (July 17-18, 2026)
+
+**Keywords**: iMF, K-invariance, adaptive loss, average-velocity field, raw_mse, K2 vs K10, training adjustments.
+
+1. **Adaptive Loss Clarification**: Audited the `imf_official` training curve and determined that the seemingly flat headline loss is an expected artifact of the self-normalizing adaptive loss. The underlying un-normalized MSEs did converge, but plateaued coarsely due to the intrinsic difficulty of fitting a 2-time-argument average-velocity field on only 96 demonstrations.
+2. **K-Invariance Validation**: Investigated why high-K (e.g., K=10, K=50) trajectories appeared chaotic while low-K (K=1, K=2) remained decisive. Concluded that iMF is designed to be **K-invariant**; increasing steps merely resolves the roughness of an under-fit field and averages away crucial mode-commitments in multimodal tasks. The proper evaluation regime for iMF is strictly K=1 or K=2.
+3. **Training Tuning Proposals**: Recommended rebalancing the training interval distribution to favor large-`h` (e.g., lowering `meanflow_data_proportion` to 0.25 and increasing `p_std` to 1.4) to better align with the interval queries made during K-step sampling.
+
+***
+
+## HardFlow Replication Fix 2: Checkpoint & Tensorboard (July 18, 2026)
+
+**Keywords**: HardFlow, tensorboard, pretrained checkpoint, model_ema_20.pth, evaluation readiness.
+
+1. **Missing Checkpoint Bottleneck**: Identified that HardFlow evaluation methods (`hardflow_new`, `original`, etc.) act as inference-time constrained samplers that expect a pretrained `model_ema_20.pth` checkpoint, which is not shipped with the repository.
+2. **Resolution Path**: Established a workflow to manually download the official pretrained weights into the `logs/hardflow/` directory, immediately unblocking evaluation and bypassing the need for a 1-million-step training run.
+3. **Tensorboard Dependency**: Traced a `ModuleNotFoundError` for `tensorboard` to the training script. Confirmed this is exclusively a training dependency and documented that it must be pip-installed into the `hardflow_clone` environment only if training from scratch is desired.
+
+***
+
+## ODE Solver Architecture & Performance Audits (July 18, 2026)
+
+**Keywords**: ODE solvers, SafeFlowMPC, explicit Euler, Midpoint, RK4, NFE budget, projection separation.
+
+1. **SafeFlowMPC vs. FMv3 Scope Comparison**: Authored a detailed audit differentiating the core flow ODE integrator from safety/projection optimizers. Conclusively determined that both SafeFlowMPC and FMv3 employ fixed-step, explicit Euler-style integration for advancing the flow, while Newton/SQP-style solvers (like SLSQP or acados) are strictly confined to the separate safety/projection layers.
+2. **Same-NFE Mathematical Advantages**: Documented why higher-order solvers (like 2nd-order Midpoint) outperform Euler under a strict Number of Function Evaluations (NFE) budget. Proved that for smooth Flow Matching vector fields, Midpoint's $O(1/N^2)$ accuracy significantly reduces discretization error by discarding the underestimated starting slope, making it computationally superior to Euler for identical neural network inference costs.
+
+***
+
+## HardFlow Eval: Original Baseline Validation (July 18, 2026)
+
+**Keywords**: HardFlow eval, original baseline, unguided sampling, safety rate, constraint enforcement.
+
+1. **First End-to-End Success**: Successfully executed the first full evaluation run (`eval_hardflow` job 23565) using the downloaded `model_ema_20.pth` checkpoint, validating that the FMPCC-clone bridge, `d4rl` shim, and dynamics fitting are all fully operational.
+2. **Baseline "Floor" Established**: Evaluated the `original` (no-guidance) baseline on 50 episodes. The method achieved a 4.0% success/safety rate, with 96% of episodes terminating early due to obstacle collisions. This confirms that without projection constraints, the raw generative model frequently clips obstacles on the avoiding task.
+3. **Validation Role**: Concluded that this low safety rate is the *intended* mathematical floor for the unguided baseline, acting as the foil for the constrained methods. The critical next step is to evaluate `hardflow_new` to verify that guided constraint projection can recover safety towards 100%.
+
+***
+

@@ -217,3 +217,49 @@ Either way, **evaluate iMF at NFE 1–2 (the paper's regime), not at K10/K50.** 
 - **The model is genuinely coarse** (raw_mse plateau ≈ 3, per-dim ≈ 0.25) because: interval-sampling starves large-h (§2a), average-velocity is data-starved at 96 demos (§2b), and eval runs CFG-off so trained guidance is dead weight (§2c).
 - **On the K-sweep (§7):** the paper (arXiv:2512.02012v1) validates **only NFE 1→2** (FID 1.72→1.54), one-step-primary, silent past 2 — iMF is **K-invariant**, not an ODE integrator. Our K10/K50 "chaos" is **off-paper** and is a symptom of the **under-fit field** (high-K resolves its roughness), *not* a refutation of the paper and *not* an iMF "worse-with-K" law. **The paper's real test is K1 vs K2 — still unrun.** Judge iMF there.
 - **iMF here is faithful but structurally out-matched by UNet-FM/DPCC on this small task** — the honest, fundamental reason, consistent with `../debug_notes/INVESTIGATION_imf_fidelity_vanilla_vs_improved_meanflow.md`.
+
+---
+
+## 9. Addendum — full K-sweep K1…K100 (empirical): **commitment ↔ smoothness trade-off**
+
+*Added after running the actual sweep (K∈{1,2,10,50,100}, **one seed**). Metrics: raw-trajectory smoothness = the `diffuser` (unprojected) variant; success & constraint = the projected **`dpcc-r-tightened`** variant (user's "dpcc-rtc"). After projection every variant is smooth — smoothness below always means the **raw** `diffuser` path.*
+
+### What the sweep actually showed
+| K (NFE) | raw `diffuser` smoothness | task (success & constraint), `dpcc-r-tightened` |
+|---|---|---|
+| 1 | coarse / angular (few segments) | **best** on top-left & top-right-hard |
+| 2 | coarse / angular | **best** on top-left & top-right-hard |
+| 10 | **slightly** smoother | — |
+| 50 | smoother | **worse** than K1/2 (top-L/R) |
+| 100 | smoother — but **still not FM/DPCC-smooth** | **worse** than K1/2 (top-L/R) |
+| any | (both-hard) | all K reach full success & constraint; avg steps ≈ equal |
+
+Two things move in **opposite** directions as K rises: raw smoothness **improves a little**, task success **degrades**. That opposition is the whole story.
+
+### Correction to §7 (I had the smoothness direction wrong)
+My §7 "high-K resolves the field's roughness → *more* jitter" is **not** what the data shows. Higher K is **mildly smoother**, not more chaotic. **Supersede the §7 jitter mechanism with this:** the trade-off below. (§7's *verdict* — TRAIN not EVAL, sampler is faithful — still stands; only the "worse-with-K jitter" mechanism was wrong.)
+
+### The mechanism: **NFE trades mode-commitment for line-smoothness on a multimodal task**
+`avoiding-d3il` is **multimodal by construction** — at the obstacle you go *left* or *right*, two valid demo modes. That is the key.
+
+- **Low K (1–2): a big average-velocity jump *commits to one mode*.** `u(x, 0, 1)` integrates the whole interval in one/two shots; the jump is dominated by whichever demo mode the initial noise is closest to, so the endpoint lands **on a real, single-mode trajectory**. The path is *angular/coarse* (only 1–2 segments) but **decisive and geometry-correct** → after projection it satisfies goal + constraints → **best task metrics**.
+- **High K (50–100): fine integration of the instantaneous field *averages across modes*.** As K↑, `u→v(x,τ)`, and the under-fit instantaneous field near the decision point is a **blend of the left and right modes** (it was fit to both). Integrating that blend in many small steps drifts the path toward the **between-mode middle** — a smoother *line* that heads into the ambiguous region (often toward the obstacle it should skirt). Projection then smooths it further but **cannot restore the lost mode decision** → **worse success/constraint**.
+
+So: **more steps buy a smoother line at the cost of averaging away the mode commitment** — and on a decision task, commitment is what the metric rewards. This is exactly *why* iMF is designed one-shot, and the task numbers agree with the design: **K1/K2 win.**
+
+### Why raw smoothness rises with K yet never reaches FM/DPCC
+- *Rises with K:* 1–2 giant jumps are piecewise-linear/angular; 50–100 small steps trace a finer polyline → visually smoother.
+- *Never reaches FM/DPCC:* FM/DPCC integrate an **accurate instantaneous field**, so fine integration is genuinely smooth **and** on-mode. Our instantaneous field is **under-fit** (§1, `raw_mse` plateau ≈ 3), so even at K100 the polyline is smoother-but-still-coarse **and** mode-averaged. iMF's field simply isn't accurate enough (data ceiling, §2b) to be *both* smooth and committed the way FM's is. **Raw-trajectory smoothness is therefore a misleading proxy for policy quality here** — the smoother K100 path is the *worse* policy.
+
+### Reconciliation with the paper (arXiv:2512.02012v1)
+Consistent, not contradictory: the paper reports **1-NFE ≈ 2-NFE** (FID 1.72→1.54) and stops at 2 — precisely the regime where **commitment is intact**. Our sweep independently lands on the same operating point: **NFE 1–2 is where iMF should run.** The paper never enters the high-K mode-averaging regime; neither should we.
+
+### Honest caveats (do not over-read this)
+- **n = 1 seed**, and D3IL success is coarse (~2 trials/condition → 0/0.5/1.0 granularity, `±` of ~1–2 violations). "K1/2 > K50/100" is **suggestive, not established** — it needs a **multi-seed** rerun before it goes in a paper.
+- both-hard being all-success at every K means projection can rescue that layout regardless; the discriminating evidence is **top-left/right-hard**, where the single-side mode decision actually matters.
+
+### Implications
+1. **Operate iMF at NFE 1–2.** Both the paper and your task metrics point there; ignore high-K for policy quality.
+2. **Report task success, not raw smoothness, as the quality metric** — and note explicitly that raw smoothness *anti-correlates* with success here (a genuinely interesting result worth stating).
+3. **The §6 retrain still applies and is now better motivated:** its goal is to make the **low-K committed jump** *also* smooth — i.e. sharpen the one-shot map (more large-`h` mass), not to chase high-K. If it works you'll see it as **better K1/K2** on *both* smoothness and success.
+4. **Confirm with ≥3 seeds** at K1 and K2 before treating "low-K wins" as a finding.
