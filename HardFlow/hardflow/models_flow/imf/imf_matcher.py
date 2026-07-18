@@ -12,7 +12,7 @@ Objective (see convention.py for the derivation):
     z      = tau * x1 + (1 - tau) * x0,     v_target = x1 - x0
     (u, du_tot, v) via torch.func.jvp with tangents (v_c, +1, -1),
         v_c = detached predicted v (the "improved" predicted-v tangent)
-    V      = u + h * stopgrad(du_tot)
+    V      = u - h * stopgrad(du_tot)      # identity u = v + h*D_tot, HF conv.
     loss_u = adp(sum_dims (V - v_target)^2)         # MeanFlow identity, v-form
     loss_v = adp(sum_dims (v - v_target)^2)         # auxiliary v-head
     adp(L) = L / stopgrad((L + eps)^p)              # adaptive normalization
@@ -96,7 +96,10 @@ class ImfMatcher:
             u_fn, (z, tau, h), jvp_tangents(v_c, tau), has_aux=True
         )
 
-        V = u + pad_t_like_x(h, u) * du_tot.detach()
+        # identity: u = v + h*D_tot  =>  enforce (u - h*sg(D_tot)) == v_target.
+        # (Sign verified by gate G1: the earlier "+" variant passes G1-A (h->0)
+        #  but biases large-h -> 1-NFE overshoot and K1!=K2. See convention.py.)
+        V = u - pad_t_like_x(h, u) * du_tot.detach()
         v_target = v_target.detach()
 
         # per-sample summed squared error over (horizon, transition) dims

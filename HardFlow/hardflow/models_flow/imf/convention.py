@@ -19,21 +19,25 @@ Official iMeanFlow convention (aux repo /workspaces/aux_repo/imeanflow, imf.py)
     z_t = (1 - t) * x + t * e              t=0 data  ->  t=1 noise,  v = e - x
     mapping:  tau = 1 - t,   u_HF = -u_iMF,   h = t - r = (tau'-tau)  (equal)
 
-MeanFlow identity in HardFlow convention (derivation)
------------------------------------------------------
-Fix the interval endpoint s = tau + h and define the displacement
-    D(tau) = z_s - z_tau = h * u(z_tau, tau, h),   h = s - tau.
-Along the flow dz/dtau = v, so dD/dtau = -v. Expanding the left side with
-dh/dtau = -1:
-    -u + h * (du/dz . v + du/dtau - du/dh) = -v
-    =>   u = v - h * D_tot,
+MeanFlow identity in HardFlow convention (derivation — SIGN verified by gate G1)
+--------------------------------------------------------------------------------
+Fix the interval endpoint s = tau + h and define
+    g(tau) = z_s - z_tau = h * u(z_tau, tau, h),   h = s - tau.
+Along the flow dz/dtau = v (z_s is a constant), so dg/dtau = -v. Expanding the
+right-hand product with dh/dtau = -1:
+    dg/dtau = -u + h * (du/dz . v + du/dtau - du/dh) = -u + h * D_tot
+    =>  -u + h * D_tot = -v
+    =>   u = v + h * D_tot,
     D_tot = JVP of u(z, tau, h) with tangents (v, +1, -1).
-This mirrors the official identity u = v - (t - r) * du/dt (aux imf.py forward()),
-with the (+1, -1) tangent pair replacing their (dtdt=1, dtdr=0) because our net
-takes (tau, h) directly instead of (t, r).
+Cross-check vs the official identity u = v - (t - r) * du/dt (aux imf.py):
+under tau = 1 - t we have d/dt = -d/dtau and u_HF = -u_iMF, v_HF = -v_iMF;
+substituting flips the sign of the derivative term, giving exactly the "+"
+above. (Gate G1 empirically confirms: the "-" variant passes the h->0 test but
+overshoots 1-NFE generation and breaks K1~K2 consistency.)
 
 Training compound (official iMF style, CFG dropped — Gen13 decision D3):
-    V = u + h * stopgrad(D_tot)        loss_u = ||V - v_target||^2
+    V = u - h * stopgrad(D_tot)        loss_u = ||V - v_target||^2
+    (enforcing V == v_target is equivalent to the identity u = v + h * D_tot)
     v-head aux:                        loss_v = ||v_pred - v_target||^2
     adaptive weighting:                L / stopgrad((L + eps)^p)
 JVP tangent for z is the PREDICTED v (v_c, detached) — the "improved" MeanFlow

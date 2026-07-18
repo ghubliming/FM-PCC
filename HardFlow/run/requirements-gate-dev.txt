@@ -1,0 +1,19 @@
+# Gen13 — minimal LOCAL dev env for `python run/imf_gates.py` ONLY.
+# This is NOT the full HardFlow env (no gym/mujoco/d4rl/casadi needed — the
+# gates never touch the env, dataset, or CasADi solver). Confirmed sufficient
+# by an actual run on 2026-07-18 (all 4 gates passed).
+#
+# Setup (CPU-only, works in any plain container with network access):
+#   python3 -m venv .venv-gate && source .venv-gate/bin/activate
+#   pip install numpy einops matplotlib
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   PYTHONPATH="$PWD:$PYTHONPATH" python run/imf_gates.py
+#
+# On the cluster: NOT needed — hardflow_clone (cloned from FMPCC/DPCC) already
+# has all four packages. Just source the SLURM bridge and run the gate directly
+# (see Slurm_Codes/sbatch/hardflow/test_imf_gates.sh).
+numpy
+einops
+matplotlib
+# torch: install separately from the CPU wheel index (see command above) —
+# a single `pip install -r` will NOT resolve torch correctly from this file.
