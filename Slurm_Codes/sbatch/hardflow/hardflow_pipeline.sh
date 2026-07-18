@@ -2,48 +2,62 @@
 #SBATCH --job-name=hf_pipeline
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --gres=gpu:1
-#SBATCH --time=36:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=00:10:00
 #SBATCH --partition=gpu-1-student
 # ==============================================================================
-# One-job pipeline: (train if no checkpoint) -> fit_dynamics -> eval.
-# Mirrors sbatch/iMF/imf_pipeline.sh. Optional convenience; the separate
-# train_hardflow.sh / eval_hardflow.sh give finer control.
+# Pipeline ORCHESTRATOR (fix_3). Chains train_hardflow.sh -> eval_hardflow.sh
+# as SEPARATE sbatch jobs via --dependency=afterok, matching the repo
+# convention (sbatch/iMF/imf_pipeline.sh, sbatch/dpcc_pipeline.sh, etc.) — NOT
+# one inline job. The orchestrator itself just submits and exits.
+#
+# WHY THIS REPLACED an inline version: the previous hardflow_pipeline.sh ran
+# train+eval inline in ONE job and requested --time=36:00:00 (24h train + 12h
+# eval) to cover both phases. The cluster's actual partition hard cap is 24h,
+# so that request could NEVER be scheduled (PartitionTimeLimit — confirmed via
+# the identical bug in imf_pipeline_hardflow.sh, job 23577; see
+# logs_in_develop/Gen13/fix_3/CHANGELOG_Gen13_fix3_pipeline_time_limit.md).
+# Each CHAINED job below already has its own correctly-sized --time (<=24h).
 #
 # Submit:  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/hardflow_pipeline.sh
-# Skip training (use downloaded .pth):  SKIP_TRAIN=1 ./Slurm_Codes/submit.sh .../hardflow_pipeline.sh
+# Skip training (use a downloaded .pth): SKIP_TRAIN=1 ./Slurm_Codes/submit.sh ...
+# Eval knob (forwarded to the eval job): METHODS ("hardflow_new original")
 # ==============================================================================
-source Slurm_Codes/sbatch/hardflow/_hardflow_common.sh
+set -e
 
-METHODS="${METHODS:-hardflow_new original}"
-CKPT="logs/avoiding-v0/flow/H16_1e6steps/model_ema_20.pth"
+echo "================================================================================"
+echo "PIPELINE START: $(date)"
+echo "JOB ID:    $SLURM_JOB_ID"
+echo "================================================================================"
+function on_exit { echo "================================================================================"; echo "PIPELINE END:   $(date)"; echo "================================================================================"; }
+trap on_exit EXIT
 
-# --- 1. Train the FM backbone (unless a checkpoint exists or SKIP_TRAIN=1) -----
-if [ "${SKIP_TRAIN:-0}" = "1" ]; then
-    echo "[ HF-PIPE ] SKIP_TRAIN=1 — expecting an existing/downloaded checkpoint."
-elif [ -f "$CKPT" ]; then
-    echo "[ HF-PIPE ] checkpoint present ($CKPT) — skipping training."
+DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}
+TIME=${SUBMIT_TIME:-$(date +%H_%M_%S)}
+LOG_DIR="Slurm_Codes/logs/$DATE"
+mkdir -p "$LOG_DIR"
+LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log"
+
+SBATCH_DIR="Slurm_Codes/sbatch/hardflow"
+CKPT="logs/hardflow/avoiding-v0/flow/H16_1e6steps/model_ema_20.pth"
+
+EVAL_EXPORT="ALL"
+[ -n "$METHODS" ] && EVAL_EXPORT="$EVAL_EXPORT,METHODS=$METHODS"
+
+if [ "${SKIP_TRAIN:-0}" = "1" ] || [ -f "$CKPT" ]; then
+    echo "[ HF-PIPE ] SKIP_TRAIN or checkpoint present ($CKPT) — submitting eval only."
+    EVAL_ID=$(sbatch --parsable --export="$EVAL_EXPORT" $LOG_OPTS "${SBATCH_DIR}/eval_hardflow.sh")
+    echo "Eval submitted standalone. Job ID: $EVAL_ID"
 else
-    echo "[ HF-PIPE ] no checkpoint -> bash run_scripts/train.sh"
-    bash run_scripts/train.sh
+    TRAIN_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/train_hardflow.sh")
+    echo "Step 1: Training submitted. Job ID: $TRAIN_ID"
+
+    EVAL_ID=$(sbatch --parsable --export="$EVAL_EXPORT" $LOG_OPTS \
+        --dependency=afterok:$TRAIN_ID "${SBATCH_DIR}/eval_hardflow.sh")
+    echo "Step 2: Evaluation scheduled (afterok:$TRAIN_ID). Job ID: $EVAL_ID"
 fi
 
-# --- 2. Fit dynamics once if absent -------------------------------------------
-DYN="logs/avoiding-v0/dynamics/linear_model.npz"
-if [ ! -f "$DYN" ]; then
-    echo "[ HF-PIPE ] dynamics missing -> python run/fit_dynamics.py"
-    python run/fit_dynamics.py
-fi
-
-# --- 3. Eval each method via HardFlow's own scripts ---------------------------
-for method in $METHODS; do
-    script="run_scripts/eval_${method}.sh"
-    [ -f "$script" ] || { echo "[ HF-PIPE ] SKIP '$method' — $script not found." >&2; continue; }
-    echo "[ HF-PIPE ] method=$method -> bash $script"
-    bash "$script"
-done
-
-echo "[ HF-PIPE ] done. results:"
-ls -la logs/avoiding-v0/eval/ 2>/dev/null || echo "  (none — check the run log above)"
+echo "--------------------------------------------------------------------------------"
+echo "HardFlow pipeline submitted. Use 'squeue -u $USER' to monitor."
+echo "If training fails, evaluation is auto-cancelled by Slurm (afterok)."

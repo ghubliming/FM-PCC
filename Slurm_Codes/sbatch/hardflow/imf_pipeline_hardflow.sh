@@ -2,60 +2,70 @@
 #SBATCH --job-name=hf_imf_pipeline
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --gres=gpu:1
-#SBATCH --time=36:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=00:10:00
 #SBATCH --partition=gpu-1-student
 # ==============================================================================
-# Gen13 — one-job iMF pipeline: gates -> (train if no checkpoint) -> fit_dynamics
-# -> eval E1-E4 matrix. Mirrors sbatch/hardflow/hardflow_pipeline.sh (the FM
-# pipeline). Optional convenience; the separate train_imf_hardflow.sh /
-# eval_imf_hardflow.sh give finer control (e.g. re-eval without retraining).
+# Gen13 — iMF pipeline ORCHESTRATOR (fix_3). Chains train_imf_hardflow.sh ->
+# eval_imf_hardflow.sh as SEPARATE sbatch jobs via --dependency=afterok, exactly
+# like the repo convention (sbatch/iMF/imf_pipeline.sh, sbatch/dpcc_pipeline.sh,
+# etc.) — NOT one inline job. The orchestrator itself just submits and exits;
+# it needs no GPU/long walltime of its own.
+#
+# WHY THIS REPLACED an inline version: the previous imf_pipeline_hardflow.sh
+# ran train+eval inline in ONE job and requested --time=36:00:00 (24h train +
+# 12h eval) to cover both phases. The cluster's actual partition hard cap is
+# 24h, so that request could NEVER be scheduled — job 23577 sat PENDING
+# forever with reason (PartitionTimeLimit). See
+# logs_in_develop/Gen13/fix_3/CHANGELOG_Gen13_fix3_pipeline_time_limit.md.
+# Each CHAINED job below already has its own correctly-sized --time (<=24h),
+# so this always fits.
 #
 # Submit:  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/imf_pipeline_hardflow.sh
 # Skip training (reuse an existing checkpoint): SKIP_TRAIN=1 ./Slurm_Codes/submit.sh ...
-# Knobs: N_TRAIN_STEPS, IMF_DATA_PROPORTION, IMF_P_STD (train);
-#        IMF_METHODS ("original hardflow_new"), IMF_KS ("1 2"), IMF_CP (4) (eval)
+# Eval knobs (forwarded to the eval job via env export):
+#   IMF_METHODS ("original hardflow_new"), IMF_KS ("1 2"), IMF_CP (4)
 # ==============================================================================
-source Slurm_Codes/sbatch/hardflow/_hardflow_common.sh
+set -e
 
-IMF_METHODS="${IMF_METHODS:-original hardflow_new}"
-IMF_KS="${IMF_KS:-1 2}"
-CKPT="logs/avoiding-v0/flow/H16_imf_100k/model_ema_4.pth"
+echo "================================================================================"
+echo "PIPELINE START: $(date)"
+echo "JOB ID:    $SLURM_JOB_ID"
+echo "================================================================================"
+function on_exit { echo "================================================================================"; echo "PIPELINE END:   $(date)"; echo "================================================================================"; }
+trap on_exit EXIT
 
-# --- 0. Gates FIRST — abort before any GPU training if they fail --------------
-echo "[ HF-IMF-PIPE ] gates first: python run/imf_gates.py"
-python run/imf_gates.py || { echo "[ HF-IMF-PIPE ] GATES FAILED — aborting."; exit 1; }
+# Sub-jobs share the pipeline's own submission timestamp for log grouping
+# (same convention as sbatch/iMF/imf_pipeline.sh).
+DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}
+TIME=${SUBMIT_TIME:-$(date +%H_%M_%S)}
+LOG_DIR="Slurm_Codes/logs/$DATE"
+mkdir -p "$LOG_DIR"
+LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log"
 
-# --- 1. Train the iMF backbone (unless a checkpoint exists or SKIP_TRAIN=1) ---
-if [ "${SKIP_TRAIN:-0}" = "1" ]; then
-    echo "[ HF-IMF-PIPE ] SKIP_TRAIN=1 — expecting an existing iMF checkpoint."
-elif [ -f "$CKPT" ]; then
-    echo "[ HF-IMF-PIPE ] checkpoint present ($CKPT) — skipping training."
+SBATCH_DIR="Slurm_Codes/sbatch/hardflow"
+CKPT="logs/hardflow/avoiding-v0/flow/H16_imf_100k/model_ema_4.pth"
+
+# Forward eval knobs to the eval job's environment (sbatch --export)
+EVAL_EXPORT="ALL"
+[ -n "$IMF_METHODS" ] && EVAL_EXPORT="$EVAL_EXPORT,IMF_METHODS=$IMF_METHODS"
+[ -n "$IMF_KS" ] && EVAL_EXPORT="$EVAL_EXPORT,IMF_KS=$IMF_KS"
+[ -n "$IMF_CP" ] && EVAL_EXPORT="$EVAL_EXPORT,IMF_CP=$IMF_CP"
+
+if [ "${SKIP_TRAIN:-0}" = "1" ] || [ -f "$CKPT" ]; then
+    echo "[ HF-IMF-PIPE ] SKIP_TRAIN or checkpoint present ($CKPT) — submitting eval only."
+    EVAL_ID=$(sbatch --parsable --export="$EVAL_EXPORT" $LOG_OPTS "${SBATCH_DIR}/eval_imf_hardflow.sh")
+    echo "Eval submitted standalone. Job ID: $EVAL_ID"
 else
-    echo "[ HF-IMF-PIPE ] no checkpoint -> bash run_scripts/train_imf.sh"
-    bash run_scripts/train_imf.sh
+    TRAIN_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/train_imf_hardflow.sh")
+    echo "Step 1: Training submitted (gates run inside it first). Job ID: $TRAIN_ID"
+
+    EVAL_ID=$(sbatch --parsable --export="$EVAL_EXPORT" $LOG_OPTS \
+        --dependency=afterok:$TRAIN_ID "${SBATCH_DIR}/eval_imf_hardflow.sh")
+    echo "Step 2: Evaluation scheduled (afterok:$TRAIN_ID). Job ID: $EVAL_ID"
 fi
 
-# --- 2. Fit dynamics once if absent (hardflow_new_imf needs it) ---------------
-DYN="logs/avoiding-v0/dynamics/linear_model.npz"
-if [ ! -f "$DYN" ]; then
-    echo "[ HF-IMF-PIPE ] dynamics missing -> python run/fit_dynamics.py"
-    python run/fit_dynamics.py
-else
-    echo "[ HF-IMF-PIPE ] dynamics model present: $DYN"
-fi
-
-# --- 3. Eval the E1-E4 matrix (methods x K) via the iMF run scripts -----------
-for method in $IMF_METHODS; do
-    script="run_scripts/eval_${method}_imf.sh"
-    [ -f "$script" ] || { echo "[ HF-IMF-PIPE ] SKIP '$method' — $script not found." >&2; continue; }
-    for k in $IMF_KS; do
-        echo "[ HF-IMF-PIPE ] method=$method K=$k -> bash $script"
-        IMF_K="$k" bash "$script"
-    done
-done
-
-echo "[ HF-IMF-PIPE ] done. results:"
-ls -la logs/avoiding-v0/eval/ 2>/dev/null | grep -i imf || echo "  (none — check the run log above)"
+echo "--------------------------------------------------------------------------------"
+echo "iMF pipeline submitted. Use 'squeue -u $USER' to monitor."
+echo "If training fails, evaluation is auto-cancelled by Slurm (afterok)."
