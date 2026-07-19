@@ -15,7 +15,9 @@ flow_exp_name="H16_imf_100k"
 flow_cp="${IMF_CP:-4}"
 k_steps="${IMF_K:-2}"
 
-random_repeat=50
+# u_5: env-overridable for the paired n=200 safety run (default 50 keeps every
+# earlier K1/K2/K4/K5 invocation byte-identical).
+random_repeat="${RANDOM_REPEAT:-50}"
 controller="rh"
 replan_steps=8
 
@@ -40,6 +42,15 @@ hardflow_activation="all"
 solver_print_level="${SOLVER_PRINT_LEVEL:-0}"
 
 exp_name="H16_imf_hardflow_new_K${k_steps}"
+# u_5: suffix only when n != 50, so the frozen K1/K2/K4/K5 result dirs are never
+# overwritten and the n=200 arm lands in its own directory.
+[ "$random_repeat" != "50" ] && exp_name="${exp_name}_n${random_repeat}"
+
+# u_5(B): MPC foresight-fan diagnostic. DEFAULT OFF -- set IMF_PLOT_FAN=1 for a
+# small diagnostic run. Off => byte-identical behaviour to before (no capture,
+# no plotting), so the decisive paired n=200 safety run is unaffected.
+fan_flag=""
+[ "${IMF_PLOT_FAN:-0}" = "1" ] && fan_flag="--imf_plot_fan"
 
 echo "=== Gen13 iMF HardFlow(new) on ${env}, horizon=${horizon}, K=${k_steps} ==="
 
@@ -70,7 +81,8 @@ python run/eval_imf.py \
 	--replan_steps "$replan_steps" \
 	--hardflow_activation "$hardflow_activation" \
 	--no-render \
-	--guidance_method hardflow_new_imf
+	--guidance_method hardflow_new_imf \
+	$fan_flag
 
 end_time=$(date +%s)
 elapsed=$((end_time - start_time))

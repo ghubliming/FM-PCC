@@ -3056,3 +3056,42 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 ***
 
+## Gen13: iMF vs HardFlow Performance & Architecture Analysis (July 19, 2026)
+
+**Keywords**: Gen13, iMF, HardFlow, efficiency, safety parity, projection count, TemporalUnet, foresight fan, smoothness paradigm.
+
+1. **Efficiency Proven, Safety Undetermined**: Synthesized the first full run of Gen13 (iMF injected into HardFlow). Established that iMF delivers a decisive efficiency win (1.95× fewer NFEs, 1.74× faster compute per plan) over the FM baseline with zero distribution overlap. Safety at K=5 (1 violation) is statistically indistinguishable from the baseline (0 violations) at n=50, prompting a decisive n=200 paired run.
+2. **Architecture Documentation**: Documented the exact Gen13 integration mechanism (`ARCHITECTURE_Gen13_iMF_in_HardFlow.md`). Confirmed that the iMF backbone explicitly reuses HardFlow's `TemporalUnet` (with dual heads and two-time conditioning) instead of DiT, keeping the comparison purely focused on the average-velocity objective versus the instantaneous-velocity objective.
+3. **Projection Count Hypothesis Confirmed**: Proved that safety scales monotonically with K (80% at K=1 → 98% at K=5) not due to field quality, but because K dictates the number of prox-NLP constraint projections. K=5 emerged as the efficiency sweet spot.
+4. **Smoothness Paradigm Clarification**: Clarified why trajectory smoothness and foresight fans are central to DPCC but absent in HardFlow. HardFlow enforces dynamic feasibility and smoothness as hard equality constraints in its NLP solver rather than diagnosing them as emergent generative metrics.
+
+***
+
+## Gen13 Fix 4: Log Noise Reduction & NLP Failure Reporting (July 19, 2026)
+
+**Keywords**: Gen13, log noise, tqdm bloat, IPOPT solver, NLP failures, SLURM.
+
+1. **Training TQDM Bloat Addressed**: Fixed a severe SLURM log bloat issue (up to 4.6 MB per 4h) caused by `tqdm` carriage-return accumulation in non-TTY environments. Gated the progress bar behind `sys.stdout.isatty()`, falling back to a compact 200-step reporting interval and achieving a 39× log size reduction.
+2. **IPOPT Solver Spam Silenced**: Reduced evaluation log noise by setting `solver_print_level=0` to silence verbose IPOPT internal iteration tables.
+3. **Precise NLP Failure Tracking**: Replaced the verbose solver output with precise per-episode NLP solve and failure counters (`nlp_solves`, `nlp_failures`) saved to CSVs. Added loud warning banners for NLP solver failures, successfully validating that 0 out of 100 episodes experienced an NLP failure in the recent run.
+
+***
+
+## Data Analysis Tool Update: Plotting Decoupling (July 19, 2026)
+
+**Keywords**: Data Analysis, DA batch, plotting decoupling, SLURM.
+
+1. **Plotting Disabled for Combined Batch**: Refactored the `run_da_batch_avoiding_combined.sh` SLURM script to pass `--no-plots` by default. This disables plotting during multi-candidate statistical aggregation, significantly reducing visualization overhead when only numerical tables and Pareto rankings are required.
+
+***
+
+## Gen7 D1 + Gen6V4: Pre-flight Box-Obstacle Overlap Guard (July 19, 2026)
+
+**Keywords**: Gen7, Gen6V4, visual aligning, box-obstacle overlap, pre-flight guard, config sanity.
+
+1. **Conflict Detection**: Added a config-sanity pre-flight guard to both `eval_fm_visual_aligning.py` and `eval_visual_aligning_dpcc.py` to test if the initial 0.10 × 0.10 m box footprint physically intersects the spherical obstacle configuration before starting a rollout.
+2. **Early Abort & Safe Fallback**: If the box footprint starts inside the obstacle boundary beyond a tunable tolerance (`FMPCC_BOX_OBS_MAX_OVERLAP_M`), the rollout is immediately aborted (holding position) to prevent futile SLSQP projection thrashing toward an empty feasible set.
+3. **Persistent Conflict Flagging**: Aborted contexts are explicitly recorded with a `box_obstacle_conflict` flag in the rollout JSON and prominently flagged in console and evaluation logs (`EXCLUDE FROM METRICS`), cleanly identifying pathological geometries (e.g., tightened `combined_5` scenes) without polluting downstream success aggregates.
+
+***
+

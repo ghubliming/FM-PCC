@@ -36,6 +36,7 @@ import tyro
 
 import d3il  # noqa: F401  (registers avoiding-v0)
 import hardflow.utils
+from hardflow.utils.rendering import AvoidingTrajectoryPlotter
 
 from hardflow.datasets.sequence import SequenceDataset
 from hardflow.models_flow.imf import (
@@ -47,6 +48,49 @@ from run.eval import ProxyValueModel, check_violation
 from run.utils import deterministic, save_config, set_cuda_visible_device
 
 _IS_TTY = sys.stdout.isatty()
+
+
+def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg):
+    """u_5(B) — MPC foresight-fan plot (the DPCC/FMPCC-style diagnostic).
+
+    HardFlow computes the planned horizon and the terminal prediction at every
+    replan but discards both (`run/eval.py:393` uses `_, _`), so only the executed
+    rollout is ever rendered. This draws what the policy *intended*:
+
+      * grey   — planned H-step horizons, one per replan instant (the "fan")
+      * orange — the final terminal prediction x̂1 at each replan; for iMF this is
+                 the EXACT endpoint map z + (1-tau)*u, vs FM's Euler shot — i.e.
+                 the visual counterpart of the Gen13 seam swap
+      * black  — the actually executed trajectory (same as the standard *_real.png)
+
+    Index layout: the executed rollout is observations (state_dim=4) with x,y at
+    2,3; planned/predicted trajectories are full transitions (action_dim+state_dim)
+    with x,y at action_dim+2, action_dim+3.
+    """
+    px, py = cfg.action_dim + 2, cfg.action_dim + 3
+
+    plotter = AvoidingTrajectoryPlotter(
+        constraint=cfg.constraint,
+        obstacle_margin=cfg.obstacle_margin,
+        draw_obstacle_margin=cfg.draw_obstacle_margin,
+    )
+    fig, ax = plotter.setup_figure()
+
+    for i, plan in enumerate(planned_fan):
+        ax.plot(
+            plan[:, px], plan[:, py], "-", color="0.55", linewidth=1.2, zorder=2,
+            label="Planned horizon (fan)" if i == 0 else "",
+        )
+    for i, x1 in enumerate(x1_fan):
+        ax.plot(
+            x1[:, px], x1[:, py], "--", color="tab:orange", linewidth=1.0, alpha=0.8,
+            zorder=3, label="Terminal prediction x̂1" if i == 0 else "",
+        )
+
+    plotter.plot_single_trajectory(real_trajectory, ax, style="actual")
+    plotter.add_environment_elements(ax)
+    plotter.apply_legend(ax)
+    plotter.save_figure(fig, filepath)
 
 
 def _run_env_quiet(env, policy, cfg, run_id=0):
@@ -86,6 +130,9 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
     planned_actions = None
     action_index = 0
 
+    # u_5(B): foresight-fan buffers (stay empty unless cfg.imf_plot_fan)
+    planned_fan, x1_fan, n_replan = [], [], 0
+
     # fix_4: zero the cumulative NLP counters so the summary below is per-episode
     if hasattr(policy, "reset_nlp_stats"):
         policy.reset_nlp_stats()
@@ -103,13 +150,22 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         if cfg.controller == "rh":  # receding horizon
             if planned_actions is None or action_index >= cfg.replan_steps:
                 conditions[0] = observation
-                action, samples, _, _, info = policy(
+                action, samples, x_chain, x1_est, info = policy(
                     conditions, batch_size=cfg.batch_size
                 )
                 planned_actions = samples.actions[0]
                 action_index = 0
                 if "computation_time" in info:
                     computation_times.append(info["computation_time"])
+                # u_5(B): foresight-fan capture — OFF by default, so this branch
+                # is skipped entirely on the decisive n=200 safety run.
+                if getattr(cfg, "imf_plot_fan", False):
+                    n_replan += 1
+                    if (n_replan - 1) % max(1, cfg.imf_fan_every) == 0:
+                        # x_chain: (batch, n_steps+1, horizon, transition_dim),
+                        # already unnormalized. [-1] = the FINAL planned horizon.
+                        planned_fan.append(np.asarray(x_chain)[0, -1, :, :].copy())
+                        x1_fan.append(np.asarray(x1_est)[0, -1, :, :].copy())
             action = planned_actions[action_index]
             action_index += 1
         else:
@@ -160,6 +216,16 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         cfg.obstacle_margin,
         cfg.draw_obstacle_margin,
     )
+
+    # u_5(B): extra fan figure — only when explicitly enabled
+    if getattr(cfg, "imf_plot_fan", False) and planned_fan:
+        _save_foresight_fan(
+            planned_fan,
+            x1_fan,
+            real_trajectory,
+            os.path.join(save_path, f"{run_id}_fan.png"),
+            cfg,
+        )
 
     avg_computation_time = np.mean(computation_times) if computation_times else None
     return (

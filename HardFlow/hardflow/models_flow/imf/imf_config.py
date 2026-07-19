@@ -46,3 +46,12 @@ class ImfEvaluationConfig(FlowMatchingEvaluationConfig):
     ode_t_steps: int = 2
 
     guidance_method: str = "original_imf"  # or hardflow_new_imf
+
+    # u_5(B): MPC foresight-fan diagnostic. DEFAULT OFF — when False, eval behaves
+    # byte-identically to before (no capture, no plotting, no extra cost), so the
+    # decisive paired n=200 safety run is unaffected. Enable per-run with
+    # `--imf_plot_fan` / IMF_PLOT_FAN=1 for a small diagnostic run.
+    imf_plot_fan: bool = False
+    # Plot the planned horizon only every `imf_fan_every` replans (FMPCC convention:
+    # keeps the figure readable). 1 = every replan.
+    imf_fan_every: int = 1
