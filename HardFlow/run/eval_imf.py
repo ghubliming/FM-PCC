@@ -86,6 +86,10 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
     planned_actions = None
     action_index = 0
 
+    # fix_4: zero the cumulative NLP counters so the summary below is per-episode
+    if hasattr(policy, "reset_nlp_stats"):
+        policy.reset_nlp_stats()
+
     steps_iter = (
         tqdm.tqdm(range(cfg.max_episode_length), desc=f"Episode {run_id}")
         if _IS_TTY
@@ -133,9 +137,19 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
             break
 
     outcome = "SUCCESS" if success else "terminated"
+    # fix_4: NLP health is appended here — with IPOPT's own output silenced this
+    # is the surviving signal from that block (nlp_fail>0 would flag a projection
+    # that never converged, the prime suspect for any constraint violation).
+    nlp = policy.nlp_stats() if hasattr(policy, "nlp_stats") else {}
+    nlp_str = (
+        f"  nlp={nlp['nlp_solves']}"
+        + (f" FAILED={nlp['nlp_failures']}" if nlp.get("nlp_failures") else "")
+        if nlp
+        else ""
+    )
     print(
         f"[ eval_imf ] episode {run_id}: {outcome}  steps={final_t + 1}  "
-        f"violations={total_violations:.0f}  reward={total_rewards:.3f}"
+        f"violations={total_violations:.0f}  reward={total_rewards:.3f}{nlp_str}"
     )
 
     real_trajectory = np.array(rollout)
@@ -251,6 +265,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
 
     trajectory_data = []
     nfe_totals = []
+    nlp_failures_total = 0
 
     for run_id in range(cfg.random_repeat):
         (
@@ -265,6 +280,8 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
         safety = total_violations == 0
         nfe_info = flow_policy._nfe_info()  # last planning call of the episode
         nfe_totals.append(nfe_info["nfe_total"])
+        nlp_info = flow_policy.nlp_stats()  # cumulative over THIS episode (fix_4)
+        nlp_failures_total += nlp_info["nlp_failures"]
 
         trajectory_data.append(
             {
@@ -283,6 +300,8 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
                 "nfe_sampling": nfe_info["nfe_sampling"],
                 "nfe_warmstart": nfe_info["nfe_warmstart"],
                 "nfe_diag": nfe_info["nfe_diag"],
+                "nlp_solves": nlp_info["nlp_solves"],
+                "nlp_failures": nlp_info["nlp_failures"],
             }
         )
 
@@ -302,14 +321,21 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
             "nfe_sampling",
             "nfe_warmstart",
             "nfe_diag",
+            "nlp_solves",
+            "nlp_failures",
         ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for data in trajectory_data:
             writer.writerow(data)
 
+    nlp_note = (
+        f"  NLP failures: {nlp_failures_total} (!!)"
+        if nlp_failures_total
+        else "  all NLP solves OK"
+    )
     print(
-        f"[ eval_imf ] done. mean NFE/plan: {np.mean(nfe_totals):.1f}  "
+        f"[ eval_imf ] done. mean NFE/plan: {np.mean(nfe_totals):.1f}{nlp_note}  "
         f"csv: {csv_path}"
     )
 

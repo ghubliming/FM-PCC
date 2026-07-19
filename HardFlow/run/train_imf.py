@@ -9,10 +9,12 @@ Differences vs run/train.py:
   * a FINAL checkpoint is saved at the end (cp index n_train_steps//save_freq)
   * raw_mse_u / raw_mse_v / a0_mse are logged — judge convergence on these,
     NEVER on the adaptive `loss` (flat by construction).
+  * (fix_4) NO tqdm progress bar under SLURM — see _IS_TTY below.
 """
 
 import csv
 import os
+import sys
 from itertools import cycle
 
 import torch
@@ -30,6 +32,14 @@ try:  # optional (only training uses it; keep the eval path dependency-free)
     from torch.utils.tensorboard import SummaryWriter
 except ImportError:
     SummaryWriter = None
+
+# fix_4: under `Slurm_Codes/submit.sh` stdout is a redirected FILE, not a tty, so
+# tqdm's in-place carriage-return update never collapses — a 100k-step bar dumps
+# every single update as raw text. First run (job 23579) produced a 4.6 MB log
+# whose three longest lines were 791k/865k/742k chars (98% of the file). The
+# periodic `[ train_imf ] step ...` lines below already carry all real signal,
+# so the bar is simply disabled off-tty.
+_IS_TTY = sys.stdout.isatty()
 
 
 def train(cfg: ImfTrainingConfig, log_subfolder: str):
@@ -84,7 +94,20 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
     with open(metrics_path, "w", newline="") as f:
         csv.writer(f).writerow(["step"] + metric_keys)
 
-    for i in tqdm.tqdm(range(cfg.n_train_steps)):
+    # fix_4: live bar ONLY on an interactive terminal; plain range() under SLURM.
+    step_iter = (
+        tqdm.tqdm(range(cfg.n_train_steps))
+        if _IS_TTY
+        else range(cfg.n_train_steps)
+    )
+    if not _IS_TTY:
+        print(
+            f"[ train_imf ] non-tty (batch) mode: progress bar disabled, "
+            f"logging every {cfg.log_freq} steps of {cfg.n_train_steps}",
+            flush=True,
+        )
+
+    for i in step_iter:
         batch = batch_to_device(next(train_loader), cfg.device)
         loss, infos = matcher.loss(*batch)
         loss.backward()
@@ -110,11 +133,15 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
             if writer is not None:
                 for k in metric_keys:
                     writer.add_scalar(k, infos[k], i)
-            tqdm.tqdm.write(
+            msg = (
                 f"[ train_imf ] step {i}  raw_mse_u {infos['raw_mse_u']:.4f}  "
                 f"raw_mse_v {infos['raw_mse_v']:.4f}  a0 {infos['a0_mse']:.5f}  "
                 f"(adaptive loss {infos['loss']:.4f} — flat by design)"
             )
+            if _IS_TTY:
+                tqdm.tqdm.write(msg)
+            else:
+                print(msg, flush=True)
 
     # final checkpoint (cp index = n_train_steps // save_freq)
     final_cp = cfg.n_train_steps // cfg.save_freq

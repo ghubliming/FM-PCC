@@ -31,7 +31,13 @@ cost="distance"
 cost_scale=2500.0
 hardflow_cost_scale=100.0
 hardflow_activation="all"
-solver_print_level=5
+# fix_4: IPOPT silenced (was 5). Level 5 emitted ~45 lines PER NLP solve — 31k of
+# the 70k lines in the first run's eval log — of which only "Constraint violation"
+# (~1e-16, i.e. always healthy) and solve failures carried signal. Failures are
+# now reported by our own code instead: a loud "[ eval_imf ] WARNING: NLP solve
+# failed" line, plus nlp_solves/nlp_failures columns in trajectories.csv and a
+# per-episode `nlp=` field. Raise back to 5 only when debugging the solver itself.
+solver_print_level="${SOLVER_PRINT_LEVEL:-0}"
 
 exp_name="H16_imf_hardflow_new_K${k_steps}"
 

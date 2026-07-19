@@ -50,8 +50,22 @@ class ImfFlowPolicy(FlowPolicy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._nfe = {"warmstart": 0, "sampling": 0, "diag": 0}
+        # fix_4: NLP health counters. With IPOPT's own output silenced
+        # (solver_print_level=0), these preserve the ONLY signal that block
+        # carried: whether each prox-NLP actually solved. Cumulative across the
+        # episode (NOT reset per plan) so the per-episode summary is meaningful.
+        self._nlp_solves = 0
+        self._nlp_failures = 0
 
     # ------------------------------------------------------------------ utils
+
+    def reset_nlp_stats(self):
+        """Zero the cumulative NLP counters (call at episode start)."""
+        self._nlp_solves = 0
+        self._nlp_failures = 0
+
+    def nlp_stats(self):
+        return {"nlp_solves": self._nlp_solves, "nlp_failures": self._nlp_failures}
 
     def _reset_nfe(self):
         self._nfe = {"warmstart": 0, "sampling": 0, "diag": 0}
@@ -317,11 +331,20 @@ class ImfFlowPolicy(FlowPolicy):
                     self.oc_X_terminal_predicted, x_terminal_predicted_ref
                 )
 
+                self._nlp_solves += 1
                 try:
                     sol = self.oc_cs_opti.solve_limited()
                     x_terminal_predicted = sol.value(self.oc_X_terminal_predicted)
                 except RuntimeError:
-                    print("Solver failed, returning last available value.")
+                    # fix_4: keep this WARNING loud even with IPOPT silenced —
+                    # a failed projection is the one thing that can silently
+                    # explain a constraint violation downstream.
+                    self._nlp_failures += 1
+                    print(
+                        "[ eval_imf ] WARNING: NLP solve failed "
+                        f"(step k={k}) — using last available value.",
+                        flush=True,
+                    )
                     x_terminal_predicted = self.oc_cs_opti.debug.value(
                         self.oc_X_terminal_predicted
                     )
