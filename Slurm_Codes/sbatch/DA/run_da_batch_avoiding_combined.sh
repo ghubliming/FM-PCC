@@ -38,6 +38,7 @@ cd "$REPO"
 python Data_Analysis/DA_Code_v3/main_da_batch.py \
     --parent-path "logs/avoiding-d3il/plans,logs/avoiding-d3il-visual/plans" \
     --output-path Data_Analysis/analysis_results/batch_avoiding_combined_$(date +%Y%m%d_%H%M%S) \
+    --no-plots \
     "$@"
 
 echo "DA Batch Analysis (avoiding combined) job completed successfully."

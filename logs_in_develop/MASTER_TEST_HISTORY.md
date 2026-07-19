@@ -3018,3 +3018,41 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 ***
 
+
+## Gen13 Initialization: iMF Backbone in HardFlow (July 18, 2026)
+
+**Keywords**: Gen13, iMF, HardFlow, additive package, temporal UNet, objective port, diagnostic gates.
+
+1. **Additive Architecture Integration**: Initialized Gen13 by integrating the iMF backbone directly into the HardFlow environment as a strictly additive subpackage (`hardflow/models_flow/imf/`). The pre-existing FM codebase remains completely untouched to ensure clean side-by-side benchmarking.
+2. **Core Component Porting**: Implemented the dual-head, two-time `TemporalImfUnet`, the official iMF adaptive loss objective (`imf_matcher.py`), and the exact-jump sampler (`imf_sampler.py`). Dropped CFG entirely from the formulation as theoretically intended.
+3. **Diagnostic Gates Workflow**: Introduced `imf_gates.py` as a pre-training mandatory CPU check. This validates fundamental mechanical properties (shapes, h→0 limits, 1-NFE modal behavior) before any SLURM jobs are scheduled, ensuring correct theory implementation upfront.
+
+***
+
+## Gen13 Fix 1: iMF Identity Sign Bug Caught (July 18, 2026)
+
+**Keywords**: Gen13, gate validation, sign bug, MeanFlow identity, convention map.
+
+1. **Gate Catch**: The CPU diagnostic gates successfully caught a systemic bias where 1-NFE samples were moving toward the correct modes but systematically overshooting the target.
+2. **Root Cause Corrected**: Identified a sign inversion in the HardFlow-convention MeanFlow identity derivation (initially derived as `u = v - h·D_tot` instead of `+`). Corrected the math in `imf_matcher.py` and `convention.py`, validating the immediate utility of the gate-first workflow by avoiding ~12h of flawed GPU training.
+
+***
+
+## Gen13 Fix 2: iMF Pipeline & Quiet Logging (July 18, 2026)
+
+**Keywords**: Gen13, orchestrator, SLURM logs, quiet logging, tqdm spam.
+
+1. **Combined Orchestration**: Developed `imf_pipeline_hardflow.sh` to unify the gate-check, training, dynamics fitting, and full E1-E4 evaluation matrix into a single streamlined submission workflow.
+2. **Cosmetic Logging Fix**: Addressed unreadable console logs caused by `tqdm` carriage-return failures in redirected SLURM output files. Implemented `_run_env_quiet` inside `eval_imf.py` to suppress iterative progress bars when stdout is not a terminal, yielding clean, single-line episodic summaries without altering core evaluation metrics.
+
+***
+
+## Gen13 Fix 3: Pipeline PartitionTimeLimit Exceedance (July 18, 2026)
+
+**Keywords**: SLURM, PartitionTimeLimit, PENDING, orchestrator pattern, dependency chain.
+
+1. **Indefinite Pending Bug**: Diagnosed an issue where newly submitted pipeline jobs were permanently stuck in the queue with a `(PartitionTimeLimit)` flag.
+2. **Queue Architecture Refactor**: Identified that the pipeline scripts were naively summing the train (24h) and eval (12h) budgets into a single inline job requesting 36h, exceeding the partition's strict 24h ceiling. Refactored both `hardflow_pipeline.sh` and `imf_pipeline_hardflow.sh` into true orchestrator scripts that use `sbatch --dependency=afterok` to chain separate conformant jobs.
+
+***
+
