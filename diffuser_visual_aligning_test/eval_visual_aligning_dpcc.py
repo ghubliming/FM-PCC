@@ -60,6 +60,79 @@ from diffuser_visual_aligning.sampling.projection import Projector
 from realtime_recording.behavior_logger import RTRecorder
 RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware. total_ms = per-replan diffusion+projection wall-time (bundled).
 
+# ─── D1: box-init × obstacle overlap pre-flight guard ────────────────────────
+# Same philosophy as the SLSQP wall-clock safeguard (projection.py Fix_15.2): detect a
+# pathological configuration, shout about it in the log, degrade safely — never fail
+# silently, never quietly pollute the run's numbers.
+#
+# WHAT IT CATCHES.  The 'obstacles' family is a sphere_outside cylinder on the EE position
+# dims (6,7); it knows nothing about the box.  So a box that starts inside the obstacle disc
+# is NOT itself a constraint violation — but it is a guaranteed-futile rollout: to push the
+# box the EE must go where the box is, and that is exactly the region the projector forbids
+# the EE from entering.  Worse, the EE gets driven into the sub-disc of radius
+# (r - max_one_step) where the t=1 escape constraint makes the SLSQP feasible set EMPTY,
+# surfacing downstream only as unexplained solver thrash.  Full derivation in
+#   logs_in_develop/Gen7_FMPCC_Viusal_Aligning/D1_BOX_init_Position_Obstacle/
+#   RESEARCH_box_init_vs_obstacle_feasibility.md
+#
+# WHAT IT DOES NOT CLAIM.  This is a naive CONFIG-SANITY check, not a feasibility fix.  It
+# does not repair the projection; it declares the context unusable, says so loudly, and skips
+# it so aggregate metrics are not polluted by a rollout that never had a chance.
+#
+# Overlap is the exact square-vs-circle penetration depth — the box footprint is the
+# 0.10 x 0.10 m square from robot_push_box.xml (geom size="0.05 0.05 0.01"), rotated by the
+# context's yaw.  FMPCC_BOX_OBS_GUARD=0 disables; raise FMPCC_BOX_OBS_MAX_OVERLAP_M to be
+# more lenient (0 = abort on the faintest touch).
+_BOX_OBS_GUARD       = os.environ.get('FMPCC_BOX_OBS_GUARD', '1').lower() not in ('0', 'false', 'no')
+_BOX_OBS_MAX_OVERLAP = float(os.environ.get('FMPCC_BOX_OBS_MAX_OVERLAP_M', '0.005'))  # penetration tolerated (m)
+_BOX_HALF_SIDE       = float(os.environ.get('FMPCC_BOX_HALF_SIDE_M',       '0.05'))   # robot_push_box.xml half-extent
+
+
+def _box_obstacle_overlap(box_xy, box_angle_deg, obs_xy, radius, half_side=_BOX_HALF_SIDE):
+    """Penetration depth (m) of a circular x-y obstacle into a yaw-rotated square box footprint.
+
+    Exact square-vs-circle separation: rotate the obstacle centre into the box frame, clamp it
+    to the box rectangle to get the closest point on the box, then
+        overlap = radius - ||centre - closest||
+    Returns 0.0 when disjoint (never negative).  Note the clamp also handles the centre-inside-
+    the-box case, where sep == 0 and the overlap saturates at `radius`.
+    """
+    th   = np.deg2rad(float(box_angle_deg))
+    c, s = np.cos(th), np.sin(th)
+    d    = np.asarray(obs_xy, dtype=float) - np.asarray(box_xy, dtype=float)
+    local   = np.array([c * d[0] + s * d[1], -s * d[0] + c * d[1]])   # rotate by -yaw
+    closest = np.clip(local, -half_side, half_side)
+    sep     = float(np.linalg.norm(local - closest))
+    return max(0.0, float(radius) - sep)
+
+
+def _scan_box_obstacle_conflicts(geo_config, is_tightened, box_xy, box_angle_deg):
+    """D1: obstacles in `geo_config` whose disc penetrates the box footprint beyond tolerance.
+
+    Returns [] when the guard is off, when 'obstacles' is not an active constraint family, or
+    when nothing overlaps by more than _BOX_OBS_MAX_OVERLAP.  Each hit is a dict ready for
+    console output and the rollout JSON.  Only the x-y footprint is considered: every
+    configured obstacle is a sphere_outside on ('x','y') (optionally 'z'), and ignoring z is
+    the conservative reading of an infinite cylinder.
+    """
+    if not _BOX_OBS_GUARD or not geo_config:
+        return []
+    if 'obstacles' not in (geo_config.get('constraint_types') or []):
+        return []
+    tightening = (geo_config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
+    hits = []
+    for obs in (geo_config.get('obstacle_constraints') or []):
+        try:
+            centre = [float(obs['center'][0]), float(obs['center'][1])]
+            radius = float(obs['radius']) + tightening
+        except (KeyError, IndexError, TypeError, ValueError):
+            continue   # malformed entry — the projector will complain in its own right
+        overlap = _box_obstacle_overlap(box_xy, box_angle_deg, centre, radius)
+        if overlap > _BOX_OBS_MAX_OVERLAP:
+            hits.append({'type': obs.get('type', 'sphere_outside'), 'center': centre,
+                         'radius': float(radius), 'overlap_m': float(overlap)})
+    return hits
+
 import d3il
 print(f'[ eval ] Using d3il from: {d3il.__file__}')
 print(f'[ eval ] D3IL_DIR set to: {os.environ["D3IL_DIR"]}')
@@ -1071,6 +1144,7 @@ class VisualAgentWrapper:
         self.curr_rollout_c_pos.clear()            # Fix 9
         self.curr_rollout_mode_history.clear()     # Json_Orgnize_C4
         self.curr_context_info = {}                # Fix 10
+        self.ctx_box_obs_conflict = None           # D1: cleared here, set by record_context_info()
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
         self.history_full_plans.clear()
@@ -1238,6 +1312,11 @@ class VisualAgentWrapper:
             print(f'  - Target   XY=({ci["target_xy"][0]:.3f}, {ci["target_xy"][1]:.3f})  '
                   f'angle={ci["target_angle_deg"]:.1f}°')
             print(f'  - Init XY dist (box→target): {ci["init_xy_dist"]:.4f} m')
+            if 'box_obstacle_conflict' in ci:   # D1
+                _bc = ci['box_obstacle_conflict']
+                print(f'  - !! BOX/OBSTACLE CONFLICT: aborted, held position '
+                      f'(worst overlap {_bc["worst_overlap_m"]:.4f} m > '
+                      f'{_bc["tolerance_m"]:.4f} m tolerance) — EXCLUDE FROM METRICS')
             if 'final_box_xy' in ci:
                 print(f'  - Box  final XY=({ci["final_box_xy"][0]:.3f}, {ci["final_box_xy"][1]:.3f})  '
                       f'angle={ci["final_box_angle_deg"]:.1f}°'
@@ -1309,6 +1388,35 @@ class VisualAgentWrapper:
             'target_angle_deg':   float(target_pos[2]),
             'init_xy_dist':       init_xy_dist,
         }
+
+        # ── D1: box-init × obstacle pre-flight guard ─────────────────────────
+        # Aligning_Sim calls agent.reset() → env.reset() → record_context_info(), so the flag
+        # set here is exactly what predict() sees for this rollout.
+        self.ctx_box_obs_conflict = None
+        _hits = _scan_box_obstacle_conflicts(self.geo_config, self.is_tightened,
+                                             [pos[0], pos[1]], pos[2])
+        if _hits:
+            _worst = max(_hits, key=lambda h: h['overlap_m'])
+            self.ctx_box_obs_conflict = {
+                'context_idx':     int(context_idx),
+                'worst_overlap_m': _worst['overlap_m'],
+                'tolerance_m':     _BOX_OBS_MAX_OVERLAP,
+                'obstacles':       _hits,
+            }
+            self.curr_context_info['box_obstacle_conflict'] = self.ctx_box_obs_conflict
+            print(f'[ box-obstacle ] CONTEXT {int(context_idx)} ABORTED — box init '
+                  f'({pos[0]:.3f}, {pos[1]:.3f}) @ {pos[2]:.1f}° sits inside the EE obstacle.',
+                  flush=True)
+            for _h in _hits:
+                print(f'[ box-obstacle ]   {_h["type"]} centre=({_h["center"][0]:.3f}, '
+                      f'{_h["center"][1]:.3f}) r={_h["radius"]:.3f} m penetrates the box '
+                      f'footprint by {_h["overlap_m"]:.4f} m '
+                      f'(tolerance {_BOX_OBS_MAX_OVERLAP:.4f} m).', flush=True)
+            print(f'[ box-obstacle ]   The EE must enter this disc to push the box, but the '
+                  f'projector forbids exactly that — the rollout is unwinnable and would drive '
+                  f'SLSQP toward an empty feasible set. Holding position for this rollout; it '
+                  f'is flagged `box_obstacle_conflict` in the JSON. Set FMPCC_BOX_OBS_GUARD=0 '
+                  f'to run it anyway.', flush=True)
 
     # Fix 9: _save_diagnostics() removed — video/gif + JSON now consolidated in _export_rollout_realtime().
 
@@ -1924,6 +2032,22 @@ class VisualAgentWrapper:
                 self.obs_context.append(obs_t)
             obs_anchor = obs_t.repeat(self.batch_size, 1)   # (B, 20)
             cond = {0: obs_anchor}
+
+        # ── D1: box-init × obstacle conflict — abort this rollout ──────────
+        # record_context_info() declared this context unusable. Every per-step bookkeeping
+        # append above still runs (so the rollout still exports cleanly and the JSON keeps a
+        # real position trace), but planning is skipped entirely and the EE holds position:
+        # spending ~200 SLSQP solves per replan on a provably empty feasible set buys nothing.
+        # The episode then runs out its step budget and is recorded as a normal failure,
+        # distinguishable via context_info['box_obstacle_conflict'].
+        if getattr(self, 'ctx_box_obs_conflict', None) is not None:
+            if self.step_counter == 0:
+                print(f'[ box-obstacle ] holding position for this rollout (context '
+                      f'{self.ctx_box_obs_conflict["context_idx"]}) — see abort notice above.',
+                      flush=True)
+            self.curr_rollout_act_magnitudes.append(0.0)
+            self.step_counter += 1
+            return np.zeros((1, 3), dtype=np.float64)
 
         # ── Plan (or execute from cached action chunk) ─────────────────────
         if self.action_counter == self.action_seq_size:
