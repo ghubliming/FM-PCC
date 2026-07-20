@@ -173,6 +173,10 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
     smooth_vals = []
     # fix_7.2: same, for the RAW (pre-projection) plan + its fan buffer
     smooth_raw_vals, raw_fan = [], []
+    # u_8.2: FULL ODE chains (all steps), for the paper-Fig.11-style grid.
+    #   chain_full[i] = (n_ode_steps+1, H, T) intermediate samples x_tau
+    #   x1_full[i]    = (n_ode_steps+1, H, T) terminal predictions x1_hat
+    chain_full, x1_full = [], []
 
     # fix_4: zero the cumulative NLP counters so the summary below is per-episode
     if hasattr(policy, "reset_nlp_stats"):
@@ -219,6 +223,10 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
                         # already unnormalized. [-1] = the FINAL planned horizon.
                         planned_fan.append(np.asarray(x_chain)[0, -1, :, :].copy())
                         x1_fan.append(np.asarray(x1_est)[0, -1, :, :].copy())
+                        # u_8.2: ALSO keep every ODE step (both Fig.11 rows).
+                        # These were previously discarded by the [0, -1] slice.
+                        chain_full.append(np.asarray(x_chain)[0].copy())
+                        x1_full.append(np.asarray(x1_est)[0].copy())
             action = planned_actions[action_index]
             action_index += 1
         else:
@@ -293,6 +301,8 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
             os.path.join(save_path, f"{run_id}_fan.npz"),
             planned=np.stack(planned_fan),          # (n_replans, H, transition_dim)
             raw=np.stack(raw_fan) if raw_fan else np.zeros(0),   # fix_7.2
+            chain_full=np.stack(chain_full),   # u_8.2 (n_replans, n_ode+1, H, T)
+            x1_full=np.stack(x1_full),         # u_8.2
             x1=np.stack(x1_fan),
             real=real_trajectory,
             action_dim=cfg.action_dim,

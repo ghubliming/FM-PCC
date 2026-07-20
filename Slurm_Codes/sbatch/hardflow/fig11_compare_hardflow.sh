@@ -59,6 +59,18 @@ python run/make_fig11_comparison.py \
     ${PLAN_IDX:+--plan_idx "$PLAN_IDX"} \
     --out "$OUT"
 
+# --- 3. u_8.2: the REAL Fig.11 structure — 2xN ODE-step grid per method ------
+GRID_OUT="logs/avoiding-v0/eval/fig11_ode_grid_run${RUN_ID}.png"
+echo "=============================================================="
+echo "[ u_8.2 ] assembling ODE-step grid (4 rows: iMF x_tau/x1, FM x_tau/x1)"
+echo "=============================================================="
+python run/make_fig11_ode_grid.py \
+    --dir "$IMF_DIR" --dir2 "$FM_DIR" --both \
+    --run_id "$RUN_ID" \
+    ${PLAN_IDX:+--plan_idx "$PLAN_IDX"} \
+    --n_cols "${N_COLS:-6}" \
+    --out "$GRID_OUT" || echo "[ u_8.2 ] grid failed (see above)"
+
 echo "[ u_8 ] done."
-ls -la "$OUT" 2>/dev/null || echo "  (figure not produced — check above)"
+ls -la "$OUT" "$GRID_OUT" 2>/dev/null || echo "  (figures not produced — check above)"
 echo "  per-method fans also available: $IMF_DIR/*_fan.png , $FM_DIR/*_fan.png"
