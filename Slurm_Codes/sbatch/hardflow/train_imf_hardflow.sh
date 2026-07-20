@@ -24,4 +24,4 @@ echo "[ HF-IMF-TRAIN ] bash run_scripts/train_imf.sh"
 bash run_scripts/train_imf.sh
 
 echo "[ HF-IMF-TRAIN ] done. checkpoints:"
-ls -la logs/avoiding-v0/flow/H16_imf_100k/ 2>/dev/null || echo "  (none — check log above)"
+ls -la logs/avoiding-v0/flow/H16_imf_$(( ${N_TRAIN_STEPS:-100000} / 1000 ))k/ 2>/dev/null || echo "  (none — check log above)"

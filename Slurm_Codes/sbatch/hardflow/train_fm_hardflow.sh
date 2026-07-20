@@ -28,4 +28,4 @@ echo "[ HF-FM-TRAIN ] bash run_scripts/train_fm_wandb.sh"
 bash run_scripts/train_fm_wandb.sh
 
 echo "[ HF-FM-TRAIN ] done. artifacts:"
-ls -la logs/avoiding-v0/flow/${FM_EXP_NAME:-H16_1e6steps_wandb}/ 2>/dev/null || echo "  (none — check log)"
+ls -la logs/avoiding-v0/flow/${FM_EXP_NAME:-H16_fm_$(( ${N_TRAIN_STEPS:-1000001} / 1000 ))k}/ 2>/dev/null || echo "  (none — check log)"

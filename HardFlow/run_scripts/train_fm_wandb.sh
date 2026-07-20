@@ -7,7 +7,21 @@ export D4RL_SUPPRESS_IMPORT_ERROR=1
 
 env="avoiding-v0"; state_dim=4; action_dim=2; horizon=16
 n_train_steps="${N_TRAIN_STEPS:-1000001}"
-exp_name="${FM_EXP_NAME:-H${horizon}_1e6steps_wandb}"
+# U9 SAFETY: budget-tagged name, and NEVER "H16_1e6steps" (that is the authors'
+# downloaded checkpoint backing the whole replication — must not be touched).
+steps_tag="$(( n_train_steps / 1000 ))k"
+exp_name="${FM_EXP_NAME:-H${horizon}_fm_${steps_tag}}"
+
+if [ "$exp_name" = "H${horizon}_1e6steps" ]; then
+    echo "[ train_fm ] ABORT: refusing to write to the downloaded baseline checkpoint dir." >&2
+    exit 1
+fi
+final_cp=$(( n_train_steps / 50000 ))
+if [ -f "./logs/avoiding-v0/flow/${exp_name}/model_ema_${final_cp}.pth" ] && [ "${FORCE_OVERWRITE:-0}" != "1" ]; then
+    echo "[ train_fm ] ABORT: ./logs/avoiding-v0/flow/${exp_name}/ already holds a finished run." >&2
+    echo "              Use FM_EXP_NAME=<new_name> or FORCE_OVERWRITE=1." >&2
+    exit 1
+fi
 
 wandb_flag=""
 [ "${USE_WANDB:-1}" = "1" ] && wandb_flag="--use_wandb"

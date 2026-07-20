@@ -10,12 +10,26 @@ state_dim=4
 action_dim=2
 horizon=16
 
-exp_name="H16_imf_100k"
 
 # Gen13 D5/D6 defaults (Gen3v4-informed); override via env vars if sweeping.
 n_train_steps="${N_TRAIN_STEPS:-100000}"
 data_proportion="${IMF_DATA_PROPORTION:-0.25}"
 p_std="${IMF_P_STD:-1.4}"
+
+# U9 SAFETY: exp_name encodes the STEP BUDGET so different budgets can never
+# collide. 100000 -> "H16_imf_100k" (identical to the existing run, backward
+# compatible); 300000 -> "H16_imf_300k" (a NEW dir, existing artifacts safe).
+steps_tag="$(( ${N_TRAIN_STEPS:-100000} / 1000 ))k"
+exp_name="${IMF_EXP_NAME:-H16_imf_${steps_tag}}"
+
+# U9 SAFETY: refuse to clobber a COMPLETED training (save_config overwrites
+# silently). The existing H16_imf_100k checkpoint backs every Gen13 result.
+final_cp=$(( n_train_steps / 25000 ))
+if [ -f "./logs/avoiding-v0/flow/${exp_name}/model_ema_${final_cp}.pth" ] && [ "${FORCE_OVERWRITE:-0}" != "1" ]; then
+    echo "[ train_imf ] ABORT: ./logs/avoiding-v0/flow/${exp_name}/ already holds a finished run." >&2
+    echo "               Use IMF_EXP_NAME=<new_name>, a different N_TRAIN_STEPS, or FORCE_OVERWRITE=1." >&2
+    exit 1
+fi
 
 # U9: W&B on by default (set USE_WANDB=0 to disable). Falls back to CSV if init fails.
 wandb_flag=""

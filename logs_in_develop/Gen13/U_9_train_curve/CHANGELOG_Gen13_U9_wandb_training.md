@@ -78,6 +78,39 @@ Knobs: `USE_WANDB=0` (disable) · `WANDB_PROJECT=…` · `FM_EXP_NAME=…` · `N
 1. **FM at 100 k** — matched-budget training. If FM@100k still beats iMF@100k at matched K, the fix_7.3 refutation is confirmed *without* the training-budget confound. **This is the cheaper and more decisive of the two.**
 2. **iMF at 300 k+** — tests whether more training closes the gap. §4's curve (plateau from ~25 k, −5.4 % over the last 50 k) predicts it will not, but it is now directly testable with live curves.
 
+## 6b. 🛑 OVERWRITE SAFETY — a real data-loss bug, caught before running
+
+**The question "will the new train overwrite the old files?" was correct, and the answer was YES for iMF.**
+
+`run_scripts/train_imf.sh` had `exp_name="H16_imf_100k"` **hardcoded**. Running `N_TRAIN_STEPS=300000` would therefore have written into the *same* directory, and `run/utils.py:save_config` overwrites silently (it only prints *"old configs, checkpoints … will be overwritten"*). That would have destroyed:
+
+- `model_ema_{0..4}.pth` — **the checkpoint behind every Gen13 result** (u_5 n=200, fix_7, fix_7.3)
+- `metrics.csv` — the training curve analysed in §4 of the companion MD
+
+Two independent protections added:
+
+**(1) exp_name now encodes the step budget** — different budgets can never collide:
+
+| `N_TRAIN_STEPS` | directory |
+|---|---|
+| 100000 | `H16_imf_100k` (unchanged — backward compatible) |
+| 300000 | `H16_imf_300k` (**new dir**, existing artifacts untouched) |
+
+**(2) refuse-to-clobber guard** — if the target dir already holds a *finished* run (final `model_ema_<cp>.pth`), the script **aborts** with instructions unless `FORCE_OVERWRITE=1`.
+
+Verified by simulation against a mock existing checkpoint:
+
+| case | result |
+|---|---|
+| re-run at 100k (the dangerous one) | **ABORTED ✅** |
+| new budget 300k | proceeds → `H16_imf_300k` |
+| `FORCE_OVERWRITE=1` | proceeds (explicit opt-in) |
+| `IMF_EXP_NAME=H16_imf_rerun` | proceeds → new dir |
+
+**FM side:** was already safe (`H16_1e6steps_wandb` ≠ the downloaded `H16_1e6steps`), but now additionally (a) budget-tagged as `H16_fm_<N>k`, (b) **hard-refuses** to write to `H16_1e6steps` — the authors' downloaded checkpoint that backs the entire replication — and (c) carries the same finished-run guard.
+
+`--time` note: the sbatch `ls` lines were also hardcoded to the old name and now derive the same tag.
+
 ## 7. Verification (container)
 
 `py_compile` clean on `train_imf.py` / `train_fm.py`; `bash -n` clean on all three shell scripts; frozen files (`run/train.py`, `run_scripts/train.sh`, `run/eval.py`) confirmed untouched. Not executed here (no torch/wandb in this container) — W&B behaviour is exercised on the cluster, and every W&B path is wrapped so a failure degrades to CSV rather than aborting.
