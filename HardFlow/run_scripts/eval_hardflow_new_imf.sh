@@ -11,7 +11,9 @@ state_dim=4
 action_dim=2
 
 horizon=16
-flow_exp_name="H16_imf_100k"
+# U9: which TRAINING to evaluate. Must match IMF_EXP_NAME used at train time,
+# otherwise eval silently loads the wrong checkpoint.
+flow_exp_name="${IMF_EXP_NAME:-H16_imf_100k}"
 flow_cp="${IMF_CP:-4}"
 k_steps="${IMF_K:-2}"
 
@@ -42,6 +44,9 @@ hardflow_activation="all"
 solver_print_level="${SOLVER_PRINT_LEVEL:-0}"
 
 exp_name="H16_imf_hardflow_new_K${k_steps}"
+# U9: tag the eval output with its TRAINING SOURCE so results from different
+# trainings never collide. Legacy default (H16_imf_100k) keeps the old name.
+[ "$flow_exp_name" != "H16_imf_100k" ] && exp_name="${exp_name}_from_${flow_exp_name}"
 # u_5: suffix only when n != 50, so the frozen K1/K2/K4/K5 result dirs are never
 # overwritten and the n=200 arm lands in its own directory.
 [ "$random_repeat" != "50" ] && exp_name="${exp_name}_n${random_repeat}"

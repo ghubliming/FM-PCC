@@ -3095,3 +3095,38 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 ***
 
+## Gen13 U5: Paired n=200 Safety Run & Mechanism Identification (July 20, 2026)
+
+**Keywords**: Gen13, iMF, paired n=200 run, safety parity, efficiency, prediction error.
+
+1. **Efficiency Confirmed, Safety Gap Real**: Executed the decisive paired n=200 safety run comparing iMF K=5 and FM. Confirmed the massive efficiency win (1.95× fewer NFE, 1.74× faster compute). However, the safety parity claim was weakened: iMF reached 98.5% safety (3 violations) versus FM's 100% (0 violations). While still not statistically significant (p=0.248), non-inferiority fails at tight margins.
+2. **Mechanism Identified**: Ruled out NLP solver failures (0 failures across 7000+ solves) and projection count. Pinpointed the gap to the prediction error caused by a coarse velocity field which could not be compensated for by projections alone.
+
+***
+
+## Gen13 Fix 7.3: Matched-NFE Battery & iMF Claim Refuted (July 20, 2026)
+
+**Keywords**: Gen13, matched budget, iMF refuted, field training error, efficiency claim.
+
+1. **Matched-Budget Test Refutes iMF**: Developed a matched-NFE test battery, ensuring both methods used identical numbers of projections. At matched budgets, FM strictly dominates iMF in both safety and speed (e.g., FM@K=2 achieves 100% safety and is 2.6× faster than iMF@K=5).
+2. **Prediction Map Inaccuracy**: Demonstrated that iMF's "exact" terminal endpoint map has 4–6× higher error than FM's first-order Euler approximation due to high field training error. The fundamental rationale behind Gen13 was empirically refuted on this task at this data scale.
+
+***
+
+## Gen13 U8: Fig. 11 Style Comparison & Foresight-Fan Diagnostics (July 20, 2026)
+
+**Keywords**: Gen13, foresight fan, Fig 11, raw plan capture, smoothness diagnostic.
+
+1. **Fig. 11 Reproductions**: Re-introduced HardFlow's unused "predicted" style plot for single-instance qualitative comparisons between the iMF endpoint map and the FM Euler shot.
+2. **Diagnostic Utilities**: Introduced the MPC foresight-fan diagnostic and raw plan capture during warmstart to visualize solver smoothing, CasADi solver timing log silencing, and an expanded smoothness diagnostic suite. 
+
+***
+
+## Gen13 U9: W&B Integration & Overwrite Protection (July 20, 2026)
+
+**Keywords**: Gen13, W&B, training curves, overwrite protection, FM training.
+
+1. **W&B for iMF & FM Training**: Integrated `wandb` logging by adapting the Gen3v4 workflow. Added `train_fm.py` as an additive sibling to enable training the FM baseline in the current environment, allowing for direct comparison of training curves.
+2. **Hardened Overwrite Protection**: Prevented accidental data-loss in training scripts by enforcing budget-tagged experiment directories (e.g., `H16_imf_100k` vs `300k`) and a hard refuse-to-clobber guard that aborts if a finished checkpoint already exists in the target directory.
+
+***

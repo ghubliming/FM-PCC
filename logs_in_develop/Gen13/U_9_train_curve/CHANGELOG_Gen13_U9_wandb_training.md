@@ -111,6 +111,54 @@ Verified by simulation against a mock existing checkpoint:
 
 `--time` note: the sbatch `ls` lines were also hardcoded to the old name and now derive the same tag.
 
+## 6c. 🛑 EVAL PROVENANCE — a *silent wrong-result* bug, also caught before running
+
+Follow-up question: *"after training, what's the next command — and will eval overwrite things / can we tell which training an eval came from?"* Checking this exposed a bug **worse than overwriting**:
+
+**`flow_exp_name="H16_imf_100k"` was HARDCODED in all three iMF eval scripts.** After training `H16_imf_300k`, running eval would have:
+1. **loaded the OLD 100 k checkpoint** — silently, no error,
+2. **written to the OLD result dir** (`H16_imf_hardflow_new_K5`), overwriting the u_5/fix_7.3 results,
+3. produced numbers that *look* like they evaluate the new training but do not.
+
+A wrong-results bug is worse than a data-loss bug: data loss is obvious, this is invisible.
+
+**Fixed — two changes, both backward compatible:**
+
+| | before | after |
+|---|---|---|
+| checkpoint loaded | hardcoded `H16_imf_100k` | **`${IMF_EXP_NAME:-H16_imf_100k}`** — same var name as training, so train and eval stay in sync |
+| output dir | `H16_imf_hardflow_new_K5` | same **unless** a non-default checkpoint is used, then **`…_from_<training>`** |
+
+Verified:
+
+| invocation | loads | writes |
+|---|---|---|
+| *(no env — legacy)* | `H16_imf_100k` | `H16_imf_hardflow_new_K5` ← **unchanged** |
+| legacy, `RANDOM_REPEAT=200` | `H16_imf_100k` | `H16_imf_hardflow_new_K5_n200` ← **unchanged** (u_5's dir) |
+| `IMF_EXP_NAME=H16_imf_300k` | **`H16_imf_300k`** | `H16_imf_hardflow_new_K5_from_H16_imf_300k` |
+| `IMF_EXP_NAME=H16_imf_300k`, `RANDOM_REPEAT=200` | `H16_imf_300k` | `…_K5_from_H16_imf_300k_n200` |
+
+Every existing result directory keeps its exact name, so all prior MDs stay valid. `eval_smoothness_diag.sh` got the same treatment for **both** backbones (`IMF_EXP_NAME` / `FM_EXP_NAME` + `FM_CP`).
+
+### The post-training command sequence
+
+```bash
+# 1. train (new dir, guarded)
+N_TRAIN_STEPS=300000 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/train_imf_hardflow.sh
+#    -> logs/hardflow/avoiding-v0/flow/H16_imf_300k/{model_ema_0..12.pth, metrics.csv}
+#    NOTE cp index = N_TRAIN_STEPS/25000  (300k -> 12, NOT 4)
+
+# 2. eval it — MUST pass IMF_EXP_NAME and the matching IMF_CP
+IMF_EXP_NAME=H16_imf_300k IMF_CP=12 IMF_K=5 RANDOM_REPEAT=200 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_imf_hardflow.sh
+
+# 3. matched-budget battery against the new checkpoint
+IMF_EXP_NAME=H16_imf_300k IMF_CP=12 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_matched_nfe_hardflow.sh
+```
+
+⚠️ **`IMF_CP` must be set too.** The checkpoint index is `N_TRAIN_STEPS / save_freq(25000)` — a 300 k run's final checkpoint is `model_ema_12.pth`, not `model_ema_4.pth`. Leaving `IMF_CP=4` would evaluate a 100 k-equivalent *intermediate* checkpoint of the new run — another silent-wrong-result trap.
+
 ## 7. Verification (container)
 
 `py_compile` clean on `train_imf.py` / `train_fm.py`; `bash -n` clean on all three shell scripts; frozen files (`run/train.py`, `run_scripts/train.sh`, `run/eval.py`) confirmed untouched. Not executed here (no torch/wandb in this container) — W&B behaviour is exercised on the cluster, and every W&B path is wrapped so a failure degrades to CSV rather than aborting.

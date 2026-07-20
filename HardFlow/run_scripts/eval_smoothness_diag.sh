@@ -23,14 +23,16 @@ PLOT_FAN="${PLOT_FAN:-1}"          # fans ON for this diagnostic (tiny n)
 
 if [ "$BACKBONE" = "fm" ]; then
     # fix_7.3: FM_K env-overridable so FM can be run at iMF's budget (matched-NFE control)
-    flow_exp_name="H16_1e6steps"; flow_cp="20"; k_steps="${FM_K:-10}"   # 10 = FM native
+    flow_exp_name="${FM_EXP_NAME:-H16_1e6steps}"; flow_cp="${FM_CP:-20}"; k_steps="${FM_K:-10}"
     [ "$GUIDANCE" = "guided" ] && gm="hardflow_new" || gm="original"
 else
-    flow_exp_name="H16_imf_100k"; flow_cp="${IMF_CP:-4}"; k_steps="${IMF_K:-5}"
+    flow_exp_name="${IMF_EXP_NAME:-H16_imf_100k}"; flow_cp="${IMF_CP:-4}"; k_steps="${IMF_K:-5}"
     [ "$GUIDANCE" = "guided" ] && gm="hardflow_new_imf" || gm="original_imf"
 fi
 
 exp_name="diag_smooth_${BACKBONE}_${GUIDANCE}_K${k_steps}_n${N}"
+# U9: provenance tag when evaluating a non-default training
+case "$flow_exp_name" in H16_imf_100k|H16_1e6steps) ;; *) exp_name="${exp_name}_from_${flow_exp_name}" ;; esac
 fan_flag=""; [ "$PLOT_FAN" = "1" ] && fan_flag="--imf_plot_fan"
 
 echo "=== [fix_7 smoothness] backbone=$BACKBONE guidance=$gm K=$k_steps n=$N ==="
