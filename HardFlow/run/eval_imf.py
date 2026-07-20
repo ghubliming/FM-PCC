@@ -20,7 +20,9 @@ run/eval.py itself is left untouched — Gen13's rule is additive-only, and
 run.eval.run_env is pre-existing (pre-Gen13) code.
 """
 
+import contextlib
 import csv
+import io
 import os
 import sys
 
@@ -51,6 +53,19 @@ from run.eval import ProxyValueModel, check_violation
 from run.utils import deterministic, save_config, set_cuda_visible_device
 
 _IS_TTY = sys.stdout.isatty()
+
+
+@contextlib.contextmanager
+def _quiet_stdout():
+    """U9 fix: swallow the per-figure 'Saved trajectory plot to: ...' print.
+
+    It lives in `hardflow/utils/rendering.py::save_figure` (pre-existing, frozen),
+    firing once per saved figure — 600 lines in job 23612 (2 figures x 300
+    episodes). Suppressed at the CALL SITE instead of editing upstream.
+    """
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        yield
 
 
 def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg,
@@ -275,24 +290,26 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
     )
 
     real_trajectory = np.array(rollout)
-    hardflow.utils.save_single_trajectory_image(
-        real_trajectory,
-        os.path.join(save_path, f"{run_id}_real.png"),
-        cfg.constraint,
-        cfg.obstacle_margin,
-        cfg.draw_obstacle_margin,
-    )
+    with _quiet_stdout():
+        hardflow.utils.save_single_trajectory_image(
+            real_trajectory,
+            os.path.join(save_path, f"{run_id}_real.png"),
+            cfg.constraint,
+            cfg.obstacle_margin,
+            cfg.draw_obstacle_margin,
+        )
 
     # u_5(B): extra fan figure — only when explicitly enabled
     if getattr(cfg, "imf_plot_fan", False) and planned_fan:
-        _save_foresight_fan(
-            planned_fan,
-            x1_fan,
-            real_trajectory,
-            os.path.join(save_path, f"{run_id}_fan.png"),
-            cfg,
-            raw_fan=raw_fan,
-        )
+        with _quiet_stdout():
+            _save_foresight_fan(
+                planned_fan,
+                x1_fan,
+                real_trajectory,
+                os.path.join(save_path, f"{run_id}_fan.png"),
+                cfg,
+                raw_fan=raw_fan,
+            )
         # u_8: also dump the RAW captured arrays, so a paper-style Fig.11
         # comparison figure can be assembled afterwards as pure post-processing
         # (no GPU / no env re-run). One diagnostic run therefore serves both the

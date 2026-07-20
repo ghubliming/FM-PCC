@@ -60,6 +60,25 @@ class WarmstartCaptureMixin:
     def _stash_warmstart(self, s0_np, dof_chain_np):
         self._last_warmstart = (s0_np, dof_chain_np)
 
+    def silence_casadi_timing(self, print_level):
+        """U9 fix: re-declare the solver with CasADi's OWN `print_time` disabled.
+
+        `solver_print_level` only controls `ipopt.print_level`. CasADi prints a
+        SEPARATE ~7-line timing table after every solve (`solver : t_proc ...`),
+        governed by `print_time` (default True). fix_6 applied this to
+        ImfFlowPolicy only; the FM backbone inherits the base (frozen)
+        hardflow_formulate and kept spewing — 2,534 tables (~85% of job 23612's
+        21k-line log) all came from fm_guided cells. Both policies now call this.
+        """
+        self.oc_cs_opti.solver(
+            "ipopt",
+            {
+                "ipopt.print_level": print_level,
+                "ipopt.hessian_approximation": "limited-memory",
+                "print_time": False,
+            },
+        )
+
     def raw_plan(self):
         """Un-normalized RAW (pre-NLP) planned trajectory, (horizon, transition).
 
@@ -89,6 +108,11 @@ class InstrumentedFlowPolicy(WarmstartCaptureMixin, FlowPolicy):
         s0_np, dof_chain_np = super().warmstart(conditions)
         self._stash_warmstart(s0_np, dof_chain_np)
         return s0_np, dof_chain_np
+
+    def hardflow_formulate(self, *args, **kwargs):
+        """Base CasADi build + U9 CasADi-timing silencing (see mixin docstring)."""
+        super().hardflow_formulate(*args, **kwargs)
+        self.silence_casadi_timing(kwargs.get("print_level", args[0] if args else 5))
 
 
 class ImfFlowPolicy(WarmstartCaptureMixin, FlowPolicy):
@@ -238,15 +262,7 @@ class ImfFlowPolicy(WarmstartCaptureMixin, FlowPolicy):
         # In the n=200 paired run that produced 49,209 lines = 91% of the job log
         # (7,030 solves x 7 lines). Re-declaring the solver here overrides the base
         # options dict without editing the pre-existing flow_policy.py.
-        print_level = kwargs.get("print_level", args[0] if args else 5)
-        self.oc_cs_opti.solver(
-            "ipopt",
-            {
-                "ipopt.print_level": print_level,
-                "ipopt.hessian_approximation": "limited-memory",
-                "print_time": False,   # <-- the 91% fix
-            },
-        )
+        self.silence_casadi_timing(kwargs.get("print_level", args[0] if args else 5))
 
     def constrained_u_fn_torch(self, dof, t, h, s0):
         """dof-space u-field evaluation (mirror of base constrained_flow_fn_torch)."""
