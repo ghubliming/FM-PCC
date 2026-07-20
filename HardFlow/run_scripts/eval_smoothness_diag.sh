@@ -22,7 +22,8 @@ GUIDANCE="${GUIDANCE:-guided}"
 PLOT_FAN="${PLOT_FAN:-1}"          # fans ON for this diagnostic (tiny n)
 
 if [ "$BACKBONE" = "fm" ]; then
-    flow_exp_name="H16_1e6steps"; flow_cp="20"; k_steps=10   # FM's native setting
+    # fix_7.3: FM_K env-overridable so FM can be run at iMF's budget (matched-NFE control)
+    flow_exp_name="H16_1e6steps"; flow_cp="20"; k_steps="${FM_K:-10}"   # 10 = FM native
     [ "$GUIDANCE" = "guided" ] && gm="hardflow_new" || gm="original"
 else
     flow_exp_name="H16_imf_100k"; flow_cp="${IMF_CP:-4}"; k_steps="${IMF_K:-5}"
