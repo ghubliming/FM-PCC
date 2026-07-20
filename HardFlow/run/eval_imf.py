@@ -39,6 +39,8 @@ import hardflow.utils
 from hardflow.utils.rendering import AvoidingTrajectoryPlotter
 
 from hardflow.datasets.sequence import SequenceDataset
+from hardflow.models_flow.flow_policy import FlowPolicy
+from hardflow.models_flow.unet import TemporalUnet
 from hardflow.models_flow.imf import (
     ImfEvaluationConfig,
     ImfFlowPolicy,
@@ -62,6 +64,13 @@ def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg):
                  the EXACT endpoint map z + (1-tau)*u, vs FM's Euler shot — i.e.
                  the visual counterpart of the Gen13 seam swap
       * black  — the actually executed trajectory (same as the standard *_real.png)
+
+    STYLING NOTE: HardFlow ships an unused `style="predicted"` in
+    `hardflow/utils/rendering.py` (the paper's Fig. 11 vocabulary). It was
+    evaluated and deliberately NOT adopted — it is designed for ONE planning
+    instance, so its per-point markers clutter badly when 5-7 plans are overlaid
+    as a fan. See ../../logs_in_develop/HF_iMF/Research/MEMO_hardflow_fig11_
+    predicted_style.md for the full finding.
 
     Index layout: the executed rollout is observations (state_dim=4) with x,y at
     2,3; planned/predicted trajectories are full transitions (action_dim+state_dim)
@@ -91,6 +100,22 @@ def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg):
     plotter.add_environment_elements(ax)
     plotter.apply_legend(ax)
     plotter.save_figure(fig, filepath)
+
+
+def _traj_smoothness(plan, action_dim):
+    """fix_7 — MPC planned-trajectory smoothness (mean squared 2nd difference).
+
+    Roughness of the planned x-y path: mean_t || p[t+1] - 2p[t] + p[t-1] ||^2.
+    ZERO for a perfectly straight/constant-velocity plan; larger = more jitter.
+    Reported in normalized-position units^2 (the plan is unnormalized already, so
+    these are metres^2). Lower is smoother.
+    """
+    px, py = action_dim + 2, action_dim + 3
+    p = np.stack([plan[:, px], plan[:, py]], axis=-1)   # (H, 2)
+    if len(p) < 3:
+        return 0.0
+    d2 = p[2:] - 2.0 * p[1:-1] + p[:-2]
+    return float((d2 ** 2).sum(axis=-1).mean())
 
 
 def _run_env_quiet(env, policy, cfg, run_id=0):
@@ -132,6 +157,8 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
 
     # u_5(B): foresight-fan buffers (stay empty unless cfg.imf_plot_fan)
     planned_fan, x1_fan, n_replan = [], [], 0
+    # fix_7: planned-trajectory smoothness, one value per replan (always cheap)
+    smooth_vals = []
 
     # fix_4: zero the cumulative NLP counters so the summary below is per-episode
     if hasattr(policy, "reset_nlp_stats"):
@@ -157,6 +184,10 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
                 action_index = 0
                 if "computation_time" in info:
                     computation_times.append(info["computation_time"])
+                # fix_7: roughness of THIS replan's final planned horizon
+                smooth_vals.append(
+                    _traj_smoothness(np.asarray(x_chain)[0, -1, :, :], cfg.action_dim)
+                )
                 # u_5(B): foresight-fan capture — OFF by default, so this branch
                 # is skipped entirely on the decisive n=200 safety run.
                 if getattr(cfg, "imf_plot_fan", False):
@@ -203,9 +234,11 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         if nlp
         else ""
     )
+    mean_smooth = float(np.mean(smooth_vals)) if smooth_vals else float("nan")
     print(
         f"[ eval_imf ] episode {run_id}: {outcome}  steps={final_t + 1}  "
         f"violations={total_violations:.0f}  reward={total_rewards:.3f}{nlp_str}"
+        f"  rough={mean_smooth:.3e}"
     )
 
     real_trajectory = np.array(rollout)
@@ -234,13 +267,20 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         np.array(rollout),
         success,
         avg_computation_time,
+        mean_smooth,          # fix_7
     )
 
 
 def evaluate_imf(cfg: ImfEvaluationConfig):
-    assert cfg.guidance_method in ImfFlowPolicy.IMF_GUIDANCE_METHODS, (
-        f"run/eval_imf.py handles {ImfFlowPolicy.IMF_GUIDANCE_METHODS}; "
-        f"for FM guidance methods use run/eval.py"
+    # fix_7: with backbone="fm" this entry also drives HardFlow's original
+    # FlowPolicy (guidance: original | hardflow_new) so both methods share the
+    # same instrumentation. Default backbone="imf" is unchanged.
+    _allowed = (
+        ("original", "hardflow_new") if cfg.backbone == "fm"
+        else ImfFlowPolicy.IMF_GUIDANCE_METHODS
+    )
+    assert cfg.guidance_method in _allowed, (
+        f"backbone={cfg.backbone} supports {_allowed}, got '{cfg.guidance_method}'"
     )
 
     # dataset (only for its normalizer) — identical to run.eval.evaluate
@@ -272,15 +312,29 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
     else:
         print("No fitted dynamics found, proceeding without dynamics model")
 
-    # iMF backbone
-    flow_model = TemporalImfUnet(
-        horizon=cfg.horizon,
-        transition_dim=cfg.state_dim + cfg.action_dim,
-        cond_dim=cfg.state_dim,
-        dim=32,
-        dim_mults=(1, 4, 8),
-        attention=False,
-    ).to(cfg.device)
+    # fix_7: backbone selection. "imf" (default) = Gen13's average-velocity net;
+    # "fm" = HardFlow's ORIGINAL TemporalUnet + FlowPolicy, routed through THIS
+    # instrumented entry so the smoothness/fan diagnostics apply identically to
+    # both methods (apples-to-apples by construction). run/eval.py stays untouched.
+    is_fm = cfg.backbone == "fm"
+    if is_fm:
+        flow_model = TemporalUnet(
+            horizon=cfg.horizon,
+            transition_dim=cfg.state_dim + cfg.action_dim,
+            cond_dim=cfg.state_dim,
+            dim=32,
+            dim_mults=(1, 4, 8),
+            attention=False,
+        ).to(cfg.device)
+    else:
+        flow_model = TemporalImfUnet(
+            horizon=cfg.horizon,
+            transition_dim=cfg.state_dim + cfg.action_dim,
+            cond_dim=cfg.state_dim,
+            dim=32,
+            dim_mults=(1, 4, 8),
+            attention=False,
+        ).to(cfg.device)
     ckpt_path = os.path.join(
         cfg.log_folder,
         cfg.env,
@@ -288,7 +342,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
         cfg.flow_exp_name,
         f"model_ema_{cfg.flow_cp}.pth",
     )
-    print(f"[ eval_imf ] loading iMF checkpoint: {ckpt_path}")
+    print(f"[ eval_imf ] backbone={cfg.backbone}  loading checkpoint: {ckpt_path}")
     flow_model.load_state_dict(torch.load(ckpt_path))
     flow_model.eval()
 
@@ -306,7 +360,8 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
         dynamics_model=dynamics_model,
     ).to(cfg.device)
 
-    flow_policy = ImfFlowPolicy(
+    policy_cls = FlowPolicy if is_fm else ImfFlowPolicy
+    flow_policy = policy_cls(
         flow_model=flow_model,
         value_model=value_model,
         normalizer=normalizer,
@@ -317,7 +372,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
         dynamics_model=dynamics_model,
     )
 
-    if cfg.guidance_method == "hardflow_new_imf":
+    if cfg.guidance_method in ("hardflow_new_imf", "hardflow_new"):
         flow_policy.hardflow_formulate(
             print_level=cfg.solver_print_level,
             constraint=cfg.constraint,
@@ -340,13 +395,17 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
             real_trajectory,
             success,
             avg_computation_time,
+            mean_smooth,
         ) = _run_env_quiet(env, flow_policy, cfg, run_id=run_id)
 
         steps = len(real_trajectory) - 1
         safety = total_violations == 0
-        nfe_info = flow_policy._nfe_info()  # last planning call of the episode
+        # fix_7: NFE/NLP instrumentation exists only on ImfFlowPolicy
+        nfe_info = (flow_policy._nfe_info() if hasattr(flow_policy, '_nfe_info')
+                    else {'nfe_total': 0, 'nfe_sampling': 0, 'nfe_warmstart': 0, 'nfe_diag': 0})
         nfe_totals.append(nfe_info["nfe_total"])
-        nlp_info = flow_policy.nlp_stats()  # cumulative over THIS episode (fix_4)
+        nlp_info = (flow_policy.nlp_stats() if hasattr(flow_policy, 'nlp_stats')
+                    else {'nlp_solves': 0, 'nlp_failures': 0})
         nlp_failures_total += nlp_info["nlp_failures"]
 
         trajectory_data.append(
@@ -368,6 +427,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
                 "nfe_diag": nfe_info["nfe_diag"],
                 "nlp_solves": nlp_info["nlp_solves"],
                 "nlp_failures": nlp_info["nlp_failures"],
+                "plan_roughness": mean_smooth,
             }
         )
 
@@ -389,6 +449,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
             "nfe_diag",
             "nlp_solves",
             "nlp_failures",
+            "plan_roughness",
         ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()

@@ -179,6 +179,23 @@ class ImfFlowPolicy(FlowPolicy):
         finally:
             self.cfg.guidance_method = original_method
 
+        # u_5 fix — SILENCE CASADI'S OWN TIMING TABLE.
+        # `solver_print_level` only controls `ipopt.print_level`; CasADi prints a
+        # SEPARATE ~7-line timing table (`solver : t_proc ... nlp_f | nlp_g | ...`)
+        # after EVERY solve, governed by its own `print_time` option (default True).
+        # In the n=200 paired run that produced 49,209 lines = 91% of the job log
+        # (7,030 solves x 7 lines). Re-declaring the solver here overrides the base
+        # options dict without editing the pre-existing flow_policy.py.
+        print_level = kwargs.get("print_level", args[0] if args else 5)
+        self.oc_cs_opti.solver(
+            "ipopt",
+            {
+                "ipopt.print_level": print_level,
+                "ipopt.hessian_approximation": "limited-memory",
+                "print_time": False,   # <-- the 91% fix
+            },
+        )
+
     def constrained_u_fn_torch(self, dof, t, h, s0):
         """dof-space u-field evaluation (mirror of base constrained_flow_fn_torch)."""
         device = dof.device
@@ -382,12 +399,14 @@ class ImfFlowPolicy(FlowPolicy):
             ),
         )
 
-        print()
-        print(
-            f"    Norm of Control Inputs: {np.linalg.norm(np.array(U_optimized)):.6f}",
-            flush=True,
-        )
-        print()
+        # u_5 fix: was printed on EVERY plan call (1,406 lines + 2,812 blanks in the
+        # n=200 run) purely as noise. Kept behind an opt-in flag for debugging.
+        if getattr(self.cfg, "imf_verbose_control", False):
+            print(
+                f"    Norm of Control Inputs: "
+                f"{np.linalg.norm(np.array(U_optimized)):.6f}",
+                flush=True,
+            )
 
         optimized_final_x = np.insert(optimized_final_dof, self.action_dim, best_s0_np)
         optimized_final_x = to_torch(optimized_final_x, device="cpu")

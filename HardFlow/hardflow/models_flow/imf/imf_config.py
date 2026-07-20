@@ -47,11 +47,20 @@ class ImfEvaluationConfig(FlowMatchingEvaluationConfig):
 
     guidance_method: str = "original_imf"  # or hardflow_new_imf
 
+    # fix_7: which backbone this entry drives.
+    #   "imf" (default) -> TemporalImfUnet + ImfFlowPolicy (Gen13)
+    #   "fm"            -> HardFlow's original TemporalUnet + FlowPolicy, so the
+    #                      smoothness/fan diagnostics apply to BOTH methods through
+    #                      one identical code path. run/eval.py stays untouched.
+    backbone: str = "imf"
+
     # u_5(B): MPC foresight-fan diagnostic. DEFAULT OFF — when False, eval behaves
     # byte-identically to before (no capture, no plotting, no extra cost), so the
     # decisive paired n=200 safety run is unaffected. Enable per-run with
     # `--imf_plot_fan` / IMF_PLOT_FAN=1 for a small diagnostic run.
     imf_plot_fan: bool = False
+    # u_5 fix: per-plan "Norm of Control Inputs" print — noise in batch logs, OFF.
+    imf_verbose_control: bool = False
     # Plot the planned horizon only every `imf_fan_every` replans (FMPCC convention:
     # keeps the figure readable). 1 = every replan.
     imf_fan_every: int = 1

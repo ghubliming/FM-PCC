@@ -75,8 +75,13 @@ if [[ " $ARMS " == *" B "* ]]; then
     echo "=============================================================="
     echo "[ u_5 ARM B ] FM hardflow_new (baseline re-run)  n=$N"
     echo "=============================================================="
-    FM_LOG="logs/avoiding-v0/eval/u5_armB_fm_verbose_${SLURM_JOB_ID:-local}.log"
-    mkdir -p "$(dirname "$FM_LOG")"
+    # u_5 fix: this used to be written INTO the results tree
+    # (logs/avoiding-v0/eval/), polluting it with a non-result file. Logs belong
+    # under Slurm_Codes/logs/, next to every other job log — results dirs must
+    # contain ONLY results (trajectories.csv + *_real.png).
+    FM_LOG_DIR="$REPO/Slurm_Codes/logs/${SUBMIT_DATE:-$(date +%Y-%m-%d)}"
+    mkdir -p "$FM_LOG_DIR"
+    FM_LOG="$FM_LOG_DIR/${SUBMIT_TIME:-$(date +%H_%M_%S)}_u5_armB_fm_verbose_${SLURM_JOB_ID:-local}.log"
     echo "[ u_5 ARM B ] verbose output -> $FM_LOG (kept out of the job log)"
     if RANDOM_REPEAT="$N" bash run_scripts/eval_hardflow_new_paired.sh > "$FM_LOG" 2>&1; then
         echo "[ u_5 ARM B ] completed. tail:"
