@@ -17,6 +17,10 @@ n_train_steps="${N_TRAIN_STEPS:-100000}"
 data_proportion="${IMF_DATA_PROPORTION:-0.25}"
 p_std="${IMF_P_STD:-1.4}"
 
+# U9: W&B on by default (set USE_WANDB=0 to disable). Falls back to CSV if init fails.
+wandb_flag=""
+[ "${USE_WANDB:-1}" = "1" ] && wandb_flag="--use_wandb"
+
 echo "=== Gen13 iMF train: env=$env horizon=$horizon steps=$n_train_steps ==="
 
 python run/train_imf.py \
@@ -33,7 +37,9 @@ python run/train_imf.py \
 	--learning_rate 2e-4 \
 	--ema_decay 0.995 \
 	--imf_data_proportion "$data_proportion" \
-	--imf_p_std "$p_std"
+	--imf_p_std "$p_std" \
+	--wandb_project "${WANDB_PROJECT:-FMPCC-HF-iMF}" \
+	$wandb_flag
 
 end_time=$(date +%s)
 elapsed=$((end_time - start_time))

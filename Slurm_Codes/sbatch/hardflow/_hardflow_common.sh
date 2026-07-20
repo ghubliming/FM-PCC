@@ -84,6 +84,17 @@ case "$GYM_VER" in
     *) echo "[ HF-BRIDGE ] WARNING: gym==$GYM_VER (HardFlow's d3il expects 0.20.x — avoiding rollout may break)." ;;
 esac
 
+# ---- 6b. W&B login (U9) — same convention as sbatch/iMF/train_imf.sh ----------
+#        Key file lives at $HOME/FMPCC/.wandb_api_key (Colab-style). If absent,
+#        training still runs and falls back to metrics.csv (never blocks a job).
+if [ -f "$FMPCC_ROOT/.wandb_api_key" ]; then
+    export WANDB_API_KEY=$(cat "$FMPCC_ROOT/.wandb_api_key")
+    export WANDB_MODE="online"
+    echo "[ HF-BRIDGE ] W&B key found -> WANDB_MODE=online"
+else
+    echo "[ HF-BRIDGE ] no $FMPCC_ROOT/.wandb_api_key -> W&B disabled (CSV only)"
+fi
+
 # ---- 7. Headless MuJoCo + GPU/EGL isolation (FMPCC standing rule) --------------
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"

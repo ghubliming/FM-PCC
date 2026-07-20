@@ -42,6 +42,43 @@ except ImportError:
 _IS_TTY = sys.stdout.isatty()
 
 
+
+def sanitize_wandb_env():
+    """U9 — clear malformed W&B service tokens (copied from FMPCC Gen3v4 iMF).
+
+    A stale/partial WANDB_SERVICE token inherited from the environment makes
+    wandb.init() hang or fail on the cluster. Gen3v4 hit this; same env here.
+    """
+    for env_key in ("WANDB_SERVICE", "WANDB__SERVICE"):
+        token = os.environ.get(env_key)
+        if token and len(token.split("-")) != 5:
+            print(f"[ train_imf ] clearing malformed {env_key}")
+            os.environ.pop(env_key, None)
+
+
+def init_wandb(cfg, log_subfolder):
+    """U9 — best-effort W&B init. NEVER let logging kill a 4-hour training run."""
+    if not getattr(cfg, "use_wandb", False):
+        return None
+    sanitize_wandb_env()
+    try:
+        import wandb
+        run = wandb.init(
+            project=cfg.wandb_project,
+            entity=cfg.wandb_entity or None,
+            group=cfg.wandb_group or None,
+            name=f"HF-iMF-{cfg.exp_name}-seed{cfg.seed}",
+            config=vars(cfg),
+            dir=log_subfolder,
+            reinit=True,
+        )
+        print(f"[ train_imf ] W&B online: project={cfg.wandb_project} run={run.name}")
+        return run
+    except Exception as e:                                   # noqa: BLE001
+        print(f"[ train_imf ] W&B init FAILED ({e}) — continuing with CSV only")
+        return None
+
+
 def train(cfg: ImfTrainingConfig, log_subfolder: str):
     dataset = SequenceDataset(
         env=cfg.env,
@@ -89,6 +126,8 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
     else:
         print("[ train_imf ] tensorboard not installed -> metrics.csv only")
 
+    wandb_run = init_wandb(cfg, log_subfolder)
+
     metrics_path = os.path.join(log_subfolder, "metrics.csv")
     metric_keys = ["loss", "raw_mse_u", "raw_mse_v", "a0_mse", "fm_frac", "h_mean"]
     with open(metrics_path, "w", newline="") as f:
@@ -133,6 +172,12 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
             if writer is not None:
                 for k in metric_keys:
                     writer.add_scalar(k, infos[k], i)
+            if wandb_run is not None:                      # U9
+                try:
+                    wandb_run.log({k: infos[k] for k in metric_keys}, step=i)
+                except Exception as e:                     # noqa: BLE001
+                    print(f"[ train_imf ] W&B log failed ({e}); disabling")
+                    wandb_run = None
             msg = (
                 f"[ train_imf ] step {i}  raw_mse_u {infos['raw_mse_u']:.4f}  "
                 f"raw_mse_v {infos['raw_mse_v']:.4f}  a0 {infos['a0_mse']:.5f}  "
@@ -152,6 +197,11 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
         ema.module.state_dict(),
         os.path.join(log_subfolder, f"model_ema_{final_cp}.pth"),
     )
+    if wandb_run is not None:                              # U9
+        try:
+            wandb_run.finish()
+        except Exception:                                  # noqa: BLE001
+            pass
     print(f"[ train_imf ] done. final checkpoints saved with cp index {final_cp}")
 
 

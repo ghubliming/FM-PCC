@@ -33,6 +33,15 @@ class ImfTrainingConfig(FlowMatchingTrainingConfig):
     # console/CSV metric cadence (steps)
     log_freq: int = 200
 
+    # U9: W&B logging (pattern copied from FMPCC Gen3v4 iMF —
+    # FM_v3_imeanflow_test/train_flow_matching_v3_imeanflow.py). Same wandb
+    # version (0.17.5, inherited from the FMPCC clone) and the same
+    # $HOME/FMPCC/.wandb_api_key convention used by sbatch/iMF/train_imf.sh.
+    use_wandb: bool = False
+    wandb_project: str = "FMPCC-HF-iMF"
+    wandb_entity: str = ""      # "" -> wandb default
+    wandb_group: str = ""       # "" -> no group
+
 
 @dataclass
 class ImfEvaluationConfig(FlowMatchingEvaluationConfig):
