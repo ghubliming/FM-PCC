@@ -60,6 +60,11 @@ $REPO/Slurm_Codes/logs/<SUBMIT_DATE>/<SUBMIT_TIME>_u5_armB_fm_verbose_<jobid>.lo
 | `HardFlow/hardflow/models_flow/imf/imf_config.py` | new `imf_verbose_control: bool = False` |
 | `Slurm_Codes/sbatch/hardflow/eval_paired_n200_hardflow.sh` | FM verbose log moved out of the results tree into `Slurm_Codes/logs/<date>/` |
 
+**Track back to the code:** every change is tagged in-place with the comment marker `u_5 fix` (written during the u_5 debugging session, before this changelog was labelled fix_6) —
+```bash
+grep -rn "u_5 fix" HardFlow/hardflow/models_flow/imf/ Slurm_Codes/sbatch/hardflow/
+```
+
 **Verified:** `py_compile` + `bash -n` clean; `ImfEvaluationConfig()` confirms `imf_plot_fan=False` **and** `imf_verbose_control=False`; `git status` confirms `run/eval.py` and `run_scripts/eval_hardflow_new.sh` remain untouched.
 
 ## Lesson recorded

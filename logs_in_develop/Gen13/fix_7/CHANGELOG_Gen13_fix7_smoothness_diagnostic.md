@@ -42,6 +42,11 @@ Tests `../../HF_iMF/Research/DISCUSSION_foresight_fan_and_smoothness_paradigms.m
 | `run_scripts/eval_smoothness_diag.sh` | 🆕 one matrix cell (`BACKBONE`/`GUIDANCE`/`N`) |
 | `Slurm_Codes/sbatch/hardflow/eval_smoothness_diag_hardflow.sh` | 🆕 loops all 4 cells + prints a roughness summary table |
 
+**Track back to the code:** every change is tagged in-place with the comment marker `fix_7` —
+```bash
+grep -rn "fix_7" HardFlow/run/eval_imf.py HardFlow/hardflow/models_flow/imf/
+```
+
 **Key design choice:** rather than adding fan/roughness to the FM path (impossible — no-edit rule), the **FM backbone is routed through `eval_imf.py`**. Both methods therefore share one identical instrumented code path, making the comparison apples-to-apples by construction rather than by careful matching.
 
 **Defaults unchanged:** `backbone="imf"`, `imf_plot_fan=False`. Every previous invocation behaves identically; only the new diagnostic scripts opt in.

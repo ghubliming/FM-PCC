@@ -259,6 +259,19 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
             os.path.join(save_path, f"{run_id}_fan.png"),
             cfg,
         )
+        # u_8: also dump the RAW captured arrays, so a paper-style Fig.11
+        # comparison figure can be assembled afterwards as pure post-processing
+        # (no GPU / no env re-run). One diagnostic run therefore serves both the
+        # smoothness numbers (fix_7) and the Fig.11 comparison (u_8).
+        np.savez_compressed(
+            os.path.join(save_path, f"{run_id}_fan.npz"),
+            planned=np.stack(planned_fan),          # (n_replans, H, transition_dim)
+            x1=np.stack(x1_fan),
+            real=real_trajectory,
+            action_dim=cfg.action_dim,
+            backbone=str(getattr(cfg, "backbone", "imf")),
+            guidance=str(cfg.guidance_method),
+        )
 
     avg_computation_time = np.mean(computation_times) if computation_times else None
     return (
