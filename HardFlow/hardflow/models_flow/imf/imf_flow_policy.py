@@ -42,7 +42,56 @@ from hardflow.utils.arrays import to_torch
 from .imf_sampler import imf_sample
 
 
-class ImfFlowPolicy(FlowPolicy):
+class WarmstartCaptureMixin:
+    """fix_7.2 — capture the RAW (pre-projection) plan produced by warmstart().
+
+    HardFlow's `hardflow_new_forward` calls `self.warmstart(conditions)` to get a
+    pure generative rollout, then hard-projects it step by step. That warm-start
+    output is the **un-projected trajectory** — HardFlow's equivalent of DPCC's
+    raw `diffuser` variant. It is computed on every plan but never surfaced.
+
+    Overriding ONLY `warmstart` to stash its result gives us the raw plan for
+    BOTH backbones without copying the 150-line forward method — so the base
+    `flow_policy.py` stays untouched (Gen13 additive rule).
+    """
+
+    _last_warmstart = None
+
+    def _stash_warmstart(self, s0_np, dof_chain_np):
+        self._last_warmstart = (s0_np, dof_chain_np)
+
+    def raw_plan(self):
+        """Un-normalized RAW (pre-NLP) planned trajectory, (horizon, transition).
+
+        Mirrors exactly how `hardflow_new_forward` assembles+unnormalizes the
+        PROJECTED chain, so raw and projected are directly comparable.
+        """
+        if self._last_warmstart is None:
+            return None
+        s0_np, dof_chain = self._last_warmstart
+        final_dof = np.asarray(dof_chain)[-1, :]          # last ODE state = raw plan
+        full = np.insert(final_dof, self.action_dim, s0_np)
+        full = full.reshape(
+            1, 1, self.horizon, self.action_dim + self.state_dim
+        )
+        return self.unnormalize_chain(to_torch(full, device=self.cfg.device))[0, 0]
+
+
+class InstrumentedFlowPolicy(WarmstartCaptureMixin, FlowPolicy):
+    """fix_7.2 — HardFlow's ORIGINAL FlowPolicy + raw-plan capture, nothing else.
+
+    Used when run/eval_imf.py drives the FM backbone, so the raw-vs-projected
+    diagnostic works identically for FM and iMF. Only `warmstart` is overridden
+    (to stash); every other behaviour is the inherited, unmodified original.
+    """
+
+    def warmstart(self, conditions):
+        s0_np, dof_chain_np = super().warmstart(conditions)
+        self._stash_warmstart(s0_np, dof_chain_np)
+        return s0_np, dof_chain_np
+
+
+class ImfFlowPolicy(WarmstartCaptureMixin, FlowPolicy):
     """FlowPolicy whose flow_model is a TemporalImfUnet: (x, tau, h) -> (u, v)."""
 
     IMF_GUIDANCE_METHODS = ("original_imf", "hardflow_new_imf")
@@ -159,7 +208,10 @@ class ImfFlowPolicy(FlowPolicy):
         best_dof_chain = torch.cat(
             [best_dof_chain_part_1, best_dof_chain_part_2], dim=-1
         )
-        return to_np(best_s0), to_np(best_dof_chain)
+        # fix_7.2: stash the RAW (pre-projection) chain for the diagnostic
+        s0_np, dof_np = to_np(best_s0), to_np(best_dof_chain)
+        self._stash_warmstart(s0_np, dof_np)
+        return s0_np, dof_np
 
     def hardflow_formulate(self, *args, **kwargs):
         """Reuse the base CasADi formulation (purely algebraic — no net inside).

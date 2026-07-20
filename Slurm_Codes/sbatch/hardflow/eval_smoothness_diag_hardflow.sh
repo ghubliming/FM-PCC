@@ -52,12 +52,15 @@ for d in logs/avoiding-v0/eval/diag_smooth_*_n${N}; do
     python - "$d/trajectories.csv" << 'PY'
 import csv, sys, statistics as st
 rows=list(csv.DictReader(open(sys.argv[1])))
-r=[float(x['plan_roughness']) for x in rows if x.get('plan_roughness')]
+def col(k):
+    v=[float(x[k]) for x in rows if x.get(k) and x[k]==x[k] and x[k]!='nan']
+    return v
+r=col('plan_roughness'); rr=col('plan_roughness_raw')
 safe=sum(1 for x in rows if x['safety'].strip().lower()=='true')
 name=sys.argv[1].split('/')[-2]
 if r:
-    print(f"  {name:<44} n={len(rows):<3} roughness={st.mean(r):.4e} "
-          f"(sd {st.pstdev(r):.1e})  safe={100*safe/len(rows):.0f}%")
+    raw_s = f"raw={st.mean(rr):.3e}  ratio={st.mean(rr)/max(st.mean(r),1e-30):7.1f}x" if rr else "raw=n/a"
+    print(f"  {name:<42} n={len(rows):<3} projected={st.mean(r):.3e}  {raw_s}  safe={100*safe/len(rows):.0f}%")
 PY
 done
 echo "=============================================================="

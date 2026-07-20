@@ -46,20 +46,25 @@ from hardflow.models_flow.imf import (
     ImfFlowPolicy,
     TemporalImfUnet,
 )
+from hardflow.models_flow.imf.imf_flow_policy import InstrumentedFlowPolicy
 from run.eval import ProxyValueModel, check_violation
 from run.utils import deterministic, save_config, set_cuda_visible_device
 
 _IS_TTY = sys.stdout.isatty()
 
 
-def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg):
+def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg,
+                        raw_fan=None):
     """u_5(B) — MPC foresight-fan plot (the DPCC/FMPCC-style diagnostic).
 
     HardFlow computes the planned horizon and the terminal prediction at every
     replan but discards both (`run/eval.py:393` uses `_, _`), so only the executed
     rollout is ever rendered. This draws what the policy *intended*:
 
-      * grey   — planned H-step horizons, one per replan instant (the "fan")
+      * grey   — planned H-step horizons AFTER projection, one per replan (the "fan")
+      * blue   — the RAW pre-projection plan from warmstart (fix_7.2): HardFlow's
+                 equivalent of DPCC's un-projected `diffuser` output. Comparing
+                 blue vs grey shows exactly what the NLP does to the trajectory.
       * orange — the final terminal prediction x̂1 at each replan; for iMF this is
                  the EXACT endpoint map z + (1-tau)*u, vs FM's Euler shot — i.e.
                  the visual counterpart of the Gen13 seam swap
@@ -85,10 +90,17 @@ def _save_foresight_fan(planned_fan, x1_fan, real_trajectory, filepath, cfg):
     )
     fig, ax = plotter.setup_figure()
 
+    # fix_7.2: RAW (pre-NLP) plans first, so the projected ones draw on top
+    for i, raw in enumerate(raw_fan or []):
+        ax.plot(
+            raw[:, px], raw[:, py], "-", color="tab:blue", linewidth=1.1,
+            alpha=0.55, zorder=1,
+            label="RAW plan (pre-projection)" if i == 0 else "",
+        )
     for i, plan in enumerate(planned_fan):
         ax.plot(
-            plan[:, px], plan[:, py], "-", color="0.55", linewidth=1.2, zorder=2,
-            label="Planned horizon (fan)" if i == 0 else "",
+            plan[:, px], plan[:, py], "-", color="0.35", linewidth=1.4, zorder=2,
+            label="Projected plan (post-NLP)" if i == 0 else "",
         )
     for i, x1 in enumerate(x1_fan):
         ax.plot(
@@ -159,6 +171,8 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
     planned_fan, x1_fan, n_replan = [], [], 0
     # fix_7: planned-trajectory smoothness, one value per replan (always cheap)
     smooth_vals = []
+    # fix_7.2: same, for the RAW (pre-projection) plan + its fan buffer
+    smooth_raw_vals, raw_fan = [], []
 
     # fix_4: zero the cumulative NLP counters so the summary below is per-episode
     if hasattr(policy, "reset_nlp_stats"):
@@ -188,6 +202,14 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
                 smooth_vals.append(
                     _traj_smoothness(np.asarray(x_chain)[0, -1, :, :], cfg.action_dim)
                 )
+                # fix_7.2: the RAW (pre-NLP) plan from warmstart — HardFlow's
+                # equivalent of DPCC's un-projected `diffuser` output.
+                _raw = policy.raw_plan() if hasattr(policy, "raw_plan") else None
+                if _raw is not None:
+                    _raw = np.asarray(_raw)
+                    smooth_raw_vals.append(_traj_smoothness(_raw, cfg.action_dim))
+                    if getattr(cfg, "imf_plot_fan", False):
+                        raw_fan.append(_raw.copy())
                 # u_5(B): foresight-fan capture — OFF by default, so this branch
                 # is skipped entirely on the decisive n=200 safety run.
                 if getattr(cfg, "imf_plot_fan", False):
@@ -235,10 +257,13 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         else ""
     )
     mean_smooth = float(np.mean(smooth_vals)) if smooth_vals else float("nan")
+    mean_smooth_raw = (
+        float(np.mean(smooth_raw_vals)) if smooth_raw_vals else float("nan")
+    )
     print(
         f"[ eval_imf ] episode {run_id}: {outcome}  steps={final_t + 1}  "
         f"violations={total_violations:.0f}  reward={total_rewards:.3f}{nlp_str}"
-        f"  rough={mean_smooth:.3e}"
+        f"  rough={mean_smooth:.3e} raw={mean_smooth_raw:.3e}"
     )
 
     real_trajectory = np.array(rollout)
@@ -258,6 +283,7 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
             real_trajectory,
             os.path.join(save_path, f"{run_id}_fan.png"),
             cfg,
+            raw_fan=raw_fan,
         )
         # u_8: also dump the RAW captured arrays, so a paper-style Fig.11
         # comparison figure can be assembled afterwards as pure post-processing
@@ -266,6 +292,7 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         np.savez_compressed(
             os.path.join(save_path, f"{run_id}_fan.npz"),
             planned=np.stack(planned_fan),          # (n_replans, H, transition_dim)
+            raw=np.stack(raw_fan) if raw_fan else np.zeros(0),   # fix_7.2
             x1=np.stack(x1_fan),
             real=real_trajectory,
             action_dim=cfg.action_dim,
@@ -281,6 +308,7 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
         success,
         avg_computation_time,
         mean_smooth,          # fix_7
+        mean_smooth_raw,      # fix_7.2
     )
 
 
@@ -373,7 +401,8 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
         dynamics_model=dynamics_model,
     ).to(cfg.device)
 
-    policy_cls = FlowPolicy if is_fm else ImfFlowPolicy
+    # fix_7.2: InstrumentedFlowPolicy = the ORIGINAL FlowPolicy + raw-plan capture
+    policy_cls = InstrumentedFlowPolicy if is_fm else ImfFlowPolicy
     flow_policy = policy_cls(
         flow_model=flow_model,
         value_model=value_model,
@@ -409,6 +438,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
             success,
             avg_computation_time,
             mean_smooth,
+            mean_smooth_raw,
         ) = _run_env_quiet(env, flow_policy, cfg, run_id=run_id)
 
         steps = len(real_trajectory) - 1
@@ -441,6 +471,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
                 "nlp_solves": nlp_info["nlp_solves"],
                 "nlp_failures": nlp_info["nlp_failures"],
                 "plan_roughness": mean_smooth,
+                "plan_roughness_raw": mean_smooth_raw,
             }
         )
 
@@ -463,6 +494,7 @@ def evaluate_imf(cfg: ImfEvaluationConfig):
             "nlp_solves",
             "nlp_failures",
             "plan_roughness",
+            "plan_roughness_raw",
         ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
