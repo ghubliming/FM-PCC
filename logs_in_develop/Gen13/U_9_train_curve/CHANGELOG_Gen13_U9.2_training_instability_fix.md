@@ -56,22 +56,39 @@ The v-head is plain flow matching, yet sits at 16% of the normalized range (§9.
 
 **LR default deliberately unchanged.** The evidence says 2e-4 is wrong for this configuration, but silently changing it would make the 100k/300k runs non-reproducible. The corrected value is passed explicitly in the command below.
 
-## 3. ⭐ THE FIX RUN
+## 3. ⭐ THE FIX RUN — one submit, train + eval chained
 
 ```bash
 cd /u/home/llim/FMPCC/FM-PCC && git pull
 
 IMF_LR=2e-5 IMF_GRAD_CLIP=1.0 N_TRAIN_STEPS=100000 \
-  IMF_EXP_NAME=H16_imf_lrfix_100k \
-  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/train_imf_hardflow.sh
+  IMF_EXP_NAME=H16_imf_lrfix_100k IMF_KS=2 RANDOM_REPEAT=200 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/imf_pipeline_hardflow.sh
 ```
-~4 h. `2e-5` ≈ 2e-4 ÷ 10, the like-for-like value from §1 (target: match the reference's effective step). New `IMF_EXP_NAME` ⇒ existing checkpoints untouched.
 
-**Then evaluate it** (remember `IMF_CP` = steps/25000 = **4**):
+`2e-5` ≈ 2e-4 ÷ 10, the like-for-like value from §1. New `IMF_EXP_NAME` ⇒ existing checkpoints untouched. ~4 h train, then eval starts automatically (`afterok`); if training fails, Slurm cancels the eval.
+
+Results land in `logs/hardflow/avoiding-v0/eval/H16_imf_*_K2_from_H16_imf_lrfix_100k_n200/`.
+
+**To re-evaluate that training later without retraining:**
 ```bash
-IMF_EXP_NAME=H16_imf_lrfix_100k IMF_CP=4 IMF_K=2 RANDOM_REPEAT=200 \
-  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_imf_hardflow.sh
+SKIP_TRAIN=1 IMF_EXP_NAME=H16_imf_lrfix_100k IMF_KS="1 2" RANDOM_REPEAT=200 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/imf_pipeline_hardflow.sh
 ```
+
+### 3.1 The orchestrator itself needed a U9.2 fix
+
+`imf_pipeline_hardflow.sh` existed (fix_3) but had **`exp_name` and the checkpoint path pinned to `H16_imf_100k`**. It would have trained `H16_imf_lrfix_100k` correctly and then **silently evaluated the OLD 300k-era checkpoint** — the same silent-wrong-results class as the U9 eval-tagging bug, one level up. Now:
+
+| | before | after |
+|---|---|---|
+| `exp_name` / cp | hardcoded `H16_imf_100k` / `4` | **derived** by the same rule as `train_imf.sh`, exported to the eval job |
+| knob forwarding | `IMF_METHODS/KS/CP` only | + `IMF_LR`, `IMF_GRAD_CLIP`, `N_TRAIN_STEPS`, `IMF_EXP_NAME`, `RANDOM_REPEAT`, `IMF_DATA_PROPORTION`, `IMF_P_STD`, `USE_WANDB`, `IMF_PLOT_FAN` |
+| existing checkpoint | **silently** skipped training, evaluated it | loud **abort** (`FORCE_OVERWRITE=1` / `SKIP_TRAIN=1` to proceed deliberately) |
+| `SKIP_TRAIN=1`, no ckpt | submitted an eval doomed to fail | aborts with the missing path |
+| resolved plan | not printed | echoed before submitting (name, cp, lr, K, n) |
+
+Also: `train_imf_hardflow.sh`'s closing `ls` honours `IMF_EXP_NAME` (it printed "(none)" for named runs).
 
 ## 4. What success looks like
 

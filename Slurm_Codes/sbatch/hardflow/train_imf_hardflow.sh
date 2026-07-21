@@ -24,4 +24,7 @@ echo "[ HF-IMF-TRAIN ] bash run_scripts/train_imf.sh"
 bash run_scripts/train_imf.sh
 
 echo "[ HF-IMF-TRAIN ] done. checkpoints:"
-ls -la logs/avoiding-v0/flow/H16_imf_$(( ${N_TRAIN_STEPS:-100000} / 1000 ))k/ 2>/dev/null || echo "  (none — check log above)"
+# U9.2: honour IMF_EXP_NAME (same rule as run_scripts/train_imf.sh) — the old
+# hardcoded H16_imf_<steps>k made this listing print "(none)" for named runs.
+_exp="${IMF_EXP_NAME:-H16_imf_$(( ${N_TRAIN_STEPS:-100000} / 1000 ))k}"
+ls -la "logs/avoiding-v0/flow/${_exp}/" 2>/dev/null || echo "  (none — check log above)"
