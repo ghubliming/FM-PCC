@@ -274,11 +274,13 @@ if __name__ == '__main__':
             if cli_args.use_wandb:
                 try:
                     import wandb
+                    # Tag the run with the Slurm job id (empty off-cluster)
+                    slurm_suffix = f"-slurm-{os.environ['SLURM_JOB_ID']}" if os.environ.get('SLURM_JOB_ID') else ''
                     run = wandb.init(
                         project=cli_args.wandb_project,
                         entity=cli_args.wandb_entity,
                         group=cli_args.wandb_group,
-                        name=f'iMF-seed-{seed}',
+                        name=f'iMF-seed-{seed}{slurm_suffix}',
                         config=vars(args),
                         reinit=True,
                     )

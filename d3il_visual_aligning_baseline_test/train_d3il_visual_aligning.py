@@ -79,10 +79,12 @@ def main(cfg: DictConfig) -> None:
     _wb = cfg_dict.get('wandb', {})
     entity  = _wb.get('entity')  if _wb.get('entity')  not in (None, '???') else None
     project = _wb.get('project') if _wb.get('project') not in (None, '???') else 'd3il-baseline'
+    # Tag the run with the Slurm job id (empty off-cluster)
+    slurm_suffix = f"-slurm-{os.environ['SLURM_JOB_ID']}" if os.environ.get('SLURM_JOB_ID') else ''
     wandb.init(
         project=project,
         entity=entity,
-        name=f'{cfg_dict.get("agent_name", "agent")}_seed{cfg_dict.get("seed", 0)}',
+        name=f'{cfg_dict.get("agent_name", "agent")}_seed{cfg_dict.get("seed", 0)}{slurm_suffix}',
         group=cfg_dict.get('group', f'aligning_{cfg_dict.get("agent_name", "")}'),
         mode="online" if use_wandb else "disabled",
         config=cfg_dict,

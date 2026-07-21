@@ -56,6 +56,8 @@ fi
 # Optional W&B login
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_API_KEY=$(cat "$HOME/FMPCC/.wandb_api_key")
+    # Slurm job id -> W&B run tag (searchable/filterable alongside the run name)
+    if [ -n "$SLURM_JOB_ID" ]; then export WANDB_TAGS="slurm-$SLURM_JOB_ID"; fi
 fi
 
 cd "$REPO"

@@ -153,6 +153,9 @@ for seed in selected_seeds:
         name_parts  = [exp, args.exp_name, f'S{seed}']
         wandb_name  = '-'.join(name_parts)
         wandb_group = (cli_args.wandb_group or '-'.join(name_parts[:-1]))[:128]
+        # Tag the run name with the Slurm job id (no-op off-cluster); group stays clean
+        if os.environ.get('SLURM_JOB_ID'):
+            wandb_name = f"{wandb_name}-slurm-{os.environ['SLURM_JOB_ID']}"
         run = wandb.init(
             project=cli_args.wandb_project, entity=cli_args.wandb_entity,
             group=wandb_group, name=wandb_name, mode=cli_args.wandb_mode,

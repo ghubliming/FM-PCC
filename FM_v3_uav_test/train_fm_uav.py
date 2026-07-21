@@ -227,6 +227,10 @@ for seed in selected_seeds:
         default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
 
+        # Tag the run name with the Slurm job id (no-op off-cluster); group stays clean
+        if os.environ.get('SLURM_JOB_ID'):
+            wandb_name = f"{wandb_name}-slurm-{os.environ['SLURM_JOB_ID']}"
+
         run = wandb.init(
             project=cli_args.wandb_project,
             entity=cli_args.wandb_entity,

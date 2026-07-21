@@ -90,6 +90,8 @@ esac
 if [ -f "$FMPCC_ROOT/.wandb_api_key" ]; then
     export WANDB_API_KEY=$(cat "$FMPCC_ROOT/.wandb_api_key")
     export WANDB_MODE="online"
+    # Slurm job id -> W&B run tag (searchable/filterable alongside the run name)
+    if [ -n "$SLURM_JOB_ID" ]; then export WANDB_TAGS="slurm-$SLURM_JOB_ID"; fi
     echo "[ HF-BRIDGE ] W&B key found -> WANDB_MODE=online"
 else
     echo "[ HF-BRIDGE ] no $FMPCC_ROOT/.wandb_api_key -> W&B disabled (CSV only)"

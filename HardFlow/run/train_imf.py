@@ -63,11 +63,13 @@ def init_wandb(cfg, log_subfolder):
     sanitize_wandb_env()
     try:
         import wandb
+        # Tag the run with the Slurm job id (empty off-cluster)
+        slurm_suffix = f"-slurm-{os.environ['SLURM_JOB_ID']}" if os.environ.get('SLURM_JOB_ID') else ''
         run = wandb.init(
             project=cfg.wandb_project,
             entity=cfg.wandb_entity or None,
             group=cfg.wandb_group or None,
-            name=f"HF-iMF-{cfg.exp_name}-seed{cfg.seed}",
+            name=f"HF-iMF-{cfg.exp_name}-seed{cfg.seed}{slurm_suffix}",
             config=vars(cfg),
             dir=log_subfolder,
             reinit=True,

@@ -200,11 +200,13 @@ for seed in selected_seeds:
     if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
         sanitize_wandb_env()
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else f'{args.dataset}-{args.exp_name}'
+        # Tag the run with the Slurm job id (empty off-cluster)
+        slurm_suffix = f"-slurm-{os.environ['SLURM_JOB_ID']}" if os.environ.get('SLURM_JOB_ID') else ''
         run = wandb.init(
             project=cli_args.wandb_project,
             entity=cli_args.wandb_entity,
             group=wandb_group,
-            name=f'{args.dataset}-seed-{seed}',
+            name=f'{args.dataset}-seed-{seed}{slurm_suffix}',
             mode=cli_args.wandb_mode,
             config={
                 **vars(args),
