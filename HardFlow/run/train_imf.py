@@ -129,7 +129,7 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
     wandb_run = init_wandb(cfg, log_subfolder)
 
     metrics_path = os.path.join(log_subfolder, "metrics.csv")
-    metric_keys = ["loss", "raw_mse_u", "raw_mse_v", "a0_mse", "fm_frac", "h_mean"]
+    metric_keys = ["loss", "raw_mse_u", "raw_mse_v", "a0_mse", "fm_frac", "h_mean", "grad_norm"]
     with open(metrics_path, "w", newline="") as f:
         csv.writer(f).writerow(["step"] + metric_keys)
 
@@ -150,6 +150,12 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
         batch = batch_to_device(next(train_loader), cfg.device)
         loss, infos = matcher.loss(*batch)
         loss.backward()
+        # U9.2: clip + record the pre-clip grad norm (the instability metric)
+        gn = torch.nn.utils.clip_grad_norm_(
+            unet.parameters(),
+            cfg.grad_clip if cfg.grad_clip > 0 else float("inf"),
+        )
+        infos["grad_norm"] = float(gn)
         optimizer.step()
         scheduler.step()
         optimizer.zero_grad()
@@ -181,6 +187,7 @@ def train(cfg: ImfTrainingConfig, log_subfolder: str):
             msg = (
                 f"[ train_imf ] step {i}  raw_mse_u {infos['raw_mse_u']:.4f}  "
                 f"raw_mse_v {infos['raw_mse_v']:.4f}  a0 {infos['a0_mse']:.5f}  "
+                f"gnorm {infos['grad_norm']:.2f}  "
                 f"(adaptive loss {infos['loss']:.4f} — flat by design)"
             )
             if _IS_TTY:

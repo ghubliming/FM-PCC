@@ -15,6 +15,10 @@ horizon=16
 n_train_steps="${N_TRAIN_STEPS:-100000}"
 data_proportion="${IMF_DATA_PROPORTION:-0.25}"
 p_std="${IMF_P_STD:-1.4}"
+# U9.2: LR/clip are now knobs. Default 2e-4 kept for reproducibility of the
+# existing runs, but ~2e-5 is the like-for-like value (see imf_config.py).
+lr="${IMF_LR:-2e-4}"
+grad_clip="${IMF_GRAD_CLIP:-1.0}"
 
 # U9 SAFETY: exp_name encodes the STEP BUDGET so different budgets can never
 # collide. 100000 -> "H16_imf_100k" (identical to the existing run, backward
@@ -48,7 +52,8 @@ python run/train_imf.py \
 	--n_train_steps "$n_train_steps" \
 	--save_freq 25000 \
 	--batch_size 32 \
-	--learning_rate 2e-4 \
+	--learning_rate "$lr" \
+	--grad_clip "$grad_clip" \
 	--ema_decay 0.995 \
 	--imf_data_proportion "$data_proportion" \
 	--imf_p_std "$p_std" \

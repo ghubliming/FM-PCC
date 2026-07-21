@@ -30,6 +30,18 @@ class ImfTrainingConfig(FlowMatchingTrainingConfig):
     imf_adp_p: float = 1.0
     imf_adp_eps: float = 0.01
 
+    # U9.2 FIX — training stability.
+    # The adaptive loss adp(L)=L/sg(L+eps) SUMS over dims, so the effective
+    # gradient scales as 1/(err+eps) instead of the reference's 1/dims. At
+    # err~14 over 96 dims that is ~7x the reference per head, ~14x with two
+    # heads sharing the backbone — and it GROWS as err falls (positive
+    # feedback). Observed: max spike 331 -> 1,117 -> 7,548 across the 300k run.
+    #   * grad_clip: absent before U9.2; clipping is standard for JVP losses.
+    #   * learning_rate: 2e-4 was copied from HardFlow's FM train.sh, but the
+    #     official iMF uses 1e-4 AND is calibrated for thousands of image-latent
+    #     dims. For this 96-dim task, ~2e-5 is the like-for-like setting.
+    grad_clip: float = 1.0          # 0 disables
+
     # console/CSV metric cadence (steps)
     log_freq: int = 200
 
