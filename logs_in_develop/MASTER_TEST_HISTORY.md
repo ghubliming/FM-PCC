@@ -3181,3 +3181,40 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Metrics Archiving**: Added a dedicated `collect_hf_results.py` script to seamlessly bundle HardFlow/iMF training and evaluation metrics into timestamped zip archives for rapid analysis.
 
 ***
+
+## Gen13 U9.2: Dynamic Experiment Derivation & iMF Pipeline Safety (July 21, 2026)
+
+**Keywords**: Gen13, iMF, dynamic experiment derivation, imf_pipeline_hardflow, overwrite protection.
+
+1. **Dynamic Experiment Naming**: Updated `imf_pipeline_hardflow.sh` to derive experiment names and checkpoint filenames dynamically from hyperparameters (e.g., learning rate, gradient clipping settings, step budget) rather than hardcoding static paths.
+2. **Silent Overwrite Prevention**: Reinforced evaluation and training script safety checks to prevent silent evaluations of outdated checkpoints and avoid overwriting existing run artifacts when re-submitting cluster jobs.
+
+***
+
+## Gen3v6: MeanFlow Faithful Baseline Specification (July 22, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, baseline design, analytic JVP, two-time UNet, D3IL avoiding.
+
+1. **Analytic JVP Baseline Architecture**: Authored the full technical implementation plan (`PLAN_Gen3v6_meanflow_baseline.md`) for Gen3v6 (`flow_matcher_v3_meanflow`), establishing a faithful MeanFlow (arXiv 2505.13447) baseline as a Gen3v4 copy-modify sibling.
+2. **Mathematical Differentiation from iMF**: Configured the model to use the **analytic JVP tangent** ($v = x_1 - x_0$) rather than iMF's predicted velocity $v_c$, coupled with the official adaptive loss ($p=1, \epsilon=0.01$, per-sample sum) and $u$-form regression ($u \to \text{sg}(v + h \cdot D_{\text{tot}})$).
+3. **Controlled A/B Paradigm**: Isolates the headline claim of the iMF paper (analytic vs. predicted JVP tangent) on physical constrained control, introducing $h$-stratified residual tracking and real gradient clipping while keeping CFG off and time/step distributions matched.
+
+***
+
+## Gen3v7: α-Flow Homotopy Model Architecture (July 22, 2026)
+
+**Keywords**: Gen3v7, α-Flow, self-bootstrapped target, no-grad target, homotopy anneal, blind direction fix.
+
+1. **Self-Bootstrapped Target Formulation**: Authored `PLAN_Gen3v7_alphaflow.md` for Gen3v7 (`flow_matcher_v3_alphaflow`), adopting α-Flow (arXiv 2510.20771) to eliminate the "blind direction" defect diagnosed in the Gen13 iMF refutation. Replaces the JVP target with a self-bootstrapped `no_grad` target ($u_{\text{tgt}} = \alpha v + (1-\alpha) u_{\text{next}}$).
+2. **Flow-to-Mean Homotopy**: Configured a sigmoid-scheduled $\alpha$ annealing ($1 \to 0$), making training a smooth homotopy from vanilla Flow Matching ($\alpha=1$, known safe regime) to MeanFlow ($\alpha=0$).
+3. **Numeric Stability Enhancements**: Integrated target magnitude clamping (4.0) and step-scheduled loss weighting, with explicit convention mapping between α-Flow ($t=1$ noise) and FM-PCC ($\tau=0$ noise, $\tau=1-t$).
+
+***
+
+## Gen12: HardFlow Eval-Time Constrained Sampler Port into FMv3ODE (July 22, 2026)
+
+**Keywords**: Gen12, HardFlow, FMv3ODE, hardflow_new, zero retraining, linear dynamics refit.
+
+1. **Zero-Retraining Scope**: Formulated the technical plan (`PLAN_Gen12_hardflow_into_fmv3ode.md`) to port HardFlow's inference-time constrained sampler into FMv3ODE (`flow_matcher_v3_hardflow`). Verified that HardFlow's training logic is standard conditional flow matching without any CasADi/NLP dependencies, allowing direct reuse of existing FMv3ODE trained weights.
+2. **Black-Box `hardflow_new` Isolation**: Narrowed scope to `hardflow_new`, which queries the neural vector field as an uncompiled black-box function $f(x,t)$ outside the NLP solver, bypassing the architecture-locked l4casadi requirements of `projection`/`hardflow`.
+3. **Normalizer Alignment Requirement**: Identified a critical requirement to refit the linear dynamics `.npz` files against FMv3ODE's specific normalizer units to prevent silent physics distortion during constrained sampling.

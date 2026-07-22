@@ -75,6 +75,23 @@ args_to_watch_fmv3_imf_train = [
     ('t_schedule', 'ts'),       # U7: time-schedule selector (logit_normal | beta | uniform)
 ]
 
+# ── Gen3v6 (MeanFlow baseline) ────────────────────────────────────────────────────────
+# ⭐ `dp` (meanflow_data_proportion) is in the folder name ON PURPOSE. POST_U10_II §1.1
+# documents a live overwrite hazard: four knobs changed between two Gen3v4 runs and NONE
+# was in args_to_watch, so both runs wrote to a byte-identical folder and silently
+# clobbered each other. Any knob you intend to sweep MUST appear here.
+# 🔴 plan_fm_v3_meanflow's `diffusion_loadpath` must reproduce this list token-for-token.
+args_to_watch_fmv3_mf_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+    ('mf_objective', 'obj'),
+    ('imf_backbone', 'bb'),               # key name kept: the backbone classes are inherited
+    ('t_schedule', 'ts'),
+    ('meanflow_data_proportion', 'dp'),   # first-class ablation axis in this generation
+]
+
 logbase = 'logs'
 
 base = {
@@ -558,6 +575,102 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_imf_train),
     },
 
+    'flow_matching_v3_meanflow': {
+        # ── Gen3v6: faithful MeanFlow (arXiv 2505.13447) baseline ──────────────────────
+        # Copy-modify sibling of 'flow_matching_v3_imeanflow'. The ONLY scientific
+        # difference is the JVP z-tangent: ANALYTIC v = x1 − x0 here vs iMF's PREDICTED
+        # v_c there. Everything architectural is held identical so the A/B is controlled.
+        # See logs_in_develop/Gen3v6_MeanFlow/init/PLAN_Gen3v6_meanflow_baseline.md.
+
+        ## model & engine
+        'model': 'flow_matcher_v3_meanflow.models.MeanFlowEngine',
+        'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
+        'horizon': 8,
+
+        ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
+        'freq_dim': 256,
+        'depth': 8,
+        'num_heads': 4,
+        'mlp_dim': 256,
+        'time_dim': 256,
+        'dropout_rate': 0.1,
+
+        ## legacy loss-mixing knobs — INERT in Gen3v6 (u and v are on equal footing,
+        ## FIX-4), kept because the trainer/parser plumbing reads them.
+        'u_loss_weight': 1.0,
+        'v_loss_weight': 1.0,
+        'loss_schedule': 'balanced',
+        'warmup_epochs': 0,
+        'transition_epochs': 0,
+        'loss_type': 'l2',
+        'predict_epsilon': True,
+
+        ## ── Gen3v6 objective (PLAN §3.5) ──────────────────────────────────────────
+        'mf_objective': 'meanflow',        # only value; folder-name slot for future arms
+        'meanflow_data_proportion': 0.5,   # fraction forced to r==t (FM anchors) — official
+        'mf_adp_p': 1.0,                   # official adaptive-loss exponent
+        'mf_adp_eps': 0.01,                # official adaptive-loss epsilon
+
+        ## ── architecture flags ────────────────────────────────────────────────────
+        'dual_head': True,           # FIX-4: the v head carries a FULL loss, not a stabiliser
+        'interval_cfg': False,       # 🔴 no CFG in Gen3v6. On the UNet arm this changes the
+                                     # state_dict, so Gen3v6 checkpoints are NOT interchangeable
+                                     # with Gen3v4's — intended, and why the folders are siblings.
+                                     # On the DiT arm the ω/interval tokens still exist but are
+                                     # fed a constant default (guidance off) ⇒ inert.
+
+        ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
+        'imf_backbone': 'dit',       # match Gen3v4's DiT arm so the A/B is controlled
+        'dit_depth': 8,
+        'dit_hidden_size': 256,
+        'dit_num_heads': 4,
+        'dit_aux_head_depth': 2,
+        'dit_patch_size': 1,
+        'dit_condition_on_t': False, # official conditions on h only — KEEP FALSE (audit §2.3)
+
+        ## dataset (inherited from FMv3ODE / Gen3v4)
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+        'use_padding': True,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 0.0,  # returns-CFG output mix OFF (Gen3v6 has no guidance)
+
+        ## training
+        'n_train_steps': 100000,
+        'batch_size': 32,
+        'learning_rate': 5e-4,
+        'gradient_clip': 1.0,        # 🔴 ACTUALLY APPLIED in Gen3v6 (dead key in Gen3v4/Gen13 —
+                                     # POST_U10_III §4.1). flow_matcher_v3_meanflow/utils/training.py
+                                     # clips before optimizer.step() and logs the pre-clip norm.
+        'ema_decay': 0.995,
+        'action_weight': 10,         # kept for folder naming + utils; NOT applied to the loss (FIX-3)
+        'loss_discount': 1.0,        # same: kept, not applied to the loss (FIX-3)
+        'gradient_accumulate_every': 2,
+        ## ⚠️ TRAP (POST_U10_III §4.2): this is a WINDOW-level split. At H=8 adjacent windows
+        ## share 7 of 8 frames, so loss_test is effectively a train loss. Gen3v6 INHERITS the
+        ## leak — label every val number in the results MD as leaking, or implement an
+        ## episode-level split before claiming generalisation.
+        'train_test_split': 0.9,
+
+        ## time schedule — MUST match the plan block (it is in diffusion_loadpath).
+        't_schedule': 'logit_normal',
+        'p_mean': -0.4,              # official convention; NEGATED inside the τ sampler
+        'p_std': 1.0,
+        'time_beta_alpha_v3': 1.0,   # 'beta' ablation arm only — ignored otherwise
+        'time_beta_beta_v3': 1.0,
+
+        ## serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_meanflow/',
+        'exp_name': watch(args_to_watch_fmv3_mf_train),
+    },
+
     'plan': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
@@ -903,6 +1016,84 @@ base = {
 
         ## loading — path must match args_to_watch_fmv3_imf_train exactly (incl. _bb{imf_backbone})
         'diffusion_loadpath': 'f:flow_matching_v3_imeanflow/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}_ts{t_schedule}',
+        'diffusion_epoch': 'best',
+    },
+
+    'plan_fm_v3_meanflow': {
+        # ── Gen3v6 evaluation block. Every ARCHITECTURE key below MUST equal the
+        # 'flow_matching_v3_meanflow' training block, or the state_dict load fails
+        # (trap #6). Only sampling knobs (flow_steps_v3, solver, threshold) may differ.
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_meanflow/' +
+                  'H{horizon}_D{diffusion}_aw{action_weight}_obj{mf_objective}_bb{imf_backbone}_ts{t_schedule}_dp{meanflow_data_proportion}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## MeanFlow model
+        'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
+        'horizon': 8,
+        'action_weight': 10,
+        'u_loss_weight': 1.0,
+        'v_loss_weight': 1.0,
+        ## ⚠️ MATCHED-BUDGET OR NOTHING (PLAN §7 / fix_7.3 §9): every MeanFlow-vs-X table
+        ## must be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
+        ## MeanFlow@K=5 against FM@K=10.
+        'flow_steps_v3': 2,
+        ## MUST match training (both are in diffusion_loadpath)
+        'mf_objective': 'meanflow',
+        'meanflow_data_proportion': 0.5,
+        't_schedule': 'logit_normal',
+        'p_mean': -0.4,
+        'p_std': 1.0,
+        'time_beta_alpha_v3': 1.0,        # ignored when t_schedule='logit_normal'
+        'time_beta_beta_v3': 1.0,
+        ## train-time-only knobs — kept equal to training so config-overrides-pkl is a no-op
+        'mf_adp_p': 1.0,
+        'mf_adp_eps': 0.01,
+
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        'diffusion_timestep_threshold': _yaml_threshold,
+
+        ## architecture — MUST equal the trained checkpoint
+        'dual_head': True,
+        'interval_cfg': False,
+        'imf_backbone': 'dit',
+        'dit_depth': 8,
+        'dit_hidden_size': 256,
+        'dit_num_heads': 4,
+        'dit_aux_head_depth': 2,
+        'dit_patch_size': 1,
+        'dit_condition_on_t': False,
+
+        ## Gen3v6 has NO interval-CFG: there is no eval-time guidance operating point.
+        ## condition_guidance_w=0 keeps the DPCC returns-CFG output mix off as well.
+        'condition_guidance_w': 0.0,
+        ## returns_condition is an IDENTITY key (config-override-pkl fix_1 keeps the pkl
+        ## value to protect the state_dict). Fictional/inert for this gen — returns never
+        ## reach the backbone. Kept =True to MATCH the pkl (include_returns=True) so it
+        ## does not false-warn on every eval.
+        'returns_condition': True,
+
+        ## Few-step MeanFlow is EMA-sensitive and the official recipe samples with EMA.
+        'eval_use_ema': True,        # set False for the raw-weights A/B
+
+        ## loading — 🔴 must reproduce args_to_watch_fmv3_mf_train token-for-token,
+        ## including _dp{meanflow_data_proportion}, or eval silently finds no checkpoint.
+        'diffusion_loadpath': 'f:flow_matching_v3_meanflow/' +
+                  'H{horizon}_D{diffusion}_aw{action_weight}_obj{mf_objective}_bb{imf_backbone}_ts{t_schedule}_dp{meanflow_data_proportion}',
         'diffusion_epoch': 'best',
     },
 
