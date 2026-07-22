@@ -224,3 +224,9 @@ Do not create a new file.
 Do not truncate existing content.
 
 Maintain chronological ordering.
+
+---
+
+## Cleanup Requirements
+
+After successfully updating the history file, you MUST explicitly delete any temporary files, intermediate text dumps, or processing scripts you created during your research and analysis steps to keep the workspace clean.

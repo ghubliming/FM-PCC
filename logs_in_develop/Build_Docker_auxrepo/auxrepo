@@ -1,0 +1,42 @@
+cat << 'EOF' > /tmp/setup_workspace.sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Adjusted to target your auxiliary repositories directory
+WORKSPACE="/workspaces/aux_repo"
+mkdir -p "$WORKSPACE"
+cd "$WORKSPACE"
+
+declare -A REPOS=(
+  ["d3il"]="<https://github.com/ALRhub/d3il.git>"
+  ["mujoco_mpc"]="<https://github.com/google-deepmind/mujoco_mpc.git>"
+  ["SafeFlowMPC"]="<https://github.com/TU-Wien-ACIN-CDS/SafeFlowMPC.git>"
+  ["UAV-Flow"]="<https://github.com/prince687028/UAV-Flow.git>"
+  ["diffuser"]="<https://github.com/jannerm/diffuser.git>"
+  ["dpcc"]="<https://github.com/ralfroemer99/dpcc.git>"
+  ["drifting_policy"]="<https://github.com/phamtrongthang123/drifting_policy.git>"
+  ["imeanflow"]="<https://github.com/Lyy-iiis/imeanflow.git>"
+  ["drifting"]="https://github.com/lambertae/drifting.git"
+  ["HardFlow"]="https://github.com/azizanlab/HardFlow.git"
+  ["flow_guidance"]="https://github.com/AI4Science-WestlakeU/flow_guidance.git"
+  ["l4casadi"]="https://github.com/Tim-Salzmann/l4casadi.git"
+)
+
+for name in "${!REPOS[@]}"; do
+  url="${REPOS[$name]}"
+  if [[ "$url" == "REPLACE_ME" ]]; then
+    echo "SKIP: $name — no confident match, check your GitHub account"
+    continue
+  fi
+  if [ -d "$name" ]; then
+    echo "EXISTS: $name — pulling latest"
+    (cd "$name" && git pull)
+  else
+    echo "CLONING: $name"
+    git clone "$url" "$name"
+  fi
+done
+EOF
+
+chmod +x /tmp/setup_workspace.sh
+/tmp/setup_workspace.sh

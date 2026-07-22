@@ -9,3 +9,4 @@
 - [config/ folder convention](config-folder-convention.md) — .py = train+eval setup entries (per-experiment blocks); .yaml = constraint-projection configs (DPCC convention)
 - [Don't self-edit MASTER_TEST_HISTORY.md](dont-self-edit-master-test-history.md) — never touch the master index unless explicitly told; offer, don't add
 - [Archived_Codes = dead code](archived-codes-is-dead-code.md) — Archived_Codes/ & *(legacy/Abandoned/Outdated) folders are dead/wrong; never run/edit/list-as-work; read-only to learn in rare cases
+- [MeanFlow-family upstreams in aux_repo](meanflow-family-upstreams.md) — MeanFlow (PyTorch, only real iMF trainer) vs imeanflow (JAX official, torch branch inference-only) vs alphaflow (bootstrapped target, α-anneal)

@@ -4,7 +4,7 @@ For SLURM jobs history, refer to [important_runs.md](../Slurm_Codes/logs/importa
 
 Purpose: Concise record of what was tested across all generations/versions. Master logging markdown.
 
-## 🗺️ Master Trace Map: Workspace Architecture (Gen1 - Gen11)
+## 🗺️ Master Trace Map: Workspace Architecture (Gen1 - Gen13)
 
 Below is the definitive index mapping every research generation (internal index) to its corresponding isolated sibling folders inside the workspace. This maps out how the codebase transitioned from **State-Only** models to the state-of-the-art **Visual Flow Matching** models:
 
@@ -32,8 +32,10 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen9 (Visual Avoiding Env)** | ~~Partial~~ <br>[fm_visual_avoiding/](../fm_visual_avoiding) | ~~Partial~~ <br>[fm_visual_avoiding_test/](../fm_visual_avoiding_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): Camera Environment Capture Confirmed**. Created a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. **COMPLETED**: Camera capture pipeline. **PENDING**: Modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present.~~ <br><br> **IN PROGRESS (Partial)**: Visual Avoiding Pipeline. DPCC and FM visual models ported to avoiding tasks with single-camera observations and 6-D trajectories. Includes FiLM v2 true architecture updates. | ~~in progress~~ <br>working on |
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
 | **Gen11 (UAV Vis-Traj in MuJoCo)** | ~~Partial~~ <br>[flow_matcher_v3_uav/](../flow_matcher_v3_uav) | ~~Partial~~ <br>[FM_v3_uav_test/](../FM_v3_uav_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone.~~ <br><br> **IN PROGRESS (Partial)**: UAV Flow-Matching & DPCC. Full closed-loop 33 Hz receding-horizon control for UAV trajectory planning in MuJoCo. Includes Cascaded PID trackers, MJPC thrust control, real-time logging, and DPCC safety projection on constraint spaces. | ~~in progress~~ <br>working on |
-| **Gen11+ / X** | [/workspaces/HardFlow](/workspaces/HardFlow) | Pending | June 2026 | Integrating /workspaces/HardFlow into FMPCC. | |
-| **Gen13  (HF + iMF)** | [/workspaces/HardFlow](/workspaces/HardFlow) | Started | July 2026 | A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. (Notes on Gen13v1: Based on/build on HF code)| |
+| **Gen12 (HardFlow → FMv3ODE)** <br>*(was "Gen11+ / X")* | Planned <br>`flow_matcher_v3_hardflow/` | Planned <br>`FM_v3_hardflow_test/` | July 2026 | **Port HardFlow's eval-time constrained sampler INTO FMPCC** (opposite direction to Gen13). Verified premise: HardFlow's `train.py` is vanilla CFM with zero constraint imports — its whole contribution is at sampling time, so **the existing FMv3ODE checkpoint is reused and nothing is retrained**. Scope is deliberately narrow: only `hardflow_new` is portable (it calls the network as a black-box `f(x,t)` outside the solver); `projection`/`projection_relaxed`/`hardflow` embed the U-Net *into* the NLP via l4casadi and are architecture-locked. Copy-modify sibling pair + sbatch entries; adds a 3rd guidance arm alongside DPCC's `Projector`. ⚠️ The linear dynamics `.npz` must be REFIT on FMv3ODE's normalizer — HardFlow's is in different normalized units and would silently enforce wrong physics. Plan: [`Gen12/init/`](./Gen12/init/PLAN_Gen12_hardflow_into_fmv3ode.md). | working on |
+| **Gen13  (HF + iMF)** | [HardFlow/](../HardFlow) <br>*(vendored into FM-PCC)* | [HardFlow/run/](../HardFlow/run) <br>+ [Slurm_Codes/sbatch/hardflow/](../Slurm_Codes/sbatch/hardflow) | July 2026 | A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. (Notes on Gen13v1: Based on/build on HF code). **Status July 2026**: iMF backbone implemented additively (`hardflow/models_flow/imf/`), trained 100k/300k/lrfix-100k. Efficiency thesis **refuted** — FM@K=2 (100% safe, 0.1894 s/plan) beats iMF at every matched K. Key findings: `raw_mse_u` is a *residual*, not accuracy, and post-projection roughness measures the NLP rather than the model — **rank by unguided task success only**. See [`Gen13/U_9_train_curve/results_analysis/`](./Gen13/U_9_train_curve/results_analysis/) and [`HF_iMF/Research/COMPARE_gen13_hardflow_vs_gen3v4_imf_training.md`](./HF_iMF/Research/COMPARE_gen13_hardflow_vs_gen3v4_imf_training.md) §8. | working on |
+| **Gen3v6 (MeanFlow Baseline)** | [flow_matcher_v3_meanflow/](../flow_matcher_v3_meanflow) | [FM_v3_meanflow_test/](../FM_v3_meanflow_test) | July 2026 | **MeanFlow (2505.13447) faithful baseline** — Gen3v4 copy-modify sibling with the ANALYTIC-v JVP tangent (vs iMF's predicted `v_c`), official adaptive loss (p=1, eps=0.01, per-sample sum), two independent logit-normals, no CFG. Isolates iMF's headline contribution as a controlled A/B on constrained control. Adds the h-stratified residual metric and a real gradient clip. Plan: [`Gen3v6_MeanFlow/init/`](./Gen3v6_MeanFlow/init/PLAN_Gen3v6_meanflow_baseline.md). | working on |
+| **Gen3v7 (α-Flow)** | [flow_matcher_v3_alphaflow/](../flow_matcher_v3_alphaflow) | [FM_v3_alphaflow_test/](../FM_v3_alphaflow_test) | July 2026 | **α-Flow (arXiv 2510.20771, snap-research)** — replaces the MeanFlow JVP target with a self-bootstrapped no-grad target `u_tgt = α·v + (1−α)·u_next`, α annealed 1→0 (sigmoid) so training is a homotopy from flow matching (α=1) to MeanFlow (α=0). Targets COMPARE §8.2's blind direction, the diagnosed cause of the Gen13 iMF refutation. Adds target clamping (4.0) and a step-scheduled objective. Plan: [`Gen3v7_AlphaFlow/init/`](./Gen3v7_AlphaFlow/init/PLAN_Gen3v7_alphaflow.md). | working on |
 
 ***
 
@@ -3128,5 +3130,54 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 1. **W&B for iMF & FM Training**: Integrated `wandb` logging by adapting the Gen3v4 workflow. Added `train_fm.py` as an additive sibling to enable training the FM baseline in the current environment, allowing for direct comparison of training curves.
 2. **Hardened Overwrite Protection**: Prevented accidental data-loss in training scripts by enforcing budget-tagged experiment directories (e.g., `H16_imf_100k` vs `300k`) and a hard refuse-to-clobber guard that aborts if a finished checkpoint already exists in the target directory.
+
+***
+
+
+## Gen13 U9.1: Console Log Reduction & CasADi Silencing (July 20, 2026)
+
+**Keywords**: Gen13, log leak, CasADi timing, eval_imf, console output.
+
+1. **CasADi Log Leak Fix**: Addressed a severe console log bloat issue (~18,000 lines of CasADi timing tables per run) in the FM backbone during `eval_imf`. Shared the CasADi silencer (`silence_casadi_timing`) across both `ImfFlowPolicy` and `InstrumentedFlowPolicy`.
+2. **Per-Figure Print Suppression**: Silenced the repetitive `Saved trajectory plot` prints during evaluation using a stdout quiet context manager, reducing eval log size by approximately 9x.
+
+***
+
+## Gen13 U9: 300k Training Insights & Data Ceiling (July 21, 2026)
+
+**Keywords**: Gen13, iMF, 300k training, matched K, safety parity, efficiency claim, data ceiling.
+
+1. **Safety Parity Reached**: Discovered that 3x training budget (300k steps) significantly improved guided performance (K=2: 94% → 99.5%), making iMF statistically indistinguishable from FM in safety at matched K.
+2. **Efficiency Claim Refuted**: Despite reaching safety parity, iMF remains 1.13-1.24x slower per plan than FM due to its dual-head architecture. FM@K=2 remains the best configuration.
+3. **Data Ceiling Confirmed**: Confirmed that the raw vector field quality is bounded by the 96-demo dataset, plateauing after 100k steps. The unguided raw plan remained rough, proving that the NLP projection dominates task success.
+
+***
+
+## Gen13 U9.2: Training Instability Fix & Gradient Clipping (July 21, 2026)
+
+**Keywords**: Gen13, iMF, adaptive loss, learning rate, gradient clipping, instability.
+
+1. **Root Cause Identification**: Diagnosed the bad raw iMF field as being caused by an effective learning rate ~14-27x too hot. The adaptive loss summed over 96 dimensions without proper rescaling, which created escalating training instability.
+2. **Gradient Clipping Implementation**: Introduced gradient clipping (`grad_clip=1.0`) and adjustable learning rates into the iMF training scripts to stabilize the objective. Found that unclipped gradient norms were ~50x larger than the threshold.
+3. **Pipeline Orchestrator Fix**: Updated the `imf_pipeline_hardflow.sh` script to derive experiment names dynamically, preventing silent evaluations of outdated checkpoints and resolving silent overwrites.
+
+***
+
+## Gen13 U9.2: Gradient-Clipping Run & Metric Invalidation (July 21, 2026)
+
+**Keywords**: Gen13, gradient clipping, unguided success, raw_mse_u, surrogate metrics.
+
+1. **Unguided Success Milestone**: Evaluated the clipped training run (`lrfix`) and achieved 15.5% unguided success, demonstrating that the iMF raw field can solve the task without projection for the first time.
+2. **Surrogate Metrics Broken**: Confirmed empirically that `raw_mse_u` is a residual rather than an accuracy metric, and that trajectory smoothness anti-correlates with task success. The loss metrics degraded while trajectory success improved by 31x.
+3. **Projection vs. Field Trade-off**: Found that while the raw field improved significantly, guided (projected) performance slightly dropped (99.5% → 90.5%), proving that the NLP projection prefers a smooth but incorrect start over a rough but goal-oriented one.
+
+***
+
+## Infrastructure: W&B Tracking & Data Collection (July 21, 2026)
+
+**Keywords**: W&B, Slurm Job ID, data collection, metrics aggregation.
+
+1. **Job ID Tracking**: Appended Slurm job IDs to W&B run names and tags across all training scripts. This ensures robust experiment tracking and traceability from W&B dashboards back to cluster logs.
+2. **Metrics Archiving**: Added a dedicated `collect_hf_results.py` script to seamlessly bundle HardFlow/iMF training and evaluation metrics into timestamped zip archives for rapid analysis.
 
 ***
