@@ -92,6 +92,25 @@ args_to_watch_fmv3_mf_train = [
     ('meanflow_data_proportion', 'dp'),   # first-class ablation axis in this generation
 ]
 
+# ── Gen3v7 (α-Flow) ───────────────────────────────────────────────────────────────────
+# ⭐ EVERY α knob is in the folder name ON PURPOSE. POST_U10_II §1.1 documents a live
+# overwrite hazard where four un-watched knobs let two different runs write to a
+# byte-identical directory and silently clobber each other. α-Flow has more sweepable
+# knobs than any previous generation, so this matters more here than anywhere.
+# 🔴 plan_fm_v3_alphaflow's `diffusion_loadpath` must reproduce this list token-for-token.
+args_to_watch_fmv3_af_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+    ('imf_backbone', 'bb'),          # key name kept: the backbone classes are inherited
+    ('t_schedule', 'ts'),
+    ('af_alpha_init', 'ai'),         # 1.0  — α at step 0 (1.0 ⇒ starts as pure FM)
+    ('af_alpha_end', 'ae'),          # 0.0  — α at the end (0.0 ⇒ ends as MeanFlow)
+    ('af_alpha_gamma', 'ag'),        # 25.0 — sigmoid sharpness
+    ('af_ratio_fm', 'rf'),           # 0.5  — fraction of the batch forced to h=0 (FM anchors)
+]
+
 logbase = 'logs'
 
 base = {
@@ -671,6 +690,125 @@ base = {
         'exp_name': watch(args_to_watch_fmv3_mf_train),
     },
 
+    'flow_matching_v3_alphaflow': {
+        # ── Gen3v7: α-Flow (arXiv 2510.20771, snap-research @ b0fef77) ─────────────────
+        # Copy-modify sibling of 'flow_matching_v3_meanflow'. The scientific difference is
+        # the TARGET: MeanFlow regresses u to sg(v + h·du/dr) (a JVP of the network itself),
+        # α-Flow regresses it to sg(α·v + (1−α)·u_next) — a SELF-BOOTSTRAPPED, no-grad,
+        # derivative-free target — with α annealed 1 → 0, so training is a homotopy from
+        # plain flow matching (α=1) to MeanFlow (α=0).
+        # Everything architectural is held identical to Gen3v4/Gen3v6 so the three-way A/B
+        # is controlled. See logs_in_develop/Gen3v7_AlphaFlow/init/PLAN_Gen3v7_alphaflow.md.
+
+        ## model & engine
+        'model': 'flow_matcher_v3_alphaflow.models.AlphaFlowEngine',
+        'diffusion': 'flow_matcher_v3_alphaflow.models.AlphaFlowODE',
+        'horizon': 8,
+
+        ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
+        'freq_dim': 256,
+        'depth': 8,
+        'num_heads': 4,
+        'mlp_dim': 256,
+        'time_dim': 256,
+        'dropout_rate': 0.1,
+
+        ## legacy loss-mixing knobs — INERT (u and v are on equal footing), kept because
+        ## the trainer/parser plumbing reads them.
+        'u_loss_weight': 1.0,
+        'v_loss_weight': 1.0,
+        'loss_schedule': 'balanced',
+        'warmup_epochs': 0,
+        'transition_epochs': 0,
+        'loss_type': 'l2',
+        'predict_epsilon': True,
+
+        ## ── Gen3v7 α schedule (PLAN §3.6; upstream experiments-alphaflow.yaml:155,
+        ##    RESCALED to OUR budget) ────────────────────────────────────────────────
+        'af_alpha_scheduler': 'sigmoid',
+        'af_alpha_init': 1.0,
+        'af_alpha_end': 0.0,
+        'af_alpha_init_step': 0,
+        # 🔴🔴 THE #1 SILENT FAILURE OF THIS GENERATION (PLAN §11 trap 1). MUST equal
+        # 'n_train_steps' below. Upstream anneals over 400000 steps; copying that verbatim
+        # here leaves α pinned at ~1.0 for all 100k of our steps — i.e. you trained plain
+        # flow matching and called it α-Flow, and nothing in the logs would say so.
+        # AlphaFlowODE.__init__ raises if these two disagree; the train script also prints
+        # the whole α curve before the first step. If you change n_train_steps, change this.
+        'af_alpha_end_step': 100000,
+        'af_alpha_gamma': 25.0,
+        # snap-to-exact-0/1 guard. Without it α becomes a tiny-but-nonzero number and every
+        # sample takes the discrete branch with dt≈0 ⇒ a degenerate near-identity target.
+        'af_alpha_clamp': 0.005,
+
+        'af_ratio_fm': 0.5,      # FM anchors (h=0). Upstream ships {0.25,0.5,0.75}; Gen3v4/
+                                 # Gen3v6 use 0.5, so 0.5 keeps the A/B controlled.
+        'af_clamp_utgt': 4.0,    # upstream clamp_utgt — no prior generation here clamps
+        # ⚠️ α-Flow's adaptive_loss_weight_eps. DELIBERATELY ≠ MeanFlow/iMF's 0.01 —
+        # different method, different constant. Do NOT "harmonise" it (PLAN §11 trap 7).
+        'af_adp_eps': 1e-3,
+
+        ## ── architecture flags ────────────────────────────────────────────────────
+        'dual_head': True,           # the v head carries a FULL loss, not a stabiliser
+        'interval_cfg': False,       # 🔴 no CFG in Gen3v7 — mirrors α-Flow's own non-cfg
+                                     # `alphaflow-sigmoid-latentspace-B-2` config and keeps
+                                     # the comparison to Gen3v6 clean.
+
+        ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
+        'imf_backbone': 'dit',       # match Gen3v4/Gen3v6's DiT arm so the A/B is controlled
+        'dit_depth': 8,
+        'dit_hidden_size': 256,
+        'dit_num_heads': 4,
+        'dit_aux_head_depth': 2,
+        'dit_patch_size': 1,
+        'dit_condition_on_t': False, # official conditions on h only — KEEP FALSE (audit §2.3)
+
+        ## dataset (inherited from FMv3ODE / Gen3v4 / Gen3v6)
+        'loader': 'datasets.SequenceDataset',
+        'normalizer': 'LimitsNormalizer',
+        'preprocess_fns': [],
+        'clip_denoised': False,
+        'max_path_length': 150,
+        'include_returns': True,
+        'returns_scale': 400,
+        'discount': 0.99,
+        'use_padding': True,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 0.0,  # returns-CFG output mix OFF (Gen3v7 has no guidance)
+
+        ## training
+        'n_train_steps': 100000,     # 🔴 keep in sync with af_alpha_end_step above
+        'batch_size': 32,
+        'learning_rate': 5e-4,
+        'gradient_clip': 1.0,        # 🔴 ACTUALLY APPLIED (dead key in Gen3v4/Gen13 —
+                                     # POST_U10_III §4.1). Matters MORE here: the discrete
+                                     # branch has no JVP and should be calmer, so a
+                                     # surviving spike is diagnostic, not background noise.
+        'ema_decay': 0.995,
+        'action_weight': 10,         # kept for folder naming + utils; NOT applied to the loss
+        'loss_discount': 1.0,        # same: kept, not applied to the loss
+        'gradient_accumulate_every': 2,
+        ## ⚠️ TRAP (POST_U10_III §4.2): this is a WINDOW-level split. At H=8 adjacent windows
+        ## share 7 of 8 frames, so loss_test is effectively a train loss. Gen3v7 INHERITS the
+        ## leak — label every val number in the results MD as leaking, or implement an
+        ## episode-level split before claiming generalisation.
+        'train_test_split': 0.9,
+
+        ## time schedule — MUST match the plan block (it is in diffusion_loadpath).
+        ## α-Flow's own distrib_t_t_next_mf is minmax over two logit_norm(-0.4, 1.0) draws,
+        ## identical to what Gen3v6 already does, so nothing changed here.
+        't_schedule': 'logit_normal',
+        'p_mean': -0.4,              # official convention; NEGATED inside the τ sampler
+        'p_std': 1.0,
+        'time_beta_alpha_v3': 1.0,   # 'beta' ablation arm only — ignored otherwise
+        'time_beta_beta_v3': 1.0,
+
+        ## serialization
+        'logbase': logbase,
+        'prefix': 'flow_matching_v3_alphaflow/',
+        'exp_name': watch(args_to_watch_fmv3_af_train),
+    },
+
     'plan': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
@@ -1094,6 +1232,97 @@ base = {
         ## including _dp{meanflow_data_proportion}, or eval silently finds no checkpoint.
         'diffusion_loadpath': 'f:flow_matching_v3_meanflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_obj{mf_objective}_bb{imf_backbone}_ts{t_schedule}_dp{meanflow_data_proportion}',
+        'diffusion_epoch': 'best',
+    },
+
+    'plan_fm_v3_alphaflow': {
+        # ── Gen3v7 evaluation block. Every ARCHITECTURE key below MUST equal the
+        # 'flow_matching_v3_alphaflow' training block, or the state_dict load fails.
+        # Only sampling knobs (flow_steps_v3, solver, threshold) may differ.
+        #
+        # ✅ α is TRAINING-ONLY. It does not appear at inference and the sampler is
+        # unchanged (x += dt·u) — which is exactly what makes Gen3v4 / Gen3v6 / Gen3v7
+        # comparable at matched K. The af_* keys below are carried only so the
+        # config-overrides-pkl reconciliation stays a silent no-op.
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/flow_matching_v3_alphaflow/' +
+                  'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
+                  '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        ## α-Flow model
+        'diffusion': 'flow_matcher_v3_alphaflow.models.AlphaFlowODE',
+        'horizon': 8,
+        'action_weight': 10,
+        'u_loss_weight': 1.0,
+        'v_loss_weight': 1.0,
+        ## ⚠️ MATCHED-BUDGET OR NOTHING (PLAN §8 / fix_7.3 §9): every α-Flow-vs-X table must
+        ## be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
+        ## α-Flow@K=5 against FM@K=10. The comparator is FM @ K=2 → 100% safe, 0.1894 s/plan.
+        'flow_steps_v3': 2,
+        ## MUST match training (these four are in diffusion_loadpath)
+        'af_alpha_init': 1.0,
+        'af_alpha_end': 0.0,
+        'af_alpha_gamma': 25.0,
+        'af_ratio_fm': 0.5,
+        't_schedule': 'logit_normal',
+        'p_mean': -0.4,
+        'p_std': 1.0,
+        'time_beta_alpha_v3': 1.0,        # ignored when t_schedule='logit_normal'
+        'time_beta_beta_v3': 1.0,
+        ## train-time-only knobs — kept equal to training so config-overrides-pkl is a no-op
+        'af_alpha_scheduler': 'sigmoid',
+        'af_alpha_init_step': 0,
+        'af_alpha_end_step': 100000,
+        'af_alpha_clamp': 0.005,
+        'af_clamp_utgt': 4.0,
+        'af_adp_eps': 1e-3,
+
+        'ode_solver_backend_v3': 'legacy_euler',
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        'diffusion_timestep_threshold': _yaml_threshold,
+
+        ## architecture — MUST equal the trained checkpoint
+        'dual_head': True,
+        'interval_cfg': False,
+        'imf_backbone': 'dit',
+        'dit_depth': 8,
+        'dit_hidden_size': 256,
+        'dit_num_heads': 4,
+        'dit_aux_head_depth': 2,
+        'dit_patch_size': 1,
+        'dit_condition_on_t': False,
+
+        ## Gen3v7 has NO interval-CFG: there is no eval-time guidance operating point.
+        ## condition_guidance_w=0 keeps the DPCC returns-CFG output mix off as well.
+        'condition_guidance_w': 0.0,
+        ## returns_condition is an IDENTITY key (config-override-pkl fix_1 keeps the pkl
+        ## value to protect the state_dict). Fictional/inert for this gen — returns never
+        ## reach the backbone. Kept =True to MATCH the pkl (include_returns=True) so it
+        ## does not false-warn on every eval.
+        'returns_condition': True,
+
+        ## Few-step MeanFlow-family models are EMA-sensitive; the official recipes use EMA.
+        'eval_use_ema': True,        # set False for the raw-weights A/B
+
+        ## loading — 🔴 must reproduce args_to_watch_fmv3_af_train token-for-token
+        ## (H, D, aw, bb, ts, ai, ae, ag, rf) or eval silently finds no checkpoint.
+        'diffusion_loadpath': 'f:flow_matching_v3_alphaflow/' +
+                  'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
+                  '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}',
         'diffusion_epoch': 'best',
     },
 
