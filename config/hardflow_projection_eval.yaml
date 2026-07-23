@@ -11,7 +11,20 @@ write_to_file: True
 exps: [
   'avoiding-d3il',
   ]
-seeds: [6, 7, 8, 9, 10]
+seeds: [6]
+
+#seeds: [6, 7, 8, 9, 10]
+
+# ⭐ WHICH TRAINED MODEL TO EVALUATE — the single control entry.
+# Direct path to the PARENT of the per-seed checkpoint subdirs (the eval appends
+# `/<seed>/` and loads epoch 'best'). Point this at ANY trained FMv3-family model —
+# fmv3ode / meanflow / alphaflow / imf / … — and it loads that model's own class
+# natively; no per-model loadpath template to maintain.
+#   e.g.  /u/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10
+# Default null -> fall back to the templated plan_fm_v3_hardflow.diffusion_loadpath in
+# config/avoiding-d3il.py. If the path (or the fallback) is missing, the eval prints a
+# WARNING per seed and skips it — it does not crash the job.
+checkpoint_dir: null
 
 avoiding_halfspace_variants: [
   'top-right-hard',    # /

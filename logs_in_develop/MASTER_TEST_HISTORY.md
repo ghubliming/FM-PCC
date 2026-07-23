@@ -3239,3 +3239,45 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
    - Created `Slurm_Codes/sbatch/MeanFlow/` pipeline scripts (`meanflow_pipeline.sh`, `train_meanflow.sh`, `eval_meanflow.sh`, `load_results_meanflow.sh`).
    - Created `FM_v3_meanflow_test/gates_meanflow.py` for pre-flight G0/G1/G3' harness checks.
 
+***
+
+## Gen3v6: MeanFlow Baseline Fixes (July 23, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, diffuser namespace shim, training crash, ModuleNotFoundError.
+
+1. **Training Crash at Step 0 Resolved**: Diagnosed and fixed a `ModuleNotFoundError` during the first run of the `meanflow_pipeline.sh`. The crash occurred because the training script's configuration loader (`diffuser/utils/config.py`) hard-prefixes every configuration class string with the `diffuser` package name.
+2. **Namespace Shim Implementation**: Created a shim namespace package at `diffuser/flow_matcher_v3_meanflow/` to re-export the real classes from `flow_matcher_v3_meanflow.models`. This mirrors the solution used in Gen3v4, allowing the dynamically resolved classes to retain their true `__module__` paths and preventing pickled class mismatches during evaluation.
+
+***
+
+## Gen3v7: α-Flow Homotopy Coding Pass 1 (July 23, 2026)
+
+**Keywords**: Gen3v7, α-Flow, homotopy, self-bootstrapped target, matched budget, endpoint error, backbone fidelity.
+
+1. **α-Flow Implementation Completed**: Completed coding pass 1 for Gen3v7 (`flow_matcher_v3_alphaflow`), replacing MeanFlow's JVP target with α-Flow's self-bootstrapped, no-grad target (`u_tgt = α·v + (1−α)·u_next`). This targets the blind direction hypothesized to cause iMF's underperformance.
+2. **Homotopy Schedule**: Implemented the α anneal (1 → 0) using a sigmoid schedule, creating a smooth transition from plain flow matching (α=1) to MeanFlow (α=0) during training.
+3. **Pre-flight Guards & Robustness**: Implemented strict pre-flight checks (`gates_alphaflow.py`) to prevent silent failures (e.g., constant α schedules), including a constructor assert, pre-flight banner, and extensive W&B telemetry for the α schedule. Added the `diffuser` shim up front to avoid Gen3v6's training crash.
+4. **Matched-K Sweeps Built-In**: Integrated the K-grid eval sweep directly into the evaluation pipeline (`eval_flow_matching_v3_alphaflow.py --flow-steps K`) to ensure matched-budget comparisons are structural rather than aspirational. Added `endpoint_error_alphaflow.py` for direct measurement of the sampler's terminal prediction error.
+5. **Backbone Fidelity Analysis**: Documented a gap in backbone fidelity: Gen3v6 and Gen3v7 use the iMF DiT backbone instead of their respective official networks (MFDiT and SiT). While this ensures controlled A/B testing across the three generations, it means the results represent the new objectives running on the iMF network architecture.
+
+***
+
+## Gen12: HardFlow into FMv3ODE Initialization (July 23, 2026)
+
+**Keywords**: Gen12, HardFlow, FMv3ODE, hardflow_new, zero retraining, geometry alignment.
+
+1. **Constrained Sampler Ported**: Implemented Gen12 (`flow_matcher_v3_hardflow`), porting HardFlow's inference-time constrained sampler (`hardflow_new`) to run directly on the existing FMv3 trained checkpoint. The neural field enters the loop entirely as a black-box function `f(x, t)`.
+2. **Feasible Set Alignment**: Rewrote the upstream sampler to construct its CasADi NLP using FMPCC's `constraint_list` instead of HardFlow's hard-coded geometry. This ensures the new constrained sampler enforces the exact same obstacle and boundary geometry as the baseline DPCC, validating the A/B test.
+3. **Pre-flight Seam Tests**: Created a robust test suite (`gates_hardflow.py`) that executes with no checkpoint/dataset to assert correct DOF index mapping, time-direction alignment (noise τ=0 → data τ=1), and baseline feasibility.
+4. **Dynamics Fitting**: Ported the linear dynamics fitter (`fit_dynamics_fmv3.py`) to run on FMv3's dataset and normalizer, adding a strict episode-level held-out evaluation check to guarantee physical accuracy before sampling.
+
+***
+
+## Gen13: CLOSURE I — iMF vs FM in HardFlow (July 23, 2026)
+
+**Keywords**: Gen13, iMF, HardFlow, CLOSURE, efficiency refuted, anti-correlation, warm-start smoothness, blind direction.
+
+1. **Efficiency Thesis Refuted**: Conducted a decisive paired evaluation (n=200/arm) between iMF and standard FM inside HardFlow. At matched budgets, FM strictly dominates iMF. FM@K=2 achieves 100% safety at 0.1894 s/plan, while iMF remains slower (1.09–1.24×) and tops out at 99.5% safety.
+2. **Trajectory Quality vs. Planning Quality Conflict**: Discovered a perfect inverse correlation (Spearman ρ = -1.00) between unguided and guided success across five iMF models. The model with the best raw field (17.5% success) was the worst planner (90.0%), while the model with the worst raw field (0.5%) was the best planner (99.5%). Optimizing the generative field degraded the warm-start smoothness needed by the prox-NLP solver.
+3. **Projection Dominates Task Success**: Confirmed that the NLP projection lifts both backbones from near 0% raw safety to 96–100% guided safety. The generative field determines only the initial guess.
+4. **Blind Direction Mechanism Diagnosed**: Identified a structural "blind direction" of width `h` in the MeanFlow residual (`δ_u = h·δ_D`) that is invisible to the training loss but degrades the sampler. The problem is maximal precisely in the large-`h` (few NFE) regime that the method was intended to optimize.

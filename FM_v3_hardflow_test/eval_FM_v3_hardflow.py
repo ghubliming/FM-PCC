@@ -11,6 +11,7 @@
 # `flow_steps` in the YAML overrides it for EVERY arm at once, so a matched-K
 # comparison is the default rather than something the operator has to remember.
 import argparse
+import glob
 import json
 import os
 import sys
@@ -50,6 +51,11 @@ constraint_types = config['constraint_types']
 hardflow_cfg = config.get('hardflow', {})
 flow_steps_override = args_cli.flow_steps if args_cli.flow_steps is not None else config.get('flow_steps')
 FORCE_OVERWRITE = os.environ.get('FORCE_OVERWRITE', '0') == '1'
+# Direct checkpoint path (default null). Parent of the per-seed subdirs, e.g.
+#   logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_..._aw10
+# When set, Gen12 loads that model's OWN class natively (fmv3ode / meanflow / …).
+# When null, falls back to the templated plan_fm_v3_hardflow.diffusion_loadpath.
+checkpoint_dir = config.get('checkpoint_dir')
 
 
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
@@ -115,10 +121,40 @@ for exp in exps:
         axes_all_seeds = list(axes_all_seeds)
         for seed in seeds:
             args = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seed)
+            # ── Which checkpoint to load ─────────────────────────────────────────────
+            # checkpoint_dir set  -> load <checkpoint_dir>/<seed>/ with the pickle's OWN
+            #                        class (target_class=None): fmv3ode / meanflow / etc.
+            # checkpoint_dir null -> templated plan_fm_v3_hardflow.diffusion_loadpath.
+            if checkpoint_dir:
+                loadpath_parts = (checkpoint_dir, str(seed))
+                target_class = None
+            else:
+                loadpath_parts = (args.loadbase, args.dataset, args.diffusion_loadpath, str(seed))
+                target_class = args.diffusion
+            seed_dir = os.path.join(*loadpath_parts)
+            # Warn + skip on a missing/incorrect path instead of crashing the whole job.
+            if not os.path.isdir(seed_dir) or not glob.glob(os.path.join(seed_dir, 'state_*.pt')):
+                print('=' * 80, file=sys.stderr)
+                print(f'[ WARNING ] No checkpoint for seed {seed} — looked in:', file=sys.stderr)
+                print(f'            {seed_dir}', file=sys.stderr)
+                if checkpoint_dir:
+                    print(f'            checkpoint_dir = {checkpoint_dir}', file=sys.stderr)
+                    print('            Fix `checkpoint_dir` in the eval YAML, or check the seed exists.',
+                          file=sys.stderr)
+                else:
+                    print('            checkpoint_dir is null (default) and the templated loadpath', file=sys.stderr)
+                    print('            was not found. Set `checkpoint_dir` in', file=sys.stderr)
+                    print('            config/hardflow_projection_eval.yaml to a real path.', file=sys.stderr)
+                print(f'            SKIPPING seed {seed}.', file=sys.stderr)
+                print('=' * 80, file=sys.stderr)
+                continue
             # Get model
-            fm_experiment = load_diffusion_with_override(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed), target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+            fm_experiment = load_diffusion_with_override(*loadpath_parts, target_class=target_class, epoch=args.diffusion_epoch, device=args.device)
             fm_model = fm_experiment.diffusion
             dataset = fm_experiment.dataset
+            # Trust the checkpoint's own horizon (a direct-path model may differ from the
+            # plan block's default of 8).
+            args.horizon = fm_model.horizon
             # ⭐ PLAN §5: one knob sets K for all three arms. Gen13's central error was
             # comparing arms at different K; making it a single override removes the
             # chance of repeating it.
@@ -137,7 +173,11 @@ for exp in exps:
             if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
             obs_indices = config['observation_indices'][robot_name]
             act_indices = config['action_indices'][robot_name]
-            if fm_model.__class__.__name__ == 'GaussianDiffusion':
+            # Route by whether the model plans actions, NOT by class name — a direct-path
+            # checkpoint can be FlowMatchingODE / MeanFlowODE / … not just GaussianDiffusion.
+            # All FMv3 action-planning models expose action_dim > 0; only states-only
+            # (inverse-dynamics) models have action_dim == 0.
+            if getattr(fm_model, 'action_dim', 0) > 0:
                 trajectory_dim = fm_model.transition_dim - fm_model.goal_dim
                 action_dim = fm_model.action_dim
                 fm_variant = 'states_actions'

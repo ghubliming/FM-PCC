@@ -47,6 +47,11 @@ HORIZON = 8
 ACTION_DIM = 2
 STATE_DIM = 4
 
+# Gen12 reads its OWN config, never config/projection_eval.yaml. The gates build
+# their constraint list from the same file eval_FM_v3_hardflow.py uses, so a gate
+# that passes proves the exact geometry the eval will enforce.
+CONFIG_PATH = 'config/hardflow_projection_eval.yaml'
+
 # Stand-in normalizer limits for [vx, vy, x_des, y_des, x, y]. The gates test
 # geometry and index bookkeeping, not dataset statistics; the real limits come
 # from the checkpoint's normalizer at eval time.
@@ -74,9 +79,9 @@ class StubVelocity:
         return iter(())
 
 
-def build_constraints(halfspace_variant='both-hard'):
+def build_constraints(halfspace_variant='both-hard', config_path=CONFIG_PATH):
     """The real avoiding-d3il constraint list, exactly as eval builds it."""
-    with open('config/projection_eval.yaml', 'r') as fh:
+    with open(config_path, 'r') as fh:
         config = yaml.safe_load(fh)
 
     if halfspace_variant == 'top-left-hard':
@@ -220,7 +225,7 @@ def gate_g1(flow_steps, device):
 # ---------------------------------------------------------------------------#
 # G2 — the NLP
 # ---------------------------------------------------------------------------#
-def gate_g2(halfspace_variant='both-hard'):
+def gate_g2(halfspace_variant='both-hard', config_path=CONFIG_PATH):
     """Feasibility of the prox solve, plus one correction to the plan.
 
     PLAN §1.2 describes the pull-back as "weighted by tau^2
@@ -236,7 +241,7 @@ def gate_g2(halfspace_variant='both-hard'):
     invariant to tau under the pure prox objective.
     """
     print('\n-- G2: prox-NLP feasibility and tau bookkeeping ' + '-' * 29)
-    constraint_list, obstacles, idx = build_constraints(halfspace_variant)
+    constraint_list, obstacles, idx = build_constraints(halfspace_variant, config_path)
     L = TrajectoryLayout(HORIZON, ACTION_DIM, STATE_DIM)
     nlp = HardFlowNLP(layout=L, constraint_list=constraint_list,
                       mins=STUB_MINS, maxs=STUB_MAXS, dt=1.0,
@@ -290,10 +295,10 @@ def gate_g2(halfspace_variant='both-hard'):
 # ---------------------------------------------------------------------------#
 # G3 — end to end
 # ---------------------------------------------------------------------------#
-def gate_g3(flow_steps, device, halfspace_variant='both-hard'):
+def gate_g3(flow_steps, device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
     """The whole sampler on a stub field: runs, ends feasible, costs what we say."""
     print('\n-- G3: end-to-end constrained sampler ' + '-' * 38)
-    constraint_list, obstacles, idx = build_constraints(halfspace_variant)
+    constraint_list, obstacles, idx = build_constraints(halfspace_variant, config_path)
     L = TrajectoryLayout(HORIZON, ACTION_DIM, STATE_DIM)
     nlp = HardFlowNLP(layout=L, constraint_list=constraint_list,
                       mins=STUB_MINS, maxs=STUB_MAXS, dt=1.0,
@@ -342,14 +347,16 @@ def main():
     parser.add_argument('--flow-steps', type=int, default=5)
     parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
     parser.add_argument('--halfspace-variant', default='both-hard')
+    parser.add_argument('--config', default=CONFIG_PATH,
+                        help='Gen12 eval config the gates read constraints from.')
     args = parser.parse_args()
 
-    print(f'Gen12 gates | device = {args.device} | K = {args.flow_steps}')
+    print(f'Gen12 gates | device = {args.device} | K = {args.flow_steps} | config = {args.config}')
     results = {
         'G0 layout': gate_g0(),
         'G1 direction': gate_g1(args.flow_steps, args.device),
-        'G2 NLP': gate_g2(args.halfspace_variant),
-        'G3 end-to-end': gate_g3(args.flow_steps, args.device, args.halfspace_variant),
+        'G2 NLP': gate_g2(args.halfspace_variant, args.config),
+        'G3 end-to-end': gate_g3(args.flow_steps, args.device, args.halfspace_variant, args.config),
     }
 
     print('\n' + '=' * 60)
