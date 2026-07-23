@@ -3218,3 +3218,24 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Zero-Retraining Scope**: Formulated the technical plan (`PLAN_Gen12_hardflow_into_fmv3ode.md`) to port HardFlow's inference-time constrained sampler into FMv3ODE (`flow_matcher_v3_hardflow`). Verified that HardFlow's training logic is standard conditional flow matching without any CasADi/NLP dependencies, allowing direct reuse of existing FMv3ODE trained weights.
 2. **Black-Box `hardflow_new` Isolation**: Narrowed scope to `hardflow_new`, which queries the neural vector field as an uncompiled black-box function $f(x,t)$ outside the NLP solver, bypassing the architecture-locked l4casadi requirements of `projection`/`hardflow`.
 3. **Normalizer Alignment Requirement**: Identified a critical requirement to refit the linear dynamics `.npz` files against FMv3ODE's specific normalizer units to prevent silent physics distortion during constrained sampling.
+
+***
+
+## Gen3v6 Coding Pass 1: MeanFlow Baseline Implementation (July 22, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, coding pass 1, mf_diffusion, analytic JVP, adaptive loss, gradient clip, gates_meanflow.
+
+1. **Package Creation & Copy-Modify Isolation**: Created `flow_matcher_v3_meanflow` and `FM_v3_meanflow_test` as an isolated copy-modify sibling pair from Gen3v4 (`flow_matcher_v3_imeanflow`). Renamed all internal modules and classes (`MeanFlowODE`, `MeanFlowEngine`, `MFTrajectoryModel`, `MFDiTTrajectory`) to eliminate stale imports.
+2. **Faithful Objective & Guarded JVP Tangent (`mf_diffusion.py`)**: Rewrote the core objective to implement the faithful MeanFlow paper (arXiv 2505.13447) loss:
+   - **Guarded Analytic JVP Tangent**: Evaluates `_jvp(_u_of, (x_r, r, h), (v_inst, ones, -ones))` using the analytic target $v_{\text{inst}} = x_1 - x_0$, isolating the core MeanFlow vs. iMF hypothesis.
+   - **Logit-Normal $(\tau, r)$ Sampling**: Replaced $r = t \cdot U(0,1)$ with two independent logit-normals on the $\tau$ axis (`_sample_tau_pair()`) using $-p_{\text{mean}}$ parameterization.
+   - **Official Adaptive Loss & Dual-Head Loss**: Applied per-sample sum adaptive loss ($\text{err} / \text{sg}(\text{err} + 0.01)^{1.0}$) and integrated an explicit second loss term for $v$-head regression.
+   - **DPCC Loss Weights Stripped**: Stripped legacy `loss_fn.weights` multiplier to preserve pure MeanFlow dynamics.
+3. **h-Stratified Metrics & Active Gradient Clipping**:
+   - Added $h$-stratified residual metrics (`h_mse_b0`..`b3` across buckets $h=0$, $(0,0.3)$, $[0.3,0.6)$, $[0.6,1.0]$) alongside `raw_mse_u` and `per_dim_rms_u`.
+   - Wired `gradient_clip` (1.0) into `Trainer` (`clip_grad_norm_`) with pre-clip `grad_norm_history` logging to eliminate loss spikes.
+4. **Config, SLURM & Diagnostic Harness**:
+   - Added `args_to_watch_fmv3_mf_train` and matched `flow_matching_v3_meanflow` / `plan_fm_v3_meanflow` blocks in `config/avoiding-d3il.py`.
+   - Created `Slurm_Codes/sbatch/MeanFlow/` pipeline scripts (`meanflow_pipeline.sh`, `train_meanflow.sh`, `eval_meanflow.sh`, `load_results_meanflow.sh`).
+   - Created `FM_v3_meanflow_test/gates_meanflow.py` for pre-flight G0/G1/G3' harness checks.
+
