@@ -985,18 +985,20 @@ base = {
         'suffix': '0',
     },
 
-    # ── Gen12 (HardFlow → FMv3) ───────────────────────────────────────────────
-    # Eval-ONLY block. Gen12 trains nothing: HardFlow's contribution is entirely
-    # at sampling time (PLAN §1), so this reuses the Gen3 `flow_matching_v3`
-    # checkpoint untouched. Hence `diffusion_loadpath` points at the ORIGINAL
-    # training folder, not at a `flow_matching_v3_hardflow/` one — there is no
-    # such folder and there is not meant to be.
+    # ── Gen12 (HardFlow → FMv3ODE) ────────────────────────────────────────────
+    # Eval-ONLY block. Gen12 trains nothing (PLAN §1): it reuses a pre-trained
+    # checkpoint. HardFlow's `hardflow_new` sampler is only valid for a single-time
+    # velocity field v = f(x, t), so Gen12 loads the **FMv3ODE** model
+    # (`FlowMatchingODE`) SPECIFICALLY — not iMF / MeanFlow (two-time u(z,τ,h)) nor
+    # anything else. This block is the single control entry (path + eval budget);
+    # config/hardflow_projection_eval.yaml holds the experiment knobs (seeds, arms,
+    # constraint geometry, arm-C tuning).
     #
-    # 🔴 `flow_steps_v3` here is the CHECKPOINT's K (it is part of the load path).
-    # Do NOT edit it to sweep the eval K — that would point at a folder that does
-    # not exist. The eval K is `flow_steps` in config/hardflow_projection_eval.yaml,
-    # which is applied to the model AFTER loading and is recorded in the results
-    # directory name.
+    # LOADING: copied from `plan_fm_v3_ode_selectable` — the same RELATIVE templated
+    # loadpath, so no machine-specific absolute path. With action_weight=10 it renders
+    # to logs/avoiding-d3il/flow_matching_v3_ode_selectable/
+    #        H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/<seed>/  — the trained
+    # FMv3ODE checkpoint. The pickle's own FlowMatchingODE class loads natively.
     'plan_fm_v3_hardflow': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
@@ -1006,26 +1008,35 @@ base = {
         'seed': 0,
         'test_ret': 0,
 
-        ## serialization
+        # ⭐ Eval K — matched across ALL arms (PLAN §5). The SAMPLING budget, applied to
+        # the model AFTER loading; recorded in the results dir name (K<flow_steps>_n<n>).
+        # CLI `--flow-steps N` overrides this.
+        'flow_steps': 10,
+        # Optional: a direct absolute path to the checkpoint parent dir, overriding the
+        # templated loadpath below. Default None -> use the FMv3ODE loadpath (recommended,
+        # machine-independent).
+        'checkpoint_dir': None,
+
+        ## serialization (results path)
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_hardflow/',
         'exp_name': watch(args_to_watch_v3),
 
-        ## flow matching v3 model (must mirror the `flow_matching_v3` train block)
-        'diffusion': 'models.diffusion.GaussianDiffusion',
+        ## FMv3ODE model + loadpath — copied from plan_fm_v3_ode_selectable
+        'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
+        'action_weight': 10,        # renders '_aw10' -> matches the trained checkpoint
+        'time_beta_alpha_v3': 1.5,  # renders '_a1.5'
+        'time_beta_beta_v3': 1.0,   # renders '_b1.0'
+        'flow_steps_v3': 10,        # K in the results exp_name (not the loadpath)
         'n_diffusion_steps': 20,
-        'flow_steps_v3': 10,
-        'ode_inference_steps_v3': 10,
         'returns_condition': False,
         'predict_epsilon': True,
         'dynamic_loss': False,
         'max_path_length': 150,     # read by fit_dynamics_fmv3's default .npz path
 
-        ## loading — the Gen3 checkpoint, reused verbatim
-        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{flow_steps_v3}_D{diffusion}',
-        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+        'diffusion_loadpath': 'f:flow_matching_v3_ode_selectable/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
 
         'diffusion_epoch': 'best',      # 'latest'
 

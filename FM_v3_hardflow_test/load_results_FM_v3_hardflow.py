@@ -24,8 +24,6 @@ with open(args_cli.config, 'r') as file:
 
 projection_variants = config['projection_variants']
 n_trials = config['n_trials']
-flow_steps = args_cli.flow_steps if args_cli.flow_steps is not None else config['flow_steps']
-run_tag = f'K{flow_steps}_n{n_trials}'
 
 exp = 'avoiding-d3il'
 class Parser(utils.Parser):
@@ -33,6 +31,12 @@ class Parser(utils.Parser):
     config: str = 'config.' + exp
 
 seeds = config['seeds']
+# Eval K now lives in the plan_fm_v3_hardflow block (config/avoiding-d3il.py);
+# --flow-steps overrides which K bucket to report.
+_args0 = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seeds[0])
+flow_steps = args_cli.flow_steps if args_cli.flow_steps is not None else getattr(_args0, 'flow_steps', None)
+run_tag = f'K{flow_steps}_n{n_trials}'
+
 avoiding_halfspace_variants = config['avoiding_halfspace_variants']
 
 sr_goal_all = {}

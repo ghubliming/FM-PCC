@@ -218,3 +218,93 @@ fix_1 doc is the current-state authority. If you copy a submit command, take it 
 not from the init changelog.
 
 Still nothing run.
+
+---
+
+## 8. Eval knobs moved to the plan block; loading locked to FMv3ODE
+
+Two related changes, driven by the user: (a) keep the eval API tidy by putting the loading
+knobs in the plan block like every other generation; (b) load **FMv3ODE only**, since
+`hardflow_new` is only valid for a single-time velocity field.
+
+### 8.1 Knobs relocated to `plan_fm_v3_hardflow` (config/avoiding-d3il.py)
+
+`checkpoint_dir` and `flow_steps` (eval K) now live in the plan block, not the YAML. The eval and
+`load_results` read them from `args`. This removes the two friction points:
+
+- **No `HFFM_FLOW_STEPS=` env var.** `flow_steps` is a plan-block key; the eval sbatch is now a
+  plain `python …` call. CLI `--flow-steps N` still overrides (used to sweep K).
+- **No `checkpoint_dir: null` vs git dance.** It's a committed config value.
+
+The YAML keeps only the experiment knobs (seeds, `n_trials`, `projection_variants`, the `hardflow`
+arm-C block, constraint geometry, plotting). Clean split:
+
+| config/avoiding-d3il.py `plan_fm_v3_hardflow` | config/hardflow_projection_eval.yaml |
+|---|---|
+| which model + loadpath, eval K (`flow_steps`), horizon, results prefix, batch_size (A/B) | seeds, n_trials, arms, constraint geometry, arm-C `hardflow` tuning, plotting |
+
+### 8.2 Loading locked to FMv3ODE, via the FMv3ODE loadpath convention
+
+The init block pointed at a non-existent `flow_matching_v3 / GaussianDiffusion` checkpoint (§6.1).
+Replaced with the **same relative templated loadpath** `plan_fm_v3_ode_selectable` uses, with
+`action_weight=10` so it renders to the real trained folder:
+
+```
+logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/<seed>/
+```
+
+Verified by rendering: the plan block's `diffusion_loadpath` matches the checkpoint folder
+token-for-token. Because it is **relative** (resolved against `logs/` from the repo root on the
+cluster), there is no machine-specific absolute path, so `git pull` never breaks it and
+`checkpoint_dir` can default to `None`.
+
+- `diffusion` = `models.diffusion.FlowMatchingODE`; the checkpoint's own class loads **natively**
+  (`target_class=None` on both load paths) from the `flow_matcher_v3_ode_selectable` package.
+- **Deliberately FMv3ODE-only.** The earlier "load any FMv3-family model (iMF/MeanFlow/…)"
+  generality (§6.4) is withdrawn: `hardflow_new` assumes `v = f(x, t)`, which a two-time iMF/MeanFlow
+  field is not. Comments in the plan block and eval now state FMv3ODE-only.
+- `checkpoint_dir` remains as an **optional absolute-path override** (default `None`) for a
+  non-standard checkpoint location; when set, the eval uses it instead of the templated path.
+
+### 8.3 Verification (static)
+
+- `config/avoiding-d3il.py`, `eval_FM_v3_hardflow.py`, `load_results_FM_v3_hardflow.py` compile.
+- Plan block renders to the exact FMv3ODE checkpoint folder (`aw10`, `a1.5`, `b1.0`, H8).
+- No stale YAML reads of `checkpoint_dir`/`flow_steps` remain; both come from the plan block.
+- Eval + load_results sbatch have no `HFFM_FLOW_STEPS`; `bash -n` passes.
+
+### 8.4 How to run now (no env vars)
+
+```
+# gates once (no checkpoint needed)
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow_fmv3/gates_hardflow_fmv3.sh
+# eval — K and checkpoint come from the plan block
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow_fmv3/eval_fmv3_hardflow_job.sh
+# sweep K without editing config:
+#   for K in 2 5 10; do python FM_v3_hardflow_test/eval_FM_v3_hardflow.py --flow-steps "$K"; done
+```
+
+Still nothing run.
+
+### 8.5 Pointing at a trained FMv3ODE checkpoint — the workflow (confirmed)
+
+Loading a trained model is now **identical to `plan_fm_v3_ode_selectable`**: the Gen12 plan block
+uses the same `diffusion` class and the same relative templated `diffusion_loadpath`; only
+`action_weight` differs (10 vs 1) to render the trained folder. Verified: the two blocks share the
+loadpath template verbatim.
+
+To evaluate a given FMv3ODE checkpoint:
+
+1. In `plan_fm_v3_hardflow` (config/avoiding-d3il.py), set `horizon`, `action_weight`,
+   `time_beta_alpha_v3`, `time_beta_beta_v3` to match the trained folder name — exactly as you
+   would for `plan_fm_v3_ode_selectable`. (For the current `…_a1.5_b1.0_aw10` checkpoint these are
+   already set.)
+2. Set `seeds` in config/hardflow_projection_eval.yaml.
+3. Run the smoke gates (no checkpoint needed) and/or the eval job:
+   ```
+   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow_fmv3/gates_hardflow_fmv3.sh
+   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow_fmv3/eval_fmv3_hardflow_job.sh
+   ```
+
+Preconditions: commit + pull on the cluster (it runs committed code), and the per-seed
+`state_best.pt` must exist under the rendered path (else the eval warns and skips that seed).

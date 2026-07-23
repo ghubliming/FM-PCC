@@ -77,26 +77,19 @@ fi
 cd "$REPO"
 
 # 4) Gen12 evaluation: arms A (unguided) / B (DPCC projection) / C (hardflow_new),
-#    all three in ONE process per K so seeds, env resets and the checkpoint are shared.
+#    all three in ONE process so seeds, env resets and the checkpoint are shared.
 #
-# ⚠️ MATCHED BUDGET OR NOTHING (PLAN §5). In HardFlow, K == ode_t_steps drives BOTH
-# the NFE and the number of NLP solves — it is not a free axis. Gen13's central error
-# was comparing arms at different K, which invalidated a whole round of conclusions.
-# The K grid is therefore built in here rather than left as a config edit somebody
-# has to remember; each K writes its own results directory (K<K>_n<n>), so nothing
-# overwrites anything.
+# All knobs live in config (edit -> submit, no env vars):
+#   - which model + eval K : plan_fm_v3_hardflow block in config/avoiding-d3il.py
+#   - seeds / arms / geometry / arm-C tuning : config/hardflow_projection_eval.yaml
 #
-# Override without editing this file:  HFFM_FLOW_STEPS="10" sbatch ...
-# Re-run a finished directory:         FORCE_OVERWRITE=1 sbatch ...   (PLAN §3.6)
-FLOW_STEPS_GRID="${HFFM_FLOW_STEPS:-2 5 10}"
-echo "[ eval ] matched-K budgets to evaluate: $FLOW_STEPS_GRID"
-echo "[ eval ] FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
-
-for K in $FLOW_STEPS_GRID; do
-    echo "================================================================================"
-    echo "[ eval ] K = $K   ($(date))"
-    echo "================================================================================"
-    python FM_v3_hardflow_test/eval_FM_v3_hardflow.py --flow-steps "$K"
-done
+# ⚠️ MATCHED BUDGET (PLAN §5): the block's `flow_steps` K applies to ALL arms at once,
+# so A/B/C are always compared at equal K. Results go to K<K>_n<n>, so nothing overwrites.
+#
+# To SWEEP K without editing config, pass --flow-steps per value (each its own dir):
+#     for K in 2 5 10; do python FM_v3_hardflow_test/eval_FM_v3_hardflow.py --flow-steps "$K"; done
+# Re-run a finished directory:  FORCE_OVERWRITE=1 sbatch ...   (PLAN §3.6)
+echo "[ eval ] FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}  (K + checkpoint from the plan block)"
+python FM_v3_hardflow_test/eval_FM_v3_hardflow.py
 
 echo "Evaluation completed successfully."

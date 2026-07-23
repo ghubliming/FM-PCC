@@ -49,13 +49,11 @@ n_trials = config['n_trials']
 plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
 hardflow_cfg = config.get('hardflow', {})
-flow_steps_override = args_cli.flow_steps if args_cli.flow_steps is not None else config.get('flow_steps')
 FORCE_OVERWRITE = os.environ.get('FORCE_OVERWRITE', '0') == '1'
-# Direct checkpoint path (default null). Parent of the per-seed subdirs, e.g.
-#   logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_..._aw10
-# When set, Gen12 loads that model's OWN class natively (fmv3ode / meanflow / …).
-# When null, falls back to the templated plan_fm_v3_hardflow.diffusion_loadpath.
-checkpoint_dir = config.get('checkpoint_dir')
+# `checkpoint_dir` and `flow_steps` now live in the plan_fm_v3_hardflow block in
+# config/avoiding-d3il.py (read from `args` inside the seed loop), so the eval has a
+# single tidy control entry. CLI `--flow-steps N` still overrides the block's K.
+flow_steps_cli = args_cli.flow_steps
 
 
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
@@ -121,16 +119,22 @@ for exp in exps:
         axes_all_seeds = list(axes_all_seeds)
         for seed in seeds:
             args = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seed)
+            # checkpoint_dir + eval K come from the plan block (config/avoiding-d3il.py);
+            # CLI --flow-steps overrides K.
+            checkpoint_dir = getattr(args, 'checkpoint_dir', None)
+            flow_steps_override = flow_steps_cli if flow_steps_cli is not None else getattr(args, 'flow_steps', None)
             # ── Which checkpoint to load ─────────────────────────────────────────────
-            # checkpoint_dir set  -> load <checkpoint_dir>/<seed>/ with the pickle's OWN
-            #                        class (target_class=None): fmv3ode / meanflow / etc.
-            # checkpoint_dir null -> templated plan_fm_v3_hardflow.diffusion_loadpath.
+            # Gen12 loads the FMv3ODE checkpoint (FlowMatchingODE). Both paths load the
+            # pickle's OWN class natively (target_class=None): FlowMatchingODE lives in the
+            # flow_matcher_v3_ode_selectable package, not here, so no override is possible
+            # or wanted.
+            #   checkpoint_dir None (default) -> templated FMv3ODE loadpath (relative)
+            #   checkpoint_dir set            -> that absolute <checkpoint_dir>/<seed>/
+            target_class = None
             if checkpoint_dir:
                 loadpath_parts = (checkpoint_dir, str(seed))
-                target_class = None
             else:
                 loadpath_parts = (args.loadbase, args.dataset, args.diffusion_loadpath, str(seed))
-                target_class = args.diffusion
             seed_dir = os.path.join(*loadpath_parts)
             # Warn + skip on a missing/incorrect path instead of crashing the whole job.
             if not os.path.isdir(seed_dir) or not glob.glob(os.path.join(seed_dir, 'state_*.pt')):
@@ -139,12 +143,12 @@ for exp in exps:
                 print(f'            {seed_dir}', file=sys.stderr)
                 if checkpoint_dir:
                     print(f'            checkpoint_dir = {checkpoint_dir}', file=sys.stderr)
-                    print('            Fix `checkpoint_dir` in the eval YAML, or check the seed exists.',
-                          file=sys.stderr)
+                    print('            Fix `checkpoint_dir` in the plan_fm_v3_hardflow block', file=sys.stderr)
+                    print('            (config/avoiding-d3il.py), or check the seed exists.', file=sys.stderr)
                 else:
-                    print('            checkpoint_dir is null (default) and the templated loadpath', file=sys.stderr)
-                    print('            was not found. Set `checkpoint_dir` in', file=sys.stderr)
-                    print('            config/hardflow_projection_eval.yaml to a real path.', file=sys.stderr)
+                    print('            checkpoint_dir is None and the templated loadpath was not', file=sys.stderr)
+                    print('            found. Set `checkpoint_dir` in the plan_fm_v3_hardflow block', file=sys.stderr)
+                    print('            in config/avoiding-d3il.py to a real path.', file=sys.stderr)
                 print(f'            SKIPPING seed {seed}.', file=sys.stderr)
                 print('=' * 80, file=sys.stderr)
                 continue
@@ -173,10 +177,9 @@ for exp in exps:
             if robot_name == 'antmaze': env.env.env.env.ant_env.frame_skip = 5
             obs_indices = config['observation_indices'][robot_name]
             act_indices = config['action_indices'][robot_name]
-            # Route by whether the model plans actions, NOT by class name — a direct-path
-            # checkpoint can be FlowMatchingODE / MeanFlowODE / … not just GaussianDiffusion.
-            # All FMv3 action-planning models expose action_dim > 0; only states-only
-            # (inverse-dynamics) models have action_dim == 0.
+            # Gen12 loads FMv3ODE (FlowMatchingODE), which plans actions (action_dim > 0).
+            # Route by action_dim rather than a hard class-name check so the loaded
+            # FlowMatchingODE takes the states_actions path.
             if getattr(fm_model, 'action_dim', 0) > 0:
                 trajectory_dim = fm_model.transition_dim - fm_model.goal_dim
                 action_dim = fm_model.action_dim

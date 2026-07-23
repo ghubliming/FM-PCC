@@ -75,14 +75,10 @@ fi
 
 cd "$REPO"
 
-# 4) Aggregate one table per matched-K bucket. Buckets are never mixed: --flow-steps
-#    selects exactly one K<K>_n<n> directory (PLAN §5 / Gen13 fix_7).
-FLOW_STEPS_GRID="${HFFM_FLOW_STEPS:-2 5 10}"
-for K in $FLOW_STEPS_GRID; do
-    echo "================================================================================"
-    echo "[ load_results ] K = $K"
-    echo "================================================================================"
-    python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py --flow-steps "$K"
-done
+# 4) Aggregate the table for the plan block's K bucket (K<K>_n<n>). Buckets are never
+#    mixed (PLAN §5 / Gen13 fix_7). If you swept K with --flow-steps in the eval job,
+#    report each bucket the same way here, e.g.:
+#        for K in 2 5 10; do python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py --flow-steps "$K"; done
+python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py
 
 echo "Aggregation completed successfully."
