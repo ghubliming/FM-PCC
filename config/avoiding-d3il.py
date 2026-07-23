@@ -985,6 +985,54 @@ base = {
         'suffix': '0',
     },
 
+    # ── Gen12 (HardFlow → FMv3) ───────────────────────────────────────────────
+    # Eval-ONLY block. Gen12 trains nothing: HardFlow's contribution is entirely
+    # at sampling time (PLAN §1), so this reuses the Gen3 `flow_matching_v3`
+    # checkpoint untouched. Hence `diffusion_loadpath` points at the ORIGINAL
+    # training folder, not at a `flow_matching_v3_hardflow/` one — there is no
+    # such folder and there is not meant to be.
+    #
+    # 🔴 `flow_steps_v3` here is the CHECKPOINT's K (it is part of the load path).
+    # Do NOT edit it to sweep the eval K — that would point at a folder that does
+    # not exist. The eval K is `flow_steps` in config/hardflow_projection_eval.yaml,
+    # which is applied to the model AFTER loading and is recorded in the results
+    # directory name.
+    'plan_fm_v3_hardflow': {
+        'policy': 'sampling.Policy',
+        'max_episode_length': 200,
+        'batch_size': 4,            # arms A/B; arm C uses hardflow.batch_size (default 1)
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+
+        ## serialization
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'plans/flow_matching_v3_hardflow/',
+        'exp_name': watch(args_to_watch_v3),
+
+        ## flow matching v3 model (must mirror the `flow_matching_v3` train block)
+        'diffusion': 'models.diffusion.GaussianDiffusion',
+        'horizon': 8,
+        'n_diffusion_steps': 20,
+        'flow_steps_v3': 10,
+        'ode_inference_steps_v3': 10,
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'max_path_length': 150,     # read by fit_dynamics_fmv3's default .npz path
+
+        ## loading — the Gen3 checkpoint, reused verbatim
+        'diffusion_loadpath': 'f:flow_matching_v3/H{horizon}_K{flow_steps_v3}_D{diffusion}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+
+        'diffusion_epoch': 'best',      # 'latest'
+
+        'verbose': False,
+        'suffix': '0',
+    },
+
     'plan_fm_v3_ode_selectable': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
