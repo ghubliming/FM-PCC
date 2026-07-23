@@ -4,9 +4,11 @@
 **Follows:** [`../init/CHANGELOG_Gen12_coding1.md`](../init/CHANGELOG_Gen12_coding1.md)
 **Nothing committed.**
 
-This fix has two parts: **§1–§5** decouple the eval from `projection_eval.yaml`;
+This fix has three parts: **§1–§5** decouple the eval from `projection_eval.yaml`;
 **§6** replaces the templated loadpath with a direct `checkpoint_dir`, after we found the
-init loadpath pointed at a checkpoint that does not exist / is the wrong model class.
+init loadpath pointed at a checkpoint that does not exist / is the wrong model class;
+**§7** renames the misleading `*_pipeline.sh` (Gen12 has no training) and pins down the
+real-deploy entrypoint.
 
 ---
 
@@ -159,3 +161,60 @@ missing) still evaluates what exists.
 
 Still nothing run. Next cluster step is unchanged (gates first, PLAN §4), but the eval now needs
 `checkpoint_dir` pointed at the real ode_selectable folder to load anything.
+
+---
+
+## 7. "pipeline" renamed — Gen12 has no training
+
+### 7.1 The confusion
+
+In this repo a `*_pipeline.sh` chains **TRAIN → EVAL** (see `AlphaFlow/alphaflow_pipeline.sh`,
+`MeanFlow/meanflow_pipeline.sh`). Gen12 shipped a `hardflow_fmv3_pipeline.sh` — but **Gen12 trains
+nothing** (PLAN §1: it reuses a pre-trained FMv3 checkpoint). The name implied a training stage
+that does not, and should not, exist.
+
+### 7.2 Confirmed: there is zero training surface in Gen12
+
+- `FM_v3_hardflow_test/` has **no train script** — `train_FM_v3.py` was deleted at init
+  (init changelog §2.1). Contents: `eval_FM_v3_hardflow.py`, `gates_hardflow.py`,
+  `fit_dynamics_fmv3.py`, `load_results_FM_v3_hardflow.py`.
+- `Slurm_Codes/sbatch/hardflow_fmv3/` has **no train sbatch**.
+- The chain script itself contains **no train job** (grep `train` → only the "there is NO training
+  job" comment).
+
+So nothing had to be deactivated — the training surface was already absent. The only fix needed
+was the misleading name.
+
+### 7.3 Change
+
+| before | after |
+|---|---|
+| `Slurm_Codes/sbatch/hardflow_fmv3/hardflow_fmv3_pipeline.sh` | `…/hardflow_fmv3_debug_chain.sh` (`git mv`) |
+| `#SBATCH --job-name=hffm_pipeline` | `hffm_debug_chain` |
+| header "Pipeline Master Script" | "DEBUG / BRING-UP CHAIN (NOT a train pipeline)" + why |
+| log banners `PIPELINE START/END` | `DEBUG-CHAIN START/END` |
+
+The chain's behaviour is unchanged: gates → eval → aggregate, `afterok` so a gate failure cancels
+the rest. Only the name and the messaging changed. `bash -n` passes.
+
+### 7.4 The real-deploy entrypoint (the user's question, pinned down)
+
+- **Real deploy = the eval job ALONE.** Once the gates have passed once, submit:
+  ```
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow_fmv3/eval_fmv3_hardflow_job.sh
+  ```
+  This is now stated in the chain's header and echoed at submit time.
+- **`hardflow_fmv3_debug_chain.sh`** is the convenience wrapper for validation / bring-up (it just
+  front-loads the gates and back-loads the aggregation around that same eval job).
+- **`gates_hardflow_fmv3.sh`** — run once after any change to the sampler/layout; needs no checkpoint.
+- **`load_results_hardflow_fmv3.sh`** — aggregation; run after eval.
+- **`fit_dynamics_hardflow_fmv3.sh`** — only if the YAML is switched to `dynamics_mode: linear_fit`.
+
+### 7.5 Stale references left as historical record
+
+`init/CHANGELOG_Gen12_coding1.md` (§6, §14) still names `hardflow_fmv3_pipeline.sh`. Init
+changelogs are historical records of what was built at init time and are **not** rewritten; this
+fix_1 doc is the current-state authority. If you copy a submit command, take it from here (§7.4),
+not from the init changelog.
+
+Still nothing run.
