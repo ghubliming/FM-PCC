@@ -3290,3 +3290,44 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Trajectory Quality vs. Planning Quality Conflict**: Discovered a perfect inverse correlation (Spearman ρ = -1.00) between unguided and guided success across five iMF models. The model with the best raw field (17.5% success) was the worst planner (90.0%), while the model with the worst raw field (0.5%) was the best planner (99.5%). Optimizing the generative field degraded the warm-start smoothness needed by the prox-NLP solver.
 3. **Projection Dominates Task Success**: Confirmed that the NLP projection lifts both backbones from near 0% raw safety to 96–100% guided safety. The generative field determines only the initial guess.
 4. **Blind Direction Mechanism Diagnosed**: Identified a structural "blind direction" of width `h` in the MeanFlow residual (`δ_u = h·δ_D`) that is invisible to the training loss but degrades the sampler. The problem is maximal precisely in the large-`h` (few NFE) regime that the method was intended to optimize.
+
+***
+
+## Gen3v6: MeanFlow Baseline First Successful Run (July 24, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, baseline design, functional smoke, h-stratified metric, training convergence.
+
+1. **Successful End-to-End Run**: The namespace shim worked, allowing MeanFlow to train end-to-end on one seed without crashing. MeanFlow learned a goal-reaching field, and coupled with DPCC hard projection, produced safe control at K=2 NFE (100% goal and constraint satisfaction on three obstacle halfspaces).
+2. **h-Stratified Metric Validation**: The new h-stratified metric localized the field's weak spot, revealing that the large-h regime (h ∈ [0.6, 1.0]) is rarely sampled with the current distribution and thus poorly trained. This validates the need for Gen3v7 (α-Flow) to address the sample scarcity at large h.
+3. **Gradient Clipping Effective**: Pre-clip gradient norms showed massive spikes (up to 28.4), proving that gradient clipping (1.0) is doing real work to stabilize the JVP target's variance.
+
+***
+
+## Gen3v7: α-Flow First Training Curve Insight (July 24, 2026)
+
+**Keywords**: Gen3v7, α-Flow, training curve, blind direction, raw_mse_u, unmatchable target.
+
+1. **Machinery Functional**: The α-Flow annealing schedule worked perfectly, smoothly transitioning from 1.0 to 0.0 without triggering any silent failures.
+2. **Structural Metric Artefacts**: While the `raw_mse_u` curve appeared non-monotone and poor, this was identified as expected behavior because at α=1, the instantaneous velocity target is intentionally unmatchable at large h.
+3. **Blind-Direction Instability Confirmed**: The scientifically interesting signal emerged as α→0 (pure MeanFlow). Instability spikes clustered specifically in the α=0 regime, validating the "blind-direction" phenomenon that Gen3v7 was explicitly built to probe.
+4. **Planning vs. Field Quality**: K=1 evaluation showed the raw generative field reaches the goal but is unsafe, while DPCC projection perfectly restores safety. This confirms the Gen13 CLOSURE I finding that poor MSE does not prevent the projection step from producing a successful planner.
+
+***
+
+## Gen12: G2 Gate τ-Invariance Fix (July 24, 2026)
+
+**Keywords**: Gen12, HardFlow, G2 gate, τ-invariance, IPOPT solver drift.
+
+1. **False-Negative Gate Resolved**: Fixed a failure in the G2 pre-flight gate during its first cluster run. The gate incorrectly asserted bitwise DOF equality across τ, failing because the IPOPT solver is iterative and objective rescaling changes the stopping point of non-binding DOFs.
+2. **Binding-Distance Assertion**: Updated the gate to assert the τ-invariance of the binding distance instead of raw DOF equality. This properly validates the sampler port's integrity while ignoring harmless numerical drift in the solver's free directions.
+
+***
+
+## Gen12: First End-to-End Evaluation at K=20 (July 24, 2026)
+
+**Keywords**: Gen12, HardFlow, constrained sampling, matched-budget, K=20, safety vs speed.
+
+1. **Pipeline Validated**: Conducted a preliminary 6-episode smoke run at K=20 across three arms: Arm A (unguided), Arm B (post-hoc projection), and Arm C (in-loop constrained sampling). The Gen12 port worked end-to-end, achieving exactly the designed NFE and NLP-solve counts.
+2. **Guidance Drives Safety**: Confirmed that the unguided field reaches the goal (100%) but completely fails constraints (0% safe), whereas both constraint mechanisms (B and C) restore 100% safety with 0 violations. The field provides the goal capability, but the projection machinery guarantees safety.
+3. **Safety Ties, Speed Differs**: At K=20, both post-hoc projection and in-loop constrained sampling saturated at 100% task success. However, post-hoc projection (Arm B) was approximately 1.6× faster than in-loop sampling (Arm C). Enforcing constraints during sampling matched post-hoc projection on safety but at a higher computational cost.
+4. **Next Steps**: A full low-K sweep (K ∈ {2, 5, 10}) is required. The high-K regime obscures potential benefits; the true test is whether in-loop guidance can rescue trajectories at low K where post-hoc projection might fail.
