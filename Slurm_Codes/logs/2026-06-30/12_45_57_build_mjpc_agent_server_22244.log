@@ -1,0 +1,385 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+========================================================
+BUILD START: Tue Jun 30 10:45:59 UTC 2026  |  Job 22244  |  i6-gpu-1
+Build dir : /tmp/mjpc_build_22244
+Binary target: /u/home/llim/FMPCC/FM-PCC/third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server
+========================================================
+2 channel Terms of Service accepted
+Channels:
+ - conda-forge
+ - defaults
+Platform: linux-64
+Collecting package metadata (repodata.json): - \ | / - \ | done
+Solving environment: - \ done
+
+
+==> WARNING: A newer version of conda exists. <==
+    current version: 26.1.1
+    latest version: 26.5.3
+
+Please update conda by running
+
+    $ conda update -n base -c defaults conda
+
+
+
+## Package Plan ##
+
+  environment location: /u/home/llim/miniconda3/envs/_mjpc_build
+
+  added / updated specs:
+    - c-compiler
+    - cmake
+    - cxx-compiler
+    - ninja
+    - zlib
+
+
+The following NEW packages will be INSTALLED:
+
+  _openmp_mutex      conda-forge/linux-64::_openmp_mutex-4.5-20_gnu 
+  binutils           conda-forge/linux-64::binutils-2.45.1-default_h4852527_102 
+  binutils_impl_lin~ conda-forge/linux-64::binutils_impl_linux-64-2.45.1-default_hfdba357_102 
+  binutils_linux-64  conda-forge/linux-64::binutils_linux-64-2.45.1-default_h4852527_102 
+  bzip2              conda-forge/linux-64::bzip2-1.0.8-hda65f42_9 
+  c-ares             conda-forge/linux-64::c-ares-1.34.6-hb03c661_0 
+  c-compiler         conda-forge/linux-64::c-compiler-1.11.0-h4d9bdce_0 
+  ca-certificates    conda-forge/noarch::ca-certificates-2026.6.17-hbd8a1cb_0 
+  cmake              conda-forge/linux-64::cmake-4.3.4-hc85cc9f_0 
+  cxx-compiler       conda-forge/linux-64::cxx-compiler-1.11.0-hfcd1e18_0 
+  gcc                conda-forge/linux-64::gcc-14.3.0-h6f77f03_19 
+  gcc_impl_linux-64  conda-forge/linux-64::gcc_impl_linux-64-14.3.0-h235f0fe_19 
+  gcc_linux-64       conda-forge/linux-64::gcc_linux-64-14.3.0-h50e9bb6_27 
+  gxx                conda-forge/linux-64::gxx-14.3.0-h76987e4_19 
+  gxx_impl_linux-64  conda-forge/linux-64::gxx_impl_linux-64-14.3.0-h2185e75_19 
+  gxx_linux-64       conda-forge/linux-64::gxx_linux-64-14.3.0-hd240bd5_27 
+  kernel-headers_li~ conda-forge/noarch::kernel-headers_linux-64-5.14.0-he073ed8_3 
+  keyutils           conda-forge/linux-64::keyutils-1.6.3-hb9d3cd8_0 
+  krb5               conda-forge/linux-64::krb5-1.22.2-hbde042b_1 
+  ld_impl_linux-64   conda-forge/linux-64::ld_impl_linux-64-2.45.1-default_hbd61a6d_102 
+  libcurl            conda-forge/linux-64::libcurl-8.21.0-hcf29cc6_1 
+  libedit            conda-forge/linux-64::libedit-3.1.20250104-pl5321h7949ede_0 
+  libev              conda-forge/linux-64::libev-4.33-hd590300_2 
+  libexpat           conda-forge/linux-64::libexpat-2.8.1-hecca717_1 
+  libgcc             conda-forge/linux-64::libgcc-15.2.0-he0feb66_19 
+  libgcc-devel_linu~ conda-forge/noarch::libgcc-devel_linux-64-14.3.0-hf649bbc_119 
+  libgcc-ng          conda-forge/linux-64::libgcc-ng-15.2.0-h69a702a_19 
+  libgomp            conda-forge/linux-64::libgomp-15.2.0-he0feb66_19 
+  liblzma            conda-forge/linux-64::liblzma-5.8.3-hb03c661_0 
+  libnghttp2         conda-forge/linux-64::libnghttp2-1.68.1-h877daf1_0 
+  libsanitizer       conda-forge/linux-64::libsanitizer-14.3.0-h8f1669f_19 
+  libssh2            conda-forge/linux-64::libssh2-1.11.1-hcf80075_0 
+  libstdcxx          conda-forge/linux-64::libstdcxx-15.2.0-h934c35e_19 
+  libstdcxx-devel_l~ conda-forge/noarch::libstdcxx-devel_linux-64-14.3.0-h9f08a49_119 
+  libuv              conda-forge/linux-64::libuv-1.52.1-h280c20c_0 
+  libzlib            conda-forge/linux-64::libzlib-1.3.2-h25fd6f3_2 
+  ncurses            conda-forge/linux-64::ncurses-6.6-hdb14827_0 
+  ninja              conda-forge/linux-64::ninja-1.13.2-h171cf75_0 
+  openssl            conda-forge/linux-64::openssl-3.6.3-h35e630c_0 
+  rhash              conda-forge/linux-64::rhash-1.4.6-hb9d3cd8_1 
+  sysroot_linux-64   conda-forge/noarch::sysroot_linux-64-2.34-h087de78_3 
+  tzdata             conda-forge/noarch::tzdata-2025c-hc9c84f9_1 
+  zlib               conda-forge/linux-64::zlib-1.3.2-h25fd6f3_2 
+  zstd               conda-forge/linux-64::zstd-1.5.7-hb78ec9c_6 
+
+
+
+Downloading and Extracting Packages: ...working... done
+Preparing transaction: / - \ done
+Verifying transaction: / - \ | / - \ | / - \ | / done
+Executing transaction: \ | / - \ | done
+#
+# To activate this environment, use
+#
+#     $ conda activate _mjpc_build
+#
+# To deactivate an active environment, use
+#
+#     $ conda deactivate
+
+Cloning into '/tmp/mjpc_build_22244/mujoco_mpc'...
+-- The C compiler identification is GNU 14.3.0
+-- The CXX compiler identification is GNU 14.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /u/home/llim/miniconda3/envs/_mjpc_build/bin/x86_64-conda-linux-gnu-cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /u/home/llim/miniconda3/envs/_mjpc_build/bin/x86_64-conda-linux-gnu-c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CAN_BUILD_AVX
+-- Performing Test CAN_BUILD_AVX - Success
+-- Performing Test SUPPORTS_LLD
+-- Performing Test SUPPORTS_LLD - Failed
+-- Performing Test SUPPORTS_GOLD
+-- Performing Test SUPPORTS_GOLD - Success
+-- Performing Test SUPPORTS_GC_SECTIONS
+-- Performing Test SUPPORTS_GC_SECTIONS - Success
+-- Found Python: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- mujoco::FindOrFetch: checking for targets in package `mujoco`
+-- mujoco::FindOrFetch: checking for targets in package `mujoco` - target `mujoco::mujoco` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `mujoco`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(mujoco) is deprecated, call
+  FetchContent_MakeAvailable(mujoco) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(mujoco) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  CMakeLists.txt:73 (findorfetch)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(lodepng) is deprecated, call
+  FetchContent_MakeAvailable(lodepng) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(lodepng) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:102 (FetchContent_Populate)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(marchingcubecpp) is deprecated, call
+  FetchContent_MakeAvailable(marchingcubecpp) instead.  Policy CMP0169 can be
+  set to OLD to allow FetchContent_Populate(marchingcubecpp) to be called
+  directly for now, but the ability to call it with declared details will be
+  removed completely in a future version.
+Call Stack (most recent call first):
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:122 (FetchContent_Populate)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- mujoco::FindOrFetch: checking for targets in package `qhull`
+-- mujoco::FindOrFetch: checking for targets in package `qhull` - target `qhull` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `qhull`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(qhull) is deprecated, call
+  FetchContent_MakeAvailable(qhull) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(qhull) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:129 (findorfetch)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Deprecation Warning at build/_deps/qhull-src/CMakeLists.txt:70 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for inttypes.h
+-- Looking for inttypes.h - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Check size of off_t
+-- Check size of off_t - done
+-- Looking for fseeko
+-- Looking for fseeko - found
+-- Looking for ftello
+-- Looking for ftello - found
+-- Looking for PRIdMAX
+-- Looking for PRIdMAX - found
+-- 
+-- ========== qhull Build Information ==========
+-- Build Version:                             8.1-alpha1
+-- Install Prefix (CMAKE_INSTALL_PREFIX):     /usr/local
+-- Binary Directory (BIN_INSTALL_DIR):        bin
+-- Library Directory (LIB_INSTALL_DIR):       lib
+-- Include Directory (INCLUDE_INSTALL_DIR):   include
+-- Documentation Directory (DOC_INSTALL_DIR): share/doc/qhull
+-- Man Pages Directory (MAN_INSTALL_DIR):     share/man/man1
+-- CMake Directory (CMAKE_INSTALL_DIR):       lib/cmake/QHull
+-- PkgConfig Directory (PKGCONFIG_INSTALL_DIR):lib/pkgconfig
+-- Build Type (CMAKE_BUILD_TYPE):             Release
+-- Build static libraries:                    ON
+-- Build shared library:                      OFF
+-- Use shared library for linking apps:       OFF
+-- Build tests:				   OFF
+-- To override these options, add -D{OPTION_NAME}=... to the cmake command
+--   Build the debug targets                  -DCMAKE_BUILD_TYPE=Debug
+-- 
+-- To build and install qhull, enter "make" and "make install"
+-- To smoketest qhull, enter "ctest"
+-- 
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `qhull` - Done
+-- mujoco::FindOrFetch: checking for targets in package `tinyxml2`
+-- mujoco::FindOrFetch: checking for targets in package `tinyxml2` - target `tinyxml2` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `tinyxml2`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(tinyxml2) is deprecated, call
+  FetchContent_MakeAvailable(tinyxml2) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(tinyxml2) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:153 (findorfetch)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `tinyxml2` - Done
+-- mujoco::FindOrFetch: checking for targets in package `tinyobjloader`
+-- mujoco::FindOrFetch: checking for targets in package `tinyobjloader` - target `tinyobjloader` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `tinyobjloader`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(tinyobjloader) is deprecated, call
+  FetchContent_MakeAvailable(tinyobjloader) instead.  Policy CMP0169 can be
+  set to OLD to allow FetchContent_Populate(tinyobjloader) to be called
+  directly for now, but the ability to call it with declared details will be
+  removed completely in a future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:171 (findorfetch)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Deprecation Warning at build/_deps/tinyobjloader-src/CMakeLists.txt:5 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `tinyobjloader` - Done
+-- mujoco::FindOrFetch: checking for targets in package `sdflib`
+-- mujoco::FindOrFetch: checking for targets in package `sdflib` - target `SdfLib` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `sdflib`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(sdflib) is deprecated, call
+  FetchContent_MakeAvailable(sdflib) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(sdflib) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:190 (findorfetch)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(glm_lib) is deprecated, call
+  FetchContent_MakeAvailable(glm_lib) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(glm_lib) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  build/_deps/sdflib-src/libs/CMakeLists.txt:13 (FetchContent_Populate)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Deprecation Warning at build/_deps/glm_lib-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+CMake Deprecation Warning at build/_deps/glm_lib-src/CMakeLists.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- GLM is a header only library, no need to build it. Set the option GLM_TEST_ENABLE with ON to build and run the test bench
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(spdlog_lib) is deprecated, call
+  FetchContent_MakeAvailable(spdlog_lib) instead.  Policy CMP0169 can be set
+  to OLD to allow FetchContent_Populate(spdlog_lib) to be called directly for
+  now, but the ability to call it with declared details will be removed
+  completely in a future version.
+Call Stack (most recent call first):
+  build/_deps/sdflib-src/libs/CMakeLists.txt:67 (FetchContent_Populate)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Build spdlog: 1.9.2
+-- Build type: Release
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(cereal_lib) is deprecated, call
+  FetchContent_MakeAvailable(cereal_lib) instead.  Policy CMP0169 can be set
+  to OLD to allow FetchContent_Populate(cereal_lib) to be called directly for
+  now, but the ability to call it with declared details will be removed
+  completely in a future version.
+Call Stack (most recent call first):
+  build/_deps/sdflib-src/libs/CMakeLists.txt:81 (FetchContent_Populate)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `sdflib` - Done
+-- mujoco::FindOrFetch: checking for targets in package `ccd`
+-- mujoco::FindOrFetch: checking for targets in package `ccd` - target `ccd` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `ccd`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(ccd) is deprecated, call
+  FetchContent_MakeAvailable(ccd) instead.  Policy CMP0169 can be set to OLD
+  to allow FetchContent_Populate(ccd) to be called directly for now, but the
+  ability to call it with declared details will be removed completely in a
+  future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  build/_deps/mujoco-src/cmake/MujocoDependencies.cmake:210 (findorfetch)
+  build/_deps/mujoco-src/CMakeLists.txt:53 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Deprecation Warning at build/_deps/ccd-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Performing Test COMPILER_SUPPORTS_VISIBILITY
+-- Performing Test COMPILER_SUPPORTS_VISIBILITY - Success
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `ccd` - Done
+-- mujoco::FindOrFetch: checking for targets in package `mujoco`
+-- mujoco::FindOrFetch: checking for targets in package `mujoco` - found
+-- mujoco::FindOrFetch: checking for targets in package `glfw3`
+-- mujoco::FindOrFetch: checking for targets in package `glfw3` - target `glfw` not defined.
+-- mujoco::FindOrFetch: Using FetchContent to retrieve `glfw3`
+CMake Warning (dev) at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(glfw3) is deprecated, call
+  FetchContent_MakeAvailable(glfw3) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(glfw3) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/FindOrFetch.cmake:126 (FetchContent_Populate)
+  build/_deps/mujoco-src/simulate/cmake/SimulateDependencies.cmake:77 (findorfetch)
+  build/_deps/mujoco-src/simulate/CMakeLists.txt:64 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Using X11 for window creation
+CMake Error at /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FindPackageHandleStandardArgs.cmake:290 (message):
+  Could NOT find X11 (missing: X11_X11_LIB)
+Call Stack (most recent call first):
+  /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FindPackageHandleStandardArgs.cmake:654 (_FPHSA_FAILURE_MESSAGE)
+  /u/home/llim/miniconda3/envs/_mjpc_build/share/cmake-4.3/Modules/FindX11.cmake:697 (find_package_handle_standard_args)
+  build/_deps/glfw3-src/CMakeLists.txt:208 (find_package)
+
+
+-- Configuring incomplete, errors occurred!

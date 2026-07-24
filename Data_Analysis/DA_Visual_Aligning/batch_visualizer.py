@@ -15,9 +15,9 @@ from config import PLOT_CONFIG
 logger = logging.getLogger(__name__)
 
 CANDIDATE_COLORS = {
-    'A': '#e74c3c', 'B': '#f39c12', 'C': '#f1c40f', 'D': '#3498db',
-    'E': '#2ecc71', 'F': '#9b59b6', 'G': '#1abc9c', 'H': '#e67e22',
-    'I': '#34495e', 'J': '#c0392b',
+    1: '#e74c3c', 2: '#f39c12', 3: '#f1c40f', 4: '#3498db',
+    5: '#2ecc71', 6: '#9b59b6', 7: '#1abc9c', 8: '#e67e22',
+    9: '#34495e', 10: '#c0392b',
 }
 
 

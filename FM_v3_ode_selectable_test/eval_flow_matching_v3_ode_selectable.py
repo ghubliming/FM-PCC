@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import flow_matcher_v3_ode_selectable.utils as utils
 from flow_matcher_v3_ode_selectable.sampling.policies import Policy
 from flow_matcher_v3_ode_selectable.sampling.projection import Projector
+# REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 import sys
 import argparse
@@ -244,7 +247,8 @@ for exp in exps:
                     policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
                     fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
                     fig.suptitle(f'{exp} - {variant}')
-                    save_samples_every = args.horizon // 2
+                    save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
+                    plot_samples_every = max(1, args.horizon // 2)  # fix_1.2: keep PLOT readable - draw foresight fan only every H/2 steps (npz still saves every step)
                     sampled_trajectories_all = []
                     n_success = np.zeros(n_trials)
                     n_success_and_constraints = np.zeros(n_trials)
@@ -279,6 +283,13 @@ for exp in exps:
                         action_buffer = []
                         sampled_trajectories = []
                         disable_projection = False
+                        # REAL_TIME_RECORDING_UPDATE — one recorder per rollout episode.
+                        rt_rec = RTRecorder(episode_id=f'{exp}_{variant}_seed{seed}_trial{i}',
+                                            variant=variant, scene=exp,
+                                            system='FMv3ODE_selectable',
+                                            control_hz=RT_CONTROL_HZ,
+                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            text_log=config.get('write_to_file', True))
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
                             if 'halfspace' in constraint_types:
@@ -302,7 +313,13 @@ for exp in exps:
                             n_violations[i] += violated_this_timestep
                             start = time.time()
                             action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
-                            avg_time[i] += time.time() - start
+                            _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
+                            avg_time[i] += _rt_total_ms / 1e3
+                            # REAL_TIME_RECORDING_UPDATE — record per-step timing (proj bundled inside policy()).
+                            rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
+                                        action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
+                                        proj_active=(variant != 'diffuser' and not disable_projection),
+                                        contact=bool(violated_this_timestep), step_idx=_)
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
                                 obs, rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
@@ -333,7 +350,13 @@ for exp in exps:
                         
                         obs_all.append(np.array(obs_buffer))
                         act_all.append(np.array(action_buffer))
-                        
+                        # REAL_TIME_RECORDING_UPDATE — write per-episode realtime_<variant>_trial<i>.log + SUMMARY.
+                        if config.get('write_to_file', True):
+                            rt_rec.save(f'{save_path}/realtime_{variant}_trial{i}.log',
+                                        behaviour={'success': int(n_success[i]),
+                                                   'n_steps': int(n_steps[i]),
+                                                   'violations': int(n_violations[i])})
+
                         sampled_trajectories_all.append(sampled_trajectories)
                         if i >= plot_how_many: continue
                         plot_states = ['x', 'y', 'x_des', 'y_des']
@@ -349,7 +372,7 @@ for exp in exps:
                         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
                         axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
                         axes = [ax[i, 5], ax_all[i, variant_idx]]
-                        for __ in range(len(sampled_trajectories_all[i])):
+                        for __ in range(0, len(sampled_trajectories_all[i]), plot_samples_every):
                             for ___ in range(min(args.batch_size, 4)):
                                 for curr_ax in axes:
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')

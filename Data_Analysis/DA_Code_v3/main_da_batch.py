@@ -175,7 +175,24 @@ def main():
         if args.seeds:
             seeds = [int(s.strip()) for s in args.seeds.split(',')]
         
-        candidates = discover_candidates_recursive(args.parent_path, seed_list=seeds, max_depth=10)
+        # Support comma-separated parent paths so multiple experiment trees can be
+        # compared in one run (e.g. "logs/avoiding-d3il/plans,logs/avoiding-d3il-visual/plans").
+        _parent_paths = [p.strip() for p in args.parent_path.split(',')]
+        if len(_parent_paths) == 1:
+            candidates = discover_candidates_recursive(_parent_paths[0], seed_list=seeds, max_depth=10)
+        else:
+            _all_infos = []
+            for _p in _parent_paths:
+                _c = discover_candidates_recursive(_p, seed_list=seeds, max_depth=10)
+                _all_infos.extend(_c.values())
+            _all_infos.sort(key=lambda x: x['path'])   # stable ordering across runs
+            # Integer keys (1-based), matching discover_candidates_recursive's own
+            # convention (multi_candidate_discovery.py: cand_idx = letter_index + 1).
+            # The old chr(ord('A') + i) scheme overflowed past 'Z' (26 letters) into raw
+            # ASCII punctuation for combined runs with >26 candidates, producing
+            # filesystem-unsafe labels (e.g. a literal '\') that broke BatchDataLoader/
+            # BatchVisualizer once those were migrated to expect int keys (8c20b7d).
+            candidates = {i + 1: info for i, info in enumerate(_all_infos)}
         
         if not candidates:
             logger.error("No candidates found. Exiting.")

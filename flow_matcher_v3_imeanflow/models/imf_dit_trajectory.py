@@ -345,8 +345,13 @@ class IMFDiTTrajectory(nn.Module):
         tmin_tok = self.t_min_tokens[None] + self.cfg_t_start_embedder(self._as_batched(t_min, b, dev))[:, None]
         tmax_tok = self.t_max_tokens[None] + self.cfg_t_end_embedder(self._as_batched(t_max, b, dev))[:, None]
 
-        # class token: y=0 (sole conditioning class) normally; null index on CFG dropout
-        y_idx = torch.full((b,), self.num_classes if force_dropout else 0, dtype=torch.long, device=dev)
+        # class token: y=0 (sole conditioning class) normally; null index on CFG dropout.
+        # U10 (W5): force_dropout may be a PER-SAMPLE bool tensor [b] (official cond_drop needs
+        # per-row null selection) OR a plain bool (legacy batch-wide). Both supported.
+        if torch.is_tensor(force_dropout):
+            y_idx = (force_dropout.to(dev).reshape(b) != 0).long() * self.num_classes
+        else:
+            y_idx = torch.full((b,), self.num_classes if force_dropout else 0, dtype=torch.long, device=dev)
         class_tok = self.class_tokens[None] + self.y_embedder(y_idx)[:, None]
 
         return torch.cat([class_tok, omega_tok, tmin_tok, tmax_tok, time_tok, x_embed], dim=1)

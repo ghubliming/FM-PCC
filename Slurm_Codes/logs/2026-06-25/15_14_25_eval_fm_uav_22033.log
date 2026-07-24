@@ -1,0 +1,81 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jun 25 13:14:26 UTC 2026  |  eval_fm_uav  |  ID 22033  |  NODE i6-gpu-1
+SCENE: corridor   SEEDS: 6   N_TRIALS: 2
+GIT REV:   a1b1738
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=corridor seed=6  Thu Jun 25 13:14:27 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene corridor --seed 6 --n-trials 2 --projection fm_only --record gif
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-corridor/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+
+
+                    [ utils/normalization ] Constant data in dimension 1 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 9)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 9)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] corridor: variants=['diffuser', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+[ eval ] corridor variant=diffuser (B=4, proj=off, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=80.625  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/diffuser/
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 492, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 479, in main
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 479, in <dictcomp>
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 467, in eval_scene
+    summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 407, in _run_variant
+    r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 288, in rollout_one
+    action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/sampling/policies.py", line 46, in __call__
+    samples, infos = self.model(conditions, returns=returns, projector=projector, constraints=constraints, horizon=horizon, **self.sample_kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/models/diffusion.py", line 371, in forward
+    return self.conditional_sample(cond=cond, *args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/models/diffusion.py", line 293, in conditional_sample
+    return self.p_sample_loop(shape, cond, returns, *args, **kwargs)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/models/diffusion.py", line 265, in p_sample_loop
+    x[:, :, :-self.goal_dim], projection_costs = projector.project(x[:, :, :-self.goal_dim], constraints)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/sampling/projection.py", line 88, in project
+    r = - trajectory_reshaped @ self.Q
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (4x88 and 96x96)
+Exception ignored in: <function GLContext.__del__ at 0x7f3a53289900>
+Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 130, in __del__
+    self.free()
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/mujoco/egl/__init__.py", line 123, in free
+    EGL.eglMakeCurrent(EGL_DISPLAY, EGL.EGL_NO_SURFACE,
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglMakeCurrent,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f3a53268bc0>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f3a53d9af40>,
+		<OpenGL._opaque.EGLSurface_pointer object at 0x7f3a53d9af40>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f3a53d9aec0>,
+	),
+	result = 0
+)
+JOB END: Thu Jun 25 13:15:21 UTC 2026

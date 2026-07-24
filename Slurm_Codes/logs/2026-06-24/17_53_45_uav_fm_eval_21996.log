@@ -1,0 +1,32 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jun 24 23:27:00 UTC 2026  |  uav_fm_eval  |  ID 21996  |  NODE i6-gpu-1
+SCENE: corridor   SEEDS: 6   N_TRIALS: 20
+GIT REV:   f512dbf
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=corridor seed=6  Wed Jun 24 23:27:00 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene corridor --seed 6 --n-trials 20 --projection fm_only --record none
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-corridor/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+
+
+                    [ utils/normalization ] Constant data in dimension 1 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 9)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 9)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] corridor seed=6 proj=fm_only: success=0.000  contact=0.000  fm_ms(mean/p95)=85.4/88.0
+         → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/fm_only/  (results.json, fm_only.npz, fm_only.png, eval_fm_only.log, diagnostics/)
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=corridor for seeds=[6]
+JOB END: Wed Jun 24 23:34:32 UTC 2026

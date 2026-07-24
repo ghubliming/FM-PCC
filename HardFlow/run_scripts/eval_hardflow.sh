@@ -1,0 +1,75 @@
+#!/bin/bash
+# Evaluate HardFlow on the "avoiding" task.
+# HardFlow steers the sampler so the planned trajectory avoids all obstacles
+# and heads to the target.
+start_time=$(date +%s)
+
+export D4RL_SUPPRESS_IMPORT_ERROR=1
+
+env="avoiding-v0"
+state_dim=4
+action_dim=2
+
+flow_type="cfm"
+horizon=16
+flow_cp=20
+ode_t_steps=10
+
+random_repeat=50
+controller="rh"
+replan_steps=8
+
+warmstart_batch=1
+
+# warm-start trajectory + value model used inside the per-step optimization
+value_objective="distance"
+value_objective_scale=0.1
+value_constraint_scale=10.0
+
+# HardFlow surrogate optimization
+constraint="novel"
+obstacle_margin=0.02
+cost="distance"
+cost_scale=2500.0
+hardflow_cost_scale=100.0
+hardflow_activation="all"
+solver_print_level=5
+
+exp_name="H${horizon}_1e6steps_hardflow_${ode_t_steps}steps"
+
+echo "=== Running HardFlow on ${env}, horizon=${horizon}, ode_t_steps=${ode_t_steps} ==="
+
+python run/eval.py \
+	--device cuda:0 \
+	--seed 0 \
+	--random_repeat "$random_repeat" \
+	--exp_name "$exp_name" \
+	--env "$env" \
+	--state_dim "$state_dim" \
+	--action_dim "$action_dim" \
+	--horizon "$horizon" \
+	--flow_exp_name "H${horizon}_1e6steps" \
+	--flow_cp "$flow_cp" \
+	--flow_matching_type "$flow_type" \
+	--ode_t_steps "$ode_t_steps" \
+	--warmstart_batch "$warmstart_batch" \
+	--value_objective "$value_objective" \
+	--value_objective_scale "$value_objective_scale" \
+	--value_constraint_scale "$value_constraint_scale" \
+	--solver_print_level "$solver_print_level" \
+	--constraint "$constraint" \
+	--cost "$cost" \
+	--cost_scale "$cost_scale" \
+	--hardflow_cost_scale "$hardflow_cost_scale" \
+	--obstacle_margin "$obstacle_margin" \
+	--dynamics_constraint \
+	--controller "$controller" \
+	--replan_steps "$replan_steps" \
+	--hardflow_activation "$hardflow_activation" \
+	--no-render \
+	--guidance_method hardflow
+
+end_time=$(date +%s)
+elapsed=$((end_time - start_time))
+printf "Total runtime: %dh %dm %ds\n" \
+	$((elapsed / 3600)) $(( (elapsed % 3600) / 60 )) $((elapsed % 60))

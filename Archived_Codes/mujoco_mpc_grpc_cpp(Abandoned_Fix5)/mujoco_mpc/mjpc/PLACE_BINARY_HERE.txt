@@ -1,0 +1,9 @@
+Put the compiled agent_server binary here:
+  third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server
+
+Build it on the cluster from the mujoco_mpc repo:
+  cd /path/to/mujoco_mpc
+  mkdir build && cd build
+  cmake .. -DMJPC_BUILD_GRPC_SERVICE=ON -DCMAKE_BUILD_TYPE=Release
+  cmake --build . --target agent_server -j$(nproc)
+  cp bin/agent_server <FM-PCC>/third_party/mujoco_mpc/mujoco_mpc/mjpc/agent_server

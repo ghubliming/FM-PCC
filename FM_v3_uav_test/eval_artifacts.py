@@ -2,8 +2,8 @@
 
 Restores the FMv3-ODE-style output set for the UAV closed-loop eval:
 per-(scene,seed,projection) `<variant>.npz` + `eval_<variant>.log` + 2-D overview
-`<variant>.png`/`all.png` + per-rollout `diagnostics/rollout_<r>_stats.json` +
-optional `rollout_<r>.gif`.
+`<variant>.png` + per-rollout `diagnostics/rollout_<r>_stats.json` +
+optional `rollout_<r>.gif`. (Fix_14 dropped the redundant per-variant `all.png` duplicate.)
 
 SCOPE (see U3 PLAN): originally only the `fm_only` / diffuser baseline, with
 constraint/PCC fields scaffolded as placeholders so the Epoch-7 DPCC work would be a
@@ -38,31 +38,83 @@ def json_safe_rollouts(rollouts):
 def save_npz(out_dir, variant, rollouts, args_dict):
     """Write `<variant>.npz` matching the legacy FMv3ODE schema analysis scripts expect.
 
-    Real keys: n_success, n_success_and_constraints, n_steps, n_violations, total_violations,
-    obs_all, act_all, sampled_trajectories_all, args. (E7: constraint metrics are now taken
-    from the rollouts; with dynamics-only they are clean/zero — per-scene geometry fills them.)
+    Fix_10 (2/2): array names are group-prefixed to match rollout_one's nested JSON schema
+    (`physical`/`constraint`/`goal`/`success` groups), and the physical/goal metrics that were
+    always computed but never persisted to NPZ (only the constraint-axis ones were) are now
+    saved too — the same "share metrics between the per-rollout JSON and the aggregate-across-
+    trials NPZ" mapping, e.g. JSON `physical.safe` <-> NPZ `phys_safe`, JSON
+    `constraint.n_violations` <-> NPZ `constraint_n_violations`, JSON `success.strict` <-> NPZ
+    `success_strict`. NPZ itself stays flat (np.savez has no native nesting); only the key
+    names + the added arrays changed. See
+    logs_in_develop/Gen11/Epoch9_PCC_Constraints/Fix_10_json_metrics/PLAN_fix10_2_json_schema_redesign.md
+    This is a UAV-only rename/addition — avoiding/visual-aligining's own npz writers untouched.
+
+    Real keys: success_strict, success_relaxed, success_strict_and_constraints,
+    success_relaxed_and_constraints, n_steps, phys_safe, phys_contact_frac, phys_min_z,
+    phys_final_z, constraint_collision_free, constraint_n_violations,
+    constraint_total_violations, goal_reached, goal_dist, goal_crossed_line, obs_all, act_all,
+    sampled_trajectories_all, args.
     """
-    n = len(rollouts)
-    n_success = np.array([1.0 if r.get('success') else 0.0 for r in rollouts])
+    def _f(r, group, key, default=0.0):
+        return float(r.get(group, {}).get(key, default))
+
+    def _b(r, group, key):
+        return 1.0 if r.get(group, {}).get(key) else 0.0
+
     n_steps = np.array([r.get('n_fm_steps', 0) for r in rollouts], dtype=float)
     obs_all = np.array([np.asarray(r.get('obs_traj', [])) for r in rollouts], dtype=object)
     act_all = np.array([np.asarray(r.get('act_traj', [])) for r in rollouts], dtype=object)
     plans_all = np.array([np.asarray(r.get('plans', [])) for r in rollouts], dtype=object)
 
-    # ── Constraint-aware metrics (from rollouts; dynamics-only → trivially clean) ──
-    n_success_and_constraints = np.array(
-        [1.0 if r.get('success_and_constraints') else 0.0 for r in rollouts])
-    n_violations = np.array([r.get('n_violations', 0) for r in rollouts], dtype=float)
-    total_violations = np.array([r.get('total_violations', 0.0) for r in rollouts], dtype=float)
+    # ── success (2x2 matrix, same 4 fields as the JSON `success` group) ──────────
+    success_strict = np.array([_b(r, 'success', 'strict') for r in rollouts])
+    success_relaxed = np.array([_b(r, 'success', 'relaxed') for r in rollouts])
+    success_strict_and_constraints = np.array([_b(r, 'success', 'strict_and_constraints') for r in rollouts])
+    success_relaxed_and_constraints = np.array([_b(r, 'success', 'relaxed_and_constraints') for r in rollouts])
+
+    # ── physical (Axis A, hard MuJoCo contact truth) — NEW, was never persisted before ──
+    phys_safe = np.array([_b(r, 'physical', 'safe') for r in rollouts])
+    phys_contact_frac = np.array([_f(r, 'physical', 'contact_frac') for r in rollouts])
+    phys_min_z = np.array([_f(r, 'physical', 'min_z') for r in rollouts])
+    phys_final_z = np.array([_f(r, 'physical', 'final_z') for r in rollouts])
+
+    # ── constraint (Axis B, declared-margin truth; dynamics-only → trivially clean) ──
+    constraint_collision_free = np.array([_b(r, 'constraint', 'collision_free') for r in rollouts])
+    constraint_n_violations = np.array([_f(r, 'constraint', 'n_violations') for r in rollouts])
+    constraint_total_violations = np.array([_f(r, 'constraint', 'total_violations') for r in rollouts])
+
+    # ── goal — NEW, was never persisted before ───────────────────────────────────
+    goal_reached = np.array([_b(r, 'goal', 'reached') for r in rollouts])
+    goal_dist = np.array([_f(r, 'goal', 'dist') for r in rollouts])
+    goal_crossed_line = np.array([_b(r, 'goal', 'crossed_line') for r in rollouts])
+
+    # ── projection health (Fix_15.3) — flag rollouts whose projection was ABANDONED ──
+    # by the sustained-slowness circuit breaker (projection.py Fix_15.2). A tripped rollout
+    # ran (partly) on the UNPROJECTED trajectory, so its constraint metrics are NOT valid —
+    # downstream analysis MUST treat projection_cb_tripped==1 rows as "projection broken".
+    projection_cb_tripped = np.array([_b(r, 'projection_health', 'cb_tripped') for r in rollouts])
+    projection_cb_skipped_steps = np.array([_f(r, 'projection_health', 'cb_skipped_steps') for r in rollouts])
 
     path = os.path.join(out_dir, f'{variant}.npz')
     np.savez(
         path,
-        n_success=n_success,
-        n_success_and_constraints=n_success_and_constraints,
+        success_strict=success_strict,
+        success_relaxed=success_relaxed,
+        success_strict_and_constraints=success_strict_and_constraints,
+        success_relaxed_and_constraints=success_relaxed_and_constraints,
         n_steps=n_steps,
-        n_violations=n_violations,
-        total_violations=total_violations,
+        phys_safe=phys_safe,
+        phys_contact_frac=phys_contact_frac,
+        phys_min_z=phys_min_z,
+        phys_final_z=phys_final_z,
+        constraint_collision_free=constraint_collision_free,
+        constraint_n_violations=constraint_n_violations,
+        constraint_total_violations=constraint_total_violations,
+        goal_reached=goal_reached,
+        goal_dist=goal_dist,
+        goal_crossed_line=goal_crossed_line,
+        projection_cb_tripped=projection_cb_tripped,               # Fix_15.3
+        projection_cb_skipped_steps=projection_cb_skipped_steps,   # Fix_15.3
         obs_all=obs_all,
         act_all=act_all,
         sampled_trajectories_all=plans_all,
@@ -103,7 +155,10 @@ def plot_overview(out_dir, variant, scene, rollouts):
         if obs.ndim != 2 or obs.shape[0] == 0:
             continue
         x, y, z = obs[:, P_X], obs[:, P_Y], obs[:, P_Z]
-        color = _homotopy_color(r.get('homotopy', '?'), palette) if _homotopy_color else None
+        # Fix_12: color by the class ACTUALLY flown when available (pillars) — the commanded
+        # `homotopy` label is only the expert route's tag; the unconditioned FM picks its own.
+        _hlabel = r.get('homotopy_flown') or r.get('homotopy', '?')
+        color = _homotopy_color(_hlabel, palette) if _homotopy_color else None
         ax_xy.plot(x, y, color=color, lw=1.5, alpha=0.8)
         ax_xy.plot(x[0], y[0], 'o', color='#2ca02c', ms=5, zorder=5)   # start
         ax_xz.plot(x, z, color=color, lw=1.5, alpha=0.8)
@@ -122,10 +177,21 @@ def plot_overview(out_dir, variant, scene, rollouts):
 
     fig.suptitle(f'UAV FM eval — {scene} — variant={variant} — {len(rollouts)} trials',
                  fontsize=13)
+    # Fix_15.3: flag if the projection circuit breaker tripped on ANY trial of this variant.
+    _n_tripped = sum(1 for r in rollouts if (r.get('projection_health') or {}).get('cb_tripped'))
+    if _n_tripped:
+        fig.text(0.5, 0.95,
+                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on {_n_tripped}/{len(rollouts)} trials '
+                 f'— those paths are UNPROJECTED (sustained SLSQP slowness)',
+                 color='white', backgroundcolor='crimson', fontsize=11, fontweight='bold',
+                 ha='center', va='center')
     fig.tight_layout()
     main = os.path.join(out_dir, f'{variant}.png')
     fig.savefig(main, dpi=130)
-    fig.savefig(os.path.join(out_dir, 'all.png'), dpi=130)   # aggregate alias (single-seed)
+    # Fix_14: dropped the `all.png` alias — `out_dir` is the PER-VARIANT folder
+    # (results/<geo_tag>/<variant>/), so `all.png` was a byte-identical duplicate of
+    # `<variant>.png`, not the "all variants, this seed" aggregate its name promised (that would
+    # have to live one level up at <geo_tag>/). Nothing consumes it; removed to stop the confusion.
     plt.close(fig)
     return main
 
@@ -143,17 +209,134 @@ def save_rollout_stats(diag_dir, idx, rollout):
 
 
 def save_rollout_gif(diag_dir, idx, frames, fps=10):
-    """Write an overhead GIF from caller-rendered RGB frames (opt-in)."""
+    """Write an overhead GIF from caller-rendered RGB frames (opt-in).
+
+    Fix_7: encode with a reduced/optimized palette + delta-frame compression when the
+    installed imageio's GIF writer supports it — background (scene/obstacles) is static
+    across frames, only the drone moves, so `subrectangles` alone typically shrinks file
+    size substantially with no visible quality loss. Falls back to the plain call if the
+    active imageio backend/version rejects these kwargs (never fails the save outright).
+    Fix_9: palettesize lowered 128→64 (still ample for a steelblue/tomato/drone overhead
+    scene — a handful of flat colors, not a photo) for a further ~2x on the color-table side.
+    """
     if not frames:
         return None
     import imageio
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}.gif')
-    imageio.mimsave(path, frames, fps=fps)
+    try:
+        imageio.mimsave(path, frames, fps=fps, subrectangles=True, palettesize=64)
+    except TypeError:
+        imageio.mimsave(path, frames, fps=fps)
     return path
 
 
-def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
+# ── projector constraint-geometry overlay (Fix_14) ───────────────────────────
+
+def _fs_normalize_halfspace(hs):
+    """Foresight-local copy of eval_fm_uav._normalize_halfspace (kept here to avoid a
+    circular import back into the __main__ eval module). Returns (triple, x_active)."""
+    if isinstance(hs, dict):
+        line = hs['line']
+        return [line[0], line[1], hs['side']], hs.get('x_active')
+    return [hs[0], hs[1], hs[2]], None
+
+
+def _fs_wall_xy(hs):
+    """Resolve a halfspace to (p1, p2, side, x_active), clipped to its live x-range so the
+    s_curve per-segment walls are drawn only where they are actually enforced."""
+    triple, x_active = _fs_normalize_halfspace(hs)
+    (x1, y1), (x2, y2), side = triple
+    if x_active is not None and abs(x2 - x1) > 1e-9:
+        lo, hi = x_active
+        t0 = (lo - x1) / (x2 - x1); t1 = (hi - x1) / (x2 - x1)
+        t0, t1 = sorted((max(0.0, min(1.0, t0)), max(0.0, min(1.0, t1))))
+        x1n = x1 + t0 * (x2 - x1); x2n = x1 + t1 * (x2 - x1)
+        y1n = y1 + t0 * (y2 - y1); y2n = y1 + t1 * (y2 - y1)
+        return (x1n, y1n), (x2n, y2n), side, (lo, hi)
+    return (x1, y1), (x2, y2), side, x_active
+
+
+def draw_projector_geometry(ax_xy, ax_xz, geo_config, variant=''):
+    """Fix_14: overlay the ENFORCED projector constraint surfaces onto the foresight panels.
+
+    Without this the foresight SVG only showed the raw scene obstacles (SCENE_OBSTACLES), so on
+    e.g. s_curve/dpcc-r there was nothing to read the green candidate fan against — you couldn't
+    tell whether the projector actually solved the corner halfspaces and re-routed the plan.
+
+    Mirrors eval_fm_uav.plot_geo_constraints (same colours, same TRUE enforced margin
+    r_drone+margin_base [+enlarge if -tightened]) but paints onto the caller's existing axes.
+    Respects the per-variant toggles so the overlay is what THIS variant's QP saw:
+      • `geo_free`  → geometric families removed (drawn as an explicit 'NOT enforced' note)
+      • `-tightened`→ margin += enlarge_constraints
+    Returns matplotlib legend handles for the caller to merge into its legend.
+    """
+    import matplotlib.patches as _mpa
+    from matplotlib.lines import Line2D as _Line2D
+
+    if not geo_config:
+        return []
+    ctypes  = list(geo_config.get('constraint_types', []))
+    geo_off = 'geo_free' in (variant or '')
+    _infl   = geo_config.get('inflation') or {}
+    inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
+    enlarge = float(geo_config.get('enlarge_constraints') or 0.0) if 'tightened' in (variant or '') else 0.0
+    margin  = inflation_base + enlarge
+
+    show_box = (not geo_off) and 'geo_bounds' in ctypes and geo_config.get('workspace_bounds') is not None
+    hs_list  = geo_config.get('halfspace_constraints', []) if ((not geo_off) and 'halfspace' in ctypes) else []
+    obs_list = geo_config.get('obstacle_constraints', [])  if ((not geo_off) and 'obstacles' in ctypes) else []
+
+    lb_d = ub_d = None
+    if show_box:
+        lb_d = np.array(geo_config['workspace_bounds']['lb'], dtype=float) + margin
+        ub_d = np.array(geo_config['workspace_bounds']['ub'], dtype=float) - margin
+        for _i, _fb in ((0, (-3.6, 3.6)), (1, (-2.0, 2.0)), (2, (0.0, 2.0))):   # clamp ±inf for display
+            if np.isinf(lb_d[_i]): lb_d[_i] = _fb[0]
+            if np.isinf(ub_d[_i]): ub_d[_i] = _fb[1]
+        ax_xy.add_patch(_mpa.Rectangle((lb_d[0], lb_d[1]), ub_d[0]-lb_d[0], ub_d[1]-lb_d[1],
+                                       lw=1.4, edgecolor='steelblue', facecolor='none',
+                                       ls='--', alpha=0.85, zorder=2))
+        ax_xz.axhline(lb_d[2], color='steelblue', ls='--', lw=1.0, alpha=0.7, zorder=2)
+        ax_xz.axhline(ub_d[2], color='steelblue', ls='--', lw=1.0, alpha=0.7, zorder=2)
+
+    cz_mid = (lb_d[2] + ub_d[2]) / 2 if lb_d is not None else 0.9
+    for hs in hs_list:
+        (hx1, hy1), (hx2, hy2), side, x_active = _fs_wall_xy(hs)
+        ax_xy.plot([hx1, hx2], [hy1, hy2], color='darkorange', lw=2.2, zorder=6)
+        dx, dy = hx2 - hx1, hy2 - hy1; nrm = np.hypot(dx, dy) or 1.0
+        nx, ny = (-dy/nrm, dx/nrm) if side == 'above' else (dy/nrm, -dx/nrm)  # arrow → feasible side
+        mx, my = (hx1 + hx2) / 2, (hy1 + hy2) / 2
+        ax_xy.annotate('', xy=(mx + nx*0.25, my + ny*0.25), xytext=(mx, my),
+                       arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.4), zorder=6)
+        if x_active is not None:
+            ax_xy.text(mx, my, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=6,
+                       color='saddlebrown', ha='center', va='bottom', zorder=7)
+        xb_lo, xb_hi = sorted((hx1, hx2))
+        ax_xz.axvspan(xb_lo, xb_hi, color='darkorange', alpha=0.08, zorder=1)
+    for obs in obs_list:
+        cx, cy = float(obs['center'][0]), float(obs['center'][1])
+        ax_xy.add_patch(_mpa.Circle((cx, cy), float(obs['radius']) + margin, lw=1.5,
+                                    edgecolor='tomato', facecolor='tomato', alpha=0.18, zorder=5))
+        ax_xy.plot(cx, cy, '+', color='tomato', ms=7, zorder=6)
+        ax_xz.add_patch(_mpa.Circle((cx, cz_mid), float(obs['radius']) + margin, lw=1.0,
+                                    edgecolor='tomato', facecolor='none', ls='--', alpha=0.6, zorder=2))
+
+    handles = []
+    if show_box:
+        handles.append(_Line2D([0], [0], color='steelblue', ls='--', lw=1.4, label='workspace box (enforced)'))
+    if hs_list:
+        handles.append(_Line2D([0], [0], color='darkorange', lw=2.2, label='halfspace wall (enforced)'))
+    if obs_list:
+        handles.append(_Line2D([0], [0], marker='o', color='w', markerfacecolor='tomato',
+                               markersize=9, alpha=0.6, label='obstacle+margin (enforced)'))
+    if geo_off and any(t in ctypes for t in ('geo_bounds', 'halfspace', 'obstacles')):
+        ax_xy.text(0.02, 0.98, 'geo_free: geometry NOT enforced\n(surfaces hidden)',
+                   transform=ax_xy.transAxes, fontsize=8, color='crimson', va='top', ha='left', zorder=13)
+    return handles
+
+
+def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None, variant=''):
     """MPC candidate-fan foresight SVG — UAV-specific two-panel design.
 
     Panel layout (UAV is a 3D flight task; altitude deserves its own axis):
@@ -167,6 +350,13 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
       black dot   = replan anchor at actual p position
       lime ★ / red ■ = start / end
 
+    Fix_14: when `geo_config` (+ `variant`) is supplied the ENFORCED projector surfaces are
+    overlaid via `draw_projector_geometry` — steelblue workspace box, darkorange halfspace walls
+    (s_curve segments clipped to their live x-range, with a feasible-side arrow), tomato
+    obstacle balls, all at the TRUE margin r_drone+margin_base [+enlarge if -tightened]. This is
+    what lets you see whether the candidate fan actually solved the corner (dpcc-r on s_curve).
+    Raw SCENE_OBSTACLES are still drawn underneath (physical collision truth vs planning surface).
+
     Why NOT the Gen7 3D panel: matplotlib 3D SVG is a static projection — can't
     rotate, altitude (Z) is compressed into perspective, candidate fan becomes a
     clutter of overlapping green lines.  For UAV the dedicated XZ panel reads the
@@ -179,6 +369,11 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
 
     os.makedirs(diag_dir, exist_ok=True)
     path = os.path.join(diag_dir, f'rollout_{idx}_mpc_foresight.svg')
+
+    # Fix_12: `success` became a nested group in the Fix_10 schema — bool(dict) was always
+    # True, so every foresight title read success=1. Read the strict field, tolerate both.
+    _succ = rollout.get('success')
+    _succ = _succ.get('strict') if isinstance(_succ, dict) else _succ
 
     plans    = rollout.get('plans', [])
     obs_traj = np.asarray(rollout.get('obs_traj', []))
@@ -209,9 +404,19 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
     fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(22, 9))
     fig.suptitle(
         f'Rollout {idx} — MPC Decision Points  '
-        f'(success={int(bool(rollout.get("success")))},  {n_cands} cands/step,  '
+        f'(success={int(bool(_succ))},  {n_cands} cands/step,  '
         f'every {stride} FM steps shown)',
         fontsize=13)
+    # Fix_15.3: loud banner when the projection circuit breaker tripped for this rollout —
+    # the green candidate fan below is (partly) UNPROJECTED, so it does NOT reflect the
+    # enforced constraints. See projection.py Fix_15.2 (sustained SLSQP slowness).
+    _ph = rollout.get('projection_health', {}) or {}
+    if _ph.get('cb_tripped'):
+        fig.text(0.5, 0.955,
+                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED — {int(_ph.get("cb_skipped_steps", 0))} step(s) '
+                 f'UNPROJECTED (sustained SLSQP slowness). Candidate fan is NOT constraint-valid.',
+                 color='white', backgroundcolor='crimson', fontsize=12, fontweight='bold',
+                 ha='center', va='center')
 
     # ── candidate fan ─────────────────────────────────────────────────────────
     for step_i, plan in enumerate(plans):
@@ -232,6 +437,9 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
     # ── XY panel — obstacles + paths ─────────────────────────────────────────
     if _draw_obstacles is not None:
         _draw_obstacles(ax_xy, obstacles)          # proven: circles for cylinders, rects for boxes
+    # Fix_14: overlay the ENFORCED projector surfaces (walls/balls/box at the true margin) so the
+    # green candidate fan can be read against what the QP constrained — not just raw geometry.
+    _geo_handles = draw_projector_geometry(ax_xy, ax_xz, geo_config, variant)
 
     ax_xy.plot(act[:, 0], act[:, 1], color='red',   lw=1.2, zorder=9)
     ax_xy.plot(des[:, 0], des[:, 1], color='black', lw=1.2, zorder=7)
@@ -248,8 +456,8 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6):
         _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
                 markersize=7,  label='end'),
     ]
-    ax_xy.legend(handles=_lgd, fontsize=9)
-    ax_xy.set_title(f'XY top-down + obstacles  (every {stride} steps)', fontsize=12)
+    ax_xy.legend(handles=_lgd + _geo_handles, fontsize=9)
+    ax_xy.set_title(f'XY top-down + enforced constraints  (every {stride} steps)', fontsize=12)
     ax_xy.set_xlabel('X (m)', fontsize=11); ax_xy.set_ylabel('Y (m)', fontsize=11)
     ax_xy.set_aspect('equal', adjustable='datalim')
     ax_xy.grid(True, alpha=0.3)
@@ -302,24 +510,50 @@ def write_eval_log(out_dir, variant, summary, rollouts):
         f.write(f"UAV FM eval  |  scene={summary['scene']}  seed={summary['seed']}  "
                 f"variant={variant}\n")
         f.write('=' * 70 + '\n')
+        # Fix_15.3: loud banner if the projection circuit breaker tripped on any trial.
+        _tripped = [i for i, r in enumerate(rollouts) if (r.get('projection_health') or {}).get('cb_tripped')]
+        if _tripped:
+            f.write('!' * 70 + '\n')
+            f.write(f"  !!! PROJECTION CIRCUIT-BREAKER TRIPPED on {len(_tripped)}/{len(rollouts)} "
+                    f"trials: {_tripped}\n")
+            f.write("  !!! Those trials ran (partly) UNPROJECTED (sustained SLSQP slowness,\n")
+            f.write("  !!! projection.py Fix_15.2) — their constraint metrics are NOT valid.\n")
+            f.write('!' * 70 + '\n')
         for i, r in enumerate(rollouts):
+            phys = r.get('physical', {}); goal = r.get('goal', {}); succ = r.get('success', {})
+            # Fix_12: show the flown class next to the commanded label (pillars only).
+            _flown = r.get('homotopy_flown')
+            _flown_str = f"flown={_flown:<10}  " if _flown else ''
+            # Fix_15.3: per-rollout circuit-breaker marker (skipped-step count when tripped).
+            _ph = r.get('projection_health', {}) or {}
+            _cb_str = f"  cb=TRIPPED({int(_ph.get('cb_skipped_steps', 0))})" if _ph.get('cb_tripped') else ''
             f.write(
-                f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  "
-                f"success={int(bool(r.get('success')))}  "
-                f"contact={r.get('contact_frac', float('nan')):.3f}  "
-                f"min_z={r.get('min_z', float('nan')):.3f}  "
-                f"goal_dist={r.get('goal_dist', float('nan')):.3f}  "
-                f"track_err={r.get('track_err_mean', float('nan')):.2f}\n")
+                f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  {_flown_str}"
+                f"success={int(bool(succ.get('strict')))}  "
+                f"success_relaxed={int(bool(succ.get('relaxed')))}  "
+                f"contact={phys.get('contact_frac', float('nan')):.3f}  "
+                f"min_z={phys.get('min_z', float('nan')):.3f}  "
+                f"goal_dist={goal.get('dist', float('nan')):.3f}  "
+                f"track_err={r.get('track_err_mean', float('nan')):.2f}{_cb_str}\n")
         f.write('-' * 70 + '\n')
-        f.write(f"  success_rate (goal+safe): {summary['success_rate']:.3f}\n")
-        f.write(f"  success_and_constraints : {summary.get('success_and_constraints_rate', float('nan')):.3f}\n")
-        f.write(f"  safe_rate (contact-free+airborne): {summary.get('safe_rate', float('nan')):.3f}\n")
-        f.write(f"  collision_free_rate     : {summary.get('collision_free_rate', float('nan')):.3f}  "
-                f"(violations mean: {summary.get('n_violations_mean', 0):.2f})\n")
-        f.write(f"  contact_frac_mean     : {summary['contact_frac_mean']:.3f}\n")
-        f.write(f"  goal_dist_mean        : {summary['goal_dist_mean']:.3f}\n")
-        f.write(f"  goal_reached_rate     : {summary['goal_reached_rate']:.3f}\n")
+        _s = summary.get('success', {}); _p = summary.get('physical', {})
+        _c = summary.get('constraint', {}); _g = summary.get('goal', {}); _t = summary.get('timing', {})
+        f.write(f"  success_rate (goal+safe): {_s.get('strict_rate', float('nan')):.3f}\n")
+        f.write(f"  success_relaxed_rate (crossed finish line): "
+                f"{_s.get('relaxed_rate', float('nan')):.3f}\n")
+        f.write(f"  success_and_constraints : {_s.get('strict_and_constraints_rate', float('nan')):.3f}\n")
+        f.write(f"  safe_rate (contact-free+airborne): {_p.get('safe_rate', float('nan')):.3f}\n")
+        f.write(f"  collision_free_rate     : {_c.get('collision_free_rate', float('nan')):.3f}  "
+                f"(violations mean: {_c.get('n_violations_mean', 0):.2f})\n")
+        f.write(f"  contact_frac_mean     : {_p.get('contact_frac_mean', float('nan')):.3f}\n")
+        f.write(f"  goal_dist_mean        : {_g.get('dist_mean', float('nan')):.3f}\n")
+        f.write(f"  goal_reached_rate     : {_g.get('reached_rate', float('nan')):.3f}\n")
+        # U_13: DPCC-style step accounting (early-stop on goal-reach; miss = full budget).
+        _st = summary.get('steps', {})
+        f.write(f"  steps_mean            : {_st.get('mean', float('nan')):.1f}  "
+                f"(to_goal {_st.get('to_goal_mean', float('nan')):.1f} / "
+                f"budget {_st.get('max_episode_length', '?')})\n")
         f.write(f"  track_err_mean        : {summary['track_err_mean']:.3f}\n")
-        f.write(f"  fm_ms mean/p95        : {summary['fm_ms_mean']:.1f}/{summary['fm_ms_p95']:.1f}\n")
+        f.write(f"  fm_ms mean/p95        : {_t.get('fm_ms_mean', float('nan')):.1f}/{_t.get('fm_ms_p95', float('nan')):.1f}\n")
         f.write('  [ PCC constraint metrics: placeholder — Epoch 7 ]\n')
     return path

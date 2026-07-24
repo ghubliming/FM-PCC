@@ -160,7 +160,12 @@ class Aligning_Sim(BaseSim):
                     _fbox_quat = env.scene.get_obj_quat(env.push_box)
                     agent.update_rollout_info({**info, 'context': context,
                                                'final_box_pos':  _fbox_pos,
-                                               'final_box_quat': _fbox_quat})
+                                               'final_box_quat': _fbox_quat,
+                                               # Json_Orgnize_C4: thread the env's own success
+                                               # thresholds through so agents can derive
+                                               # success_relaxed without hardcoding a copy.
+                                               'pos_min_dist':   env.pos_min_dist,
+                                               'rot_min_dist':   env.rot_min_dist})
 
     ################################
     # we use multi-process for the simulation

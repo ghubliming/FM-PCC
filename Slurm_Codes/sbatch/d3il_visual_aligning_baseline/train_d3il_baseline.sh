@@ -56,6 +56,8 @@ fi
 # Optional W&B login
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_API_KEY=$(cat "$HOME/FMPCC/.wandb_api_key")
+    # Slurm job id -> W&B run tag (searchable/filterable alongside the run name)
+    if [ -n "$SLURM_JOB_ID" ]; then export WANDB_TAGS="slurm-$SLURM_JOB_ID"; fi
 fi
 
 cd "$REPO"
@@ -69,7 +71,7 @@ cd "$REPO"
 # State agents (no _vision): use aligning_config        → Aligning_Dataset,     obs_dim=20
 #
 # D3IL paper (ICLR 2024): 200 epochs for image agents, 500 for state agents;
-# eval every 1/10th of total training; best val-loss checkpoint saved.
+# eval every 1/10th of total training; best simulation-success checkpoint saved (U3).
 #
 # Outputs land in: logs/d3il_visual_aligning_baseline/{agent_name}/seed_{s}/weights/
 # (already gitignored via root .gitignore  logs/*)

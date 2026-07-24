@@ -1,0 +1,57 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Jun 29 13:13:24 UTC 2026  |  uav_fm_eval  |  ID 22177  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 
+GIT REV:   4396266
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Mon Jun 29 13:13:25 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6  --projection fm_only --record none
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-pillars/H8_Dmodels.diffusion.FlowMatchingODE_cmpos_only_ctrlmjpc/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ utils/setup ] Made savepath: logs/UAV_FM/uav-pillars/H8_Dmodels.diffusion.FlowMatchingODE/6
+[ eval ] pillars: skipping 6 tightened variants (no spatial constraints in constraint_types — enlarge has no effect): ['gradient-tightened', 'post_processing-tightened', 'model_free-tightened', 'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened']
+[ eval ] pillars: variants=['diffuser', 'gradient', 'post_processing', 'model_free', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 690, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 677, in main
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 677, in <dictcomp>
+    summaries = {s: eval_scene(s, args) for s in scenes}
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 646, in eval_scene
+    summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 557, in _run_variant
+    r = rollout_one(mj_model, scene, homotopy, 10_000 + i, policy, horizon,
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_uav_test/eval_fm_uav.py", line 367, in rollout_one
+    action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/sampling/policies.py", line 45, in __call__
+    conditions = self._format_conditions(conditions, batch_size)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/sampling/policies.py", line 117, in _format_conditions
+    conditions = utils.apply_dict(
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser/utils/arrays.py", line 53, in apply_dict
+    return {
+  File "/data/home/llim/FMPCC/FM-PCC/diffuser/utils/arrays.py", line 54, in <dictcomp>
+    k: fn(v, *args, **kwargs)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/datasets/normalization.py", line 39, in normalize
+    return self.normalizers[key].normalize(x)
+  File "/data/home/llim/FMPCC/FM-PCC/flow_matcher_v3_uav/datasets/normalization.py", line 159, in normalize
+    x = (x - self.mins) / (self.maxs - self.mins)
+ValueError: operands could not be broadcast together with shapes (9,) (6,) 
+JOB END: Mon Jun 29 13:13:29 UTC 2026

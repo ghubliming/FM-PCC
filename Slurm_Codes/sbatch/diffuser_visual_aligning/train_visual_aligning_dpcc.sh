@@ -49,12 +49,14 @@ fi
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_API_KEY=$(cat $HOME/FMPCC/.wandb_api_key)
     export WANDB_MODE="online"
+    # Slurm job id -> W&B run tag (searchable/filterable alongside the run name)
+    if [ -n "$SLURM_JOB_ID" ]; then export WANDB_TAGS="slurm-$SLURM_JOB_ID"; fi
 fi
 
 cd "$REPO"
 
 python diffuser_visual_aligning_test/train_visual_aligning_dpcc.py \
-    --seeds 5 6 7 8 9 \
+    --seeds 6 \
     --use-wandb \
     --wandb-project FMPCC-visual-aligning-dpcc
 

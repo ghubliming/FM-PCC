@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.egg-info/
+*.pyc
+*.pyo
+
+# Editor / IDE
+.idea/
+.vscode/
+
+# Logs and stdout dumps (also matches a `logs` symlink)
+**/logs/
+/logs
+*.out
+
+# Auto-generated code (e.g., l4casadi)
+**_generated/
+
+# Figures
+fig/
+
+# Simulator artifacts
+**/MUJOCO_LOG.TXT
+**/panda_tmp_rb*.xml
+
+# Image-editing experiment outputs
+output/
+summary/
+comparison/
+result/
+sample/
+
+# Pretrained checkpoints (placed locally, not committed)
+*.pth
+
+# Per-task data/working folders that may exist across branches
+# NOTE (FM-PCC vendor): the upstream `d3il/`, `datasets/`, `dataset/`, `experiment/`
+# ignores were REMOVED here on purpose. HardFlow is vendored into FM-PCC as plain
+# copied code, so the d3il simulator + avoiding demos (~61MB) MUST be tracked by
+# FM-PCC's git to reach the cluster via `git pull`. Re-adding them would hide the sim.
+# experiment/
+
+# OS
+.DS_Store

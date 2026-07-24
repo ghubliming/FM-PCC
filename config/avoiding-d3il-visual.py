@@ -65,6 +65,7 @@ args_to_watch_fm_visual_train = [
     ('if_vision', 'V'),
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),
+    ('film_mode', 'film'),   # skipped by watch() if key absent → v1 paths unchanged
 ]
 
 args_to_watch_fm_visual_plan = [
@@ -76,6 +77,7 @@ args_to_watch_fm_visual_plan = [
     ('diffusion', 'D'),
     ('if_vision', 'V'),
     ('mpc_batch_size', 'mpc'),
+    ('film_mode', 'film'),   # skipped by watch() if key absent → v1 paths unchanged
 ]
 
 logbase = 'logs'
@@ -132,6 +134,10 @@ base = {
     },
 
     # ─── 2. FM Visual AVOIDING (training) ───
+    # film_mode: 'v1' (default) = additive-bias FiLM
+    #            'v2'           = true FiLM per-block γ/β  (U5, opt-in)
+    # watch() appends '_filmv1' / '_filmv2' → separate checkpoint folders per mode.
+    # To switch: change film_mode here AND in plan_fm_visual_avoiding. That's it.
     'fm_visual_avoiding': {
         'model':            'fm_visual_avoiding.models.visual_unet.VisualUNet',
         'diffusion':        'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching',
@@ -160,6 +166,7 @@ base = {
         'train_test_split': 0.9,
         'device':           'cuda',
         'seed':             0,
+        'film_mode':        'v1',
     },
 
     # ─── 3. Visual-DPCC AVOIDING (planning) ───
@@ -243,11 +250,13 @@ base = {
         'diffusion_loadpath': (
             'f:fm_visual_avoiding/'
             'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}'
         ),
         'diffusion_epoch':  'best',
         'verbose':          False,
         'suffix':           '0',
         'constraint_list':  list(_AVOIDING_OBSTACLES),
+        'film_mode':        'v1',
     },
+
 }

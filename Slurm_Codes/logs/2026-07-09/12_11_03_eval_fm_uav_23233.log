@@ -1,0 +1,283 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jul  9 10:11:04 UTC 2026  |  eval_fm_uav  |  ID 23233  |  NODE i6-gpu-1
+SCENE: s_curve   SEEDS: 6   N_TRIALS: 
+GIT REV:   36c9db7
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] seed 1/1: scene=s_curve seed=6  Thu Jul  9 10:11:05 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene s_curve --seed 6  --projection fm_only --record gif
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-s_curve/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] E9 geo 's_curve' ← variant 's_curve': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=4, obs=2)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'gradient', 'gradient-tightened', 'post_processing', 'post_processing-tightened', 'model_free', 'model_free-tightened', 'bounds_free', 'geo_free', 'geo_free-bounds_free', 'geo_free-model_free', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] s_curve feasibility check: homotopy=default expert route OK under planning margin 0.33 m
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/17: 'diffuser'  (n_trials=10)
+[ geo ] Constraint overview → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] s_curve variant=diffuser: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=diffuser: trial 1/10 done  (81.9s elapsed this variant, ~737.5s to go)
+[ eval ] s_curve variant=diffuser: trial 2/10 done  (162.8s elapsed this variant, ~651.4s to go)
+[ eval ] s_curve variant=diffuser: trial 3/10 done  (243.6s elapsed this variant, ~568.5s to go)
+[ eval ] s_curve variant=diffuser: trial 4/10 done  (326.9s elapsed this variant, ~490.4s to go)
+[ eval ] s_curve variant=diffuser: trial 5/10 done  (407.5s elapsed this variant, ~407.5s to go)
+[ eval ] s_curve variant=diffuser: trial 6/10 done  (488.0s elapsed this variant, ~325.3s to go)
+[ eval ] s_curve variant=diffuser: trial 7/10 done  (574.0s elapsed this variant, ~246.0s to go)
+[ eval ] s_curve variant=diffuser: trial 8/10 done  (655.4s elapsed this variant, ~163.8s to go)
+[ eval ] s_curve variant=diffuser: trial 9/10 done  (737.1s elapsed this variant, ~81.9s to go)
+[ eval ] s_curve variant=diffuser: trial 10/10 done  (817.5s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=diffuser (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=252.761  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] s_curve variant=diffuser TIMING: fm_ms=85.6 proj_ms=0.0 total_ms=85.6 (p95=101.2) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/17: 'gradient'  (n_trials=10)
+[ eval ] s_curve variant=gradient: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=gradient: trial 1/10 done  (100.3s elapsed this variant, ~902.3s to go)
+[ eval ] s_curve variant=gradient: trial 2/10 done  (197.3s elapsed this variant, ~789.3s to go)
+[ eval ] s_curve variant=gradient: trial 3/10 done  (294.3s elapsed this variant, ~686.7s to go)
+[ eval ] s_curve variant=gradient: trial 4/10 done  (391.4s elapsed this variant, ~587.1s to go)
+[ eval ] s_curve variant=gradient: trial 5/10 done  (488.7s elapsed this variant, ~488.7s to go)
+[ eval ] s_curve variant=gradient: trial 6/10 done  (584.2s elapsed this variant, ~389.5s to go)
+[ eval ] s_curve variant=gradient: trial 7/10 done  (681.6s elapsed this variant, ~292.1s to go)
+[ eval ] s_curve variant=gradient: trial 8/10 done  (778.7s elapsed this variant, ~194.7s to go)
+[ eval ] s_curve variant=gradient: trial 9/10 done  (876.5s elapsed this variant, ~97.4s to go)
+[ eval ] s_curve variant=gradient: trial 10/10 done  (974.0s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=gradient (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=7.874  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient/
+[ eval ] s_curve variant=gradient TIMING: fm_ms=91.7 proj_ms=0.0 total_ms=91.7 (p95=100.4) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/17: 'gradient-tightened'  (n_trials=10)
+[ geo ] Constraint overview → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] s_curve variant=gradient-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=gradient-tightened: trial 1/10 done  (97.0s elapsed this variant, ~872.8s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 2/10 done  (194.2s elapsed this variant, ~776.7s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 3/10 done  (291.4s elapsed this variant, ~680.0s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 4/10 done  (388.2s elapsed this variant, ~582.3s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 5/10 done  (485.8s elapsed this variant, ~485.8s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 6/10 done  (581.2s elapsed this variant, ~387.5s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 7/10 done  (678.9s elapsed this variant, ~291.0s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 8/10 done  (776.3s elapsed this variant, ~194.1s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 9/10 done  (873.3s elapsed this variant, ~97.0s to go)
+[ eval ] s_curve variant=gradient-tightened: trial 10/10 done  (970.3s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=gradient-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=6.741  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened/
+[ eval ] s_curve variant=gradient-tightened TIMING: fm_ms=91.4 proj_ms=0.0 total_ms=91.4 (p95=93.4) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 4/17: 'post_processing'  (n_trials=10)
+[ eval ] s_curve variant=post_processing: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=post_processing: trial 1/10 done  (146.7s elapsed this variant, ~1320.4s to go)
+[ eval ] s_curve variant=post_processing: trial 2/10 done  (289.5s elapsed this variant, ~1158.2s to go)
+[ eval ] s_curve variant=post_processing: trial 3/10 done  (436.6s elapsed this variant, ~1018.7s to go)
+[ eval ] s_curve variant=post_processing: trial 4/10 done  (609.8s elapsed this variant, ~914.7s to go)
+[ eval ] s_curve variant=post_processing: trial 5/10 done  (764.4s elapsed this variant, ~764.4s to go)
+[ eval ] s_curve variant=post_processing: trial 6/10 done  (912.7s elapsed this variant, ~608.4s to go)
+[ eval ] s_curve variant=post_processing: trial 7/10 done  (1065.8s elapsed this variant, ~456.8s to go)
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 22.4400.
+
+[ eval ] s_curve variant=post_processing: trial 8/10 done  (1211.8s elapsed this variant, ~302.9s to go)
+[ eval ] s_curve variant=post_processing: trial 9/10 done  (1367.8s elapsed this variant, ~152.0s to go)
+[ eval ] s_curve variant=post_processing: trial 10/10 done  (1512.9s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=post_processing (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=30.607  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing/
+[ eval ] s_curve variant=post_processing TIMING: fm_ms=84.3 proj_ms=70.6 total_ms=154.9 (p95=297.5) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 5/17: 'post_processing-tightened'  (n_trials=10)
+[ eval ] s_curve variant=post_processing-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=post_processing-tightened: trial 1/10 done  (167.2s elapsed this variant, ~1504.6s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 2/10 done  (310.8s elapsed this variant, ~1243.0s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 3/10 done  (457.7s elapsed this variant, ~1067.9s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 4/10 done  (605.3s elapsed this variant, ~908.0s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 5/10 done  (752.3s elapsed this variant, ~752.3s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 6/10 done  (920.9s elapsed this variant, ~613.9s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 7/10 done  (1071.7s elapsed this variant, ~459.3s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 8/10 done  (1228.2s elapsed this variant, ~307.1s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 9/10 done  (1398.0s elapsed this variant, ~155.3s to go)
+[ eval ] s_curve variant=post_processing-tightened: trial 10/10 done  (1544.5s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=post_processing-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=33.042  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened/
+[ eval ] s_curve variant=post_processing-tightened TIMING: fm_ms=84.4 proj_ms=74.4 total_ms=158.8 (p95=311.9) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 6/17: 'model_free'  (n_trials=10)
+[ eval ] s_curve variant=model_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=model_free: trial 1/10 done  (181.8s elapsed this variant, ~1636.6s to go)
+[ eval ] s_curve variant=model_free: trial 2/10 done  (363.9s elapsed this variant, ~1455.6s to go)
+[ eval ] s_curve variant=model_free: trial 3/10 done  (580.5s elapsed this variant, ~1354.6s to go)
+[ eval ] s_curve variant=model_free: trial 4/10 done  (763.3s elapsed this variant, ~1144.9s to go)
+[ eval ] s_curve variant=model_free: trial 5/10 done  (947.3s elapsed this variant, ~947.3s to go)
+[ eval ] s_curve variant=model_free: trial 6/10 done  (1163.1s elapsed this variant, ~775.4s to go)
+[ eval ] s_curve variant=model_free: trial 7/10 done  (1350.0s elapsed this variant, ~578.6s to go)
+[ eval ] s_curve variant=model_free: trial 8/10 done  (1571.3s elapsed this variant, ~392.8s to go)
+[ eval ] s_curve variant=model_free: trial 9/10 done  (1754.7s elapsed this variant, ~195.0s to go)
+[ eval ] s_curve variant=model_free: trial 10/10 done  (1937.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=250.133  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free/
+[ eval ] s_curve variant=model_free TIMING: fm_ms=84.9 proj_ms=123.8 total_ms=208.7 (p95=286.5) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 7/17: 'model_free-tightened'  (n_trials=10)
+[ eval ] s_curve variant=model_free-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=model_free-tightened: trial 1/10 done  (219.0s elapsed this variant, ~1970.9s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 2/10 done  (405.3s elapsed this variant, ~1621.2s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 3/10 done  (624.6s elapsed this variant, ~1457.3s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 4/10 done  (843.9s elapsed this variant, ~1265.8s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 5/10 done  (1035.1s elapsed this variant, ~1035.1s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 6/10 done  (1258.9s elapsed this variant, ~839.3s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 7/10 done  (1446.9s elapsed this variant, ~620.1s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 8/10 done  (1666.2s elapsed this variant, ~416.6s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 9/10 done  (1887.3s elapsed this variant, ~209.7s to go)
+[ eval ] s_curve variant=model_free-tightened: trial 10/10 done  (2074.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=model_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=264.766  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened/
+[ eval ] s_curve variant=model_free-tightened TIMING: fm_ms=84.8 proj_ms=139.2 total_ms=224.0 (p95=293.4) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 8/17: 'bounds_free'  (n_trials=10)
+[ eval ] s_curve variant=bounds_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=bounds_free: trial 1/10 done  (476.4s elapsed this variant, ~4287.8s to go)
+[ eval ] s_curve variant=bounds_free: trial 2/10 done  (1159.2s elapsed this variant, ~4636.7s to go)
+[ eval ] s_curve variant=bounds_free: trial 3/10 done  (1601.2s elapsed this variant, ~3736.1s to go)
+[ eval ] s_curve variant=bounds_free: trial 4/10 done  (2050.1s elapsed this variant, ~3075.1s to go)
+[ eval ] s_curve variant=bounds_free: trial 5/10 done  (2527.5s elapsed this variant, ~2527.5s to go)
+[ eval ] s_curve variant=bounds_free: trial 6/10 done  (2989.9s elapsed this variant, ~1993.3s to go)
+[ eval ] s_curve variant=bounds_free: trial 7/10 done  (3395.3s elapsed this variant, ~1455.1s to go)
+[ eval ] s_curve variant=bounds_free: trial 8/10 done  (3930.8s elapsed this variant, ~982.7s to go)
+[ eval ] s_curve variant=bounds_free: trial 9/10 done  (4640.5s elapsed this variant, ~515.6s to go)
+[ eval ] s_curve variant=bounds_free: trial 10/10 done  (5402.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=58.205  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free/
+[ eval ] s_curve variant=bounds_free TIMING: fm_ms=84.9 proj_ms=518.4 total_ms=603.3 (p95=2072.8) budget=30.3ms → real_time_OVER×8710
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 23.7400.
+
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 9/17: 'geo_free'  (n_trials=10)
+[ eval ] s_curve variant=geo_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=geo_free: trial 1/10 done  (278.5s elapsed this variant, ~2506.6s to go)
+[ eval ] s_curve variant=geo_free: trial 2/10 done  (415.2s elapsed this variant, ~1660.8s to go)
+[ eval ] s_curve variant=geo_free: trial 3/10 done  (552.0s elapsed this variant, ~1288.0s to go)
+[ eval ] s_curve variant=geo_free: trial 4/10 done  (688.7s elapsed this variant, ~1033.0s to go)
+[ eval ] s_curve variant=geo_free: trial 5/10 done  (825.5s elapsed this variant, ~825.5s to go)
+[ eval ] s_curve variant=geo_free: trial 6/10 done  (962.5s elapsed this variant, ~641.7s to go)
+[ eval ] s_curve variant=geo_free: trial 7/10 done  (1057.3s elapsed this variant, ~453.1s to go)
+[ eval ] s_curve variant=geo_free: trial 8/10 done  (1194.1s elapsed this variant, ~298.5s to go)
+[ eval ] s_curve variant=geo_free: trial 9/10 done  (1330.8s elapsed this variant, ~147.9s to go)
+[ eval ] s_curve variant=geo_free: trial 10/10 done  (1617.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=geo_free (B=4, proj=on, sel=random): success=0.100  success_relaxed=0.700  safe=0.700  goal_reached=0.100  steps_to_goal=599/871  track_err=14.164  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free/
+[ eval ] s_curve variant=geo_free TIMING: fm_ms=84.7 proj_ms=89.7 total_ms=174.4 (p95=589.9) budget=30.3ms → real_time_OVER×8438
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 10/17: 'geo_free-bounds_free'  (n_trials=10)
+[ eval ] s_curve variant=geo_free-bounds_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 1/10 done  (246.4s elapsed this variant, ~2217.3s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 2/10 done  (372.8s elapsed this variant, ~1491.3s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 3/10 done  (499.0s elapsed this variant, ~1164.4s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 4/10 done  (625.1s elapsed this variant, ~937.6s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 5/10 done  (751.1s elapsed this variant, ~751.1s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 6/10 done  (877.4s elapsed this variant, ~585.0s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 7/10 done  (965.1s elapsed this variant, ~413.6s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 8/10 done  (1091.0s elapsed this variant, ~272.8s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 9/10 done  (1217.1s elapsed this variant, ~135.2s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 10/10 done  (1465.9s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=geo_free-bounds_free (B=4, proj=on, sel=random): success=0.100  success_relaxed=0.700  safe=0.700  goal_reached=0.100  steps_to_goal=602/871  track_err=15.466  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free/
+[ eval ] s_curve variant=geo_free-bounds_free TIMING: fm_ms=84.6 proj_ms=74.0 total_ms=158.7 (p95=481.9) budget=30.3ms → real_time_OVER×8441
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 11/17: 'geo_free-model_free'  (n_trials=10)
+[ eval ] s_curve variant=geo_free-model_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=geo_free-model_free: trial 1/10 done  (121.1s elapsed this variant, ~1090.2s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 2/10 done  (242.5s elapsed this variant, ~970.1s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 3/10 done  (364.0s elapsed this variant, ~849.3s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 4/10 done  (485.1s elapsed this variant, ~727.7s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 5/10 done  (606.5s elapsed this variant, ~606.5s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 6/10 done  (727.1s elapsed this variant, ~484.7s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 7/10 done  (847.8s elapsed this variant, ~363.4s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 8/10 done  (969.5s elapsed this variant, ~242.4s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 9/10 done  (1091.1s elapsed this variant, ~121.2s to go)
+[ eval ] s_curve variant=geo_free-model_free: trial 10/10 done  (1212.6s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=geo_free-model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=242.562  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free/
+[ eval ] s_curve variant=geo_free-model_free TIMING: fm_ms=84.6 proj_ms=43.9 total_ms=128.5 (p95=133.9) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 12/17: 'dpcc-r'  (n_trials=10)
+[ eval ] s_curve variant=dpcc-r: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-r: trial 1/10 done  (1077.1s elapsed this variant, ~9693.7s to go)
+[ eval ] s_curve variant=dpcc-r: trial 2/10 done  (1787.6s elapsed this variant, ~7150.4s to go)
+[ eval ] s_curve variant=dpcc-r: trial 3/10 done  (2536.9s elapsed this variant, ~5919.5s to go)
+[ eval ] s_curve variant=dpcc-r: trial 4/10 done  (3247.6s elapsed this variant, ~4871.5s to go)
+[ eval ] s_curve variant=dpcc-r: trial 5/10 done  (4059.5s elapsed this variant, ~4059.5s to go)
+[ eval ] s_curve variant=dpcc-r: trial 6/10 done  (4724.9s elapsed this variant, ~3150.0s to go)
+[ eval ] s_curve variant=dpcc-r: trial 7/10 done  (5449.2s elapsed this variant, ~2335.4s to go)
+[ eval ] s_curve variant=dpcc-r: trial 8/10 done  (6220.0s elapsed this variant, ~1555.0s to go)
+[ eval ] s_curve variant=dpcc-r: trial 9/10 done  (6887.4s elapsed this variant, ~765.3s to go)
+[ eval ] s_curve variant=dpcc-r: trial 10/10 done  (7610.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.100  goal_reached=0.000  steps_to_goal=nan/871  track_err=48.536  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r/
+[ eval ] s_curve variant=dpcc-r TIMING: fm_ms=85.7 proj_ms=769.0 total_ms=854.7 (p95=4705.2) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 13/17: 'dpcc-r-tightened'  (n_trials=10)
+[ eval ] s_curve variant=dpcc-r-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 1/10 done  (685.5s elapsed this variant, ~6169.5s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 2/10 done  (1419.2s elapsed this variant, ~5676.9s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 3/10 done  (2155.7s elapsed this variant, ~5030.0s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 4/10 done  (2818.5s elapsed this variant, ~4227.7s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 5/10 done  (3520.7s elapsed this variant, ~3520.7s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 6/10 done  (4233.4s elapsed this variant, ~2822.2s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 7/10 done  (5007.6s elapsed this variant, ~2146.1s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 8/10 done  (5684.9s elapsed this variant, ~1421.2s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 9/10 done  (6422.6s elapsed this variant, ~713.6s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 10/10 done  (7302.4s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=48.332  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened/
+[ eval ] s_curve variant=dpcc-r-tightened TIMING: fm_ms=86.2 proj_ms=733.2 total_ms=819.4 (p95=3386.4) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 14/17: 'dpcc-c'  (n_trials=10)
+[ eval ] s_curve variant=dpcc-c: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-c: trial 1/10 done  (939.6s elapsed this variant, ~8456.8s to go)
+[ eval ] s_curve variant=dpcc-c: trial 2/10 done  (1619.6s elapsed this variant, ~6478.6s to go)
+[ eval ] s_curve variant=dpcc-c: trial 3/10 done  (2260.8s elapsed this variant, ~5275.2s to go)
+[ eval ] s_curve variant=dpcc-c: trial 4/10 done  (2962.0s elapsed this variant, ~4443.0s to go)
+[ eval ] s_curve variant=dpcc-c: trial 5/10 done  (3693.9s elapsed this variant, ~3693.9s to go)
+[ eval ] s_curve variant=dpcc-c: trial 6/10 done  (4392.5s elapsed this variant, ~2928.3s to go)
+[ eval ] s_curve variant=dpcc-c: trial 7/10 done  (5096.5s elapsed this variant, ~2184.2s to go)
+[ eval ] s_curve variant=dpcc-c: trial 8/10 done  (6445.6s elapsed this variant, ~1611.4s to go)
+[ eval ] s_curve variant=dpcc-c: trial 9/10 done  (7125.5s elapsed this variant, ~791.7s to go)
+[ eval ] s_curve variant=dpcc-c: trial 10/10 done  (8344.4s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.000  success_relaxed=0.100  safe=0.100  goal_reached=0.000  steps_to_goal=nan/871  track_err=42.718  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c/
+[ eval ] s_curve variant=dpcc-c TIMING: fm_ms=85.7 proj_ms=853.4 total_ms=939.1 (p95=6301.5) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 15/17: 'dpcc-c-tightened'  (n_trials=10)
+[ eval ] s_curve variant=dpcc-c-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 1/10 done  (1305.8s elapsed this variant, ~11752.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 2/10 done  (1979.1s elapsed this variant, ~7916.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 3/10 done  (2617.2s elapsed this variant, ~6106.7s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 4/10 done  (3467.4s elapsed this variant, ~5201.0s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 5/10 done  (4871.9s elapsed this variant, ~4871.9s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 6/10 done  (5636.1s elapsed this variant, ~3757.4s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 7/10 done  (6361.2s elapsed this variant, ~2726.2s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 8/10 done  (7034.2s elapsed this variant, ~1758.6s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 9/10 done  (7812.6s elapsed this variant, ~868.1s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 10/10 done  (8961.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c-tightened (B=4, proj=on, sel=minimum_projection_cost): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=40.272  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened/
+[ eval ] s_curve variant=dpcc-c-tightened TIMING: fm_ms=85.4 proj_ms=924.4 total_ms=1009.8 (p95=5827.0) budget=30.3ms → real_time_OVER×8710
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 16/17: 'dpcc-t'  (n_trials=10)
+[ eval ] s_curve variant=dpcc-t: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-t: trial 1/10 done  (882.9s elapsed this variant, ~7945.7s to go)
+[ eval ] s_curve variant=dpcc-t: trial 2/10 done  (2435.7s elapsed this variant, ~9742.7s to go)
+[ eval ] s_curve variant=dpcc-t: trial 3/10 done  (3173.1s elapsed this variant, ~7403.9s to go)
+[ eval ] s_curve variant=dpcc-t: trial 4/10 done  (4091.7s elapsed this variant, ~6137.6s to go)
+[ eval ] s_curve variant=dpcc-t: trial 5/10 done  (5003.1s elapsed this variant, ~5003.1s to go)
+[ eval ] s_curve variant=dpcc-t: trial 6/10 done  (5758.6s elapsed this variant, ~3839.1s to go)
+[ eval ] s_curve variant=dpcc-t: trial 7/10 done  (6524.8s elapsed this variant, ~2796.3s to go)
+[ eval ] s_curve variant=dpcc-t: trial 8/10 done  (7290.4s elapsed this variant, ~1822.6s to go)
+[ eval ] s_curve variant=dpcc-t: trial 9/10 done  (8093.9s elapsed this variant, ~899.3s to go)
+[ eval ] s_curve variant=dpcc-t: trial 10/10 done  (9379.0s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.100  steps_to_goal=633/871  track_err=42.900  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t/
+[ eval ] s_curve variant=dpcc-t TIMING: fm_ms=85.1 proj_ms=1007.0 total_ms=1092.1 (p95=7905.9) budget=30.3ms → real_time_OVER×8472
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 17/17: 'dpcc-t-tightened'  (n_trials=10)
+[ eval ] s_curve variant=dpcc-t-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 1/10 done  (1200.3s elapsed this variant, ~10802.5s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 2/10 done  (2360.0s elapsed this variant, ~9439.8s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 3/10 done  (2939.1s elapsed this variant, ~6857.9s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 4/10 done  (4121.5s elapsed this variant, ~6182.3s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 5/10 done  (5461.1s elapsed this variant, ~5461.1s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 6/10 done  (7078.6s elapsed this variant, ~4719.1s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 7/10 done  (7876.2s elapsed this variant, ~3375.5s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 8/10 done  (8772.1s elapsed this variant, ~2193.0s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 9/10 done  (10068.9s elapsed this variant, ~1118.8s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 10/10 done  (11304.9s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.100  steps_to_goal=510/871  track_err=46.511  → logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened/
+[ eval ] s_curve variant=dpcc-t-tightened TIMING: fm_ms=85.1 proj_ms=1240.2 total_ms=1325.4 (p95=7027.7) budget=30.3ms → real_time_OVER×8349
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=s_curve for seeds=[6]
+JOB END: Fri Jul 10 06:18:37 UTC 2026

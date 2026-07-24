@@ -8,7 +8,7 @@ import numpy as np
 try:
     import wandb
 except ImportError:
-    pass
+    wandb = None
 
 
 def reset_wandb_env():

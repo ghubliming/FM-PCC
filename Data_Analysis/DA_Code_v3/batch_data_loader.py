@@ -52,9 +52,9 @@ class BatchDataLoader:
         Returns:
             dict: Batch data organized by candidate
             {
-                'A': {seed: {variant: {constraint: {halfspace: metrics}}}},
-                'B': {...},
-                'C': {...}
+                1: {seed: {variant: {constraint: {halfspace: metrics}}}},
+                2: {...},
+                3: {...}
             }
         """
         # Use defaults from config if not provided
@@ -159,7 +159,7 @@ class BatchDataLoader:
         Get raw data dict for a specific candidate.
         
         Args:
-            letter: Candidate letter (e.g., 'A', 'B')
+            letter: Candidate index (e.g., 1, 2)
             
         Returns:
             dict: Candidate's data structure

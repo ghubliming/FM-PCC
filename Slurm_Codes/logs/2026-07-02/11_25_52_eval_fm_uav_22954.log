@@ -1,0 +1,49 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jul  2 10:54:53 UTC 2026  |  eval_fm_uav  |  ID 22954  |  NODE i6-gpu-1
+SCENE: corridor   SEEDS: 6   N_TRIALS: 
+GIT REV:   e1a71e2
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=corridor seed=6  Thu Jul  2 10:54:53 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene corridor --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=5  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-corridor/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 1 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 360, 6)
+    actions: (500, 360, 3)
+    rewards: (500, 360, 1)
+    terminals: (500, 360, 1)
+    normed_observations: (500, 360, 6)
+    normed_actions: (500, 360, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] corridor: variants=['diffuser', 'gradient', 'post_processing', 'model_free', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+[ eval ] corridor variant=diffuser (B=4, proj=off, sel=random): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.572  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/diffuser/
+[ eval ] corridor variant=diffuser TIMING: fm_ms=94.0 proj_ms=0.0 total_ms=94.0 (p95=104.4) budget=30.3ms → real_time_OVER×1282
+[ eval ] UAV: overriding model_fm.goal_dim 1 → 0 (false-positive constant channel; UAV has no goal dims)
+[ eval ] corridor variant=gradient (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=4.144  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/gradient/
+[ eval ] corridor variant=gradient TIMING: fm_ms=99.9 proj_ms=0.0 total_ms=99.9 (p95=108.2) budget=30.3ms → real_time_OVER×1282
+[ eval ] corridor variant=post_processing (B=4, proj=on, sel=random): success=0.000  safe=0.600  goal_reached=0.000  track_err=2.135  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/post_processing/
+[ eval ] corridor variant=post_processing TIMING: fm_ms=92.7 proj_ms=13.6 total_ms=106.3 (p95=167.4) budget=30.3ms → real_time_OVER×1282
+[ eval ] corridor variant=model_free (B=4, proj=on, sel=random): success=0.000  safe=0.200  goal_reached=0.000  track_err=44.940  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/model_free/
+[ eval ] corridor variant=model_free TIMING: fm_ms=92.4 proj_ms=30.7 total_ms=123.1 (p95=163.4) budget=30.3ms → real_time_OVER×1282
+[ eval ] corridor variant=dpcc-r (B=4, proj=on, sel=random): success=0.200  safe=1.000  goal_reached=0.200  track_err=0.537  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/dpcc-r/
+[ eval ] corridor variant=dpcc-r TIMING: fm_ms=90.3 proj_ms=48.0 total_ms=138.3 (p95=148.4) budget=30.3ms → real_time_OVER×1282
+[ eval ] corridor variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.200  safe=1.000  goal_reached=0.200  track_err=0.525  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/dpcc-c/
+[ eval ] corridor variant=dpcc-c TIMING: fm_ms=91.5 proj_ms=48.6 total_ms=140.1 (p95=148.4) budget=30.3ms → real_time_OVER×1282
+[ eval ] corridor variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.200  safe=1.000  goal_reached=0.200  track_err=0.526  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5/6/dpcc-t/
+[ eval ] corridor variant=dpcc-t TIMING: fm_ms=90.9 proj_ms=48.2 total_ms=139.1 (p95=147.8) budget=30.3ms → real_time_OVER×1282
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=corridor for seeds=[6]
+JOB END: Thu Jul  2 11:15:45 UTC 2026

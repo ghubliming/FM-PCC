@@ -1,6 +1,39 @@
+import os
+import time
+from collections import deque
 import numpy as np
 import torch
 from scipy.optimize import minimize, Bounds
+
+# ─── Fix_15.2 (synced from Gen11 UAV): episode-level "sustained slowness" breaker ─
+# Supersedes Fix_15's per-solve 2 s hard cap, which was the wrong altitude: it killed
+# rare-but-legitimate hard solves AND corrupted output (every capped solve silently
+# fell back to unprojected). A single slow solve is harmless — one 120 s spike among
+# 400 otherwise-fast steps costs nothing. The pathology worth killing is *sustained*
+# slowness: when essentially EVERY step of an episode blows the real-time budget
+# (JOB 23293 Gen7 `dpcc-r × combined_5` — thousands of consecutive solves each hitting
+# the cap). So we judge recent history, not the individual solve:
+#   • each solve keeps a *generous* wall-clock BACKSTOP (default 60 s) that only trips
+#     on a genuinely non-terminating solve — normal slow solves finish and keep their
+#     real projected result;
+#   • a sliding window over the last WINDOW project() calls (= replan steps) counts how
+#     many were "slow" (call wall-time > SLOW_MS). When ≥ TRIP_FRAC of the window is
+#     slow the breaker OPENS and projection is SKIPPED (returned unprojected, ~0 ms) so
+#     the episode stops bleeding time. After COOLDOWN skips it HALF-OPENs and probes one
+#     real solve: fast ⇒ close (a new easy episode recovers automatically — the sliding
+#     window needs no explicit episode boundary); still slow ⇒ re-open.
+# A lone spike never trips it (1 slow / WINDOW); all-steps-slow trips within ~WINDOW
+# steps then costs almost nothing. Set FMPCC_PROJ_CB_WINDOW=0 to disable the breaker.
+_PROJ_SOLVE_BACKSTOP_S = float(os.environ.get('FMPCC_PROJ_SOLVE_BACKSTOP_S', '60.0'))   # per-solve hang backstop (s); <=0 disables
+_PROJ_SLOW_MS          = float(os.environ.get('FMPCC_PROJ_SLOW_MS',          '1000.0')) # a project() call slower than this = one "slow step"
+_PROJ_CB_WINDOW        = int(  os.environ.get('FMPCC_PROJ_CB_WINDOW',        '40'))      # steps of recent history to judge; 0 disables
+_PROJ_CB_TRIP_FRAC     = float(os.environ.get('FMPCC_PROJ_CB_TRIP_FRAC',     '0.9'))     # fraction of a full window that must be slow to OPEN
+_PROJ_CB_COOLDOWN      = int(  os.environ.get('FMPCC_PROJ_CB_COOLDOWN',      '40'))      # OPEN skips before a HALF-OPEN probe
+
+
+class _SolveBudgetExceeded(Exception):
+    """Raised from the SLSQP callback when one solve overruns the generous hang backstop."""
+    pass
 
 class Projector:
     """
@@ -101,9 +134,28 @@ class Projector:
         # empty constraint matrices and bounds [-5,5] corrupts healthy trajectories via the QP cost.
         if self.A.shape[0] == 0 and self.C.shape[0] == 0 and len(self.obstacle_constraints.P_list) == 0:
             batch_size = trajectory.shape[0]
+            self.last_proj_skipped = False    # Fix_15.3: no-constraint fast path, not a breaker skip
             return trajectory, np.zeros(batch_size, dtype=np.float32)
 
         dims = trajectory.shape
+
+        # Fix_15.2: circuit breaker — while OPEN, skip projection entirely and return the
+        # unprojected trajectory (fast), so a sustained-slow episode stops bleeding time.
+        if not hasattr(self, '_cb_state'):
+            self._cb_state = 'closed'
+            self._cb_window = deque(maxlen=_PROJ_CB_WINDOW)
+            self._cb_skips = 0
+            self._cb_trips = 0
+        if self._cb_state == 'open':
+            self._cb_skips += 1
+            if self._cb_skips >= _PROJ_CB_COOLDOWN:
+                self._cb_state = 'half_open'          # next call probes one real solve
+                self._cb_skips = 0
+            self.last_proj_ms = 0.0
+            self.last_proj_skipped = True     # Fix_15.3: this step's trajectory is UNPROJECTED
+            return trajectory, np.full(dims[0], np.inf, dtype=np.float32)
+        _call_t0 = time.perf_counter()
+        self.last_proj_skipped = False        # Fix_15.3: real solve ran this step
 
         # Reshape the trajectory to a batch of vectors (from B x H x T to B x (HT)
         batch_size = trajectory.shape[0]
@@ -187,14 +239,33 @@ class Projector:
             # Cost
             cost_fun = lambda x: 0.5 * x @ Q @ x + r_np_double[i] @ x # + (A_double @ x - b_double) @ (A_double @ x - b_double)
             jac_cost_fun = lambda x: Q @ x + r_np_double[i]
-            res = minimize(fun=cost_fun, 
-                            x0=trajectory_np_double[i],
-                            constraints=constraints, 
-                            method='SLSQP', 
-                            jac=jac_cost_fun, 
-                            bounds=Bounds(-5 * np.ones_like(trajectory_np_double[i]), 5 * np.ones_like(trajectory_np_double[i])),
-                            tol=1e-6,
-                            options={'maxiter': 1000, 'disp': False})
+            # Fix_15.2: generous per-solve BACKSTOP — only catches a genuinely
+            # non-terminating solve. SLSQP calls the callback each iteration; raising
+            # there unwinds cleanly out of minimize(). Sustained slowness is handled by
+            # the circuit breaker (below), not here.
+            _t0 = time.perf_counter()
+            def _deadline_cb(xk, _t0=_t0):
+                if _PROJ_SOLVE_BACKSTOP_S > 0 and time.perf_counter() - _t0 > _PROJ_SOLVE_BACKSTOP_S:
+                    raise _SolveBudgetExceeded()
+            try:
+                res = minimize(fun=cost_fun,
+                                x0=trajectory_np_double[i],
+                                constraints=constraints,
+                                method='SLSQP',
+                                jac=jac_cost_fun,
+                                bounds=Bounds(-5 * np.ones_like(trajectory_np_double[i]), 5 * np.ones_like(trajectory_np_double[i])),
+                                tol=1e-6,
+                                callback=_deadline_cb,
+                                options={'maxiter': 1000, 'disp': False})
+            except _SolveBudgetExceeded:
+                # Rare: one solve hit the 60 s hang backstop. Keep it unprojected (inf
+                # cost so selection avoids it) and let the circuit breaker judge the trend.
+                sol_np[i] = trajectory_np_double[i]
+                projection_costs[i] = np.inf
+                self._cost_exploded_count = getattr(self, '_cost_exploded_count', 0) + 1
+                print(f'[ projector ] solve backstop hit ({_PROJ_SOLVE_BACKSTOP_S:.0f}s) '
+                      f'— kept unprojected trajectory (batch {i}).', flush=True)
+                continue
 
             sol_np[i] = res.x
             projection_costs[i] = 0.5 * sol_np[i] @ Q @ sol_np[i] + r_np[i] @ sol_np[i] + 0.5 * trajectory_np[i] @ Q @ trajectory_np[i]
@@ -207,6 +278,27 @@ class Projector:
             #           f'success={res.success} nit={res.nit} status={res.status}')
 
         sol = torch.tensor(sol_np, device=self.device).reshape(dims)
+
+        # Fix_15.2: record this step's wall-time and update the circuit breaker.
+        _call_ms = (time.perf_counter() - _call_t0) * 1e3
+        self.last_proj_ms = _call_ms
+        _slow = _call_ms > _PROJ_SLOW_MS
+        if self._cb_state == 'half_open':
+            if _slow:
+                self._cb_state = 'open'; self._cb_skips = 0     # still bad → re-open
+            else:
+                self._cb_state = 'closed'; self._cb_window.clear()
+                print(f'[ projector ] circuit breaker RECOVERED — projection resumed '
+                      f'(step {_call_ms:.0f} ms).', flush=True)
+        elif self._cb_window.maxlen:                            # closed & breaker enabled
+            self._cb_window.append(_slow)
+            if len(self._cb_window) == self._cb_window.maxlen and \
+               sum(self._cb_window) >= _PROJ_CB_TRIP_FRAC * self._cb_window.maxlen:
+                self._cb_state = 'open'; self._cb_skips = 0; self._cb_trips += 1
+                print(f'[ projector ] COST EXPLODED (sustained): {sum(self._cb_window)}/'
+                      f'{self._cb_window.maxlen} recent steps > {_PROJ_SLOW_MS:.0f} ms — '
+                      f'OPENING circuit breaker, skipping projection until it recovers '
+                      f'(trip #{self._cb_trips}).', flush=True)
 
         # print(f'Projection time {self.solver}:', time.time() - start_time)
         return sol, projection_costs    # only implemented for proxsuite and scipy and parallelize=False

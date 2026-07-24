@@ -13,18 +13,18 @@ logger = logging.getLogger(__name__)
 # Use config for styling
 from config import PLOT_CONFIG, MAJOR_VARIANTS, AUXILIARY_VARIANTS
 
-# Color scheme for candidates: A=red, B=orange, C=yellow, D=blue, E=green...
+# Color scheme for candidates: 1=red, 2=orange, 3=yellow, 4=blue, 5=green...
 CANDIDATE_COLORS = {
-    'A': '#e74c3c',      # red
-    'B': '#f39c12',      # orange
-    'C': '#f1c40f',      # yellow
-    'D': '#3498db',      # blue
-    'E': '#2ecc71',      # green
-    'F': '#9b59b6',      # purple
-    'G': '#1abc9c',      # teal
-    'H': '#e67e22',      # dark orange
-    'I': '#34495e',      # dark blue
-    'J': '#c0392b',      # dark red
+    1:  '#e74c3c',      # red
+    2:  '#f39c12',      # orange
+    3:  '#f1c40f',      # yellow
+    4:  '#3498db',      # blue
+    5:  '#2ecc71',      # green
+    6:  '#9b59b6',      # purple
+    7:  '#1abc9c',      # teal
+    8:  '#e67e22',      # dark orange
+    9:  '#34495e',      # dark blue
+    10: '#c0392b',      # dark red
 }
 
 

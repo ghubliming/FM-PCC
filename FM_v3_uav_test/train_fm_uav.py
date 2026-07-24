@@ -199,6 +199,12 @@ for seed in selected_seeds:
     parser_obj = Parser()
     parser_obj.dataset = f'uav-{cli_args.scene}'   # → data branch + output path segregation
     args = parser_obj.parse_args(experiment='flow_matching_v3_uav', seed=seed)
+    # Resolve per-scene max_path_length (avoid over-allocating replay buffer for short scenes).
+    from config.uav import MAX_PATH_LENGTH_PER_SCENE
+    resolved_max_path = MAX_PATH_LENGTH_PER_SCENE.get(cli_args.scene, args.max_path_length)
+    if resolved_max_path != args.max_path_length:
+        print(f'[ train ] max_path_length: {args.max_path_length} → {resolved_max_path} (scene={cli_args.scene})')
+        args.max_path_length = resolved_max_path
     torch.manual_seed(args.seed)
     if not manifest_written:
         run_root = os.path.dirname(args.savepath)
@@ -220,6 +226,10 @@ for seed in selected_seeds:
         # Group name clusters seeds of the same experiment together
         default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
         wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
+
+        # Tag the run name with the Slurm job id (no-op off-cluster); group stays clean
+        if os.environ.get('SLURM_JOB_ID'):
+            wandb_name = f"{wandb_name}-slurm-{os.environ['SLURM_JOB_ID']}"
 
         run = wandb.init(
             project=cli_args.wandb_project,
@@ -246,6 +256,10 @@ for seed in selected_seeds:
         include_returns=args.include_returns,
         returns_scale=args.max_path_length,
         discount=args.discount,
+        # U4: 'p_des' (default → obs=[p_des|p|v] 9D, action=Δp_des, transition=12) or
+        #     'real_p' (→ obs=[p|v] 6D, action=Δp, transition=9). Model auto-sizes from
+        #     observation_dim+action_dim below, so no model edit is needed.
+        cond_mode=getattr(args, 'cond_mode', 'p_des'),
     )
     dataset = dataset_config()
     observation_dim = dataset.observation_dim

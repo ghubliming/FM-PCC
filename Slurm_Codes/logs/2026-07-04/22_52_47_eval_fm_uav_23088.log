@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Jul  4 20:52:48 UTC 2026  |  eval_fm_uav  |  ID 23088  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 
+GIT REV:   0b0915b
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Sat Jul  4 20:52:49 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6  --projection fm_only --record gif
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+slurmstepd-i6-gpu-1: error: *** JOB 23088 ON i6-gpu-1 CANCELLED AT 2026-07-04T21:31:02 ***
+JOB END: Sat Jul  4 21:31:02 UTC 2026

@@ -1,0 +1,57 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Jun 26 10:02:27 UTC 2026  |  eval_fm_uav  |  ID 22094  |  NODE i6-gpu-1
+SCENE: corridor   SEEDS: 6   N_TRIALS: 2
+GIT REV:   a5ba4cb
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=corridor seed=6  Fri Jun 26 10:02:28 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene corridor --seed 6 --n-trials 2 --projection fm_only --record none
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-corridor/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6
+
+
+                    [ utils/normalization ] Constant data in dimension 1 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 9)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 9)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] corridor: variants=['diffuser', 'gradient', 'gradient-tightened', 'post_processing', 'post_processing-tightened', 'model_free', 'model_free-tightened', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened']  constraints=['dynamics']  batch_size=4
+[ eval ] corridor variant=diffuser (B=4, proj=off, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=80.625  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/diffuser/
+[ eval ] corridor variant=diffuser TIMING: fm_ms=86.5 proj_ms=0.0 total_ms=86.5 (p95=89.6) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=gradient (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=3.509  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/gradient/
+[ eval ] corridor variant=gradient TIMING: fm_ms=91.2 proj_ms=0.0 total_ms=91.2 (p95=94.2) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=gradient-tightened (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=3.686  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/gradient-tightened/
+[ eval ] corridor variant=gradient-tightened TIMING: fm_ms=91.2 proj_ms=0.0 total_ms=91.2 (p95=94.0) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=post_processing (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=1.821  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/post_processing/
+[ eval ] corridor variant=post_processing TIMING: fm_ms=85.2 proj_ms=12.2 total_ms=97.5 (p95=98.8) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=post_processing-tightened (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=1.642  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/post_processing-tightened/
+[ eval ] corridor variant=post_processing-tightened TIMING: fm_ms=85.5 proj_ms=54.1 total_ms=139.5 (p95=247.5) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=model_free (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=68.112  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/model_free/
+[ eval ] corridor variant=model_free TIMING: fm_ms=85.5 proj_ms=59.7 total_ms=145.2 (p95=200.4) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=model_free-tightened (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=70.817  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/model_free-tightened/
+[ eval ] corridor variant=model_free-tightened TIMING: fm_ms=85.9 proj_ms=60.2 total_ms=146.1 (p95=198.7) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=26.939  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dpcc-r/
+[ eval ] corridor variant=dpcc-r TIMING: fm_ms=85.6 proj_ms=217.9 total_ms=303.6 (p95=715.9) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=1.069  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dpcc-r-tightened/
+[ eval ] corridor variant=dpcc-r-tightened TIMING: fm_ms=85.6 proj_ms=60.0 total_ms=145.6 (p95=148.8) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.000  safe=0.500  goal_reached=0.000  track_err=31.642  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dpcc-c/
+[ eval ] corridor variant=dpcc-c TIMING: fm_ms=85.7 proj_ms=256.7 total_ms=342.4 (p95=749.4) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=dpcc-c-tightened (B=4, proj=on, sel=minimum_projection_cost): success=0.000  safe=0.000  goal_reached=0.000  track_err=53.056  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dpcc-c-tightened/
+[ eval ] corridor variant=dpcc-c-tightened TIMING: fm_ms=85.8 proj_ms=394.5 total_ms=480.4 (p95=823.9) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  safe=0.000  goal_reached=0.000  track_err=1.158  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dpcc-t/
+[ eval ] corridor variant=dpcc-t TIMING: fm_ms=85.3 proj_ms=60.0 total_ms=145.3 (p95=147.1) budget=30.3ms → real_time_OVER×497
+[ eval ] corridor variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.000  safe=0.000  goal_reached=0.000  track_err=36.928  → logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE/6/dpcc-t-tightened/
+[ eval ] corridor variant=dpcc-t-tightened TIMING: fm_ms=85.3 proj_ms=229.2 total_ms=314.6 (p95=799.0) budget=30.3ms → real_time_OVER×497
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=corridor for seeds=[6]
+JOB END: Fri Jun 26 10:24:13 UTC 2026

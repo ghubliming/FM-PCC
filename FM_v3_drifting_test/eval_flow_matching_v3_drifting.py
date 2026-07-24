@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import flow_matcher_v3_drifting.utils as utils
 from flow_matcher_v3_drifting.sampling.policies import Policy
 from flow_matcher_v3_drifting.sampling.projection import Projector
+# REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 import sys
 import argparse
@@ -116,6 +119,37 @@ for exp in exps:
                             for k in keys_to_remove:
                                 print(f"[WARNING] Dropping unexpected kwarg from pickle: '{k}'", file=sys.stderr)
                                 del diffusion_config._dict[k]
+
+                    # CONFIG-OVERRIDES-PKL (fix_1, 2026-07-14): the pkl PRESERVES training-time params; the eval
+                    # config is compared against it and reconciled in TWO tiers (see
+                    # logs_in_develop/config_override_pkl/fix_1/):
+                    #   - SAMPLING knobs (operating point, safe to change at eval): eval config OVERRIDES the pkl, [INFO].
+                    #   - identity/architecture keys (must match the checkpoint): pkl value is KEPT to protect the
+                    #     state_dict; a loud [WARNING] fires if the eval config disagrees.
+                    _SAMPLING_OVERRIDE_KEYS = {
+                        'flow_steps_v3', 'ode_inference_steps_v3', 'ode_solver_backend_v3',
+                        'ode_solver_method_v3', 'ode_solver_rtol_v3', 'ode_solver_atol_v3',
+                        'ode_solver_step_size_v3', 'meanflow_cfg_omega', 'meanflow_cfg_t_min',
+                        'meanflow_cfg_t_max', 'condition_guidance_w', 'clip_denoised',
+                        'diffusion_timestep_threshold',
+                    }
+                    for _k in list(diffusion_config._dict.keys()):
+                        if not hasattr(args, _k):
+                            continue
+                        _new, _old = getattr(args, _k), diffusion_config._dict[_k]
+                        try:
+                            _same = bool(_new == _old)
+                        except Exception:
+                            _same = False
+                        if _same:
+                            continue
+                        if _k in _SAMPLING_OVERRIDE_KEYS:
+                            print(f"[ config->pkl ] INFO  {_k}: train={_old!r} -> eval={_new!r}  (sampling knob; applied)", file=sys.stderr)
+                            diffusion_config._dict[_k] = _new
+                        else:
+                            print(f"[ config->pkl ] WARNING  {_k}: train-pkl={_old!r} vs eval-config={_new!r} -- "
+                                  f"identity/architecture key; KEEPING the train value to protect the checkpoint "
+                                  f"(fix the config to match the checkpoint, or retrain).", file=sys.stderr)
 
                     import inspect
                     print(f"\n[INFO] Instantiating Diffusion Model from:", file=sys.stderr)
@@ -244,7 +278,8 @@ for exp in exps:
                     policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
                     fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
                     fig.suptitle(f'{exp} - {variant}')
-                    save_samples_every = args.horizon // 2
+                    save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
+                    plot_samples_every = max(1, args.horizon // 2)  # fix_1.2: keep PLOT readable - draw foresight fan only every H/2 steps (npz still saves every step)
                     sampled_trajectories_all = []
                     n_success = np.zeros(n_trials)
                     n_success_and_constraints = np.zeros(n_trials)
@@ -279,6 +314,13 @@ for exp in exps:
                         action_buffer = []
                         sampled_trajectories = []
                         disable_projection = False
+                        # REAL_TIME_RECORDING_UPDATE — one recorder per rollout episode.
+                        rt_rec = RTRecorder(episode_id=f'{exp}_{variant}_seed{seed}_trial{i}',
+                                            variant=variant, scene=exp,
+                                            system='FMv3_drifting',
+                                            control_hz=RT_CONTROL_HZ,
+                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            text_log=config.get('write_to_file', True))
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
                             if 'halfspace' in constraint_types:
@@ -302,7 +344,13 @@ for exp in exps:
                             n_violations[i] += violated_this_timestep
                             start = time.time()
                             action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
-                            avg_time[i] += time.time() - start
+                            _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
+                            avg_time[i] += _rt_total_ms / 1e3
+                            # REAL_TIME_RECORDING_UPDATE — record per-step timing (proj bundled inside policy()).
+                            rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
+                                        action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
+                                        proj_active=(variant != 'diffuser' and not disable_projection),
+                                        contact=bool(violated_this_timestep), step_idx=_)
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
                                 obs, rew, terminated, info = env.step(np.concatenate((next_pos_des, fixed_z, [0, 1, 0, 0]), axis=0))
@@ -333,7 +381,13 @@ for exp in exps:
                         
                         obs_all.append(np.array(obs_buffer))
                         act_all.append(np.array(action_buffer))
-                        
+                        # REAL_TIME_RECORDING_UPDATE — write per-episode realtime_<variant>_trial<i>.log + SUMMARY.
+                        if config.get('write_to_file', True):
+                            rt_rec.save(f'{save_path}/realtime_{variant}_trial{i}.log',
+                                        behaviour={'success': int(n_success[i]),
+                                                   'n_steps': int(n_steps[i]),
+                                                   'violations': int(n_violations[i])})
+
                         sampled_trajectories_all.append(sampled_trajectories)
                         if i >= plot_how_many: continue
                         plot_states = ['x', 'y', 'x_des', 'y_des']
@@ -349,7 +403,7 @@ for exp in exps:
                         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
                         axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
                         axes = [ax[i, 5], ax_all[i, variant_idx]]
-                        for __ in range(len(sampled_trajectories_all[i])):
+                        for __ in range(0, len(sampled_trajectories_all[i]), plot_samples_every):
                             for ___ in range(min(args.batch_size, 4)):
                                 for curr_ax in axes:
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')

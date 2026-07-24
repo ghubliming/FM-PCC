@@ -22,6 +22,9 @@ import yaml
 import fm_visual_avoiding.utils as utils
 from fm_visual_avoiding.sampling.projection import Projector
 from fm_visual_avoiding.models.visual_gaussian_diffusion import VisualFlowMatching
+# REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware. NB: total_ms bundles vision-encoder + FM + projection (agent.predict).
 
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 import argparse
@@ -145,7 +148,11 @@ def _warn_pkl_config_mismatch(diffusion, args):
         ('n_diffusion_steps', getattr(diffusion, 'n_timesteps',   None), getattr(args, 'n_diffusion_steps', None)),
         ('clip_denoised',     getattr(diffusion, 'clip_denoised', None), getattr(args, 'clip_denoised',     None)),
     ]
-    print('\n[ eval pkl values ] (these win over the .py plan config)')
+    # CONFIG-OVERRIDES-PKL (2026-07-13): same-named kwargs are now overridden by the .py plan
+    # config BEFORE instantiation (see load_diffusion_with_override). Only differently-named
+    # keys (n_diffusion_steps ↔ pkl 'n_timesteps') remain pkl-authoritative — this banner
+    # still covers those.
+    print('\n[ eval pkl values ] (config-overrides-pkl active: same-named keys take the .py config; n_diffusion_steps stays pkl)')
     for key, pkl_v, cfg_v in checks:
         if pkl_v is None and cfg_v is None:
             continue
@@ -163,7 +170,7 @@ def _warn_pkl_config_mismatch(diffusion, args):
 
 
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
-                                 device='cuda:0', seed=None):
+                                 device='cuda:0', seed=None, override_args=None):
     import inspect
     print(f'\n[ eval loading ] {os.path.join(*loadpath)}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -180,6 +187,38 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
             valid = set(inspect.signature(target_cls.__init__).parameters)
             for k in [k for k in diffusion_config._dict if k not in valid]:
                 del diffusion_config._dict[k]
+
+    # CONFIG-OVERRIDES-PKL (fix_1, 2026-07-14): the pkl PRESERVES training-time params; the eval
+    # config is compared against it and reconciled in TWO tiers (see
+    # logs_in_develop/config_override_pkl/fix_1/):
+    #   - SAMPLING knobs (operating point, safe to change at eval): eval config OVERRIDES the pkl, [INFO].
+    #   - identity/architecture keys (must match the checkpoint): pkl value is KEPT to protect the
+    #     state_dict; a loud [WARNING] fires if the eval config disagrees.
+    _SAMPLING_OVERRIDE_KEYS = {
+        'flow_steps_v3', 'ode_inference_steps_v3', 'ode_solver_backend_v3',
+        'ode_solver_method_v3', 'ode_solver_rtol_v3', 'ode_solver_atol_v3',
+        'ode_solver_step_size_v3', 'meanflow_cfg_omega', 'meanflow_cfg_t_min',
+        'meanflow_cfg_t_max', 'condition_guidance_w', 'clip_denoised',
+        'diffusion_timestep_threshold',
+    }
+    if override_args is not None:
+        for _k in list(diffusion_config._dict.keys()):
+            if not hasattr(override_args, _k):
+                continue
+            _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+            try:
+                _same = bool(_new == _old)
+            except Exception:
+                _same = False
+            if _same:
+                continue
+            if _k in _SAMPLING_OVERRIDE_KEYS:
+                print(f"[ config->pkl ] INFO  {_k}: train={_old!r} -> eval={_new!r}  (sampling knob; applied)")
+                diffusion_config._dict[_k] = _new
+            else:
+                print(f"[ config->pkl ] WARNING  {_k}: train-pkl={_old!r} vs eval-config={_new!r} -- "
+                      f"identity/architecture key; KEEPING the train value to protect the checkpoint "
+                      f"(fix the config to match the checkpoint, or retrain).")
 
     dataset  = dataset_config()
     model    = model_config().to(device)
@@ -243,7 +282,8 @@ for exp in exps:
             if not args_cli.aggregate_only:
                 fm_experiment = load_diffusion_with_override(
                     args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
-                    target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device)
+                    target_class=args.diffusion, epoch=args.diffusion_epoch, device=args.device,
+                    override_args=args)
                 fm_model = fm_experiment.diffusion
                 _warn_pkl_config_mismatch(fm_model, args)
 
@@ -373,7 +413,8 @@ for exp in exps:
                         figsize=(10 * len(projection_variants),
                                  10 * min(n_trials, plot_how_many)), squeeze=False)
 
-                    save_samples_every          = args.horizon // 2
+                    save_samples_every          = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
+                    plot_samples_every = max(1, args.horizon // 2)  # fix_1.2: keep PLOT readable - draw foresight fan only every H/2 steps (npz still saves every step)
                     n_success                   = np.zeros(n_trials)
                     n_success_and_constraints   = np.zeros(n_trials)
                     n_steps                     = np.zeros(n_trials)
@@ -400,6 +441,13 @@ for exp in exps:
                         sampled_trajectories = []
                         disable_projection = False
                         desired_next_pos   = obs[obs_indices['x']:obs_indices['y'] + 1].copy()
+                        # REAL_TIME_RECORDING_UPDATE — one recorder per rollout episode.
+                        rt_rec = RTRecorder(episode_id=f'{exp}_{variant}_seed{seed}_trial{i}',
+                                            variant=variant, scene=exp,
+                                            system='VisualAvoiding_FM',
+                                            control_hz=RT_CONTROL_HZ,
+                                            batch_size=args.mpc_batch_size, horizon=args.horizon,
+                                            text_log=config.get('write_to_file', True))
 
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
@@ -438,7 +486,13 @@ for exp in exps:
                                 bp_image = bp_img_raw.transpose((2, 0, 1)).copy() / 255.
                                 c_xy     = env.robot.current_c_pos[:2].copy()
                                 action, traj_plan = agent.predict(bp_image, obs[:2].copy(), c_xy)
-                            avg_time[i] += time.time() - start
+                            _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled encoder+FM+projection
+                            avg_time[i] += _rt_total_ms / 1e3
+                            # REAL_TIME_RECORDING_UPDATE — record per-step timing.
+                            rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
+                                        action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
+                                        proj_active=(variant != 'diffuser' and not disable_projection),
+                                        contact=bool(violated_this_timestep), step_idx=_)
 
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
@@ -469,6 +523,12 @@ for exp in exps:
 
                         obs_all.append(np.array(obs_buffer))
                         act_all.append(np.array(action_buffer))
+                        # REAL_TIME_RECORDING_UPDATE — write per-episode realtime_<variant>_trial<i>.log + SUMMARY.
+                        if config['write_to_file']:
+                            rt_rec.save(f'{save_path}/realtime_{variant}_trial{i}.log',
+                                        behaviour={'success': int(n_success[i]),
+                                                   'n_steps': int(n_steps[i]),
+                                                   'violations': int(n_violations[i])})
                         sampled_trajectories_all.append(sampled_trajectories)
 
                         if i >= plot_how_many:
@@ -494,7 +554,9 @@ for exp in exps:
                             colors[seed % len(colors)], linewidth=2)
 
                         # Col 5: planned c_xy trajectory from FM model at subsampled steps
-                        for traj_np in sampled_trajectories_all[i]:
+                        for _pi, traj_np in enumerate(sampled_trajectories_all[i]):
+                            if _pi % plot_samples_every != 0:   # fix_1.2: subsample plot only
+                                continue
                             if traj_np is None:
                                 continue
                             for k in range(traj_np.shape[0]):

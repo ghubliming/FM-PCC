@@ -1,0 +1,640 @@
+diff -ru /workspaces/diffuser/diffuser/utils/arrays.py /workspaces/dpcc/diffuser/utils/arrays.py
+--- /workspaces/diffuser/diffuser/utils/arrays.py	2026-05-21 14:35:56.071840430 +0000
++++ /workspaces/dpcc/diffuser/utils/arrays.py	2026-04-08 13:42:37.874600363 +0000
+@@ -31,6 +31,8 @@
+ 		return {k: to_device(v, device) for k, v in x.items()}
+ 	else:
+ 		raise RuntimeError(f'Unrecognized type in `to_device`: {type(x)}')
++		# print(f'Unrecognized type in `to_device`: {type(x)}')
++		# pdb.set_trace()
+ 
+ def batchify(batch):
+ 	'''
+Only in /workspaces/diffuser/diffuser/utils: cloud.py
+Only in /workspaces/diffuser/diffuser/utils: colab.py
+diff -ru /workspaces/diffuser/diffuser/utils/config.py /workspaces/dpcc/diffuser/utils/config.py
+--- /workspaces/diffuser/diffuser/utils/config.py	2026-05-21 14:35:56.071840430 +0000
++++ /workspaces/dpcc/diffuser/utils/config.py	2026-04-08 13:42:37.874600363 +0000
+@@ -1,5 +1,5 @@
+ import os
+-import collections
++from collections.abc import Mapping
+ import importlib
+ import pickle
+ 
+@@ -15,10 +15,10 @@
+     module = importlib.import_module(f'{repo_name}.{module_name}')
+     ## eg, diffusion.utils.Renderer
+     _class = getattr(module, class_name)
+-    print(f'[ utils/config ] Imported {repo_name}.{module_name}:{class_name}')
++    # print(f'[ utils/config ] Imported {repo_name}.{module_name}:{class_name}')
+     return _class
+ 
+-class Config(collections.Mapping):
++class Config(Mapping):
+ 
+     def __init__(self, _class, verbose=True, savepath=None, device=None, **kwargs):
+         self._class = import_class(_class)
+Only in /workspaces/dpcc/diffuser/utils: constraints_helpers.py
+Only in /workspaces/diffuser/diffuser/utils: git_utils.py
+diff -ru /workspaces/diffuser/diffuser/utils/__init__.py /workspaces/dpcc/diffuser/utils/__init__.py
+--- /workspaces/diffuser/diffuser/utils/__init__.py	2026-05-21 14:35:56.071840430 +0000
++++ /workspaces/dpcc/diffuser/utils/__init__.py	2026-04-08 13:42:37.864693718 +0000
+@@ -3,7 +3,7 @@
+ from .progress import *
+ from .setup import *
+ from .config import *
+-from .rendering import *
+ from .arrays import *
+-from .colab import *
+ from .logger import *
++from .plot import *
++from .constraints_helpers import *
+Only in /workspaces/diffuser/diffuser/utils: iql.py
+Only in /workspaces/dpcc/diffuser/utils: plot.py
+Only in /workspaces/diffuser/diffuser/utils: pybullet_utils.py
+Only in /workspaces/dpcc/diffuser/utils: __pycache__
+Only in /workspaces/diffuser/diffuser/utils: rendering.py
+diff -ru /workspaces/diffuser/diffuser/utils/serialization.py /workspaces/dpcc/diffuser/utils/serialization.py
+--- /workspaces/diffuser/diffuser/utils/serialization.py	2026-05-21 14:35:56.071840430 +0000
++++ /workspaces/dpcc/diffuser/utils/serialization.py	2026-04-08 13:42:37.874600363 +0000
+@@ -6,7 +6,8 @@
+ 
+ from collections import namedtuple
+ 
+-DiffusionExperiment = namedtuple('Diffusion', 'dataset renderer model diffusion ema trainer epoch')
++# DiffusionExperiment = namedtuple('Diffusion', 'dataset renderer model diffusion ema trainer epoch')
++DiffusionExperiment = namedtuple('Diffusion', 'dataset model diffusion trainer epoch losses')
+ 
+ def mkdir(savepath):
+     """
+@@ -22,42 +23,56 @@
+     states = glob.glob1(os.path.join(*loadpath), 'state_*')
+     latest_epoch = -1
+     for state in states:
+-        epoch = int(state.replace('state_', '').replace('.pt', ''))
++        try:
++            epoch = int(state.replace('state_', '').replace('.pt', ''))
++        except ValueError:
++            epoch = -1
++        # epoch = int(state.replace('state_', '').replace('.pt', ''))
+         latest_epoch = max(epoch, latest_epoch)
+     return latest_epoch
+ 
+ def load_config(*loadpath):
+     loadpath = os.path.join(*loadpath)
+     config = pickle.load(open(loadpath, 'rb'))
+-    print(f'[ utils/serialization ] Loaded config from {loadpath}')
+-    print(config)
++    # print(f'[ utils/serialization ] Loaded config from {loadpath}')
++    # print(config)
+     return config
+ 
++def load_losses(*loadpath):
++    loadpath = os.path.join(*loadpath)
++    if os.path.exists(loadpath):
++        losses = pickle.load(open(loadpath, 'rb'))
++        # print(f'[ utils/serialization ] Loaded losses from {loadpath}')
++        return losses
++    else:
++        # print(f'[ utils/serialization ] File {loadpath} does not exist')
++        return None
++
+ def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None):
++    print(f'\n[ utils/serialization ] Loading model from {os.path.join(*loadpath)}\n')
++
+     dataset_config = load_config(*loadpath, 'dataset_config.pkl')
+-    render_config = load_config(*loadpath, 'render_config.pkl')
+     model_config = load_config(*loadpath, 'model_config.pkl')
+     diffusion_config = load_config(*loadpath, 'diffusion_config.pkl')
+     trainer_config = load_config(*loadpath, 'trainer_config.pkl')
+ 
+-    ## remove absolute path for results loaded from azure
+-    ## @TODO : remove results folder from within trainer class
+     trainer_config._dict['results_folder'] = os.path.join(*loadpath)
+ 
+-    dataset = dataset_config(seed=seed)
+-    renderer = render_config()
+-    model = model_config()
+-    diffusion = diffusion_config(model)
+-    trainer = trainer_config(diffusion, dataset, renderer)
++    dataset = dataset_config()
++    model = model_config().to(device)
++    diffusion = diffusion_config(model).to(device)
++    trainer = trainer_config(diffusion_model=diffusion, dataset=dataset)
+ 
+     if epoch == 'latest':
+         epoch = get_latest_epoch(loadpath)
+ 
+-    print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
++    # print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
+ 
+     trainer.load(epoch)
+ 
+-    return DiffusionExperiment(dataset, renderer, model, diffusion, trainer.ema_model, trainer, epoch)
++    losses = load_losses(*loadpath, 'losses.pkl')
++
++    return DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
+ 
+ def check_compatibility(experiment_1, experiment_2):
+     '''
+diff -ru /workspaces/diffuser/diffuser/utils/setup.py /workspaces/dpcc/diffuser/utils/setup.py
+--- /workspaces/diffuser/diffuser/utils/setup.py	2026-05-21 14:35:56.071840430 +0000
++++ /workspaces/dpcc/diffuser/utils/setup.py	2026-04-08 13:42:37.874600363 +0000
+@@ -3,14 +3,12 @@
+ import random
+ import numpy as np
+ import torch
+-from tap import Tap
++import json
++# from tap import 
++import argparse
+ import pdb
+ 
+ from .serialization import mkdir
+-from .git_utils import (
+-    get_git_rev,
+-    save_git_diff,
+-)
+ 
+ def set_seed(seed):
+     random.seed(seed)
+@@ -39,26 +37,37 @@
+     ## https://stackoverflow.com/a/53671539
+     return eval(f"f'{template}'")
+ 
+-class Parser(Tap):
++class Parser(argparse.ArgumentParser):
+ 
+-    def save(self):
+-        fullpath = os.path.join(self.savepath, 'args.json')
+-        print(f'[ utils/setup ] Saved args to {fullpath}')
+-        super().save(fullpath, skip_unpicklable=True)
++    def __init__(self, *args, savepath='', **kwargs):
++        super().__init__(*args, **kwargs)
++        self.add_argument('--config', help='Path to config file')
++        self.add_argument('--seed', type=int, help='Random seed')  # Add seed argument
++        self.savepath = savepath
+ 
+-    def parse_args(self, experiment=None):
+-        args = super().parse_args(known_only=True)
++    def save(self, args):
++        fullpath = os.path.join(self.savepath, 'args.json')
++        with open(fullpath, 'w') as f:
++            json.dump(vars(args), f, skipkeys=True)
++        # print(f'[ utils/setup ] Saved args to {fullpath}')
++        # super().save(fullpath, skip_unpicklable=True)
++
++    def parse_args(self, experiment=None, seed=None):
++        args = super().parse_args()
++        args.dataset = self.dataset
++        args.config = self.config
+         ## if not loading from a config script, skip the result of the setup
+         if not hasattr(args, 'config'): return args
+         args = self.read_config(args, experiment)
+-        self.add_extras(args)
++
++        args.seed = seed if seed is not None else args.seed
++
++        # self.add_extras(args)
+         self.eval_fstrings(args)
+         self.set_seed(args)
+-        self.get_commit(args)
+         self.set_loadbase(args)
+         self.generate_exp_name(args)
+         self.mkdir(args)
+-        self.save_diff(args)
+         return args
+ 
+     def read_config(self, args, experiment):
+@@ -66,16 +75,16 @@
+             Load parameters from config file
+         '''
+         dataset = args.dataset.replace('-', '_')
+-        print(f'[ utils/setup ] Reading config: {args.config}:{dataset}')
++        # print(f'[ utils/setup ] Reading config: {args.config}:{dataset}')
+         module = importlib.import_module(args.config)
+         params = getattr(module, 'base')[experiment]
+ 
+         if hasattr(module, dataset) and experiment in getattr(module, dataset):
+-            print(f'[ utils/setup ] Using overrides | config: {args.config} | dataset: {dataset}')
++            # print(f'[ utils/setup ] Using overrides | config: {args.config} | dataset: {dataset}')
+             overrides = getattr(module, dataset)[experiment]
+             params.update(overrides)
+-        else:
+-            print(f'[ utils/setup ] Not using overrides | config: {args.config} | dataset: {dataset}')
++        # else:
++            # print(f'[ utils/setup ] Not using overrides | config: {args.config} | dataset: {dataset}')
+ 
+         self._dict = {}
+         for key, val in params.items():
+@@ -92,7 +101,7 @@
+         if not len(extras):
+             return
+ 
+-        print(f'[ utils/setup ] Found extras: {extras}')
++        # print(f'[ utils/setup ] Found extras: {extras}')
+         assert len(extras) % 2 == 0, f'Found odd number ({len(extras)}) of extras: {extras}'
+         for i in range(0, len(extras), 2):
+             key = extras[i].replace('--', '')
+@@ -100,7 +109,7 @@
+             assert hasattr(args, key), f'[ utils/setup ] {key} not found in config: {args.config}'
+             old_val = getattr(args, key)
+             old_type = type(old_val)
+-            print(f'[ utils/setup ] Overriding config | {key} : {old_val} --> {val}')
++            # print(f'[ utils/setup ] Overriding config | {key} : {old_val} --> {val}')
+             if val == 'None':
+                 val = None
+             elif val == 'latest':
+@@ -120,19 +129,20 @@
+             if type(old) is str and old[:2] == 'f:':
+                 val = old.replace('{', '{args.').replace('f:', '')
+                 new = lazy_fstring(val, args)
+-                print(f'[ utils/setup ] Lazy fstring | {key} : {old} --> {new}')
++                # print(f'[ utils/setup ] Lazy fstring | {key} : {old} --> {new}')
+                 setattr(self, key, new)
+                 self._dict[key] = new
++                setattr(args, key, new)     # Added so that it works with argparse
+ 
+     def set_seed(self, args):
+         if not hasattr(args, 'seed') or args.seed is None:
+             return
+-        print(f'[ utils/setup ] Setting seed: {args.seed}')
++        # print(f'[ utils/setup ] Setting seed: {args.seed}')
+         set_seed(args.seed)
+ 
+     def set_loadbase(self, args):
+         if hasattr(args, 'loadbase') and args.loadbase is None:
+-            print(f'[ utils/setup ] Setting loadbase: {args.logbase}')
++            # print(f'[ utils/setup ] Setting loadbase: {args.logbase}')
+             args.loadbase = args.logbase
+ 
+     def generate_exp_name(self, args):
+@@ -141,25 +151,16 @@
+         exp_name = getattr(args, 'exp_name')
+         if callable(exp_name):
+             exp_name_string = exp_name(args)
+-            print(f'[ utils/setup ] Setting exp_name to: {exp_name_string}')
++            # print(f'[ utils/setup ] Setting exp_name to: {exp_name_string}')
+             setattr(args, 'exp_name', exp_name_string)
+             self._dict['exp_name'] = exp_name_string
+ 
+     def mkdir(self, args):
+         if 'logbase' in dir(args) and 'dataset' in dir(args) and 'exp_name' in dir(args):
+-            args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name)
++            args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name, str(args.seed))
+             self._dict['savepath'] = args.savepath
+-            if 'suffix' in dir(args):
+-                args.savepath = os.path.join(args.savepath, args.suffix)
++            # if 'suffix' in dir(args):
++            #     args.savepath = os.path.join(args.savepath, args.suffix)
+             if mkdir(args.savepath):
+                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
+-            self.save()
+-
+-    def get_commit(self, args):
+-        args.commit = get_git_rev()
+-
+-    def save_diff(self, args):
+-        try:
+-            save_git_diff(os.path.join(args.savepath, 'diff.txt'))
+-        except:
+-            print('[ utils/setup ] WARNING: did not save git diff')
++            self.save(args)
+\ No newline at end of file
+diff -ru /workspaces/diffuser/diffuser/utils/training.py /workspaces/dpcc/diffuser/utils/training.py
+--- /workspaces/diffuser/diffuser/utils/training.py	2026-05-21 14:35:56.071840430 +0000
++++ /workspaces/dpcc/diffuser/utils/training.py	2026-04-08 13:42:37.874600363 +0000
+@@ -1,13 +1,11 @@
+-import os
++import os, pickle
+ import copy
+ import numpy as np
+ import torch
+-import einops
+-import pdb
++from tqdm.auto import tqdm
++from diffusers.optimization import get_cosine_schedule_with_warmup
+ 
+-from .arrays import batch_to_device, to_np, to_device, apply_dict
+-from .timer import Timer
+-from .cloud import sync_logs
++from .arrays import batch_to_device
+ 
+ def cycle(dl):
+     while True:
+@@ -37,21 +35,19 @@
+         self,
+         diffusion_model,
+         dataset,
+-        renderer,
++        train_test_split=1.0,
+         ema_decay=0.995,
+         train_batch_size=32,
+         train_lr=2e-5,
++        lr_warmup_steps=1000,
++        n_train_steps=1e5,
++        n_steps_per_epoch=1000,
+         gradient_accumulate_every=2,
+         step_start_ema=2000,
+         update_ema_every=10,
+-        log_freq=100,
+-        sample_freq=1000,
+-        save_freq=1000,
+-        label_freq=100000,
+-        save_parallel=False,
++        log_freq=1000,
++        train_device='cuda',
+         results_folder='./results',
+-        n_reference=8,
+-        bucket=None,
+     ):
+         super().__init__()
+         self.model = diffusion_model
+@@ -61,31 +57,49 @@
+ 
+         self.step_start_ema = step_start_ema
+         self.log_freq = log_freq
+-        self.sample_freq = sample_freq
+-        self.save_freq = save_freq
+-        self.label_freq = label_freq
+-        self.save_parallel = save_parallel
++        self.save_freq = n_train_steps // 5
+ 
++        self.n_train_steps = n_train_steps
++        self.n_steps_per_epoch = n_steps_per_epoch
+         self.batch_size = train_batch_size
+         self.gradient_accumulate_every = gradient_accumulate_every
+ 
+         self.dataset = dataset
+-        self.dataloader = cycle(torch.utils.data.DataLoader(
+-            self.dataset, batch_size=train_batch_size, num_workers=1, shuffle=True, pin_memory=True
+-        ))
+-        self.dataloader_vis = cycle(torch.utils.data.DataLoader(
+-            self.dataset, batch_size=1, num_workers=0, shuffle=True, pin_memory=True
+-        ))
+-        self.renderer = renderer
++        self.train_test_split = train_test_split
++        if train_test_split == 1:
++            self.train_dataloader = cycle(torch.utils.data.DataLoader(
++                self.dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
++            ))
++        else:
++            n_train = int(train_test_split * len(self.dataset))
++            n_test = len(self.dataset) - n_train
++            train_dataset, test_dataset = torch.utils.data.random_split(self.dataset, [n_train, n_test])
++            self.train_dataloader = cycle(torch.utils.data.DataLoader(
++                train_dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
++            ))
++            self.test_dataloader = cycle(torch.utils.data.DataLoader(
++                test_dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
++            ))
++            self.best_test_loss = np.inf
++        self.train_losses = []
++        self.test_losses = []
++        self.train_a0_losses = []
++        self.test_a0_losses = []
++
+         self.optimizer = torch.optim.Adam(diffusion_model.parameters(), lr=train_lr)
++        self.lr_scheduler = get_cosine_schedule_with_warmup(
++            optimizer=self.optimizer,
++            num_warmup_steps=lr_warmup_steps,
++            num_training_steps=self.n_train_steps,
++        )
+ 
+         self.logdir = results_folder
+-        self.bucket = bucket
+-        self.n_reference = n_reference
+ 
+         self.reset_parameters()
+         self.step = 0
+ 
++        self.device = train_device
++
+     def reset_parameters(self):
+         self.ema_model.load_state_dict(self.model.state_dict())
+ 
+@@ -99,40 +113,100 @@
+     #------------------------------------ api ------------------------------------#
+     #-----------------------------------------------------------------------------#
+ 
+-    def train(self, n_train_steps):
++    def train_epoch(self, n_train_steps, epoch=0):        
++        progress_bar = tqdm(total=n_train_steps)
++        progress_bar.set_description(f"Epoch {epoch}")
+ 
+-        timer = Timer()
+         for step in range(n_train_steps):
+-            for i in range(self.gradient_accumulate_every):
+-                batch = next(self.dataloader)
+-                batch = batch_to_device(batch)
+-
++            for _ in range(self.gradient_accumulate_every):
++                batch = next(self.train_dataloader)
++                batch = batch_to_device(batch, device=self.device)
+                 loss, infos = self.model.loss(*batch)
+                 loss = loss / self.gradient_accumulate_every
+                 loss.backward()
+ 
+             self.optimizer.step()
++            self.lr_scheduler.step()
+             self.optimizer.zero_grad()
+ 
+             if self.step % self.update_ema_every == 0:
+                 self.step_ema()
+ 
+             if self.step % self.save_freq == 0:
+-                label = self.step // self.label_freq * self.label_freq
++                label = self.step
+                 self.save(label)
+ 
+             if self.step % self.log_freq == 0:
+-                infos_str = ' | '.join([f'{key}: {val:8.4f}' for key, val in infos.items()])
+-                print(f'{self.step}: {loss:8.4f} | {infos_str} | t: {timer():8.4f}', flush=True)
++                self.train_losses.append([self.step, loss.item()])
++                if 'a0_loss' in infos:
++                    self.train_a0_losses.append([self.step, infos['a0_loss'].item()])
++
++                if self.train_test_split < 1:
++                    test_loss, test_a0_loss = self.test()
++                    self.test_losses.append([self.step, test_loss])
++                    self.test_a0_losses.append([self.step, test_a0_loss])
++                    if test_loss < self.best_test_loss:
++                        self.best_test_loss = test_loss
++                        self.save_best()
++                    if self.step == 0:
++                        # if self.model.action_dim > 0:
++                        print(f'Initial test loss: {test_loss:8.4f}, a0 loss: {test_a0_loss:8.4f}')
++                        # else:
++                            # print(f'Initial test loss: {test_loss:8.4f}')
++                self.save_losses()
++            
++            # if self.train_test_split < 1:
++            #     if 'a0_loss' in infos:
++            #         logs = {"loss": loss.item(), "a0_loss": infos['a0_loss'].item(), "loss_test": test_loss, "a0_loss_test": test_a0_loss, "lr": self.lr_scheduler.get_last_lr()[0], "step": self.step}
++            #     else:
++            #         logs = {"loss": loss.item(), "loss_test": test_loss, "lr": self.lr_scheduler.get_last_lr()[0], "step": self.step}
++            # else:
++            #     if 'a0_loss' in infos:
++            #         logs = {"loss": loss.item(), "a0_loss": infos['a0_loss'].item(), "lr": self.lr_scheduler.get_last_lr()[0], "step": self.step}
++            #     else:
++            #         logs = {"loss": loss.item(), "lr": self.lr_scheduler.get_last_lr()[0], "step": self.step}
++
++            logs = {"loss": loss.item()}
++            for l in ["diffusion_loss", "dyn_loss", "a0_loss", ]:
++                if l in infos:
++                    logs[l] = infos[l].item()
++            if self.train_test_split < 1:
++                logs["loss_test"] = test_loss
++                if 'a0_loss' in infos:
++                    logs["a0_loss_test"] = test_a0_loss
++            logs["lr"] = self.lr_scheduler.get_last_lr()[0]
++            logs["step"] = self.step
+ 
+-            if self.step == 0 and self.sample_freq:
+-                self.render_reference(self.n_reference)
+-
+-            if self.sample_freq and self.step % self.sample_freq == 0:
+-                self.render_samples()
++            progress_bar.update(1)
++            progress_bar.set_postfix(**logs)
+ 
+             self.step += 1
+ 
++    def train(self):
++        n_epochs = int(self.n_train_steps // self.n_steps_per_epoch)
++        for epoch in range(n_epochs):
++            self.train_epoch(self.n_steps_per_epoch, epoch)
++
++    def test(self, n_test=100):
++        self.model.eval()   # Set the model to evaluation mode
++
++        test_loss = 0
++        test_a0_loss = 0
++        with torch.no_grad():
++            for step in range(n_test):
++                batch = next(self.test_dataloader)
++                batch = batch_to_device(batch, device=self.device)
++                loss, infos = self.model.loss(*batch)
++                loss /= self.gradient_accumulate_every
++            
++                test_loss += loss.item()
++                test_a0_loss += infos['a0_loss'].item() if 'a0_loss' in infos else 0
++
++            test_loss /= n_test
++            test_a0_loss /= n_test
++
++        return test_loss, test_a0_loss
++
+     def save(self, epoch):
+         '''
+             saves model and ema to disk;
+@@ -145,9 +219,33 @@
+         }
+         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
+         torch.save(data, savepath)
+-        print(f'[ utils/training ] Saved model to {savepath}', flush=True)
+-        if self.bucket is not None:
+-            sync_logs(self.logdir, bucket=self.bucket, background=self.save_parallel)
++        # print(f'Saved model to {savepath}', flush=True)
++
++    def save_best(self):
++        '''
++            saves model and ema to disk;
++            syncs to storage bucket if a bucket is specified
++        '''
++        data = {
++            'step': self.step,
++            'model': self.model.state_dict(),
++            'ema': self.ema_model.state_dict()
++        }
++        savepath = os.path.join(self.logdir, f'state_best.pt')
++        torch.save(data, savepath)
++        # print(f'Saved best model to {savepath}', flush=True)
++
++    def save_losses(self):
++        data = {
++            'training_losses': self.train_losses,
++            'test_losses': self.test_losses,
++            'training_a0_losses': self.train_a0_losses,
++            'test_a0_losses': self.test_a0_losses,
++        }
++        savepath = os.path.join(self.logdir, 'losses.pkl')
++
++        with open(savepath, 'wb') as f:
++            pickle.dump(data, f)
+ 
+     def load(self, epoch):
+         '''
+@@ -159,69 +257,3 @@
+         self.step = data['step']
+         self.model.load_state_dict(data['model'])
+         self.ema_model.load_state_dict(data['ema'])
+-
+-    #-----------------------------------------------------------------------------#
+-    #--------------------------------- rendering ---------------------------------#
+-    #-----------------------------------------------------------------------------#
+-
+-    def render_reference(self, batch_size=10):
+-        '''
+-            renders training points
+-        '''
+-
+-        ## get a temporary dataloader to load a single batch
+-        dataloader_tmp = cycle(torch.utils.data.DataLoader(
+-            self.dataset, batch_size=batch_size, num_workers=0, shuffle=True, pin_memory=True
+-        ))
+-        batch = dataloader_tmp.__next__()
+-        dataloader_tmp.close()
+-
+-        ## get trajectories and condition at t=0 from batch
+-        trajectories = to_np(batch.trajectories)
+-        conditions = to_np(batch.conditions[0])[:,None]
+-
+-        ## [ batch_size x horizon x observation_dim ]
+-        normed_observations = trajectories[:, :, self.dataset.action_dim:]
+-        observations = self.dataset.normalizer.unnormalize(normed_observations, 'observations')
+-
+-        savepath = os.path.join(self.logdir, f'_sample-reference.png')
+-        self.renderer.composite(savepath, observations)
+-
+-    def render_samples(self, batch_size=2, n_samples=2):
+-        '''
+-            renders samples from (ema) diffusion model
+-        '''
+-        for i in range(batch_size):
+-
+-            ## get a single datapoint
+-            batch = self.dataloader_vis.__next__()
+-            conditions = to_device(batch.conditions, 'cuda:0')
+-
+-            ## repeat each item in conditions `n_samples` times
+-            conditions = apply_dict(
+-                einops.repeat,
+-                conditions,
+-                'b d -> (repeat b) d', repeat=n_samples,
+-            )
+-
+-            ## [ n_samples x horizon x (action_dim + observation_dim) ]
+-            samples = self.ema_model(conditions)
+-            trajectories = to_np(samples.trajectories)
+-
+-            ## [ n_samples x horizon x observation_dim ]
+-            normed_observations = trajectories[:, :, self.dataset.action_dim:]
+-
+-            # [ 1 x 1 x observation_dim ]
+-            normed_conditions = to_np(batch.conditions[0])[:,None]
+-
+-            ## [ n_samples x (horizon + 1) x observation_dim ]
+-            normed_observations = np.concatenate([
+-                np.repeat(normed_conditions, n_samples, axis=0),
+-                normed_observations
+-            ], axis=1)
+-
+-            ## [ n_samples x (horizon + 1) x observation_dim ]
+-            observations = self.dataset.normalizer.unnormalize(normed_observations, 'observations')
+-
+-            savepath = os.path.join(self.logdir, f'sample-{self.step}-{i}.png')
+-            self.renderer.composite(savepath, observations)
+Only in /workspaces/diffuser/diffuser/utils: transformations.py
+Only in /workspaces/diffuser/diffuser/utils: video.py

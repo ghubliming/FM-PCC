@@ -51,13 +51,15 @@ fi
 if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
     export WANDB_API_KEY=$(cat $HOME/FMPCC/.wandb_api_key)
     export WANDB_MODE="online"
+    # Slurm job id -> W&B run tag (searchable/filterable alongside the run name)
+    if [ -n "$SLURM_JOB_ID" ]; then export WANDB_TAGS="slurm-$SLURM_JOB_ID"; fi
 fi
 
 # 4) Run FM v3 Drifting Training
 cd "$REPO"
 
 python FM_v3_drifting_test/train_flow_matching_v3_drifting.py \
-    --seeds 6 7 8 9 10 \
+    --seeds 6 \
     --use-wandb \
     --wandb-project FMPCC-knoll
 

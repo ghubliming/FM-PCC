@@ -1,0 +1,17 @@
+name: hardflow
+channels:
+- defaults
+- conda-forge
+dependencies:
+- python=3.9
+- setuptools=65.*
+- pip=22.*
+- patchelf
+- pip:
+    - git+https://github.com/Farama-Foundation/d4rl@f2a05c0d66722499bf8031b094d9af3aea7c372b#egg=d4rl
+    - minari[hf]
+    - h5py
+    - einops
+    - pot
+    - tensorboard
+    - tyro

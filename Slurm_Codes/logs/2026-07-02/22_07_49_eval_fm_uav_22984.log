@@ -1,0 +1,53 @@
+4/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Jul  2 20:07:50 UTC 2026  |  eval_fm_uav  |  ID 22984  |  NODE i6-gpu-1
+SCENE: pillars   SEEDS: 6   N_TRIALS: 
+GIT REV:   2c1c187
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+--------------------------------------------------------------------------------
+[ uav_fm_eval ] scene=pillars seed=6  Thu Jul  2 20:07:51 UTC 2026
+[ uav_fm_eval ] python FM_v3_uav_test/eval_fm_uav.py --scene pillars --seed 6  --projection fm_only --record gif
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=5  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars: variants=['diffuser', 'gradient', 'post_processing', 'model_free', 'dpcc-r', 'dpcc-c', 'dpcc-t']  constraints=['dynamics']  batch_size=4
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=diffuser (B=4, proj=off, sel=random): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.206  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/diffuser/
+[ eval ] pillars variant=diffuser TIMING: fm_ms=84.7 proj_ms=0.0 total_ms=84.7 (p95=89.0) budget=30.3ms → real_time_OVER×2115
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=gradient (B=4, proj=on, sel=random): success=0.000  safe=0.000  goal_reached=0.000  track_err=6.680  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/gradient/
+[ eval ] pillars variant=gradient TIMING: fm_ms=88.2 proj_ms=0.0 total_ms=88.2 (p95=88.5) budget=30.3ms → real_time_OVER×2115
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=post_processing (B=4, proj=on, sel=random): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.181  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/post_processing/
+[ eval ] pillars variant=post_processing TIMING: fm_ms=84.5 proj_ms=9.3 total_ms=93.8 (p95=97.4) budget=30.3ms → real_time_OVER×2115
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=model_free (B=4, proj=on, sel=random): success=0.000  safe=0.600  goal_reached=0.000  track_err=0.209  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/model_free/
+[ eval ] pillars variant=model_free TIMING: fm_ms=84.7 proj_ms=18.7 total_ms=103.4 (p95=104.0) budget=30.3ms → real_time_OVER×2115
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.197  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/dpcc-r/
+[ eval ] pillars variant=dpcc-r TIMING: fm_ms=84.8 proj_ms=46.2 total_ms=131.0 (p95=131.7) budget=30.3ms → real_time_OVER×2115
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.194  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/dpcc-c/
+[ eval ] pillars variant=dpcc-c TIMING: fm_ms=84.8 proj_ms=46.2 total_ms=131.0 (p95=131.5) budget=30.3ms → real_time_OVER×2115
+[ eval ] pid_const_v: v_des_magnitude=0.520 m/s (mean_act=0.0157 m × 33 Hz)
+[ eval ] pillars variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  safe=1.000  goal_reached=0.000  track_err=0.193  → logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5/6/dpcc-t/
+[ eval ] pillars variant=dpcc-t TIMING: fm_ms=84.8 proj_ms=46.2 total_ms=130.9 (p95=131.5) budget=30.3ms → real_time_OVER×2115
+UAV FM eval complete.
+Job completed successfully. Evaluated scene=pillars for seeds=[6]
+JOB END: Thu Jul  2 20:39:20 UTC 2026

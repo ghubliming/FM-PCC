@@ -63,7 +63,9 @@ class VisualUNet(nn.Module):
             latent_dim = 0
 
         # ── 2. Temporal U-Net backbone ────────────────────────────────────────
-        from fm_visual_avoiding.models.unet1d_temporal_cond import UNet1DTemporalCondModel
+        # film_mode: 'v1' (default) = additive-bias FiLM via time-embed concat
+        #            'v2'           = true FiLM per-block γ scale + β shift (opt-in)
+        self.film_mode = getattr(config, 'film_mode', 'v1')
 
         self.target_horizon  = config.horizon
         self.padded_horizon  = ((self.target_horizon + 7) // 8) * 8
@@ -76,7 +78,7 @@ class VisualUNet(nn.Module):
             obs_dim = getattr(config, 'obs_dim', 4)
             transition_dim = config.action_dim + obs_dim
 
-        self.backbone = UNet1DTemporalCondModel(
+        backbone_kwargs = dict(
             horizon=self.padded_horizon,
             transition_dim=transition_dim,
             cond_dim=latent_dim,
@@ -85,7 +87,15 @@ class VisualUNet(nn.Module):
             returns_condition=getattr(config, 'returns_condition', False),
             condition_dropout=getattr(config, 'condition_dropout', 0.1),
             use_cond_projection=self.if_vision,
-        ).to(self.device)
+        )
+
+        if self.film_mode == 'v2':
+            from fm_visual_avoiding.models.unet1d_temporal_film import UNet1DTemporalFiLMModel
+            self.backbone = UNet1DTemporalFiLMModel(**backbone_kwargs).to(self.device)
+            print('[ VisualUNet ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE')
+        else:
+            from fm_visual_avoiding.models.unet1d_temporal_cond import UNet1DTemporalCondModel
+            self.backbone = UNet1DTemporalCondModel(**backbone_kwargs).to(self.device)
 
         self.action_dim = getattr(config, 'action_dim', 2)
 

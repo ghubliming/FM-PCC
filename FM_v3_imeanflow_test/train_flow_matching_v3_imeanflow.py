@@ -22,6 +22,10 @@ import torch
 
 # Standard FM-PCC imports (Note: importing from diffuser.utils is maybe not ideal/optimal?)
 import diffuser.utils as utils
+# U9 fix: the Trainer must be the iMF package's own (it carries the U9 val-loss edits:
+# on_epoch_end callback, 3-tuple test(), seeded split, raw_mse). diffuser.utils.Trainer
+# is the shared DPCC one and does NOT have them — using it crashes on train(on_epoch_end=).
+from flow_matcher_v3_imeanflow.utils.training import Trainer as iMFTrainer
 
 
 class Parser(utils.Parser):
@@ -41,23 +45,61 @@ def sanitize_wandb_env():
             os.environ.pop(env_key, None)
 
 
-def log_wandb_from_losses(losses_path, run):
-    """Reconstruct W&B logs from losses.pkl (standard FM-PCC pattern)."""
+def log_wandb_from_losses(losses_path, run, after_step=-1):
+    """Replay losses.pkl into W&B (standard FM-PCC pattern).
+
+    U9: only logs steps > after_step and returns the last step logged, so it can be
+    called incrementally per epoch — curves now appear during training and survive
+    SLURM timeouts, instead of only after a seed fully completes.
+    """
     if not os.path.exists(losses_path):
-        return
-    
+        return after_step
+
     with open(losses_path, 'rb') as f:
         losses_data = pickle.load(f)
-    
+
     training_losses = losses_data.get('training_losses', [])
-    test_losses = losses_data.get('test_losses', [])
-    test_by_step = {step: value for step, value in test_losses}
-    
+
+    # U9 metric-parity pass: full DPCC/Gen0 set (a0 curves) + imeanflow analogs
+    # (train/raw_mse ≙ their loss_u, aux_loss ≙ their loss_v). val/raw_mse is the
+    # held-out raw MSE — adaptive-weight-free, comparable across runs/objectives,
+    # unlike test/loss under meanflow_jvp (self-referential + adaptively reweighted).
+    # Missing pkl keys (old runs, or objectives without an aux head) just skip.
+    companion_keys = {
+        'test_losses': 'test/loss',
+        'training_a0_losses': 'train/a0_loss',
+        'test_a0_losses': 'test/a0_loss',
+        'training_raw_mse_losses': 'train/raw_mse',
+        'test_raw_mse_losses': 'val/raw_mse',
+        'training_aux_losses': 'train/aux_loss',
+        'test_aux_losses': 'test/aux_loss',
+        'lr_history': 'train/lr',
+    }
+    by_step = {
+        wandb_key: dict(losses_data.get(pkl_key, []))
+        for pkl_key, wandb_key in companion_keys.items()
+    }
+
+    last_step = after_step
     for step, train_loss in training_losses:
+        if step <= after_step:
+            continue
         log_dict = {'train/loss': train_loss}
-        if step in test_by_step:
-            log_dict['test/loss'] = test_by_step[step]
+        for wandb_key, series in by_step.items():
+            if step in series:
+                log_dict[wandb_key] = series[step]
         run.log(log_dict, step=step)
+        last_step = max(last_step, step)
+
+    if training_losses:
+        run.summary['final_train_loss'] = training_losses[-1][1]
+    test_losses = losses_data.get('test_losses', [])
+    raw_mse_losses = losses_data.get('test_raw_mse_losses', [])
+    if test_losses:
+        run.summary['final_test_loss'] = test_losses[-1][1]
+    if raw_mse_losses:
+        run.summary['final_val_raw_mse'] = raw_mse_losses[-1][1]
+    return last_step
 
 
 def upload_wandb_artifact(run, seed, savepath):
@@ -203,10 +245,14 @@ if __name__ == '__main__':
                 meanflow_cfg_t_min=getattr(args, 'meanflow_cfg_t_min', 0.0),
                 meanflow_cfg_t_max=getattr(args, 'meanflow_cfg_t_max', 1.0),
                 meanflow_cfg_beta=getattr(args, 'meanflow_cfg_beta', 1.0),
+                # U10 imf_official (faithful iMF) — see U10/PLAN_faithful_imf_replication.md
+                meanflow_cfg_smax=getattr(args, 'meanflow_cfg_smax', 7.0),
+                meanflow_data_proportion=getattr(args, 'meanflow_data_proportion', 0.5),
+                meanflow_class_dropout_prob=getattr(args, 'meanflow_class_dropout_prob', 0.1),
             )
 
             trainer_config = utils.Config(
-                utils.Trainer,
+                iMFTrainer,   # U9 fix: iMF-package Trainer, not diffuser.utils.Trainer
                 savepath=(args.savepath, 'trainer_config.pkl'),
                 train_test_split=getattr(args, 'train_test_split', 0.9),
                 ema_decay=args.ema_decay,
@@ -228,11 +274,13 @@ if __name__ == '__main__':
             if cli_args.use_wandb:
                 try:
                     import wandb
+                    # Tag the run with the Slurm job id (empty off-cluster)
+                    slurm_suffix = f"-slurm-{os.environ['SLURM_JOB_ID']}" if os.environ.get('SLURM_JOB_ID') else ''
                     run = wandb.init(
                         project=cli_args.wandb_project,
                         entity=cli_args.wandb_entity,
                         group=cli_args.wandb_group,
-                        name=f'iMF-seed-{seed}',
+                        name=f'iMF-seed-{seed}{slurm_suffix}',
                         config=vars(args),
                         reinit=True,
                     )
@@ -241,11 +289,20 @@ if __name__ == '__main__':
 
             # Train
             print(f"[ train ] Starting training (steps: {trainer.n_train_steps})")
-            trainer.train()
+            # U9: flush losses.pkl to W&B after every epoch (live curves; timeout-safe)
+            losses_path = os.path.join(args.savepath, 'losses.pkl')
+            wandb_cursor = {'last_step': -1}
 
-            # Log to W&B
+            def _flush_wandb(epoch):
+                if run is not None:
+                    wandb_cursor['last_step'] = log_wandb_from_losses(
+                        losses_path, run, after_step=wandb_cursor['last_step'])
+
+            trainer.train(on_epoch_end=_flush_wandb)
+
+            # Log to W&B (final flush catches anything after the last epoch boundary)
             if run is not None:
-                log_wandb_from_losses(os.path.join(args.savepath, 'losses.pkl'), run)
+                log_wandb_from_losses(losses_path, run, after_step=wandb_cursor['last_step'])
                 upload_wandb_artifact(run, seed, args.savepath)
                 run.finish()
 

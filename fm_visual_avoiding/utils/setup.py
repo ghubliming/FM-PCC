@@ -207,14 +207,32 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-        # 2. Copy associated yaml configs — visual_aligning_eval.yaml is the live
+        # 2. Copy associated yaml configs — visual_avoiding_eval.yaml is the live
         # eval config read by eval_fm_visual_avoiding.py at runtime.
-        yaml_path = 'config/visual_aligning_eval.yaml'
+        # BUG FIX: this was hardcoded to 'config/visual_aligning_eval.yaml' (visual-ALIGNING's
+        # yaml, a different task/package) — copy-paste artifact from that package's
+        # utils/setup.py, never updated for visual-avoiding. Confirmed
+        # fm_visual_avoiding_test/eval_fm_visual_avoiding.py actually reads
+        # config/visual_avoiding_eval.yaml (line ~125), not visual_aligning_eval.yaml.
+        yaml_path = 'config/visual_avoiding_eval.yaml'
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'visual_aligning_eval.yaml')
+                dest = os.path.join(snapshot_dir, 'visual_avoiding_eval.yaml')
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
+            except Exception:
+                pass
+
+        # Cleanup: this call is unconditional (fires on every eval run — see mkdir()'s
+        # `self.snapshot_configs(args)` outside the `if save:` guard), so the fix above
+        # self-heals automatically. But the OLD buggy path wrote a DIFFERENTLY-NAMED file
+        # ('visual_aligning_eval.yaml') that the fixed code above doesn't overwrite — remove
+        # it if present so a stale wrong-package file doesn't sit alongside the correct one.
+        # Safe here: that filename is never legitimately correct content for THIS package.
+        _stale = os.path.join(snapshot_dir, 'visual_aligning_eval.yaml')
+        if os.path.exists(_stale):
+            try:
+                os.remove(_stale)
             except Exception:
                 pass
 

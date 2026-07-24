@@ -1,7 +1,7 @@
 """
 Multi-Candidate Discovery Module (v2)
 
-Auto-discovers experimental candidate folders and assigns letter codes (A, B, C, D, E...).
+Auto-discovers experimental candidate folders and assigns numeric indices (1, 2, 3...).
 A candidate is any subfolder that contains the required seed directories.
 """
 
@@ -89,21 +89,20 @@ def discover_candidates(parent_path, seed_list=None):
         # Check if this folder contains required seeds
         existing_seeds = get_existing_seeds(seed_list, subfolder_path)
         if existing_seeds:
-            # Assign letter code
-            letter_code = chr(ord('A') + letter_index)
+            cand_idx = letter_index + 1
             missing_seeds = [s for s in seed_list if s not in existing_seeds]
-            
+
             if missing_seeds:
-                logger.warning(f"Candidate {letter_code} ({subfolder_name}) is MISSING seeds: {missing_seeds}")
-            
-            candidates[letter_code] = {
+                logger.warning(f"Candidate {cand_idx} ({subfolder_name}) is MISSING seeds: {missing_seeds}")
+
+            candidates[cand_idx] = {
                 'path': os.path.abspath(subfolder_path),
                 'name': subfolder_name,
                 'seeds': existing_seeds,
                 'missing_seeds': missing_seeds
             }
-            
-            logger.info(f"Candidate {letter_code}: {subfolder_name}")
+
+            logger.info(f"Candidate {cand_idx}: {subfolder_name}")
             letter_index += 1
     
     if not candidates:
@@ -157,19 +156,19 @@ def discover_candidates_recursive(parent_path, seed_list=None, max_depth=3):
             # Check if this is a candidate
             existing_seeds = get_existing_seeds(seed_list, entry_path)
             if existing_seeds:
-                letter_code = chr(ord('A') + letter_index)
+                cand_idx = letter_index + 1
                 missing_seeds = [s for s in seed_list if s not in existing_seeds]
-                
+
                 if missing_seeds:
-                    logger.warning(f"Candidate {letter_code} ({entry}) is MISSING seeds: {missing_seeds}")
-                
-                candidates[letter_code] = {
+                    logger.warning(f"Candidate {cand_idx} ({entry}) is MISSING seeds: {missing_seeds}")
+
+                candidates[cand_idx] = {
                     'path': os.path.abspath(entry_path),
                     'name': entry,
                     'seeds': existing_seeds,
                     'missing_seeds': missing_seeds
                 }
-                logger.info(f"Candidate {letter_code}: {entry}")
+                logger.info(f"Candidate {cand_idx}: {entry}")
                 letter_index += 1
             else:
                 # Recurse deeper

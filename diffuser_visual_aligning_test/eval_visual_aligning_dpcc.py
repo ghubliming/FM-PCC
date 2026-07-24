@@ -13,12 +13,18 @@
 # Output:  logs/aligning-d3il-visual/visual_aligning_dpcc/<exp>/results/<seed>/
 #          ├── expert_references/expert_rollout_<r>.{mp4,gif}   (generated once before variant loop)
 #          └── <variant>/
-#              ├── <variant>.npz
+#              ├── <variant>.npz     ← C5: SINGLE source of raw truth (UAV-style schema).
+#              │                        obs_all is 6-D [des_c_pos(0:3) | c_pos(3:6)];
+#              │                        sampled_trajectories_all is the FULL MPC fan;
+#              │                        selected_idx_all is per-replan chosen index.
 #              ├── <variant>.png     (6-panel rollout grid)
-#              ├── results_seed_<s>.pkl
 #              ├── eval_<variant>.log
 #              ├── diag_first_replan.txt
-#              └── diagnostics/rollout_<r>.{mp4,gif,_data.pkl,_stats.json,_report.png,_mpc_foresight.png}
+#              └── diagnostics/rollout_<r>.{mp4,gif,_stats.json,_report.png,_mpc_foresight.png}
+#          C5 removed the per-rollout `_data.pkl` and per-variant `results_seed_<s>.pkl`
+#          (all their raw arrays now live in <variant>.npz; JSONs stay metrics-only). A
+#          transient `<variant>.partial.npz` crash-safety sidecar is written every N rollouts
+#          and deleted on successful variant completion (see _save_partial_npz).
 
 import gc
 import json
@@ -50,6 +56,82 @@ os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
 
 import diffuser_visual_aligning.utils as utils
 from diffuser_visual_aligning.sampling.projection import Projector
+# REAL_TIME_RECORDING_UPDATE — per-replan timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware. total_ms = per-replan diffusion+projection wall-time (bundled).
+
+# ─── D1: box-init × obstacle overlap pre-flight guard ────────────────────────
+# Same philosophy as the SLSQP wall-clock safeguard (projection.py Fix_15.2): detect a
+# pathological configuration, shout about it in the log, degrade safely — never fail
+# silently, never quietly pollute the run's numbers.
+#
+# WHAT IT CATCHES.  The 'obstacles' family is a sphere_outside cylinder on the EE position
+# dims (6,7); it knows nothing about the box.  So a box that starts inside the obstacle disc
+# is NOT itself a constraint violation — but it is a guaranteed-futile rollout: to push the
+# box the EE must go where the box is, and that is exactly the region the projector forbids
+# the EE from entering.  Worse, the EE gets driven into the sub-disc of radius
+# (r - max_one_step) where the t=1 escape constraint makes the SLSQP feasible set EMPTY,
+# surfacing downstream only as unexplained solver thrash.  Full derivation in
+#   logs_in_develop/Gen7_FMPCC_Viusal_Aligning/D1_BOX_init_Position_Obstacle/
+#   RESEARCH_box_init_vs_obstacle_feasibility.md
+#
+# WHAT IT DOES NOT CLAIM.  This is a naive CONFIG-SANITY check, not a feasibility fix.  It
+# does not repair the projection; it declares the context unusable, says so loudly, and skips
+# it so aggregate metrics are not polluted by a rollout that never had a chance.
+#
+# Overlap is the exact square-vs-circle penetration depth — the box footprint is the
+# 0.10 x 0.10 m square from robot_push_box.xml (geom size="0.05 0.05 0.01"), rotated by the
+# context's yaw.  FMPCC_BOX_OBS_GUARD=0 disables; raise FMPCC_BOX_OBS_MAX_OVERLAP_M to be
+# more lenient (0 = abort on the faintest touch).
+_BOX_OBS_GUARD       = os.environ.get('FMPCC_BOX_OBS_GUARD', '1').lower() not in ('0', 'false', 'no')
+_BOX_OBS_MAX_OVERLAP = float(os.environ.get('FMPCC_BOX_OBS_MAX_OVERLAP_M', '0.005'))  # penetration tolerated (m)
+_BOX_HALF_SIDE       = float(os.environ.get('FMPCC_BOX_HALF_SIDE_M',       '0.05'))   # robot_push_box.xml half-extent
+
+
+def _box_obstacle_overlap(box_xy, box_angle_deg, obs_xy, radius, half_side=_BOX_HALF_SIDE):
+    """Penetration depth (m) of a circular x-y obstacle into a yaw-rotated square box footprint.
+
+    Exact square-vs-circle separation: rotate the obstacle centre into the box frame, clamp it
+    to the box rectangle to get the closest point on the box, then
+        overlap = radius - ||centre - closest||
+    Returns 0.0 when disjoint (never negative).  Note the clamp also handles the centre-inside-
+    the-box case, where sep == 0 and the overlap saturates at `radius`.
+    """
+    th   = np.deg2rad(float(box_angle_deg))
+    c, s = np.cos(th), np.sin(th)
+    d    = np.asarray(obs_xy, dtype=float) - np.asarray(box_xy, dtype=float)
+    local   = np.array([c * d[0] + s * d[1], -s * d[0] + c * d[1]])   # rotate by -yaw
+    closest = np.clip(local, -half_side, half_side)
+    sep     = float(np.linalg.norm(local - closest))
+    return max(0.0, float(radius) - sep)
+
+
+def _scan_box_obstacle_conflicts(geo_config, is_tightened, box_xy, box_angle_deg):
+    """D1: obstacles in `geo_config` whose disc penetrates the box footprint beyond tolerance.
+
+    Returns [] when the guard is off, when 'obstacles' is not an active constraint family, or
+    when nothing overlaps by more than _BOX_OBS_MAX_OVERLAP.  Each hit is a dict ready for
+    console output and the rollout JSON.  Only the x-y footprint is considered: every
+    configured obstacle is a sphere_outside on ('x','y') (optionally 'z'), and ignoring z is
+    the conservative reading of an infinite cylinder.
+    """
+    if not _BOX_OBS_GUARD or not geo_config:
+        return []
+    if 'obstacles' not in (geo_config.get('constraint_types') or []):
+        return []
+    tightening = (geo_config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
+    hits = []
+    for obs in (geo_config.get('obstacle_constraints') or []):
+        try:
+            centre = [float(obs['center'][0]), float(obs['center'][1])]
+            radius = float(obs['radius']) + tightening
+        except (KeyError, IndexError, TypeError, ValueError):
+            continue   # malformed entry — the projector will complain in its own right
+        overlap = _box_obstacle_overlap(box_xy, box_angle_deg, centre, radius)
+        if overlap > _BOX_OBS_MAX_OVERLAP:
+            hits.append({'type': obs.get('type', 'sphere_outside'), 'center': centre,
+                         'radius': float(radius), 'overlap_m': float(overlap)})
+    return hits
 
 import d3il
 print(f'[ eval ] Using d3il from: {d3il.__file__}')
@@ -83,6 +165,18 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     Non-visual (23D): same first 9 dims + obs_20D trailing dims (9-22, unconstrained).
 
     trajectory_dim=9 for visual, 23 for non-visual (UF-17).
+
+    Patch_Constraints_C3 (dangerous rename — see logs_in_develop/Gen7_FMPCC_Viusal_Aligning/
+    Patch_Constraints_C3/; this file is Gen6V4's live eval script, sharing
+    config/visual_aligning_eval.yaml with fm_visual_aligning_test/eval_fm_visual_aligning.py,
+    so it carries the identical fix): 'bounds' and the geo/workspace box used to be the SAME
+    constraint_types flag, silently dropping DPCC-avoiding's action-magnitude guard. Split:
+      - 'geo_bounds' → the Cartesian workspace box on ACTUAL position (dims 6,7,8), reading
+        `config['workspace_bounds']`. This is what 'bounds' used to mean here.
+      - 'bounds' → RESTORED to its true DPCC meaning: an action-magnitude limit on dims
+        0,1,2 (dx,dy,dz). SELF-DERIVED from `act_normalizer.mins/.maxs` by default (this
+        dataset's own observed action range), settable via `config['action_bounds']`:
+        `'auto'` (default) / explicit `{lb,ub}` / `null`.
     """
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'des_x': 3, 'des_y': 4, 'des_z': 5,
             'x': 6, 'y': 7, 'z': 8}
@@ -103,7 +197,10 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     pad = trajectory_dim - 9
     constraint_list = []
 
-    if 'bounds' in config.get('constraint_types', []):
+    if 'geo_bounds' in config.get('constraint_types', []) and 'geo_free' not in variant:
+        # U8: 'geo_free' (variant-level, mirrors 'model_free') skips this + halfspace +
+        # obstacles TOGETHER — the "geometric/spatial" group. See
+        # logs_in_develop/Gen7_FMPCC_Viusal_Aligning/Patch_Constraints_C3/Gen11E9U8_Sync/.
         tightening = config.get('enlarge_constraints') or 0.0
         ws_lb = np.array(config['workspace_bounds']['lb'])
         ws_ub = np.array(config['workspace_bounds']['ub'])
@@ -115,12 +212,40 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list.append(['lb', lb])
         constraint_list.append(['ub', ub])
 
-    if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        constraint_list.append(('deriv', [6, 0]))
-        constraint_list.append(('deriv', [7, 1]))
-        constraint_list.append(('deriv', [8, 2]))
+    if 'bounds' in config.get('constraint_types', []) and 'bounds_free' not in variant:
+        # RESTORED DPCC action-magnitude bound (dims 0,1,2 = dx,dy,dz) — see docstring.
+        # NOT tightened by `enlarge_constraints`: it's a dataset-range cap, not a spatial
+        # surface (only geo_bounds/halfspace/obstacles get the tightening margin).
+        # U8: 'bounds_free' (variant-level) skips just this family — independent of and
+        # composable with 'model_free'/'geo_free': 'geo_free-bounds_free' = dynamics alone,
+        # 'geo_free-model_free' = bounds alone. See Gen11E9U8_Sync changelog.
+        ab = config.get('action_bounds', 'auto')
+        if ab == 'auto':
+            a_lb = np.asarray(act_normalizer.mins, dtype=float)
+            a_ub = np.asarray(act_normalizer.maxs, dtype=float)
+        elif ab is not None:
+            a_lb = np.array(ab['lb'], dtype=float)
+            a_ub = np.array(ab['ub'], dtype=float)
+        else:
+            a_lb = a_ub = None
+        if a_lb is not None:
+            lb = np.concatenate([a_lb, np.full(trajectory_dim - 3, -np.inf)])
+            ub = np.concatenate([a_ub, np.full(trajectory_dim - 3,  np.inf)])
+            constraint_list.append(['lb', lb])
+            constraint_list.append(['ub', ub])
 
-    if 'halfspace' in config.get('constraint_types', []):
+    if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
+        # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
+        # Traj layout: [act(0,1,2) | des_c_pos(3,4,5) | real c_pos(6,7,8)]
+        # des_c_pos(3,4,5): commanded position (real, from D3IL). c_pos(6,7,8): actual TCP (real, C4 fix).
+        constraint_list.append(('deriv', [3, 0]))   # DC_FIX des_x[t+1] = des_x[t] + act_x[t]
+        constraint_list.append(('deriv', [4, 1]))   # DC_FIX des_y[t+1] = des_y[t] + act_y[t]
+        constraint_list.append(('deriv', [5, 2]))   # DC_FIX des_z[t+1] = des_z[t] + act_z[t]
+        constraint_list.append(('deriv', [6, 0]))   # c_pos_x[t+1] = c_pos_x[t] + act_x[t]
+        constraint_list.append(('deriv', [7, 1]))   # c_pos_y[t+1] = c_pos_y[t] + act_y[t]
+        constraint_list.append(('deriv', [8, 2]))   # c_pos_z[t+1] = c_pos_z[t] + act_z[t]
+
+    if 'halfspace' in config.get('constraint_types', []) and 'geo_free' not in variant:
         tightening = config.get('enlarge_constraints') or 0.0
         _hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
@@ -128,7 +253,7 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
             C_row, d = utils.formulate_halfspace_constraints(hs, margin, trajectory_dim, _hs_indices)
             constraint_list.append(('ineq', (C_row, d)))
 
-    if 'obstacles' in config.get('constraint_types', []):
+    if 'obstacles' in config.get('constraint_types', []) and 'geo_free' not in variant:
         tightening = config.get('enlarge_constraints') or 0.0
         for obs in config.get('obstacle_constraints', []):
             dims = [_DIM[d] if isinstance(d, str) else int(d) for d in obs['dimensions']]
@@ -252,7 +377,7 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
     enlarge = (geo_config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
 
     # ── Workspace bounds (tighten + clamp inf for display) ───────────────────
-    has_bounds = 'bounds' in constraint_types
+    has_bounds = 'geo_bounds' in constraint_types
     ws_lb = ws_ub = lb_d = ub_d = None
     _Z_DISP = (0.0, 0.50)   # default z display when z is unconstrained (±inf)
     if has_bounds and 'workspace_bounds' in geo_config:
@@ -360,7 +485,7 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
     if lb_d is not None:
         ax_xy.add_patch(_mpa.Rectangle(
             (lb_d[0], lb_d[1]), ub_d[0]-lb_d[0], ub_d[1]-lb_d[1],
-            lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12, label='bounds'))
+            lw=1.5, edgecolor='steelblue', facecolor='steelblue', alpha=0.12, label='geo bounds'))
     else:
         ax_xy.text(0.5, 0.5, 'no bounds', ha='center', va='center',
                    transform=ax_xy.transAxes, fontsize=9, color='gray')
@@ -498,7 +623,7 @@ def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
     ob_margin = np.full(T, np.inf)
 
     # ── Bounds ────────────────────────────────────────────────────────────────
-    if 'bounds' in ct and 'workspace_bounds' in geo_config:
+    if 'geo_bounds' in ct and 'workspace_bounds' in geo_config:
         wb = geo_config['workspace_bounds']
         lb = np.where(np.isinf(np.array(wb['lb'], dtype=float)), -1e9,
                       np.array(wb['lb'], dtype=float)) + enlarge
@@ -550,7 +675,7 @@ def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
 
     # ── Constraint margin (mean min-distance to boundary at non-violated steps)
     m_all = np.full(T, np.inf)
-    if 'bounds'    in ct: m_all = np.minimum(m_all, b_margin)
+    if 'geo_bounds' in ct: m_all = np.minimum(m_all, b_margin)
     if 'halfspace' in ct: m_all = np.minimum(m_all, hs_margin)
     if 'obstacles' in ct: m_all = np.minimum(m_all, ob_margin)
     valid_m   = m_all[(~any_viol) & np.isfinite(m_all)]
@@ -607,7 +732,7 @@ def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
     viol  = np.zeros(B * H, dtype=bool)
     _DIM  = {'x': 0, 'y': 1, 'z': 2}
 
-    if 'bounds' in ct and 'workspace_bounds' in geo_config:
+    if 'geo_bounds' in ct and 'workspace_bounds' in geo_config:
         wb = geo_config['workspace_bounds']
         lb = np.where(np.isinf(np.array(wb['lb'], dtype=float)), -1e9,
                       np.array(wb['lb'], dtype=float)) + enlarge
@@ -639,6 +764,176 @@ def _check_planned_violations(cands_xyz, geo_config, enlarge=0.0):
             viol |= (dist < r - 1e-6)
 
     return float(viol.mean())
+
+
+def _nest_constraint_metrics(cm):
+    """Json_Orgnize_C4 (Findings #2/#3): reshape check_trajectory_constraints' flat exec_*/
+    plan_* dict (see its own docstring) into grouped {exec: {..., by_family: {...}},
+    plan: {...}} — used both for the per-rollout stats JSON and for constraint_metrics.json's
+    aggregate `per_rollout` list, so both artifacts share one nesting convention. Does NOT
+    change what's measured — purely a presentation reshape of the same numbers.
+    `cm` may be {} (no geo_config / empty rollout) — returns empty groups in that case.
+    """
+    if not cm:
+        return {'exec': {}, 'plan': {}}
+    exec_group = {
+        'n_violated_steps':       cm.get('exec_n_violated_steps', 0),
+        'constraint_sat_rate':    cm.get('exec_constraint_sat_rate', 1.0),
+        'zero_violation_rollout': cm.get('exec_zero_violation_rollout', True),
+        'by_family': {
+            'bounds':    {'viol_count': cm.get('exec_bounds_viol_count', 0),
+                          'max_viol_m': cm.get('exec_max_bounds_viol_m', 0.0)},
+            'halfspace': {'viol_count': cm.get('exec_halfspace_viol_count', 0),
+                          'max_viol_m': cm.get('exec_max_halfspace_viol_m', 0.0)},
+            'obstacles': {'viol_count': cm.get('exec_obstacle_viol_count', 0),
+                          'max_viol_m': cm.get('exec_max_obstacle_penetration_m', 0.0)},
+        },
+        'margin_mean_m':        cm.get('exec_constraint_margin_mean_m', 0.0),
+        'first_violation_step': cm.get('exec_first_violation_step', -1),
+        'longest_safe_streak':  cm.get('exec_longest_safe_streak', 0),
+        'dynamics_consistency_error': {
+            'mean': cm.get('exec_dynamics_consistency_error_mean', 0.0),
+            'max':  cm.get('exec_dynamics_consistency_error_max', 0.0),
+        },
+    }
+    plan_group = {}
+    if 'plan_post_viol_rate_mean' in cm:
+        plan_group = {
+            'post_viol_rate_mean': cm.get('plan_post_viol_rate_mean', 0.0),
+            'post_viol_rate_max':  cm.get('plan_post_viol_rate_max', 0.0),
+            'n_replan_steps':      cm.get('plan_n_replan_steps', 0),
+        }
+    return {'exec': exec_group, 'plan': plan_group}
+
+
+# ── C5: consolidated NPZ payload (single source of raw truth) ──────────────────
+
+def _collect_per_rollout_arrays(agent):
+    """C5 consolidation: build the per-rollout raw + metric arrays for the variant NPZ from
+    agent state ONLY (no dependency on Aligning_Sim.test_agent's aggregate return), so the
+    identical payload can be written both at variant end AND incrementally as a crash-safety
+    partial. Returns a kwargs dict for np.savez.
+
+    Schema notes (C5 — mirrors FM_v3_uav_test/eval_artifacts.py):
+      - `obs_all` is now 6-D per step: [des_c_pos(0:3) | c_pos(3:6)] — the model's actual
+        6-D input and the UAV obs layout. Cols 0:3 are the commanded position (byte-identical
+        to the OLD 3-D `obs_all`, so any consumer slicing [:, :3] is unaffected); cols 3:6
+        are the ACTUAL executed path (was the pkl-only `c_pos_history`).
+      - `sampled_trajectories_all` is now the FULL MPC candidate fan (per replan step a
+        (B,H,3) array) — was the SELECTED plan only; the fan was the pkl-only `all_candidates`.
+      - `selected_idx_all` is NEW (was pkl-only): which candidate index executed per replan.
+    All other keys are unchanged from the pre-C5 npz (same construction, same names).
+    """
+    obs_all, act_all, cand_all, selidx_all = [], [], [], []
+    for r in range(agent.rollout_counter + 1):
+        d = agent.master_rollout_history.get(f'rollout_{r}')
+        if not d:
+            continue
+        des  = np.asarray(d.get('real_robot_pos'))       # (T,3) commanded (des_c_pos)
+        cpos = np.asarray(d.get('c_pos_history'))         # (T,3) actual executed path
+        if des.ndim == 2 and cpos.ndim == 2 and des.shape == cpos.shape:
+            obs_all.append(np.concatenate([des, cpos], axis=1))   # (T,6) [des | c_pos]
+        else:
+            obs_all.append(des)                           # fallback: des-only on shape mismatch
+        act_all.append(np.asarray(d.get('desired_actions')))
+        cand_all.append(list(d.get('all_candidates', [])))         # list of (B,H,3) — full fan
+        selidx_all.append(np.asarray(d.get('selected_idx', []), dtype=np.int32))
+
+    _ci = agent.history_context_info
+    _max_phys = np.array([float(np.max(e)) if len(e) else 0.0
+                          for e in agent.history_pos_tracking_errors], dtype=np.float32)
+    _hcm = agent.history_constraint_metrics
+
+    def _cm(key, default=0.0):
+        return np.array([m.get(key, default) for m in _hcm], dtype=np.float32)
+
+    return dict(
+        obs_all=np.array(obs_all, dtype=object),
+        act_all=np.array(act_all, dtype=object),
+        sampled_trajectories_all=np.array(cand_all, dtype=object),
+        selected_idx_all=np.array(selidx_all, dtype=object),
+        success_relaxed=np.array(agent.history_success_relaxed),
+        n_steps=np.array(agent.history_n_steps),
+        avg_time=np.array(agent.history_avg_time),
+        mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist),
+        physical_tracking_errors=np.array(agent.history_pos_tracking_errors, dtype=object),
+        max_phys_error_per_rollout=_max_phys,
+        outcome_max_physical_tracking_error=_max_phys,
+        context_box_init_xy=np.array([[c.get('box_init_xy', [0.0, 0.0])[0],
+                                       c.get('box_init_xy', [0.0, 0.0])[1]] for c in _ci],
+                                     dtype=np.float32),
+        context_target_xy=np.array([[c.get('target_xy', [0.0, 0.0])[0],
+                                     c.get('target_xy', [0.0, 0.0])[1]] for c in _ci],
+                                   dtype=np.float32),
+        context_box_angle_deg=np.array([c.get('box_init_angle_deg', 0.0) for c in _ci],
+                                       dtype=np.float32),
+        context_target_angle_deg=np.array([c.get('target_angle_deg', 0.0) for c in _ci],
+                                          dtype=np.float32),
+        context_init_xy_dist=np.array([c.get('init_xy_dist', 0.0) for c in _ci],
+                                      dtype=np.float32),
+        contact_first_step=np.array(agent.history_contact_first_step, dtype=np.int32),
+        contact_last_step=np.array(agent.history_contact_last_step, dtype=np.int32),
+        contact_first_pos_xy=np.array(agent.history_contact_first_pos_xy, dtype=np.float32),
+        contact_last_pos_xy=np.array(agent.history_contact_last_pos_xy, dtype=np.float32),
+        constraint_exec_n_violated_steps=_cm('exec_n_violated_steps'),
+        constraint_exec_sat_rate=_cm('exec_constraint_sat_rate', 1.0),
+        constraint_exec_zero_violation=_cm('exec_zero_violation_rollout'),
+        constraint_exec_bounds_viol_count=_cm('exec_bounds_viol_count'),
+        constraint_exec_halfspace_viol_count=_cm('exec_halfspace_viol_count'),
+        constraint_exec_obstacle_viol_count=_cm('exec_obstacle_viol_count'),
+        constraint_exec_max_bounds_viol_m=_cm('exec_max_bounds_viol_m'),
+        constraint_exec_max_halfspace_viol_m=_cm('exec_max_halfspace_viol_m'),
+        constraint_exec_max_obstacle_penetration_m=_cm('exec_max_obstacle_penetration_m'),
+        constraint_exec_margin_mean_m=_cm('exec_constraint_margin_mean_m'),
+        constraint_exec_first_violation_step=_cm('exec_first_violation_step', -1),
+        constraint_exec_longest_safe_streak=_cm('exec_longest_safe_streak'),
+        constraint_exec_dyn_err_mean=_cm('exec_dynamics_consistency_error_mean'),
+        constraint_exec_dyn_err_max=_cm('exec_dynamics_consistency_error_max'),
+        constraint_plan_post_viol_rate_mean=_cm('plan_post_viol_rate_mean'),
+        constraint_plan_post_viol_rate_max=_cm('plan_post_viol_rate_max'),
+        constraint_plan_n_replan_steps=_cm('plan_n_replan_steps'),
+        # Fix_15.3: projection-circuit-breaker flags per rollout. cb_tripped==1 → that rollout ran
+        # (partly) UNPROJECTED (sustained SLSQP slowness); its constraint_exec_* metrics are INVALID.
+        projection_cb_tripped=np.array([1 if s > 0 else 0 for s in agent.history_cb_skipped_steps],
+                                       dtype=np.int32),
+        projection_cb_skipped_steps=np.array(agent.history_cb_skipped_steps, dtype=np.int32),
+    )
+
+
+def _save_partial_npz(path, agent, seed, args_dict):
+    """C5 crash-safety: atomically write a `<variant>.partial.npz` snapshot of every raw
+    per-rollout array gathered so far.
+
+    Deliberately a SIDECAR, not `<variant>.npz`: the DA pipeline only ever reads
+    `<variant>.npz`, which is written exactly once, atomically, at variant END. So a
+    completed run's analysis never sees partial data, and today's clean "missing npz =>
+    variant didn't finish" semantics are preserved. This file is pure raw-data insurance
+    against a mid-variant SLURM kill and is deleted on successful completion. Aggregate
+    scalars that require test_agent's return (entropy, per-context mode_encoding) are not
+    available mid-run, so they are best-effort (`complete=False` flags this).
+    """
+    done = [r for r in range(agent.rollout_counter + 1)
+            if agent.master_rollout_history.get(f'rollout_{r}')]
+    strict = np.array([bool(agent.master_rollout_history[f'rollout_{r}'].get('success', False))
+                       for r in done], dtype=bool)
+    modes  = np.array([int(agent.master_rollout_history[f'rollout_{r}'].get('mode', 0))
+                       for r in done], dtype=np.int32)
+    mdist  = np.array([float(agent.master_rollout_history[f'rollout_{r}'].get('mean_distance', 0.0))
+                       for r in done], dtype=np.float32)
+    payload = _collect_per_rollout_arrays(agent)
+    payload.update(
+        success_rate=float(strict.mean()) if strict.size else 0.0,
+        entropy=float('nan'),
+        n_success=strict, success_strict=strict,
+        mode_per_rollout=modes,
+        mean_distance=mdist,
+        seed=seed, complete=False,
+        n_rollouts_done=int(strict.size),
+        args=args_dict,
+    )
+    tmp = f'{path}.tmp{os.getpid()}.npz'
+    np.savez(tmp, **payload)
+    os.replace(tmp, path)   # atomic on same filesystem
 
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -748,7 +1043,11 @@ class VisualAgentWrapper:
                  max_action_delta=None,
                  mpc_foresight_stride=6,
                  geo_config=None,
-                 is_tightened=False):
+                 is_tightened=False,
+                 total_rollouts=None,
+                 seed=None,
+                 npz_args=None,
+                 partial_npz_every=5):
 
         self.model              = diffusion_model
         self.device             = device
@@ -763,6 +1062,10 @@ class VisualAgentWrapper:
         self.save_path          = save_path
         self.record_mode        = record_mode
         self.variant            = variant
+        # C5: crash-safety partial-npz sidecar (see _save_partial_npz).
+        self._seed              = seed
+        self._npz_args          = npz_args if npz_args is not None else {}
+        self._partial_npz_every = partial_npz_every
 
         model_horizon = getattr(self.model, 'horizon', window_size)
         self.action_seq_size = min(action_seq_size, model_horizon)
@@ -792,8 +1095,14 @@ class VisualAgentWrapper:
         self.curr_rollout_all_candidates  = []  # Fix 8/9: per-rollout accumulator (stores c_pos dims)
         self.curr_rollout_selected_idx    = []  # Fix 8: per-rollout accumulator
         self.curr_rollout_c_pos           = []  # Fix 9: actual robot position per step
+        self.curr_rollout_mode_history     = []  # Json_Orgnize_C4: per-step proximity mode (0=within 5.1cm of box)
         self.curr_context_info            = {}  # Fix 10: set by record_context_info each rollout
         self.history_context_info         = []  # Fix 10: per-rollout context records
+        self.history_success_relaxed      = []  # Json_Orgnize_C4: position-only success per rollout
+        self.history_contact_first_step   = []  # Json_Orgnize_C4
+        self.history_contact_last_step    = []
+        self.history_contact_first_pos_xy = []
+        self.history_contact_last_pos_xy  = []
         self.curr_rollout_time           = 0
         self.master_rollout_history      = {}
         self.video_frames                = []
@@ -801,6 +1110,10 @@ class VisualAgentWrapper:
         self.mpc_foresight_stride        = mpc_foresight_stride
         self.geo_config                  = geo_config or {}
         self.is_tightened                = is_tightened
+        # Fix_11 (Gen7/Gen6V4): progress/ETA for this (geo, variant) item's rollout loop —
+        # n_contexts*n_trajectories, known at construction time; None disables the line.
+        self.total_rollouts              = total_rollouts
+        self._item_t0                    = time.time()
         self.curr_rollout_act_magnitudes = []
         self.curr_rollout_dist_to_target = []
         self.curr_rollout_clamp_events   = []
@@ -811,6 +1124,12 @@ class VisualAgentWrapper:
         # UF-16.3: constraint metrics
         self.history_constraint_metrics  = []   # per-rollout exec metric dicts
         self._plan_post_viol_rates       = []   # per-replan planned violation rate
+        # Fix_15.3: projection-circuit-breaker accounting (projection.py Fix_15.2). Counts FM
+        # steps whose projection was SKIPPED because the sustained-slowness breaker was OPEN —
+        # those steps ran UNPROJECTED, so the rollout's constraint metrics are NOT trustworthy.
+        self.curr_rollout_cb_skipped_steps = 0
+        self.history_cb_skipped_steps      = []
+        self.history_cb_trips              = []
 
     def reset(self):
         self.mental_robot_pos   = None
@@ -823,7 +1142,9 @@ class VisualAgentWrapper:
         self.curr_rollout_time  = 0
         self.curr_rollout_tracking_errors.clear()
         self.curr_rollout_c_pos.clear()            # Fix 9
+        self.curr_rollout_mode_history.clear()     # Json_Orgnize_C4
         self.curr_context_info = {}                # Fix 10
+        self.ctx_box_obs_conflict = None           # D1: cleared here, set by record_context_info()
         self.history_real_pos.clear()
         self.history_desired_actions.clear()
         self.history_full_plans.clear()
@@ -838,6 +1159,14 @@ class VisualAgentWrapper:
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
         self._plan_post_viol_rates.clear()   # UF-16.3
+        self.curr_rollout_cb_skipped_steps = 0   # Fix_15.3
+        # REAL_TIME_RECORDING_UPDATE — fresh per-rollout timing recorder.
+        self.rt_rec = RTRecorder(
+            episode_id=f'{self.variant}_rollout{self.rollout_counter}',
+            variant=self.variant, scene='aligning', system='VisualAligning_Diffuser',
+            control_hz=RT_CONTROL_HZ, batch_size=self.batch_size,
+            horizon=getattr(self.model, 'horizon', self.action_seq_size),
+            text_log=bool(self.save_path))
 
     def update_rollout_info(self, info):
         """Called by Aligning_Sim at rollout end. Mirrors ddpm_encdec verbose format."""
@@ -867,6 +1196,34 @@ class VisualAgentWrapper:
                 'final_xy_dist':       _final_xy_dist,
             })
 
+        # Json_Orgnize_C4 (Finding #5): success_relaxed — position-only, ignore final angle.
+        # pos_min_dist is threaded through `info` from the live env (aligning_sim.py); fall
+        # back to the env's own hardcoded default (aligining.py:198) only if an older
+        # aligining_sim.py without the threading fix is ever used, so this never hard-fails.
+        _pos_min_dist = float(info.get('pos_min_dist', 0.018))
+        _final_xy_dist_for_relax = self.curr_context_info.get('final_xy_dist')
+        success_relaxed = (bool(_final_xy_dist_for_relax <= _pos_min_dist)
+                            if _final_xy_dist_for_relax is not None else False)
+
+        # Json_Orgnize_C4 (Finding #6): first/last-contact step+position — a proximity proxy
+        # (robot-box XY dist < aligining.py's robot_box_dist=0.051m via check_mode()'s `mode`),
+        # NOT verified MuJoCo mesh contact (no such API exists for this env). `-1`/None sentinel
+        # when the robot never got close during the whole rollout.
+        contact_first_step = contact_last_step = -1
+        contact_first_pos_xy = contact_last_pos_xy = None
+        if self.curr_rollout_mode_history and self.curr_rollout_c_pos:
+            _contact_idx = [i for i, m in enumerate(self.curr_rollout_mode_history) if m == 0]
+            if _contact_idx:
+                contact_first_step = int(_contact_idx[0])
+                contact_last_step  = int(_contact_idx[-1])
+                _n_pos = len(self.curr_rollout_c_pos)
+                if contact_first_step < _n_pos:
+                    contact_first_pos_xy = [float(self.curr_rollout_c_pos[contact_first_step][0]),
+                                             float(self.curr_rollout_c_pos[contact_first_step][1])]
+                if contact_last_step < _n_pos:
+                    contact_last_pos_xy = [float(self.curr_rollout_c_pos[contact_last_step][0]),
+                                            float(self.curr_rollout_c_pos[contact_last_step][1])]
+
         self.master_rollout_history[f'rollout_{ridx}'] = {
             'real_robot_pos':      np.array(self.history_real_pos),
             'c_pos_history':       np.array(self.curr_rollout_c_pos),         # Fix 9
@@ -884,6 +1241,18 @@ class VisualAgentWrapper:
             'dist_to_target':     list(self.curr_rollout_dist_to_target),
             'clamp_events':       list(self.curr_rollout_clamp_events),
             'context_info':       dict(self.curr_context_info),               # Fix 10
+            'success_relaxed':        success_relaxed,                       # Json_Orgnize_C4
+            'contact_first_step':     contact_first_step,
+            'contact_last_step':      contact_last_step,
+            'contact_first_pos_xy':   contact_first_pos_xy,
+            'contact_last_pos_xy':    contact_last_pos_xy,
+            # Fix_15.3: projection circuit-breaker health for this rollout.
+            'projection_health': {
+                'cb_tripped':       bool(self.curr_rollout_cb_skipped_steps > 0),
+                'cb_skipped_steps': int(self.curr_rollout_cb_skipped_steps),
+                'cb_trips':         int(getattr(self.projector, '_cb_trips', 0)),
+                'backstop_hits':    int(getattr(self.projector, '_cost_exploded_count', 0)),
+            },
         }
 
         # UF-16.3: compute constraint satisfaction metrics for this rollout.
@@ -908,6 +1277,14 @@ class VisualAgentWrapper:
 
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
+        self.history_cb_skipped_steps.append(int(self.curr_rollout_cb_skipped_steps))   # Fix_15.3
+        self.history_cb_trips.append(int(getattr(self.projector, '_cb_trips', 0)))       # Fix_15.3
+        # REAL_TIME_RECORDING_UPDATE — write per-rollout realtime_<variant>_rollout<ridx>.log + SUMMARY.
+        if getattr(self, 'rt_rec', None) is not None and self.save_path:
+            self.rt_rec.save(
+                os.path.join(self.save_path, f'realtime_{self.variant}_rollout{ridx}.log'),
+                behaviour={'success': int(bool(success)), 'steps': int(self.step_counter),
+                           'mean_distance': round(float(mean_dist), 4)})
         self.history_rollout_mean_dist.append(float(mean_dist))               # Fix 9
         self.history_pos_tracking_errors.append(
             np.array(self.curr_rollout_tracking_errors))
@@ -917,6 +1294,13 @@ class VisualAgentWrapper:
         self.history_dist_to_target.append(list(self.curr_rollout_dist_to_target))
         self.history_clamp_events.append(list(self.curr_rollout_clamp_events))
         self.history_context_info.append(dict(self.curr_context_info))        # Fix 10
+        self.history_success_relaxed.append(success_relaxed)                # Json_Orgnize_C4
+        self.history_contact_first_step.append(contact_first_step)
+        self.history_contact_last_step.append(contact_last_step)
+        self.history_contact_first_pos_xy.append(
+            contact_first_pos_xy if contact_first_pos_xy is not None else [float('nan'), float('nan')])
+        self.history_contact_last_pos_xy.append(
+            contact_last_pos_xy if contact_last_pos_xy is not None else [float('nan'), float('nan')])
 
         ctx_type = 'Seen Training Context' if self.eval_on_train else 'Unseen Test Context'
         ci = self.curr_context_info
@@ -928,6 +1312,11 @@ class VisualAgentWrapper:
             print(f'  - Target   XY=({ci["target_xy"][0]:.3f}, {ci["target_xy"][1]:.3f})  '
                   f'angle={ci["target_angle_deg"]:.1f}°')
             print(f'  - Init XY dist (box→target): {ci["init_xy_dist"]:.4f} m')
+            if 'box_obstacle_conflict' in ci:   # D1
+                _bc = ci['box_obstacle_conflict']
+                print(f'  - !! BOX/OBSTACLE CONFLICT: aborted, held position '
+                      f'(worst overlap {_bc["worst_overlap_m"]:.4f} m > '
+                      f'{_bc["tolerance_m"]:.4f} m tolerance) — EXCLUDE FROM METRICS')
             if 'final_box_xy' in ci:
                 print(f'  - Box  final XY=({ci["final_box_xy"][0]:.3f}, {ci["final_box_xy"][1]:.3f})  '
                       f'angle={ci["final_box_angle_deg"]:.1f}°'
@@ -939,16 +1328,34 @@ class VisualAgentWrapper:
         print(f'  - Max Physical Tracking Error: {max_phys_err:.6f} m')       # Fix 9
         print(f'  - Avg Inference Time: {avg_time:.4f} seconds/replan')
         print(f'  - Clamp events: {len(self.curr_rollout_clamp_events)}')
+        if self.curr_rollout_cb_skipped_steps > 0:   # Fix_15.3
+            print(f'  - ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED: {self.curr_rollout_cb_skipped_steps} '
+                  f'step(s) UNPROJECTED (sustained SLSQP slowness) — constraint metrics NOT valid')
+        # Fix_11: progress/ETA within this (geo, variant) item — the debug block above was
+        # already good, it just never said how many rollouts are left or how long that'll
+        # take. `rollout_counter` is 0-based and already incremented by this rollout's own
+        # reset(), so +1 is the count completed so far.
+        if self.total_rollouts:
+            _done = self.rollout_counter + 1
+            _elapsed = time.time() - self._item_t0
+            _avg = _elapsed / _done
+            _eta = _avg * (self.total_rollouts - _done)
+            print(f'  - Progress: rollout {_done}/{self.total_rollouts}  '
+                  f'({_elapsed:.1f}s elapsed this item, ~{_eta:.1f}s to go)')
         print('-' * 80 + '\n')
 
         if self.save_path is not None:
             self._export_rollout_realtime(ridx)   # Fix 9: handles PNG+JSON+pkl+video
 
     def record_step_info(self, info):
-        """Called by Aligning_Sim after each env.step() — accumulates per-step mean_distance."""
+        """Called by Aligning_Sim after each env.step() — accumulates per-step mean_distance
+        and (Json_Orgnize_C4) the proximity `mode` (0 = EE within robot_box_dist of the box),
+        used at rollout-end to derive first/last-contact step+position. `mode` is a distance
+        proxy (aligining.py's check_mode()), not verified MuJoCo mesh contact."""
         d = info.get('mean_distance')
         if d is not None:
             self.curr_rollout_dist_to_target.append(float(d))
+        self.curr_rollout_mode_history.append(int(info.get('mode', 1)))
 
     def capture_frame(self, bp_np, inhand_np):
         """Non-visual GIF hook. Receives (C,H,W) float[0,1] BGR images from
@@ -982,6 +1389,35 @@ class VisualAgentWrapper:
             'init_xy_dist':       init_xy_dist,
         }
 
+        # ── D1: box-init × obstacle pre-flight guard ─────────────────────────
+        # Aligning_Sim calls agent.reset() → env.reset() → record_context_info(), so the flag
+        # set here is exactly what predict() sees for this rollout.
+        self.ctx_box_obs_conflict = None
+        _hits = _scan_box_obstacle_conflicts(self.geo_config, self.is_tightened,
+                                             [pos[0], pos[1]], pos[2])
+        if _hits:
+            _worst = max(_hits, key=lambda h: h['overlap_m'])
+            self.ctx_box_obs_conflict = {
+                'context_idx':     int(context_idx),
+                'worst_overlap_m': _worst['overlap_m'],
+                'tolerance_m':     _BOX_OBS_MAX_OVERLAP,
+                'obstacles':       _hits,
+            }
+            self.curr_context_info['box_obstacle_conflict'] = self.ctx_box_obs_conflict
+            print(f'[ box-obstacle ] CONTEXT {int(context_idx)} ABORTED — box init '
+                  f'({pos[0]:.3f}, {pos[1]:.3f}) @ {pos[2]:.1f}° sits inside the EE obstacle.',
+                  flush=True)
+            for _h in _hits:
+                print(f'[ box-obstacle ]   {_h["type"]} centre=({_h["center"][0]:.3f}, '
+                      f'{_h["center"][1]:.3f}) r={_h["radius"]:.3f} m penetrates the box '
+                      f'footprint by {_h["overlap_m"]:.4f} m '
+                      f'(tolerance {_BOX_OBS_MAX_OVERLAP:.4f} m).', flush=True)
+            print(f'[ box-obstacle ]   The EE must enter this disc to push the box, but the '
+                  f'projector forbids exactly that — the rollout is unwinnable and would drive '
+                  f'SLSQP toward an empty feasible set. Holding position for this rollout; it '
+                  f'is flagged `box_obstacle_conflict` in the JSON. Set FMPCC_BOX_OBS_GUARD=0 '
+                  f'to run it anyway.', flush=True)
+
     # Fix 9: _save_diagnostics() removed — video/gif + JSON now consolidated in _export_rollout_realtime().
 
     def _export_rollout_realtime(self, rollout_idx):
@@ -1007,40 +1443,60 @@ class VisualAgentWrapper:
                     except Exception as e:
                         print(f'[ WARNING ] GIF failed: {e}')
 
-            with open(os.path.join(diag_path, f'rollout_{rollout_idx}_data.pkl'), 'wb') as f:
-                pickle.dump(data, f)
+            # C5: per-rollout `_data.pkl` removed — every raw array it held (c_pos_history,
+            # all_candidates, selected_idx, …) now lives in <variant>.npz. Crash-safety is
+            # provided instead by the incremental <variant>.partial.npz sidecar written at the
+            # end of this method every `partial_npz_every` rollouts.
 
-            # Fix 9: JSON only (no .txt duplicate); Fix 10: context_info added
-            stats = {
-                'rollout_index':                  int(rollout_idx),
-                'success':                        bool(data.get('success', False)),
-                'steps':                          int(data.get('steps', 0)),
-                'mean_distance':                  float(data.get('mean_distance', 0.0)),
-                'mode':                           int(data.get('mode', 0)),
-                'avg_inference_time_per_replan':  float(data.get('avg_time', 0.0)),  # Fix 12
-                'max_physical_tracking_error':    float(data.get('max_physical_tracking_error', 0.0)),
-                'context_info':                   data.get('context_info', {}),
-                'constraint_metrics':             data.get('constraint_metrics', {}),  # UF-16.3
-            }
-            # UF-16.3: per-rollout constraint metric summary
+            # Json_Orgnize_C4: grouped schema replacing the old flat/chaotic layout.
+            # `exec_n_steps` (Finding #1, was a literal duplicate of `steps`) is dropped —
+            # `timing.steps` is the single canonical step count now.
             _cm = data.get('constraint_metrics', {})
+            _nested_cm = _nest_constraint_metrics(_cm)
+            _ci = data.get('context_info', {})
+            _contact_note = ('proximity proxy (robot-box XY dist < 0.051m), '
+                              'not physical mesh contact')
+            stats = {
+                'rollout_index': int(rollout_idx),
+                'mode':          int(data.get('mode', 0)),
+                'success': {
+                    'strict':  bool(data.get('success', False)),
+                    'relaxed': bool(data.get('success_relaxed', False)),
+                },
+                'outcome': {
+                    'mean_distance':               float(data.get('mean_distance', 0.0)),
+                    'max_physical_tracking_error':  float(data.get('max_physical_tracking_error', 0.0)),
+                },
+                'timing': {
+                    'steps':                          int(data.get('steps', 0)),
+                    'avg_inference_time_per_replan':   float(data.get('avg_time', 0.0)),  # Fix 12
+                },
+                'context': dict(_ci),
+                'contact': {
+                    'first_step':    (int(data['contact_first_step'])
+                                       if data.get('contact_first_step', -1) >= 0 else None),
+                    'first_pos_xy':  data.get('contact_first_pos_xy'),
+                    'last_step':     (int(data['contact_last_step'])
+                                       if data.get('contact_last_step', -1) >= 0 else None),
+                    'last_pos_xy':   data.get('contact_last_pos_xy'),
+                    'note':          _contact_note,
+                },
+                'constraint': _nested_cm,
+            }
             if _cm:
-                _sat = _cm.get('exec_constraint_sat_rate', 1.0)
-                _nviol = _cm.get('exec_n_violated_steps', 0)
-                _bv = _cm.get('exec_bounds_viol_count', 0)
-                _hv = _cm.get('exec_halfspace_viol_count', 0)
-                _ov = _cm.get('exec_obstacle_viol_count', 0)
-                _fv = _cm.get('exec_first_violation_step', -1)
-                _ls = _cm.get('exec_longest_safe_streak', 0)
-                _mg = _cm.get('exec_constraint_margin_mean_m', 0.0)
-                _dy = _cm.get('exec_dynamics_consistency_error_mean', 0.0)
-                _pv = _cm.get('plan_post_viol_rate_mean', 0.0)
-                _zv = _cm.get('exec_zero_violation_rollout', False)
-                print(f'  [ constraints ] sat={_sat:.3f}  violated={_nviol}steps'
-                      f'  (bounds={_bv} hs={_hv} obs={_ov})')
-                print(f'    first_viol_step={_fv}  longest_safe={_ls}  '
-                      f'margin={_mg:.4f}m  dyn_err={_dy:.4f}m')
-                print(f'    plan_post_viol_rate={_pv:.4f}  zero_viol={_zv}')
+                _ex = _nested_cm['exec']
+                print(f'  [ constraints ] sat={_ex["constraint_sat_rate"]:.3f}  '
+                      f'violated={_ex["n_violated_steps"]}steps'
+                      f'  (bounds={_ex["by_family"]["bounds"]["viol_count"]} '
+                      f'hs={_ex["by_family"]["halfspace"]["viol_count"]} '
+                      f'obs={_ex["by_family"]["obstacles"]["viol_count"]})')
+                print(f'    first_viol_step={_ex["first_violation_step"]}  '
+                      f'longest_safe={_ex["longest_safe_streak"]}  '
+                      f'margin={_ex["margin_mean_m"]:.4f}m  '
+                      f'dyn_err={_ex["dynamics_consistency_error"]["mean"]:.4f}m')
+                _pv = _nested_cm['plan'].get('post_viol_rate_mean', 0.0)
+                print(f'    plan_post_viol_rate={_pv:.4f}  '
+                      f'zero_viol={_ex["zero_violation_rollout"]}')
             with open(os.path.join(diag_path, f'rollout_{rollout_idx}_stats.json'), 'w') as sf:
                 json.dump(stats, sf, indent=4)
 
@@ -1152,6 +1608,15 @@ class VisualAgentWrapper:
                     f'(success={data.get("success")},  {n_cands} candidates/step,  '
                     f'every {_STRIDE} replans shown)',
                     fontsize=13)
+                # Fix_15.3: loud banner when this rollout's projection circuit breaker tripped —
+                # the candidate fan is (partly) UNPROJECTED, so it is NOT constraint-valid.
+                _ph = data.get('projection_health', {}) or {}
+                if _ph.get('cb_tripped'):
+                    fig_mpc.text(0.5, 0.955,
+                                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED — {int(_ph.get("cb_skipped_steps", 0))} '
+                                 f'step(s) UNPROJECTED (sustained SLSQP slowness). Fan NOT constraint-valid.',
+                                 color='white', backgroundcolor='crimson', fontsize=12, fontweight='bold',
+                                 ha='center', va='center')
                 ax_xy = fig_mpc.add_subplot(1, 2, 1)
                 ax_3d = fig_mpc.add_subplot(1, 2, 2, projection='3d')
 
@@ -1195,6 +1660,20 @@ class VisualAgentWrapper:
                     _Line2D([0],[0], marker='s', color='w', markerfacecolor='red',
                             markersize=7,  label='end'),
                 ]
+                # Json_Orgnize_C4 (Finding #7): first/last-contact markers, XY panel only —
+                # proximity proxy (see contact.note in the stats JSON), not mesh contact.
+                _cfs = data.get('contact_first_step', -1)
+                _cls = data.get('contact_last_step', -1)
+                if _cfs is not None and _cfs >= 0 and _cfs < len(_ref):
+                    ax_xy.scatter([_ref[_cfs, 0]], [_ref[_cfs, 1]], marker='*', s=140,
+                                  color='blue', zorder=15, linewidths=0)
+                    _lgd.append(_Line2D([0],[0], marker='*', color='w', markerfacecolor='blue',
+                                         markersize=10, label='first contact'))
+                if _cls is not None and _cls >= 0 and _cls < len(_ref):
+                    ax_xy.scatter([_ref[_cls, 0]], [_ref[_cls, 1]], marker='X', s=140,
+                                  color='purple', zorder=15, linewidths=0)
+                    _lgd.append(_Line2D([0],[0], marker='X', color='w', markerfacecolor='purple',
+                                         markersize=9, label='last contact'))
                 if self.is_tightened and _enlarge > 0:
                     _lgd += [
                         _Line2D([0],[0], color='steelblue', lw=1.5, linestyle='-',
@@ -1223,7 +1702,7 @@ class VisualAgentWrapper:
                     import matplotlib.patches as _mpa_uf15
                     for _cl_e, _cl_dash in _c_layers:
                         _cl_ls = '--' if _cl_dash else '-'
-                        if 'bounds' in _ct and 'workspace_bounds' in _gc:
+                        if 'geo_bounds' in _ct and 'workspace_bounds' in _gc:
                             _wb    = _gc['workspace_bounds']
                             _lb_xy = np.array(_wb['lb'][:2], dtype=float) + _cl_e
                             _ub_xy = np.array(_wb['ub'][:2], dtype=float) - _cl_e
@@ -1251,6 +1730,50 @@ class VisualAgentWrapper:
                                 if not _cl_dash:
                                     ax_xy.plot(float(_obs['center'][0]), float(_obs['center'][1]),
                                                'r+', ms=6, zorder=2)
+
+                # U_19 (Gen7/Gen6V4): draw the physical push-box footprint on the XY
+                # panel so its position relative to the obstacle/constraints is visible
+                # (the box may overlap the added obstacle). The aligning push-box is a
+                # 0.10×0.10 m square (MuJoCo half-extent 0.05 in robot_push_box.xml);
+                # box/target poses carry a yaw angle in degrees (box_space samples
+                # [x, y, angle∈[-90,90]]). Drawn as rotated squares: init = solid
+                # saddlebrown (filled), final = dashed saddlebrown, target = goldenrod.
+                if _ci:
+                    import matplotlib.patches as _mpa_box
+                    _BOX_HALF = 0.05  # m — aligning push-box half-extent (robot_push_box.xml)
+                    def _draw_box_xy(_cx, _cy, _ang_deg, _ec, _ls, _fill):
+                        _a = np.radians(_ang_deg)
+                        _R = np.array([[np.cos(_a), -np.sin(_a)],
+                                       [np.sin(_a),  np.cos(_a)]])
+                        _corners = np.array([[-_BOX_HALF, -_BOX_HALF], [_BOX_HALF, -_BOX_HALF],
+                                             [_BOX_HALF,  _BOX_HALF], [-_BOX_HALF,  _BOX_HALF]])
+                        _pts = _corners @ _R.T + np.array([_cx, _cy])
+                        ax_xy.add_patch(_mpa_box.Polygon(
+                            _pts, closed=True, lw=1.8, linestyle=_ls, edgecolor=_ec,
+                            facecolor=_ec if _fill else 'none',
+                            alpha=0.18 if _fill else 0.95, zorder=3))
+                    _bi = _ci.get('box_init_xy')
+                    if _bi is not None:
+                        _draw_box_xy(float(_bi[0]), float(_bi[1]),
+                                     float(_ci.get('box_init_angle_deg', 0.0)),
+                                     'saddlebrown', '-', True)
+                        _lgd.append(_Line2D([0], [0], color='saddlebrown', lw=1.8,
+                                            label='push-box (init)'))
+                    _bf = _ci.get('final_box_xy')
+                    if _bf is not None:
+                        _draw_box_xy(float(_bf[0]), float(_bf[1]),
+                                     float(_ci.get('final_box_angle_deg', 0.0)),
+                                     'saddlebrown', '--', False)
+                        _lgd.append(_Line2D([0], [0], color='saddlebrown', lw=1.8,
+                                            linestyle='--', label='push-box (final)'))
+                    _tt = _ci.get('target_xy')
+                    if _tt is not None:
+                        _draw_box_xy(float(_tt[0]), float(_tt[1]),
+                                     float(_ci.get('target_angle_deg', 0.0)),
+                                     'goldenrod', '-', False)
+                        _lgd.append(_Line2D([0], [0], color='goldenrod', lw=1.8,
+                                            label='target box'))
+                    ax_xy.legend(handles=_lgd, fontsize=9)
 
                 # ── 3D XYZ panel ──────────────────────────────────────────────
                 for step_i, (cands, _sel) in enumerate(zip(all_cands_list, sel_idx_list)):
@@ -1282,7 +1805,7 @@ class VisualAgentWrapper:
 
                 # UF-15.2 / UF-16: workspace box wireframe on 3D panel
                 # For tightened variants: solid nominal box + dashed inner planning box
-                if _gc and 'bounds' in _ct and 'workspace_bounds' in _gc:
+                if _gc and 'geo_bounds' in _ct and 'workspace_bounds' in _gc:
                     for _cl_e, _cl_dash in _c_layers:
                         _wb  = _gc['workspace_bounds']
                         _x0, _y0, _z0 = np.array(_wb['lb'], dtype=float) + _cl_e
@@ -1401,6 +1924,20 @@ class VisualAgentWrapper:
         except Exception as e:
             print(f'[ diag ] Real-time export failed for rollout {rollout_idx}: {e}')
 
+        # C5: incremental crash-safety snapshot every `partial_npz_every` rollouts. Kept
+        # outside the plotting try/except above so a plot failure never skips the snapshot
+        # (and a snapshot failure is reported distinctly rather than masked). Sidecar file;
+        # see _save_partial_npz for why it is not <variant>.npz.
+        if (self._partial_npz_every and self.save_path and self.geo_config
+                and self.geo_config.get('write_to_file', True)
+                and (self.rollout_counter + 1) % self._partial_npz_every == 0):
+            try:
+                _save_partial_npz(
+                    os.path.join(self.save_path, f'{self.variant}.partial.npz'),
+                    self, self._seed, self._npz_args)
+            except Exception as e:
+                print(f'[ diag ] partial NPZ snapshot failed at rollout {rollout_idx}: {e}')
+
     @torch.no_grad()
     def predict(self, state, goal=None, extra_args=None, if_vision=False):
         """
@@ -1496,6 +2033,22 @@ class VisualAgentWrapper:
             obs_anchor = obs_t.repeat(self.batch_size, 1)   # (B, 20)
             cond = {0: obs_anchor}
 
+        # ── D1: box-init × obstacle conflict — abort this rollout ──────────
+        # record_context_info() declared this context unusable. Every per-step bookkeeping
+        # append above still runs (so the rollout still exports cleanly and the JSON keeps a
+        # real position trace), but planning is skipped entirely and the EE holds position:
+        # spending ~200 SLSQP solves per replan on a provably empty feasible set buys nothing.
+        # The episode then runs out its step budget and is recorded as a normal failure,
+        # distinguishable via context_info['box_obstacle_conflict'].
+        if getattr(self, 'ctx_box_obs_conflict', None) is not None:
+            if self.step_counter == 0:
+                print(f'[ box-obstacle ] holding position for this rollout (context '
+                      f'{self.ctx_box_obs_conflict["context_idx"]}) — see abort notice above.',
+                      flush=True)
+            self.curr_rollout_act_magnitudes.append(0.0)
+            self.step_counter += 1
+            return np.zeros((1, 3), dtype=np.float64)
+
         # ── Plan (or execute from cached action chunk) ─────────────────────
         if self.action_counter == self.action_seq_size:
             t_replan = time.time()   # Fix 12: time only the replan call, not cached fetches
@@ -1504,6 +2057,10 @@ class VisualAgentWrapper:
 
             if self.projector is not None:
                 trajectory, infos = self.model(cond, projector=self.projector)
+                # Fix_15.3: the projector marks each call it SKIPS while its sustained-slowness
+                # circuit breaker is OPEN (unprojected step). Count them for artifact marking.
+                if getattr(self.projector, 'last_proj_skipped', False):
+                    self.curr_rollout_cb_skipped_steps += 1
             else:
                 trajectory, infos = self.model(cond)
 
@@ -1639,7 +2196,14 @@ class VisualAgentWrapper:
 
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
-            self.curr_rollout_time += time.time() - t_replan   # Fix 12: accumulate per-replan time
+            _rt_replan_ms = (time.time() - t_replan) * 1e3   # REAL_TIME_RECORDING_UPDATE — per-replan diffusion+projection wall-time
+            self.curr_rollout_time += _rt_replan_ms / 1e3   # Fix 12: accumulate per-replan time
+            # REAL_TIME_RECORDING_UPDATE — record this replan's timing (proj bundled in model call).
+            if getattr(self, 'rt_rec', None) is not None:
+                self.rt_rec.step(t=self.step_counter / RT_CONTROL_HZ, total_ms=_rt_replan_ms,
+                                 obs=np.concatenate([des_robot_pos_np, robot_pos_np]),
+                                 pos=robot_pos_np[:2], proj_active=(self.projector is not None),
+                                 track_err=phys_err, step_idx=self._replan_count)
 
         next_action    = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy().squeeze(0)   # (3,)
@@ -1665,7 +2229,7 @@ class VisualAgentWrapper:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', override_args=None):
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Loading from {lp}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -1676,6 +2240,38 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
 
     if target_class is not None:
         diffusion_config._class = utils.config.import_class(target_class)
+
+    # CONFIG-OVERRIDES-PKL (fix_1, 2026-07-14): the pkl PRESERVES training-time params; the eval
+    # config is compared against it and reconciled in TWO tiers (see
+    # logs_in_develop/config_override_pkl/fix_1/):
+    #   - SAMPLING knobs (operating point, safe to change at eval): eval config OVERRIDES the pkl, [INFO].
+    #   - identity/architecture keys (must match the checkpoint): pkl value is KEPT to protect the
+    #     state_dict; a loud [WARNING] fires if the eval config disagrees.
+    _SAMPLING_OVERRIDE_KEYS = {
+        'flow_steps_v3', 'ode_inference_steps_v3', 'ode_solver_backend_v3',
+        'ode_solver_method_v3', 'ode_solver_rtol_v3', 'ode_solver_atol_v3',
+        'ode_solver_step_size_v3', 'meanflow_cfg_omega', 'meanflow_cfg_t_min',
+        'meanflow_cfg_t_max', 'condition_guidance_w', 'clip_denoised',
+        'diffusion_timestep_threshold',
+    }
+    if override_args is not None:
+        for _k in list(diffusion_config._dict.keys()):
+            if not hasattr(override_args, _k):
+                continue
+            _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+            try:
+                _same = bool(_new == _old)
+            except Exception:
+                _same = False
+            if _same:
+                continue
+            if _k in _SAMPLING_OVERRIDE_KEYS:
+                print(f"[ config->pkl ] INFO  {_k}: train={_old!r} -> eval={_new!r}  (sampling knob; applied)")
+                diffusion_config._dict[_k] = _new
+            else:
+                print(f"[ config->pkl ] WARNING  {_k}: train-pkl={_old!r} vs eval-config={_new!r} -- "
+                      f"identity/architecture key; KEEPING the train value to protect the checkpoint "
+                      f"(fix the config to match the checkpoint, or retrain).")
 
     dataset   = dataset_config()
     model     = model_config()
@@ -1710,8 +2306,9 @@ if __name__ == '__main__':
     n_contexts          = config.get('n_contexts', 30)
     n_trajectories      = config.get('n_trajectories_per_context', 1)
 
-    for seed in seeds:
-        print(f'\n=== Evaluating seed {seed} ===')
+    for _seed_i, seed in enumerate(seeds):
+        # Fix_11: seed X/N — the outermost breadcrumb level (mirrors UAV's Fix_11).
+        print(f'\n=== Evaluating seed {_seed_i + 1}/{len(seeds)} (seed={seed}) ===')
         args = Parser().parse_args(experiment='plan_visual_aligning_dpcc', seed=seed)
 
         diffusion_model = None
@@ -1719,7 +2316,7 @@ if __name__ == '__main__':
             exp = load_diffusion_with_override(
                 args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
                 target_class=args.diffusion, epoch=args.diffusion_epoch,
-                device=args.device,
+                device=args.device, override_args=args,
             )
             diffusion_model = exp.diffusion
             # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule
@@ -1798,7 +2395,7 @@ if __name__ == '__main__':
         # loop body needs no indentation change.
         _geo_specs = config.get('geo_constraint_variants', [
             {'name': 'combined_2',
-             'constraint_types': config.get('constraint_types', ['bounds', 'dynamics']),
+             'constraint_types': config.get('constraint_types', ['geo_bounds', 'dynamics']),
              'workspace_bounds': {'lb': [0.30, -0.35, 0.05], 'ub': [0.70, 0.35, 0.40]}}
         ])
         # enlarge_constraints: None when yaml sets null → no tightened twin generated
@@ -1816,7 +2413,7 @@ if __name__ == '__main__':
             if 'workspace_bounds'      in _gs: _gc['workspace_bounds']      = _gs['workspace_bounds']
             if 'obstacle_constraints'  in _gs: _gc['obstacle_constraints']  = _gs['obstacle_constraints']
             if 'halfspace_constraints' in _gs: _gc['halfspace_constraints'] = _gs['halfspace_constraints']
-            _has_geo = any(t in _gc['constraint_types'] for t in ('bounds', 'halfspace', 'obstacles'))
+            _has_geo = any(t in _gc['constraint_types'] for t in ('geo_bounds', 'halfspace', 'obstacles'))
             for _v in projection_variants:
                 _run_items.append((_gs['name'], _gc, _v, False))
             # auto-generate tightened twin for entries with bounds/obstacles
@@ -1824,7 +2421,12 @@ if __name__ == '__main__':
                 for _v in projection_variants:
                     _run_items.append((_gs['name'] + '-tightened', _gc, _v, True))
 
-        for geo_name, geo_config, geo_variant, is_tightened in _run_items:
+        _n_run_items = len(_run_items)
+        for _item_i, (geo_name, geo_config, geo_variant, is_tightened) in enumerate(_run_items):
+            # Fix_11: this is the line to grep for after a killed/timed-out job — the LAST
+            # one printed is the (geo, variant) combo that was running when it got cut.
+            print(f'[ eval ] >>> item {_item_i + 1}/{_n_run_items}: geo={geo_name}  '
+                  f'variant={geo_variant}  tightened={is_tightened}')
             if geo_variant == projection_variants[0]:
                 print(f'\n[ geo ] ── Constraint variant: {geo_name}  '
                       f'types={geo_config["constraint_types"]} ──')
@@ -1929,6 +2531,10 @@ if __name__ == '__main__':
                     mpc_foresight_stride=geo_config.get('mpc_foresight_stride', 6),
                     geo_config=geo_config,
                     is_tightened=is_tightened,
+                    total_rollouts=n_contexts * n_trajectories,   # Fix_11
+                    seed=seed,                                    # C5: partial-npz sidecar
+                    npz_args=vars(args),                          # C5
+                    partial_npz_every=geo_config.get('partial_npz_every', 5),  # C5
                 )
 
                 _if_vision_config = getattr(args, 'if_vision', True)
@@ -1984,71 +2590,80 @@ if __name__ == '__main__':
                 entropy = -(m_norm * torch.log(m_norm + 1e-12) /
                             torch.log(torch.tensor(float(n_modes)))).sum(1).mean().item()
 
-                obs_all, act_all, plans_all = [], [], []
+                # C5: DESIRED-only per-rollout path list for the legacy PNG grid below.
+                # (The npz payload — incl. the 6-D obs_all and the full MPC fan — is built
+                # separately by _collect_per_rollout_arrays so the grid's plotting stays 3-D.)
+                obs_des_all = []
                 for r in range(agent.rollout_counter + 1):
                     d = agent.master_rollout_history.get(f'rollout_{r}')
                     if d:
-                        obs_all.append(d['real_robot_pos'])
-                        act_all.append(d['desired_actions'])
-                        plans_all.append(d['full_plans'])
+                        obs_des_all.append(d['real_robot_pos'])
 
-                # ── NPZ save (legacy-compatible) ─────────────────────────────
+                # ── NPZ save (C5: single source of raw truth; UAV-style schema) ──────
+                # _collect_per_rollout_arrays supplies every per-rollout array (raw + metrics),
+                # incl. the widened 6-D obs_all, the full fan (sampled_trajectories_all) and
+                # selected_idx_all. Only the aggregate scalars that need Aligning_Sim's return
+                # (success_rate/entropy/mode_encoding/n_success/mean_distance) are added here.
                 if geo_config.get('write_to_file', True):
-                    # U10.2: flatten context_info + clean tracking error into NPZ
-                    # so DA code can load per-rollout arrays directly (same pattern as avoiding).
-                    _ci = agent.history_context_info   # list of dicts, one per rollout
-                    _max_phys = np.array([
-                        float(np.max(e)) if len(e) else 0.0
-                        for e in agent.history_pos_tracking_errors
-                    ], dtype=np.float32)
-                    _ctx_box_xy   = np.array([[c.get('box_init_xy',  [0.0, 0.0])[0],
-                                               c.get('box_init_xy',  [0.0, 0.0])[1]]
-                                              for c in _ci], dtype=np.float32)
-                    _ctx_tgt_xy   = np.array([[c.get('target_xy',    [0.0, 0.0])[0],
-                                               c.get('target_xy',    [0.0, 0.0])[1]]
-                                              for c in _ci], dtype=np.float32)
-                    _ctx_box_ang  = np.array([c.get('box_init_angle_deg', 0.0) for c in _ci], dtype=np.float32)
-                    _ctx_tgt_ang  = np.array([c.get('target_angle_deg',   0.0) for c in _ci], dtype=np.float32)
-                    _ctx_xy_dist  = np.array([c.get('init_xy_dist',       0.0) for c in _ci], dtype=np.float32)
-                    np.savez(f'{save_path}/{variant}.npz',
-                             success_rate=success_rate, entropy=entropy,
-                             mode_encoding=mode_encoding.numpy(),
-                             elapsed_seconds=elapsed, seed=seed,
-                             n_success=successes.flatten().numpy(),
-                             n_steps=np.array(agent.history_n_steps),
-                             avg_time=np.array(agent.history_avg_time),
-                             mean_distance=mean_dist.flatten().numpy(),
-                             mean_dist_per_rollout=np.array(agent.history_rollout_mean_dist),
-                             physical_tracking_errors=np.array(
-                                 agent.history_pos_tracking_errors, dtype=object),
-                             max_phys_error_per_rollout=_max_phys,
-                             context_box_init_xy=_ctx_box_xy,
-                             context_target_xy=_ctx_tgt_xy,
-                             context_box_angle_deg=_ctx_box_ang,
-                             context_target_angle_deg=_ctx_tgt_ang,
-                             context_init_xy_dist=_ctx_xy_dist,
-                             obs_all=np.array(obs_all, dtype=object),
-                             act_all=np.array(act_all, dtype=object),
-                             sampled_trajectories_all=np.array(plans_all, dtype=object),
-                             args=vars(args))
+                    _npz_payload = _collect_per_rollout_arrays(agent)
+                    np.savez(
+                        f'{save_path}/{variant}.npz',
+                        success_rate=success_rate, entropy=entropy,
+                        mode_encoding=mode_encoding.numpy(),
+                        elapsed_seconds=elapsed, seed=seed,
+                        n_success=successes.flatten().numpy(),
+                        success_strict=successes.flatten().numpy(),   # schema-consistent name
+                        mean_distance=mean_dist.flatten().numpy(),
+                        complete=True,                                # C5: full/authoritative run
+                        args=vars(args),
+                        **_npz_payload,
+                    )
+                    # C5: variant finished → drop the now-redundant crash-safety sidecar.
+                    _partial = os.path.join(save_path, f'{variant}.partial.npz')
+                    if os.path.exists(_partial):
+                        try:
+                            os.remove(_partial)
+                        except OSError:
+                            pass
 
-                pkl_name = (f'results_seed_{seed}_train_set.pkl'
-                            if args_cli.eval_on_train else f'results_seed_{seed}.pkl')
-                with open(os.path.join(save_path, pkl_name), 'wb') as f:
-                    pickle.dump({'success_rate': success_rate,
-                                 'entropy': entropy, 'elapsed': elapsed}, f)
+                # Fix_15.3: drop a greppable sentinel + warn when the projection circuit breaker
+                # tripped on any rollout of this variant — those rollouts ran (partly) UNPROJECTED
+                # (sustained SLSQP slowness, projection.py Fix_15.2), so their constraint metrics are
+                # NOT valid. Artifacts are still written (partial run kept), just clearly marked.
+                _cb_skips = getattr(agent, 'history_cb_skipped_steps', [])
+                _cb_tripped_idx = [i for i, s in enumerate(_cb_skips) if s > 0]
+                if _cb_tripped_idx:
+                    _tot_skipped = int(sum(_cb_skips))
+                    with open(os.path.join(save_path, 'PROJECTION_CB_TRIPPED.txt'), 'w') as _f:
+                        _f.write(f"PROJECTION CIRCUIT-BREAKER TRIPPED — aligning variant={variant}\n")
+                        _f.write(f"tripped_rollouts={_cb_tripped_idx}  "
+                                 f"({len(_cb_tripped_idx)}/{len(_cb_skips)})\n")
+                        _f.write(f"total_skipped_steps={_tot_skipped}\n")
+                        _f.write("Cause: sustained SLSQP slowness (projection.py Fix_15.2 breaker OPENED).\n")
+                        _f.write("These rollouts ran (partly) UNPROJECTED — constraint metrics are NOT\n")
+                        _f.write("valid; treat this variant as 'projection broken for this geometry'.\n")
+                    print(f'[ eval ] variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
+                          f'{len(_cb_tripped_idx)}/{len(_cb_skips)} rollouts ({_tot_skipped} steps '
+                          f'skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.',
+                          flush=True)
 
                 # ── Legacy PNG rollout grid (mirrors ddpm_encdec) ────────────
                 print(f'[ eval ] Generating PNG rollout grid for {variant}...')
-                n_plot = min(len(obs_all), 5)
+                n_plot = min(len(obs_des_all), 5)
                 if n_plot > 0:
                     fig, axes = plt.subplots(n_plot, 6, figsize=(30, 5 * n_plot),
                                              squeeze=False)
                     fig.suptitle(f'Visual-DPCC — {variant} (Seed {seed})')
+                    if _cb_tripped_idx:   # Fix_15.3
+                        fig.text(0.5, 0.965,
+                                 f'⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on {len(_cb_tripped_idx)}/'
+                                 f'{len(_cb_skips)} rollouts — those paths are UNPROJECTED '
+                                 f'(sustained SLSQP slowness)',
+                                 color='white', backgroundcolor='crimson', fontsize=11,
+                                 fontweight='bold', ha='center', va='center')
 
                     for i in range(n_plot):
-                        obs_traj   = obs_all[i]    # (T, 3) des_robot_pos
-                        plans_list = plans_all[i]  # list of (H, 3) action arrays
+                        obs_traj   = obs_des_all[i]   # (T, 3) des_robot_pos
                         rollout_data = agent.master_rollout_history.get(f'rollout_{i}', {})
                         c_pos_hist   = rollout_data.get('c_pos_history', None)  # Fix 9: actual positions
 
@@ -2156,26 +2771,35 @@ if __name__ == '__main__':
                     print(f'  Zero-violation rollouts:        {_zv_cnt} / {n_r}  '
                           f'({100*_zv_cnt/max(1,n_r):.1f}%)')
 
-                    # Save constraint_metrics.json alongside results.pkl
+                    # Json_Orgnize_C4 (Open Q3, resolved: yes): nest the aggregate the same
+                    # way as the per-rollout stats JSON (exec/plan/by_family groups), so both
+                    # artifacts share one convention. `per_rollout` now holds the SAME nested
+                    # shape (via _nest_constraint_metrics) rather than the old flat dicts.
                     _cm_summary = {
                         'variant': variant, 'geo_name': geo_name, 'seed': int(seed),
                         'n_rollouts': n_r,
-                        'exec_constraint_sat_rate':         {'mean': float(_sat_arr.mean()), 'std': float(_sat_arr.std())},
-                        'exec_n_violated_steps':            {'mean': float(_nviol.mean()),   'std': float(_nviol.std())},
-                        'exec_bounds_viol_count':           {'mean': float(_bv.mean()),      'std': float(_bv.std())},
-                        'exec_halfspace_viol_count':        {'mean': float(_hv.mean()),      'std': float(_hv.std())},
-                        'exec_obstacle_viol_count':         {'mean': float(_ov.mean()),      'std': float(_ov.std())},
-                        'exec_max_bounds_viol_m':           {'mean': float(_bmx.mean()),     'std': float(_bmx.std())},
-                        'exec_max_halfspace_viol_m':        {'mean': float(_hmx.mean()),     'std': float(_hmx.std())},
-                        'exec_max_obstacle_penetration_m':  {'mean': float(_omx.mean()),     'std': float(_omx.std())},
-                        'exec_constraint_margin_mean_m':    {'mean': float(_mg.mean()),      'std': float(_mg.std())},
-                        'exec_first_violation_step':        {'mean': float(_fv[_fv>=0].mean()) if (_fv>=0).any() else -1,
-                                                             'n_rollouts_with_violation': int((_fv>=0).sum())},
-                        'exec_longest_safe_streak':         {'mean': float(_ls.mean()),      'std': float(_ls.std())},
-                        'exec_dynamics_consistency_error':  {'mean': float(_dy.mean()),      'std': float(_dy.std())},
-                        'plan_post_viol_rate':              {'mean': float(_pv.mean()),      'std': float(_pv.std())},
-                        'exec_zero_violation_rollouts':     _zv_cnt,
-                        'per_rollout':                      _hcm,
+                        'exec': {
+                            'constraint_sat_rate':    {'mean': float(_sat_arr.mean()), 'std': float(_sat_arr.std())},
+                            'n_violated_steps':       {'mean': float(_nviol.mean()),  'std': float(_nviol.std())},
+                            'by_family': {
+                                'bounds':    {'viol_count':  {'mean': float(_bv.mean()),  'std': float(_bv.std())},
+                                              'max_viol_m':  {'mean': float(_bmx.mean()), 'std': float(_bmx.std())}},
+                                'halfspace': {'viol_count':  {'mean': float(_hv.mean()),  'std': float(_hv.std())},
+                                              'max_viol_m':  {'mean': float(_hmx.mean()), 'std': float(_hmx.std())}},
+                                'obstacles': {'viol_count':  {'mean': float(_ov.mean()),  'std': float(_ov.std())},
+                                              'max_viol_m':  {'mean': float(_omx.mean()), 'std': float(_omx.std())}},
+                            },
+                            'margin_mean_m':        {'mean': float(_mg.mean()), 'std': float(_mg.std())},
+                            'first_violation_step': {'mean': float(_fv[_fv>=0].mean()) if (_fv>=0).any() else -1,
+                                                      'n_rollouts_with_violation': int((_fv>=0).sum())},
+                            'longest_safe_streak':  {'mean': float(_ls.mean()), 'std': float(_ls.std())},
+                            'dynamics_consistency_error': {'mean': float(_dy.mean()), 'std': float(_dy.std())},
+                            'zero_violation_rollouts': _zv_cnt,
+                        },
+                        'plan': {
+                            'post_viol_rate': {'mean': float(_pv.mean()), 'std': float(_pv.std())},
+                        },
+                        'per_rollout': [_nest_constraint_metrics(m) for m in _hcm],
                     }
                     _cm_path = os.path.join(save_path, 'constraint_metrics.json')
                     with open(_cm_path, 'w') as _cmf:

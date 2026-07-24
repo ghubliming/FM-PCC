@@ -79,10 +79,20 @@ class Parser(argparse.ArgumentParser):
         self.set_loadbase(args)
         self.generate_exp_name(args)
         
-        # Only save args if we are training. In evaluation, we want to avoid 
+        # Only save args if we are training. In evaluation, we want to avoid
         # creating redundant and confusing 'args_resume_X.json' files.
         save = (experiment == 'train')
-        self.mkdir(args, save=save)
+        if experiment is not None and experiment.startswith('plan_'):
+            # Plan/eval experiments: compute savepath for reference but do NOT create
+            # the directory. The actual output inserts eval_params_dir before the seed;
+            # creating the base plan dir here produces a ghost folder (e.g.
+            # plans/.../H8_.../6) that is never the real output path.
+            if 'logbase' in dir(args) and 'dataset' in dir(args) and 'exp_name' in dir(args):
+                args.savepath = os.path.join(args.logbase, args.dataset, args.exp_name, str(args.seed))
+                self.savepath = args.savepath
+                self._dict['savepath'] = args.savepath
+        else:
+            self.mkdir(args, save=save)
         return args
 
     def read_config(self, args, experiment):
@@ -180,9 +190,10 @@ class Parser(argparse.ArgumentParser):
             if mkdir(args.savepath):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
 
-            # Smart Config Snapshot
-            self.snapshot_configs(args)
             if save:
+                # Config snapshot only during training (save=True).
+                # Eval writes the snapshot explicitly at the eval-tag-aware seed dir instead.
+                self.snapshot_configs(args)
                 self.save(args)
     def snapshot_configs(self, args):
         if not hasattr(args, 'config'):
@@ -206,12 +217,18 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-        # 2. Copy associated yaml configs (e.g. projection_eval.yaml)
-        # We look in the 'config/' directory relative to the current working directory
-        yaml_path = 'config/projection_eval.yaml'
+        # 2. Copy associated yaml configs (e.g. uav_projection.yaml)
+        # We look in the 'config/' directory relative to the current working directory.
+        # BUG FIX: this was hardcoded to 'config/projection_eval.yaml' (the AVOIDING task's
+        # yaml, copy-pasted from that package's utils/setup.py) — that file always exists
+        # repo-wide regardless of which package is running, so it silently snapshotted the
+        # WRONG yaml into every UAV run's config_snapshot_uav/ folder (never the UAV eval's
+        # real config/uav_projection.yaml). This is the UAV-specific copy of setup.py, so it
+        # must always snapshot the UAV's own yaml.
+        yaml_path = 'config/uav_projection.yaml'
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'projection_eval.yaml')
+                dest = os.path.join(snapshot_dir, 'uav_projection.yaml')
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:

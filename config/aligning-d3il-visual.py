@@ -21,6 +21,9 @@ args_to_watch_dpcc_train = [
     # NOTE: In visual_aligning_dpcc, max_path_length is max_n_episodes (not rollout steps).
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),           # training mini-batch size (bs32/bs64) — distinct from MPC candidate pool
+    # FiLM_V2: emits 'filmv1'/'filmv2' so v1 and v2 checkpoints save in PARALLEL dirs.
+    # watch() skips this for blocks that don't define film_mode (e.g. ddpm_encdec_vision).
+    ('film_mode', 'film'),
 ]
 
 args_to_watch_dpcc_plan = [
@@ -34,6 +37,8 @@ args_to_watch_dpcc_plan = [
     #       max_path_length is a loadpath key only (checkpoint directory name fragment).
     ('max_episode_length', 'steps'),
     ('mpc_batch_size', 'mpc'),          # MPC candidate pool size in plan folder name (mpc4)
+    # FiLM_V2: separates v1/v2 EVAL result folders.
+    ('film_mode', 'film'),
 ]
 
 args_to_watch_fmv3_ode_train = [
@@ -65,6 +70,8 @@ args_to_watch_fm_visual_train = [
     ('if_vision', 'V'),
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),            # training mini-batch size (bs32/bs64) — distinct from MPC candidate pool
+    # FiLM_V2: emits 'filmv1'/'filmv2' so v1 and v2 checkpoints save in PARALLEL dirs.
+    ('film_mode', 'film'),
 ]
 
 args_to_watch_fm_visual_plan = [
@@ -76,6 +83,8 @@ args_to_watch_fm_visual_plan = [
     ('diffusion', 'D'),
     ('if_vision', 'V'),
     ('mpc_batch_size', 'mpc'),       # MPC candidate pool size in plan folder name (mpc4)
+    # FiLM_V2: separates v1/v2 EVAL result folders.
+    ('film_mode', 'film'),
 ]
 
 args_to_watch_imf_visual_train = [
@@ -89,6 +98,7 @@ args_to_watch_imf_visual_train = [
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),
     ('imf_objective', 'obj'),   # encodes training objective in folder name
+    ('t_schedule', 'ts'),       # U7: time-schedule selector (logit_normal | beta | uniform)
 ]
 
 logbase = 'logs'
@@ -356,6 +366,16 @@ base = {
         'condition_dropout': 0.1,
         'returns_condition': False,
 
+        # FiLM backbone selector (FiLM_V2 upgrade, 2026-06-27). OPTIONAL knob.
+        #   'v1' (default) → UNet1DTemporalCondModel (current Fake-FiLM additive-bias).
+        #   'v2'           → UNet1DTemporalFiLMModel (True FiLM: per-block γ scale + β shift).
+        # film_mode is now a PATH key (via args_to_watch_dpcc_train → '..._filmv1'/'..._filmv2'),
+        # so v1 and v2 checkpoints/results save in PARALLEL dirs automatically — just flip this
+        # value, no prefix edit needed. v2 is OPT-IN and requires fresh training.
+        # ⚠ Existing pre-2026-06-27 checkpoints were saved WITHOUT the '_filmv1' suffix; to eval
+        #   them either rename their folder to add '_filmv1' or retrain.
+        'film_mode': 'v1',
+
         # ======================================================================================
         # 📊 DATASET
         # ParityAligningDataset loads 9D trajectories from raw pkl files.
@@ -429,6 +449,16 @@ base = {
         'dim_mults': (1, 2, 4, 8),
         'condition_dropout': 0.1,
         'returns_condition': False,
+
+        # FiLM backbone selector (FiLM_V2 upgrade, 2026-06-27). OPTIONAL knob.
+        #   'v1' (default) → UNet1DTemporalCondModel (current Fake-FiLM additive-bias).
+        #   'v2'           → UNet1DTemporalFiLMModel (True FiLM: per-block γ scale + β shift).
+        # film_mode is now a PATH key (via args_to_watch_fm_visual_train → '..._filmv1'/'..._filmv2'),
+        # so v1 and v2 checkpoints/results save in PARALLEL dirs automatically — just flip this
+        # value, no prefix edit needed. v2 is OPT-IN and requires fresh training.
+        # ⚠ Existing pre-2026-06-27 checkpoints were saved WITHOUT the '_filmv1' suffix; to eval
+        #   them either rename their folder to add '_filmv1' or retrain.
+        'film_mode': 'v1',
 
         # ======================================================================================
         # 📊 DATASET
@@ -593,11 +623,15 @@ base = {
         'prefix': (
             'f:plans/visual_aligning_dpcc/'
             'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}/'
         ),
         'exp_name': watch(args_to_watch_dpcc_plan),
         'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
+        # MUST match the TRAINING block's film_mode — the architecture must agree with the
+        # checkpoint, and film_mode is baked into diffusion_loadpath ('..._film{film_mode}'),
+        # so this auto-resolves to the v1 or v2 checkpoint dir. Flip both blocks together.
+        'film_mode': 'v1',
         'predict_epsilon': True,
         'diffusion_timestep_threshold': _yaml_threshold,
         # D1: original DPCC always evaluates with clip_denoised=False (cosine schedule ~9.4× amplification
@@ -606,7 +640,7 @@ base = {
         'diffusion_loadpath': (
             'f:visual_aligning_dpcc/'
             'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}'
         ),
         'diffusion_epoch': 'best',
         'verbose': False,
@@ -673,11 +707,15 @@ base = {
         'prefix': (
             'f:plans/fm_visual_aligning/'
             'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}/'
         ),
         'exp_name': watch(args_to_watch_fm_visual_plan),
         'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'returns_condition': False,
+        # MUST match the TRAINING block's film_mode — the architecture must agree with the
+        # checkpoint, and film_mode is baked into diffusion_loadpath ('..._film{film_mode}'),
+        # so this auto-resolves to the v1 or v2 checkpoint dir. Flip both blocks together.
+        'film_mode': 'v1',
         'predict_epsilon': True,
         'diffusion_timestep_threshold': _yaml_threshold,
         # D1: FM ODE does not use a denoising schedule, so clip_denoised has no effect on the chain.
@@ -689,7 +727,7 @@ base = {
         'diffusion_loadpath': (
             'f:fm_visual_aligning/'
             'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}'
         ),
         'diffusion_epoch': 'best',
         'verbose': False,
@@ -735,6 +773,11 @@ base['imf_visual_aligning'] = {
     'meanflow_adaptive_p': 0.5,
     'meanflow_adaptive_c': 1e-3,
     'meanflow_aux_weight': 0.0,
+    # U7: time-schedule. 'logit_normal' = canonical iMF default (reference imf.py, DEFAULT).
+    # 'beta' = legacy 1-Beta(α,β). NOTE: plan block diffusion_loadpath must match.
+    't_schedule': 'logit_normal',     # U7 DEFAULT
+    'p_mean': -0.4,                   # logit-normal P_mean (sigmoid median ≈ 0.40)
+    'p_std': 1.0,                     # logit-normal P_std
     # iMF guardrails against E4 spike (Gen3v4 lesson):
     # lower lr (2e-4 already set via fm_visual_aligning inherit) + smaller action_weight
     'action_weight': 1,
@@ -746,15 +789,19 @@ base['plan_imf_visual_aligning'] = {
     **base['plan_fm_visual_aligning'],
     'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
     'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
+    # U7: MUST match training block. Set 'beta' to load pre-U7 checkpoints.
+    't_schedule': 'logit_normal',       # U7 DEFAULT
+    'p_mean': -0.4,
+    'p_std': 1.0,
     'prefix': (
         'f:plans/imf_visual_aligning/'
         'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}/'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}/'
     ),
     # diffusion_loadpath MUST match args_to_watch_imf_visual_train exactly
     'diffusion_loadpath': (
         'f:imf_visual_aligning/'
         'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
-        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}'
     ),
 }

@@ -33,7 +33,7 @@ MUJOCO_LOG.TXT
 # Temp
 temp/*
 
-.claude
+#.claude
 .claude_history_backup
 
 # Scratch directory

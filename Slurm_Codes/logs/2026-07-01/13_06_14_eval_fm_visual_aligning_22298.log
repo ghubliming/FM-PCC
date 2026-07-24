@@ -1,0 +1,41 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jul  1 11:06:15 UTC 2026
+JOB NAME:  eval_fm_visual_aligning
+JOB ID:    22298
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   170e3dd
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+[ eval ] Recording mode set to: all
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/fm_visual_aligning_test/eval_fm_visual_aligning.py", line 42, in <module>
+    import wandb as _wandb
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/__init__.py", line 27, in <module>
+    from wandb import sdk as wandb_sdk
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/__init__.py", line 25, in <module>
+    from .artifacts.artifact import Artifact
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/artifacts/artifact.py", line 46, in <module>
+    from wandb.apis.normalize import normalize_exceptions
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/apis/__init__.py", line 43, in <module>
+    from .internal import Api as InternalApi  # noqa
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/apis/internal.py", line 3, in <module>
+    from wandb.sdk.internal.internal_api import Api as InternalApi
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/internal/internal_api.py", line 48, in <module>
+    from ..lib import credentials, retry
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/lib/retry.py", line 17, in <module>
+    from .mailbox import ContextCancelledError
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/lib/mailbox.py", line 102, in <module>
+    class _MailboxSlot:
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/wandb/sdk/lib/mailbox.py", line 103, in _MailboxSlot
+    _result: Optional[pb.Result]
+AttributeError: module 'wandb.proto.wandb_internal_pb2' has no attribute 'Result'

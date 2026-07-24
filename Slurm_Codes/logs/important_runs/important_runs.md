@@ -45,6 +45,13 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_eval_19922.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-06/14_47_57_fmv3_load_results_19923.log
 
+-> aw10 but K20 full seeds!
+02/07
+22989 fix log path
+22990 debug
+22991 fix the mujuco pip bug, cause by mujoco mjx
+22992 the numpy also destroed by mujoco mjx. RUN, fixed
+
 - fmv3ode aw1 ode20
 eval
 
@@ -75,7 +82,14 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_train_20050.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_eval_20051.log
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-09/17_36_21_dpcc_load_results_20052.log
 
-- Drifting
+
+FMv3ODE with mpc traj npz
+K5
+23462 failed aw set into 10 -> 23482 mistake -> 23490
+
+---
+
+##  Drifting
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_20_train_drifting_20135.log
 
 Finished
@@ -94,7 +108,10 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-21/17_55_00_eval_drifting_20662.log
 
 ---
 
-# iMF
+
+
+
+# iMF Gen3v4
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-13/22_24_54_train_imf_20216.log
 
 finished, by loss curve is bad
@@ -217,6 +234,40 @@ still bad
 21744 - TRAIN MAX & other enhanced parameters
 21753 eval(submit as dependency)
 
+- U7
+22154
+
+- U9
+action_w = 1, 1e4 train, dit
+23163/4 -> FAILED 
+retry 23172
+
+---
+
+Run again 5e4 train (23190)
+'learning_rate': 1e-4 (lowered from 5e-4 to prevent early divergence/loss spikes); 'ema_decay': 0.9999 (increased from 0.995 to give you smooth, jitter-free evaluations); 'gradient_accumulate_every': 8 (increased from 2 so your model gets a much cleaner, stable gradient from an effective batch size of 256, without blowing up your VRAM)
+
+-> TOTAL CHAOTIC, EXPLODED
+
+after config_override_pkl and turn off CFG rerun
+23364
+-> it is no more exploding, but still not smooth, ie beat the old Unet FM or even DPCC
+
+- U10
+23391 (prvious run failed due to drain SSD place)
+23420 (K2)
+
+-> K10 23455
+-> K50 23468
+-> K100 23489
+->K1 23508
+
+---
+
+from setup 1 to setup 2
+see ((Post_U10 Results Analysis default K2 --coding --U10 --(iMF, Gen3v4 --(Gen3 --Works - Develop Iterations--Plan & Works (Replace, Update to FM--DPCC Code & Replace Code Works)))) (SS26-Thesis-Flow_matching))
+23551
+
 ---
 # Visual 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-12/23_19_40_train_visual_aligning_20136.log
@@ -311,7 +362,7 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-01/16_58_59_eval_visual_aligning_dpcc_2108
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-06-02/11_57_45_eval_imf_21125.log
 NOT good, closure task
 
-- Gen7 FM Visual Aligning
+- Gen7(Legacy, new is later) FM Visual Aligning 
 (10k train)
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-18/12_02_46_train_visual_aligning_fm_20473.log
 
@@ -385,27 +436,6 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/00_10_16_eval_visual_aligning_dpcc_2068
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_27_visual_aligning_pipeline_dpcc_20697.log
 
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-22/21_36_27_train_visual_aligning_dpcc_20698.log
-
-**Bring Back Constraints/PCC**
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/11_19_40_eval_visual_aligning_dpcc_20843.log
-
-inital run good no bugs, but looks weird results. maybe PCC 0.5 threshold wrong, maybe the Dynamic Projection wrong, need check.
-
-(FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4/6/results/combined_4_uf15)
-
-UF16.1
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/13_25_38_eval_visual_aligning_dpcc_20846.log
-(Good enough, like the roolout 1 FM is way better than Diffusion. also the PCC obstcle can observed some hint.)
-->
-FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/(Good Run_27_05)combined_4
-
----
-logging update to with metric of constratints violation
-+ 
-Combined_5 Yaml
-
-FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/16_44_22_eval_visual_aligning_dpcc_20849.log
-
 
 
 # FM Gen7 New fm_visual_alinging
@@ -522,6 +552,29 @@ the roll out 0,1 cannot go inside the box, it is the evidence that worse than vi
 
 ---
 
+
+**Bring Back Constraints/PCC**
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/11_19_40_eval_visual_aligning_dpcc_20843.log
+
+inital run good no bugs, but looks weird results. maybe PCC 0.5 threshold wrong, maybe the Dynamic Projection wrong, need check.
+
+(FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps900_bs64/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4/6/results/combined_4_uf15)
+
+UF16.1
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/13_25_38_eval_visual_aligning_dpcc_20846.log
+(Good enough, like the roolout 1 FM is way better than Diffusion. also the PCC obstcle can observed some hint.)
+->
+FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4/6/results/(Good Run_27_05)combined_4
+
+---
+logging update to with metric of constratints violation
++ 
+Combined_5 Yaml
+
+FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-27/16_44_22_eval_visual_aligning_dpcc_20849.log
+
+
+
 UF17 fix
 rerun, mark old as b_uf17, before uf17 update
 
@@ -561,6 +614,10 @@ FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-28/12_21_25_eval_fm_visual_aligning_20874.
 
 ---
 
+C4 -> test on Gen6V4(Gen7 same)
+23134 visual_aligning_dpcc film v2 train + Eval (also test the C4)
+
+
 # API Patching. 26. May
 FMPCC/FM-PCC/Slurm_Codes/logs/2026-05-26/12_54_49_run_patch_legacy_checkpoints_20810.log
 
@@ -599,6 +656,56 @@ U2 20/06/2026
 21760-21771
 
 ---
+
+FiLM v2 real FiLM 28/06
+22118 (only model free and post proccessing)
++
+22126
+
+---
+- U3 baseline train update
+
+22210 piepline - train work
+22212
+debug
+->
+22231
+32 train stil bug
+
+-> 22248 try
+
+
+---
+
+**DC-FIX**
+22396 (film v2!) TIME LIMIT KILLED
+
+22485 (film v1)
+
+---
+
+**boudns fix**
+23094
+fail, reanchor 
+
+23097 killed - too many redundant tests -> change into just the a new projection `bounds`
+rerun in 23109
+
+---
+
+FM V_A Gen7 eavl not on train_set, (random init position +  the C5 Updates/Gen11 Fix14 state, 11/07)
+23293 (SLSQP solver guad too strict only diffuser valid, projection all dead) -> KILLED
+
+-> Try FilM_v1 
+23314 -> Killed 
+try new Fix15.2/C6 sync for no `diffuser` projections
+23317
+
+---
+
+dpcc V_A run on random init(observe if init overlap the obstacle) 
+23514
+
 # Gen8 iMF Visual Aligning
 
 Fix1.2
@@ -709,6 +816,15 @@ Diffu. 21824/5
 seed 78910
 21969 FM
 21970 Diffu
+
+---
+- 30/06 U5 film v2
+->
+22234/6 run eval cancel rerun 22238
+
+---
+
+Recollect the mpj traj data, rerun eval film v1 visual avoiding 23450
 
 # Gen11
 # E2 
@@ -843,6 +959,173 @@ U3
 other sence tests
 21988/89
 
-21990-unkown jobs
+21993,4,5,6
+test with Gif the scurve 22016 (killed, resutls to bad)
 
-21991-
+# E7
+22019 first run test on empty
+22033 test the corridor behaviour
+22036 rerun, fix bug
+22037 pillar run with MPC. -> exploede MPC lines
+- U2
+pillar
+22039
+
+pillar
+22041 U2.2
+
+
+
+- U3 metrics like model_free bring back
+& the real time eval logging
+22093/4
+
+---
+
+- U4
+Fix3
+Test 22128
+Still buggy math -> 
+
+Fix5
+22131
+22137 scurve
+
+22139 empty
+22150 pillars
+
+## U8
+pillars
+22176 + 7 (9D train)
+7 - eval Failed!
+
+22188 (success pid stop and go, good results!)
+-> genenrate some gif 22195
+
+
+before is ODE 100
+
+---
+22207 FM Scurve train + eval (ODE20)
+eval fail/debug fixed
+22247 scurves tracking error acculation! try the anchorP!
+anchorP -> 22287
+
+**DC-FIX**
+22295 / Disk full rerun
+22380 sucess, with dynamic correction is good. scurve
+
+try the pillars (the empty and the corridor need retrain 9D)
+22245 (Good)
+
+trian + eval on corridor 22296
+
+- try the pid_const_v
+22980 debug -> 984
+
+- train the 9D 22983
+22983
+
+empty trained, -> eval
+pid_stopgo
+23031
+
+---
+## MJPC
+try the mjpc
+22194 - need debug 
+22266 / 7/  8 / 9 / 22270(with debug)
+SIG error from nowher, fail
+
+
+---
+- build the cpp bin for mjpc solver
+22209
+fail, debug
+22235
+-> debug 
+22237
+->
+22239
+->
+22240
+22241
+22242
+22243
+22244
+22245
+PASS
+lib fix
+22246
++
+fix .so
+22265
+
+---
+add smoke test
+22271 smoke 2 fail
+22272
+
+---
+
+OK, run eval mjpc in scurve 22257
+lack pkg 
+install pip install grpcio grpcio-tools
+22261 + 2 + 3 
+
+---
+
+U6 JAX mjpc Solver
+22958 pillars
+22962
+22963
+fail, drifting badly
+22964 killed, same as 63, and maybe cheating
+22966 (set up mjpc faithfully)
+
+******
+---
+
+## E9 (Gen11)
+23087 (init, no `bounds`)
+23088 (with bounds pre fix)
+Killed
+
+-> fix_4 
+23091 pillrs 
+
+23093 scurves with the single dynamics + boudns tests
+(yaml fail)
+23096 killed - too many redundant tests -> change into just the a new projection `bounds`
+
+23110 rerun after U8 new design of prjection variants (s_curve)
+23126 - pillars
+failed-debug
+23131
+
+- fix12
+23189 - corridor
+
+- U13 
+23233 incl. Geo free - Bounds free
+
+- Fix14
+23265 - pillars -- KILLED due to timelimit
+
+# REAL TIME EVAL test
+tried on the Gen11 E7U3
+then implent to all codes!
+
+# DA run 
+22208 -> all avoiding incl visual
+fail, debug
+
+23032, 03/07 DA combined
+debug -> 23033
+
+# Hardflow Replicaion
+init 15/07 
+"METHODS="original" ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_hardflow.sh"
+23486
+fix1 -> 23491 succes test 
+run pipeline -> 23507

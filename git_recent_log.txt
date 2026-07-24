@@ -1,0 +1,103 @@
+commit 547fe39a9c325e4c329bc9216f4f1d359964ab88
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Sat Jun 27 16:23:04 2026 +0000
+
+    (hotfix, misc) feat: automate FiLM mode pathing and add documentation for FiLM V2 upgrade
+
+ config/aligning-d3il-visual.py                     |  49 +-
+ .../FiLM_Upgrade/MEMO_FiLM_code_to_math.md         | 585 +++++++++++++++++++++
+ 2 files changed, 616 insertions(+), 18 deletions(-)
+
+commit 7b2a3033b99b5f1e79fcf83a46286a0e494d2b7e
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Sat Jun 27 11:38:49 2026 +0000
+
+    (Gen7/Gen6v4 FiLMv2 Additional upgrade) feat: implement True-FiLM temporal U-Net backbone with decoupled visual conditioning via per-channel scale and shift
+
+ config/aligning-d3il-visual.py                     |  24 ++
+ .../models/unet1d_temporal_film.py                 | 317 ++++++++++++++++++++
+ diffuser_visual_aligning/models/visual_unet.py     |  20 +-
+ fm_visual_aligning/models/unet1d_temporal_film.py  | 317 ++++++++++++++++++++
+ fm_visual_aligning/models/visual_unet.py           |  20 +-
+ .../FiLM_v2/see_the_Gen7_Logs                      |   0
+ .../FiLM_Upgrade/CHANGELOG_FiLM_V2.md              | 138 +++++++++
+ .../FiLM_Upgrade/Ideas.md                          | 323 +++++++++++++++++++++
+ .../FiLM_Upgrade/PLAN_FiLM_V2.md                   | 310 ++++++++++++++++++++
+ 9 files changed, 1461 insertions(+), 8 deletions(-)
+
+commit 3337e763e0a31064cddea21be2ec6eeb4ffb6633
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Fri Jun 26 21:05:52 2026 +0000
+
+    misc Docu Update
+
+ .../data_example_anlysis/ALIGNING_EXPANSION.md     |  318 +++
+ .../data_example_anlysis/DPCC_TENSOR_ORIGIN.md     |  298 +++
+ .../MODEL_ARCHITECTURE_GUIDE.md                    | 1521 +++++++++++++++
+ .../data_example_anlysis/WHY_FM_KEEPS_PLANNING.md  | 2032 ++++++++++++++++++++
+ logs_in_develop/MASTER_TEST_HISTORY.md             |   32 +
+ 5 files changed, 4201 insertions(+)
+
+commit e92b7cc8b96d6e60061a16eabc563703a02f95c5
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Fri Jun 26 11:04:01 2026 +0000
+
+    (gen11 realtime logging hotfix)refactor: move DATASET_HZ to an authoritative import from dataset_writer and add comprehensive rollout analysis logs
+
+ FM_v3_uav_test/eval_fm_uav.py                      |    4 +-
+ config/uav_eval.yaml                               |    6 +-
+ .../Real_Time_eval_loggging/PLAN.md                |  223 ++-
+ .../data_example_anlysis/ANALYSIS.md               |  247 +++
+ .../rollout_corridor_C_10001.log                   | 1736 ++++++++++++++++++++
+ 5 files changed, 2122 insertions(+), 94 deletions(-)
+
+commit 6a851c29538771ced92f88c9469bff550600948d
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Fri Jun 26 10:19:46 2026 +0000
+
+    (Gen11E7 eval real time logging flags ) feat: add text_log toggle to reduce loop overhead and move control_hz/budget_ms to config
+
+ FM_v3_uav_test/behavior_logger.py                  |  21 ++-
+ FM_v3_uav_test/eval_fm_uav.py                      |   9 +-
+ config/uav_eval.yaml                               |   6 +
+ .../Real_Time_eval_loggging/CHANGELOG.md           |  39 +++++
+ .../Real_Time_eval_loggging/PLAN.md                | 187 +++++++++++++++++++++
+ 5 files changed, 256 insertions(+), 6 deletions(-)
+
+commit a5ba4cbb6f39eb64d668b0a1f0768535a3e23635
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Fri Jun 26 10:01:54 2026 +0000
+
+    (Gen11E7 U3) hotfix: apply projector gradients in-place to ensure correct state updates in diffusion model steps
+
+ flow_matcher_v3_uav/models/diffusion.py | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+commit 3a725fc18e89fb34b6411554e1d4aba0ece281e1
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Fri Jun 26 09:45:07 2026 +0000
+
+    (EVAL REAL TIME MONITOR for Gen11 E7) feat: implement per-step real-time behavior logging for Gen11 E7 UAV FM-PCC evaluation
+
+ FM_v3_uav_test/behavior_logger.py                  | 178 +++++++++++++++++++++
+ FM_v3_uav_test/eval_fm_uav.py                      |  71 +++++++-
+ flow_matcher_v3_uav/models/diffusion.py            |   6 +
+ flow_matcher_v3_uav/sampling/policies.py           |  19 +++
+ .../Real_Time_eval_loggging/CHANGELOG.md           |  98 ++++++++++++
+ .../Real_Time_eval_loggging/PLAN.md                | 172 ++++++++++++++++++++
+ logs_in_develop/REALTIME_RECORDING/IDEAS.md        |  10 ++
+ 7 files changed, 549 insertions(+), 5 deletions(-)
+
+commit 63a1350678818c9c18b24da5da1502a42b8c33d2
+Author: ghubliming <139686052+ghubliming@users.noreply.github.com>
+Date:   Fri Jun 26 09:25:54 2026 +0000
+
+    (Gen11 E7 U3) feat: add UAV dynamics constraint and MPC foresight visualization to improve multi-modal evaluation stability.
+
+ FM_v3_uav_test/eval_fm_uav.py                      |  33 +-
+ config/uav_eval.yaml                               |  28 +-
+ .../{U1 => U1&2}/CHANGELOG.md                      |   0
+ .../U1&2/WHY_PCC_WORKS_PILLARS.md                  | 379 +++++++++++++++++++++
+ .../Epoch7_fm_pcc_FULL_PCC_MPC/U3/CHANGELOG.md     |  68 ++++
+ logs_in_develop/MASTER_TEST_HISTORY.md             |  59 ++++
+ 6 files changed, 552 insertions(+), 15 deletions(-)

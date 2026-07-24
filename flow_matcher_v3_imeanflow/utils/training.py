@@ -36,6 +36,7 @@ class Trainer(object):
         diffusion_model,
         dataset,
         train_test_split=1.0,
+        split_seed=42,
         ema_decay=0.995,
         train_batch_size=32,
         train_lr=2e-5,
@@ -73,7 +74,13 @@ class Trainer(object):
         else:
             n_train = int(train_test_split * len(self.dataset))
             n_test = len(self.dataset) - n_train
-            train_dataset, test_dataset = torch.utils.data.random_split(self.dataset, [n_train, n_test])
+            # U9: seeded generator — unseeded split re-splits differently on resume,
+            # leaking old test trajectories into training and making best_test_loss
+            # compare across different test sets.
+            train_dataset, test_dataset = torch.utils.data.random_split(
+                self.dataset, [n_train, n_test],
+                generator=torch.Generator().manual_seed(split_seed),
+            )
             self.train_dataloader = cycle(torch.utils.data.DataLoader(
                 train_dataset, batch_size=train_batch_size, num_workers=2, shuffle=True, pin_memory=True
             ))
@@ -85,6 +92,17 @@ class Trainer(object):
         self.test_losses = []
         self.train_a0_losses = []
         self.test_a0_losses = []
+        self.test_raw_mse_losses = []  # U9: adaptive-weight-free companion val metric
+        # U9 metric-parity pass: train-side raw MSE (imeanflow's loss_u analog) and the
+        # aux v-head loss on both sides (imeanflow's loss_v analog; empty when the
+        # objective has no aux head, e.g. meanflow_jvp with meanflow_aux_weight=0)
+        self.train_raw_mse_losses = []
+        self.train_aux_losses = []
+        self.test_aux_losses = []
+        # U9 parity: learning-rate curve — verifies the cosine+warmup scheduler
+        # resumed correctly (it is rebuilt from scratch on resume) and explains
+        # loss spikes/plateaus at a glance
+        self.lr_history = []
         self.current_test_loss = None
         self.current_test_a0_loss = None
 
@@ -142,11 +160,19 @@ class Trainer(object):
                 self.train_losses.append([self.step, loss.item()])
                 if 'a0_loss' in infos:
                     self.train_a0_losses.append([self.step, infos['a0_loss'].item()])
+                if 'raw_mse' in infos:
+                    self.train_raw_mse_losses.append([self.step, infos['raw_mse'].item()])
+                if 'aux_loss' in infos:
+                    self.train_aux_losses.append([self.step, infos['aux_loss'].item()])
+                self.lr_history.append([self.step, self.lr_scheduler.get_last_lr()[0]])
 
                 if self.train_test_split < 1:
-                    test_loss, test_a0_loss = self.test()
+                    test_loss, test_a0_loss, test_raw_mse, test_aux = self.test()
                     self.test_losses.append([self.step, test_loss])
                     self.test_a0_losses.append([self.step, test_a0_loss])
+                    self.test_raw_mse_losses.append([self.step, test_raw_mse])
+                    if test_aux is not None:
+                        self.test_aux_losses.append([self.step, test_aux])
                     self.current_test_loss = test_loss
                     self.current_test_a0_loss = test_a0_loss
                     if test_loss < self.best_test_loss:
@@ -171,7 +197,7 @@ class Trainer(object):
             #         logs = {"loss": loss.item(), "lr": self.lr_scheduler.get_last_lr()[0], "step": self.step}
 
             logs = {"loss": loss.item()}
-            for l in ["diffusion_loss", "dyn_loss", "a0_loss", ]:
+            for l in ["diffusion_loss", "dyn_loss", "a0_loss", "raw_mse", "aux_loss", ]:
                 if l in infos:
                     logs[l] = infos[l].item()
             if self.train_test_split < 1 and self.current_test_loss is not None:
@@ -187,7 +213,7 @@ class Trainer(object):
 
             self.step += 1
 
-    def train(self):
+    def train(self, on_epoch_end=None):
         if self.step >= self.n_train_steps:
             return
 
@@ -199,26 +225,45 @@ class Trainer(object):
             self.train_epoch(steps_this_epoch, epoch)
             remaining_steps -= steps_this_epoch
             epoch += 1
+            # U9: lets callers flush losses to W&B per epoch instead of only at the end
+            if on_epoch_end is not None:
+                on_epoch_end(epoch)
 
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
 
         test_loss = 0
         test_a0_loss = 0
+        test_raw_mse = 0
+        test_aux = 0
+        aux_seen = False
         with torch.no_grad():
             for step in range(n_test):
                 batch = next(self.test_dataloader)
                 batch = batch_to_device(batch, device=self.device)
                 loss, infos = self.model.loss(*batch)
                 loss /= self.gradient_accumulate_every
-            
+
                 test_loss += loss.item()
                 test_a0_loss += infos['a0_loss'].item() if 'a0_loss' in infos else 0
+                test_raw_mse += infos['raw_mse'].item() if 'raw_mse' in infos else 0
+                if 'aux_loss' in infos:
+                    test_aux += infos['aux_loss'].item()
+                    aux_seen = True
 
             test_loss /= n_test
             test_a0_loss /= n_test
+            test_raw_mse /= n_test
+            # None (not 0) when the objective has no aux head — callers skip logging it
+            test_aux = test_aux / n_test if aux_seen else None
 
-        return test_loss, test_a0_loss
+        # U9: restore train mode — eval() above was never undone, leaving the model
+        # in eval mode for all training after step 0 (inherited from DPCC upstream).
+        # No effect on current backbones (mask-based condition dropout only), but any
+        # future nn.Dropout/BatchNorm layer would silently train wrong without this.
+        self.model.train()
+
+        return test_loss, test_a0_loss, test_raw_mse, test_aux
 
     def save(self, epoch):
         '''
@@ -233,6 +278,11 @@ class Trainer(object):
             'test_losses': self.test_losses,
             'train_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
+            'test_raw_mse_losses': self.test_raw_mse_losses,
+            'train_raw_mse_losses': self.train_raw_mse_losses,
+            'train_aux_losses': self.train_aux_losses,
+            'test_aux_losses': self.test_aux_losses,
+            'lr_history': self.lr_history,
         }
         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
         torch.save(data, savepath)
@@ -251,6 +301,11 @@ class Trainer(object):
             'test_losses': self.test_losses,
             'train_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
+            'test_raw_mse_losses': self.test_raw_mse_losses,
+            'train_raw_mse_losses': self.train_raw_mse_losses,
+            'train_aux_losses': self.train_aux_losses,
+            'test_aux_losses': self.test_aux_losses,
+            'lr_history': self.lr_history,
         }
         savepath = os.path.join(self.logdir, f'state_best.pt')
         torch.save(data, savepath)
@@ -262,6 +317,11 @@ class Trainer(object):
             'test_losses': self.test_losses,
             'training_a0_losses': self.train_a0_losses,
             'test_a0_losses': self.test_a0_losses,
+            'test_raw_mse_losses': self.test_raw_mse_losses,
+            'training_raw_mse_losses': self.train_raw_mse_losses,
+            'training_aux_losses': self.train_aux_losses,
+            'test_aux_losses': self.test_aux_losses,
+            'lr_history': self.lr_history,
         }
         savepath = os.path.join(self.logdir, 'losses.pkl')
 
@@ -331,6 +391,11 @@ class Trainer(object):
             self.test_losses = data.get('test_losses', [])
             self.train_a0_losses = data.get('train_a0_losses', [])
             self.test_a0_losses = data.get('test_a0_losses', [])
+            self.test_raw_mse_losses = data.get('test_raw_mse_losses', [])  # U9
+            self.train_raw_mse_losses = data.get('train_raw_mse_losses', [])  # U9 parity
+            self.train_aux_losses = data.get('train_aux_losses', [])          # U9 parity
+            self.test_aux_losses = data.get('test_aux_losses', [])            # U9 parity
+            self.lr_history = data.get('lr_history', [])                      # U9 parity
             print(f'[ utils/training ] Restored loss history from checkpoint at step {self.step}')
         else:
             # Fallback to losses.pkl if not in checkpoint
@@ -343,6 +408,11 @@ class Trainer(object):
                     self.test_losses = losses.get('test_losses', [])
                     self.train_a0_losses = losses.get('training_a0_losses', [])
                     self.test_a0_losses = losses.get('test_a0_losses', [])
+                    self.test_raw_mse_losses = losses.get('test_raw_mse_losses', [])  # U9
+                    self.train_raw_mse_losses = losses.get('training_raw_mse_losses', [])  # U9 parity
+                    self.train_aux_losses = losses.get('training_aux_losses', [])          # U9 parity
+                    self.test_aux_losses = losses.get('test_aux_losses', [])               # U9 parity
+                    self.lr_history = losses.get('lr_history', [])                         # U9 parity
                     print(f'[ utils/training ] Restored loss history from {losses_path}')
                 except Exception as e:
                     print(f'[ utils/training ] Error loading losses from {losses_path}: {e}')

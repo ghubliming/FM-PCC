@@ -49,6 +49,9 @@ os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
 
 import imf_visual_aligning.utils as utils
 from imf_visual_aligning.sampling.projection import Projector
+# REAL_TIME_RECORDING_UPDATE — per-replan timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
+from realtime_recording.behavior_logger import RTRecorder
+RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware. total_ms = per-replan iMF+projection wall-time (bundled). NB: this eval's source is incomplete (ported per user request).
 
 import d3il
 print(f'[ eval ] Using d3il from: {d3il.__file__}')
@@ -120,9 +123,15 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list.append(['ub', ub])
 
     if 'dynamics' in config.get('constraint_types', []) and 'model_free' not in variant:
-        constraint_list.append(('deriv', [6, 0]))
-        constraint_list.append(('deriv', [7, 1]))
-        constraint_list.append(('deriv', [8, 2]))
+        # DC_FIX: both real channels anchored — 6 rows (DPCC avoiding 4-row pattern scaled to 3D).
+        # Traj layout: [act(0,1,2) | des_c_pos(3,4,5) | real c_pos(6,7,8)]
+        # des_c_pos(3,4,5): commanded position (real, from D3IL). c_pos(6,7,8): actual TCP (real, C4 fix).
+        constraint_list.append(('deriv', [3, 0]))   # DC_FIX des_x[t+1] = des_x[t] + act_x[t]
+        constraint_list.append(('deriv', [4, 1]))   # DC_FIX des_y[t+1] = des_y[t] + act_y[t]
+        constraint_list.append(('deriv', [5, 2]))   # DC_FIX des_z[t+1] = des_z[t] + act_z[t]
+        constraint_list.append(('deriv', [6, 0]))   # c_pos_x[t+1] = c_pos_x[t] + act_x[t]
+        constraint_list.append(('deriv', [7, 1]))   # c_pos_y[t+1] = c_pos_y[t] + act_y[t]
+        constraint_list.append(('deriv', [8, 2]))   # c_pos_z[t+1] = c_pos_z[t] + act_z[t]
 
     if 'halfspace' in config.get('constraint_types', []):
         tightening = config.get('enlarge_constraints') or 0.0
@@ -827,6 +836,13 @@ class VisualAgentWrapper:
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
         self._plan_post_viol_rates.clear()   # UF-16.3
+        # REAL_TIME_RECORDING_UPDATE — fresh per-rollout timing recorder.
+        self.rt_rec = RTRecorder(
+            episode_id=f'{self.variant}_rollout{self.rollout_counter}',
+            variant=self.variant, scene='aligning', system='VisualAligning_iMF',
+            control_hz=RT_CONTROL_HZ, batch_size=self.batch_size,
+            horizon=getattr(self.model, 'horizon', self.action_seq_size),
+            text_log=bool(self.save_path))
 
     def update_rollout_info(self, info):
         """Called by Aligning_Sim at rollout end. Mirrors ddpm_encdec verbose format."""
@@ -896,6 +912,12 @@ class VisualAgentWrapper:
 
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
+        # REAL_TIME_RECORDING_UPDATE — write per-rollout realtime_<variant>_rollout<ridx>.log + SUMMARY.
+        if getattr(self, 'rt_rec', None) is not None and self.save_path:
+            self.rt_rec.save(
+                os.path.join(self.save_path, f'realtime_{self.variant}_rollout{ridx}.log'),
+                behaviour={'success': int(bool(success)), 'steps': int(self.step_counter),
+                           'mean_distance': round(float(mean_dist), 4)})
         self.history_rollout_mean_dist.append(float(mean_dist))              # Fix 9
         self.history_pos_tracking_errors.append(
             np.array(self.curr_rollout_tracking_errors))
@@ -1627,7 +1649,14 @@ class VisualAgentWrapper:
 
             self.curr_action_seq = action_traj[:, :self.action_seq_size, :]
             self.history_full_plans.append(action_traj[0].detach().cpu().numpy())
-            self.curr_rollout_time += time.time() - t_replan   # Fix 12: accumulate per-replan time
+            _rt_replan_ms = (time.time() - t_replan) * 1e3   # REAL_TIME_RECORDING_UPDATE — per-replan iMF+projection wall-time
+            self.curr_rollout_time += _rt_replan_ms / 1e3   # Fix 12: accumulate per-replan time
+            # REAL_TIME_RECORDING_UPDATE — record this replan's timing (proj bundled in model call).
+            if getattr(self, 'rt_rec', None) is not None:
+                self.rt_rec.step(t=self.step_counter / RT_CONTROL_HZ, total_ms=_rt_replan_ms,
+                                 obs=np.concatenate([des_robot_pos_np, robot_pos_np]),
+                                 pos=robot_pos_np[:2], proj_active=(self.projector is not None),
+                                 track_err=phys_err, step_idx=self._replan_count)
 
         next_action    = self.curr_action_seq[:, self.action_counter, :]
         next_action_np = next_action.detach().cpu().numpy().squeeze(0)   # (3,)
@@ -1727,7 +1756,7 @@ def _rebuild_engine_config_from_path(lp, device='cuda:0'):
     return model_config
 
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', override_args=None):
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Loading from {lp}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -1760,6 +1789,38 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
 
     if target_class is not None:
         diffusion_config._class = utils.config.import_class(target_class)
+
+    # CONFIG-OVERRIDES-PKL (fix_1, 2026-07-14): the pkl PRESERVES training-time params; the eval
+    # config is compared against it and reconciled in TWO tiers (see
+    # logs_in_develop/config_override_pkl/fix_1/):
+    #   - SAMPLING knobs (operating point, safe to change at eval): eval config OVERRIDES the pkl, [INFO].
+    #   - identity/architecture keys (must match the checkpoint): pkl value is KEPT to protect the
+    #     state_dict; a loud [WARNING] fires if the eval config disagrees.
+    _SAMPLING_OVERRIDE_KEYS = {
+        'flow_steps_v3', 'ode_inference_steps_v3', 'ode_solver_backend_v3',
+        'ode_solver_method_v3', 'ode_solver_rtol_v3', 'ode_solver_atol_v3',
+        'ode_solver_step_size_v3', 'meanflow_cfg_omega', 'meanflow_cfg_t_min',
+        'meanflow_cfg_t_max', 'condition_guidance_w', 'clip_denoised',
+        'diffusion_timestep_threshold',
+    }
+    if override_args is not None:
+        for _k in list(diffusion_config._dict.keys()):
+            if not hasattr(override_args, _k):
+                continue
+            _new, _old = getattr(override_args, _k), diffusion_config._dict[_k]
+            try:
+                _same = bool(_new == _old)
+            except Exception:
+                _same = False
+            if _same:
+                continue
+            if _k in _SAMPLING_OVERRIDE_KEYS:
+                print(f"[ config->pkl ] INFO  {_k}: train={_old!r} -> eval={_new!r}  (sampling knob; applied)")
+                diffusion_config._dict[_k] = _new
+            else:
+                print(f"[ config->pkl ] WARNING  {_k}: train-pkl={_old!r} vs eval-config={_new!r} -- "
+                      f"identity/architecture key; KEEPING the train value to protect the checkpoint "
+                      f"(fix the config to match the checkpoint, or retrain).")
 
     dataset   = dataset_config()
     model     = model_config()
@@ -1803,7 +1864,7 @@ if __name__ == '__main__':
             exp = load_diffusion_with_override(
                 args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
                 target_class=args.diffusion, epoch=args.diffusion_epoch,
-                device=args.device,
+                device=args.device, override_args=args,
             )
             diffusion_model = exp.diffusion
             # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule

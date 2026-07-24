@@ -1,0 +1,37 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Jul  1 12:27:51 UTC 2026
+JOB NAME:  eval_fm_visual_aligning
+JOB ID:    22381
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   7ed3b4d
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+[ eval ] Recording mode set to: all
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/fm_visual_aligning_test/eval_fm_visual_aligning.py", line 60, in <module>
+    import fm_visual_aligning.utils as utils
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_aligning/utils/__init__.py", line 2, in <module>
+    from .training import *
+  File "/u/home/llim/FMPCC/FM-PCC/fm_visual_aligning/utils/training.py", line 6, in <module>
+    from diffusers.optimization import get_cosine_schedule_with_warmup
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/diffusers/__init__.py", line 5, in <module>
+    from .utils import (
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/diffusers/utils/__init__.py", line 21, in <module>
+    from .constants import (
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/diffusers/utils/constants.py", line 21, in <module>
+    from .import_utils import ENV_VARS_TRUE_VALUES, is_peft_available, is_transformers_available
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/diffusers/utils/import_utils.py", line 228, in <module>
+    _wandb_available = importlib.util.find_spec("wandb") is not None
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/util.py", line 114, in find_spec
+    raise ValueError('{}.__spec__ is None'.format(name))
+ValueError: wandb.__spec__ is None
