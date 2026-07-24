@@ -3271,6 +3271,15 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Pre-flight Seam Tests**: Created a robust test suite (`gates_hardflow.py`) that executes with no checkpoint/dataset to assert correct DOF index mapping, time-direction alignment (noise τ=0 → data τ=1), and baseline feasibility.
 4. **Dynamics Fitting**: Ported the linear dynamics fitter (`fit_dynamics_fmv3.py`) to run on FMv3's dataset and normalizer, adding a strict episode-level held-out evaluation check to guarantee physical accuracy before sampling.
 
+## Gen12: Eval Config Decoupling & Direct-Checkpoint Loader (July 23, 2026)
+
+**Keywords**: Gen12, eval config, decouple, checkpoint_dir, FMv3ODE.
+
+1. **Eval Config Decoupled**: Single-sourced Gen12's evaluation to use `config/hardflow_projection_eval.yaml` exclusively. The pre-flight gates (`gates_hardflow.py`) now read constraints from this file, preventing geometry alignment leaks where the gates pass on a different geometry than the eval enforces.
+2. **Direct-Checkpoint Loader**: Added `checkpoint_dir` parameter for direct checkpoint pathing, resolving an issue where the initial load path pointed at an invalid `GaussianDiffusion` checkpoint. Model-type routing now correctly identifies native class loading so trained `FlowMatchingODE` models can be evaluated.
+3. **Pipeline Renamed**: Renamed `hardflow_fmv3_pipeline.sh` to `hardflow_fmv3_debug_chain.sh` to explicitly clarify there is NO training in Gen12, removing false training implications.
+4. **Eval Knobs Relocated**: Migrated `checkpoint_dir` and `flow_steps` into the `plan_fm_v3_hardflow` block inside `config/avoiding-d3il.py` for a cleaner evaluation API, and locked target model loading strictly to FMv3ODE since the `hardflow_new` mathematics assume a single-time velocity field.
+
 ***
 
 ## Gen13: CLOSURE I — iMF vs FM in HardFlow (July 23, 2026)
