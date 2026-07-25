@@ -5,4 +5,5 @@ from .hardflow_projection import (
     HardFlowNLP,
     HardFlowSampler,
     HardFlowPolicy,
+    resolve_activation_threshold,
 )

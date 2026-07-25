@@ -321,7 +321,7 @@ def gate_g3(flow_steps, device, halfspace_variant='both-hard', config_path=CONFI
     T = ACTION_DIM + STATE_DIM
     model = StubVelocity(torch.full((1, HORIZON, T), 0.2, device=device))
     sampler = HardFlowSampler(model=model, layout=L, nlp=nlp, device=device,
-                              activation='all')
+                              activation_threshold=0.0)
 
     centre = np.asarray(obstacles[0]['center'], dtype=float)
     radius = float(obstacles[0]['radius'])
@@ -356,6 +356,106 @@ def gate_g3(flow_steps, device, halfspace_variant='both-hard', config_path=CONFI
     return bool(ok)
 
 
+# ---------------------------------------------------------------------------#
+# G4 — U4 activation threshold: final-step invariant + monotone solve count
+# ---------------------------------------------------------------------------#
+def _make_sampler(device, activation_threshold, halfspace_variant='both-hard',
+                  config_path=CONFIG_PATH):
+    constraint_list, obstacles, idx = build_constraints(halfspace_variant, config_path)
+    L = TrajectoryLayout(HORIZON, ACTION_DIM, STATE_DIM)
+    nlp = HardFlowNLP(layout=L, constraint_list=constraint_list, mins=STUB_MINS,
+                      maxs=STUB_MAXS, dt=1.0, reg_scale=1.0, dynamics_mode='deriv',
+                      print_level=0)
+    T = ACTION_DIM + STATE_DIM
+    model = StubVelocity(torch.full((1, HORIZON, T), 0.2, device=device))
+    sampler = HardFlowSampler(model=model, layout=L, nlp=nlp, device=device,
+                              activation_threshold=activation_threshold)
+    centre = np.asarray(obstacles[0]['center'], dtype=float)
+    radius = float(obstacles[0]['radius'])
+    s0_phys = np.array([centre[0], centre[1] - 0.15, centre[0], centre[1] - 0.15])
+    s0_norm = (s0_phys - STUB_MINS[2:]) / (STUB_MAXS[2:] - STUB_MINS[2:]) * 2 - 1
+    cond = {0: torch.as_tensor(s0_norm, dtype=torch.float32, device=device).unsqueeze(0)}
+    return sampler, nlp, L, cond, centre, radius, idx
+
+
+def gate_g4(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
+    """U4: the final step is ALWAYS solved (safety), and the solve count is
+    monotone non-increasing in the threshold and matches #{k: tau_next >= thr}."""
+    print('\n-- G4: U4 activation threshold — final-step invariant + count ' + '-' * 14)
+    ok = True
+    for K in (2, 5, 10):
+        prev_solves = None
+        for thr in (0.0, 0.5, 0.9, 1.0):
+            sampler, nlp, L, cond, centre, radius, idx = _make_sampler(
+                device, thr, halfspace_variant, config_path)
+            torch.manual_seed(0)
+            x, infos = sampler.sample(cond, flow_steps=K, batch_size=1)
+            # expected active steps: tau_{k+1} >= thr, plus the forced final step
+            dt = 1.0 / K
+            expected = sum(1 for k in range(K) if ((k + 1) * dt >= thr) or (k == K - 1))
+            solves = infos['nlp_solves']
+            # terminal feasibility (safety guarantee) must hold at every threshold
+            traj = x[0].detach().cpu().numpy()
+            dmin = min(np.linalg.norm(unnormalize(traj[t])[[idx['x'], idx['y']]] - centre)
+                       for t in range(1, HORIZON))
+            feasible = dmin >= radius - 1e-3
+            count_ok = solves == expected
+            mono_ok = prev_solves is None or solves <= prev_solves
+            prev_solves = solves
+            ok &= feasible and count_ok and mono_ok
+            print(f'  K={K:>2} thr={thr:<4} solves={solves:>2} (exp {expected:>2})  '
+                  f'min_d={dmin:.3f} {"feasible" if feasible else "VIOLATED"}  '
+                  f'{"OK" if (feasible and count_ok and mono_ok) else "FAIL"}')
+    print(f'  G4 -> {"PASS" if ok else "FAIL"}')
+    return bool(ok)
+
+
+# ---------------------------------------------------------------------------#
+# G5 — U4.2 candidate fan + DPCC-style selection
+# ---------------------------------------------------------------------------#
+def gate_g5(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
+    """U4.2: a batch fan produces per-candidate costs; minimum_projection_cost
+    returns argmin(candidate_costs); random returns 0; each terminal feasible."""
+    print('\n-- G5: U4.2 candidate fan + selection ' + '-' * 38)
+    from flow_matcher_v3_hardflow.sampling.hardflow_projection import HardFlowPolicy
+    ok = True
+    sampler, nlp, L, cond, centre, radius, idx = _make_sampler(
+        device, 0.0, halfspace_variant, config_path)
+    torch.manual_seed(0)
+    x, infos = sampler.sample(cond, flow_steps=5, batch_size=4)
+
+    costs = infos.get('candidate_costs')
+    has_costs = costs is not None and len(costs) == 4
+    print(f'  candidate_costs present, len==4: {has_costs}  values={np.round(costs, 4) if has_costs else None}')
+    ok &= has_costs
+
+    # every candidate's terminal must be feasible (safety holds per candidate)
+    feas = True
+    for b in range(4):
+        traj = x[b].detach().cpu().numpy()
+        dmin = min(np.linalg.norm(unnormalize(traj[t])[[idx['x'], idx['y']]] - centre)
+                   for t in range(1, HORIZON))
+        feas &= dmin >= radius - 1e-3
+    print(f'  all 4 candidate terminals feasible: {feas}')
+    ok &= feas
+
+    # selection rules (mirror HardFlowPolicy._select on stub infos)
+    class _P:
+        trajectory_selection = 'minimum_projection_cost'
+        candidate_cost = 'prox'
+        prev_observations = None
+    sel_c = HardFlowPolicy._select(_P(), np.zeros((4, HORIZON, STATE_DIM)), infos, 4, False)
+    _P.trajectory_selection = 'random'
+    sel_r = HardFlowPolicy._select(_P(), np.zeros((4, HORIZON, STATE_DIM)), infos, 4, False)
+    c_ok = sel_c == int(np.argmin(costs))
+    r_ok = sel_r == 0
+    ok &= c_ok and r_ok
+    print(f'  minimum_projection_cost -> {sel_c} (argmin {int(np.argmin(costs))})  {"OK" if c_ok else "FAIL"}')
+    print(f'  random -> {sel_r} (expect 0)  {"OK" if r_ok else "FAIL"}')
+    print(f'  G5 -> {"PASS" if ok else "FAIL"}')
+    return bool(ok)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--flow-steps', type=int, default=5)
@@ -371,6 +471,8 @@ def main():
         'G1 direction': gate_g1(args.flow_steps, args.device),
         'G2 NLP': gate_g2(args.halfspace_variant, args.config),
         'G3 end-to-end': gate_g3(args.flow_steps, args.device, args.halfspace_variant, args.config),
+        'G4 U4 threshold': gate_g4(args.device, args.halfspace_variant, args.config),
+        'G5 U4.2 selection': gate_g5(args.device, args.halfspace_variant, args.config),
     }
 
     print('\n' + '=' * 60)

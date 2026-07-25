@@ -28,7 +28,8 @@ import yaml
 import flow_matcher_v3_hardflow.utils as utils
 from flow_matcher_v3_hardflow.sampling.policies import Policy
 from flow_matcher_v3_hardflow.sampling.projection import Projector
-from flow_matcher_v3_hardflow.sampling.hardflow_projection import HardFlowPolicy
+from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
+    HardFlowPolicy, resolve_activation_threshold)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 
 parser = argparse.ArgumentParser(description='Gen12 HardFlow-into-FMv3 evaluation.')
@@ -50,6 +51,17 @@ plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
 hardflow_cfg = config.get('hardflow', {})
 FORCE_OVERWRITE = os.environ.get('FORCE_OVERWRITE', '0') == '1'
+# ── arm C (hardflow_new) knobs, resolved once ────────────────────────────────
+# U4: late-activation threshold. Accepts `activation_threshold` (float in [0,1]) or the
+# legacy `activation: all|late` alias. HFFM_ACT_THRESHOLD env overrides for sweeps.
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   hardflow_cfg.get('activation_threshold',
+                                    hardflow_cfg.get('activation', 0.0))))
+# U4.2: candidate fan + selection. batch_size>1 fans candidates; selection rule comes
+# from the variant suffix (hardflow_new-c/-r/-t), like DPCC.
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
 # `checkpoint_dir` and `flow_steps` now live in the plan_fm_v3_hardflow block in
 # config/avoiding-d3il.py (read from `args` inside the seed loop), so the eval has a
 # single tidy control entry. CLI `--flow-steps N` still overrides the block's K.
@@ -257,7 +269,11 @@ for exp in exps:
                     delta_t = 4.0 * dt
 
                 # ---- PLAN §3.6: provenance-encoding output dir, refuse to clobber ----
-                run_tag = f'K{flow_steps}_n{n_trials}'
+                # U4/U4.2: arm-C sweeps over activation threshold and MPC candidate count
+                # must not collide, so encode both in the run tag — e.g.
+                #   .../halfspace_both-hard/K10_n2_thres0.5_mpc4/hardflow_new-c.npz
+                # (arms A/B are threshold/mpc-invariant; their numbers repeat across tags).
+                run_tag = f'K{flow_steps}_n{n_trials}_thres{hf_act_threshold:g}_mpc{hf_batch_size}'
                 save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}/{run_tag}'
                              if 'avoiding' in exp else f'{args.savepath}/results/{run_tag}')
                 npz_path = f'{save_path}/{variant}.npz'
@@ -269,14 +285,20 @@ for exp in exps:
 
                 if is_hardflow:
                     # ---------------- arm C ----------------
-                    batch_size = int(hardflow_cfg.get('batch_size', 1))
+                    batch_size = hf_batch_size
+                    # U4.2: DPCC-parity selection from the variant suffix.
+                    hf_selection = 'random'
+                    if variant.endswith('-t'): hf_selection = 'temporal_consistency'
+                    elif variant.endswith('-c'): hf_selection = 'minimum_projection_cost'
                     policy = HardFlowPolicy(
                         model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
                         transition_dim=trajectory_dim, action_dim=action_dim,
                         constraint_list=constraints, dt=delta_t, flow_steps=flow_steps,
                         preprocess_fns=args.preprocess_fns, test_ret=args.test_ret,
                         reg_scale=float(hardflow_cfg.get('reg_scale', 1.0)),
-                        activation=hardflow_cfg.get('activation', 'all'),
+                        activation_threshold=hf_act_threshold,
+                        trajectory_selection=hf_selection,
+                        candidate_cost=hf_candidate_cost,
                         dynamics_mode=hardflow_cfg.get('dynamics_mode', 'deriv'),
                         linear_dynamics=linear_dynamics,
                         print_level=int(hardflow_cfg.get('ipopt_print_level', 0)),
@@ -433,12 +455,15 @@ for exp in exps:
                 print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
                 print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                 # PLAN §5: compute must be reported alongside success, per arm.
+                # U4/U4.2: also report the activation threshold and selection for arm C.
+                hf_report = (f'  act_thr={hf_act_threshold:g}  sel={hf_selection}'
+                             if is_hardflow else '')
                 print(f'Compute: K={flow_steps}  batch={batch_size}  '
                       f'NFE={nfe_total}  NLP solves={nlp_solves_total}  '
-                      f'NLP failures={nlp_failures_total}')
+                      f'NLP failures={nlp_failures_total}{hf_report}')
                 if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
                 if config['write_to_file']:
-                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, hardflow_cfg=json.dumps(hardflow_cfg))
+                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
                 fig.savefig(f'{save_path}/{variant}.png')
                 plt.close(fig)
                 ax_all[0, variant_idx].set_title(variant)
@@ -446,7 +471,7 @@ for exp in exps:
             if save_path is not None:
                 fig_all.savefig(f'{save_path}/all.png')
         variant_idx = 0
-        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}/K{flow_steps}_n{n_trials}'
+        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}/K{flow_steps}_n{n_trials}_thres{hf_act_threshold:g}_mpc{hf_batch_size}'
         os.makedirs(path, exist_ok=True)
         for fig, ax in zip(figs_all_seeds, axes_all_seeds):
             ax.set_xlim(ax_limits[0])

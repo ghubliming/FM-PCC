@@ -8,10 +8,13 @@ table is exactly the Gen13 fix_7 error and is not possible here by construction.
 import argparse
 import os
 
+import os
+
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import flow_matcher_v3_hardflow.utils as utils
+from flow_matcher_v3_hardflow.sampling.hardflow_projection import resolve_activation_threshold
 
 cli = argparse.ArgumentParser(description=__doc__)
 cli.add_argument('--config', default='config/hardflow_projection_eval.yaml')
@@ -35,7 +38,13 @@ seeds = config['seeds']
 # --flow-steps overrides which K bucket to report.
 _args0 = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seeds[0])
 flow_steps = args_cli.flow_steps if args_cli.flow_steps is not None else getattr(_args0, 'flow_steps', None)
-run_tag = f'K{flow_steps}_n{n_trials}'
+# U4/U4.2: the run tag encodes the arm-C activation threshold + batch (must match eval).
+_hf = config.get('hardflow', {})
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   _hf.get('activation_threshold', _hf.get('activation', 0.0))))
+hf_batch_size = int(os.environ.get('HFFM_BATCH', _hf.get('batch_size', 1)))
+run_tag = f'K{flow_steps}_n{n_trials}_thres{hf_act_threshold:g}_mpc{hf_batch_size}'
 
 avoiding_halfspace_variants = config['avoiding_halfspace_variants']
 
@@ -158,7 +167,7 @@ else:
                         xytext=(0, 3), textcoords='offset points',
                         ha='center', va='bottom')
     fig.tight_layout()
-    dest = os.path.join(out_dir, f'success_rates_K{flow_steps}_n{n_trials}.png')
+    dest = os.path.join(out_dir, f'success_rates_{run_tag}.png')
     fig.savefig(dest)
     plt.close(fig)
     print(f'\nWrote {dest}')

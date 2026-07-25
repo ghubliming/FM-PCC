@@ -321,21 +321,45 @@ class HardFlowNLP:
 # ------------------------------- the sampler -------------------------------#
 # ---------------------------------------------------------------------------#
 
+def resolve_activation_threshold(activation):
+    """Map a config value to a float NLP-activation threshold in [0, 1].
+
+    U4: the per-step NLP is solved only when the flow time τ_{k+1} ≥ threshold
+    (plus always the final step). Accepts either a number in [0, 1], or the
+    back-compat aliases 'all' → 0.0 (every step) / 'late' → 0.5 (last half).
+    """
+    if isinstance(activation, str):
+        aliases = {'all': 0.0, 'late': 0.5}
+        key = activation.strip().lower()
+        if key not in aliases:
+            raise ValueError(
+                f"activation must be a number in [0,1] or one of {list(aliases)}, "
+                f"got {activation!r}")
+        return aliases[key]
+    thr = float(activation)
+    if not (0.0 <= thr <= 1.0):
+        raise ValueError(f'activation_threshold must be in [0, 1], got {thr}')
+    return thr
+
+
 class HardFlowSampler:
     """In-loop constrained ODE sampler (`hardflow_new`) for an FMv3 model.
 
     The model is used ONLY as a black box `v = f(x, t)`.
     """
 
-    def __init__(self, model, layout, nlp, device='cuda', activation='all',
+    def __init__(self, model, layout, nlp, device='cuda', activation_threshold=0.0,
                  verbose=False):
-        assert activation in ('all', 'late'), \
-            f'hardflow_activation must be "all" or "late", got {activation!r}'
+        assert 0.0 <= activation_threshold <= 1.0, \
+            f'activation_threshold must be in [0, 1], got {activation_threshold}'
         self.model = model
         self.layout = layout
         self.nlp = nlp
         self.device = device
-        self.activation = activation
+        # U4: solve the NLP only at ODE steps with τ_next ≥ this threshold (plus the
+        # forced final step). 0.0 = every step (old 'all'); 0.5 = last half (old
+        # 'late', DPCC-parity); 1.0 = terminal-only (≈ post-hoc projection).
+        self.activation_threshold = float(activation_threshold)
         self.verbose = verbose
         self.nfe = 0
 
@@ -373,6 +397,12 @@ class HardFlowSampler:
 
         out = torch.zeros_like(x_init)
         chains = []
+        # U4.2: per-candidate cost, for DPCC-style candidate selection.
+        #   prox    = Σ_k ‖x1_proj − x1_ref‖²  (total NLP intervention; ranking key)
+        #   control = Σ_k ‖u_k‖               (control effort; descriptor)
+        # By the minimal-intervention principle the least-intervened candidate is the
+        # most faithful to the field — the analog of DPCC's minimum_projection_cost.
+        prox_costs, ctrl_costs = [], []
         n_solves_before, n_fail_before = self.nlp.n_solves, self.nlp.n_failures
 
         for b in range(batch_size):
@@ -386,6 +416,7 @@ class HardFlowSampler:
             x_flat = x_init[b].reshape(-1).detach().cpu().numpy()
             x_k = L.to_dof(x_flat)
             chain = [x_k.copy()]
+            cand_prox, cand_ctrl = 0.0, 0.0
 
             for k in range(K):
                 tau_k = k * dt
@@ -394,17 +425,27 @@ class HardFlowSampler:
                 v_k = self._velocity(x_k, tau_k, s0_torch, cond_b, returns_b)
                 x_ref = x_k + v_k * dt
 
-                active = self.activation == 'all' or k >= K // 2
+                # U4: solve the NLP only when τ_next ≥ threshold, but ALWAYS on the
+                # final step (k == K-1). The terminal solve is what the safety
+                # guarantee rides on (paper Prop. safety_guarantee; PLAN U4 §5.2) —
+                # the `or k == K-1` guard is mandatory, and also covers the float
+                # case where τ_next at the last step is not exactly 1.0.
+                active = (tau_next >= self.activation_threshold) or (k == K - 1)
                 if active:
                     v_next = self._velocity(x_ref, tau_next, s0_torch, cond_b, returns_b)
                     x1_ref = x_ref + (1.0 - tau_next) * v_next
                     x1_proj = self.nlp.solve(x1_ref, tau_next)
-                    x_k = x_ref + tau_next * (x1_proj - x1_ref)
+                    cand_prox += float(np.sum((np.asarray(x1_proj) - x1_ref) ** 2))
+                    x_next = x_ref + tau_next * (x1_proj - x1_ref)
                 else:
-                    x_k = x_ref
-                x_k = np.asarray(x_k, dtype=float).reshape(-1)
+                    x_next = x_ref
+                x_next = np.asarray(x_next, dtype=float).reshape(-1)
+                cand_ctrl += float(np.linalg.norm((x_next - x_ref) / dt))
+                x_k = x_next
                 chain.append(x_k.copy())
 
+            prox_costs.append(cand_prox)
+            ctrl_costs.append(cand_ctrl)
             full = L.from_dof(x_k, s0_np)
             out[b] = torch.as_tensor(full, dtype=torch.float32,
                                      device=self.device).view(L.horizon, L.transition_dim)
@@ -414,9 +455,12 @@ class HardFlowSampler:
 
         infos = {
             'projection_costs': {},
+            'candidate_costs': np.array(prox_costs),           # U4.2 ranking key (prox)
+            'candidate_costs_control': np.array(ctrl_costs),   # U4.2 descriptor
             'nfe': self.nfe,
             'nlp_solves': self.nlp.n_solves - n_solves_before,
             'nlp_failures': self.nlp.n_failures - n_fail_before,
+            'activation_threshold': self.activation_threshold,
             'dof_chains': np.stack(chains, axis=0),
         }
         return out, infos
@@ -433,14 +477,23 @@ class HardFlowPolicy:
     loop is shared byte-for-byte between arms B and C.
     """
 
+    # DPCC-parity candidate-selection rules (U4.2). Same names as sampling.Policy.
+    SELECTION_RULES = ('random', 'temporal_consistency', 'minimum_projection_cost')
+
     def __init__(self, model, normalizer, horizon, transition_dim, action_dim,
                  constraint_list, dt=1.0, flow_steps=None, preprocess_fns=[],
-                 test_ret=0, reg_scale=1.0, activation='all',
+                 test_ret=0, reg_scale=1.0, activation_threshold=0.0,
+                 trajectory_selection='random', candidate_cost='prox',
                  dynamics_mode='deriv', linear_dynamics=None, print_level=0,
                  print_time=False, device='cuda', goal_dim=0, verbose=False):
         assert goal_dim == 0, (
             'Gen12 targets avoiding-d3il (goal_dim=0). A goal-conditioned env '
             'would need the goal columns carried through the dof vector.')
+        assert trajectory_selection in self.SELECTION_RULES, (
+            f'trajectory_selection must be one of {self.SELECTION_RULES}, '
+            f'got {trajectory_selection!r}')
+        assert candidate_cost in ('prox', 'control'), \
+            f"candidate_cost must be 'prox' or 'control', got {candidate_cost!r}"
         from diffuser.datasets.preprocessing import get_policy_preprocess_fn
 
         self.model = model
@@ -449,6 +502,8 @@ class HardFlowPolicy:
         self.preprocess_fn = get_policy_preprocess_fn(preprocess_fns)
         self.test_ret = test_ret
         self.device = device
+        self.trajectory_selection = trajectory_selection
+        self.candidate_cost = candidate_cost
         self.flow_steps = int(flow_steps if flow_steps is not None
                               else getattr(model, 'flow_steps_v3', 10))
 
@@ -470,7 +525,7 @@ class HardFlowPolicy:
 
         self.sampler = HardFlowSampler(
             model=model, layout=self.layout, nlp=self.nlp, device=device,
-            activation=activation, verbose=verbose)
+            activation_threshold=activation_threshold, verbose=verbose)
 
         self.prev_observations = None
         self.last_info = {}
@@ -499,10 +554,10 @@ class HardFlowPolicy:
         normed_observations = trajectories[:, :, self.action_dim:]
         observations = self.normalizer.unnormalize(normed_observations, 'observations')
 
-        # Arm C solves one NLP chain per candidate, so there is no cheap
-        # projection-cost signal to rank them by; candidate 0 is used. The Gen12
-        # headline runs at batch_size=1 (PLAN §3.4) where this is a no-op.
-        which_trajectory = 0
+        # U4.2: DPCC-style candidate selection over the batch fan. Mirrors
+        # sampling.Policy so arm C and arm B pick candidates by the same rules.
+        which_trajectory = self._select(observations, infos, batch_size,
+                                        disable_projection)
         self.prev_observations = np.repeat(
             np.expand_dims(observations[which_trajectory], axis=0), batch_size, axis=0)
 
@@ -511,6 +566,24 @@ class HardFlowPolicy:
         action = actions[which_trajectory, 0]
 
         return action, Trajectories(actions, observations)
+
+    def _select(self, observations, infos, batch_size, disable_projection):
+        """Pick which candidate to execute (U4.2), mirroring DPCC's Policy."""
+        if batch_size == 1 or disable_projection:
+            return 0
+        sel = self.trajectory_selection
+        if sel == 'temporal_consistency' and self.prev_observations is not None:
+            # closest to the previously-executed plan (shifted by one step)
+            order = np.argsort(np.linalg.norm(
+                observations[:, :-1, :] - self.prev_observations[:, 1:, :], axis=(1, 2)))
+            return int(order[0])
+        if sel == 'minimum_projection_cost':
+            key = ('candidate_costs' if self.candidate_cost == 'prox'
+                   else 'candidate_costs_control')
+            costs = infos.get(key)
+            if costs is not None and len(costs) == batch_size:
+                return int(np.argmin(costs))
+        return 0  # 'random' (index 0), or t/c fallbacks before any history exists
 
     @property
     def nfe(self):
