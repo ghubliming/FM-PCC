@@ -3331,3 +3331,24 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Guidance Drives Safety**: Confirmed that the unguided field reaches the goal (100%) but completely fails constraints (0% safe), whereas both constraint mechanisms (B and C) restore 100% safety with 0 violations. The field provides the goal capability, but the projection machinery guarantees safety.
 3. **Safety Ties, Speed Differs**: At K=20, both post-hoc projection and in-loop constrained sampling saturated at 100% task success. However, post-hoc projection (Arm B) was approximately 1.6× faster than in-loop sampling (Arm C). Enforcing constraints during sampling matched post-hoc projection on safety but at a higher computational cost.
 4. **Next Steps**: A full low-K sweep (K ∈ {2, 5, 10}) is required. The high-K regime obscures potential benefits; the true test is whether in-loop guidance can rescue trajectories at low K where post-hoc projection might fail.
+
+***
+
+## Gen12: Late-Activation Threshold & MPC Candidate Selection (July 25, 2026)
+
+**Keywords**: Gen12, HardFlow, late-activation threshold, MPC candidate selection, terminal-step safety.
+
+1. **Late-Activation Threshold**: Implemented a continuous `activation_threshold` for the per-step NLP solver in Arm C (`hardflow_new`). The NLP is now solved only when the flow time `τ_next ≥ threshold`. Crucially, the final step is always solved, preserving HardFlow's terminal safety guarantee. Configurable via `activation_threshold` (0.0 for every step, 0.5 for late half, 1.0 for terminal only).
+2. **MPC Candidate Selection**: Expanded the existing candidate fan (`batch_size > 1`) with DPCC-style selection mechanisms. Added `candidate_cost` tracking (e.g., minimum projection cost to penalize NLP intervention) and implemented random (`-r`), temporal consistency (`-t`), and minimum projection cost (`-c`) selection strategies, mirroring DPCC.
+3. **Provenance & Pre-flight Gates**: Encoded configuration parameters into the output path (`thres{t}_mpc{b}`) to prevent sweep collisions. Added new pre-flight gates (G4 and G5) to strictly verify the final-step safety invariant and the fan/selection logic prior to any full run.
+
+***
+
+## Gen13: U10 Terminal Safeguarding in Original HardFlow (July 25, 2026)
+
+**Keywords**: Gen13, HardFlow, terminal safeguarding, activation threshold, efficiency ablation.
+
+1. **Threshold Ported to Original HF**: Added the continuous late-activation threshold to the original vendored HardFlow codebase (`HardFlow/hardflow/models_flow/flow_policy.py`). As in Gen12, the final step is strictly guarded to ensure the terminal safety guarantee remains intact.
+2. **True HF-vs-HF Ablation Setup**: This allows for a clean ablation of the original HardFlow (threshold ON vs full-step baseline) on its native environment (avoiding-v0, H16) and geometry, independent of the FMPCC/DPCC ecosystem. The default behavior remains unchanged (`-1.0` disabled).
+3. **Sweep Automation**: Created a dedicated SLURM sweep script (`eval_threshold_sweep_hardflow.sh`) to systematically evaluate the impact of different threshold levels (e.g., 0.0, 0.5, 0.75, 1.0) on safety rate, total steps, computation time, and NLP-solve count.
+

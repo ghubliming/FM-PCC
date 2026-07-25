@@ -30,6 +30,8 @@ from flow_matcher_v3_hardflow.sampling.policies import Policy
 from flow_matcher_v3_hardflow.sampling.projection import Projector
 from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
     HardFlowPolicy, resolve_activation_threshold)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 
 parser = argparse.ArgumentParser(description='Gen12 HardFlow-into-FMv3 evaluation.')
@@ -179,6 +181,15 @@ for exp in exps:
                 fm_model.ode_inference_steps_v3 = int(flow_steps_override)
             flow_steps = int(fm_model.flow_steps_v3)
             print(f'[ eval ] matched K (flow_steps_v3) = {flow_steps} for every arm')
+            # fix_5: FMv3ODE-style path — <train-name>/<eval-name>/<seed>/results/...
+            # The eval knobs (K, threshold, mpc, n) live in the EVAL-NAME folder, matching
+            # flow_matching_v3_ode_selectable (…T0.5_D…_mpc4/6/results/…), NOT as a run_tag
+            # buried under results/.
+            _train_name = hf_paths.train_name(checkpoint_dir, args.diffusion_loadpath)
+            _eval_name = hf_paths.eval_name(flow_steps, hf_act_threshold, hf_batch_size, n_trials)
+            args.savepath = hf_paths.eval_root(args.logbase, args.dataset, _train_name, _eval_name, seed)
+            os.makedirs(args.savepath, exist_ok=True)
+            print(f'[ eval ] savepath: {args.savepath}')
             if 'pointmaze' in exp or 'antmaze' in exp:
                 minari_dataset = minari.load_dataset(exp, download=True)
                 env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()
@@ -268,14 +279,11 @@ for exp in exps:
                 elif 'dt4p0' in variant:
                     delta_t = 4.0 * dt
 
-                # ---- PLAN §3.6: provenance-encoding output dir, refuse to clobber ----
-                # U4/U4.2: arm-C sweeps over activation threshold and MPC candidate count
-                # must not collide, so encode both in the run tag — e.g.
-                #   .../halfspace_both-hard/K10_n2_thres0.5_mpc4/hardflow_new-c.npz
-                # (arms A/B are threshold/mpc-invariant; their numbers repeat across tags).
-                run_tag = f'K{flow_steps}_n{n_trials}_thres{hf_act_threshold:g}_mpc{hf_batch_size}'
-                save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}/{run_tag}'
-                             if 'avoiding' in exp else f'{args.savepath}/results/{run_tag}')
+                # ---- fix_5: FMv3ODE-style path (K/thres/mpc are in the EVAL-NAME folder
+                # already, via args.savepath), so results is just results/halfspace_<hv>/.
+                # PLAN §3.6: refuse to clobber a finished dir.
+                save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}'
+                             if 'avoiding' in exp else f'{args.savepath}/results')
                 npz_path = f'{save_path}/{variant}.npz'
                 if os.path.exists(npz_path) and not FORCE_OVERWRITE:
                     print(f'[ eval ] {npz_path} already exists — skipping. '
@@ -471,7 +479,9 @@ for exp in exps:
             if save_path is not None:
                 fig_all.savefig(f'{save_path}/all.png')
         variant_idx = 0
-        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}/K{flow_steps}_n{n_trials}_thres{hf_act_threshold:g}_mpc{hf_batch_size}'
+        # fix_5: eval knobs already live in the eval-name folder; all_seeds sits beside
+        # the per-seed dirs at <train>/<eval>/all_seeds/halfspace_<hv>/.
+        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
         for fig, ax in zip(figs_all_seeds, axes_all_seeds):
             ax.set_xlim(ax_limits[0])
