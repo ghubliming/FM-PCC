@@ -331,11 +331,15 @@ def resolve_activation_threshold(activation):
     if isinstance(activation, str):
         aliases = {'all': 0.0, 'late': 0.5}
         key = activation.strip().lower()
-        if key not in aliases:
+        if key in aliases:
+            return aliases[key]
+        # numeric string (e.g. from an env var or CLI, like HFFM_ACT_THRESHOLD=0.5)
+        try:
+            activation = float(key)
+        except ValueError:
             raise ValueError(
                 f"activation must be a number in [0,1] or one of {list(aliases)}, "
                 f"got {activation!r}")
-        return aliases[key]
     thr = float(activation)
     if not (0.0 <= thr <= 1.0):
         raise ValueError(f'activation_threshold must be in [0, 1], got {thr}')

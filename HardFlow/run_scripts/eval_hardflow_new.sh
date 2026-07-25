@@ -33,9 +33,18 @@ hardflow_cost_scale=100.0
 hardflow_activation="all"
 solver_print_level=5
 
-exp_name="H${horizon}_1e6steps_hardflow_new_${ode_t_steps}steps"
+# Gen13 U10: continuous late-activation threshold. Default -1.0 = DISABLED (falls
+# back to hardflow_activation="all" -> every step; behaviour unchanged). Set
+# HF_ACT_THRESHOLD to sweep, e.g. HF_ACT_THRESHOLD=0.5 (last half, terminal always
+# solved) or 1.0 (terminal-only NLP). Encoded in exp_name so runs never collide.
+hardflow_activation_threshold="${HF_ACT_THRESHOLD:--1.0}"
 
-echo "=== Running HardFlow (new) on ${env}, horizon=${horizon}, ode_t_steps=${ode_t_steps} ==="
+exp_name="H${horizon}_1e6steps_hardflow_new_${ode_t_steps}steps"
+if awk "BEGIN{exit !($hardflow_activation_threshold >= 0)}"; then
+    exp_name="${exp_name}_thres${hardflow_activation_threshold}"
+fi
+
+echo "=== Running HardFlow (new) on ${env}, horizon=${horizon}, ode_t_steps=${ode_t_steps}, thres=${hardflow_activation_threshold} ==="
 
 python run/eval.py \
 	--device cuda:0 \
@@ -64,6 +73,7 @@ python run/eval.py \
 	--controller "$controller" \
 	--replan_steps "$replan_steps" \
 	--hardflow_activation "$hardflow_activation" \
+	--hardflow_activation_threshold "$hardflow_activation_threshold" \
 	--no-render \
 	--guidance_method hardflow_new
 
