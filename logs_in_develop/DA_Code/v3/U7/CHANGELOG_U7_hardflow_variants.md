@@ -150,3 +150,43 @@ combined plots are the ones to read for a **HardFlow-vs-DPCC** candidate compari
 
 **Verify:** `batch_visualizer.py` compiles; `plot_candidate_combined_comparison` is in `plot_all`;
 uses `.get()` so a zero-file candidate can't KeyError.
+
+---
+
+## 9. THE ACTUAL BUG — HTML seed-verify aborted the whole plot (not the data, not the variants)
+
+Diagnosed from a real cluster CSV (`temp/DAv3U7/batch_.../candidates_multidimensional_aggregated.csv`).
+**The data was correct all along** — CAND_23 (`…/aw10/K20_thres0.5_mpc1_n2`) has all three variants
+(`diffuser`, `dpcc-c-tightened`, `hardflow_new`) across all three halfspaces with correct values
+(e.g. hardflow_new both-hard: `n_success_and_constraints=1.0`, `avg_time=0.497`). So U7 §1 (loading)
+and the Python DA worked. The symptom "hardflow candidate won't show" was **entirely in the HTML
+visualizer** (`Data_Analysis/Visualizer/index.html`), which §1/§5/§8 never touched.
+
+**Root cause:** in **custom seed mode**, `trigger_plot` verified that *every* selected candidate has
+*every* selected seed, and on any miss it did:
+```python
+seed-error-msg = "Error: CAND_{cand} missing seed(s) ...!"
+plot-area.innerHTML = ""; plt.close('all'); return    # aborts the ENTIRE plot
+```
+CAND_23 is a seed-6-only run (`Missing_Seeds=[7,8,9,10]`). The moment it was included with seeds
+7–10 selected, the whole plot was wiped — so the DPCC (all-seed) candidate rendered alone and adding
+hardflow made everything disappear. Exactly the "leave it blank instead" ask.
+
+**Fix (`index.html`):** replaced the hard abort with a non-fatal **warning** — plot whatever seeds
+exist per candidate, blank the rest; only abort if the *entire* subset is empty:
+```python
+warn = [f"CAND_{c}: {sorted(missing)}" for c in checked_cands if <missing seeds>]
+if warn: seed-error-msg = "Note: plotting available seeds only — missing " + "; ".join(warn)
+if subset.empty: <clear + return>       # only when truly nothing
+```
+Now CAND_23 plots its seed-6 data alongside the multi-seed DPCC candidate, with a note that seeds
+7–10 are absent. Verified the edited block compiles as Python (pyscript runs it in-browser).
+
+**No cluster re-run needed** — the CSV is already correct. Just load the updated `index.html` and
+re-SYNC. (Aggregated seed mode never had this bug; it has no per-seed verify.)
+
+### Corrected root-cause ordering
+1. §1 config — hardflow variants loadable (**needed**, real).
+2. §5/§8 batch PNG plots — hardflow in robustness/heatmap/combined (**valid, but the user's pipeline
+   runs `--no-plots`; the HTML is CSV-driven, so these were not the blocker**).
+3. **§9 HTML seed-verify abort — the actual cause of "hardflow won't show".**

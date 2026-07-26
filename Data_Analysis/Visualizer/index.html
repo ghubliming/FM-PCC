@@ -241,17 +241,24 @@ async def trigger_plot(event=None):
         if mode == "candidate": mask &= (df_raw['halfspace_variant'] == env)
         subset = df_raw[mask]
         
-        # Verify seeds
+        # U7 fix: WARN about candidates missing a selected seed, but do NOT abort the
+        # whole plot (that wiped everything the moment a partial-seed candidate — e.g.
+        # a seed-6-only hardflow run — was included). Plot whatever seeds exist; the
+        # groupby mean below just uses the available rows per candidate.
+        warn = []
         for cand in checked_cands:
             cand_subset = subset[subset['Candidate'] == cand]
             found = set(cand_subset['seed'].unique())
             missing = set(checked_seeds) - found
             if missing:
-                document.getElementById("seed-error-msg").innerText = f"Error: CAND_{cand} missing seed(s) {list(missing)}!"
-                document.getElementById("plot-area").innerHTML = ""
-                plt.close('all')
-                return
-                
+                warn.append(f"CAND_{cand}: {sorted(missing)}")
+        if warn:
+            document.getElementById("seed-error-msg").innerText = "Note: plotting available seeds only — missing " + "; ".join(warn)
+        if subset.empty:
+            document.getElementById("plot-area").innerHTML = ""
+            plt.close('all')
+            return
+
         pivot_mean = subset.groupby([x_axis, 'variant'])['value'].mean().unstack()
         pivot_std = subset.groupby([x_axis, 'variant'])['value'].std().unstack() if len(checked_seeds) > 1 else None
         active_subset = subset
