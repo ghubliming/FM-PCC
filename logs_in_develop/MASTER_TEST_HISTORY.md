@@ -3352,3 +3352,55 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **True HF-vs-HF Ablation Setup**: This allows for a clean ablation of the original HardFlow (threshold ON vs full-step baseline) on its native environment (avoiding-v0, H16) and geometry, independent of the FMPCC/DPCC ecosystem. The default behavior remains unchanged (`-1.0` disabled).
 3. **Sweep Automation**: Created a dedicated SLURM sweep script (`eval_threshold_sweep_hardflow.sh`) to systematically evaluate the impact of different threshold levels (e.g., 0.0, 0.5, 0.75, 1.0) on safety rate, total steps, computation time, and NLP-solve count.
 
+***
+
+## Gen12: FMv3ODE-Style Path Layout (Fix 5) (July 25, 2026)
+
+**Keywords**: Gen12, path layout, hf_paths, eval knobs, folder structure.
+
+1. **Path Layout Standardized**: Re-structured Gen12's evaluation output paths to mirror the strict `FMv3ODE` visual convention (`<train-name>/<eval-name>/<seed>/...`).
+2. **Train/Eval Split**: The loaded checkpoint identity and the evaluation configuration (K, threshold, MPC fan) are now explicitly split into their own hierarchical folder levels.
+3. **Data Discovery**: This resolves the issue where evaluation knobs were buried deeply, allowing the Data Analysis (DA) scripts to systematically discover and aggregate HardFlow runs.
+
+***
+
+## Gen12 & Gen13: Activation Threshold Polarity Fix (Fix 6 & 11) (July 26, 2026)
+
+**Keywords**: Gen12, Gen13, HardFlow, DPCC, threshold polarity, activation gate.
+
+1. **Polarity Alignment**: Discovered that HardFlow's activation threshold was inverted compared to DPCC (where a higher value means *more* projection). Flipped the logic so that `threshold = 1.0` means projecting every step, and `0.0` means projecting only the terminal step.
+2. **Unified Semantics**: This ensures that when configuring both DPCC and HardFlow in the same evaluation, the `activation_threshold` parameter carries the exact same meaning, preventing confounding variables during A/B testing.
+3. **Default Behavior Preserved**: The default behavior (full projection on every step) remains mathematically identical under the new polarity. Applied symmetrically to both Gen12 and original HardFlow (Gen13).
+
+***
+
+## Gen12 vs DPCC: Interim Synthesis & Discussion (July 26, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC, constrained sampling, post-hoc projection, scientific verdict, low K collapse.
+
+1. **Cost-Parity Achieved**: Confirmed that at saturated high-K budgets (K=20), both HardFlow (Arm C) and DPCC (Arm B) achieve 100% safety. With the U4 late-activation threshold (0.5), HardFlow reduces its NLP solves by ~46%, achieving cost-parity with DPCC.
+2. **Low-K Collapse**: Identified a critical failure mode: at low K (K=2, 5), DPCC remains 100% safe, while HardFlow collapses. This refutes the hope that in-loop guidance rescues coarse-field trajectories, because projecting a garbage terminal prediction yields a feasible-but-wrong plan.
+3. **Scientific Implication**: The data strongly trends toward the conclusion that *the projection dominates the outcome regardless of when it is applied*. HardFlow acts as a more complex equal to DPCC without strictly beating it.
+4. **Final Crux Remaining**: The only remaining confound is whether applying candidate selection (U4.2 MPC fan) to HardFlow at low-K can recover the failure, which is the defining next experiment.
+
+***
+
+## DA_Code v3 (U7): HardFlow Integration & Visualizer Robustness (July 26, 2026)
+
+**Keywords**: DA_Code v3, HardFlow variants, HTML visualizer, candidate comparison, seed verification.
+
+1. **First-Class HardFlow Support**: Taught the Data Analysis pipeline the HardFlow variants (`hardflow_new`, `-c`, `-r`, `-t`). These variants now natively load and populate across all candidate-level plots, batch robustness boxplots, and constraint heatmaps alongside DPCC.
+2. **HardFlow-Specific Metrics**: Surfaced HardFlow-exclusive data like `nlp_solves`, `nlp_failures`, and `activation_threshold` directly into the DA metrics dictionary.
+3. **Combined Candidate Comparison**: Built unified comparison plots (`00c`, `01c`, `02c`) that evaluate candidates using their *own* aggregated metrics, correctly handling candidates that lack DPCC arms.
+4. **HTML Visualizer Resilience**: Fixed a critical bug in `index.html` where missing custom seeds caused a hard abort of the entire rendering process. The visualizer now issues a non-fatal warning and plots whatever subset is available.
+5. **Sensible Defaults**: Addressed a startup freeze caused by the dropdown defaulting to a HardFlow-only metric. The dropdown now smartly defaults to a universally shared metric like `n_success_and_constraints`.
+
+***
+
+## DA_Code v3 (U8): Bar Value Labels (July 26, 2026)
+
+**Keywords**: DA_Code v3, visualizer, bar labels, data visibility.
+
+1. **Exact Numeric Rendering**: Added exact 3-sig-fig (`.3g`) value labels rotated 90 degrees above every individual bar in the dynamic grouped bar chart.
+2. **Comparison Ergonomics**: This completely removes the need to visually eyeball values off the y-axis, vastly improving the usability of the tool for tight performance comparisons (e.g., 0.497s vs 0.637s).
+
