@@ -1,0 +1,2789 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Jul 20 09:42:22 UTC 2026
+JOB NAME:  eval_smoothness_diag_hardflow   ID: 23608   NODE: i6-gpu-1
+CONDA ENV: hardflow_clone   (clone of FMPCC — live env untouched)
+HARDFLOW_REPO: /u/home/llim/FMPCC/FM-PCC/HardFlow
+LOG COLLECT:   /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+HARDFLOW GIT: 4f92297
+================================================================================
+[ HF-BRIDGE ] python: /u/home/llim/miniconda3/envs/hardflow_clone/bin/python
+[ HF-BRIDGE ] tyro OK, gym==0.20.0
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ HF-BRIDGE ] /u/home/llim/FMPCC/FM-PCC/HardFlow/logs -> /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+[ HF-BRIDGE ] cwd: /u/home/llim/FMPCC/FM-PCC/HardFlow
+==============================================================
+[ fix_7 ] cell: backbone=imf guidance=unguided  n=5
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== [fix_7 smoothness] backbone=imf guidance=original_imf K=5 n=5 ===
+=== exp_name: diag_smooth_imf_unguided_K5_n5 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2472.33it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_5185444e-841f-11f1-ae25-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+No fitted dynamics found, proceeding without dynamics model
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=imf  loading checkpoint: logs/avoiding-v0/flow/H16_imf_100k/model_ema_4.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+[ eval_imf ] episode 0: terminated  steps=35  violations=1  reward=0.000  nlp=0  rough=1.749e-04
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/0_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/0_fan.png
+[ eval_imf ] episode 1: terminated  steps=67  violations=1  reward=0.000  nlp=0  rough=1.224e-04
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/1_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/1_fan.png
+[ eval_imf ] episode 2: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=1.702e-04
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/2_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/2_fan.png
+[ eval_imf ] episode 3: terminated  steps=63  violations=1  reward=0.000  nlp=0  rough=1.981e-04
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/3_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/3_fan.png
+[ eval_imf ] episode 4: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=1.673e-04
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/4_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/4_fan.png
+[ eval_imf ] done. mean NFE/plan: 11.0  all NLP solves OK  csv: logs/avoiding-v0/eval/diag_smooth_imf_unguided_K5_n5/trajectories.csv
+Total runtime: 0h 0m 20s
+==============================================================
+[ fix_7 ] cell: backbone=imf guidance=guided  n=5
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== [fix_7 smoothness] backbone=imf guidance=hardflow_new_imf K=5 n=5 ===
+=== exp_name: diag_smooth_imf_guided_K5_n5 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2449.23it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_5d7b79ee-841f-11f1-8978-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+Loading fitted dynamics from logs/avoiding-v0/dynamics/linear_model.npz
+Fitted dynamics loaded successfully
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=imf  loading checkpoint: logs/avoiding-v0/flow/H16_imf_100k/model_ema_4.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+[ eval_imf ] episode 0: SUCCESS  steps=51  violations=0  reward=1.000  nlp=35  rough=2.437e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/0_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/0_fan.png
+[ eval_imf ] episode 1: SUCCESS  steps=51  violations=0  reward=1.000  nlp=35  rough=2.152e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/1_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/1_fan.png
+[ eval_imf ] episode 2: SUCCESS  steps=55  violations=0  reward=1.000  nlp=35  rough=2.698e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/2_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/2_fan.png
+[ eval_imf ] episode 3: SUCCESS  steps=51  violations=0  reward=1.000  nlp=35  rough=2.033e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/3_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/3_fan.png
+[ eval_imf ] episode 4: SUCCESS  steps=50  violations=0  reward=1.000  nlp=35  rough=1.651e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/4_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/4_fan.png
+[ eval_imf ] done. mean NFE/plan: 21.0  all NLP solves OK  csv: logs/avoiding-v0/eval/diag_smooth_imf_guided_K5_n5/trajectories.csv
+Total runtime: 0h 0m 39s
+==============================================================
+[ fix_7 ] cell: backbone=fm guidance=unguided  n=5
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== [fix_7 smoothness] backbone=fm guidance=original K=10 n=5 ===
+=== exp_name: diag_smooth_fm_unguided_K10_n5 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2349.09it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_74a7bb6e-841f-11f1-9790-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+No fitted dynamics found, proceeding without dynamics model
+[ models/temporal ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=fm  loading checkpoint: logs/avoiding-v0/flow/H16_1e6steps/model_ema_20.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+[ eval_imf ] episode 0: terminated  steps=16  violations=1  reward=0.000  rough=1.716e-05
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/0_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/0_fan.png
+[ eval_imf ] episode 1: terminated  steps=15  violations=1  reward=0.000  rough=3.669e-05
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/1_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/1_fan.png
+[ eval_imf ] episode 2: terminated  steps=13  violations=1  reward=0.000  rough=8.811e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/2_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/2_fan.png
+[ eval_imf ] episode 3: terminated  steps=27  violations=1  reward=0.000  rough=1.378e-05
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/3_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/3_fan.png
+[ eval_imf ] episode 4: terminated  steps=23  violations=1  reward=0.000  rough=1.165e-05
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/4_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/4_fan.png
+[ eval_imf ] done. mean NFE/plan: 0.0  all NLP solves OK  csv: logs/avoiding-v0/eval/diag_smooth_fm_unguided_K10_n5/trajectories.csv
+Total runtime: 0h 0m 14s
+==============================================================
+[ fix_7 ] cell: backbone=fm guidance=guided  n=5
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== [fix_7 smoothness] backbone=fm guidance=hardflow_new K=10 n=5 ===
+=== exp_name: diag_smooth_fm_guided_K10_n5 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2467.24it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_7d2d9b28-841f-11f1-a8d4-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+Loading fitted dynamics from logs/avoiding-v0/dynamics/linear_model.npz
+Fitted dynamics loaded successfully
+[ models/temporal ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=fm  loading checkpoint: logs/avoiding-v0/flow/H16_1e6steps/model_ema_20.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  88.00us (  3.83us)  62.26us (  2.71us)        23
+       nlp_g  |   1.97ms ( 85.48us)   1.47ms ( 63.85us)        23
+  nlp_grad_f  | 137.00us (  5.71us)  94.69us (  3.95us)        24
+   nlp_jac_g  |   6.65ms (276.92us)   4.98ms (207.43us)        24
+       total  | 183.12ms (183.12ms) 148.84ms (148.84ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 125.00us (  3.29us)  99.05us (  2.61us)        38
+       nlp_g  |   2.82ms ( 74.26us)   2.32ms ( 61.06us)        38
+    nlp_grad  | 101.00us (101.00us) 101.28us (101.28us)         1
+  nlp_grad_f  | 197.00us (  4.92us) 151.80us (  3.79us)        40
+   nlp_jac_g  |   9.66ms (241.48us)   8.00ms (199.90us)        40
+       total  |  72.26ms ( 72.26ms)  72.26ms ( 72.26ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 164.00us (  3.15us) 133.68us (  2.57us)        52
+       nlp_g  |   3.62ms ( 69.65us)   3.11ms ( 59.89us)        52
+    nlp_grad  | 213.00us (106.50us) 213.48us (106.74us)         2
+  nlp_grad_f  | 255.00us (  4.64us) 204.50us (  3.72us)        55
+   nlp_jac_g  |  12.51ms (227.53us)  10.82ms (196.80us)        55
+       total  |  76.29ms ( 76.29ms)  76.26ms ( 76.26ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 194.00us (  3.03us) 163.35us (  2.55us)        64
+       nlp_g  |   4.31ms ( 67.30us)   3.79ms ( 59.28us)        64
+    nlp_grad  | 326.00us (108.67us) 326.67us (108.89us)         3
+  nlp_grad_f  | 303.00us (  4.46us) 249.92us (  3.68us)        68
+   nlp_jac_g  |  14.99ms (220.37us)  13.27ms (195.15us)        68
+       total  |  61.50ms ( 61.50ms)  61.49ms ( 61.49ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 221.00us (  2.95us) 190.20us (  2.54us)        75
+       nlp_g  |   4.94ms ( 65.80us)   4.42ms ( 58.90us)        75
+    nlp_grad  | 441.00us (110.25us) 441.80us (110.45us)         4
+  nlp_grad_f  | 344.00us (  4.30us) 293.08us (  3.66us)        80
+   nlp_jac_g  |  17.23ms (215.38us)  15.52ms (193.98us)        80
+       total  |  54.17ms ( 54.17ms)  54.14ms ( 54.14ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 249.00us (  2.90us) 217.62us (  2.53us)        86
+       nlp_g  |   5.57ms ( 64.80us)   5.05ms ( 58.72us)        86
+    nlp_grad  | 554.00us (110.80us) 555.08us (111.02us)         5
+  nlp_grad_f  | 389.00us (  4.23us) 336.21us (  3.65us)        92
+   nlp_jac_g  |  19.48ms (211.75us)  17.78ms (193.23us)        92
+       total  |  54.85ms ( 54.85ms)  54.83ms ( 54.83ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 279.00us (  2.85us) 247.16us (  2.52us)        98
+       nlp_g  |   6.26ms ( 63.89us)   5.73ms ( 58.47us)        98
+    nlp_grad  | 676.00us (112.67us) 677.39us (112.90us)         6
+  nlp_grad_f  | 438.00us (  4.17us) 382.33us (  3.64us)       105
+   nlp_jac_g  |  21.91ms (208.70us)  20.22ms (192.53us)       105
+       total  |  65.21ms ( 65.21ms)  65.20ms ( 65.20ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 312.00us (  2.81us) 280.12us (  2.52us)       111
+       nlp_g  |   7.01ms ( 63.18us)   6.47ms ( 58.32us)       111
+    nlp_grad  | 792.00us (113.14us) 792.81us (113.26us)         7
+  nlp_grad_f  | 489.00us (  4.11us) 431.09us (  3.62us)       119
+   nlp_jac_g  |  24.53ms (206.11us)  22.83ms (191.87us)       119
+       total  |  72.52ms ( 72.52ms)  72.48ms ( 72.48ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 343.00us (  2.79us) 310.85us (  2.53us)       123
+       nlp_g  |   7.72ms ( 62.78us)   7.18ms ( 58.34us)       123
+    nlp_grad  | 904.00us (113.00us) 904.81us (113.10us)         8
+  nlp_grad_f  | 538.00us (  4.08us) 476.68us (  3.61us)       132
+   nlp_jac_g  |  26.97ms (204.30us)  25.28ms (191.49us)       132
+       total  |  66.23ms ( 66.23ms)  66.20ms ( 66.20ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 373.00us (  2.78us) 338.08us (  2.52us)       134
+       nlp_g  |   8.36ms ( 62.37us)   7.80ms ( 58.24us)       134
+    nlp_grad  |   1.02ms (113.44us)   1.02ms (113.61us)         9
+  nlp_grad_f  | 583.00us (  4.05us) 518.36us (  3.60us)       144
+   nlp_jac_g  |  29.20ms (202.74us)  27.51ms (191.04us)       144
+       total  |  58.81ms ( 58.81ms)  58.78ms ( 58.78ms)         1
+
+    Norm of Control Inputs: 15.671958
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 408.00us (  2.79us) 368.81us (  2.53us)       146
+       nlp_g  |   9.05ms ( 61.99us)   8.49ms ( 58.17us)       146
+    nlp_grad  |   1.13ms (112.90us)   1.13ms (113.08us)        10
+  nlp_grad_f  | 640.00us (  4.08us) 571.31us (  3.64us)       157
+   nlp_jac_g  |  31.73ms (202.13us)  30.05ms (191.43us)       157
+       total  |  63.89ms ( 63.89ms)  63.83ms ( 63.83ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 437.00us (  2.77us) 398.70us (  2.52us)       158
+       nlp_g  |   9.74ms ( 61.62us)   9.17ms ( 58.06us)       158
+    nlp_grad  |   1.26ms (114.73us)   1.26ms (114.91us)        11
+  nlp_grad_f  | 689.00us (  4.05us) 618.63us (  3.64us)       170
+   nlp_jac_g  |  34.21ms (201.24us)  32.54ms (191.38us)       170
+       total  |  66.43ms ( 66.43ms)  66.38ms ( 66.38ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 465.00us (  2.75us) 427.61us (  2.53us)       169
+       nlp_g  |  10.47ms ( 61.93us)   9.90ms ( 58.57us)       169
+    nlp_grad  |   1.38ms (114.58us)   1.38ms (114.71us)        12
+  nlp_grad_f  | 734.00us (  4.03us) 664.30us (  3.65us)       182
+   nlp_jac_g  |  36.50ms (200.55us)  34.83ms (191.36us)       182
+       total  |  62.85ms ( 62.85ms)  62.77ms ( 62.77ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 489.00us (  2.73us) 452.59us (  2.53us)       179
+       nlp_g  |  11.04ms ( 61.69us)  10.47ms ( 58.49us)       179
+    nlp_grad  |   1.51ms (115.77us)   1.51ms (115.91us)        13
+  nlp_grad_f  | 779.00us (  4.04us) 704.26us (  3.65us)       193
+   nlp_jac_g  |  38.56ms (199.80us)  36.89ms (191.15us)       193
+       total  |  52.24ms ( 52.24ms)  52.24ms ( 52.24ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 518.00us (  2.73us) 479.90us (  2.53us)       190
+       nlp_g  |  11.71ms ( 61.63us)  11.13ms ( 58.57us)       190
+    nlp_grad  |   1.62ms (115.50us)   1.62ms (115.64us)        14
+  nlp_grad_f  | 824.00us (  4.02us) 746.77us (  3.64us)       205
+   nlp_jac_g  |  40.85ms (199.26us)  39.18ms (191.13us)       205
+       total  |  59.14ms ( 59.14ms)  59.10ms ( 59.10ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 543.00us (  2.72us) 504.85us (  2.52us)       200
+       nlp_g  |  12.28ms ( 61.41us)  11.70ms ( 58.48us)       200
+    nlp_grad  |   1.73ms (115.53us)   1.74ms (115.69us)        15
+  nlp_grad_f  | 867.00us (  4.01us) 785.83us (  3.64us)       216
+   nlp_jac_g  |  42.98ms (199.00us)  41.29ms (191.17us)       216
+       total  |  52.83ms ( 52.83ms)  52.81ms ( 52.81ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 571.00us (  2.71us) 532.98us (  2.53us)       211
+       nlp_g  |  12.92ms ( 61.21us)  12.33ms ( 58.41us)       211
+    nlp_grad  |   1.85ms (115.44us)   1.85ms (115.63us)        16
+  nlp_grad_f  | 913.00us (  4.00us) 828.85us (  3.64us)       228
+   nlp_jac_g  |  45.24ms (198.43us)  43.56ms (191.03us)       228
+       total  |  60.01ms ( 60.01ms)  60.01ms ( 60.01ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 595.00us (  2.70us) 555.74us (  2.53us)       220
+       nlp_g  |  13.43ms ( 61.05us)  12.84ms ( 58.35us)       220
+    nlp_grad  |   1.96ms (115.12us)   1.96ms (115.34us)        17
+  nlp_grad_f  | 952.00us (  4.00us) 864.79us (  3.63us)       238
+   nlp_jac_g  |  47.13ms (198.05us)  45.45ms (190.98us)       238
+       total  |  45.39ms ( 45.39ms)  45.36ms ( 45.36ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 622.00us (  2.70us) 580.63us (  2.52us)       230
+       nlp_g  |  14.00ms ( 60.87us)  13.40ms ( 58.27us)       230
+    nlp_grad  |   2.07ms (114.94us)   2.07ms (115.18us)        18
+  nlp_grad_f  | 992.00us (  3.98us) 903.50us (  3.63us)       249
+   nlp_jac_g  |  49.20ms (197.58us)  47.52ms (190.84us)       249
+       total  |  52.06ms ( 52.06ms)  52.02ms ( 52.02ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 646.00us (  2.69us) 605.42us (  2.52us)       240
+       nlp_g  |  14.58ms ( 60.76us)  13.98ms ( 58.25us)       240
+    nlp_grad  |   2.18ms (114.74us)   2.18ms (114.97us)        19
+  nlp_grad_f  |   1.04ms (  3.99us) 943.16us (  3.63us)       260
+   nlp_jac_g  |  51.27ms (197.20us)  49.60ms (190.77us)       260
+       total  |  53.39ms ( 53.39ms)  53.39ms ( 53.39ms)         1
+
+    Norm of Control Inputs: 13.439754
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 676.00us (  2.69us) 635.61us (  2.53us)       251
+       nlp_g  |  15.24ms ( 60.71us)  14.63ms ( 58.29us)       251
+    nlp_grad  |   2.29ms (114.70us)   2.30ms (114.94us)        20
+  nlp_grad_f  |   1.09ms (  4.00us) 995.87us (  3.66us)       272
+   nlp_jac_g  |  53.67ms (197.31us)  52.01ms (191.20us)       272
+       total  |  59.35ms ( 59.35ms)  59.35ms ( 59.35ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 700.00us (  2.69us) 658.40us (  2.53us)       260
+       nlp_g  |  15.77ms ( 60.67us)  15.16ms ( 58.30us)       260
+    nlp_grad  |   2.46ms (117.05us)   2.46ms (117.27us)        21
+  nlp_grad_f  |   1.13ms (  4.01us)   1.03ms (  3.67us)       282
+   nlp_jac_g  |  55.56ms (197.03us)  53.90ms (191.15us)       282
+       total  |  45.36ms ( 45.36ms)  45.36ms ( 45.36ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 725.00us (  2.70us) 681.87us (  2.53us)       269
+       nlp_g  |  16.30ms ( 60.61us)  15.68ms ( 58.29us)       269
+    nlp_grad  |   2.57ms (116.95us)   2.58ms (117.18us)        22
+  nlp_grad_f  |   1.17ms (  4.01us)   1.07ms (  3.67us)       292
+   nlp_jac_g  |  57.48ms (196.87us)  55.83ms (191.21us)       292
+       total  |  45.06ms ( 45.06ms)  45.04ms ( 45.04ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 750.00us (  2.70us) 704.59us (  2.53us)       278
+       nlp_g  |  16.82ms ( 60.49us)  16.19ms ( 58.23us)       278
+    nlp_grad  |   2.71ms (117.87us)   2.72ms (118.07us)        23
+  nlp_grad_f  |   1.21ms (  4.01us)   1.11ms (  3.67us)       302
+   nlp_jac_g  |  59.36ms (196.56us)  57.71ms (191.09us)       302
+       total  |  44.59ms ( 44.59ms)  44.59ms ( 44.59ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 776.00us (  2.70us) 727.16us (  2.53us)       287
+       nlp_g  |  17.33ms ( 60.40us)  16.70ms ( 58.20us)       287
+    nlp_grad  |   2.83ms (118.00us)   2.84ms (118.19us)        24
+  nlp_grad_f  |   1.25ms (  4.00us)   1.15ms (  3.67us)       312
+   nlp_jac_g  |  61.28ms (196.41us)  59.60ms (191.03us)       312
+       total  |  45.05ms ( 45.05ms)  45.01ms ( 45.01ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 798.00us (  2.70us) 750.08us (  2.53us)       296
+       nlp_g  |  17.85ms ( 60.30us)  17.21ms ( 58.16us)       296
+    nlp_grad  |   2.95ms (117.84us)   2.95ms (118.05us)        25
+  nlp_grad_f  |   1.28ms (  3.99us)   1.18ms (  3.67us)       322
+   nlp_jac_g  |  63.15ms (196.13us)  61.48ms (190.92us)       322
+       total  |  44.80ms ( 44.80ms)  44.77ms ( 44.77ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 822.00us (  2.70us) 770.93us (  2.54us)       304
+       nlp_g  |  18.32ms ( 60.26us)  17.68ms ( 58.16us)       304
+    nlp_grad  |   3.06ms (117.54us)   3.06ms (117.74us)        26
+  nlp_grad_f  |   1.32ms (  3.98us)   1.22ms (  3.67us)       331
+   nlp_jac_g  |  64.84ms (195.90us)  63.17ms (190.85us)       331
+       total  |  38.71ms ( 38.71ms)  38.71ms ( 38.71ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 842.00us (  2.70us) 791.40us (  2.54us)       312
+       nlp_g  |  18.78ms ( 60.18us)  18.14ms ( 58.13us)       312
+    nlp_grad  |   3.17ms (117.33us)   3.17ms (117.53us)        27
+  nlp_grad_f  |   1.35ms (  3.98us)   1.25ms (  3.67us)       340
+   nlp_jac_g  |  66.53ms (195.69us)  64.87ms (190.78us)       340
+       total  |  38.66ms ( 38.66ms)  38.62ms ( 38.62ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 862.00us (  2.69us) 812.21us (  2.54us)       320
+       nlp_g  |  19.25ms ( 60.14us)  18.60ms ( 58.12us)       320
+    nlp_grad  |   3.28ms (117.21us)   3.29ms (117.41us)        28
+  nlp_grad_f  |   1.39ms (  3.97us)   1.28ms (  3.67us)       349
+   nlp_jac_g  |  68.25ms (195.56us)  66.58ms (190.79us)       349
+       total  |  38.47ms ( 38.47ms)  38.46ms ( 38.46ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 884.00us (  2.70us) 832.56us (  2.54us)       328
+       nlp_g  |  19.70ms ( 60.06us)  19.05ms ( 58.09us)       328
+    nlp_grad  |   3.39ms (117.00us)   3.40ms (117.19us)        29
+  nlp_grad_f  |   1.42ms (  3.97us)   1.31ms (  3.67us)       358
+   nlp_jac_g  |  69.95ms (195.38us)  68.28ms (190.73us)       358
+       total  |  38.70ms ( 38.70ms)  38.66ms ( 38.66ms)         1
+
+    Norm of Control Inputs: 7.395884
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 940.00us (  2.71us) 883.35us (  2.55us)       347
+       nlp_g  |  20.85ms ( 60.08us)  20.19ms ( 58.18us)       347
+    nlp_grad  |   3.50ms (116.77us)   3.51ms (116.98us)        30
+  nlp_grad_f  |   1.51ms (  3.98us)   1.39ms (  3.69us)       378
+   nlp_jac_g  |  73.93ms (195.59us)  72.28ms (191.21us)       378
+       total  | 104.70ms (104.70ms) 104.66ms (104.66ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  | 972.00us (  2.71us) 912.68us (  2.54us)       359
+       nlp_g  |  21.55ms ( 60.02us)  20.88ms ( 58.16us)       359
+    nlp_grad  |   3.69ms (119.13us)   3.70ms (119.34us)        31
+  nlp_grad_f  |   1.56ms (  3.98us)   1.44ms (  3.69us)       391
+   nlp_jac_g  |  76.41ms (195.42us)  74.76ms (191.20us)       391
+       total  |  66.25ms ( 66.25ms)  66.21ms ( 66.21ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.01ms (  2.71us) 947.01us (  2.54us)       373
+       nlp_g  |  22.36ms ( 59.94us)  21.68ms ( 58.13us)       373
+    nlp_grad  |   3.81ms (118.94us)   3.81ms (119.15us)        32
+  nlp_grad_f  |   1.61ms (  3.97us)   1.49ms (  3.68us)       406
+   nlp_jac_g  |  79.22ms (195.13us)  77.58ms (191.07us)       406
+       total  |  81.88ms ( 81.88ms)  81.83ms ( 81.83ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.04ms (  2.70us) 976.56us (  2.54us)       385
+       nlp_g  |  23.05ms ( 59.86us)  22.36ms ( 58.09us)       385
+    nlp_grad  |   3.92ms (118.67us)   3.92ms (118.89us)        33
+  nlp_grad_f  |   1.66ms (  3.97us)   1.54ms (  3.68us)       419
+   nlp_jac_g  |  81.68ms (194.93us)  80.03ms (191.01us)       419
+       total  |  68.01ms ( 68.01ms)  67.98ms ( 67.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.07ms (  2.70us)   1.00ms (  2.54us)       396
+       nlp_g  |  23.67ms ( 59.78us)  22.99ms ( 58.04us)       396
+    nlp_grad  |   4.03ms (118.47us)   4.04ms (118.69us)        34
+  nlp_grad_f  |   1.71ms (  3.97us)   1.58ms (  3.67us)       431
+   nlp_jac_g  |  83.93ms (194.72us)  82.28ms (190.91us)       431
+       total  |  60.31ms ( 60.31ms)  60.29ms ( 60.29ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.09ms (  2.70us)   1.03ms (  2.54us)       405
+       nlp_g  |  24.20ms ( 59.74us)  23.50ms ( 58.04us)       405
+    nlp_grad  |   4.14ms (118.20us)   4.14ms (118.42us)        35
+  nlp_grad_f  |   1.75ms (  3.96us)   1.62ms (  3.67us)       441
+   nlp_jac_g  |  85.81ms (194.57us)  84.17ms (190.85us)       441
+       total  |  45.13ms ( 45.13ms)  45.13ms ( 45.13ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.11ms (  2.69us)   1.05ms (  2.54us)       413
+       nlp_g  |  24.65ms ( 59.69us)  23.96ms ( 58.01us)       413
+    nlp_grad  |   4.25ms (117.97us)   4.25ms (118.18us)        36
+  nlp_grad_f  |   1.78ms (  3.96us)   1.65ms (  3.67us)       450
+   nlp_jac_g  |  87.52ms (194.48us)  85.88ms (190.85us)       450
+       total  |  38.16ms ( 38.16ms)  38.12ms ( 38.12ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.13ms (  2.69us)   1.07ms (  2.54us)       421
+       nlp_g  |  25.11ms ( 59.64us)  24.41ms ( 57.98us)       421
+    nlp_grad  |   4.36ms (117.76us)   4.36ms (117.96us)        37
+  nlp_grad_f  |   1.82ms (  3.96us)   1.69ms (  3.67us)       459
+   nlp_jac_g  |  89.20ms (194.34us)  87.57ms (190.78us)       459
+       total  |  37.99ms ( 37.99ms)  37.99ms ( 37.99ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.16ms (  2.70us)   1.09ms (  2.53us)       429
+       nlp_g  |  25.58ms ( 59.62us)  24.87ms ( 57.98us)       429
+    nlp_grad  |   4.47ms (117.55us)   4.47ms (117.75us)        38
+  nlp_grad_f  |   1.85ms (  3.96us)   1.72ms (  3.67us)       468
+   nlp_jac_g  |  90.90ms (194.23us)  89.27ms (190.75us)       468
+       total  |  38.05ms ( 38.05ms)  38.02ms ( 38.02ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.18ms (  2.70us)   1.11ms (  2.53us)       437
+       nlp_g  |  26.04ms ( 59.58us)  25.33ms ( 57.96us)       437
+    nlp_grad  |   4.60ms (117.95us)   4.61ms (118.17us)        39
+  nlp_grad_f  |   1.89ms (  3.96us)   1.75ms (  3.67us)       477
+   nlp_jac_g  |  92.59ms (194.11us)  90.96ms (190.70us)       477
+       total  |  38.80ms ( 38.80ms)  38.78ms ( 38.78ms)         1
+
+    Norm of Control Inputs: 16.777137
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.21ms (  2.70us)   1.14ms (  2.54us)       448
+       nlp_g  |  26.67ms ( 59.54us)  25.96ms ( 57.94us)       448
+    nlp_grad  |   4.71ms (117.75us)   4.72ms (117.97us)        40
+  nlp_grad_f  |   1.94ms (  3.97us)   1.80ms (  3.69us)       489
+   nlp_jac_g  |  94.96ms (194.20us)  93.34ms (190.89us)       489
+       total  |  55.75ms ( 55.75ms)  55.74ms ( 55.74ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.24ms (  2.70us)   1.16ms (  2.54us)       458
+       nlp_g  |  27.26ms ( 59.52us)  26.54ms ( 57.95us)       458
+    nlp_grad  |   4.84ms (118.07us)   4.85ms (118.28us)        41
+  nlp_grad_f  |   1.98ms (  3.96us)   1.84ms (  3.69us)       500
+   nlp_jac_g  |  97.04ms (194.09us)  95.42ms (190.85us)       500
+       total  |  46.91ms ( 46.91ms)  46.92ms ( 46.92ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.26ms (  2.70us)   1.19ms (  2.54us)       468
+       nlp_g  |  27.83ms ( 59.47us)  27.11ms ( 57.92us)       468
+    nlp_grad  |   4.96ms (118.19us)   4.97ms (118.40us)        42
+  nlp_grad_f  |   2.02ms (  3.95us)   1.88ms (  3.68us)       511
+   nlp_jac_g  |  99.11ms (193.95us)  97.49ms (190.79us)       511
+       total  |  47.69ms ( 47.69ms)  47.69ms ( 47.69ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.29ms (  2.70us)   1.21ms (  2.54us)       479
+       nlp_g  |  28.46ms ( 59.42us)  27.73ms ( 57.89us)       479
+    nlp_grad  |   5.08ms (118.09us)   5.09ms (118.30us)        43
+  nlp_grad_f  |   2.06ms (  3.94us)   1.92ms (  3.68us)       523
+   nlp_jac_g  | 101.36ms (193.81us)  99.75ms (190.73us)       523
+       total  |  54.52ms ( 54.52ms)  54.52ms ( 54.52ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.32ms (  2.69us)   1.24ms (  2.53us)       491
+       nlp_g  |  29.15ms ( 59.36us)  28.41ms ( 57.86us)       491
+    nlp_grad  |   5.19ms (117.93us)   5.20ms (118.15us)        44
+  nlp_grad_f  |   2.11ms (  3.93us)   1.97ms (  3.67us)       536
+   nlp_jac_g  | 103.79ms (193.63us) 102.18ms (190.64us)       536
+       total  |  62.76ms ( 62.76ms)  62.82ms ( 62.82ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.35ms (  2.69us)   1.27ms (  2.53us)       502
+       nlp_g  |  29.77ms ( 59.31us)  29.03ms ( 57.84us)       502
+    nlp_grad  |   5.30ms (117.76us)   5.31ms (117.97us)        45
+  nlp_grad_f  |   2.15ms (  3.93us)   2.01ms (  3.67us)       548
+   nlp_jac_g  | 106.03ms (193.49us) 104.43ms (190.57us)       548
+       total  |  54.64ms ( 54.64ms)  54.61ms ( 54.61ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.38ms (  2.69us)   1.30ms (  2.53us)       514
+       nlp_g  |  30.46ms ( 59.26us)  29.71ms ( 57.81us)       514
+    nlp_grad  |   5.41ms (117.67us)   5.42ms (117.87us)        46
+  nlp_grad_f  |   2.20ms (  3.93us)   2.06ms (  3.67us)       561
+   nlp_jac_g  | 108.49ms (193.38us) 106.89ms (190.53us)       561
+       total  |  62.28ms ( 62.28ms)  62.22ms ( 62.22ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.42ms (  2.69us)   1.33ms (  2.53us)       527
+       nlp_g  |  31.21ms ( 59.21us)  30.45ms ( 57.79us)       527
+    nlp_grad  |   5.52ms (117.53us)   5.53ms (117.73us)        47
+  nlp_grad_f  |   2.25ms (  3.92us)   2.11ms (  3.66us)       575
+   nlp_jac_g  | 111.10ms (193.22us) 109.51ms (190.45us)       575
+       total  |  69.46ms ( 69.46ms)  69.46ms ( 69.46ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.45ms (  2.69us)   1.36ms (  2.53us)       538
+       nlp_g  |  31.84ms ( 59.19us)  31.09ms ( 57.78us)       538
+    nlp_grad  |   5.64ms (117.46us)   5.65ms (117.64us)        48
+  nlp_grad_f  |   2.30ms (  3.91us)   2.15ms (  3.66us)       587
+   nlp_jac_g  | 113.38ms (193.15us) 111.79ms (190.44us)       587
+       total  |  54.53ms ( 54.53ms)  54.53ms ( 54.53ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.48ms (  2.68us)   1.39ms (  2.53us)       550
+       nlp_g  |  32.54ms ( 59.17us)  31.78ms ( 57.78us)       550
+    nlp_grad  |   5.75ms (117.37us)   5.76ms (117.54us)        49
+  nlp_grad_f  |   2.34ms (  3.91us)   2.19ms (  3.66us)       600
+   nlp_jac_g  | 115.82ms (193.04us) 114.24ms (190.41us)       600
+       total  |  62.80ms ( 62.80ms)  62.76ms ( 62.76ms)         1
+
+    Norm of Control Inputs: 5.182721
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.57ms (  2.66us)   1.49ms (  2.52us)       592
+       nlp_g  |  34.97ms ( 59.07us)  34.19ms ( 57.75us)       592
+    nlp_grad  |   5.87ms (117.30us)   5.87ms (117.48us)        50
+  nlp_grad_f  |   2.49ms (  3.90us)   2.33ms (  3.65us)       638
+   nlp_jac_g  | 123.25ms (192.88us) 121.68ms (190.43us)       639
+       total  | 155.99ms (155.99ms) 155.92ms (155.92ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.69ms (  2.64us)   1.61ms (  2.51us)       641
+       nlp_g  |  37.76ms ( 58.90us)  36.96ms ( 57.66us)       641
+    nlp_grad  |   6.00ms (117.65us)   6.01ms (117.83us)        51
+  nlp_grad_f  |   2.65ms (  3.87us)   2.48ms (  3.63us)       684
+   nlp_jac_g  | 132.00ms (192.43us) 130.46ms (190.17us)       686
+       total  | 251.50ms (251.50ms) 251.50ms (251.50ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.80ms (  2.63us)   1.71ms (  2.50us)       683
+       nlp_g  |  40.16ms ( 58.79us)  39.34ms ( 57.60us)       683
+    nlp_grad  |   6.12ms (117.67us)   6.13ms (117.87us)        52
+  nlp_grad_f  |   2.79ms (  3.86us)   2.62ms (  3.62us)       724
+   nlp_jac_g  | 139.69ms (192.15us) 138.15ms (190.03us)       727
+       total  | 178.77ms (178.77ms) 178.71ms (178.71ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.89ms (  2.62us)   1.79ms (  2.49us)       720
+       nlp_g  |  42.26ms ( 58.69us)  41.43ms ( 57.54us)       720
+    nlp_grad  |   6.24ms (117.68us)   6.25ms (117.86us)        53
+  nlp_grad_f  |   2.92ms (  3.85us)   2.74ms (  3.61us)       758
+   nlp_jac_g  | 146.20ms (191.87us) 144.68ms (189.87us)       762
+       total  | 164.43ms (164.43ms) 164.38ms (164.38ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   1.98ms (  2.61us)   1.89ms (  2.48us)       760
+       nlp_g  |  44.54ms ( 58.61us)  43.69ms ( 57.49us)       760
+    nlp_grad  |   6.35ms (117.57us)   6.36ms (117.76us)        54
+  nlp_grad_f  |   3.05ms (  3.83us)   2.86ms (  3.60us)       795
+   nlp_jac_g  | 153.38ms (191.72us) 151.84ms (189.80us)       800
+       total  | 167.31ms (167.31ms) 167.30ms (167.30ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.09ms (  2.60us)   1.99ms (  2.47us)       804
+       nlp_g  |  47.02ms ( 58.48us)  46.16ms ( 57.41us)       804
+    nlp_grad  |   6.47ms (117.56us)   6.48ms (117.74us)        55
+  nlp_grad_f  |   3.16ms (  3.83us)   2.97ms (  3.59us)       827
+   nlp_jac_g  | 159.54ms (191.53us) 158.02ms (189.70us)       833
+       total  | 145.23ms (145.23ms) 145.21ms (145.21ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.12ms (  2.60us)   2.02ms (  2.47us)       815
+       nlp_g  |  47.65ms ( 58.46us)  46.78ms ( 57.40us)       815
+    nlp_grad  |   6.58ms (117.48us)   6.59ms (117.64us)        56
+  nlp_grad_f  |   3.21ms (  3.83us)   3.01ms (  3.59us)       839
+   nlp_jac_g  | 161.80ms (191.48us) 160.28ms (189.69us)       845
+       total  |  55.02ms ( 55.02ms)  54.95ms ( 54.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.15ms (  2.60us)   2.04ms (  2.47us)       826
+       nlp_g  |  48.29ms ( 58.46us)  47.41ms ( 57.40us)       826
+    nlp_grad  |   6.70ms (117.51us)   6.71ms (117.69us)        57
+  nlp_grad_f  |   3.25ms (  3.82us)   3.06ms (  3.59us)       851
+   nlp_jac_g  | 164.06ms (191.44us) 162.55ms (189.67us)       857
+       total  |  54.27ms ( 54.27ms)  54.27ms ( 54.27ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.18ms (  2.60us)   2.07ms (  2.47us)       838
+       nlp_g  |  49.04ms ( 58.52us)  48.12ms ( 57.42us)       838
+    nlp_grad  |   6.81ms (117.38us)   6.82ms (117.57us)        58
+  nlp_grad_f  |   3.30ms (  3.82us)   3.10ms (  3.59us)       864
+   nlp_jac_g  | 166.56ms (191.44us) 165.05ms (189.71us)       870
+       total  |  66.37ms ( 66.37ms)  66.32ms ( 66.32ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.21ms (  2.61us)   2.10ms (  2.47us)       847
+       nlp_g  |  49.56ms ( 58.51us)  48.63ms ( 57.42us)       847
+    nlp_grad  |   6.92ms (117.31us)   6.93ms (117.51us)        59
+  nlp_grad_f  |   3.34ms (  3.82us)   3.14ms (  3.59us)       874
+   nlp_jac_g  | 168.43ms (191.40us) 166.92ms (189.69us)       880
+       total  |  44.63ms ( 44.63ms)  44.60ms ( 44.60ms)         1
+
+    Norm of Control Inputs: 30.016077
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.24ms (  2.60us)   2.13ms (  2.48us)       859
+       nlp_g  |  50.26ms ( 58.51us)  49.32ms ( 57.42us)       859
+    nlp_grad  |   7.04ms (117.25us)   7.05ms (117.45us)        60
+  nlp_grad_f  |   3.40ms (  3.83us)   3.19ms (  3.60us)       887
+   nlp_jac_g  | 171.03ms (191.52us) 169.52ms (189.83us)       893
+       total  |  67.79ms ( 67.79ms)  67.60ms ( 67.60ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.27ms (  2.61us)   2.16ms (  2.48us)       871
+       nlp_g  |  50.95ms ( 58.49us)  50.00ms ( 57.41us)       871
+    nlp_grad  |   7.17ms (117.52us)   7.18ms (117.73us)        61
+  nlp_grad_f  |   3.45ms (  3.83us)   3.24ms (  3.60us)       900
+   nlp_jac_g  | 173.47ms (191.47us) 171.97ms (189.81us)       906
+       total  |  66.54ms ( 66.54ms)  66.51ms ( 66.51ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.30ms (  2.60us)   2.19ms (  2.48us)       883
+       nlp_g  |  51.64ms ( 58.48us)  50.69ms ( 57.41us)       883
+    nlp_grad  |   7.28ms (117.44us)   7.29ms (117.65us)        62
+  nlp_grad_f  |   3.50ms (  3.84us)   3.29ms (  3.60us)       913
+   nlp_jac_g  | 175.94ms (191.44us) 174.42ms (189.79us)       919
+       total  |  66.89ms ( 66.89ms)  66.84ms ( 66.84ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.32ms (  2.60us)   2.21ms (  2.48us)       893
+       nlp_g  |  52.21ms ( 58.47us)  51.26ms ( 57.40us)       893
+    nlp_grad  |   7.39ms (117.35us)   7.41ms (117.57us)        63
+  nlp_grad_f  |   3.54ms (  3.84us)   3.33ms (  3.60us)       924
+   nlp_jac_g  | 178.00ms (191.40us) 176.49ms (189.77us)       930
+       total  |  51.96ms ( 51.96ms)  51.95ms ( 51.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.36ms (  2.61us)   2.24ms (  2.48us)       904
+       nlp_g  |  52.84ms ( 58.45us)  51.88ms ( 57.39us)       904
+    nlp_grad  |   7.50ms (117.23us)   7.52ms (117.44us)        64
+  nlp_grad_f  |   3.59ms (  3.84us)   3.37ms (  3.60us)       936
+   nlp_jac_g  | 180.25ms (191.35us) 178.74ms (189.74us)       942
+       total  |  58.66ms ( 58.66ms)  58.62ms ( 58.62ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.38ms (  2.61us)   2.26ms (  2.48us)       913
+       nlp_g  |  53.38ms ( 58.47us)  52.42ms ( 57.41us)       913
+    nlp_grad  |   7.62ms (117.15us)   7.63ms (117.35us)        65
+  nlp_grad_f  |   3.63ms (  3.84us)   3.41ms (  3.60us)       946
+   nlp_jac_g  | 182.15ms (191.33us) 180.64ms (189.75us)       952
+       total  |  45.82ms ( 45.82ms)  45.83ms ( 45.83ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.41ms (  2.61us)   2.29ms (  2.48us)       923
+       nlp_g  |  53.96ms ( 58.46us)  52.99ms ( 57.41us)       923
+    nlp_grad  |   7.73ms (117.06us)   7.74ms (117.25us)        66
+  nlp_grad_f  |   3.67ms (  3.84us)   3.45ms (  3.60us)       957
+   nlp_jac_g  | 184.22ms (191.29us) 182.71ms (189.73us)       963
+       total  |  51.62ms ( 51.62ms)  51.61ms ( 51.61ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.43ms (  2.61us)   2.31ms (  2.48us)       933
+       nlp_g  |  54.53ms ( 58.45us)  53.56ms ( 57.41us)       933
+    nlp_grad  |   7.84ms (117.01us)   7.85ms (117.20us)        67
+  nlp_grad_f  |   3.72ms (  3.84us)   3.49ms (  3.60us)       968
+   nlp_jac_g  | 186.29ms (191.26us) 184.79ms (189.72us)       974
+       total  |  52.04ms ( 52.04ms)  52.00ms ( 52.00ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.46ms (  2.61us)   2.34ms (  2.48us)       943
+       nlp_g  |  55.11ms ( 58.44us)  54.13ms ( 57.40us)       943
+    nlp_grad  |   7.95ms (116.96us)   7.97ms (117.14us)        68
+  nlp_grad_f  |   3.75ms (  3.83us)   3.53ms (  3.60us)       979
+   nlp_jac_g  | 188.40ms (191.26us) 186.90ms (189.75us)       985
+       total  |  52.21ms ( 52.21ms)  52.17ms ( 52.17ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.48ms (  2.61us)   2.36ms (  2.48us)       953
+       nlp_g  |  55.68ms ( 58.42us)  54.70ms ( 57.39us)       953
+    nlp_grad  |   8.07ms (116.94us)   8.08ms (117.12us)        69
+  nlp_grad_f  |   3.80ms (  3.84us)   3.57ms (  3.60us)       990
+   nlp_jac_g  | 190.46ms (191.23us) 188.97ms (189.73us)       996
+       total  |  52.02ms ( 52.02ms)  52.00ms ( 52.00ms)         1
+
+    Norm of Control Inputs: 19.464259
+
+[ eval_imf ] episode 0: SUCCESS  steps=56  violations=0  reward=1.000  rough=2.483e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/0_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/0_fan.png
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.54ms (  2.60us)   2.42ms (  2.48us)       975
+       nlp_g  |  56.94ms ( 58.39us)  55.94ms ( 57.38us)       975
+    nlp_grad  |   8.18ms (116.86us)   8.19ms (117.03us)        70
+  nlp_grad_f  |   3.89ms (  3.84us)   3.65ms (  3.61us)      1013
+   nlp_jac_g  | 194.87ms (191.24us) 193.39ms (189.79us)      1019
+       total  |  85.76ms ( 85.76ms)  85.71ms ( 85.71ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.58ms (  2.60us)   2.47ms (  2.48us)       994
+       nlp_g  |  58.02ms ( 58.37us)  57.03ms ( 57.37us)       994
+    nlp_grad  |   8.32ms (117.17us)   8.33ms (117.34us)        71
+  nlp_grad_f  |   3.96ms (  3.84us)   3.72ms (  3.60us)      1033
+   nlp_jac_g  | 198.61ms (191.15us) 197.13ms (189.74us)      1039
+       total  |  77.71ms ( 77.71ms)  77.76ms ( 77.76ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.62ms (  2.60us)   2.50ms (  2.48us)      1009
+       nlp_g  |  58.90ms ( 58.37us)  57.89ms ( 57.38us)      1009
+    nlp_grad  |   8.44ms (117.19us)   8.45ms (117.37us)        72
+  nlp_grad_f  |   4.02ms (  3.84us)   3.78ms (  3.60us)      1049
+   nlp_jac_g  | 201.72ms (191.21us) 200.25ms (189.81us)      1055
+       total  |  84.69ms ( 84.69ms)  84.66ms ( 84.66ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.65ms (  2.60us)   2.54ms (  2.48us)      1023
+       nlp_g  |  59.70ms ( 58.36us)  58.69ms ( 57.37us)      1023
+    nlp_grad  |   8.55ms (117.12us)   8.56ms (117.30us)        73
+  nlp_grad_f  |   4.08ms (  3.83us)   3.83ms (  3.60us)      1064
+   nlp_jac_g  | 204.53ms (191.15us) 203.07ms (189.78us)      1070
+       total  |  81.89ms ( 81.89ms)  81.86ms ( 81.86ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.69ms (  2.59us)   2.57ms (  2.48us)      1037
+       nlp_g  |  60.50ms ( 58.34us)  59.48ms ( 57.36us)      1037
+    nlp_grad  |   8.67ms (117.19us)   8.68ms (117.36us)        74
+  nlp_grad_f  |   4.14ms (  3.83us)   3.89ms (  3.60us)      1079
+   nlp_jac_g  | 207.34ms (191.09us) 205.88ms (189.75us)      1085
+       total  |  82.88ms ( 82.88ms)  82.84ms ( 82.84ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.74ms (  2.60us)   2.61ms (  2.48us)      1054
+       nlp_g  |  61.48ms ( 58.33us)  60.45ms ( 57.35us)      1054
+    nlp_grad  |   8.79ms (117.15us)   8.80ms (117.32us)        75
+  nlp_grad_f  |   4.20ms (  3.83us)   3.95ms (  3.60us)      1097
+   nlp_jac_g  | 210.71ms (191.03us) 209.25ms (189.71us)      1103
+       total  | 104.17ms (104.17ms) 104.13ms (104.13ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.77ms (  2.59us)   2.65ms (  2.48us)      1069
+       nlp_g  |  62.35ms ( 58.32us)  61.31ms ( 57.35us)      1069
+    nlp_grad  |   8.91ms (117.21us)   8.92ms (117.38us)        76
+  nlp_grad_f  |   4.26ms (  3.82us)   4.00ms (  3.60us)      1113
+   nlp_jac_g  | 213.70ms (190.97us) 212.25ms (189.68us)      1119
+       total  |  89.77ms ( 89.77ms)  89.73ms ( 89.73ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.81ms (  2.59us)   2.68ms (  2.48us)      1082
+       nlp_g  |  63.10ms ( 58.32us)  62.05ms ( 57.35us)      1082
+    nlp_grad  |   9.02ms (117.16us)   9.03ms (117.32us)        77
+  nlp_grad_f  |   4.31ms (  3.82us)   4.05ms (  3.60us)      1127
+   nlp_jac_g  | 216.32ms (190.93us) 214.88ms (189.66us)      1133
+       total  |  75.56ms ( 75.56ms)  75.57ms ( 75.57ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.84ms (  2.60us)   2.71ms (  2.48us)      1095
+       nlp_g  |  63.84ms ( 58.30us)  62.79ms ( 57.34us)      1095
+    nlp_grad  |   9.14ms (117.15us)   9.15ms (117.32us)        78
+  nlp_grad_f  |   4.36ms (  3.82us)   4.10ms (  3.60us)      1141
+   nlp_jac_g  | 218.95ms (190.89us) 217.52ms (189.64us)      1147
+       total  |  74.66ms ( 74.66ms)  74.62ms ( 74.62ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.88ms (  2.60us)   2.75ms (  2.48us)      1107
+       nlp_g  |  64.53ms ( 58.29us)  63.47ms ( 57.33us)      1107
+    nlp_grad  |   9.25ms (117.11us)   9.26ms (117.28us)        79
+  nlp_grad_f  |   4.41ms (  3.82us)   4.15ms (  3.60us)      1154
+   nlp_jac_g  | 221.40ms (190.86us) 219.97ms (189.63us)      1160
+       total  |  68.15ms ( 68.15ms)  68.12ms ( 68.12ms)         1
+
+    Norm of Control Inputs: 24.280796
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.93ms (  2.60us)   2.79ms (  2.48us)      1126
+       nlp_g  |  65.63ms ( 58.28us)  64.56ms ( 57.33us)      1126
+    nlp_grad  |   9.37ms (117.06us)   9.38ms (117.22us)        80
+  nlp_grad_f  |   4.49ms (  3.82us)   4.23ms (  3.60us)      1174
+   nlp_jac_g  | 225.30ms (190.93us) 223.86ms (189.72us)      1180
+       total  |  99.12ms ( 99.12ms)  99.11ms ( 99.11ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   2.97ms (  2.60us)   2.83ms (  2.48us)      1143
+       nlp_g  |  66.60ms ( 58.27us)  65.52ms ( 57.33us)      1143
+    nlp_grad  |   9.50ms (117.26us)   9.51ms (117.42us)        81
+  nlp_grad_f  |   4.56ms (  3.82us)   4.29ms (  3.60us)      1192
+   nlp_jac_g  | 228.65ms (190.86us) 227.23ms (189.67us)      1198
+       total  |  87.97ms ( 87.97ms)  87.93ms ( 87.93ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.02ms (  2.60us)   2.88ms (  2.48us)      1160
+       nlp_g  |  67.58ms ( 58.26us)  66.49ms ( 57.32us)      1160
+    nlp_grad  |   9.61ms (117.21us)   9.62ms (117.36us)        82
+  nlp_grad_f  |   4.62ms (  3.82us)   4.35ms (  3.60us)      1210
+   nlp_jac_g  | 232.05ms (190.83us) 230.63ms (189.66us)      1216
+       total  |  89.32ms ( 89.32ms)  89.28ms ( 89.28ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.05ms (  2.60us)   2.91ms (  2.48us)      1173
+       nlp_g  |  68.32ms ( 58.25us)  67.23ms ( 57.31us)      1173
+    nlp_grad  |   9.75ms (117.41us)   9.76ms (117.55us)        83
+  nlp_grad_f  |   4.67ms (  3.82us)   4.40ms (  3.60us)      1224
+   nlp_jac_g  | 234.68ms (190.80us) 233.26ms (189.65us)      1230
+       total  |  59.40ms ( 59.40ms)  59.40ms ( 59.40ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.08ms (  2.60us)   2.94ms (  2.48us)      1184
+       nlp_g  |  68.96ms ( 58.24us)  67.85ms ( 57.31us)      1184
+    nlp_grad  |   9.86ms (117.37us)   9.87ms (117.52us)        84
+  nlp_grad_f  |   4.72ms (  3.82us)   4.44ms (  3.60us)      1236
+   nlp_jac_g  | 236.96ms (190.79us) 235.54ms (189.65us)      1242
+       total  |  54.89ms ( 54.89ms)  54.85ms ( 54.85ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.11ms (  2.60us)   2.97ms (  2.48us)      1196
+       nlp_g  |  69.64ms ( 58.23us)  68.53ms ( 57.30us)      1196
+    nlp_grad  |   9.98ms (117.36us)   9.99ms (117.52us)        85
+  nlp_grad_f  |   4.76ms (  3.81us)   4.49ms (  3.60us)      1249
+   nlp_jac_g  | 239.40ms (190.76us) 237.99ms (189.63us)      1255
+       total  |  62.40ms ( 62.40ms)  62.34ms ( 62.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.14ms (  2.60us)   2.99ms (  2.48us)      1207
+       nlp_g  |  70.27ms ( 58.22us)  69.16ms ( 57.30us)      1207
+    nlp_grad  |  10.09ms (117.31us)  10.10ms (117.47us)        86
+  nlp_grad_f  |   4.81ms (  3.81us)   4.53ms (  3.60us)      1261
+   nlp_jac_g  | 241.65ms (190.73us) 240.24ms (189.62us)      1267
+       total  |  55.10ms ( 55.10ms)  55.13ms ( 55.13ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.17ms (  2.60us)   3.02ms (  2.48us)      1217
+       nlp_g  |  70.86ms ( 58.22us)  69.74ms ( 57.30us)      1217
+    nlp_grad  |  10.20ms (117.25us)  10.22ms (117.41us)        87
+  nlp_grad_f  |   4.85ms (  3.81us)   4.57ms (  3.59us)      1272
+   nlp_jac_g  | 243.74ms (190.72us) 242.34ms (189.62us)      1278
+       total  |  52.90ms ( 52.90ms)  52.86ms ( 52.86ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.19ms (  2.60us)   3.05ms (  2.48us)      1227
+       nlp_g  |  71.43ms ( 58.22us)  70.31ms ( 57.30us)      1227
+    nlp_grad  |  10.31ms (117.19us)  10.33ms (117.35us)        88
+  nlp_grad_f  |   4.89ms (  3.81us)   4.61ms (  3.59us)      1283
+   nlp_jac_g  | 245.83ms (190.71us) 244.43ms (189.63us)      1289
+       total  |  52.99ms ( 52.99ms)  52.96ms ( 52.96ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.22ms (  2.60us)   3.07ms (  2.48us)      1238
+       nlp_g  |  72.06ms ( 58.21us)  70.93ms ( 57.30us)      1238
+    nlp_grad  |  10.43ms (117.17us)  10.44ms (117.32us)        89
+  nlp_grad_f  |   4.93ms (  3.81us)   4.65ms (  3.59us)      1295
+   nlp_jac_g  | 248.10ms (190.70us) 246.70ms (189.62us)      1301
+       total  |  59.23ms ( 59.23ms)  59.22ms ( 59.22ms)         1
+
+    Norm of Control Inputs: 24.128229
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.26ms (  2.60us)   3.11ms (  2.48us)      1254
+       nlp_g  |  72.98ms ( 58.20us)  71.85ms ( 57.29us)      1254
+    nlp_grad  |  10.54ms (117.14us)  10.56ms (117.30us)        90
+  nlp_grad_f  |   5.00ms (  3.81us)   4.72ms (  3.60us)      1312
+   nlp_jac_g  | 251.42ms (190.76us) 250.02ms (189.70us)      1318
+       total  |  80.96ms ( 80.96ms)  80.91ms ( 80.91ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.30ms (  2.60us)   3.15ms (  2.48us)      1270
+       nlp_g  |  73.90ms ( 58.19us)  72.76ms ( 57.29us)      1270
+    nlp_grad  |  10.68ms (117.36us)  10.69ms (117.52us)        91
+  nlp_grad_f  |   5.07ms (  3.81us)   4.78ms (  3.60us)      1329
+   nlp_jac_g  | 254.61ms (190.72us) 253.22ms (189.68us)      1335
+       total  |  80.63ms ( 80.63ms)  80.58ms ( 80.58ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.33ms (  2.60us)   3.18ms (  2.48us)      1282
+       nlp_g  |  74.61ms ( 58.19us)  73.46ms ( 57.30us)      1282
+    nlp_grad  |  10.80ms (117.39us)  10.81ms (117.55us)        92
+  nlp_grad_f  |   5.12ms (  3.81us)   4.83ms (  3.60us)      1342
+   nlp_jac_g  | 257.06ms (190.70us) 255.68ms (189.68us)      1348
+       total  |  51.91ms ( 51.91ms)  51.91ms ( 51.91ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.37ms (  2.60us)   3.21ms (  2.48us)      1294
+       nlp_g  |  75.30ms ( 58.19us)  74.15ms ( 57.30us)      1294
+    nlp_grad  |  10.91ms (117.34us)  10.93ms (117.51us)        93
+  nlp_grad_f  |   5.16ms (  3.81us)   4.87ms (  3.60us)      1355
+   nlp_jac_g  | 259.54ms (190.70us) 258.16ms (189.68us)      1361
+       total  |  51.85ms ( 51.85ms)  51.86ms ( 51.86ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.40ms (  2.60us)   3.24ms (  2.48us)      1307
+       nlp_g  |  76.06ms ( 58.20us)  74.90ms ( 57.31us)      1307
+    nlp_grad  |  11.03ms (117.32us)  11.04ms (117.49us)        94
+  nlp_grad_f  |   5.22ms (  3.81us)   4.93ms (  3.60us)      1369
+   nlp_jac_g  | 262.35ms (190.80us) 260.94ms (189.78us)      1375
+       total  |  76.06ms ( 76.06ms)  76.02ms ( 76.02ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.43ms (  2.60us)   3.27ms (  2.48us)      1318
+       nlp_g  |  76.70ms ( 58.19us)  75.53ms ( 57.31us)      1318
+    nlp_grad  |  11.20ms (117.84us)  11.21ms (118.01us)        95
+  nlp_grad_f  |   5.27ms (  3.81us)   4.97ms (  3.60us)      1381
+   nlp_jac_g  | 264.62ms (190.78us) 263.21ms (189.77us)      1387
+       total  |  60.81ms ( 60.81ms)  60.77ms ( 60.77ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.46ms (  2.60us)   3.30ms (  2.48us)      1328
+       nlp_g  |  77.27ms ( 58.19us)  76.10ms ( 57.30us)      1328
+    nlp_grad  |  11.31ms (117.81us)  11.33ms (117.98us)        96
+  nlp_grad_f  |   5.31ms (  3.81us)   5.01ms (  3.60us)      1392
+   nlp_jac_g  | 266.70ms (190.77us) 265.29ms (189.77us)      1398
+       total  |  53.10ms ( 53.10ms)  53.09ms ( 53.09ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.48ms (  2.60us)   3.32ms (  2.48us)      1338
+       nlp_g  |  77.85ms ( 58.18us)  76.67ms ( 57.30us)      1338
+    nlp_grad  |  11.43ms (117.78us)  11.44ms (117.95us)        97
+  nlp_grad_f  |   5.35ms (  3.81us)   5.05ms (  3.60us)      1403
+   nlp_jac_g  | 268.76ms (190.75us) 267.36ms (189.75us)      1409
+       total  |  52.78ms ( 52.78ms)  52.77ms ( 52.77ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.52ms (  2.61us)   3.35ms (  2.48us)      1350
+       nlp_g  |  78.54ms ( 58.17us)  77.36ms ( 57.30us)      1350
+    nlp_grad  |  11.54ms (117.78us)  11.56ms (117.94us)        98
+  nlp_grad_f  |   5.39ms (  3.81us)   5.10ms (  3.60us)      1416
+   nlp_jac_g  | 271.20ms (190.72us) 269.80ms (189.73us)      1422
+       total  |  67.99ms ( 67.99ms)  67.95ms ( 67.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.55ms (  2.61us)   3.38ms (  2.48us)      1362
+       nlp_g  |  79.22ms ( 58.17us)  78.04ms ( 57.29us)      1362
+    nlp_grad  |  11.65ms (117.72us)  11.67ms (117.89us)        99
+  nlp_grad_f  |   5.45ms (  3.81us)   5.14ms (  3.60us)      1429
+   nlp_jac_g  | 273.65ms (190.70us) 272.26ms (189.73us)      1435
+       total  |  68.44ms ( 68.44ms)  68.40ms ( 68.40ms)         1
+
+    Norm of Control Inputs: 19.490861
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.60ms (  2.61us)   3.42ms (  2.48us)      1377
+       nlp_g  |  80.09ms ( 58.16us)  78.90ms ( 57.30us)      1377
+    nlp_grad  |  11.77ms (117.68us)  11.79ms (117.86us)       100
+  nlp_grad_f  |   5.52ms (  3.82us)   5.22ms (  3.61us)      1445
+   nlp_jac_g  | 276.90ms (190.83us) 275.51ms (189.88us)      1451
+       total  |  83.75ms ( 83.75ms)  83.70ms ( 83.70ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.62ms (  2.61us)   3.44ms (  2.48us)      1386
+       nlp_g  |  80.61ms ( 58.16us)  79.41ms ( 57.30us)      1386
+    nlp_grad  |  11.91ms (117.92us)  11.93ms (118.11us)       101
+  nlp_grad_f  |   5.56ms (  3.82us)   5.25ms (  3.61us)      1455
+   nlp_jac_g  | 278.78ms (190.82us) 277.40ms (189.87us)      1461
+       total  |  45.58ms ( 45.58ms)  45.54ms ( 45.54ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.64ms (  2.61us)   3.46ms (  2.48us)      1394
+       nlp_g  |  81.07ms ( 58.15us)  79.86ms ( 57.29us)      1394
+    nlp_grad  |  12.02ms (117.87us)  12.04ms (118.06us)       102
+  nlp_grad_f  |   5.60ms (  3.82us)   5.29ms (  3.61us)      1464
+   nlp_jac_g  | 280.50ms (190.81us) 279.12ms (189.88us)      1470
+       total  |  37.78ms ( 37.78ms)  37.78ms ( 37.78ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.67ms (  2.61us)   3.49ms (  2.48us)      1403
+       nlp_g  |  81.58ms ( 58.15us)  80.37ms ( 57.29us)      1403
+    nlp_grad  |  12.14ms (117.82us)  12.15ms (118.00us)       103
+  nlp_grad_f  |   5.64ms (  3.82us)   5.32ms (  3.61us)      1474
+   nlp_jac_g  | 282.40ms (190.81us) 281.02ms (189.88us)      1480
+       total  |  44.98ms ( 44.98ms)  44.98ms ( 44.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.69ms (  2.61us)   3.51ms (  2.49us)      1412
+       nlp_g  |  82.10ms ( 58.14us)  80.89ms ( 57.29us)      1412
+    nlp_grad  |  12.25ms (117.76us)  12.27ms (117.95us)       104
+  nlp_grad_f  |   5.67ms (  3.82us)   5.36ms (  3.61us)      1484
+   nlp_jac_g  | 284.27ms (190.79us) 282.90ms (189.87us)      1490
+       total  |  45.63ms ( 45.63ms)  45.60ms ( 45.60ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.71ms (  2.61us)   3.53ms (  2.49us)      1421
+       nlp_g  |  82.62ms ( 58.14us)  81.40ms ( 57.28us)      1421
+    nlp_grad  |  12.36ms (117.70us)  12.38ms (117.90us)       105
+  nlp_grad_f  |   5.71ms (  3.82us)   5.40ms (  3.61us)      1494
+   nlp_jac_g  | 286.16ms (190.77us) 284.79ms (189.86us)      1500
+       total  |  45.47ms ( 45.47ms)  45.47ms ( 45.47ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.74ms (  2.61us)   3.55ms (  2.49us)      1430
+       nlp_g  |  83.14ms ( 58.14us)  81.92ms ( 57.28us)      1430
+    nlp_grad  |  12.47ms (117.67us)  12.49ms (117.87us)       106
+  nlp_grad_f  |   5.75ms (  3.82us)   5.43ms (  3.61us)      1504
+   nlp_jac_g  | 288.03ms (190.75us) 286.67ms (189.85us)      1510
+       total  |  46.09ms ( 46.09ms)  46.05ms ( 46.05ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.76ms (  2.61us)   3.58ms (  2.49us)      1439
+       nlp_g  |  83.66ms ( 58.14us)  82.43ms ( 57.28us)      1439
+    nlp_grad  |  12.59ms (117.63us)  12.61ms (117.82us)       107
+  nlp_grad_f  |   5.79ms (  3.82us)   5.47ms (  3.61us)      1514
+   nlp_jac_g  | 289.92ms (190.74us) 288.55ms (189.84us)      1520
+       total  |  46.59ms ( 46.59ms)  46.59ms ( 46.59ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.79ms (  2.61us)   3.60ms (  2.49us)      1448
+       nlp_g  |  84.17ms ( 58.13us)  82.94ms ( 57.28us)      1448
+    nlp_grad  |  12.70ms (117.60us)  12.72ms (117.80us)       108
+  nlp_grad_f  |   5.83ms (  3.82us)   5.50ms (  3.61us)      1524
+   nlp_jac_g  | 291.79ms (190.71us) 290.43ms (189.82us)      1530
+       total  |  46.29ms ( 46.29ms)  46.29ms ( 46.29ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.81ms (  2.61us)   3.62ms (  2.49us)      1457
+       nlp_g  |  84.70ms ( 58.14us)  83.46ms ( 57.28us)      1457
+    nlp_grad  |  12.82ms (117.57us)  12.84ms (117.76us)       109
+  nlp_grad_f  |   5.87ms (  3.82us)   5.54ms (  3.61us)      1534
+   nlp_jac_g  | 293.71ms (190.72us) 292.35ms (189.84us)      1540
+       total  |  46.31ms ( 46.31ms)  46.27ms ( 46.27ms)         1
+
+    Norm of Control Inputs: 5.208749
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.85ms (  2.61us)   3.67ms (  2.49us)      1474
+       nlp_g  |  85.68ms ( 58.13us)  84.43ms ( 57.28us)      1474
+    nlp_grad  |  12.93ms (117.53us)  12.95ms (117.72us)       110
+  nlp_grad_f  |   5.94ms (  3.82us)   5.61ms (  3.61us)      1552
+   nlp_jac_g  | 297.20ms (190.76us) 295.84ms (189.89us)      1558
+       total  |  88.63ms ( 88.63ms)  88.56ms ( 88.56ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.88ms (  2.61us)   3.69ms (  2.49us)      1485
+       nlp_g  |  86.32ms ( 58.12us)  85.06ms ( 57.28us)      1485
+    nlp_grad  |  13.06ms (117.68us)  13.08ms (117.87us)       111
+  nlp_grad_f  |   5.98ms (  3.82us)   5.65ms (  3.61us)      1564
+   nlp_jac_g  | 299.47ms (190.74us) 298.11ms (189.88us)      1570
+       total  |  44.39ms ( 44.39ms)  44.35ms ( 44.35ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.91ms (  2.61us)   3.72ms (  2.49us)      1496
+       nlp_g  |  86.95ms ( 58.12us)  85.69ms ( 57.28us)      1496
+    nlp_grad  |  13.18ms (117.63us)  13.20ms (117.83us)       112
+  nlp_grad_f  |   6.02ms (  3.82us)   5.70ms (  3.61us)      1576
+   nlp_jac_g  | 301.72ms (190.72us) 300.37ms (189.86us)      1582
+       total  |  54.73ms ( 54.73ms)  54.73ms ( 54.73ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.94ms (  2.61us)   3.75ms (  2.49us)      1506
+       nlp_g  |  87.53ms ( 58.12us)  86.26ms ( 57.28us)      1506
+    nlp_grad  |  13.29ms (117.60us)  13.31ms (117.80us)       113
+  nlp_grad_f  |   6.07ms (  3.82us)   5.73ms (  3.61us)      1587
+   nlp_jac_g  | 303.78ms (190.70us) 302.44ms (189.86us)      1593
+       total  |  53.02ms ( 53.02ms)  53.01ms ( 53.01ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.96ms (  2.61us)   3.77ms (  2.49us)      1514
+       nlp_g  |  87.99ms ( 58.12us)  86.72ms ( 57.28us)      1514
+    nlp_grad  |  13.41ms (117.61us)  13.43ms (117.80us)       114
+  nlp_grad_f  |   6.10ms (  3.82us)   5.77ms (  3.61us)      1596
+   nlp_jac_g  | 305.49ms (190.69us) 304.15ms (189.85us)      1602
+       total  |  37.01ms ( 37.01ms)  36.98ms ( 36.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   3.98ms (  2.61us)   3.79ms (  2.49us)      1522
+       nlp_g  |  88.44ms ( 58.11us)  87.17ms ( 57.27us)      1522
+    nlp_grad  |  13.52ms (117.58us)  13.54ms (117.78us)       115
+  nlp_grad_f  |   6.13ms (  3.82us)   5.80ms (  3.61us)      1605
+   nlp_jac_g  | 307.19ms (190.68us) 305.85ms (189.85us)      1611
+       total  |  38.23ms ( 38.23ms)  38.23ms ( 38.23ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.00ms (  2.62us)   3.81ms (  2.49us)      1530
+       nlp_g  |  88.90ms ( 58.11us)  87.63ms ( 57.27us)      1530
+    nlp_grad  |  13.63ms (117.53us)  13.66ms (117.73us)       116
+  nlp_grad_f  |   6.17ms (  3.82us)   5.83ms (  3.61us)      1614
+   nlp_jac_g  | 308.89ms (190.67us) 307.56ms (189.85us)      1620
+       total  |  38.61ms ( 38.61ms)  38.57ms ( 38.57ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.03ms (  2.62us)   3.83ms (  2.49us)      1539
+       nlp_g  |  89.42ms ( 58.10us)  88.14ms ( 57.27us)      1539
+    nlp_grad  |  13.75ms (117.50us)  13.77ms (117.70us)       117
+  nlp_grad_f  |   6.21ms (  3.82us)   5.87ms (  3.61us)      1624
+   nlp_jac_g  | 310.77ms (190.66us) 309.44ms (189.84us)      1630
+       total  |  45.81ms ( 45.81ms)  45.81ms ( 45.81ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.04ms (  2.61us)   3.85ms (  2.49us)      1547
+       nlp_g  |  89.88ms ( 58.10us)  88.60ms ( 57.27us)      1547
+    nlp_grad  |  13.86ms (117.46us)  13.88ms (117.66us)       118
+  nlp_grad_f  |   6.24ms (  3.82us)   5.90ms (  3.61us)      1633
+   nlp_jac_g  | 312.49ms (190.66us) 311.16ms (189.85us)      1639
+       total  |  38.49ms ( 38.49ms)  38.45ms ( 38.45ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.07ms (  2.62us)   3.87ms (  2.49us)      1556
+       nlp_g  |  90.40ms ( 58.09us)  89.11ms ( 57.27us)      1556
+    nlp_grad  |  13.97ms (117.42us)  14.00ms (117.62us)       119
+  nlp_grad_f  |   6.28ms (  3.82us)   5.94ms (  3.61us)      1643
+   nlp_jac_g  | 314.37ms (190.64us) 313.04ms (189.84us)      1649
+       total  |  45.64ms ( 45.64ms)  45.62ms ( 45.62ms)         1
+
+    Norm of Control Inputs: 3.361533
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.11ms (  2.62us)   3.90ms (  2.49us)      1567
+       nlp_g  |  91.03ms ( 58.09us)  89.74ms ( 57.27us)      1567
+    nlp_grad  |  14.08ms (117.36us)  14.11ms (117.57us)       120
+  nlp_grad_f  |   6.33ms (  3.83us)   5.99ms (  3.62us)      1655
+   nlp_jac_g  | 316.73ms (190.69us) 315.41ms (189.89us)      1661
+       total  |  60.39ms ( 60.39ms)  60.34ms ( 60.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.14ms (  2.62us)   3.93ms (  2.49us)      1578
+       nlp_g  |  91.66ms ( 58.09us)  90.36ms ( 57.26us)      1578
+    nlp_grad  |  14.22ms (117.53us)  14.25ms (117.74us)       121
+  nlp_grad_f  |   6.37ms (  3.82us)   6.03ms (  3.62us)      1667
+   nlp_jac_g  | 318.99ms (190.67us) 317.67ms (189.88us)      1673
+       total  |  59.92ms ( 59.92ms)  59.92ms ( 59.92ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.16ms (  2.62us)   3.95ms (  2.49us)      1588
+       nlp_g  |  92.24ms ( 58.09us)  90.94ms ( 57.27us)      1588
+    nlp_grad  |  14.34ms (117.52us)  14.36ms (117.72us)       122
+  nlp_grad_f  |   6.42ms (  3.82us)   6.07ms (  3.62us)      1678
+   nlp_jac_g  | 321.11ms (190.69us) 319.84ms (189.93us)      1684
+       total  |  51.68ms ( 51.68ms)  51.71ms ( 51.71ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.19ms (  2.62us)   3.98ms (  2.49us)      1597
+       nlp_g  |  92.76ms ( 58.08us)  91.45ms ( 57.26us)      1597
+    nlp_grad  |  14.46ms (117.53us)  14.48ms (117.74us)       123
+  nlp_grad_f  |   6.46ms (  3.83us)   6.11ms (  3.62us)      1688
+   nlp_jac_g  | 323.05ms (190.70us) 321.77ms (189.95us)      1694
+       total  |  44.82ms ( 44.82ms)  44.79ms ( 44.79ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.21ms (  2.62us)   4.00ms (  2.49us)      1606
+       nlp_g  |  93.27ms ( 58.08us)  91.96ms ( 57.26us)      1606
+    nlp_grad  |  14.57ms (117.53us)  14.60ms (117.74us)       124
+  nlp_grad_f  |   6.49ms (  3.82us)   6.15ms (  3.62us)      1698
+   nlp_jac_g  | 324.93ms (190.69us) 323.66ms (189.94us)      1704
+       total  |  45.16ms ( 45.16ms)  45.16ms ( 45.16ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.23ms (  2.62us)   4.02ms (  2.49us)      1614
+       nlp_g  |  93.73ms ( 58.07us)  92.42ms ( 57.26us)      1614
+    nlp_grad  |  14.69ms (117.52us)  14.72ms (117.72us)       125
+  nlp_grad_f  |   6.53ms (  3.82us)   6.18ms (  3.62us)      1707
+   nlp_jac_g  | 326.64ms (190.69us) 325.38ms (189.95us)      1713
+       total  |  37.57ms ( 37.57ms)  37.53ms ( 37.53ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.26ms (  2.62us)   4.04ms (  2.49us)      1623
+       nlp_g  |  94.25ms ( 58.07us)  92.93ms ( 57.26us)      1623
+    nlp_grad  |  14.81ms (117.52us)  14.83ms (117.72us)       126
+  nlp_grad_f  |   6.57ms (  3.82us)   6.22ms (  3.62us)      1717
+   nlp_jac_g  | 328.52ms (190.67us) 327.26ms (189.94us)      1723
+       total  |  45.82ms ( 45.82ms)  45.80ms ( 45.80ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.28ms (  2.62us)   4.07ms (  2.49us)      1633
+       nlp_g  |  94.82ms ( 58.07us)  93.49ms ( 57.25us)      1633
+    nlp_grad  |  14.92ms (117.50us)  14.95ms (117.70us)       127
+  nlp_grad_f  |   6.61ms (  3.83us)   6.26ms (  3.62us)      1728
+   nlp_jac_g  | 330.61ms (190.66us) 329.35ms (189.94us)      1734
+       total  |  52.28ms ( 52.28ms)  52.28ms ( 52.28ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.31ms (  2.62us)   4.09ms (  2.49us)      1644
+       nlp_g  |  95.46ms ( 58.06us)  94.12ms ( 57.25us)      1644
+    nlp_grad  |  15.04ms (117.48us)  15.06ms (117.68us)       128
+  nlp_grad_f  |   6.66ms (  3.82us)   6.31ms (  3.63us)      1740
+   nlp_jac_g  | 332.86ms (190.64us) 331.61ms (189.93us)      1746
+       total  |  60.27ms ( 60.27ms)  60.25ms ( 60.25ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.33ms (  2.62us)   4.12ms (  2.49us)      1653
+       nlp_g  |  95.97ms ( 58.06us)  94.63ms ( 57.25us)      1653
+    nlp_grad  |  15.15ms (117.45us)  15.18ms (117.65us)       129
+  nlp_grad_f  |   6.69ms (  3.83us)   6.34ms (  3.63us)      1750
+   nlp_jac_g  | 334.75ms (190.63us) 333.50ms (189.92us)      1756
+       total  |  45.67ms ( 45.67ms)  45.67ms ( 45.67ms)         1
+
+    Norm of Control Inputs: 9.614300
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.38ms (  2.62us)   4.16ms (  2.49us)      1668
+       nlp_g  |  96.84ms ( 58.06us)  95.49ms ( 57.25us)      1668
+    nlp_grad  |  15.26ms (117.42us)  15.29ms (117.62us)       130
+  nlp_grad_f  |   6.76ms (  3.83us)   6.41ms (  3.63us)      1766
+   nlp_jac_g  | 337.90ms (190.69us) 336.65ms (189.99us)      1772
+       total  |  84.87ms ( 84.87ms)  84.81ms ( 84.81ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.40ms (  2.63us)   4.18ms (  2.49us)      1678
+       nlp_g  |  97.49ms ( 58.10us)  96.14ms ( 57.30us)      1678
+    nlp_grad  |  15.40ms (117.58us)  15.43ms (117.78us)       131
+  nlp_grad_f  |   6.80ms (  3.83us)   6.45ms (  3.63us)      1777
+   nlp_jac_g  | 339.98ms (190.68us) 338.74ms (189.98us)      1783
+       total  |  48.30ms ( 48.30ms)  48.26ms ( 48.26ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.43ms (  2.63us)   4.21ms (  2.49us)      1688
+       nlp_g  |  98.07ms ( 58.10us)  96.71ms ( 57.29us)      1688
+    nlp_grad  |  15.52ms (117.61us)  15.55ms (117.81us)       132
+  nlp_grad_f  |   6.85ms (  3.83us)   6.49ms (  3.63us)      1788
+   nlp_jac_g  | 342.05ms (190.66us) 340.82ms (189.98us)      1794
+       total  |  47.62ms ( 47.62ms)  47.59ms ( 47.59ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.46ms (  2.63us)   4.23ms (  2.49us)      1697
+       nlp_g  |  98.59ms ( 58.10us)  97.22ms ( 57.29us)      1697
+    nlp_grad  |  15.64ms (117.57us)  15.66ms (117.77us)       133
+  nlp_grad_f  |   6.88ms (  3.83us)   6.53ms (  3.63us)      1798
+   nlp_jac_g  | 343.92ms (190.65us) 342.70ms (189.96us)      1804
+       total  |  40.50ms ( 40.50ms)  40.45ms ( 40.45ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.49ms (  2.63us)   4.26ms (  2.49us)      1708
+       nlp_g  |  99.22ms ( 58.09us)  97.84ms ( 57.29us)      1708
+    nlp_grad  |  15.76ms (117.57us)  15.78ms (117.77us)       134
+  nlp_grad_f  |   6.93ms (  3.83us)   6.57ms (  3.63us)      1810
+   nlp_jac_g  | 346.18ms (190.63us) 344.96ms (189.95us)      1816
+       total  |  58.04ms ( 58.04ms)  58.08ms ( 58.08ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.51ms (  2.63us)   4.28ms (  2.49us)      1717
+       nlp_g  |  99.73ms ( 58.09us)  98.36ms ( 57.28us)      1717
+    nlp_grad  |  15.87ms (117.55us)  15.90ms (117.75us)       135
+  nlp_grad_f  |   6.97ms (  3.83us)   6.61ms (  3.63us)      1820
+   nlp_jac_g  | 348.09ms (190.63us) 346.87ms (189.96us)      1826
+       total  |  45.38ms ( 45.38ms)  45.39ms ( 45.39ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.53ms (  2.63us)   4.30ms (  2.49us)      1725
+       nlp_g  | 100.21ms ( 58.09us)  98.82ms ( 57.29us)      1725
+    nlp_grad  |  15.99ms (117.54us)  16.01ms (117.75us)       136
+  nlp_grad_f  |   7.01ms (  3.83us)   6.64ms (  3.63us)      1829
+   nlp_jac_g  | 349.83ms (190.64us) 348.62ms (189.98us)      1835
+       total  |  38.35ms ( 38.35ms)  38.31ms ( 38.31ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.55ms (  2.63us)   4.32ms (  2.49us)      1733
+       nlp_g  | 100.67ms ( 58.09us)  99.28ms ( 57.29us)      1733
+    nlp_grad  |  16.10ms (117.53us)  16.13ms (117.73us)       137
+  nlp_grad_f  |   7.04ms (  3.83us)   6.67ms (  3.63us)      1838
+   nlp_jac_g  | 351.60ms (190.67us) 350.39ms (190.02us)      1844
+       total  |  39.06ms ( 39.06ms)  39.06ms ( 39.06ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.58ms (  2.63us)   4.34ms (  2.49us)      1742
+       nlp_g  | 101.18ms ( 58.08us)  99.79ms ( 57.28us)      1742
+    nlp_grad  |  16.21ms (117.49us)  16.24ms (117.70us)       138
+  nlp_grad_f  |   7.08ms (  3.83us)   6.71ms (  3.63us)      1848
+   nlp_jac_g  | 353.48ms (190.66us) 352.27ms (190.01us)      1854
+       total  |  45.85ms ( 45.85ms)  45.81ms ( 45.81ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.60ms (  2.63us)   4.37ms (  2.49us)      1751
+       nlp_g  | 101.69ms ( 58.08us) 100.30ms ( 57.28us)      1751
+    nlp_grad  |  16.33ms (117.45us)  16.35ms (117.65us)       139
+  nlp_grad_f  |   7.12ms (  3.83us)   6.75ms (  3.63us)      1858
+   nlp_jac_g  | 355.36ms (190.65us) 354.16ms (190.00us)      1864
+       total  |  46.53ms ( 46.53ms)  46.53ms ( 46.53ms)         1
+
+    Norm of Control Inputs: 17.704418
+
+[ eval_imf ] episode 1: SUCCESS  steps=51  violations=0  reward=1.000  rough=2.320e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/1_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/1_fan.png
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.66ms (  2.63us)   4.42ms (  2.49us)      1772
+       nlp_g  | 102.91ms ( 58.07us) 101.50ms ( 57.28us)      1772
+    nlp_grad  |  16.44ms (117.45us)  16.47ms (117.66us)       140
+  nlp_grad_f  |   7.21ms (  3.83us)   6.83ms (  3.63us)      1880
+   nlp_jac_g  | 359.61ms (190.67us) 358.41ms (190.04us)      1886
+       total  | 103.33ms (103.33ms) 103.29ms (103.29ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.71ms (  2.63us)   4.46ms (  2.49us)      1790
+       nlp_g  | 103.96ms ( 58.08us) 102.54ms ( 57.29us)      1790
+    nlp_grad  |  16.58ms (117.60us)  16.61ms (117.81us)       141
+  nlp_grad_f  |   7.28ms (  3.83us)   6.90ms (  3.63us)      1899
+   nlp_jac_g  | 363.19ms (190.65us) 362.00ms (190.02us)      1905
+       total  |  85.12ms ( 85.12ms)  85.08ms ( 85.08ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.75ms (  2.63us)   4.51ms (  2.49us)      1807
+       nlp_g  | 104.94ms ( 58.07us) 103.52ms ( 57.29us)      1807
+    nlp_grad  |  16.70ms (117.61us)  16.73ms (117.82us)       142
+  nlp_grad_f  |   7.34ms (  3.83us)   6.96ms (  3.63us)      1917
+   nlp_jac_g  | 366.59ms (190.63us) 365.40ms (190.02us)      1923
+       total  |  87.83ms ( 87.83ms)  87.78ms ( 87.78ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.78ms (  2.63us)   4.53ms (  2.49us)      1818
+       nlp_g  | 105.57ms ( 58.07us) 104.14ms ( 57.29us)      1818
+    nlp_grad  |  16.82ms (117.60us)  16.85ms (117.81us)       143
+  nlp_grad_f  |   7.39ms (  3.83us)   7.00ms (  3.63us)      1929
+   nlp_jac_g  | 368.84ms (190.62us) 367.66ms (190.00us)      1935
+       total  |  54.69ms ( 54.69ms)  54.65ms ( 54.65ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.81ms (  2.63us)   4.56ms (  2.49us)      1827
+       nlp_g  | 106.08ms ( 58.06us) 104.65ms ( 57.28us)      1827
+    nlp_grad  |  16.93ms (117.58us)  16.96ms (117.79us)       144
+  nlp_grad_f  |   7.43ms (  3.83us)   7.04ms (  3.63us)      1939
+   nlp_jac_g  | 370.73ms (190.60us) 369.55ms (190.00us)      1945
+       total  |  40.01ms ( 40.01ms)  40.01ms ( 40.01ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.83ms (  2.63us)   4.58ms (  2.49us)      1837
+       nlp_g  | 106.66ms ( 58.06us) 105.22ms ( 57.28us)      1837
+    nlp_grad  |  17.05ms (117.57us)  17.08ms (117.78us)       145
+  nlp_grad_f  |   7.47ms (  3.83us)   7.08ms (  3.63us)      1950
+   nlp_jac_g  | 372.79ms (190.59us) 371.61ms (189.99us)      1956
+       total  |  51.55ms ( 51.55ms)  51.51ms ( 51.51ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.86ms (  2.63us)   4.61ms (  2.49us)      1848
+       nlp_g  | 107.29ms ( 58.06us) 105.85ms ( 57.28us)      1848
+    nlp_grad  |  17.17ms (117.58us)  17.20ms (117.78us)       146
+  nlp_grad_f  |   7.51ms (  3.83us)   7.12ms (  3.63us)      1962
+   nlp_jac_g  | 375.05ms (190.57us) 373.88ms (189.98us)      1968
+       total  |  60.14ms ( 60.14ms)  60.10ms ( 60.10ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.89ms (  2.63us)   4.64ms (  2.49us)      1860
+       nlp_g  | 107.98ms ( 58.05us) 106.53ms ( 57.28us)      1860
+    nlp_grad  |  17.29ms (117.60us)  17.32ms (117.80us)       147
+  nlp_grad_f  |   7.56ms (  3.83us)   7.17ms (  3.63us)      1975
+   nlp_jac_g  | 377.51ms (190.57us) 376.35ms (189.98us)      1981
+       total  |  68.24ms ( 68.24ms)  68.20ms ( 68.20ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.92ms (  2.63us)   4.66ms (  2.49us)      1870
+       nlp_g  | 108.55ms ( 58.05us) 107.10ms ( 57.27us)      1870
+    nlp_grad  |  17.42ms (117.72us)  17.45ms (117.91us)       148
+  nlp_grad_f  |   7.60ms (  3.83us)   7.21ms (  3.63us)      1986
+   nlp_jac_g  | 379.62ms (190.57us) 378.45ms (189.99us)      1992
+       total  |  53.39ms ( 53.39ms)  53.39ms ( 53.39ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.95ms (  2.63us)   4.69ms (  2.49us)      1880
+       nlp_g  | 109.13ms ( 58.05us) 107.67ms ( 57.27us)      1880
+    nlp_grad  |  17.54ms (117.70us)  17.57ms (117.89us)       149
+  nlp_grad_f  |   7.64ms (  3.82us)   7.25ms (  3.63us)      1997
+   nlp_jac_g  | 381.69ms (190.56us) 380.53ms (189.98us)      2003
+       total  |  52.57ms ( 52.57ms)  52.53ms ( 52.53ms)         1
+
+    Norm of Control Inputs: 16.449634
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   4.98ms (  2.63us)   4.72ms (  2.49us)      1894
+       nlp_g  | 109.94ms ( 58.04us) 108.47ms ( 57.27us)      1894
+    nlp_grad  |  17.65ms (117.67us)  17.68ms (117.86us)       150
+  nlp_grad_f  |   7.70ms (  3.83us)   7.31ms (  3.63us)      2012
+   nlp_jac_g  | 384.61ms (190.59us) 383.46ms (190.02us)      2018
+       total  |  67.83ms ( 67.83ms)  67.82ms ( 67.82ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.02ms (  2.63us)   4.76ms (  2.49us)      1909
+       nlp_g  | 110.79ms ( 58.04us) 109.32ms ( 57.27us)      1909
+    nlp_grad  |  17.78ms (117.77us)  17.81ms (117.96us)       151
+  nlp_grad_f  |   7.76ms (  3.83us)   7.36ms (  3.63us)      2028
+   nlp_jac_g  | 387.62ms (190.57us) 386.47ms (190.01us)      2034
+       total  |  73.33ms ( 73.33ms)  73.29ms ( 73.29ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.05ms (  2.63us)   4.79ms (  2.49us)      1920
+       nlp_g  | 111.42ms ( 58.03us) 109.95ms ( 57.26us)      1920
+    nlp_grad  |  17.90ms (117.78us)  17.93ms (117.96us)       152
+  nlp_grad_f  |   7.81ms (  3.83us)   7.41ms (  3.63us)      2040
+   nlp_jac_g  | 389.88ms (190.56us) 388.74ms (190.00us)      2046
+       total  |  55.00ms ( 55.00ms)  55.00ms ( 55.00ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.08ms (  2.63us)   4.82ms (  2.49us)      1931
+       nlp_g  | 112.05ms ( 58.03us) 110.57ms ( 57.26us)      1931
+    nlp_grad  |  18.02ms (117.77us)  18.05ms (117.96us)       153
+  nlp_grad_f  |   7.85ms (  3.83us)   7.45ms (  3.63us)      2052
+   nlp_jac_g  | 392.15ms (190.55us) 391.01ms (189.99us)      2058
+       total  |  59.25ms ( 59.25ms)  59.22ms ( 59.22ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.11ms (  2.63us)   4.84ms (  2.49us)      1942
+       nlp_g  | 112.69ms ( 58.03us) 111.20ms ( 57.26us)      1942
+    nlp_grad  |  18.14ms (117.76us)  18.16ms (117.94us)       154
+  nlp_grad_f  |   7.90ms (  3.83us)   7.49ms (  3.63us)      2064
+   nlp_jac_g  | 394.42ms (190.54us) 393.29ms (189.99us)      2070
+       total  |  60.07ms ( 60.07ms)  60.07ms ( 60.07ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.14ms (  2.63us)   4.87ms (  2.49us)      1953
+       nlp_g  | 113.33ms ( 58.03us) 111.83ms ( 57.26us)      1953
+    nlp_grad  |  18.25ms (117.75us)  18.28ms (117.94us)       155
+  nlp_grad_f  |   7.94ms (  3.83us)   7.54ms (  3.63us)      2076
+   nlp_jac_g  | 396.68ms (190.53us) 395.54ms (189.98us)      2082
+       total  |  60.04ms ( 60.04ms)  59.98ms ( 59.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.17ms (  2.63us)   4.90ms (  2.49us)      1966
+       nlp_g  | 114.08ms ( 58.02us) 112.58ms ( 57.26us)      1966
+    nlp_grad  |  18.37ms (117.74us)  18.40ms (117.93us)       156
+  nlp_grad_f  |   8.00ms (  3.83us)   7.59ms (  3.63us)      2090
+   nlp_jac_g  | 399.32ms (190.52us) 398.19ms (189.98us)      2096
+       total  |  73.69ms ( 73.69ms)  73.65ms ( 73.65ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.21ms (  2.63us)   4.94ms (  2.49us)      1979
+       nlp_g  | 114.83ms ( 58.02us) 113.32ms ( 57.26us)      1979
+    nlp_grad  |  18.49ms (117.75us)  18.51ms (117.93us)       157
+  nlp_grad_f  |   8.05ms (  3.82us)   7.64ms (  3.63us)      2104
+   nlp_jac_g  | 401.94ms (190.49us) 400.82ms (189.96us)      2110
+       total  |  74.14ms ( 74.14ms)  74.12ms ( 74.12ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.24ms (  2.63us)   4.97ms (  2.49us)      1992
+       nlp_g  | 115.57ms ( 58.02us) 114.06ms ( 57.26us)      1992
+    nlp_grad  |  18.60ms (117.75us)  18.63ms (117.93us)       158
+  nlp_grad_f  |   8.10ms (  3.82us)   7.69ms (  3.63us)      2118
+   nlp_jac_g  | 404.55ms (190.47us) 403.43ms (189.94us)      2124
+       total  |  73.17ms ( 73.17ms)  73.13ms ( 73.13ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.27ms (  2.63us)   5.00ms (  2.49us)      2003
+       nlp_g  | 116.20ms ( 58.01us) 114.68ms ( 57.26us)      2003
+    nlp_grad  |  18.72ms (117.76us)  18.75ms (117.94us)       159
+  nlp_grad_f  |   8.14ms (  3.82us)   7.73ms (  3.63us)      2130
+   nlp_jac_g  | 406.84ms (190.47us) 405.72ms (189.95us)      2136
+       total  |  58.87ms ( 58.87ms)  58.87ms ( 58.87ms)         1
+
+    Norm of Control Inputs: 8.986684
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.30ms (  2.63us)   5.03ms (  2.50us)      2014
+       nlp_g  | 116.86ms ( 58.02us) 115.34ms ( 57.27us)      2014
+    nlp_grad  |  18.84ms (117.73us)  18.87ms (117.91us)       160
+  nlp_grad_f  |   8.19ms (  3.82us)   7.78ms (  3.63us)      2142
+   nlp_jac_g  | 409.37ms (190.58us) 408.26ms (190.07us)      2148
+       total  |  60.80ms ( 60.80ms)  60.75ms ( 60.75ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.33ms (  2.63us)   5.05ms (  2.50us)      2024
+       nlp_g  | 117.43ms ( 58.02us) 115.91ms ( 57.27us)      2024
+    nlp_grad  |  19.02ms (118.12us)  19.05ms (118.31us)       161
+  nlp_grad_f  |   8.24ms (  3.83us)   7.83ms (  3.64us)      2153
+   nlp_jac_g  | 411.45ms (190.57us) 410.34ms (190.06us)      2159
+       total  |  48.31ms ( 48.31ms)  48.29ms ( 48.29ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.36ms (  2.64us)   5.07ms (  2.50us)      2033
+       nlp_g  | 117.95ms ( 58.02us) 116.42ms ( 57.26us)      2033
+    nlp_grad  |  19.13ms (118.11us)  19.16ms (118.29us)       162
+  nlp_grad_f  |   8.28ms (  3.83us)   7.87ms (  3.64us)      2163
+   nlp_jac_g  | 413.35ms (190.57us) 412.25ms (190.07us)      2169
+       total  |  45.34ms ( 45.34ms)  45.30ms ( 45.30ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.38ms (  2.64us)   5.10ms (  2.50us)      2042
+       nlp_g  | 118.48ms ( 58.02us) 116.94ms ( 57.27us)      2042
+    nlp_grad  |  19.25ms (118.11us)  19.28ms (118.29us)       163
+  nlp_grad_f  |   8.32ms (  3.83us)   7.90ms (  3.64us)      2173
+   nlp_jac_g  | 415.31ms (190.60us) 414.21ms (190.09us)      2179
+       total  |  45.02ms ( 45.02ms)  45.01ms ( 45.01ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.41ms (  2.64us)   5.12ms (  2.50us)      2051
+       nlp_g  | 119.00ms ( 58.02us) 117.45ms ( 57.27us)      2051
+    nlp_grad  |  19.37ms (118.12us)  19.40ms (118.30us)       164
+  nlp_grad_f  |   8.36ms (  3.83us)   7.94ms (  3.64us)      2183
+   nlp_jac_g  | 417.20ms (190.59us) 416.10ms (190.09us)      2189
+       total  |  45.24ms ( 45.24ms)  45.24ms ( 45.24ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.43ms (  2.64us)   5.14ms (  2.50us)      2059
+       nlp_g  | 119.45ms ( 58.01us) 117.91ms ( 57.26us)      2059
+    nlp_grad  |  19.49ms (118.10us)  19.52ms (118.28us)       165
+  nlp_grad_f  |   8.39ms (  3.83us)   7.97ms (  3.64us)      2192
+   nlp_jac_g  | 418.90ms (190.58us) 417.81ms (190.08us)      2198
+       total  |  37.97ms ( 37.97ms)  37.93ms ( 37.93ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.45ms (  2.64us)   5.16ms (  2.50us)      2067
+       nlp_g  | 119.92ms ( 58.02us) 118.37ms ( 57.27us)      2067
+    nlp_grad  |  19.60ms (118.07us)  19.63ms (118.25us)       166
+  nlp_grad_f  |   8.43ms (  3.83us)   8.01ms (  3.64us)      2201
+   nlp_jac_g  | 420.61ms (190.58us) 419.52ms (190.08us)      2207
+       total  |  38.93ms ( 38.93ms)  38.93ms ( 38.93ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.48ms (  2.64us)   5.19ms (  2.50us)      2077
+       nlp_g  | 120.51ms ( 58.02us) 118.96ms ( 57.27us)      2077
+    nlp_grad  |  19.72ms (118.06us)  19.75ms (118.24us)       167
+  nlp_grad_f  |   8.47ms (  3.83us)   8.04ms (  3.64us)      2212
+   nlp_jac_g  | 422.70ms (190.58us) 421.61ms (190.09us)      2218
+       total  |  53.62ms ( 53.62ms)  53.58ms ( 53.58ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.51ms (  2.64us)   5.21ms (  2.50us)      2087
+       nlp_g  | 121.09ms ( 58.02us) 119.53ms ( 57.27us)      2087
+    nlp_grad  |  19.83ms (118.02us)  19.86ms (118.21us)       168
+  nlp_grad_f  |   8.51ms (  3.83us)   8.08ms (  3.64us)      2223
+   nlp_jac_g  | 424.77ms (190.56us) 423.68ms (190.08us)      2229
+       total  |  53.49ms ( 53.49ms)  53.45ms ( 53.45ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.53ms (  2.64us)   5.23ms (  2.50us)      2095
+       nlp_g  | 121.55ms ( 58.02us) 119.99ms ( 57.27us)      2095
+    nlp_grad  |  19.95ms (118.02us)  19.98ms (118.20us)       169
+  nlp_grad_f  |   8.54ms (  3.83us)   8.12ms (  3.64us)      2232
+   nlp_jac_g  | 426.49ms (190.57us) 425.40ms (190.08us)      2238
+       total  |  38.50ms ( 38.50ms)  38.48ms ( 38.48ms)         1
+
+    Norm of Control Inputs: 8.192441
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.57ms (  2.64us)   5.27ms (  2.50us)      2111
+       nlp_g  | 122.47ms ( 58.02us) 120.90ms ( 57.27us)      2111
+    nlp_grad  |  20.06ms (118.02us)  20.09ms (118.20us)       170
+  nlp_grad_f  |   8.61ms (  3.83us)   8.18ms (  3.64us)      2249
+   nlp_jac_g  | 429.82ms (190.61us) 428.74ms (190.13us)      2255
+       total  |  97.04ms ( 97.04ms)  96.98ms ( 96.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.61ms (  2.64us)   5.30ms (  2.50us)      2123
+       nlp_g  | 123.16ms ( 58.01us) 121.58ms ( 57.27us)      2123
+    nlp_grad  |  20.20ms (118.13us)  20.23ms (118.31us)       171
+  nlp_grad_f  |   8.66ms (  3.83us)   8.23ms (  3.64us)      2262
+   nlp_jac_g  | 432.26ms (190.59us) 431.19ms (190.12us)      2268
+       total  |  66.34ms ( 66.34ms)  66.33ms ( 66.33ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.64ms (  2.64us)   5.34ms (  2.50us)      2137
+       nlp_g  | 123.96ms ( 58.01us) 122.38ms ( 57.27us)      2137
+    nlp_grad  |  20.32ms (118.15us)  20.35ms (118.33us)       172
+  nlp_grad_f  |   8.72ms (  3.83us)   8.28ms (  3.64us)      2277
+   nlp_jac_g  | 435.08ms (190.57us) 434.01ms (190.11us)      2283
+       total  |  80.60ms ( 80.60ms)  80.60ms ( 80.60ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.67ms (  2.64us)   5.36ms (  2.50us)      2148
+       nlp_g  | 124.59ms ( 58.00us) 123.00ms ( 57.26us)      2148
+    nlp_grad  |  20.43ms (118.11us)  20.46ms (118.29us)       173
+  nlp_grad_f  |   8.76ms (  3.83us)   8.33ms (  3.64us)      2289
+   nlp_jac_g  | 437.34ms (190.56us) 436.28ms (190.10us)      2295
+       total  |  59.53ms ( 59.53ms)  59.53ms ( 59.53ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.69ms (  2.64us)   5.39ms (  2.50us)      2157
+       nlp_g  | 125.10ms ( 58.00us) 123.52ms ( 57.26us)      2157
+    nlp_grad  |  20.55ms (118.07us)  20.58ms (118.25us)       174
+  nlp_grad_f  |   8.80ms (  3.83us)   8.36ms (  3.64us)      2299
+   nlp_jac_g  | 439.23ms (190.56us) 438.17ms (190.10us)      2305
+       total  |  44.85ms ( 44.85ms)  44.85ms ( 44.85ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.72ms (  2.64us)   5.41ms (  2.50us)      2166
+       nlp_g  | 125.62ms ( 58.00us) 124.03ms ( 57.26us)      2166
+    nlp_grad  |  20.67ms (118.09us)  20.70ms (118.26us)       175
+  nlp_grad_f  |   8.84ms (  3.83us)   8.40ms (  3.64us)      2309
+   nlp_jac_g  | 441.12ms (190.55us) 440.07ms (190.09us)      2315
+       total  |  45.73ms ( 45.73ms)  45.70ms ( 45.70ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.74ms (  2.64us)   5.43ms (  2.50us)      2175
+       nlp_g  | 126.14ms ( 57.99us) 124.54ms ( 57.26us)      2175
+    nlp_grad  |  20.78ms (118.07us)  20.81ms (118.24us)       176
+  nlp_grad_f  |   8.88ms (  3.83us)   8.44ms (  3.64us)      2319
+   nlp_jac_g  | 443.05ms (190.56us) 442.00ms (190.11us)      2325
+       total  |  45.75ms ( 45.75ms)  45.75ms ( 45.75ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.76ms (  2.64us)   5.46ms (  2.50us)      2184
+       nlp_g  | 126.66ms ( 57.99us) 125.06ms ( 57.26us)      2184
+    nlp_grad  |  20.90ms (118.09us)  20.93ms (118.27us)       177
+  nlp_grad_f  |   8.92ms (  3.83us)   8.47ms (  3.64us)      2329
+   nlp_jac_g  | 444.99ms (190.57us) 443.94ms (190.12us)      2335
+       total  |  45.77ms ( 45.77ms)  45.73ms ( 45.73ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.79ms (  2.64us)   5.48ms (  2.50us)      2192
+       nlp_g  | 127.11ms ( 57.99us) 125.51ms ( 57.26us)      2192
+    nlp_grad  |  21.02ms (118.07us)  21.05ms (118.25us)       178
+  nlp_grad_f  |   8.95ms (  3.83us)   8.51ms (  3.64us)      2338
+   nlp_jac_g  | 446.70ms (190.57us) 445.65ms (190.12us)      2344
+       total  |  38.10ms ( 38.10ms)  38.10ms ( 38.10ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.81ms (  2.64us)   5.50ms (  2.50us)      2200
+       nlp_g  | 127.57ms ( 57.99us) 125.96ms ( 57.26us)      2200
+    nlp_grad  |  21.13ms (118.06us)  21.16ms (118.24us)       179
+  nlp_grad_f  |   8.99ms (  3.83us)   8.54ms (  3.64us)      2347
+   nlp_jac_g  | 448.40ms (190.57us) 447.36ms (190.12us)      2353
+       total  |  37.93ms ( 37.93ms)  37.90ms ( 37.90ms)         1
+
+    Norm of Control Inputs: 14.514726
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.84ms (  2.64us)   5.53ms (  2.50us)      2211
+       nlp_g  | 128.20ms ( 57.98us) 126.59ms ( 57.26us)      2211
+    nlp_grad  |  21.25ms (118.07us)  21.28ms (118.25us)       180
+  nlp_grad_f  |   9.04ms (  3.83us)   8.59ms (  3.64us)      2359
+   nlp_jac_g  | 450.80ms (190.61us) 449.76ms (190.17us)      2365
+       total  |  55.52ms ( 55.52ms)  55.45ms ( 55.45ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.87ms (  2.64us)   5.55ms (  2.50us)      2220
+       nlp_g  | 128.72ms ( 57.98us) 127.10ms ( 57.25us)      2220
+    nlp_grad  |  21.39ms (118.17us)  21.42ms (118.34us)       181
+  nlp_grad_f  |   9.08ms (  3.83us)   8.63ms (  3.64us)      2369
+   nlp_jac_g  | 452.68ms (190.60us) 451.64ms (190.17us)      2375
+       total  |  39.86ms ( 39.86ms)  39.85ms ( 39.85ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.89ms (  2.64us)   5.57ms (  2.50us)      2229
+       nlp_g  | 129.24ms ( 57.98us) 127.61ms ( 57.25us)      2229
+    nlp_grad  |  21.50ms (118.14us)  21.53ms (118.31us)       182
+  nlp_grad_f  |   9.12ms (  3.83us)   8.67ms (  3.64us)      2379
+   nlp_jac_g  | 454.56ms (190.59us) 453.53ms (190.16us)      2385
+       total  |  39.34ms ( 39.34ms)  39.34ms ( 39.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.92ms (  2.64us)   5.59ms (  2.50us)      2238
+       nlp_g  | 129.75ms ( 57.98us) 128.12ms ( 57.25us)      2238
+    nlp_grad  |  21.62ms (118.14us)  21.65ms (118.31us)       183
+  nlp_grad_f  |   9.16ms (  3.83us)   8.70ms (  3.64us)      2389
+   nlp_jac_g  | 456.45ms (190.59us) 455.43ms (190.16us)      2395
+       total  |  40.34ms ( 40.34ms)  40.34ms ( 40.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.94ms (  2.64us)   5.62ms (  2.50us)      2248
+       nlp_g  | 130.32ms ( 57.97us) 128.69ms ( 57.25us)      2248
+    nlp_grad  |  21.73ms (118.10us)  21.76ms (118.27us)       184
+  nlp_grad_f  |   9.20ms (  3.83us)   8.74ms (  3.64us)      2400
+   nlp_jac_g  | 458.53ms (190.58us) 457.50ms (190.15us)      2406
+       total  |  47.85ms ( 47.85ms)  47.85ms ( 47.85ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   5.98ms (  2.64us)   5.65ms (  2.50us)      2260
+       nlp_g  | 131.01ms ( 57.97us) 129.37ms ( 57.24us)      2260
+    nlp_grad  |  21.84ms (118.07us)  21.87ms (118.23us)       185
+  nlp_grad_f  |   9.25ms (  3.83us)   8.79ms (  3.64us)      2413
+   nlp_jac_g  | 461.02ms (190.58us) 459.97ms (190.15us)      2419
+       total  |  62.95ms ( 62.95ms)  62.92ms ( 62.92ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.01ms (  2.65us)   5.68ms (  2.50us)      2271
+       nlp_g  | 131.64ms ( 57.96us) 129.99ms ( 57.24us)      2271
+    nlp_grad  |  21.96ms (118.06us)  21.99ms (118.23us)       186
+  nlp_grad_f  |   9.29ms (  3.83us)   8.83ms (  3.64us)      2425
+   nlp_jac_g  | 463.27ms (190.57us) 462.22ms (190.14us)      2431
+       total  |  54.58ms ( 54.58ms)  54.58ms ( 54.58ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.04ms (  2.65us)   5.71ms (  2.50us)      2283
+       nlp_g  | 132.36ms ( 57.98us) 130.71ms ( 57.25us)      2283
+    nlp_grad  |  22.08ms (118.07us)  22.11ms (118.23us)       187
+  nlp_grad_f  |   9.34ms (  3.83us)   8.88ms (  3.64us)      2438
+   nlp_jac_g  | 465.77ms (190.58us) 464.73ms (190.15us)      2444
+       total  |  62.09ms ( 62.09ms)  62.08ms ( 62.08ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.07ms (  2.65us)   5.73ms (  2.50us)      2294
+       nlp_g  | 132.99ms ( 57.97us) 131.33ms ( 57.25us)      2294
+    nlp_grad  |  22.20ms (118.06us)  22.23ms (118.22us)       188
+  nlp_grad_f  |   9.38ms (  3.83us)   8.92ms (  3.64us)      2450
+   nlp_jac_g  | 468.02ms (190.56us) 466.98ms (190.14us)      2456
+       total  |  55.20ms ( 55.20ms)  55.15ms ( 55.15ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.10ms (  2.65us)   5.76ms (  2.50us)      2304
+       nlp_g  | 133.56ms ( 57.97us) 131.90ms ( 57.25us)      2304
+    nlp_grad  |  22.31ms (118.05us)  22.34ms (118.20us)       189
+  nlp_grad_f  |   9.42ms (  3.83us)   8.96ms (  3.64us)      2461
+   nlp_jac_g  | 470.08ms (190.55us) 469.05ms (190.13us)      2467
+       total  |  47.91ms ( 47.91ms)  47.87ms ( 47.87ms)         1
+
+    Norm of Control Inputs: 6.010174
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.27ms (  2.64us)   5.93ms (  2.50us)      2373
+       nlp_g  | 137.51ms ( 57.95us) 135.82ms ( 57.24us)      2373
+    nlp_grad  |  22.43ms (118.05us)  22.46ms (118.21us)       190
+  nlp_grad_f  |   9.62ms (  3.82us)   9.15ms (  3.64us)      2517
+   nlp_jac_g  | 481.92ms (190.48us) 480.90ms (190.08us)      2530
+       total  | 247.99ms (247.99ms) 247.90ms (247.90ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.37ms (  2.64us)   6.02ms (  2.49us)      2414
+       nlp_g  | 139.84ms ( 57.93us) 138.13ms ( 57.22us)      2414
+    nlp_grad  |  22.57ms (118.16us)  22.60ms (118.32us)       191
+  nlp_grad_f  |   9.75ms (  3.82us)   9.28ms (  3.63us)      2554
+   nlp_jac_g  | 488.99ms (190.42us) 487.99ms (190.03us)      2568
+       total  | 129.51ms (129.51ms) 129.48ms (129.48ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.47ms (  2.63us)   6.12ms (  2.49us)      2456
+       nlp_g  | 142.20ms ( 57.90us) 140.48ms ( 57.20us)      2456
+    nlp_grad  |  22.69ms (118.16us)  22.72ms (118.32us)       192
+  nlp_grad_f  |   9.88ms (  3.82us)   9.40ms (  3.63us)      2588
+   nlp_jac_g  | 495.49ms (190.35us) 494.50ms (189.97us)      2603
+       total  | 130.32ms (130.32ms) 130.24ms (130.24ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.61ms (  2.63us)   6.25ms (  2.49us)      2513
+       nlp_g  | 145.43ms ( 57.87us) 143.69ms ( 57.18us)      2513
+    nlp_grad  |  22.81ms (118.17us)  22.84ms (118.33us)       193
+  nlp_grad_f  |  10.04ms (  3.81us)   9.55ms (  3.63us)      2633
+   nlp_jac_g  | 504.28ms (190.30us) 503.31ms (189.93us)      2650
+       total  | 227.06ms (227.06ms) 227.05ms (227.05ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.66ms (  2.63us)   6.29ms (  2.49us)      2529
+       nlp_g  | 146.35ms ( 57.87us) 144.60ms ( 57.18us)      2529
+    nlp_grad  |  22.93ms (118.17us)  22.96ms (118.34us)       194
+  nlp_grad_f  |  10.10ms (  3.81us)   9.61ms (  3.63us)      2650
+   nlp_jac_g  | 507.50ms (190.29us) 506.53ms (189.92us)      2667
+       total  |  91.91ms ( 91.91ms)  91.87ms ( 91.87ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.68ms (  2.63us)   6.31ms (  2.49us)      2538
+       nlp_g  | 146.88ms ( 57.87us) 145.12ms ( 57.18us)      2538
+    nlp_grad  |  23.05ms (118.18us)  23.08ms (118.35us)       195
+  nlp_grad_f  |  10.14ms (  3.81us)   9.65ms (  3.63us)      2660
+   nlp_jac_g  | 509.39ms (190.28us) 508.42ms (189.92us)      2677
+       total  |  44.94ms ( 44.94ms)  44.90ms ( 44.90ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.71ms (  2.63us)   6.34ms (  2.49us)      2547
+       nlp_g  | 147.39ms ( 57.87us) 145.63ms ( 57.18us)      2547
+    nlp_grad  |  23.16ms (118.15us)  23.19ms (118.32us)       196
+  nlp_grad_f  |  10.18ms (  3.81us)   9.68ms (  3.63us)      2670
+   nlp_jac_g  | 511.28ms (190.28us) 510.32ms (189.92us)      2687
+       total  |  45.25ms ( 45.25ms)  45.25ms ( 45.25ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.73ms (  2.63us)   6.36ms (  2.49us)      2556
+       nlp_g  | 147.91ms ( 57.87us) 146.14ms ( 57.18us)      2556
+    nlp_grad  |  23.27ms (118.13us)  23.31ms (118.30us)       197
+  nlp_grad_f  |  10.21ms (  3.81us)   9.72ms (  3.63us)      2680
+   nlp_jac_g  | 513.17ms (190.27us) 512.21ms (189.92us)      2697
+       total  |  45.03ms ( 45.03ms)  45.04ms ( 45.04ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.75ms (  2.63us)   6.38ms (  2.49us)      2564
+       nlp_g  | 148.37ms ( 57.87us) 146.60ms ( 57.18us)      2564
+    nlp_grad  |  23.39ms (118.12us)  23.42ms (118.29us)       198
+  nlp_grad_f  |  10.25ms (  3.81us)   9.75ms (  3.63us)      2689
+   nlp_jac_g  | 514.88ms (190.27us) 513.92ms (189.92us)      2706
+       total  |  38.62ms ( 38.62ms)  38.58ms ( 38.58ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.77ms (  2.63us)   6.40ms (  2.49us)      2572
+       nlp_g  | 148.83ms ( 57.86us) 147.05ms ( 57.17us)      2572
+    nlp_grad  |  23.55ms (118.33us)  23.55ms (118.33us)       199
+  nlp_grad_f  |  10.29ms (  3.81us)   9.78ms (  3.63us)      2698
+   nlp_jac_g  | 516.57ms (190.27us) 515.62ms (189.91us)      2715
+       total  |  38.34ms ( 38.34ms)  38.34ms ( 38.34ms)         1
+
+    Norm of Control Inputs: 20.581146
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.81ms (  2.63us)   6.43ms (  2.49us)      2584
+       nlp_g  | 149.52ms ( 57.86us) 147.74ms ( 57.17us)      2584
+    nlp_grad  |  23.66ms (118.31us)  23.66ms (118.30us)       200
+  nlp_grad_f  |  10.34ms (  3.81us)   9.84ms (  3.63us)      2711
+   nlp_jac_g  | 519.12ms (190.29us) 518.17ms (189.94us)      2728
+       total  |  62.56ms ( 62.56ms)  62.55ms ( 62.55ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.84ms (  2.63us)   6.46ms (  2.49us)      2595
+       nlp_g  | 150.16ms ( 57.86us) 148.37ms ( 57.18us)      2595
+    nlp_grad  |  23.80ms (118.40us)  23.80ms (118.40us)       201
+  nlp_grad_f  |  10.38ms (  3.81us)   9.88ms (  3.63us)      2723
+   nlp_jac_g  | 521.38ms (190.28us) 520.43ms (189.94us)      2740
+       total  |  53.66ms ( 53.66ms)  53.61ms ( 53.61ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.87ms (  2.63us)   6.49ms (  2.49us)      2609
+       nlp_g  | 150.96ms ( 57.86us) 149.17ms ( 57.17us)      2609
+    nlp_grad  |  23.92ms (118.41us)  23.92ms (118.41us)       202
+  nlp_grad_f  |  10.44ms (  3.81us)   9.94ms (  3.63us)      2738
+   nlp_jac_g  | 524.20ms (190.27us) 523.26ms (189.93us)      2755
+       total  |  82.12ms ( 82.12ms)  82.07ms ( 82.07ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.90ms (  2.63us)   6.52ms (  2.49us)      2620
+       nlp_g  | 151.59ms ( 57.86us) 149.79ms ( 57.17us)      2620
+    nlp_grad  |  24.04ms (118.42us)  24.04ms (118.43us)       203
+  nlp_grad_f  |  10.48ms (  3.81us)   9.98ms (  3.63us)      2750
+   nlp_jac_g  | 526.48ms (190.27us) 525.54ms (189.93us)      2767
+       total  |  59.06ms ( 59.06ms)  59.03ms ( 59.03ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.93ms (  2.63us)   6.55ms (  2.49us)      2631
+       nlp_g  | 152.22ms ( 57.86us) 150.41ms ( 57.17us)      2631
+    nlp_grad  |  24.16ms (118.42us)  24.16ms (118.42us)       204
+  nlp_grad_f  |  10.52ms (  3.81us)  10.02ms (  3.63us)      2762
+   nlp_jac_g  | 528.73ms (190.26us) 527.79ms (189.92us)      2779
+       total  |  59.59ms ( 59.59ms)  59.58ms ( 59.58ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.96ms (  2.63us)   6.58ms (  2.49us)      2644
+       nlp_g  | 152.97ms ( 57.85us) 151.15ms ( 57.17us)      2644
+    nlp_grad  |  24.27ms (118.39us)  24.27ms (118.40us)       205
+  nlp_grad_f  |  10.57ms (  3.81us)  10.07ms (  3.63us)      2776
+   nlp_jac_g  | 531.35ms (190.24us) 530.42ms (189.91us)      2793
+       total  |  74.84ms ( 74.84ms)  74.84ms ( 74.84ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   6.99ms (  2.63us)   6.61ms (  2.49us)      2654
+       nlp_g  | 153.54ms ( 57.85us) 151.72ms ( 57.17us)      2654
+    nlp_grad  |  24.39ms (118.37us)  24.39ms (118.38us)       206
+  nlp_grad_f  |  10.62ms (  3.81us)  10.11ms (  3.63us)      2787
+   nlp_jac_g  | 533.43ms (190.24us) 532.50ms (189.91us)      2804
+       total  |  52.38ms ( 52.38ms)  52.34ms ( 52.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.01ms (  2.63us)   6.63ms (  2.49us)      2663
+       nlp_g  | 154.13ms ( 57.88us) 152.31ms ( 57.19us)      2663
+    nlp_grad  |  24.50ms (118.37us)  24.51ms (118.38us)       207
+  nlp_grad_f  |  10.66ms (  3.81us)  10.15ms (  3.63us)      2797
+   nlp_jac_g  | 535.32ms (190.23us) 534.39ms (189.91us)      2814
+       total  |  44.91ms ( 44.91ms)  44.83ms ( 44.83ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.04ms (  2.63us)   6.65ms (  2.49us)      2672
+       nlp_g  | 154.65ms ( 57.88us) 152.82ms ( 57.19us)      2672
+    nlp_grad  |  24.62ms (118.38us)  24.63ms (118.40us)       208
+  nlp_grad_f  |  10.70ms (  3.81us)  10.19ms (  3.63us)      2807
+   nlp_jac_g  | 537.22ms (190.23us) 536.29ms (189.91us)      2824
+       total  |  44.35ms ( 44.35ms)  44.35ms ( 44.35ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.06ms (  2.63us)   6.68ms (  2.49us)      2681
+       nlp_g  | 155.17ms ( 57.88us) 153.33ms ( 57.19us)      2681
+    nlp_grad  |  24.74ms (118.39us)  24.75ms (118.40us)       209
+  nlp_grad_f  |  10.74ms (  3.81us)  10.22ms (  3.63us)      2817
+   nlp_jac_g  | 539.10ms (190.23us) 538.18ms (189.90us)      2834
+       total  |  44.12ms ( 44.12ms)  44.08ms ( 44.08ms)         1
+
+    Norm of Control Inputs: 16.714724
+
+[ eval_imf ] episode 2: SUCCESS  steps=50  violations=0  reward=1.000  rough=2.470e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/2_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/2_fan.png
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.11ms (  2.63us)   6.73ms (  2.49us)      2702
+       nlp_g  | 156.39ms ( 57.88us) 154.54ms ( 57.20us)      2702
+    nlp_grad  |  24.86ms (118.38us)  24.86ms (118.39us)       210
+  nlp_grad_f  |  10.82ms (  3.81us)  10.31ms (  3.63us)      2839
+   nlp_jac_g  | 543.43ms (190.28us) 542.51ms (189.96us)      2856
+       total  |  93.15ms ( 93.15ms)  93.09ms ( 93.09ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.15ms (  2.63us)   6.76ms (  2.49us)      2716
+       nlp_g  | 157.19ms ( 57.88us) 155.34ms ( 57.19us)      2716
+    nlp_grad  |  24.99ms (118.45us)  25.00ms (118.47us)       211
+  nlp_grad_f  |  10.88ms (  3.81us)  10.36ms (  3.63us)      2854
+   nlp_jac_g  | 546.27ms (190.27us) 545.36ms (189.95us)      2871
+       total  |  77.94ms ( 77.94ms)  77.89ms ( 77.89ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.19ms (  2.63us)   6.80ms (  2.49us)      2732
+       nlp_g  | 158.13ms ( 57.88us) 156.27ms ( 57.20us)      2732
+    nlp_grad  |  25.11ms (118.43us)  25.11ms (118.45us)       212
+  nlp_grad_f  |  10.95ms (  3.81us)  10.42ms (  3.63us)      2871
+   nlp_jac_g  | 549.49ms (190.27us) 548.59ms (189.95us)      2888
+       total  |  96.65ms ( 96.65ms)  96.62ms ( 96.62ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.23ms (  2.63us)   6.83ms (  2.49us)      2744
+       nlp_g  | 158.82ms ( 57.88us) 156.95ms ( 57.20us)      2744
+    nlp_grad  |  25.22ms (118.40us)  25.23ms (118.43us)       213
+  nlp_grad_f  |  11.00ms (  3.81us)  10.47ms (  3.63us)      2884
+   nlp_jac_g  | 551.96ms (190.26us) 551.05ms (189.95us)      2901
+       total  |  66.70ms ( 66.70ms)  66.72ms ( 66.72ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.26ms (  2.63us)   6.87ms (  2.49us)      2757
+       nlp_g  | 159.58ms ( 57.88us) 157.71ms ( 57.20us)      2757
+    nlp_grad  |  25.34ms (118.43us)  25.35ms (118.45us)       214
+  nlp_grad_f  |  11.05ms (  3.81us)  10.52ms (  3.63us)      2898
+   nlp_jac_g  | 554.61ms (190.26us) 553.71ms (189.95us)      2915
+       total  |  74.47ms ( 74.47ms)  74.44ms ( 74.44ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.30ms (  2.63us)   6.90ms (  2.49us)      2771
+       nlp_g  | 160.39ms ( 57.88us) 158.51ms ( 57.20us)      2771
+    nlp_grad  |  25.46ms (118.40us)  25.46ms (118.43us)       215
+  nlp_grad_f  |  11.10ms (  3.81us)  10.57ms (  3.63us)      2913
+   nlp_jac_g  | 557.47ms (190.26us) 556.58ms (189.96us)      2930
+       total  |  82.31ms ( 82.31ms)  82.27ms ( 82.27ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.34ms (  2.64us)   6.94ms (  2.49us)      2785
+       nlp_g  | 161.20ms ( 57.88us) 159.31ms ( 57.20us)      2785
+    nlp_grad  |  25.57ms (118.38us)  25.58ms (118.41us)       216
+  nlp_grad_f  |  11.16ms (  3.81us)  10.63ms (  3.63us)      2928
+   nlp_jac_g  | 560.30ms (190.25us) 559.41ms (189.95us)      2945
+       total  |  83.42ms ( 83.42ms)  83.37ms ( 83.37ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.37ms (  2.64us)   6.97ms (  2.49us)      2797
+       nlp_g  | 161.88ms ( 57.88us) 159.99ms ( 57.20us)      2797
+    nlp_grad  |  25.68ms (118.36us)  25.69ms (118.39us)       217
+  nlp_grad_f  |  11.21ms (  3.81us)  10.67ms (  3.63us)      2941
+   nlp_jac_g  | 562.75ms (190.25us) 561.87ms (189.95us)      2958
+       total  |  68.33ms ( 68.33ms)  68.30ms ( 68.30ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.41ms (  2.64us)   7.00ms (  2.49us)      2811
+       nlp_g  | 162.69ms ( 57.87us) 160.79ms ( 57.20us)      2811
+    nlp_grad  |  25.80ms (118.36us)  25.81ms (118.39us)       218
+  nlp_grad_f  |  11.26ms (  3.81us)  10.73ms (  3.63us)      2956
+   nlp_jac_g  | 565.56ms (190.23us) 564.69ms (189.94us)      2973
+       total  |  82.76ms ( 82.76ms)  82.73ms ( 82.73ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.44ms (  2.64us)   7.03ms (  2.49us)      2823
+       nlp_g  | 163.37ms ( 57.87us) 161.47ms ( 57.20us)      2823
+    nlp_grad  |  25.92ms (118.34us)  25.92ms (118.37us)       219
+  nlp_grad_f  |  11.31ms (  3.81us)  10.77ms (  3.63us)      2969
+   nlp_jac_g  | 568.03ms (190.23us) 567.16ms (189.94us)      2986
+       total  |  68.54ms ( 68.54ms)  68.51ms ( 68.51ms)         1
+
+    Norm of Control Inputs: 20.202306
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.49ms (  2.64us)   7.08ms (  2.49us)      2840
+       nlp_g  | 164.35ms ( 57.87us) 162.44ms ( 57.20us)      2840
+    nlp_grad  |  26.03ms (118.31us)  26.03ms (118.34us)       220
+  nlp_grad_f  |  11.39ms (  3.81us)  10.84ms (  3.63us)      2987
+   nlp_jac_g  | 571.60ms (190.28us) 570.74ms (189.99us)      3004
+       total  |  84.62ms ( 84.62ms)  84.56ms ( 84.56ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.54ms (  2.64us)   7.12ms (  2.49us)      2859
+       nlp_g  | 165.44ms ( 57.87us) 163.52ms ( 57.19us)      2859
+    nlp_grad  |  26.17ms (118.42us)  26.18ms (118.45us)       221
+  nlp_grad_f  |  11.46ms (  3.81us)  10.91ms (  3.63us)      3007
+   nlp_jac_g  | 575.40ms (190.28us) 574.52ms (189.99us)      3024
+       total  |  87.24ms ( 87.24ms)  87.18ms ( 87.18ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.58ms (  2.64us)   7.16ms (  2.49us)      2876
+       nlp_g  | 166.43ms ( 57.87us) 164.50ms ( 57.20us)      2876
+    nlp_grad  |  26.29ms (118.41us)  26.29ms (118.44us)       222
+  nlp_grad_f  |  11.53ms (  3.81us)  10.97ms (  3.63us)      3025
+   nlp_jac_g  | 578.79ms (190.27us) 577.91ms (189.98us)      3042
+       total  |  89.21ms ( 89.21ms)  89.18ms ( 89.18ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.61ms (  2.63us)   7.20ms (  2.49us)      2889
+       nlp_g  | 167.18ms ( 57.87us) 165.24ms ( 57.20us)      2889
+    nlp_grad  |  26.40ms (118.39us)  26.41ms (118.42us)       223
+  nlp_grad_f  |  11.58ms (  3.81us)  11.02ms (  3.63us)      3039
+   nlp_jac_g  | 581.43ms (190.26us) 580.56ms (189.97us)      3056
+       total  |  59.85ms ( 59.85ms)  59.81ms ( 59.81ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.65ms (  2.63us)   7.23ms (  2.49us)      2903
+       nlp_g  | 167.98ms ( 57.86us) 166.03ms ( 57.19us)      2903
+    nlp_grad  |  26.52ms (118.38us)  26.52ms (118.41us)       224
+  nlp_grad_f  |  11.64ms (  3.81us)  11.08ms (  3.63us)      3054
+   nlp_jac_g  | 584.26ms (190.25us) 583.43ms (189.98us)      3071
+       total  |  77.66ms ( 77.66ms)  77.66ms ( 77.66ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.68ms (  2.63us)   7.26ms (  2.49us)      2915
+       nlp_g  | 168.69ms ( 57.87us) 166.73ms ( 57.20us)      2915
+    nlp_grad  |  26.64ms (118.38us)  26.64ms (118.41us)       225
+  nlp_grad_f  |  11.68ms (  3.81us)  11.12ms (  3.63us)      3067
+   nlp_jac_g  | 586.71ms (190.24us) 585.88ms (189.97us)      3084
+       total  |  62.30ms ( 62.30ms)  62.27ms ( 62.27ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.71ms (  2.63us)   7.29ms (  2.49us)      2926
+       nlp_g  | 169.31ms ( 57.86us) 167.36ms ( 57.20us)      2926
+    nlp_grad  |  26.75ms (118.38us)  26.76ms (118.41us)       226
+  nlp_grad_f  |  11.73ms (  3.81us)  11.17ms (  3.63us)      3079
+   nlp_jac_g  | 588.98ms (190.24us) 588.16ms (189.97us)      3096
+       total  |  54.80ms ( 54.80ms)  54.80ms ( 54.80ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.73ms (  2.63us)   7.31ms (  2.49us)      2936
+       nlp_g  | 169.89ms ( 57.86us) 167.92ms ( 57.19us)      2936
+    nlp_grad  |  26.87ms (118.36us)  26.87ms (118.39us)       227
+  nlp_grad_f  |  11.77ms (  3.81us)  11.20ms (  3.63us)      3090
+   nlp_jac_g  | 591.05ms (190.23us) 590.22ms (189.97us)      3107
+       total  |  47.45ms ( 47.45ms)  47.39ms ( 47.39ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.76ms (  2.63us)   7.34ms (  2.49us)      2947
+       nlp_g  | 170.52ms ( 57.86us) 168.55ms ( 57.19us)      2947
+    nlp_grad  |  26.98ms (118.35us)  26.99ms (118.38us)       228
+  nlp_grad_f  |  11.81ms (  3.81us)  11.25ms (  3.63us)      3102
+   nlp_jac_g  | 593.30ms (190.22us) 592.49ms (189.96us)      3119
+       total  |  59.98ms ( 59.98ms)  59.95ms ( 59.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.79ms (  2.63us)   7.36ms (  2.49us)      2956
+       nlp_g  | 171.03ms ( 57.86us) 169.06ms ( 57.19us)      2956
+    nlp_grad  |  27.10ms (118.34us)  27.11ms (118.37us)       229
+  nlp_grad_f  |  11.85ms (  3.81us)  11.28ms (  3.63us)      3112
+   nlp_jac_g  | 595.21ms (190.22us) 594.40ms (189.96us)      3129
+       total  |  46.35ms ( 46.35ms)  46.35ms ( 46.35ms)         1
+
+    Norm of Control Inputs: 24.182671
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.83ms (  2.63us)   7.40ms (  2.49us)      2972
+       nlp_g  | 171.95ms ( 57.86us) 169.97ms ( 57.19us)      2972
+    nlp_grad  |  27.21ms (118.31us)  27.22ms (118.34us)       230
+  nlp_grad_f  |  11.92ms (  3.81us)  11.35ms (  3.63us)      3129
+   nlp_jac_g  | 598.54ms (190.25us) 597.73ms (190.00us)      3146
+       total  |  78.33ms ( 78.33ms)  78.28ms ( 78.28ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.87ms (  2.63us)   7.44ms (  2.49us)      2987
+       nlp_g  | 172.81ms ( 57.85us) 170.82ms ( 57.19us)      2987
+    nlp_grad  |  27.35ms (118.39us)  27.35ms (118.42us)       231
+  nlp_grad_f  |  11.99ms (  3.81us)  11.41ms (  3.63us)      3145
+   nlp_jac_g  | 601.54ms (190.24us) 600.74ms (189.99us)      3162
+       total  |  70.05ms ( 70.05ms)  70.02ms ( 70.02ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.90ms (  2.63us)   7.48ms (  2.49us)      3003
+       nlp_g  | 173.73ms ( 57.85us) 171.74ms ( 57.19us)      3003
+    nlp_grad  |  27.46ms (118.38us)  27.47ms (118.41us)       232
+  nlp_grad_f  |  12.05ms (  3.81us)  11.47ms (  3.63us)      3162
+   nlp_jac_g  | 604.73ms (190.23us) 603.93ms (189.98us)      3179
+       total  |  81.32ms ( 81.32ms)  81.32ms ( 81.32ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.94ms (  2.63us)   7.52ms (  2.49us)      3017
+       nlp_g  | 174.53ms ( 57.85us) 172.53ms ( 57.19us)      3017
+    nlp_grad  |  27.57ms (118.34us)  27.58ms (118.38us)       233
+  nlp_grad_f  |  12.11ms (  3.81us)  11.52ms (  3.63us)      3177
+   nlp_jac_g  | 607.54ms (190.21us) 606.75ms (189.97us)      3194
+       total  |  76.98ms ( 76.98ms)  76.96ms ( 76.96ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   7.97ms (  2.63us)   7.55ms (  2.49us)      3029
+       nlp_g  | 175.21ms ( 57.84us) 173.21ms ( 57.18us)      3029
+    nlp_grad  |  27.69ms (118.32us)  27.70ms (118.36us)       234
+  nlp_grad_f  |  12.15ms (  3.81us)  11.57ms (  3.63us)      3190
+   nlp_jac_g  | 609.99ms (190.21us) 609.20ms (189.96us)      3207
+       total  |  68.36ms ( 68.36ms)  68.39ms ( 68.39ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.00ms (  2.63us)   7.58ms (  2.49us)      3040
+       nlp_g  | 175.84ms ( 57.84us) 173.83ms ( 57.18us)      3040
+    nlp_grad  |  27.81ms (118.32us)  27.81ms (118.35us)       235
+  nlp_grad_f  |  12.20ms (  3.81us)  11.61ms (  3.63us)      3202
+   nlp_jac_g  | 612.24ms (190.20us) 611.46ms (189.95us)      3219
+       total  |  61.01ms ( 61.01ms)  60.98ms ( 60.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.03ms (  2.63us)   7.60ms (  2.49us)      3050
+       nlp_g  | 176.43ms ( 57.84us) 174.42ms ( 57.19us)      3050
+    nlp_grad  |  27.92ms (118.31us)  27.93ms (118.34us)       236
+  nlp_grad_f  |  12.24ms (  3.81us)  11.65ms (  3.63us)      3213
+   nlp_jac_g  | 614.33ms (190.19us) 613.55ms (189.95us)      3230
+       total  |  53.59ms ( 53.59ms)  53.55ms ( 53.55ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.06ms (  2.63us)   7.63ms (  2.49us)      3062
+       nlp_g  | 177.11ms ( 57.84us) 175.10ms ( 57.18us)      3062
+    nlp_grad  |  28.04ms (118.30us)  28.04ms (118.33us)       237
+  nlp_grad_f  |  12.29ms (  3.81us)  11.69ms (  3.62us)      3226
+   nlp_jac_g  | 616.78ms (190.19us) 616.00ms (189.95us)      3243
+       total  |  67.08ms ( 67.08ms)  67.08ms ( 67.08ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.09ms (  2.63us)   7.66ms (  2.49us)      3073
+       nlp_g  | 177.74ms ( 57.84us) 175.72ms ( 57.18us)      3073
+    nlp_grad  |  28.15ms (118.27us)  28.16ms (118.31us)       238
+  nlp_grad_f  |  12.34ms (  3.81us)  11.74ms (  3.62us)      3238
+   nlp_jac_g  | 619.08ms (190.19us) 618.30ms (189.96us)      3255
+       total  |  60.12ms ( 60.12ms)  60.12ms ( 60.12ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.12ms (  2.63us)   7.69ms (  2.49us)      3085
+       nlp_g  | 178.45ms ( 57.84us) 176.42ms ( 57.19us)      3085
+    nlp_grad  |  28.26ms (118.24us)  28.27ms (118.27us)       239
+  nlp_grad_f  |  12.39ms (  3.81us)  11.78ms (  3.62us)      3251
+   nlp_jac_g  | 621.53ms (190.19us) 620.76ms (189.95us)      3268
+       total  |  67.50ms ( 67.50ms)  67.49ms ( 67.49ms)         1
+
+    Norm of Control Inputs: 24.530039
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.17ms (  2.63us)   7.73ms (  2.49us)      3101
+       nlp_g  | 179.39ms ( 57.85us) 177.35ms ( 57.19us)      3101
+    nlp_grad  |  28.38ms (118.25us)  28.39ms (118.28us)       240
+  nlp_grad_f  |  12.46ms (  3.81us)  11.85ms (  3.63us)      3268
+   nlp_jac_g  | 624.96ms (190.25us) 624.20ms (190.01us)      3285
+       total  |  91.63ms ( 91.63ms)  91.62ms ( 91.62ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.19ms (  2.63us)   7.75ms (  2.49us)      3110
+       nlp_g  | 179.91ms ( 57.85us) 177.86ms ( 57.19us)      3110
+    nlp_grad  |  28.57ms (118.55us)  28.58ms (118.58us)       241
+  nlp_grad_f  |  12.50ms (  3.81us)  11.89ms (  3.63us)      3278
+   nlp_jac_g  | 626.85ms (190.24us) 626.08ms (190.01us)      3295
+       total  |  40.82ms ( 40.82ms)  40.82ms ( 40.82ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.21ms (  2.63us)   7.77ms (  2.49us)      3118
+       nlp_g  | 180.37ms ( 57.85us) 178.32ms ( 57.19us)      3118
+    nlp_grad  |  28.68ms (118.52us)  28.69ms (118.56us)       242
+  nlp_grad_f  |  12.54ms (  3.81us)  11.92ms (  3.63us)      3287
+   nlp_jac_g  | 628.62ms (190.26us) 627.82ms (190.02us)      3304
+       total  |  32.97ms ( 32.97ms)  32.95ms ( 32.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.24ms (  2.63us)   7.79ms (  2.49us)      3127
+       nlp_g  | 180.88ms ( 57.85us) 178.83ms ( 57.19us)      3127
+    nlp_grad  |  28.80ms (118.51us)  28.81ms (118.55us)       243
+  nlp_grad_f  |  12.58ms (  3.81us)  11.96ms (  3.63us)      3297
+   nlp_jac_g  | 630.50ms (190.25us) 629.70ms (190.01us)      3314
+       total  |  44.81ms ( 44.81ms)  44.81ms ( 44.81ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.26ms (  2.63us)   7.82ms (  2.49us)      3136
+       nlp_g  | 181.40ms ( 57.84us) 179.34ms ( 57.19us)      3136
+    nlp_grad  |  28.91ms (118.50us)  28.92ms (118.53us)       244
+  nlp_grad_f  |  12.61ms (  3.81us)  11.99ms (  3.63us)      3307
+   nlp_jac_g  | 632.39ms (190.25us) 631.60ms (190.01us)      3324
+       total  |  44.91ms ( 44.91ms)  44.87ms ( 44.87ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.29ms (  2.63us)   7.84ms (  2.49us)      3146
+       nlp_g  | 181.97ms ( 57.84us) 179.91ms ( 57.19us)      3146
+    nlp_grad  |  29.03ms (118.48us)  29.04ms (118.51us)       245
+  nlp_grad_f  |  12.65ms (  3.81us)  12.03ms (  3.63us)      3318
+   nlp_jac_g  | 634.47ms (190.25us) 633.68ms (190.01us)      3335
+       total  |  52.13ms ( 52.13ms)  52.09ms ( 52.09ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.31ms (  2.63us)   7.87ms (  2.49us)      3155
+       nlp_g  | 182.49ms ( 57.84us) 180.42ms ( 57.19us)      3155
+    nlp_grad  |  29.15ms (118.50us)  29.16ms (118.54us)       246
+  nlp_grad_f  |  12.69ms (  3.81us)  12.07ms (  3.63us)      3328
+   nlp_jac_g  | 636.40ms (190.25us) 635.61ms (190.02us)      3345
+       total  |  44.74ms ( 44.74ms)  44.72ms ( 44.72ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.34ms (  2.63us)   7.89ms (  2.49us)      3164
+       nlp_g  | 183.01ms ( 57.84us) 180.93ms ( 57.19us)      3164
+    nlp_grad  |  29.27ms (118.49us)  29.28ms (118.53us)       247
+  nlp_grad_f  |  12.73ms (  3.81us)  12.11ms (  3.63us)      3338
+   nlp_jac_g  | 638.33ms (190.26us) 637.51ms (190.02us)      3355
+       total  |  44.82ms ( 44.82ms)  44.78ms ( 44.78ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.37ms (  2.64us)   7.91ms (  2.49us)      3174
+       nlp_g  | 183.58ms ( 57.84us) 181.50ms ( 57.18us)      3174
+    nlp_grad  |  29.39ms (118.51us)  29.40ms (118.54us)       248
+  nlp_grad_f  |  12.77ms (  3.81us)  12.15ms (  3.63us)      3349
+   nlp_jac_g  | 640.41ms (190.26us) 639.60ms (190.02us)      3366
+       total  |  52.08ms ( 52.08ms)  52.07ms ( 52.07ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.39ms (  2.64us)   7.94ms (  2.49us)      3183
+       nlp_g  | 184.10ms ( 57.84us) 182.02ms ( 57.18us)      3183
+    nlp_grad  |  29.50ms (118.49us)  29.51ms (118.52us)       249
+  nlp_grad_f  |  12.81ms (  3.81us)  12.18ms (  3.63us)      3359
+   nlp_jac_g  | 642.30ms (190.25us) 641.49ms (190.01us)      3376
+       total  |  44.62ms ( 44.62ms)  44.62ms ( 44.62ms)         1
+
+    Norm of Control Inputs: 5.232612
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.45ms (  2.64us)   7.99ms (  2.49us)      3205
+       nlp_g  | 185.37ms ( 57.84us) 183.28ms ( 57.18us)      3205
+    nlp_grad  |  29.62ms (118.48us)  29.63ms (118.51us)       250
+  nlp_grad_f  |  12.90ms (  3.81us)  12.27ms (  3.63us)      3382
+   nlp_jac_g  | 646.72ms (190.27us) 645.93ms (190.03us)      3399
+       total  | 101.78ms (101.78ms) 101.74ms (101.74ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.53ms (  2.63us)   8.07ms (  2.49us)      3237
+       nlp_g  | 187.19ms ( 57.83us) 185.09ms ( 57.18us)      3237
+    nlp_grad  |  29.76ms (118.55us)  29.76ms (118.58us)       251
+  nlp_grad_f  |  13.00ms (  3.81us)  12.36ms (  3.63us)      3409
+   nlp_jac_g  | 651.83ms (190.26us) 651.04ms (190.03us)      3426
+       total  | 144.33ms (144.33ms) 144.28ms (144.28ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.56ms (  2.63us)   8.10ms (  2.49us)      3251
+       nlp_g  | 188.00ms ( 57.83us) 185.89ms ( 57.18us)      3251
+    nlp_grad  |  29.88ms (118.56us)  29.89ms (118.59us)       252
+  nlp_grad_f  |  13.05ms (  3.81us)  12.41ms (  3.63us)      3424
+   nlp_jac_g  | 654.68ms (190.26us) 653.90ms (190.03us)      3441
+       total  |  63.01ms ( 63.01ms)  62.98ms ( 62.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.62ms (  2.63us)   8.15ms (  2.49us)      3273
+       nlp_g  | 189.25ms ( 57.82us) 187.13ms ( 57.17us)      3273
+    nlp_grad  |  30.00ms (118.56us)  30.00ms (118.60us)       253
+  nlp_grad_f  |  13.12ms (  3.81us)  12.48ms (  3.62us)      3444
+   nlp_jac_g  | 658.43ms (190.24us) 657.66ms (190.02us)      3461
+       total  |  96.63ms ( 96.63ms)  96.60ms ( 96.60ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.65ms (  2.63us)   8.19ms (  2.49us)      3288
+       nlp_g  | 190.15ms ( 57.83us) 187.99ms ( 57.17us)      3288
+    nlp_grad  |  30.11ms (118.55us)  30.12ms (118.59us)       254
+  nlp_grad_f  |  13.18ms (  3.81us)  12.54ms (  3.62us)      3460
+   nlp_jac_g  | 661.44ms (190.23us) 660.67ms (190.01us)      3477
+       total  |  81.42ms ( 81.42ms)  81.42ms ( 81.42ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.69ms (  2.63us)   8.22ms (  2.49us)      3300
+       nlp_g  | 190.84ms ( 57.83us) 188.67ms ( 57.17us)      3300
+    nlp_grad  |  30.23ms (118.55us)  30.24ms (118.58us)       255
+  nlp_grad_f  |  13.23ms (  3.81us)  12.58ms (  3.62us)      3473
+   nlp_jac_g  | 663.89ms (190.23us) 663.13ms (190.01us)      3490
+       total  |  66.72ms ( 66.72ms)  66.69ms ( 66.69ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.72ms (  2.63us)   8.25ms (  2.49us)      3311
+       nlp_g  | 191.48ms ( 57.83us) 189.30ms ( 57.17us)      3311
+    nlp_grad  |  30.35ms (118.54us)  30.36ms (118.58us)       256
+  nlp_grad_f  |  13.27ms (  3.81us)  12.63ms (  3.62us)      3485
+   nlp_jac_g  | 666.16ms (190.22us) 665.41ms (190.01us)      3502
+       total  |  60.43ms ( 60.43ms)  60.40ms ( 60.40ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.75ms (  2.63us)   8.28ms (  2.49us)      3322
+       nlp_g  | 192.11ms ( 57.83us) 189.92ms ( 57.17us)      3322
+    nlp_grad  |  30.47ms (118.54us)  30.48ms (118.58us)       257
+  nlp_grad_f  |  13.32ms (  3.81us)  12.67ms (  3.62us)      3497
+   nlp_jac_g  | 668.41ms (190.21us) 667.66ms (190.00us)      3514
+       total  |  60.37ms ( 60.37ms)  60.35ms ( 60.35ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.78ms (  2.63us)   8.30ms (  2.49us)      3332
+       nlp_g  | 192.69ms ( 57.83us) 190.50ms ( 57.17us)      3332
+    nlp_grad  |  30.58ms (118.53us)  30.59ms (118.57us)       258
+  nlp_grad_f  |  13.35ms (  3.81us)  12.71ms (  3.62us)      3508
+   nlp_jac_g  | 670.50ms (190.21us) 669.75ms (190.00us)      3525
+       total  |  55.23ms ( 55.23ms)  55.20ms ( 55.20ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.80ms (  2.63us)   8.33ms (  2.49us)      3342
+       nlp_g  | 193.26ms ( 57.83us) 191.06ms ( 57.17us)      3342
+    nlp_grad  |  30.71ms (118.56us)  30.72ms (118.59us)       259
+  nlp_grad_f  |  13.39ms (  3.81us)  12.75ms (  3.62us)      3519
+   nlp_jac_g  | 672.59ms (190.21us) 671.85ms (190.00us)      3536
+       total  |  52.25ms ( 52.25ms)  52.21ms ( 52.21ms)         1
+
+    Norm of Control Inputs: 17.248876
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.85ms (  2.63us)   8.37ms (  2.49us)      3358
+       nlp_g  | 194.19ms ( 57.83us) 191.98ms ( 57.17us)      3358
+    nlp_grad  |  30.84ms (118.60us)  30.86ms (118.68us)       260
+  nlp_grad_f  |  13.46ms (  3.81us)  12.81ms (  3.62us)      3535
+   nlp_jac_g  | 675.75ms (190.24us) 675.01ms (190.04us)      3552
+       total  |  89.31ms ( 89.31ms)  89.25ms ( 89.25ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.89ms (  2.63us)   8.41ms (  2.49us)      3375
+       nlp_g  | 195.17ms ( 57.83us) 192.95ms ( 57.17us)      3375
+    nlp_grad  |  30.97ms (118.67us)  30.99ms (118.75us)       261
+  nlp_grad_f  |  13.53ms (  3.81us)  12.88ms (  3.62us)      3553
+   nlp_jac_g  | 679.11ms (190.23us) 678.37ms (190.02us)      3570
+       total  | 103.66ms (103.66ms) 103.62ms (103.62ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.92ms (  2.63us)   8.44ms (  2.49us)      3387
+       nlp_g  | 195.87ms ( 57.83us) 193.65ms ( 57.18us)      3387
+    nlp_grad  |  31.09ms (118.67us)  31.11ms (118.75us)       262
+  nlp_grad_f  |  13.58ms (  3.81us)  12.92ms (  3.62us)      3566
+   nlp_jac_g  | 681.57ms (190.22us) 680.84ms (190.02us)      3583
+       total  |  67.40ms ( 67.40ms)  67.38ms ( 67.38ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.95ms (  2.63us)   8.47ms (  2.49us)      3399
+       nlp_g  | 196.57ms ( 57.83us) 194.34ms ( 57.17us)      3399
+    nlp_grad  |  31.21ms (118.66us)  31.23ms (118.74us)       263
+  nlp_grad_f  |  13.62ms (  3.81us)  12.97ms (  3.62us)      3579
+   nlp_jac_g  | 684.03ms (190.22us) 683.30ms (190.02us)      3596
+       total  |  67.89ms ( 67.89ms)  67.85ms ( 67.85ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   8.98ms (  2.63us)   8.50ms (  2.49us)      3410
+       nlp_g  | 197.20ms ( 57.83us) 194.96ms ( 57.17us)      3410
+    nlp_grad  |  31.32ms (118.65us)  31.34ms (118.73us)       264
+  nlp_grad_f  |  13.67ms (  3.81us)  13.01ms (  3.62us)      3591
+   nlp_jac_g  | 686.28ms (190.21us) 685.55ms (190.01us)      3608
+       total  |  59.94ms ( 59.94ms)  59.95ms ( 59.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.01ms (  2.63us)   8.52ms (  2.49us)      3420
+       nlp_g  | 197.77ms ( 57.83us) 195.54ms ( 57.17us)      3420
+    nlp_grad  |  31.44ms (118.64us)  31.46ms (118.72us)       265
+  nlp_grad_f  |  13.71ms (  3.81us)  13.05ms (  3.62us)      3602
+   nlp_jac_g  | 688.35ms (190.20us) 687.63ms (190.00us)      3619
+       total  |  53.28ms ( 53.28ms)  53.28ms ( 53.28ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.03ms (  2.63us)   8.54ms (  2.49us)      3429
+       nlp_g  | 198.30ms ( 57.83us) 196.06ms ( 57.18us)      3429
+    nlp_grad  |  31.55ms (118.62us)  31.57ms (118.70us)       266
+  nlp_grad_f  |  13.74ms (  3.81us)  13.09ms (  3.62us)      3612
+   nlp_jac_g  | 690.23ms (190.20us) 689.51ms (190.00us)      3629
+       total  |  46.77ms ( 46.77ms)  46.76ms ( 46.76ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.06ms (  2.63us)   8.57ms (  2.49us)      3438
+       nlp_g  | 198.82ms ( 57.83us) 196.57ms ( 57.18us)      3438
+    nlp_grad  |  31.67ms (118.62us)  31.69ms (118.69us)       267
+  nlp_grad_f  |  13.78ms (  3.81us)  13.12ms (  3.62us)      3622
+   nlp_jac_g  | 692.12ms (190.20us) 691.40ms (190.00us)      3639
+       total  |  46.63ms ( 46.63ms)  46.59ms ( 46.59ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.08ms (  2.64us)   8.59ms (  2.49us)      3447
+       nlp_g  | 199.34ms ( 57.83us) 197.09ms ( 57.18us)      3447
+    nlp_grad  |  31.79ms (118.61us)  31.81ms (118.69us)       268
+  nlp_grad_f  |  13.82ms (  3.80us)  13.16ms (  3.62us)      3632
+   nlp_jac_g  | 694.05ms (190.20us) 693.34ms (190.01us)      3649
+       total  |  46.74ms ( 46.74ms)  46.74ms ( 46.74ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.11ms (  2.63us)   8.61ms (  2.49us)      3456
+       nlp_g  | 199.90ms ( 57.84us) 197.61ms ( 57.18us)      3456
+    nlp_grad  |  31.90ms (118.60us)  31.92ms (118.68us)       269
+  nlp_grad_f  |  13.86ms (  3.80us)  13.19ms (  3.62us)      3642
+   nlp_jac_g  | 695.93ms (190.20us) 695.22ms (190.00us)      3659
+       total  |  46.35ms ( 46.35ms)  46.30ms ( 46.30ms)         1
+
+    Norm of Control Inputs: 10.636174
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.14ms (  2.63us)   8.64ms (  2.49us)      3469
+       nlp_g  | 200.65ms ( 57.84us) 198.35ms ( 57.18us)      3469
+    nlp_grad  |  32.02ms (118.59us)  32.04ms (118.67us)       270
+  nlp_grad_f  |  13.91ms (  3.81us)  13.25ms (  3.62us)      3656
+   nlp_jac_g  | 698.69ms (190.22us) 697.98ms (190.03us)      3673
+       total  |  69.49ms ( 69.49ms)  69.49ms ( 69.49ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.17ms (  2.63us)   8.67ms (  2.49us)      3481
+       nlp_g  | 201.34ms ( 57.84us) 199.04ms ( 57.18us)      3481
+    nlp_grad  |  32.16ms (118.66us)  32.18ms (118.74us)       271
+  nlp_grad_f  |  13.96ms (  3.81us)  13.30ms (  3.62us)      3669
+   nlp_jac_g  | 701.14ms (190.22us) 700.44ms (190.03us)      3686
+       total  |  66.20ms ( 66.20ms)  66.17ms ( 66.17ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.20ms (  2.63us)   8.70ms (  2.49us)      3492
+       nlp_g  | 201.97ms ( 57.84us) 199.66ms ( 57.18us)      3492
+    nlp_grad  |  32.27ms (118.65us)  32.30ms (118.73us)       272
+  nlp_grad_f  |  14.01ms (  3.81us)  13.34ms (  3.62us)      3681
+   nlp_jac_g  | 703.40ms (190.21us) 702.70ms (190.02us)      3698
+       total  |  59.20ms ( 59.20ms)  59.17ms ( 59.17ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.23ms (  2.64us)   8.73ms (  2.49us)      3502
+       nlp_g  | 202.54ms ( 57.84us) 200.23ms ( 57.18us)      3502
+    nlp_grad  |  32.39ms (118.63us)  32.41ms (118.71us)       273
+  nlp_grad_f  |  14.05ms (  3.81us)  13.38ms (  3.62us)      3692
+   nlp_jac_g  | 705.47ms (190.21us) 704.78ms (190.02us)      3709
+       total  |  52.48ms ( 52.48ms)  52.48ms ( 52.48ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.26ms (  2.64us)   8.75ms (  2.49us)      3512
+       nlp_g  | 203.12ms ( 57.84us) 200.80ms ( 57.18us)      3512
+    nlp_grad  |  32.50ms (118.62us)  32.52ms (118.70us)       274
+  nlp_grad_f  |  14.09ms (  3.81us)  13.42ms (  3.62us)      3703
+   nlp_jac_g  | 707.58ms (190.21us) 706.89ms (190.02us)      3720
+       total  |  52.94ms ( 52.94ms)  52.94ms ( 52.94ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.28ms (  2.63us)   8.78ms (  2.49us)      3522
+       nlp_g  | 203.70ms ( 57.84us) 201.37ms ( 57.18us)      3522
+    nlp_grad  |  32.62ms (118.61us)  32.64ms (118.69us)       275
+  nlp_grad_f  |  14.13ms (  3.81us)  13.46ms (  3.62us)      3714
+   nlp_jac_g  | 709.65ms (190.20us) 708.96ms (190.02us)      3731
+       total  |  53.47ms ( 53.47ms)  53.41ms ( 53.41ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.31ms (  2.63us)   8.80ms (  2.49us)      3532
+       nlp_g  | 204.28ms ( 57.84us) 201.95ms ( 57.18us)      3532
+    nlp_grad  |  32.73ms (118.61us)  32.76ms (118.68us)       276
+  nlp_grad_f  |  14.17ms (  3.81us)  13.50ms (  3.62us)      3725
+   nlp_jac_g  | 711.74ms (190.20us) 711.06ms (190.02us)      3742
+       total  |  55.14ms ( 55.14ms)  55.14ms ( 55.14ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.33ms (  2.64us)   8.82ms (  2.49us)      3541
+       nlp_g  | 204.80ms ( 57.84us) 202.47ms ( 57.18us)      3541
+    nlp_grad  |  32.87ms (118.65us)  32.89ms (118.73us)       277
+  nlp_grad_f  |  14.21ms (  3.81us)  13.53ms (  3.62us)      3735
+   nlp_jac_g  | 713.63ms (190.20us) 712.95ms (190.02us)      3752
+       total  |  45.59ms ( 45.59ms)  45.59ms ( 45.59ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.36ms (  2.64us)   8.85ms (  2.49us)      3550
+       nlp_g  | 205.32ms ( 57.84us) 202.99ms ( 57.18us)      3550
+    nlp_grad  |  32.98ms (118.65us)  33.01ms (118.73us)       278
+  nlp_grad_f  |  14.25ms (  3.81us)  13.57ms (  3.62us)      3745
+   nlp_jac_g  | 715.54ms (190.20us) 714.87ms (190.02us)      3762
+       total  |  45.50ms ( 45.50ms)  45.47ms ( 45.47ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.38ms (  2.64us)   8.87ms (  2.49us)      3558
+       nlp_g  | 205.78ms ( 57.84us) 203.44ms ( 57.18us)      3558
+    nlp_grad  |  33.10ms (118.63us)  33.12ms (118.71us)       279
+  nlp_grad_f  |  14.29ms (  3.81us)  13.60ms (  3.62us)      3754
+   nlp_jac_g  | 717.27ms (190.21us) 716.60ms (190.03us)      3771
+       total  |  39.17ms ( 39.17ms)  39.17ms ( 39.17ms)         1
+
+    Norm of Control Inputs: 18.940992
+
+[ eval_imf ] episode 3: SUCCESS  steps=51  violations=0  reward=1.000  rough=3.932e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/3_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/3_fan.png
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.43ms (  2.64us)   8.92ms (  2.49us)      3577
+       nlp_g  | 206.90ms ( 57.84us) 204.55ms ( 57.18us)      3577
+    nlp_grad  |  33.21ms (118.62us)  33.23ms (118.70us)       280
+  nlp_grad_f  |  14.37ms (  3.81us)  13.68ms (  3.62us)      3774
+   nlp_jac_g  | 721.13ms (190.22us) 720.47ms (190.05us)      3791
+       total  |  83.85ms ( 83.85ms)  83.84ms ( 83.84ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.47ms (  2.64us)   8.96ms (  2.49us)      3593
+       nlp_g  | 207.82ms ( 57.84us) 205.46ms ( 57.18us)      3593
+    nlp_grad  |  33.35ms (118.68us)  33.37ms (118.76us)       281
+  nlp_grad_f  |  14.44ms (  3.81us)  13.74ms (  3.62us)      3791
+   nlp_jac_g  | 724.31ms (190.21us) 723.64ms (190.03us)      3808
+       total  |  81.42ms ( 81.42ms)  81.38ms ( 81.38ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.50ms (  2.64us)   8.98ms (  2.49us)      3605
+       nlp_g  | 208.51ms ( 57.84us) 206.14ms ( 57.18us)      3605
+    nlp_grad  |  33.46ms (118.67us)  33.49ms (118.75us)       282
+  nlp_grad_f  |  14.49ms (  3.81us)  13.79ms (  3.62us)      3804
+   nlp_jac_g  | 726.75ms (190.20us) 726.09ms (190.03us)      3821
+       total  |  61.04ms ( 61.04ms)  61.04ms ( 61.04ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.53ms (  2.64us)   9.02ms (  2.49us)      3618
+       nlp_g  | 209.25ms ( 57.84us) 206.88ms ( 57.18us)      3618
+    nlp_grad  |  33.58ms (118.67us)  33.61ms (118.75us)       283
+  nlp_grad_f  |  14.54ms (  3.81us)  13.83ms (  3.62us)      3818
+   nlp_jac_g  | 729.39ms (190.19us) 728.74ms (190.02us)      3835
+       total  |  69.02ms ( 69.02ms)  69.05ms ( 69.05ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.56ms (  2.63us)   9.04ms (  2.49us)      3628
+       nlp_g  | 209.82ms ( 57.83us) 207.45ms ( 57.18us)      3628
+    nlp_grad  |  33.70ms (118.66us)  33.72ms (118.74us)       284
+  nlp_grad_f  |  14.58ms (  3.81us)  13.87ms (  3.62us)      3829
+   nlp_jac_g  | 731.50ms (190.20us) 730.85ms (190.03us)      3846
+       total  |  46.74ms ( 46.74ms)  46.70ms ( 46.70ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.59ms (  2.63us)   9.07ms (  2.49us)      3638
+       nlp_g  | 210.39ms ( 57.83us) 208.02ms ( 57.18us)      3638
+    nlp_grad  |  33.82ms (118.66us)  33.84ms (118.74us)       285
+  nlp_grad_f  |  14.62ms (  3.81us)  13.91ms (  3.62us)      3840
+   nlp_jac_g  | 733.56ms (190.19us) 732.91ms (190.02us)      3857
+       total  |  45.35ms ( 45.35ms)  45.34ms ( 45.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.61ms (  2.63us)   9.10ms (  2.49us)      3650
+       nlp_g  | 211.08ms ( 57.83us) 208.70ms ( 57.18us)      3650
+    nlp_grad  |  33.93ms (118.64us)  33.95ms (118.72us)       286
+  nlp_grad_f  |  14.67ms (  3.81us)  13.96ms (  3.62us)      3853
+   nlp_jac_g  | 736.03ms (190.19us) 735.39ms (190.02us)      3870
+       total  |  66.73ms ( 66.73ms)  66.72ms ( 66.72ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.64ms (  2.63us)   9.12ms (  2.49us)      3660
+       nlp_g  | 211.65ms ( 57.83us) 209.27ms ( 57.18us)      3660
+    nlp_grad  |  34.05ms (118.64us)  34.07ms (118.72us)       287
+  nlp_grad_f  |  14.71ms (  3.81us)  14.00ms (  3.62us)      3864
+   nlp_jac_g  | 738.11ms (190.19us) 737.47ms (190.02us)      3881
+       total  |  52.22ms ( 52.22ms)  52.17ms ( 52.17ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.67ms (  2.63us)   9.15ms (  2.49us)      3670
+       nlp_g  | 212.23ms ( 57.83us) 209.83ms ( 57.18us)      3670
+    nlp_grad  |  34.17ms (118.63us)  34.19ms (118.71us)       288
+  nlp_grad_f  |  14.75ms (  3.81us)  14.04ms (  3.62us)      3875
+   nlp_jac_g  | 740.18ms (190.18us) 739.54ms (190.02us)      3892
+       total  |  52.01ms ( 52.01ms)  51.97ms ( 51.97ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.70ms (  2.63us)   9.17ms (  2.49us)      3681
+       nlp_g  | 212.86ms ( 57.83us) 210.46ms ( 57.17us)      3681
+    nlp_grad  |  34.28ms (118.63us)  34.31ms (118.71us)       289
+  nlp_grad_f  |  14.80ms (  3.81us)  14.08ms (  3.62us)      3887
+   nlp_jac_g  | 742.42ms (190.17us) 741.79ms (190.01us)      3904
+       total  |  59.56ms ( 59.56ms)  59.56ms ( 59.56ms)         1
+
+    Norm of Control Inputs: 17.458529
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.74ms (  2.63us)   9.21ms (  2.49us)      3695
+       nlp_g  | 213.66ms ( 57.83us) 211.26ms ( 57.17us)      3695
+    nlp_grad  |  34.40ms (118.61us)  34.42ms (118.69us)       290
+  nlp_grad_f  |  14.86ms (  3.81us)  14.14ms (  3.62us)      3902
+   nlp_jac_g  | 745.37ms (190.19us) 744.74ms (190.03us)      3919
+       total  |  78.20ms ( 78.20ms)  78.15ms ( 78.15ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.76ms (  2.63us)   9.24ms (  2.49us)      3706
+       nlp_g  | 214.29ms ( 57.82us) 211.89ms ( 57.17us)      3706
+    nlp_grad  |  34.55ms (118.71us)  34.57ms (118.79us)       291
+  nlp_grad_f  |  14.90ms (  3.81us)  14.18ms (  3.62us)      3914
+   nlp_jac_g  | 747.62ms (190.19us) 746.99ms (190.03us)      3931
+       total  |  60.34ms ( 60.34ms)  60.31ms ( 60.31ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.80ms (  2.64us)   9.27ms (  2.49us)      3719
+       nlp_g  | 215.04ms ( 57.82us) 212.63ms ( 57.17us)      3719
+    nlp_grad  |  34.67ms (118.72us)  34.69ms (118.80us)       292
+  nlp_grad_f  |  14.96ms (  3.81us)  14.23ms (  3.62us)      3928
+   nlp_jac_g  | 750.25ms (190.18us) 749.63ms (190.02us)      3945
+       total  |  73.93ms ( 73.93ms)  73.91ms ( 73.91ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.83ms (  2.63us)   9.30ms (  2.49us)      3731
+       nlp_g  | 215.73ms ( 57.82us) 213.31ms ( 57.17us)      3731
+    nlp_grad  |  34.78ms (118.72us)  34.81ms (118.79us)       293
+  nlp_grad_f  |  15.01ms (  3.81us)  14.28ms (  3.62us)      3941
+   nlp_jac_g  | 752.70ms (190.17us) 752.08ms (190.02us)      3958
+       total  |  67.95ms ( 67.95ms)  67.95ms ( 67.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.86ms (  2.63us)   9.33ms (  2.49us)      3743
+       nlp_g  | 216.43ms ( 57.82us) 214.00ms ( 57.17us)      3743
+    nlp_grad  |  34.90ms (118.71us)  34.92ms (118.79us)       294
+  nlp_grad_f  |  15.06ms (  3.81us)  14.33ms (  3.62us)      3954
+   nlp_jac_g  | 755.15ms (190.17us) 754.54ms (190.01us)      3971
+       total  |  67.48ms ( 67.48ms)  67.46ms ( 67.46ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.89ms (  2.63us)   9.36ms (  2.49us)      3756
+       nlp_g  | 217.17ms ( 57.82us) 214.74ms ( 57.17us)      3756
+    nlp_grad  |  35.02ms (118.70us)  35.04ms (118.78us)       295
+  nlp_grad_f  |  15.11ms (  3.81us)  14.38ms (  3.62us)      3968
+   nlp_jac_g  | 757.79ms (190.16us) 757.18ms (190.01us)      3985
+       total  |  75.01ms ( 75.01ms)  74.98ms ( 74.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.93ms (  2.63us)   9.39ms (  2.49us)      3767
+       nlp_g  | 217.81ms ( 57.82us) 215.37ms ( 57.17us)      3767
+    nlp_grad  |  35.13ms (118.70us)  35.16ms (118.77us)       296
+  nlp_grad_f  |  15.16ms (  3.81us)  14.42ms (  3.62us)      3980
+   nlp_jac_g  | 760.06ms (190.16us) 759.46ms (190.01us)      3997
+       total  |  60.24ms ( 60.24ms)  60.21ms ( 60.21ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.95ms (  2.63us)   9.42ms (  2.49us)      3778
+       nlp_g  | 218.44ms ( 57.82us) 216.00ms ( 57.17us)      3778
+    nlp_grad  |  35.25ms (118.70us)  35.28ms (118.77us)       297
+  nlp_grad_f  |  15.20ms (  3.81us)  14.46ms (  3.62us)      3992
+   nlp_jac_g  | 762.32ms (190.15us) 761.72ms (190.00us)      4009
+       total  |  60.17ms ( 60.17ms)  60.17ms ( 60.17ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |   9.98ms (  2.63us)   9.45ms (  2.49us)      3790
+       nlp_g  | 219.14ms ( 57.82us) 216.69ms ( 57.18us)      3790
+    nlp_grad  |  35.37ms (118.69us)  35.39ms (118.77us)       298
+  nlp_grad_f  |  15.25ms (  3.81us)  14.51ms (  3.62us)      4005
+   nlp_jac_g  | 764.75ms (190.14us) 764.16ms (189.99us)      4022
+       total  |  68.15ms ( 68.15ms)  68.13ms ( 68.13ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.02ms (  2.63us)   9.48ms (  2.49us)      3803
+       nlp_g  | 219.89ms ( 57.82us) 217.44ms ( 57.18us)      3803
+    nlp_grad  |  35.49ms (118.68us)  35.51ms (118.76us)       299
+  nlp_grad_f  |  15.31ms (  3.81us)  14.56ms (  3.62us)      4019
+   nlp_jac_g  | 767.39ms (190.14us) 766.80ms (189.99us)      4036
+       total  |  75.71ms ( 75.71ms)  75.68ms ( 75.68ms)         1
+
+    Norm of Control Inputs: 10.898966
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.05ms (  2.63us)   9.51ms (  2.49us)      3814
+       nlp_g  | 220.54ms ( 57.82us) 218.08ms ( 57.18us)      3814
+    nlp_grad  |  35.60ms (118.67us)  35.62ms (118.75us)       300
+  nlp_grad_f  |  15.36ms (  3.81us)  14.61ms (  3.62us)      4031
+   nlp_jac_g  | 769.80ms (190.17us) 769.22ms (190.03us)      4048
+       total  |  60.34ms ( 60.34ms)  60.34ms ( 60.34ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.07ms (  2.63us)   9.53ms (  2.49us)      3823
+       nlp_g  | 221.07ms ( 57.83us) 218.60ms ( 57.18us)      3823
+    nlp_grad  |  35.74ms (118.75us)  35.77ms (118.83us)       301
+  nlp_grad_f  |  15.40ms (  3.81us)  14.65ms (  3.62us)      4041
+   nlp_jac_g  | 771.70ms (190.17us) 771.13ms (190.03us)      4058
+       total  |  45.67ms ( 45.67ms)  45.67ms ( 45.67ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.10ms (  2.63us)   9.55ms (  2.49us)      3832
+       nlp_g  | 221.59ms ( 57.83us) 219.12ms ( 57.18us)      3832
+    nlp_grad  |  35.86ms (118.75us)  35.89ms (118.83us)       302
+  nlp_grad_f  |  15.45ms (  3.81us)  14.69ms (  3.63us)      4051
+   nlp_jac_g  | 773.60ms (190.17us) 773.03ms (190.03us)      4068
+       total  |  45.98ms ( 45.98ms)  45.95ms ( 45.95ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.12ms (  2.63us)   9.58ms (  2.49us)      3841
+       nlp_g  | 222.11ms ( 57.83us) 219.63ms ( 57.18us)      3841
+    nlp_grad  |  35.98ms (118.75us)  36.00ms (118.82us)       303
+  nlp_grad_f  |  15.49ms (  3.81us)  14.72ms (  3.63us)      4061
+   nlp_jac_g  | 775.49ms (190.16us) 774.92ms (190.02us)      4078
+       total  |  44.25ms ( 44.25ms)  44.25ms ( 44.25ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.14ms (  2.63us)   9.60ms (  2.49us)      3850
+       nlp_g  | 222.62ms ( 57.82us) 220.14ms ( 57.18us)      3850
+    nlp_grad  |  36.09ms (118.73us)  36.12ms (118.81us)       304
+  nlp_grad_f  |  15.53ms (  3.81us)  14.76ms (  3.63us)      4071
+   nlp_jac_g  | 777.38ms (190.16us) 776.81ms (190.02us)      4088
+       total  |  45.09ms ( 45.09ms)  45.04ms ( 45.04ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.16ms (  2.63us)   9.62ms (  2.49us)      3858
+       nlp_g  | 223.08ms ( 57.82us) 220.59ms ( 57.18us)      3858
+    nlp_grad  |  36.21ms (118.72us)  36.23ms (118.80us)       305
+  nlp_grad_f  |  15.56ms (  3.81us)  14.79ms (  3.63us)      4080
+   nlp_jac_g  | 779.07ms (190.16us) 778.50ms (190.02us)      4097
+       total  |  38.73ms ( 38.73ms)  38.72ms ( 38.72ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.18ms (  2.63us)   9.64ms (  2.49us)      3866
+       nlp_g  | 223.54ms ( 57.82us) 221.05ms ( 57.18us)      3866
+    nlp_grad  |  36.33ms (118.73us)  36.35ms (118.80us)       306
+  nlp_grad_f  |  15.60ms (  3.81us)  14.82ms (  3.63us)      4089
+   nlp_jac_g  | 780.77ms (190.15us) 780.21ms (190.02us)      4106
+       total  |  38.27ms ( 38.27ms)  38.23ms ( 38.23ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.20ms (  2.63us)   9.66ms (  2.49us)      3873
+       nlp_g  | 223.93ms ( 57.82us) 221.44ms ( 57.18us)      3873
+    nlp_grad  |  36.45ms (118.73us)  36.47ms (118.80us)       307
+  nlp_grad_f  |  15.63ms (  3.81us)  14.85ms (  3.63us)      4097
+   nlp_jac_g  | 782.28ms (190.15us) 781.72ms (190.01us)      4114
+       total  |  30.72ms ( 30.72ms)  30.72ms ( 30.72ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.22ms (  2.63us)   9.68ms (  2.49us)      3880
+       nlp_g  | 224.34ms ( 57.82us) 221.85ms ( 57.18us)      3880
+    nlp_grad  |  36.56ms (118.70us)  36.58ms (118.77us)       308
+  nlp_grad_f  |  15.66ms (  3.82us)  14.88ms (  3.63us)      4105
+   nlp_jac_g  | 783.78ms (190.15us) 783.22ms (190.01us)      4122
+       total  |  30.49ms ( 30.49ms)  30.45ms ( 30.45ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.24ms (  2.63us)   9.70ms (  2.49us)      3887
+       nlp_g  | 224.74ms ( 57.82us) 222.24ms ( 57.18us)      3887
+    nlp_grad  |  36.67ms (118.68us)  36.70ms (118.76us)       309
+  nlp_grad_f  |  15.69ms (  3.82us)  14.91ms (  3.63us)      4113
+   nlp_jac_g  | 785.31ms (190.15us) 784.75ms (190.01us)      4130
+       total  |  31.52ms ( 31.52ms)  31.52ms ( 31.52ms)         1
+
+    Norm of Control Inputs: 5.629303
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.29ms (  2.64us)   9.73ms (  2.49us)      3902
+       nlp_g  | 225.61ms ( 57.82us) 223.10ms ( 57.18us)      3902
+    nlp_grad  |  36.79ms (118.67us)  36.81ms (118.75us)       310
+  nlp_grad_f  |  15.76ms (  3.82us)  14.98ms (  3.63us)      4129
+   nlp_jac_g  | 788.45ms (190.17us) 787.90ms (190.04us)      4146
+       total  |  84.30ms ( 84.30ms)  84.24ms ( 84.24ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.31ms (  2.64us)   9.76ms (  2.49us)      3912
+       nlp_g  | 226.18ms ( 57.82us) 223.67ms ( 57.18us)      3912
+    nlp_grad  |  36.93ms (118.74us)  36.95ms (118.82us)       311
+  nlp_grad_f  |  15.80ms (  3.82us)  15.02ms (  3.63us)      4140
+   nlp_jac_g  | 790.51ms (190.16us) 789.97ms (190.03us)      4157
+       total  |  52.65ms ( 52.65ms)  52.65ms ( 52.65ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.34ms (  2.64us)   9.78ms (  2.49us)      3921
+       nlp_g  | 226.69ms ( 57.82us) 224.18ms ( 57.17us)      3921
+    nlp_grad  |  37.05ms (118.75us)  37.07ms (118.83us)       312
+  nlp_grad_f  |  15.84ms (  3.82us)  15.05ms (  3.63us)      4150
+   nlp_jac_g  | 792.40ms (190.16us) 791.86ms (190.03us)      4167
+       total  |  45.72ms ( 45.72ms)  45.66ms ( 45.66ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.36ms (  2.64us)   9.80ms (  2.49us)      3930
+       nlp_g  | 227.21ms ( 57.82us) 224.69ms ( 57.17us)      3930
+    nlp_grad  |  37.17ms (118.75us)  37.19ms (118.82us)       313
+  nlp_grad_f  |  15.88ms (  3.82us)  15.09ms (  3.63us)      4160
+   nlp_jac_g  | 794.30ms (190.16us) 793.77ms (190.03us)      4177
+       total  |  44.95ms ( 44.95ms)  44.92ms ( 44.92ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.38ms (  2.64us)   9.82ms (  2.49us)      3938
+       nlp_g  | 227.67ms ( 57.81us) 225.15ms ( 57.17us)      3938
+    nlp_grad  |  37.28ms (118.74us)  37.31ms (118.82us)       314
+  nlp_grad_f  |  15.91ms (  3.82us)  15.12ms (  3.63us)      4169
+   nlp_jac_g  | 796.00ms (190.16us) 795.47ms (190.03us)      4186
+       total  |  38.52ms ( 38.52ms)  38.52ms ( 38.52ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.41ms (  2.64us)   9.85ms (  2.49us)      3947
+       nlp_g  | 228.20ms ( 57.81us) 225.67ms ( 57.17us)      3947
+    nlp_grad  |  37.40ms (118.72us)  37.42ms (118.80us)       315
+  nlp_grad_f  |  15.95ms (  3.82us)  15.16ms (  3.63us)      4179
+   nlp_jac_g  | 797.90ms (190.16us) 797.37ms (190.03us)      4196
+       total  |  45.87ms ( 45.87ms)  45.83ms ( 45.83ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.43ms (  2.64us)   9.87ms (  2.49us)      3955
+       nlp_g  | 228.67ms ( 57.82us) 226.14ms ( 57.18us)      3955
+    nlp_grad  |  37.51ms (118.70us)  37.53ms (118.78us)       316
+  nlp_grad_f  |  15.98ms (  3.82us)  15.19ms (  3.63us)      4188
+   nlp_jac_g  | 799.65ms (190.17us) 799.12ms (190.04us)      4205
+       total  |  38.36ms ( 38.36ms)  38.35ms ( 38.35ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.45ms (  2.64us)   9.89ms (  2.50us)      3963
+       nlp_g  | 229.13ms ( 57.82us) 226.59ms ( 57.18us)      3963
+    nlp_grad  |  37.63ms (118.70us)  37.65ms (118.78us)       317
+  nlp_grad_f  |  16.02ms (  3.82us)  15.22ms (  3.63us)      4197
+   nlp_jac_g  | 801.35ms (190.16us) 800.83ms (190.04us)      4214
+       total  |  38.19ms ( 38.19ms)  38.15ms ( 38.15ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.47ms (  2.64us)   9.91ms (  2.50us)      3970
+       nlp_g  | 229.53ms ( 57.82us) 226.99ms ( 57.18us)      3970
+    nlp_grad  |  37.75ms (118.70us)  37.77ms (118.78us)       318
+  nlp_grad_f  |  16.05ms (  3.82us)  15.25ms (  3.63us)      4205
+   nlp_jac_g  | 802.86ms (190.16us) 802.34ms (190.04us)      4222
+       total  |  30.43ms ( 30.43ms)  30.43ms ( 30.43ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.49ms (  2.64us)   9.92ms (  2.50us)      3977
+       nlp_g  | 229.93ms ( 57.81us) 227.38ms ( 57.17us)      3977
+    nlp_grad  |  37.86ms (118.70us)  37.89ms (118.78us)       319
+  nlp_grad_f  |  16.08ms (  3.82us)  15.28ms (  3.63us)      4213
+   nlp_jac_g  | 804.37ms (190.16us) 803.86ms (190.04us)      4230
+       total  |  31.52ms ( 31.52ms)  31.48ms ( 31.48ms)         1
+
+    Norm of Control Inputs: 5.386302
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.52ms (  2.64us)   9.95ms (  2.50us)      3989
+       nlp_g  | 230.63ms ( 57.82us) 228.07ms ( 57.18us)      3989
+    nlp_grad  |  37.98ms (118.69us)  38.01ms (118.77us)       320
+  nlp_grad_f  |  16.14ms (  3.82us)  15.34ms (  3.63us)      4226
+   nlp_jac_g  | 806.96ms (190.19us) 806.45ms (190.07us)      4243
+       total  |  63.19ms ( 63.19ms)  63.12ms ( 63.12ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.55ms (  2.64us)   9.98ms (  2.50us)      3999
+       nlp_g  | 231.21ms ( 57.82us) 228.66ms ( 57.18us)      3999
+    nlp_grad  |  38.12ms (118.75us)  38.14ms (118.83us)       321
+  nlp_grad_f  |  16.18ms (  3.82us)  15.38ms (  3.63us)      4237
+   nlp_jac_g  | 809.05ms (190.18us) 808.54ms (190.07us)      4254
+       total  |  46.80ms ( 46.80ms)  46.80ms ( 46.80ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.58ms (  2.64us)  10.00ms (  2.50us)      4009
+       nlp_g  | 231.79ms ( 57.82us) 229.22ms ( 57.18us)      4009
+    nlp_grad  |  38.24ms (118.75us)  38.26ms (118.83us)       322
+  nlp_grad_f  |  16.23ms (  3.82us)  15.42ms (  3.63us)      4248
+   nlp_jac_g  | 811.11ms (190.18us) 810.61ms (190.06us)      4265
+       total  |  47.40ms ( 47.40ms)  47.40ms ( 47.40ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.61ms (  2.64us)  10.03ms (  2.50us)      4020
+       nlp_g  | 232.42ms ( 57.81us) 229.85ms ( 57.18us)      4020
+    nlp_grad  |  38.35ms (118.74us)  38.38ms (118.82us)       323
+  nlp_grad_f  |  16.27ms (  3.82us)  15.46ms (  3.63us)      4260
+   nlp_jac_g  | 813.37ms (190.17us) 812.87ms (190.06us)      4277
+       total  |  54.60ms ( 54.60ms)  54.57ms ( 54.57ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.64ms (  2.64us)  10.07ms (  2.50us)      4033
+       nlp_g  | 233.16ms ( 57.81us) 230.58ms ( 57.17us)      4033
+    nlp_grad  |  38.47ms (118.73us)  38.50ms (118.82us)       324
+  nlp_grad_f  |  16.32ms (  3.82us)  15.51ms (  3.63us)      4274
+   nlp_jac_g  | 816.02ms (190.17us) 815.52ms (190.05us)      4291
+       total  |  70.44ms ( 70.44ms)  70.40ms ( 70.40ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.67ms (  2.64us)  10.09ms (  2.50us)      4044
+       nlp_g  | 233.79ms ( 57.81us) 231.21ms ( 57.17us)      4044
+    nlp_grad  |  38.59ms (118.73us)  38.61ms (118.82us)       325
+  nlp_grad_f  |  16.37ms (  3.82us)  15.55ms (  3.63us)      4286
+   nlp_jac_g  | 818.29ms (190.17us) 817.80ms (190.05us)      4303
+       total  |  55.00ms ( 55.00ms)  55.00ms ( 55.00ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.71ms (  2.64us)  10.12ms (  2.50us)      4055
+       nlp_g  | 234.43ms ( 57.81us) 231.85ms ( 57.18us)      4055
+    nlp_grad  |  38.72ms (118.79us)  38.75ms (118.87us)       326
+  nlp_grad_f  |  16.41ms (  3.82us)  15.59ms (  3.63us)      4298
+   nlp_jac_g  | 820.55ms (190.16us) 820.06ms (190.05us)      4315
+       total  |  54.81ms ( 54.81ms)  54.77ms ( 54.77ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.74ms (  2.64us)  10.15ms (  2.50us)      4068
+       nlp_g  | 235.19ms ( 57.82us) 232.60ms ( 57.18us)      4068
+    nlp_grad  |  38.84ms (118.79us)  38.87ms (118.88us)       327
+  nlp_grad_f  |  16.47ms (  3.82us)  15.64ms (  3.63us)      4312
+   nlp_jac_g  | 823.17ms (190.15us) 822.68ms (190.04us)      4329
+       total  |  69.48ms ( 69.48ms)  69.43ms ( 69.43ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.77ms (  2.64us)  10.18ms (  2.50us)      4078
+       nlp_g  | 235.78ms ( 57.82us) 233.18ms ( 57.18us)      4078
+    nlp_grad  |  38.96ms (118.79us)  38.99ms (118.87us)       328
+  nlp_grad_f  |  16.51ms (  3.82us)  15.68ms (  3.63us)      4323
+   nlp_jac_g  | 825.24ms (190.15us) 824.75ms (190.03us)      4340
+       total  |  47.91ms ( 47.91ms)  47.91ms ( 47.91ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.79ms (  2.64us)  10.20ms (  2.50us)      4088
+       nlp_g  | 236.35ms ( 57.82us) 233.75ms ( 57.18us)      4088
+    nlp_grad  |  39.08ms (118.79us)  39.11ms (118.88us)       329
+  nlp_grad_f  |  16.55ms (  3.82us)  15.72ms (  3.63us)      4334
+   nlp_jac_g  | 827.31ms (190.14us) 826.83ms (190.03us)      4351
+       total  |  47.58ms ( 47.58ms)  47.58ms ( 47.58ms)         1
+
+    Norm of Control Inputs: 5.195857
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  10.95ms (  2.64us)  10.36ms (  2.49us)      4154
+       nlp_g  | 240.13ms ( 57.81us) 237.49ms ( 57.17us)      4154
+    nlp_grad  |  39.19ms (118.77us)  39.22ms (118.86us)       330
+  nlp_grad_f  |  16.75ms (  3.82us)  15.91ms (  3.63us)      4387
+   nlp_jac_g  | 837.88ms (190.13us) 837.42ms (190.02us)      4407
+       total  | 258.93ms (258.93ms) 258.91ms (258.91ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.04ms (  2.63us)  10.45ms (  2.49us)      4193
+       nlp_g  | 242.34ms ( 57.80us) 239.69ms ( 57.16us)      4193
+    nlp_grad  |  39.33ms (118.83us)  39.36ms (118.92us)       331
+  nlp_grad_f  |  16.86ms (  3.81us)  16.02ms (  3.62us)      4421
+   nlp_jac_g  | 844.49ms (190.11us) 844.03ms (190.01us)      4442
+       total  | 186.98ms (186.98ms) 186.92ms (186.92ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.16ms (  2.63us)  10.56ms (  2.49us)      4240
+       nlp_g  | 245.02ms ( 57.79us) 242.35ms ( 57.16us)      4240
+    nlp_grad  |  39.46ms (118.85us)  39.49ms (118.93us)       332
+  nlp_grad_f  |  17.01ms (  3.81us)  16.16ms (  3.62us)      4461
+   nlp_jac_g  | 852.33ms (190.08us) 851.89ms (189.99us)      4484
+       total  | 188.72ms (188.72ms) 188.67ms (188.67ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.20ms (  2.63us)  10.60ms (  2.49us)      4256
+       nlp_g  | 245.94ms ( 57.79us) 243.26ms ( 57.16us)      4256
+    nlp_grad  |  39.57ms (118.84us)  39.60ms (118.93us)       333
+  nlp_grad_f  |  17.07ms (  3.81us)  16.22ms (  3.62us)      4478
+   nlp_jac_g  | 855.56ms (190.08us) 855.13ms (189.99us)      4501
+       total  |  81.99ms ( 81.99ms)  81.99ms ( 81.99ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.22ms (  2.63us)  10.63ms (  2.49us)      4266
+       nlp_g  | 246.52ms ( 57.79us) 243.83ms ( 57.16us)      4266
+    nlp_grad  |  39.69ms (118.85us)  39.72ms (118.94us)       334
+  nlp_grad_f  |  17.11ms (  3.81us)  16.26ms (  3.62us)      4489
+   nlp_jac_g  | 857.62ms (190.08us) 857.20ms (189.98us)      4512
+       total  |  52.95ms ( 52.95ms)  52.90ms ( 52.90ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.25ms (  2.63us)  10.66ms (  2.49us)      4278
+       nlp_g  | 247.20ms ( 57.78us) 244.51ms ( 57.16us)      4278
+    nlp_grad  |  39.81ms (118.84us)  39.84ms (118.93us)       335
+  nlp_grad_f  |  17.16ms (  3.81us)  16.31ms (  3.62us)      4502
+   nlp_jac_g  | 860.08ms (190.07us) 859.66ms (189.98us)      4525
+       total  |  66.56ms ( 66.56ms)  66.53ms ( 66.53ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.28ms (  2.63us)  10.68ms (  2.49us)      4286
+       nlp_g  | 247.66ms ( 57.78us) 244.97ms ( 57.16us)      4286
+    nlp_grad  |  39.94ms (118.86us)  39.97ms (118.95us)       336
+  nlp_grad_f  |  17.19ms (  3.81us)  16.34ms (  3.62us)      4511
+   nlp_jac_g  | 861.78ms (190.07us) 861.36ms (189.98us)      4534
+       total  |  37.73ms ( 37.73ms)  37.73ms ( 37.73ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.30ms (  2.63us)  10.70ms (  2.49us)      4295
+       nlp_g  | 248.17ms ( 57.78us) 245.48ms ( 57.15us)      4295
+    nlp_grad  |  40.05ms (118.85us)  40.08ms (118.94us)       337
+  nlp_grad_f  |  17.23ms (  3.81us)  16.37ms (  3.62us)      4521
+   nlp_jac_g  | 863.68ms (190.07us) 863.26ms (189.98us)      4544
+       total  |  45.82ms ( 45.82ms)  45.79ms ( 45.79ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.32ms (  2.63us)  10.72ms (  2.49us)      4305
+       nlp_g  | 248.75ms ( 57.78us) 246.05ms ( 57.16us)      4305
+    nlp_grad  |  40.17ms (118.84us)  40.20ms (118.93us)       338
+  nlp_grad_f  |  17.27ms (  3.81us)  16.41ms (  3.62us)      4532
+   nlp_jac_g  | 865.75ms (190.07us) 865.34ms (189.98us)      4555
+       total  |  53.57ms ( 53.57ms)  53.54ms ( 53.54ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.35ms (  2.63us)  10.75ms (  2.49us)      4315
+       nlp_g  | 249.33ms ( 57.78us) 246.63ms ( 57.16us)      4315
+    nlp_grad  |  40.29ms (118.84us)  40.32ms (118.93us)       339
+  nlp_grad_f  |  17.31ms (  3.81us)  16.45ms (  3.62us)      4543
+   nlp_jac_g  | 867.83ms (190.06us) 867.41ms (189.97us)      4566
+       total  |  53.40ms ( 53.40ms)  53.40ms ( 53.40ms)         1
+
+    Norm of Control Inputs: 15.385831
+
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.39ms (  2.63us)  10.78ms (  2.49us)      4327
+       nlp_g  | 250.02ms ( 57.78us) 247.31ms ( 57.16us)      4327
+    nlp_grad  |  40.40ms (118.82us)  40.43ms (118.92us)       340
+  nlp_grad_f  |  17.37ms (  3.81us)  16.51ms (  3.62us)      4556
+   nlp_jac_g  | 870.40ms (190.08us) 869.99ms (190.00us)      4579
+       total  |  62.05ms ( 62.05ms)  62.00ms ( 62.00ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.42ms (  2.63us)  10.81ms (  2.49us)      4339
+       nlp_g  | 250.71ms ( 57.78us) 247.99ms ( 57.15us)      4339
+    nlp_grad  |  40.54ms (118.88us)  40.57ms (118.98us)       341
+  nlp_grad_f  |  17.41ms (  3.81us)  16.55ms (  3.62us)      4569
+   nlp_jac_g  | 872.85ms (190.08us) 872.45ms (189.99us)      4592
+       total  |  61.98ms ( 61.98ms)  61.98ms ( 61.98ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.47ms (  2.63us)  10.86ms (  2.49us)      4360
+       nlp_g  | 251.91ms ( 57.78us) 249.19ms ( 57.15us)      4360
+    nlp_grad  |  40.66ms (118.88us)  40.69ms (118.98us)       342
+  nlp_grad_f  |  17.49ms (  3.81us)  16.63ms (  3.62us)      4591
+   nlp_jac_g  | 876.98ms (190.07us) 876.59ms (189.98us)      4614
+       total  | 133.16ms (133.16ms) 133.10ms (133.10ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.50ms (  2.63us)  10.89ms (  2.49us)      4371
+       nlp_g  | 252.55ms ( 57.78us) 249.82ms ( 57.15us)      4371
+    nlp_grad  |  40.77ms (118.87us)  40.81ms (118.97us)       343
+  nlp_grad_f  |  17.54ms (  3.81us)  16.67ms (  3.62us)      4603
+   nlp_jac_g  | 879.28ms (190.07us) 878.86ms (189.98us)      4626
+       total  |  59.27ms ( 59.27ms)  59.23ms ( 59.23ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.53ms (  2.63us)  10.92ms (  2.49us)      4383
+       nlp_g  | 253.24ms ( 57.78us) 250.50ms ( 57.15us)      4383
+    nlp_grad  |  40.89ms (118.87us)  40.92ms (118.96us)       344
+  nlp_grad_f  |  17.59ms (  3.81us)  16.72ms (  3.62us)      4616
+   nlp_jac_g  | 881.73ms (190.07us) 881.31ms (189.98us)      4639
+       total  |  67.57ms ( 67.57ms)  67.60ms ( 67.60ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.56ms (  2.63us)  10.95ms (  2.49us)      4396
+       nlp_g  | 253.99ms ( 57.78us) 251.24ms ( 57.15us)      4396
+    nlp_grad  |  41.01ms (118.86us)  41.04ms (118.96us)       345
+  nlp_grad_f  |  17.64ms (  3.81us)  16.77ms (  3.62us)      4630
+   nlp_jac_g  | 884.39ms (190.07us) 883.97ms (189.98us)      4653
+       total  |  73.29ms ( 73.29ms)  73.25ms ( 73.25ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.59ms (  2.63us)  10.98ms (  2.49us)      4405
+       nlp_g  | 254.55ms ( 57.79us) 251.80ms ( 57.16us)      4405
+    nlp_grad  |  41.12ms (118.86us)  41.16ms (118.95us)       346
+  nlp_grad_f  |  17.68ms (  3.81us)  16.81ms (  3.62us)      4640
+   nlp_jac_g  | 886.41ms (190.09us) 885.98ms (190.00us)      4663
+       total  |  46.30ms ( 46.30ms)  46.25ms ( 46.25ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.62ms (  2.63us)  11.00ms (  2.49us)      4415
+       nlp_g  | 255.13ms ( 57.79us) 252.37ms ( 57.16us)      4415
+    nlp_grad  |  41.30ms (119.01us)  41.33ms (119.11us)       347
+  nlp_grad_f  |  17.73ms (  3.81us)  16.85ms (  3.62us)      4651
+   nlp_jac_g  | 888.48ms (190.09us) 888.06ms (190.00us)      4674
+       total  |  52.27ms ( 52.27ms)  52.27ms ( 52.27ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.64ms (  2.63us)  11.03ms (  2.49us)      4425
+       nlp_g  | 255.70ms ( 57.79us) 252.94ms ( 57.16us)      4425
+    nlp_grad  |  41.42ms (119.02us)  41.45ms (119.12us)       348
+  nlp_grad_f  |  17.77ms (  3.81us)  16.89ms (  3.62us)      4662
+   nlp_jac_g  | 890.55ms (190.09us) 890.13ms (190.00us)      4685
+       total  |  52.55ms ( 52.55ms)  52.55ms ( 52.55ms)         1
+      solver  :   t_proc      (avg)   t_wall      (avg)    n_eval
+       nlp_f  |  11.67ms (  2.63us)  11.06ms (  2.49us)      4437
+       nlp_g  | 256.39ms ( 57.78us) 253.62ms ( 57.16us)      4437
+    nlp_grad  |  41.53ms (119.01us)  41.57ms (119.11us)       349
+  nlp_grad_f  |  17.81ms (  3.81us)  16.93ms (  3.62us)      4675
+   nlp_jac_g  | 893.00ms (190.08us) 892.58ms (189.99us)      4698
+       total  |  67.35ms ( 67.35ms)  67.32ms ( 67.32ms)         1
+
+    Norm of Control Inputs: 17.424583
+
+[ eval_imf ] episode 4: SUCCESS  steps=51  violations=0  reward=1.000  rough=2.208e-06
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/4_real.png
+Saved trajectory plot to: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/4_fan.png
+[ eval_imf ] done. mean NFE/plan: 0.0  all NLP solves OK  csv: logs/avoiding-v0/eval/diag_smooth_fm_guided_K10_n5/trajectories.csv
+Total runtime: 0h 0m 54s
+==============================================================
+[ fix_7 ] SMOOTHNESS SUMMARY (plan_roughness: lower = smoother)
+==============================================================
+  diag_smooth_fm_guided_K10_n5                 n=5   roughness=2.6827e-06 (sd 6.3e-07)  safe=100%
+  diag_smooth_fm_unguided_K10_n5               n=5   roughness=1.7619e-05 (sd 9.9e-06)  safe=0%
+  diag_smooth_imf_guided_K5_n5                 n=5   roughness=2.1941e-06 (sd 3.6e-07)  safe=100%
+  diag_smooth_imf_unguided_K5_n5               n=5   roughness=1.6659e-04 (sd 2.5e-05)  safe=0%
+==============================================================
+================================================================================
+JOB END: Mon Jul 20 09:44:30 UTC 2026
+================================================================================

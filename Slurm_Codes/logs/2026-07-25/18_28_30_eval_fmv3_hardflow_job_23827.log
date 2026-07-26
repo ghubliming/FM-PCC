@@ -1,0 +1,29 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Jul 25 16:28:30 UTC 2026
+JOB NAME:  eval_fmv3_hardflow_job
+JOB ID:    23827
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   18fa5c2
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ eval ] single run, K from plan block   FORCE_OVERWRITE=0
+pybullet build time: Nov 28 2023 23:45:17
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_hardflow_test/eval_FM_v3_hardflow.py", line 57, in <module>
+    hf_act_threshold = resolve_activation_threshold(
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_hardflow/sampling/hardflow_projection.py", line 335, in resolve_activation_threshold
+    raise ValueError(
+ValueError: activation must be a number in [0,1] or one of ['all', 'late'], got '0.0'
+================================================================================
+JOB END:   Sat Jul 25 16:28:35 UTC 2026
+================================================================================

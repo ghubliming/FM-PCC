@@ -15,6 +15,7 @@ squeue -o "%.10i %.10P %.30j %.10u %.2t %.10M %.10D %R"
 
 or 
 squeue -o "%.10i %.12u %.2t %.10M %.6D %.12P %.15R %.15b %.25b %.20T %.30j"
+squeue -o "%.10i %.12u %.10M %.6D %.15P %.25R %.20b %.12T %.50j"
 
 ## shutdown sbatch
 scancel XXXXX
@@ -75,3 +76,7 @@ scontrol show node i6-gpu-1 | grep -E "CfgTRES|AllocTRES"
 ## 4. Controlling Jobs
 *   **`scancel <JOB_ID>`**: Kills a specific job.
 *   **`scancel -u $USER`**: Kills **all** of your jobs at once.
+
+# misc
+## HF data aggregate for download
+python3 Slurm_Codes/sbatch/hardflow/collect_hf_results.py

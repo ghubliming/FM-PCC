@@ -1,0 +1,18 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+DEBUG-CHAIN START: Thu Jul 23 22:31:19 UTC 2026
+JOB ID:    23782
+================================================================================
+Launching Gen12 HardFlow-into-FMv3 DEBUG/BRING-UP chain (gates -> eval -> aggregate)...
+NOTE: Gen12 has no training. Real deploy = eval job alone (see header).
+Step 1: Gates submitted. Job ID: 23783
+Step 2: Evaluation scheduled (afterok:23783). Job ID: 23784
+Step 3: Aggregation scheduled (afterok:23784). Job ID: 23785
+--------------------------------------------------------------------------------
+Gen12 debug/bring-up chain submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+If the gates fail, evaluation and aggregation are cancelled automatically by Slurm.
+================================================================================
+================================================================================
+DEBUG-CHAIN END:   Thu Jul 23 22:31:19 UTC 2026
+================================================================================

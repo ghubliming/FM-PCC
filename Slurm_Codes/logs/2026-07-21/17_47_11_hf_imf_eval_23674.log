@@ -1,0 +1,1005 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jul 21 20:44:30 UTC 2026
+JOB NAME:  hf_imf_eval   ID: 23674   NODE: i6-gpu-1
+CONDA ENV: hardflow_clone   (clone of FMPCC — live env untouched)
+HARDFLOW_REPO: /u/home/llim/FMPCC/FM-PCC/HardFlow
+LOG COLLECT:   /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+HARDFLOW GIT: 36efd5a
+================================================================================
+[ HF-BRIDGE ] python: /u/home/llim/miniconda3/envs/hardflow_clone/bin/python
+[ HF-BRIDGE ] tyro OK, gym==0.20.0
+[ HF-BRIDGE ] W&B key found -> WANDB_MODE=online
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ HF-BRIDGE ] /u/home/llim/FMPCC/FM-PCC/HardFlow/logs -> /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+[ HF-BRIDGE ] cwd: /u/home/llim/FMPCC/FM-PCC/HardFlow
+[ HF-IMF-EVAL ] dynamics model present: logs/avoiding-v0/dynamics/linear_model.npz
+==============================================================
+[ HF-IMF-EVAL ] method=original K=1 -> bash run_scripts/eval_original_imf.sh
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== Gen13 iMF Original on avoiding-v0, horizon=16, K=1 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2475.98it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_fbad60b6-8544-11f1-9298-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+No fitted dynamics found, proceeding without dynamics model
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=imf  loading checkpoint: logs/avoiding-v0/flow/H16_imf_cliponly_100k/model_ema_4.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+[ eval_imf ] episode 0: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=1.913e-03 raw=nan
+[ eval_imf ] episode 1: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.906e-03 raw=nan
+[ eval_imf ] episode 2: terminated  steps=57  violations=1  reward=0.000  nlp=0  rough=1.637e-03 raw=nan
+[ eval_imf ] episode 3: terminated  steps=27  violations=1  reward=0.000  nlp=0  rough=7.592e-04 raw=nan
+[ eval_imf ] episode 4: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.976e-03 raw=nan
+[ eval_imf ] episode 5: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.744e-03 raw=nan
+[ eval_imf ] episode 6: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=8.489e-04 raw=nan
+[ eval_imf ] episode 7: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.569e-03 raw=nan
+[ eval_imf ] episode 8: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=6.697e-04 raw=nan
+[ eval_imf ] episode 9: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.774e-03 raw=nan
+[ eval_imf ] episode 10: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=1.331e-03 raw=nan
+[ eval_imf ] episode 11: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.941e-03 raw=nan
+[ eval_imf ] episode 12: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.684e-03 raw=nan
+[ eval_imf ] episode 13: terminated  steps=58  violations=1  reward=0.000  nlp=0  rough=2.289e-03 raw=nan
+[ eval_imf ] episode 14: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.672e-03 raw=nan
+[ eval_imf ] episode 15: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.590e-03 raw=nan
+[ eval_imf ] episode 16: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=7.310e-04 raw=nan
+[ eval_imf ] episode 17: terminated  steps=28  violations=1  reward=0.000  nlp=0  rough=1.362e-03 raw=nan
+[ eval_imf ] episode 18: terminated  steps=31  violations=1  reward=0.000  nlp=0  rough=9.543e-04 raw=nan
+[ eval_imf ] episode 19: terminated  steps=31  violations=1  reward=0.000  nlp=0  rough=6.668e-04 raw=nan
+[ eval_imf ] episode 20: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=7.409e-04 raw=nan
+[ eval_imf ] episode 21: terminated  steps=28  violations=1  reward=0.000  nlp=0  rough=7.279e-04 raw=nan
+[ eval_imf ] episode 22: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=9.229e-04 raw=nan
+[ eval_imf ] episode 23: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.563e-03 raw=nan
+[ eval_imf ] episode 24: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.718e-03 raw=nan
+[ eval_imf ] episode 25: terminated  steps=66  violations=1  reward=0.000  nlp=0  rough=1.616e-03 raw=nan
+[ eval_imf ] episode 26: terminated  steps=26  violations=1  reward=0.000  nlp=0  rough=1.035e-03 raw=nan
+[ eval_imf ] episode 27: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=2.013e-03 raw=nan
+[ eval_imf ] episode 28: terminated  steps=32  violations=1  reward=0.000  nlp=0  rough=7.906e-04 raw=nan
+[ eval_imf ] episode 29: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.932e-03 raw=nan
+[ eval_imf ] episode 30: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.467e-03 raw=nan
+[ eval_imf ] episode 31: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=1.609e-03 raw=nan
+[ eval_imf ] episode 32: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=1.676e-03 raw=nan
+[ eval_imf ] episode 33: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=2.329e-03 raw=nan
+[ eval_imf ] episode 34: terminated  steps=57  violations=1  reward=0.000  nlp=0  rough=1.878e-03 raw=nan
+[ eval_imf ] episode 35: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=8.249e-04 raw=nan
+[ eval_imf ] episode 36: terminated  steps=60  violations=1  reward=0.000  nlp=0  rough=1.722e-03 raw=nan
+[ eval_imf ] episode 37: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.876e-03 raw=nan
+[ eval_imf ] episode 38: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=2.411e-03 raw=nan
+[ eval_imf ] episode 39: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.684e-03 raw=nan
+[ eval_imf ] episode 40: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=1.048e-03 raw=nan
+[ eval_imf ] episode 41: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.981e-03 raw=nan
+[ eval_imf ] episode 42: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.752e-03 raw=nan
+[ eval_imf ] episode 43: terminated  steps=26  violations=1  reward=0.000  nlp=0  rough=9.629e-04 raw=nan
+[ eval_imf ] episode 44: terminated  steps=69  violations=1  reward=0.000  nlp=0  rough=2.840e-03 raw=nan
+[ eval_imf ] episode 45: terminated  steps=54  violations=1  reward=0.000  nlp=0  rough=1.535e-03 raw=nan
+[ eval_imf ] episode 46: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=1.257e-03 raw=nan
+[ eval_imf ] episode 47: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=1.817e-03 raw=nan
+[ eval_imf ] episode 48: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.601e-03 raw=nan
+[ eval_imf ] episode 49: terminated  steps=73  violations=1  reward=0.000  nlp=0  rough=1.822e-03 raw=nan
+[ eval_imf ] episode 50: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.731e-03 raw=nan
+[ eval_imf ] episode 51: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=1.540e-03 raw=nan
+[ eval_imf ] episode 52: terminated  steps=33  violations=1  reward=0.000  nlp=0  rough=9.379e-04 raw=nan
+[ eval_imf ] episode 53: terminated  steps=54  violations=1  reward=0.000  nlp=0  rough=1.792e-03 raw=nan
+[ eval_imf ] episode 54: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=2.111e-03 raw=nan
+[ eval_imf ] episode 55: terminated  steps=67  violations=1  reward=0.000  nlp=0  rough=2.024e-03 raw=nan
+[ eval_imf ] episode 56: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.522e-03 raw=nan
+[ eval_imf ] episode 57: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=1.662e-03 raw=nan
+[ eval_imf ] episode 58: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=7.665e-04 raw=nan
+[ eval_imf ] episode 59: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.298e-03 raw=nan
+[ eval_imf ] episode 60: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=1.565e-03 raw=nan
+[ eval_imf ] episode 61: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.751e-03 raw=nan
+[ eval_imf ] episode 62: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.436e-03 raw=nan
+[ eval_imf ] episode 63: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.508e-03 raw=nan
+[ eval_imf ] episode 64: terminated  steps=57  violations=1  reward=0.000  nlp=0  rough=1.533e-03 raw=nan
+[ eval_imf ] episode 65: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.524e-03 raw=nan
+[ eval_imf ] episode 66: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.689e-03 raw=nan
+[ eval_imf ] episode 67: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=2.168e-03 raw=nan
+[ eval_imf ] episode 68: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.820e-03 raw=nan
+[ eval_imf ] episode 69: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.576e-03 raw=nan
+[ eval_imf ] episode 70: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.928e-03 raw=nan
+[ eval_imf ] episode 71: terminated  steps=64  violations=1  reward=0.000  nlp=0  rough=2.418e-03 raw=nan
+[ eval_imf ] episode 72: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=2.165e-03 raw=nan
+[ eval_imf ] episode 73: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=5.616e-04 raw=nan
+[ eval_imf ] episode 74: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=1.443e-03 raw=nan
+[ eval_imf ] episode 75: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=6.650e-04 raw=nan
+[ eval_imf ] episode 76: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.408e-03 raw=nan
+[ eval_imf ] episode 77: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=2.099e-03 raw=nan
+[ eval_imf ] episode 78: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=1.536e-03 raw=nan
+[ eval_imf ] episode 79: terminated  steps=54  violations=1  reward=0.000  nlp=0  rough=2.219e-03 raw=nan
+[ eval_imf ] episode 80: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=7.134e-04 raw=nan
+[ eval_imf ] episode 81: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=1.026e-03 raw=nan
+[ eval_imf ] episode 82: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=7.089e-04 raw=nan
+[ eval_imf ] episode 83: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=5.538e-04 raw=nan
+[ eval_imf ] episode 84: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=9.700e-04 raw=nan
+[ eval_imf ] episode 85: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=1.730e-03 raw=nan
+[ eval_imf ] episode 86: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=9.706e-04 raw=nan
+[ eval_imf ] episode 87: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=8.904e-04 raw=nan
+[ eval_imf ] episode 88: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=2.069e-03 raw=nan
+[ eval_imf ] episode 89: terminated  steps=63  violations=1  reward=0.000  nlp=0  rough=1.994e-03 raw=nan
+[ eval_imf ] episode 90: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.508e-03 raw=nan
+[ eval_imf ] episode 91: terminated  steps=32  violations=1  reward=0.000  nlp=0  rough=1.254e-03 raw=nan
+[ eval_imf ] episode 92: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=2.189e-03 raw=nan
+[ eval_imf ] episode 93: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.803e-03 raw=nan
+[ eval_imf ] episode 94: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.863e-03 raw=nan
+[ eval_imf ] episode 95: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=2.310e-03 raw=nan
+[ eval_imf ] episode 96: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.590e-03 raw=nan
+[ eval_imf ] episode 97: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.506e-03 raw=nan
+[ eval_imf ] episode 98: terminated  steps=30  violations=1  reward=0.000  nlp=0  rough=6.165e-04 raw=nan
+[ eval_imf ] episode 99: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=1.467e-03 raw=nan
+[ eval_imf ] episode 100: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=1.002e-03 raw=nan
+[ eval_imf ] episode 101: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.953e-03 raw=nan
+[ eval_imf ] episode 102: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.806e-03 raw=nan
+[ eval_imf ] episode 103: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.604e-03 raw=nan
+[ eval_imf ] episode 104: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=2.316e-03 raw=nan
+[ eval_imf ] episode 105: terminated  steps=54  violations=1  reward=0.000  nlp=0  rough=1.759e-03 raw=nan
+[ eval_imf ] episode 106: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=1.915e-03 raw=nan
+[ eval_imf ] episode 107: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=2.233e-03 raw=nan
+[ eval_imf ] episode 108: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=1.776e-03 raw=nan
+[ eval_imf ] episode 109: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=2.100e-03 raw=nan
+[ eval_imf ] episode 110: terminated  steps=26  violations=1  reward=0.000  nlp=0  rough=9.254e-04 raw=nan
+[ eval_imf ] episode 111: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=2.339e-03 raw=nan
+[ eval_imf ] episode 112: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.848e-03 raw=nan
+[ eval_imf ] episode 113: terminated  steps=63  violations=1  reward=0.000  nlp=0  rough=1.743e-03 raw=nan
+[ eval_imf ] episode 114: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=1.451e-03 raw=nan
+[ eval_imf ] episode 115: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.318e-03 raw=nan
+[ eval_imf ] episode 116: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.705e-03 raw=nan
+[ eval_imf ] episode 117: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=2.453e-03 raw=nan
+[ eval_imf ] episode 118: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.849e-03 raw=nan
+[ eval_imf ] episode 119: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=1.807e-03 raw=nan
+[ eval_imf ] episode 120: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=1.711e-03 raw=nan
+[ eval_imf ] episode 121: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.888e-03 raw=nan
+[ eval_imf ] episode 122: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=8.607e-04 raw=nan
+[ eval_imf ] episode 123: terminated  steps=30  violations=1  reward=0.000  nlp=0  rough=8.749e-04 raw=nan
+[ eval_imf ] episode 124: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.513e-03 raw=nan
+[ eval_imf ] episode 125: terminated  steps=32  violations=1  reward=0.000  nlp=0  rough=1.061e-03 raw=nan
+[ eval_imf ] episode 126: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.855e-03 raw=nan
+[ eval_imf ] episode 127: terminated  steps=30  violations=1  reward=0.000  nlp=0  rough=8.862e-04 raw=nan
+[ eval_imf ] episode 128: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=1.458e-03 raw=nan
+[ eval_imf ] episode 129: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.969e-03 raw=nan
+[ eval_imf ] episode 130: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=1.812e-03 raw=nan
+[ eval_imf ] episode 131: terminated  steps=29  violations=1  reward=0.000  nlp=0  rough=9.614e-04 raw=nan
+[ eval_imf ] episode 132: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.545e-03 raw=nan
+[ eval_imf ] episode 133: terminated  steps=41  violations=1  reward=0.000  nlp=0  rough=1.639e-03 raw=nan
+[ eval_imf ] episode 134: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.306e-03 raw=nan
+[ eval_imf ] episode 135: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.759e-03 raw=nan
+[ eval_imf ] episode 136: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.800e-03 raw=nan
+[ eval_imf ] episode 137: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.765e-03 raw=nan
+[ eval_imf ] episode 138: terminated  steps=30  violations=1  reward=0.000  nlp=0  rough=7.272e-04 raw=nan
+[ eval_imf ] episode 139: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=1.738e-03 raw=nan
+[ eval_imf ] episode 140: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=2.020e-03 raw=nan
+[ eval_imf ] episode 141: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.561e-03 raw=nan
+[ eval_imf ] episode 142: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=1.481e-03 raw=nan
+[ eval_imf ] episode 143: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=1.936e-03 raw=nan
+[ eval_imf ] episode 144: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=1.007e-03 raw=nan
+[ eval_imf ] episode 145: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.329e-03 raw=nan
+[ eval_imf ] episode 146: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.845e-03 raw=nan
+[ eval_imf ] episode 147: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=1.818e-03 raw=nan
+[ eval_imf ] episode 148: terminated  steps=54  violations=1  reward=0.000  nlp=0  rough=1.898e-03 raw=nan
+[ eval_imf ] episode 149: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.781e-03 raw=nan
+[ eval_imf ] episode 150: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=1.736e-03 raw=nan
+[ eval_imf ] episode 151: terminated  steps=30  violations=1  reward=0.000  nlp=0  rough=1.188e-03 raw=nan
+[ eval_imf ] episode 152: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.517e-03 raw=nan
+[ eval_imf ] episode 153: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.725e-03 raw=nan
+[ eval_imf ] episode 154: terminated  steps=65  violations=1  reward=0.000  nlp=0  rough=1.990e-03 raw=nan
+[ eval_imf ] episode 155: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.296e-03 raw=nan
+[ eval_imf ] episode 156: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=1.544e-03 raw=nan
+[ eval_imf ] episode 157: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=1.384e-03 raw=nan
+[ eval_imf ] episode 158: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=8.123e-04 raw=nan
+[ eval_imf ] episode 159: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=1.600e-03 raw=nan
+[ eval_imf ] episode 160: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=3.404e-04 raw=nan
+[ eval_imf ] episode 161: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=1.694e-03 raw=nan
+[ eval_imf ] episode 162: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.581e-03 raw=nan
+[ eval_imf ] episode 163: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=2.038e-03 raw=nan
+[ eval_imf ] episode 164: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=2.119e-03 raw=nan
+[ eval_imf ] episode 165: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.472e-03 raw=nan
+[ eval_imf ] episode 166: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=2.078e-03 raw=nan
+[ eval_imf ] episode 167: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.568e-03 raw=nan
+[ eval_imf ] episode 168: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.615e-03 raw=nan
+[ eval_imf ] episode 169: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=1.687e-03 raw=nan
+[ eval_imf ] episode 170: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=2.031e-03 raw=nan
+[ eval_imf ] episode 171: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=2.030e-03 raw=nan
+[ eval_imf ] episode 172: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.512e-03 raw=nan
+[ eval_imf ] episode 173: terminated  steps=29  violations=1  reward=0.000  nlp=0  rough=8.480e-04 raw=nan
+[ eval_imf ] episode 174: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=1.494e-03 raw=nan
+[ eval_imf ] episode 175: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.843e-03 raw=nan
+[ eval_imf ] episode 176: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=1.773e-03 raw=nan
+[ eval_imf ] episode 177: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=6.719e-04 raw=nan
+[ eval_imf ] episode 178: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=1.726e-03 raw=nan
+[ eval_imf ] episode 179: terminated  steps=56  violations=1  reward=0.000  nlp=0  rough=1.672e-03 raw=nan
+[ eval_imf ] episode 180: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.907e-03 raw=nan
+[ eval_imf ] episode 181: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=1.375e-03 raw=nan
+[ eval_imf ] episode 182: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=1.965e-03 raw=nan
+[ eval_imf ] episode 183: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.851e-03 raw=nan
+[ eval_imf ] episode 184: terminated  steps=27  violations=1  reward=0.000  nlp=0  rough=8.743e-04 raw=nan
+[ eval_imf ] episode 185: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=8.105e-04 raw=nan
+[ eval_imf ] episode 186: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=2.115e-03 raw=nan
+[ eval_imf ] episode 187: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=1.729e-03 raw=nan
+[ eval_imf ] episode 188: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=1.514e-03 raw=nan
+[ eval_imf ] episode 189: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=2.102e-03 raw=nan
+[ eval_imf ] episode 190: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=1.780e-03 raw=nan
+[ eval_imf ] episode 191: terminated  steps=29  violations=1  reward=0.000  nlp=0  rough=6.359e-04 raw=nan
+[ eval_imf ] episode 192: terminated  steps=30  violations=1  reward=0.000  nlp=0  rough=8.562e-04 raw=nan
+[ eval_imf ] episode 193: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=2.029e-03 raw=nan
+[ eval_imf ] episode 194: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=2.314e-03 raw=nan
+[ eval_imf ] episode 195: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=1.574e-03 raw=nan
+[ eval_imf ] episode 196: terminated  steps=27  violations=1  reward=0.000  nlp=0  rough=8.514e-04 raw=nan
+[ eval_imf ] episode 197: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=1.832e-03 raw=nan
+[ eval_imf ] episode 198: terminated  steps=54  violations=1  reward=0.000  nlp=0  rough=1.724e-03 raw=nan
+[ eval_imf ] episode 199: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=1.923e-03 raw=nan
+[ eval_imf ] done. mean NFE/plan: 3.0  all NLP solves OK  csv: logs/avoiding-v0/eval/H16_imf_original_K1_from_H16_imf_cliponly_100k_n200/trajectories.csv
+Total runtime: 0h 8m 17s
+==============================================================
+[ HF-IMF-EVAL ] method=original K=2 -> bash run_scripts/eval_original_imf.sh
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== Gen13 iMF Original on avoiding-v0, horizon=16, K=2 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2573.19it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_23ef0e02-8546-11f1-b513-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+No fitted dynamics found, proceeding without dynamics model
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=imf  loading checkpoint: logs/avoiding-v0/flow/H16_imf_cliponly_100k/model_ema_4.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+[ eval_imf ] episode 0: terminated  steps=37  violations=1  reward=0.000  nlp=0  rough=6.525e-04 raw=nan
+[ eval_imf ] episode 1: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=4.763e-04 raw=nan
+[ eval_imf ] episode 2: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=4.177e-04 raw=nan
+[ eval_imf ] episode 3: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=5.882e-04 raw=nan
+[ eval_imf ] episode 4: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=6.039e-04 raw=nan
+[ eval_imf ] episode 5: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=5.947e-04 raw=nan
+[ eval_imf ] episode 6: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=4.005e-04 raw=nan
+[ eval_imf ] episode 7: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=2.106e-04 raw=nan
+[ eval_imf ] episode 8: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=5.862e-04 raw=nan
+[ eval_imf ] episode 9: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=2.410e-04 raw=nan
+[ eval_imf ] episode 10: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=6.740e-04 raw=nan
+[ eval_imf ] episode 11: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=4.245e-04 raw=nan
+[ eval_imf ] episode 12: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=5.256e-04 raw=nan
+[ eval_imf ] episode 13: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=5.325e-04 raw=nan
+[ eval_imf ] episode 14: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=6.558e-04 raw=nan
+[ eval_imf ] episode 15: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=5.650e-04 raw=nan
+[ eval_imf ] episode 16: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=3.518e-04 raw=nan
+[ eval_imf ] episode 17: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=2.245e-04 raw=nan
+[ eval_imf ] episode 18: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=6.050e-04 raw=nan
+[ eval_imf ] episode 19: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=7.628e-04 raw=nan
+[ eval_imf ] episode 20: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=2.544e-04 raw=nan
+[ eval_imf ] episode 21: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=6.827e-04 raw=nan
+[ eval_imf ] episode 22: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=3.846e-04 raw=nan
+[ eval_imf ] episode 23: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=2.082e-04 raw=nan
+[ eval_imf ] episode 24: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=5.234e-04 raw=nan
+[ eval_imf ] episode 25: SUCCESS  steps=66  violations=0  reward=1.000  nlp=0  rough=6.220e-04 raw=nan
+[ eval_imf ] episode 26: terminated  steps=36  violations=1  reward=0.000  nlp=0  rough=6.225e-04 raw=nan
+[ eval_imf ] episode 27: terminated  steps=28  violations=1  reward=0.000  nlp=0  rough=4.280e-04 raw=nan
+[ eval_imf ] episode 28: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=2.072e-04 raw=nan
+[ eval_imf ] episode 29: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=2.758e-04 raw=nan
+[ eval_imf ] episode 30: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=4.605e-04 raw=nan
+[ eval_imf ] episode 31: terminated  steps=60  violations=1  reward=0.000  nlp=0  rough=5.659e-04 raw=nan
+[ eval_imf ] episode 32: terminated  steps=17  violations=1  reward=0.000  nlp=0  rough=4.787e-04 raw=nan
+[ eval_imf ] episode 33: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=5.522e-04 raw=nan
+[ eval_imf ] episode 34: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=6.431e-04 raw=nan
+[ eval_imf ] episode 35: terminated  steps=49  violations=1  reward=0.000  nlp=0  rough=6.119e-04 raw=nan
+[ eval_imf ] episode 36: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=5.884e-04 raw=nan
+[ eval_imf ] episode 37: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=7.351e-04 raw=nan
+[ eval_imf ] episode 38: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=2.611e-04 raw=nan
+[ eval_imf ] episode 39: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=9.893e-04 raw=nan
+[ eval_imf ] episode 40: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=4.950e-04 raw=nan
+[ eval_imf ] episode 41: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=3.766e-04 raw=nan
+[ eval_imf ] episode 42: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=4.812e-04 raw=nan
+[ eval_imf ] episode 43: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=5.059e-04 raw=nan
+[ eval_imf ] episode 44: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=7.333e-04 raw=nan
+[ eval_imf ] episode 45: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=6.964e-04 raw=nan
+[ eval_imf ] episode 46: terminated  steps=27  violations=1  reward=0.000  nlp=0  rough=4.303e-04 raw=nan
+[ eval_imf ] episode 47: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=5.384e-04 raw=nan
+[ eval_imf ] episode 48: terminated  steps=17  violations=1  reward=0.000  nlp=0  rough=5.213e-04 raw=nan
+[ eval_imf ] episode 49: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=4.518e-04 raw=nan
+[ eval_imf ] episode 50: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=6.105e-04 raw=nan
+[ eval_imf ] episode 51: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.463e-04 raw=nan
+[ eval_imf ] episode 52: SUCCESS  steps=70  violations=0  reward=1.000  nlp=0  rough=5.820e-04 raw=nan
+[ eval_imf ] episode 53: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=4.627e-04 raw=nan
+[ eval_imf ] episode 54: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=2.631e-04 raw=nan
+[ eval_imf ] episode 55: terminated  steps=41  violations=1  reward=0.000  nlp=0  rough=4.971e-04 raw=nan
+[ eval_imf ] episode 56: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=5.791e-04 raw=nan
+[ eval_imf ] episode 57: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=4.678e-04 raw=nan
+[ eval_imf ] episode 58: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=5.730e-04 raw=nan
+[ eval_imf ] episode 59: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=5.062e-04 raw=nan
+[ eval_imf ] episode 60: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=4.970e-04 raw=nan
+[ eval_imf ] episode 61: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=5.499e-04 raw=nan
+[ eval_imf ] episode 62: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=5.982e-04 raw=nan
+[ eval_imf ] episode 63: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=4.262e-04 raw=nan
+[ eval_imf ] episode 64: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=6.170e-04 raw=nan
+[ eval_imf ] episode 65: terminated  steps=53  violations=1  reward=0.000  nlp=0  rough=5.464e-04 raw=nan
+[ eval_imf ] episode 66: terminated  steps=38  violations=1  reward=0.000  nlp=0  rough=7.167e-04 raw=nan
+[ eval_imf ] episode 67: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=6.344e-04 raw=nan
+[ eval_imf ] episode 68: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.438e-04 raw=nan
+[ eval_imf ] episode 69: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.994e-04 raw=nan
+[ eval_imf ] episode 70: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=7.495e-04 raw=nan
+[ eval_imf ] episode 71: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=6.167e-04 raw=nan
+[ eval_imf ] episode 72: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=4.448e-04 raw=nan
+[ eval_imf ] episode 73: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=3.607e-04 raw=nan
+[ eval_imf ] episode 74: terminated  steps=26  violations=1  reward=0.000  nlp=0  rough=8.100e-04 raw=nan
+[ eval_imf ] episode 75: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=5.973e-04 raw=nan
+[ eval_imf ] episode 76: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=6.337e-04 raw=nan
+[ eval_imf ] episode 77: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=6.347e-04 raw=nan
+[ eval_imf ] episode 78: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=5.624e-04 raw=nan
+[ eval_imf ] episode 79: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=6.855e-04 raw=nan
+[ eval_imf ] episode 80: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=5.832e-04 raw=nan
+[ eval_imf ] episode 81: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=2.547e-04 raw=nan
+[ eval_imf ] episode 82: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=6.597e-04 raw=nan
+[ eval_imf ] episode 83: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=5.559e-04 raw=nan
+[ eval_imf ] episode 84: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=5.409e-04 raw=nan
+[ eval_imf ] episode 85: terminated  steps=29  violations=1  reward=0.000  nlp=0  rough=9.984e-04 raw=nan
+[ eval_imf ] episode 86: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=6.359e-04 raw=nan
+[ eval_imf ] episode 87: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.514e-04 raw=nan
+[ eval_imf ] episode 88: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=4.042e-04 raw=nan
+[ eval_imf ] episode 89: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=6.492e-04 raw=nan
+[ eval_imf ] episode 90: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=3.273e-04 raw=nan
+[ eval_imf ] episode 91: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=4.570e-04 raw=nan
+[ eval_imf ] episode 92: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=4.625e-04 raw=nan
+[ eval_imf ] episode 93: terminated  steps=31  violations=1  reward=0.000  nlp=0  rough=4.397e-04 raw=nan
+[ eval_imf ] episode 94: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=6.471e-04 raw=nan
+[ eval_imf ] episode 95: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=5.157e-04 raw=nan
+[ eval_imf ] episode 96: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=5.401e-04 raw=nan
+[ eval_imf ] episode 97: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=4.578e-04 raw=nan
+[ eval_imf ] episode 98: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=4.515e-04 raw=nan
+[ eval_imf ] episode 99: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=6.601e-04 raw=nan
+[ eval_imf ] episode 100: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=6.768e-04 raw=nan
+[ eval_imf ] episode 101: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=2.742e-04 raw=nan
+[ eval_imf ] episode 102: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=8.142e-04 raw=nan
+[ eval_imf ] episode 103: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=3.562e-04 raw=nan
+[ eval_imf ] episode 104: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=5.418e-04 raw=nan
+[ eval_imf ] episode 105: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=4.805e-04 raw=nan
+[ eval_imf ] episode 106: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=4.109e-04 raw=nan
+[ eval_imf ] episode 107: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=6.894e-04 raw=nan
+[ eval_imf ] episode 108: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=5.632e-04 raw=nan
+[ eval_imf ] episode 109: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=3.390e-04 raw=nan
+[ eval_imf ] episode 110: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=6.835e-04 raw=nan
+[ eval_imf ] episode 111: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=2.772e-04 raw=nan
+[ eval_imf ] episode 112: terminated  steps=68  violations=1  reward=0.000  nlp=0  rough=4.056e-04 raw=nan
+[ eval_imf ] episode 113: terminated  steps=55  violations=1  reward=0.000  nlp=0  rough=6.283e-04 raw=nan
+[ eval_imf ] episode 114: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=7.107e-04 raw=nan
+[ eval_imf ] episode 115: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=5.649e-04 raw=nan
+[ eval_imf ] episode 116: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=3.663e-04 raw=nan
+[ eval_imf ] episode 117: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=2.643e-04 raw=nan
+[ eval_imf ] episode 118: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=7.035e-04 raw=nan
+[ eval_imf ] episode 119: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=5.380e-04 raw=nan
+[ eval_imf ] episode 120: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=6.074e-04 raw=nan
+[ eval_imf ] episode 121: terminated  steps=28  violations=1  reward=0.000  nlp=0  rough=3.995e-04 raw=nan
+[ eval_imf ] episode 122: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=7.977e-04 raw=nan
+[ eval_imf ] episode 123: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=6.678e-04 raw=nan
+[ eval_imf ] episode 124: terminated  steps=60  violations=1  reward=0.000  nlp=0  rough=5.646e-04 raw=nan
+[ eval_imf ] episode 125: terminated  steps=36  violations=1  reward=0.000  nlp=0  rough=7.456e-04 raw=nan
+[ eval_imf ] episode 126: terminated  steps=39  violations=1  reward=0.000  nlp=0  rough=5.623e-04 raw=nan
+[ eval_imf ] episode 127: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.074e-04 raw=nan
+[ eval_imf ] episode 128: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=6.986e-04 raw=nan
+[ eval_imf ] episode 129: terminated  steps=37  violations=1  reward=0.000  nlp=0  rough=7.404e-04 raw=nan
+[ eval_imf ] episode 130: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.888e-04 raw=nan
+[ eval_imf ] episode 131: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=6.226e-04 raw=nan
+[ eval_imf ] episode 132: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=6.672e-04 raw=nan
+[ eval_imf ] episode 133: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=4.284e-04 raw=nan
+[ eval_imf ] episode 134: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=4.354e-04 raw=nan
+[ eval_imf ] episode 135: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=5.679e-04 raw=nan
+[ eval_imf ] episode 136: terminated  steps=37  violations=1  reward=0.000  nlp=0  rough=6.767e-04 raw=nan
+[ eval_imf ] episode 137: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=3.273e-04 raw=nan
+[ eval_imf ] episode 138: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=5.226e-04 raw=nan
+[ eval_imf ] episode 139: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=4.618e-04 raw=nan
+[ eval_imf ] episode 140: terminated  steps=46  violations=1  reward=0.000  nlp=0  rough=4.885e-04 raw=nan
+[ eval_imf ] episode 141: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=4.942e-04 raw=nan
+[ eval_imf ] episode 142: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.456e-04 raw=nan
+[ eval_imf ] episode 143: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=5.550e-04 raw=nan
+[ eval_imf ] episode 144: terminated  steps=51  violations=1  reward=0.000  nlp=0  rough=5.044e-04 raw=nan
+[ eval_imf ] episode 145: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=3.629e-04 raw=nan
+[ eval_imf ] episode 146: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=3.996e-04 raw=nan
+[ eval_imf ] episode 147: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=7.699e-04 raw=nan
+[ eval_imf ] episode 148: SUCCESS  steps=63  violations=0  reward=1.000  nlp=0  rough=5.290e-04 raw=nan
+[ eval_imf ] episode 149: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=4.743e-04 raw=nan
+[ eval_imf ] episode 150: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=6.217e-04 raw=nan
+[ eval_imf ] episode 151: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=6.714e-04 raw=nan
+[ eval_imf ] episode 152: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=5.163e-04 raw=nan
+[ eval_imf ] episode 153: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=3.793e-04 raw=nan
+[ eval_imf ] episode 154: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=5.578e-04 raw=nan
+[ eval_imf ] episode 155: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=2.652e-04 raw=nan
+[ eval_imf ] episode 156: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=6.828e-04 raw=nan
+[ eval_imf ] episode 157: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=4.725e-04 raw=nan
+[ eval_imf ] episode 158: terminated  steps=47  violations=1  reward=0.000  nlp=0  rough=5.989e-04 raw=nan
+[ eval_imf ] episode 159: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=1.883e-04 raw=nan
+[ eval_imf ] episode 160: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=3.377e-04 raw=nan
+[ eval_imf ] episode 161: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=6.021e-04 raw=nan
+[ eval_imf ] episode 162: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=3.065e-04 raw=nan
+[ eval_imf ] episode 163: terminated  steps=38  violations=1  reward=0.000  nlp=0  rough=6.278e-04 raw=nan
+[ eval_imf ] episode 164: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=2.349e-04 raw=nan
+[ eval_imf ] episode 165: terminated  steps=17  violations=1  reward=0.000  nlp=0  rough=5.532e-04 raw=nan
+[ eval_imf ] episode 166: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=5.851e-04 raw=nan
+[ eval_imf ] episode 167: terminated  steps=48  violations=1  reward=0.000  nlp=0  rough=7.285e-04 raw=nan
+[ eval_imf ] episode 168: terminated  steps=37  violations=1  reward=0.000  nlp=0  rough=6.360e-04 raw=nan
+[ eval_imf ] episode 169: terminated  steps=63  violations=1  reward=0.000  nlp=0  rough=4.715e-04 raw=nan
+[ eval_imf ] episode 170: terminated  steps=31  violations=1  reward=0.000  nlp=0  rough=3.354e-04 raw=nan
+[ eval_imf ] episode 171: terminated  steps=50  violations=1  reward=0.000  nlp=0  rough=8.527e-04 raw=nan
+[ eval_imf ] episode 172: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=3.067e-04 raw=nan
+[ eval_imf ] episode 173: terminated  steps=43  violations=1  reward=0.000  nlp=0  rough=9.035e-04 raw=nan
+[ eval_imf ] episode 174: terminated  steps=26  violations=1  reward=0.000  nlp=0  rough=3.845e-04 raw=nan
+[ eval_imf ] episode 175: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=6.731e-04 raw=nan
+[ eval_imf ] episode 176: terminated  steps=27  violations=1  reward=0.000  nlp=0  rough=5.610e-04 raw=nan
+[ eval_imf ] episode 177: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=2.486e-04 raw=nan
+[ eval_imf ] episode 178: terminated  steps=40  violations=1  reward=0.000  nlp=0  rough=5.625e-04 raw=nan
+[ eval_imf ] episode 179: terminated  steps=17  violations=1  reward=0.000  nlp=0  rough=4.566e-04 raw=nan
+[ eval_imf ] episode 180: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=5.475e-04 raw=nan
+[ eval_imf ] episode 181: terminated  steps=18  violations=1  reward=0.000  nlp=0  rough=3.816e-04 raw=nan
+[ eval_imf ] episode 182: terminated  steps=44  violations=1  reward=0.000  nlp=0  rough=7.731e-04 raw=nan
+[ eval_imf ] episode 183: terminated  steps=19  violations=1  reward=0.000  nlp=0  rough=5.650e-04 raw=nan
+[ eval_imf ] episode 184: terminated  steps=22  violations=1  reward=0.000  nlp=0  rough=2.559e-04 raw=nan
+[ eval_imf ] episode 185: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=3.418e-04 raw=nan
+[ eval_imf ] episode 186: terminated  steps=41  violations=1  reward=0.000  nlp=0  rough=5.664e-04 raw=nan
+[ eval_imf ] episode 187: terminated  steps=21  violations=1  reward=0.000  nlp=0  rough=3.577e-04 raw=nan
+[ eval_imf ] episode 188: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=5.780e-04 raw=nan
+[ eval_imf ] episode 189: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=4.804e-04 raw=nan
+[ eval_imf ] episode 190: terminated  steps=52  violations=1  reward=0.000  nlp=0  rough=7.044e-04 raw=nan
+[ eval_imf ] episode 191: terminated  steps=45  violations=1  reward=0.000  nlp=0  rough=5.974e-04 raw=nan
+[ eval_imf ] episode 192: terminated  steps=23  violations=1  reward=0.000  nlp=0  rough=2.753e-04 raw=nan
+[ eval_imf ] episode 193: terminated  steps=25  violations=1  reward=0.000  nlp=0  rough=3.859e-04 raw=nan
+[ eval_imf ] episode 194: terminated  steps=32  violations=1  reward=0.000  nlp=0  rough=3.267e-04 raw=nan
+[ eval_imf ] episode 195: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=3.434e-04 raw=nan
+[ eval_imf ] episode 196: terminated  steps=42  violations=1  reward=0.000  nlp=0  rough=6.749e-04 raw=nan
+[ eval_imf ] episode 197: terminated  steps=24  violations=1  reward=0.000  nlp=0  rough=3.693e-04 raw=nan
+[ eval_imf ] episode 198: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=5.159e-04 raw=nan
+[ eval_imf ] episode 199: terminated  steps=20  violations=1  reward=0.000  nlp=0  rough=2.186e-04 raw=nan
+[ eval_imf ] done. mean NFE/plan: 5.0  all NLP solves OK  csv: logs/avoiding-v0/eval/H16_imf_original_K2_from_H16_imf_cliponly_100k_n200/trajectories.csv
+Total runtime: 0h 6m 39s
+==============================================================
+[ HF-IMF-EVAL ] method=hardflow_new K=1 -> bash run_scripts/eval_hardflow_new_imf.sh
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== Gen13 iMF HardFlow(new) on avoiding-v0, horizon=16, K=1 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2532.79it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_11e2769e-8547-11f1-888b-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+Loading fitted dynamics from logs/avoiding-v0/dynamics/linear_model.npz
+Fitted dynamics loaded successfully
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=imf  loading checkpoint: logs/avoiding-v0/flow/H16_imf_cliponly_100k/model_ema_4.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+[ eval_imf ] episode 0: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.447e-06 raw=2.264e-03
+[ eval_imf ] episode 1: SUCCESS  steps=64  violations=0  reward=1.000  nlp=8  rough=2.561e-06 raw=2.117e-03
+[ eval_imf ] episode 2: terminated  steps=77  violations=1  reward=0.000  nlp=10  rough=2.748e-06 raw=2.018e-03
+[ eval_imf ] episode 3: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.869e-06 raw=1.815e-03
+[ eval_imf ] episode 4: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.950e-06 raw=3.048e-03
+[ eval_imf ] episode 5: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.484e-06 raw=1.887e-03
+[ eval_imf ] episode 6: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=2.281e-06 raw=1.809e-03
+[ eval_imf ] episode 7: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.299e-06 raw=2.686e-03
+[ eval_imf ] episode 8: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.174e-06 raw=2.817e-03
+[ eval_imf ] episode 9: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.753e-06 raw=3.414e-03
+[ eval_imf ] episode 10: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.014e-06 raw=2.018e-03
+[ eval_imf ] episode 11: SUCCESS  steps=63  violations=0  reward=1.000  nlp=8  rough=3.591e-06 raw=2.711e-03
+[ eval_imf ] episode 12: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.387e-06 raw=2.771e-03
+[ eval_imf ] episode 13: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.729e-06 raw=2.604e-03
+[ eval_imf ] episode 14: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.886e-06 raw=1.943e-03
+[ eval_imf ] episode 15: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.956e-06 raw=2.936e-03
+[ eval_imf ] episode 16: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.752e-06 raw=2.128e-03
+[ eval_imf ] episode 17: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=2.716e-06 raw=1.885e-03
+[ eval_imf ] episode 18: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.710e-06 raw=2.040e-03
+[ eval_imf ] episode 19: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.353e-06 raw=3.141e-03
+[ eval_imf ] episode 20: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.152e-06 raw=1.857e-03
+[ eval_imf ] episode 21: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.786e-06 raw=2.376e-03
+[ eval_imf ] episode 22: SUCCESS  steps=64  violations=0  reward=1.000  nlp=8  rough=3.327e-06 raw=3.419e-03
+[ eval_imf ] episode 23: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.593e-06 raw=3.084e-03
+[ eval_imf ] episode 24: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.988e-06 raw=2.127e-03
+[ eval_imf ] episode 25: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=3.662e-06 raw=2.577e-03
+[ eval_imf ] episode 26: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=2.444e-06 raw=2.460e-03
+[ eval_imf ] episode 27: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=4.230e-06 raw=2.908e-03
+[ eval_imf ] episode 28: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.409e-06 raw=2.763e-03
+[ eval_imf ] episode 29: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.700e-06 raw=3.065e-03
+[ eval_imf ] episode 30: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.600e-06 raw=2.904e-03
+[ eval_imf ] episode 31: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=2.487e-06 raw=2.296e-03
+[ eval_imf ] episode 32: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.498e-06 raw=3.522e-03
+[ eval_imf ] episode 33: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.949e-06 raw=2.078e-03
+[ eval_imf ] episode 34: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.823e-06 raw=1.852e-03
+[ eval_imf ] episode 35: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.752e-06 raw=2.059e-03
+[ eval_imf ] episode 36: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.776e-06 raw=2.082e-03
+[ eval_imf ] episode 37: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.803e-06 raw=2.469e-03
+[ eval_imf ] episode 38: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.072e-06 raw=2.125e-03
+[ eval_imf ] episode 39: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=4.560e-06 raw=3.029e-03
+[ eval_imf ] episode 40: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.622e-06 raw=2.875e-03
+[ eval_imf ] episode 41: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.750e-06 raw=2.273e-03
+[ eval_imf ] episode 42: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.498e-06 raw=3.326e-03
+[ eval_imf ] episode 43: SUCCESS  steps=72  violations=0  reward=1.000  nlp=9  rough=3.163e-06 raw=2.609e-03
+[ eval_imf ] episode 44: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.162e-06 raw=3.890e-03
+[ eval_imf ] WARNING: NLP solve failed (step k=0) — using last available value.
+[ eval_imf ] episode 45: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9 FAILED=1  rough=2.886e-06 raw=2.516e-03
+[ eval_imf ] episode 46: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.421e-06 raw=2.274e-03
+[ eval_imf ] episode 47: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.863e-06 raw=1.889e-03
+[ eval_imf ] episode 48: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.665e-06 raw=2.321e-03
+[ eval_imf ] episode 49: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=3.385e-06 raw=2.796e-03
+[ eval_imf ] episode 50: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.643e-06 raw=3.305e-03
+[ eval_imf ] episode 51: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.788e-06 raw=2.118e-03
+[ eval_imf ] episode 52: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.960e-06 raw=2.083e-03
+[ eval_imf ] episode 53: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.764e-06 raw=1.994e-03
+[ eval_imf ] episode 54: SUCCESS  steps=63  violations=0  reward=1.000  nlp=8  rough=3.461e-06 raw=2.901e-03
+[ eval_imf ] episode 55: SUCCESS  steps=64  violations=0  reward=1.000  nlp=8  rough=3.927e-06 raw=3.091e-03
+[ eval_imf ] episode 56: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.639e-06 raw=1.797e-03
+[ eval_imf ] episode 57: SUCCESS  steps=64  violations=0  reward=1.000  nlp=8  rough=3.586e-06 raw=3.103e-03
+[ eval_imf ] episode 58: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.039e-06 raw=2.262e-03
+[ eval_imf ] episode 59: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.978e-06 raw=3.143e-03
+[ eval_imf ] episode 60: terminated  steps=78  violations=1  reward=0.000  nlp=10  rough=3.264e-06 raw=2.648e-03
+[ eval_imf ] episode 61: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.180e-06 raw=1.884e-03
+[ eval_imf ] episode 62: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=4.152e-06 raw=3.106e-03
+[ eval_imf ] episode 63: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.562e-06 raw=2.968e-03
+[ eval_imf ] episode 64: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.709e-06 raw=1.839e-03
+[ eval_imf ] episode 65: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.349e-06 raw=3.010e-03
+[ eval_imf ] WARNING: NLP solve failed (step k=0) — using last available value.
+[ eval_imf ] episode 66: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9 FAILED=1  rough=2.495e-06 raw=1.814e-03
+[ eval_imf ] episode 67: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=4.814e-06 raw=3.519e-03
+[ eval_imf ] episode 68: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.852e-06 raw=2.014e-03
+[ eval_imf ] episode 69: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.758e-06 raw=1.949e-03
+[ eval_imf ] episode 70: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.646e-06 raw=2.235e-03
+[ eval_imf ] episode 71: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.254e-06 raw=2.089e-03
+[ eval_imf ] episode 72: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.517e-06 raw=1.903e-03
+[ eval_imf ] episode 73: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.865e-06 raw=1.942e-03
+[ eval_imf ] episode 74: SUCCESS  steps=64  violations=0  reward=1.000  nlp=8  rough=3.517e-06 raw=3.487e-03
+[ eval_imf ] episode 75: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.048e-06 raw=2.434e-03
+[ eval_imf ] episode 76: SUCCESS  steps=72  violations=1  reward=1.000  nlp=9  rough=2.465e-06 raw=2.243e-03
+[ eval_imf ] episode 77: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.766e-06 raw=3.115e-03
+[ eval_imf ] episode 78: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.372e-06 raw=2.243e-03
+[ eval_imf ] episode 79: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.400e-06 raw=2.775e-03
+[ eval_imf ] episode 80: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.221e-06 raw=2.046e-03
+[ eval_imf ] episode 81: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.638e-06 raw=1.998e-03
+[ eval_imf ] episode 82: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.987e-06 raw=3.316e-03
+[ eval_imf ] episode 83: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.896e-06 raw=1.818e-03
+[ eval_imf ] episode 84: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.379e-06 raw=3.620e-03
+[ eval_imf ] episode 85: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.813e-06 raw=1.992e-03
+[ eval_imf ] episode 86: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=4.304e-06 raw=2.647e-03
+[ eval_imf ] episode 87: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.293e-06 raw=1.991e-03
+[ eval_imf ] episode 88: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.040e-06 raw=1.748e-03
+[ eval_imf ] episode 89: SUCCESS  steps=74  violations=0  reward=1.000  nlp=10  rough=3.617e-06 raw=2.730e-03
+[ eval_imf ] episode 90: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.701e-06 raw=1.986e-03
+[ eval_imf ] episode 91: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.517e-06 raw=2.078e-03
+[ eval_imf ] episode 92: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.576e-06 raw=1.813e-03
+[ eval_imf ] episode 93: SUCCESS  steps=70  violations=1  reward=1.000  nlp=9  rough=2.593e-06 raw=1.959e-03
+[ eval_imf ] episode 94: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.237e-06 raw=2.067e-03
+[ eval_imf ] episode 95: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.551e-06 raw=2.036e-03
+[ eval_imf ] episode 96: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=4.390e-06 raw=3.176e-03
+[ eval_imf ] episode 97: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.975e-06 raw=3.038e-03
+[ eval_imf ] episode 98: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.989e-06 raw=3.135e-03
+[ eval_imf ] episode 99: terminated  steps=70  violations=1  reward=0.000  nlp=9  rough=2.601e-06 raw=2.108e-03
+[ eval_imf ] episode 100: SUCCESS  steps=70  violations=1  reward=1.000  nlp=9  rough=2.472e-06 raw=2.172e-03
+[ eval_imf ] episode 101: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.331e-06 raw=3.964e-03
+[ eval_imf ] episode 102: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.807e-06 raw=2.115e-03
+[ eval_imf ] episode 103: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.955e-06 raw=2.691e-03
+[ eval_imf ] episode 104: SUCCESS  steps=75  violations=0  reward=1.000  nlp=10  rough=2.829e-06 raw=1.804e-03
+[ eval_imf ] episode 105: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=3.200e-06 raw=2.056e-03
+[ eval_imf ] episode 106: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=4.125e-06 raw=3.254e-03
+[ eval_imf ] episode 107: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.682e-06 raw=2.774e-03
+[ eval_imf ] episode 108: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.974e-06 raw=1.916e-03
+[ eval_imf ] episode 109: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.019e-06 raw=2.209e-03
+[ eval_imf ] episode 110: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.679e-06 raw=2.203e-03
+[ eval_imf ] episode 111: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.264e-06 raw=2.099e-03
+[ eval_imf ] episode 112: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.235e-06 raw=2.386e-03
+[ eval_imf ] episode 113: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=2.943e-06 raw=1.655e-03
+[ eval_imf ] episode 114: terminated  steps=79  violations=1  reward=0.000  nlp=10  rough=2.944e-06 raw=2.003e-03
+[ eval_imf ] episode 115: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.893e-06 raw=2.060e-03
+[ eval_imf ] episode 116: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.387e-06 raw=3.238e-03
+[ eval_imf ] episode 117: SUCCESS  steps=72  violations=0  reward=1.000  nlp=9  rough=2.664e-06 raw=1.827e-03
+[ eval_imf ] episode 118: SUCCESS  steps=64  violations=0  reward=1.000  nlp=8  rough=2.610e-06 raw=1.854e-03
+[ eval_imf ] episode 119: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=3.529e-06 raw=2.900e-03
+[ eval_imf ] episode 120: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.616e-06 raw=2.118e-03
+[ eval_imf ] episode 121: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.536e-06 raw=3.090e-03
+[ eval_imf ] episode 122: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.120e-06 raw=2.206e-03
+[ eval_imf ] episode 123: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=4.011e-06 raw=3.020e-03
+[ eval_imf ] episode 124: terminated  steps=72  violations=1  reward=0.000  nlp=9  rough=2.409e-06 raw=2.289e-03
+[ eval_imf ] episode 125: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.778e-06 raw=1.906e-03
+[ eval_imf ] episode 126: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.186e-06 raw=1.802e-03
+[ eval_imf ] episode 127: SUCCESS  steps=73  violations=0  reward=1.000  nlp=10  rough=2.957e-06 raw=2.264e-03
+[ eval_imf ] episode 128: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.425e-06 raw=3.023e-03
+[ eval_imf ] episode 129: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.500e-06 raw=2.386e-03
+[ eval_imf ] episode 130: SUCCESS  steps=73  violations=0  reward=1.000  nlp=10  rough=3.309e-06 raw=3.009e-03
+[ eval_imf ] episode 131: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.238e-06 raw=3.014e-03
+[ eval_imf ] episode 132: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.641e-06 raw=2.207e-03
+[ eval_imf ] episode 133: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.002e-06 raw=2.466e-03
+[ eval_imf ] episode 134: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.724e-06 raw=1.998e-03
+[ eval_imf ] episode 135: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.669e-06 raw=2.093e-03
+[ eval_imf ] episode 136: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=4.516e-06 raw=2.917e-03
+[ eval_imf ] episode 137: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.482e-06 raw=2.400e-03
+[ eval_imf ] episode 138: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=3.490e-06 raw=2.861e-03
+[ eval_imf ] episode 139: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.755e-06 raw=1.875e-03
+[ eval_imf ] episode 140: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=4.901e-06 raw=3.527e-03
+[ eval_imf ] episode 141: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.065e-06 raw=1.868e-03
+[ eval_imf ] episode 142: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=4.064e-06 raw=3.549e-03
+[ eval_imf ] episode 143: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=4.611e-06 raw=3.367e-03
+[ eval_imf ] episode 144: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.924e-06 raw=3.500e-03
+[ eval_imf ] episode 145: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.667e-06 raw=2.000e-03
+[ eval_imf ] episode 146: SUCCESS  steps=72  violations=0  reward=1.000  nlp=9  rough=2.866e-06 raw=2.062e-03
+[ eval_imf ] episode 147: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.887e-06 raw=1.871e-03
+[ eval_imf ] episode 148: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.529e-06 raw=2.626e-03
+[ eval_imf ] episode 149: SUCCESS  steps=76  violations=0  reward=1.000  nlp=10  rough=2.810e-06 raw=2.255e-03
+[ eval_imf ] episode 150: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.643e-06 raw=2.287e-03
+[ eval_imf ] episode 151: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.844e-06 raw=2.682e-03
+[ eval_imf ] episode 152: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.387e-06 raw=2.501e-03
+[ eval_imf ] episode 153: terminated  steps=72  violations=1  reward=0.000  nlp=9  rough=2.365e-06 raw=1.923e-03
+[ eval_imf ] episode 154: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.581e-06 raw=2.569e-03
+[ eval_imf ] episode 155: terminated  steps=40  violations=1  reward=0.000  nlp=5  rough=1.843e-06 raw=1.724e-03
+[ eval_imf ] episode 156: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.448e-06 raw=1.905e-03
+[ eval_imf ] episode 157: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.807e-06 raw=1.919e-03
+[ eval_imf ] episode 158: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.725e-06 raw=3.017e-03
+[ eval_imf ] episode 159: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=2.737e-06 raw=1.974e-03
+[ eval_imf ] episode 160: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.869e-06 raw=1.953e-03
+[ eval_imf ] episode 161: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.897e-06 raw=2.107e-03
+[ eval_imf ] episode 162: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=2.637e-06 raw=2.099e-03
+[ eval_imf ] episode 163: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.223e-06 raw=3.411e-03
+[ eval_imf ] episode 164: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.828e-06 raw=2.423e-03
+[ eval_imf ] episode 165: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=2.883e-06 raw=1.843e-03
+[ eval_imf ] episode 166: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.744e-06 raw=1.877e-03
+[ eval_imf ] episode 167: SUCCESS  steps=75  violations=0  reward=1.000  nlp=10  rough=2.479e-06 raw=1.914e-03
+[ eval_imf ] episode 168: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.205e-06 raw=2.241e-03
+[ eval_imf ] episode 169: SUCCESS  steps=70  violations=0  reward=1.000  nlp=9  rough=3.105e-06 raw=2.316e-03
+[ eval_imf ] episode 170: terminated  steps=77  violations=1  reward=0.000  nlp=10  rough=3.173e-06 raw=2.013e-03
+[ eval_imf ] episode 171: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.851e-06 raw=1.998e-03
+[ eval_imf ] episode 172: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.276e-06 raw=3.289e-03
+[ eval_imf ] episode 173: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.750e-06 raw=1.869e-03
+[ eval_imf ] episode 174: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.386e-06 raw=3.140e-03
+[ eval_imf ] episode 175: SUCCESS  steps=71  violations=1  reward=1.000  nlp=9  rough=2.660e-06 raw=1.942e-03
+[ eval_imf ] episode 176: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.518e-06 raw=1.668e-03
+[ eval_imf ] episode 177: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.883e-06 raw=2.442e-03
+[ eval_imf ] episode 178: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.739e-06 raw=3.592e-03
+[ eval_imf ] episode 179: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.738e-06 raw=2.184e-03
+[ eval_imf ] episode 180: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.900e-06 raw=1.657e-03
+[ eval_imf ] episode 181: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.664e-06 raw=2.939e-03
+[ eval_imf ] episode 182: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.902e-06 raw=1.939e-03
+[ eval_imf ] episode 183: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=4.368e-06 raw=3.240e-03
+[ eval_imf ] episode 184: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.608e-06 raw=1.733e-03
+[ eval_imf ] episode 185: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.803e-06 raw=3.198e-03
+[ eval_imf ] episode 186: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.335e-06 raw=2.841e-03
+[ eval_imf ] episode 187: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.918e-06 raw=2.006e-03
+[ eval_imf ] episode 188: SUCCESS  steps=68  violations=0  reward=1.000  nlp=9  rough=3.992e-06 raw=3.431e-03
+[ eval_imf ] episode 189: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.620e-06 raw=2.939e-03
+[ eval_imf ] episode 190: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=2.841e-06 raw=1.900e-03
+[ eval_imf ] episode 191: SUCCESS  steps=72  violations=0  reward=1.000  nlp=9  rough=2.531e-06 raw=2.304e-03
+[ eval_imf ] episode 192: SUCCESS  steps=72  violations=0  reward=1.000  nlp=9  rough=3.403e-06 raw=2.763e-03
+[ eval_imf ] episode 193: SUCCESS  steps=65  violations=0  reward=1.000  nlp=9  rough=3.566e-06 raw=2.738e-03
+[ eval_imf ] episode 194: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=2.843e-06 raw=1.940e-03
+[ eval_imf ] episode 195: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=3.334e-06 raw=1.886e-03
+[ eval_imf ] episode 196: SUCCESS  steps=71  violations=0  reward=1.000  nlp=9  rough=3.435e-06 raw=2.838e-03
+[ eval_imf ] episode 197: SUCCESS  steps=69  violations=0  reward=1.000  nlp=9  rough=2.855e-06 raw=2.308e-03
+[ eval_imf ] episode 198: SUCCESS  steps=66  violations=0  reward=1.000  nlp=9  rough=3.540e-06 raw=3.126e-03
+[ eval_imf ] episode 199: SUCCESS  steps=67  violations=0  reward=1.000  nlp=9  rough=2.946e-06 raw=1.749e-03
+[ eval_imf ] done. mean NFE/plan: 5.0  NLP failures: 2 (!!)  csv: logs/avoiding-v0/eval/H16_imf_hardflow_new_K1_from_H16_imf_cliponly_100k_n200/trajectories.csv
+Total runtime: 0h 15m 50s
+==============================================================
+[ HF-IMF-EVAL ] method=hardflow_new K=2 -> bash run_scripts/eval_hardflow_new_imf.sh
+==============================================================
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== Gen13 iMF HardFlow(new) on avoiding-v0, horizon=16, K=2 ===
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2577.94it/s]
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/HardFlow/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_47f80b8e-8549-11f1-8bfc-d85ed34e311e.xml' with default provider at slot 1
+
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+Loading fitted dynamics from logs/avoiding-v0/dynamics/linear_model.npz
+Fitted dynamics loaded successfully
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ eval_imf ] backbone=imf  loading checkpoint: logs/avoiding-v0/flow/H16_imf_cliponly_100k/model_ema_4.pth
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+[ eval_imf ] episode 0: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.153e-06 raw=6.769e-04
+[ eval_imf ] episode 1: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.869e-06 raw=6.598e-04
+[ eval_imf ] episode 2: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.648e-06 raw=5.875e-04
+[ eval_imf ] episode 3: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.658e-06 raw=8.315e-04
+[ eval_imf ] episode 4: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.864e-06 raw=6.213e-04
+[ eval_imf ] episode 5: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.733e-06 raw=6.474e-04
+[ eval_imf ] episode 6: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.626e-06 raw=5.379e-04
+[ eval_imf ] episode 7: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=3.517e-06 raw=6.941e-04
+[ eval_imf ] episode 8: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.251e-06 raw=9.831e-04
+[ eval_imf ] episode 9: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.266e-06 raw=7.689e-04
+[ eval_imf ] episode 10: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.826e-06 raw=5.768e-04
+[ eval_imf ] episode 11: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.907e-06 raw=1.117e-03
+[ eval_imf ] episode 12: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.208e-06 raw=5.669e-04
+[ eval_imf ] episode 13: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.336e-06 raw=6.623e-04
+[ eval_imf ] episode 14: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.375e-06 raw=6.155e-04
+[ eval_imf ] episode 15: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.149e-06 raw=6.851e-04
+[ eval_imf ] episode 16: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.418e-06 raw=6.052e-04
+[ eval_imf ] episode 17: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.804e-06 raw=7.497e-04
+[ eval_imf ] episode 18: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.371e-06 raw=7.584e-04
+[ eval_imf ] episode 19: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=1.917e-06 raw=5.570e-04
+[ eval_imf ] episode 20: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.811e-06 raw=9.506e-04
+[ eval_imf ] episode 21: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.066e-06 raw=7.739e-04
+[ eval_imf ] episode 22: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.294e-06 raw=6.648e-04
+[ eval_imf ] episode 23: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.658e-06 raw=6.127e-04
+[ eval_imf ] episode 24: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.157e-06 raw=9.075e-04
+[ eval_imf ] episode 25: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=3.009e-06 raw=6.935e-04
+[ eval_imf ] episode 26: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.429e-06 raw=9.043e-04
+[ eval_imf ] episode 27: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.676e-06 raw=7.600e-04
+[ eval_imf ] episode 28: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.549e-06 raw=8.497e-04
+[ eval_imf ] episode 29: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.468e-06 raw=8.092e-04
+[ eval_imf ] episode 30: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.031e-06 raw=7.917e-04
+[ eval_imf ] episode 31: terminated  steps=56  violations=1  reward=0.000  nlp=14  rough=1.675e-06 raw=6.807e-04
+[ eval_imf ] episode 32: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.639e-06 raw=6.108e-04
+[ eval_imf ] episode 33: terminated  steps=47  violations=1  reward=0.000  nlp=12  rough=2.747e-06 raw=7.432e-04
+[ eval_imf ] episode 34: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.628e-06 raw=6.989e-04
+[ eval_imf ] episode 35: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.656e-06 raw=9.081e-04
+[ eval_imf ] episode 36: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.769e-06 raw=1.025e-03
+[ eval_imf ] episode 37: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.968e-06 raw=6.656e-04
+[ eval_imf ] episode 38: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.007e-06 raw=7.960e-04
+[ eval_imf ] episode 39: terminated  steps=63  violations=1  reward=0.000  nlp=16  rough=2.971e-06 raw=7.481e-04
+[ eval_imf ] episode 40: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.475e-06 raw=6.638e-04
+[ eval_imf ] episode 41: SUCCESS  steps=68  violations=0  reward=1.000  nlp=18  rough=2.833e-06 raw=7.515e-04
+[ eval_imf ] episode 42: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.406e-06 raw=8.286e-04
+[ eval_imf ] episode 43: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.350e-06 raw=8.119e-04
+[ eval_imf ] episode 44: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.371e-06 raw=8.324e-04
+[ eval_imf ] episode 45: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=1.813e-06 raw=4.858e-04
+[ eval_imf ] episode 46: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.703e-06 raw=1.103e-03
+[ eval_imf ] episode 47: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=3.103e-06 raw=8.908e-04
+[ eval_imf ] episode 48: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.442e-06 raw=7.779e-04
+[ eval_imf ] episode 49: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.968e-06 raw=9.520e-04
+[ eval_imf ] episode 50: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.186e-06 raw=6.877e-04
+[ eval_imf ] episode 51: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.318e-06 raw=6.498e-04
+[ eval_imf ] episode 52: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.940e-06 raw=7.404e-04
+[ eval_imf ] episode 53: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.505e-06 raw=7.037e-04
+[ eval_imf ] episode 54: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=1.832e-06 raw=7.117e-04
+[ eval_imf ] episode 55: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.577e-06 raw=8.012e-04
+[ eval_imf ] episode 56: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.234e-06 raw=6.397e-04
+[ eval_imf ] episode 57: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.519e-06 raw=5.349e-04
+[ eval_imf ] episode 58: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.457e-06 raw=7.040e-04
+[ eval_imf ] episode 59: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.372e-06 raw=6.641e-04
+[ eval_imf ] episode 60: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.253e-06 raw=5.727e-04
+[ eval_imf ] episode 61: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.364e-06 raw=9.435e-04
+[ eval_imf ] episode 62: SUCCESS  steps=60  violations=0  reward=1.000  nlp=16  rough=2.985e-06 raw=1.572e-03
+[ eval_imf ] episode 63: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.058e-06 raw=8.044e-04
+[ eval_imf ] episode 64: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.226e-06 raw=6.184e-04
+[ eval_imf ] episode 65: SUCCESS  steps=68  violations=0  reward=1.000  nlp=18  rough=2.126e-06 raw=6.773e-04
+[ eval_imf ] episode 66: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.495e-06 raw=7.442e-04
+[ eval_imf ] episode 67: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.411e-06 raw=8.931e-04
+[ eval_imf ] episode 68: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.755e-06 raw=6.089e-04
+[ eval_imf ] episode 69: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.327e-06 raw=8.345e-04
+[ eval_imf ] episode 70: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=3.321e-06 raw=7.809e-04
+[ eval_imf ] episode 71: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.723e-06 raw=6.581e-04
+[ eval_imf ] episode 72: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.392e-06 raw=6.058e-04
+[ eval_imf ] episode 73: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=1.730e-06 raw=6.973e-04
+[ eval_imf ] episode 74: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.717e-06 raw=7.308e-04
+[ eval_imf ] episode 75: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.399e-06 raw=6.140e-04
+[ eval_imf ] episode 76: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.538e-06 raw=6.877e-04
+[ eval_imf ] episode 77: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.262e-06 raw=6.548e-04
+[ eval_imf ] episode 78: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.904e-06 raw=7.754e-04
+[ eval_imf ] episode 79: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.704e-06 raw=6.885e-04
+[ eval_imf ] episode 80: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.092e-06 raw=6.604e-04
+[ eval_imf ] episode 81: SUCCESS  steps=58  violations=0  reward=1.000  nlp=16  rough=2.647e-06 raw=5.900e-04
+[ eval_imf ] episode 82: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.167e-06 raw=7.245e-04
+[ eval_imf ] episode 83: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.600e-06 raw=9.584e-04
+[ eval_imf ] episode 84: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.577e-06 raw=9.167e-04
+[ eval_imf ] episode 85: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.357e-06 raw=6.259e-04
+[ eval_imf ] episode 86: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.960e-06 raw=7.168e-04
+[ eval_imf ] episode 87: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.978e-06 raw=1.225e-03
+[ eval_imf ] episode 88: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.833e-06 raw=7.670e-04
+[ eval_imf ] episode 89: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.133e-06 raw=1.016e-03
+[ eval_imf ] episode 90: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.221e-06 raw=5.270e-04
+[ eval_imf ] episode 91: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.994e-06 raw=6.295e-04
+[ eval_imf ] episode 92: SUCCESS  steps=63  violations=0  reward=1.000  nlp=16  rough=1.662e-06 raw=8.375e-04
+[ eval_imf ] episode 93: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.582e-06 raw=6.194e-04
+[ eval_imf ] episode 94: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.463e-06 raw=7.404e-04
+[ eval_imf ] episode 95: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.929e-06 raw=7.688e-04
+[ eval_imf ] episode 96: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=1.889e-06 raw=7.944e-04
+[ eval_imf ] episode 97: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.452e-06 raw=7.327e-04
+[ eval_imf ] episode 98: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.260e-06 raw=8.431e-04
+[ eval_imf ] episode 99: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.692e-06 raw=6.890e-04
+[ eval_imf ] episode 100: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.146e-06 raw=8.492e-04
+[ eval_imf ] WARNING: NLP solve failed (step k=0) — using last available value.
+[ eval_imf ] WARNING: NLP solve failed (step k=1) — using last available value.
+[ eval_imf ] episode 101: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16 FAILED=2  rough=3.245e-06 raw=1.106e-03
+[ eval_imf ] episode 102: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.459e-06 raw=6.424e-04
+[ eval_imf ] episode 103: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.084e-06 raw=7.790e-04
+[ eval_imf ] episode 104: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.276e-06 raw=5.924e-04
+[ eval_imf ] episode 105: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.137e-06 raw=5.049e-04
+[ eval_imf ] episode 106: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.675e-06 raw=8.187e-04
+[ eval_imf ] episode 107: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=1.802e-06 raw=6.543e-04
+[ eval_imf ] episode 108: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.177e-06 raw=7.408e-04
+[ eval_imf ] episode 109: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.520e-06 raw=7.502e-04
+[ eval_imf ] episode 110: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=3.077e-06 raw=7.717e-04
+[ eval_imf ] episode 111: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.604e-06 raw=5.990e-04
+[ eval_imf ] episode 112: SUCCESS  steps=63  violations=0  reward=1.000  nlp=16  rough=1.820e-06 raw=4.934e-04
+[ eval_imf ] episode 113: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.279e-06 raw=6.917e-04
+[ eval_imf ] episode 114: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.739e-06 raw=9.129e-04
+[ eval_imf ] episode 115: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.230e-06 raw=8.420e-04
+[ eval_imf ] episode 116: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.662e-06 raw=9.103e-04
+[ eval_imf ] episode 117: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.815e-06 raw=1.262e-03
+[ eval_imf ] episode 118: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.703e-06 raw=6.494e-04
+[ eval_imf ] episode 119: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.070e-06 raw=4.568e-04
+[ eval_imf ] episode 120: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.371e-06 raw=6.839e-04
+[ eval_imf ] episode 121: SUCCESS  steps=62  violations=0  reward=1.000  nlp=16  rough=2.760e-06 raw=6.593e-04
+[ eval_imf ] episode 122: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.681e-06 raw=9.192e-04
+[ eval_imf ] episode 123: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.802e-06 raw=7.105e-04
+[ eval_imf ] episode 124: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=3.237e-06 raw=6.682e-04
+[ eval_imf ] episode 125: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=3.022e-06 raw=7.356e-04
+[ eval_imf ] episode 126: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.000e-06 raw=5.909e-04
+[ eval_imf ] episode 127: SUCCESS  steps=62  violations=0  reward=1.000  nlp=16  rough=2.792e-06 raw=1.201e-03
+[ eval_imf ] episode 128: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.655e-06 raw=5.561e-04
+[ eval_imf ] episode 129: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.808e-06 raw=1.072e-03
+[ eval_imf ] episode 130: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=1.758e-06 raw=7.481e-04
+[ eval_imf ] episode 131: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.554e-06 raw=6.011e-04
+[ eval_imf ] episode 132: terminated  steps=54  violations=1  reward=0.000  nlp=14  rough=1.564e-06 raw=5.620e-04
+[ eval_imf ] episode 133: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.142e-06 raw=7.391e-04
+[ eval_imf ] episode 134: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.337e-06 raw=6.051e-04
+[ eval_imf ] episode 135: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.072e-06 raw=6.339e-04
+[ eval_imf ] episode 136: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.787e-06 raw=9.486e-04
+[ eval_imf ] episode 137: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.276e-06 raw=6.356e-04
+[ eval_imf ] episode 138: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.647e-06 raw=6.931e-04
+[ eval_imf ] episode 139: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.085e-06 raw=6.706e-04
+[ eval_imf ] episode 140: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.618e-06 raw=1.077e-03
+[ eval_imf ] episode 141: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.492e-06 raw=6.421e-04
+[ eval_imf ] episode 142: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.203e-06 raw=6.963e-04
+[ eval_imf ] episode 143: terminated  steps=56  violations=1  reward=0.000  nlp=14  rough=2.574e-06 raw=5.204e-04
+[ eval_imf ] episode 144: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.022e-06 raw=5.507e-04
+[ eval_imf ] episode 145: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.530e-06 raw=7.358e-04
+[ eval_imf ] episode 146: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.803e-06 raw=6.797e-04
+[ eval_imf ] episode 147: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.792e-06 raw=6.430e-04
+[ eval_imf ] episode 148: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.045e-06 raw=8.589e-04
+[ eval_imf ] episode 149: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.986e-06 raw=6.832e-04
+[ eval_imf ] episode 150: SUCCESS  steps=63  violations=0  reward=1.000  nlp=16  rough=2.172e-06 raw=8.516e-04
+[ eval_imf ] episode 151: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.648e-06 raw=7.238e-04
+[ eval_imf ] episode 152: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.599e-06 raw=8.290e-04
+[ eval_imf ] episode 153: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.770e-06 raw=6.890e-04
+[ eval_imf ] episode 154: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.440e-06 raw=1.150e-03
+[ eval_imf ] episode 155: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.537e-06 raw=6.918e-04
+[ eval_imf ] episode 156: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.787e-06 raw=1.161e-03
+[ eval_imf ] episode 157: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.515e-06 raw=6.382e-04
+[ eval_imf ] episode 158: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.954e-06 raw=8.931e-04
+[ eval_imf ] episode 159: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.844e-06 raw=6.335e-04
+[ eval_imf ] episode 160: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.817e-06 raw=8.059e-04
+[ eval_imf ] episode 161: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=3.157e-06 raw=7.777e-04
+[ eval_imf ] episode 162: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.223e-06 raw=6.333e-04
+[ eval_imf ] episode 163: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=3.014e-06 raw=7.279e-04
+[ eval_imf ] episode 164: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=3.101e-06 raw=8.794e-04
+[ eval_imf ] episode 165: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=1.909e-06 raw=5.142e-04
+[ eval_imf ] episode 166: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.021e-06 raw=6.937e-04
+[ eval_imf ] episode 167: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.481e-06 raw=7.120e-04
+[ eval_imf ] episode 168: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.572e-06 raw=1.073e-03
+[ eval_imf ] episode 169: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=2.640e-06 raw=1.022e-03
+[ eval_imf ] episode 170: terminated  steps=14  violations=1  reward=0.000  nlp=4  rough=2.701e-06 raw=3.006e-04
+[ eval_imf ] episode 171: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.030e-06 raw=6.962e-04
+[ eval_imf ] episode 172: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.176e-06 raw=7.938e-04
+[ eval_imf ] episode 173: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.007e-06 raw=6.568e-04
+[ eval_imf ] episode 174: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=2.775e-06 raw=7.323e-04
+[ eval_imf ] episode 175: terminated  steps=45  violations=1  reward=0.000  nlp=12  rough=2.831e-06 raw=6.511e-04
+[ eval_imf ] episode 176: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.454e-06 raw=6.127e-04
+[ eval_imf ] episode 177: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.752e-06 raw=6.696e-04
+[ eval_imf ] episode 178: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.456e-06 raw=1.006e-03
+[ eval_imf ] episode 179: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=3.251e-06 raw=8.566e-04
+[ eval_imf ] episode 180: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.809e-06 raw=5.649e-04
+[ eval_imf ] episode 181: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=3.076e-06 raw=9.810e-04
+[ eval_imf ] episode 182: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.281e-06 raw=9.698e-04
+[ eval_imf ] episode 183: SUCCESS  steps=57  violations=0  reward=1.000  nlp=16  rough=1.795e-06 raw=6.549e-04
+[ eval_imf ] episode 184: SUCCESS  steps=53  violations=0  reward=1.000  nlp=14  rough=3.049e-06 raw=6.842e-04
+[ eval_imf ] episode 185: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=1.823e-06 raw=5.844e-04
+[ eval_imf ] episode 186: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.796e-06 raw=7.690e-04
+[ eval_imf ] episode 187: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.561e-06 raw=7.199e-04
+[ eval_imf ] episode 188: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.410e-06 raw=1.006e-03
+[ eval_imf ] episode 189: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.025e-06 raw=6.197e-04
+[ eval_imf ] episode 190: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.471e-06 raw=9.367e-04
+[ eval_imf ] episode 191: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.908e-06 raw=6.007e-04
+[ eval_imf ] episode 192: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=2.368e-06 raw=9.162e-04
+[ eval_imf ] episode 193: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.677e-06 raw=7.600e-04
+[ eval_imf ] episode 194: SUCCESS  steps=56  violations=0  reward=1.000  nlp=14  rough=3.078e-06 raw=8.349e-04
+[ eval_imf ] episode 195: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.263e-06 raw=7.390e-04
+[ eval_imf ] episode 196: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=1.809e-06 raw=8.243e-04
+[ eval_imf ] episode 197: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.435e-06 raw=9.002e-04
+[ eval_imf ] episode 198: SUCCESS  steps=55  violations=0  reward=1.000  nlp=14  rough=2.343e-06 raw=6.833e-04
+[ eval_imf ] episode 199: SUCCESS  steps=54  violations=0  reward=1.000  nlp=14  rough=2.102e-06 raw=8.818e-04
+[ eval_imf ] done. mean NFE/plan: 9.0  NLP failures: 2 (!!)  csv: logs/avoiding-v0/eval/H16_imf_hardflow_new_K2_from_H16_imf_cliponly_100k_n200/trajectories.csv
+Total runtime: 0h 15m 25s
+[ HF-IMF-EVAL ] done. results under logs/avoiding-v0/eval/ :
+drwxr-xr-x  2 llim tumuser    4096 Jul 19 02:15 H16_imf_hardflow_new_K1
+drwxr-xr-x  2 llim tumuser    8192 Jul 20 22:01 H16_imf_hardflow_new_K1_from_H16_imf_300k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 21:15 H16_imf_hardflow_new_K1_from_H16_imf_cliponly_100k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 20:39 H16_imf_hardflow_new_K1_from_H16_imf_lronly_100k_n200
+drwxr-xr-x  2 llim tumuser    4096 Jul 19 02:19 H16_imf_hardflow_new_K2
+drwxr-xr-x  2 llim tumuser    8192 Jul 20 22:17 H16_imf_hardflow_new_K2_from_H16_imf_300k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 21:30 H16_imf_hardflow_new_K2_from_H16_imf_cliponly_100k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 14:53 H16_imf_hardflow_new_K2_from_H16_imf_lrfix_100k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 20:54 H16_imf_hardflow_new_K2_from_H16_imf_lronly_100k_n200
+drwxr-xr-x  2 llim tumuser    4096 Jul 19 10:59 H16_imf_hardflow_new_K4
+drwxr-xr-x  2 llim tumuser    4096 Jul 19 11:04 H16_imf_hardflow_new_K5
+drwxr-xr-x  2 llim tumuser    8192 Jul 19 22:54 H16_imf_hardflow_new_K5_n200
+drwxr-xr-x  2 llim tumuser    4096 Jul 19 02:11 H16_imf_original_K1
+drwxr-xr-x  2 llim tumuser    8192 Jul 20 21:38 H16_imf_original_K1_from_H16_imf_300k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 20:52 H16_imf_original_K1_from_H16_imf_cliponly_100k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 20:18 H16_imf_original_K1_from_H16_imf_lronly_100k_n200
+drwxr-xr-x  2 llim tumuser    4096 Jul 19 02:12 H16_imf_original_K2
+drwxr-xr-x  2 llim tumuser    8192 Jul 20 21:45 H16_imf_original_K2_from_H16_imf_300k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 20:59 H16_imf_original_K2_from_H16_imf_cliponly_100k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 14:38 H16_imf_original_K2_from_H16_imf_lrfix_100k_n200
+drwxr-xr-x  2 llim tumuser    8192 Jul 21 20:25 H16_imf_original_K2_from_H16_imf_lronly_100k_n200
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:47 diag_smooth_imf_guided_K10_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:35 diag_smooth_imf_guided_K1_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:38 diag_smooth_imf_guided_K2_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:42 diag_smooth_imf_guided_K5_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 10:31 diag_smooth_imf_guided_K5_n3
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 10:24 diag_smooth_imf_guided_K5_n5
+drwxr-xr-x  2 llim tumuser    4096 Jul 21 10:16 diag_smooth_imf_guided_K5_n5_from_H16_imf_300k
+drwxr-xr-x  2 llim tumuser    4096 Jul 21 16:46 diag_smooth_imf_guided_K5_n5_from_H16_imf_lrfix_100k
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:55 diag_smooth_imf_unguided_K10_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:51 diag_smooth_imf_unguided_K1_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:52 diag_smooth_imf_unguided_K2_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 11:53 diag_smooth_imf_unguided_K5_n20
+drwxr-xr-x  2 llim tumuser    4096 Jul 20 10:23 diag_smooth_imf_unguided_K5_n5
+drwxr-xr-x  2 llim tumuser    4096 Jul 21 10:15 diag_smooth_imf_unguided_K5_n5_from_H16_imf_300k
+drwxr-xr-x  2 llim tumuser    4096 Jul 21 16:45 diag_smooth_imf_unguided_K5_n5_from_H16_imf_lrfix_100k
+-rw-r--r--  1 llim tumuser  222840 Jul 20 10:31 fig11_imf_vs_fm_run0.png
+================================================================================
+JOB END: Tue Jul 21 21:30:42 UTC 2026
+================================================================================

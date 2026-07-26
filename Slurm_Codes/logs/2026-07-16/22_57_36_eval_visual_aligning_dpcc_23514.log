@@ -4918,3 +4918,1718 @@ Context 19 Rollout 0
 [ DIAG replan=50 step=49 ] norm|a0|=1.192  denorm|a0|=9.74e-03 m  dir=[-0.649  0.735 -0.196]
 [ DIAG replan=100 step=99 ] norm|a0|=1.009  denorm|a0|=8.18e-03 m  dir=[-0.973  0.002 -0.231]
 [ DIAG replan=150 step=149 ] norm|a0|=0.235  denorm|a0|=1.24e-04 m  dir=[-0.046 -0.043 -0.998]
+[ DIAG replan=200 step=199 ] norm|a0|=0.235  denorm|a0|=1.55e-04 m  dir=[-0.032 -0.072 -0.997]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=1.11e-04 m  dir=[-0.045 -0.034 -0.998]
+[ DIAG replan=300 step=299 ] norm|a0|=162.719  denorm|a0|=1.78e-02 m  dir=[ 0.524 -0.657  0.542]
+[ DIAG replan=350 step=349 ] norm|a0|=1120.840  denorm|a0|=1.78e-02 m  dir=[-0.834  0.471  0.287]
+[ DIAG replan=400 step=399 ] norm|a0|=3273.856  denorm|a0|=1.78e-02 m  dir=[-0.802  0.571  0.176]
+[ Unseen Test Context 19 Finished ]
+  - Context idx: 19
+  - Box  init XY=(0.417, -0.148)  angle=-20.1°
+  - Target   XY=(0.509, 0.234)  angle=-3.3°
+  - Init XY dist (box→target): 0.3937 m
+  - Box  final XY=(0.372, 0.203)  angle=-64.9°  (dist_to_target: 0.1410 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.241723 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.033937 m
+  - Avg Inference Time: 0.3570 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 20/30  (3366.5s elapsed this item, ~1683.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_19.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.722  violated=111steps  (bounds=111 hs=0 obs=0)
+    first_viol_step=289  longest_safe=289  margin=0.1169m  dyn_err=0.0094m
+    plan_post_viol_rate=0.1380  zero_viol=False
+Context 20 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[ 0.974  0.013 -0.227]
+[ DIAG replan=100 step=99 ] norm|a0|=603.135  denorm|a0|=1.78e-02 m  dir=[ 0.848 -0.481  0.224]
+[ DIAG replan=150 step=149 ] norm|a0|=905.353  denorm|a0|=1.78e-02 m  dir=[0.92  0.334 0.204]
+[ DIAG replan=200 step=199 ] norm|a0|=1330.659  denorm|a0|=1.78e-02 m  dir=[0.317 0.917 0.241]
+[ DIAG replan=250 step=249 ] norm|a0|=1934.516  denorm|a0|=1.78e-02 m  dir=[0.005 0.975 0.223]
+[ DIAG replan=300 step=299 ] norm|a0|=3414.067  denorm|a0|=1.78e-02 m  dir=[-0.472  0.855  0.216]
+[ DIAG replan=350 step=349 ] norm|a0|=5058.789  denorm|a0|=1.78e-02 m  dir=[-0.577  0.793  0.198]
+[ DIAG replan=400 step=399 ] norm|a0|=5186.703  denorm|a0|=1.78e-02 m  dir=[-0.721  0.66   0.208]
+[ Unseen Test Context 20 Finished ]
+  - Context idx: 20
+  - Box  init XY=(0.568, -0.184)  angle=-88.1°
+  - Target   XY=(0.502, 0.234)  angle=20.7°
+  - Init XY dist (box→target): 0.4236 m
+  - Box  final XY=(0.568, -0.184)  angle=-88.1°  (dist_to_target: 0.4236 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.514070 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.938108 m
+  - Avg Inference Time: 0.3576 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 21/30  (3535.4s elapsed this item, ~1515.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_20.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.118  violated=353steps  (bounds=319 hs=34 obs=5)
+    first_viol_step=47  longest_safe=47  margin=0.1109m  dyn_err=0.0159m
+    plan_post_viol_rate=0.3359  zero_viol=False
+Context 21 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=3.012  denorm|a0|=1.18e-02 m  dir=[ 0.655  0.747 -0.114]
+[ DIAG replan=100 step=99 ] norm|a0|=1131.655  denorm|a0|=1.44e-02 m  dir=[ 0.728 -0.679 -0.101]
+[ DIAG replan=150 step=149 ] norm|a0|=2495.374  denorm|a0|=1.44e-02 m  dir=[ 0.485 -0.873 -0.055]
+[ DIAG replan=200 step=199 ] norm|a0|=3969.131  denorm|a0|=1.44e-02 m  dir=[ 0.353 -0.934 -0.05 ]
+[ DIAG replan=250 step=249 ] norm|a0|=4091.064  denorm|a0|=1.44e-02 m  dir=[ 0.463 -0.883 -0.082]
+[ DIAG replan=300 step=299 ] norm|a0|=4879.911  denorm|a0|=1.44e-02 m  dir=[ 0.323 -0.945 -0.041]
+[ DIAG replan=350 step=349 ] norm|a0|=5087.390  denorm|a0|=1.44e-02 m  dir=[ 0.4   -0.914 -0.068]
+[ DIAG replan=400 step=399 ] norm|a0|=5352.594  denorm|a0|=1.44e-02 m  dir=[ 0.399 -0.914 -0.071]
+[ Unseen Test Context 21 Finished ]
+  - Context idx: 21
+  - Box  init XY=(0.536, -0.215)  angle=-38.8°
+  - Target   XY=(0.419, 0.275)  angle=64.5°
+  - Init XY dist (box→target): 0.5035 m
+  - Box  final XY=(0.530, -0.221)  angle=-39.6°  (dist_to_target: 0.5081 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.543010 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.993002 m
+  - Avg Inference Time: 0.3570 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 22/30  (3704.8s elapsed this item, ~1347.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_21.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.223  violated=311steps  (bounds=311 hs=0 obs=0)
+    first_viol_step=89  longest_safe=89  margin=0.0723m  dyn_err=0.0133m
+    plan_post_viol_rate=0.4345  zero_viol=False
+Context 22 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.183  denorm|a0|=9.66e-03 m  dir=[ 0.814  0.545 -0.199]
+[ DIAG replan=100 step=99 ] norm|a0|=355.739  denorm|a0|=1.44e-02 m  dir=[ 0.983 -0.153 -0.106]
+[ DIAG replan=150 step=149 ] norm|a0|=1647.363  denorm|a0|=1.44e-02 m  dir=[ 0.694 -0.71  -0.116]
+[ DIAG replan=200 step=199 ] norm|a0|=3010.653  denorm|a0|=1.44e-02 m  dir=[ 0.476 -0.875 -0.086]
+[ DIAG replan=250 step=249 ] norm|a0|=3719.521  denorm|a0|=1.44e-02 m  dir=[ 0.462 -0.883 -0.085]
+[ DIAG replan=300 step=299 ] norm|a0|=5511.886  denorm|a0|=1.44e-02 m  dir=[ 0.279 -0.958 -0.06 ]
+[ DIAG replan=350 step=349 ] norm|a0|=4655.127  denorm|a0|=1.44e-02 m  dir=[ 0.424 -0.902 -0.08 ]
+[ DIAG replan=400 step=399 ] norm|a0|=5841.599  denorm|a0|=1.44e-02 m  dir=[ 0.345 -0.937 -0.061]
+[ Unseen Test Context 22 Finished ]
+  - Context idx: 22
+  - Box  init XY=(0.508, -0.225)  angle=-47.9°
+  - Target   XY=(0.441, 0.203)  angle=72.7°
+  - Init XY dist (box→target): 0.4340 m
+  - Box  final XY=(0.474, -0.254)  angle=-61.6°  (dist_to_target: 0.4586 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.602508 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.566770 m
+  - Avg Inference Time: 0.3562 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 23/30  (3873.9s elapsed this item, ~1179.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_22.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.213  violated=315steps  (bounds=240 hs=88 obs=0)
+    first_viol_step=67  longest_safe=67  margin=0.0917m  dyn_err=0.0131m
+    plan_post_viol_rate=0.4006  zero_viol=False
+Context 23 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.237  denorm|a0|=1.47e-04 m  dir=[-0.001  0.072 -0.997]
+[ DIAG replan=100 step=99 ] norm|a0|=0.233  denorm|a0|=6.16e-05 m  dir=[-0.032  0.001 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.229  denorm|a0|=9.13e-05 m  dir=[-0.04   0.013 -0.999]
+[ DIAG replan=200 step=199 ] norm|a0|=0.228  denorm|a0|=7.53e-05 m  dir=[-0.023 -0.004 -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.232  denorm|a0|=3.42e-05 m  dir=[-0.015 -0.002 -1.   ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.234  denorm|a0|=3.35e-05 m  dir=[-0.014  0.01  -1.   ]
+[ DIAG replan=350 step=349 ] norm|a0|=0.237  denorm|a0|=6.93e-05 m  dir=[-0.018 -0.025 -1.   ]
+[ DIAG replan=400 step=399 ] norm|a0|=0.232  denorm|a0|=6.98e-05 m  dir=[-0.032 -0.016 -0.999]
+[ Unseen Test Context 23 Finished ]
+  - Context idx: 23
+  - Box  init XY=(0.592, -0.203)  angle=76.7°
+  - Target   XY=(0.492, 0.298)  angle=40.6°
+  - Init XY dist (box→target): 0.5107 m
+  - Box  final XY=(0.552, -0.204)  angle=58.8°  (dist_to_target: 0.5056 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.303340 m
+  - Environment Mode: 0
+  - Max Physical Tracking Error: 0.041992 m
+  - Avg Inference Time: 0.3572 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 24/30  (4042.8s elapsed this item, ~1010.7s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_23.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=400  margin=0.1232m  dyn_err=0.0014m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 24 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.242  denorm|a0|=1.15e-04 m  dir=[ 0.005  0.028 -1.   ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.015  denorm|a0|=8.33e-03 m  dir=[-0.006  0.002 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=181.766  denorm|a0|=1.44e-02 m  dir=[-0.248 -0.968 -0.043]
+[ DIAG replan=200 step=199 ] norm|a0|=688.002  denorm|a0|=1.44e-02 m  dir=[-0.276 -0.943 -0.187]
+[ DIAG replan=250 step=249 ] norm|a0|=1414.529  denorm|a0|=1.44e-02 m  dir=[ 0.014 -0.976 -0.215]
+[ DIAG replan=300 step=299 ] norm|a0|=2359.629  denorm|a0|=1.44e-02 m  dir=[ 0.227 -0.959 -0.171]
+[ DIAG replan=350 step=349 ] norm|a0|=3184.512  denorm|a0|=1.44e-02 m  dir=[ 0.2   -0.973 -0.113]
+[ DIAG replan=400 step=399 ] norm|a0|=4316.967  denorm|a0|=1.44e-02 m  dir=[ 0.232 -0.965 -0.12 ]
+[ Unseen Test Context 24 Finished ]
+  - Context idx: 24
+  - Box  init XY=(0.533, -0.247)  angle=-46.3°
+  - Target   XY=(0.424, 0.249)  angle=-77.8°
+  - Init XY dist (box→target): 0.5081 m
+  - Box  final XY=(0.533, -0.247)  angle=-46.3°  (dist_to_target: 0.5081 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.341665 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.991290 m
+  - Avg Inference Time: 0.3579 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 25/30  (4212.2s elapsed this item, ~842.4s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_24.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.427  violated=229steps  (bounds=229 hs=0 obs=0)
+    first_viol_step=171  longest_safe=171  margin=0.1004m  dyn_err=0.0091m
+    plan_post_viol_rate=0.3355  zero_viol=False
+Context 25 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.273  denorm|a0|=8.34e-03 m  dir=[ 0.98  -0.033 -0.199]
+[ DIAG replan=100 step=99 ] norm|a0|=1397.737  denorm|a0|=1.78e-02 m  dir=[ 0.9   -0.419  0.123]
+[ DIAG replan=150 step=149 ] norm|a0|=1146.281  denorm|a0|=1.78e-02 m  dir=[0.945 0.303 0.126]
+[ DIAG replan=200 step=199 ] norm|a0|=1191.513  denorm|a0|=1.78e-02 m  dir=[0.648 0.717 0.257]
+[ DIAG replan=250 step=249 ] norm|a0|=1511.530  denorm|a0|=1.78e-02 m  dir=[0.243 0.908 0.341]
+[ DIAG replan=300 step=299 ] norm|a0|=2166.843  denorm|a0|=1.78e-02 m  dir=[-0.221  0.947  0.232]
+[ DIAG replan=350 step=349 ] norm|a0|=3047.091  denorm|a0|=1.78e-02 m  dir=[-0.588  0.773  0.236]
+[ DIAG replan=400 step=399 ] norm|a0|=4821.202  denorm|a0|=1.78e-02 m  dir=[-0.642  0.734  0.222]
+[ Unseen Test Context 25 Finished ]
+  - Context idx: 25
+  - Box  init XY=(0.521, -0.145)  angle=-51.6°
+  - Target   XY=(0.418, 0.217)  angle=56.9°
+  - Init XY dist (box→target): 0.3760 m
+  - Box  final XY=(0.521, -0.145)  angle=-51.6°  (dist_to_target: 0.3760 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.489295 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.447516 m
+  - Avg Inference Time: 0.3599 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 26/30  (4382.7s elapsed this item, ~674.3s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_25.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.110  violated=356steps  (bounds=328 hs=28 obs=0)
+    first_viol_step=42  longest_safe=42  margin=0.0957m  dyn_err=0.0164m
+    plan_post_viol_rate=0.3433  zero_viol=False
+Context 26 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.230  denorm|a0|=1.54e-04 m  dir=[ 0.034  0.07  -0.997]
+[ DIAG replan=100 step=99 ] norm|a0|=0.241  denorm|a0|=8.50e-05 m  dir=[-0.006 -0.002 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.240  denorm|a0|=2.52e-04 m  dir=[-0.12  -0.031 -0.992]
+[ DIAG replan=200 step=199 ] norm|a0|=416.517  denorm|a0|=1.44e-02 m  dir=[-0.412 -0.909 -0.066]
+[ DIAG replan=250 step=249 ] norm|a0|=770.510  denorm|a0|=1.44e-02 m  dir=[-0.229 -0.948 -0.22 ]
+[ DIAG replan=300 step=299 ] norm|a0|=1468.000  denorm|a0|=1.44e-02 m  dir=[-0.099 -0.966 -0.239]
+[ DIAG replan=350 step=349 ] norm|a0|=2157.749  denorm|a0|=1.44e-02 m  dir=[-0.158 -0.964 -0.212]
+[ DIAG replan=400 step=399 ] norm|a0|=2512.939  denorm|a0|=1.44e-02 m  dir=[-0.226 -0.948 -0.223]
+[ Unseen Test Context 26 Finished ]
+  - Context idx: 26
+  - Box  init XY=(0.545, -0.230)  angle=-72.0°
+  - Target   XY=(0.562, 0.213)  angle=-58.2°
+  - Init XY dist (box→target): 0.4439 m
+  - Box  final XY=(0.546, -0.230)  angle=-72.0°  (dist_to_target: 0.4433 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.259942 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.079408 m
+  - Avg Inference Time: 0.3576 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 27/30  (4552.0s elapsed this item, ~505.8s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_26.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.510  violated=196steps  (bounds=196 hs=0 obs=0)
+    first_viol_step=204  longest_safe=204  margin=0.1083m  dyn_err=0.0082m
+    plan_post_viol_rate=0.2881  zero_viol=False
+Context 27 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=6.692  denorm|a0|=1.28e-02 m  dir=[0.184 0.982 0.035]
+[ DIAG replan=100 step=99 ] norm|a0|=1218.109  denorm|a0|=1.78e-02 m  dir=[ 0.927 -0.363  0.094]
+[ DIAG replan=150 step=149 ] norm|a0|=969.748  denorm|a0|=1.78e-02 m  dir=[0.806 0.551 0.216]
+[ DIAG replan=200 step=199 ] norm|a0|=1408.600  denorm|a0|=1.78e-02 m  dir=[0.28  0.938 0.205]
+[ DIAG replan=250 step=249 ] norm|a0|=1639.192  denorm|a0|=1.78e-02 m  dir=[0.023 0.956 0.292]
+[ DIAG replan=300 step=299 ] norm|a0|=3781.486  denorm|a0|=1.78e-02 m  dir=[-0.44   0.88   0.182]
+[ DIAG replan=350 step=349 ] norm|a0|=5171.667  denorm|a0|=1.78e-02 m  dir=[-0.599  0.782  0.171]
+[ DIAG replan=400 step=399 ] norm|a0|=6034.075  denorm|a0|=1.78e-02 m  dir=[-0.644  0.741  0.191]
+[ Unseen Test Context 27 Finished ]
+  - Context idx: 27
+  - Box  init XY=(0.528, -0.134)  angle=-53.2°
+  - Target   XY=(0.585, 0.259)  angle=58.6°
+  - Init XY dist (box→target): 0.3971 m
+  - Box  final XY=(0.528, -0.134)  angle=-53.2°  (dist_to_target: 0.3971 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.509285 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.010130 m
+  - Avg Inference Time: 0.3586 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 28/30  (4721.7s elapsed this item, ~337.3s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_27.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.100  violated=360steps  (bounds=332 hs=28 obs=0)
+    first_viol_step=39  longest_safe=39  margin=0.1014m  dyn_err=0.0164m
+    plan_post_viol_rate=0.3448  zero_viol=False
+Context 28 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.042  denorm|a0|=8.41e-03 m  dir=[ 0.936 -0.25  -0.25 ]
+[ DIAG replan=100 step=99 ] norm|a0|=958.653  denorm|a0|=1.78e-02 m  dir=[ 0.916 -0.357  0.184]
+[ DIAG replan=150 step=149 ] norm|a0|=773.910  denorm|a0|=1.78e-02 m  dir=[0.726 0.613 0.312]
+[ DIAG replan=200 step=199 ] norm|a0|=1502.486  denorm|a0|=1.78e-02 m  dir=[0.128 0.954 0.273]
+[ DIAG replan=250 step=249 ] norm|a0|=3153.982  denorm|a0|=1.78e-02 m  dir=[-0.311  0.932  0.186]
+[ DIAG replan=300 step=299 ] norm|a0|=4788.440  denorm|a0|=1.78e-02 m  dir=[-0.516  0.84   0.17 ]
+[ DIAG replan=350 step=349 ] norm|a0|=5641.891  denorm|a0|=1.78e-02 m  dir=[-0.625  0.761  0.174]
+[ DIAG replan=400 step=399 ] norm|a0|=6489.561  denorm|a0|=1.78e-02 m  dir=[-0.668  0.727  0.157]
+[ Unseen Test Context 28 Finished ]
+  - Context idx: 28
+  - Box  init XY=(0.596, -0.115)  angle=59.9°
+  - Target   XY=(0.425, 0.206)  angle=-13.8°
+  - Init XY dist (box→target): 0.3641 m
+  - Box  final XY=(0.596, -0.115)  angle=59.9°  (dist_to_target: 0.3641 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.386791 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.820815 m
+  - Avg Inference Time: 0.3568 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 29/30  (4890.1s elapsed this item, ~168.6s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_28.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.110  violated=356steps  (bounds=329 hs=27 obs=7)
+    first_viol_step=41  longest_safe=41  margin=0.0986m  dyn_err=0.0161m
+    plan_post_viol_rate=0.3436  zero_viol=False
+Context 29 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.012  denorm|a0|=8.20e-03 m  dir=[ 0.     0.973 -0.23 ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.230  denorm|a0|=6.96e-05 m  dir=[-0.014  0.029 -0.999]
+[ DIAG replan=150 step=149 ] norm|a0|=0.230  denorm|a0|=1.45e-04 m  dir=[-0.007  0.071 -0.997]
+[ DIAG replan=200 step=199 ] norm|a0|=0.243  denorm|a0|=1.26e-04 m  dir=[-0.021  0.03  -0.999]
+[ DIAG replan=250 step=249 ] norm|a0|=0.234  denorm|a0|=6.83e-05 m  dir=[-0.033  0.009 -0.999]
+[ DIAG replan=300 step=299 ] norm|a0|=0.236  denorm|a0|=1.39e-04 m  dir=[-0.063  0.03  -0.998]
+[ DIAG replan=350 step=349 ] norm|a0|=0.232  denorm|a0|=1.33e-04 m  dir=[-0.066  0.017 -0.998]
+[ DIAG replan=400 step=399 ] norm|a0|=0.235  denorm|a0|=5.13e-05 m  dir=[-0.021  0.011 -1.   ]
+[ Unseen Test Context 29 Finished ]
+  - Context idx: 29
+  - Box  init XY=(0.516, -0.141)  angle=45.5°
+  - Target   XY=(0.570, 0.310)  angle=-88.8°
+  - Init XY dist (box→target): 0.4541 m
+  - Box  final XY=(0.591, -0.075)  angle=65.6°  (dist_to_target: 0.3860 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.622070 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.041960 m
+  - Avg Inference Time: 0.3575 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 30/30  (5059.0s elapsed this item, ~0.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/diagnostics/rollout_29.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=400  margin=0.1250m  dyn_err=0.0020m
+    plan_post_viol_rate=0.0000  zero_viol=True
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.4049353003501892
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for gradient...
+--- aligning-d3il-visual [default] gradient seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4049 m  +- 0.1199 m
+Min final mean distance:   0.2153 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    400.00 +- 0.00
+Physical tracking error:   mean=0.9174 m  max=3.9930 m
+Avg inference time/replan: 0.357 s
+--- Constraint Metrics [gradient] ---
+  Execution satisfaction rate:    0.369 ± 0.347
+  Violated steps/rollout:         252.2 ± 138.9  (bounds=231.2  hs=36.1  obs=1.0)
+  Max bounds viol (m):            0.2247 ± 0.1550
+  Max halfspace viol (m):         0.0256 ± 0.0270
+  Max obstacle penetration (m):   0.0070 ± 0.0160
+  Constraint margin mean (m):     0.1034 ± 0.0107
+  First violation step:           82.5 (n_rollouts_with_viol=24)
+  Longest safe streak (steps):    146.0 ± 139.6
+  Dynamics consistency err (m):   0.0113 ± 0.0053
+  Plan post-proj viol rate:       0.2845 ± 0.1544
+  Zero-violation rollouts:        6 / 30  (20.0%)
+  → Saved: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/gradient/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] >>> item 6/24: geo=combined_5  variant=post_processing  tightened=False
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'post_processing' (trajectory_dim=9)
+there are cpus:  64
+3105159 {0}
+Process 3105159 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_a4ee9a3c-822a-11f1-a658-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 0.0017  0.0041 -0.2137]  |mag| = 0.2137
+[ DIAG first-replan ] denormalized a0 = [1.0e-05 3.0e-05 2.1e-04]  |mag| = 0.000215 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2484, 1.0000]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 0.0017  0.0041 -0.2137]
+  step  1: [ 0.001  -0.0092 -0.2204]
+  step  2: [-0.0007 -0.0146 -0.2241]
+  step  3: [ 0.0199  0.96   -0.2255]
+  step  4: [ 0.0543  1.     -0.2323]
+  step  5: [ 0.4485  0.7936 -0.2353]
+  step  6: [ 0.8998  0.7552 -0.2484]
+  step  7: [ 0.9293  0.7055 -0.2106]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_norm (dim=6)=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=0.175  denorm|a0|=6.37e-04 m  dir=[-0.03  -0.014 -0.999]
+[ DIAG replan=100 step=99 ] norm|a0|=1.028  denorm|a0|=8.33e-03 m  dir=[-0.011  0.973 -0.232]
+[ DIAG replan=150 step=149 ] norm|a0|=1.594  denorm|a0|=1.58e-02 m  dir=[-0.627 -0.627  0.462]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Box  final XY=(0.581, -0.204)  angle=-43.5°  (dist_to_target: 0.5433 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.568001 m
+  - Avg Inference Time: 0.4085 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 1/30  (184.1s elapsed this item, ~5337.7s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.377  violated=249steps  (bounds=249 hs=0 obs=0)
+    first_viol_step=151  longest_safe=151  margin=0.1128m  dyn_err=0.0131m
+    plan_post_viol_rate=0.1139  zero_viol=False
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.205  denorm|a0|=3.65e-04 m  dir=[ 0.071  0.079 -0.994]
+[ DIAG replan=100 step=99 ] norm|a0|=0.205  denorm|a0|=3.10e-04 m  dir=[ 0.004  0.004 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.232  denorm|a0|=5.84e-05 m  dir=[-0.01  -0.027 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[0.577 0.577 0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Box  final XY=(0.556, -0.247)  angle=-81.0°  (dist_to_target: 0.4836 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.673924 m
+  - Avg Inference Time: 0.4011 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 2/30  (370.4s elapsed this item, ~5185.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.488  violated=205steps  (bounds=205 hs=0 obs=0)
+    first_viol_step=195  longest_safe=195  margin=0.1334m  dyn_err=0.0112m
+    plan_post_viol_rate=0.0440  zero_viol=False
+Context 2 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.519  denorm|a0|=3.71e-03 m  dir=[-0.343  0.781 -0.522]
+[ DIAG replan=100 step=99 ] norm|a0|=1.022  denorm|a0|=8.22e-03 m  dir=[ 0.964  0.003 -0.266]
+[ DIAG replan=150 step=149 ] norm|a0|=0.571  denorm|a0|=4.22e-03 m  dir=[ 0.059  0.88  -0.47 ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.396  denorm|a0|=2.36e-03 m  dir=[ 0.614 -0.325 -0.72 ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.309  denorm|a0|=1.47e-03 m  dir=[ 0.254 -0.501 -0.827]
+[ DIAG replan=300 step=299 ] norm|a0|=0.296  denorm|a0|=1.46e-03 m  dir=[ 0.322 -0.497 -0.806]
+[ DIAG replan=350 step=349 ] norm|a0|=0.283  denorm|a0|=1.48e-03 m  dir=[ 0.335 -0.527 -0.781]
+[ DIAG replan=400 step=399 ] norm|a0|=0.300  denorm|a0|=1.47e-03 m  dir=[ 0.158 -0.563 -0.811]
+[ Unseen Test Context 2 Finished ]
+  - Context idx: 2
+  - Box  init XY=(0.527, -0.127)  angle=-34.4°
+  - Target   XY=(0.513, 0.302)  angle=-34.6°
+  - Init XY dist (box→target): 0.4297 m
+  - Box  final XY=(0.527, -0.127)  angle=-34.4°  (dist_to_target: 0.4297 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.215251 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.035053 m
+  - Avg Inference Time: 0.3565 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 3/30  (538.9s elapsed this item, ~4849.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.755  violated=98steps  (bounds=0 hs=98 obs=0)
+    first_viol_step=49  longest_safe=49  margin=0.0188m  dyn_err=0.0040m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 3 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.941  denorm|a0|=7.50e-03 m  dir=[ 0.954  0.006 -0.299]
+[ DIAG replan=100 step=99 ] norm|a0|=0.310  denorm|a0|=1.37e-03 m  dir=[ 0.268 -0.433 -0.861]
+[ DIAG replan=150 step=149 ] norm|a0|=1.643  denorm|a0|=1.37e-02 m  dir=[ 0.509 -0.609 -0.609]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ Unseen Test Context 3 Finished ]
+  - Context idx: 3
+  - Box  init XY=(0.517, -0.145)  angle=28.1°
+  - Target   XY=(0.582, 0.285)  angle=-15.4°
+  - Init XY dist (box→target): 0.4341 m
+  - Box  final XY=(0.517, -0.145)  angle=28.1°  (dist_to_target: 0.4341 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.337977 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.401446 m
+  - Avg Inference Time: 0.4005 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 4/30  (725.2s elapsed this item, ~4713.6s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.500  violated=200steps  (bounds=155 hs=200 obs=0)
+    first_viol_step=55  longest_safe=112  margin=0.0422m  dyn_err=0.0095m
+    plan_post_viol_rate=0.3932  zero_viol=False
+Context 4 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.347  denorm|a0|=1.82e-03 m  dir=[ 0.566 -0.228 -0.792]
+[ DIAG replan=100 step=99 ] norm|a0|=0.753  denorm|a0|=5.93e-03 m  dir=[-0.014  0.945 -0.326]
+[ DIAG replan=150 step=149 ] norm|a0|=0.357  denorm|a0|=2.10e-03 m  dir=[-0.47  -0.521 -0.712]
+[ DIAG replan=200 step=199 ] norm|a0|=0.298  denorm|a0|=1.38e-03 m  dir=[ 0.228 -0.499 -0.836]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 4 Finished ]
+  - Context idx: 4
+  - Box  init XY=(0.553, -0.135)  angle=-24.2°
+  - Target   XY=(0.514, 0.208)  angle=12.3°
+  - Init XY dist (box→target): 0.3447 m
+  - Box  final XY=(0.553, -0.135)  angle=-24.2°  (dist_to_target: 0.3447 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.273741 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.142529 m
+  - Avg Inference Time: 0.3892 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 5/30  (907.4s elapsed this item, ~4537.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.570  violated=172steps  (bounds=131 hs=41 obs=0)
+    first_viol_step=38  longest_safe=82  margin=0.0265m  dyn_err=0.0088m
+    plan_post_viol_rate=0.0739  zero_viol=False
+Context 5 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.531  denorm|a0|=3.93e-03 m  dir=[ 0.883 -0.1   -0.459]
+[ DIAG replan=100 step=99 ] norm|a0|=1.441  denorm|a0|=1.18e-02 m  dir=[-0.694 -0.694 -0.192]
+[ DIAG replan=150 step=149 ] norm|a0|=0.408  denorm|a0|=2.49e-03 m  dir=[ 0.65  -0.291 -0.702]
+[ DIAG replan=200 step=199 ] norm|a0|=0.350  denorm|a0|=2.13e-03 m  dir=[ 0.643 -0.346 -0.683]
+[ DIAG replan=250 step=249 ] norm|a0|=0.297  denorm|a0|=1.29e-03 m  dir=[ 0.068 -0.508 -0.859]
+[ DIAG replan=300 step=299 ] norm|a0|=0.305  denorm|a0|=1.38e-03 m  dir=[ 0.177 -0.505 -0.845]
+[ DIAG replan=350 step=349 ] norm|a0|=0.304  denorm|a0|=1.51e-03 m  dir=[ 0.257 -0.536 -0.804]
+[ DIAG replan=400 step=399 ] norm|a0|=0.284  denorm|a0|=1.55e-03 m  dir=[ 0.304 -0.573 -0.761]
+[ Unseen Test Context 5 Finished ]
+  - Context idx: 5
+  - Box  init XY=(0.541, -0.104)  angle=-14.4°
+  - Target   XY=(0.442, 0.243)  angle=27.8°
+  - Init XY dist (box→target): 0.3605 m
+  - Box  final XY=(0.541, -0.104)  angle=-14.4°  (dist_to_target: 0.3605 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.297565 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.040305 m
+  - Avg Inference Time: 0.3604 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 6/30  (1077.6s elapsed this item, ~4310.3s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_5.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.720  violated=112steps  (bounds=0 hs=112 obs=0)
+    first_viol_step=41  longest_safe=41  margin=0.0200m  dyn_err=0.0044m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 6 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.231  denorm|a0|=1.52e-04 m  dir=[-0.025 -0.072 -0.997]
+[ DIAG replan=100 step=99 ] norm|a0|=0.738  denorm|a0|=5.75e-03 m  dir=[ 0.485  0.799 -0.356]
+[ DIAG replan=150 step=149 ] norm|a0|=0.454  denorm|a0|=2.95e-03 m  dir=[ 0.722 -0.241 -0.649]
+[ DIAG replan=200 step=199 ] norm|a0|=0.331  denorm|a0|=1.85e-03 m  dir=[ 0.582 -0.328 -0.744]
+[ DIAG replan=250 step=249 ] norm|a0|=0.336  denorm|a0|=1.84e-03 m  dir=[ 0.499 -0.421 -0.757]
+[ DIAG replan=300 step=299 ] norm|a0|=0.312  denorm|a0|=1.40e-03 m  dir=[ 0.037 -0.519 -0.854]
+[ DIAG replan=350 step=349 ] norm|a0|=0.314  denorm|a0|=1.40e-03 m  dir=[ 0.2   -0.472 -0.859]
+[ DIAG replan=400 step=399 ] norm|a0|=0.287  denorm|a0|=1.67e-03 m  dir=[ 0.441 -0.531 -0.723]
+[ Unseen Test Context 6 Finished ]
+  - Context idx: 6
+  - Box  init XY=(0.537, -0.180)  angle=-70.4°
+  - Target   XY=(0.444, 0.240)  angle=-86.3°
+  - Init XY dist (box→target): 0.4302 m
+  - Box  final XY=(0.537, -0.180)  angle=-70.4°  (dist_to_target: 0.4302 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.259554 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.036223 m
+  - Avg Inference Time: 0.3571 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 7/30  (1246.0s elapsed this item, ~4094.1s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_6.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.732  violated=107steps  (bounds=0 hs=107 obs=0)
+    first_viol_step=44  longest_safe=44  margin=0.0203m  dyn_err=0.0040m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 7 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.192  denorm|a0|=4.55e-04 m  dir=[ 0.045  0.03  -0.999]
+[ DIAG replan=100 step=99 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 7 Finished ]
+  - Context idx: 7
+  - Box  init XY=(0.433, -0.196)  angle=-87.5°
+  - Target   XY=(0.492, 0.326)  angle=-3.2°
+  - Init XY dist (box→target): 0.5249 m
+  - Box  final XY=(0.433, -0.196)  angle=-87.5°  (dist_to_target: 0.5249 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.496668 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.048350 m
+  - Avg Inference Time: 0.4142 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 8/30  (1437.6s elapsed this item, ~3953.3s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_7.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.245  violated=302steps  (bounds=302 hs=0 obs=0)
+    first_viol_step=98  longest_safe=98  margin=0.1310m  dyn_err=0.0141m
+    plan_post_viol_rate=0.1257  zero_viol=False
+Context 8 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.150  denorm|a0|=9.10e-04 m  dir=[-0.059  0.037 -0.998]
+[ DIAG replan=100 step=99 ] norm|a0|=0.212  denorm|a0|=2.41e-04 m  dir=[-0.027 -0.002 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=1.732  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 8 Finished ]
+  - Context idx: 8
+  - Box  init XY=(0.481, -0.188)  angle=87.0°
+  - Target   XY=(0.436, 0.285)  angle=-76.4°
+  - Init XY dist (box→target): 0.4750 m
+  - Box  final XY=(0.481, -0.188)  angle=87.0°  (dist_to_target: 0.4750 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.691492 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.833802 m
+  - Avg Inference Time: 0.4080 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 9/30  (1626.8s elapsed this item, ~3795.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_8.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.395  violated=242steps  (bounds=242 hs=0 obs=0)
+    first_viol_step=158  longest_safe=158  margin=0.1491m  dyn_err=0.0127m
+    plan_post_viol_rate=0.0620  zero_viol=False
+Context 9 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.351  denorm|a0|=1.95e-03 m  dir=[ 0.595 -0.28  -0.753]
+[ DIAG replan=100 step=99 ] norm|a0|=0.598  denorm|a0|=4.52e-03 m  dir=[ 0.898 -0.114 -0.424]
+[ DIAG replan=150 step=149 ] norm|a0|=0.312  denorm|a0|=1.35e-03 m  dir=[ 0.172 -0.464 -0.869]
+[ DIAG replan=200 step=199 ] norm|a0|=0.382  denorm|a0|=2.38e-03 m  dir=[-0.048  0.742 -0.668]
+[ DIAG replan=250 step=249 ] norm|a0|=0.297  denorm|a0|=1.37e-03 m  dir=[ 0.259 -0.488 -0.834]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 9 Finished ]
+  - Context idx: 9
+  - Box  init XY=(0.505, -0.109)  angle=-64.7°
+  - Target   XY=(0.436, 0.231)  angle=48.4°
+  - Init XY dist (box→target): 0.3472 m
+  - Box  final XY=(0.505, -0.109)  angle=-64.7°  (dist_to_target: 0.3472 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.487714 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.409239 m
+  - Avg Inference Time: 0.3759 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 10/30  (1803.3s elapsed this item, ~3606.6s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_9.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.660  violated=136steps  (bounds=71 hs=65 obs=0)
+    first_viol_step=41  longest_safe=104  margin=0.0267m  dyn_err=0.0071m
+    plan_post_viol_rate=0.0486  zero_viol=False
+Context 10 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.762  denorm|a0|=5.87e-03 m  dir=[-0.843 -0.36  -0.4  ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.459  denorm|a0|=3.23e-03 m  dir=[ 0.831 -0.14  -0.538]
+[ DIAG replan=150 step=149 ] norm|a0|=0.428  denorm|a0|=2.83e-03 m  dir=[ 0.713 -0.335 -0.616]
+[ DIAG replan=200 step=199 ] norm|a0|=0.432  denorm|a0|=2.94e-03 m  dir=[ 0.778 -0.241 -0.581]
+[ DIAG replan=250 step=249 ] norm|a0|=0.291  denorm|a0|=1.40e-03 m  dir=[ 0.139 -0.559 -0.817]
+[ DIAG replan=300 step=299 ] norm|a0|=0.711  denorm|a0|=5.42e-03 m  dir=[-0.89  -0.159 -0.427]
+[ DIAG replan=350 step=349 ] norm|a0|=0.288  denorm|a0|=1.36e-03 m  dir=[ 0.165 -0.539 -0.826]
+[ DIAG replan=400 step=399 ] norm|a0|=0.282  denorm|a0|=1.45e-03 m  dir=[-0.046 -0.613 -0.789]
+[ Unseen Test Context 10 Finished ]
+  - Context idx: 10
+  - Box  init XY=(0.566, -0.149)  angle=-78.6°
+  - Target   XY=(0.429, 0.289)  angle=28.3°
+  - Init XY dist (box→target): 0.4584 m
+  - Box  final XY=(0.566, -0.149)  angle=-78.6°  (dist_to_target: 0.4584 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.526154 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.044880 m
+  - Avg Inference Time: 0.3564 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 11/30  (1971.5s elapsed this item, ~3405.4s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_10.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.762  violated=95steps  (bounds=0 hs=95 obs=0)
+    first_viol_step=48  longest_safe=48  margin=0.0222m  dyn_err=0.0046m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 11 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.415  denorm|a0|=1.98e-03 m  dir=[-0.072  0.022 -0.997]
+[ DIAG replan=100 step=99 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 11 Finished ]
+  - Context idx: 11
+  - Box  init XY=(0.408, -0.205)  angle=-1.7°
+  - Target   XY=(0.489, 0.261)  angle=42.4°
+  - Init XY dist (box→target): 0.4729 m
+  - Box  final XY=(0.408, -0.205)  angle=-1.7°  (dist_to_target: 0.4729 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.359216 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.625551 m
+  - Avg Inference Time: 0.4145 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 12/30  (2163.6s elapsed this item, ~3245.4s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_11.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=400  margin=0.0858m  dyn_err=0.0124m
+    plan_post_viol_rate=0.1668  zero_viol=True
+Context 12 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.905  denorm|a0|=7.23e-03 m  dir=[ 0.732  0.619 -0.285]
+[ DIAG replan=100 step=99 ] norm|a0|=1.442  denorm|a0|=1.18e-02 m  dir=[-0.694 -0.694 -0.195]
+[ DIAG replan=150 step=149 ] norm|a0|=0.341  denorm|a0|=1.65e-03 m  dir=[-0.116 -0.529 -0.841]
+[ DIAG replan=200 step=199 ] norm|a0|=0.296  denorm|a0|=1.47e-03 m  dir=[ 0.396 -0.445 -0.803]
+[ DIAG replan=250 step=249 ] norm|a0|=0.467  denorm|a0|=3.28e-03 m  dir=[-0.678 -0.497 -0.541]
+[ DIAG replan=300 step=299 ] norm|a0|=0.372  denorm|a0|=2.25e-03 m  dir=[ 0.608 -0.391 -0.691]
+[ DIAG replan=350 step=349 ] norm|a0|=0.320  denorm|a0|=1.81e-03 m  dir=[ 0.513 -0.443 -0.735]
+[ DIAG replan=400 step=399 ] norm|a0|=0.831  denorm|a0|=6.65e-03 m  dir=[-0.744  0.608 -0.277]
+[ Unseen Test Context 12 Finished ]
+  - Context idx: 12
+  - Box  init XY=(0.579, -0.117)  angle=18.8°
+  - Target   XY=(0.445, 0.221)  angle=-3.0°
+  - Init XY dist (box→target): 0.3635 m
+  - Box  final XY=(0.579, -0.117)  angle=18.8°  (dist_to_target: 0.3635 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.242532 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.037946 m
+  - Avg Inference Time: 0.3586 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 13/30  (2333.1s elapsed this item, ~3050.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_12.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.752  violated=99steps  (bounds=0 hs=99 obs=0)
+    first_viol_step=42  longest_safe=42  margin=0.0194m  dyn_err=0.0047m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 13 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.971  denorm|a0|=7.81e-03 m  dir=[ 0.72   0.643 -0.262]
+[ DIAG replan=100 step=99 ] norm|a0|=0.339  denorm|a0|=1.60e-03 m  dir=[ 0.385 -0.358 -0.851]
+[ DIAG replan=150 step=149 ] norm|a0|=0.293  denorm|a0|=6.59e-04 m  dir=[-0.045 -0.033 -0.998]
+[ DIAG replan=200 step=199 ] norm|a0|=0.662  denorm|a0|=5.13e-03 m  dir=[ 0.322  0.873 -0.367]
+[ DIAG replan=250 step=249 ] norm|a0|=0.338  denorm|a0|=1.64e-03 m  dir=[ 0.07  -0.544 -0.836]
+[ DIAG replan=300 step=299 ] norm|a0|=0.307  denorm|a0|=1.38e-03 m  dir=[ 0.207 -0.483 -0.851]
+[ DIAG replan=350 step=349 ] norm|a0|=0.300  denorm|a0|=1.46e-03 m  dir=[ 0.292 -0.506 -0.812]
+[ DIAG replan=400 step=399 ] norm|a0|=0.290  denorm|a0|=1.43e-03 m  dir=[ 0.177 -0.564 -0.806]
+[ Unseen Test Context 13 Finished ]
+  - Context idx: 13
+  - Box  init XY=(0.511, -0.101)  angle=-22.1°
+  - Target   XY=(0.557, 0.280)  angle=14.1°
+  - Init XY dist (box→target): 0.3837 m
+  - Box  final XY=(0.511, -0.101)  angle=-22.1°  (dist_to_target: 0.3837 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.292612 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.041495 m
+  - Avg Inference Time: 0.3583 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 14/30  (2502.4s elapsed this item, ~2859.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_13.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.720  violated=112steps  (bounds=0 hs=112 obs=0)
+    first_viol_step=41  longest_safe=41  margin=0.0202m  dyn_err=0.0044m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 14 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.188  denorm|a0|=4.91e-04 m  dir=[-0.025  0.014 -1.   ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.212  denorm|a0|=2.50e-04 m  dir=[ 0.007  0.05  -0.999]
+[ DIAG replan=150 step=149 ] norm|a0|=1.028  denorm|a0|=1.35e-02 m  dir=[-0.024 -0.231  0.973]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 14 Finished ]
+  - Context idx: 14
+  - Box  init XY=(0.543, -0.231)  angle=-24.7°
+  - Target   XY=(0.442, 0.236)  angle=59.1°
+  - Init XY dist (box→target): 0.4777 m
+  - Box  final XY=(0.543, -0.231)  angle=-24.7°  (dist_to_target: 0.4777 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.471716 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.984455 m
+  - Avg Inference Time: 0.4045 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 15/30  (2690.0s elapsed this item, ~2690.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_14.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.410  violated=236steps  (bounds=236 hs=0 obs=0)
+    first_viol_step=164  longest_safe=164  margin=0.1513m  dyn_err=0.0119m
+    plan_post_viol_rate=0.0563  zero_viol=False
+Context 15 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.254  denorm|a0|=3.72e-04 m  dir=[-0.101 -0.109 -0.989]
+[ DIAG replan=100 step=99 ] norm|a0|=1.720  denorm|a0|=1.43e-02 m  dir=[ 0.569 -0.581 -0.581]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ Unseen Test Context 15 Finished ]
+  - Context idx: 15
+  - Box  init XY=(0.578, -0.114)  angle=-87.7°
+  - Target   XY=(0.589, 0.277)  angle=-2.2°
+  - Init XY dist (box→target): 0.3912 m
+  - Box  final XY=(0.584, -0.104)  angle=-78.2°  (dist_to_target: 0.3810 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.401565 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.859895 m
+  - Avg Inference Time: 0.4094 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 16/30  (2880.2s elapsed this item, ~2520.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_15.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.438  violated=225steps  (bounds=203 hs=225 obs=0)
+    first_viol_step=45  longest_safe=112  margin=0.0467m  dyn_err=0.0112m
+    plan_post_viol_rate=0.4665  zero_viol=False
+Context 16 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.000  denorm|a0|=8.34e-03 m  dir=[-0.022 -0.012 -1.   ]
+[ DIAG replan=100 step=99 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 16 Finished ]
+  - Context idx: 16
+  - Box  init XY=(0.475, -0.164)  angle=-15.2°
+  - Target   XY=(0.580, 0.316)  angle=-85.5°
+  - Init XY dist (box→target): 0.4905 m
+  - Box  final XY=(0.475, -0.164)  angle=-15.2°  (dist_to_target: 0.4905 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.440707 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.909774 m
+  - Avg Inference Time: 0.4185 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 17/30  (3074.4s elapsed this item, ~2351.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_16.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=400  margin=0.0798m  dyn_err=0.0132m
+    plan_post_viol_rate=0.1657  zero_viol=True
+Context 17 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.969  denorm|a0|=7.88e-03 m  dir=[ 0.005  0.976 -0.22 ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.019  denorm|a0|=8.30e-03 m  dir=[-0.01   0.977 -0.211]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577  0.577  0.577]
+[ Unseen Test Context 17 Finished ]
+  - Context idx: 17
+  - Box  init XY=(0.581, -0.244)  angle=51.8°
+  - Target   XY=(0.437, 0.294)  angle=-32.0°
+  - Init XY dist (box→target): 0.5574 m
+  - Box  final XY=(0.581, -0.244)  angle=51.8°  (dist_to_target: 0.5574 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.511748 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.206404 m
+  - Avg Inference Time: 0.4136 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 18/30  (3266.3s elapsed this item, ~2177.5s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_17.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.330  violated=268steps  (bounds=265 hs=0 obs=3)
+    first_viol_step=107  longest_safe=107  margin=0.1054m  dyn_err=0.0125m
+    plan_post_viol_rate=0.4410  zero_viol=False
+Context 18 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.511  denorm|a0|=3.59e-03 m  dir=[-0.002  0.834 -0.552]
+[ DIAG replan=100 step=99 ] norm|a0|=0.566  denorm|a0|=4.19e-03 m  dir=[ 0.397  0.792 -0.463]
+[ DIAG replan=150 step=149 ] norm|a0|=0.527  denorm|a0|=3.66e-03 m  dir=[-0.803 -0.114 -0.585]
+[ DIAG replan=200 step=199 ] norm|a0|=0.297  denorm|a0|=1.43e-03 m  dir=[ 0.298 -0.494 -0.817]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 18 Finished ]
+  - Context idx: 18
+  - Box  init XY=(0.532, -0.156)  angle=-46.3°
+  - Target   XY=(0.526, 0.321)  angle=2.7°
+  - Init XY dist (box→target): 0.4764 m
+  - Box  final XY=(0.532, -0.156)  angle=-46.3°  (dist_to_target: 0.4764 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.374425 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.038034 m
+  - Avg Inference Time: 0.3888 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 19/30  (3447.7s elapsed this item, ~1996.1s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_18.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.570  violated=172steps  (bounds=130 hs=42 obs=0)
+    first_viol_step=39  longest_safe=109  margin=0.0286m  dyn_err=0.0086m
+    plan_post_viol_rate=0.0906  zero_viol=False
+Context 19 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.164  denorm|a0|=7.56e-04 m  dir=[-0.003 -0.004 -1.   ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.253  denorm|a0|=2.63e-04 m  dir=[ 0.032  0.068 -0.997]
+[ DIAG replan=150 step=149 ] norm|a0|=1.732  denorm|a0|=1.78e-02 m  dir=[0.577 0.577 0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ Unseen Test Context 19 Finished ]
+  - Context idx: 19
+  - Box  init XY=(0.417, -0.148)  angle=-20.1°
+  - Target   XY=(0.509, 0.234)  angle=-3.3°
+  - Init XY dist (box→target): 0.3937 m
+  - Box  final XY=(0.417, -0.148)  angle=-20.1°  (dist_to_target: 0.3937 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.243446 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.631501 m
+  - Avg Inference Time: 0.4093 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 20/30  (3637.4s elapsed this item, ~1818.7s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_19.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.407  violated=237steps  (bounds=234 hs=0 obs=3)
+    first_viol_step=131  longest_safe=131  margin=0.0821m  dyn_err=0.0126m
+    plan_post_viol_rate=0.1131  zero_viol=False
+Context 20 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.726  denorm|a0|=5.57e-03 m  dir=[ 0.913 -0.036 -0.405]
+[ DIAG replan=100 step=99 ] norm|a0|=0.377  denorm|a0|=2.10e-03 m  dir=[ 0.579 -0.265 -0.771]
+[ DIAG replan=150 step=149 ] norm|a0|=0.427  denorm|a0|=2.73e-03 m  dir=[-0.645 -0.391 -0.656]
+[ DIAG replan=200 step=199 ] norm|a0|=0.313  denorm|a0|=1.32e-03 m  dir=[ 0.049 -0.47  -0.881]
+[ DIAG replan=250 step=249 ] norm|a0|=1.732  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 20 Finished ]
+  - Context idx: 20
+  - Box  init XY=(0.568, -0.184)  angle=-88.1°
+  - Target   XY=(0.502, 0.234)  angle=20.7°
+  - Init XY dist (box→target): 0.4236 m
+  - Box  final XY=(0.568, -0.184)  angle=-88.1°  (dist_to_target: 0.4236 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.514070 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.727763 m
+  - Avg Inference Time: 0.3839 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 21/30  (3817.2s elapsed this item, ~1635.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_20.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.625  violated=150steps  (bounds=97 hs=53 obs=0)
+    first_viol_step=51  longest_safe=123  margin=0.0334m  dyn_err=0.0083m
+    plan_post_viol_rate=0.0611  zero_viol=False
+Context 21 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.732  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=100 step=99 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 21 Finished ]
+  - Context idx: 21
+  - Box  init XY=(0.536, -0.215)  angle=-38.8°
+  - Target   XY=(0.419, 0.275)  angle=64.5°
+  - Init XY dist (box→target): 0.5035 m
+  - Box  final XY=(0.544, -0.220)  angle=-49.9°  (dist_to_target: 0.5102 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.572900 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.683850 m
+  - Avg Inference Time: 0.4194 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 22/30  (4011.6s elapsed this item, ~1458.8s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_21.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.355  violated=258steps  (bounds=258 hs=0 obs=0)
+    first_viol_step=62  longest_safe=62  margin=0.0535m  dyn_err=0.0141m
+    plan_post_viol_rate=0.1297  zero_viol=False
+Context 22 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.190  denorm|a0|=9.74e-03 m  dir=[ 0.548  0.815 -0.19 ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.223  denorm|a0|=3.26e-04 m  dir=[-0.085 -0.132 -0.988]
+[ DIAG replan=150 step=149 ] norm|a0|=7.769  denorm|a0|=1.78e-02 m  dir=[ 0.644 -0.414  0.644]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[ 0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 22 Finished ]
+  - Context idx: 22
+  - Box  init XY=(0.508, -0.225)  angle=-47.9°
+  - Target   XY=(0.441, 0.203)  angle=72.7°
+  - Init XY dist (box→target): 0.4340 m
+  - Box  final XY=(0.508, -0.225)  angle=-47.9°  (dist_to_target: 0.4340 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.552096 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.782864 m
+  - Avg Inference Time: 0.4104 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 23/30  (4201.6s elapsed this item, ~1278.7s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_22.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.348  violated=261steps  (bounds=261 hs=0 obs=6)
+    first_viol_step=139  longest_safe=139  margin=0.1146m  dyn_err=0.0146m
+    plan_post_viol_rate=0.1037  zero_viol=False
+Context 23 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.194  denorm|a0|=9.70e-03 m  dir=[ 0.66   0.717 -0.226]
+[ DIAG replan=100 step=99 ] norm|a0|=0.696  denorm|a0|=5.34e-03 m  dir=[-0.912 -0.101 -0.397]
+[ DIAG replan=150 step=149 ] norm|a0|=0.266  denorm|a0|=3.54e-04 m  dir=[-0.022  0.003 -1.   ]
+[ DIAG replan=200 step=199 ] norm|a0|=0.269  denorm|a0|=3.95e-04 m  dir=[-0.024  0.02  -1.   ]
+[ DIAG replan=250 step=249 ] norm|a0|=0.614  denorm|a0|=4.65e-03 m  dir=[ 0.898 -0.138 -0.418]
+[ DIAG replan=300 step=299 ] norm|a0|=0.597  denorm|a0|=4.53e-03 m  dir=[ 0.906 -0.1   -0.411]
+[ DIAG replan=350 step=349 ] norm|a0|=0.636  denorm|a0|=4.91e-03 m  dir=[ 0.921 -0.097 -0.378]
+[ DIAG replan=400 step=399 ] norm|a0|=0.758  denorm|a0|=5.96e-03 m  dir=[ 0.172  0.928 -0.33 ]
+[ Unseen Test Context 23 Finished ]
+  - Context idx: 23
+  - Box  init XY=(0.592, -0.203)  angle=76.7°
+  - Target   XY=(0.492, 0.298)  angle=40.6°
+  - Init XY dist (box→target): 0.5107 m
+  - Box  final XY=(0.592, -0.203)  angle=76.7°  (dist_to_target: 0.5107 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.355628 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.049252 m
+  - Avg Inference Time: 0.3612 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 24/30  (4371.7s elapsed this item, ~1092.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_23.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.765  violated=94steps  (bounds=0 hs=94 obs=0)
+    first_viol_step=85  longest_safe=85  margin=0.0428m  dyn_err=0.0056m
+    plan_post_viol_rate=0.0437  zero_viol=False
+Context 24 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.016  denorm|a0|=8.33e-03 m  dir=[-0.983  0.005 -0.185]
+[ DIAG replan=100 step=99 ] norm|a0|=0.996  denorm|a0|=8.05e-03 m  dir=[-0.97   0.015 -0.241]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 24 Finished ]
+  - Context idx: 24
+  - Box  init XY=(0.533, -0.247)  angle=-46.3°
+  - Target   XY=(0.424, 0.249)  angle=-77.8°
+  - Init XY dist (box→target): 0.5081 m
+  - Box  final XY=(0.533, -0.247)  angle=-46.3°  (dist_to_target: 0.5081 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.341665 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.792116 m
+  - Avg Inference Time: 0.4106 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 25/30  (4562.1s elapsed this item, ~912.4s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_24.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.300  violated=280steps  (bounds=280 hs=0 obs=0)
+    first_viol_step=120  longest_safe=120  margin=0.1352m  dyn_err=0.0133m
+    plan_post_viol_rate=0.1120  zero_viol=False
+Context 25 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.948  denorm|a0|=7.65e-03 m  dir=[ 0.742  0.623 -0.248]
+[ DIAG replan=100 step=99 ] norm|a0|=0.312  denorm|a0|=1.34e-03 m  dir=[ 0.121 -0.476 -0.871]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577  0.577 -0.577]
+[ Unseen Test Context 25 Finished ]
+  - Context idx: 25
+  - Box  init XY=(0.521, -0.145)  angle=-51.6°
+  - Target   XY=(0.418, 0.217)  angle=56.9°
+  - Init XY dist (box→target): 0.3760 m
+  - Box  final XY=(0.521, -0.145)  angle=-51.6°  (dist_to_target: 0.3760 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.489295 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.807923 m
+  - Avg Inference Time: 0.4051 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 26/30  (4750.8s elapsed this item, ~730.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_25.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.435  violated=226steps  (bounds=184 hs=226 obs=0)
+    first_viol_step=42  longest_safe=113  margin=0.0412m  dyn_err=0.0102m
+    plan_post_viol_rate=0.4462  zero_viol=False
+Context 26 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.973  0.005 -0.229]
+[ DIAG replan=100 step=99 ] norm|a0|=0.918  denorm|a0|=7.43e-03 m  dir=[-0.018  0.97  -0.242]
+[ DIAG replan=150 step=149 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=200 step=199 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.78e-02 m  dir=[-0.577 -0.577  0.577]
+[ Unseen Test Context 26 Finished ]
+  - Context idx: 26
+  - Box  init XY=(0.545, -0.230)  angle=-72.0°
+  - Target   XY=(0.562, 0.213)  angle=-58.2°
+  - Init XY dist (box→target): 0.4439 m
+  - Box  final XY=(0.545, -0.230)  angle=-72.0°  (dist_to_target: 0.4439 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.260219 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.687794 m
+  - Avg Inference Time: 0.4101 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 27/30  (4941.2s elapsed this item, ~549.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_26.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.310  violated=276steps  (bounds=276 hs=0 obs=0)
+    first_viol_step=124  longest_safe=124  margin=0.1479m  dyn_err=0.0130m
+    plan_post_viol_rate=0.1120  zero_viol=False
+Context 27 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.361  denorm|a0|=2.14e-03 m  dir=[ 0.662 -0.244 -0.708]
+[ DIAG replan=100 step=99 ] norm|a0|=1.440  denorm|a0|=1.18e-02 m  dir=[-0.694 -0.694 -0.188]
+[ DIAG replan=150 step=149 ] norm|a0|=0.925  denorm|a0|=7.37e-03 m  dir=[-0.899 -0.322 -0.297]
+[ DIAG replan=200 step=199 ] norm|a0|=0.309  denorm|a0|=1.52e-03 m  dir=[ 0.437 -0.39  -0.811]
+[ DIAG replan=250 step=249 ] norm|a0|=0.333  denorm|a0|=1.59e-03 m  dir=[ 0.153 -0.52  -0.84 ]
+[ DIAG replan=300 step=299 ] norm|a0|=0.305  denorm|a0|=1.42e-03 m  dir=[ 0.171 -0.523 -0.835]
+[ DIAG replan=350 step=349 ] norm|a0|=0.304  denorm|a0|=1.59e-03 m  dir=[-0.12  -0.617 -0.777]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 27 Finished ]
+  - Context idx: 27
+  - Box  init XY=(0.528, -0.134)  angle=-53.2°
+  - Target   XY=(0.585, 0.259)  angle=58.6°
+  - Init XY dist (box→target): 0.3971 m
+  - Box  final XY=(0.528, -0.134)  angle=-53.2°  (dist_to_target: 0.3971 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.509285 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.153835 m
+  - Avg Inference Time: 0.3617 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 28/30  (5111.6s elapsed this item, ~365.1s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_27.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.732  violated=107steps  (bounds=0 hs=107 obs=0)
+    first_viol_step=39  longest_safe=39  margin=0.0186m  dyn_err=0.0045m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 28 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.132  denorm|a0|=9.20e-03 m  dir=[ 0.743  0.632 -0.22 ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.315  denorm|a0|=1.37e-03 m  dir=[-0.197 -0.454 -0.869]
+[ DIAG replan=150 step=149 ] norm|a0|=0.323  denorm|a0|=1.47e-03 m  dir=[ 0.188 -0.483 -0.855]
+[ DIAG replan=200 step=199 ] norm|a0|=0.311  denorm|a0|=1.36e-03 m  dir=[ 0.165 -0.476 -0.864]
+[ DIAG replan=250 step=249 ] norm|a0|=1.732  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 28 Finished ]
+  - Context idx: 28
+  - Box  init XY=(0.596, -0.115)  angle=59.9°
+  - Target   XY=(0.425, 0.206)  angle=-13.8°
+  - Init XY dist (box→target): 0.3641 m
+  - Box  final XY=(0.596, -0.115)  angle=59.9°  (dist_to_target: 0.3641 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.386791 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 1.737274 m
+  - Avg Inference Time: 0.3826 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 29/30  (5291.1s elapsed this item, ~182.5s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_28.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.607  violated=157steps  (bounds=97 hs=60 obs=0)
+    first_viol_step=41  longest_safe=90  margin=0.0281m  dyn_err=0.0080m
+    plan_post_viol_rate=0.0555  zero_viol=False
+Context 29 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.946  denorm|a0|=7.56e-03 m  dir=[ 0.699  0.656 -0.286]
+[ DIAG replan=100 step=99 ] norm|a0|=0.679  denorm|a0|=5.17e-03 m  dir=[-0.83  -0.364 -0.421]
+[ DIAG replan=150 step=149 ] norm|a0|=0.302  denorm|a0|=1.27e-03 m  dir=[ 0.126 -0.468 -0.875]
+[ DIAG replan=200 step=199 ] norm|a0|=0.316  denorm|a0|=1.47e-03 m  dir=[ 0.2   -0.506 -0.839]
+[ DIAG replan=250 step=249 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=300 step=299 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=8.660  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 29 Finished ]
+  - Context idx: 29
+  - Box  init XY=(0.516, -0.141)  angle=45.5°
+  - Target   XY=(0.570, 0.310)  angle=-88.8°
+  - Init XY dist (box→target): 0.4541 m
+  - Box  final XY=(0.516, -0.141)  angle=45.5°  (dist_to_target: 0.4541 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.600138 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 2.133997 m
+  - Avg Inference Time: 0.3898 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 30/30  (5473.5s elapsed this item, ~0.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/diagnostics/rollout_29.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.535  violated=186steps  (bounds=136 hs=50 obs=0)
+    first_viol_step=43  longest_safe=55  margin=0.0325m  dyn_err=0.0088m
+    plan_post_viol_rate=0.0821  zero_viol=False
+p(m|c) tensor([[0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.],
+        [0., 0.]])
+Mean Distance 0.41319239139556885
+Successrate 0.0
+entropy -0.0
+[ eval ] Generating PNG rollout grid for post_processing...
+--- aligning-d3il-visual [default] post_processing seed=6 ---
+Success rate:              0.0000
+Avg final mean distance:   0.4132 m  +- 0.1251 m
+Min final mean distance:   0.2153 m
+Avg steps (successful):    0.00 +- 0.00
+Avg steps (all trials):    400.00 +- 0.00
+Physical tracking error:   mean=0.5936 m  max=3.9098 m
+Avg inference time/replan: 0.391 s
+--- Constraint Metrics [post_processing] ---
+  Execution satisfaction rate:    0.562 ± 0.199
+  Violated steps/rollout:         175.4 ± 79.6  (bounds=133.7  hs=59.5  obs=0.4)
+  Max bounds viol (m):            0.1577 ± 0.1769
+  Max halfspace viol (m):         0.0151 ± 0.0285
+  Max obstacle penetration (m):   0.0015 ± 0.0071
+  Constraint margin mean (m):     0.0657 ± 0.0471
+  First violation step:           79.8 (n_rollouts_with_viol=28)
+  Longest safe streak (steps):    117.9 ± 85.8
+  Dynamics consistency err (m):   0.0095 ± 0.0036
+  Plan post-proj viol rate:       0.1169 ± 0.1349
+  Zero-violation rollouts:        2 / 30  (6.7%)
+  → Saved: logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/post_processing/constraint_metrics.json
+--------------------------------------------------------------------------------
+
+[ eval ] >>> item 7/24: geo=combined_5  variant=model_free  tightened=False
+[ eval ] Loaded normalizers from logs/aligning-d3il-visual/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/6
+[ eval ] obs_normalizer  mins=[ 0.2196 -0.3488  0.12    0.2089 -0.365   0.1005]  maxs=[0.7198 0.4658 0.2516 0.7357 0.4911 0.2653]
+[ eval ] act_normalizer  mins=[-0.0083 -0.0083 -0.0083]  maxs=[0.0083 0.0083 0.0134]
+[ eval ] DPCC projector active for variant 'model_free' (trajectory_dim=9)
+there are cpus:  64
+3105159 {0}
+Process 3105159 unpinned — visual eval requires all CPU threads (OpenMP/CUDA/SLSQP).
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/gym/spaces/box.py:127: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+WARNING: mju_openResource: could not open resource '/data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_69c2692c-8237-11f1-a658-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (74 iterations):  8.113627453026797e-06
+Final IK error (0 iterations):  8.113627453026797e-06
+Context 0 Rollout 0
+[ DIAG first-replan ] normalized   a0 = [ 0.0018  0.0068 -0.2295]  |mag| = 0.2296
+[ DIAG first-replan ] denormalized a0 = [1.e-05 6.e-05 4.e-05]  |mag| = 0.000071 m
+[ DIAG first-replan ] horizon act (normalized) range: [-0.2482, 1.0000]
+[ DIAG first-replan ] per-step normalized acts (H=8):
+  step  0: [ 0.0018  0.0068 -0.2295]
+  step  1: [ 0.0016 -0.0044 -0.2347]
+  step  2: [-0.0005 -0.0101 -0.2347]
+  step  3: [ 0.0055  0.9649 -0.2327]
+  step  4: [ 0.028   1.     -0.2375]
+  step  5: [ 0.4212  0.8022 -0.2381]
+  step  6: [ 0.8874  0.7682 -0.2482]
+  step  7: [ 0.9179  0.715  -0.2106]
+[ DIAG obs ] des_c_pos=[ 0.525  -0.3488  0.2516]  c_pos=[ 0.525  -0.3488  0.2516]
+[ DIAG obs ] obs_norm (dim=6)=[ 0.2209 -1.      1.      0.1999 -0.9623  0.8339]
+[ DIAG img ] bp_image   std=0.2093  shape=(3, 96, 96)
+[ DIAG img ] inhand_img std=0.2490  shape=(3, 96, 96)
+[ DIAG ] saved → logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diag_first_replan.txt
+[ DIAG replan=50 step=49 ] norm|a0|=1.000  denorm|a0|=8.33e-03 m  dir=[-0.01   0.006 -1.   ]
+[ DIAG replan=100 step=99 ] norm|a0|=0.236  denorm|a0|=1.23e-04 m  dir=[-0.043  0.044 -0.998]
+[ DIAG replan=150 step=149 ] norm|a0|=0.236  denorm|a0|=8.91e-05 m  dir=[-0.01   0.041 -0.999]
+[ DIAG replan=200 step=199 ] norm|a0|=0.229  denorm|a0|=1.31e-04 m  dir=[-0.06   0.02  -0.998]
+[ DIAG replan=250 step=249 ] norm|a0|=0.234  denorm|a0|=9.56e-05 m  dir=[-0.     0.049 -0.999]
+[ DIAG replan=300 step=299 ] norm|a0|=0.231  denorm|a0|=1.01e-04 m  dir=[-0.044  0.024 -0.999]
+[ DIAG replan=350 step=349 ] norm|a0|=0.233  denorm|a0|=1.06e-04 m  dir=[-0.049  0.024 -0.999]
+[ DIAG replan=400 step=399 ] norm|a0|=0.230  denorm|a0|=1.22e-04 m  dir=[-0.041  0.044 -0.998]
+[ Unseen Test Context 0 Finished ]
+  - Context idx: 0
+  - Box  init XY=(0.581, -0.204)  angle=-43.5°
+  - Target   XY=(0.498, 0.333)  angle=-58.3°
+  - Init XY dist (box→target): 0.5433 m
+  - Box  final XY=(0.581, -0.204)  angle=-43.5°  (dist_to_target: 0.5433 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.312711 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.028923 m
+  - Avg Inference Time: 0.4520 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 1/30  (201.4s elapsed this item, ~5841.2s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_0.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=400  margin=0.1020m  dyn_err=0.0013m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 1 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.224  denorm|a0|=1.84e-04 m  dir=[ 0.07   0.036 -0.997]
+[ DIAG replan=100 step=99 ] norm|a0|=0.226  denorm|a0|=9.50e-05 m  dir=[ 0.024 -0.005 -1.   ]
+[ DIAG replan=150 step=149 ] norm|a0|=0.230  denorm|a0|=1.26e-04 m  dir=[ 0.05   0.037 -0.998]
+[ DIAG replan=200 step=199 ] norm|a0|=1.025  denorm|a0|=8.30e-03 m  dir=[-0.971 -0.005 -0.237]
+[ DIAG replan=250 step=249 ] norm|a0|=0.972  denorm|a0|=7.84e-03 m  dir=[ 0.014 -0.968 -0.251]
+[ DIAG replan=300 step=299 ] norm|a0|=0.234  denorm|a0|=8.98e-05 m  dir=[-0.03   0.034 -0.999]
+[ DIAG replan=350 step=349 ] norm|a0|=0.229  denorm|a0|=1.42e-04 m  dir=[-0.028  0.063 -0.998]
+[ DIAG replan=400 step=399 ] norm|a0|=0.230  denorm|a0|=1.36e-04 m  dir=[-0.045  0.051 -0.998]
+[ Unseen Test Context 1 Finished ]
+  - Context idx: 1
+  - Box  init XY=(0.556, -0.247)  angle=-81.0°
+  - Target   XY=(0.547, 0.236)  angle=39.6°
+  - Init XY dist (box→target): 0.4836 m
+  - Box  final XY=(0.556, -0.247)  angle=-81.0°  (dist_to_target: 0.4836 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.576892 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 0.024551 m
+  - Avg Inference Time: 0.4538 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 2/30  (408.8s elapsed this item, ~5723.5s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_1.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=1.000  violated=0steps  (bounds=0 hs=0 obs=0)
+    first_viol_step=-1  longest_safe=400  margin=0.1024m  dyn_err=0.0017m
+    plan_post_viol_rate=0.0000  zero_viol=True
+Context 2 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.019  denorm|a0|=8.29e-03 m  dir=[ 0.975  0.02  -0.22 ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.084  denorm|a0|=8.61e-03 m  dir=[ 0.923 -0.168 -0.347]
+[ DIAG replan=150 step=149 ] norm|a0|=1.290  denorm|a0|=1.03e-02 m  dir=[ 0.775 -0.452 -0.441]
+[ DIAG replan=200 step=199 ] norm|a0|=1.629  denorm|a0|=1.33e-02 m  dir=[ 0.614 -0.614 -0.496]
+[ DIAG replan=250 step=249 ] norm|a0|=1.710  denorm|a0|=1.42e-02 m  dir=[ 0.585 -0.585 -0.562]
+[ DIAG replan=300 step=299 ] norm|a0|=1.732  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=350 step=349 ] norm|a0|=1.688  denorm|a0|=1.40e-02 m  dir=[ 0.592 -0.592 -0.546]
+[ DIAG replan=400 step=399 ] norm|a0|=1.649  denorm|a0|=1.35e-02 m  dir=[ 0.607 -0.607 -0.514]
+[ Unseen Test Context 2 Finished ]
+  - Context idx: 2
+  - Box  init XY=(0.527, -0.127)  angle=-34.4°
+  - Target   XY=(0.513, 0.302)  angle=-34.6°
+  - Init XY dist (box→target): 0.4297 m
+  - Box  final XY=(0.527, -0.127)  angle=-34.4°  (dist_to_target: 0.4297 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.215251 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.509680 m
+  - Avg Inference Time: 2.9203 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 3/30  (1603.4s elapsed this item, ~14430.3s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_2.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.152  violated=339steps  (bounds=177 hs=167 obs=0)
+    first_viol_step=42  longest_safe=42  margin=0.0763m  dyn_err=0.0116m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 3 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=0.992  denorm|a0|=8.03e-03 m  dir=[ 0.971  0.001 -0.238]
+[ DIAG replan=100 step=99 ] norm|a0|=1.036  denorm|a0|=8.36e-03 m  dir=[ 0.965 -0.07  -0.251]
+[ DIAG replan=150 step=149 ] norm|a0|=1.189  denorm|a0|=9.45e-03 m  dir=[ 0.841 -0.358 -0.405]
+[ DIAG replan=200 step=199 ] norm|a0|=1.582  denorm|a0|=1.29e-02 m  dir=[ 0.632 -0.632 -0.448]
+[ DIAG replan=250 step=249 ] norm|a0|=1.651  denorm|a0|=1.36e-02 m  dir=[ 0.606 -0.606 -0.516]
+[ DIAG replan=300 step=299 ] norm|a0|=1.729  denorm|a0|=1.44e-02 m  dir=[ 0.578 -0.578 -0.575]
+[ DIAG replan=350 step=349 ] norm|a0|=1.669  denorm|a0|=1.38e-02 m  dir=[ 0.599 -0.599 -0.531]
+[ DIAG replan=400 step=399 ] norm|a0|=1.718  denorm|a0|=1.43e-02 m  dir=[ 0.582 -0.582 -0.568]
+[ Unseen Test Context 3 Finished ]
+  - Context idx: 3
+  - Box  init XY=(0.517, -0.145)  angle=28.1°
+  - Target   XY=(0.582, 0.285)  angle=-15.4°
+  - Init XY dist (box→target): 0.4341 m
+  - Box  final XY=(0.517, -0.145)  angle=28.1°  (dist_to_target: 0.4341 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.337977 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.440758 m
+  - Avg Inference Time: 2.7177 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 4/30  (2717.2s elapsed this item, ~17661.9s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_3.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.380  violated=248steps  (bounds=181 hs=67 obs=0)
+    first_viol_step=53  longest_safe=99  margin=0.0602m  dyn_err=0.0111m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 4 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.024  denorm|a0|=8.34e-03 m  dir=[ 0.977  0.019 -0.213]
+[ DIAG replan=100 step=99 ] norm|a0|=1.071  denorm|a0|=8.54e-03 m  dir=[ 0.934 -0.157 -0.322]
+[ DIAG replan=150 step=149 ] norm|a0|=1.360  denorm|a0|=1.09e-02 m  dir=[ 0.735 -0.459 -0.499]
+[ DIAG replan=200 step=199 ] norm|a0|=1.604  denorm|a0|=1.31e-02 m  dir=[ 0.624 -0.624 -0.471]
+[ DIAG replan=250 step=249 ] norm|a0|=1.692  denorm|a0|=1.40e-02 m  dir=[ 0.591 -0.591 -0.549]
+[ DIAG replan=300 step=299 ] norm|a0|=1.689  denorm|a0|=1.40e-02 m  dir=[ 0.592 -0.592 -0.547]
+[ DIAG replan=350 step=349 ] norm|a0|=1.638  denorm|a0|=1.34e-02 m  dir=[ 0.611 -0.611 -0.505]
+[ DIAG replan=400 step=399 ] norm|a0|=1.732  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ Unseen Test Context 4 Finished ]
+  - Context idx: 4
+  - Box  init XY=(0.553, -0.135)  angle=-24.2°
+  - Target   XY=(0.514, 0.208)  angle=12.3°
+  - Init XY dist (box→target): 0.3447 m
+  - Box  final XY=(0.553, -0.135)  angle=-24.2°  (dist_to_target: 0.3447 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.273741 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.609434 m
+  - Avg Inference Time: 2.6108 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 5/30  (3788.2s elapsed this item, ~18941.0s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_4.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.330  violated=268steps  (bounds=194 hs=74 obs=0)
+    first_viol_step=38  longest_safe=94  margin=0.0554m  dyn_err=0.0116m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 5 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.025  denorm|a0|=8.34e-03 m  dir=[ 0.975  0.022 -0.22 ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.062  denorm|a0|=8.49e-03 m  dir=[ 0.941 -0.153 -0.301]
+[ DIAG replan=150 step=149 ] norm|a0|=1.364  denorm|a0|=1.10e-02 m  dir=[ 0.733 -0.461 -0.5  ]
+[ DIAG replan=200 step=199 ] norm|a0|=1.676  denorm|a0|=1.39e-02 m  dir=[ 0.597 -0.587 -0.547]
+[ DIAG replan=250 step=249 ] norm|a0|=1.712  denorm|a0|=1.42e-02 m  dir=[ 0.584 -0.584 -0.563]
+[ DIAG replan=300 step=299 ] norm|a0|=1.659  denorm|a0|=1.37e-02 m  dir=[ 0.603 -0.603 -0.523]
+[ DIAG replan=350 step=349 ] norm|a0|=1.732  denorm|a0|=1.44e-02 m  dir=[ 0.577 -0.577 -0.577]
+[ DIAG replan=400 step=399 ] norm|a0|=1.721  denorm|a0|=1.43e-02 m  dir=[ 0.581 -0.581 -0.57 ]
+[ Unseen Test Context 5 Finished ]
+  - Context idx: 5
+  - Box  init XY=(0.541, -0.104)  angle=-14.4°
+  - Target   XY=(0.442, 0.243)  angle=27.8°
+  - Init XY dist (box→target): 0.3605 m
+  - Box  final XY=(0.541, -0.104)  angle=-14.4°  (dist_to_target: 0.3605 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.297565 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.522805 m
+  - Avg Inference Time: 2.5598 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 6/30  (4838.9s elapsed this item, ~19355.7s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_5.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.175  violated=330steps  (bounds=178 hs=156 obs=0)
+    first_viol_step=41  longest_safe=41  margin=0.0680m  dyn_err=0.0116m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 6 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.014  denorm|a0|=8.23e-03 m  dir=[ 0.973  0.014 -0.23 ]
+[ DIAG replan=100 step=99 ] norm|a0|=1.080  denorm|a0|=8.55e-03 m  dir=[ 0.926  0.017 -0.378]
+[ DIAG replan=150 step=149 ] norm|a0|=1.435  denorm|a0|=1.17e-02 m  dir=[ 0.697 -0.425 -0.578]
+[ DIAG replan=200 step=199 ] norm|a0|=1.629  denorm|a0|=1.33e-02 m  dir=[ 0.614 -0.614 -0.496]
+[ DIAG replan=250 step=249 ] norm|a0|=1.649  denorm|a0|=1.35e-02 m  dir=[ 0.607 -0.607 -0.514]
+[ DIAG replan=300 step=299 ] norm|a0|=1.639  denorm|a0|=1.34e-02 m  dir=[ 0.61  -0.61  -0.506]
+[ DIAG replan=350 step=349 ] norm|a0|=1.708  denorm|a0|=1.42e-02 m  dir=[ 0.586 -0.586 -0.561]
+[ DIAG replan=400 step=399 ] norm|a0|=1.689  denorm|a0|=1.40e-02 m  dir=[ 0.592 -0.592 -0.546]
+[ Unseen Test Context 6 Finished ]
+  - Context idx: 6
+  - Box  init XY=(0.537, -0.180)  angle=-70.4°
+  - Target   XY=(0.444, 0.240)  angle=-86.3°
+  - Init XY dist (box→target): 0.4302 m
+  - Box  final XY=(0.532, -0.181)  angle=-73.1°  (dist_to_target: 0.4308 m)
+  - Total Steps: 400
+  - Success status: False
+  - Final Mean Distance: 0.252107 m
+  - Environment Mode: 1
+  - Max Physical Tracking Error: 3.496496 m
+  - Avg Inference Time: 2.4795 seconds/replan
+  - Clamp events: 0
+  - Progress: rollout 7/30  (5857.4s elapsed this item, ~19245.8s to go)
+--------------------------------------------------------------------------------
+
+[ WARNING ] MP4 failed: Could not find a backend to open `logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2/6/results/combined_5/model_free/diagnostics/rollout_6.mp4`` with iomode `wI`.
+Based on the extension, the following plugins might add capable backends:
+  FFMPEG:  pip install imageio[ffmpeg]
+  pyav:  pip install imageio[pyav]
+  [ constraints ] sat=0.160  violated=336steps  (bounds=178 hs=162 obs=0)
+    first_viol_step=44  longest_safe=44  margin=0.0754m  dyn_err=0.0116m
+    plan_post_viol_rate=0.0000  zero_viol=False
+Context 7 Rollout 0
+[ DIAG replan=50 step=49 ] norm|a0|=1.027  denorm|a0|=8.33e-03 m  dir=[-0.009  0.974 -0.228]
+[ DIAG replan=100 step=99 ] norm|a0|=1.172  denorm|a0|=9.29e-03 m  dir=[ 0.853 -0.019 -0.521]
+[ DIAG replan=150 step=149 ] norm|a0|=1.222  denorm|a0|=9.73e-03 m  dir=[ 0.818 -0.262 -0.512]
+[ DIAG replan=200 step=199 ] norm|a0|=1.606  denorm|a0|=1.32e-02 m  dir=[ 0.622 -0.552 -0.555]
+[ DIAG replan=250 step=249 ] norm|a0|=1.713  denorm|a0|=1.42e-02 m  dir=[ 0.584 -0.584 -0.564]
+slurmstepd-i6-gpu-1: error: *** JOB 23514 ON i6-gpu-1 CANCELLED AT 2026-07-18T01:14:48 DUE TO TIME LIMIT ***

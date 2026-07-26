@@ -266,7 +266,19 @@ after config_override_pkl and turn off CFG rerun
 
 from setup 1 to setup 2
 see ((Post_U10 Results Analysis default K2 --coding --U10 --(iMF, Gen3v4 --(Gen3 --Works - Develop Iterations--Plan & Works (Replace, Update to FM--DPCC Code & Replace Code Works)))) (SS26-Thesis-Flow_matching))
-23551
+23551(K2)
+
+23572 K1
+23574 K10
+23581 K50
+
+---
+
+setup3
+23650 (5e4 train)
+
+-> 2e5 train
+23680
 
 ---
 # Visual 
@@ -1128,4 +1140,70 @@ init 15/07
 "METHODS="original" ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_hardflow.sh"
 23486
 fix1 -> 23491 succes test 
-run pipeline -> 23507
+run pipeline -> 23559 
+fail, fix 2
+23565 (METHODS="original" ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_hardflow.sh)
+success
+RUN constraint 23566
+
+
+# Gen13
+23575 test
+23578
+23586/7 (K45 follow the guide)
+U5 23602
+Smooth test (fix7) 23608 / fix.2 23610
+U8 fig11 but imf -> 23609 / fix.2 23611
+23612 same NFE test
+
+U9 Incrase train step to 300k for imf and wandb logging 
+23613
+EVAL on it -> 23624
+
+23634 - check smooth of new 300k trian of imf
+23636 U9.2 tune the learning rate, since loss curve so bad
+23668 inspect the smooth
+23669 + 23672 u9.2 follow up next step run, arm A&B
+(IV)
+
+23683 80k train
+(Stop as 55k)
+Eval -> 23733/4 
+(
+    SKIP_TRAIN=1 IMF_EXP_NAME=H16_imf_lrfix_800k IMF_CP=22 \
+    > IMF_KS="1 2" RANDOM_REPEAT=200 \
+    >   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/imf_pipeline_hardflow.sh
+)
+
+- U10
+23832
+
+---
+
+# Gen3v6 mean flow
+23734 FAIL 
+23744 trian seed 6
+EVAL in 23777
+
+try unet 23812
+
+# Gen3v7 alpha flow 
+1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
+EVAL 23786
+
+try unet
+23809
+
+# Gen12 
+init pipeline run 23767 -> All killed, not run
+fix1(.3) -> debug_chain_23782 
+FAIL Gate fix2
+23795
+
+fix3
+sweep run 23815
+
+U4
+23826 to smoke test
+23827/8 : thres 0(baseline) and 0.5 test FAIL (quick patch 23830/1 0+0.3 retest)
+23829 mpc batch=4 test
