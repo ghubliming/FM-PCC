@@ -190,3 +190,32 @@ re-SYNC. (Aggregated seed mode never had this bug; it has no per-seed verify.)
 2. §5/§8 batch PNG plots — hardflow in robustness/heatmap/combined (**valid, but the user's pipeline
    runs `--no-plots`; the HTML is CSV-driven, so these were not the blocker**).
 3. **§9 HTML seed-verify abort — the actual cause of "hardflow won't show".**
+
+---
+
+## 10. Follow-up — "select only the hardflow candidate → stuck on CHOOSE_EXPERIMENT_TO_START"
+
+Second HTML regression, also introduced by U7, distinct from §9.
+
+**Cause:** §1 added the HardFlow-only metrics (`activation_threshold`, `batch_size`, `flow_steps`,
+`nlp_solves`, `nlp_failures`, `nfe`) to the CSV. In `index.html`, `populate_dynamic_filters` builds
+the metric dropdown from `sorted(df_agg['metric'].unique())` and lets the browser select the **first
+`<option>`**. `activation_threshold` / `batch_size` / `flow_steps` all sort **before** the core
+metrics, so the default metric became a **hardflow-only** metric. Those keys exist only in
+`hardflow_new*.npz` — `diffuser.npz` / `dpcc*.npz` don't have them. With the default variant still
+`diffuser` (first checkbox), the `(variant=diffuser, metric=activation_threshold)` mask was empty, and
+`trigger_plot`'s `if subset.empty: return` bailed **without touching `plot-area`**, so the initial
+`CHOOSE_EXPERIMENT_TO_START` placeholder just stayed on screen.
+
+**Fixes (`index.html`):**
+1. **Sensible default metric** — `populate_dynamic_filters` now marks the first available of
+   `["n_success_and_constraints", "n_success", "avg_time"]` as `selected` (falls back to `metrics[0]`
+   only if none present). So the initial/typical selection lands on a metric every variant has.
+2. **No more silent placeholder** — added `show_no_data(metric, vars, cands, env)`; both empty-subset
+   branches (aggregated and custom-seed) now render a red diagnostic box naming the exact
+   metric/variants/candidates/env that produced no rows, plus a tip that hardflow-only metrics only
+   exist for `hardflow_new*` variants. The stuck "CHOOSE_EXPERIMENT_TO_START" can no longer occur.
+
+Combined with §9 (seed-verify no longer aborts the whole plot), the hardflow candidate now renders on
+core metrics, and any genuinely empty facet says *why* instead of showing the boot placeholder.
+**Still no cluster re-run needed** — reload `index.html` and re-SYNC.

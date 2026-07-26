@@ -205,7 +205,13 @@ async def load_data(event=None):
 
 def populate_dynamic_filters():
     metrics = sorted(df_agg['metric'].unique())
-    document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}">{m.upper()}</option>' for m in metrics])
+    # U7 fix: default to a CORE metric, not the alphabetically-first one. Adding the
+    # HardFlow-only metrics (activation_threshold, batch_size, ...) made 'a...' sort to
+    # the top, so the dropdown defaulted to a metric that only hardflow_new npz has —
+    # every non-hardflow variant then filtered to an empty subset (blank plot / stuck
+    # placeholder). Prefer the headline metric so the initial + typical selection has data.
+    default_metric = next((m for m in ["n_success_and_constraints", "n_success", "avg_time"] if m in metrics), metrics[0] if metrics else None)
+    document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}"{" selected" if m == default_metric else ""}>{m.upper()}</option>' for m in metrics])
     envs = sorted(df_agg['halfspace_variant'].unique())
     document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
     # Do NOT auto-check every box on first load: large batches (many variants x
@@ -219,6 +225,22 @@ def populate_dynamic_filters():
     # are untouched since they never match .isdigit().
     cands_list = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
     document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}"{" checked" if i == 0 else ""} onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for i, c in enumerate(cands_list)])
+
+def show_no_data(metric, checked_vars, checked_cands, env):
+    # U7 fix: never leave the "CHOOSE_EXPERIMENT_TO_START" placeholder (or a silent
+    # blank) when a valid-looking selection has no rows — tell the user WHICH facet is
+    # empty. Most common cause: a hardflow-only metric (activation_threshold / nlp_solves)
+    # selected against non-hardflow variants, or a candidate that lacks the chosen env.
+    env_line = f"<br>env = <b>{env}</b>" if env else ""
+    msg = (f'<div style="padding:24px;color:#b71c1c;font-family:monospace;font-size:13px;line-height:1.6;">'
+           f'<b>NO DATA FOR THIS SELECTION</b><br><br>'
+           f'metric = <b>{metric}</b><br>'
+           f'variants = {", ".join(checked_vars)}<br>'
+           f'candidates = {", ".join("CAND_"+c for c in checked_cands)}{env_line}<br><br>'
+           f'Tip: hardflow-only metrics (activation_threshold, nlp_solves, nfe, batch_size, '
+           f'flow_steps) exist only for <b>hardflow_new*</b> variants. Pick a core metric '
+           f'(n_success_and_constraints, avg_time) to compare across all variants.</div>')
+    document.getElementById("plot-area").innerHTML = msg
 
 async def trigger_plot(event=None):
     global df_agg, df_raw, current_fig
@@ -255,8 +277,8 @@ async def trigger_plot(event=None):
         if warn:
             document.getElementById("seed-error-msg").innerText = "Note: plotting available seeds only — missing " + "; ".join(warn)
         if subset.empty:
-            document.getElementById("plot-area").innerHTML = ""
             plt.close('all')
+            show_no_data(metric, checked_vars, checked_cands, env if mode == "candidate" else None)
             return
 
         pivot_mean = subset.groupby([x_axis, 'variant'])['value'].mean().unstack()
@@ -266,7 +288,9 @@ async def trigger_plot(event=None):
         mask = (df_agg['metric'] == metric) & (df_agg['variant'].isin(checked_vars)) & (df_agg['Candidate'].isin(checked_cands))
         if mode == "candidate": mask &= (df_agg['halfspace_variant'] == env)
         subset = df_agg[mask]
-        if subset.empty: return
+        if subset.empty:
+            show_no_data(metric, checked_vars, checked_cands, env if mode == "candidate" else None)
+            return
         val_col = 'mean' if 'mean' in df_agg.columns else 'value'
         pivot_mean = subset.groupby([x_axis, 'variant'])[val_col].mean().unstack()
         pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df_agg.columns else None
