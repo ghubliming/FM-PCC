@@ -11,7 +11,7 @@ import json
 logger = logging.getLogger(__name__)
 
 # Use config for styling
-from config import PLOT_CONFIG, MAJOR_VARIANTS, AUXILIARY_VARIANTS
+from config import PLOT_CONFIG, MAJOR_VARIANTS, AUXILIARY_VARIANTS, HARDFLOW_VARIANTS
 
 # Color scheme for candidates: 1=red, 2=orange, 3=yellow, 4=blue, 5=green...
 CANDIDATE_COLORS = {
@@ -187,9 +187,15 @@ class BatchVisualizer:
         )
         # 2. Tightened
         self._generate_robustness_subgroup(
-            output_dir, "03b_candidate_robustness_tightened", 
-            ['dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened'], 
+            output_dir, "03b_candidate_robustness_tightened",
+            ['dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened'],
             "Robustness: Tightened DPCC (Seed Variability)", show
+        )
+        # 3. U7: HardFlow (Gen12 arm C) — same plot, hardflow_new* variants
+        self._generate_robustness_subgroup(
+            output_dir, "03c_candidate_robustness_hardflow",
+            HARDFLOW_VARIANTS,
+            "Robustness: HardFlow arm-C (Seed Variability)", show
         )
 
     def _generate_robustness_subgroup(self, output_dir, filename, variants, title, show):
@@ -248,6 +254,12 @@ class BatchVisualizer:
             output_dir, "04b_candidate_heatmap_tightened",
             ['dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened'],
             "Constraint Performance: Tightened DPCC", show
+        )
+        # 3. U7: HardFlow (Gen12 arm C)
+        self._generate_heatmap_subgroup(
+            output_dir, "04c_candidate_heatmap_hardflow",
+            HARDFLOW_VARIANTS,
+            "Constraint Performance: HardFlow arm-C", show
         )
 
     def _generate_heatmap_subgroup(self, output_dir, filename, variants, title, show):

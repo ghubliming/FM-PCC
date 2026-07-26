@@ -1,8 +1,14 @@
 # CHANGELOG — DA_Code v3 U7: teach the DA the HardFlow (Gen12) variants
 
 **Date:** 2026-07-26 · **Type:** fix (DA code) · **Status:** code complete, verified static
-**Scope:** `Data_Analysis/DA_Code_v3/config.py` only. **Nothing committed.**
+**Scope:** `config.py` + `batch_visualizer.py`. **Nothing committed.**
 **Sits alongside** DA_Code/v3 fix_1..fix_6 (user asked for "U7").
+
+> **Update (same day):** the first pass changed `config.py` only; that made hardflow load and show
+> in the **single-candidate** visualizer (which is variant-generic) and the batch candidate-level /
+> MAJOR-AUX plots. But the batch **robustness boxplot + constraint heatmap were hardcoded to DPCC
+> variant lists**, so hardflow was invisible there. §5 adds the HardFlow subgroup to both — so
+> `hardflow_new` is now a first-class variant everywhere, like `dpcc-c`.
 
 ---
 
@@ -68,12 +74,45 @@ projection of the sampled trajectory; hardflow = per-step prox-NLP on the *predi
 they are *comparable* (same success/safety/time axes, now both loaded) but **not identical solvers**.
 The `activation_threshold` / `nlp_solves` metrics (now loaded) make that explicit per row.
 
-## 4. Caveats
+## 5. Visualizer fix (`batch_visualizer.py`) — hardflow was hardcoded out
+
+The batch per-variant plots each emitted exactly two subgroups, both hardcoded to DPCC:
+`plot_candidate_robustness_boxplot` and `plot_candidate_constraint_heatmap` used
+`['dpcc-r','dpcc-c','dpcc-t']` and the tightened trio. The config change (MAJOR_VARIANTS) does **not**
+reach these literals, so hardflow never appeared in those plots — this is what "can't set
+hardflow_new as a variant like dpcc-c" was hitting.
+
+Fix: added a **third HardFlow subgroup** to each, driven by `HARDFLOW_VARIANTS`:
+- `03c_candidate_robustness_hardflow.png`
+- `04c_candidate_heatmap_hardflow.png`
+
+`_generate_robustness_subgroup` / `_generate_heatmap_subgroup` already filter by
+`detailed['variant'].isin(variants)` and skip empties, so DPCC-only candidates simply don't appear in
+the hardflow subgroup (and vice-versa). `batch_visualizer.py` compiles.
+
+**Where hardflow_new shows up now, as a first-class variant:**
+| view | before U7 | after U7 |
+|---|---|---|
+| single-candidate `plot_variant_comparison` (variant bars) | not loaded | **shown** (generic; ranks all loaded variants) |
+| batch candidate-level accuracy/time | not counted | **counted** (MAJOR incl. hardflow_new) |
+| batch MAJOR/AUX group plots | absent | **present** |
+| batch robustness boxplot / constraint heatmap | **hardcoded DPCC only** | **new 03c/04c HardFlow subgroup** |
+
+## 6. Direct "hardflow_new vs dpcc-c" within one folder
+Because the Gen12 eval writes all arms into the SAME results dir, the hardflow eval folder
+(`…/K20_thres0.5_mpc1_n2/6/results/halfspace_*/`) contains **both** `dpcc-c-tightened.npz` and
+`hardflow_new.npz`. Run the **single-candidate** DA on that folder to get a direct within-candidate
+variant bar chart (diffuser vs dpcc-c-tightened vs hardflow_new) — the cleanest B-vs-C picture:
+```
+python Data_Analysis/DA_Code_v3/main_da.py \
+    --root-path logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc1_n2 \
+    --seeds 6
+```
+(adjust flags to your main_da.py signature).
+
+## 7. Caveats
 - **Seed mismatch:** hardflow candidates have only seed 6; DPCC candidates have all 5. For a fair
-  head-to-head, compare seed 6 vs seed 6 (or note the n imbalance) — the DA averages over whatever
-  seeds each candidate has.
-- **HARDFLOW_METRICS display:** these are loaded into each hardflow row's data dict and defined in
-  config, but the batch reporter's summary table still centres on the core `METRICS`. Surfacing
-  `nlp_solves`/`activation_threshold` in the printed table is a small follow-up if you want them
-  in the report rather than read from the npz. The success/safety/time comparison — the headline —
-  works now.
+  head-to-head, compare seed 6 vs seed 6 — the DA averages over whatever seeds each candidate has.
+- **HARDFLOW_METRICS display:** `nlp_solves`/`activation_threshold`/… are loaded into each hardflow
+  row and defined in config, but the batch *reporter's* summary table still centres on core `METRICS`.
+  Surfacing them in the printed table is a small follow-up; success/safety/time (the headline) works.
