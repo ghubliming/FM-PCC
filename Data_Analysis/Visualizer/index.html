@@ -308,6 +308,18 @@ async def trigger_plot(event=None):
     plt.close('all')
     fig, ax = plt.subplots(figsize=(calc_width, 6))
     pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=0.9, yerr=pivot_std, capsize=4)
+
+    # U8: print the exact value directly above each bar. Only label real BarContainers
+    # (skip the ErrorbarContainer that yerr adds); blank out NaN bars so absent
+    # variant/candidate combos don't render "nan". Extra top margin keeps labels on-canvas.
+    from matplotlib.container import BarContainer
+    for container in ax.containers:
+        if not isinstance(container, BarContainer):
+            continue
+        labels = [f"{v:.3g}" if v == v else "" for v in container.datavalues]
+        ax.bar_label(container, labels=labels, padding=3, fontsize=7, rotation=90)
+    ax.margins(y=0.15)
+
     ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
 
     ax.grid(True, alpha=0.2, axis='y')
