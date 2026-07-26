@@ -116,3 +116,37 @@ python Data_Analysis/DA_Code_v3/main_da.py \
 - **HARDFLOW_METRICS display:** `nlp_solves`/`activation_threshold`/… are loaded into each hardflow
   row and defined in config, but the batch *reporter's* summary table still centres on core `METRICS`.
   Surfacing them in the printed table is a small follow-up; success/safety/time (the headline) works.
+
+---
+
+## 8. Second visualizer bug — candidate-level plots dropped the hardflow candidate
+
+**Symptom (user):** comparing the hardflow candidate vs the fmv3ode/DPCC candidate, only the
+fmv3ode one appears; the hardflow candidate is missing from the plot entirely.
+
+**Root cause:** the headline candidate-level plots — Pareto `00a/b`, success `01a/b`, time `02a/b` —
+key on `accuracy_std_group` / `accuracy_tight_group` / `time_ms_*_group`, which the aggregator
+computes **only from the DPCC variant lists** (`std_variants=['dpcc-r','dpcc-c','dpcc-t']`,
+`tight_variants=[…tightened]`, `batch_aggregator.py` L102-126). A hardflow candidate has **no DPCC
+variants**, so those keys are `None`, and both `_generate_pareto_subgroup` and
+`_generate_bar_comparison` **skip** any candidate whose value is `None` → the hardflow candidate
+vanishes. U7 §1's `MAJOR_VARIANTS` change did not reach these DPCC-only group keys.
+
+**Fix (`batch_visualizer.py`): `plot_candidate_combined_comparison`** (wired into `plot_all`), which
+includes **every** candidate using each candidate's *own* unified headline metric
+(`stats['accuracy']` / `stats['time_ms']` = mean over whatever MAJOR variants it has — DPCC majors
+for a DPCC candidate, `hardflow_new*` for a hardflow candidate; both are set now that U7 put hardflow
+in `MAJOR_VARIANTS`). New outputs:
+- `00c_candidate_pareto_combined.png` — success vs time, all candidates with both metrics
+- `01c_candidate_success_combined.png` — success bar, **all** candidates
+- `02c_candidate_time_combined.png` — time bar, **all** candidates
+
+Per the user's request, **nothing is dropped**: a candidate missing the metric is drawn as a **blank
+(0) bar labelled `n/a`** with its letter kept on the axis (rather than omitted). The scatter skips a
+point only if *both* metrics are absent (can't place it), but the bars always keep the slot.
+
+The DPCC-subgroup plots (`00/01/02 a/b`) are left as-is (they are DPCC-specific by design); the `c`
+combined plots are the ones to read for a **HardFlow-vs-DPCC** candidate comparison.
+
+**Verify:** `batch_visualizer.py` compiles; `plot_candidate_combined_comparison` is in `plot_all`;
+uses `.get()` so a zero-file candidate can't KeyError.

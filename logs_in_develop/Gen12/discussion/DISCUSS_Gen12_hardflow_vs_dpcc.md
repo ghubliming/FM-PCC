@@ -61,17 +61,97 @@ On HardFlow's own algorithm/env: threshold 0.5 = identical safety+quality at −
 to terminal-only (0.0 DPCC) degrades safety (1.00→0.98) and path length. Two independent codebases
 agree: **threshold 0.5 is a safe ~⅓ compute saving.**
 
-## 4. The "is it the same NLP?" question (asked during DA work)
+## 4. Are the two NLPs the same? — the actual math + code
 
-**No — different solvers, comparable outcomes.**
-- **DPCC (arm B):** *post-hoc* — sample the full trajectory, then one SLSQP projection snaps it onto
-  the feasible set. No network in the solve.
-- **HardFlow (arm C):** *in-loop* — at each active ODE step, a small prox-NLP nudges the *predicted
-  terminal* `x̂₁` toward feasibility, blended back by τ.
+**No. Same feasible set `S`, different optimisation problem, different decision variable, different
+solver, different call site.** Here are both, verbatim from the code.
 
-At threshold 0.5 both act over the *last half* of the ODE (same schedule region, DPCC polarity after
-fix_6), but they are **not the same optimisation**. So the arms are a fair *outcome* comparison
-(success / safety / time, all now loadable in the DA after DA-U7), not a "same-NLP" identity.
+### 4.1 DPCC (arm B) — post-hoc projection of the SAMPLED trajectory
+Code: `flow_matcher_v3/sampling/projection.py::Projector.project` (L70–155); called *after* the ODE
+step, only near the end, in `flow_matcher_v3/models/diffusion.py::p_sample_loop` L178/L193:
+```
+near_end = loop_idx >= (1 - T)·K ;  if near_end:  x, cost = projector.project(x, ...)
+```
+Decision variable = the **full sampled trajectory** `z = x ∈ ℝ^{H·T}` (all H steps stacked).
+The solve (SLSQP, L133–142):
+```
+min_z   ½ zᵀQz + rᵀz          with r = −z_rawᵀQ   ⟺   min_z ½‖z − z_raw‖²_Q
+s.t.    A z = b               (Euler-kinematics equalities + fixed x₀)
+        C z ≤ d               (halfspaces, velocity bounds)
+        zₜᵀP zₜ + qᵀzₜ ≤ v    (sphere/obstacle, per step t=1..H−1)
+```
+i.e. **Euclidean(-Q) projection of the already-generated sample onto `S`**, solved **once**, on the
+real trajectory. The network does not appear in the solve.
+
+### 4.2 HardFlow (arm C) — in-loop prox-NLP on the PREDICTED TERMINAL
+Code: `flow_matcher_v3_hardflow/sampling/hardflow_projection.py`. Per active ODE step k
+(`HardFlowSampler.sample` L444–448):
+```
+x_ref   = x_k + v(x_k,τ_k)·dt
+x̂₁_ref = x_ref + (1 − τ_{k+1})·v(x_ref, τ_{k+1})     # 1-step terminal extrapolation
+x̂₁*    = HardFlowNLP.solve(x̂₁_ref, τ_{k+1})
+x_{k+1} = x_ref + τ_{k+1}·(x̂₁* − x̂₁_ref)             # pull-back, blended by τ
+```
+The NLP (`HardFlowNLP`, L155–174) has decision variable = the **predicted terminal** `x̂₁ ∈ ℝ^{dof}`
+(dof = H·T − state_dim, s₀ pinned), objective (L155–157):
+```
+min_{x̂₁}   ½ · reg · τ² · ‖x̂₁ − x̂₁_ref‖²        s.t.   h(x̂₁) ≤ 0   (same S as §4.1)
+```
+solved with **CasADi/IPOPT** (L174, `solve_limited` L309), **once per active step** (up to K times a
+plan).
+
+### 4.3 Why they are not the same (side-by-side)
+
+| | DPCC (arm B) | HardFlow (arm C) |
+|---|---|---|
+| decision variable | sampled trajectory `z = x` | predicted terminal `x̂₁ = x_ref + (1−τ)v` |
+| objective | ½‖z − z_raw‖²_Q (Q-weighted) | ½·reg·τ²·‖x̂₁ − x̂₁_ref‖² |
+| when | **once**, post-hoc, near end | **per active ODE step**, in-loop |
+| operates on | the real iterate | a 1-step *extrapolation* of the terminal |
+| result mapped back? | no (z is the sample) | yes: `x_{k+1}=x_ref+τ(x̂₁*−x̂₁_ref)` |
+| solver | scipy SLSQP, dim H·T | CasADi/IPOPT, dim H·T−state_dim |
+| feasible set `S` | **identical** (Gen12 builds arm C's `h` from the same yaml geometry) | **identical** |
+
+**Only `S` is shared.** So at threshold 0.5 both *act over the last half of the ODE and enforce the
+same constraints*, but they solve **different programs on different variables** → not the same NLP.
+A `hardflow_new.npz` and a `dpcc-c-tightened.npz` are a fair **outcome** comparison (success / safety
+/ time), never a solver identity. The per-row `activation_threshold` / `nlp_solves` (loaded after
+DA-U7) make the distinction explicit.
+
+## 4.4 What does "HF beats DPCC" MEAN? — the interpretation table
+
+Because §4.3 shows **both enforce the identical feasible set `S`**, safety alone often can't separate
+them (both hit 100% once K is large enough). So read the two axes the DA reports —
+**success** `s = n_success_and_constraints` (primary) and **avg_time** `t` (secondary) — with this logic:
+
+Let `s_H, t_H` = hardflow, `s_D, t_D` = DPCC, at **matched K, matched n, same seeds, same S**.
+
+| observation | conclusion | what it means scientifically |
+|---|---|---|
+| `s_H > s_D` | **HF wins on quality** ⭐ | in-loop steering reaches feasible-AND-good solutions that post-hoc projection cannot — the projection lands the raw sample in a bad feasible basin, in-loop avoids it. **This is the only outcome that justifies the contribution.** |
+| `s_H ≈ s_D` and `t_H < t_D` | HF wins on cost only | same quality, cheaper. Useful but weak — it's an efficiency claim, not "constrained sampling is better." Depends on solver tuning, not method. |
+| `s_H ≈ s_D` and `t_H ≈ t_D` | tie | no reason to prefer HF over the simpler incumbent (Occam → keep DPCC). |
+| `s_H ≈ s_D` and `t_H > t_D` | HF loses on cost | DPCC dominates (this was fix_3/U4 at high K before U4; U4 made it a tie). |
+| `s_H < s_D` | **HF loses** | post-hoc projection is strictly better; in-loop buys nothing. Any time advantage is irrelevant — you don't trade safety/success for speed. |
+
+**The decisive caveat (why "faster" is the weak claim):** at saturation (high K) both reach `s≈1.00`,
+so a time win is the *only* thing left — but a time win at equal quality is a **solver/efficiency**
+result, not evidence that in-loop constrained sampling is *better than* post-hoc projection. The
+strong, publishable claim requires **`s_H > s_D` in a regime where DPCC genuinely fails** — i.e. where
+projecting the finished sample onto `S` cannot recover a good trajectory but in-loop steering can.
+fix_3 tested exactly that regime (low K) and found the **opposite** (`s_H < s_D`). So:
+
+- **"HF avg-time beats DPCC" (with `s_H ≈ s_D`)** → *nice-to-have efficiency*, not a scientific win.
+  Report as "matches DPCC safety at lower/again-equal cost." Do **not** claim in-loop superiority.
+- **"HF success beats DPCC" (`s_H > s_D`, especially at low K / hard constraints)** → *the real result*:
+  in-loop constrained sampling is genuinely better because it shapes the trajectory before commitment,
+  not after. This is what to hunt for, and what the U4∩U4.2 low-K run (§7) is designed to expose.
+- **Same-safety, same-time** → the honest headline is "the projection dominates the outcome regardless
+  of when it is applied" (the Gen13 finding), and HardFlow is a more complex equal.
+
+Concretely for the pair you're inspecting (`hardflow_new` @0.5 vs `dpcc-c-tightened`, both in the
+`K20_thres0.5_mpc1_n2` folder): both are 100% safe at K=20, so this pair can **only** show a time
+difference → it is the *weak* (efficiency) axis. The *quality* axis needs the **low-K** run.
 
 ## 5. Where this leaves the central question
 

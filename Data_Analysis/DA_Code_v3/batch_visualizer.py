@@ -425,22 +425,105 @@ class BatchVisualizer:
         
         print(f"[ DA ] Matrix analysis complete. Saved to: {output_dir}")
 
+    def plot_candidate_combined_comparison(self, output_dir, show=False):
+        """U7: cross-candidate comparison that includes EVERY candidate — DPCC and
+        HardFlow together — using each candidate's own unified headline metric
+        (`accuracy` / `time_ms` = mean over whatever MAJOR variants it has, so a DPCC
+        candidate contributes dpcc-c/... and a hardflow candidate contributes
+        hardflow_new/...). The DPCC-subgroup plots (00/01/02 a/b) key on DPCC-only
+        group stats, so a hardflow candidate is None there and gets dropped — THIS is
+        the "only fmv3ode shows" bug. Here nothing is dropped: a candidate missing the
+        metric is shown as a blank (0) bar / skipped scatter point but KEPT on the axis.
+        """
+        stats = self.candidate_stats
+        letters = sorted(stats.keys())
+
+        # --- combined success bar (blank if missing, but label kept) ---
+        fig, ax = plt.subplots(figsize=(max(8, 1.5 * len(letters)), 6))
+        vals, present = [], []
+        for l in letters:
+            a = stats[l].get('accuracy')
+            present.append(a is not None)
+            vals.append((a * 100) if a is not None else 0.0)
+        bars = ax.bar(range(len(letters)), vals,
+                      color=[self._get_candidate_color(l) for l in letters],
+                      alpha=0.85, edgecolor='black', linewidth=1.5)
+        for bar, v, ok in zip(bars, vals, present):
+            ax.text(bar.get_x() + bar.get_width() / 2., bar.get_height(),
+                    f'{v:.1f}%' if ok else 'n/a', ha='center', va='bottom', fontweight='bold')
+        ax.set_ylabel('Goal+Constraint Success (%) — each candidate\'s own major variants',
+                      fontsize=11, fontweight='bold')
+        ax.set_title('Combined Success: ALL candidates (DPCC + HardFlow)', fontsize=13, fontweight='bold')
+        ax.set_xticks(range(len(letters))); ax.set_xticklabels(letters)
+        ax.set_ylim([0, 105]); ax.grid(True, alpha=0.3, axis='y')
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/01c_candidate_success_combined.png", dpi=PLOT_CONFIG.get('dpi', 300))
+        if show: plt.show()
+        plt.close()
+
+        # --- combined time bar ---
+        fig, ax = plt.subplots(figsize=(max(8, 1.5 * len(letters)), 6))
+        tvals, tpresent = [], []
+        for l in letters:
+            tm = stats[l].get('time_ms')
+            tpresent.append(tm is not None)
+            tvals.append(tm if tm is not None else 0.0)
+        bars = ax.bar(range(len(letters)), tvals,
+                      color=[self._get_candidate_color(l) for l in letters],
+                      alpha=0.85, edgecolor='black', linewidth=1.5)
+        for bar, v, ok in zip(bars, tvals, tpresent):
+            ax.text(bar.get_x() + bar.get_width() / 2., bar.get_height(),
+                    f'{v:.3f}' if ok else 'n/a', ha='center', va='bottom', fontweight='bold')
+        ax.set_ylabel('Computation Time per plan (s)', fontsize=11, fontweight='bold')
+        ax.set_title('Combined Time: ALL candidates (DPCC + HardFlow)', fontsize=13, fontweight='bold')
+        ax.set_xticks(range(len(letters))); ax.set_xticklabels(letters)
+        ax.grid(True, alpha=0.3, axis='y')
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/02c_candidate_time_combined.png", dpi=PLOT_CONFIG.get('dpi', 300))
+        if show: plt.show()
+        plt.close()
+
+        # --- combined pareto (success vs time), only candidates with both ---
+        fig, ax = plt.subplots(figsize=(12, 8))
+        plotted = 0
+        for l in letters:
+            a, tm = stats[l].get('accuracy'), stats[l].get('time_ms')
+            if a is None or tm is None:
+                continue
+            ax.scatter(tm, a * 100, s=500, alpha=0.75,
+                       color=self._get_candidate_color(l), edgecolors='black', linewidth=2, label=l)
+            ax.annotate(l, (tm, a * 100), fontsize=13, fontweight='bold',
+                        ha='center', va='center', color='white')
+            plotted += 1
+        ax.set_xlabel('Computation Time per plan (s)', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Goal+Constraint Success (%)', fontsize=12, fontweight='bold')
+        ax.set_title('Combined Pareto: ALL candidates (DPCC + HardFlow)', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        if plotted: ax.legend(loc='best', fontsize=10)
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/00c_candidate_pareto_combined.png", dpi=PLOT_CONFIG.get('dpi', 300))
+        if show: plt.show()
+        plt.close()
+
     def plot_all(self, output_dir, show=False):
         """
         Generate all comparison plots including hierarchical matrix analysis.
         """
         logger.info("Generating all cross-candidate comparison plots...")
-        
-        # Original v2 plots
+
+        # Original v2 plots (DPCC-subgroup keyed — hardflow candidates absent here)
         self.plot_candidate_pareto_frontier(output_dir, show=show)
         self.plot_candidate_success_comparison(output_dir, show=show)
         self.plot_candidate_time_comparison(output_dir, show=show)
         self.plot_candidate_robustness_boxplot(output_dir, show=show)
         self.plot_candidate_constraint_heatmap(output_dir, show=show)
-        
+
+        # U7: combined plots that include EVERY candidate (DPCC + HardFlow together)
+        self.plot_candidate_combined_comparison(output_dir, show=show)
+
         # New Multidimensional Matrix Analysis
         self.plot_matrix_analysis(output_dir, show=show)
-        
+
         logger.info("All plots generated successfully")
 
 
