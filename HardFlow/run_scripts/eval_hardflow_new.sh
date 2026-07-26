@@ -33,10 +33,11 @@ hardflow_cost_scale=100.0
 hardflow_activation="all"
 solver_print_level=5
 
-# Gen13 U10: continuous late-activation threshold. Default -1.0 = DISABLED (falls
-# back to hardflow_activation="all" -> every step; behaviour unchanged). Set
-# HF_ACT_THRESHOLD to sweep, e.g. HF_ACT_THRESHOLD=0.5 (last half, terminal always
-# solved) or 1.0 (terminal-only NLP). Encoded in exp_name so runs never collide.
+# Gen13 U10 (DPCC polarity): late-activation threshold = fraction of the late
+# trajectory projected (HIGHER = MORE projection, like DPCC's diffusion_timestep_
+# threshold). Default -1.0 = DISABLED (falls back to hardflow_activation="all" ->
+# 1.0 = every step; behaviour unchanged). Set HF_ACT_THRESHOLD to sweep, e.g.
+# 1.0 (every step) / 0.5 (last half) / 0.0 (terminal-only). Encoded in exp_name.
 hardflow_activation_threshold="${HF_ACT_THRESHOLD:--1.0}"
 
 exp_name="H${horizon}_1e6steps_hardflow_new_${ode_t_steps}steps"

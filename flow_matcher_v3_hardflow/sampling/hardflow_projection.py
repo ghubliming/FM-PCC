@@ -324,12 +324,15 @@ class HardFlowNLP:
 def resolve_activation_threshold(activation):
     """Map a config value to a float NLP-activation threshold in [0, 1].
 
-    U4: the per-step NLP is solved only when the flow time τ_{k+1} ≥ threshold
-    (plus always the final step). Accepts either a number in [0, 1], or the
-    back-compat aliases 'all' → 0.0 (every step) / 'late' → 0.5 (last half).
+    fix_6: DPCC polarity. `threshold` = the fraction of the (late) trajectory over
+    which the NLP is active, EXACTLY like DPCC's `diffusion_timestep_threshold`
+    (higher = MORE projection). The per-step NLP is solved when τ_{k+1} ≥ (1 −
+    threshold), plus always the final step. So:
+        1.0 → every step (full)     0.5 → last half     0.0 → terminal-only.
+    Accepts a number in [0, 1], or the aliases 'all' → 1.0 / 'late' → 0.5.
     """
     if isinstance(activation, str):
-        aliases = {'all': 0.0, 'late': 0.5}
+        aliases = {'all': 1.0, 'late': 0.5}
         key = activation.strip().lower()
         if key in aliases:
             return aliases[key]
@@ -360,9 +363,10 @@ class HardFlowSampler:
         self.layout = layout
         self.nlp = nlp
         self.device = device
-        # U4: solve the NLP only at ODE steps with τ_next ≥ this threshold (plus the
-        # forced final step). 0.0 = every step (old 'all'); 0.5 = last half (old
-        # 'late', DPCC-parity); 1.0 = terminal-only (≈ post-hoc projection).
+        # fix_6 (DPCC polarity): threshold = fraction of the late trajectory projected
+        # (higher = MORE projection), matching DPCC's diffusion_timestep_threshold.
+        # NLP active when τ_next ≥ (1 − threshold), plus the forced final step.
+        # 1.0 = every step (full); 0.5 = last half; 0.0 = terminal-only.
         self.activation_threshold = float(activation_threshold)
         self.verbose = verbose
         self.nfe = 0
@@ -429,12 +433,13 @@ class HardFlowSampler:
                 v_k = self._velocity(x_k, tau_k, s0_torch, cond_b, returns_b)
                 x_ref = x_k + v_k * dt
 
-                # U4: solve the NLP only when τ_next ≥ threshold, but ALWAYS on the
-                # final step (k == K-1). The terminal solve is what the safety
-                # guarantee rides on (paper Prop. safety_guarantee; PLAN U4 §5.2) —
-                # the `or k == K-1` guard is mandatory, and also covers the float
-                # case where τ_next at the last step is not exactly 1.0.
-                active = (tau_next >= self.activation_threshold) or (k == K - 1)
+                # U4 + fix_6: EXACT DPCC gate. DPCC projects when
+                # `loop_idx >= (1 - T)*K`; we use the identical `k >= (1 - threshold)*K`
+                # (threshold == DPCC's diffusion_timestep_threshold, higher = more
+                # projection) PLUS the forced final step. The terminal solve is what the
+                # safety guarantee rides on (paper Prop.; PLAN U4 §5.2) — `or k == K-1`
+                # is mandatory and makes threshold 0.0 => terminal-only (not truly none).
+                active = (k >= (1.0 - self.activation_threshold) * K) or (k == K - 1)
                 if active:
                     v_next = self._velocity(x_ref, tau_next, s0_torch, cond_b, returns_b)
                     x1_ref = x_ref + (1.0 - tau_next) * v_next

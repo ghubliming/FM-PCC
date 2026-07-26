@@ -79,11 +79,12 @@ class FlowMatchingEvaluationConfig:
     projection_gradient_lr: float = 1.0
     projection_gradient_steps: int = 5
     hardflow_activation: str = "all"
-    # Gen13 U10: continuous late-activation threshold for hardflow_new. The per-step
-    # NLP is solved only when the flow time t_{k+1} >= this threshold, but the FINAL
-    # step is always solved (terminal safety guarantee, paper Prop.). -1.0 = disabled,
-    # fall back to the binary `hardflow_activation` (all/late). 0.0 = every step,
-    # 0.5 = last half (== 'late'), 1.0 = terminal-only NLP.
+    # Gen13 U10 (DPCC polarity): continuous late-activation threshold for hardflow_new,
+    # SAME meaning as DPCC's diffusion_timestep_threshold — the fraction of the late
+    # trajectory over which the NLP is active, HIGHER = MORE projection. NLP solved when
+    # t_{k+1} >= (1 - threshold); the FINAL step is always solved (terminal safety
+    # guarantee, paper Prop.). -1.0 = disabled -> fall back to binary hardflow_activation
+    # (all -> 1.0). 1.0 = every step, 0.5 = last half, 0.0 = terminal-only NLP.
     hardflow_activation_threshold: float = -1.0
     warmstart_batch: int = 1
     solver_print_level: int = 5

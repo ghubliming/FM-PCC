@@ -15,9 +15,10 @@
 # full-step (every-step) baseline — a clean HF-vs-HF ablation on HardFlow's own env
 # (avoiding-v0, H16). See logs_in_develop/Gen13/U_10/PLAN_Gen13_U10_*.md.
 #
-#   threshold 0.0 -> every step (full-step baseline)
+#   DPCC polarity (higher = MORE projection, == diffusion_timestep_threshold):
+#   threshold 1.0 -> every step (full-step baseline)
 #   threshold 0.5 -> last half (terminal always solved)
-#   threshold 1.0 -> terminal-only NLP (~ post-hoc projection)
+#   threshold 0.0 -> terminal-only NLP (~ post-hoc projection)
 #
 # The terminal step is ALWAYS solved (safety guarantee, paper Prop.). Each threshold
 # writes its own eval dir (exp_name ..._thres<t>), so nothing overwrites.
@@ -40,7 +41,8 @@ else
 fi
 
 # --- Threshold sweep on original HF (hardflow_new) -----------------------------
-THRES_GRID="${HF_THRES_GRID:-0.0 0.5 1.0}"
+# DPCC polarity: 1.0=full-step, 0.5=last-half, 0.0=terminal-only.
+THRES_GRID="${HF_THRES_GRID:-1.0 0.5 0.0}"
 echo "[ HF-U10 ] threshold grid: $THRES_GRID  (FM backbone, hardflow_new)"
 for thr in $THRES_GRID; do
     echo "=============================================================="

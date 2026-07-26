@@ -54,12 +54,13 @@ constraint_types = config['constraint_types']
 hardflow_cfg = config.get('hardflow', {})
 FORCE_OVERWRITE = os.environ.get('FORCE_OVERWRITE', '0') == '1'
 # ── arm C (hardflow_new) knobs, resolved once ────────────────────────────────
-# U4: late-activation threshold. Accepts `activation_threshold` (float in [0,1]) or the
-# legacy `activation: all|late` alias. HFFM_ACT_THRESHOLD env overrides for sweeps.
+# U4 + fix_6: late-activation threshold in DPCC polarity (higher = MORE projection;
+# 1.0 = every step, 0.5 = last half, 0.0 = terminal-only). Accepts a float in [0,1] or
+# the alias 'all'(=1.0)/'late'(=0.5). HFFM_ACT_THRESHOLD env overrides for sweeps.
 hf_act_threshold = resolve_activation_threshold(
     os.environ.get('HFFM_ACT_THRESHOLD',
                    hardflow_cfg.get('activation_threshold',
-                                    hardflow_cfg.get('activation', 0.0))))
+                                    hardflow_cfg.get('activation', 1.0))))
 # U4.2: candidate fan + selection. batch_size>1 fans candidates; selection rule comes
 # from the variant suffix (hardflow_new-c/-r/-t), like DPCC.
 hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))

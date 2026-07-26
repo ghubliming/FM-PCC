@@ -45,7 +45,7 @@ flow_steps = args_cli.flow_steps if args_cli.flow_steps is not None else getattr
 _hf = config.get('hardflow', {})
 hf_act_threshold = resolve_activation_threshold(
     os.environ.get('HFFM_ACT_THRESHOLD',
-                   _hf.get('activation_threshold', _hf.get('activation', 0.0))))
+                   _hf.get('activation_threshold', _hf.get('activation', 1.0))))
 hf_batch_size = int(os.environ.get('HFFM_BATCH', _hf.get('batch_size', 1)))
 _train_name = hf_paths.train_name(getattr(_args0, 'checkpoint_dir', None), _args0.diffusion_loadpath)
 _eval_name = hf_paths.eval_name(flow_steps, hf_act_threshold, hf_batch_size, n_trials)

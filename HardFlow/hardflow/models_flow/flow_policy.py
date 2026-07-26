@@ -1318,14 +1318,16 @@ class FlowPolicy(nn.Module):
         X_optimized = [best_dof_chain_np[0, :]]
         U_optimized = []
         dt = 1.0 / self.oc_N_steps
-        # Gen13 U10: resolve the continuous late-activation threshold once. If
+        # Gen13 U10 (fix: DPCC polarity). threshold = fraction of the late trajectory
+        # projected — SAME as DPCC's diffusion_timestep_threshold, higher = MORE
+        # projection. NLP active when t_{k+1} >= (1 - threshold). If
         # hardflow_activation_threshold < 0 it is disabled and we fall back to the
-        # binary hardflow_activation (all -> 0.0, late -> 0.5).
+        # binary hardflow_activation (all -> 1.0 = every step, late -> 0.5 = last half).
         _thr = getattr(self.cfg, "hardflow_activation_threshold", -1.0)
         if _thr is not None and _thr >= 0.0:
             activation_threshold = float(_thr)
         elif self.cfg.hardflow_activation == "all":
-            activation_threshold = 0.0
+            activation_threshold = 1.0
         elif self.cfg.hardflow_activation == "late":
             activation_threshold = 0.5
         else:
@@ -1339,11 +1341,12 @@ class FlowPolicy(nn.Module):
             v_k = flow_eval_np(x_k, t_k)
             x_next_ref = x_k + v_k * dt
 
-            # U10: solve the NLP only when t_{k+1} >= threshold, but ALWAYS on the
-            # final step (k == N-1) — the terminal solve is what the safety guarantee
-            # rides on (paper Prop. safety_guarantee). The `or k == N-1` guard also
-            # covers the float case where t_{k+1} at the last step isn't exactly 1.0.
-            control_flag = ((t_k + dt) >= activation_threshold) or (k == self.oc_N_steps - 1)
+            # U10 + fix: EXACT DPCC gate. DPCC projects when `loop_idx >= (1 - T)*K`;
+            # we use the identical `k >= (1 - threshold)*N` (threshold == DPCC's
+            # diffusion_timestep_threshold, higher = more projection) PLUS the forced
+            # final step — the terminal solve is what the safety guarantee rides on
+            # (paper Prop.). `or k == N-1` makes threshold 0.0 => terminal-only.
+            control_flag = (k >= (1.0 - activation_threshold) * self.oc_N_steps) or (k == self.oc_N_steps - 1)
 
             if control_flag:
                 v_next = flow_eval_np(x_next_ref, t_k + dt)

@@ -86,15 +86,16 @@ hardflow:
   # upstream and becomes live only if a competing objective term is added.
   reg_scale: 1.0
 
-  # ── U4: late-activation threshold ──────────────────────────────────────────
-  # Solve the per-step NLP only when the flow time tau_next >= this threshold; the
-  # FINAL step is ALWAYS solved (the terminal solve is what the safety guarantee
-  # rides on — paper Prop. safety_guarantee). Env override: HFFM_ACT_THRESHOLD.
-  #   0.0 -> every step (old 'all'; full-step baseline)
-  #   0.5 -> last half (old 'late'; DPCC diffusion_timestep_threshold parity)
-  #   1.0 -> terminal-only NLP (~ post-hoc projection of the final sample)
-  activation_threshold: 0.0
-  # Back-compat alias, used only if activation_threshold is absent: all|late -> 0.0|0.5
+  # ── U4 late-activation threshold (fix_6: DPCC polarity) ────────────────────
+  # SAME meaning as DPCC's diffusion_timestep_threshold: the fraction of the (late)
+  # trajectory over which the NLP is active — HIGHER = MORE projection. The NLP is
+  # solved when tau_next >= (1 - threshold); the FINAL step is ALWAYS solved (the
+  # terminal solve is what the safety guarantee rides on). Env override: HFFM_ACT_THRESHOLD.
+  #   1.0 -> every step (full; the safe default, matches old behaviour)
+  #   0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
+  #   0.0 -> terminal-only NLP (~ post-hoc projection of the final sample)
+  activation_threshold: 1.0
+  # Back-compat alias, used only if activation_threshold is absent: all|late -> 1.0|0.5
   activation: all
 
   # ── U4.2: candidate-selection ranking key (for hardflow_new-c) ──────────────

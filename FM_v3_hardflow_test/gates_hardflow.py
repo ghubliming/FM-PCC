@@ -379,8 +379,9 @@ def _make_sampler(device, activation_threshold, halfspace_variant='both-hard',
 
 
 def gate_g4(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
-    """U4: the final step is ALWAYS solved (safety), and the solve count is
-    monotone non-increasing in the threshold and matches #{k: tau_next >= thr}."""
+    """U4 + fix_6 (DPCC polarity): the final step is ALWAYS solved (safety), and the
+    solve count is monotone NON-DECREASING in the threshold (higher thr = more
+    projection) and matches #{k: tau_next >= (1 - thr)} plus the forced final step."""
     print('\n-- G4: U4 activation threshold — final-step invariant + count ' + '-' * 14)
     ok = True
     for K in (2, 5, 10):
@@ -390,9 +391,8 @@ def gate_g4(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
                 device, thr, halfspace_variant, config_path)
             torch.manual_seed(0)
             x, infos = sampler.sample(cond, flow_steps=K, batch_size=1)
-            # expected active steps: tau_{k+1} >= thr, plus the forced final step
-            dt = 1.0 / K
-            expected = sum(1 for k in range(K) if ((k + 1) * dt >= thr) or (k == K - 1))
+            # expected active steps (exact DPCC gate): k >= (1 - thr)*K, plus final step
+            expected = sum(1 for k in range(K) if (k >= (1.0 - thr) * K) or (k == K - 1))
             solves = infos['nlp_solves']
             # terminal feasibility (safety guarantee) must hold at every threshold
             traj = x[0].detach().cpu().numpy()
@@ -400,7 +400,7 @@ def gate_g4(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
                        for t in range(1, HORIZON))
             feasible = dmin >= radius - 1e-3
             count_ok = solves == expected
-            mono_ok = prev_solves is None or solves <= prev_solves
+            mono_ok = prev_solves is None or solves >= prev_solves  # DPCC polarity: ↑thr ⇒ ↑solves
             prev_solves = solves
             ok &= feasible and count_ok and mono_ok
             print(f'  K={K:>2} thr={thr:<4} solves={solves:>2} (exp {expected:>2})  '
