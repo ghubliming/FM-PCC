@@ -208,13 +208,17 @@ def populate_dynamic_filters():
     document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}">{m.upper()}</option>' for m in metrics])
     envs = sorted(df_agg['halfspace_variant'].unique())
     document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
+    # Do NOT auto-check every box on first load: large batches (many variants x
+    # candidates) freeze the page trying to render the full matrix at once. Only
+    # pre-select the first item in each list so an initial lightweight plot draws;
+    # the user then picks the rest (or hits [ALL]).
     vars_list = sorted(df_agg['variant'].unique())
-    document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" checked onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
+    document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}"{" checked" if i == 0 else ""} onchange="trigger_plot()"> <span>{v}</span></div>' for i, v in enumerate(vars_list)])
     # numeric-labeled batches (Candidate = "1".."48") must sort as numbers, not
     # lexicographically ("1","10","11",...,"2",...) — alphabetic labels ("A","B",...)
     # are untouched since they never match .isdigit().
     cands_list = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
-    document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" checked onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
+    document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}"{" checked" if i == 0 else ""} onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for i, c in enumerate(cands_list)])
 
 async def trigger_plot(event=None):
     global df_agg, df_raw, current_fig
