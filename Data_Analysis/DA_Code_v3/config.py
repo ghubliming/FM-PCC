@@ -7,6 +7,16 @@ from pathlib import Path
 # Default seeds and variants (from projection_eval.yaml)
 DEFAULT_SEEDS = [6, 7, 8, 9, 10]
 
+# U7: Gen12 HardFlow arm-C variants (in-loop constrained sampling). Same npz schema
+# as the DPCC arms, plus extra keys (nlp_solves / nfe / activation_threshold — loaded
+# generically by data_loader). Suffix = DPCC-parity candidate selection (-c/-r/-t).
+HARDFLOW_VARIANTS = [
+    'hardflow_new',
+    'hardflow_new-c',
+    'hardflow_new-r',
+    'hardflow_new-t',
+]
+
 DEFAULT_PROJECTION_VARIANTS = [
     'dpcc-r',
     'dpcc-r-tightened',
@@ -25,12 +35,16 @@ DEFAULT_PROJECTION_VARIANTS = [
     'dpcc-c-tightened-dt0p5',
     'dpcc-c-tightened-dt2p0',
     'dpcc-c-tightened-dt4p0',
-]
+] + HARDFLOW_VARIANTS   # U7: make hardflow_new* discoverable/loadable
 
 MAJOR_VARIANTS = [
     'dpcc-r', 'dpcc-r-tightened',
     'dpcc-c', 'dpcc-c-tightened',
     'dpcc-t', 'dpcc-t-tightened',
+    # U7: headline arm-C lines, so hardflow_new sits next to dpcc-c-tightened in the
+    # per-variant comparison table. The batch aggregator/visualizer skip a major that a
+    # given candidate lacks, so DPCC-only candidates are unaffected.
+    'hardflow_new', 'hardflow_new-c',
 ]
 
 AUXILIARY_VARIANTS = [v for v in DEFAULT_PROJECTION_VARIANTS if v not in MAJOR_VARIANTS]
@@ -59,6 +73,19 @@ METRICS = [
     'collision_free_completed',
 ]
 
+# U7: HardFlow-only scalar metrics (present in hardflow_new npz; absent -> NaN for DPCC).
+# Kept OUT of core METRICS so existing DPCC tables/plots are unchanged; the data_loader
+# reads them generically and the reporter surfaces them for hardflow rows only. Use these
+# to answer "is the NLP the same?" — same activation_threshold + comparable nlp_solves.
+HARDFLOW_METRICS = [
+    'nlp_solves',
+    'nlp_failures',
+    'nfe',
+    'activation_threshold',
+    'batch_size',
+    'flow_steps',
+]
+
 # Plot styling
 PLOT_CONFIG = {
     'figsize': (12, 7),
@@ -84,6 +111,13 @@ METRIC_LABELS = {
     'avg_time': 'Computation Time (ms)',
     'n_violations': 'Avg Violations per Trial',
     'total_violations': 'Total Cumulative Violations',
+    # U7 HardFlow-only
+    'nlp_solves': 'NLP Solves (per run, sum)',
+    'nlp_failures': 'NLP Failures',
+    'nfe': 'Network Fn Evals',
+    'activation_threshold': 'Activation Threshold (DPCC polarity)',
+    'batch_size': 'MPC Candidates',
+    'flow_steps': 'Flow Steps (K)',
 }
 
 METRIC_TYPES = {
@@ -94,6 +128,13 @@ METRIC_TYPES = {
     'avg_time': 'continuous',
     'n_violations': 'continuous',
     'total_violations': 'continuous',
+    # U7 HardFlow-only
+    'nlp_solves': 'continuous',
+    'nlp_failures': 'continuous',
+    'nfe': 'continuous',
+    'activation_threshold': 'continuous',
+    'batch_size': 'continuous',
+    'flow_steps': 'continuous',
 }
 
 # Output folder naming
