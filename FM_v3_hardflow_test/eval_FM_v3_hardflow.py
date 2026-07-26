@@ -295,10 +295,18 @@ for exp in exps:
                 if is_hardflow:
                     # ---------------- arm C ----------------
                     batch_size = hf_batch_size
-                    # U4.2: DPCC-parity selection from the variant suffix.
+                    # U4.2 + U5: DPCC-parity selection from the variant suffix. Strip the
+                    # '-tightened' marker FIRST so the selection suffix composes with it —
+                    # hardflow_new-c-tightened -> minimum_projection_cost AND enlarged
+                    # constraints — exactly like DPCC parses 'dpcc-c' independently of
+                    # 'tightened'. (The old endswith('-c') broke here, silently falling back
+                    # to random for every -tightened variant.) At batch_size==1 all of
+                    # -r/-c/-t collapse to index 0 (see HardFlowPolicy._select), so they are
+                    # identical there and only diverge once the candidate fan is on (mpc>1).
+                    _sel_base = variant.replace('-tightened', '')
                     hf_selection = 'random'
-                    if variant.endswith('-t'): hf_selection = 'temporal_consistency'
-                    elif variant.endswith('-c'): hf_selection = 'minimum_projection_cost'
+                    if _sel_base.endswith('-t'): hf_selection = 'temporal_consistency'
+                    elif _sel_base.endswith('-c'): hf_selection = 'minimum_projection_cost'
                     policy = HardFlowPolicy(
                         model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
                         transition_dim=trajectory_dim, action_dim=action_dim,

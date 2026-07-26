@@ -47,10 +47,26 @@ diffusion_timestep_threshold: 0.5
 #   hardflow_new / hardflow_new-r  -> random (index 0)
 #   hardflow_new-t                 -> temporal_consistency
 #   hardflow_new-c                 -> minimum_projection_cost (least NLP intervention)
+# U5: full DPCC-parity naming for arm C — {-r,-c,-t} selection x {'', -tightened}
+# geometry, mirroring DPCC's own 6-variant set (dpcc-{r,t,c}[-tightened]). The selection
+# suffix (-r random / -c minimum_projection_cost / -t temporal_consistency) is only
+# MEANINGFUL at batch_size (mpc) > 1; at mpc==1 all three collapse to the same single
+# candidate (HardFlowPolicy._select returns index 0), so running the trio there is just
+# redundant compute. '-tightened' adds the same 0.025 margin dpcc-c-tightened gets, so
+# arm B vs hardflow_new-c-tightened is matched on the feasible set.
+#
+# DEFAULT below = the two hardflow arms that are non-redundant at mpc==1:
+#   hardflow_new             (untightened baseline; == -r/-c/-t at mpc==1)
+#   hardflow_new-c-tightened (tightened; the matched partner of dpcc-c-tightened)
+# For an mpc>1 sweep, set batch_size>1 and uncomment the full parity set.
 projection_variants: [
-  'diffuser',              # arm A — unguided (field quality floor)
-  'dpcc-c-tightened',      # arm B — the incumbent post-hoc projection
-  'hardflow_new',          # arm C — in-loop constrained sampling (the contribution)
+  'diffuser',                    # arm A — unguided (field quality floor)
+  'dpcc-c-tightened',            # arm B — incumbent post-hoc projection + SAFEGUARD:
+                                 #         cross-check vs the FMv3ODE eval's dpcc-c-tightened
+                                 #         (same DPCC code + checkpoint) to prove the port is clean
+  # arm C, full DPCC-parity matrix (needs HFFM_BATCH>1 to differ; at mpc==1 the -r/-c/-t collapse)
+  'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',
+  'hardflow_new-r-tightened', 'hardflow_new-c-tightened', 'hardflow_new-t-tightened',
 ]
 
 projection_cost: 'pos_vel'

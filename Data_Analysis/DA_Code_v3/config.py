@@ -10,11 +10,13 @@ DEFAULT_SEEDS = [6, 7, 8, 9, 10]
 # U7: Gen12 HardFlow arm-C variants (in-loop constrained sampling). Same npz schema
 # as the DPCC arms, plus extra keys (nlp_solves / nfe / activation_threshold — loaded
 # generically by data_loader). Suffix = DPCC-parity candidate selection (-c/-r/-t).
+# U5: full DPCC-parity set — {-r,-c,-t} selection x {'', -tightened} geometry, mirroring
+# DPCC's dpcc-{r,t,c}[-tightened]. Loaded generically; a candidate that lacks a variant is
+# skipped. At mpc==1 the -r/-c/-t within each geometry are identical (selection is a no-op).
 HARDFLOW_VARIANTS = [
     'hardflow_new',
-    'hardflow_new-c',
-    'hardflow_new-r',
-    'hardflow_new-t',
+    'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',
+    'hardflow_new-r-tightened', 'hardflow_new-c-tightened', 'hardflow_new-t-tightened',
 ]
 
 DEFAULT_PROJECTION_VARIANTS = [
@@ -45,6 +47,7 @@ MAJOR_VARIANTS = [
     # per-variant comparison table. The batch aggregator/visualizer skip a major that a
     # given candidate lacks, so DPCC-only candidates are unaffected.
     'hardflow_new', 'hardflow_new-c',
+    'hardflow_new-c-tightened',   # U5: headline matched-margin arm vs dpcc-c-tightened
 ]
 
 AUXILIARY_VARIANTS = [v for v in DEFAULT_PROJECTION_VARIANTS if v not in MAJOR_VARIANTS]
