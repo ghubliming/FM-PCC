@@ -20,6 +20,7 @@ import torch.nn as nn
 
 from .unet1d_temporal_cond import Flow_matcher_U_Net_v2
 from .af_dit_trajectory import AFDiTTrajectory
+from .af_sit_trajectory import AFSiTTrajectory
 
 
 class AFTrajectoryModel(nn.Module):
@@ -38,8 +39,10 @@ class AFTrajectoryModel(nn.Module):
         dual_head: bool = False,     # v shares the backbone (vs the legacy orphan aux MLP)
         interval_cfg: bool = False,  # condition the backbone on (omega, t_min, t_max)
         # U6 — backbone selector. 'unet' (default) keeps the UNet; 'dit' swaps in the
-        # faithful official-iMF transformer (AFDiTTrajectory). Both satisfy the same
-        # velocity_net forward contract, so the objective/JVP/sampler are unchanged.
+        # faithful official-iMF transformer (AFDiTTrajectory); 'sit' (U2) swaps in α-Flow's
+        # OWN backbone, the SiT (AFSiTTrajectory: LayerNorm, qk_norm=False, adaLN-zero, t+r
+        # conditioning). All three satisfy the same velocity_net forward contract, so the
+        # objective/JVP/sampler are unchanged.
         imf_backbone: str = 'unet',
         dit_depth: int = 8,
         dit_hidden_size: int = 256,
@@ -73,6 +76,21 @@ class AFTrajectoryModel(nn.Module):
                 condition_dropout=dropout_rate,
                 condition_on_t=dit_condition_on_t,
             )
+        elif imf_backbone == 'sit':
+            # U2 — α-Flow's OWN backbone: the SiT (adaLN-zero, LayerNorm affine-off run in fp32,
+            # qk_norm=False, GELU(tanh) mlp_ratio=4, frozen sin-cos pos-embed, two time
+            # embedders t+r). Reuses the dit_* sizing knobs; SiT has no shared-trunk/head split
+            # and no h-only conditioning switch, so dit_aux_head_depth / dit_condition_on_t are
+            # N/A. α-Flow's SiT is single-head (u); AFSiTTrajectory adds a twin v FinalLayer
+            # ONLY to feed this lineage's v aux-loss (dropped at inference) — see its docstring (B).
+            self.velocity_net = AFSiTTrajectory(
+                horizon=seq_len,
+                transition_dim=state_dim,
+                hidden_size=dit_hidden_size,
+                depth=dit_depth,
+                num_heads=dit_num_heads,
+                patch_size=dit_patch_size,
+            )
         elif imf_backbone == 'unet':
             self.velocity_net = Flow_matcher_U_Net_v2(
                 horizon=seq_len,
@@ -86,7 +104,7 @@ class AFTrajectoryModel(nn.Module):
                 interval_cfg=interval_cfg,
             )
         else:
-            raise ValueError(f"Unknown imf_backbone '{imf_backbone}' (expected 'unet' or 'dit')")
+            raise ValueError(f"Unknown imf_backbone '{imf_backbone}' (expected 'unet', 'dit' or 'sit')")
 
         # Legacy orphan aux head — kept ONLY for dual_head=False back-compat (does not
         # share the backbone). When dual_head=True, v comes from velocity_net's v-head.
@@ -110,9 +128,9 @@ class AFTrajectoryModel(nn.Module):
         t_max: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Predict the mean-flow velocity u and instantaneous velocity v → (u, v)."""
-        if self.dual_head or self.imf_backbone == 'dit':
-            # Shared-backbone u + v (official split). The DiT carries native v-heads, so it
-            # always uses this path. CFG knobs are constant w.r.t. the JVP.
+        if self.dual_head or self.imf_backbone in ('dit', 'sit'):
+            # Shared-backbone u + v (official split). Both transformer backbones carry native
+            # v-heads, so they always use this path. CFG knobs are constant w.r.t. the JVP.
             u, v = self.velocity_net(
                 x, cond, t, h=h, force_dropout=force_dropout,
                 omega=omega, t_min=t_min, t_max=t_max, return_v=True,
