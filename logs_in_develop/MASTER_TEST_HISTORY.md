@@ -3404,3 +3404,43 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Exact Numeric Rendering**: Added exact 3-sig-fig (`.3g`) value labels rotated 90 degrees above every individual bar in the dynamic grouped bar chart.
 2. **Comparison Ergonomics**: This completely removes the need to visually eyeball values off the y-axis, vastly improving the usability of the tool for tight performance comparisons (e.g., 0.497s vs 0.637s).
 
+***
+
+## Gen12 U5: Full DPCC-Parity Variant Scheme & MPC=4 Analysis (July 26-27, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC parity, variant scheme, mpc=4, in-loop tightening, un-batched generation.
+
+1. **DPCC-Parity Variants**: Implemented the full DPCC-parity variant scheme for Arm C (HardFlow in-loop), encompassing both candidate selection (`-r`/`-c`/`-t`) and constraint geometry (`-tightened`). This allows for perfectly matched comparisons between HardFlow and DPCC on all axes.
+2. **Constraint Enforcement Validation**: Verified mathematically and behaviorally that `hardflow_new-*-tightened` genuinely enlarges the constraints in the CasADi/IPOPT solver exactly like DPCC does with SciPy.
+3. **HardFlow vs DPCC Cost Analysis**: Diagnosed why HardFlow was ~4× slower than DPCC per step. The bottleneck was NOT the NLP solver (both do 40 solves per plan) but the un-batched generation loop: HardFlow integrated candidates one at a time on the GPU with CPU round-trips on every evaluation.
+4. **MPC=4 Full Run Findings**: 
+   - **With Tightening**: HardFlow matches DPCC's perfect constraint satisfaction (100% safety, 0 violations) but remains more computationally expensive.
+   - **Without Tightening (Zero Margin)**: HardFlow dominates post-hoc DPCC, offering 3–18× fewer violations and preserving 100% goal success. HardFlow's value is in safety with zero margin, not speed at equal margin.
+
+***
+
+## Gen12 Fix 7: Batched Compute for HardFlow Sampler (July 27, 2026)
+
+**Keywords**: Gen12, HardFlow, batched compute, speedup, generation loop, ipopt bottleneck.
+
+1. **Batched Generation Implementation**: Rewrote the HardFlow sampler to integrate the candidate fan on the GPU in a single batched pass (`_velocity_batch`), mirroring DPCC's generation parallelism. CPU↔GPU transfers now only occur at the NLP solve boundaries.
+2. **Speedup Validated**: This fix yielded a ~1.77× speedup, closing the per-step computation gap to DPCC from ~3.9× down to ~2.1× without altering mathematical outcomes or success rates.
+3. **Remaining Bottleneck Identified**: The residual ~2.1× gap to DPCC is now primarily driven by the IPOPT solver being ~2.7× costlier per solve than SciPy (partly due to an L-BFGS approximation of a constant Hessian) and the mathematically necessary extra `v_next` endpoint prediction.
+
+***
+
+## Gen3v6 U2: Official MeanFlow DiT Backbone (July 27, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, mf_dit, official backbone, architecture confound.
+
+1. **Official Network Ported**: Added the official MeanFlow DiT (`mf_dit`) as a third backbone option. Previously, the "faithful" DiT arm was running the iMF architecture.
+2. **Clean Backbone A/B**: This removes an architectural confound, allowing for a clean three-way backbone A/B test (DPCC-UNet vs iMF-DiT vs MeanFlow-DiT) under the fixed MeanFlow objective.
+
+***
+
+## Gen3v7 U2: α-Flow SiT Backbone (July 27, 2026)
+
+**Keywords**: Gen3v7, α-Flow, sit, official backbone, architecture confound.
+
+1. **Official Network Ported**: Analogous to Gen3v6 U2, ported α-Flow's own SiT (`sit`) architecture to serve as the third backbone for the Gen3v7 objective.
+2. **Objective/Architecture Match**: This ensures the α-Flow objective runs on its native architecture, enabling a strict single-variable backbone A/B test (DPCC-UNet vs iMF-DiT vs α-Flow-SiT) for the α-Flow homotopy formulation.

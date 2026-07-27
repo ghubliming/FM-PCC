@@ -639,7 +639,8 @@ base = {
                                      # fed a constant default (guidance off) ⇒ inert.
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
-        'imf_backbone': 'dit',       # match Gen3v4's DiT arm so the A/B is controlled
+        ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'mf_dit' (U2: official-MeanFlow DiT).
+        'imf_backbone': 'mf_dit',    # U2 default: MeanFlow's own DiT (was 'dit'); use 'dit'/'unet' for A/B
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -755,7 +756,8 @@ base = {
                                      # the comparison to Gen3v6 clean.
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
-        'imf_backbone': 'dit',       # match Gen3v4/Gen3v6's DiT arm so the A/B is controlled
+        ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'sit' (U2: α-Flow's own SiT).
+        'imf_backbone': 'sit',       # U2 default: α-Flow's own SiT (was 'dit'); use 'dit'/'unet' for A/B
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -1267,13 +1269,14 @@ base = {
         ## architecture — MUST equal the trained checkpoint
         'dual_head': True,
         'interval_cfg': False,
-        'imf_backbone': 'dit',
+        ## valid: 'unet' | 'dit' | 'mf_dit' (U2) — MUST equal the train block's value.
+        'imf_backbone': 'mf_dit',
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
-        'dit_aux_head_depth': 2,
+        'dit_aux_head_depth': 2,      # iMF 'dit' only (ignored by 'mf_dit'/'unet')
         'dit_patch_size': 1,
-        'dit_condition_on_t': False,
+        'dit_condition_on_t': False,  # iMF 'dit' only (ignored by 'mf_dit'/'unet')
 
         ## Gen3v6 has NO interval-CFG: there is no eval-time guidance operating point.
         ## condition_guidance_w=0 keeps the DPCC returns-CFG output mix off as well.
@@ -1357,13 +1360,14 @@ base = {
         ## architecture — MUST equal the trained checkpoint
         'dual_head': True,
         'interval_cfg': False,
-        'imf_backbone': 'dit',
+        ## valid: 'unet' | 'dit' | 'sit' (U2) — MUST equal the train block's value.
+        'imf_backbone': 'sit',
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
-        'dit_aux_head_depth': 2,
+        'dit_aux_head_depth': 2,      # iMF 'dit' only (ignored by 'sit'/'unet')
         'dit_patch_size': 1,
-        'dit_condition_on_t': False,
+        'dit_condition_on_t': False,  # iMF 'dit' only (ignored by 'sit'/'unet')
 
         ## Gen3v7 has NO interval-CFG: there is no eval-time guidance operating point.
         ## condition_guidance_w=0 keeps the DPCC returns-CFG output mix off as well.
