@@ -371,26 +371,43 @@ class HardFlowSampler:
         self.verbose = verbose
         self.nfe = 0
 
-    def _velocity(self, dof_np, tau, s0_torch, cond, returns):
-        """Black-box velocity on the dof vector: (dof,) x float -> (dof,)."""
+    def _velocity_batch(self, X, tau, s0_all, cond, returns):
+        """Batched black-box velocity: (B, dof) torch -> (B, dof) torch, on device.
+
+        fix_7: the candidate fan goes through the U-Net in ONE forward pass, exactly
+        like DPCC's `p_sample` on a `(B, H, T)` tensor — not a Python per-candidate
+        loop. Eval-mode GroupNorm has no cross-batch coupling, so each row's output
+        is identical to the old batch-1 call; only the GPU-call *count* changes
+        (K+n_active per plan instead of B*(K+n_active)). Stays on the GPU (returns a
+        torch tensor) so the ODE integrates without a CPU round-trip per step.
+        """
         L = self.layout
-        dof = torch.as_tensor(dof_np, dtype=torch.float32, device=self.device).reshape(1, -1)
-        full = torch.cat([dof[:, :L.action_dim], s0_torch, dof[:, L.action_dim:]], dim=1)
-        traj = full.view(1, L.horizon, L.transition_dim)
-        t = torch.full((1,), float(tau), dtype=torch.float32, device=self.device)
+        B = X.shape[0]
+        full = torch.cat([X[:, :L.action_dim], s0_all, X[:, L.action_dim:]], dim=1)
+        traj = full.view(B, L.horizon, L.transition_dim)
+        t = torch.full((B,), float(tau), dtype=torch.float32, device=self.device)
         with torch.no_grad():
             v = self.model._predict_velocity(traj, cond, t, returns=returns)
-        self.nfe += 1
-        v_flat = v.reshape(1, -1)
+        self.nfe += B                                          # count per-sample evals (unchanged metric)
+        v_flat = v.reshape(B, -1)
         v_dof = torch.cat([v_flat[:, :L.action_dim],
                            v_flat[:, L.transition_dim:]], dim=1)
-        return v_dof.cpu().numpy().reshape(-1)
+        return v_dof
 
     def sample(self, cond, flow_steps, batch_size=1, returns=None):
         """Run the constrained ODE.
 
         Returns (x, infos) with x of shape (batch, H, T) — the same contract as
         `GaussianDiffusion.p_sample_loop`, so the eval script can swap samplers.
+
+        fix_7 (DPCC-parity compute): the batch=B candidate fan is integrated as ONE
+        GPU tensor, mirroring DPCC's batched `p_sample_loop`. The per-candidate Python
+        loop survives ONLY around the CPU NLP solve — which is exactly where DPCC's
+        `Projector.project` also loops (`for i in range(batch_size)` scipy). So the
+        parallelism structure now matches DPCC operation-for-operation: batched network
+        + serial per-candidate solves + a CPU<->GPU transfer only at the NLP boundary
+        (active steps), not on every velocity eval. The math is unchanged: each row
+        sees the identical velocity evals and the identical per-candidate NLP solve.
         """
         L = self.layout
         K = int(flow_steps)
@@ -403,74 +420,82 @@ class HardFlowSampler:
                                    device=self.device)
         x_init = apply_conditioning(x_init, cond, L.action_dim, goal_dim=0)
 
-        out = torch.zeros_like(x_init)
-        chains = []
-        # U4.2: per-candidate cost, for DPCC-style candidate selection.
+        # dof view (drop s_0) of every candidate, kept ON the GPU for the whole ODE.
+        x_init_flat = x_init.reshape(batch_size, -1)
+        X = torch.cat([x_init_flat[:, :L.action_dim],
+                       x_init_flat[:, L.transition_dim:]], dim=1)      # (B, dof)
+        s0_all = x_init[:, 0, L.action_dim:]                           # (B, state_dim), pinned
+        s0_all_np = s0_all.detach().cpu().numpy()
+
+        # Batched conditioning: drop string keys exactly as the old per-candidate
+        # path did, but keep the full B batch instead of slicing [b:b+1].
+        cond_net = {k: v for k, v in cond.items() if not isinstance(k, str)}
+        returns_net = returns
+
+        # U4.2 per-candidate costs (DPCC-style selection).
         #   prox    = Σ_k ‖x1_proj − x1_ref‖²  (total NLP intervention; ranking key)
         #   control = Σ_k ‖u_k‖               (control effort; descriptor)
-        # By the minimal-intervention principle the least-intervened candidate is the
-        # most faithful to the field — the analog of DPCC's minimum_projection_cost.
-        prox_costs, ctrl_costs = [], []
+        cand_prox = np.zeros(batch_size, dtype=np.float64)
+        cand_ctrl = torch.zeros(batch_size, device=self.device)
+        chains = [X.detach()]                                          # list of (B, dof) on device
         n_solves_before, n_fail_before = self.nlp.n_solves, self.nlp.n_failures
 
+        for k in range(K):
+            tau_k = k * dt
+            tau_next = tau_k + dt
+
+            V = self._velocity_batch(X, tau_k, s0_all, cond_net, returns_net)
+            X_ref = X + V * dt
+
+            # U4 + fix_6: EXACT DPCC gate, unchanged. DPCC projects when
+            # `loop_idx >= (1 - T)*K`; we use the identical `k >= (1 - threshold)*K`
+            # PLUS the forced final step (the terminal solve carries the safety
+            # guarantee). threshold == DPCC's diffusion_timestep_threshold.
+            active = (k >= (1.0 - self.activation_threshold) * K) or (k == K - 1)
+            if active:
+                V_next = self._velocity_batch(X_ref, tau_next, s0_all, cond_net, returns_net)
+                X1_ref = X_ref + (1.0 - tau_next) * V_next            # (B, dof) GPU
+                # --- CPU NLP boundary: one transfer out, serial per-candidate solve
+                #     (== DPCC's Projector.project loop), one transfer back.
+                X1_ref_np = X1_ref.detach().cpu().numpy()
+                X1_proj_np = np.empty_like(X1_ref_np)
+                for b in range(batch_size):
+                    self.nlp.set_s0(s0_all_np[b])                     # per-candidate s0
+                    X1_proj_np[b] = np.asarray(
+                        self.nlp.solve(X1_ref_np[b], tau_next),
+                        dtype=X1_ref_np.dtype).reshape(-1)
+                cand_prox += np.sum(
+                    (X1_proj_np.astype(np.float64) - X1_ref_np.astype(np.float64)) ** 2, axis=1)
+                X1_proj = torch.as_tensor(X1_proj_np, dtype=X_ref.dtype, device=self.device)
+                X_next = X_ref + tau_next * (X1_proj - X1_ref)
+            else:
+                X_next = X_ref
+
+            cand_ctrl = cand_ctrl + (((X_next - X_ref) / dt) ** 2).sum(dim=1).sqrt()
+            X = X_next
+            chains.append(X.detach())
+
+        # Reconstruct full trajectories (single CPU transfer of the final dof).
+        X_np = X.detach().cpu().numpy()
+        out = torch.zeros_like(x_init)
         for b in range(batch_size):
-            s0_torch = x_init[b:b + 1, 0, L.action_dim:]
-            s0_np = s0_torch.detach().cpu().numpy().reshape(-1)
-            self.nlp.set_s0(s0_np)
-
-            cond_b = {k: v[b:b + 1] for k, v in cond.items() if not isinstance(k, str)}
-            returns_b = returns[b:b + 1] if returns is not None else None
-
-            x_flat = x_init[b].reshape(-1).detach().cpu().numpy()
-            x_k = L.to_dof(x_flat)
-            chain = [x_k.copy()]
-            cand_prox, cand_ctrl = 0.0, 0.0
-
-            for k in range(K):
-                tau_k = k * dt
-                tau_next = tau_k + dt
-
-                v_k = self._velocity(x_k, tau_k, s0_torch, cond_b, returns_b)
-                x_ref = x_k + v_k * dt
-
-                # U4 + fix_6: EXACT DPCC gate. DPCC projects when
-                # `loop_idx >= (1 - T)*K`; we use the identical `k >= (1 - threshold)*K`
-                # (threshold == DPCC's diffusion_timestep_threshold, higher = more
-                # projection) PLUS the forced final step. The terminal solve is what the
-                # safety guarantee rides on (paper Prop.; PLAN U4 §5.2) — `or k == K-1`
-                # is mandatory and makes threshold 0.0 => terminal-only (not truly none).
-                active = (k >= (1.0 - self.activation_threshold) * K) or (k == K - 1)
-                if active:
-                    v_next = self._velocity(x_ref, tau_next, s0_torch, cond_b, returns_b)
-                    x1_ref = x_ref + (1.0 - tau_next) * v_next
-                    x1_proj = self.nlp.solve(x1_ref, tau_next)
-                    cand_prox += float(np.sum((np.asarray(x1_proj) - x1_ref) ** 2))
-                    x_next = x_ref + tau_next * (x1_proj - x1_ref)
-                else:
-                    x_next = x_ref
-                x_next = np.asarray(x_next, dtype=float).reshape(-1)
-                cand_ctrl += float(np.linalg.norm((x_next - x_ref) / dt))
-                x_k = x_next
-                chain.append(x_k.copy())
-
-            prox_costs.append(cand_prox)
-            ctrl_costs.append(cand_ctrl)
-            full = L.from_dof(x_k, s0_np)
+            full = L.from_dof(X_np[b], s0_all_np[b])
             out[b] = torch.as_tensor(full, dtype=torch.float32,
                                      device=self.device).view(L.horizon, L.transition_dim)
-            chains.append(np.stack(chain, axis=0))
-
         out = apply_conditioning(out, cond, L.action_dim, goal_dim=0)
+
+        # (K+1, B, dof) on device -> (B, K+1, dof) numpy, one transfer.
+        dof_chains = torch.stack(chains, dim=1).detach().cpu().numpy()
 
         infos = {
             'projection_costs': {},
-            'candidate_costs': np.array(prox_costs),           # U4.2 ranking key (prox)
-            'candidate_costs_control': np.array(ctrl_costs),   # U4.2 descriptor
+            'candidate_costs': cand_prox,                          # U4.2 ranking key (prox)
+            'candidate_costs_control': cand_ctrl.detach().cpu().numpy(),  # U4.2 descriptor
             'nfe': self.nfe,
             'nlp_solves': self.nlp.n_solves - n_solves_before,
             'nlp_failures': self.nlp.n_failures - n_fail_before,
             'activation_threshold': self.activation_threshold,
-            'dof_chains': np.stack(chains, axis=0),
+            'dof_chains': dof_chains,
         }
         return out, infos
 
