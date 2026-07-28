@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 import flow_matcher_v3_meanflow.utils as utils
 from flow_matcher_v3_meanflow.sampling.policies import Policy
 from flow_matcher_v3_meanflow.sampling.projection import Projector
+# Gen3v6 U3 — arm C: HardFlow in-loop constrained sampler (verbatim Gen12 port; queried at h=0).
+from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
+    HardFlowPolicy, resolve_activation_threshold)
 # REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
 from realtime_recording.behavior_logger import RTRecorder
 RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
@@ -40,8 +43,15 @@ args_cli, remaining_argv = parser.parse_known_args()
 # Pass remaining args to Parser if needed
 sys.argv = [sys.argv[0]] + remaining_argv
 
-with open('config/projection_eval.yaml', 'r') as file:
+# Gen3v6 U3: repointed from the SHARED config/projection_eval.yaml to the Gen3v6-dedicated
+# unified file (DPCC arms + HardFlow arm in one document). --config overrides it.
+_default_cfg = 'config/meanflow_projection_eval.yaml'
+_cfg_path = _default_cfg
+if '--config' in remaining_argv:
+    _cfg_path = remaining_argv[remaining_argv.index('--config') + 1]
+with open(_cfg_path, 'r') as file:
     config = yaml.safe_load(file)
+print(f'[ eval ] config: {_cfg_path}')
 
 exps = config['exps']
 seeds = config['seeds']
@@ -55,6 +65,18 @@ n_trials = config['n_trials']
 plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
 diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
+
+# ── Gen3v6 U3 — arm C (HardFlow) knobs, resolved once (verbatim Gen12 semantics) ──────────
+hardflow_cfg = config.get('hardflow', {})
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   hardflow_cfg.get('activation_threshold',
+                                    hardflow_cfg.get('activation', 1.0))))
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
+# Matched-K: one knob sets K for EVERY arm (Gen12 PLAN §5 — never compare arms at different K).
+# Priority: HFFM_FLOW_STEPS env > plan-block flow_steps > model's native flow_steps_v3 (fallback).
+_flow_steps_env = os.environ.get('HFFM_FLOW_STEPS')
 
 for exp in exps:
     for halfspace_variant in halfspace_variants:
@@ -188,6 +210,15 @@ for exp in exps:
                 fm_model.ode_solver_rtol_v3 = getattr(args, 'ode_solver_rtol_v3', getattr(fm_model, 'ode_solver_rtol_v3', None))
                 fm_model.ode_solver_atol_v3 = getattr(args, 'ode_solver_atol_v3', getattr(fm_model, 'ode_solver_atol_v3', None))
                 fm_model.ode_solver_step_size_v3 = getattr(args, 'ode_solver_step_size_v3', getattr(fm_model, 'ode_solver_step_size_v3', None))
+                # Gen3v6 U3 — matched-K resolution. HF arm always needs an explicit K; arms A/B use the
+                # native sampler K. Both derive from the SAME flow_steps so the comparison is matched.
+                flow_steps = int(_flow_steps_env) if _flow_steps_env is not None else \
+                    int(getattr(args, 'flow_steps', 0)) or int(getattr(fm_model, 'flow_steps_v3', 10))
+                if _flow_steps_env is not None or getattr(args, 'flow_steps', 0):
+                    # explicit override → force it onto the native sampler too (all arms at this K)
+                    fm_model.ode_inference_steps_v3 = flow_steps
+                    fm_model.flow_steps_v3 = flow_steps
+                print(f'[ eval ] matched K (flow_steps) = {flow_steps} for every arm')
                 dataset = fm_experiment.dataset
                 if 'pointmaze' in exp or 'antmaze' in exp:
                     minari_dataset = minari.load_dataset(exp, download=True)
@@ -262,7 +293,8 @@ for exp in exps:
                 sys.stdout = Tee(sys.stdout, log_file)
                 
                 try:
-                    print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
+                    is_hardflow = variant.startswith('hardflow')
+                    print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed}) - K={flow_steps}----------------------------')
                     gradient = True if 'gradient' in variant else False
                     if 'model_free' in variant and 'tightened' in variant:
                         constraints = constraint_list_without_prior_tightened
@@ -281,13 +313,40 @@ for exp in exps:
                         delta_t = 2.0 * dt
                     elif 'dt4p0' in variant:
                         delta_t = 4.0 * dt
-                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
-                                            diffusion_timestep_threshold=diffusion_timestep_threshold)
-                    projector = None if variant == 'diffuser' else projector
-                    trajectory_selection = 'random'
-                    if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
-                    if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
-                    policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
+                    if is_hardflow:
+                        # ---------------- arm C (HardFlow) — verbatim Gen12 construction ----------------
+                        batch_size = hf_batch_size
+                        # DPCC-parity selection from the variant suffix; strip '-tightened' FIRST so the
+                        # selection suffix composes with the geometry (hardflow_new-c-tightened → min-cost
+                        # AND enlarged). At batch_size==1 all of -r/-c/-t collapse to index 0.
+                        _sel_base = variant.replace('-tightened', '')
+                        hf_selection = 'random'
+                        if _sel_base.endswith('-t'): hf_selection = 'temporal_consistency'
+                        elif _sel_base.endswith('-c'): hf_selection = 'minimum_projection_cost'
+                        policy = HardFlowPolicy(
+                            model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
+                            transition_dim=trajectory_dim, action_dim=action_dim,
+                            constraint_list=constraints, dt=delta_t, flow_steps=flow_steps,
+                            preprocess_fns=args.preprocess_fns, test_ret=args.test_ret,
+                            reg_scale=float(hardflow_cfg.get('reg_scale', 1.0)),
+                            activation_threshold=hf_act_threshold,
+                            trajectory_selection=hf_selection,
+                            candidate_cost=hf_candidate_cost,
+                            dynamics_mode=hardflow_cfg.get('dynamics_mode', 'deriv'),
+                            linear_dynamics=None,
+                            print_level=int(hardflow_cfg.get('ipopt_print_level', 0)),
+                            print_time=bool(hardflow_cfg.get('casadi_print_time', False)),
+                            device=args.device, goal_dim=fm_model.goal_dim)
+                    else:
+                        # ---------------- arms A / B (diffuser / DPCC) — unchanged ----------------
+                        batch_size = args.batch_size
+                        projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
+                                                diffusion_timestep_threshold=diffusion_timestep_threshold)
+                        projector = None if variant == 'diffuser' else projector
+                        trajectory_selection = 'random'
+                        if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
+                        if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+                        policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
                     fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
                     fig.suptitle(f'{exp} - {variant}')
                     save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
@@ -301,7 +360,11 @@ for exp in exps:
                     avg_time = np.zeros(n_trials)
                     collision_free_completed = np.ones(n_trials)
                     pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
-                    
+                    # Gen3v6 U3 — HardFlow-arm metrics (0 for arms A/B).
+                    nfe_total = 0
+                    nlp_solves_total = 0
+                    nlp_failures_total = 0
+
                     obs_all = []
                     act_all = []
 
@@ -331,7 +394,7 @@ for exp in exps:
                                             variant=variant, scene=exp,
                                             system='FMv3_MeanFlow',
                                             control_hz=RT_CONTROL_HZ,
-                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            batch_size=batch_size, horizon=args.horizon,
                                             text_log=config.get('write_to_file', True))
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
@@ -355,9 +418,13 @@ for exp in exps:
                                 total_violations[i] += np.sum(np.maximum(0, act_obs - upper_bound)) + np.sum(np.maximum(0, lower_bound - act_obs))
                             n_violations[i] += violated_this_timestep
                             start = time.time()
-                            action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
+                            action, samples = policy(conditions={0: obs}, batch_size=batch_size, horizon=args.horizon, disable_projection=disable_projection)
                             _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
                             avg_time[i] += _rt_total_ms / 1e3
+                            # Gen3v6 U3 — accumulate HardFlow-arm metrics (nlp solves/failures per plan).
+                            if is_hardflow:
+                                nlp_solves_total += policy.last_info.get('nlp_solves', 0)
+                                nlp_failures_total += policy.last_info.get('nlp_failures', 0)
                             # REAL_TIME_RECORDING_UPDATE — record per-step timing (proj bundled inside policy()).
                             rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
                                         action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
@@ -437,17 +504,30 @@ for exp in exps:
                     print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
                     print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                     if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
-                    
+                    # Gen3v6 U3 — HardFlow-arm metric summary (nfe accumulated on the sampler).
+                    if is_hardflow:
+                        nfe_total = int(getattr(policy, 'nfe', 0))
+                        print(f'[hardflow] NFE={nfe_total}  NLP solves={nlp_solves_total}  '
+                              f'NLP failures={nlp_failures_total}  batch(mpc)={batch_size}  '
+                              f'act_threshold={hf_act_threshold}')
+
                     if config['write_to_file']:
-                        np.savez(f'{save_path}/{variant}.npz', 
-                                 n_success=n_success, 
-                                 n_success_and_constraints=n_success_and_constraints, 
-                                 n_steps=n_steps, 
-                                 n_violations=n_violations, 
-                                 total_violations=total_violations, 
-                                 avg_time=avg_time, 
-                                 collision_free_completed=collision_free_completed, 
+                        np.savez(f'{save_path}/{variant}.npz',
+                                 n_success=n_success,
+                                 n_success_and_constraints=n_success_and_constraints,
+                                 n_steps=n_steps,
+                                 n_violations=n_violations,
+                                 total_violations=total_violations,
+                                 avg_time=avg_time,
+                                 collision_free_completed=collision_free_completed,
                                  args=args,
+                                 # Gen3v6 U3 — HardFlow-arm metrics (0 for arms A/B).
+                                 is_hardflow=bool(is_hardflow),
+                                 nfe_total=int(nfe_total),
+                                 nlp_solves_total=int(nlp_solves_total),
+                                 nlp_failures_total=int(nlp_failures_total),
+                                 hf_batch_size=int(batch_size),
+                                 hf_act_threshold=float(hf_act_threshold),
                                  obs_all=np.array(obs_all, dtype=object),
                                  act_all=np.array(act_all, dtype=object),
                                  sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))

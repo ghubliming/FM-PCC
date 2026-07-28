@@ -128,16 +128,30 @@ arm-C logic into it (both are copy-modifies of the same DPCC eval, so the diff i
 
 ## 4. Config additions (additive — existing DPCC runs unaffected)
 
-### 4a. New eval YAML — `config/meanflow_hardflow_projection_eval.yaml`
+### 4a. One unified, Gen3v6-dedicated eval YAML — `config/meanflow_projection_eval.yaml`
 
-A **separate** file (do NOT edit `config/projection_eval.yaml`, which other generations share).
-Copy `config/hardflow_projection_eval.yaml` verbatim and set `projection_variants` to the **union**
-the user wants — DPCC set **plus** HardFlow set — so one run emits both:
+**Decision (user): keep ONE YAML — but a Gen3v6-OWNED one, not the shared file.**
+`config/projection_eval.yaml` is read by **~50 files across every generation** (every `FM_*_test`,
+every `flow_matcher_v3_*/utils/setup.py`, `scripts/`, `config/*.py`), so adding `hardflow_new` there
+would inject the HF arm into Gen3/Gen7/αFlow/etc. — and crash the gens whose drivers don't import
+`HardFlowPolicy`. So we do NOT touch it.
+
+Instead: create **one** new file `config/meanflow_projection_eval.yaml` that is the single source of
+truth for Gen3v6 eval — it merges the **full DPCC set + the HardFlow set + the `hardflow:` block**
+into one document, and Gen3v6's driver reads only this file. This gives exactly the "one unified
+yaml" the user wants (one file does dpcc **and** hardflow), while staying isolated from other gens.
+
+Concretely: copy the current Gen3v6 DPCC variant set from `config/projection_eval.yaml`, append the
+HardFlow set, and add the verbatim `hardflow:` block:
 
 ```yaml
 projection_variants: [
   'diffuser',
+  # ── DPCC arms (unchanged from the shared projection_eval.yaml) ──
   'dpcc-r','dpcc-r-tightened','dpcc-c','dpcc-c-tightened','dpcc-t','dpcc-t-tightened',
+  'gradient','gradient-tightened','post_processing','post_processing-tightened',
+  'model_free','model_free-tightened',
+  # ── HardFlow arm (new; gated by variant.startswith('hardflow')) ──
   'hardflow_new-r','hardflow_new-c','hardflow_new-t',
   'hardflow_new-r-tightened','hardflow_new-c-tightened','hardflow_new-t-tightened',
 ]
@@ -145,8 +159,18 @@ projection_variants: [
 
 plus the verbatim `hardflow:` block (batch_size, dynamics_mode=deriv, activation_threshold,
 candidate_cost=prox, ipopt/casadi print switches) and the identical constraint geometry
-(halfspace/obstacle/bounds/enlarge — already matches Gen3v6's `projection_eval.yaml`).
+(halfspace/obstacle/bounds/enlarge — already matches Gen3v6's current `projection_eval.yaml`).
 `dynamics_mode: deriv` keeps arms B and C on an **identical feasible set** (matched comparison).
+
+**Driver repoint:** change `FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py` (line 43) and
+`load_results_flow_matching_v3_meanflow.py` from `config/projection_eval.yaml` →
+`config/meanflow_projection_eval.yaml`. A DPCC-only run then just means listing only the `dpcc-*`
+variants in this one file (the HF arm never fires without a `hardflow*` entry).
+*Minor caveat:* Gen3v6 no longer auto-inherits future edits to the shared `projection_eval.yaml`
+(constraint geometry etc.) — acceptable, and exactly the isolation copy-modify intends; the geometry
+is already identical and stable. (Note: `flow_matcher_v3_meanflow/utils/setup.py` also references
+the shared yaml for the config-snapshot copy — check whether it must be repointed too, or left as a
+harmless snapshot of the shared file, during the coding pass.)
 
 ### 4b. `plan_fm_v3_meanflow` block (`config/avoiding-d3il.py`) — add HF knobs
 
@@ -168,7 +192,10 @@ separates by K (`…_K{flow_steps}_…`).
 Add `Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh` — copy
 `Slurm_Codes/sbatch/hardflow_fmv3/eval_fmv3_hardflow_job.sh`, retarget:
 
-- `python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py --config config/meanflow_hardflow_projection_eval.yaml`
+- `python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py` — reads the unified
+  `config/meanflow_projection_eval.yaml` via the repointed path (§4a). *(Optionally add a `--config`
+  arg like Gen12's driver has, if you want to switch configs without editing the source — a small
+  convenience, not required.)*
 - keep the **EGL/GPU isolation guard verbatim** (never weaken it), `MUJOCO_GL=egl`, conda `FMPCC`.
 - pass through `HFFM_BATCH` / `HFFM_ACT_THRESHOLD` / `HFFM_FLOW_STEPS` env knobs.
 - casadi/ipopt already available in the FMPCC env (Gen12 runs prove it) — no env change.
@@ -197,10 +224,11 @@ After U3, a Gen3v6 eval must record, per `(scenario, variant, seed)`:
 
 ## 7. Additivity / isolation guarantees (so existing Gen3v6 work is safe)
 
-- New YAML is a **separate file**; the default `config/projection_eval.yaml` (DPCC-only) is
-  untouched → existing Gen3v6 DPCC eval runs are byte-for-byte unchanged.
-- The eval driver's arm-C branch is gated on `variant.startswith('hardflow')`, so with the old
-  DPCC-only `projection_variants` it never executes.
+- The shared `config/projection_eval.yaml` (read by ~50 files across all gens) is **left untouched**
+  → every other generation's eval is byte-for-byte unchanged. Gen3v6 repoints to its own single
+  `config/meanflow_projection_eval.yaml`.
+- The eval driver's arm-C branch is gated on `variant.startswith('hardflow')`, so a `projection_variants`
+  list with only `dpcc-*` entries never executes the HF path (one file, both modes).
 - No training-side change (U3 is eval-only). The U2 backbone work and all checkpoints are untouched.
 - `diffuser/` namespace shim: **no new file needed** — `HardFlowPolicy` is imported directly by the
   test driver (not via `import_class` config strings), and the loaded checkpoint class
@@ -252,13 +280,14 @@ After U3, a Gen3v6 eval must record, per `(scenario, variant, seed)`:
 | **NEW (verbatim + 1-line h=0)** | `flow_matcher_v3_meanflow/sampling/hardflow_projection.py` |
 | edit (export) | `flow_matcher_v3_meanflow/sampling/__init__.py` |
 | **graft arm C** | `FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py` |
-| edit (HF rows) | `FM_v3_meanflow_test/load_results_flow_matching_v3_meanflow.py` |
+| edit (HF rows + repoint yaml) | `FM_v3_meanflow_test/load_results_flow_matching_v3_meanflow.py` |
+| edit (arm C **+ repoint yaml** to the unified file) | `FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py` |
 | NEW (gate) | `FM_v3_meanflow_test/gates_hardflow_meanflow.py` |
 | NEW (opt) | `FM_v3_meanflow_test/hf_paths.py` *(only if D2=Gen12-style)* |
-| **NEW (eval config)** | `config/meanflow_hardflow_projection_eval.yaml` |
+| **NEW (ONE unified eval config)** | `config/meanflow_projection_eval.yaml` (DPCC + HardFlow + `hardflow:` block) |
 | edit (HF knobs) | `config/avoiding-d3il.py` → `plan_fm_v3_meanflow` (`flow_steps`, …) |
 | **NEW (sbatch)** | `Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh` |
-| unchanged | training, U2 backbone, `config/projection_eval.yaml`, `diffuser/` shim, DPCC arms |
+| unchanged | training, U2 backbone, **shared `config/projection_eval.yaml`**, `diffuser/` shim, DPCC arms |
 
 ## 11. Validation plan (cluster)
 

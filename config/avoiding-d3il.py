@@ -1247,6 +1247,10 @@ base = {
         ## must be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
         ## MeanFlow@K=5 against FM@K=10.
         'flow_steps_v3': 2,
+        ## Gen3v6 U3 — HardFlow-arm (arm C) Euler K. Kept EQUAL to flow_steps_v3 so all three
+        ## arms (diffuser / dpcc / hardflow_new) run at the same K (matched-budget, PLAN §7).
+        ## Override at eval with HFFM_FLOW_STEPS=<K> (forces K onto every arm at once).
+        'flow_steps': 2,
         ## MUST match training (both are in diffusion_loadpath)
         'mf_objective': 'meanflow',
         'meanflow_data_proportion': 0.5,

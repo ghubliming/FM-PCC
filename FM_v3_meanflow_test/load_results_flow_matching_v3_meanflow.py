@@ -5,7 +5,8 @@ import os
 import flow_matcher_v3_meanflow.utils as utils
 
 # Load configuration
-with open('config/projection_eval.yaml', 'r') as file:
+# Gen3v6 U3: repointed to the Gen3v6-dedicated unified eval config (DPCC + HardFlow arms).
+with open('config/meanflow_projection_eval.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 projection_variants = config['projection_variants']
@@ -33,6 +34,11 @@ for variant in projection_variants:
     n_violations_all = np.array([])
     total_violations_all = np.array([])
     collision_free_completed_all = np.array([])
+    # Gen3v6 U3 — HardFlow-arm metric accumulators (stay 0 for arms A/B).
+    nfe_sum = 0
+    nlp_solves_sum = 0
+    nlp_failures_sum = 0
+    is_hardflow_variant = False
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             args = Parser().parse_args(experiment='plan_fm_v3_meanflow', seed=seed)
@@ -67,6 +73,12 @@ for variant in projection_variants:
                 n_violations_all = np.append(n_violations_all, n_violations)
                 total_violations_all = np.append(total_violations_all, total_violations)
                 collision_free_completed_all = np.append(collision_free_completed_all, collision_free_completed)
+                # Gen3v6 U3 — pull HardFlow-arm metrics if present (older npz without them → skip).
+                if 'is_hardflow' in data and bool(data['is_hardflow']):
+                    is_hardflow_variant = True
+                    nfe_sum += int(data['nfe_total'])
+                    nlp_solves_sum += int(data['nlp_solves_total'])
+                    nlp_failures_sum += int(data['nlp_failures_total'])
             except FileNotFoundError:
                 print(f"[ Error ] Could not find results at: {args.savepath}/results/halfspace_{halfspace_variant}/{variant}.npz")
                 continue
@@ -93,6 +105,10 @@ for variant in projection_variants:
     print(f'Average violations: {n_violations_avg:.2f} +- {n_violations_std:.2f}')
     print(f'Average total violations: {total_violations_avg:.3f} +- {total_violations_std:.3f}')
     print(f'Average time: {avg_time.mean():.2f} +- {avg_time.std():.2f}')
+    # Gen3v6 U3 — HardFlow-arm compute metrics (summed over halfspace×seed).
+    if is_hardflow_variant:
+        print(f'[hardflow] NFE(sum)={nfe_sum}  NLP solves(sum)={nlp_solves_sum}  '
+              f'NLP failures(sum)={nlp_failures_sum}')
     print(f'${steps_avg:.1f} \pm {steps_std:.1f}$ & ${success_rate_goal:.2f}$ & ${success_rate_constraints:.2f}$ & ${n_violations_avg:.1f} \pm {n_violations_std:.1f}$ \\\\')
 
     sr_goal_all[variant] = success_rate_goal

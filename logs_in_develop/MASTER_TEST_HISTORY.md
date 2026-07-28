@@ -3664,3 +3664,35 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 > [!TIP]
 > **Route**: Gen3v6 U2 → Gen3v7 U2 → Gen13 HF\_Mix\_ML → thesis A/B table. Signal is too strong to deprioritise.
+
+***
+
+## Gen3v6 (MeanFlow) & Gen3v7 (α-Flow) U2: Initial Cluster Runs (July 28, 2026)
+
+**Keywords**: Gen3v6, Gen3v7, mf_dit, sit, training stability, α-homotopy, DPCC projection, low NFE collapse.
+
+1. **Backbone Validation**: The first cluster runs of the official MeanFlow DiT (`mf_dit`) and α-Flow SiT (`sit`) backbones successfully confirmed the U2 hypothesis: the DiT architecture class itself (not iMF's specific RoPE/token machinery) is the load-bearing component. Both new models train cleanly and can achieve 100% safe control with DPCC projection at K=2.
+2. **α-Flow Stability**: Validating the core α-Flow homotopy thesis, α-Flow's self-bootstrapped training (α: 1→0) demonstrated significantly superior stability over pure MeanFlow (peak `raw_mse_u` 84 vs 1900, final grad-norm 60 vs 527), effectively taming the MeanFlow blind-direction blow-up.
+3. **Generative Field Weakness**: Despite clean training, both models still produce raw generative fields that are weak in isolation and heavily dependent on DPCC post-processing for constraint satisfaction.
+4. **General DPCC Artifact Identified**: Analysis of the results revealed that the `dpcc-c` projection strategy collapses to 0.00 success at K=2 across both new backbones. This indicates a generic projection logic edge-case rather than a generational defect.
+
+***
+
+## Gen13 U11: Unified HF_Mix_ML Matching Framework (July 28, 2026)
+
+**Keywords**: Gen13, HardFlow, ML, iMF, MeanFlow, α-Flow, unified framework, A/B testing.
+
+1. **The Ultimate A/B Setup**: Implemented the unified ML matching framework (`models_flow/ml`) inside HardFlow. This natively integrates iMF, MeanFlow, and α-Flow training models, mapping them all to a single shared dual-head backbone (`TemporalImfUnet`).
+2. **Strict Objective Isolation**: The framework ensures models differ strictly in their training-time targets: iMF uses the predicted `v_c`, MeanFlow uses analytic `v`, and α-Flow uses the bootstrapped α formulation.
+3. **Controlled Configuration**: A dynamic `build_matcher` dispatcher handles configuration based on a unified `MlTrainingConfig` and `--ml_type` flag (`imf` | `mf` | `af`), simplifying runtime selection.
+4. **Non-Destructive Integration**: Maintained complete backwards compatibility for the existing, frozen iMF runs. Original evaluation scripts were untouched, ensuring no namespace collisions during cross-architecture evaluations.
+
+***
+
+## DA_Code v3 U9: Visualizer Plot Legend (July 28, 2026)
+
+**Keywords**: DA_Code v3, visualizer, HTML, index.html, plot legend, candidate mapping.
+
+1. **Per-Plot Legend**: Upgraded the HTML visualizer (`index.html`) with a dynamic "Plot Legend" box located immediately beneath the main chart. It generates a localized table that maps x-axis positions to their exact candidate source paths for the current plot.
+2. **Debugging Ergonomics**: This vastly improves comparative debugging speed by eliminating the need to search the entire global Path Audit Map to decipher bar group path origins.
+3. **Mode-Aware Adaptation**: The legend automatically adapts to the visualizer's state, shifting between positional mapping in "By Candidate" mode and averaged facet mapping in "By Environment" mode.
