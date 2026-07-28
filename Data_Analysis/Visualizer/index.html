@@ -105,6 +105,7 @@
     <div class="content">
         <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
         <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
+        <div class="path-section" id="selection-map-section" style="display:none; border-top: 2px dashed #007bff; margin-bottom: 0;"><label style="color:#007bff;">Plot Legend — Selected Candidates (this plot only)</label><div id="selection-map-container"></div></div>
         <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map</label><div id="path-map-container"></div></div>
     </div>
 </div>
@@ -342,7 +343,11 @@ async def trigger_plot(event=None):
     import asyncio
     await asyncio.sleep(0.1)
     window.applyZoom()
-    
+
+    # Selected-candidates legend, in the exact left-to-right order they appear on the
+    # plot's x-axis (pivot_mean.index). Lets the user read each plotted bar-group's ID
+    # straight off to its source path without hunting through the full Path Audit Map.
+    render_selection_map(pivot_mean.index.tolist(), x_axis, checked_cands)
     update_scorecard(active_subset, metric)
 
 def download_plot(event):
@@ -411,6 +416,43 @@ def update_scorecard(subset, metric):
     html += f'</div>'
     
     document.getElementById("scorecard-container").innerHTML = html
+
+def render_selection_map(x_categories, x_axis, checked_cands):
+    # Compact "plot legend" shown directly under the chart: only the candidates actually
+    # in THIS plot, numbered in plot x-axis order, each mapped to its source path. The
+    # full Path Audit Map below still lists every candidate in the batch.
+    if df_agg is None: return
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+
+    if x_axis == 'Candidate':
+        # candidate mode: the x-axis categories ARE the candidates, in plotted order.
+        ordered = [str(c) for c in x_categories]
+        pos_header = "Plot X-Pos"
+        note = "numbered left-to-right as they appear on the plot"
+    else:
+        # env mode: x-axis is the environment; candidates are averaged into each group.
+        # Still list the selected candidates so the user knows what fed the bars.
+        ordered = [str(c) for c in checked_cands]
+        pos_header = "#"
+        note = "averaged across the plotted environments (not an x-axis order)"
+
+    rows = ""
+    for i, c in enumerate(ordered, start=1):
+        path = path_map.get(c, "— path not found —")
+        segs = str(path).split('/')
+        c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{j%6}">{s}</span>' for j, s in enumerate(segs) if s])
+        rows += (f'<tr><td style="text-align:center;width:80px"><strong>{i}</strong></td>'
+                 f'<td style="width:100px"><strong>CAND_{c}</strong></td>'
+                 f'<td><code>{c_path}</code></td></tr>')
+
+    html = (f'<div style="font-size:10px;color:#666;margin-bottom:6px;">{len(ordered)} selected — {note}</div>'
+            f'<table><thead><tr>'
+            f'<th style="width:80px">{pos_header}</th>'
+            f'<th style="width:100px">ID</th>'
+            f'<th>Source Path</th></tr></thead><tbody>{rows}</tbody></table>')
+    document.getElementById("selection-map-container").innerHTML = html
+    document.getElementById("selection-map-section").style.display = "block"
 
 def render_path_map():
     if df_agg is None: return
