@@ -1,5 +1,6 @@
 from diffuser.utils import watch
 import yaml
+import os
 
 # Read the threshold dynamically from the YAML config, abort if not found
 with open('config/projection_eval.yaml', 'r') as f:
@@ -1246,11 +1247,13 @@ base = {
         ## ⚠️ MATCHED-BUDGET OR NOTHING (PLAN §7 / fix_7.3 §9): every MeanFlow-vs-X table
         ## must be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
         ## MeanFlow@K=5 against FM@K=10.
-        'flow_steps_v3': 2,
-        ## Gen3v6 U3 — HardFlow-arm (arm C) Euler K. Kept EQUAL to flow_steps_v3 so all three
-        ## arms (diffuser / dpcc / hardflow_new) run at the same K (matched-budget, PLAN §7).
-        ## Override at eval with HFFM_FLOW_STEPS=<K> (forces K onto every arm at once).
-        'flow_steps': 2,
+        ## Gen3v6 U3 — matched-K for ALL arms. Both K knobs read HFFM_FLOW_STEPS (default 2) so a
+        ## K-sweep is `HFFM_FLOW_STEPS=<K> ./submit.sh …`. Because K flows through the CONFIG (not a
+        ## post-load model patch), args.flow_steps_v3 → exp_name '_K{K}_' → each K writes its OWN
+        ## results dir (no cross-K overwrite). flow_steps_v3 drives arms A/B (native sampler K);
+        ## flow_steps drives arm C (HardFlow Euler K); kept EQUAL (matched-budget, PLAN §7).
+        'flow_steps_v3': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
+        'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
         ## MUST match training (both are in diffusion_loadpath)
         'mf_objective': 'meanflow',
         'meanflow_data_proportion': 0.5,

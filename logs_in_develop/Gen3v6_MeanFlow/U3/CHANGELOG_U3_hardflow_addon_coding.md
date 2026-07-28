@@ -12,8 +12,11 @@ identity `u(x,t,0)=v(x,t)` so the field handed to the NLP/endpoint is exactly wh
 ## Defaults chosen for the plan's open decisions (D1–D4)
 
 Proceeded with sensible defaults (all overridable, documented below):
-- **D1 (K):** matched-K for all arms; `flow_steps` added to the plan block = `flow_steps_v3` = **2**.
-  Override with `HFFM_FLOW_STEPS=<K>` (forces K onto every arm at once).
+- **D1 (K):** matched-K for all arms. Both plan-block K knobs (`flow_steps_v3` for arms A/B,
+  `flow_steps` for arm C) read `HFFM_FLOW_STEPS` (default 2). **K flows through the config**, so
+  `args.flow_steps_v3` renders the `_K{K}_` token in the results-dir name → **each K writes its own
+  dir, no cross-K overwrite** (see the "K-sweep path separation" fix below). K-sweep =
+  `HFFM_FLOW_STEPS=<K> ./submit.sh …`.
 - **D2 (results path):** simple — HF `.npz` files land in the **same** `results/halfspace_*/` dir as
   the DPCC `.npz`, one run = both sets. (No `hf_paths.py` port.)
 - **D3 (batch):** `hardflow.batch_size = 1` (faithful, = Gen12 default; `-r/-c/-t` collapse to one
@@ -76,8 +79,19 @@ generation) is left untouched**, so no other generation is affected. A DPCC-only
 `dpcc-*`/`diffuser` variants here (the HF arm never fires without a `hardflow*` entry).
 
 ### EDIT — `config/avoiding-d3il.py` → `plan_fm_v3_meanflow`
-Added `'flow_steps': 2` (the HF-arm Euler K), kept equal to `flow_steps_v3` so all three arms run at
-matched K; override with `HFFM_FLOW_STEPS`.
+Added `import os`; both K knobs read the env:
+`'flow_steps_v3': int(os.environ.get('HFFM_FLOW_STEPS', 2))` (arms A/B native sampler K) and
+`'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2))` (arm C HardFlow Euler K). Kept equal
+(matched-K).
+
+**K-sweep path separation (collision fix).** Driving K through the *config* (not a post-load model
+patch) is deliberate: `args.flow_steps_v3` is what the `('flow_steps_v3','K')` `args_to_watch` token
+renders into `exp_name`, hence into `args.savepath`. If K were only patched onto `fm_model` after
+`parse_args()` (the earlier approach), every K would render the plan-default `_K2_` and the K1/2/5/20
+runs would **overwrite each other**. With K in the config, each K gets its own
+`…_K{K}_Meuler_…` dir, and `load_results` (which parses the same config under the same env) reads the
+matching dir. The eval driver still force-sets `fm_model.ode_inference_steps_v3 = flow_steps` because
+line ~185's `getattr` can otherwise pick up a stale checkpoint value instead of this K.
 
 ### NEW — `Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh`
 Copy of `eval_meanflow.sh` (EGL/GPU isolation guard, conda `FMPCC`, `MUJOCO_GL=egl` **all

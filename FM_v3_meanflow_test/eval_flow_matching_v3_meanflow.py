@@ -74,9 +74,8 @@ hf_act_threshold = resolve_activation_threshold(
                                     hardflow_cfg.get('activation', 1.0))))
 hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
 hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
-# Matched-K: one knob sets K for EVERY arm (Gen12 PLAN §5 — never compare arms at different K).
-# Priority: HFFM_FLOW_STEPS env > plan-block flow_steps > model's native flow_steps_v3 (fallback).
-_flow_steps_env = os.environ.get('HFFM_FLOW_STEPS')
+# Matched-K note: K is set for EVERY arm via HFFM_FLOW_STEPS, which the plan block reads into
+# args.flow_steps / flow_steps_v3 (so it also drives the results-dir name). Resolved per-seed below.
 
 for exp in exps:
     for halfspace_variant in halfspace_variants:
@@ -210,15 +209,14 @@ for exp in exps:
                 fm_model.ode_solver_rtol_v3 = getattr(args, 'ode_solver_rtol_v3', getattr(fm_model, 'ode_solver_rtol_v3', None))
                 fm_model.ode_solver_atol_v3 = getattr(args, 'ode_solver_atol_v3', getattr(fm_model, 'ode_solver_atol_v3', None))
                 fm_model.ode_solver_step_size_v3 = getattr(args, 'ode_solver_step_size_v3', getattr(fm_model, 'ode_solver_step_size_v3', None))
-                # Gen3v6 U3 — matched-K resolution. HF arm always needs an explicit K; arms A/B use the
-                # native sampler K. Both derive from the SAME flow_steps so the comparison is matched.
-                flow_steps = int(_flow_steps_env) if _flow_steps_env is not None else \
-                    int(getattr(args, 'flow_steps', 0)) or int(getattr(fm_model, 'flow_steps_v3', 10))
-                if _flow_steps_env is not None or getattr(args, 'flow_steps', 0):
-                    # explicit override → force it onto the native sampler too (all arms at this K)
-                    fm_model.ode_inference_steps_v3 = flow_steps
-                    fm_model.flow_steps_v3 = flow_steps
-                print(f'[ eval ] matched K (flow_steps) = {flow_steps} for every arm')
+                # Gen3v6 U3 — matched-K. K arrives via the config (args.flow_steps / flow_steps_v3,
+                # both reading HFFM_FLOW_STEPS), so args.savepath already encodes _K{K}_ (distinct-K
+                # runs never collide). Force it onto the native sampler too — line 185's getattr can
+                # otherwise pick up a stale checkpoint ode_inference_steps_v3 instead of this K.
+                flow_steps = int(getattr(args, 'flow_steps', 0)) or int(getattr(fm_model, 'flow_steps_v3', 10))
+                fm_model.ode_inference_steps_v3 = flow_steps
+                fm_model.flow_steps_v3 = flow_steps
+                print(f'[ eval ] matched K (flow_steps) = {flow_steps} for every arm (savepath: {args.savepath})')
                 dataset = fm_experiment.dataset
                 if 'pointmaze' in exp or 'antmaze' in exp:
                     minari_dataset = minari.load_dataset(exp, download=True)

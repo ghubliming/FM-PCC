@@ -3667,25 +3667,44 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 ***
 
+## Gen12 U5: Loadable FM Models & HardFlow Portability (July 28, 2026)
+
+**Keywords**: Gen12, HardFlow, FMv3ODE, instantaneous velocity, mean-flow, checkpoint compatibility.
+
+1. **Velocity Field Mismatch**: Determined that Gen12's HardFlow arm cannot directly load iMF, MeanFlow, or α-Flow checkpoints. HardFlow intrinsically requires an instantaneous probability-flow velocity `v(x,t)` for its Euler integration and endpoint prediction. The Gen3 models parameterize the interval-average velocity `u(x,t,r)` instead.
+2. **The `h=0` Identity Solution**: The MeanFlow training target natively grounds `u` on `v` at zero interval (`u(x,t,0) = v(x,t)`). Therefore, instead of upgrading Gen12 to support mean-flow sampling, the HardFlow modules can be ported directly into Gen3v6/v7. By explicitly querying the network at `h=0`, HardFlow can seamlessly consume the mean-flow checkpoint as a genuine instantaneous velocity field with mathematically identical semantics to Gen12.
+
+***
+
+## Gen3v6 U3: HardFlow Addon Integration Plan (July 28, 2026)
+
+**Keywords**: Gen3v6, Gen12, HardFlow, DPCC, field-quality A/B, configuration isolation.
+
+1. **In-Folder Addon**: Formulated a plan to port the validated Gen12 HardFlow modules (casadi NLP, Euler sampler, fix_7 batching) directly into the Gen3v6 directory structure as a sibling arm, mimicking Gen12's layout.
+2. **Field-Quality A/B Test**: This integration will uniquely enable direct, side-by-side field quality comparisons between the native DPCC arms and the HardFlow in-loop projection arm on the same MeanFlow checkpoint, under identical feasible sets.
+3. **Additive Eval Architecture**: Designed a unified Gen3v6-dedicated eval configuration (`config/meanflow_projection_eval.yaml`) to run the full matrix of DPCC and HardFlow variants simultaneously, strictly isolated from other generations to prevent configuration pollution.
+
+***
+
 ## Gen3v6 (MeanFlow) & Gen3v7 (α-Flow) U2: Initial Cluster Runs (July 28, 2026)
 
 **Keywords**: Gen3v6, Gen3v7, mf_dit, sit, training stability, α-homotopy, DPCC projection, low NFE collapse.
 
 1. **Backbone Validation**: The first cluster runs of the official MeanFlow DiT (`mf_dit`) and α-Flow SiT (`sit`) backbones successfully confirmed the U2 hypothesis: the DiT architecture class itself (not iMF's specific RoPE/token machinery) is the load-bearing component. Both new models train cleanly and can achieve 100% safe control with DPCC projection at K=2.
 2. **α-Flow Stability**: Validating the core α-Flow homotopy thesis, α-Flow's self-bootstrapped training (α: 1→0) demonstrated significantly superior stability over pure MeanFlow (peak `raw_mse_u` 84 vs 1900, final grad-norm 60 vs 527), effectively taming the MeanFlow blind-direction blow-up.
-3. **Generative Field Weakness**: Despite clean training, both models still produce raw generative fields that are weak in isolation and heavily dependent on DPCC post-processing for constraint satisfaction.
+3. **Generative Field Weakness**: Despite clean training, both models still produce raw generative fields that are weak in isolation and heavily dependent on DPCC post-processing for constraint satisfaction. The few-NFE instability at the terminal step also persists.
 4. **General DPCC Artifact Identified**: Analysis of the results revealed that the `dpcc-c` projection strategy collapses to 0.00 success at K=2 across both new backbones. This indicates a generic projection logic edge-case rather than a generational defect.
 
 ***
 
-## Gen13 U11: Unified HF_Mix_ML Matching Framework (July 28, 2026)
+## Gen13 U11: Giant Upgrade to HF_Mix_ML (July 28, 2026)
 
 **Keywords**: Gen13, HardFlow, ML, iMF, MeanFlow, α-Flow, unified framework, A/B testing.
 
-1. **The Ultimate A/B Setup**: Implemented the unified ML matching framework (`models_flow/ml`) inside HardFlow. This natively integrates iMF, MeanFlow, and α-Flow training models, mapping them all to a single shared dual-head backbone (`TemporalImfUnet`).
+1. **The Ultimate A/B Setup**: Formulated and executed the integration of iMF, MeanFlow, and α-Flow training objectives natively into the HardFlow repository (`models_flow/ml`). This architecture-controlled framework holds the backbone (`TemporalImfUnet`), sampler, and NLP entirely constant across all models.
 2. **Strict Objective Isolation**: The framework ensures models differ strictly in their training-time targets: iMF uses the predicted `v_c`, MeanFlow uses analytic `v`, and α-Flow uses the bootstrapped α formulation.
-3. **Controlled Configuration**: A dynamic `build_matcher` dispatcher handles configuration based on a unified `MlTrainingConfig` and `--ml_type` flag (`imf` | `mf` | `af`), simplifying runtime selection.
-4. **Non-Destructive Integration**: Maintained complete backwards compatibility for the existing, frozen iMF runs. Original evaluation scripts were untouched, ensuring no namespace collisions during cross-architecture evaluations.
+3. **Controlled Configuration**: A dynamic `build_matcher` dispatcher handles configuration based on a unified `MlTrainingConfig` and `--ml_type` flag (`imf` | `mf` | `af`), simplifying runtime selection while strictly isolating parameter blocks for each family.
+4. **Frozen Backwards Compatibility**: Carefully designed the upgrade to be strictly additive. The original `imf/` package and its canonical training/eval scripts remain byte-for-byte untouched, preserving the validity of the previous Gen13 closure.
 
 ***
 
