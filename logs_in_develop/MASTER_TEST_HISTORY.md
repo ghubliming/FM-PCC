@@ -19,7 +19,7 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen3 Upgrade 3** | [flow_matcher_v3/](../flow_matcher_v3) | [FM_v3_test/](../FM_v3_test) | Late April 2026 (up to Apr 20) | **FM-v3**: Introduced SafeFlow-style continuous-time model query semantics (State-Only). | |
 | **Gen3v2 (ODE Solver Addon)** | [flow_matcher_v3_ode_selectable/](../flow_matcher_v3_ode_selectable) | [FM_v3_ode_selectable_test/](../FM_v3_ode_selectable_test) | April 21 – May 4, 2026 | Added advanced ODE solvers (`torchdiffeq`, RK4, Euler, Dopri5) with a dynamic override mechanism (State-Only). | finished |
 | **Gen3v3 (Drifting Engine)** | [flow_matcher_v3_drifting/](../flow_matcher_v3_drifting) | [FM_v3_drifting_test/](../FM_v3_drifting_test) | May 12, 2026 | Drifting baseline recovery and path reconstruction (State-Only). | working on |
-| **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). | working on |
+| **Gen3v4 (iMeanFlow)** | [flow_matcher_v3_imeanflow/](../flow_matcher_v3_imeanflow) | [FM_v3_imeanflow_test/](../FM_v3_imeanflow_test) | May 13, 2026 | **iMeanFlow (iMF)** planning/inference infrastructure (State-Only). <br><br> ❌ **FAILED / GIVEN UP (July 2026)**: iMF efficiency thesis refuted by Gen13 CLOSURE I. Superseded by **Gen3v6 (MeanFlow)** and **Gen3v7 (α-Flow)**, which both outperform iMF under low NFE. iMF development is **suspended** — no further work planned on this branch. | ~~working on~~ <br>**❌ abandoned** |
 | **Gen3v5 (BNS Solver)** | Pending | Pending | Pending | **BNS Solver**: Boundary-constrained Noise-guided Solver (Pending Plan). | |
 | **Gen4 (Abandoned Visual)** | [(Abandoned)flow_matcher_v3_avoiding_visual/](../(Abandoned)flow_matcher_v3_avoiding_visual) | [(Abandoned)FM_v3_avoiding_visual_test/](../(Abandoned)FM_v3_avoiding_visual_test) | Late April 2026 (Apr 25–28) | **Abandoned**. Coupled code and regression risks via direct D3IL source modifications. | |
 | **Gen5 (Visual Aligning)** | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision) | [ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test/](../ddpm_encdec_vision_Legacy/ddpm_encdec_vision_test) | May 12 – May 17, 2026 | **Legacy baseline** (archived). Based on the `ddpmact d3il base` (imitation framework). Succeeded only once and never returned good results since. | |
@@ -32,10 +32,11 @@ Below is the definitive index mapping every research generation (internal index)
 | **Gen9 (Visual Avoiding Env)** | ~~Partial~~ <br>[fm_visual_avoiding/](../fm_visual_avoiding) | ~~Partial~~ <br>[fm_visual_avoiding_test/](../fm_visual_avoiding_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): Camera Environment Capture Confirmed**. Created a visual avoiding dataset and environment in MuJoCo by adding cameras to capture visual data from the existing avoiding expert trajectories. **COMPLETED**: Camera capture pipeline. **PENDING**: Modify and test the Gen6v4 and Gen7 visual aligning models in this new environment to learn and validate MuJoCo environment generation. **Features**: 1. Flexible 3D (xyz) and 2D (xy) tensor switch for training/learning (evaluation consistently outputs 3D plots regardless of tensor shape to maintain identical behavior). 2. Add parameters for avoiding env tensor inputs, since aligning-specific inputs (box angle/position) are not present.~~ <br><br> **IN PROGRESS (Partial)**: Visual Avoiding Pipeline. DPCC and FM visual models ported to avoiding tasks with single-camera observations and 6-D trajectories. Includes FiLM v2 true architecture updates. | ~~in progress~~ <br>working on |
 | **Gen10 (DDPM ACT / Transformer)** | Pending | Pending | Planned | **Planned Upgrade**: Add a new DDPM ACT backbone (the generally best and theoretically most powerful model in D3IL). This will upgrade the Gen6v4 (Diffusion) and Gen7 (FM) U-Net backbones to a VAE + Transformer (or superior mathematical ML architecture). **Note**: If Gen8 is successful in establishing a modular engine switch, Gen10 will be directly based on Gen8 and should only focus on the ML architecture design itself (unless paradigm shifts like action chunking dictate a broader system redesign beyond the model backbone). | |
 | **Gen11 (UAV Vis-Traj in MuJoCo)** | ~~Partial~~ <br>[flow_matcher_v3_uav/](../flow_matcher_v3_uav) | ~~Partial~~ <br>[FM_v3_uav_test/](../FM_v3_uav_test) | ~~In Progress~~ <br>June 2026 | ~~**PARTIAL COMPLETION (30 May 2026): UAV Model Migration (Epoch 1) Completed**. Implemented a UAV visual-trajectory planning environment manually in MuJoCo with abstract 3D geometric constraints. **COMPLETED**: Skydio X2 model assets (XML, mesh, texture) migrated from upstream `mujoco_menagerie` and patched for MJPC tasks. **PENDING**: Python environment class, residual/transition logic, and training pipeline implementation. Features a custom drone dynamic model and 0-shot evaluation on random start/end locations under geometric constraints, utilizing a visual-aligning-style backbone.~~ <br><br> **IN PROGRESS (Partial)**: UAV Flow-Matching & DPCC. Full closed-loop 33 Hz receding-horizon control for UAV trajectory planning in MuJoCo. Includes Cascaded PID trackers, MJPC thrust control, real-time logging, and DPCC safety projection on constraint spaces. | ~~in progress~~ <br>working on |
-| **Gen12 (HardFlow → FMv3ODE)** <br>*(was "Gen11+ / X")* | Planned <br>`flow_matcher_v3_hardflow/` | Planned <br>`FM_v3_hardflow_test/` | July 2026 | ⚠️ **WARNING: Gen12 is built on DPCC/FMv3ODE, whereas Gen13 is built on HardFLOW. Their deep math and robotic mechanisms are fundamentally different!** <br><br> **Port HardFlow's eval-time constrained sampler INTO FMPCC** (opposite direction to Gen13). Verified premise: HardFlow's `train.py` is vanilla CFM with zero constraint imports — its whole contribution is at sampling time, so **the existing FMv3ODE checkpoint is reused and nothing is retrained**. Scope is deliberately narrow: only `hardflow_new` is portable (it calls the network as a black-box `f(x,t)` outside the solver); `projection`/`projection_relaxed`/`hardflow` embed the U-Net *into* the NLP via l4casadi and are architecture-locked. Copy-modify sibling pair + sbatch entries; adds a 3rd guidance arm alongside DPCC's `Projector`. ⚠️ The linear dynamics `.npz` must be REFIT on FMv3ODE's normalizer — HardFlow's is in different normalized units and would silently enforce wrong physics. Plan: [`Gen12/init/`](./Gen12/init/PLAN_Gen12_hardflow_into_fmv3ode.md). | working on |
-| **Gen13  (HF + iMF)** | [HardFlow/](../HardFlow) <br>*(vendored into FM-PCC)* | [HardFlow/run/](../HardFlow/run) <br>+ [Slurm_Codes/sbatch/hardflow/](../Slurm_Codes/sbatch/hardflow) | July 2026 | ⚠️ **WARNING: Gen13 is built on HardFLOW, whereas Gen12 is built on DPCC/FMv3ODE. Their deep math and robotic mechanisms are fundamentally different!** <br><br> A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. (Notes on Gen13v1: Based on/build on HF code). **Status July 2026**: iMF backbone implemented additively (`hardflow/models_flow/imf/`), trained 100k/300k/lrfix-100k. Efficiency thesis **refuted** — FM@K=2 (100% safe, 0.1894 s/plan) beats iMF at every matched K. Key findings: `raw_mse_u` is a *residual*, not accuracy, and post-projection roughness measures the NLP rather than the model — **rank by unguided task success only**. See [`Gen13/U_9_train_curve/results_analysis/`](./Gen13/U_9_train_curve/results_analysis/) and [`HF_iMF/Research/COMPARE_gen13_hardflow_vs_gen3v4_imf_training.md`](./HF_iMF/Research/COMPARE_gen13_hardflow_vs_gen3v4_imf_training.md) §8. | working on |
-| **Gen3v6 (MeanFlow Baseline)** | [flow_matcher_v3_meanflow/](../flow_matcher_v3_meanflow) | [FM_v3_meanflow_test/](../FM_v3_meanflow_test) | July 2026 | **MeanFlow (2505.13447) faithful baseline** — Gen3v4 copy-modify sibling with the ANALYTIC-v JVP tangent (vs iMF's predicted `v_c`), official adaptive loss (p=1, eps=0.01, per-sample sum), two independent logit-normals, no CFG. Isolates iMF's headline contribution as a controlled A/B on constrained control. Adds the h-stratified residual metric and a real gradient clip. Plan: [`Gen3v6_MeanFlow/init/`](./Gen3v6_MeanFlow/init/PLAN_Gen3v6_meanflow_baseline.md). | working on |
-| **Gen3v7 (α-Flow)** | [flow_matcher_v3_alphaflow/](../flow_matcher_v3_alphaflow) | [FM_v3_alphaflow_test/](../FM_v3_alphaflow_test) | July 2026 | **α-Flow (arXiv 2510.20771, snap-research)** — replaces the MeanFlow JVP target with a self-bootstrapped no-grad target `u_tgt = α·v + (1−α)·u_next`, α annealed 1→0 (sigmoid) so training is a homotopy from flow matching (α=1) to MeanFlow (α=0). Targets COMPARE §8.2's blind direction, the diagnosed cause of the Gen13 iMF refutation. Adds target clamping (4.0) and a step-scheduled objective. Plan: [`Gen3v7_AlphaFlow/init/`](./Gen3v7_AlphaFlow/init/PLAN_Gen3v7_alphaflow.md). | working on |
+| **Gen12 (HardFlow → FMv3ODE)** <br>*(was "Gen11+ / X")* <br>*(→ = the HardFlow/α-Flow sampler is ported **into** the Gen3v6/v7 FMv3ODE checkpoint — Gen3v6 & v7 are the base works this builds on)* | Planned <br>`flow_matcher_v3_hardflow/` | Planned <br>`FM_v3_hardflow_test/` | July 2026 | ⚠️ **WARNING: Gen12 is built on DPCC/FMv3ODE, whereas Gen13 is built on HardFLOW. Their deep math and robotic mechanisms are fundamentally different!** <br><br> **Port HardFlow's eval-time constrained sampler INTO FMPCC** (opposite direction to Gen13). Verified premise: HardFlow's `train.py` is vanilla CFM with zero constraint imports — its whole contribution is at sampling time, so **the existing FMv3ODE checkpoint is reused and nothing is retrained**. Scope is deliberately narrow: only `hardflow_new` is portable (it calls the network as a black-box `f(x,t)` outside the solver); `projection`/`projection_relaxed`/`hardflow` embed the U-Net *into* the NLP via l4casadi and are architecture-locked. Copy-modify sibling pair + sbatch entries; adds a 3rd guidance arm alongside DPCC's `Projector`. ⚠️ The linear dynamics `.npz` must be REFIT on FMv3ODE's normalizer — HardFlow's is in different normalized units and would silently enforce wrong physics. Plan: [`Gen12/init/`](./Gen12/init/PLAN_Gen12_hardflow_into_fmv3ode.md). | working on |
+| ~~**Gen13  (HF + iMF)**~~ <br>**Gen13 (HF\_Mix\_ML)** | [HardFlow/](../HardFlow) <br>*(vendored into FM-PCC)* | [HardFlow/run/](../HardFlow/run) <br>+ [Slurm_Codes/sbatch/hardflow/](../Slurm_Codes/sbatch/hardflow) | July 2026 | ⚠️ **WARNING: Gen13 is built on HardFLOW, whereas Gen12 is built on DPCC/FMv3ODE. Their deep math and robotic mechanisms are fundamentally different!** <br><br> A new model of HardFlow + IMF, which includes HardFlow individual evaluation tests and the HF + IMF integrated framework. (Notes on Gen13v1: Based on/build on HF code). **Status July 2026**: iMF backbone implemented additively (`hardflow/models_flow/imf/`), trained 100k/300k/lrfix-100k. Efficiency thesis **refuted** — FM@K=2 (100% safe, 0.1894 s/plan) beats iMF at every matched K. Key findings: `raw_mse_u` is a *residual*, not accuracy, and post-projection roughness measures the NLP rather than the model — **rank by unguided task success only**. See [`Gen13/U_9_train_curve/results_analysis/`](./Gen13/U_9_train_curve/results_analysis/) and [`HF_iMF/Research/COMPARE_gen13_hardflow_vs_gen3v4_imf_training.md`](./HF_iMF/Research/COMPARE_gen13_hardflow_vs_gen3v4_imf_training.md) §8. <br><br> 🔄 **REASSEMBLE → Gen13 (HF\_Mix\_ML)**: Gen13 is no longer iMF-only. Reassembling into **HF\_Mix\_ML** by adding the Gen3v6 (MeanFlow / MF) and Gen3v7 (α-Flow / AF) ML backbones into the HardFlow constrained sampler framework alongside the original iMF backbone. New multi-backbone lineup: **iMF + MF + AF** — all three heads running under HardFlow's eval-time constrained sampler for a unified cross-architecture comparison on the HF base. | working on |
+| **Gen3v6 (MeanFlow Baseline)** | [flow_matcher_v3_meanflow/](../flow_matcher_v3_meanflow) | [FM_v3_meanflow_test/](../FM_v3_meanflow_test) | July 2026 | **MeanFlow (2505.13447) faithful baseline** — Gen3v4 copy-modify sibling with the ANALYTIC-v JVP tangent (vs iMF's predicted `v_c`), official adaptive loss (p=1, eps=0.01, per-sample sum), two independent logit-normals, no CFG. Isolates iMF's headline contribution as a controlled A/B on constrained control. Adds the h-stratified residual metric and a real gradient clip. Plan: [`Gen3v6_MeanFlow/init/`](./Gen3v6_MeanFlow/init/PLAN_Gen3v6_meanflow_baseline.md). <br><br> 📌 **UPCOMING (one-time eval):** Adding the HardFlow (HF) sampler metric into this gen alongside the existing DPCC metrics — **all DPCC + HF metrics out** in a single combined evaluation run (mirrors Gen12's port but applied here on the MeanFlow checkpoint). | working on |
+| **Gen3v7 (α-Flow)** | [flow_matcher_v3_alphaflow/](../flow_matcher_v3_alphaflow) | [FM_v3_alphaflow_test/](../FM_v3_alphaflow_test) | July 2026 | **α-Flow (arXiv 2510.20771, snap-research)** — replaces the MeanFlow JVP target with a self-bootstrapped no-grad target `u_tgt = α·v + (1−α)·u_next`, α annealed 1→0 (sigmoid) so training is a homotopy from flow matching (α=1) to MeanFlow (α=0). Targets COMPARE §8.2's blind direction, the diagnosed cause of the Gen13 iMF refutation. Adds target clamping (4.0) and a step-scheduled objective. Plan: [`Gen3v7_AlphaFlow/init/`](./Gen3v7_AlphaFlow/init/PLAN_Gen3v7_alphaflow.md). <br><br> 📌 **UPCOMING (one-time eval):** Adding the HardFlow (HF) sampler metric into this gen alongside the existing DPCC metrics — **all DPCC + HF metrics out** in a single combined evaluation run (mirrors Gen12's port but applied here on the α-Flow checkpoint). | working on |
+
 
 ***
 
@@ -3428,6 +3429,201 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Remaining Bottleneck Identified**: The residual ~2.1× gap to DPCC is now primarily driven by the IPOPT solver being ~2.7× costlier per solve than SciPy (partly due to an L-BFGS approximation of a constant Hessian) and the mathematically necessary extra `v_next` endpoint prediction.
 
 ***
+- Wired `gradient_clip` (1.0) into `Trainer` (`clip_grad_norm_`) with pre-clip `grad_norm_history` logging to eliminate loss spikes.
+4. **Config, SLURM & Diagnostic Harness**:
+   - Added `args_to_watch_fmv3_mf_train` and matched `flow_matching_v3_meanflow` / `plan_fm_v3_meanflow` blocks in `config/avoiding-d3il.py`.
+   - Created `Slurm_Codes/sbatch/MeanFlow/` pipeline scripts (`meanflow_pipeline.sh`, `train_meanflow.sh`, `eval_meanflow.sh`, `load_results_meanflow.sh`).
+   - Created `FM_v3_meanflow_test/gates_meanflow.py` for pre-flight G0/G1/G3' harness checks.
+
+***
+
+## Gen3v6: MeanFlow Baseline Fixes (July 23, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, diffuser namespace shim, training crash, ModuleNotFoundError.
+
+1. **Training Crash at Step 0 Resolved**: Diagnosed and fixed a `ModuleNotFoundError` during the first run of the `meanflow_pipeline.sh`. The crash occurred because the training script's configuration loader (`diffuser/utils/config.py`) hard-prefixes every configuration class string with the `diffuser` package name.
+2. **Namespace Shim Implementation**: Created a shim namespace package at `diffuser/flow_matcher_v3_meanflow/` to re-export the real classes from `flow_matcher_v3_meanflow.models`. This mirrors the solution used in Gen3v4, allowing the dynamically resolved classes to retain their true `__module__` paths and preventing pickled class mismatches during evaluation.
+
+***
+
+## Gen3v7: α-Flow Homotopy Coding Pass 1 (July 23, 2026)
+
+**Keywords**: Gen3v7, α-Flow, homotopy, self-bootstrapped target, matched budget, endpoint error, backbone fidelity.
+
+1. **α-Flow Implementation Completed**: Completed coding pass 1 for Gen3v7 (`flow_matcher_v3_alphaflow`), replacing MeanFlow's JVP target with α-Flow's self-bootstrapped, no-grad target (`u_tgt = α·v + (1−α)·u_next`). This targets the blind direction hypothesized to cause iMF's underperformance.
+2. **Homotopy Schedule**: Implemented the α anneal (1 → 0) using a sigmoid schedule, creating a smooth transition from plain flow matching (α=1) to MeanFlow (α=0) during training.
+3. **Pre-flight Guards & Robustness**: Implemented strict pre-flight checks (`gates_alphaflow.py`) to prevent silent failures (e.g., constant α schedules), including a constructor assert, pre-flight banner, and extensive W&B telemetry for the α schedule. Added the `diffuser` shim up front to avoid Gen3v6's training crash.
+4. **Matched-K Sweeps Built-In**: Integrated the K-grid eval sweep directly into the evaluation pipeline (`eval_flow_matching_v3_alphaflow.py --flow-steps K`) to ensure matched-budget comparisons are structural rather than aspirational. Added `endpoint_error_alphaflow.py` for direct measurement of the sampler's terminal prediction error.
+5. **Backbone Fidelity Analysis**: Documented a gap in backbone fidelity: Gen3v6 and Gen3v7 use the iMF DiT backbone instead of their respective official networks (MFDiT and SiT). While this ensures controlled A/B testing across the three generations, it means the results represent the new objectives running on the iMF network architecture.
+
+***
+
+## Gen12: HardFlow into FMv3ODE Initialization (July 23, 2026)
+
+**Keywords**: Gen12, HardFlow, FMv3ODE, hardflow_new, zero retraining, geometry alignment.
+
+1. **Constrained Sampler Ported**: Implemented Gen12 (`flow_matcher_v3_hardflow`), porting HardFlow's inference-time constrained sampler (`hardflow_new`) to run directly on the existing FMv3 trained checkpoint. The neural field enters the loop entirely as a black-box function `f(x, t)`.
+2. **Feasible Set Alignment**: Rewrote the upstream sampler to construct its CasADi NLP using FMPCC's `constraint_list` instead of HardFlow's hard-coded geometry. This ensures the new constrained sampler enforces the exact same obstacle and boundary geometry as the baseline DPCC, validating the A/B test.
+3. **Pre-flight Seam Tests**: Created a robust test suite (`gates_hardflow.py`) that executes with no checkpoint/dataset to assert correct DOF index mapping, time-direction alignment (noise τ=0 → data τ=1), and baseline feasibility.
+4. **Dynamics Fitting**: Ported the linear dynamics fitter (`fit_dynamics_fmv3.py`) to run on FMv3's dataset and normalizer, adding a strict episode-level held-out evaluation check to guarantee physical accuracy before sampling.
+
+## Gen12: Eval Config Decoupling & Direct-Checkpoint Loader (July 23, 2026)
+
+**Keywords**: Gen12, eval config, decouple, checkpoint_dir, FMv3ODE.
+
+1. **Eval Config Decoupled**: Single-sourced Gen12's evaluation to use `config/hardflow_projection_eval.yaml` exclusively. The pre-flight gates (`gates_hardflow.py`) now read constraints from this file, preventing geometry alignment leaks where the gates pass on a different geometry than the eval enforces.
+2. **Direct-Checkpoint Loader**: Added `checkpoint_dir` parameter for direct checkpoint pathing, resolving an issue where the initial load path pointed at an invalid `GaussianDiffusion` checkpoint. Model-type routing now correctly identifies native class loading so trained `FlowMatchingODE` models can be evaluated.
+3. **Pipeline Renamed**: Renamed `hardflow_fmv3_pipeline.sh` to `hardflow_fmv3_debug_chain.sh` to explicitly clarify there is NO training in Gen12, removing false training implications.
+4. **Eval Knobs Relocated**: Migrated `checkpoint_dir` and `flow_steps` into the `plan_fm_v3_hardflow` block inside `config/avoiding-d3il.py` for a cleaner evaluation API, and locked target model loading strictly to FMv3ODE since the `hardflow_new` mathematics assume a single-time velocity field.
+
+***
+
+## Gen13: CLOSURE I — iMF vs FM in HardFlow (July 23, 2026)
+
+**Keywords**: Gen13, iMF, HardFlow, CLOSURE, efficiency refuted, anti-correlation, warm-start smoothness, blind direction.
+
+1. **Efficiency Thesis Refuted**: Conducted a decisive paired evaluation (n=200/arm) between iMF and standard FM inside HardFlow. At matched budgets, FM strictly dominates iMF. FM@K=2 achieves 100% safety at 0.1894 s/plan, while iMF remains slower (1.09–1.24×) and tops out at 99.5% safety.
+2. **Trajectory Quality vs. Planning Quality Conflict**: Discovered a perfect inverse correlation (Spearman ρ = -1.00) between unguided and guided success across five iMF models. The model with the best raw field (17.5% success) was the worst planner (90.0%), while the model with the worst raw field (0.5%) was the best planner (99.5%). Optimizing the generative field degraded the warm-start smoothness needed by the prox-NLP solver.
+3. **Projection Dominates Task Success**: Confirmed that the NLP projection lifts both backbones from near 0% raw safety to 96–100% guided safety. The generative field determines only the initial guess.
+4. **Blind Direction Mechanism Diagnosed**: Identified a structural "blind direction" of width `h` in the MeanFlow residual (`δ_u = h·δ_D`) that is invisible to the training loss but degrades the sampler. The problem is maximal precisely in the large-`h` (few NFE) regime that the method was intended to optimize.
+
+***
+
+## Gen3v6: MeanFlow Baseline First Successful Run (July 24, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, baseline design, functional smoke, h-stratified metric, training convergence.
+
+1. **Successful End-to-End Run**: The namespace shim worked, allowing MeanFlow to train end-to-end on one seed without crashing. MeanFlow learned a goal-reaching field, and coupled with DPCC hard projection, produced safe control at K=2 NFE (100% goal and constraint satisfaction on three obstacle halfspaces).
+2. **h-Stratified Metric Validation**: The new h-stratified metric localized the field's weak spot, revealing that the large-h regime (h ∈ [0.6, 1.0]) is rarely sampled with the current distribution and thus poorly trained. This validates the need for Gen3v7 (α-Flow) to address the sample scarcity at large h.
+3. **Gradient Clipping Effective**: Pre-clip gradient norms showed massive spikes (up to 28.4), proving that gradient clipping (1.0) is doing real work to stabilize the JVP target's variance.
+
+***
+
+## Gen3v7: α-Flow First Training Curve Insight (July 24, 2026)
+
+**Keywords**: Gen3v7, α-Flow, training curve, blind direction, raw_mse_u, unmatchable target.
+
+1. **Machinery Functional**: The α-Flow annealing schedule worked perfectly, smoothly transitioning from 1.0 to 0.0 without triggering any silent failures.
+2. **Structural Metric Artefacts**: While the `raw_mse_u` curve appeared non-monotone and poor, this was identified as expected behavior because at α=1, the instantaneous velocity target is intentionally unmatchable at large h.
+3. **Blind-Direction Instability Confirmed**: The scientifically interesting signal emerged as α→0 (pure MeanFlow). Instability spikes clustered specifically in the α=0 regime, validating the "blind-direction" phenomenon that Gen3v7 was explicitly built to probe.
+4. **Planning vs. Field Quality**: K=1 evaluation showed the raw generative field reaches the goal but is unsafe, while DPCC projection perfectly restores safety. This confirms the Gen13 CLOSURE I finding that poor MSE does not prevent the projection step from producing a successful planner.
+
+***
+
+## Gen12: G2 Gate τ-Invariance Fix (July 24, 2026)
+
+**Keywords**: Gen12, HardFlow, G2 gate, τ-invariance, IPOPT solver drift.
+
+1. **False-Negative Gate Resolved**: Fixed a failure in the G2 pre-flight gate during its first cluster run. The gate incorrectly asserted bitwise DOF equality across τ, failing because the IPOPT solver is iterative and objective rescaling changes the stopping point of non-binding DOFs.
+2. **Binding-Distance Assertion**: Updated the gate to assert the τ-invariance of the binding distance instead of raw DOF equality. This properly validates the sampler port's integrity while ignoring harmless numerical drift in the solver's free directions.
+
+***
+
+## Gen12: First End-to-End Evaluation at K=20 (July 24, 2026)
+
+**Keywords**: Gen12, HardFlow, constrained sampling, matched-budget, K=20, safety vs speed.
+
+1. **Pipeline Validated**: Conducted a preliminary 6-episode smoke run at K=20 across three arms: Arm A (unguided), Arm B (post-hoc projection), and Arm C (in-loop constrained sampling). The Gen12 port worked end-to-end, achieving exactly the designed NFE and NLP-solve counts.
+2. **Guidance Drives Safety**: Confirmed that the unguided field reaches the goal (100%) but completely fails constraints (0% safe), whereas both constraint mechanisms (B and C) restore 100% safety with 0 violations. The field provides the goal capability, but the projection machinery guarantees safety.
+3. **Safety Ties, Speed Differs**: At K=20, both post-hoc projection and in-loop constrained sampling saturated at 100% task success. However, post-hoc projection (Arm B) was approximately 1.6× faster than in-loop sampling (Arm C). Enforcing constraints during sampling matched post-hoc projection on safety but at a higher computational cost.
+4. **Next Steps**: A full low-K sweep (K ∈ {2, 5, 10}) is required. The high-K regime obscures potential benefits; the true test is whether in-loop guidance can rescue trajectories at low K where post-hoc projection might fail.
+
+***
+
+## Gen12: Late-Activation Threshold & MPC Candidate Selection (July 25, 2026)
+
+**Keywords**: Gen12, HardFlow, late-activation threshold, MPC candidate selection, terminal-step safety.
+
+1. **Late-Activation Threshold**: Implemented a continuous `activation_threshold` for the per-step NLP solver in Arm C (`hardflow_new`). The NLP is now solved only when the flow time `τ_next ≥ threshold`. Crucially, the final step is always solved, preserving HardFlow's terminal safety guarantee. Configurable via `activation_threshold` (0.0 for every step, 0.5 for late half, 1.0 for terminal only).
+2. **MPC Candidate Selection**: Expanded the existing candidate fan (`batch_size > 1`) with DPCC-style selection mechanisms. Added `candidate_cost` tracking (e.g., minimum projection cost to penalize NLP intervention) and implemented random (`-r`), temporal consistency (`-t`), and minimum projection cost (`-c`) selection strategies, mirroring DPCC.
+3. **Provenance & Pre-flight Gates**: Encoded configuration parameters into the output path (`thres{t}_mpc{b}`) to prevent sweep collisions. Added new pre-flight gates (G4 and G5) to strictly verify the final-step safety invariant and the fan/selection logic prior to any full run.
+
+***
+
+## Gen13: U10 Terminal Safeguarding in Original HardFlow (July 25, 2026)
+
+**Keywords**: Gen13, HardFlow, terminal safeguarding, activation threshold, efficiency ablation.
+
+1. **Threshold Ported to Original HF**: Added the continuous late-activation threshold to the original vendored HardFlow codebase (`HardFlow/hardflow/models_flow/flow_policy.py`). As in Gen12, the final step is strictly guarded to ensure the terminal safety guarantee remains intact.
+2. **True HF-vs-HF Ablation Setup**: This allows for a clean ablation of the original HardFlow (threshold ON vs full-step baseline) on its native environment (avoiding-v0, H16) and geometry, independent of the FMPCC/DPCC ecosystem. The default behavior remains unchanged (`-1.0` disabled).
+3. **Sweep Automation**: Created a dedicated SLURM sweep script (`eval_threshold_sweep_hardflow.sh`) to systematically evaluate the impact of different threshold levels (e.g., 0.0, 0.5, 0.75, 1.0) on safety rate, total steps, computation time, and NLP-solve count.
+
+***
+
+## Gen12: FMv3ODE-Style Path Layout (Fix 5) (July 25, 2026)
+
+**Keywords**: Gen12, path layout, hf_paths, eval knobs, folder structure.
+
+1. **Path Layout Standardized**: Re-structured Gen12's evaluation output paths to mirror the strict `FMv3ODE` visual convention (`<train-name>/<eval-name>/<seed>/...`).
+2. **Train/Eval Split**: The loaded checkpoint identity and the evaluation configuration (K, threshold, MPC fan) are now explicitly split into their own hierarchical folder levels.
+3. **Data Discovery**: This resolves the issue where evaluation knobs were buried deeply, allowing the Data Analysis (DA) scripts to systematically discover and aggregate HardFlow runs.
+
+***
+
+## Gen12 & Gen13: Activation Threshold Polarity Fix (Fix 6 & 11) (July 26, 2026)
+
+**Keywords**: Gen12, Gen13, HardFlow, DPCC, threshold polarity, activation gate.
+
+1. **Polarity Alignment**: Discovered that HardFlow's activation threshold was inverted compared to DPCC (where a higher value means *more* projection). Flipped the logic so that `threshold = 1.0` means projecting every step, and `0.0` means projecting only the terminal step.
+2. **Unified Semantics**: This ensures that when configuring both DPCC and HardFlow in the same evaluation, the `activation_threshold` parameter carries the exact same meaning, preventing confounding variables during A/B testing.
+3. **Default Behavior Preserved**: The default behavior (full projection on every step) remains mathematically identical under the new polarity. Applied symmetrically to both Gen12 and original HardFlow (Gen13).
+
+***
+
+## Gen12 vs DPCC: Interim Synthesis & Discussion (July 26, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC, constrained sampling, post-hoc projection, scientific verdict, low K collapse.
+
+1. **Cost-Parity Achieved**: Confirmed that at saturated high-K budgets (K=20), both HardFlow (Arm C) and DPCC (Arm B) achieve 100% safety. With the U4 late-activation threshold (0.5), HardFlow reduces its NLP solves by ~46%, achieving cost-parity with DPCC.
+2. **Low-K Collapse**: Identified a critical failure mode: at low K (K=2, 5), DPCC remains 100% safe, while HardFlow collapses. This refutes the hope that in-loop guidance rescues coarse-field trajectories, because projecting a garbage terminal prediction yields a feasible-but-wrong plan.
+3. **Scientific Implication**: The data strongly trends toward the conclusion that *the projection dominates the outcome regardless of when it is applied*. HardFlow acts as a more complex equal to DPCC without strictly beating it.
+4. **Final Crux Remaining**: The only remaining confound is whether applying candidate selection (U4.2 MPC fan) to HardFlow at low-K can recover the failure, which is the defining next experiment.
+
+***
+
+## DA_Code v3 (U7): HardFlow Integration & Visualizer Robustness (July 26, 2026)
+
+**Keywords**: DA_Code v3, HardFlow variants, HTML visualizer, candidate comparison, seed verification.
+
+1. **First-Class HardFlow Support**: Taught the Data Analysis pipeline the HardFlow variants (`hardflow_new`, `-c`, `-r`, `-t`). These variants now natively load and populate across all candidate-level plots, batch robustness boxplots, and constraint heatmaps alongside DPCC.
+2. **HardFlow-Specific Metrics**: Surfaced HardFlow-exclusive data like `nlp_solves`, `nlp_failures`, and `activation_threshold` directly into the DA metrics dictionary.
+3. **Combined Candidate Comparison**: Built unified comparison plots (`00c`, `01c`, `02c`) that evaluate candidates using their *own* aggregated metrics, correctly handling candidates that lack DPCC arms.
+4. **HTML Visualizer Resilience**: Fixed a critical bug in `index.html` where missing custom seeds caused a hard abort of the entire rendering process. The visualizer now issues a non-fatal warning and plots whatever subset is available.
+5. **Sensible Defaults**: Addressed a startup freeze caused by the dropdown defaulting to a HardFlow-only metric. The dropdown now smartly defaults to a universally shared metric like `n_success_and_constraints`.
+
+***
+
+## DA_Code v3 (U8): Bar Value Labels (July 26, 2026)
+
+**Keywords**: DA_Code v3, visualizer, bar labels, data visibility.
+
+1. **Exact Numeric Rendering**: Added exact 3-sig-fig (`.3g`) value labels rotated 90 degrees above every individual bar in the dynamic grouped bar chart.
+2. **Comparison Ergonomics**: This completely removes the need to visually eyeball values off the y-axis, vastly improving the usability of the tool for tight performance comparisons (e.g., 0.497s vs 0.637s).
+
+***
+
+## Gen12 U5: Full DPCC-Parity Variant Scheme & MPC=4 Analysis (July 26-27, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC parity, variant scheme, mpc=4, in-loop tightening, un-batched generation.
+
+1. **DPCC-Parity Variants**: Implemented the full DPCC-parity variant scheme for Arm C (HardFlow in-loop), encompassing both candidate selection (`-r`/`-c`/`-t`) and constraint geometry (`-tightened`). This allows for perfectly matched comparisons between HardFlow and DPCC on all axes.
+2. **Constraint Enforcement Validation**: Verified mathematically and behaviorally that `hardflow_new-*-tightened` genuinely enlarges the constraints in the CasADi/IPOPT solver exactly like DPCC does with SciPy.
+3. **HardFlow vs DPCC Cost Analysis**: Diagnosed why HardFlow was ~4× slower than DPCC per step. The bottleneck was NOT the NLP solver (both do 40 solves per plan) but the un-batched generation loop: HardFlow integrated candidates one at a time on the GPU with CPU round-trips on every evaluation.
+4. **MPC=4 Full Run Findings**: 
+   - **With Tightening**: HardFlow matches DPCC's perfect constraint satisfaction (100% safety, 0 violations) but remains more computationally expensive.
+   - **Without Tightening (Zero Margin)**: HardFlow dominates post-hoc DPCC, offering 3–18× fewer violations and preserving 100% goal success. HardFlow's value is in safety with zero margin, not speed at equal margin.
+
+***
+
+## Gen12 Fix 7: Batched Compute for HardFlow Sampler (July 27, 2026)
+
+**Keywords**: Gen12, HardFlow, batched compute, speedup, generation loop, ipopt bottleneck.
+
+1. **Batched Generation Implementation**: Rewrote the HardFlow sampler to integrate the candidate fan on the GPU in a single batched pass (`_velocity_batch`), mirroring DPCC's generation parallelism. CPU↔GPU transfers now only occur at the NLP solve boundaries.
+2. **Speedup Validated**: This fix yielded a ~1.77× speedup, closing the per-step computation gap to DPCC from ~3.9× down to ~2.1× without altering mathematical outcomes or success rates.
+3. **Remaining Bottleneck Identified**: The residual ~2.1× gap to DPCC is now primarily driven by the IPOPT solver being ~2.7× costlier per solve than SciPy (partly due to an L-BFGS approximation of a constant Hessian) and the mathematically necessary extra `v_next` endpoint prediction.
+
+***
 
 ## Gen3v6 U2: Official MeanFlow DiT Backbone (July 27, 2026)
 
@@ -3444,3 +3640,27 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 1. **Official Network Ported**: Analogous to Gen3v6 U2, ported α-Flow's own SiT (`sit`) architecture to serve as the third backbone for the Gen3v7 objective.
 2. **Objective/Architecture Match**: This ensures the α-Flow objective runs on its native architecture, enabling a strict single-variable backbone A/B test (DPCC-UNet vs iMF-DiT vs α-Flow-SiT) for the α-Flow homotopy formulation.
+
+***
+
+## ⭐🚀 GIANT LEAP & ❌ Pivot: MeanFlow / α-Flow Replace iMF (July 2026)
+
+> [!IMPORTANT]
+> **Gen3v6 (MeanFlow) and Gen3v7 (α-Flow) U2 — running on their own native ML backbones (MeanFlow-DiT / α-Flow-SiT) — produced extraordinary initial results under low NFE: smooth trajectories, acceptable success rates, efficient steps. Gen3v4 (iMF) is simultaneously declared failed and suspended. This is the active research route going forward.**
+
+| | Gen3v4 (iMF) ❌ | Gen3v6 (MeanFlow) ✅ | Gen3v7 (α-Flow) ✅ |
+| :--- | :--- | :--- | :--- |
+| **Status** | Suspended | Active (U2) | Active (U2) |
+| **Backbone** | iMF-DiT | MeanFlow-DiT (`mf_dit`) | α-Flow-SiT (`sit`) |
+| **Low-NFE trajectory** | Poor — blind-direction flaw | Smooth & coherent | Smooth & coherent |
+| **Success rate** | Refuted by Gen13 CLOSURE I | Promising initial | Promising initial |
+| **Why** | FM@K=2 strictly dominates iMF; Spearman ρ = -1.00 anti-correlation between field quality and guided success; projection dominates regardless | Analytic-JVP on native DiT validates MeanFlow (2505.13447) headline in constrained robotics | Self-bootstrapped homotopy (α: 1→0) on native SiT; viable/superior alternative to MeanFlow |
+
+**Next steps (priority order):**
+1. Full eval grid (K-steps, seeds, constraint tightness) on Gen3v6 U2 + Gen3v7 U2.
+2. One-time `all DPCC + HF metrics out` combined eval on both gens.
+3. Gen13 **HF\_Mix\_ML** integration — port MF + AF checkpoints into HardFlow for full **iMF + MF + AF** cross-arch comparison.
+4. Thesis A/B table: rank iMF / MF / AF / vanilla-FM by success rate, NFE, smoothness under identical DPCC budgets.
+
+> [!TIP]
+> **Route**: Gen3v6 U2 → Gen3v7 U2 → Gen13 HF\_Mix\_ML → thesis A/B table. Signal is too strong to deprioritise.
