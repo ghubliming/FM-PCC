@@ -290,14 +290,20 @@ def _run_env_quiet(env, policy, cfg, run_id=0):
     )
 
     real_trajectory = np.array(rollout)
-    with _quiet_stdout():
-        hardflow.utils.save_single_trajectory_image(
-            real_trajectory,
-            os.path.join(save_path, f"{run_id}_real.png"),
-            cfg.constraint,
-            cfg.obstacle_margin,
-            cfg.draw_obstacle_margin,
-        )
+    # Gen13 U12: this per-episode *_real.png is written UNCONDITIONALLY (it is NOT
+    # gated by --no-render). At n=200 × methods × K that is thousands of PNGs; it
+    # filled the cluster disk mid-run and crashed AF hardflow_new K2 on
+    # 128_real.png (OSError Errno 28). Gate it on an env flag, DEFAULT ON so every
+    # existing/iMF run stays byte-identical; the Mix-ML eval sets HF_EVAL_SAVE_PNG=0.
+    if os.environ.get("HF_EVAL_SAVE_PNG", "1") != "0":
+        with _quiet_stdout():
+            hardflow.utils.save_single_trajectory_image(
+                real_trajectory,
+                os.path.join(save_path, f"{run_id}_real.png"),
+                cfg.constraint,
+                cfg.obstacle_margin,
+                cfg.draw_obstacle_margin,
+            )
 
     # u_5(B): extra fan figure — only when explicitly enabled
     if getattr(cfg, "imf_plot_fan", False) and planned_fan:
