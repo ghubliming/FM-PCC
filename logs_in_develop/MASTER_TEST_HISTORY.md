@@ -3715,3 +3715,32 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Per-Plot Legend**: Upgraded the HTML visualizer (`index.html`) with a dynamic "Plot Legend" box located immediately beneath the main chart. It generates a localized table that maps x-axis positions to their exact candidate source paths for the current plot.
 2. **Debugging Ergonomics**: This vastly improves comparative debugging speed by eliminating the need to search the entire global Path Audit Map to decipher bar group path origins.
 3. **Mode-Aware Adaptation**: The legend automatically adapts to the visualizer's state, shifting between positional mapping in "By Candidate" mode and averaged facet mapping in "By Environment" mode.
+
+
+***
+
+## Gen13 U12 & U12.2: Mix-ML Evaluation Tidy & Family-First Folders (July 29, 2026)
+
+**Keywords**: Gen13, Mix-ML, output paths, family-first, evaluation structure.
+
+1. **Output Tidy**: Eliminated the redundant `imf` naming and PNG-flood from Mix-ML evaluation outputs by structuring results into `{raw,hfproj}_K<k>_n<n>`. This prevents `OSError: Errno 28` cluster disk crashes.
+2. **Family-First Folder Layout**: Refactored training and evaluation checkpoint paths to nest by objective family (`imf/`, `mf/`, `af/`), organizing runs into logical groups instead of a flat directory.
+3. **Preserving Baselines**: These structural changes correctly wrapped the frozen iMF entry points (`eval_imf.py`), ensuring backward compatibility without modifying the original canonical iMF implementation.
+
+***
+
+## Gen13 U13: Mix-ML Smoothness Diagnostic & Legacy Auto-Detect (July 29, 2026)
+
+**Keywords**: Gen13, Mix-ML, smoothness, MPC foresight-fan, backward compatibility.
+
+1. **Mix-ML Smoothness Diagnostic**: Extended the fix_7 MPC foresight-fan smoothness diagnostic to the Mix-ML objectives (MeanFlow / α-Flow) at K1/K2. Added wrappers (`eval_smoothness_diag_ml.sh`) to effortlessly collect unguided vs projected trajectory roughness and fan images using the existing instrumentation.
+2. **Legacy Checkpoint Auto-Detect**: Implemented a hotfix ensuring that `eval_smoothness_diag_ml.sh` seamlessly finds and evaluates pre-U12 flat-layout checkpoints, outputting them into the new nested U12 layout without requiring manual directory migrations.
+
+***
+
+## Cluster Maintenance: Clean Weights Tool (July 29, 2026)
+
+**Keywords**: maintenance, disk space, checkpoint pruning, clean_weights.
+
+1. **Pruning Tool**: Built `tools/clean_weights/clean_weights.py` to safely reclaim cluster storage by deleting intermediate periodic training weights (`state_<digits>.pt`), retaining only the self-sufficient `state_best.pt`.
+2. **Safety Protocols**: Integrated strict safety rules, including best-gated safety (skipping unfinished directories missing a best weight) and an explicit `--exclude` option to protect ongoing training runs from deletion.
