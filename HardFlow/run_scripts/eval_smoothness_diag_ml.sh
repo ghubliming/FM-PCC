@@ -31,8 +31,38 @@ guidance="${GUIDANCE:-hfproj}"
 k_steps="${ML_K:-2}"
 PLOT_FAN="${PLOT_FAN:-1}"          # fans ON by default -- this IS the fan diagnostic
 
-flow_exp_name="${ML_EXP_NAME:-${IMF_EXP_NAME:-${ml_type}/H16_ml_${ml_type}_100k}}"
 flow_cp="${ML_CP:-${IMF_CP:-4}}"
+run_tag="H16_ml_${ml_type}_100k"
+nested_name="${ml_type}/${run_tag}"     # U12.2 convention (fresh runs land here)
+legacy_name="${run_tag}"                # pre-U12.2 flat convention (U11/U12 checkpoints)
+
+# Checkpoint LOAD path: auto-detect nested vs legacy-flat so this doesn't break
+# on checkpoints trained before U12.2 (which are NOT physically moved). An
+# explicit ML_EXP_NAME/IMF_EXP_NAME override always wins, used verbatim, and
+# is NOT a fallback (it's the caller's explicit choice), so it stays quiet.
+#
+# No silent fallback: EVERY path that is not "nested + explicit request" gets
+# a loud WARNING banner on BOTH stdout and stderr, so it survives in a Slurm
+# log even buried under thousands of lines of dataset/normalizer noise.
+_warn_fallback() {
+    local msg="$1"
+    { echo "################################################################"
+      echo "[ smooth_diag_ml ] WARNING: $msg"
+      echo "################################################################"
+    } | tee /dev/stderr
+}
+
+if [ -n "${ML_EXP_NAME:-${IMF_EXP_NAME:-}}" ]; then
+    flow_exp_name="${ML_EXP_NAME:-${IMF_EXP_NAME}}"
+elif [ -f "logs/avoiding-v0/flow/${nested_name}/model_ema_${flow_cp}.pth" ]; then
+    flow_exp_name="$nested_name"
+elif [ -f "logs/avoiding-v0/flow/${legacy_name}/model_ema_${flow_cp}.pth" ]; then
+    flow_exp_name="$legacy_name"
+    _warn_fallback "nested checkpoint '${nested_name}' NOT FOUND -- falling back to LEGACY flat checkpoint '${legacy_name}' (pre-U12.2 layout, not migrated). Loading '${legacy_name}', NOT '${nested_name}'."
+else
+    flow_exp_name="$nested_name"
+    _warn_fallback "no checkpoint found at nested '${nested_name}' OR legacy '${legacy_name}' (cp=${flow_cp}). Proceeding with '${nested_name}' -- this WILL fail with FileNotFoundError below unless that checkpoint appears by run time."
+fi
 
 case "$guidance" in
     hfproj) gm="hardflow_new_imf" ;;
@@ -40,10 +70,10 @@ case "$guidance" in
     *) echo "[ smooth_diag_ml ] ERROR: GUIDANCE must be raw|hfproj, got '$guidance'" >&2; exit 1 ;;
 esac
 
-# U12.2-style nesting: family-first via flow_exp_name, then a smooth_* sub-arm
-# (kept separate from the decisive raw_K*/hfproj_K* n=200 dirs — this is a
-# small-n diagnostic, not a safety-rate measurement).
-exp_name="${flow_exp_name}/smooth_${guidance}_K${k_steps}_n${N}"
+# OUTPUT path stays tidy/family-first (U12.2 nested convention) REGARDLESS of
+# where the checkpoint was actually loaded from — decoupled on purpose so a
+# legacy-flat checkpoint still produces a well-organized eval tree.
+exp_name="${nested_name}/smooth_${guidance}_K${k_steps}_n${N}"
 fan_flag=""; [ "$PLOT_FAN" = "1" ] && fan_flag="--imf_plot_fan"
 
 echo "=== [Gen13 U13 smooth_diag] ml_type=$ml_type guidance=$gm K=$k_steps n=$N run=$flow_exp_name ==="

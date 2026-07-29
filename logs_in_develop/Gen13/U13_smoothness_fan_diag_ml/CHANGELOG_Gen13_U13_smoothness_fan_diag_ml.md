@@ -68,6 +68,43 @@ family-first tree. Ends with a `find … -name '*_fan.png'` pointer for the visu
 - Confirmed the real CSV column names (`safety`, `plan_roughness`, `plan_roughness_raw`) against
   `eval_imf.py`'s `fieldnames`/`writer.writerow` — match.
 
+## Fix (same day, first cluster run) — legacy-flat checkpoint auto-detect
+
+**Symptom:** first submit failed all 4 cells with `FileNotFoundError:
+logs/avoiding-v0/flow/mf/H16_ml_mf_100k/model_ema_4.pth` (and the `af/` equivalent).
+
+**Root cause:** `H16_ml_mf_100k`/`H16_ml_af_100k` were trained **before** U12.2 and were never
+physically `mv`'d into the new nested layout (U12.2's changelog flagged this as expected — the
+migration `mv` commands were offered, not run). U13's default `flow_exp_name` assumed the new
+nested path (`mf/H16_ml_mf_100k`) unconditionally, with no check that anything existed there.
+
+**Fix (`eval_smoothness_diag_ml.sh` only — still no frozen-file changes):** the checkpoint LOAD
+path now auto-detects: nested (`<ml_type>/H16_ml_<type>_100k`) checked first, legacy flat
+(`H16_ml_<type>_100k`) as fallback, with a clear `NOTE:`/`WARNING:` log line saying which one it
+picked (or that neither exists). An explicit `ML_EXP_NAME`/`IMF_EXP_NAME` override still always
+wins, used verbatim, same as before. The output `exp_name` is **decoupled from the load path** —
+it always uses the tidy nested form, so a legacy-flat checkpoint still produces a well-organized
+`eval/<ml_type>/H16_ml_<type>_100k/smooth_.../` tree instead of writing back to a flat dir.
+
+Verified both branches by simulation (not just read): legacy-flat-only → loads legacy, writes
+nested; nested-only (post any future migration) → loads nested. The sbatch loop's `CELL_DIRS`
+(used for the summary table) already computed the nested form independently, so it needed no
+change — it now matches the leaf script's output path by construction.
+
+No cluster-side `mv` was required to fix this — this is a pure wrapper-script robustness fix, not
+a migration. (The U12.2 migration commands remain available if you ever want the checkpoints
+physically reorganized, but are no longer necessary for this diagnostic to work.)
+
+**Follow-up — no silent fallback.** The first version of the fallback logged a single quiet
+`NOTE:` line to stdout only, which is easy to lose in a Slurm log buried under dataset/normalizer
+output. Changed to a loud `_warn_fallback()` banner (`###...###` framed, `[ smooth_diag_ml ]
+WARNING: ...`) piped through `tee /dev/stderr`, so it prints on **both stdout and stderr** every
+time the resolved checkpoint path is not "nested + explicit request" — i.e. both the legacy-flat
+fallback case and the neither-found case now bannerize identically loudly. An explicit
+`ML_EXP_NAME`/`IMF_EXP_NAME` override is the caller's stated intent, not a fallback, so it still
+prints quietly (just the normal `run=...` info line). Verified by simulated capture that the
+banner appears in both streams.
+
 ## How to run
 ```bash
 # the default matrix = exactly the ask (mf & af, K1 & K2, hfproj = raw+projected pair)
