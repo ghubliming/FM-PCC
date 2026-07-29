@@ -49,12 +49,31 @@ less logs/_clean_weights_runlogs/clean_weights_*.log
 python tools/clean_weights/clean_weights.py --apply
 ```
 
+### Protecting a run that will resume training
+
+Use `--exclude` to keep an unfinished run whose numbered checkpoints you still need to
+resume from. It's **repeatable** and accepts an absolute path, a path relative to `--root`,
+or a glob. Anything under an excluded directory is kept:
+
+```bash
+# keep this seed's checkpoints (still training, waiting to resume):
+python tools/clean_weights/clean_weights.py --apply \
+  --exclude 'avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/7'
+
+# multiple / glob:
+python tools/clean_weights/clean_weights.py --exclude '*alphaflow*/7' --exclude 'UAV_FM/uav-s_curve'
+```
+
+Excluded files are reported (console + log as `EXCLUDE` lines) so you can confirm what was
+protected. Run a dry-run first to verify the match.
+
 ### Options
 
 | Flag | Default | Meaning |
 |------|---------|---------|
 | `--root PATH` | `~/FMPCC/FM-PCC/logs` | logs root to scan |
 | `--apply` | off (dry-run) | actually delete |
+| `--exclude PATH_OR_GLOB` | none | protect a folder/file from deletion; repeatable. Absolute path, path relative to `--root`, or glob. |
 | `-h/--help` | — | help |
 
 ## Logging
@@ -64,7 +83,7 @@ Each invocation writes `logs/_clean_weights_runlogs/clean_weights_<YYYYMMDD_HHMM
 
 - **BEFORE** — total size of the root, free disk, per-top-level-folder sizes.
 - **DELETE manifest** — every file with size + mtime; `SKIP-NOBEST` lines for the best-less
-  dirs that were left alone.
+  dirs that were left alone; `EXCLUDE` lines for anything protected via `--exclude`.
 - **AFTER** — deleted count, freed bytes, recomputed total + free disk (in `--apply`;
   projected in dry-run).
 

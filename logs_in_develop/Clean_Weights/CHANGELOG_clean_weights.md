@@ -17,6 +17,11 @@ training checkpoints and keep only the best weight per run.
     `~/FMPCC/FM-PCC/logs`).
   - **Best-gated safety**: prunes a dir only if it holds a `state_best.pt`; dirs with numbered
     checkpoints but no best (crashed / in-progress) are skipped and reported.
+  - **`--exclude PATH_OR_GLOB` (repeatable)**: protect an unfinished run that will resume
+    training. Accepts an absolute path, a path relative to `--root`, or a glob
+    (e.g. `*alphaflow*/7`); anything under an excluded dir is kept. Protected files are
+    reported on console + logged as `EXCLUDE` lines. Added after user flagged that
+    `.../AlphaFlowODE_.../7` is mid-training and must not be pruned.
   - Single `os.walk` computes BEFORE totals, per-top-level-folder sizes, and candidates in one
     pass. Skips/ignores its own run-logs folder. Skips symlinks.
   - Writes a timestamped audit log per run to **`logs/_clean_weights_runlogs/`** (inside the

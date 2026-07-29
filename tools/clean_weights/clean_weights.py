@@ -48,11 +48,50 @@ def human(n: int) -> str:
     return f"{f:.1f}TB"
 
 
-def scan(root: Path, runlogs_dir: Path):
+def resolve_excludes(root: Path, patterns: list[str]):
+    """Split --exclude values into (absolute ancestor paths, glob patterns).
+
+    A value that resolves to an existing path (absolute, or relative to root) is treated
+    as an ancestor filter: anything under it is protected. Everything is ALSO kept as a
+    glob so wildcard values like '*alphaflow*/7' work.
+    """
+    anc: list[Path] = []
+    globs: list[str] = list(patterns)
+    for p in patterns:
+        cand = Path(p)
+        if not cand.is_absolute():
+            cand = root / p
+        try:
+            cand = cand.resolve()
+        except OSError:
+            continue
+        if cand.exists():
+            anc.append(cand)
+    return anc, globs
+
+
+def is_excluded(fp: Path, root: Path, anc: list[Path], globs: list[str]) -> bool:
+    for a in anc:
+        if fp == a or a in fp.parents:
+            return True
+    import fnmatch
+    fp_s = str(fp)
+    try:
+        rel_s = str(fp.relative_to(root))
+    except ValueError:
+        rel_s = fp_s
+    for g in globs:
+        if fnmatch.fnmatch(fp_s, g) or fnmatch.fnmatch(rel_s, g) \
+                or fnmatch.fnmatch(fp_s, f"*{g}*"):
+            return True
+    return False
+
+
+def scan(root: Path, runlogs_dir: Path, anc: list[Path], globs: list[str]):
     """Single walk: total size, per-top-level sizes, and periodic-checkpoint candidates.
 
     Returns (total_bytes, per_top {name: bytes}, to_delete [(path, size, mtime)],
-             nobest_dirs set[Path]).
+             nobest_dirs set[Path], excluded [(path, size)]).
     """
     total = 0
     per_top: dict[str, int] = {}
@@ -90,13 +129,16 @@ def scan(root: Path, runlogs_dir: Path):
 
     to_delete: list[tuple[Path, int, float]] = []
     nobest_dirs: set[Path] = set()
+    excluded: list[tuple[Path, int]] = []
     for fp, size in candidates:
-        if str(fp.parent) in has_best:
+        if is_excluded(fp, root, anc, globs):
+            excluded.append((fp, size))
+        elif str(fp.parent) in has_best:
             to_delete.append((fp, size, fp.stat().st_mtime))
         else:
             nobest_dirs.add(fp.parent)
 
-    return total, per_top, to_delete, nobest_dirs
+    return total, per_top, to_delete, nobest_dirs, excluded
 
 
 def main() -> int:
@@ -105,6 +147,10 @@ def main() -> int:
                     help=f"logs root to scan (default: {DEFAULT_ROOT})")
     ap.add_argument("--apply", action="store_true",
                     help="actually delete (default: dry-run, deletes nothing)")
+    ap.add_argument("--exclude", action="append", default=[], metavar="PATH_OR_GLOB",
+                    help="protect a folder/file from deletion; repeatable. Accepts an "
+                         "absolute path, a path relative to --root, or a glob "
+                         "(e.g. '*alphaflow*/7'). Anything under an excluded dir is kept.")
     args = ap.parse_args()
 
     root: Path = args.root.expanduser().resolve()
@@ -125,8 +171,13 @@ def main() -> int:
     print(f" log  : {logfile}")
     print("=" * 63)
 
+    anc, globs = resolve_excludes(root, args.exclude)
+    if args.exclude:
+        print(" excl : " + ", ".join(args.exclude))
+
     # ---- BEFORE scan --------------------------------------------------------
-    total_before, per_top, to_delete, nobest_dirs = scan(root, runlogs_dir)
+    total_before, per_top, to_delete, nobest_dirs, excluded = scan(
+        root, runlogs_dir, anc, globs)
     free_before = shutil.disk_usage(root).free
     reclaimable = sum(sz for _, sz, _ in to_delete)
 
@@ -138,6 +189,8 @@ def main() -> int:
     w(f"# clean_weights run {ts}")
     w(f"# root={root}")
     w(f"# mode={'APPLY' if args.apply else 'DRY-RUN'}")
+    if args.exclude:
+        w(f"# exclude={args.exclude}")
     w()
     w("== BEFORE ==")
     w(f"total size : {human(total_before)} ({total_before} B)")
@@ -155,6 +208,11 @@ def main() -> int:
         w("== SKIPPED: numbered checkpoints but NO state_best.pt ==")
         for d in sorted(nobest_dirs):
             w(f"SKIP-NOBEST  {d}")
+    if excluded:
+        w()
+        w("== EXCLUDED by --exclude (protected) ==")
+        for fp, sz in sorted(excluded):
+            w(f"EXCLUDE {human(sz):>10}  {fp}")
 
     # ---- APPLY --------------------------------------------------------------
     deleted, freed, errors = 0, 0, 0
@@ -190,6 +248,10 @@ def main() -> int:
     print()
     print(f"BEFORE  total {human(total_before)} | free disk {human(free_before)}")
     print(f"Periodic checkpoints to delete : {len(to_delete)}")
+    if excluded:
+        excl_bytes = sum(sz for _, sz in excluded)
+        print(f"Protected by --exclude         : {len(excluded)} file(s), "
+              f"{human(excl_bytes)} kept")
     if nobest_dirs:
         print(f"!! {len(nobest_dirs)} dir(s) with numbered checkpoints but NO "
               f"{BEST_NAME} — SKIPPED (see log)")
