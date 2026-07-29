@@ -8,10 +8,11 @@
 #SBATCH --time=24:00:00
 #SBATCH --partition=gpu-1-student
 # ==============================================================================
-# Gen13 U11 — train a selectable MLbone (imf|mf|af) inside HardFlow.
+# Gen13 U11/U12.2 — train a selectable MLbone (imf|mf|af) inside HardFlow.
 # Runs the shared iMF gates FIRST (they validate the frozen TemporalImfUnet +
 # convention + sampler that ALL three MLbones ride on) and aborts if they fail.
-# Produces logs/hardflow/avoiding-v0/flow/H16_ml_<ml_type>_<steps>k/model_ema_*.pth.
+# Produces logs/hardflow/avoiding-v0/flow/<ml_type>/H16_ml_<ml_type>_<steps>k/model_ema_*.pth
+# (U12.2: nested one folder per family first — imf/ mf/ af/).
 #
 # Submit (via the pipeline is preferred):
 #   ML_TYPE=mf ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/train_ml_hardflow.sh
@@ -30,5 +31,5 @@ bash run_scripts/train_ml.sh
 
 echo "[ HF-ML-TRAIN ] done. checkpoints:"
 _ml="${ML_TYPE:-imf}"
-_exp="${ML_EXP_NAME:-H16_ml_${_ml}_$(( ${N_TRAIN_STEPS:-100000} / 1000 ))k}"
+_exp="${ML_EXP_NAME:-${_ml}/H16_ml_${_ml}_$(( ${N_TRAIN_STEPS:-100000} / 1000 ))k}"
 ls -la "logs/avoiding-v0/flow/${_exp}/" 2>/dev/null || echo "  (none — check log above)"

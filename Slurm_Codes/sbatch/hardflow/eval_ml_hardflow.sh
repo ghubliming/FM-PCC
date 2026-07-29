@@ -8,17 +8,22 @@
 #SBATCH --time=12:00:00
 #SBATCH --partition=gpu-1-student
 # ==============================================================================
-# Gen13 U12 — evaluate a Mix-ML run (imf|mf|af) on avoiding, RAW + HARDFLOW-proj.
-# Clean sibling of eval_imf_hardflow.sh. Two differences that matter:
-#   1. NAMING — dirs are named after the OBJECTIVE, not "imf", and grouped one
-#      folder per training run:  logs/<env>/eval/<ML_EXP_NAME>/<method>_K<k>[_n<n>]/
-#      (method ∈ {raw, hfproj}).  eval_${method}_ml.sh does the tidy naming.
-#   2. NO PNG FLOOD — HF_EVAL_SAVE_PNG=0 by default, so the per-episode *_real.png
+# Gen13 U12/U12.2 — evaluate a Mix-ML run (imf|mf|af) on avoiding, RAW + HARDFLOW-proj.
+# Clean sibling of eval_imf_hardflow.sh. Differences that matter:
+#   1. NAMING — dirs are named after the OBJECTIVE, not "imf":
+#        logs/<env>/eval/<ML_EXP_NAME>/<method>_K<k>[_n<n>]/   (method ∈ {raw, hfproj})
+#      eval_${method}_ml.sh does the tidy naming.
+#   2. FAMILY-FIRST NESTING (U12.2) — ML_EXP_NAME is normally <ml_type>/<run>
+#      (set by ml_pipeline_hardflow.sh, e.g. "mf/H16_ml_mf_100k"), so results land
+#      one folder per FAMILY first:  eval/mf/H16_ml_mf_100k/hfproj_K2_n200/
+#      Pre-U12.2 flat checkpoints (e.g. "H16_ml_af_100k", no family folder) still
+#      load fine — pass ML_EXP_NAME verbatim, nothing auto-prefixes an override.
+#   3. NO PNG FLOOD — HF_EVAL_SAVE_PNG=0 by default, so the per-episode *_real.png
 #      (thousands at n=200×methods×K; it filled the disk and crashed AF-K2 in U11)
 #      is skipped. Set HF_EVAL_SAVE_PNG=1 to restore the renders.
 #
 # Submit (usually via ml_pipeline_hardflow.sh; standalone for re-eval):
-#   ML_EXP_NAME=H16_ml_mf_100k ML_CP=4 ML_KS="1 2" RANDOM_REPEAT=200 \
+#   ML_EXP_NAME=mf/H16_ml_mf_100k ML_CP=4 ML_KS="1 2" RANDOM_REPEAT=200 \
 #     ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_ml_hardflow.sh
 # Knobs (env): ML_METHODS ("raw hfproj"), ML_KS ("1 2"), ML_CP (4),
 #              RANDOM_REPEAT, HF_EVAL_SAVE_PNG (0), IMF_PLOT_FAN.
@@ -26,7 +31,7 @@
 # ==============================================================================
 source Slurm_Codes/sbatch/hardflow/_hardflow_common.sh
 
-ML_EXP_NAME="${ML_EXP_NAME:-${IMF_EXP_NAME:-H16_ml_imf_100k}}"
+ML_EXP_NAME="${ML_EXP_NAME:-${IMF_EXP_NAME:-imf/H16_ml_imf_100k}}"
 ML_METHODS="${ML_METHODS:-raw hfproj}"
 ML_KS="${ML_KS:-${IMF_KS:-1 2}}"
 

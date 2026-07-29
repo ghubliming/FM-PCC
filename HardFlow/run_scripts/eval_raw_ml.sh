@@ -5,6 +5,8 @@
 # the run after the OBJECTIVE it actually evaluated (mf/af/imf), not "imf", and
 # writes into a tidy per-run folder:
 #     logs/<env>/eval/<ML_EXP_NAME>/raw_K<k>[_n<n>]/
+# U12.2: ML_EXP_NAME is normally "<ml_type>/<run>" (e.g. "mf/H16_ml_mf_100k"), so
+# this nests family-first for free: eval/mf/H16_ml_mf_100k/raw_K2_n200/.
 # The frozen eval_original_imf.sh is left byte-identical (iMF baseline path).
 start_time=$(date +%s)
 
@@ -17,7 +19,7 @@ horizon=16
 
 # WHICH training to evaluate. ML_EXP_NAME is the Mix-ML run (e.g. H16_ml_mf_100k);
 # IMF_EXP_NAME kept as a fallback so the pipeline's existing wiring still works.
-flow_exp_name="${ML_EXP_NAME:-${IMF_EXP_NAME:-H16_ml_imf_100k}}"
+flow_exp_name="${ML_EXP_NAME:-${IMF_EXP_NAME:-imf/H16_ml_imf_100k}}"
 flow_cp="${ML_CP:-${IMF_CP:-4}}"
 k_steps="${ML_K:-${IMF_K:-2}}"
 random_repeat="${RANDOM_REPEAT:-50}"

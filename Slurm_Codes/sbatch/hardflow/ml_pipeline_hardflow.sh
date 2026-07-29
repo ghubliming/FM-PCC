@@ -14,9 +14,13 @@
 # EVAL is OBJECTIVE-AGNOSTIC — MF/AF train the SAME TemporalImfUnet, so
 # run/eval_imf.py loads their checkpoints and runs ImfFlowPolicy unchanged.
 # U12: eval now goes through eval_ml_hardflow.sh (NOT the frozen iMF one), which
-# names dirs after the objective and groups them one folder per run:
-#     logs/<env>/eval/<EXP_NAME>/{raw,hfproj}_K<k>[_n<n>]/
-# We forward ML_EXP_NAME=<the ML run> so eval loads exactly this checkpoint.
+# names dirs after the objective. U12.2: EXP_NAME itself now carries the family
+# prefix (EXP_NAME=<ml_type>/H16_ml_<ml_type>_<steps>k), so BOTH train and eval
+# nest one folder per FAMILY FIRST, then the run, then the arm — for free:
+#     logs/<env>/flow/<EXP_NAME>/model_ema_*.pth                  == flow/mf/H16_ml_mf_100k/...
+#     logs/<env>/eval/<EXP_NAME>/{raw,hfproj}_K<k>[_n<n>]/         == eval/mf/H16_ml_mf_100k/hfproj_K2_n200/
+# We forward ML_EXP_NAME=$EXP_NAME so eval loads exactly this checkpoint and
+# lands in the matching family folder.
 #
 # ------------------------------------------------------------------ USAGE
 #   MeanFlow, one seed, train+eval (K=1,2, n=200):
@@ -55,7 +59,10 @@ SBATCH_DIR="Slurm_Codes/sbatch/hardflow"
 ML_TYPE="${ML_TYPE:-imf}"
 N_TRAIN_STEPS="${N_TRAIN_STEPS:-100000}"
 STEPS_TAG="$(( N_TRAIN_STEPS / 1000 ))k"
-EXP_NAME="${ML_EXP_NAME:-H16_ml_${ML_TYPE}_${STEPS_TAG}}"
+RUN_NAME="H16_ml_${ML_TYPE}_${STEPS_TAG}"
+# U12.2: default nests under <ml_type>/ (family-first folder). An explicit
+# ML_EXP_NAME override is used VERBATIM (no auto family-prefix).
+EXP_NAME="${ML_EXP_NAME:-${ML_TYPE}/${RUN_NAME}}"
 FINAL_CP="${IMF_CP:-$(( N_TRAIN_STEPS / 25000 ))}"
 CKPT="logs/hardflow/avoiding-v0/flow/${EXP_NAME}/model_ema_${FINAL_CP}.pth"
 
@@ -109,4 +116,4 @@ fi
 echo "--------------------------------------------------------------------------------"
 echo "Mix-ML pipeline submitted (ml_type=$ML_TYPE). Monitor with 'squeue -u $USER'."
 echo "If training fails, evaluation is auto-cancelled by Slurm (afterok)."
-echo "Results land in logs/hardflow/avoiding-v0/eval/${EXP_NAME}/{raw,hfproj}_K*[_n*]/"
+echo "Results land in logs/hardflow/avoiding-v0/eval/${EXP_NAME}/{raw,hfproj}_K*[_n*]/  (family folder: ${ML_TYPE}/)"

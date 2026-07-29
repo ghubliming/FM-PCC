@@ -4,6 +4,8 @@
 # call and SAME --guidance_method hardflow_new_imf (code contract, untouched), but
 # named after the OBJECTIVE (mf/af/imf), not "imf", into a tidy per-run folder:
 #     logs/<env>/eval/<ML_EXP_NAME>/hfproj_K<k>[_n<n>]/
+# U12.2: ML_EXP_NAME is normally "<ml_type>/<run>" (e.g. "af/H16_ml_af_100k"), so
+# this nests family-first for free: eval/af/H16_ml_af_100k/hfproj_K2_n200/.
 # The frozen eval_hardflow_new_imf.sh is left byte-identical (iMF baseline path).
 start_time=$(date +%s)
 
@@ -14,7 +16,7 @@ state_dim=4
 action_dim=2
 horizon=16
 
-flow_exp_name="${ML_EXP_NAME:-${IMF_EXP_NAME:-H16_ml_imf_100k}}"
+flow_exp_name="${ML_EXP_NAME:-${IMF_EXP_NAME:-imf/H16_ml_imf_100k}}"
 flow_cp="${ML_CP:-${IMF_CP:-4}}"
 k_steps="${ML_K:-${IMF_K:-2}}"
 random_repeat="${RANDOM_REPEAT:-50}"

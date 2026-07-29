@@ -1,8 +1,11 @@
 #!/bin/bash
-# Gen13 U11 — train a selectable MLbone (imf|mf|af) on avoiding.
+# Gen13 U11/U12.2 — train a selectable MLbone (imf|mf|af) on avoiding.
 # Additive sibling of train_imf.sh; produces
-#   logs/avoiding-v0/flow/H16_ml_<ml_type>_<steps>k/model_ema_{0..N}.pth
-# The `ml_` prefix guarantees NO collision with the frozen H16_imf_* iMF runs.
+#   logs/avoiding-v0/flow/<ml_type>/H16_ml_<ml_type>_<steps>k/model_ema_{0..N}.pth
+# U12.2: nested one folder per FAMILY first (imf/ mf/ af/), so `ls logs/.../flow/`
+# shows the three objectives instead of a flat pile of runs. The `ml_` prefix in
+# the run name still guarantees NO collision with the frozen H16_imf_* iMF runs.
+# Override ML_EXP_NAME to use any exact path/name (no auto family-prefix applied).
 start_time=$(date +%s)
 
 export D4RL_SUPPRESS_IMPORT_ERROR=1
@@ -19,9 +22,13 @@ n_train_steps="${N_TRAIN_STEPS:-100000}"
 lr="${IMF_LR:-2e-4}"
 grad_clip="${IMF_GRAD_CLIP:-1.0}"
 
-# exp_name encodes the family AND the step budget so nothing ever collides.
+# U12.2: default exp_name nests under <ml_type>/ so the family is the FIRST
+# folder level; the step budget still disambiguates within it. An explicit
+# ML_EXP_NAME override is used VERBATIM (no auto family-prefix) — the caller
+# owns the full path then.
 steps_tag="$(( n_train_steps / 1000 ))k"
-exp_name="${ML_EXP_NAME:-H16_ml_${ml_type}_${steps_tag}}"
+run_name="H16_ml_${ml_type}_${steps_tag}"
+exp_name="${ML_EXP_NAME:-${ml_type}/${run_name}}"
 
 # refuse to clobber a COMPLETED run (save_config overwrites silently).
 final_cp=$(( n_train_steps / 25000 ))
