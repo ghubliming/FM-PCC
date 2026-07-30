@@ -29,9 +29,30 @@ DIFFERENCES FROM UPSTREAM, ALL DELIBERATE (see the Gen12 changelog §4):
   * No value-model warm start.  FMPCC has no value model; upstream's warmstart
     only picked a noise seed and the s0 parameter, both of which we get for
     free.  This also keeps the NFE accounting clean (2K here, K+2K upstream).
-  * The initial noise matches FMv3's sampler (`0.5 * randn`), not HardFlow's
-    unit `randn`.
+  * The initial noise matches THE HOST MODEL'S OWN SAMPLER, via the explicit
+    `init_noise_scale` argument.  See the fix_4 warning below — this is the one
+    thing that does NOT transfer when the port is moved to a new generation.
   * IPOPT and CasADi are silenced by default (PLAN §3.5).
+
+⚠️ fix_4 — INITIAL-NOISE SCALE IS GENERATION-SPECIFIC.  DO NOT HARDCODE.
+------------------------------------------------------------------------
+Gen12's base (`flow_matcher_v3/models/diffusion.py:164,227`) starts its ODE from
+`0.5 * randn`.  Gen3v6's MeanFlow (`mf_diffusion.py:204`) starts from
+`randn` — sigma=1.0, chosen to match its `q_sample` training noise
+(`mf_diffusion.py:180-183`, `noise = torch.randn_like(x_start)`).  The original
+U3 port copied Gen12's 0.5 verbatim, so arm C ran at HALF the trained noise
+scale: an out-of-distribution tau=0 state, and arms B/C not sharing a start
+distribution — the exact thing this sampler is supposed to guarantee.
+
+`init_noise_scale` is therefore a REQUIRED argument on `HardFlowSampler` (no
+default — a wrong scale is silent, so the call site must state it).
+`HardFlowPolicy` defaults it to Gen3v6's 1.0 and the eval driver passes it
+explicitly anyway.
+When porting to another generation, read the scale off that generation's own
+`p_sample_loop` (Gen3v7 / alpha-Flow: `af_diffusion.py:260` is sigma=1.0 — do NOT
+read it from `flow_matcher_v3_alphaflow/models/diffusion.py`, which is the legacy
+FMv3ODE class in the same folder and still uses 0.5).
+`gates_hardflow_meanflow.py::gate_h3` pins this numerically.
 """
 
 import time
@@ -355,13 +376,18 @@ class HardFlowSampler:
     The model is used ONLY as a black box `v = f(x, t)`.
     """
 
-    def __init__(self, model, layout, nlp, device='cuda', activation_threshold=0.0,
-                 verbose=False):
+    def __init__(self, model, layout, nlp, init_noise_scale, device='cuda',
+                 activation_threshold=0.0, verbose=False):
         assert 0.0 <= activation_threshold <= 1.0, \
             f'activation_threshold must be in [0, 1], got {activation_threshold}'
+        # fix_4: no default. A wrong scale is silent — it just degrades the field
+        # quality — so the call site must state it explicitly (module docstring).
+        assert init_noise_scale > 0, \
+            f'init_noise_scale must be > 0, got {init_noise_scale}'
         self.model = model
         self.layout = layout
         self.nlp = nlp
+        self.init_noise_scale = float(init_noise_scale)
         self.device = device
         # fix_6 (DPCC polarity): threshold = fraction of the late trajectory projected
         # (higher = MORE projection), matching DPCC's diffusion_timestep_threshold.
@@ -370,6 +396,12 @@ class HardFlowSampler:
         self.activation_threshold = float(activation_threshold)
         self.verbose = verbose
         self.nfe = 0
+
+    def draw_init_noise(self, batch_size):
+        """The tau=0 draw, isolated so `gate_h3` can pin its scale without an NLP."""
+        return self.init_noise_scale * torch.randn(
+            batch_size, self.layout.horizon, self.layout.transition_dim,
+            device=self.device)
 
     def _velocity_batch(self, X, tau, s0_all, cond, returns):
         """Batched black-box velocity: (B, dof) torch -> (B, dof) torch, on device.
@@ -421,11 +453,12 @@ class HardFlowSampler:
         K = int(flow_steps)
         dt = 1.0 / K
 
-        # Same initial-noise law as FMv3's own sampler (0.5 * randn), so arms A,
-        # B and C start from the same distribution. PLAN §3.3 direction: FMv3
-        # integrates tau = 0 (noise) -> 1 (data), identical to HardFlow.
-        x_init = 0.5 * torch.randn(batch_size, L.horizon, L.transition_dim,
-                                   device=self.device)
+        # fix_4: the initial-noise law is taken from the HOST model's own sampler
+        # via `init_noise_scale` (Gen3v6 MeanFlow: sigma=1.0, mf_diffusion.py:204),
+        # NOT hardcoded to Gen12's 0.5. This is what actually makes arms A, B and C
+        # start from the same distribution. PLAN §3.3 direction: FMv3 integrates
+        # tau = 0 (noise) -> 1 (data), identical to HardFlow.
+        x_init = self.draw_init_noise(batch_size)
         x_init = apply_conditioning(x_init, cond, L.action_dim, goal_dim=0)
 
         # dof view (drop s_0) of every candidate, kept ON the GPU for the whole ODE.
@@ -443,10 +476,16 @@ class HardFlowSampler:
         # U4.2 per-candidate costs (DPCC-style selection).
         #   prox    = Σ_k ‖x1_proj − x1_ref‖²  (total NLP intervention; ranking key)
         #   control = Σ_k ‖u_k‖               (control effort; descriptor)
+        # fix_4: `control` previously accumulated ‖(X_next − X_ref)/dt‖, which is the
+        # NLP correction, not the field's control effort — i.e. a tau-reweighted copy
+        # of `prox`, so candidate_cost='control' silently reproduced 'prox' instead of
+        # offering an independent ranking. It now accumulates the velocity magnitude
+        # the docstring always claimed.
         cand_prox = np.zeros(batch_size, dtype=np.float64)
         cand_ctrl = torch.zeros(batch_size, device=self.device)
         chains = [X.detach()]                                          # list of (B, dof) on device
         n_solves_before, n_fail_before = self.nlp.n_solves, self.nlp.n_failures
+        nfe_before = self.nfe
 
         for k in range(K):
             tau_k = k * dt
@@ -454,6 +493,7 @@ class HardFlowSampler:
 
             V = self._velocity_batch(X, tau_k, s0_all, cond_net, returns_net)
             X_ref = X + V * dt
+            cand_ctrl = cand_ctrl + V.reshape(batch_size, -1).norm(dim=1)   # fix_4: Σ_k ‖u_k‖
 
             # U4 + fix_6: EXACT DPCC gate, unchanged. DPCC projects when
             # `loop_idx >= (1 - T)*K`; we use the identical `k >= (1 - threshold)*K`
@@ -479,7 +519,6 @@ class HardFlowSampler:
             else:
                 X_next = X_ref
 
-            cand_ctrl = cand_ctrl + (((X_next - X_ref) / dt) ** 2).sum(dim=1).sqrt()
             X = X_next
             chains.append(X.detach())
 
@@ -499,7 +538,14 @@ class HardFlowSampler:
             'projection_costs': {},
             'candidate_costs': cand_prox,                          # U4.2 ranking key (prox)
             'candidate_costs_control': cand_ctrl.detach().cpu().numpy(),  # U4.2 descriptor
-            'nfe': self.nfe,
+            # fix_4: `nfe` was cumulative-since-construction while `nlp_solves`/
+            # `nlp_failures` were per-call deltas, so summing infos across the episode
+            # (as the eval driver does for the NLP counters) would have grown
+            # quadratically. All three are per-call deltas now; the running total stays
+            # available as `nfe_total` and on `policy.nfe`, which is what the eval
+            # driver actually reports — so the logged NFE figure is unchanged.
+            'nfe': self.nfe - nfe_before,
+            'nfe_total': self.nfe,
             'nlp_solves': self.nlp.n_solves - n_solves_before,
             'nlp_failures': self.nlp.n_failures - n_fail_before,
             'activation_threshold': self.activation_threshold,
@@ -527,7 +573,10 @@ class HardFlowPolicy:
                  test_ret=0, reg_scale=1.0, activation_threshold=0.0,
                  trajectory_selection='random', candidate_cost='prox',
                  dynamics_mode='deriv', linear_dynamics=None, print_level=0,
-                 print_time=False, device='cuda', goal_dim=0, verbose=False):
+                 print_time=False, device='cuda', goal_dim=0, verbose=False,
+                 init_noise_scale=1.0):
+        """`init_noise_scale` defaults to Gen3v6's sigma=1.0 (mf_diffusion.py:204).
+        It is a REQUIRED consideration when porting — see the module docstring."""
         assert goal_dim == 0, (
             'Gen12 targets avoiding-d3il (goal_dim=0). A goal-conditioned env '
             'would need the goal columns carried through the dof vector.')
@@ -566,7 +615,8 @@ class HardFlowPolicy:
             print_level=print_level, print_time=print_time)
 
         self.sampler = HardFlowSampler(
-            model=model, layout=self.layout, nlp=self.nlp, device=device,
+            model=model, layout=self.layout, nlp=self.nlp,
+            init_noise_scale=init_noise_scale, device=device,
             activation_threshold=activation_threshold, verbose=verbose)
 
         self.prev_observations = None
@@ -625,7 +675,11 @@ class HardFlowPolicy:
             costs = infos.get(key)
             if costs is not None and len(costs) == batch_size:
                 return int(np.argmin(costs))
-        return 0  # 'random' (index 0), or t/c fallbacks before any history exists
+        # fix_4 (naming, not behaviour): 'random' takes slot 0, it does not draw. The
+        # randomness lives in the noise, so slot 0 IS an unbiased sample of the fan —
+        # and DPCC's Policy does exactly the same (`which_trajectory = 0`). Kept
+        # identical so arm B and arm C stay comparable; only the comment was wrong.
+        return 0  # 'random' (slot 0), or t/c fallbacks before any history exists
 
     @property
     def nfe(self):

@@ -3744,3 +3744,11 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 1. **Pruning Tool**: Built `tools/clean_weights/clean_weights.py` to safely reclaim cluster storage by deleting intermediate periodic training weights (`state_<digits>.pt`), retaining only the self-sufficient `state_best.pt`.
 2. **Safety Protocols**: Integrated strict safety rules, including best-gated safety (skipping unfinished directories missing a best weight) and an explicit `--exclude` option to protect ongoing training runs from deletion.
+
+***
+
+## Gen13 U13: SLURM Hotfix (July 29, 2026)
+
+**Keywords**: Gen13, Mix-ML, SLURM, timeout.
+
+1. **Evaluation Timeout Fix**: Increased the SLURM wall-clock time limit for the Mix-ML smoothness diagnostic matrix (`eval_smoothness_diag_ml_hardflow.sh`) to 12 hours, ensuring the foresight-fan captures can run to completion without being prematurely killed.

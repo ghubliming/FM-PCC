@@ -24,6 +24,11 @@ from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
 HORIZON, ACTION_DIM, STATE_DIM = 8, 2, 4
 TRANSITION_DIM = ACTION_DIM + STATE_DIM
 
+# fix_4: Gen3v6's MeanFlow sampler starts at sigma=1.0 (mf_diffusion.py:204), matching its
+# q_sample training noise. Gen12's FMv3ODE base used 0.5 and the U3 port inherited it — this
+# constant plus gate_h3 is what stops that regressing, here or in a future generation.
+MEANFLOW_INIT_NOISE_SCALE = 1.0
+
 
 class _RecordingMeanFlowStub:
     """Mimics MeanFlowODE._predict_velocity(x, cond, t, h=None, returns=None).
@@ -65,8 +70,9 @@ def gate_h1(device='cpu'):
     print('\n-- H1: HardFlow queries the mean-flow field at h==0 ' + '-' * 15)
     stub = _RecordingMeanFlowStub()
     layout = TrajectoryLayout(HORIZON, ACTION_DIM, STATE_DIM)
-    sampler = HardFlowSampler(model=stub, layout=layout, nlp=None, device=device,
-                              activation_threshold=1.0)
+    sampler = HardFlowSampler(model=stub, layout=layout, nlp=None,
+                              init_noise_scale=MEANFLOW_INIT_NOISE_SCALE,
+                              device=device, activation_threshold=1.0)
     B = 4
     X = torch.zeros(B, layout.dof, device=device)
     s0 = torch.zeros(B, STATE_DIM, device=device)
@@ -84,6 +90,36 @@ def gate_h1(device='cpu'):
     ok = ok and is_tensor and all_zero and right_shape
     print(f'  H1 -> {"PASS" if ok else "FAIL"}  '
           f'(u(x,t,0)=v identity is what makes the projection math == Gen12)')
+    return ok
+
+
+def gate_h3(device='cpu'):
+    """fix_4 pin: arm C's tau=0 draw must match the MeanFlow sampler's own sigma=1.0.
+
+    The original U3 port carried Gen12's `0.5 * randn` into a model trained and sampled at
+    sigma=1.0, so arm C started off-distribution and arms B/C did not share a start
+    distribution. This is a SILENT failure — no crash, no solver error, just a degraded
+    field — so it gets a numeric gate rather than a comment.
+    """
+    print('\n-- H3: arm C init noise == MeanFlow sampler sigma ' + '-' * 12)
+    layout = TrajectoryLayout(HORIZON, ACTION_DIM, STATE_DIM)
+    sampler = HardFlowSampler(model=_RecordingMeanFlowStub(), layout=layout, nlp=None,
+                              init_noise_scale=MEANFLOW_INIT_NOISE_SCALE,
+                              device=device, activation_threshold=1.0)
+    torch.manual_seed(0)
+    draw = sampler.draw_init_noise(4096)
+    std = float(draw.std())
+    scale_ok = sampler.init_noise_scale == MEANFLOW_INIT_NOISE_SCALE
+    # 4096*8*6 samples -> the sample std is tight; 2% is generous but still catches 0.5 vs 1.0.
+    std_ok = abs(std - MEANFLOW_INIT_NOISE_SCALE) < 0.02 * MEANFLOW_INIT_NOISE_SCALE
+    shape_ok = tuple(draw.shape) == (4096, HORIZON, TRANSITION_DIM)
+    print(f'  init_noise_scale        : {sampler.init_noise_scale} '
+          f'(expected {MEANFLOW_INIT_NOISE_SCALE}, mf_diffusion.py:204)')
+    print(f'  empirical std of x_init : {std:.4f}')
+    print(f'  draw shape              : {tuple(draw.shape)}  ok={shape_ok}')
+    ok = scale_ok and std_ok and shape_ok
+    print(f'  H3 -> {"PASS" if ok else "FAIL"}  '
+          f'(0.5 here = arm C runs at half the trained noise scale, silently)')
     return ok
 
 
@@ -108,7 +144,7 @@ if __name__ == '__main__':
     ap.add_argument('--device', default='cpu')
     a = ap.parse_args()
 
-    results = [gate_h0(), gate_h1(device=a.device)]
+    results = [gate_h0(), gate_h1(device=a.device), gate_h3(device=a.device)]
     if a.checkpoint:
         results.append(gate_h2(a.checkpoint, device=a.device))
     print('\n' + '=' * 60)

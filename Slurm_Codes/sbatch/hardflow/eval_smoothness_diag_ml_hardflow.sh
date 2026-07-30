@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --time=01:00:00
+#SBATCH --time=12:00:00
 #SBATCH --partition=gpu-1-student
 # ==============================================================================
 # Gen13 U13 — MPC foresight-fan / smoothness diagnostic MATRIX for Mix-ML.

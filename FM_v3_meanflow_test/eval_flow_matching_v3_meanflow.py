@@ -334,6 +334,11 @@ for exp in exps:
                             linear_dynamics=None,
                             print_level=int(hardflow_cfg.get('ipopt_print_level', 0)),
                             print_time=bool(hardflow_cfg.get('casadi_print_time', False)),
+                            # fix_4: arm C must start from the SAME noise law as arms A/B.
+                            # Gen3v6's MeanFlow sampler is sigma=1.0 (mf_diffusion.py:204);
+                            # the U3 port had inherited Gen12's 0.5. Stated explicitly here
+                            # so a generation swap can't reintroduce it silently.
+                            init_noise_scale=1.0,
                             device=args.device, goal_dim=fm_model.goal_dim)
                     else:
                         # ---------------- arms A / B (diffuser / DPCC) — unchanged ----------------
