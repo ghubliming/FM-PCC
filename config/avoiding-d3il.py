@@ -1338,7 +1338,17 @@ base = {
         ## ⚠️ MATCHED-BUDGET OR NOTHING (PLAN §8 / fix_7.3 §9): every α-Flow-vs-X table must
         ## be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
         ## α-Flow@K=5 against FM@K=10. The comparator is FM @ K=2 → 100% safe, 0.1894 s/plan.
-        'flow_steps_v3': 2,
+        ## Gen3v7 U3 — matched-K for ALL arms (mirrors plan_fm_v3_meanflow L1252-1253). Both K
+        ## knobs read HFFM_FLOW_STEPS (default 2), so a K-sweep is
+        ## `HFFM_FLOW_STEPS=<K> ./submit.sh …` and `--flow-steps <K>` patches both (the eval
+        ## driver's CLI override sets flow_steps too). Because K flows through the CONFIG rather
+        ## than a post-load model patch, args.flow_steps_v3 → exp_name '_K{K}_' → each K writes
+        ## its OWN results dir and no two budgets can overwrite each other.
+        ##   flow_steps_v3 → arms A/B (the native α-Flow sampler's K)
+        ##   flow_steps    → arm C   (the HardFlow Euler K)
+        ## Kept EQUAL. Diverging them silently voids every arm-B-vs-arm-C comparison.
+        'flow_steps_v3': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
+        'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
         ## MUST match training (these four are in diffusion_loadpath)
         'af_alpha_init': 1.0,
         'af_alpha_end': 0.0,

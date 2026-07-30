@@ -3752,3 +3752,33 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 **Keywords**: Gen13, Mix-ML, SLURM, timeout.
 
 1. **Evaluation Timeout Fix**: Increased the SLURM wall-clock time limit for the Mix-ML smoothness diagnostic matrix (`eval_smoothness_diag_ml_hardflow.sh`) to 12 hours, ensuring the foresight-fan captures can run to completion without being prematurely killed.
+
+***
+
+## Gen3v6 U3: HardFlow Initial Noise Scale Bug (July 30, 2026)
+
+**Keywords**: Gen3v6, HardFlow, sampling noise, init_noise_scale, sibling-sync failure.
+
+1. **Noise Scale Mismatch**: Discovered a critical initialization bug in `HardFlowSampler` where the initial ODE noise was drawn at half the trained noise scale (`0.5 * randn`) while the MeanFlow model was trained and properly sampled at full scale (`1.0 * randn`). The HardFlow port had verbatim inherited Gen12's `0.5` scale, breaking the fundamental DPCC-vs-HardFlow comparison parity since the arms started from different distributions.
+2. **Invalidated Results**: This bug retroactively invalidated all prior K=2 `hardflow_new-*` results for Gen3v6.
+3. **The Fix**: Introduced `init_noise_scale` as a mandatory argument for `HardFlowSampler`, with `HardFlowPolicy` passing the correct value of `1.0`. Added `gate_h3` to the test suite to strictly validate the empirical standard deviation of the initial noise draw, preventing future silent regressions across generations.
+
+***
+
+## Gen3v6 U3: K-Sweep Investigation of `dpcc-c` Collapse (July 30, 2026)
+
+**Keywords**: Gen3v6, DPCC, dpcc-c, trajectory collapse, K-sweep, generative defect.
+
+1. **The Stay-Put Anomaly**: Investigated a severe failure where the `dpcc-c` arm consistently froze the robot at its starting position over the entire episode at K=2. A matched K-sweep (K=1, 2, 5, 20) revealed this was a highly localized generative defect in the `mf_dit` checkpoint, completely absent at every other K value (0.0% collapse at K=1/5/20 vs 28.1% at K=2).
+2. **Degenerate Generation**: At K=2, the network generates coherent, fully feasible "stay put" plans. Because these plans never approach any constraint boundaries, their projection cost is effectively zero. The minimum-projection-cost (`-c`) selection rule then correctly (by its own definition) but fatally selects these useless plans, compounding the 28% generation collapse into a >70% failure rate per episode.
+3. **Confirmed DPCC Health**: The investigation verified the core selection and projection code is mathematically sound. At K=5 and K=20, `dpcc-c-tightened` emerges as the strongest arm, achieving 1.0 success on goal and constraints across all scenarios.
+
+***
+
+## Gen13 U11: Full Mix-ML Evaluation & Training Divergence (July 30, 2026)
+
+**Keywords**: Gen13, HardFlow, Mix-ML, MeanFlow, AlphaFlow, U12 disk-flood fix, training stability.
+
+1. **U12 Fix Validated**: Successfully ran a clean 200-episode completion of AlphaFlow (AF) at K=2 under HardFlow using the new U12 evaluation path (`eval_ml_hardflow.sh` with `HF_EVAL_SAVE_PNG=0`), confirming the `Errno 28` disk-crash issue is permanently resolved.
+2. **Competitive Baselines**: Both Mix-ML checkpoints succeeded end-to-end inside HardFlow. MeanFlow scored 97.0% success at K=2, while AlphaFlow slightly edged it out at 98.0%, making both immediately competitive with the frozen iMF baselines at matched training budgets.
+3. **Late-Training Velocity Divergence**: Analysis of the training curves identified a severe stability trap: the adaptive loss remained artificially flat while the true velocity prediction error (`raw_mse_u`) collapsed to a minimum midway through the run (~75k steps), only to violently blow up by the end of training (115x increase for AlphaFlow). This establishes that the current 100k-step checkpoints are significantly degraded and highlights the need to evaluate the earlier ~75k-step checkpoints where the field quality peaked.
