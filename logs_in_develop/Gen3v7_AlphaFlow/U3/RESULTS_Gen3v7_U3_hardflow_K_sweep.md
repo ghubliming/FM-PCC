@@ -15,6 +15,26 @@ Companion docs: [`CHANGELOG_Gen3v7_U3_hardflow_arm.md`](CHANGELOG_Gen3v7_U3_hard
 
 ---
 
+> ## ⚠️ SUPERSEDED IN PART — the `-t` rows need re-eval (added 2026-07-31, fix_4)
+>
+> This sweep ran at `cb859e3`, which carries the `prev_observations` double-permutation bug fixed in
+> [`../fix_4/CHANGELOG_Gen3v7_fix_4_temporal_consistency_reference.md`](../fix_4/CHANGELOG_Gen3v7_fix_4_temporal_consistency_reference.md)
+> (mirror of Gen3v6 fix_5, `ecbae16f`). At `HFFM_BATCH=4` about **75% of replans stored a plan the agent
+> never executed** as the temporal-consistency reference.
+>
+> **Affected: `dpcc-t` and `dpcc-t-tightened` only** — rows in §3, §3.1, §4, §7, and both DPCC subtotals.
+> Arm C is unaffected (`HardFlowPolicy._select` never reorders `observations`), as are `-r*`, `-c*`, and
+> `diffuser`.
+>
+> **Do not cite the §1/§3 headline "HardFlow edges ahead, 29.0 vs 28.5" until re-run.** The bug handicaps
+> *only* the losing arm, by up to 1.5 points against a 0.5-point gap — a bias with a known sign, not noise.
+> §2's isolation control, the whole `-c` analysis (§4/§5/§5(b′)/§6), §7's real-time finding, and §8 are
+> unaffected and stand as written. Full accounting of what breaks if this is not re-run: fix_4 §5.1.
+>
+> Re-run cost: ~3 h 25 m for all five K.
+
+---
+
 ## 1. Verdict
 
 1. **The port is correct and provably isolated.** Across the **84** DPCC/`diffuser` cells shared with the
@@ -82,8 +102,8 @@ Sum over the three halfspace scenarios; max 3.0. Two trials per cell, so each ha
 | `dpcc-r-tightened` | **3.00** | **3.00** | **3.00** | **3.00** | **3.00** |
 | `dpcc-c` | 2.50 | **0.00** | 2.00 | 3.00 | 2.00 |
 | `dpcc-c-tightened` | 3.00 | **0.00** | 3.00 | 3.00 | 2.50 |
-| `dpcc-t` | 3.00 | 1.00 | 2.50 | 2.50 | 2.00 |
-| `dpcc-t-tightened` | 3.00 | 2.50 | 3.00 | 2.50 | 2.50 |
+| `dpcc-t` ⚠️ | 3.00 | 1.00 | 2.50 | 2.50 | 2.00 |
+| `dpcc-t-tightened` ⚠️ | 3.00 | 2.50 | 3.00 | 2.50 | 2.50 |
 | `hardflow_new-r` | 1.00 | 1.50 | 1.00 | 1.50 | 1.50 |
 | `hardflow_new-r-tightened` | **3.00** | **3.00** | 2.50 | **3.00** | **3.00** |
 | `hardflow_new-c` | 2.50 | **0.00** | 1.00 | 1.00 | 1.00 |
@@ -95,10 +115,14 @@ Arm subtotals:
 
 | subtotal | K=1 | K=2 | K=5 | K=10 | K=20 | Σ |
 |---|---|---|---|---|---|---|
-| DPCC, all 6 (max 18) | 16.0 | 8.0 | 14.5 | 14.0 | 12.5 | 65.0 |
+| DPCC, all 6 (max 18) ⚠️ | 16.0 | 8.0 | 14.5 | 14.0 | 12.5 | 65.0 |
 | HardFlow, all 6 (max 18) | 14.0 | 9.5 | 9.5 | 11.5 | 12.5 | 57.0 |
-| DPCC, tightened **r + t** (max 6) | 6.0 | 5.5 | 6.0 | 5.5 | 5.5 | **28.5** |
+| DPCC, tightened **r + t** (max 6) ⚠️ | 6.0 | 5.5 | 6.0 | 5.5 | 5.5 | **28.5** |
 | HardFlow, tightened **r + t** (max 6) | 6.0 | **6.0** | 5.0 | **6.0** | **6.0** | **29.0** |
+
+⚠️ = contains `dpcc-t*`, affected by the fix_4 bug (see the banner above). The DPCC rows are
+**understated by up to 1.5**; the HardFlow rows are correct. The 0.5-point DPCC-vs-HardFlow gap below
+is therefore not defensible until re-run.
 
 Read the two rows that matter (the bottom pair). Once `-c` — a known-broken selection rule on *both*
 engines — is excluded, the two arms are statistically indistinguishable, with HardFlow nominally ahead by
@@ -116,10 +140,15 @@ Same table, `-t-tightened` only (the headline arm), against Gen3v6 post-fix_4:
 
 | arm | K=1 | K=2 | K=5 | K=10 | K=20 |
 |---|---|---|---|---|---|
-| Gen3v7 `dpcc-t-tightened` | 3.00 | 2.50 | 3.00 | 2.50 | 2.50 |
+| Gen3v7 `dpcc-t-tightened` ⚠️ | 3.00 | 2.50 | 3.00 | 2.50 | 2.50 |
 | Gen3v7 `hardflow_new-t-tightened` | 3.00 | **3.00** | 2.50 | **3.00** | **3.00** |
 | Gen3v6 `dpcc-t-tightened` | 3.00 | 2.50 | 3.00 | 3.00 | 3.00 |
 | Gen3v6 `hardflow_new-t-tightened` | 2.50 | 3.00 | 3.00 | 3.00 | 3.00 |
+
+⚠️ **Mixed provenance after fix_4.** Both `dpcc-t-tightened` rows are bug-affected today, so they are at
+least comparable *to each other*. Once Gen3v6 is re-run at `ecbae16f` and Gen3v7 is not, this table
+silently compares fixed against buggy — and would suggest α-Flow's DPCC baseline is worse than
+MeanFlow's when the gap may be entirely the fix. Re-run both, or neither.
 
 All four rows live in the 2.5–3.0 band. At n=2 trials per halfspace this is a ceiling effect, not a ranking
 — the honest statement is **`-t-tightened` is saturated on this task for both generations and both engines**.
