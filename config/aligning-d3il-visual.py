@@ -805,3 +805,270 @@ base['plan_imf_visual_aligning'] = {
         '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}'
     ),
 }
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Gen14 — VISUAL MIX-ML: one frame, four config-activated ML engines
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Model folder: mix_visual_aligning/   Test folder: mix_visual_aligning_test/
+# Plan:         logs_in_develop/Gen14/init/PLAN_Gen14_visual_mix_ml.md
+#
+#   engine=ddpm  <- Gen6V4  (visual_aligning_dpcc)      VisualGaussianDiffusion
+#   engine=fm    <- Gen7    (fm_visual_aligning)        VisualFlowMatching     [reference arm]
+#   engine=mf    <- Gen3v6  (flow_matcher_v3_meanflow)  VisualMeanFlow
+#   engine=af    <- Gen3v7  (flow_matcher_v3_alphaflow) VisualAlphaFlow
+#
+# Task/data/dims are FROZEN across all four arms (9D visual aligning, action_dim=3,
+# obs_dim=6, horizon=8) and the backbone is locked to the VisualUNet stack, so the
+# four-way comparison is architecture-controlled: only objective + sampler vary.
+#
+# ⚠️ Gen14 = DPCC math. Gen13 (HF_Mix_ML) = HardFlow math. NEVER mix their results.
+#
+# The EXISTING blocks above are untouched: Gen6V4 and Gen7 keep their own checkpoints
+# and paths, and Gen14 writes under mix_visual_aligning/ exclusively.
+# ──────────────────────────────────────────────────────────────────────────────────────
+
+# Single source of truth for the training budget. 🔴 The alpha-Flow anneal MUST span the
+# ACTUAL budget (PLAN §6.2a): af_alpha_end_step and af_n_train_steps are BOTH derived from
+# this one name, and af_diffusion.py asserts they agree. Never write the number twice.
+_MIX_N_TRAIN_STEPS = int(1e5)
+
+# One watch list for all four arms. watch() skips keys a block does not define, so each
+# arm's folder name carries exactly its own identity keys (e.g. 'K' only for ddpm,
+# 'ts'/'af' only for the two-time arms).
+args_to_watch_mix_visual_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),      # ddpm only — FM/MF/AF blocks do not define it
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+    ('if_vision', 'V'),
+    ('max_path_length', 'steps'),
+    ('batch_size', 'bs'),
+    ('film_mode', 'film'),
+    ('engine', 'E'),                 # ← Gen14 arm identity key
+    ('t_schedule', 'ts'),            # mf/af only
+    ('af_alpha_scheduler', 'afsch'), # af only
+]
+
+args_to_watch_mix_visual_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),      # ddpm only
+    ('flow_steps_v3', 'K'),          # fm/mf/af only  (the two are mutually exclusive per arm)
+    ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+    ('if_vision', 'V'),
+    ('mpc_batch_size', 'mpc'),
+    ('film_mode', 'film'),
+    ('engine', 'E'),
+]
+
+
+# A few training identity keys live under a DIFFERENT name on the planning side, to keep
+# the eval script's namespace unambiguous. Gen7 does the same rename by hand
+# (`batch_size` -> `train_batch_size`, "also fixes b{mpc} vs b{beta} clash"). The VALUES
+# must be equal; only the arg name differs. Extend this map, never the call sites.
+_MIX_TRAIN_TO_PLAN_KEY = {
+    'batch_size': 'train_batch_size',
+}
+
+
+def _mix_loadpath(watch_list, block, prefix, key_map=None):
+    """Build a loadpath/prefix format string from the SAME watch list that builds exp_name.
+
+    🔴 This is the fix for the oldest trap in this repo: a plan block whose
+    diffusion_loadpath does not reproduce args_to_watch key-for-key resolves to a
+    non-existent directory and the eval dies minutes into a GPU allocation. Deriving the
+    string here makes that class of bug unrepresentable — there is only one list.
+
+    Mirrors diffuser.utils.watch(): keys absent from `block` are skipped, and the entries
+    are joined with '_' after the trailing-slash prefix.
+
+    `block` is the block that DEFINES the identity (always the TRAINING block, so the
+    fragments and their order match what watch() emitted at train time). `key_map`
+    renames the emitted {placeholder} to the name the CONSUMING block exposes — the
+    placeholder is resolved later by eval_fstrings against the consuming args object,
+    so it must name a key that object actually has.
+    """
+    key_map = key_map or {}
+    parts = []
+    for key, label in watch_list:
+        if key == 'prefix' or key not in block:
+            continue
+        parts.append(f'{label}{{{key_map.get(key, key)}}}')
+    return 'f:' + prefix + '_'.join(parts)
+
+
+# ─── shared eval/planning knobs, identical for all four arms ────────────────────────────
+# Inherited from plan_fm_visual_aligning so the ROLLOUT is byte-identical across arms:
+# same env, same episode budget, same MPC candidate pool, same constraint YAML. Only the
+# generative engine differs — that is the whole point of the generation.
+_mix_plan_common = {
+    k: v for k, v in base['plan_fm_visual_aligning'].items()
+    if k not in ('prefix', 'exp_name', 'diffusion', 'diffusion_loadpath')
+}
+
+
+def _mix_train_block(engine, parent, overrides):
+    """Assemble one training block: parent arm's config + Gen14 identity + arm overrides."""
+    blk = {**base[parent], **overrides, 'engine': engine,
+           'prefix': f'mix_visual_aligning_{engine}/'}
+    blk['exp_name'] = watch(args_to_watch_mix_visual_train)
+    return blk
+
+
+def _mix_plan_block(engine, train_blk, overrides, drop=()):
+    """Assemble one planning block, deriving every path string from the watch lists.
+
+    Mirrors Gen7's two-level scheme exactly:
+      prefix   -> the CHECKPOINT identity (training keys)  = which model produced this
+      exp_name -> the EVAL identity       (plan keys)      = how it was rolled out
+    so results for one checkpoint under different K / solver / mpc land in sibling dirs.
+
+    `drop` removes keys inherited from the FM plan template that do not apply to this arm
+    (e.g. the ODE-solver keys on the DDPM arm), so they never reach the folder name or the
+    engine constructor.
+    """
+    blk = {**_mix_plan_common, **overrides, 'engine': engine,
+           'diffusion': train_blk['diffusion']}
+    for k in drop:
+        blk.pop(k, None)
+
+    # Mirror every TRAINING identity value into the plan block under its planning-side
+    # name, so the derived {placeholders} below always resolve. Values are copied from the
+    # training block itself — a plan/train value mismatch is therefore impossible, which is
+    # the whole failure mode Gen7's "MUST match exactly" comments warn about.
+    for key, _label in args_to_watch_mix_visual_train:
+        if key == 'prefix' or key not in train_blk:
+            continue
+        plan_key = _MIX_TRAIN_TO_PLAN_KEY.get(key, key)
+        # Unconditional: for an IDENTITY key the training value is the only correct one.
+        # Overriding it in a plan block is exactly the mistake this loop prevents.
+        blk[plan_key] = train_blk[key]
+
+    # Training-key fragments -> the CHECKPOINT identity, re-pointed at this arm's plan
+    # namespace. `[2:]` strips the 'f:' marker; the whole prefix carries one of its own.
+    _ckpt_id = _mix_loadpath(
+        args_to_watch_mix_visual_train, train_blk, '', _MIX_TRAIN_TO_PLAN_KEY)[2:]
+    blk['prefix']   = f'f:plans/mix_visual_aligning_{engine}/{_ckpt_id}/'
+    blk['exp_name'] = watch(args_to_watch_mix_visual_plan)
+
+    # diffusion_loadpath must reproduce the TRAINING block's exp_name exactly, key for key.
+    blk['diffusion_loadpath'] = _mix_loadpath(
+        args_to_watch_mix_visual_train, train_blk,
+        f'mix_visual_aligning_{engine}/', _MIX_TRAIN_TO_PLAN_KEY)
+    return blk
+
+
+# ─── arm: ddpm (Gen6V4) ────────────────────────────────────────────────────────────────
+# Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
+# Gen6V4's own hyperparameters (action_weight=10, live n_diffusion_steps=100), otherwise
+# it is not the Gen6V4 baseline it claims to be.
+base['mix_visual_aligning_ddpm'] = _mix_train_block('ddpm', 'visual_aligning_dpcc', {
+    'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
+    'diffusion': 'mix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+})
+
+# ─── arm: fm (Gen7) — THE REFERENCE ARM ────────────────────────────────────────────────
+# Must remain a pure re-pointing of fm_visual_aligning. Do not tune anything here: gate G1
+# compares this arm against Gen7 and expects bit-identical training.
+base['mix_visual_aligning_fm'] = _mix_train_block('fm', 'fm_visual_aligning', {
+    'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
+    'diffusion': 'mix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching',
+})
+
+# ─── arm: mf (Gen3v6 MeanFlow) ─────────────────────────────────────────────────────────
+base['mix_visual_aligning_mf'] = _mix_train_block('mf', 'fm_visual_aligning', {
+    'model':     'mix_visual_aligning.models.mf_engine.MeanFlowEngine',
+    'diffusion': 'mix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow',
+    # Time schedule: 'logit_normal' is the official MeanFlow default and the Gen3v6 default.
+    # 🔴 The sign convention is -p_mean (mf_diffusion.py:360). Using +p_mean puts the mass
+    # near NOISE and looks *almost* fine. Do not "fix" it.
+    't_schedule': 'logit_normal',
+    'p_mean': -0.4,
+    'p_std': 1.0,
+    # Official MeanFlow objective constants (per-sample SUM, p=1, eps=0.01).
+    'meanflow_data_proportion': 0.5,   # fraction of the batch forced to r==t (FM anchors)
+    'mf_adp_p': 1.0,
+    'mf_adp_eps': 0.01,
+    # 🔴 Architecture flags — copied from Gen3v6 (config/avoiding-d3il.py:635-636).
+    # dual_head=True: the v head SHARES the backbone trunk and carries a full loss
+    # (FIX-4). False falls back to an orphan MLP on raw x and guts half the objective.
+    # interval_cfg=False: no CFG in Gen3v6. On the UNet arm this flag changes the
+    # state_dict, so flipping it makes checkpoints non-interchangeable.
+    'dual_head': True,
+    'interval_cfg': False,
+    # Gen3v6/v7 trainer extras — a DEAD key in the Gen7 trainer, actually applied here.
+    'gradient_clip': 1.0,
+    'split_seed': 42,
+    # PLAN §6.1 ablation knob. Default OFF: the vision encoder trains end-to-end, exactly
+    # as in Gen6V4/Gen7. Pre-encoding the latent is what zeroes the JVP tangent — freezing
+    # is NOT required for that, and turning this on changes what is learned.
+    'mf_freeze_vision_encoder': False,
+})
+
+# ─── arm: af (Gen3v7 alpha-Flow) ───────────────────────────────────────────────────────
+base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
+    'model':     'mix_visual_aligning.models.af_engine.AlphaFlowEngine',
+    'diffusion': 'mix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow',
+    't_schedule': 'logit_normal',
+    'p_mean': -0.4,
+    'p_std': 1.0,
+    # alpha-Flow's OWN constants. ⚠️ af_adp_eps=1e-3 is DELIBERATELY != MeanFlow's 0.01
+    # (af_diffusion.py:97) — different method, different constant. Do NOT harmonise them.
+    'af_ratio_fm': 0.5,
+    'af_adp_eps': 1e-3,
+    'af_clamp_utgt': 4.0,
+    # 🔴 Same architecture flags as the mf arm — Gen3v7 ships them identically
+    # (config/avoiding-d3il.py:754-755). Keeping mf and af equal here is also what
+    # makes the MeanFlow-vs-alpha-Flow comparison architecture-controlled.
+    'dual_head': True,
+    'interval_cfg': False,
+    # The alpha anneal: 1 -> 0 means training starts as plain flow matching and becomes
+    # MeanFlow. 🔴 end_step is bound to _MIX_N_TRAIN_STEPS, the same name that sets
+    # n_train_steps below. The train script re-derives it and af_diffusion asserts on it.
+    'af_alpha_scheduler': 'sigmoid',
+    'af_alpha_init': 1.0,
+    'af_alpha_end': 0.0,
+    'af_alpha_init_step': 0,
+    'af_alpha_end_step': _MIX_N_TRAIN_STEPS,
+    'af_alpha_gamma': 25.0,
+    'af_alpha_clamp': 0.005,
+    'n_train_steps': _MIX_N_TRAIN_STEPS,
+    'gradient_clip': 1.0,
+    'split_seed': 42,
+    'mf_freeze_vision_encoder': False,
+})
+
+# ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────
+base['plan_mix_visual_aligning_ddpm'] = _mix_plan_block(
+    'ddpm', base['mix_visual_aligning_ddpm'], {},
+    # DDPM has a real reverse chain, not an ODE: drop every continuous-time key inherited
+    # from the FM plan template so it reaches neither the folder name nor the constructor.
+    # n_diffusion_steps (copied from the training block) is this arm's K.
+    drop=('flow_steps_v3', 'ode_solver_backend_v3', 'ode_solver_method_v3',
+          'ode_solver_rtol_v3', 'ode_solver_atol_v3', 'ode_solver_step_size_v3',
+          'time_beta_alpha_v3', 'time_beta_beta_v3'))
+
+base['plan_mix_visual_aligning_fm'] = _mix_plan_block(
+    'fm', base['mix_visual_aligning_fm'], {})
+
+base['plan_mix_visual_aligning_mf'] = _mix_plan_block(
+    'mf', base['mix_visual_aligning_mf'], {
+        # MUST match the training block — both are checkpoint-path keys.
+        't_schedule': 'logit_normal',
+        'p_mean': -0.4,
+        'p_std': 1.0,
+    })
+
+base['plan_mix_visual_aligning_af'] = _mix_plan_block(
+    'af', base['mix_visual_aligning_af'], {
+        't_schedule': 'logit_normal',
+        'p_mean': -0.4,
+        'p_std': 1.0,
+        'af_alpha_scheduler': 'sigmoid',
+    })
