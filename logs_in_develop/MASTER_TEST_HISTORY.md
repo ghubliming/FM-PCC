@@ -3782,3 +3782,24 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **U12 Fix Validated**: Successfully ran a clean 200-episode completion of AlphaFlow (AF) at K=2 under HardFlow using the new U12 evaluation path (`eval_ml_hardflow.sh` with `HF_EVAL_SAVE_PNG=0`), confirming the `Errno 28` disk-crash issue is permanently resolved.
 2. **Competitive Baselines**: Both Mix-ML checkpoints succeeded end-to-end inside HardFlow. MeanFlow scored 97.0% success at K=2, while AlphaFlow slightly edged it out at 98.0%, making both immediately competitive with the frozen iMF baselines at matched training budgets.
 3. **Late-Training Velocity Divergence**: Analysis of the training curves identified a severe stability trap: the adaptive loss remained artificially flat while the true velocity prediction error (`raw_mse_u`) collapsed to a minimum midway through the run (~75k steps), only to violently blow up by the end of training (115x increase for AlphaFlow). This establishes that the current 100k-step checkpoints are significantly degraded and highlights the need to evaluate the earlier ~75k-step checkpoints where the field quality peaked.
+
+***
+
+## Gen3v7 U2: Investigation of `dpcc-c` Defects (July 30, 2026)
+
+**Keywords**: Gen3v7, AlphaFlow, DPCC, dpcc-c, trajectory collapse, boundary hugging.
+
+1. **Two Distinct `dpcc-c` Defects Identified**: Investigated failures across both Gen3v7 backbones (`bbdit` and `bbsit`). Discovered two completely separate failure modes: Defect A (Boundary Hugging) and Defect B (Start-pose Freeze).
+2. **Defect A - Boundary Hugging**: Present in plain `dpcc-c` for both backbones at all K values. The `-c` cost formula is identically zero on the entire feasible interior, meaning it cannot express a preference for clearance. This causes the plan to drift onto the constraint surface, triggering a runaway gap where the commanded setpoint decouples from the robot. `dpcc-c-tightened` is completely immune because the tightening pushes the zero-cost region inward, forcing actual clearance.
+3. **Defect B - Start-pose Freeze (`bbsit` K=2 only)**: Reproduced the exact Gen3v6 start-pose freeze, but discovered a critical new insight: the collapse is strongly state-conditioned, not simply random noise. The degenerate "stay put" mode exists only within a radius of ≈0.01 from the start pose. Once the robot moves beyond 0.01, the collapse rate drops to exactly 0.00%.
+4. **Validation-Curve Corroboration**: The K=2 collapse corresponds exactly to the `b2` (h ∈ [0.3, 0.6)) validation bucket for `bbsit`, which has the worst sustained validation error, confirming a mid-interval hole in the velocity field.
+
+***
+
+## Gen3v7 U3: HardFlow Arm Port to AlphaFlow (July 30, 2026)
+
+**Keywords**: Gen3v7, AlphaFlow, HardFlow, in-loop NLP, h=0 grounding.
+
+1. **Feature Port**: Successfully ported the HardFlow in-loop constrained sampler (arm C) into AlphaFlow. This introduces the full three-arm evaluation setup (`diffuser`, `dpcc-*`, `hardflow_new-*`) to Gen3v7.
+2. **AlphaFlow's Structural Advantage**: The HardFlow NLP requires an instantaneous velocity field `v(x,t)`. Unlike Gen3v6 which relied on the structural identity `u(x,t,0) = v(x,t)`, AlphaFlow explicitly trains this anchor via `af_ratio_fm` (forcing `r=t` and `u_tgt=v` for half the batch). This makes Gen3v7 a better-supported host for the HardFlow arm.
+3. **Safety and Bug Fixes**: The port correctly initializes with noise scale σ=1.0 and adds a new gate (`H4`) to verify that the checkpoint was actually trained with `af_ratio_fm > 0`. Also fixed a latent plot-loop crash caused by mismatched candidate fan sizes between DPCC and HardFlow.

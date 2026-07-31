@@ -56,18 +56,29 @@ class Policy:
             observations = self.normalizer.unnormalize(diffusion_trajectories[:, :, :, self.action_dim:], 'observations')
         
         # Sort according to similarity with previous observations
+        # fix_5: `which_trajectory` always indexes the ORIGINAL (unsorted) batch, because
+        # `actions` is never reordered (see the `actions[which_trajectory, 0]` below). The
+        # temporal-consistency branch DOES reorder `observations`, so indexing it with
+        # `which_trajectory` picks a different candidate than the one being executed.
+        # `executed_idx` is the index of the executed plan *within `observations` as it
+        # stands at line 70* — 0 after the sort, `which_trajectory` otherwise. This restores
+        # the invariant MPC_NPZ_PATCH (JOB C) intended: prev_observations is the plan that
+        # was actually executed.
         if self.trajectory_selection == 'temporal_consistency' and not disable_projection and self.prev_observations is not None:   # Temporal consistency
             order = np.argsort(np.linalg.norm(observations[:,:-1,:] - self.prev_observations[:,1:,:], axis=(1,2)))
             which_trajectory = order[0]
             observations = observations[order]
+            executed_idx = 0                                                                                                        # observations is now sorted; best match sits at 0
         elif self.trajectory_selection == 'minimum_projection_cost' and not disable_projection:                                     # Minimum projection cost
             costs_total = np.zeros(batch_size)
             for timestep, cost in infos['projection_costs'].items():
                 costs_total += cost
             which_trajectory = np.argmin(costs_total)
+            executed_idx = which_trajectory                                                                                         # observations not reordered
         else:                                                                                                                       # Random selection
             which_trajectory = 0
-        self.prev_observations = np.repeat(np.expand_dims(observations[which_trajectory], axis=0), batch_size, axis=0)  # MPC_NPZ_PATCH
+            executed_idx = 0
+        self.prev_observations = np.repeat(np.expand_dims(observations[executed_idx], axis=0), batch_size, axis=0)  # MPC_NPZ_PATCH + fix_5
 
         ## Extract or calculate action
         if self.inverse_dynamics:
