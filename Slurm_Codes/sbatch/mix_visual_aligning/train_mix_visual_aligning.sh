@@ -65,24 +65,38 @@ cd "$REPO"
 
 # ─── Gen14: pick the ML engine arm ──────────────────────────────────────
 # $1 = engine  (ddpm | fm | mf | af)   default: fm  (the Gen7 reference arm)
-# $2 = seed    (optional)              default: 6
+# $2 = seed(s) (optional)              default: $MIX_SEEDS (6 7 8 9 10)
 #
-#   sbatch train_mix_visual_aligning.sh mf        # MeanFlow arm, seed 6
-#   sbatch train_mix_visual_aligning.sh af 7      # alpha-Flow arm, seed 7
+#   sbatch train_mix_visual_aligning.sh mf          # MeanFlow arm, all default seeds
+#   sbatch train_mix_visual_aligning.sh af 7        # alpha-Flow arm, seed 7 only
+#   sbatch train_mix_visual_aligning.sh mf "6 7"    # two seeds, SEQUENTIALLY in this one job
 #
 # Each arm writes to its OWN checkpoint tree (mix_visual_aligning_<engine>/...), so the
 # four can train concurrently without touching each other or the Gen6V4/Gen7 originals.
+#
+# ⚠ SEQUENTIAL vs FAN-OUT. Seeds listed here run one after another INSIDE this single job,
+#   against a 24 h wall. Visual aligning trains a ResNet-18 pair alongside the U-Net, so one
+#   seed at 1e5 steps is already a large fraction of that wall — 5 sequential seeds will not
+#   fit. Use mix_visual_aligning_pipeline.sh instead: it submits ONE JOB PER SEED, so each
+#   seed gets its own 24 h budget and they run in parallel. Pass a list here only when you
+#   deliberately want them serialised (e.g. to hold a single GPU allocation).
 ENGINE="${1:-fm}"
-SEED="${2:-6}"
+SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 case "$ENGINE" in
     ddpm|fm|mf|af) ;;
     *) echo "[ train ] ERROR: unknown engine '$ENGINE' (want: ddpm | fm | mf | af)"; exit 1 ;;
 esac
-echo "[ train ] engine=$ENGINE  seed=$SEED"
+echo "[ train ] engine=$ENGINE  seeds='$SEEDS'"
+if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then
+    echo "[ train ] WARNING: $(echo $SEEDS | wc -w) seeds will run SEQUENTIALLY in this one job"
+    echo "[ train ]          against the 24 h wall. Prefer mix_visual_aligning_pipeline.sh,"
+    echo "[ train ]          which submits one job per seed."
+fi
 
+# $SEEDS is intentionally unquoted: it must word-split into separate --seeds arguments.
 python mix_visual_aligning_test/train_mix_visual_aligning.py \
     --engine "$ENGINE" \
-    --seeds "$SEED" \
+    --seeds $SEEDS \
     --use-wandb \
     --wandb-project FM-PCC-visual-aligning-gen14
 

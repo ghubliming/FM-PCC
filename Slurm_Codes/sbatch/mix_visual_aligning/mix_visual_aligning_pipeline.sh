@@ -46,43 +46,60 @@ LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log
 #   2. Training   (train_mix_visual_aligning.sh)  — only if the gates pass
 #   3. Evaluation (eval_mix_visual_aligning.sh)   — only if training succeeds
 #
-# Usage:  sbatch mix_visual_aligning_pipeline.sh <engine> [seed]
+# Usage:  sbatch mix_visual_aligning_pipeline.sh <engine> [seeds]
 #           <engine> = ddpm | fm | mf | af      (default: fm, the Gen7 reference arm)
-#           [seed]   = training seed            (default: 6)
+#           [seeds]  = space-separated seed list, QUOTED   (default: "6 7 8 9 10")
 #
-#   sbatch mix_visual_aligning_pipeline.sh mf 6
+#   sbatch mix_visual_aligning_pipeline.sh mf                # all 5 default seeds
+#   sbatch mix_visual_aligning_pipeline.sh mf 6              # seed 6 only (smoke run)
+#   sbatch mix_visual_aligning_pipeline.sh af "6 7 8"        # a subset
+#   MIX_SEEDS="6 7" sbatch mix_visual_aligning_pipeline.sh mf   # via env instead
 #
 # The gates run FIRST on purpose: a broken copy or a dead alpha schedule is cheap to
 # catch in one minute and expensive to discover after a 24-hour training run.
+#
+# FAN-OUT (Gen14 multi-seed): this submits ONE train job and ONE eval job PER SEED, all
+# gated on a SINGLE shared gates job. Rationale: the gates are seed-independent (they check
+# copy fidelity, the JVP, the alpha schedule and the projector — none of which touch a
+# seed), so running them five times would be pure waste; whereas visual training is far too
+# slow to serialise five seeds against one 24 h wall. Each seed therefore gets its own
+# 24 h budget and they run in parallel, subject to queue capacity.
+#
+#   gates ──┬─> train(seed 6) ──> eval(seed 6)
+#           ├─> train(seed 7) ──> eval(seed 7)
+#           └─> ...
+#
+# Each eval depends only on ITS OWN train, so one seed dying does not block the others.
 # ==============================================================================
 
 SBATCH_DIR="Slurm_Codes/sbatch/mix_visual_aligning"
 ENGINE="${1:-fm}"
-SEED="${2:-6}"
+SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 
 case "$ENGINE" in
     ddpm|fm|mf|af) ;;
     *) echo "ERROR: unknown engine '$ENGINE' (want: ddpm | fm | mf | af)"; exit 1 ;;
 esac
 
-echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seed=$SEED ..."
+echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS' ..."
 
-# 1. Gates
+# 1. Gates — ONE job, shared by every seed (seed-independent by construction).
 GATE_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/gates_mix_visual.sh")
 echo "Step 1: Gates submitted. Job ID: $GATE_ID"
 
-# 2. Training (only if the gates pass)
-TRAIN_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$GATE_ID \
-    "${SBATCH_DIR}/train_mix_visual_aligning.sh" "$ENGINE" "$SEED")
-echo "Step 2: Training scheduled (afterok:$GATE_ID). Job ID: $TRAIN_ID"
+# 2/3. One train->eval chain per seed. $SEEDS is unquoted so it word-splits.
+for SEED in $SEEDS; do
+    TRAIN_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$GATE_ID \
+        "${SBATCH_DIR}/train_mix_visual_aligning.sh" "$ENGINE" "$SEED")
+    echo "  seed $SEED: train scheduled (afterok:$GATE_ID). Job ID: $TRAIN_ID"
 
-# 3. Evaluation (only if training succeeds)
-EVAL_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$TRAIN_ID \
-    "${SBATCH_DIR}/eval_mix_visual_aligning.sh" "$ENGINE" "$SEED")
-echo "Step 3: Evaluation scheduled (afterok:$TRAIN_ID). Job ID: $EVAL_ID"
+    EVAL_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$TRAIN_ID \
+        "${SBATCH_DIR}/eval_mix_visual_aligning.sh" "$ENGINE" "$SEED")
+    echo "  seed $SEED: eval  scheduled (afterok:$TRAIN_ID). Job ID: $EVAL_ID"
+done
 
 echo "--------------------------------------------------------------------------------"
-echo "Visual-Mix-ML (Gen14) Pipeline submitted — engine=$ENGINE seed=$SEED."
+echo "Visual-Mix-ML (Gen14) Pipeline submitted — engine=$ENGINE seeds='$SEEDS'."
 echo "Use 'squeue -u $USER' to monitor progress."
-echo "A failed stage cancels the downstream stages automatically."
+echo "A failed stage cancels its OWN downstream stage; other seeds are unaffected."
 echo "================================================================================"

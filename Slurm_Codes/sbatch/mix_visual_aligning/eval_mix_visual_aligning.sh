@@ -68,11 +68,18 @@ cd "$REPO"
 # Model loaded via experiment='plan_mix_visual_aligning_<engine>'.
 # Results: logs/aligning-d3il-visual/plans/mix_visual_aligning_<engine>/<exp>/results/<seed>/
 #
-# Args: $1=engine (ddpm|fm|mf|af, default fm)  $2=seed (optional)  $3=record_mode (default all)
-# $2 blank -> seed list read from the config yaml (all configured seeds, sequentially).
-# $2 set   -> overrides the yaml; only that seed runs. Use for per-seed Slurm fan-out:
-#   sbatch eval_mix_visual_aligning.sh mf 5
+# Args: $1=engine (ddpm|fm|mf|af, default fm)  $2=seed(s) (optional)  $3=record_mode (default all)
+# $2 blank    -> $MIX_SEEDS (default "6 7 8 9 10"), run sequentially in this one job.
+# $2 = "6"    -> that seed only. Use for per-seed Slurm fan-out:
 #   sbatch eval_mix_visual_aligning.sh mf 6
+#   sbatch eval_mix_visual_aligning.sh mf 7
+# $2 = "6 7"  -> those seeds, sequentially.
+#
+# NOTE: the seed list is passed on the COMMAND LINE, not read from
+# config/visual_aligning_eval.yaml. That yaml is SHARED with the Gen6V4 and Gen7 evals and
+# still says `seeds: [6]`; raising it there would drag those generations along with Gen14.
+# Everything else (variants, constraints, n_contexts) still comes from the shared yaml, which
+# is the point — same benchmark for every arm, only the seed set is Gen14's own.
 #
 # --engine MUST match the arm the checkpoint was trained with; the eval script asserts on
 # it (engine_registry.assert_engine_matches) rather than dying later inside load_state_dict.
@@ -83,16 +90,14 @@ case "$ENGINE" in
 esac
 echo "[ eval ] engine=$ENGINE"
 
-SEED_ARG=""
-if [ -n "$2" ]; then
-    SEED_ARG="--seed $2"
-    echo "[ eval ] Overriding seed to: $2"
-fi
+SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
+echo "[ eval ] seeds='$SEEDS'"
 
 RECORD_MODE="${3:-all}"
 echo "[ eval ] Recording mode set to: $RECORD_MODE"
 
+# $SEEDS is intentionally unquoted: it must word-split into separate --seeds arguments.
 python mix_visual_aligning_test/eval_mix_visual_aligning.py \
-    --engine "$ENGINE" $SEED_ARG --record "$RECORD_MODE" --eval-on-train
+    --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train
 
 echo "Job completed successfully."

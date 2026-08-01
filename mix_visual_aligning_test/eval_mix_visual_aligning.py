@@ -2294,6 +2294,12 @@ class Parser(utils.Parser):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int)
+    # ── Gen14 ── plural seed override. config/visual_aligning_eval.yaml is SHARED with the
+    # Gen6V4 and Gen7 evals, so Gen14 must NOT edit `seeds:` there — bumping it to 5 seeds
+    # would send those generations looking for checkpoints they may not have. This flag lets
+    # the Gen14 sbatch carry its own seed list while the yaml stays at its Gen7 value.
+    # Precedence: --seed (single) > --seeds (list) > yaml `seeds:`.
+    parser.add_argument('--seeds', type=int, nargs='+')
     parser.add_argument('--aggregate-only', action='store_true')
     parser.add_argument('--record', type=str,
                         choices=['none', 'video', 'gif', 'all'], default='all')
@@ -2309,7 +2315,13 @@ if __name__ == '__main__':
     with open('config/visual_aligning_eval.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
-    seeds               = [args_cli.seed] if args_cli.seed else config['seeds']
+    if args_cli.seed:
+        seeds, _seed_src = [args_cli.seed], 'cli --seed'
+    elif args_cli.seeds:
+        seeds, _seed_src = [int(s) for s in args_cli.seeds], 'cli --seeds'
+    else:
+        seeds, _seed_src = config['seeds'], 'config/visual_aligning_eval.yaml'
+    print(f'[ eval ] seeds: {seeds}  (source: {_seed_src})')
     projection_variants = config.get('projection_variants', ['diffuser'])
     n_contexts          = config.get('n_contexts', 30)
     n_trajectories      = config.get('n_trajectories_per_context', 1)
