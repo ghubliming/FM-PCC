@@ -78,9 +78,32 @@ fi
 # 4) Run MeanFlow (Gen3v6) Training
 cd "$REPO"
 
+# ── fix_6: disk pre-flight ────────────────────────────────────────────────────
+# Job 24069 lost ~6 h of seed-9 training to `[Errno 28] No space left on device`
+# while writing state_80000.pt. One full run is ~5 checkpoints x 5 seeds, so print
+# the numbers up front — a job that starts with <10G free is going to die.
+echo "[ DISK ] $(df -h "$REPO"  | tail -1)   <- repo/logs"
+echo "[ DISK ] $(df -h "$HOME"  | tail -1)   <- \$HOME (wandb cache + conda)"
+FREE_G=$(df -BG --output=avail "$REPO" | tail -1 | tr -dc '0-9')
+if [ -n "$FREE_G" ] && [ "$FREE_G" -lt 10 ]; then
+    echo "[ DISK ] ⚠️  only ${FREE_G}G free on the logs filesystem — checkpoint writes may fail"
+fi
+
+# ── fix_6: seeds + resume are env-overridable, and "$@" reaches the script ─────
+#   TRAIN_SEEDS="7 8 9 10" AUTO_RESUME=1 ./Slurm_Codes/submit.sh <this script>
+# AUTO_RESUME defaults ON: it is a no-op on a fresh savepath, and on a restart it
+# continues each seed from its newest checkpoint and skips seeds already finished.
+# Extra flags pass through, e.g.  ... <this script> --resume-step -1 --resume-seed 9
+TRAIN_SEEDS="${TRAIN_SEEDS:-6}"
+RESUME_FLAG=""
+if [ "${AUTO_RESUME:-1}" = "1" ]; then RESUME_FLAG="--auto-resume"; fi
+echo "[ train ] seeds='$TRAIN_SEEDS'  resume='$RESUME_FLAG'  extra='$*'"
+
 python FM_v3_meanflow_test/train_flow_matching_v3_meanflow.py \
-    --seeds 6 \
+    --seeds $TRAIN_SEEDS \
+    $RESUME_FLAG \
     --use-wandb \
-    --wandb-project FMPCC-MeanFlow
+    --wandb-project FMPCC-MeanFlow \
+    "$@"
 
 echo "Job completed successfully."
