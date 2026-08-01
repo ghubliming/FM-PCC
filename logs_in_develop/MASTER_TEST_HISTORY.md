@@ -3872,3 +3872,25 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Multi-Seed Default Fixed**: The Gen14 training and evaluation scripts were hardcoded to seed 6 only. Introduced robust multi-seed argument parsing (`--seeds`) without polluting the shared YAML configuration used by legacy models.
 2. **Parallel Job Fan-out**: To prevent a 24-hour job wall-time timeout when running sequential visual trainings, the `mix_visual_aligning_pipeline.sh` orchestrator was refactored. 
 3. **Pipeline Efficiency**: The pipeline now launches a single shared G0-G6 diagnostic gate check, which dynamically spawns parallel, independent train-then-eval chains for each requested seed, ensuring efficient cluster utilization and isolated failure domains.
+
+***
+
+## Gen14 Fix 3b: Upstream Re-sync of the Two-Time Trainer (August 1, 2026)
+
+**Keywords**: Gen14, Mix-ML, sibling-sync, G0 gate, auto-resume.
+
+1. **Gate G0 Caught Divergence**: A pipeline run triggered a G0 gate failure because the Gen14 `training_twotime.py` copy diverged from its upstream source (`flow_matcher_v3_alphaflow/utils/training.py`).
+2. **Upstream Evolution**: The upstream source was recently updated by Gen3v6/7 Fix 6 and Fix 6.2 to include optimizer state restoration and `best_test_loss` watermark preservation.
+3. **Re-sync and Capability Gain**: The verbatim re-sync resolved the gate failure and explicitly gifted Gen14 the robust auto-resume capability. This is especially crucial for visual aligning tasks, which run near the 24-hour wall limit and are highly exposed to interrupted training traps.
+
+***
+
+## DA_Code: Metric Smoothness Discussion (August 1, 2026)
+
+**Keywords**: DA_Code, smoothness metric, high-frequency energy, demo-calibration, zigzag, curvature.
+
+1. **Current Metric Limitations**: An audit of the current Gen13 smoothness metric (mean squared second difference) revealed it is scale-dependent, sampling-rate-dependent, and inherently penalizes valid obstacle-avoiding curves because it conflates "turns a lot" with "turns erratically (zigzag)".
+2. **The "Straight = Optimal" Fallacy**: Identified that rewarding straightness is fundamentally flawed for obstacle-avoiding tasks. The eye's perception of "smoothness" corresponds to low high-frequency energy (lack of jitter/zigzag), not necessarily low curvature.
+3. **Demo-Calibrated Smoothness**: Proposed that smoothness cannot be judged on an absolute scale. Future metrics should be calibrated against the expert demonstrations (e.g., reporting a plan's roughness as a percentile against the demo distribution) to normalize scale and task differences automatically.
+4. **HardFlow Degeneracy**: Noted that under HardFlow, the post-projection plan is smooth by construction due to hard equality constraints. Therefore, meaningful smoothness analysis must focus on the raw pre-NLP plan and the final executed path.
+5. **Proposed Vector**: Proposed replacing the single number with a vector of four metrics (Normalised d² energy, Turn-reversal rate, Spline residual, and Spike detector) alongside demo percentiles, ensuring any future smoothness measurements accurately capture distinct failure modes without conflation.

@@ -486,7 +486,13 @@ for exp in exps:
                         axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
                         axes = [ax[i, 5], ax_all[i, variant_idx]]
                         for __ in range(0, len(sampled_trajectories_all[i]), plot_samples_every):
-                            for ___ in range(min(args.batch_size, 4)):
+                            # 🔴 fix_7 — iterate the LOCAL batch, not args.batch_size. Arm C
+                            # overrides it (batch_size = hf_batch_size, :316) and the yaml
+                            # default is 1, so with HFFM_BATCH unset this asked for index 1 of
+                            # a 1-row candidate array -> IndexError. Arms A/B are unaffected
+                            # (batch_size = args.batch_size, :345). Restores parity with the
+                            # alphaflow/hardflow siblings, which already read `batch_size`.
+                            for ___ in range(min(batch_size, 4)):
                                 for curr_ax in axes:
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, 0, obs_indices['x']], sampled_trajectories_all[i][__][___, 0, obs_indices['y']], 'go', label='Start')
@@ -544,6 +550,8 @@ for exp in exps:
             
             if not args_cli.aggregate_only:
                 fig_all.savefig(f'{save_path}/all.png')
+                plt.close(fig_all)   # fix_7: was the only figure never closed -> "More than 20
+                                     # figures have been opened" once the variant list grew to 13.
                 env.close()
         
         # Save aggregate plots for all seeds
