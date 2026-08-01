@@ -72,8 +72,13 @@ cd "$REPO"
 #   sbatch gates_mix_visual.sh static   # the no-GPU subset (g0, g1, g4, g6)
 #
 # Exit code is non-zero if ANY gate fails, so this is safe to chain ahead of training.
-# NOTE: G6's `fm` leg is EXPECTED to report a missing terminal-step projector fallback —
-# that is the upstream Gen7/Gen6V4 finding, not a Gen14 regression.
+#
+# NOTE (fix_2): G6 is a RUNTIME test — it drives p_sample_loop at K=1 with a spy projector
+# and counts project() calls. Its `fm` leg is EXPECTED to print a loud
+# "KNOWN UPSTREAM DEFECT" banner: at K=1 with threshold=0.5 the Gen7 guard
+# `0 >= 0.5` is False, so the DPCC projection never runs. That is a Gen7/Gen6V4 defect,
+# NOT a Gen14 regression, so it does not fail the gate (failing would block the
+# pipeline's --dependency=afterok chain). Read the banner; do not ignore it.
 GATE="${1:-all}"
 echo "[ gates ] running: $GATE"
 

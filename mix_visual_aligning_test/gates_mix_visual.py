@@ -12,9 +12,15 @@ G4  alpha spans the budget  alpha(0)~1, alpha(N)~0, monotone
 G5  alpha->0 == MeanFlow    af with alpha pinned to 0 matches the mf objective
 G6  projector fires at K=1  the DPCC projection is not silently skipped at 1 NFE
 
-G0 and G1 are static (G0 needs no torch at all). G2-G6 build real models and need a GPU.
+G0 needs no torch at all. G1 and G4 need torch but no GPU. G6 builds small state-only
+models and runs on CPU. G2/G3/G5 build visual models and need a GPU (`--gate static`
+runs everything except those three).
+
 Read `raw_mse_u`, never `diffusion_loss`: the adaptive loss sits at its ceiling by
 construction and says nothing about convergence.
+
+fix_2 (2026-08-01): G6 was a substring search that could never fail — see its docstring.
+It is now a runtime spy-projector test.
 """
 
 import argparse
@@ -283,35 +289,146 @@ def gate_g5(device='cuda'):
     return ok
 
 
-def gate_g6(device='cuda'):
-    """At K=1 the DPCC projector must still fire.
+class _SpyProjector:
+    """Records whether the sampler actually called project() — the whole point of G6.
 
-    🔴 The mf/af arms inherit Gen3v6's terminal-step fallback
-    (`or loop_idx == flow_steps - 1`, mf_diffusion.py:283). The fm arm does NOT — Gen7's
-    loop has only the threshold term (fm_diffusion.py:178), so with a low threshold the
-    projection is skipped entirely and the run reports "FM is unsafe" when nothing was
-    ever projected. The fm leg of this gate is EXPECTED TO FAIL; that failure is the
-    finding, and the fix belongs upstream in Gen7, not inside Gen14 (PLAN §6.4).
+    Mimics the surface `Projector` exposes to p_sample_loop: `.gradient`,
+    `.diffusion_timestep_threshold`, `.project()`. `gradient=False` selects the
+    SLSQP branch, which is the one the eval pipeline uses.
     """
-    print('\n=== G6: projector fires at K=1 ===')
-    import inspect
-    from mix_visual_aligning.models import mf_diffusion, af_diffusion, fm_diffusion
+
+    def __init__(self, threshold):
+        self.diffusion_timestep_threshold = threshold
+        self.gradient = False
+        self.n_calls = 0
+        self.called_at = []
+
+    def project(self, trajectory, constraints=None):
+        self.n_calls += 1
+        return trajectory, 0.0          # identity projection: we only count the call
+
+    def compute_cost(self, trajectory, constraints=None):
+        return 0.0
+
+
+def _eval_threshold(default=0.5):
+    """The threshold the eval pipeline actually deploys, read from the same YAML the
+    config block reads. Hard-coding it here would let the gate drift away from reality."""
+    path = os.path.join(REPO, 'config', 'visual_aligning_eval.yaml')
+    try:
+        with open(path) as f:
+            for line in f:
+                if line.strip().startswith('diffusion_timestep_threshold:'):
+                    return float(line.split(':', 1)[1].strip())
+    except Exception:
+        pass
+    return default
+
+
+def gate_g6(device='cpu'):
+    """🔴 RUNTIME check: at K=1, does the DPCC projector actually get called?
+
+    ── fix_2 ──────────────────────────────────────────────────────────────────
+    The original G6 was a substring search for 'flow_steps - 1' over the whole
+    module. That string also appears in the unrelated `repeat_last` clamp
+    (`loop_idx = min(i, flow_steps - 1)`) which is present in ALL THREE engines, so
+    the check could never fail: mf/af passed for the wrong reason and fm was
+    reported as having a fallback it does not have. Cluster run 24082 printed
+    `DIFF fm: terminal-step fallback present` — a false pass.
+
+    Replaced with a behavioural test: run p_sample_loop at K=1 with a spy projector
+    and count the calls. No source-string heuristics, nothing to drift.
+    ───────────────────────────────────────────────────────────────────────────
+
+    EXPECTED RESULT (with the deployed threshold of 0.5):
+      mf, af -> project() IS called. Gen3v6's guard is
+                `(loop_idx >= int((1-thr)*K)) or (loop_idx == K-1)`; at K=1 both
+                the int() truncation and the explicit fallback fire.
+      fm     -> project() is NOT called. Gen7's guard is only
+                `loop_idx >= (1-thr)*K` = `0 >= 0.5` -> False. The DPCC projection
+                is skipped ENTIRELY and the run silently reports FM as unsafe when
+                nothing was ever projected.
+
+    The fm leg does NOT fail this gate: it is a known Gen7/Gen6V4 upstream defect,
+    not a Gen14 regression, and failing here would block the pipeline's
+    `--dependency=afterok` chain forever. It is printed as a loud banner instead.
+    The fix belongs upstream in Gen7, after which Gen14 re-copies (PLAN §6.4).
+    """
+    print('\n=== G6: projector fires at K=1 (RUNTIME) ===')
+    import torch
+    from mix_visual_aligning.models.engine_registry import resolve, import_class
+
+    thr = _eval_threshold()
+    print(f'  threshold = {thr} (from config/visual_aligning_eval.yaml — the deployed value)')
+    print(f'  building state-only (if_vision=False) models on {device}: no vision encoder needed\n')
+
+    horizon, batch, action_dim, obs_dim = 8, 2, 3, 6
+    transition_dim = action_dim + obs_dim
+
+    class _Cfg:
+        pass
+    cfg = _Cfg()
+    cfg.device, cfg.if_vision, cfg.horizon = device, False, horizon
+    cfg.action_dim, cfg.obs_dim, cfg.dim = action_dim, obs_dim, 32
+    cfg.dim_mults, cfg.condition_dropout, cfg.returns_condition = (1, 2, 4, 8), 0.1, False
+    cfg.film_mode = 'v1'
+
     ok = True
-    for name, mod in (('mf', mf_diffusion), ('af', af_diffusion), ('fm', fm_diffusion)):
-        src = inspect.getsource(mod)
-        has_fallback = 'flow_steps - 1' in src or 'flow_steps_v3 - 1' in src
-        expected = name in ('mf', 'af')
-        status = 'ok  ' if has_fallback == expected else 'DIFF'
-        note = ('terminal-step fallback present' if has_fallback
-                else 'NO terminal-step fallback — projection can be SKIPPED at K=1')
-        print(f'  {status} {name}: {note}')
-        if name == 'fm' and not has_fallback:
-            print('       ^ EXPECTED. Gen7/Gen6V4 upstream bug — report it, do not patch Gen14.')
-        if has_fallback != expected and name != 'fm':
-            ok = False
-    print('  G6 PASS (static check)' if ok else '  G6 FAIL')
-    print('  Runtime confirmation: run eval with --engine mf and flow_steps_v3=1, then '
-          'check projection_costs[0] is populated and non-trivial.')
+    upstream_finding = False
+    for arm in ('mf', 'af', 'fm'):
+        spec = resolve(arm)
+        ModelCls, DiffCls = import_class(spec['model']), import_class(spec['diffusion'])
+
+        if spec['wraps_unet']:
+            model = ModelCls(state_dim=transition_dim, seq_len=horizon, freq_dim=cfg.dim,
+                             dropout_rate=0.1, device=device, if_vision=False, vis_config=cfg,
+                             dual_head=True, interval_cfg=False)
+            extra = dict(if_vision=False, t_schedule='logit_normal', p_mean=-0.4, p_std=1.0)
+        else:
+            model = ModelCls(cfg)
+            extra = {}
+
+        diffusion = DiffCls(model, horizon=horizon, observation_dim=obs_dim,
+                            action_dim=action_dim, goal_dim=0, n_timesteps=100,
+                            loss_type='l2', flow_steps_v3=1, **extra).to(device)
+        diffusion.flow_steps_v3 = 1                      # K = 1: the low-NFE regime
+        diffusion.ode_inference_steps_v3 = 1
+
+        spy = _SpyProjector(thr)
+        cond = {0: torch.zeros(batch, obs_dim, device=device)}
+        with torch.no_grad():
+            diffusion.p_sample_loop((batch, horizon, transition_dim), cond,
+                                    projector=spy, constraints=None)
+
+        fired = spy.n_calls > 0
+        if arm in ('mf', 'af'):
+            if fired:
+                print(f'  ok   {arm}: project() called {spy.n_calls}x at K=1')
+            else:
+                ok = False
+                print(f'  FAIL {arm}: project() NEVER called at K=1 — the DPCC cage is OFF. '
+                      f'The terminal-step fallback was lost.')
+        else:
+            if fired:
+                print(f'  ok   {arm}: project() called {spy.n_calls}x at K=1 '
+                      f'(upstream Gen7 appears to have been fixed — update this gate)')
+            else:
+                upstream_finding = True
+                print(f'  !!   {arm}: project() NEVER called at K=1  <-- KNOWN UPSTREAM DEFECT')
+
+    if upstream_finding:
+        print('\n  ' + '!' * 68)
+        print('  !! Gen7/Gen6V4 UPSTREAM DEFECT CONFIRMED AT RUNTIME (not a Gen14 regression)')
+        print(f'  !! fm arm at K=1, threshold={thr}: `loop_idx >= (1-thr)*K` = `0 >= {1-thr}`')
+        print('  !! is False, so the DPCC projection NEVER RUNS. Any K=1 result from the fm')
+        print('  !! arm showing constraint violations is measuring an UNPROJECTED trajectory.')
+        print('  !! Only K=1 is affected (at K=2, `1 >= 1.0` is True).')
+        print('  !! Fix belongs in fm_visual_aligning/models/diffusion.py, THEN re-copy here.')
+        print('  ' + '!' * 68)
+
+    print('\n  G6 PASS (runtime)' if ok else '\n  G6 FAIL')
+    print('  End-to-end confirmation (optional): run eval with --engine mf and '
+          'flow_steps_v3=1 and check projection_costs[0] is populated and non-trivial.')
     return ok
 
 
