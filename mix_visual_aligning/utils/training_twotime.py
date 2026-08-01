@@ -341,6 +341,14 @@ class Trainer(object):
             'step': self.step,
             'model': self.model.state_dict(),
             'ema': self.ema_model.state_dict(),
+            # 🔴 fix_6 — OPTIMIZER STATE. Without these two, "resume" restarted Adam with
+            # zeroed moments and rewound the cosine LR schedule to its warmup, i.e. at step
+            # 80000 the LR jumped 4.87e-5 -> 3e-4. That is not a resume, it is a second
+            # training run glued onto a checkpoint. Old checkpoints lack these keys; load()
+            # degrades gracefully (see there).
+            'optimizer': self.optimizer.state_dict(),
+            'lr_scheduler': self.lr_scheduler.state_dict(),
+            'best_test_loss': self.best_test_loss if hasattr(self, 'best_test_loss') else None,
             'train_losses': self.train_losses,
             'test_losses': self.test_losses,
             'train_a0_losses': self.train_a0_losses,
@@ -443,6 +451,39 @@ class Trainer(object):
         except Exception as e:
             print(f'[ utils/training ] Error saving exhaustive losses to {json_path}: {e}')
 
+    def _restore_optimizer_state(self, data):
+        '''
+            fix_6 — put the optimizer and the LR schedule back where they were.
+
+            Two cases:
+              * checkpoint written by fix_6 or later -> exact restore.
+              * checkpoint written BEFORE fix_6 (no 'optimizer'/'lr_scheduler' keys) -> the
+                Adam moments are unrecoverable, but the LR schedule is a pure function of
+                the step count, so we replay it forward to self.step. That alone is the
+                difference between continuing at 4.87e-5 and restarting warmup at 3e-4.
+            Call AFTER self.step has been set.
+
+            Gen3v7 note: the α schedule needs no restoring — `train_epoch` recomputes it
+            from `self.step` via `set_train_step` on every step, so a resumed run picks the
+            anneal up exactly where it left off. Check train/alpha after a resume anyway.
+        '''
+        if 'best_test_loss' in data and data['best_test_loss'] is not None:
+            self.best_test_loss = data['best_test_loss']
+
+        if 'optimizer' in data and 'lr_scheduler' in data:
+            self.optimizer.load_state_dict(data['optimizer'])
+            self.lr_scheduler.load_state_dict(data['lr_scheduler'])
+            print(f'[ utils/training ] Restored optimizer + LR schedule '
+                  f'(lr={self.lr_scheduler.get_last_lr()[0]:.3e})')
+            return
+
+        print('[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. '
+              'Adam moments restart cold; fast-forwarding the LR schedule instead.')
+        for _ in range(int(self.step)):
+            self.lr_scheduler.step()
+        print(f'[ utils/training ] LR schedule fast-forwarded to step {self.step} '
+              f'(lr={self.lr_scheduler.get_last_lr()[0]:.3e})')
+
     def load(self, epoch):
         '''
             loads model and ema from disk
@@ -453,6 +494,7 @@ class Trainer(object):
         self.step = data['step']
         self.model.load_state_dict(data['model'])
         self.ema_model.load_state_dict(data['ema'])
+        self._restore_optimizer_state(data)
 
         # Restore losses from checkpoint if available
         if 'train_losses' in data:
@@ -493,3 +535,16 @@ class Trainer(object):
                     print(f'[ utils/training ] Restored loss history from {losses_path}')
                 except Exception as e:
                     print(f'[ utils/training ] Error loading losses from {losses_path}: {e}')
+
+        # 🔴 fix_6 — recover the best-val watermark on PRE-fix_6 checkpoints.
+        # Without this, best_test_loss stays np.inf after a resume, so the FIRST test
+        # unconditionally calls save_best() and overwrites state_best.pt — with a model that
+        # may well be worse. state_best.pt is exactly what eval loads
+        # ('diffusion_epoch': 'best', config/avoiding-d3il.py:1304), so a resume would
+        # silently downgrade the deliverable, and if the periodic state_*.pt files had been
+        # deleted to free disk there would be nothing left to fall back to.
+        # The restored test_losses history holds the exact watermark — nothing is estimated.
+        if getattr(self, 'best_test_loss', None) in (None, np.inf) and len(self.test_losses) > 0:
+            self.best_test_loss = min(value for _step, value in self.test_losses)
+            print(f'[ utils/training ] Recovered best_test_loss={self.best_test_loss:.6f} '
+                  f'from restored history ({len(self.test_losses)} points)')

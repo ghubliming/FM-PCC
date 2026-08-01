@@ -3829,3 +3829,46 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 4. **Visual Latent Pre-Encoding**: Solved a severe inefficiency where the forward-mode JVP for MeanFlow/α-Flow would erroneously differentiate through the visual encoder. The system now pre-encodes the images once into a `visual_latent`, turning it into a captured constant with a tangent of zero by construction.
 5. **Config Safeguards**: Removed historical path-drift traps by strictly deriving all loading and evaluation paths dynamically from training configuration keys, making cross-talk or folder mismatches structurally impossible.
 6. **Status**: Code is complete and gates G0-G6 have been built for verification. The pipeline is currently unverified on the hardware cluster; next steps require running the rigorous gate battery.
+
+***
+
+## Gen3v6 Fix 5: Temporal-Consistency Verification & Blast Radius (August 1, 2026)
+
+**Keywords**: Gen3v6, temporal-consistency, blast radius, bit-deterministic, dpcc-t, dpcc-c collapse.
+
+1. **Fix 5 Verified & Scoped**: Empirically confirmed that the temporal-consistency reference repair (`executed_idx`) is live and perfectly scoped. Across a 195-cell benchmark sweep, only the 30 cells belonging to `dpcc-t` and `dpcc-t-tightened` changed, leaving the remaining 165 cells byte-identical.
+2. **Ceiling Performance Restored**: The repaired `dpcc-t-tightened` variant achieved ceiling performance (15.00/15.00 g&c) across the entire K sweep. The untightened `dpcc-t` showed noisier but net-positive improvement, confirming the theoretical expectation that consistent self-tracking reduces obstacle drift.
+3. **HardFlow's Final Lead Eliminated**: The fix nullified HardFlow's (`hardflow_new-t-tightened`) sole remaining performance edge at K=2. On this benchmark, HardFlow matches but never beats DPCC at any value of K.
+4. **`dpcc-c` Collapse Independent**: Verified that the catastrophic K=2 collapse of `dpcc-c-tightened` is completely unaffected by this fix, isolating the suspected cause strictly to the `cand_prox` ranking extrapolation key.
+
+***
+
+## Gen14 Fix 2: G6 Gate Overhaul & Runtime Projector Test (August 1, 2026)
+
+**Keywords**: Gen14, Mix-ML, pre-flight gate, G6, runtime test, SpyProjector, low-NFE.
+
+1. **No-Op Gate Caught**: Discovered that the G6 pre-flight gate (designed to test if the projector falls back at K=1) was a meaningless substring search that always evaluated to true for every engine.
+2. **True Low-NFE Bug Isolated**: Validated that the underlying defect is real: at a 0.5 activation threshold, the `fm` arm will never project at K=1, compromising its low-NFE evaluations. `mf` and `af` arms are safe due to integer truncation and an explicit terminal fallback.
+3. **Behavioral Runtime Test**: Replaced the heuristic gate with a robust runtime test (`_SpyProjector`). G6 now executes a CPU-only K=1 `p_sample_loop` and asserts that `.project()` is actually called. It is configured to flag the known `fm` upstream defect with a warning banner without blocking downstream dependencies.
+
+***
+
+## Gen3v6 & Gen3v7 Fix 6: Auto-Resume & Optimizer State Restoration (August 1, 2026)
+
+**Keywords**: Gen3v6, Gen3v7, auto-resume, optimizer state, LR fast-forward, best_test_loss, full disk.
+
+1. **Full Disk Crash**: Gen3v6 training (seed 9) crashed at step 80,000 due to a completely filled workspace disk. Investigation revealed that the capability to resume training from checkpoints was lost during the Gen3v4 rewrite.
+2. **Auto-Resume Implemented**: Restored robust auto-resume wiring (`--auto-resume`, `--resume-step`) to both Gen3v6 and Gen3v7 trainers and SLURM launchers.
+3. **Exact Optimizer Restoration**: Fixed a silent historical defect where resuming a run reset the Adam moments and cosine LR schedule to zero. Checkpoints now store and restore the `optimizer` and `lr_scheduler`. For legacy checkpoints missing this state, the LR schedule is automatically fast-forwarded to the resume step to prevent warmup spikes.
+4. **Watermark Preservation**: Saved `best_test_loss` into the checkpoint payload. This prevents the resumed evaluator from initializing the watermark at infinity and immediately overwriting `state_best.pt` with an inferior model.
+5. **Disk Pre-flight**: Added a pre-flight `df -h` check in the SLURM submission scripts to proactively flag dangerously low disk space before scheduling jobs.
+
+***
+
+## Gen14 Fix 3: Multi-Seed Fan-out for Visual-Mix-ML (August 1, 2026)
+
+**Keywords**: Gen14, Mix-ML, multi-seed, SLURM fan-out, pipeline dependency.
+
+1. **Multi-Seed Default Fixed**: The Gen14 training and evaluation scripts were hardcoded to seed 6 only. Introduced robust multi-seed argument parsing (`--seeds`) without polluting the shared YAML configuration used by legacy models.
+2. **Parallel Job Fan-out**: To prevent a 24-hour job wall-time timeout when running sequential visual trainings, the `mix_visual_aligning_pipeline.sh` orchestrator was refactored. 
+3. **Pipeline Efficiency**: The pipeline now launches a single shared G0-G6 diagnostic gate check, which dynamically spawns parallel, independent train-then-eval chains for each requested seed, ensuring efficient cluster utilization and isolated failure domains.

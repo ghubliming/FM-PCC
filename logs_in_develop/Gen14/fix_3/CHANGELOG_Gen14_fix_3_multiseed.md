@@ -106,6 +106,54 @@ script. Concurrent seeds cannot collide. Cross-seed aggregation stays a downstre
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh af "6 7 8"
 ```
 
+## 6b. fix_3b — upstream re-sync of the two-time trainer (job 24111 G0 FAIL)
+
+The first pipeline submission at `ff3f3c2` (job 24110 → gates 24111) came back **G0 FAIL,
+all six other gates PASS**. Cause was NOT fix_3:
+
+```
+! mix_visual_aligning/utils/training_twotime.py: DIFFERS from
+  flow_matcher_v3_alphaflow/utils/training.py
+```
+
+`training_twotime.py` was copied at `b5846ee5` (Gen14 init). Its source then moved twice,
+**after** the copy was cut:
+
+| commit | what it added to `flow_matcher_v3_alphaflow/utils/training.py` |
+|---|---|
+| `d97eb92c` | Gen3v6/7 Fix6 — `optimizer`/`lr_scheduler` in `_checkpoint_payload()`, `_restore_optimizer_state()` called from `load()` |
+| `15b82d6b` | Fix6.2 — recover the `best_test_loss` watermark from restored history |
+
+The diff was **55 lines, all deletions on the Gen14 side, zero additions** — Gen14's copy had
+no divergence of its own, it was simply the pre-fix_6 version. So this was not a defect in
+Gen14 and not a regression; it is the sibling-sync pattern CLAUDE.md warns about, and G0
+caught it exactly as designed. The gate went red because the *upstream* moved.
+
+**Action:** verbatim re-copy, same CRLF→LF treatment as the original.
+
+```bash
+tr -d '\r' < flow_matcher_v3_alphaflow/utils/training.py > mix_visual_aligning/utils/training_twotime.py
+```
+
+G0 re-run locally: **PASS, 23/23, exit 0.** `ast.parse` clean; `numpy as np` (needed by the
+fix_6.2 `np.inf` check) already imported at line 4; `from .arrays import batch_to_device`
+resolves against Gen14's own `utils/arrays.py`.
+
+**Why it was worth doing rather than bypassing the gate.** The old copy trained correctly —
+this bought no bug fix. It bought *resume*. Without fix_6 a resumed run restarts Adam with
+zeroed moments and rewinds the cosine LR (measured 4.87e-5 → 3e-4 at step 80000), and
+without fix_6.2 the first post-resume test overwrites `state_best.pt` — the file eval
+loads — with a possibly worse model. Gen3v6 hit this for real (job 24069, seed 9, full
+disk). Visual aligning at 1e5 steps with two ResNet-18 encoders is *more* exposed to the
+24 h wall than Gen3v6's state-only runs, so the trap was more likely here, not less.
+
+**Still not mirrored:** Gen3v7's `--auto-resume` CLI (`find_latest_checkpoint()`,
+`training_already_complete()`, `resolve_resume()`) is not in
+`mix_visual_aligning_test/train_mix_visual_aligning.py`. Not needed for the above — Gen14's
+train script already has `--resume-step` and calls `trainer.load()`, so
+`_restore_optimizer_state()` fires automatically. The CLI would only remove the need to pass
+a step number by hand on a requeue. Deferred.
+
 ## 7. Note recorded while answering: FiLM default
 
 Not a change — logged because it was asked and is easy to get wrong later.
