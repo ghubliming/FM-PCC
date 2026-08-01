@@ -14,7 +14,9 @@ copy-modify. This mirror is preventative.
   `training_already_complete()`, `resolve_resume()`.
 - `flow_matcher_v3_alphaflow/utils/training.py` — `optimizer` / `lr_scheduler` /
   `best_test_loss` added to `_checkpoint_payload()`; new `_restore_optimizer_state()` called
-  from `load()`, with an LR-schedule fast-forward for pre-fix_6 checkpoints.
+  from `load()`, with an LR-schedule fast-forward for pre-fix_6 checkpoints; plus recovery of
+  the `best_test_loss` watermark from the restored history, so a resume cannot overwrite
+  `state_best.pt` — the file eval actually loads — with a worse model (Gen3v6 §4b).
 - `Slurm_Codes/sbatch/AlphaFlow/train_alphaflow.sh` — `TRAIN_SEEDS` / `AUTO_RESUME` env
   vars, `"$@"` forwarded, disk pre-flight.
 

@@ -515,3 +515,16 @@ class Trainer(object):
                     print(f'[ utils/training ] Restored loss history from {losses_path}')
                 except Exception as e:
                     print(f'[ utils/training ] Error loading losses from {losses_path}: {e}')
+
+        # 🔴 fix_6 — recover the best-val watermark on PRE-fix_6 checkpoints.
+        # Without this, best_test_loss stays np.inf after a resume, so the FIRST test
+        # unconditionally calls save_best() and overwrites state_best.pt — with a model that
+        # may well be worse. state_best.pt is exactly what eval loads
+        # ('diffusion_epoch': 'best', config/avoiding-d3il.py:1219), so a resume would
+        # silently downgrade the deliverable, and if the periodic state_*.pt files had been
+        # deleted to free disk there would be nothing left to fall back to.
+        # The restored test_losses history holds the exact watermark — nothing is estimated.
+        if getattr(self, 'best_test_loss', None) in (None, np.inf) and len(self.test_losses) > 0:
+            self.best_test_loss = min(value for _step, value in self.test_losses)
+            print(f'[ utils/training ] Recovered best_test_loss={self.best_test_loss:.6f} '
+                  f'from restored history ({len(self.test_losses)} points)')

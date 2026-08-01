@@ -169,6 +169,51 @@ LR continuing its cosine descent from ~4.9e-5; a spike back toward 3e-4 means
 
 ---
 
+## 4b. "What if I delete the periodic weights to free disk?"
+
+Asked while planning the cleanup in §4 step 0. Answer: **resume is safe, but there was a bug
+in exactly this path, now fixed.**
+
+`state_best.pt` is not just a resume candidate — it is **the deliverable**. The eval loads it
+and nothing else: `'diffusion_epoch': 'best'` (`config/avoiding-d3il.py:1219`) →
+`trainer.load('best')` (`eval_flow_matching_v3_meanflow.py:192-194`). The periodic
+`state_<step>.pt` files are *only* ever used for resume.
+
+**The bug.** `best_test_loss` was not in a pre-fix_6 payload, so after resuming it stayed at
+`np.inf` — meaning the **first** `test()` would call `save_best()` unconditionally and
+overwrite `state_best.pt`, possibly with a worse model. With the periodic files deleted there
+would be no fallback, and eval would silently ship the downgraded weights.
+Fixed at the end of `load()`: when the watermark is absent it is recovered as
+`min(test_losses)` from the restored history — exact, not estimated.
+
+**Behaviour table** (all rows exercised offline against a simulated seed-9 directory):
+
+| Files left in the seed dir | `find_latest_checkpoint` | Outcome |
+|---|---|---|
+| `state_best.pt` only | `('best', 79000)` | ✅ resumes, 21000 steps remain |
+| periodic only, no best | `(60000, 60000)` | ✅ resumes, loses 19000 steps |
+| `state_best.pt` **corrupt** + a periodic file | `(40000, 40000)` | ✅ logs the read error, falls back |
+| `state_best.pt` corrupt, nothing else | `(None, None)` | ⚠️ prints "no checkpoint found", trains from step 0 |
+| **everything deleted, `losses.pkl` intact, seed finished** | — | 🔴 **skipped as complete — and the weights are gone** |
+
+**So: safe to delete the periodic `state_<step>.pt` files. Never delete `state_best.pt`.**
+The last row is the trap — for seeds 7 and 8 `losses.pkl` says complete, so auto-resume will
+correctly skip them, but if their `state_best.pt` was deleted there is nothing to eval and no
+way to regenerate short of `--force-restart` and a full 7.5 h retrain.
+
+Safe cleanup for the finished seeds:
+
+```bash
+BASE=logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5
+du -sh $BASE/*                                  # look before deleting
+rm -f $BASE/{7,8}/state_[0-9]*.pt               # periodic only; state_best.pt untouched
+ls $BASE/{7,8}/state_best.pt                    # must still exist
+```
+
+Leave seed 9's files alone until it has resumed and written a fresh checkpoint.
+
+---
+
 ## 5. Verification
 
 | Check | Result |
@@ -179,6 +224,8 @@ LR continuing its cosine descent from ~4.9e-5; a spike back toward 3e-4 means
 | `submit.sh` forwards trailing args to the job script | confirmed, `submit.sh:11-13,43` |
 | `Trainer.train()` is resume-aware without modification | confirmed, `training.py:259-273` |
 | `save_freq` arithmetic vs. the log's checkpoint set | confirmed, `100000 // 5 = 20000` |
+| Resume helpers exercised offline (stubbed `torch`) — 12 cases incl. best-only, corrupt-best, wiped dir, died-at-80k vs finished | all as intended (§4b table) |
+| Eval really loads `state_best.pt` | confirmed, `config/avoiding-d3il.py:1219` → `eval:192-194` |
 | Files touched outside Gen3v6/Gen3v7 | **none** |
 
 **Not verified:** nothing was executed — this container has no torch. The resume path itself
