@@ -42,6 +42,22 @@
         .p-seg-3 { color: #ef6c00; font-weight: bold; }
         .p-seg-4 { color: #6a1b9a; font-weight: bold; }
         .p-seg-5 { color: #00838f; font-weight: bold; }
+        /* U10: paper-style result matrices (candidates x variants). These must NOT inherit
+           the global `table-layout: fixed; width: 100%` above — with ~18 variant columns
+           fixed layout squeezes every "mean ± sem" cell into an unreadable wrap. */
+        .paper-tbl-wrap { overflow: auto; max-height: 560px; border: 1px solid #000; margin-bottom: 26px; }
+        .paper-tbl { border-collapse: collapse; table-layout: auto; width: auto; min-width: 100%; font-size: 10px; }
+        .paper-tbl th, .paper-tbl td { border: 1px solid #ccc; padding: 4px 7px; text-align: right; white-space: nowrap; overflow-wrap: normal; }
+        .paper-tbl thead th { position: sticky; top: 0; background: #ececec; z-index: 2; text-align: center; font-size: 9px; font-weight: bold; }
+        .paper-tbl td.rowhead { position: sticky; left: 0; background: #fafafa; text-align: left; font-weight: bold; z-index: 1; }
+        .paper-tbl thead th.corner { left: 0; z-index: 3; background: #ececec; text-align: left; }
+        .paper-tbl tbody tr:hover td { background: #fffde7; }
+        .paper-tbl tbody tr:hover td.rowhead { background: #fff59d; }
+        .paper-tbl .nullcell { color: #bbb; text-align: center; }
+        .paper-tbl .sem { color: #666; }
+        .paper-tbl .flag { color: #c62828; font-size: 9px; font-weight: bold; }
+        .tbl-caption { font-size: 12px; font-weight: bold; margin: 16px 0 4px; }
+        .tbl-note { font-size: 10px; color: #666; margin-bottom: 6px; }
     </style>
 
     <py-config>
@@ -76,7 +92,7 @@
         <input type="number" id="fig-width" value="10.0" step="1.0" onchange="trigger_plot()">
     </div>
     <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
-        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">DOWNLOAD_PNG</button>
+        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">EXPORT PNG + LATEX</button>
     </div>
     <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
         <div class="control-group"><label>2. Analysis Mode</label><select id="mode-select" onchange="trigger_plot()"><option value="candidate">By Candidate</option><option value="env">By Environment</option></select></div>
@@ -101,11 +117,12 @@
 </div>
 
 <div class="main">
-    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.7</div></div>
+    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.11</div></div>
     <div class="content">
         <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
         <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
         <div class="path-section" id="selection-map-section" style="display:none; border-top: 2px dashed #007bff; margin-bottom: 0;"><label style="color:#007bff;">Plot Legend — Selected Candidates (this plot only)</label><div id="selection-map-container"></div></div>
+        <div class="path-section" id="summary-section" style="display:none; border-top: 2px solid #000;"><label>Result Matrices — Selected Candidates &times; All Variants</label><div id="summary-container"></div></div>
         <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map</label><div id="path-map-container"></div></div>
     </div>
 </div>
@@ -119,7 +136,11 @@ from js import document, console, fetch, window, Uint8Array, File, URL
 from pyodide.ffi import create_proxy
 
 df = None
+df_agg = None
+df_raw = None
 current_fig = None
+# U10: bumped on every SYNC_SOURCE so the result-matrix cache invalidates on new data.
+data_version = 0
 
 async def init_manifest():
     import re
@@ -157,7 +178,7 @@ async def init_manifest():
         pass
 
 async def load_data(event=None):
-    global df_agg, df_raw
+    global df_agg, df_raw, data_version
     mode = window.currentMode
     if mode == "list":
         batch = document.getElementById("batch-select").value
@@ -192,6 +213,7 @@ async def load_data(event=None):
         else:
             df_raw = None
 
+        data_version += 1
         document.getElementById("controls-panel").style.display = "flex"
         document.getElementById("download-btn").style.display = "block"
         document.getElementById("path-section").style.display = "block"
@@ -215,17 +237,19 @@ def populate_dynamic_filters():
     document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}"{" selected" if m == default_metric else ""}>{m.upper()}</option>' for m in metrics])
     envs = sorted(df_agg['halfspace_variant'].unique())
     document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
-    # Do NOT auto-check every box on first load: large batches (many variants x
-    # candidates) freeze the page trying to render the full matrix at once. Only
-    # pre-select the first item in each list so an initial lightweight plot draws;
-    # the user then picks the rest (or hits [ALL]).
+    # Do NOT auto-check any box on first load: large batches (many variants x candidates)
+    # freeze the page trying to render the full matrix at once. U10 also drops the old
+    # "pre-check the first item" behaviour — the plot starts empty on purpose, because the
+    # Result Matrices section below now gives the full unfiltered picture without any
+    # selection, and an auto-picked CAND_1/first-variant bar was routinely mistaken for a
+    # meaningful default. The user checks what they want (or hits [ALL]).
     vars_list = sorted(df_agg['variant'].unique())
-    document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}"{" checked" if i == 0 else ""} onchange="trigger_plot()"> <span>{v}</span></div>' for i, v in enumerate(vars_list)])
+    document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
     # numeric-labeled batches (Candidate = "1".."48") must sort as numbers, not
     # lexicographically ("1","10","11",...,"2",...) — alphabetic labels ("A","B",...)
     # are untouched since they never match .isdigit().
     cands_list = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
-    document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}"{" checked" if i == 0 else ""} onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for i, c in enumerate(cands_list)])
+    document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
 
 def show_no_data(metric, checked_vars, checked_cands, env):
     # U7 fix: never leave the "CHOOSE_EXPERIMENT_TO_START" placeholder (or a silent
@@ -243,13 +267,43 @@ def show_no_data(metric, checked_vars, checked_cands, env):
            f'(n_success_and_constraints, avg_time) to compare across all variants.</div>')
     document.getElementById("plot-area").innerHTML = msg
 
+def show_empty_selection(checked_vars, checked_cands):
+    # U10: with nothing pre-checked, an un-drawn plot is the normal start state — say so
+    # explicitly instead of leaving the stale "CHOOSE_EXPERIMENT_TO_START" placeholder (or a
+    # previous plot) sitting there, and point at the matrices that ARE already populated.
+    missing = []
+    if not checked_vars: missing.append("variant")
+    if not checked_cands: missing.append("candidate")
+    document.getElementById("plot-area").innerHTML = (
+        '<div style="padding:60px 24px;color:#666;font-family:monospace;font-size:13px;line-height:1.7;">'
+        f'<b style="color:#000;font-size:15px;">NO PLOT — SELECT AT LEAST ONE {" AND ONE ".join(m.upper() for m in missing)}</b><br><br>'
+        'Sidebar &rarr; <b>5. Variants</b> and <b>6. Candidates</b> (use <b>[ALL]</b> for everything).<br>'
+        'Nothing is pre-checked by design.<br><br>'
+        'The <b>Result Matrices</b> below only need <b>candidates</b> &mdash; tick those alone and '
+        'they (and the LaTeX export) fill in with every variant as a column.</div>')
+    document.getElementById("scorecard-container").innerHTML = (
+        '<div class="score-card" style="grid-column: span 4; text-align:center; color:#999;">'
+        'No selection &mdash; scorecard idle</div>')
+    document.getElementById("selection-map-section").style.display = "none"
+
 async def trigger_plot(event=None):
     global df_agg, df_raw, current_fig
     if df_agg is None: return
     metric, mode, env = document.getElementById("metric-select").value, document.getElementById("mode-select").value, document.getElementById("env-select").value
     checked_vars, checked_cands = get_checked("var-check"), get_checked("cand-check")
-    if not checked_vars or not checked_cands or not metric: return
-    
+
+    # U10: the Result Matrices ignore the VARIANT checkboxes (all variants are always
+    # columns) and only follow the candidate ones, so they are rendered BEFORE the
+    # early-return below — with candidates but no variants ticked the plot can't draw, yet
+    # the matrices are perfectly well defined.
+    render_summary_tables()
+
+    if not checked_vars or not checked_cands or not metric:
+        plt.close('all')
+        current_fig = None
+        show_empty_selection(checked_vars, checked_cands)
+        return
+
     seed_mode = document.getElementById("seed-mode-select").value
     document.getElementById("seed-error-msg").innerText = ""
     x_axis = 'Candidate' if mode == "candidate" else 'halfspace_variant'
@@ -350,30 +404,53 @@ async def trigger_plot(event=None):
     render_selection_map(pivot_mean.index.tolist(), x_axis, checked_cands)
     update_scorecard(active_subset, metric)
 
+def _download_bytes(payload, filename, mime):
+    js_array = Uint8Array.new(payload)
+    f = File.new([js_array], filename, { "type": mime })
+    url = URL.createObjectURL(f)
+    link = document.createElement("a"); link.href = url; link.download = filename; link.click()
+    URL.revokeObjectURL(url)
+
 def download_plot(event):
     global current_fig
-    if current_fig is None: return
-    
+    if df_agg is None: return
+
     from datetime import datetime
     now = datetime.now().strftime("%Y%m%d_%H%M")
+    stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     metric = document.getElementById('metric-select').value
     env = document.getElementById('env-select').value
     checked_vars = get_checked("var-check")
     checked_cands = get_checked("cand-check")
-    
+    batch_label = document.getElementById("batch-select").value if window.currentMode == "list" else document.getElementById("custom-path").value
+
     base_name = f"plot_{metric}_{env}_{len(checked_vars)}v_{len(checked_cands)}c_{now}"
-    
-    # 1. Download PNG
-    buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
-    js_array = Uint8Array.new(buf.read()); file_png = File.new([js_array], f"{base_name}.png", { "type": "image/png" }); url_png = URL.createObjectURL(file_png)
-    link_png = document.createElement("a"); link_png.href = url_png; link_png.download = f"{base_name}.png"; link_png.click(); URL.revokeObjectURL(url_png)
-    
+    written = []
+
+    # 1. PNG — only if a figure is actually on screen. U10.1: the export no longer bails out
+    # when there is no plot, because the LaTeX tables below depend on the candidate selection
+    # alone and are perfectly exportable with zero variants ticked.
+    if current_fig is not None:
+        buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
+        _download_bytes(buf.read(), f"{base_name}.png", "image/png")
+        written.append("PNG")
+
+    # 2. LaTeX — the four Result Matrices, exactly as rendered on the page.
+    ctx, err = _summary_context()
+    if ctx is not None:
+        tex = build_latex(ctx, batch_label, stamp)
+        _download_bytes(tex.encode(), f"{base_name}_tables.tex", "text/x-tex")
+        written.append("TEX")
+    else:
+        console.log(f"[ export ] no LaTeX tables: {err}")
+
     p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
     path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
     
     metadata = f"AUDIT LOG: {base_name}\n"
     metadata += "="*40 + "\n"
-    metadata += f"TIMESTAMP: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    metadata += f"TIMESTAMP: {stamp}\n"
+    metadata += f"BATCH:     {batch_label}\n"
     metadata += f"METRIC:    {metric}\n"
     metadata += f"ENV:       {env}\n\n"
     metadata += f"SELECTED VARIANTS ({len(checked_vars)}):\n"
@@ -382,9 +459,10 @@ def download_plot(event):
     for c in checked_cands:
         path = path_map.get(c, "Path not found")
         metadata += f" - CAND_{c} (Source: {path})\n"
-    
-    js_text = Uint8Array.new(metadata.encode()); file_txt = File.new([js_text], f"{base_name}.txt", { "type": "text/plain" }); url_txt = URL.createObjectURL(file_txt)
-    link_txt = document.createElement("a"); link_txt.href = url_txt; link_txt.download = f"{base_name}.txt"; link_txt.click(); URL.revokeObjectURL(url_txt)
+
+    _download_bytes(metadata.encode(), f"{base_name}.txt", "text/plain")
+    written.append("TXT")
+    document.getElementById("engine-status").innerText = "EXPORTED: " + " + ".join(written)
 
 def get_checked(class_name):
     elements = document.getElementsByClassName(class_name)
@@ -453,6 +531,263 @@ def render_selection_map(x_categories, x_axis, checked_cands):
             f'<th>Source Path</th></tr></thead><tbody>{rows}</tbody></table>')
     document.getElementById("selection-map-container").innerHTML = html
     document.getElementById("selection-map-section").style.display = "block"
+
+# ---------------------------------------------------------------------------------------
+# U10: paper-style Result Matrices — rows = the CHECKED candidates, cols = ALL variants.
+# The variant checkboxes are deliberately ignored (a paper table wants every method side by
+# side); the candidate checkboxes are honoured (U10.1 — the batches carry 70+ candidates and
+# nobody wants all of them in a paper table).
+# (metric, caption, value format, annotate-with-failure-flags?)
+# Captions are plain ASCII with " -- " so the same string feeds both the HTML (rendered as an
+# em dash) and the LaTeX export (rendered as an en dash) without an entity/escaping split.
+# ---------------------------------------------------------------------------------------
+SUMMARY_TABLES = [
+    ("n_success", "N_SUCCESS -- success rate (goal reached)", "{:.3f}", False),
+    ("n_success_and_constraints", "N_SUCCESS + CONSTRAINT -- success rate (goal reached AND constraints satisfied)", "{:.3f}", False),
+    ("n_steps", "N_STEPS -- steps taken (episode length)", "{:.1f}", True),
+    ("avg_time", "AVG_TIME -- average computation time per planning step [s]", "{:.4f}", True),
+]
+summary_cache_key = None
+
+def _seed_context():
+    # Mirrors trigger_plot's own branch: custom seed mode only applies when the raw
+    # per-seed CSV actually loaded, otherwise everything falls back to the aggregate.
+    seed_mode = document.getElementById("seed-mode-select").value
+    if seed_mode == "custom" and df_raw is not None:
+        return "custom", tuple(sorted(int(x) for x in get_checked("seed-check")))
+    return "standard", ()
+
+def _summary_stats(env, seed_mode, seeds):
+    # -> ({(metric, cand, variant): {mean, std, count}}, candidates, variants)
+    metrics = [t[0] for t in SUMMARY_TABLES]
+    if seed_mode == "custom":
+        d = df_raw[(df_raw['halfspace_variant'] == env) & (df_raw['metric'].isin(metrics)) & (df_raw['seed'].isin(list(seeds)))]
+        if d.empty: return {}, [], []
+        g = d.groupby(['metric', 'Candidate', 'variant'])['value']
+        stats = pd.DataFrame({'mean': g.mean(), 'std': g.std(), 'count': g.count()})
+    else:
+        d = df_agg[(df_agg['halfspace_variant'] == env) & (df_agg['metric'].isin(metrics))]
+        if d.empty: return {}, [], []
+        val_col = 'mean' if 'mean' in d.columns else 'value'
+        g = d.groupby(['metric', 'Candidate', 'variant'])
+        # In the aggregated CSV 'std'/'count' are already across seeds, so just carry them
+        # through (the groupby is a de-dup, one row per facet — mean/max are no-ops).
+        stats = pd.DataFrame({
+            'mean': g[val_col].mean(),
+            'std': g['std'].mean() if 'std' in d.columns else float('nan'),
+            'count': g['count'].max() if 'count' in d.columns else 1,
+        })
+    cands = sorted(d['Candidate'].astype(str).unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    variants = sorted(d['variant'].unique())
+    return stats.to_dict('index'), cands, variants
+
+def _cell_stats(rec, metric, cand, var):
+    # None for a facet that simply wasn't run (the NULL case) or whose mean is NaN.
+    e = rec.get((metric, cand, var))
+    if e is None: return None
+    try:
+        m = float(e.get('mean'))
+    except (TypeError, ValueError):
+        return None
+    if m != m: return None
+    try:
+        cnt = int(e.get('count'))
+    except (TypeError, ValueError):
+        cnt = 1
+    try:
+        sd = float(e.get('std'))
+    except (TypeError, ValueError):
+        sd = float('nan')
+    return m, sd, cnt
+
+def _fmt_cell(st, fmt):
+    # Single seed -> bare number. Multiple seeds -> mean +- standard error of the mean.
+    m, sd, cnt = st
+    txt = fmt.format(m)
+    if cnt > 1 and sd == sd:
+        txt += ' <span class="sem">&plusmn; ' + fmt.format(sd / (cnt ** 0.5)) + '</span>'
+    return txt
+
+def _fail_flags(rec, cand, var):
+    # "did N_SUCCESS+CONSTRAINT win for this candidate/variant?" — a perfect cell is
+    # n_success == 1 (goal always reached) AND n_success_and_constraints == n_success
+    # (constraints never cost a success). Anything less is flagged with the reason(s).
+    tol = 1e-9
+    ns = _cell_stats(rec, 'n_success', cand, var)
+    nsc = _cell_stats(rec, 'n_success_and_constraints', cand, var)
+    flags = []
+    if ns is not None and ns[0] < 1.0 - tol:
+        flags.append("goal")
+    if nsc is not None:
+        base = ns[0] if ns is not None else 1.0
+        if nsc[0] < base - tol:
+            flags.append("constraint")
+    return flags
+
+def _render_matrix(rec, metric, fmt, annotate, cands, variants):
+    head = '<thead><tr><th class="corner">Candidate</th>' + "".join(f'<th>{v}</th>' for v in variants) + '</tr></thead>'
+    rows = []
+    for c in cands:
+        cells = [f'<td class="rowhead">CAND_{c}</td>']
+        for v in variants:
+            st = _cell_stats(rec, metric, c, v)
+            if st is None:
+                cells.append('<td class="nullcell">&mdash;</td>')
+                continue
+            txt = _fmt_cell(st, fmt)
+            if annotate:
+                flags = _fail_flags(rec, c, v)
+                if flags:
+                    txt += ' <span class="flag">(' + ", ".join(flags) + ')</span>'
+            cells.append(f'<td title="n={st[2]} seed(s)">{txt}</td>')
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    return ('<div class="paper-tbl-wrap"><table class="paper-tbl">' + head
+            + '<tbody>' + "".join(rows) + '</tbody></table></div>')
+
+def _summary_context():
+    # Single source of truth for BOTH the on-page matrices and the LaTeX export, so the .tex
+    # can never disagree with what is on screen. -> (ctx_dict, error_message)
+    if df_agg is None:
+        return None, "No batch loaded — hit SYNC_SOURCE first."
+    env = document.getElementById("env-select").value
+    seed_mode, seeds = _seed_context()
+    if seed_mode == "custom" and not seeds:
+        return None, "Custom Seed Compare: select at least one seed."
+    checked_cands = get_checked("cand-check")
+    if not checked_cands:
+        return None, "No candidates selected — tick some in the sidebar (6. Candidates)."
+    rec, _avail_cands, variants = _summary_stats(env, seed_mode, seeds)
+    if not variants:
+        return None, f"No data at all for environment {env}."
+    # Rows = every CHECKED candidate, numeric-aware order (same as the sidebar). A candidate
+    # with no run in this env is kept as an all-NULL row rather than silently dropped — the
+    # user asked for it, so its absence is itself the result.
+    cands = sorted(checked_cands, key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    return {"env": env, "seed_mode": seed_mode, "seeds": seeds,
+            "rec": rec, "cands": cands, "variants": variants}, None
+
+def _seed_txt(ctx):
+    return "all available seeds per cell" if ctx["seed_mode"] == "standard" \
+        else "seeds " + ", ".join(str(s) for s in ctx["seeds"])
+
+def render_summary_tables(force=False):
+    global summary_cache_key
+    if df_agg is None: return
+    env = document.getElementById("env-select").value
+    seed_mode, seeds = _seed_context()
+    # U10.1: the candidate checkboxes now DO drive these tables, so they join the cache key.
+    # The variant checkboxes still don't (all variants are always columns), which is what
+    # keeps ticking through variants cheap.
+    key = (env, seed_mode, seeds, tuple(get_checked("cand-check")), data_version)
+    if key == summary_cache_key and not force: return
+    summary_cache_key = key
+
+    container = document.getElementById("summary-container")
+    document.getElementById("summary-section").style.display = "block"
+
+    ctx, err = _summary_context()
+    if ctx is None:
+        container.innerHTML = f'<div class="tbl-note" style="color:#c62828"><b>{err}</b></div>'
+        return
+
+    cands, variants = ctx["cands"], ctx["variants"]
+    blocks = ['<div class="tbl-note">'
+              f'Environment <b>{ctx["env"]}</b> &middot; {_seed_txt(ctx)} &middot; {len(cands)} selected candidates &times; {len(variants)} variants.<br>'
+              'A cell aggregating &gt;1 seed shows <b>mean &plusmn; standard error</b> (std&nbsp;/&nbsp;&radic;n); a single-seed cell shows the plain value '
+              '(hover a cell for its seed count). <b>&mdash;</b> = that candidate/variant combination was never run.<br>'
+              'In the N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '
+              'N_SUCCESS+CONSTRAINT did <b>not</b> win &mdash; <span class="flag">goal</span> = goal not always reached, '
+              '<span class="flag">constraint</span> = a constraint was violated. Unmarked numbers are fully successful runs.<br>'
+              'Rows follow <b>6. Candidates</b>; columns are always every variant. '
+              '<b>EXPORT PNG + LATEX</b> writes exactly these four tables to a .tex file.'
+              '</div>']
+    for i, (metric, caption, fmt, annotate) in enumerate(SUMMARY_TABLES, start=1):
+        blocks.append(f'<div class="tbl-caption">Table {i} &mdash; {caption.replace(" -- ", " &mdash; ")}</div>')
+        blocks.append(_render_matrix(ctx["rec"], metric, fmt, annotate, cands, variants))
+    container.innerHTML = "".join(blocks)
+
+# ---------------------------------------------------------------------------------------
+# U10.1: LaTeX export of the same four matrices — one standalone, compilable .tex file.
+# ---------------------------------------------------------------------------------------
+def _tex_escape(s):
+    s = str(s)
+    for a, b in (("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("$", r"\$"),
+                 ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                 ("~", r"\textasciitilde{}"), ("^", r"\textasciicircum{}")):
+        s = s.replace(a, b)
+    return s
+
+def _tex_cell(st, fmt, flags):
+    if st is None:
+        return "--"
+    m, sd, cnt = st
+    body = fmt.format(m)
+    if cnt > 1 and sd == sd:
+        body += r" \pm " + fmt.format(sd / (cnt ** 0.5))
+    txt = "$" + body + "$"
+    if flags:
+        txt += r"\,{\tiny (" + ", ".join(flags) + ")}"
+    return txt
+
+def _tex_table(ctx, metric, caption, fmt, annotate, idx):
+    rec, cands, variants = ctx["rec"], ctx["cands"], ctx["variants"]
+    lines = [r"\begin{table}[htbp]", r"\centering",
+             r"\caption{" + _tex_escape(caption) + "}",
+             r"\label{tab:" + metric.replace("_", "-") + "}",
+             # 18-ish variant columns never fit \textwidth at a readable font size; let
+             # LaTeX shrink the box instead of silently overflowing into the margin.
+             r"\resizebox{\textwidth}{!}{%",
+             r"\begin{tabular}{l" + "r" * len(variants) + "}",
+             r"\toprule",
+             "Candidate & " + " & ".join(_tex_escape(v) for v in variants) + r" \\",
+             r"\midrule"]
+    for c in cands:
+        cells = [_tex_cell(_cell_stats(rec, metric, c, v), fmt,
+                           _fail_flags(rec, c, v) if annotate else [])
+                 for v in variants]
+        lines.append(_tex_escape("CAND_" + str(c)) + " & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}%", "}", r"\end{table}", ""]
+    return "\n".join(lines)
+
+def build_latex(ctx, batch_label, stamp):
+    env, cands, variants = ctx["env"], ctx["cands"], ctx["variants"]
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+
+    # Keep every emitted byte ASCII: the file carries no \usepackage[utf8]{inputenc}, and a
+    # stray em dash even inside a % comment trips older TeX installs.
+    out = ["% FM-PCC Matrix Explorer - Data_Analysis/Visualizer/index.html (SCIENTIFIC_SUITE_v3.11)",
+           f"% generated {stamp}",
+           f"% batch: {batch_label}",
+           r"\documentclass[10pt]{article}",
+           r"\usepackage[landscape,margin=1.5cm]{geometry}",
+           r"\usepackage{booktabs}",
+           r"\usepackage{graphicx}",
+           r"\begin{document}",
+           "",
+           r"\section*{FM-PCC results -- " + _tex_escape(env) + "}",
+           "",
+           r"\noindent\textbf{Batch:} \texttt{" + _tex_escape(batch_label) + r"}\\",
+           r"\textbf{Environment:} " + _tex_escape(env) + r"\\",
+           r"\textbf{Seeds:} " + _tex_escape(_seed_txt(ctx)) + r"\\",
+           r"\textbf{Generated:} " + _tex_escape(stamp),
+           "",
+           r"\bigskip\noindent Cells aggregating more than one seed report "
+           r"$\mathrm{mean} \pm \mathrm{SEM}$ ($\mathrm{std}/\sqrt{n}$); single-seed cells report the "
+           r"plain value. \texttt{--} marks a candidate/variant combination that was never run. "
+           r"In Tables~3 and~4 a trailing {\tiny (goal, constraint)} marks a cell whose "
+           r"N\_SUCCESS+CONSTRAINT did not win: \emph{goal} = the goal was not always reached, "
+           r"\emph{constraint} = a constraint was violated.",
+           ""]
+    for i, (metric, caption, fmt, annotate) in enumerate(SUMMARY_TABLES, start=1):
+        out.append(_tex_table(ctx, metric, caption, fmt, annotate, i))
+
+    # Candidate -> source path audit. verbatim so the long cluster paths need no escaping.
+    out += [r"\section*{Candidate source paths}", r"{\footnotesize", r"\begin{verbatim}"]
+    for c in cands:
+        out.append(f"CAND_{c}  {path_map.get(c, 'path not found')}")
+    out += [r"\end{verbatim}", "}", "", r"\end{document}", ""]
+    return "\n".join(out)
 
 def render_path_map():
     if df_agg is None: return
