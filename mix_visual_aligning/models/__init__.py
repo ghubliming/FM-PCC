@@ -8,13 +8,15 @@ Provenance of each arm is recorded in `engine_registry.ENGINES[...]['source']`.
 """
 
 # ── the dispatch table (the frame) ────────────────────────────────────────────
-from .engine_registry import ENGINES, ENGINE_KEYS, resolve, describe
+from .engine_registry import (
+    ENGINES, ENGINE_KEYS, ENGINE_INPUT_KEYS, canonical_engine, resolve, describe,
+)
 
 # ── backbones ─────────────────────────────────────────────────────────────────
-from .unet1d_temporal_cond import UNet1DTemporalCondModel   # Gen7 — ddpm/fm arms
-from .visual_unet import VisualUNet                          # Gen7 — ddpm/fm arms
+from .unet1d_temporal_cond import UNet1DTemporalCondModel   # Gen7 — diffusion/fm arms
+from .visual_unet import VisualUNet                          # Gen7 — diffusion/fm arms
 
-# ── arm: ddpm (Gen6V4, verbatim) ──────────────────────────────────────────────
+# ── arm: diffusion (Gen6V4, verbatim) ─────────────────────────────────────────
 from .diffusion import GaussianDiffusion
 from .visual_gaussian_diffusion import VisualGaussianDiffusion
 
@@ -23,7 +25,8 @@ from .fm_diffusion import FlowMatchingODE
 from .visual_fm_diffusion import VisualFlowMatching
 
 __all__ = [
-    'ENGINES', 'ENGINE_KEYS', 'resolve', 'describe',
+    'ENGINES', 'ENGINE_KEYS', 'ENGINE_INPUT_KEYS', 'canonical_engine',
+    'resolve', 'describe',
     'UNet1DTemporalCondModel', 'VisualUNet',
     'GaussianDiffusion', 'VisualGaussianDiffusion',
     'FlowMatchingODE', 'VisualFlowMatching',

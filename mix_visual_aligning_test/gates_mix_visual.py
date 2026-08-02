@@ -5,16 +5,17 @@
     python -m mix_visual_aligning_test.gates_mix_visual --gate g0      # no torch needed
 
 G0  copy fidelity          every verbatim/sed file still matches its source
-G1  reference-arm identity ddpm/fm still resolve to Gen6V4/Gen7 classes and Gen7's Trainer
+G1  reference-arm identity diffusion/fm still resolve to Gen6V4/Gen7 classes and Gen7's Trainer
 G2  JVP survives vision    one mf training step, if_vision=True, no NotImplementedError
 G3  MeanFlow identity h=0   u_target == v_inst when every sample is an FM anchor
 G4  alpha spans the budget  alpha(0)~1, alpha(N)~0, monotone
 G5  alpha->0 == MeanFlow    af with alpha pinned to 0 matches the mf objective
 G6  projector fires at K=1  the DPCC projection is not silently skipped at 1 NFE
+G7  film_mode=v2 everywhere all four arms build at v2; two-time keeps h_mlp; JVP survives
 
 G0 needs no torch at all. G1 and G4 need torch but no GPU. G6 builds small state-only
-models and runs on CPU. G2/G3/G5 build visual models and need a GPU (`--gate static`
-runs everything except those three).
+models and runs on CPU. G2/G3/G5/G7 build visual models and need a GPU (`--gate static`
+runs everything except those four).
 
 Read `raw_mse_u`, never `diffusion_loss`: the adaptive loss sits at its ceiling by
 construction and says nothing about convergence.
@@ -48,7 +49,7 @@ VERBATIM = [
     ('mix_visual_aligning/utils/serialization.py',         'fm_visual_aligning/utils/serialization.py',         'fm_visual_aligning'),
     ('mix_visual_aligning/utils/setup.py',                 'fm_visual_aligning/utils/setup.py',                 'fm_visual_aligning'),
     ('mix_visual_aligning/utils/config.py',                'fm_visual_aligning/utils/config.py',                'fm_visual_aligning'),
-    # ── from Gen6V4 (diffuser_visual_aligning) — the ddpm arm ──
+    # ── from Gen6V4 (diffuser_visual_aligning) — the diffusion arm ──
     ('mix_visual_aligning/models/diffusion.py',                'diffuser_visual_aligning/models/diffusion.py',                'diffuser_visual_aligning'),
     ('mix_visual_aligning/models/visual_gaussian_diffusion.py', 'diffuser_visual_aligning/models/visual_gaussian_diffusion.py', 'diffuser_visual_aligning'),
     # ── from Gen3v6 (flow_matcher_v3_meanflow) — the mf arm ──
@@ -78,6 +79,9 @@ GRAFTED = {
 NEW_FILES = [
     'mix_visual_aligning/models/engine_registry.py',
     'mix_visual_aligning/models/visual_unet_twotime.py',
+    # U5 — two-time TRUE-FiLM backbone. Imports Gen7's verbatim FiLMResidualTemporalBlock
+    # rather than reimplementing it, so both v2 arms share one FiLM definition.
+    'mix_visual_aligning/models/unet1d_twotime_film.py',
     'mix_visual_aligning/models/visual_mf_diffusion.py',
     'mix_visual_aligning/models/visual_af_diffusion.py',
     'mix_visual_aligning/models/__init__.py',
@@ -125,7 +129,7 @@ def gate_g0(verbose=True):
 
 
 def gate_g1():
-    """ddpm/fm resolve to Gen6V4/Gen7 classes and Gen7's Trainer; mf/af to the two-time one.
+    """diffusion/fm resolve to Gen6V4/Gen7 classes and Gen7's Trainer; mf/af to the two-time one.
 
     This is the STRUCTURAL half of the reference-arm guarantee (PLAN §3.1). The numerical
     half — 50 training steps compared against Gen7 — needs a GPU and is driven by the
@@ -134,7 +138,7 @@ def gate_g1():
     print('\n=== G1: reference-arm wiring ===')
     from mix_visual_aligning.models.engine_registry import ENGINES, resolve
     expected = {
-        'ddpm': ('VisualGaussianDiffusion', 'VisualUNet',       'training.Trainer',          False),
+        'diffusion': ('VisualGaussianDiffusion', 'VisualUNet',       'training.Trainer',          False),
         'fm':   ('VisualFlowMatching',      'VisualUNet',       'training.Trainer',          False),
         'mf':   ('VisualMeanFlow',          'MeanFlowEngine',   'training_twotime.Trainer',  True),
         'af':   ('VisualAlphaFlow',         'AlphaFlowEngine',  'training_twotime.Trainer',  True),
@@ -155,8 +159,8 @@ def gate_g1():
             print(f'  FAIL {eng}: {"; ".join(bad)}')
         else:
             print(f'  ok   {eng}: {spec["label"]}')
-    # The ddpm/fm arms must not reach any Gen14-authored module.
-    for eng in ('ddpm', 'fm'):
+    # The diffusion/fm arms must not reach any Gen14-authored module.
+    for eng in ('diffusion', 'fm'):
         spec = ENGINES[eng]
         for key in ('diffusion', 'model', 'trainer'):
             if 'twotime' in spec[key]:
@@ -167,7 +171,7 @@ def gate_g1():
     return ok
 
 
-def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda'):
+def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode='v1'):
     """Minimal in-memory build of one arm — no dataset, no checkpoint."""
     import torch
     from mix_visual_aligning.models.engine_registry import resolve, import_class
@@ -178,7 +182,7 @@ def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda'):
     cfg.device, cfg.if_vision, cfg.horizon = device, if_vision, horizon
     cfg.action_dim, cfg.obs_dim, cfg.dim = 3, 6, 32
     cfg.dim_mults, cfg.condition_dropout, cfg.returns_condition = (1, 2, 4, 8), 0.1, False
-    cfg.film_mode = 'v1'
+    cfg.film_mode = film_mode
 
     spec = resolve(engine)
     ModelCls, DiffCls = import_class(spec['model']), import_class(spec['diffusion'])
@@ -432,9 +436,123 @@ def gate_g6(device='cpu'):
     return ok
 
 
+def gate_g7(device='cuda'):
+    """film_mode='v2' builds on ALL FOUR arms, keeps h_mlp, and survives the JVP (U5).
+
+    Until U5 the True-FiLM backbone existed only for the diffusion/fm arms, and
+    `VisualUNetTwoTime` raised on `film_mode='v2'` — Gen7's v2 file has no `h_mlp`, so
+    routing mf/af through it would have silently un-conditioned the model on the
+    interval h. `unet1d_twotime_film.py` closes that. Four things must hold:
+
+      1. every arm CONSTRUCTS at v2, and the two legacy arms are unchanged at v1
+      2. FiLM heads are actually present and live (`use_film`) on every arm at v2
+      3. the two-time v2 backbone still owns an `h_mlp`, and its block time-path is
+         TIME-ONLY (`in_features == dim`, not `2*dim`) — that width IS the v1/v2
+         difference, so it is the cheapest proof the visual latent left the time path
+      4. one mf loss step at v2 is finite: forward-mode AD survives the multiplicative
+         gate `out = (1+γ)·f + β`. γ/β are constants under the JVP (cond is captured,
+         not differentiated), so this should hold by construction — gate it anyway,
+         because "should" is what G2 exists to disprove.
+
+    Needs a GPU: the FiLM heads only exist when cond_dim > 0, i.e. if_vision=True,
+    which builds the two ResNet-18 encoders.
+    """
+    print('\n=== G7: film_mode=v2 on all four arms ===')
+    import torch
+    from mix_visual_aligning.models.engine_registry import resolve, import_class
+
+    horizon, batch, dim = 8, 2, 32
+    ok = True
+
+    class _Cfg:
+        pass
+
+    for arm in ('diffusion', 'fm', 'mf', 'af'):
+        spec = resolve(arm)
+        ModelCls = import_class(spec['model'])
+
+        cfg = _Cfg()
+        cfg.device, cfg.if_vision, cfg.horizon = device, True, horizon
+        cfg.action_dim, cfg.obs_dim, cfg.dim = 3, 6, dim
+        cfg.dim_mults, cfg.condition_dropout, cfg.returns_condition = (1, 2, 4, 8), 0.1, False
+        cfg.film_mode = 'v2'
+
+        try:
+            if spec['wraps_unet']:
+                model = ModelCls(state_dim=9, seq_len=horizon, freq_dim=dim,
+                                 dropout_rate=0.1, device=device, if_vision=True,
+                                 vis_config=cfg, dual_head=True, interval_cfg=False)
+            else:
+                model = ModelCls(cfg)
+        except Exception as e:
+            ok = False
+            print(f'  FAIL {arm}: construction at v2 raised {type(e).__name__}: {e}')
+            continue
+
+        # (2) FiLM heads present and live. Class identity is checked by NAME so this
+        # still passes if the block is re-exported, but it must be THE Gen7 block.
+        blocks = [m for m in model.modules()
+                  if type(m).__name__ == 'FiLMResidualTemporalBlock']
+        if not blocks:
+            ok = False
+            print(f'  FAIL {arm}: no FiLMResidualTemporalBlock in the module tree — '
+                  f'film_mode=v2 was accepted but silently ignored.')
+            continue
+        if not all(b.use_film for b in blocks):
+            ok = False
+            print(f'  FAIL {arm}: {sum(not b.use_film for b in blocks)}/{len(blocks)} FiLM '
+                  f'heads are inert (cond_dim==0) — the visual latent is not reaching them.')
+            continue
+
+        # (3) time path is TIME-ONLY, and h_mlp survived on the two-time arms.
+        width = blocks[0].time_mlp[1].in_features
+        width_ok = (width == dim)
+        if not width_ok:
+            ok = False
+            print(f'  FAIL {arm}: block time_mlp in_features={width}, want {dim}. '
+                  f'{2 * dim} means the cond concat is still in the time path (v1 shape).')
+            continue
+
+        if spec['two_time']:
+            carriers = [m for m in model.modules() if hasattr(m, 'h_mlp')]
+            if not carriers:
+                ok = False
+                print(f'  FAIL {arm}: v2 backbone has NO h_mlp — MeanFlow/alpha-Flow '
+                      f'h-conditioning would be silently dropped. This is exactly the '
+                      f'failure the pre-U5 guard was preventing; do not remove the guard '
+                      f'without this gate passing.')
+                continue
+
+        print(f'  ok   {arm}: {len(blocks)} FiLM heads, time-only embed ({width}), '
+              f'h_mlp={"yes" if spec["two_time"] else "n/a"}')
+
+    # (4) the JVP, on the arm that actually takes one.
+    cfg, model, DiffCls, obs_dim = _build('mf', True, horizon, batch, device, film_mode='v2')
+    diffusion = DiffCls(model, horizon=horizon, observation_dim=obs_dim, action_dim=3,
+                        goal_dim=0, n_timesteps=100, loss_type='l2', if_vision=True,
+                        t_schedule='logit_normal', p_mean=-0.4, p_std=1.0,
+                        meanflow_data_proportion=0.5, mf_adp_p=1.0, mf_adp_eps=0.01).to(device)
+    traj, cond = _fake_visual_batch(batch, horizon, device)
+    loss, info = diffusion.loss(traj, cond)
+    loss.backward()
+    finite = bool(torch.isfinite(loss))
+    raw = float(info['raw_mse_u']) if 'raw_mse_u' in info else float('nan')
+    print(f'  mf@v2 JVP: loss={float(loss):.6f} finite={finite}  raw_mse_u={raw:.6f}')
+    if not finite:
+        ok = False
+        print('  FAIL mf@v2: JVP produced a non-finite loss through the FiLM gate.')
+
+    print('\n  G7 PASS' if ok else '\n  G7 FAIL')
+    print('  NOTE: v1 and v2 state_dicts are NOT interchangeable (embed_dim differs and '
+          'film_proj is new). film_mode is a path key, so they land in parallel dirs — '
+          'but a v2 config pointed at a v1 checkpoint still dies in load_state_dict.')
+    return ok
+
+
 GATES = {'g0': gate_g0, 'g1': gate_g1, 'g2': gate_g2,
-         'g3': gate_g3, 'g4': gate_g4, 'g5': gate_g5, 'g6': gate_g6}
-NEEDS_GPU = {'g2', 'g3', 'g5'}
+         'g3': gate_g3, 'g4': gate_g4, 'g5': gate_g5, 'g6': gate_g6,
+         'g7': gate_g7}
+NEEDS_GPU = {'g2', 'g3', 'g5', 'g7'}
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()

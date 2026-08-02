@@ -1,23 +1,23 @@
 """Gen14 — the engine dispatch table. THE only place an arm branches.
 
-`engine` is a config key: one of 'ddpm' | 'fm' | 'mf' | 'af'. Everything that differs
+`engine` is a config key: one of 'diffusion' | 'fm' | 'mf' | 'af'. Everything that differs
 between arms is declared here, so `train_mix_visual_aligning.py` and
 `eval_mix_visual_aligning.py` contain no `if engine == ...` chains.
 
 ────────────────────────────────────────────────────────────────────────────────
 THE STRUCTURAL RULE (PLAN §3.1)
 
-  The 'ddpm' and 'fm' arms import ONLY verbatim copies of Gen6V4 / Gen7 files.
+  The 'diffusion' and 'fm' arms import ONLY verbatim copies of Gen6V4 / Gen7 files.
   Every newly-authored line lives in a module that only 'mf' and 'af' import.
 
 That is what makes Gen14's reproduction of Gen6V4 and Gen7 a property of the file
 layout rather than something a test has to establish. Do not "simplify" an mf/af
-module into a path the ddpm/fm arms reach.
+module into a path the diffusion/fm arms reach.
 ────────────────────────────────────────────────────────────────────────────────
 
 `wraps_unet` is the one structural asymmetry:
 
-  wraps_unet=False (ddpm, fm)
+  wraps_unet=False (diffusion, fm)
       VisualUNet is built directly and handed to the engine:
           engine_cls(model=VisualUNet(args), ...)
   wraps_unet=True  (mf, af)
@@ -26,7 +26,7 @@ module into a path the ddpm/fm arms reach.
           engine_cls(model=MeanFlowEngine(if_vision=True, vis_config=args), ...)
 
 Consequence: `model_config.pkl` describes the ENGINE for mf/af and the U-NET for
-ddpm/fm. The eval loader reconstructs whatever it finds, so an arm mismatch between
+diffusion/fm. The eval loader reconstructs whatever it finds, so an arm mismatch between
 train and eval surfaces as an opaque state_dict error — which is why
 `assert_engine_matches()` exists.
 """
@@ -35,9 +35,14 @@ _P = 'mix_visual_aligning.models.'
 _U = 'mix_visual_aligning.utils.'
 
 ENGINES = {
-    # ── Gen6V4 — DDPM. Verbatim copy of diffuser_visual_aligning. ─────────────
-    'ddpm': dict(
-        label       = 'DDPM (Gen6V4)',
+    # ── Gen6V4 — denoising diffusion. Verbatim copy of diffuser_visual_aligning. ──
+    # U5: this key was 'ddpm' until 2026-08-02. The repo's vocabulary everywhere else
+    # (folder `diffuser_visual_aligning/`, class `VisualGaussianDiffusion`, config block
+    # `visual_aligning_dpcc`, the Data_Analysis variant names `diffuser`/`dpcc-*`) says
+    # "diffusion", never "ddpm". 'ddpm' remains a deprecated input alias — see
+    # ENGINE_ALIASES — but it is no longer the identity written into any path.
+    'diffusion': dict(
+        label       = 'Diffusion / DDPM (Gen6V4)',
         diffusion   = _P + 'visual_gaussian_diffusion.VisualGaussianDiffusion',
         model       = _P + 'visual_unet.VisualUNet',
         wraps_unet  = False,
@@ -83,10 +88,38 @@ ENGINES = {
 
 ENGINE_KEYS = tuple(ENGINES.keys())
 
+# Deprecated spellings accepted on INPUT only (CLI, sbatch, old scripts). They never
+# survive into an identity: `canonical_engine()` maps them before anything is written
+# to a path, a config block name, or model_config.pkl. Keeping the alias means a
+# stale `submit.sh ... ddpm` command still runs instead of dying on an unknown arm.
+ENGINE_ALIASES = {
+    'ddpm': 'diffusion',
+}
+
+# Everything a CLI may legally accept — canonical keys plus the deprecated aliases.
+ENGINE_INPUT_KEYS = tuple(ENGINES.keys()) + tuple(ENGINE_ALIASES.keys())
+
+
+def canonical_engine(engine, warn=True):
+    """Normalise a user-supplied engine string to its canonical key.
+
+    Call this ONCE at the entry point, then pass the canonical value everywhere —
+    an alias that leaks into `exp_name` would produce a second, divergent checkpoint
+    tree for the same arm.
+    """
+    key = str(engine).lower().strip()
+    if key in ENGINE_ALIASES:
+        target = ENGINE_ALIASES[key]
+        if warn:
+            print(f"[ engine_registry ] NOTE: engine '{key}' is a deprecated alias for "
+                  f"'{target}' (renamed 2026-08-02, Gen14 U5). Using '{target}'.")
+        return target
+    return key
+
 
 def resolve(engine):
     """Return the registry entry for `engine`, or raise with the valid set."""
-    key = str(engine).lower().strip()
+    key = canonical_engine(engine, warn=False)
     if key not in ENGINES:
         raise ValueError(
             f"[ engine_registry ] unknown engine '{engine}'. "
@@ -107,7 +140,7 @@ def import_class(dotted_path):
 def get_trainer_cls(engine):
     """Trainer class for this arm.
 
-    ddpm/fm -> utils.training.Trainer          (Gen7 verbatim)
+    diffusion/fm -> utils.training.Trainer          (Gen7 verbatim)
     mf/af   -> utils.training_twotime.Trainer  (Gen3v7 verbatim: h-stratified metrics,
                                                 real gradient_clip, seeded split, and
                                                 set_train_step() for the alpha anneal)
@@ -118,7 +151,7 @@ def get_trainer_cls(engine):
 def nfe_of(engine, args, default=None):
     """Read this arm's inference-step count off `args` under ITS OWN key.
 
-    ddpm counts denoising steps (`n_diffusion_steps`); fm/mf/af count ODE steps
+    diffusion counts denoising steps (`n_diffusion_steps`); fm/mf/af count ODE steps
     (`flow_steps_v3`). Callers that print or path-name "K" must go through here.
     """
     key = resolve(engine)['nfe_key']
@@ -144,7 +177,9 @@ def assert_engine_matches(requested, checkpoint_engine):
         print(f"[ engine_registry ] WARNING: checkpoint records no 'engine' key; "
               f"assuming '{requested}'. Verify this is the arm you trained.")
         return
-    if str(requested).lower() != str(checkpoint_engine).lower():
+    # Compare CANONICAL keys: a pre-U5 checkpoint records engine='ddpm', which is the
+    # same arm as today's 'diffusion' and must not be rejected as a mismatch.
+    if canonical_engine(requested, warn=False) != canonical_engine(checkpoint_engine, warn=False):
         raise ValueError(
             f"[ engine_registry ] ENGINE MISMATCH — requested '{requested}' but the "
             f"checkpoint was trained with '{checkpoint_engine}'. Loading it would fail "

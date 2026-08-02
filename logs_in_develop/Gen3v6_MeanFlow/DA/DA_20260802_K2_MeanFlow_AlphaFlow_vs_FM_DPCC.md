@@ -350,3 +350,385 @@ So it is not a safety failure and not an env-specific fluke: **the `-c` projecti
 | — (not observed) | C109 is 30/30 on *all three* tightened variants — the most robust arm in the batch, and the real rival (§9.1) |
 
 **Bottom line unchanged from §2 but now properly supported:** MF/AF at K=2 buy **compute and latency predictability**, not accuracy. The new addition is that they also buy a **safer failure mode**. The open threat remains CAND_109, and the missing experiment remains FM evaluated at K=2 (§7.2).
+
+---
+---
+
+# 10. Addendum — same-K comparison, K-ladders, and MF vs AF
+
+§§1–9 looked at 6 hand-picked candidates. This addendum uses **all 106 candidates in the batch**, grouped by *trained model* so that K-sweeps compare one checkpoint against itself. It answers four questions directly:
+
+1. **Did we beat DPCC/FM at the *same* K?** (the minimum bar)
+2. **When DPCC/FM K rises, does MF/AF at K=2 still win?**
+3. **Are there high-K MF/AF runs, and what do they say?**
+4. **MF vs AF head to head.**
+
+Three of the four answers changed my mind about the paper's framing. **§10.4 in particular invalidates the causal story in §3 and §9.6.**
+
+## 10.0 Inventory and the seed rules used here
+
+Candidates were grouped by their **parent training folder** (the `plans/<family>/<train-config>/` prefix), because `H8_K{n}_...` leaf folders under different parents are different *models*, not different K of the same model. 106 candidates collapse into these usable ladders:
+
+| ladder (one trained model) | K values available | seeds |
+|---|---|---|
+| `plans/diffusion` GaussDiff aw10 thres0.5 (**DPCC baseline**) | 10, 20 | **5** |
+| `flow_matching_v3_ode_selectable` GaussDiff a1.5 b1.0 aw1 | 1, 5, 10, 20 | **5** |
+| `flow_matching_v3_ode_selectable` **FlowMatchingODE** aw10 (**FM baseline**) | 5, 20 | 20→**5**, 5→1 |
+| `flow_matching_v3_alphaflow` bbsit (**AF, the §§1–9 model**) | 1, 2, 5, 10 | 2→**5**, rest→**4** (seed 6 missing) |
+| `flow_matching_v3_meanflow` dp0.5 (**MF, the §§1–9 model**) | 1, 2, 5, 10, 20 | 2→**5**, rest→1 (seed 6 only) |
+| `flow_matching_v3_alphaflow(Bf_U3)` bbdit / bbsit / bbunet | 1, 2, 5, 10 (+20 on fix4) | 1 (seed 6) |
+| `flow_matching_v3_meanflow(Bf_Fix4 / Bf_Fix5)` | 1, 2, 5, 10, 20 | 1 (seed 6) |
+
+**Seed rule applied throughout §10, per your instruction (full is better, else one seed):**
+
+- **5-seed tables** (30 episodes) where all arms have all seeds.
+- **Seeds 7–10 only** (24 episodes) whenever the AF ladder is involved — CAND_30/31/33 are missing seed 6, so seeds 7–10 is the largest *complete, paired* set. CAND_32 is truncated to the same 4 seeds so every comparison is like-for-like.
+- **Seed 6 only** (6 episodes) for the MF ladder, the FM K=5 point, and the backbone ablations. These are flagged **[n=1 seed]** everywhere and are *indicative only* — 6 episodes cannot support a claim on its own. They are included because you asked, and because several of them replicate across 3–4 independent training runs, which is what makes them believable (§10.6).
+
+**Critical gap found:** there is **no DPCC and no FlowMatchingODE run at K=2 anywhere in the batch**, at any seed count. The nearest non-flow points are K=1 (`CAND_8`, `CAND_109`). So the literal same-K comparison you asked for **cannot be made at K=2** — §10.1 makes it at K=1 instead, which is a *stricter* bar.
+
+## 10.1 The same-K question — the least result
+
+Since no baseline exists at K=2, the honest same-cost comparison is **at K=1**, where AF, MF, plain diffusion and FMv3-selectable diffusion all have runs. Best tightened variant, seeds 7–10 (24 episodes) where possible:
+
+| arm | K | best tightened variant | s+c | latency [s] | steps | **episode cost [s]** |
+|---|---:|---|---|---:|---:|---:|
+| **AlphaFlow** | **1** | `dpcc-t-tightened` | **24/24** | 0.0140 | 77.7 | **0.93** |
+| GaussDiff-FMv3 (C109) | 1 | `dpcc-t-tightened` | **24/24** | 0.0172 | 69.2 | 1.17 |
+| AlphaFlow | 2 | `dpcc-r-tightened` | **24/24** | 0.0202 | 68.4 | 1.38 |
+| MeanFlow | 2 | `dpcc-r-tightened` | **24/24** | 0.0251 | 70.8 | 1.79 |
+| plain diffusion (CAND_8) | 1 | `dpcc-c-tightened` | 20/30 | 0.0333 | 72.1 | 2.40 |
+| MeanFlow **[n=1 seed]** | 1 | `dpcc-t-tightened` | 6/6 | 0.0271 | 75.7 | 2.05 |
+
+**Answer: at equal K, AlphaFlow does beat the diffusion baselines — but only narrowly, and only against `C109`.** Paired on seeds 7–10, AF K=1 vs C109 K=1 on episode planning cost:
+
+| variant | AF K=1 | C109 K=1 | Δ episode cost | AF wins |
+|---|---|---|---|---|
+| `dpcc-t-tightened` | 24/24, 0.93 s | 24/24, 1.17 s | **−0.243 s [−0.305, −0.187]** | **12/12** |
+| `dpcc-r-tightened` | 24/24, 1.09 s | 24/24, 1.18 s | −0.087 s [−0.160, −0.008] | 10/12 |
+| `dpcc-c-tightened` | 21/24, 1.97 s | 24/24, 1.35 s | +0.616 s [+0.195, +0.985] | 2/12 |
+
+AF K=1 wins on two of three projection variants (CI excludes 0 on both) and **loses** on the third. Against plain diffusion K=1 (CAND_8, 20/30) both flow arms win outright on quality.
+
+> **AF K=1 + `dpcc-t-tightened` at 0.93 s/episode is the cheapest perfect configuration in the entire 106-candidate batch.** Note this is **K=1, not the K=2 that §§1–9 promoted** — see §10.3.
+
+## 10.2 Baseline K-ladders — does DPCC/FM get better with more K?
+
+**No. Quality is saturated at every K; only cost moves.** All 5 seeds, 30 episodes, best tightened variant:
+
+| ladder | K | s+c | latency [s] | steps | episode cost [s] |
+|---|---:|---|---:|---:|---:|
+| **DPCC** GaussDiff aw10 thres0.5 | 10 | 30/30 | 0.3098 | 70.3 | 21.79 |
+| **DPCC** GaussDiff aw10 thres0.5 | 20 | 30/30 | 0.5534 | 70.1 | **38.81** |
+| FMv3sel GaussDiff aw1 | 1 | 30/30 | 0.0172 | 69.2 | **1.19** |
+| FMv3sel GaussDiff aw1 | 5 (midpoint\*) | 30/30 | 0.1458 | 70.2 | 10.24 |
+| FMv3sel GaussDiff aw1 | 10 (thr = 1\*\*) | 30/30 | 0.9400 | 63.8 | 59.97 |
+| FMv3sel GaussDiff aw1 | 20 | 30/30 | 0.4470 | 62.9 | 28.13 |
+| FM **FlowMatchingODE** aw10 | 20 | 30/30 | 0.4767 | 63.2 | 30.14 |
+| FM **FlowMatchingODE** aw10 **[n=1 seed]** | 5 | 6/6 | 0.1114 | 68.2 | **7.60** |
+| HardFlow mpc4 | 20 | 30/30 | 0.4709 | 63.2 | 29.78 |
+| plain diffusion aw1 | 20 | 30/30 | 0.5973 | 78.7 | 46.99 |
+
+\* `Mmidpoint` = midpoint solver, 2 network evals per step → 10 NFE, which is why its gen time/NFE is 17.8 ms vs ~9 ms elsewhere.
+\*\* `T1` = projection threshold 1.0 → projects on **every** step; not a clean ladder point, kept for the §10.4 mechanism.
+
+**Answer to "when DPCC/FM K rises, do MF/AF still beat them?" — yes, and the margin *grows*.** DPCC going K=10→20 costs 1.78× more time for **exactly zero** quality gain (30/30 → 30/30). Paired, 5 seeds:
+
+| comparison | Δ s+c | sign p | speed-up | time wins |
+|---|---|---:|---:|---|
+| AF K=2 vs **DPCC K=20** | −0.067 [−0.167, 0.000] | 0.50 | **×25.7** (16.0–32.6) | **15/15** |
+| MF K=2 vs **DPCC K=20** | −0.033 [−0.100, 0.000] | 1.00 | **×22.2** (17.9–26.5) | **15/15** |
+| AF K=2 vs **FMv3sel-GD K=20** | −0.067 [−0.167, 0.000] | 0.50 | **×20.9** (8.4–29.7) | **15/15** |
+
+Quality differences remain non-significant in every case (consistent with §9.2); the speed-up is 15/15 and grows from ×14.8 at K=10 to ×25.7 at K=20.
+
+**But the flip side:** FM at **K=5** reaches 6/6 at 7.60 s/episode **[n=1 seed]**. This is the first direct evidence on the ablation flagged in §7.2 — **FM does not need K=20.** At K=5 it is already 4× cheaper than at K=20 with no visible quality loss. The K=20 FM baseline that §§1–9 measured against is therefore a **weak baseline**, and part of the headline ×22–30 speed-up is an artefact of comparing against an over-provisioned configuration. A properly tuned FM baseline would be at K=5, cutting the honest speed-up to roughly **×5–8**.
+
+## 10.3 MF/AF K-ladders — high-K runs exist, and more K is strictly worse
+
+**AlphaFlow ladder, same trained model, seeds 7–10 (24 episodes):**
+
+| K | s+c | latency [s] | steps | episode cost [s] | robustness (min over 3 tightened variants) |
+|---:|---|---:|---:|---:|---|
+| **1** | 24/24 | 0.0140 | 77.7 | **1.09** | 21/24 |
+| 2 | 24/24 | 0.0202 | 68.4 | 1.38 | **6/24** ← see §10.6 |
+| 5 | 24/24 | 0.2010 | 69.6 | 13.98 | 22/24 |
+| 10 | 24/24 | 0.3407 | 62.0 | 21.14 | 20/24 |
+
+**MeanFlow ladder, same trained model [n=1 seed, seed 6]:**
+
+| K | s+c | latency [s] | steps | episode cost [s] |
+|---:|---|---:|---:|---:|
+| 1 | 6/6 | 0.0271 | 75.7 | 2.05 |
+| **2** | 6/6 | 0.0269 | 65.5 | **1.76** |
+| 5 | 6/6 | 0.2220 | 67.2 | 14.91 |
+| 10 | 6/6 | 0.3588 | 70.7 | 25.35 |
+| 20 | 6/6 | 0.9739 | 67.0 | **65.25** |
+
+Replicated on two independent older MF training runs (`Bf_Fix4`, `Bf_Fix5`) with the same shape — K=20 costs 63.8 s/episode on Fix5, 33× the K=2 cost, for identical 6/6.
+
+**Answer to "are there high-K MF/AF runs?" — yes, K up to 20 for MF and K=10 (K=20 at one seed) for AF, and they are all a waste.** Paired, AF K=2 vs AF K=10 on seeds 7–10: Δ s+c +0.167 (favouring K=2, p = 0.25), speed-up **×18.3, 12/12 wins**. Quality is flat across the whole ladder for both families; cost rises ~20–35×.
+
+**And K=2 is not the optimum.** AF K=1 vs AF K=2, paired, seeds 7–10: quality **identical on all 12 cells**, K=1 is **×1.4 faster, 12/12 wins**. The K=2 setting that §§1–9 promoted is dominated by K=1 on cost, and beaten on robustness too (21/24 vs 6/24 min). Its only advantage is 9 fewer environment steps (68.4 vs 77.7).
+
+## 10.4 Where the wall time actually goes — this invalidates §3 and §9.6
+
+§3 concluded "time scales cleanly with NFE (~9 ms per network call)" from the K-sweep of *generation-only* times, and §9.6/§9.7 built the latency argument on it. Decomposing projected time into generation + projection overhead across every ladder shows that is **wrong for the projected numbers, which are the ones that matter**:
+
+| ladder | K | gen only [s] | projected [s] | overhead [s] | proj. calls | **per projection [ms]** | gen per NFE [ms] |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| DPCC | 10 | 0.0888 | 0.3217 | 0.2329 | 5 | 46.6 | 8.88 |
+| DPCC | 20 | 0.1793 | 0.5630 | 0.3837 | 10 | 38.4 | 8.97 |
+| FMv3sel-GD | 1 | 0.0091 | 0.0173 | 0.0082 | 1 | 8.2 | 9.11 |
+| FMv3sel-GD | 5 | 0.0892 | 0.1458 | 0.0566 | 3 | 18.9 | 17.84 |
+| FMv3sel-GD (thr=1) | 10 | 0.0855 | 1.0564 | 0.9709 | 10 | 97.1 | 8.55 |
+| FMv3sel-GD | 20 | 0.1826 | 0.4470 | 0.2644 | 10 | 26.4 | 9.13 |
+| **AlphaFlow** | **1** | 0.0063 | 0.0141 | 0.0078 | **1** | 7.8 | 6.27 |
+| **AlphaFlow** | **2** | 0.0122 | 0.0235 | 0.0113 | **1** | 11.3 | 6.10 |
+| AlphaFlow | 5 | 0.0300 | 0.2010 | 0.1709 | 3 | 57.0 | 6.01 |
+| AlphaFlow | 10 | 0.0577 | 0.3411 | 0.2834 | 5 | 56.7 | 5.77 |
+| MeanFlow | 2 | 0.0178 | 0.0269 | 0.0091 | **1** | 9.1 | 8.89 |
+| MeanFlow | 20 | 0.1648 | 0.9739 | 0.8091 | 10 | 80.9 | 8.24 |
+| FM-ODE | 5 | 0.0457 | 0.1154 | 0.0697 | 3 | 23.2 | 9.13 |
+| FM-ODE | 20 | 0.1844 | 0.4679 | 0.2835 | 10 | 28.4 | 9.22 |
+
+Projection calls per replan is `K − int((1−threshold)·K)`, verified against the sampler loop (`flow_matcher_v3_alphaflow/models/af_diffusion.py:342-343`, `flow_matcher_v3_meanflow/models/mf_diffusion.py:284-285`, `flow_matcher_v3_ode_selectable/models/diffusion.py:207-208`).
+
+**The generative model is 27–48 % of projected latency at K=1–2 and only 15–20 % at K≥5. The DPCC projection dominates, and its call count is tied to K by the threshold rule.** So:
+
+> The real mechanism is **not** "MeanFlow/AlphaFlow generate faster". It is **"K=1–2 makes the DPCC projection run once per replan instead of K/2 times"**. Any generator that works at K≤2 gets the identical benefit — which is precisely why the K=1 GaussianDiffusion (C109) is competitive, and why §§1–9 could not explain it away.
+
+At K=1–2 the projection fires exactly once, at the final iterate, so the overhead floor is one NLP solve (~8–11 ms). Everything above that is redundant projection calls on intermediate, noisier iterates — which are *also* individually more expensive (7.8 → 57 ms per call for AF as K goes 1 → 10), because the NLP starts further from feasibility.
+
+**Consequence for the paper:** the contribution should be stated as *"MeanFlow/AlphaFlow retain trajectory quality at the K=1–2 operating point where the projection cost collapses to a single solve"*, not as a generation-speed result. That is still a real contribution — but the burden of proof moves to showing **FM/diffusion do *not* retain quality at K=1–2**, and §10.1 shows C109 does. This is now the central open question of the whole line of work.
+
+## 10.5 MeanFlow vs AlphaFlow, head to head
+
+**At K=2, full 5 seeds, paired over 15 (env, seed) cells:**
+
+| variant | Δ s+c (AF − MF) | 95 % CI | W/L/T | sign p | AF speed-up | time wins |
+|---|---|---|---|---:|---:|---|
+| `dpcc-r-tightened` | +0.033 | [+0.000, +0.100] | 1/0/14 | 1.00 | ×1.2 (1.2–1.4) | **15/15** |
+| `dpcc-t-tightened` | −0.033 | [−0.133, +0.067] | 1/2/12 | 1.00 | ×1.2 (0.6–1.4) | 13/15 |
+
+**Quality: a dead tie** (§9.2 already showed MF − AF = −0.033, p = 1.00). **Cost: AF wins consistently but modestly** — ×1.2, from a cheaper backbone (SiT at 6.1 ms/NFE vs `mf_dit` at 8.9 ms/NFE), giving 1.38 vs 1.79 s/episode.
+
+**Across the ladder AF is ahead at every K** (AF seeds 7–10 vs MF seed 6, *not* paired — different seeds, indicative only): AF 1.09/1.38/13.98/21.14 s per episode at K=1/2/5/10 against MF 2.05/1.76/14.91/25.35. The one place MF leads is **K=1**, where MF's episode cost (2.05 s) is worse than AF's (1.09 s) but MF K=2 (1.76 s) beats MF K=1 — i.e. **MF has an optimum at K=2, AF at K=1**. That is consistent with MeanFlow's one-step objective being trained for a *specific* step count while AlphaFlow's α-annealed objective degrades more gracefully.
+
+**Verdict: prefer AlphaFlow.** Equal quality, ~20 % cheaper, better K=1 behaviour, and the more robust ladder. MF's only distinguishing result is that it survives §9.4's failure-mode test identically.
+
+## 10.6 The `dpcc-c` collapse is a **K=2-specific** bug, not an MF/AF property
+
+§9.8 called this an "interaction between the `-c` cost formulation and a 2-NFE sampler". The K-ladder pins it down much harder. `dpcc-c-tightened`, seed 6 (6 episodes), across **every** MF/AF training run in the batch:
+
+| run | K=1 | **K=2** | K=5 |
+|---|---|---|---|
+| AF bbdit (U3) | 6/6 | **6/6** | 6/6 |
+| AF bbsit (U3) | 6/6 | **0/6** | 6/6 |
+| AF bbsit (fix4) | 6/6 | **0/6** | — |
+| AF bbsit (final, CAND_32) | 6/6 | **0/6** | — |
+| MF Fix4 | 2/6 | **0/6** | 6/6 |
+| MF Fix5 | 2/6 | **0/6** | 6/6 |
+| MF final (CAND_102) | 2/6 | **0/6** | 6/6 |
+
+And on the AF ladder at seeds 7–10: K=1 → 21/24, **K=2 → 6/24**, K=5 → 23/24, K=10 → 24/24.
+
+**It is exactly K=2, it reproduces across 4 independent AF runs and 3 independent MF runs, and it disappears at K=1 and K=5.** Both K=1 and K=2 make *exactly one* projection call (verified: `snapping_start_idx = int(0.5·K)` gives 0 for K=1 and 1 for K=2, both the final iterate), so this is **not** a projection-count effect — it is about the *iterate* the single projection is applied to. At K=2 the last velocity evaluation uses `tau = 0.5` and the projection lands on a half-integrated sample; at K=1 it lands on a fully-integrated one.
+
+The one exception — **AF with the `bbdit` backbone is 6/6 at K=2** — says the failure is a K=2 × backbone interaction, not a property of the `-c` cost. Since `bbsit` is the backbone used by the headline candidate, this is a live bug in exactly the configuration §§1–9 recommends.
+
+**This is now the highest-value debug target in the batch**: it is 100 % reproducible, isolated to one K, and has a working control (`bbdit`, and K=1/K=5) to diff against.
+
+## 10.7 AlphaFlow backbone ablation **[n=1 seed]**
+
+Seed 6, best tightened variant:
+
+| backbone | K=2 | K=10 |
+|---|---|---|
+| `bbsit` (SiT) | **6/6, 1.30 s/ep** | 6/6, 26.94 s/ep |
+| `bbdit` (DiT) | 6/6, 2.79 s/ep | 6/6, 28.66 s/ep |
+| `bbunet` (U-Net) | **1/6, 17.64 s/ep** | **1/6, 145.84 s/ep** |
+
+`bbsit` is the right default: same quality as `bbdit` at less than half the cost. **`bbunet` is broken for AlphaFlow** — 1/6 at both K, with a 13× latency penalty at K=10 (the projection cannot fix a bad trajectory, so it iterates). Do not run further AF experiments on the U-Net backbone.
+
+## 10.8 Champion table
+
+Best tightened variant per arm, **seeds 7–10, 24 episodes**, ranked by episode planning cost:
+
+| rank | arm | K | variant | s+c | **episode cost [s]** | vs DPCC K=10 |
+|---:|---|---:|---|---|---:|---:|
+| 1 | **AlphaFlow** | **1** | `dpcc-t-tightened` | 24/24 | **0.93** | **×24** |
+| 2 | GaussDiff-FMv3 (C109) | 1 | `dpcc-t-tightened` | 24/24 | 1.17 | ×19 |
+| 3 | AlphaFlow | 2 | `dpcc-r-tightened` | 24/24 | 1.38 | ×16 |
+| 4 | MeanFlow | 2 | `dpcc-r-tightened` | 24/24 | 1.79 | ×12 |
+| 5 | DPCC | 10 | `dpcc-c-tightened` | 24/24 | 22.28 | 1.0 |
+| 6 | FM-ODE | 20 | `dpcc-c-tightened` | 24/24 | 29.55 | ×0.75 |
+
+Robustness across *all three* tightened variants (min /24): **C109 24**, AF K=5 22, DPCC K=10 22, AF K=1 21, FM K=20 21, AF K=10 20, **AF K=2 6, MF K=2 3**.
+
+**The two rankings disagree, and that is the honest summary of this batch:** AF K=1 is the *cheapest* perfect arm, C109 K=1 is the *most robust* one, and the K=2 configurations that §§1–9 promoted are the *least robust* things in the table.
+
+## 10.9 What §10 changes, and what to run
+
+| §§1–9 said | §10 finds |
+|---|---|
+| K=2 MF/AF is the operating point | **K=1 dominates K=2 for AF** — same quality, ×1.4 faster, far more robust (21/24 vs 6/24) |
+| Speed-up comes from fewer network evaluations | **False.** It comes from fewer *projection* calls; generation is 15–48 % of latency (§10.4) |
+| FM K=20 is the FM baseline | **FM K=5 is 6/6 at 4× less cost [n=1 seed]** — K=20 is an over-provisioned baseline, honest speed-up drops to ≈×5–8 |
+| Baselines might improve with more K | **They do not.** DPCC K=10→20 and FMv3sel-GD K=1→20 are all 30/30; only cost moves. MF/AF beat them by a *growing* margin |
+| `dpcc-c` collapse is an "MF/AF × 2-NFE" interaction | **It is K=2-specific and backbone-specific**; K=1 and K=5 are clean, `bbdit` is clean. Reproduces on 7 independent training runs |
+| MF vs AF not addressed | **Tied on quality, AF ~20 % cheaper**; MF optimum is K=2, AF optimum is K=1 |
+| CAND_109 is the awkward rival | Still is — and is now the *most robust* arm in the batch (24/24 on all three variants) |
+
+**Run queue, revised and re-prioritised:**
+
+1. **FM-ODE and DPCC at K=1 and K=2, 5 seeds, 3 envs.** This is now the single decisive experiment. §10.4 says the entire advantage is "works at K≤2"; if FM/diffusion also work at K≤2 there is no flow-specific contribution, and if they do not, that *is* the contribution. Currently there is no FM run below K=5 and no diffusion K=2 run at all.
+2. **Complete the AF ladder on seed 6** (CAND_30/31/33) so the AF K-sweep is 5-seed, and **run the MF ladder on seeds 7–10** — the MF ladder is currently one seed, and AF/MF ladders sit on *disjoint* seed sets, which blocks a paired MF-vs-AF K comparison.
+3. **Debug the K=2 `dpcc-c` collapse** using `bbdit` @ K=2 and `bbsit` @ K=1/K=5 as working controls (§10.6).
+4. **Re-run the headline at K=1**, not K=2 — AF K=1 is cheaper, more robust, and the fair same-K comparator against C109 (§10.1).
+5. More rollouts (§7.1) — still binding: 24–30 episodes cannot separate 24/24 from 23/24.
+
+---
+---
+
+# 11. HardFlow — how it works, and HardFlow vs DPCC
+
+You asked for this because HardFlow is *theoretically* the better projector and you want to know whether the current numbers justify a threshold sweep. Short answer: **HF is theoretically better, is empirically not better here, and the reason it is not better tells you exactly where the optimisation space is — but it is not in the threshold, and lowering the threshold is the wrong direction.**
+
+## 11.1 What HardFlow actually does
+
+Source: `flow_matcher_v3_meanflow/sampling/hardflow_projection.py` (686 lines; the `flow_matcher_v3_hardflow` copy is the 624-line original). The sampler loop is `HardFlowSampler.sample()`, lines 490–523. Per ODE step `k` (τ_k = k·dt, dt = 1/K):
+
+```
+1.  V      = f(X, τ_k)                          # velocity, 1 network pass
+2.  X_ref  = X + V·dt                           # plain Euler step
+3.  active = (k >= (1 − threshold)·K) or (k == K − 1)
+4.  if active:
+5.      V_next = f(X_ref, τ_next)               # SECOND network pass
+6.      X1_ref = X_ref + (1 − τ_next)·V_next    # extrapolate to the ENDPOINT x₁
+7.      X1_proj = NLP.solve(X1_ref, τ_next)     # project the CLEAN trajectory
+8.      X_next  = X_ref + τ_next·(X1_proj − X1_ref)   # τ-scaled blend back
+9.  else:
+10.     X_next  = X_ref
+```
+
+The two structural differences from DPCC — which projects the *current iterate* in place and keeps the full correction (`x, cost = projector.project(x, constraints)`, `models/diffusion.py:265-268`) — are:
+
+- **What gets projected.** DPCC hands the NLP the half-integrated sample `x_τ`, which is a noisy object where "dynamics" and "obstacle clearance" are only approximately meaningful. HF first extrapolates to the predicted clean endpoint `x₁` and projects *that*, then maps the correction back. This is the same idea as projecting the x₀-prediction rather than the noisy latent in diffusion guidance.
+- **How much of the correction is applied.** DPCC applies 100 % of it at every active step. HF scales by `τ_next`, so a correction at τ = 0.1 is applied at 10 % strength and one at τ = 1.0 at full strength. Early, unreliable corrections cannot wreck the sample.
+
+The NLP itself (`HardFlowNLP`, lines 129–338) is a CasADi/IPOPT program over the whole horizon that enforces, simultaneously: the halfspace/obstacle constraint set, **linear transition dynamics** `A·s_t + B·a_t + c = s_{t+1}` (lines 300–308), and **input saturation** `−1 ≤ a_t ≤ 1` (lines 311–315). So it returns a *dynamically feasible* trajectory, not merely a geometrically feasible one. On failure it keeps the last IPOPT iterate rather than aborting (line 332–338) and increments `n_failures`.
+
+## 11.2 The theoretical case for HF — it is sound
+
+1. **The NLP sees a physically meaningful object.** Constraints and dynamics are evaluated on the predicted clean trajectory at every τ, not on a noisy iterate.
+2. **Feasibility is enforced, not encouraged.** Hard constraints inside an IPOPT solve, including dynamics and actuator limits, versus DPCC's projection onto the constraint set alone.
+3. **The τ-blend is a proper annealing schedule** — the correction strength grows with confidence in the sample.
+4. **The forced final solve carries the safety guarantee** regardless of threshold (line 502, the `or (k == K − 1)` clause).
+
+None of this is wrong. It is simply not the binding constraint on this benchmark.
+
+## 11.3 The cost model — HF is structurally ~3× DPCC
+
+Step 5 above costs an **extra network pass per active step**, so HF's NFE per replan is `K + n_active` against `K` for the plain sampler. On top of that the NLP is a full-horizon IPOPT solve with dynamics and saturation constraints, against DPCC's cheaper set projection. Measured, same generator, same seeds:
+
+| generator | selection | DPCC s+c | DPCC lat. [s] | HF s+c | HF lat. [s] | **HF/DPCC** | HF `nfe_total` |
+|---|---|---|---:|---|---:|---:|---:|
+| AlphaFlow K=2 | `r-tightened` | **30/30** | 0.0202 | **30/30** | 0.0673 | **3.34×** | 755 |
+| AlphaFlow K=2 | `t-tightened` | 28/30 | 0.0228 | **30/30** | 0.0686 | 3.00× | 751 |
+| AlphaFlow K=2 | `c-tightened` | 6/30 | 0.0190 | **24/30** | 0.0667 | 3.50× | 1402 |
+| MeanFlow K=2 | `r-tightened` | **29/30** | 0.0251 | 27/30 | 0.0788 | 3.14× | 771 |
+| MeanFlow K=2 | `t-tightened` | **29/30** | 0.0253 | **29/30** | 0.0801 | 3.17× | 783 |
+| MeanFlow K=2 | `c-tightened` | 3/30 | 0.0236 | **23/30** | 0.0790 | 3.34× | 1423 |
+
+Per episode (`n_steps × latency`, 5 seeds, 30 episodes):
+
+| generator | selection | DPCC | HardFlow | ratio |
+|---|---|---|---|---:|
+| AlphaFlow K=2 | `r-tightened` | 30/30, **1.36 s** | 30/30, 4.51 s | 3.31× |
+| AlphaFlow K=2 | `t-tightened` | 28/30, **1.61 s** | 30/30, 4.58 s | 2.84× |
+| AlphaFlow K=2 | `c-tightened` | 6/30, 3.43 s | **24/30**, 6.86 s | 2.00× |
+| MeanFlow K=2 | `r-tightened` | 29/30, **1.77 s** | 27/30, 5.46 s | 3.08× |
+| MeanFlow K=2 | `t-tightened` | 29/30, **1.73 s** | 29/30, 5.60 s | 3.24× |
+| MeanFlow K=2 | `c-tightened` | 3/30, 4.40 s | **23/30**, 8.41 s | 1.91× |
+
+**Verdict on the headline comparison: HF costs ~3× DPCC and buys nothing on the variants that already work.** On `r-tightened` and `t-tightened` the two are within ±2 episodes of each other out of 30 — statistically indistinguishable (§9.2's machinery applies) — while HF is 2.8–3.3× more expensive. If the goal is the cheapest safe controller, DPCC wins on this benchmark.
+
+## 11.4 Where HF *is* clearly better — it rescues `dpcc-c`, and that identifies the K=2 bug
+
+The one large, unambiguous HF win is on the `-c` selection rule, and it is large: **AF 6/30 → 24/30, MF 3/30 → 23/30.** This is the §10.6 collapse, and HF fixing it explains the mechanism.
+
+`-r`/`-t`/`-c` are **candidate-selection rules**, not constraint sets (`scripts/eval.py:210-211`): `-t` = `temporal_consistency`, `-c` = `minimum_projection_cost`, `-r` = the default. `-c` ranks the candidate fan by the accumulated proximity cost `Σ‖x1_proj − x1_ref‖²` and keeps the **least-corrected** trajectory.
+
+Under DPCC at K=2 that cost is measured on a **half-integrated iterate at τ = 0.5**. A candidate that barely moves is trivially near-feasible, so its projection cost is ≈ 0 and it wins the ranking — which is exactly the observed failure signature in §9.8: **199 steps (the cap), `n_success` = 0, `total_violations` = 0.0.** The selection rule is picking a stalled trajectory because standing still is cheap to project.
+
+Under HF the same cost is measured on the **predicted clean endpoint x₁**, where a stalled trajectory is *not* cheap — it fails to reach the goal, so the NLP has to move it. The ranking signal becomes meaningful and the collapse disappears.
+
+> **This is the strongest argument for HF in the whole batch, and it is not a speed or safety argument — it is that HF makes `minimum_projection_cost` a valid selection criterion at low K, which DPCC does not.** It also confirms §10.6's diagnosis and hands you the fix: either use HF for `-c`, or compute DPCC's ranking cost on an extrapolated endpoint instead of the current iterate (a much cheaper change than switching projectors).
+
+## 11.5 HF needs high K — which is the wrong regime for this project
+
+Standalone HF family (`flow_matching_v3_hardflow`, FlowMatchingODE generator), HF arm vs its own DPCC control arm on the identical model and seed. **[n=1 seed, seed 6, 6 episodes]** except CAND_42:
+
+| cand | K | threshold | mpc | HF s+c | HF lat. [s] | HF ep [s] | DPCC s+c | DPCC lat. [s] | DPCC ep [s] |
+|---|---:|---|---|---|---:|---:|---|---:|---:|
+| CAND_39 | **2** | 0.0 | 1 | **2/6** | 0.0782 | 4.15 | **6/6** | 0.0261 | **1.91** |
+| CAND_40 | **5** | 0.0 | 1 | **3/6** | 0.1888 | 10.76 | **6/6** | 0.1101 | **6.97** |
+| CAND_35 | 10 | 0.0 | 1 | 6/6 | 0.3741 | 25.75 | 6/6 | 0.1996 | **12.61** |
+| CAND_37 | 20 | 0.0 | 1 | 6/6 | 0.7460 | 51.47 | 6/6 | 0.4745 | **29.50** |
+| CAND_36 | 20 | 0.5 | 1 | 6/6 | 0.4876 | 32.99 | 6/6 | 0.4751 | **29.53** |
+| CAND_38 | 20 | 0.0 | 4 | 6/6 | 3.0081 | 207.56 | 6/6 | 0.4768 | **29.64** |
+| CAND_44 | 20 | 0.5 | 4 | 6/6 | 1.0034 | 103.52 | 6/6 | 0.4733 | **29.42** |
+| CAND_42 | 20 | 0.5 | 4 | **30/30** | 1.8225 | 182.92 | **30/30** | 0.4709 | **29.78** | *(5 seeds)* |
+
+**HF collapses at K=2 (2/6) and K=5 (3/6) while DPCC is 6/6 on the identical model and seed.** It only reaches parity from K=10 up, and never beats DPCC on cost at any K.
+
+The reason is line 6 of the algorithm: `X1_ref = X_ref + (1 − τ_next)·V_next`. At K=2 the first active step is at τ_next = 1.0 — fine — but at K=2 the *sample* reaching that point came from a single coarse Euler step, and at K=5 the extrapolation `(1 − τ)·V` spans up to 0.8 of the flow with a single velocity. **HF projects an endpoint estimate that is only as good as a first-order extrapolation, and that estimate degrades exactly as K falls.** The NLP then solves accurately — for the wrong target.
+
+Since §10 established that the entire cost advantage of this line of work lives at **K = 1–2**, and HF is broken precisely there, HF as currently implemented is incompatible with the project's operating point.
+
+## 11.6 The threshold — polarity, and why "lower" is the wrong direction
+
+**Polarity first, because it is counter-intuitive** (`resolve_activation_threshold`, lines 345–370, and the gate at line 502):
+
+> `threshold` = the fraction of the **late** trajectory over which the NLP is active. **Higher = MORE projection.** `1.0` → every step, `0.5` → last half, `0.0` → **terminal solve only**. Identical polarity to DPCC's `diffusion_timestep_threshold`.
+
+So "trying a lower threshold" means **less** projection, not more. Three things follow from the data:
+
+**(a) At K = 1–2, lowering the threshold does literally nothing.** The gate is `(k >= (1−thr)·K) or (k == K−1)`. The `or` clause forces the final step unconditionally, so at K=1 and K=2 the solve count is pinned at **exactly 1** for every threshold in [0, 1]. The current deployed value is 0.5 (`config/visual_aligning_eval.yaml`, and `diffusion_timestep_threshold: 0.5` in the eval yaml). **A threshold sweep at K=2 will produce identical numbers** — the same is true for the DPCC arm. Do not spend cluster time on it.
+
+**(b) At high K, lowering the threshold makes HF *slower*, not faster.** This is the surprising one, and it is consistent across both mpc settings at K=20:
+
+| K=20 | threshold 0.0 (terminal only, 1 solve) | threshold 0.5 (last half, 10 solves) | change |
+|---|---:|---:|---|
+| mpc1 | 0.7460 s/step | **0.4876 s/step** | **−35 %** |
+| mpc4 | 3.0081 s/step | **1.0034 s/step** | **−67 %** |
+
+Fewer solves cost *more* wall time. The explanation is solver conditioning: with terminal-only projection the NLP must drag a fully unconstrained endpoint into the feasible set in one shot, so IPOPT burns iterations (and `solve_limited` may bail, keeping a bad iterate, line 330–338). With projection over the last half, each solve starts near-feasible and converges quickly. **Gradual projection is cheaper per episode than one big projection.**
+
+**(c) Quality is already saturated at 6/6 for every K≥10 threshold setting**, so there is no quality headroom for the threshold to recover either.
+
+**Conclusion on your plan: the threshold sweep as described will not produce a result.** At K=2 it is a no-op by construction; at K=20 the direction you want to move (lower) is the direction the data says is worse. If you sweep anything, sweep **upward** — `threshold = 1.0` (project every step) is untested and is the only setting for which no run exists.
+
+## 11.7 Where the optimisation space actually is
+
+HF is not underperforming because of a tuning parameter. It is underperforming for two structural reasons, and both are fixable:
+
+**1. The endpoint estimate is a first-order extrapolation — and MeanFlow makes it exact for free.**
+Line 6 approximates `x₁ ≈ x_τ + (1−τ)·v(x_τ, τ)`, which is a one-step Euler jump across the remaining flow — accurate only for small `(1−τ)`, i.e. large K. **But MeanFlow's entire parameterisation is the average velocity `u(x, t, h)` over an interval `h`** (`mf_diffusion.py:165`, `_predict_velocity(x, cond, t, h=...)`; the engine takes `h` explicitly). Setting `h = 1 − τ` gives `x₁ = x_τ + (1−τ)·u(x_τ, τ, h=1−τ)` **exactly, by construction, in one network call** — no extrapolation error, at any K.
+
+> This is the single highest-value idea in this section: **replace HF's Euler endpoint extrapolation with a MeanFlow one-shot endpoint jump.** It costs the same one extra network pass HF already pays, removes the error term that breaks HF at K=2–5, and it is only available because the generator is a MeanFlow. That is a real MF-specific contribution — arguably a better one than the speed claim in §§1–9, which §10.4 showed is really a projection-count effect available to any low-K generator.
+
+**2. The NLP is doing more work than the benchmark requires.** Full-horizon IPOPT with dynamics and saturation, ~8–60 ms per solve, against DPCC's cheaper set projection at comparable quality. On `avoiding-d3il` the constraint set is simple enough that the extra machinery has no headroom to show value. If HF is to be justified it needs a benchmark where dynamic feasibility actually binds — UAV, or the obstacles/dynamics constraint types that are configured in `projection_eval.yaml` but not exercised in this halfspace-only batch.
+
+**3. Cheap partial win available now:** the `-c` rescue in §11.4 does not require HF. Computing DPCC's `minimum_projection_cost` ranking on an extrapolated (or MeanFlow-exact) endpoint instead of the current iterate should fix the K=2 `-c` collapse at ~zero added cost, since the ranking is already computed — only the point at which it is evaluated changes.
+
+## 11.8 Run queue for the HF thread
+
+1. **Do not run the threshold sweep at K=2** — it is a no-op (§11.6a). If you want a threshold data point, run `threshold = 1.0` at K=10/20, the only untested setting.
+2. **MeanFlow-exact endpoint in HF** (§11.7.1). Replace lines 5–6 of the sampler with a single `u(x, τ, h=1−τ)` call and re-run the K-ladder at K=1, 2, 5. **This is the experiment that would make HF viable at the project's operating point**, and it is a ~10-line change to `hardflow_projection.py`.
+3. **Endpoint-based ranking for DPCC `-c`** (§11.7.3) — cheap, and directly targets the §10.6 bug.
+4. **Complete the HF K-ladder on 5 seeds.** Everything below K=20 in §11.5 is one seed. The K=2 (2/6) and K=5 (3/6) failures are the load-bearing claims of this section and they rest on 6 episodes each.
+5. **Test HF where dynamics bind** — `obstacles` / `dynamics` constraint types, or the UAV task. HF's advantage is dynamic feasibility, and the halfspace-only benchmark cannot show it.
+
+**Bottom line:** HF is theoretically better, currently 3× more expensive for equal quality, and broken at K≤5 where this project operates. The threshold is not the lever — the endpoint extrapolation is, and MeanFlow happens to be the one generator that can make it exact.

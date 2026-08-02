@@ -68,7 +68,7 @@ cd "$REPO"
 # Model loaded via experiment='plan_mix_visual_aligning_<engine>'.
 # Results: logs/aligning-d3il-visual/plans/mix_visual_aligning_<engine>/<exp>/results/<seed>/
 #
-# Args: $1=engine (ddpm|fm|mf|af, default fm)  $2=seed(s) (optional)  $3=record_mode (default all)
+# Args: $1=engine (diffusion|fm|mf|af, default fm)  $2=seed(s) (optional)  $3=record_mode (default all)
 # $2 blank    -> $MIX_SEEDS (default "6 7 8 9 10"), run sequentially in this one job.
 # $2 = "6"    -> that seed only. Use for per-seed Slurm fan-out:
 #   sbatch eval_mix_visual_aligning.sh mf 6
@@ -85,8 +85,9 @@ cd "$REPO"
 # it (engine_registry.assert_engine_matches) rather than dying later inside load_state_dict.
 ENGINE="${1:-fm}"
 case "$ENGINE" in
-    ddpm|fm|mf|af) ;;
-    *) echo "[ eval ] ERROR: unknown engine '$ENGINE' (want: ddpm | fm | mf | af)"; exit 1 ;;
+    diffusion|fm|mf|af) ;;
+    ddpm) ENGINE=diffusion; echo "[ engine ] NOTE: 'ddpm' is a deprecated alias for 'diffusion' (Gen14 U5)" ;;
+    *) echo "[ eval ] ERROR: unknown engine '$ENGINE' (want: diffusion | fm | mf | af)"; exit 1 ;;
 esac
 echo "[ eval ] engine=$ENGINE"
 

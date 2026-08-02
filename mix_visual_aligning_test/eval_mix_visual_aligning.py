@@ -5,7 +5,7 @@
 # blocks marked `Gen14` below is Gen7's script verbatim.
 #
 # ONE rollout harness, FOUR engines, selected with --engine:
-#     ddpm  Gen6V4  VisualGaussianDiffusion   NFE key = n_diffusion_steps (reverse chain)
+#     diffusion  Gen6V4  VisualGaussianDiffusion   NFE key = n_diffusion_steps (reverse chain)
 #     fm    Gen7    VisualFlowMatching        NFE key = flow_steps_v3     (Euler ODE 0→1)
 #     mf    Gen3v6  VisualMeanFlow            NFE key = flow_steps_v3     (two-time, u-head only)
 #     af    Gen3v7  VisualAlphaFlow           NFE key = flow_steps_v3     (two-time, u-head only)
@@ -64,7 +64,8 @@ import mix_visual_aligning.utils as utils
 from mix_visual_aligning.sampling.projection import Projector
 # Gen14 — the arm dispatch table. Every engine-specific branch lives there, not here.
 from mix_visual_aligning.models.engine_registry import (
-    ENGINE_KEYS, resolve, describe, nfe_of, assert_engine_matches,
+    ENGINE_KEYS, ENGINE_INPUT_KEYS, canonical_engine,
+    resolve, describe, nfe_of, assert_engine_matches,
 )
 # REAL_TIME_RECORDING_UPDATE — per-replan timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
 from realtime_recording.behavior_logger import RTRecorder
@@ -2307,8 +2308,10 @@ if __name__ == '__main__':
     # ── Gen14 ── the arm selector. Must match the arm the checkpoint was trained with;
     # assert_engine_matches() below turns a mismatch into a clear message instead of an
     # opaque state_dict error minutes into a GPU allocation.
-    parser.add_argument('--engine', type=str, default='fm', choices=list(ENGINE_KEYS),
-                        help='ML engine arm: ddpm (Gen6V4) | fm (Gen7) | mf (Gen3v6) | af (Gen3v7)')
+    # `ENGINE_INPUT_KEYS` = the four canonical keys + deprecated aliases ('ddpm'), so a
+    # stale command still runs. canonical_engine() normalises before anything is named.
+    parser.add_argument('--engine', type=str, default='fm', choices=list(ENGINE_INPUT_KEYS),
+                        help='ML engine arm: diffusion (Gen6V4) | fm (Gen7) | mf (Gen3v6) | af (Gen3v7)')
     args_cli, remaining = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining
 
@@ -2327,7 +2330,7 @@ if __name__ == '__main__':
     n_trajectories      = config.get('n_trajectories_per_context', 1)
 
     # ── Gen14 BLOCK 1/2 — resolve the arm ─────────────────────────────────────
-    ENGINE      = args_cli.engine
+    ENGINE      = canonical_engine(args_cli.engine)   # 'ddpm' -> 'diffusion' (U5)
     ENGINE_SPEC = resolve(ENGINE)
     EXPERIMENT  = f'plan_mix_visual_aligning_{ENGINE}'
     print(f'[ eval ] {describe(ENGINE)}')
@@ -2372,12 +2375,12 @@ if __name__ == '__main__':
             print(f'[ eval ] Model n_timesteps = {_model_n_ts}  '
                   f'(config n_diffusion_steps = {_config_n_ts})')
             # ── Gen14 BLOCK 2/2 — report NFE under THIS arm's key ─────────────
-            # ddpm counts denoising steps (n_diffusion_steps); fm/mf/af count ODE
+            # diffusion counts denoising steps (n_diffusion_steps); fm/mf/af count ODE
             # steps (flow_steps_v3). Printing one label for both is how a run gets
             # read as K=100 when it actually ran K=1.
             _nfe = nfe_of(ENGINE, args, default='?')
             print(f'[ eval ] NFE ({ENGINE_SPEC["nfe_key"]}) = {_nfe}   engine={ENGINE}')
-            if ENGINE == 'ddpm':
+            if ENGINE == 'diffusion':
                 print(f'[ eval ] DDPM reverse chain: {_config_n_ts} denoising steps '
                       f'(flow_steps_v3 does not apply to this arm)')
             else:

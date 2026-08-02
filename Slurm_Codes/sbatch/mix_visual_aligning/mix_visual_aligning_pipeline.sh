@@ -47,7 +47,7 @@ LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log
 #   3. Evaluation (eval_mix_visual_aligning.sh)   — only if training succeeds
 #
 # Usage:  sbatch mix_visual_aligning_pipeline.sh <engine> [seeds]
-#           <engine> = ddpm | fm | mf | af      (default: fm, the Gen7 reference arm)
+#           <engine> = diffusion | fm | mf | af      (default: fm, the Gen7 reference arm)
 #           [seeds]  = space-separated seed list, QUOTED   (default: "6 7 8 9 10")
 #
 #   sbatch mix_visual_aligning_pipeline.sh mf                # all 5 default seeds
@@ -77,8 +77,9 @@ ENGINE="${1:-fm}"
 SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 
 case "$ENGINE" in
-    ddpm|fm|mf|af) ;;
-    *) echo "ERROR: unknown engine '$ENGINE' (want: ddpm | fm | mf | af)"; exit 1 ;;
+    diffusion|fm|mf|af) ;;
+    ddpm) ENGINE=diffusion; echo "[ engine ] NOTE: 'ddpm' is a deprecated alias for 'diffusion' (Gen14 U5)" ;;
+    *) echo "ERROR: unknown engine '$ENGINE' (want: diffusion | fm | mf | af)"; exit 1 ;;
 esac
 
 echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS' ..."

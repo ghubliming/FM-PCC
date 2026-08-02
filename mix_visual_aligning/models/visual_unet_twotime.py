@@ -3,8 +3,10 @@
 Body copied from `fm_visual_aligning/models/visual_unet.py` (Gen7). Three deltas,
 all additive, each marked `Gen14`:
 
-  1. Backbone is `unet1d_twotime_cond.Flow_matcher_U_Net_v2` (h_mlp + FiLM graft)
-     instead of Gen7's `UNet1DTemporalCondModel` (FiLM only, no h).
+  1. Backbone is a two-time one (h_mlp + visual conditioning) instead of Gen7's
+     h-less pair. `film_mode` picks which:
+       'v1' -> `unet1d_twotime_cond.Flow_matcher_U_Net_v2`      (Gen7 v1 + h_mlp)
+       'v2' -> `unet1d_twotime_film.Flow_matcher_U_Net_v2_FiLM` (Gen7 v2 + h_mlp, U5)
   2. `forward()` accepts and forwards the two-time surface:
      `h`, `omega`, `t_min`, `t_max`, `return_v` — so `MFTrajectoryModel` /
      `AFTrajectoryModel` can call it exactly like they call the state-only UNet.
@@ -100,19 +102,19 @@ class VisualUNetTwoTime(nn.Module):
             latent_dim = 0
 
         # ── 2. Two-time temporal U-Net backbone (Gen14) ───────────────────────
-        # film_mode 'v2' (true per-block gamma/beta FiLM) has NO h_mlp and is not
-        # ported to the two-time arms. Fail loudly rather than silently running v1.
-        film_mode = getattr(config, 'film_mode', 'v1')
-        if film_mode not in ('v1', None):
+        # film_mode selects how the visual latent reaches the residual blocks:
+        #   'v1' → Flow_matcher_U_Net_v2       (Fake FiLM: additive bias via time-embed concat)
+        #   'v2' → Flow_matcher_U_Net_v2_FiLM  (True FiLM: per-block γ scale + β shift)
+        # U5: v2 used to raise here, because Gen7's v2 file has no h_mlp and would have
+        # dropped the MeanFlow/alpha-Flow h-conditioning. unet1d_twotime_film.py now
+        # carries BOTH — see its JVP-safety note. Absence of the key still means 'v1',
+        # so every existing config and checkpoint is unaffected.
+        self.film_mode = getattr(config, 'film_mode', 'v1') or 'v1'
+        if self.film_mode not in ('v1', 'v2'):
             raise ValueError(
-                f"[ VisualUNetTwoTime ] film_mode='{film_mode}' is not supported on the "
-                "two-time (mf/af) arms — unet1d_temporal_film.py has no h_mlp, so the "
-                "MeanFlow/alpha-Flow h-conditioning would be silently dropped. "
-                "Use film_mode='v1' for engine=mf/af, or run film_mode='v2' on the fm arm."
+                f"[ VisualUNetTwoTime ] film_mode='{self.film_mode}' is not a known mode "
+                "(want 'v1' or 'v2')."
             )
-        self.film_mode = 'v1'
-
-        from mix_visual_aligning.models.unet1d_twotime_cond import Flow_matcher_U_Net_v2
 
         self.target_horizon  = config.horizon
         # U-Net needs temporal dim divisible by 8 (3 levels of stride-2 downsampling)
@@ -127,7 +129,7 @@ class VisualUNetTwoTime(nn.Module):
             obs_dim = getattr(config, 'obs_dim', 20)
             transition_dim = config.action_dim + obs_dim
 
-        self.backbone = Flow_matcher_U_Net_v2(
+        backbone_kwargs = dict(
             horizon=self.padded_horizon,
             transition_dim=transition_dim,
             cond_dim=latent_dim,
@@ -137,8 +139,18 @@ class VisualUNetTwoTime(nn.Module):
             condition_dropout=getattr(config, 'condition_dropout', 0.1),
             dual_head=dual_head,
             interval_cfg=interval_cfg,
-            use_cond_projection=self.if_vision,   # FiLM gates enabled for visual mode
-        ).to(self.device)
+            # Visual conditioning enabled for visual mode. Under v1 this concatenates
+            # into the time embedding; under v2 it feeds the per-block γ/β heads.
+            use_cond_projection=self.if_vision,
+        )
+        if self.film_mode == 'v2':
+            from mix_visual_aligning.models.unet1d_twotime_film import Flow_matcher_U_Net_v2_FiLM
+            self.backbone = Flow_matcher_U_Net_v2_FiLM(**backbone_kwargs).to(self.device)
+            print('[ VisualUNetTwoTime ] film_mode=v2 — TRUE FiLM backbone '
+                  '(per-block γ scale + β shift) ACTIVE, h_mlp retained')
+        else:
+            from mix_visual_aligning.models.unet1d_twotime_cond import Flow_matcher_U_Net_v2
+            self.backbone = Flow_matcher_U_Net_v2(**backbone_kwargs).to(self.device)
 
         # Expose action_dim so the diffusion engine can reference it
         self.action_dim = getattr(config, 'action_dim', 3)

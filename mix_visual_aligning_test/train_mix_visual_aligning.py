@@ -3,7 +3,7 @@
 # Dataset: ParityAligningDataset (9D visual) / StateOnlyAligningDataset (23D non-visual).
 #
 # ONE frame, FOUR engines, selected with --engine:
-#     ddpm  Gen6V4  diffuser_visual_aligning     VisualGaussianDiffusion
+#     diffusion  Gen6V4  diffuser_visual_aligning     VisualGaussianDiffusion
 #     fm    Gen7    fm_visual_aligning           VisualFlowMatching        (default/reference)
 #     mf    Gen3v6  flow_matcher_v3_meanflow     VisualMeanFlow
 #     af    Gen3v7  flow_matcher_v3_alphaflow    VisualAlphaFlow
@@ -26,7 +26,8 @@ import wandb
 import mix_visual_aligning.utils as utils
 # Gen14 — the arm dispatch table. Every engine-specific branch lives there, not here.
 from mix_visual_aligning.models.engine_registry import (
-    ENGINE_KEYS, resolve, import_class, get_trainer_cls, describe,
+    ENGINE_KEYS, ENGINE_INPUT_KEYS, canonical_engine,
+    resolve, import_class, get_trainer_cls, describe,
 )
 
 exp = 'aligning-d3il-visual'
@@ -53,7 +54,7 @@ def sanitize_wandb_env():
 # answer whether the field is bad ONLY at large h — exactly where 1-2-NFE sampling lives.
 # Empty buckets are dropped by the trainer, so those series are sparse by design.
 #
-# Arms that do not produce a given metric (ddpm has no h-buckets, mf has no alpha) simply
+# Arms that do not produce a given metric (diffusion has no h-buckets, mf has no alpha) simply
 # have no pkl key and are skipped. One map serves all four engines.
 WANDB_COMPANION_KEYS = {
     'test_losses': 'test/loss',
@@ -175,8 +176,10 @@ def parse_top_level_args():
     # ── Gen14 ── the arm selector. Picks the config block, the engine classes and
     # the Trainer. Default 'fm' == the Gen7 reference arm, so a bare invocation
     # reproduces Gen7 behaviour.
-    p.add_argument('--engine', type=str, default='fm', choices=list(ENGINE_KEYS),
-                   help='ML engine arm: ddpm (Gen6V4) | fm (Gen7) | mf (Gen3v6) | af (Gen3v7)')
+    # `ENGINE_INPUT_KEYS` = the four canonical keys + deprecated aliases ('ddpm'), so a
+    # stale command still runs. canonical_engine() normalises before anything is named.
+    p.add_argument('--engine', type=str, default='fm', choices=list(ENGINE_INPUT_KEYS),
+                   help='ML engine arm: diffusion (Gen6V4) | fm (Gen7) | mf (Gen3v6) | af (Gen3v7)')
     args, remaining = p.parse_known_args()
     return args, remaining
 
@@ -238,7 +241,7 @@ selected_seeds, seed_source = resolve_seed_list(cli_args)
 print(f'[ train ] Seeds: {selected_seeds}  (source: {seed_source})')
 
 # ── Gen14 BLOCK 1/3 — resolve the arm ─────────────────────────────────────────
-ENGINE      = cli_args.engine
+ENGINE      = canonical_engine(cli_args.engine)   # 'ddpm' -> 'diffusion' (U5), with a notice
 ENGINE_SPEC = resolve(ENGINE)
 EXPERIMENT  = f'mix_visual_aligning_{ENGINE}'     # the config block name
 print(f'[ train ] {describe(ENGINE)}')
@@ -322,10 +325,10 @@ for seed in selected_seeds:
 
     # ── Gen14 BLOCK 2/3 — backbone + engine, per arm ──────────────────────────
     # Two shapes only, selected by ENGINE_SPEC['wraps_unet']:
-    #   False (ddpm, fm) — VisualUNet is built here and handed to the engine.
+    #   False (diffusion, fm) — VisualUNet is built here and handed to the engine.
     #   True  (mf, af)   — an engine wrapper is built here; it constructs
     #                      VisualUNetTwoTime internally as its velocity_net.
-    # model_config.pkl therefore describes the U-Net for ddpm/fm and the ENGINE
+    # model_config.pkl therefore describes the U-Net for diffusion/fm and the ENGINE
     # for mf/af; eval's load_diffusion_with_override reconstructs whichever it finds.
     _obs_dim        = 6 if _if_vision else 20   # UF-17: non-visual uses 20D obs
     _transition_dim = args.action_dim + _obs_dim
@@ -356,7 +359,7 @@ for seed in selected_seeds:
             interval_cfg=getattr(args, 'interval_cfg', False),
         )
     else:
-        # ddpm / fm — Gen6V4/Gen7 shape, unchanged.
+        # diffusion / fm — Gen6V4/Gen7 shape, unchanged.
         model_config = utils.Config(
             ModelCls,
             savepath=(args.savepath, 'model_config.pkl'),
@@ -377,7 +380,7 @@ for seed in selected_seeds:
         action_weight=getattr(args, 'action_weight', 10.0),
     )
 
-    if ENGINE == 'ddpm':
+    if ENGINE == 'diffusion':
         # Gen6V4 DDPM: a real discrete denoising chain — n_diffusion_steps is LIVE here.
         print(f'[ train ] n_diffusion_steps = {_n_diff_steps} (DDPM: live denoising chain)')
         _engine_kwargs.update(
@@ -456,7 +459,7 @@ for seed in selected_seeds:
     diffusion = diffusion_config(model)
 
     # ── Gen14 BLOCK 3/3 — Trainer, per arm ────────────────────────────────────
-    # ddpm/fm -> utils.training.Trainer          (Gen7 verbatim)
+    # diffusion/fm -> utils.training.Trainer          (Gen7 verbatim)
     # mf/af   -> utils.training_twotime.Trainer  (Gen3v7 verbatim — h-stratified
     #            metrics, real gradient_clip, seeded split, set_train_step for alpha)
     # Trainer calls model.loss(*batch), which unpacks Batch(trajectories, conditions).
@@ -474,7 +477,7 @@ for seed in selected_seeds:
     )
     if ENGINE_SPEC['two_time']:
         # ⚠️ split_seed exists ONLY on the two-time trainer. This means mf/af use a
-        # SEEDED train/test split while ddpm/fm use Gen7's unseeded one — a real
+        # SEEDED train/test split while diffusion/fm use Gen7's unseeded one — a real
         # cross-arm confound on test_loss. PLAN §4: accept, document, and compare
         # arms on unguided TASK SUCCESS (split-independent), never on test_loss.
         _trainer_kwargs['split_seed']    = getattr(args, 'split_seed', 42)
@@ -501,7 +504,7 @@ for seed in selected_seeds:
             print(f'[ train ] Resume checkpoint not found: {cp}')
 
     # ── Gen14 U4 ── flush losses.pkl to W&B after every epoch instead of only at the end.
-    # `on_epoch_end` is a no-op for any Trainer that does not accept it (the ddpm arm's
+    # `on_epoch_end` is a no-op for any Trainer that does not accept it (the diffusion arm's
     # Gen6V4 trainer), so the call is guarded by a signature check rather than assumed.
     losses_path = os.path.join(args.savepath, 'losses.pkl')
     wandb_cursor = {'last_step': -1}

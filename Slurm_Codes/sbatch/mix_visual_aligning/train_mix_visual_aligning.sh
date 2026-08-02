@@ -64,7 +64,7 @@ fi
 cd "$REPO"
 
 # ─── Gen14: pick the ML engine arm ──────────────────────────────────────
-# $1 = engine  (ddpm | fm | mf | af)   default: fm  (the Gen7 reference arm)
+# $1 = engine  (diffusion | fm | mf | af)   default: fm  (the Gen7 reference arm)
 # $2 = seed(s) (optional)              default: $MIX_SEEDS (6 7 8 9 10)
 #
 #   sbatch train_mix_visual_aligning.sh mf          # MeanFlow arm, all default seeds
@@ -83,8 +83,9 @@ cd "$REPO"
 ENGINE="${1:-fm}"
 SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 case "$ENGINE" in
-    ddpm|fm|mf|af) ;;
-    *) echo "[ train ] ERROR: unknown engine '$ENGINE' (want: ddpm | fm | mf | af)"; exit 1 ;;
+    diffusion|fm|mf|af) ;;
+    ddpm) ENGINE=diffusion; echo "[ engine ] NOTE: 'ddpm' is a deprecated alias for 'diffusion' (Gen14 U5)" ;;
+    *) echo "[ train ] ERROR: unknown engine '$ENGINE' (want: diffusion | fm | mf | af)"; exit 1 ;;
 esac
 echo "[ train ] engine=$ENGINE  seeds='$SEEDS'"
 if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then

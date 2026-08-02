@@ -813,7 +813,7 @@ base['plan_imf_visual_aligning'] = {
 # Model folder: mix_visual_aligning/   Test folder: mix_visual_aligning_test/
 # Plan:         logs_in_develop/Gen14/init/PLAN_Gen14_visual_mix_ml.md
 #
-#   engine=ddpm  <- Gen6V4  (visual_aligning_dpcc)      VisualGaussianDiffusion
+#   engine=diffusion  <- Gen6V4  (visual_aligning_dpcc)      VisualGaussianDiffusion
 #   engine=fm    <- Gen7    (fm_visual_aligning)        VisualFlowMatching     [reference arm]
 #   engine=mf    <- Gen3v6  (flow_matcher_v3_meanflow)  VisualMeanFlow
 #   engine=af    <- Gen3v7  (flow_matcher_v3_alphaflow) VisualAlphaFlow
@@ -834,12 +834,12 @@ base['plan_imf_visual_aligning'] = {
 _MIX_N_TRAIN_STEPS = int(1e5)
 
 # One watch list for all four arms. watch() skips keys a block does not define, so each
-# arm's folder name carries exactly its own identity keys (e.g. 'K' only for ddpm,
+# arm's folder name carries exactly its own identity keys (e.g. 'K' only for diffusion,
 # 'ts'/'af' only for the two-time arms).
 args_to_watch_mix_visual_train = [
     ('prefix', ''),
     ('horizon', 'H'),
-    ('n_diffusion_steps', 'K'),      # ddpm only — FM/MF/AF blocks do not define it
+    ('n_diffusion_steps', 'K'),      # diffusion only — FM/MF/AF blocks do not define it
     ('diffusion', 'D'),
     ('time_beta_alpha_v3', 'a'),
     ('time_beta_beta_v3', 'b'),
@@ -856,7 +856,7 @@ args_to_watch_mix_visual_train = [
 args_to_watch_mix_visual_plan = [
     ('prefix', ''),
     ('horizon', 'H'),
-    ('n_diffusion_steps', 'K'),      # ddpm only
+    ('n_diffusion_steps', 'K'),      # diffusion only
     ('flow_steps_v3', 'K'),          # fm/mf/af only  (the two are mutually exclusive per arm)
     ('ode_solver_method_v3', 'M'),
     ('diffusion_timestep_threshold', 'T'),
@@ -964,11 +964,11 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
     return blk
 
 
-# ─── arm: ddpm (Gen6V4) ────────────────────────────────────────────────────────────────
+# ─── arm: diffusion (Gen6V4) ────────────────────────────────────────────────────────────────
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
 # Gen6V4's own hyperparameters (action_weight=10, live n_diffusion_steps=100), otherwise
 # it is not the Gen6V4 baseline it claims to be.
-base['mix_visual_aligning_ddpm'] = _mix_train_block('ddpm', 'visual_aligning_dpcc', {
+base['mix_visual_aligning_diffusion'] = _mix_train_block('diffusion', 'visual_aligning_dpcc', {
     'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
     'diffusion': 'mix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
 })
@@ -1045,8 +1045,8 @@ base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
 })
 
 # ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────
-base['plan_mix_visual_aligning_ddpm'] = _mix_plan_block(
-    'ddpm', base['mix_visual_aligning_ddpm'], {},
+base['plan_mix_visual_aligning_diffusion'] = _mix_plan_block(
+    'diffusion', base['mix_visual_aligning_diffusion'], {},
     # DDPM has a real reverse chain, not an ODE: drop every continuous-time key inherited
     # from the FM plan template so it reaches neither the folder name nor the constructor.
     # n_diffusion_steps (copied from the training block) is this arm's K.
