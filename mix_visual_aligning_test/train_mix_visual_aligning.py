@@ -14,6 +14,7 @@
 # Usage:  python -m mix_visual_aligning_test.train_mix_visual_aligning --engine mf --seed 6
 import argparse
 import glob
+import inspect
 import json
 import os
 import pickle
@@ -39,26 +40,105 @@ def sanitize_wandb_env():
         if token and len(token.split('-')) != 5:
             os.environ.pop(key, None)
 
-def log_wandb_curves_from_losses(losses_path, run):
+# ── Gen14 U4 ── the pkl-key -> W&B-key map. Gen14 inherited Gen7's 4-key version, which
+# predates the Gen3v6 U9 metric-parity pass; meanwhile the two-time trainer it now uses
+# (utils/training_twotime.py, copied from Gen3v7) persists 30+ series. The result was a
+# run that wrote every diagnostic to losses.pkl and showed almost none of it.
+#
+# Read val/raw_mse_u, NOT train/loss or test/loss: on the mf/af arms the adaptive weight
+# pins the reported loss near its ceiling by construction (COMPARE §7.1) — job 24124 ended
+# at test/loss 0.926 having started around 1.0, while val/raw_mse_u actually moved.
+#
+# h_mse_b0..b3 are the h-stratified residuals (h==0, (0,0.3), [0.3,0.6), [0.6,1.0]). They
+# answer whether the field is bad ONLY at large h — exactly where 1-2-NFE sampling lives.
+# Empty buckets are dropped by the trainer, so those series are sparse by design.
+#
+# Arms that do not produce a given metric (ddpm has no h-buckets, mf has no alpha) simply
+# have no pkl key and are skipped. One map serves all four engines.
+WANDB_COMPANION_KEYS = {
+    'test_losses': 'test/loss',
+    'training_a0_losses': 'train/a0_loss',
+    'test_a0_losses': 'test/a0_loss',
+    'training_raw_mse_losses': 'train/raw_mse',
+    'test_raw_mse_losses': 'val/raw_mse',
+    'training_aux_losses': 'train/aux_loss',
+    'test_aux_losses': 'test/aux_loss',
+    'lr_history': 'train/lr',
+    # ── Gen3v6 ────────────────────────────────────────────────────────────────────
+    'grad_norm_history': 'train/grad_norm',       # pre-clip norm; is gradient_clip biting?
+    'training_raw_mse_u_losses': 'train/raw_mse_u',
+    'training_raw_mse_v_losses': 'train/raw_mse_v',
+    'training_per_dim_rms_u_losses': 'train/per_dim_rms_u',
+    'training_h_mse_b0_losses': 'train/h_mse_b0',
+    'training_h_mse_b1_losses': 'train/h_mse_b1',
+    'training_h_mse_b2_losses': 'train/h_mse_b2',
+    'training_h_mse_b3_losses': 'train/h_mse_b3',
+    'training_h_mean_losses': 'train/h_mean',
+    'training_fm_frac_losses': 'train/fm_frac',
+    'test_raw_mse_u_losses': 'val/raw_mse_u',
+    'test_raw_mse_v_losses': 'val/raw_mse_v',
+    'test_per_dim_rms_u_losses': 'val/per_dim_rms_u',
+    'test_h_mse_b0_losses': 'val/h_mse_b0',
+    'test_h_mse_b1_losses': 'val/h_mse_b1',
+    'test_h_mse_b2_losses': 'val/h_mse_b2',
+    'test_h_mse_b3_losses': 'val/h_mse_b3',
+    # ── Gen3v7 — alpha schedule telemetry (gate G4), af arm only ───────────────────
+    'training_alpha_losses': 'train/alpha',
+    'training_discrete_frac_losses': 'train/discrete_frac',
+    'training_clamp_frac_losses': 'train/clamp_frac',
+    'test_alpha_losses': 'val/alpha',
+    'test_discrete_frac_losses': 'val/discrete_frac',
+}
+
+
+def log_wandb_curves_from_losses(losses_path, run, after_step=-1):
+    """Replay losses.pkl into W&B (standard FM-PCC pattern).
+
+    Gen14 U4: only logs steps > after_step and returns the last step logged, so it can be
+    called incrementally per epoch — curves appear DURING training and survive a SLURM
+    timeout, instead of only after a seed fully completes. Visual aligning is ~9.5 h per
+    seed, so the previous log-at-the-end behaviour meant a wall-clock kill lost the entire
+    W&B record of a run whose losses.pkl on disk was perfectly intact.
+    """
     if not os.path.exists(losses_path):
-        return
+        return after_step
     with open(losses_path, 'rb') as f:
         losses = pickle.load(f)
-    training_losses   = losses.get('training_losses', [])
-    test_losses       = losses.get('test_losses', [])
-    training_a0       = losses.get('training_a0_losses', [])
-    test_a0           = losses.get('test_a0_losses', [])
-    test_by_step      = {s: v for s, v in test_losses}
-    train_a0_by_step  = {s: v for s, v in training_a0}
-    test_a0_by_step   = {s: v for s, v in test_a0}
-    for step, tloss in training_losses:
-        ld = {'train/loss': tloss}
-        if step in test_by_step:    ld['test/loss']      = test_by_step[step]
-        if step in train_a0_by_step: ld['train/a0_loss'] = train_a0_by_step[step]
-        if step in test_a0_by_step:  ld['test/a0_loss']  = test_a0_by_step[step]
-        run.log(ld, step=step)
-    if training_losses: run.summary['final_train_loss'] = training_losses[-1][1]
-    if test_losses:     run.summary['final_test_loss']  = test_losses[-1][1]
+
+    training_losses = losses.get('training_losses', [])
+    by_step = {
+        wandb_key: dict(losses.get(pkl_key, []))
+        for pkl_key, wandb_key in WANDB_COMPANION_KEYS.items()
+    }
+
+    last_step = after_step
+    for step, train_loss in training_losses:
+        if step <= after_step:
+            continue
+        log_dict = {'train/loss': train_loss}
+        for wandb_key, series in by_step.items():
+            if step in series:
+                log_dict[wandb_key] = series[step]
+        run.log(log_dict, step=step)
+        last_step = max(last_step, step)
+
+    if training_losses:
+        run.summary['final_train_loss'] = training_losses[-1][1]
+    test_losses = losses.get('test_losses', [])
+    if test_losses:
+        run.summary['final_test_loss'] = test_losses[-1][1]
+    raw_mse_losses = losses.get('test_raw_mse_losses', [])
+    if raw_mse_losses:
+        run.summary['final_val_raw_mse'] = raw_mse_losses[-1][1]
+    # Kill-criterion inputs: the first and final h-stratified residuals. If b3 (h in
+    # [0.6,1]) is flat at its step-0 value while b0 (h=0) dropped ~10x, the field is
+    # untrained exactly where low-NFE sampling lives — report and stop.
+    for bucket in ('h_mse_b0', 'h_mse_b1', 'h_mse_b2', 'h_mse_b3'):
+        series = losses.get(f'training_{bucket}_losses', [])
+        if series:
+            run.summary[f'first_train_{bucket}'] = series[0][1]
+            run.summary[f'final_train_{bucket}'] = series[-1][1]
+    return last_step
 
 def upload_wandb_artifact(run, seed, args):
     artifact = wandb.Artifact(
@@ -420,10 +500,26 @@ for seed in selected_seeds:
         else:
             print(f'[ train ] Resume checkpoint not found: {cp}')
 
-    trainer.train()
+    # ── Gen14 U4 ── flush losses.pkl to W&B after every epoch instead of only at the end.
+    # `on_epoch_end` is a no-op for any Trainer that does not accept it (the ddpm arm's
+    # Gen6V4 trainer), so the call is guarded by a signature check rather than assumed.
+    losses_path = os.path.join(args.savepath, 'losses.pkl')
+    wandb_cursor = {'last_step': -1}
+
+    def _flush_wandb(epoch):
+        if run is not None:
+            wandb_cursor['last_step'] = log_wandb_curves_from_losses(
+                losses_path, run, after_step=wandb_cursor['last_step'])
+
+    if run is not None and 'on_epoch_end' in inspect.signature(trainer.train).parameters:
+        trainer.train(on_epoch_end=_flush_wandb)
+    else:
+        trainer.train()
 
     if run is not None:
-        log_wandb_curves_from_losses(os.path.join(args.savepath, 'losses.pkl'), run)
+        # Final catch-up: picks up the last epoch's rows, and is a full replay if the
+        # trainer had no on_epoch_end hook (cursor still at -1).
+        log_wandb_curves_from_losses(losses_path, run, after_step=wandb_cursor['last_step'])
         upload_wandb_artifact(run, seed, args)
         run.summary['status'] = 'completed'
         run.summary['seed']   = seed
