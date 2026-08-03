@@ -246,6 +246,120 @@ consequences:
 3. **The ratio is set by θ_eff alone**, so the cheap K=1/K=2 arms are a *legitimate* proxy for the
    expensive K=20 arms at the same θ_eff — which is what makes the smoke test below worth running.
 
+> ⚠️ **Consequences 1 and 3 above are REFUTED by real K=2 data — see §2c.** They are kept here
+> because the *algebra* is right; what fails is the premise that `b_ipopt` is a constant. Read §2c
+> before using anything in this subsection.
+
+---
+
+## 2c. EMPIRICAL TEST of the K-invariance claim — **REFUTED**
+
+**Source:** `temp/0308/plot_n_success_and_constraints_both-hard_20v_2c_20260803_1812_tables.tex`
+(Visualizer LaTeX export, batch `batch_avoiding_combined_20260802_092307`, env `both-hard`,
+mean ± SEM over all available seeds). Two **K=2, T=0.5** candidates:
+
+- **CAND_32** — Gen3v7 α-Flow (`H8_K2_Meuler_T0.5_…AlphaFlowODE`)
+- **CAND_102** — Gen3v6 MeanFlow (`H8_K2_Meuler_T0.5_…MeanFlowODE`)
+
+Both are at `n_active = 1` and `(1−θ)·K = 1.0` (integral) → **fix_8-invariant**, and `θ_eff = 1/2 = 0.5`,
+exactly matching the Gen12 K=20 reference's `θ_eff = 10/20 = 0.5`. So this is a like-for-like test of
+the K-invariance prediction, on the formula's own terms.
+
+### Measured (avg_time, mean over the -r/-r-tightened/-t/-t-tightened arms)
+
+| run | `a` (per NN call) | DPCC | HF | **HF/DPCC** |
+|---|---|---|---|---|
+| CAND_32 (α-Flow, K=2) | 6.15 ms | 20.1 ms | 67.5 ms | **3.36×** |
+| CAND_102 (MeanFlow, K=2) | 8.30 ms | 24.9 ms | 77.8 ms | **3.13×** |
+| **Gen12 FMv3ODE, K=20** | 8.80 ms | 473 ms | 1060 ms | **2.24×** |
+
+**§2b predicted 2.24× at every K. The measured value at K=2 is 3.1–3.4×.** The prediction fails, and
+it fails in the *unfavourable* direction: **shrinking K WIDENS HF's relative gap.**
+
+### Where it breaks — the solver term, not the network
+
+Backing out each run's own constants (`a` from its diffuser arm, so the different DiT-vs-U-Net
+backbone is *not* a confound), with `u = b_scipy·B`, `v = b_ipopt·B`:
+
+| run | `b_scipy·B` | `b_ipopt·B` | **`b_ipopt / b_scipy`** |
+|---|---|---|---|
+| CAND_32, K=2 | 7.78 ms | 49.0 ms | **6.30×** |
+| CAND_102, K=2 | 8.27 ms | 52.9 ms | **6.39×** |
+| Gen12, K=20 | 7.42 ms/solve | 19.90 ms/solve | **2.68×** |
+
+**`B` cancels in the ratio**, so the 6.3× vs 2.68× comparison is free of the unknown-batch confound.
+
+The decisive check — take Gen12's constants and predict CAND_32 using *its own* `a`:
+
+```
+DPCC:  2·6.15 + 7.43  = 19.7 ms      measured 19.9 ms    ✅ transfers (1% error)
+HF  :  3·6.15 + 19.89 = 38.3 ms      measured 66.7 ms    ❌ off by 1.74×
+```
+
+**`b_scipy` is portable across K, model family and batch (7.4 → 7.8 → 8.3 ms). `b_ipopt` is not
+(19.9 → 49.0 → 52.9 ms, ~2.5×).** The additive model holds for DPCC and breaks for HardFlow.
+
+### Why: ipopt's cost tracks how far `x1_ref` starts from feasible
+
+`HardFlowNLP.solve` seeds the solve with the *reference*, not the previous solution:
+
+```python
+self.opti.set_value(self.x1_ref, x1_ref)
+self.opti.set_initial(self.x1, x1_ref)     # cold-ish: initial guess = the unprojected reference
+```
+
+So per-solve cost is set by the **quality of `x1_ref`**, which depends on K:
+
+- **K=20, 10 active steps:** by the time each solve runs, the ODE has taken many fine Euler steps
+  *and* the previous 9 solves already pushed the trajectory into the feasible set. Each solve starts
+  nearly-feasible → few barrier iterations → **~20 ms**.
+- **K=2, 1 active step:** a single solve on a raw reference produced by **two** coarse Euler steps,
+  with no prior projection to lean on. Far from feasible → many barrier iterations → **~50 ms**.
+
+scipy SLSQP (active-set) is far less sensitive to this, which is why `b_scipy` barely moves. In short:
+**consecutive in-loop projections amortise; an isolated one does not.** ipopt's per-solve cost is a
+function of the projection *schedule*, not a constant of the solver.
+
+### What this changes
+
+1. ❌ **"Shrinking K does not close HF's gap" (§2b #1) — WRONG in a worse way.** Low K doesn't just
+   fail to help; it actively **hurts** HF (2.24× → 3.1–3.4×). "Run HF at low K to look competitive"
+   is not merely ineffective, it is **counterproductive**.
+2. ❌ **"Cheap K=1/K=2 arms are a legitimate proxy for K=20" (§2b #3) — WRONG.** Arm 0 is still worth
+   running, but as its **own** operating point, **not** as a stand-in for the K=20 result.
+3. ✅ **The disaggregation rule (§2) is vindicated.** A single summed cost would have hidden this
+   entirely: the NN term behaved exactly as predicted, and *only* the NLP term broke. Reporting
+   `b_scipy` and `b_ipopt` separately is what made the failure visible and localisable.
+4. ⚠️ **The θ=0.1 predictions in §2/§4 (DPCC 235 ms, HF 353 ms) are now suspect on the HF side only.**
+   θ=0.1 at K=20 drops HF from 10 active steps to **2** — a large move toward the un-amortised regime.
+   Expect HF **above** 353 ms; the DPCC 235 ms prediction should still hold. **This makes the θ=0.1
+   run more interesting, not less: it now tests amortisation, not just the additive model.**
+
+### Revised prediction for the θ=0.1 run
+
+| | DPCC | HF |
+|---|---|---|
+| §4 additive model | **235 ms** (trust) | 353 ms (**lower bound only**) |
+| with amortisation (`b_ipopt` → ~40–50 ms at 2 active steps) | 235 ms | **~500–600 ms** |
+| implied HF/DPCC | — | **2.1–2.6×** (vs 1.50× naive) |
+
+**Falsifiable either way:** if the measured θ=0.1 HF time lands near 353 ms, `b_ipopt` is constant
+after all and the K=2 gap must be explained by something else (model family, node, batch). If it
+lands near 500–600 ms, amortisation is confirmed and `b_ipopt` must be modelled as a function of
+`n_active`.
+
+### Caveats
+
+- The K=2 rows come from **α-Flow / MeanFlow** checkpoints (Gen3v6/v7, DiT backbone), not FMv3ODE.
+  Using each run's own `a` removes the *network*-cost confound, and `b_ipopt/b_scipy` is
+  `B`-independent — but a *different checkpoint produces a different `x1_ref` quality*, which is
+  precisely the mechanism at issue. **A same-checkpoint K sweep (FMv3ODE at K=2 vs K=20) would settle
+  it cleanly** and is the single most valuable follow-up run.
+- `B` (mpc candidates) is not recorded in the LaTeX export. It cancels in every ratio quoted above,
+  but the absolute `b·B` figures are not directly comparable to Gen12's per-solve numbers.
+
+---
+
 ### The minimal exact-parity pair (useful, and Gen13-relevant)
 
 Applying `K_H = K_D(1−θ_D)`, `θ_H = θ_D/(1−θ_D)` (§3) at the smallest usable size:
@@ -400,13 +514,15 @@ All on the **FMv3ODE** checkpoint in Gen12, `avoiding-d3il`, mpc=4, B=4, seeds 6
 
 | # | purpose | DPCC | HardFlow | cost |
 |---|---|---|---|---|
-| **0** | **cheap smoke-test** of the cost model (§2b) — exact double-parity | K2 θ0.5 | **K1 θ1.0** | ~10× cheaper |
+| **0** | cheap probe at its **own** operating point (§2c: **NOT** a K=20 proxy) | K2 θ0.5 | **K1 θ1.0** | ~10× cheaper |
 | **A** | baseline (have it) | K20 θ0.5 | K20 θ0.5 | — |
 | **B** | **edge probe** — your θ=0.1 | K20 θ0.1 | K20 θ0.1 | ~½ of A |
 | **C** | **double-parity headline** | K20 θ0.5 | **K10 θ1.0** | ≈ A |
 | D | *(optional)* NFE-parity-only, to show it's misleading | K20 θ0.5 | K13 θ0.5 | — |
 
-**Do arm 0 first** — it validates (or kills) the K-invariance and additive-cost claims in minutes.
+**§2c already killed K-invariance** using existing K=2 data, so arm 0 is no longer a validation of it.
+Its value now is measuring `b_ipopt` at `n_active=1` on the *FMv3ODE* checkpoint — the same-checkpoint
+control the §2c caveat calls for. **Arm B (θ=0.1) is the priority run**; it tests amortisation.
 
 ⚠️ **Every arm above sits on an INTEGER `(1−θ)·K`** (18.0, 10.0, 1.0, 0.0) so the two gates give the
 same `n_active` (§1). Do **not** improvise other (K, θ) pairs without checking that — e.g. K=5 θ=0.5
@@ -431,7 +547,9 @@ straight out of the npz — divide by plan count to get per-plan figures and che
    projection still hold safety where DPCC's *post-hoc* single-shot correction fails? This is where
    HF should win: DPCC at θ=0.1 projects a nearly-final trajectory twice with no chance for the flow
    to re-absorb the correction, while HF's terminal solve is structurally guaranteed.
-2. **avg_time vs the §4 predictions** (235 / 353 ms) — confirms or kills the additive model.
+2. **avg_time vs the predictions** — DPCC vs 235 ms (additive model, trusted); HF vs **both** 353 ms
+   (naive) and ~500–600 ms (amortisation-corrected, §2c). Which one it lands on decides whether
+   `b_ipopt` is a constant or a function of `n_active`.
 3. **`b_scipy` back-out** from DPCC's two thresholds — the clean, unconfounded per-solve measurement.
 4. **Arm C** — equal NFE *and* equal NPE; any time gap left is pure ipopt-vs-SLSQP.
 

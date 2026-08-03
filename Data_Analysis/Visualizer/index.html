@@ -58,6 +58,11 @@
         .paper-tbl .flag { color: #c62828; font-size: 9px; font-weight: bold; }
         .tbl-caption { font-size: 12px; font-weight: bold; margin: 16px 0 4px; }
         .tbl-note { font-size: 10px; color: #666; margin-bottom: 6px; }
+        /* U11: per-row "download this source folder as .zip" button (Plot Legend + Path Audit Map). */
+        .dl-folder { margin-left: 8px; padding: 2px 7px; font-size: 10px; font-weight: bold; border: 1px solid #007bff;
+                     background: #eaf3ff; color: #0056b3; cursor: pointer; white-space: nowrap; vertical-align: middle; }
+        .dl-folder:hover { background: #007bff; color: #fff; }
+        .dl-folder:disabled { opacity: 0.45; cursor: wait; }
     </style>
 
     <py-config>
@@ -92,7 +97,7 @@
         <input type="number" id="fig-width" value="10.0" step="1.0" onchange="trigger_plot()">
     </div>
     <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
-        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">EXPORT PNG + LATEX</button>
+        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">EXPORT ZIP (PNG + LATEX + LOG)</button>
     </div>
     <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
         <div class="control-group"><label>2. Analysis Mode</label><select id="mode-select" onchange="trigger_plot()"><option value="candidate">By Candidate</option><option value="env">By Environment</option></select></div>
@@ -117,7 +122,7 @@
 </div>
 
 <div class="main">
-    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.11</div></div>
+    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.12</div></div>
     <div class="content">
         <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
         <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
@@ -130,7 +135,8 @@
 <script type="py">
 import pandas as pd
 import matplotlib.pyplot as plt
-import io, json
+import io, json, re, zipfile, asyncio
+from urllib.parse import quote, unquote
 from pyscript import display
 from js import document, console, fetch, window, Uint8Array, File, URL
 from pyodide.ffi import create_proxy
@@ -411,6 +417,181 @@ def _download_bytes(payload, filename, mime):
     link = document.createElement("a"); link.href = url; link.download = filename; link.click()
     URL.revokeObjectURL(url)
 
+# ---------------------------------------------------------------------------------------
+# U11: "download this candidate's SOURCE FOLDER as a .zip", the browser equivalent of
+# right-click -> Download on the folder in VS Code.
+#
+# How it can work at all: the CSV's Full_Path is an ABSOLUTE path on the machine that ran the
+# analysis (e.g. /data/home/llim/FMPCC/FM-PCC/logs/...), and the README tells you to serve the
+# REPO ROOT over `python3 -m http.server`. So the very same http.server that hands out this
+# page also hands out `<repo-root>/logs/...` — we just have to turn the absolute path back
+# into a root-relative one, walk the directory listing recursively, and zip the files client
+# side. Nothing server-side is added; if the listing isn't reachable we say so instead of
+# pretending. Only works when serving from the repo root of the machine holding the runs.
+# ---------------------------------------------------------------------------------------
+MAX_CRAWL_DEPTH = 8       # runs nest a few levels (seed/ -> rollouts/); 8 is far past that
+MAX_CRAWL_FILES = 4000    # runaway guard: a mis-resolved path could point at the whole repo
+CONFIRM_FILE_COUNT = 150  # above this, ask first — .npz rollout dumps get big fast
+_folder_dl_busy = False
+
+def _esc_attr(s):
+    return (str(s).replace("&", "&amp;").replace('"', "&quot;")
+                  .replace("<", "&lt;").replace(">", "&gt;"))
+
+def _folder_btn(path, label=""):
+    # Rendered into the Source Path cell of both path tables. The path travels in a data-
+    # attribute (NOT an inline onclick arg) because real run folders contain characters that
+    # break naive JS string quoting — e.g. "fm_visual_avoiding(unfull)" and single quotes.
+    p = "" if path is None else str(path).strip()
+    if p in ("", "Unknown", "nan", "— path not found —"):
+        return ""
+    return (f'<button class="dl-folder" data-path="{_esc_attr(p)}" data-cand="{_esc_attr(label)}"'
+            f' title="Download this folder as .zip (served by the same host as this page)">'
+            f'&#8681; ZIP</button>')
+
+def _rel_path_candidates(full_path):
+    # Absolute run path -> ordered guesses at the path RELATIVE to the served root, most
+    # specific first. The page lives at <root>/Data_Analysis/Visualizer/, so each guess is
+    # later probed as "../../<guess>/" and the first one that returns a directory listing wins.
+    p = str(full_path).replace("\\", "/").strip()
+    segs = [s for s in p.split("/") if s and s != "."]
+    outs = []
+    for i in range(len(segs) - 1, -1, -1):        # everything after the last repo-root marker
+        if segs[i] == "FM-PCC":
+            outs.append(segs[i + 1:])
+            break
+    if "logs" in segs:                            # …/logs/<task>/plans/… (repo-relative by convention)
+        outs.append(segs[segs.index("logs"):])
+    outs.append(segs)                             # last resort: the whole path, leading / dropped
+    seen, uniq = set(), []
+    for o in outs:
+        key = "/".join(o)
+        if key and key not in seen:
+            seen.add(key)
+            uniq.append(o)
+    return uniq
+
+def _enc(segs):
+    return "/".join(quote(s) for s in segs)
+
+async def _fetch_listing(url):
+    # -> directory-listing HTML, or None if this URL isn't a browsable directory.
+    try:
+        r = await fetch(url)
+    except Exception:
+        return None
+    if not r.ok:
+        return None
+    ctype = r.headers.get("content-type") or ""
+    if "text/html" not in ctype:
+        return None
+    text = await r.text()
+    # http.server emits <title>Directory listing for /…</title>; requiring it stops a stray
+    # index.html (or an SPA fallback) from being mistaken for a directory full of files.
+    if "Directory listing" not in text:
+        return None
+    return text
+
+def _listing_entries(html):
+    out = []
+    for h in re.findall(r'<a href="([^"]+)"', html):
+        if h.startswith(("/", "?", "#", "..", "http://", "https://")):
+            continue
+        out.append(h)
+    return out
+
+async def _crawl_dir(base_url, rel_prefix, depth, files):
+    html = await _fetch_listing(base_url)
+    if html is None:
+        return
+    for h in _listing_entries(html):
+        name = unquote(h.rstrip("/"))
+        if not name or name in (".", ".."):
+            continue
+        if h.endswith("/"):
+            if depth < MAX_CRAWL_DEPTH:
+                await _crawl_dir(base_url + h, rel_prefix + name + "/", depth + 1, files)
+        else:
+            files.append((rel_prefix + name, base_url + h))
+        if len(files) >= MAX_CRAWL_FILES:
+            return
+
+async def _download_folder(full_path, label):
+    global _folder_dl_busy
+    status = document.getElementById("engine-status")
+    if _folder_dl_busy:
+        status.innerText = "FOLDER_ZIP_BUSY"
+        return
+    _folder_dl_busy = True
+    for b in document.getElementsByClassName("dl-folder"):
+        b.disabled = True
+    try:
+        status.innerText = "RESOLVING FOLDER..."
+        root_url, segs_used = None, None
+        for segs in _rel_path_candidates(full_path):
+            url = "../../" + _enc(segs) + "/"
+            if await _fetch_listing(url) is not None:
+                root_url, segs_used = url, segs
+                break
+        if root_url is None:
+            status.innerText = "FOLDER_NOT_SERVED"
+            window.alert(
+                "Could not reach this folder over HTTP:\n\n" + str(full_path) +
+                "\n\nThe folder is only downloadable when this page is served with "
+                "`python3 -m http.server` FROM THE REPO ROOT of the machine that holds the runs "
+                "(directory listing enabled). Viewing a cluster-generated CSV from a machine "
+                "without those log folders cannot work.")
+            return
+
+        status.innerText = "SCANNING FOLDER..."
+        files = []
+        await _crawl_dir(root_url, "", 0, files)
+        if not files:
+            status.innerText = "FOLDER_EMPTY"
+            window.alert("Folder resolved but contains no files:\n\n" + str(full_path))
+            return
+
+        folder = segs_used[-1]
+        zip_name = (f"CAND_{label}__{folder}.zip" if str(label).strip() else f"{folder}.zip")
+        if len(files) > CONFIRM_FILE_COUNT and not window.confirm(
+                f"{folder}\n\n{len(files)} files found"
+                + (" (crawl limit hit — folder may be even larger)" if len(files) >= MAX_CRAWL_FILES else "")
+                + ".\n\nDownload them all as one .zip?\n"
+                  "Rollout dumps (.npz / videos) can run to hundreds of MB, and the whole "
+                  "archive is built in browser memory."):
+            status.innerText = "FOLDER_ZIP_CANCELLED"
+            return
+
+        total = 0
+        zbuf = io.BytesIO()
+        with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED) as z:
+            for i, (rel_name, url) in enumerate(files, start=1):
+                r = await fetch(url)
+                if not r.ok:
+                    console.log(f"[ folder zip ] skip HTTP {r.status}: {url}")
+                    continue
+                data = bytes(Uint8Array.new(await r.arrayBuffer()).to_py())
+                total += len(data)
+                # Everything nests under the folder name, so unzipping never litters cwd.
+                z.writestr(folder + "/" + rel_name, data)
+                status.innerText = f"ZIPPING {i}/{len(files)} — {total/1e6:.1f} MB"
+                await asyncio.sleep(0)
+        _download_bytes(zbuf.getvalue(), zip_name, "application/zip")
+        status.innerText = f"FOLDER ZIP: {len(files)} files, {total/1e6:.1f} MB"
+    except Exception as e:
+        status.innerText = "FOLDER_ZIP_ERROR"
+        console.log(f"[ folder zip ] {e}")
+        window.alert("Folder download failed:\n\n" + str(e))
+    finally:
+        _folder_dl_busy = False
+        for b in document.getElementsByClassName("dl-folder"):
+            b.disabled = False
+
+def download_folder(path, label=""):
+    # Sync entry point for the JS click handler — schedules the coroutine so JS never has to
+    # deal with (or swallow) an unhandled promise rejection.
+    asyncio.ensure_future(_download_folder(str(path), str(label)))
+
 def download_plot(event):
     global current_fig
     if df_agg is None: return
@@ -426,20 +607,24 @@ def download_plot(event):
 
     base_name = f"plot_{metric}_{env}_{len(checked_vars)}v_{len(checked_cands)}c_{now}"
     written = []
+    # U11: everything goes into ONE .zip instead of firing three separate <a download> clicks.
+    # Browsers throttle / prompt on multi-file auto-downloads, and the three pieces (figure,
+    # tables, audit log) only make sense together anyway. bundle = [(name_in_zip, bytes)].
+    bundle = []
 
     # 1. PNG — only if a figure is actually on screen. U10.1: the export no longer bails out
     # when there is no plot, because the LaTeX tables below depend on the candidate selection
     # alone and are perfectly exportable with zero variants ticked.
     if current_fig is not None:
         buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
-        _download_bytes(buf.read(), f"{base_name}.png", "image/png")
+        bundle.append((f"{base_name}.png", buf.read()))
         written.append("PNG")
 
     # 2. LaTeX — the four Result Matrices, exactly as rendered on the page.
     ctx, err = _summary_context()
     if ctx is not None:
         tex = build_latex(ctx, batch_label, stamp)
-        _download_bytes(tex.encode(), f"{base_name}_tables.tex", "text/x-tex")
+        bundle.append((f"{base_name}_tables.tex", tex.encode()))
         written.append("TEX")
     else:
         console.log(f"[ export ] no LaTeX tables: {err}")
@@ -460,9 +645,15 @@ def download_plot(event):
         path = path_map.get(c, "Path not found")
         metadata += f" - CAND_{c} (Source: {path})\n"
 
-    _download_bytes(metadata.encode(), f"{base_name}.txt", "text/plain")
+    bundle.append((f"{base_name}.txt", metadata.encode()))
     written.append("TXT")
-    document.getElementById("engine-status").innerText = "EXPORTED: " + " + ".join(written)
+
+    zbuf = io.BytesIO()
+    with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED) as z:
+        for fname, payload in bundle:
+            z.writestr(fname, payload)
+    _download_bytes(zbuf.getvalue(), f"{base_name}.zip", "application/zip")
+    document.getElementById("engine-status").innerText = "EXPORTED ZIP: " + " + ".join(written)
 
 def get_checked(class_name):
     elements = document.getElementsByClassName(class_name)
@@ -522,9 +713,10 @@ def render_selection_map(x_categories, x_axis, checked_cands):
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{j%6}">{s}</span>' for j, s in enumerate(segs) if s])
         rows += (f'<tr><td style="text-align:center;width:80px"><strong>{i}</strong></td>'
                  f'<td style="width:100px"><strong>CAND_{c}</strong></td>'
-                 f'<td><code>{c_path}</code></td></tr>')
+                 f'<td><code>{c_path}</code>{_folder_btn(path, c)}</td></tr>')
 
-    html = (f'<div style="font-size:10px;color:#666;margin-bottom:6px;">{len(ordered)} selected — {note}</div>'
+    html = (f'<div style="font-size:10px;color:#666;margin-bottom:6px;">{len(ordered)} selected — {note}'
+            f' &middot; <b>&#8681; ZIP</b> downloads that run folder from the serving host</div>'
             f'<table><thead><tr>'
             f'<th style="width:80px">{pos_header}</th>'
             f'<th style="width:100px">ID</th>'
@@ -699,7 +891,7 @@ def render_summary_tables(force=False):
               'N_SUCCESS+CONSTRAINT did <b>not</b> win &mdash; <span class="flag">goal</span> = goal not always reached, '
               '<span class="flag">constraint</span> = a constraint was violated. Unmarked numbers are fully successful runs.<br>'
               'Rows follow <b>6. Candidates</b>; columns are always every variant. '
-              '<b>EXPORT PNG + LATEX</b> writes exactly these four tables to a .tex file.'
+              '<b>EXPORT ZIP</b> writes exactly these four tables to a .tex file inside the archive.'
               '</div>']
     for i, (metric, caption, fmt, annotate) in enumerate(SUMMARY_TABLES, start=1):
         blocks.append(f'<div class="tbl-caption">Table {i} &mdash; {caption.replace(" -- ", " &mdash; ")}</div>')
@@ -756,7 +948,7 @@ def build_latex(ctx, batch_label, stamp):
 
     # Keep every emitted byte ASCII: the file carries no \usepackage[utf8]{inputenc}, and a
     # stray em dash even inside a % comment trips older TeX installs.
-    out = ["% FM-PCC Matrix Explorer - Data_Analysis/Visualizer/index.html (SCIENTIFIC_SUITE_v3.11)",
+    out = ["% FM-PCC Matrix Explorer - Data_Analysis/Visualizer/index.html (SCIENTIFIC_SUITE_v3.12)",
            f"% generated {stamp}",
            f"% batch: {batch_label}",
            r"\documentclass[10pt]{article}",
@@ -820,12 +1012,12 @@ def render_path_map():
             else:
                 html += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
                 
-        html += f'<td><code>{c_path}</code></td></tr>'
-        
+        html += f'<td><code>{c_path}</code>{_folder_btn(row[p_col], row["Candidate"])}</td></tr>'
+
     document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
 
 document.trigger_plot = create_proxy(trigger_plot)
-import asyncio
+document.download_folder = create_proxy(download_folder)
 asyncio.ensure_future(init_manifest())
 </script>
 
@@ -879,6 +1071,20 @@ asyncio.ensure_future(init_manifest())
         trigger_plot();
     }
     
+    // U11: delegated handler for the per-row "download this source folder" buttons. Delegation
+    // (not inline onclick) because both path tables are re-rendered wholesale on every redraw,
+    // and the folder paths contain characters that would break inline-attribute quoting.
+    document.addEventListener("click", function (ev) {
+        const btn = ev.target.closest ? ev.target.closest(".dl-folder") : null;
+        if (!btn) return;
+        ev.preventDefault();
+        if (!window.document.download_folder) {
+            alert("PyScript engine still loading — try again in a moment.");
+            return;
+        }
+        window.document.download_folder(btn.dataset.path, btn.dataset.cand || "");
+    });
+
     function bulkSelect(className, state) {
         const elements = document.getElementsByClassName(className);
         for (let e of elements) { e.checked = state; }
