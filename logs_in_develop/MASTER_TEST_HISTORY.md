@@ -3894,3 +3894,55 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Demo-Calibrated Smoothness**: Proposed that smoothness cannot be judged on an absolute scale. Future metrics should be calibrated against the expert demonstrations (e.g., reporting a plan's roughness as a percentile against the demo distribution) to normalize scale and task differences automatically.
 4. **HardFlow Degeneracy**: Noted that under HardFlow, the post-projection plan is smooth by construction due to hard equality constraints. Therefore, meaningful smoothness analysis must focus on the raw pre-NLP plan and the final executed path.
 5. **Proposed Vector**: Proposed replacing the single number with a vector of four metrics (Normalised d² energy, Turn-reversal rate, Spline residual, and Spike detector) alongside demo percentiles, ensuring any future smoothness measurements accurately capture distinct failure modes without conflation.
+
+***
+
+## Gen3v6 Fix 7: HardFlow Plot Crash & Figure Leak (August 1, 2026)
+
+**Keywords**: Gen3v6, HardFlow, IndexError, plot batch_size, figure leak.
+
+1. **Plot Loop Crash Fixed**: Resolved an `IndexError` in the HardFlow evaluation plotting routine (`eval_flow_matching_v3_meanflow.py`) caused by a local vs. global `batch_size` variable mismatch. The fix iterates the local `batch_size` (overridden by the HardFlow branch) instead of `args.batch_size`, restoring sibling parity with AlphaFlow and HardFlow evaluation scripts.
+2. **No Data Lost**: The crash occurred in the plotting logic before `.npz` generation, meaning no previously analyzed results were affected or corrupted.
+3. **Figure Leak Plugged**: Fixed a memory leak where `fig_all` was never closed, which would eventually raise a "More than 20 figures have been opened" warning when the variant list grew.
+
+***
+
+## Gen14 U4: W&B Metric Parity & Per-Epoch Flush (August 2, 2026)
+
+**Keywords**: Gen14, W&B, metric parity, per-epoch flush.
+
+1. **Metric Telemetry Restored**: Diagnosed that Gen14 was dropping 26 metrics from W&B (including the critical `raw_mse_u`) because it inherited an outdated, pre-U9 logger from Gen7. Replaced the hardcoded 4-key map with the full 30-key superset from Gen3v7 to ensure complete metric visibility for all arms.
+2. **Per-Epoch Logging**: Moved the W&B flush from an end-of-run call to a per-epoch hook within `trainer.train(on_epoch_end=...)`. This ensures that interrupted jobs or jobs killed by the 24-hour wall limit (which visual aligning tasks are highly exposed to) still write their telemetry to W&B incrementally.
+3. **Adaptive Compatibility**: Added a signature guard to the per-epoch flush so it gracefully falls back to end-of-run logging for the hookless `ddpm` and `fm` trainers (which remain G0-locked verbatim copies), preventing a `TypeError` at step 0.
+
+***
+
+## DA_Code v3 U10: Result Matrices & LaTeX Export (August 2, 2026)
+
+**Keywords**: DA_Code, Result Matrices, LaTeX export, Visualizer.
+
+1. **Paper-Style Result Matrices**: Added a new "Result Matrices" section to the Visualizer UI that dynamically builds side-by-side comparison tables (success, success + constraints, steps, average time) for explicitly checked candidates across all variants.
+2. **Failure Annotations**: Inline failure markers (e.g., `(goal, constraint)`) are now explicitly suffixed onto step and time metrics if a run succeeded but tripped a constraint, preventing unsafe configurations from masquerading as fast winners.
+3. **LaTeX Export**: Replaced the PNG export with an integrated `EXPORT PNG + LATEX` action. The tables are now directly exported as a standalone, compilable `.tex` file with properly escaped LaTeX syntax, guaranteeing exact parity with the on-screen metrics.
+
+***
+
+## DA_Code: K=2 MeanFlow / AlphaFlow vs FM and DPCC (August 2, 2026)
+
+**Keywords**: DA_Code, AlphaFlow, MeanFlow, baseline comparison, failure asymmetry, trajectory quality.
+
+1. **Failure-Mode Asymmetry**: Re-analysis of raw episode data revealed that AlphaFlow and MeanFlow never fail unsafe (0 constraint violations across all tightened variants, only timeouts), whereas DPCC and FM baselines regularly trip constraints. This represents a massive safety advantage for the K=2 flow arms.
+2. **Projection Cost Dominates**: Identified that the generational speed-up is derived from making fewer *projection* calls, not from faster network evaluations. AlphaFlow/MeanFlow at K=1-2 bypass intermediate constraint projections, collapsing overhead to a single NLP solve (~11ms vs. ~384ms for DPCC).
+3. **The K=1 Optimum**: Established that AlphaFlow at K=1 is strictly dominant over K=2: it is faster, equally accurate, and more robust. The K=1 ODE-sampled diffusion baseline (CAND_109) is also highly competitive, placing the burden of proof on whether flow models retain quality at K=1-2 better than naive step-truncated diffusion models.
+4. **dpcc-c Liveness Bug**: Isolated a reproducible liveness bug where the `-c` projection cost formulation drives 2-step MF/AF plans into an indefinite stall (199 steps, 0 violations).
+
+***
+
+## Gen14 U5: Engine Rename & Two-Time FiLM v2 (August 2, 2026)
+
+**Keywords**: Gen14, FiLM v2, ddpm to diffusion, JVP safety, conditioning.
+
+1. **Engine Rename (`ddpm` → `diffusion`)**: Unified the repository's vocabulary by renaming the `ddpm` arm to `diffusion`. The `ddpm` key now functions strictly as a backward-compatible input alias.
+2. **True FiLM (v2) for Two-Time Arms**: Implemented `unet1d_twotime_film.py` to enable FiLM v2 for the `mf` and `af` arms. FiLM v2 introduces an affine modulation gate (γ, β) after the first convolution, adding ~1M parameters.
+3. **JVP Safety Proved**: Verified that the forward-mode derivative (JVP) for MeanFlow/α-Flow remains mathematically sound under the FiLM v2 multiplicative gate because the visual latent (`c`) has a tangent of zero by construction. The gate modulates the derivative perfectly as `d/dr[(1+γ)f + β] = (1+γ)·df/dr`.
+4. **Architectural Unification**: Ensured that the visual mode for *all four* Gen14 arms (`diffusion`, `fm`, `mf`, `af`) leverages the exact same 1-D temporal U-Net backbone, perfectly isolating the *objective* for four-way comparisons. The FiLM v2 route is fully opt-in and gated (G7).

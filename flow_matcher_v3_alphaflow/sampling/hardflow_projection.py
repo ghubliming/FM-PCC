@@ -534,11 +534,19 @@ class HardFlowSampler:
             X_ref = X + V * dt
             cand_ctrl = cand_ctrl + V.reshape(batch_size, -1).norm(dim=1)   # fix_4: Σ_k ‖u_k‖
 
-            # U4 + fix_6: EXACT DPCC gate, unchanged. DPCC projects when
-            # `loop_idx >= (1 - T)*K`; we use the identical `k >= (1 - threshold)*K`
+            # U4 + fix_6: EXACT DPCC gate. DPCC projects when `loop_idx >= (1 - T)*K`,
             # PLUS the forced final step (the terminal solve carries the safety
             # guarantee). threshold == DPCC's diffusion_timestep_threshold.
-            active = (k >= (1.0 - self.activation_threshold) * K) or (k == K - 1)
+            #
+            # [Gen12fix8] ROUNDING PARITY: int() added. fix_6 matched DPCC's polarity but
+            # not its ROUNDING. DPCC truncates the boundary — `int((1-T)*K)`, i.e. FLOOR
+            # (models/diffusion.py:207) — and upstream HardFlow floors too (`k < N//2`,
+            # flow_policy.py:868). Comparing against the raw float is CEIL, which made
+            # HardFlow do one FEWER projection step than both references whenever (1-T)*K
+            # is not an integer. No-op at integer boundaries, so existing runs reproduce
+            # bit-identically. Synced from flow_matcher_v3_hardflow (Gen12).
+            # See logs_in_develop/Gen12/fix_8/.
+            active = (k >= int((1.0 - self.activation_threshold) * K)) or (k == K - 1)
             if active:
                 V_next = self._velocity_batch(X_ref, tau_next, s0_all, cond_net, returns_net)
                 X1_ref = X_ref + (1.0 - tau_next) * V_next            # (B, dof) GPU

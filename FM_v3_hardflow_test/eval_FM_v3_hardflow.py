@@ -65,6 +65,16 @@ hf_act_threshold = resolve_activation_threshold(
 # from the variant suffix (hardflow_new-c/-r/-t), like DPCC.
 hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
 hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
+# [Gen12fix8] DPCC threshold was ORPHANED CONFIG. `diffusion_timestep_threshold` exists in
+# config/hardflow_projection_eval.yaml (copied verbatim from config/projection_eval.yaml) but
+# was never read here, so arms A/B silently used Projector's hardcoded default of 0.5 — the
+# YAML knob did nothing. The FMv3ODE sibling reads it correctly
+# (FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py:54 -> Projector(...:242));
+# Gen12's port dropped both lines. Restored here + passed to Projector below.
+# Harmless so far (YAML said 0.5 == the default), but it blocks any theta != 0.5 sweep.
+# Env override DPCC_THRESHOLD added for parity with HFFM_ACT_THRESHOLD on the arm-C side.
+dpcc_threshold = float(os.environ.get('DPCC_THRESHOLD',
+                                      config.get('diffusion_timestep_threshold', 0.5)))
 # `checkpoint_dir` and `flow_steps` now live in the plan_fm_v3_hardflow block in
 # config/avoiding-d3il.py (read from `args` inside the seed loop), so the eval has a
 # single tidy control entry. CLI `--flow-steps N` still overrides the block's K.
@@ -324,7 +334,9 @@ for exp in exps:
                 else:
                     # ---------------- arms A / B ----------------
                     batch_size = args.batch_size
-                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy')
+                    # [Gen12fix8] diffusion_timestep_threshold=... restored (was omitted by the
+                    # Gen12 port -> Projector fell back to its hardcoded 0.5 default).
+                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy', diffusion_timestep_threshold=dpcc_threshold)
                     projector = None if variant == 'diffuser' else projector
                     trajectory_selection = 'random'
                     if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
@@ -480,7 +492,12 @@ for exp in exps:
                       f'NLP failures={nlp_failures_total}{hf_report}')
                 if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
                 if config['write_to_file']:
-                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
+                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
+                    # [Gen12fix8] dpcc_threshold recorded. The results dir name
+                    # (hf_paths.eval_name) encodes only the HF activation threshold, so with
+                    # DPCC's threshold now independently settable a run could otherwise be
+                    # silently mislabeled (folder says thres0.1 while arms A/B ran at 0.5).
+                    # Keep the two equal unless you deliberately want them to differ.
                 fig.savefig(f'{save_path}/{variant}.png')
                 plt.close(fig)
                 ax_all[0, variant_idx].set_title(variant)
