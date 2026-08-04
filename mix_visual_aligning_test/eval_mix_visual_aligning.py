@@ -40,6 +40,7 @@ import os
 import sys
 import pickle
 import argparse
+import importlib   # U6: --flow-steps mutates the config block before Parser reads it
 import numpy as np
 import torch
 from collections import deque
@@ -2312,6 +2313,24 @@ if __name__ == '__main__':
     # stale command still runs. canonical_engine() normalises before anything is named.
     parser.add_argument('--engine', type=str, default='fm', choices=list(ENGINE_INPUT_KEYS),
                         help='ML engine arm: diffusion (Gen6V4) | fm (Gen7) | mf (Gen3v6) | af (Gen3v7)')
+    # ── Gen14 U6 ── NFE sweep without a config edit.
+    #
+    # 🔴 This CANNOT be done by passing --flow_steps_v3 through to diffuser's Parser. That
+    # Parser is a plain argparse.ArgumentParser declaring only --config/--seed, so an unknown
+    # flag is a hard `unrecognized arguments` exit; and its generic override hook,
+    # add_extras(), is commented out at diffuser/utils/setup.py:77 (it reads args.extra_args,
+    # which Parser.__init__ never defines — uncommenting it AttributeErrors on every
+    # generation). Hence the config-block mutation below.
+    #
+    # 🔴 It also cannot be done by assigning args.flow_steps_v3 AFTER Parser().parse_args():
+    # eval_fstrings() and generate_exp_name() both run INSIDE parse_args(), so the sampler
+    # would honour the new K while the results folder still said the old one — exactly the
+    # mislabelling this file already warns about where it prints the NFE banner.
+    parser.add_argument('--flow-steps', type=int, default=None, metavar='K',
+                        help='override flow_steps_v3 (NFE) for the fm/mf/af arms. Applies to '
+                             'BOTH the sampler and the results folder name. Omit to use the '
+                             "config default (mf/af: 2, fm: 100). Not valid for 'diffusion', "
+                             'whose NFE key is n_diffusion_steps.')
     args_cli, remaining = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining
 
@@ -2335,6 +2354,35 @@ if __name__ == '__main__':
     EXPERIMENT  = f'plan_mix_visual_aligning_{ENGINE}'
     print(f'[ eval ] {describe(ENGINE)}')
     print(f'[ eval ] config block: {EXPERIMENT}')
+
+    # ── Gen14 U6 ── apply --flow-steps by mutating the config block BEFORE any
+    # Parser().parse_args() call. Parser.read_config() does importlib.import_module(config)
+    # then base[experiment], and importlib caches the module, so this single mutation is what
+    # every seed in the loop below reads. Doing it here — not after parse_args — is what keeps
+    # the sampler and the folder name in agreement: exp_name is watch(args_to_watch_mix_visual_plan),
+    # resolved against args, and args gets flow_steps_v3 from this dict.
+    #
+    # Safe by construction: flow_steps_v3 appears in args_to_watch_mix_visual_plan ONLY, never
+    # in ..._train, so _mix_plan_block's "mirror every training identity key" loop cannot
+    # touch it, and prefix/diffusion_loadpath (built from training keys) are unchanged. The
+    # checkpoint that gets loaded is identical; only the results directory differs.
+    if args_cli.flow_steps is not None:
+        _plan_blk = importlib.import_module(Parser.config).base[EXPERIMENT]
+        if 'flow_steps_v3' not in _plan_blk:
+            # The diffusion arm drops every continuous-time key in its _mix_plan_block(drop=...).
+            raise SystemExit(
+                f"[ eval ] ERROR: --flow-steps does not apply to engine '{ENGINE}' — its NFE key "
+                f"is '{ENGINE_SPEC['nfe_key']}', set via the config block '{EXPERIMENT}'.")
+        _old_k = _plan_blk['flow_steps_v3']
+        _plan_blk['flow_steps_v3'] = int(args_cli.flow_steps)
+        print(f'[ eval ] --flow-steps: flow_steps_v3 {_old_k} -> {args_cli.flow_steps}  '
+              f'(applies to the sampler AND the results folder name)')
+        # The projection budget rides on K: the sampler projects on every step from
+        # int((1 - T) * K) to the end, so this changes SLSQP solve count per replan too.
+        _thr = config.get('diffusion_timestep_threshold', 0.5)
+        print(f'[ eval ] --flow-steps: projection budget {max(_old_k - int((1 - _thr) * _old_k), 1)} -> '
+              f'{max(int(args_cli.flow_steps) - int((1 - _thr) * int(args_cli.flow_steps)), 1)} '
+              f'projector call(s) per replan at threshold T={_thr}')
 
     for _seed_i, seed in enumerate(seeds):
         # Fix_11: seed X/N — the outermost breadcrumb level (mirrors UAV's Fix_11).

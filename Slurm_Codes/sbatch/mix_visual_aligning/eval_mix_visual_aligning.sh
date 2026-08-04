@@ -97,8 +97,30 @@ echo "[ eval ] seeds='$SEEDS'"
 RECORD_MODE="${3:-all}"
 echo "[ eval ] Recording mode set to: $RECORD_MODE"
 
-# $SEEDS is intentionally unquoted: it must word-split into separate --seeds arguments.
+# ── Gen14 U6 ── $4 = NFE override (flow_steps_v3), fm/mf/af only. Blank -> config default
+# (mf/af: 2, fm: 100). Changes BOTH the sampler and the results folder, so a sweep lands in
+# sibling H8_K<N>_... directories instead of overwriting. Also changes the projection budget:
+# the sampler projects on every step from int((1 - T) * K) to the end, i.e. 1 SLSQP solve per
+# replan at K=2 vs 50 at K=100 with T=0.5. Not valid for the diffusion arm (n_diffusion_steps).
+#   sbatch eval_mix_visual_aligning.sh mf 6 all 2     # K=2
+#   sbatch eval_mix_visual_aligning.sh mf 6 all       # config default
+FLOW_STEPS="${4:-}"
+if [ -n "$FLOW_STEPS" ]; then
+    if [ "$ENGINE" = "diffusion" ]; then
+        echo "[ eval ] ERROR: NFE override (\$4) does not apply to engine 'diffusion' —"
+        echo "         its NFE key is n_diffusion_steps, set in the config block."
+        exit 1
+    fi
+    FLOW_ARG="--flow-steps $FLOW_STEPS"
+    echo "[ eval ] NFE override: flow_steps_v3 = $FLOW_STEPS"
+else
+    FLOW_ARG=""
+    echo "[ eval ] NFE: config default for engine=$ENGINE"
+fi
+
+# $SEEDS and $FLOW_ARG are intentionally unquoted: $SEEDS must word-split into separate
+# --seeds arguments, and $FLOW_ARG must vanish entirely when empty.
 python mix_visual_aligning_test/eval_mix_visual_aligning.py \
-    --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train
+    --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train $FLOW_ARG
 
 echo "Job completed successfully."

@@ -3946,3 +3946,25 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **True FiLM (v2) for Two-Time Arms**: Implemented `unet1d_twotime_film.py` to enable FiLM v2 for the `mf` and `af` arms. FiLM v2 introduces an affine modulation gate (γ, β) after the first convolution, adding ~1M parameters.
 3. **JVP Safety Proved**: Verified that the forward-mode derivative (JVP) for MeanFlow/α-Flow remains mathematically sound under the FiLM v2 multiplicative gate because the visual latent (`c`) has a tangent of zero by construction. The gate modulates the derivative perfectly as `d/dr[(1+γ)f + β] = (1+γ)·df/dr`.
 4. **Architectural Unification**: Ensured that the visual mode for *all four* Gen14 arms (`diffusion`, `fm`, `mf`, `af`) leverages the exact same 1-D temporal U-Net backbone, perfectly isolating the *objective* for four-way comparisons. The FiLM v2 route is fully opt-in and gated (G7).
+
+***
+
+## Gen12 Fix 8: HardFlow Activation Gate Rounding Parity (August 3, 2026)
+
+**Keywords**: Gen12, Gen3v6, Gen3v7, fix_8, gate rounding, ceil vs floor, DPCC threshold.
+
+1. **Latent Parity Deviation**: Identified that the HardFlow activation gate used a float comparison (effectively `ceil`), whereas the DPCC and upstream HardFlow reference gates used `int()` truncation (`floor`). This meant that whenever `(1-θ)·K` was not an integer, HardFlow silently performed exactly one fewer projection step than DPCC.
+2. **Blast Radius and Impact**: The deviation existed in the HardFlow arms of Gen12, Gen3v6 (MeanFlow), and Gen3v7 (α-Flow) due to copy-modify inheritance. However, no published results were invalidated because every existing run on disk sat exactly on an integer boundary where `ceil` and `floor` are identical. Gen14 and Gen3v4 were unaffected as they only use the floor gate.
+3. **The Fix (Fix 8a)**: Modified `hardflow_projection.py` across all three affected generations to use `int()` truncation, restoring exact three-way parity (Gen12 HF ≡ DPCC ≡ upstream HardFlow). 
+4. **DPCC Threshold Un-orphaned (Fix 8b)**: Fixed an issue in Gen12 where the DPCC `diffusion_timestep_threshold` was an orphaned configuration. It is now properly read, passed to the Projector, and recorded in the `.npz` output. Added a `DPCC_THRESHOLD` environment variable override to unblock the `θ=0.1` equal-cost test plan (Test_NFE).
+
+***
+
+## DA_Code v3 U11: Single-ZIP Export & Folder Download (August 3, 2026)
+
+**Keywords**: DA_Code, Visualizer, ZIP export, browser-side zipping, log folder download, Pyodide.
+
+1. **Single-ZIP Export**: Overhauled the Visualizer's export mechanism. Instead of firing three separate sequential downloads (PNG, TEX, TXT) that trigger browser throttling, the Visualizer now uses Pyodide's `zipfile` module to bundle all generated artifacts into a single in-memory `.zip` archive before downloading.
+2. **Source Folder Download**: Added a `⇓ ZIP` button to the "Source Path" and "Source Path (Audit)" columns in the path tables, allowing users to download an entire run folder directly from the browser.
+3. **Browser-Side Crawling**: The feature resolves absolute paths to relative ones, recursively crawls the `http.server` directory listings, fetches the files into memory as an `ArrayBuffer`, and zips them client-side.
+4. **Crawler Guards**: Implemented strict safety limits, including `MAX_CRAWL_DEPTH=8` and `MAX_CRAWL_FILES=4000`, plus a user confirmation prompt for folders with >150 files to prevent browser memory exhaustion from large `.npz` rollout dumps.

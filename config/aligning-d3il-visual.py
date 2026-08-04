@@ -1059,6 +1059,21 @@ base['plan_mix_visual_aligning_fm'] = _mix_plan_block(
 
 base['plan_mix_visual_aligning_mf'] = _mix_plan_block(
     'mf', base['mix_visual_aligning_mf'], {
+        # ── U6 ── NFE. Overrides the 100 inherited from plan_fm_visual_aligning via
+        # _mix_plan_common. 100 is the DDPM-parity number and is WRONG for a two-time
+        # model: MeanFlow's entire premise is that one u-head query spans a whole
+        # interval, and the Gen3v6/v7 state-only lineage evaluates at K=2 (see
+        # logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260802_K2_MeanFlow_AlphaFlow_vs_FM_DPCC.md).
+        # 🔴 This ALSO sets the projection budget, which is the expensive half. The sampler
+        # projects on every step from int((1 - diffusion_timestep_threshold) * K) to the end
+        # (mf_diffusion.py:284), so at T=0.5:  K=100 -> 50 SLSQP solves per replan,
+        # K=2 -> 1. That is why the first dpcc-r sweep cost ~15 s/replan and died at 11/30
+        # rollouts against the 24 h cap (logs_in_develop/Gen14/U5/DA_20260804_*.md §6).
+        # Safe to set here: flow_steps_v3 is in args_to_watch_mix_visual_plan ONLY, never in
+        # ..._train, so _mix_plan_block's training-key mirror loop cannot clobber it and
+        # diffusion_loadpath is unchanged — same checkpoint, new H8_K2_... results folder.
+        # Override per run with `--flow-steps N` (U6); no config edit needed to sweep.
+        'flow_steps_v3': 2,
         # MUST match the training block — both are checkpoint-path keys.
         't_schedule': 'logit_normal',
         'p_mean': -0.4,
@@ -1067,6 +1082,10 @@ base['plan_mix_visual_aligning_mf'] = _mix_plan_block(
 
 base['plan_mix_visual_aligning_af'] = _mix_plan_block(
     'af', base['mix_visual_aligning_af'], {
+        # ── U6 ── see the mf block above for the full rationale. Kept equal to mf's on
+        # purpose: NFE is an operating point, and an mf-vs-af comparison at different K
+        # would confound the objective with the step budget.
+        'flow_steps_v3': 2,
         't_schedule': 'logit_normal',
         'p_mean': -0.4,
         'p_std': 1.0,

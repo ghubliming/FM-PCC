@@ -50,9 +50,12 @@ LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log
 #           <engine> = diffusion | fm | mf | af      (default: fm, the Gen7 reference arm)
 #           [seeds]  = space-separated seed list, QUOTED   (default: "6 7 8 9 10")
 #
+#           [K]      = NFE override for the eval stage (U6), fm/mf/af only
+#
 #   sbatch mix_visual_aligning_pipeline.sh mf                # all 5 default seeds
 #   sbatch mix_visual_aligning_pipeline.sh mf 6              # seed 6 only (smoke run)
 #   sbatch mix_visual_aligning_pipeline.sh af "6 7 8"        # a subset
+#   sbatch mix_visual_aligning_pipeline.sh mf "6 7" 2        # NFE override (U6)
 #   MIX_SEEDS="6 7" sbatch mix_visual_aligning_pipeline.sh mf   # via env instead
 #
 # The gates run FIRST on purpose: a broken copy or a dead alpha schedule is cheap to
@@ -75,6 +78,10 @@ LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log
 SBATCH_DIR="Slurm_Codes/sbatch/mix_visual_aligning"
 ENGINE="${1:-fm}"
 SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
+# ── Gen14 U6 ── $3 = NFE override, forwarded to every eval in the fan-out. Blank -> config
+# default (mf/af: 2, fm: 100). Training is unaffected: flow_steps_v3 is an inference-only key.
+#   sbatch mix_visual_aligning_pipeline.sh mf "6 7" 2
+FLOW_STEPS="${3:-}"
 
 case "$ENGINE" in
     diffusion|fm|mf|af) ;;
@@ -82,7 +89,13 @@ case "$ENGINE" in
     *) echo "ERROR: unknown engine '$ENGINE' (want: diffusion | fm | mf | af)"; exit 1 ;;
 esac
 
-echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS' ..."
+if [ -n "$FLOW_STEPS" ] && [ "$ENGINE" = "diffusion" ]; then
+    echo "ERROR: NFE override (\$3) does not apply to engine 'diffusion' — its NFE key is"
+    echo "       n_diffusion_steps, set in the config block."
+    exit 1
+fi
+
+echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS'${FLOW_STEPS:+ K=$FLOW_STEPS} ..."
 
 # 1. Gates — ONE job, shared by every seed (seed-independent by construction).
 GATE_ID=$(sbatch --parsable $LOG_OPTS "${SBATCH_DIR}/gates_mix_visual.sh")
@@ -94,8 +107,9 @@ for SEED in $SEEDS; do
         "${SBATCH_DIR}/train_mix_visual_aligning.sh" "$ENGINE" "$SEED")
     echo "  seed $SEED: train scheduled (afterok:$GATE_ID). Job ID: $TRAIN_ID"
 
+    # $3 (record mode) must be passed positionally so $4 (NFE) lands in the right slot.
     EVAL_ID=$(sbatch --parsable $LOG_OPTS --dependency=afterok:$TRAIN_ID \
-        "${SBATCH_DIR}/eval_mix_visual_aligning.sh" "$ENGINE" "$SEED")
+        "${SBATCH_DIR}/eval_mix_visual_aligning.sh" "$ENGINE" "$SEED" all "$FLOW_STEPS")
     echo "  seed $SEED: eval  scheduled (afterok:$TRAIN_ID). Job ID: $EVAL_ID"
 done
 
