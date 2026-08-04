@@ -119,6 +119,15 @@ n_trials            = config['n_trials']
 plot_how_many       = config['plot_how_many']
 constraint_types    = config['constraint_types']
 
+# [Gen0fix2] The Projector call below never forwarded this, so it silently took the constructor
+# default of 0.5 (diffuser/sampling/projection.py:8) while the savepath was still tagged with the
+# YAML value (config/avoiding-d3il-visual.py:242 -> `..._T{diffusion_timestep_threshold}_...`).
+# Result: T-labelled folders that all ran theta=0.5. Same defect as the Gen0 baseline script,
+# inherited from upstream DPCC commit 7f09d3a. Mirrors the wiring the FM sibling already has
+# (fm_visual_avoiding_test/eval_fm_visual_avoiding.py:140,400).
+diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
+print(f"[ eval ] diffusion_timestep_threshold (from YAML) = {diffusion_timestep_threshold}")
+
 
 def _warn_pkl_config_mismatch(diffusion, args):
     """Surface frozen pkl values and warn when they silently diverge from the .py config.
@@ -360,6 +369,12 @@ for exp in exps:
                 try:
                     print(f'--- {exp} {halfspace_variant} {variant} seed={seed} ---')
 
+                    # [Gen0fix2] threshold 0 => the gate `t <= 0 * n_timesteps` fires only at
+                    # t == 0, i.e. ONE projection AFTER the last denoising step. That is the
+                    # paper's definition of post-processing; without it the arm inherits the
+                    # normal schedule and is a duplicate of `dpcc-r`.
+                    threshold = 0.0 if 'post_processing' in variant else diffusion_timestep_threshold
+
                     gradient = 'gradient' in variant
                     if 'model_free' in variant and 'tightened' in variant:
                         constraints = constraint_list_without_prior_tightened
@@ -383,7 +398,10 @@ for exp in exps:
                         constraint_list=constraints, normalizer=proj_normalizer,
                         gradient=gradient, gradient_weights=[1, 0.5, 2],
                         variant=diffuser_variant, dt=delta_t, cost_dims=None,
-                        device=args.device, solver='scipy')
+                        device=args.device, solver='scipy',
+                        # [Gen0fix2] see the note at the config-load block above; `threshold`
+                        # carries the post_processing override
+                        diffusion_timestep_threshold=threshold)
                     projector = None if variant == 'diffuser' else projector
 
                     agent = VisualAgent(diffusion, obs_normalizer, act_normalizer,

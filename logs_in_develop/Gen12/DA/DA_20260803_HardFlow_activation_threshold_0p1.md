@@ -947,10 +947,13 @@ change it. §10.8 item 0 — done, this is it.
 **New data:** `temp/0408/dpcc/`, node i6-gpu-1, seed 6, `n_trials = 2`, three halfspace envs,
 13 arms:
 
-| job | savepath tag | git rev | wall |
-|---|---|---|---|
-| 24215 | `H8_K20_T0.1_Dmodels.GaussianDiffusion` | `1b3c080` | 10:07 → 10:46 UTC |
-| 24226 | `H8_K20_T0.05_Dmodels.GaussianDiffusion` | `3e84451` | 13:29 → 14:08 UTC |
+| job | savepath tag | YAML `T` | git rev | wall | intended `n_active` |
+|---|---|---|---|---|---|
+| 24215 | `H8_K20_T0.1_Dmodels.GaussianDiffusion` | 0.1 | `1b3c080` | 10:07 → 10:46 UTC | 3 |
+| 24226 | `H8_K20_T0.05_Dmodels.GaussianDiffusion` | 0.05 | `3e84451` | 13:29 → 14:08 UTC | 2 |
+| 24254 | `H8_K20_T1_Dmodels.GaussianDiffusion` | 1 | `3e84451` | 16:03 → 16:42 UTC | 20 |
+
+All three are byte-identical to each other and all three actually ran `n_active = 11` (θ=0.5).
 
 Both loaded `logs/avoiding-d3il/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/6`,
 **checkpoint step 91000**, `n_diffusion_steps = 20`, `batch_size: 4` (`plan` block,
@@ -1000,11 +1003,22 @@ Meanwhile `config/avoiding-d3il.py` **does** put the YAML value into `args`
 `collision_free_completed`. A 3× change in projection budget (see §21.2) cannot leave a
 stochastic 200-step MPC rollout bit-identical.
 
-**Provenance.** `aux_repo/dpcc/scripts/eval.py:151-152` has the identical omission, and
-upstream's `config/projection_eval.yaml:26` pins `diffusion_timestep_threshold: 0.5` — exactly
-the constructor default, so the bug is invisible upstream. It became reachable only when
-FM-PCC started varying the YAML. **This is not a Gen12 regression and fix_8 does not touch it**
-(fix_8 repaired the Gen12 HardFlow eval script; this is the Gen0 baseline script).
+**Confirmed at θ = 1.0 — the decisive test.** Job 24254 (`temp/0408/H8_K20_T1_…`, git
+`3e84451`) ran `diffusion_timestep_threshold: 1`, which should project on **all 20** denoising
+steps instead of 11. It is **byte-identical to both other jobs** — 39/39 metric cells, 39/39
+`sha256(obs_all.npy)`, same 39-minute wall. Three thresholds spanning a 20× range in projection
+budget, one set of trajectories. Timing agrees: `dpcc-t-tightened` measures **0.539 s/step**
+against **0.82** predicted for 20 solves and **0.530** for 11.
+
+**Provenance — the wiring existed upstream and was removed.** Upstream commit **`7f09d3a`
+"Removed unused configs" (2 Dec 2024)** deleted `diffusion_timestep_threshold = config[...]`,
+the per-variant `threshold` computation, and the `diffusion_timestep_threshold=threshold`
+argument from the `Projector` call. At that moment upstream's YAML already read `0.5` — the
+constructor default — so the removal was exactly behaviour-preserving for `dpcc-*`, `gradient`,
+`model_free` and `diffuser`, which is presumably why it read as dead code. FM-PCC copied the
+post-cleanup file verbatim. **This is not a Gen12 regression and fix_8 does not touch it**
+(fix_8 repaired the Gen12 HardFlow eval script; this is the Gen0 baseline script). Full history
+in `logs_in_develop/Gen0_FMPCC_DPCC_Code_Updates/Fix2/UPSTREAM_DPCC_same_bug_analysis.md`.
 
 **Blast radius.** Every FM-PCC run through `scripts/eval.py` with a YAML threshold ≠ 0.5 is
 mislabeled and actually ran at 0.5. The FMv3ODE and Gen12-post-fix_8 paths are unaffected —
@@ -1069,8 +1083,21 @@ The same holds for the `-tightened` pair, and — checked separately — for **a
 
 The vestige is visible in the projector itself: `diffuser/sampling/projection.py:14` is
 `# self.only_last = only_last`, commented out — and commented out identically in **every**
-sibling (`flow_matcher_v3*/sampling/projection.py:14`) and **in upstream DPCC**. The feature
-`post_processing` names has never existed in this lineage; only the config entry does.
+sibling (`flow_matcher_v3*/sampling/projection.py:14`) and **in upstream DPCC**.
+
+**It was implemented, by the same mechanism, and died in the same commit as §21.1.** Upstream
+`7f09d3a^:scripts/eval.py:130` reads:
+
+```python
+threshold = diffusion_timestep_threshold if not 'post_processing' in variant else 0
+```
+
+Threshold `0` makes the gate `t <= 0 · n_timesteps` true only at `t = 0` — **project the final
+denoised sample only**, which is exactly what "post-processing" means and exactly the
+`only_last` semantics. Commit `7f09d3a` removed that line along with the wiring, and
+`post_processing` has matched no branch since. Upstream HEAD still lists it in
+`projection_variants` under `# Table 1:`, so the public repo cannot reproduce that row as a
+distinct method either.
 
 > **Consequence:** `post_processing` and `post_processing-tightened` are duplicate `dpcc-r`
 > columns in every results matrix, LaTeX table and `all_seeds` figure this repo has produced.

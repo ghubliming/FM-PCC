@@ -3968,3 +3968,42 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Source Folder Download**: Added a `⇓ ZIP` button to the "Source Path" and "Source Path (Audit)" columns in the path tables, allowing users to download an entire run folder directly from the browser.
 3. **Browser-Side Crawling**: The feature resolves absolute paths to relative ones, recursively crawls the `http.server` directory listings, fetches the files into memory as an `ArrayBuffer`, and zips them client-side.
 4. **Crawler Guards**: Implemented strict safety limits, including `MAX_CRAWL_DEPTH=8` and `MAX_CRAWL_FILES=4000`, plus a user confirmation prompt for folders with >150 files to prevent browser memory exhaustion from large `.npz` rollout dumps.
+
+***
+
+## Gen12 DA: HardFlow vs DPCC Threshold Sweeps & Cost Models (August 4, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC, activation threshold, NLP cost, n_active.
+
+1. **Threshold U-Curve**: Extensive testing of HardFlow's activation threshold revealed a U-shaped cost curve. The optimal threshold (`thr=0.1` at K=20, giving `n_active=2`) avoids an expensive single-cold-solve terminal projection by providing a warm predecessor solve.
+2. **DPCC Short-Schedule Tuning**: Evaluated the DPCC baseline on a matched short schedule (`n_active=2`). DPCC perfectly tolerates the short schedule with zero safety loss and operates 1.8x faster than HardFlow, overcoming previous conclusions that compared tuned HardFlow against untuned DPCC.
+3. **Solve Cost Discrepancy**: Identified that HardFlow's per-solve NLP cost is inherently ~10x heavier than DPCC's (20ms vs ~1.7ms) due to handling linear dynamics equalities and input saturation, whereas DPCC only projects onto halfspaces.
+4. **`-c` Pathology Clarified**: Confirmed that the `minimum_projection_cost` (`-c`) candidate selection rule inflates step counts because it rewards trajectories that do not make progress. This pathology occurs under both HardFlow and DPCC when the projection budget is low.
+
+***
+
+## Gen14 U5: Visual-Mix-ML Engine Training & Eval Insights (August 4, 2026)
+
+**Keywords**: Gen14, Visual-Mix-ML, AlphaFlow α-cliff, gradient clipping, projection cost.
+
+1. **The α-Cliff**: First visual-aligning training of MeanFlow (`mf`) and AlphaFlow (`af`) models successfully completed. However, a critical "α-cliff" was found: AlphaFlow's test error jumps 2.9× the moment `af_alpha_clamp` snaps α to exactly 0 (switching to the JVP MeanFlow target), discarding the best checkpoint.
+2. **Gradient Clipping Collapse**: Discovered that 100% of gradient updates were clipped due to a legacy `gradient_clip: 1.0` setting inherited from state-only models. This effectively renormalizes updates, crippling learning and leading to mode collapse where policies repeatedly emit zero actions.
+3. **K=2 Projection Analysis**: Evaluated models at K=2. Hard SLSQP projections (`dpcc-r`, `post_processing`) actively degrade best-case paths by forcing feasible-but-bad trajectories, while soft projection (`gradient`) maintains the best minimum-distance results. Unprojected, the models fail safely via timeouts rather than constraint violations.
+
+***
+
+## Gen14 U6: NFE Defaults & CLI Overrides (August 4, 2026)
+
+**Keywords**: Gen14, Mix-ML, NFE, K=2, flow_steps_v3, override.
+
+1. **K=2 Default for Few-Step Models**: Corrected the inherited evaluation default for `mf` and `af` arms from K=100 down to K=2. K=100 resulted in massive projection costs (~50 hours per sweep) and contradicted the core premise of MeanFlow and AlphaFlow as few-step sampling architectures.
+2. **`--flow-steps` CLI Override**: Plumbed a functional `--flow-steps` CLI override through the evaluation and SLURM pipeline. This correctly updates both the sampler's step count and the generated results folder name without affecting the `diffusion` arm (which lacks the parameter).
+
+***
+
+## Gen14 U7: HardFlow Arm C Port (August 4, 2026)
+
+**Keywords**: Gen14, HardFlow, arm C, visual conditioning.
+
+1. **Visual-Mix-ML HardFlow Port**: Successfully ported the HardFlow in-loop constrained sampler (arm C) into the Gen14 Visual-Mix-ML framework for the flow-matching arms (`fm`, `mf`, `af`). The `diffusion` arm is correctly explicitly refused.
+2. **Visual Latent Fix**: Fixed a silent fallback bug during the port where string-based visual conditioning (`visual_latent`) would have been stripped by legacy state-only code, which would have forced all HardFlow rollouts to run blindly without image conditioning.

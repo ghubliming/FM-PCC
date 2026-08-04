@@ -2741,10 +2741,23 @@ if __name__ == '__main__':
                 # `-tightened` twin is auto-generated per geo entry), not a variant suffix —
                 # unlike Gen3v6/v7, where it is part of the variant name.
                 if variant.startswith('hardflow'):
-                    if variant.endswith('-t'):
+                    # 🔴 U7 fix_1 (job 24255): `variant` has ALREADY had '_train_set' appended
+                    # at :2616 by the time this runs, so a bare `.endswith('-c')` is always
+                    # False and every hardflow cell silently fell back to 'random'. Only
+                    # hardflow_new-r was unaffected — because random IS its rule — which is
+                    # exactly why the smoke run looked fine. Strip the bookkeeping suffixes
+                    # before parsing the selection token. ('-tightened' is stripped too for
+                    # symmetry with Gen3v6/v7, where it IS part of the variant name.)
+                    _sel_base = variant
+                    for _suffix in ('_train_set', '-tightened'):
+                        if _sel_base.endswith(_suffix):
+                            _sel_base = _sel_base[:-len(_suffix)]
+                    if _sel_base.endswith('-t'):
                         trajectory_selection = 'temporal_consistency'
-                    elif variant.endswith('-c'):
+                    elif _sel_base.endswith('-c'):
                         trajectory_selection = 'minimum_projection_cost'
+                    print(f'[ hardflow ] selection={trajectory_selection} '
+                          f'(from {_sel_base!r})')
 
                 # Fix 8: diffuser runs single sample (no projection, no candidate diversity).
                 # All projected variants use args.mpc_batch_size from plan config (MPC candidate pool).
