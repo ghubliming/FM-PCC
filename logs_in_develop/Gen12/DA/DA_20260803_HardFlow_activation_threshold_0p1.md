@@ -924,3 +924,345 @@ change it. §10.8 item 0 — done, this is it.
 5. **K=10 and K=20 are different generators in effect** — same weights, different ODE
    discretisation. §17 compares them at a saturated quality metric, which is the weakest kind
    of "no worse".
+
+---
+---
+
+# Part III — the DPCC-baseline (diffusion generator) run (added 2026-08-04)
+
+> **Read this first: the run does not measure what it was submitted to measure.**
+> `scripts/eval.py` never passes `diffusion_timestep_threshold` to `Projector`, so both jobs ran
+> the constructor default **θ = 0.5** regardless of the YAML. The two savepath tags `T0.1` and
+> `T0.05` are cosmetic. The runs are bit-identical to each other (39/39 cells) — a duplicate,
+> not a sweep.
+>
+> It is still worth three things, and they are what §21–§25 report:
+> **(a)** a free end-to-end determinism control that puts an error bar under every number in
+> Parts I and II; **(b)** the first **baseline-generator** (GaussianDiffusion) numbers on this
+> benchmark, which show the *projector* cost is generator-agnostic while the *generator* is not;
+> **(c)** two config-vs-code defects — the orphaned threshold and an unimplemented
+> `post_processing` variant — both **inherited from upstream DPCC**, both still live, and
+> neither touched by fix_8. Call the repair **fix_9**.
+
+**New data:** `temp/0408/dpcc/`, node i6-gpu-1, seed 6, `n_trials = 2`, three halfspace envs,
+13 arms:
+
+| job | savepath tag | git rev | wall |
+|---|---|---|---|
+| 24215 | `H8_K20_T0.1_Dmodels.GaussianDiffusion` | `1b3c080` | 10:07 → 10:46 UTC |
+| 24226 | `H8_K20_T0.05_Dmodels.GaussianDiffusion` | `3e84451` | 13:29 → 14:08 UTC |
+
+Both loaded `logs/avoiding-d3il/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/6`,
+**checkpoint step 91000**, `n_diffusion_steps = 20`, `batch_size: 4` (`plan` block,
+`config/avoiding-d3il.py`). The two commits differ only by Gen14 U6 (`--flow-steps` for the
+mf/af visual eval), which is not on this code path. The config snapshots are byte-identical
+except the one YAML line:
+
+```
+30c30
+< diffusion_timestep_threshold: 0.1
+---
+> diffusion_timestep_threshold: 0.05
+```
+
+---
+
+## 21. The two defects
+
+### 21.1 `diffusion_timestep_threshold` is orphaned in `scripts/eval.py`
+
+The gate reads the value **off the projector**, not off `args`:
+
+```python
+# diffuser/models/diffusion.py:179, 186
+if projector is not None and projector.gradient       and t <= projector.diffusion_timestep_threshold * self.n_timesteps:
+if projector is not None and not projector.gradient   and t <= projector.diffusion_timestep_threshold * self.n_timesteps:
+```
+
+and the projector is built without it:
+
+```python
+# scripts/eval.py:205-206
+projector = Projector(horizon=args.horizon, ..., variant=diffuser_variant, dt=delta_t,
+                      cost_dims=None, device=args.device, solver='scipy')
+#                     ^ no diffusion_timestep_threshold -> falls back to the constructor
+#                       default 0.5 (diffuser/sampling/projection.py:8)
+```
+
+Meanwhile `config/avoiding-d3il.py` **does** put the YAML value into `args`
+(`'diffusion_timestep_threshold': _yaml_threshold`) and **does** watch it in `exp_name`
+(`:831`), which is why the folder is named after a number the sampler never saw.
+
+> **The savepath tag is not evidence of what ran.** `H8_K20_T0.05_…` here means θ = 0.5.
+
+**Evidence, not inference.** All 39 arm × env cells of the two jobs agree exactly on
+`n_success`, `n_success_and_constraints`, `n_steps`, `n_violations`, `total_violations` and
+`collision_free_completed`. A 3× change in projection budget (see §21.2) cannot leave a
+stochastic 200-step MPC rollout bit-identical.
+
+**Provenance.** `aux_repo/dpcc/scripts/eval.py:151-152` has the identical omission, and
+upstream's `config/projection_eval.yaml:26` pins `diffusion_timestep_threshold: 0.5` — exactly
+the constructor default, so the bug is invisible upstream. It became reachable only when
+FM-PCC started varying the YAML. **This is not a Gen12 regression and fix_8 does not touch it**
+(fix_8 repaired the Gen12 HardFlow eval script; this is the Gen0 baseline script).
+
+**Blast radius.** Every FM-PCC run through `scripts/eval.py` with a YAML threshold ≠ 0.5 is
+mislabeled and actually ran at 0.5. The FMv3ODE and Gen12-post-fix_8 paths are unaffected —
+they pass the value explicitly (`eval_flow_matching_v3_ode_selectable.py:241-242`). Fix is one
+keyword argument.
+
+### 21.2 The baseline gate is off by one from the FM gate
+
+Even once wired, the two families would not agree, because they count differently.
+
+**Baseline** (`diffuser/models/diffusion.py:175-186`): `t` runs **down** from `K−1` to `0` and
+the test is `t <= T·K` on floats, so
+
+```
+n_active = floor(T·K) + 1
+```
+
+**FMv3ODE** (`flow_matcher_v3_ode_selectable/models/diffusion.py:207-208`, §11.1):
+
+```
+n_active = K − int((1−T)·K)
+```
+
+| K | T | T·K | baseline `n_active` | FMv3ODE `n_active` |
+|---|---|---|---|---|
+| 20 | 0.5 | 10 | **11** | 10 |
+| 20 | 0.1 | 2 | **3** | 2 |
+| 20 | 0.05 | 1 | **2** | 1 |
+| 10 | 0.1 | 1 | **2** | 1 |
+| 10 | 0.05 | 0.5 | 1 | 1 |
+
+They agree **iff `T·K` is not an integer**, and differ by exactly one when it is. Every
+threshold used in Parts I–III hits the integer case except K=10/T=0.05.
+
+> Consequence: a naive "matched threshold" DPCC-baseline vs FMv3ODE comparison at K=20, T=0.1
+> would silently be **3 solves vs 2** — a 50% budget gap dressed as a matched condition. This
+> is the same class of defect fix_8 repaired between HardFlow and DPCC, one layer up. **fix_9
+> must fix the wiring and the arithmetic together, or fixing the wiring alone makes the
+> comparison wrong in a new way.**
+
+It also means Part I's DPCC-on-FM at θ=0.5 (`n_active = 10`) and this run's θ=0.5
+(`n_active = 11`) are **10 vs 11**, not equal. §24 corrects for it.
+
+### 21.3 `post_processing` is an unimplemented alias of `dpcc-r`
+
+`scripts/eval.py` branches on `gradient`, `model_free`, `dpcc-t` and `dpcc-c` (`:183-211`).
+There is **no branch for `post_processing`**, so it falls through to exactly the `dpcc-r`
+configuration: `gradient=False`, `trajectory_selection='random'`, same projector, same
+threshold.
+
+Verified at the byte level — `sha256(obs_all.npy)`:
+
+| env | `dpcc-r` | `post_processing` | |
+|---|---|---|---|
+| top-right-hard | `26896f11bc2afddb` | `26896f11bc2afddb` | identical |
+| top-left-hard | `87c4847e1734ed86` | `87c4847e1734ed86` | identical |
+| both-hard | `75ecaf727e9c4dc9` | `75ecaf727e9c4dc9` | identical |
+
+The same holds for the `-tightened` pair, and — checked separately — for **all four
+`temp/0408/FMv3ODE` runs**, both suffixes, all three envs. The FM sibling scripts have no
+`post_processing` branch either.
+
+The vestige is visible in the projector itself: `diffuser/sampling/projection.py:14` is
+`# self.only_last = only_last`, commented out — and commented out identically in **every**
+sibling (`flow_matcher_v3*/sampling/projection.py:14`) and **in upstream DPCC**. The feature
+`post_processing` names has never existed in this lineage; only the config entry does.
+
+> **Consequence:** `post_processing` and `post_processing-tightened` are duplicate `dpcc-r`
+> columns in every results matrix, LaTeX table and `all_seeds` figure this repo has produced.
+> Any table presenting post-processing as a distinct baseline is reporting `dpcc-r` twice.
+> Decide in fix_9: implement it (project only the final sample, i.e. `n_active = 1` with no
+> in-loop passes) or delete it from `projection_variants`.
+
+---
+
+## 22. The free determinism control
+
+The accidental duplicate is the cleanest control in this document: two jobs, **different GPUs**
+(`CUDA_VISIBLE_DEVICES=1` vs `2`), **different commits**, 3.4 h apart, same everything else.
+
+- **Trajectories: 39/39 cells bit-identical.** Steps, successes, violations, total violations
+  all agree exactly. The `torch.manual_seed(i)` per trial (`scripts/eval.py:241`) is doing its
+  job end to end, through MuJoCo, the sampler and SLSQP.
+- **Wall clock, 78 episodes**, ratio job-24226 / job-24215:
+
+| min | median | mean | max |
+|---|---|---|---|
+| 0.9996 | 1.0100 | 1.0097 | 1.0134 |
+
+So timing repeats to **±1%, with a ~1% systematic offset between jobs** (24226 uniformly
+slower — different GPU, different node load). That is the honest error bar for §12.3's
+`a = 8.6 ± 0.1 ms`, and for every `s/step` in Parts I–III.
+
+> **Every step-count and quality delta in Parts I and II is signal.** Run-to-run scatter on
+> this harness is exactly zero for those metrics, so the differences in §11.1 (17/21 cells
+> differ at K=20) and §12.1 are caused by the configuration change and nothing else. And
+> §12.1's effects are 45–63% against a 1% timing noise floor.
+
+---
+
+## 23. Baseline DPCC at θ = 0.5 — the reference numbers
+
+GaussianDiffusion, K = 20, `n_active = 11` (§21.2), ckpt 91000, seed 6, 6 episodes/arm,
+averaged over the three envs. Full `.npz` precision.
+
+| arm | q | steps | s/step | ep_s |
+|---|---|---|---|---|
+| `diffuser` | 0/6 | 58.8 | 0.1776 | 10.4 |
+| `gradient` | 0/6 | 60.8 | 0.1914 | 11.6 |
+| `gradient-tightened` | 0/6 | 62.2 | 0.1917 | 11.9 |
+| `model_free` | 0/6 | 67.5 | 0.2607 | 17.6 |
+| `model_free-tightened` | 0/6 | 64.7 | 0.2823 | 18.3 |
+| `dpcc-r` | 1/6 | 67.2 | 0.4057 | 27.3 |
+| `dpcc-t` | 1/6 | 67.8 | 0.5347 | 36.3 |
+| **`dpcc-c`** | **6/6** | 65.7 | 0.5060 | 33.2 |
+| `dpcc-r-tightened` | 5/6 | 65.3 | 0.5609 | 36.6 |
+| **`dpcc-t-tightened`** | **6/6** | 62.0 | 0.5324 | 33.0 |
+| **`dpcc-c-tightened`** | **6/6** | 61.5 | 0.5718 | 35.2 |
+| `post_processing` | 1/6 | 67.2 | 0.4046 | 27.2 | 
+| `post_processing-tightened` | 5/6 | 65.3 | 0.5610 | 36.7 |
+
+(The last two rows are §21.3 duplicates of `dpcc-r` / `dpcc-r-tightened`; the sub-1% time
+differences are the §22 noise floor. They are listed once for the record and are excluded from
+every comparison below.)
+
+**The generator constant transfers across engines.** `diffuser` gives
+`a = 8.90 / 8.83 / 8.90 ms` per batched net call across the three envs — against
+`8.6 ± 0.1 ms` for FlowMatchingODE (§12.3). **3% apart**, which is about what the extra work in
+`p_sample` (noise draw + posterior variance, `diffuser/models/diffusion.py:155-161`) should
+cost over a bare Euler step. §12.3 can be strengthened: `a` is portable across K, across eval
+scripts, **and across the generative engine.**
+
+The unguided step counts are not the same, though — 58.8 (diffusion) vs 65.0 (FM, §12) — so
+this is a different policy, not a re-parameterisation of the same one.
+
+---
+
+## 24. The projector cost belongs to the constraint set, not the generator
+
+Backing the NLP term out as in §12.2, with each run's own `diffuser` time and
+`n_active × B = 11 × 4 = 44`:
+
+| arm | top-right | top-left | both | mean ms/solve |
+|---|---|---|---|---|
+| `dpcc-t-tightened` | 8.51 | 8.66 | 7.02 | **8.06** |
+| `dpcc-r-tightened` | 8.27 | 10.81 | 7.05 | **8.71** |
+| `dpcc-c-tightened` | 8.05 | 9.00 | 9.83 | **8.96** |
+| `dpcc-c` | 7.57 | 6.55 | 8.28 | 7.46 |
+| `dpcc-t` | 10.89 | 6.57 | 6.88 | 8.12 |
+| `dpcc-r` | 2.41 | 7.35 | 5.79 | 5.19 |
+| `gradient[-tightened]` | 0.32 | 0.33 | 0.30 | **0.31** |
+| `model_free[-tightened]` | 1.60–2.38 | 2.17–2.58 | 1.90–2.18 | 1.89 / 2.38 |
+
+Against the FM generator at `n_active = 10` (§12.2): **3.57 / 7.47 / 11.62 ms per env, mean
+7.43**. The two are inside each other's env-to-env spread.
+
+> **`b_scipy` is a property of the constraint set and the τ-range, not of the generator.**
+> Same halfspace constraints, same SLSQP, same τ window (0.50…0.95 vs 0.45…0.95) → same
+> per-solve cost, whether the iterate came from a diffusion posterior or an ODE step.
+> This is the cross-engine version of §14 and it is consistent with §14's mechanism: cost is
+> set by how far outside the feasible set the iterate sits, and both generators are equally far
+> out at τ = 0.5.
+
+**NFE-eq across generators.** Predicting the baseline from the *FM* constants — `a = 8.88 ms`
+(this run's own generator, §23) and `b = 7.43 ms` (the FM run's, §13) — with `N_net = 20`,
+`NPE = 44`:
+
+```
+predicted  =  20 × 8.88 ms  +  44 × 7.43 ms  =  177.5 + 326.9  =  504 ms/step
+measured   =  519 ms/step   (mean of the six dpcc arms)          →  −2.7%
+```
+
+Per-arm the spread is −20% (`dpcc-r`, dragged down by one env that terminates in 31.5 steps) to
++13% (`dpcc-c-tightened`). So `b` transfers across generators to about ±10% at fixed schedule,
+which is far better than it transfers across schedules (§14: 8×). **Schedule is the first-order
+variable; generator is a rounding error.**
+
+`gradient`'s 0.31 ms/solve is worth recording separately: it is 24× cheaper than the SLSQP
+arms and buys 0/6 — the cost floor of "touching the trajectory at all", and the reason
+`gradient` sits within 8% of `diffuser` on time.
+
+---
+
+## 25. The only 6/6 on the **relaxed** problem in this entire document
+
+`dpcc-c` — **untightened** — is **6/6**, zero violations in all three envs.
+
+| generator | schedule | best untightened arm | q |
+|---|---|---|---|
+| **GaussianDiffusion** | `n_active = 11` | **`dpcc-c`** | **6/6** |
+| FlowMatchingODE | `n_active = 10` | `dpcc-r` | 4/6 |
+| FlowMatchingODE | `n_active = 2` | `dpcc-c` | 3/6 |
+| FlowMatchingODE | `n_active = 1` (K=20) | `dpcc-r` / `dpcc-c` | 2/6 |
+| HardFlow | `n_active = 10` (θ=0.5) | `dpcc-r`-style `-r` | 5/6 |
+| HardFlow | `n_active = 2` | — | 3/6 |
+
+§16 concluded "no leap — best anywhere is HF `-r` @θ=0.5 at 5/6." **That conclusion is
+superseded on the relaxed axis: the baseline diffusion generator with `dpcc-c` solves it
+outright.** §16's *comparative* claim (the FM-vs-HF trade is symmetric, tie at 3/6 at matched
+schedule) is untouched — this row is neither of those two arms.
+
+Two further observations:
+
+- **The arm ordering inverts between generators.** On the diffusion generator the untightened
+  ranking is `-c` (6/6) ≫ `-r` ≈ `-t` (1/6). On the FM generator (§10.3, §16) `-r` led and `-c`
+  trailed. `minimum_projection_cost` selection is doing real work here and nothing on the FM
+  side — which is the opposite of §10.4/§15, where `-c` was the arm that *inflated* step counts.
+  It does not inflate them here: 65.7 steps, mid-pack.
+- **Do not read this as "diffusion beats flow matching."** Three things differ at once —
+  engine, checkpoint (91000 vs 98000, different training runs entirely), and schedule (11 vs
+  10 solves). It is a single seed, 6 episodes. What it *does* establish is that **the relaxed
+  problem is solvable on this benchmark at this budget**, which §16 left open, and that makes
+  §19 item 4 considerably more valuable than it looked.
+
+**What it costs:** 33.2 s/episode, against 6.1 s for the cheapest 6/6-*tightened* point (§17,
+FM K=10 `n_active=1`). **5.4×** — for a result on a strictly harder problem. That is the real
+Pareto frontier of this dataset, and both ends of it are DPCC.
+
+---
+
+## 26. What Part III does and does not license
+
+**Does not:**
+
+- Provide a DPCC-*baseline* short-schedule datapoint. §12.1 remains an FM-generator result.
+  The K=20/`n_active`∈{2,3} baseline row is still missing and this run did not produce it.
+- Settle any generator comparison. §25 is confounded three ways.
+
+**Does:**
+
+- Put a ±1% error bar and a zero-scatter guarantee under Parts I–II (§22).
+- Extend §12.3 (`a` portable) and §14 (`b` set by schedule, not engine) across generators (§23, §24).
+- Establish that the relaxed problem is solvable at all (§25).
+- Find fix_9 (§21).
+
+### Additions to the §19 run queue
+
+- **0. fix_9, before anything else re-runs through `scripts/eval.py`.** Three parts:
+  (a) pass `diffusion_timestep_threshold=args.diffusion_timestep_threshold` at
+  `scripts/eval.py:206`; (b) reconcile the gate arithmetic with the FM path (§21.2) — floor to
+  the *same* `n_active`, and tag it `[Gen12fix9]` alongside the fix_8 comments; (c) decide
+  `post_processing` — implement or delete. Then **re-run these two jobs**, which are currently
+  a datapoint we believed we had and do not.
+- **7.** After fix_9: baseline DPCC at `n_active = 2` and `10`, to put the diffusion generator
+  on §12.1's axes. Pair it with the FM run at `n_active = 11` (or the baseline at 10) so the
+  §25 comparison is schedule-matched.
+- **8.** Audit which published/exported tables in `Data_Analysis/` and the DA-v3 Visualizer
+  carry a `post_processing` column, and which carry a `T`-tagged savepath from
+  `scripts/eval.py`. Both are wrong in the ways §21.1 and §21.3 describe.
+
+### Caveats specific to Part III
+
+1. Everything is seed 6, `n_trials = 2`. §25 rests on 6 episodes.
+2. `n_active = 11` is inferred from the source (§21.2), not instrumented. §20 caveat 3 applies
+   in full: `B = 4` is read from the config, not counted, so every ms/solve in §24 is
+   `(t − t_gen)/(11 × 4)`. §22, §23 and the NFE-eq total in §24 use only measured wall clock.
+3. The checkpoint is **91000**, not the FM line's 98000, and comes from a separate training
+   run. No conclusion here should cross that boundary.
+4. The two jobs sit on different commits. They differ only in Gen14 U6, which touches
+   `mix_visual_aligning` only — but the §22 determinism claim technically covers "these two
+   revs", not "any two revs".

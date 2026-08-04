@@ -63,6 +63,13 @@ os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
 
 import mix_visual_aligning.utils as utils
 from mix_visual_aligning.sampling.projection import Projector
+# ── Gen14 U7 ── HardFlow arm C. Ported from Gen3v7; hosts fm/mf/af only (resolve_engine_hf
+# refuses 'diffusion' — a DDPM chain has no velocity field for the NLP to integrate).
+from mix_visual_aligning.sampling.hardflow_projection import (
+    build_hardflow_sampler,
+    encode_visual_cond,
+    resolve_activation_threshold,
+)
 # Gen14 — the arm dispatch table. Every engine-specific branch lives there, not here.
 from mix_visual_aligning.models.engine_registry import (
     ENGINE_KEYS, ENGINE_INPUT_KEYS, canonical_engine,
@@ -169,7 +176,8 @@ class ProjectorNormalizer:
 # ── Projector setup ───────────────────────────────────────────────────────────
 
 def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
-                         is_tightened=False, trajectory_dim=9):
+                         is_tightened=False, trajectory_dim=9,
+                         return_constraint_list=False):
     """
     Build the DPCC SLSQP projector.
 
@@ -288,6 +296,15 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
 
     threshold = 0.0 if 'post_processing' in variant else config.get('diffusion_timestep_threshold', 0.5)
     gradient  = 'gradient' in variant
+
+    # ── Gen14 U7 ── HardFlow needs the SAME constraint_list this projector consumes.
+    # The port guide is explicit that arm C's NLP must be built from FMPCC's list and never
+    # from HardFlow's own `avoiding_geometry.py`, "otherwise arms B and C enforce different
+    # feasible sets and the comparison is void". Returning the list here — rather than
+    # re-deriving it in the HardFlow branch — makes that divergence unrepresentable.
+    # Additive only: the default path returns exactly what it always did.
+    if return_constraint_list:
+        return constraint_list, ProjectorNormalizer(proj_obs_normalizer, act_normalizer), dt
 
     return Projector(
         horizon=getattr(args, 'horizon', 8),
@@ -1043,6 +1060,7 @@ class VisualAgentWrapper:
                  save_path=None, record_mode='all',
                  obs_normalizer=None, act_normalizer=None,
                  batch_size=1, projector=None,
+                 hf_sampler=None,               # U7: HardFlow arm C (replaces the sampler)
                  trajectory_selection='random',
                  eval_on_train=False, variant='unspecified',
                  max_action_delta=None,
@@ -1062,6 +1080,12 @@ class VisualAgentWrapper:
         self.act_normalizer     = act_normalizer
         self.batch_size         = batch_size
         self.projector          = projector
+        # ── Gen14 U7 ── arm C. Mutually exclusive with `projector` by construction in the
+        # eval driver: HardFlow REPLACES p_sample_loop (the NLP runs inside the ODE), whereas
+        # DPCC post-processes each denoising step. Both being set would double-project.
+        self.hf_sampler         = hf_sampler
+        assert not (self.projector is not None and self.hf_sampler is not None), \
+            'VisualAgentWrapper: projector and hf_sampler are mutually exclusive (U7)'
         self.trajectory_selection = trajectory_selection
         self.eval_on_train      = eval_on_train
         self.save_path          = save_path
@@ -2060,7 +2084,18 @@ class VisualAgentWrapper:
             self.action_counter = 0
             self.model.eval()
 
-            if self.projector is not None:
+            if self.hf_sampler is not None:
+                # ── Gen14 U7 ── arm C. `sample()` returns the same (x, infos) contract as
+                # `p_sample_loop`, so everything downstream (candidate selection, metrics,
+                # recording) is unchanged. `encode_visual_cond` runs the ResNets ONCE here —
+                # the HardFlow sampler bypasses `model.forward()`, which is where the visual
+                # wrappers normally do that encode, so without it the field would be blind.
+                _hf_cond = encode_visual_cond(self.model, cond)
+                trajectory, infos = self.hf_sampler.sample(
+                    _hf_cond,
+                    flow_steps=int(getattr(self.model, 'flow_steps_v3', 2)),
+                    batch_size=self.batch_size)
+            elif self.projector is not None:
                 trajectory, infos = self.model(cond, projector=self.projector)
                 # Fix_15.3: the projector marks each call it SKIPS while its sustained-slowness
                 # circuit breaker is OPEN (unprojected step). Count them for artifact marking.
@@ -2079,6 +2114,19 @@ class VisualAgentWrapper:
                     diffs = traj_np - np.expand_dims(self.prev_observations, 0)
                     which = int(np.argsort(np.linalg.norm(diffs, axis=(1, 2)))[0])
                     selection_method = 'temporal_consistency'
+                elif (self.trajectory_selection == 'minimum_projection_cost'
+                      and self.hf_sampler is not None):
+                    # U7: HardFlow ranks candidates by total NLP intervention
+                    # Σ||x1_proj - x1_ref||², computed inside sample() (`candidate_costs`).
+                    # There is no DPCC projector to re-solve against, and re-solving would
+                    # be a different quantity anyway.
+                    _cc = None if infos is None else infos.get('candidate_costs')
+                    if _cc is not None and len(_cc) == self.batch_size:
+                        which = int(np.argmin(_cc))
+                        selection_method = 'minimum_projection_cost (hardflow prox)'
+                    else:
+                        which = 0
+                        selection_method = 'random (hardflow: no candidate_costs)'
                 elif (self.trajectory_selection == 'minimum_projection_cost'
                       and self.projector is not None):
                     # Try precomputed costs from post-processing projection first
@@ -2345,6 +2393,28 @@ if __name__ == '__main__':
         seeds, _seed_src = config['seeds'], 'config/visual_aligning_eval.yaml'
     print(f'[ eval ] seeds: {seeds}  (source: {_seed_src})')
     projection_variants = config.get('projection_variants', ['diffuser'])
+    # ── Gen14 U7 ── HardFlow variants live under their OWN yaml key, never in
+    # `projection_variants`.
+    #
+    # 🔴 `config/visual_aligning_eval.yaml` is SHARED with the Gen6V4 and Gen7 evals. Adding
+    # 'hardflow_new-*' to `projection_variants` would inject arm C into those generations,
+    # which have no HardFlow code, and crash them — the exact failure
+    # `config/meanflow_projection_eval.yaml:6` warns about. `hardflow_variants` is read ONLY
+    # here, so the shared file stays inert for every other consumer.
+    #
+    # Empty/absent by default: HardFlow is opt-in per run. Enable with the yaml key or
+    # `HFFM_VARIANTS="hardflow_new-r hardflow_new-c-tightened"`.
+    _hf_variants = os.environ.get('HFFM_VARIANTS')
+    _hf_variants = (_hf_variants.split() if _hf_variants
+                    else list(config.get('hardflow_variants', []) or []))
+    if _hf_variants:
+        _bad = [v for v in _hf_variants if not v.startswith('hardflow')]
+        if _bad:
+            raise SystemExit(f'[ eval ] ERROR: hardflow_variants entries must start with '
+                             f'"hardflow" (got {_bad}) — otherwise the arm-C branch in the '
+                             f'variant loop will not fire and they would silently run as DPCC.')
+        projection_variants = list(projection_variants) + _hf_variants
+        print(f'[ eval ] HardFlow variants enabled (U7): {_hf_variants}')
     n_contexts          = config.get('n_contexts', 30)
     n_trajectories      = config.get('n_trajectories_per_context', 1)
 
@@ -2599,7 +2669,59 @@ if __name__ == '__main__':
                     print(f'[ eval ] WARNING: unexpected _traj_dim={_traj_dim} '
                           f'(act={_act_dim_norm}, obs={_obs_dim_norm}); '
                           f'expected 9 (visual) or 23 (non-visual)')
-                if 'diffuser' not in variant and obs_normalizer is not None:
+                # ── Gen14 U7 ── arm C: HardFlow (`hardflow_new`). Mutually exclusive with the
+                # DPCC projector — HardFlow REPLACES the sampler rather than post-processing it,
+                # so `projector` stays None on these variants and VisualAgentWrapper takes the
+                # `hf_sampler` path instead.
+                hf_sampler = None
+                is_hardflow = variant.startswith('hardflow')
+                if is_hardflow and obs_normalizer is not None:
+                    # Refuse the diffusion arm loudly, before the GPU is spent. DDPM has no
+                    # velocity field, so `hardflow_new` — which integrates v = f(x, t) outside
+                    # the solver — is undefined on it. resolve_engine_hf() raises; catching it
+                    # here turns it into a skip with a clear reason instead of a crashed sweep.
+                    try:
+                        _hf_constraints, _hf_norm, _hf_dt = setup_dpcc_projector(
+                            args, geo_config, obs_normalizer, act_normalizer, variant,
+                            is_tightened, trajectory_dim=_traj_dim, return_constraint_list=True)
+                        _hf_cfg = geo_config.get('hardflow', {}) or {}
+                        _, _, hf_sampler = build_hardflow_sampler(
+                            model=diffusion_model,
+                            normalizer=_hf_norm,
+                            horizon=getattr(args, 'horizon', 8),
+                            transition_dim=_traj_dim,
+                            action_dim=3,
+                            constraint_list=_hf_constraints,
+                            engine=ENGINE,
+                            dt=_hf_dt,
+                            reg_scale=float(_hf_cfg.get('reg_scale', 1.0)),
+                            # Same polarity as DPCC's diffusion_timestep_threshold (fix_6):
+                            # higher = MORE projection. Defaults to the shared eval threshold
+                            # so arms B and C project over the same fraction of the ODE.
+                            # yaml `activation_threshold: null` (the default) means INHERIT
+                            # diffusion_timestep_threshold, so arms B and C project over the
+                            # same fraction of the ODE unless deliberately unmatched.
+                            # `.get(k, default)` would return None here — the key exists — so
+                            # the fallback has to be an explicit `is None` test.
+                            activation_threshold=resolve_activation_threshold(
+                                os.environ.get('HFFM_ACT_THRESHOLD')
+                                or (_hf_cfg.get('activation_threshold')
+                                    if _hf_cfg.get('activation_threshold') is not None
+                                    else geo_config.get('diffusion_timestep_threshold', 0.5))),
+                            dynamics_mode=_hf_cfg.get('dynamics_mode', 'deriv'),
+                            linear_dynamics=None,
+                            print_level=int(_hf_cfg.get('ipopt_print_level', 0)),
+                            print_time=bool(_hf_cfg.get('casadi_print_time', False)),
+                            device=args.device,
+                            goal_dim=0,
+                        )
+                        print(f'[ eval ] HardFlow sampler active for variant {variant!r} '
+                              f'(engine={ENGINE}, trajectory_dim={_traj_dim})')
+                    except (ValueError, ImportError) as _hf_err:
+                        print(f'[ eval ] SKIPPING variant {variant!r}: {_hf_err}')
+                        continue
+
+                elif 'diffuser' not in variant and obs_normalizer is not None:
                     projector = setup_dpcc_projector(
                         args, geo_config, obs_normalizer, act_normalizer, variant, is_tightened,
                         trajectory_dim=_traj_dim)
@@ -2613,9 +2735,21 @@ if __name__ == '__main__':
                     trajectory_selection = 'temporal_consistency'
                 if 'dpcc-c' in variant:
                     trajectory_selection = 'minimum_projection_cost'
+                # ── Gen14 U7 ── same suffix grammar for arm C, so `hardflow_new-c` is the
+                # matched partner of `dpcc-c` and the two arms differ only in WHEN the
+                # constraint is applied. Tightening is a GEO-level flag in Gen14 (the
+                # `-tightened` twin is auto-generated per geo entry), not a variant suffix —
+                # unlike Gen3v6/v7, where it is part of the variant name.
+                if variant.startswith('hardflow'):
+                    if variant.endswith('-t'):
+                        trajectory_selection = 'temporal_consistency'
+                    elif variant.endswith('-c'):
+                        trajectory_selection = 'minimum_projection_cost'
 
                 # Fix 8: diffuser runs single sample (no projection, no candidate diversity).
                 # All projected variants use args.mpc_batch_size from plan config (MPC candidate pool).
+                # U7: HardFlow is a projected arm and takes the same pool, so arms B and C are
+                # compared at equal candidate count.
                 if 'diffuser' in variant:
                     batch_size = 1
                 else:
@@ -2633,6 +2767,7 @@ if __name__ == '__main__':
                     act_normalizer=act_normalizer,
                     batch_size=batch_size,
                     projector=projector,
+                    hf_sampler=hf_sampler,          # U7: arm C; None on every other variant
                     trajectory_selection=trajectory_selection,
                     eval_on_train=args_cli.eval_on_train,
                     variant=variant,
