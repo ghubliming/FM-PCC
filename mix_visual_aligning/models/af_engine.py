@@ -25,7 +25,8 @@ class AlphaFlowEngine(nn.Module):
         self,
         state_dim: int,
         seq_len: int,
-        freq_dim: int = 256,
+        freq_dim: int = 32,          # 🔴 FIX_8_UNET_WIDTH — UNet CHANNEL width (was 256 => 253 M params);
+                                     # ignored by the DiT/SiT backbones. See logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
         depth: int = 8,
         num_heads: int = 4,
         mlp_dim: int = 256,
@@ -37,6 +38,11 @@ class AlphaFlowEngine(nn.Module):
         dual_head: bool = False,
         interval_cfg: bool = False,
         # U6 — backbone selector + DiT sizing (forwarded to AFTrajectoryModel).
+        # 🔴 FIX_8_BACKBONE_DEFAULT — 'unet' is CORRECT here and must stay. Gen14 never sets this key
+        # (config/aligning-d3il-visual.py has no imf_backbone anywhere), and the
+        # if_vision=True graft below REQUIRES it: `if imf_backbone not in ('unet',):
+        # raise`. Changing this default to a DiT/SiT the way the three state-only
+        # generations did would make every Gen14 mf/af visual job raise on construction.
         imf_backbone: str = 'unet',
         dit_depth: int = 8,
         dit_hidden_size: int = 256,

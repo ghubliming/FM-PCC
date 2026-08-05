@@ -28,7 +28,8 @@ class AFTrajectoryModel(nn.Module):
         self,
         state_dim: int,
         seq_len: int,
-        freq_dim: int = 256,
+        freq_dim: int = 32,          # 🔴 FIX_8_UNET_WIDTH — UNet CHANNEL width (was 256 => 253 M params);
+                                     # ignored by the DiT/SiT backbones. See logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
         depth: int = 8,
         num_heads: int = 4,
         mlp_dim: int = 256,
@@ -43,6 +44,11 @@ class AFTrajectoryModel(nn.Module):
         # OWN backbone, the SiT (AFSiTTrajectory: LayerNorm, qk_norm=False, adaLN-zero, t+r
         # conditioning). All three satisfy the same velocity_net forward contract, so the
         # objective/JVP/sampler are unchanged.
+        # 🔴 FIX_8_BACKBONE_DEFAULT — 'unet' is CORRECT here and must stay. Gen14 never sets this key
+        # (config/aligning-d3il-visual.py has no imf_backbone anywhere), and the
+        # if_vision=True graft below REQUIRES it: `if imf_backbone not in ('unet',):
+        # raise`. Changing this default to a DiT/SiT the way the three state-only
+        # generations did would make every Gen14 mf/af visual job raise on construction.
         imf_backbone: str = 'unet',
         dit_depth: int = 8,
         dit_hidden_size: int = 256,
@@ -120,6 +126,10 @@ class AFTrajectoryModel(nn.Module):
                 horizon=seq_len,
                 transition_dim=state_dim,
                 cond_dim=state_dim,
+                # 🔴 FIX_8_UNET_WIDTH — `dim` is BOTH the channel width and the time-embed
+                # width (unet1d_temporal_cond.py:106,110). `freq_dim` is this repo's
+                # only source for it, so its value IS the backbone size: 32 => 3.97 M,
+                # 256 => 253.0 M. Never raise freq_dim to "improve the embedding".
                 dim=freq_dim,
                 dim_mults=(1, 2, 4, 8),
                 returns_condition=False,
@@ -129,6 +139,16 @@ class AFTrajectoryModel(nn.Module):
             )
         else:
             raise ValueError(f"Unknown imf_backbone '{imf_backbone}' (expected 'unet', 'dit' or 'sit')")
+
+        # 🔴 FIX_8_UNET_WIDTH — announce the backbone size at BUILD time. A width defect is
+        # otherwise invisible: the model builds, trains, and logs plausible losses at any
+        # width, and nothing in the train log states a parameter count. One line here
+        # would have caught the 253 M UNet on run 1 instead of ~3 months later.
+        # 32 => 3.97 M (DPCC/FMv3ODE baseline) | 256 => 253.0 M. UNet arm only; the
+        # DiT/SiT arms size from dit_hidden_size and are unaffected by freq_dim.
+        _n_params = sum(p.numel() for p in self.velocity_net.parameters())
+        print(f'[ AFTrajectoryModel ] backbone={imf_backbone}  vision={self.if_vision}  unet_width(freq_dim)={freq_dim}  '
+              f'params={_n_params / 1e6:.1f}M')
 
         # Legacy orphan aux head — kept ONLY for dual_head=False back-compat (does not
         # share the backbone). When dual_head=True, v comes from velocity_net's v-head.

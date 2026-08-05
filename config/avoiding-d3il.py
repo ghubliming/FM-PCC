@@ -494,7 +494,15 @@ base = {
         'horizon': 8,
         
         ## iMF architecture (matches official repo)
-        'freq_dim': 256,
+        # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
+        # Its only consumer anywhere is `dim=freq_dim` in models/*_trajectory_model.py,
+        # and Flow_matcher_U_Net_v2 uses that one argument for BOTH the channel width
+        # (:106) and the time-embed width (:110). At 256 the backbone was 253.0 M params
+        # (channels 256/512/1024/2048) against the DPCC/FMv3ODE baseline's 3.97 M at 32
+        # — a 63.8x capacity error on 96 demonstrations, which silently confounded every
+        # imf_backbone='unet' run. DiT / SiT / mf_dit ignore this key (they size from
+        # dit_hidden_size). Full audit: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
+        'freq_dim': 32,
         'depth': 8,
         'num_heads': 4,
         'mlp_dim': 256,
@@ -608,7 +616,15 @@ base = {
         'horizon': 8,
 
         ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
-        'freq_dim': 256,
+        # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
+        # Its only consumer anywhere is `dim=freq_dim` in models/*_trajectory_model.py,
+        # and Flow_matcher_U_Net_v2 uses that one argument for BOTH the channel width
+        # (:106) and the time-embed width (:110). At 256 the backbone was 253.0 M params
+        # (channels 256/512/1024/2048) against the DPCC/FMv3ODE baseline's 3.97 M at 32
+        # — a 63.8x capacity error on 96 demonstrations, which silently confounded every
+        # imf_backbone='unet' run. DiT / SiT / mf_dit ignore this key (they size from
+        # dit_hidden_size). Full audit: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
+        'freq_dim': 32,
         'depth': 8,
         'num_heads': 4,
         'mlp_dim': 256,
@@ -708,7 +724,15 @@ base = {
         'horizon': 8,
 
         ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
-        'freq_dim': 256,
+        # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
+        # Its only consumer anywhere is `dim=freq_dim` in models/*_trajectory_model.py,
+        # and Flow_matcher_U_Net_v2 uses that one argument for BOTH the channel width
+        # (:106) and the time-embed width (:110). At 256 the backbone was 253.0 M params
+        # (channels 256/512/1024/2048) against the DPCC/FMv3ODE baseline's 3.97 M at 32
+        # — a 63.8x capacity error on 96 demonstrations, which silently confounded every
+        # imf_backbone='unet' run. DiT / SiT / mf_dit ignore this key (they size from
+        # dit_hidden_size). Full audit: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
+        'freq_dim': 32,
         'depth': 8,
         'num_heads': 4,
         'mlp_dim': 256,

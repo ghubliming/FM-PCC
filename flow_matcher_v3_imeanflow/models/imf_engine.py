@@ -24,7 +24,8 @@ class iMeanFlowEngine(nn.Module):
         self,
         state_dim: int,
         seq_len: int,
-        freq_dim: int = 256,
+        freq_dim: int = 32,          # 🔴 FIX_8_UNET_WIDTH — UNet CHANNEL width (was 256 => 253 M params);
+                                     # ignored by the DiT/SiT backbones. See logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
         depth: int = 8,
         num_heads: int = 4,
         mlp_dim: int = 256,
@@ -36,7 +37,12 @@ class iMeanFlowEngine(nn.Module):
         dual_head: bool = False,
         interval_cfg: bool = False,
         # U6 — backbone selector + DiT sizing (forwarded to iMFTrajectoryModel).
-        imf_backbone: str = 'unet',
+        # 🔴 FIX_8_BACKBONE_DEFAULT — this generation's OWN backbone, not 'unet'. The UNet fallback was a
+        # Gen3v4-era leftover: it is the one backbone whose every run is confounded by the
+        # freq_dim width defect (see FIX_8_UNET_WIDTH), so a missing config key used to
+        # silently select the known-bad arm. Config always passes this key; the default
+        # only matters when it doesn't, which is exactly when a wrong default hurts.
+        imf_backbone: str = 'dit',
         dit_depth: int = 8,
         dit_hidden_size: int = 256,
         dit_num_heads: int = 4,

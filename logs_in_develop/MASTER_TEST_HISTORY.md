@@ -4007,3 +4007,28 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 1. **Visual-Mix-ML HardFlow Port**: Successfully ported the HardFlow in-loop constrained sampler (arm C) into the Gen14 Visual-Mix-ML framework for the flow-matching arms (`fm`, `mf`, `af`). The `diffusion` arm is correctly explicitly refused.
 2. **Visual Latent Fix**: Fixed a silent fallback bug during the port where string-based visual conditioning (`visual_latent`) would have been stripped by legacy state-only code, which would have forced all HardFlow rollouts to run blindly without image conditioning.
+
+***
+
+## Gen0 Fix 2: DPCC Threshold Wiring & Post-Processing Baseline (August 4, 2026)
+
+**Keywords**: Gen0, DPCC, threshold wiring, post_processing, diffusion_timestep_threshold.
+
+1. **Bug Identification**: Identified a silent inheritance defect from upstream DPCC where `diffusion_timestep_threshold` was orphaned at the `Projector` call site and the `post_processing` variant was undefined. Consequently, every evaluation ran with a hardcoded threshold of 0.5, and the `post_processing` baseline was a byte-identical duplicate of `dpcc-r` instead of representing actual post-denoising projection.
+2. **The Fix (Three-part correction)**: 
+   - Forwarded `diffusion_timestep_threshold` at the `Projector` call across all live generations (Gen0, Gen3v2-v7, Gen7, Gen9, Gen12, Gen14).
+   - Re-defined `post_processing` by correctly routing it to `threshold = 0.0`.
+   - Repaired the activation gate logic (`loop_idx >= int((1.0 - T) * flow_steps) or ...`) to ensure `threshold = 0.0` correctly guarantees at least one final projection step rather than returning zero projections.
+3. **Blast Radius & Re-evaluations Needed**: Any previous DPCC-baseline or visual-avoiding run labeled with a threshold other than 0.5 actually ran at 0.5. Every `post_processing` column in the avoiding family must be regenerated to reflect the true baseline. All archived runs (at threshold 0.5 or integer `(1-T)*K`) remain structurally valid.
+
+***
+
+## Gen14 U7 DA: First HardFlow Run & Cost Analysis (August 5, 2026)
+
+**Keywords**: Gen14 U7, HardFlow, MeanFlow, K=2, projection cost, constraint satisfaction, SLSQP nondeterminism, gradient nudging.
+
+1. **Port Verification**: Analyzed the first successful HardFlow run on the Visual-Mix-ML framework (`hardflow_new-r` with `mf` engine, K=2). Confirmed the port executes correctly without exception, properly triggering the visual conditioning guard and matching `init_noise_scale=1.0` and `two_time=True` for MeanFlow.
+2. **Constraints vs. Distance**: HardFlow delivers superior nominal constraint satisfaction (0.998 satisfaction and 0.0 post-projection violations) without needing a tightening margin, unlike DPCC. However, it performs noticeably worse on distance tracking compared to soft unprojected methods.
+3. **The Soft `gradient` Winner**: The `gradient` variant won heavily on distance (0.011m best case) and remains cheap (~32ms/replan), showing that soft gradient nudging preserves rollout quality far better than hard NLP projection.
+4. **Computational Cost**: HardFlow solves an NLP inside the ODE at each active step, resulting in severe computational cost (~159–171ms per replan). This is ~3.3x slower than DPCC variants and ~5x outside the real-time 30Hz budget (33.3ms), confirming that HardFlow trades performance speed for strict nominal feasibility.
+5. **SLSQP Nondeterminism**: Uncovered that divergence in `dpcc-*` evaluations is purely due to nondeterminism in the `scipy` SLSQP projector. Unprojected methods (like `diffuser`, `gradient`, `geo_free`) are perfectly reproducible, meaning noise floors identified previously exist strictly for hard-projected cells.

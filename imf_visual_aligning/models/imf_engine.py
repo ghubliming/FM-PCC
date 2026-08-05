@@ -24,7 +24,8 @@ class iMeanFlowEngine(nn.Module):
         self,
         state_dim: int,
         seq_len: int,
-        freq_dim: int = 256,
+        freq_dim: int = 32,          # 🔴 FIX_8_UNET_WIDTH — UNet CHANNEL width (was 256 => 253 M params);
+                                     # ignored by the DiT/SiT backbones. See logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
         depth: int = 8,
         num_heads: int = 4,
         mlp_dim: int = 256,
