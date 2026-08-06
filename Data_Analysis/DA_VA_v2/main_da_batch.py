@@ -44,6 +44,7 @@ from discovery import (
 from reporter import Reporter
 from utils import (
     create_output_directory,
+    create_viewer_alias,
     parse_int_list,
     parse_str_list,
     prepare_output_directory,
@@ -107,6 +108,7 @@ def main(argv=None):
         output_dir = prepare_output_directory(args.output_path)
 
     manifest = update_results_manifest(output_dir)
+    alias = create_viewer_alias(output_dir)
 
     logger = setup_logger('DA_VA_v2',
                           os.path.join(output_dir, 'logs', 'analysis.log'),
@@ -120,6 +122,8 @@ def main(argv=None):
     logger.info(f'Output: {output_dir}')
     if manifest:
         logger.info(f'Manifest: {manifest}')
+    if alias:
+        logger.info(f'Viewer alias: {alias}')
 
     try:
         # ── 1. discover candidates ───────────────────────────────────────────

@@ -63,6 +63,12 @@ Source selection: `--source auto` (default) = npz when present, else JSON.
 `--source json` forces the JSON path. The two agree to float32 precision on
 shared fields (verified against a Gen14 U7 run).
 
+**Two rollout-JSON schemas** are supported and auto-detected per field — the
+nested Gen14/late-Gen7 one (`success.strict`, `outcome.*`, `timing.*`,
+`context.*`, `constraint.exec.*`) and the flat early-Gen7 one (`success`,
+`mean_distance`, `steps`, `context_info.*`, `constraint_metrics.exec_*`). A tree
+mixing both loads without a flag.
+
 ---
 
 ## Metrics
@@ -142,6 +148,29 @@ with a test run of the same geometry in a viewer that only knows
 `per_rollout_detail.csv` also carries legacy aliases (`success`, `mean_dist_m`,
 `steps`, `phys_err_m`, `context_xy_dist_m`, `avg_time_s`, …) so the old VA
 visualizer's rollout table still renders.
+
+### Output folder naming — do not change casually
+
+Both visualizers build their run dropdown by regexing the `analysis_results/`
+**directory listing for a leading prefix**, and they disagree about it:
+
+| page | pattern |
+|---|---|
+| `Visualizer/index.html` | `href="(batch_[^/"]+)` |
+| `Visualizer_Visual_Aligning/index.html` | `href="(va_batch_[^/"]+)` |
+
+`results_manifest.json` is only a *fallback*, used when the directory-listing
+fetch fails — which it does not under `python -m http.server`. So a run whose
+folder name misses the prefix is **invisible in the picker even though every CSV
+is present**.
+
+One name cannot match both patterns, so each run writes `batch_va2_<timestamp>`
+and symlinks `va_batch_va2_<timestamp>` beside it — same files, one copy, listed
+by both pages. `--output-path` with a name that does not start with `batch_`
+still works, but logs a warning and will not appear in the DAv3 picker.
+
+The manifest is refreshed on every run regardless, for servers that do forbid
+directory listings.
 
 ---
 

@@ -178,59 +178,90 @@ class UnitLoader:
             self._note('MISSING', f'{_uid(unit)}: diagnostics dir holds no rollout stats')
             return None
 
-        def get(path, default=np.nan):
-            return np.array([_dig(r, path, default) for r in rows], dtype=float)
+        # Two rollout-JSON schemas exist and both are still on disk:
+        #   nested (Gen14 / late Gen7): success.strict, outcome.*, timing.*,
+        #                               context.*, constraint.exec.*
+        #   flat   (early Gen7):        success, mean_distance, steps,
+        #                               context_info.*, constraint_metrics.exec_*
+        # Every field is looked up along both, first hit wins, so a mixed tree
+        # loads without a flag. `_PICK` below is (canonical, [path, path, ...]).
+        def get(*paths, default=np.nan):
+            return np.array([_pick(r, paths, default) for r in rows], dtype=float)
 
         columns = {
             'rollout_idx': np.array([_dig(r, ['rollout_index'], i)
                                      for i, r in enumerate(rows)], dtype=int),
             'mode_encoding': get(['mode']),
-            'n_success': get(['success', 'strict']),
-            'success_strict': get(['success', 'strict']),
+            'n_success': get(['success', 'strict'], ['success']),
+            'success_strict': get(['success', 'strict'], ['success']),
             'success_relaxed': get(['success', 'relaxed']),
-            'mean_dist_per_rollout': get(['outcome', 'mean_distance']),
-            'max_phys_error_per_rollout': get(['outcome', 'max_physical_tracking_error']),
-            'n_steps': get(['timing', 'steps']),
-            'avg_time': get(['timing', 'avg_inference_time_per_replan']),
-            'context_init_xy_dist': get(['context', 'init_xy_dist']),
-            'context_box_angle_deg': get(['context', 'box_init_angle_deg']),
-            'context_target_angle_deg': get(['context', 'target_angle_deg']),
-            'context_final_xy_dist': get(['context', 'final_xy_dist']),
-            'context_final_box_angle_deg': get(['context', 'final_box_angle_deg']),
+            'mean_dist_per_rollout': get(['outcome', 'mean_distance'], ['mean_distance']),
+            'max_phys_error_per_rollout': get(['outcome', 'max_physical_tracking_error'],
+                                              ['max_physical_tracking_error']),
+            'n_steps': get(['timing', 'steps'], ['steps']),
+            'avg_time': get(['timing', 'avg_inference_time_per_replan'],
+                            ['avg_inference_time_per_replan']),
+            'context_init_xy_dist': _ctx(rows, 'init_xy_dist'),
+            'context_box_angle_deg': _ctx(rows, 'box_init_angle_deg'),
+            'context_target_angle_deg': _ctx(rows, 'target_angle_deg'),
+            'context_final_xy_dist': _ctx(rows, 'final_xy_dist'),
+            'context_final_box_angle_deg': _ctx(rows, 'final_box_angle_deg'),
             'contact_first_step': get(['contact', 'first_step']),
             'contact_last_step': get(['contact', 'last_step']),
-            'constraint_exec_n_violated_steps': get(['constraint', 'exec', 'n_violated_steps']),
-            'constraint_exec_sat_rate': get(['constraint', 'exec', 'constraint_sat_rate']),
-            'constraint_exec_zero_violation': get(['constraint', 'exec', 'zero_violation_rollout']),
-            'constraint_exec_bounds_viol_count': get(['constraint', 'exec', 'by_family', 'bounds', 'viol_count']),
-            'constraint_exec_halfspace_viol_count': get(['constraint', 'exec', 'by_family', 'halfspace', 'viol_count']),
-            'constraint_exec_obstacle_viol_count': get(['constraint', 'exec', 'by_family', 'obstacles', 'viol_count']),
-            'constraint_exec_max_bounds_viol_m': get(['constraint', 'exec', 'by_family', 'bounds', 'max_viol_m']),
-            'constraint_exec_max_halfspace_viol_m': get(['constraint', 'exec', 'by_family', 'halfspace', 'max_viol_m']),
-            'constraint_exec_max_obstacle_penetration_m': get(['constraint', 'exec', 'by_family', 'obstacles', 'max_viol_m']),
-            'constraint_exec_margin_mean_m': get(['constraint', 'exec', 'margin_mean_m']),
-            'constraint_exec_first_violation_step': get(['constraint', 'exec', 'first_violation_step']),
-            'constraint_exec_longest_safe_streak': get(['constraint', 'exec', 'longest_safe_streak']),
-            'constraint_exec_dyn_err_mean': get(['constraint', 'exec', 'dynamics_consistency_error', 'mean']),
-            'constraint_exec_dyn_err_max': get(['constraint', 'exec', 'dynamics_consistency_error', 'max']),
-            'constraint_plan_post_viol_rate_mean': get(['constraint', 'plan', 'post_viol_rate_mean']),
-            'constraint_plan_post_viol_rate_max': get(['constraint', 'plan', 'post_viol_rate_max']),
-            'constraint_plan_n_replan_steps': get(['constraint', 'plan', 'n_replan_steps']),
-            'frozen': np.array([1.0 if _dig(r, ['context', 'box_obstacle_conflict'], None)
-                                else 0.0 for r in rows]),
-            'frozen_worst_overlap_m': get(['context', 'box_obstacle_conflict', 'worst_overlap_m'], np.nan),
+            'constraint_exec_n_violated_steps': _cm(rows, ['exec', 'n_violated_steps'],
+                                                    'exec_n_violated_steps'),
+            'constraint_exec_sat_rate': _cm(rows, ['exec', 'constraint_sat_rate'],
+                                            'exec_constraint_sat_rate'),
+            'constraint_exec_zero_violation': _cm(rows, ['exec', 'zero_violation_rollout'],
+                                                  'exec_zero_violation_rollout'),
+            'constraint_exec_bounds_viol_count': _cm(rows, ['exec', 'by_family', 'bounds', 'viol_count'],
+                                                     'exec_bounds_viol_count'),
+            'constraint_exec_halfspace_viol_count': _cm(rows, ['exec', 'by_family', 'halfspace', 'viol_count'],
+                                                        'exec_halfspace_viol_count'),
+            'constraint_exec_obstacle_viol_count': _cm(rows, ['exec', 'by_family', 'obstacles', 'viol_count'],
+                                                       'exec_obstacle_viol_count'),
+            'constraint_exec_max_bounds_viol_m': _cm(rows, ['exec', 'by_family', 'bounds', 'max_viol_m'],
+                                                     'exec_max_bounds_viol_m'),
+            'constraint_exec_max_halfspace_viol_m': _cm(rows, ['exec', 'by_family', 'halfspace', 'max_viol_m'],
+                                                        'exec_max_halfspace_viol_m'),
+            'constraint_exec_max_obstacle_penetration_m': _cm(rows, ['exec', 'by_family', 'obstacles', 'max_viol_m'],
+                                                              'exec_max_obstacle_penetration_m'),
+            'constraint_exec_margin_mean_m': _cm(rows, ['exec', 'margin_mean_m'],
+                                                 'exec_constraint_margin_mean_m'),
+            'constraint_exec_first_violation_step': _cm(rows, ['exec', 'first_violation_step'],
+                                                        'exec_first_violation_step'),
+            'constraint_exec_longest_safe_streak': _cm(rows, ['exec', 'longest_safe_streak'],
+                                                       'exec_longest_safe_streak'),
+            'constraint_exec_dyn_err_mean': _cm(rows, ['exec', 'dynamics_consistency_error', 'mean'],
+                                                'exec_dynamics_consistency_error_mean'),
+            'constraint_exec_dyn_err_max': _cm(rows, ['exec', 'dynamics_consistency_error', 'max'],
+                                               'exec_dynamics_consistency_error_max'),
+            'constraint_plan_post_viol_rate_mean': _cm(rows, ['plan', 'post_viol_rate_mean'],
+                                                       'plan_post_viol_rate_mean'),
+            'constraint_plan_post_viol_rate_max': _cm(rows, ['plan', 'post_viol_rate_max'],
+                                                      'plan_post_viol_rate_max'),
+            'constraint_plan_n_replan_steps': _cm(rows, ['plan', 'n_replan_steps'],
+                                                  'plan_n_replan_steps'),
+            'frozen': np.array([1.0 if _conflict(r) else 0.0 for r in rows]),
+            'frozen_worst_overlap_m': np.array(
+                [_as_float(_dig(_conflict(r) or {}, ['worst_overlap_m'], np.nan))
+                 for r in rows], dtype=float),
         }
         for axis, idx in (('x', 0), ('y', 1)):
-            for name, path in (('context_box_init_xy', ['context', 'box_init_xy']),
-                               ('context_target_xy', ['context', 'target_xy']),
-                               ('context_final_box_xy', ['context', 'final_box_xy'])):
+            for name, field in (('context_box_init_xy', 'box_init_xy'),
+                                ('context_target_xy', 'target_xy'),
+                                ('context_final_box_xy', 'final_box_xy')):
                 columns[f'{name}_{axis}'] = np.array(
-                    [_seq_item(_dig(r, path, None), idx) for r in rows], dtype=float)
+                    [_seq_item(_pick(r, ([CONTEXT_NEW, field], [CONTEXT_OLD, field]), None), idx)
+                     for r in rows], dtype=float)
 
         frame = pd.DataFrame(columns)
-        scalars = {'success_rate': float(np.nanmean(frame['n_success']))
-                   if len(frame) else np.nan}
+        scalars = {'success_rate': _safe_nanmean(frame['n_success'])}
         quality = {'npz_complete': np.nan, 'diagnostics_found': 1.0}
+
+        if np.isnan(scalars['success_rate']):
+            self._note('WARN', f'{_uid(unit)}: no success field found in the rollout '
+                               f'JSONs — unrecognised schema, metrics will be NaN')
         return frame, scalars, {}, quality
 
     # ── diagnostics side-scan (npz source) ───────────────────────────────────
@@ -266,12 +297,14 @@ class UnitLoader:
                 final_angle.append(np.nan)
                 found.append(0.0)
                 continue
-            conflict = _dig(row, ['context', 'box_obstacle_conflict'], None)
+            conflict = _conflict(row)   # nested `context` or flat `context_info`
             frozen.append(1.0 if conflict else 0.0)
-            overlap.append(_as_float(_dig(row, ['context', 'box_obstacle_conflict',
-                                                'worst_overlap_m'], np.nan)))
-            final_dist.append(_as_float(_dig(row, ['context', 'final_xy_dist'], np.nan)))
-            final_angle.append(_as_float(_dig(row, ['context', 'final_box_angle_deg'], np.nan)))
+            overlap.append(_as_float(_dig(conflict or {}, ['worst_overlap_m'], np.nan)))
+            final_dist.append(_as_float(_pick(
+                row, ([CONTEXT_NEW, 'final_xy_dist'], [CONTEXT_OLD, 'final_xy_dist']), np.nan)))
+            final_angle.append(_as_float(_pick(
+                row, ([CONTEXT_NEW, 'final_box_angle_deg'],
+                      [CONTEXT_OLD, 'final_box_angle_deg']), np.nan)))
             found.append(1.0)
 
         out['frozen'] = np.array(frozen)
@@ -488,6 +521,61 @@ def _dig(mapping, path, default=None):
             return default
         node = node[key]
     return default if node is None else node
+
+
+# The rollout-JSON schema changed between early Gen7 and Gen14; both are on disk.
+CONTEXT_NEW, CONTEXT_OLD = 'context', 'context_info'
+CONSTRAINT_NEW, CONSTRAINT_OLD = 'constraint', 'constraint_metrics'
+
+_MISSING = object()
+
+
+def _pick(row, paths, default=None):
+    """First of several candidate paths that actually resolves.
+
+    Lets one extractor read both the nested Gen14 schema and the flat early-Gen7
+    one without the caller knowing which file it has.
+    """
+    for path in paths:
+        value = _dig(row, path, _MISSING)
+        if value is not _MISSING:
+            return value
+    return default
+
+
+def _ctx(rows, field, default=np.nan):
+    """A `context` / `context_info` field across every rollout."""
+    return np.array(
+        [_pick(r, ([CONTEXT_NEW, field], [CONTEXT_OLD, field]), default) for r in rows],
+        dtype=float)
+
+
+def _cm(rows, nested_path, flat_key, default=np.nan):
+    """A constraint metric: nested `constraint.exec.…` or flat `constraint_metrics.exec_…`."""
+    return np.array(
+        [_pick(r, ([CONSTRAINT_NEW] + list(nested_path), [CONSTRAINT_OLD, flat_key]), default)
+         for r in rows],
+        dtype=float)
+
+
+def _conflict(row):
+    """The D1 box-obstacle conflict block, under either context spelling."""
+    value = _pick(row, ([CONTEXT_NEW, 'box_obstacle_conflict'],
+                        [CONTEXT_OLD, 'box_obstacle_conflict']), None)
+    if isinstance(value, dict):
+        return value
+    if not value:                       # absent, null, false, 0
+        return None
+    # A bare truthy flag (e.g. `true`): still a frozen rollout, just no detail.
+    # Must stay truthy — an empty dict would read as "not frozen".
+    return {'worst_overlap_m': float('nan')}
+
+
+def _safe_nanmean(values):
+    """nanmean without the all-NaN RuntimeWarning."""
+    array = np.asarray(values, dtype=float)
+    valid = array[~np.isnan(array)]
+    return float(valid.mean()) if valid.size else float('nan')
 
 
 def _seq_item(seq, idx):

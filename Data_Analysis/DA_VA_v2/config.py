@@ -195,7 +195,18 @@ MAJOR_VARIANTS = [
 # Output
 # ──────────────────────────────────────────────────────────────────────────────
 
-OUTPUT_FOLDER_PREFIX = 'DA_VA_V2'
+# Output folder naming is NOT cosmetic. Both HTML visualizers build their run
+# dropdown by regexing the directory listing for a name prefix, and fall back to
+# results_manifest.json only when the listing fetch fails (it does not, under
+# `python -m http.server`) — so a batch whose folder name misses the prefix is
+# invisible in the picker even though every CSV is present:
+#     Visualizer/index.html                  href="(batch_[^/"]+)
+#     Visualizer_Visual_Aligning/index.html  href="(va_batch_[^/"]+)
+# The run therefore writes `batch_va2_<timestamp>` and drops a `va_batch_va2_…`
+# symlink beside it, so it is listed by both (see utils.create_viewer_alias).
+OUTPUT_FOLDER_PREFIX = 'batch_va2'
+VIEWER_ALIAS_PREFIX = 'va_batch_'
+VIEWER_LIST_PREFIX = 'batch_'
 
 # `args` fields lifted into run_config.csv when present (best effort).
 RUN_CONFIG_FIELDS = [

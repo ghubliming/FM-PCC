@@ -5,7 +5,7 @@ import logging
 import os
 from datetime import datetime
 
-from config import OUTPUT_FOLDER_PREFIX
+from config import OUTPUT_FOLDER_PREFIX, VIEWER_ALIAS_PREFIX, VIEWER_LIST_PREFIX
 
 
 def setup_logger(name, log_file=None, level=logging.INFO):
@@ -45,9 +45,13 @@ def setup_logger(name, log_file=None, level=logging.INFO):
 
 def create_output_directory(base_path, prefix=OUTPUT_FOLDER_PREFIX,
                             return_timestamp=False):
-    """`<base>/<timestamp>_<prefix>/` with plots/ and logs/ subdirectories."""
+    """`<base>/<prefix>_<timestamp>/` with plots/ and logs/ subdirectories.
+
+    Prefix first, not timestamp first: the visualizers match the run folder by
+    leading prefix, so `20260806_..._batch_va2` would never be listed.
+    """
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    output_dir = os.path.join(base_path, f'{timestamp}_{prefix}')
+    output_dir = os.path.join(base_path, f'{prefix}_{timestamp}')
     prepare_output_directory(output_dir)
     if return_timestamp:
         return output_dir, timestamp
@@ -59,6 +63,50 @@ def prepare_output_directory(output_dir):
     os.makedirs(os.path.join(output_dir, 'plots'), exist_ok=True)
     os.makedirs(os.path.join(output_dir, 'logs'), exist_ok=True)
     return output_dir
+
+
+def create_viewer_alias(output_dir):
+    """Drop a `va_batch_*` symlink beside the run folder.
+
+    The two HTML visualizers pick runs out of the `analysis_results/` directory
+    listing by leading prefix and disagree about it — `batch_` for
+    `Visualizer/index.html`, `va_batch_` for `Visualizer_Visual_Aligning/`. One
+    folder name cannot satisfy both, so the real directory is named for the
+    former and this alias makes it visible in the latter. Same files, one copy.
+
+    Non-fatal: a filesystem without symlinks just loses the alias.
+    """
+    logger = logging.getLogger(__name__)
+    absolute = os.path.abspath(output_dir)
+    parent = os.path.dirname(absolute)
+    name = os.path.basename(absolute)
+
+    if name.startswith(VIEWER_ALIAS_PREFIX):
+        return None                      # already the VA-visible spelling
+    if name.startswith(VIEWER_LIST_PREFIX):
+        alias_name = VIEWER_ALIAS_PREFIX + name[len(VIEWER_LIST_PREFIX):]
+    else:
+        alias_name = VIEWER_ALIAS_PREFIX + name
+        logger.warning(
+            f"Output folder '{name}' does not start with '{VIEWER_LIST_PREFIX}' — it "
+            f"will NOT appear in Visualizer/index.html's run list (that page regexes "
+            f"the directory listing for that prefix).")
+
+    alias = os.path.join(parent, alias_name)
+    try:
+        if os.path.islink(alias):
+            if os.path.realpath(alias) == absolute:
+                return alias
+            os.unlink(alias)
+        elif os.path.exists(alias):
+            logger.warning(f'Viewer alias path already exists and is not a symlink: {alias}')
+            return None
+        os.symlink(name, alias)          # relative target — survives a repo move
+        logger.info(f'Viewer alias: {alias_name} -> {name}')
+        return alias
+    except OSError as exc:
+        logger.warning(f'Could not create viewer alias {alias_name}: {exc}')
+        return None
 
 
 def update_results_manifest(output_dir):

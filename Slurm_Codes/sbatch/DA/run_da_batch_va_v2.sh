@@ -49,9 +49,15 @@ export MPLBACKEND="agg"
 # 4) Run
 cd "$REPO"
 
+# The folder name matters: both HTML visualizers pick runs out of the
+# analysis_results/ directory listing by leading prefix ("batch_" for
+# Visualizer/index.html, "va_batch_" for Visualizer_Visual_Aligning/). The run
+# writes `batch_va2_<ts>` and symlinks `va_batch_va2_<ts>` beside it, so it shows
+# up in both pickers. Do not rename this to something else without reading
+# Data_Analysis/DA_VA_v2/config.py:OUTPUT_FOLDER_PREFIX.
 python Data_Analysis/DA_VA_v2/main_da_batch.py \
     --parent-path "$PARENT_PATH" \
-    --output-path "Data_Analysis/analysis_results/va2_batch_$(date +%Y%m%d_%H%M%S)" \
+    --output-path "Data_Analysis/analysis_results/batch_va2_$(date +%Y%m%d_%H%M%S)" \
     "$@"
 
 echo "DA_VA_v2 batch analysis completed."
