@@ -44,7 +44,7 @@ from discovery import (
 from reporter import Reporter
 from utils import (
     create_output_directory,
-    create_viewer_alias,
+    check_viewer_visibility,
     parse_int_list,
     parse_str_list,
     prepare_output_directory,
@@ -108,7 +108,7 @@ def main(argv=None):
         output_dir = prepare_output_directory(args.output_path)
 
     manifest = update_results_manifest(output_dir)
-    alias = create_viewer_alias(output_dir)
+    check_viewer_visibility(output_dir)
 
     logger = setup_logger('DA_VA_v2',
                           os.path.join(output_dir, 'logs', 'analysis.log'),
@@ -122,8 +122,6 @@ def main(argv=None):
     logger.info(f'Output: {output_dir}')
     if manifest:
         logger.info(f'Manifest: {manifest}')
-    if alias:
-        logger.info(f'Viewer alias: {alias}')
 
     try:
         # ── 1. discover candidates ───────────────────────────────────────────
@@ -216,7 +214,6 @@ def main(argv=None):
         logger.info('  va2_units_long.csv                   per seed/geo/variant/mask')
         logger.info('  va2_aggregated_long.csv              pooled over seeds')
         logger.info('  candidates_multidimensional_*.csv    DA_Code_v3 visualizer')
-        logger.info('  va_candidates_dynamic.csv            VA visualizer')
         logger.info('  data_quality.csv                     frozen / circuit breaker')
         logger.info('=' * 70)
         return 0

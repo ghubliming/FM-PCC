@@ -12,9 +12,6 @@ compat      candidates_ranking.csv, candidates_detailed.csv — same column name
             the existing `Data_Analysis/Visualizer/index.html` reads, so a
             visual-aligning batch can be opened in it unchanged.
 
-DA_VA       va_candidates_dynamic.csv, per_rollout_detail.csv — the shapes
-compat      `Data_Analysis/Visualizer_Visual_Aligning/index.html` reads.
-
 Axis mapping for the DA_Code_v3-compat files (that schema has no geometry or
 split axis of its own):
     halfspace_variant  ←  geo, suffixed `@train_set` for --eval-on-train rows
@@ -58,7 +55,6 @@ class Reporter:
                     self._compat_raw_table())
         self._write(output_dir, 'candidates_multidimensional_aggregated.csv',
                     self._compat_aggregated_table())
-        self._write(output_dir, 'va_candidates_dynamic.csv', self._dynamic_table())
 
         self._write(output_dir, 'candidates_ranking.csv', self._ranking_table())
         self._write(output_dir, 'candidates_detailed.csv', self._detailed_table())
@@ -74,23 +70,6 @@ class Reporter:
         table = self.agg.per_rollout
         if table.empty:
             return table
-        table = table.copy()
-
-        # Legacy aliases so the existing Visualizer_Visual_Aligning rollout table
-        # keeps working against this file; it looks these exact names up and
-        # renders '—' for anything it cannot find.
-        for legacy, canonical in (('success', 'n_success'),
-                                  ('mean_dist_m', 'mean_dist_per_rollout'),
-                                  ('steps', 'n_steps'),
-                                  ('phys_err_m', 'max_phys_error_per_rollout'),
-                                  ('context_xy_dist_m', 'context_init_xy_dist'),
-                                  ('avg_time_s', 'avg_time'),
-                                  ('final_xy_dist_m', 'context_final_xy_dist'),
-                                  ('constraint_sat_rate', 'constraint_exec_sat_rate'),
-                                  ('n_violated_steps', 'constraint_exec_n_violated_steps')):
-            if canonical in table.columns and legacy not in table.columns:
-                table[legacy] = table[canonical]
-
         lead = ['Candidate', 'FolderName', 'seed', 'split', 'geo', 'geo_base',
                 'tightened', 'variant', 'variant_raw', 'rollout_idx', 'frozen']
         lead = [c for c in lead if c in table.columns]
@@ -178,29 +157,6 @@ class Reporter:
             'count': rows['n'],
         })
         return out
-
-    # ── DA_Visual_Aligning-compatible table ──────────────────────────────────
-    def _dynamic_table(self):
-        """`va_candidates_dynamic.csv` — variant carries the geo layer as a prefix,
-        which is how the old VA visualizer splits its geo-layer dropdown."""
-        table = self.agg.agg_long
-        if table is None or table.empty:
-            return pd.DataFrame()
-        rows = table[table['mask'] == 'all'].copy()
-        variant = rows['variant'].astype(str)
-        geo = rows['geo'].astype(str)
-        labelled = np.where(geo == 'none', variant, geo + '/' + variant)
-        return pd.DataFrame({
-            'Candidate': rows['Candidate'],
-            'FolderName': rows['FolderName'],
-            'FullPath': rows['FullPath'],
-            'variant': labelled,
-            'split': rows['split'],
-            'metric': rows['metric'],
-            'mean': rows['mean'],
-            'std': rows['std'],
-            'n': rows['n'],
-        })
 
     # ── candidate-level tables ───────────────────────────────────────────────
     def _ranking_table(self):

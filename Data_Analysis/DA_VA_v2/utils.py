@@ -5,7 +5,7 @@ import logging
 import os
 from datetime import datetime
 
-from config import OUTPUT_FOLDER_PREFIX, VIEWER_ALIAS_PREFIX, VIEWER_LIST_PREFIX
+from config import OUTPUT_FOLDER_PREFIX, VIEWER_LIST_PREFIX
 
 
 def setup_logger(name, log_file=None, level=logging.INFO):
@@ -65,48 +65,20 @@ def prepare_output_directory(output_dir):
     return output_dir
 
 
-def create_viewer_alias(output_dir):
-    """Drop a `va_batch_*` symlink beside the run folder.
+def check_viewer_visibility(output_dir):
+    """Warn when the run folder will not show up in the viewer's run picker.
 
-    The two HTML visualizers pick runs out of the `analysis_results/` directory
-    listing by leading prefix and disagree about it — `batch_` for
-    `Visualizer/index.html`, `va_batch_` for `Visualizer_Visual_Aligning/`. One
-    folder name cannot satisfy both, so the real directory is named for the
-    former and this alias makes it visible in the latter. Same files, one copy.
-
-    Non-fatal: a filesystem without symlinks just loses the alias.
+    `Visualizer_VA_v2/index.html` regexes the `analysis_results/` directory
+    listing for `batch_va2_*`; a differently-named `--output-path` still works
+    but has to be opened through the viewer's CUSTOM_PATH box.
     """
-    logger = logging.getLogger(__name__)
-    absolute = os.path.abspath(output_dir)
-    parent = os.path.dirname(absolute)
-    name = os.path.basename(absolute)
-
-    if name.startswith(VIEWER_ALIAS_PREFIX):
-        return None                      # already the VA-visible spelling
+    name = os.path.basename(os.path.abspath(output_dir))
     if name.startswith(VIEWER_LIST_PREFIX):
-        alias_name = VIEWER_ALIAS_PREFIX + name[len(VIEWER_LIST_PREFIX):]
-    else:
-        alias_name = VIEWER_ALIAS_PREFIX + name
-        logger.warning(
-            f"Output folder '{name}' does not start with '{VIEWER_LIST_PREFIX}' — it "
-            f"will NOT appear in Visualizer/index.html's run list (that page regexes "
-            f"the directory listing for that prefix).")
-
-    alias = os.path.join(parent, alias_name)
-    try:
-        if os.path.islink(alias):
-            if os.path.realpath(alias) == absolute:
-                return alias
-            os.unlink(alias)
-        elif os.path.exists(alias):
-            logger.warning(f'Viewer alias path already exists and is not a symlink: {alias}')
-            return None
-        os.symlink(name, alias)          # relative target — survives a repo move
-        logger.info(f'Viewer alias: {alias_name} -> {name}')
-        return alias
-    except OSError as exc:
-        logger.warning(f'Could not create viewer alias {alias_name}: {exc}')
-        return None
+        return True
+    logging.getLogger(__name__).warning(
+        f"Output folder '{name}' does not start with '{VIEWER_LIST_PREFIX}' — it will "
+        f"not appear in the viewer's QUICK_LIST; open it via CUSTOM_PATH instead.")
+    return False
 
 
 def update_results_manifest(output_dir):

@@ -134,7 +134,6 @@ never ranked on.
 | `data_quality.csv` | per unit: frozen count, circuit-breaker trips, `npz_complete`, source |
 | `run_config.csv` | per unit: engine / K / threshold / mpc size … lifted from the npz `args` |
 | `candidates_multidimensional_raw.csv`<br>`candidates_multidimensional_aggregated.csv` | `DA_Code_v3` column names — open a VA batch in `Data_Analysis/Visualizer/index.html` unchanged |
-| `va_candidates_dynamic.csv` | `DA_Visual_Aligning` long format (variant carries the geo prefix) |
 | `candidates_ranking.csv`, `candidates_detailed.csv`, `candidates_per_variant.csv` | candidate-level tables |
 | `candidates_summary.txt` | human-readable ranking + a data-quality section |
 | `logs/analysis.log`, `logs/loading.log`, `logs/discovery_manifest.json` | what ran, what loaded, what discovery saw |
@@ -145,32 +144,32 @@ The `DA_Code_v3`-compat schema has no geometry or split axis of its own, so:
 with a test run of the same geometry in a viewer that only knows
 `halfspace_variant`.
 
-`per_rollout_detail.csv` also carries legacy aliases (`success`, `mean_dist_m`,
-`steps`, `phys_err_m`, `context_xy_dist_m`, `avg_time_s`, …) so the old VA
-visualizer's rollout table still renders.
+### Viewing it
+
+`Data_Analysis/Visualizer_VA_v2/index.html` is the viewer for these CSVs — it
+reads the four native files above directly (no compatibility shim). Serve the
+repo root and open it:
+
+```bash
+python3 -m http.server 8000        # from the repo root
+# → http://localhost:8000/Data_Analysis/Visualizer_VA_v2/index.html
+```
+
+The old `Visualizer_Visual_Aligning/index.html` (VA v1) is superseded and is not
+fed by this pipeline any more; `Visualizer/index.html` (DAv3) still opens a VA
+batch through the `candidates_multidimensional_*.csv` pair.
 
 ### Output folder naming — do not change casually
 
-Both visualizers build their run dropdown by regexing the `analysis_results/`
-**directory listing for a leading prefix**, and they disagree about it:
+The viewer builds its run dropdown by regexing the `analysis_results/`
+**directory listing** for `batch_va2_*`. `results_manifest.json` is only a
+*fallback*, used when the directory-listing fetch fails — which it does not under
+`python -m http.server`. A run whose folder name misses the prefix is therefore
+**invisible in QUICK_LIST even though every CSV is present**; open it via
+CUSTOM_PATH, or name it `batch_va2_*`. The run logs a warning when it does not.
 
-| page | pattern |
-|---|---|
-| `Visualizer/index.html` | `href="(batch_[^/"]+)` |
-| `Visualizer_Visual_Aligning/index.html` | `href="(va_batch_[^/"]+)` |
-
-`results_manifest.json` is only a *fallback*, used when the directory-listing
-fetch fails — which it does not under `python -m http.server`. So a run whose
-folder name misses the prefix is **invisible in the picker even though every CSV
-is present**.
-
-One name cannot match both patterns, so each run writes `batch_va2_<timestamp>`
-and symlinks `va_batch_va2_<timestamp>` beside it — same files, one copy, listed
-by both pages. `--output-path` with a name that does not start with `batch_`
-still works, but logs a warning and will not appear in the DAv3 picker.
-
-The manifest is refreshed on every run regardless, for servers that do forbid
-directory listings.
+`batch_va2_*` also satisfies the DAv3 page's own `batch_*` pattern, so one folder
+name serves both with no symlink or alias.
 
 ---
 

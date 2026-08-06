@@ -195,18 +195,17 @@ MAJOR_VARIANTS = [
 # Output
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Output folder naming is NOT cosmetic. Both HTML visualizers build their run
-# dropdown by regexing the directory listing for a name prefix, and fall back to
-# results_manifest.json only when the listing fetch fails (it does not, under
-# `python -m http.server`) — so a batch whose folder name misses the prefix is
-# invisible in the picker even though every CSV is present:
-#     Visualizer/index.html                  href="(batch_[^/"]+)
-#     Visualizer_Visual_Aligning/index.html  href="(va_batch_[^/"]+)
-# The run therefore writes `batch_va2_<timestamp>` and drops a `va_batch_va2_…`
-# symlink beside it, so it is listed by both (see utils.create_viewer_alias).
+# Output folder naming is NOT cosmetic. An HTML viewer builds its run dropdown by
+# regexing the `analysis_results/` directory listing for a leading prefix, and
+# falls back to results_manifest.json only when that listing fetch fails (it does
+# not, under `python -m http.server`) — so a run whose folder name misses the
+# prefix is invisible in the picker even though every CSV is present.
+#   Visualizer_VA_v2/index.html  matches  href="(batch_va2_[^/"]+)   ← this tool
+#   Visualizer/index.html        matches  href="(batch_[^/"]+)       ← also matches
+# `batch_va2_<timestamp>` therefore lands in both pickers on its own, with no
+# symlink or other accommodation.
 OUTPUT_FOLDER_PREFIX = 'batch_va2'
-VIEWER_ALIAS_PREFIX = 'va_batch_'
-VIEWER_LIST_PREFIX = 'batch_'
+VIEWER_LIST_PREFIX = 'batch_va2_'
 
 # `args` fields lifted into run_config.csv when present (best effort).
 RUN_CONFIG_FIELDS = [
