@@ -4032,3 +4032,65 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **The Soft `gradient` Winner**: The `gradient` variant won heavily on distance (0.011m best case) and remains cheap (~32ms/replan), showing that soft gradient nudging preserves rollout quality far better than hard NLP projection.
 4. **Computational Cost**: HardFlow solves an NLP inside the ODE at each active step, resulting in severe computational cost (~159–171ms per replan). This is ~3.3x slower than DPCC variants and ~5x outside the real-time 30Hz budget (33.3ms), confirming that HardFlow trades performance speed for strict nominal feasibility.
 5. **SLSQP Nondeterminism**: Uncovered that divergence in `dpcc-*` evaluations is purely due to nondeterminism in the `scipy` SLSQP projector. Unprojected methods (like `diffuser`, `gradient`, `geo_free`) are perfectly reproducible, meaning noise floors identified previously exist strictly for hard-projected cells.
+
+
+***
+
+## Gen14 U7 DA: n=30 Massive K=2 Evaluation (August 5, 2026)
+
+**Keywords**: Gen14 U7, massive K=2 eval, noise floor, constraints, HardFlow, bounds_free.
+
+1. **Noise Floor Invalidates Prior Distance Rankings**: The unprojected `diffuser` replicate showed a run-to-run distance noise floor of ±0.135m (mf) and ±0.068m (af), fully eclipsing the entire variant spread (0.10–0.18m). Consequently, no variant is statistically distinguishable from the baseline on final distance, overturning the conclusions of the n=3 HardFlow DA.
+2. **Constraints Signal is Massive**: While distance showed no signal, the constraint axis showed an unambiguous 200x gap. The `dpcc-t` variant reached 0.0 violated steps over 30 rollouts against the unprojected baseline's 63.5. Projection strictly solves the constraint satisfaction problem, though it does not buy distance accuracy.
+3. **HardFlow Fails to Earn its Cost**: HardFlow costs 145–194 ms/replan (3.5× DPCC) and is matched or beaten in every cell on constraints by a cheaper DPCC-family variant (≤50 ms).
+4. **The `bounds_free` Paradox**: Removing the bounds rows from the projection NLP unexpectedly improved performance—cutting bounds violations drastically while maintaining near-best distance and reducing compute time.
+5. **Cross-Variant Noise Confound**: Discovered that torch RNG streams were not reset per variant, compounding comparisons with different noise draws. Recommended reseeding per variant in the future.
+
+***
+
+## Gen3v6 Fix 8: UNet Channel Width Defect (`freq_dim`) Audit & Fix (August 5, 2026)
+
+**Keywords**: Gen3v6, Gen3v4, Gen3v7, UNet, capacity error, freq_dim, architecture control.
+
+1. **The 64x Capacity Defect**: Discovered that the config key `freq_dim=256` was incorrectly passed as the UNet channel width instead of a frequency-embedding parameter, building a 253M parameter backbone instead of the 4M baseline intended.
+2. **Affected Runs & Invalidated Controls**: This silent defect confounded all pre-U6 Gen3v4 runs and Gen3v6's Fix_1 `bbunet` A/B comparison. The A/B comparison changed both architecture and 25x capacity simultaneously, nullifying its verdict on the MeanFlow UNet objective.
+3. **The Fix**: Hardcoded `freq_dim: 32` across the affected state-only generations and added a build-time parameter-count guard.
+4. **Gen14 / Gen8 Safe**: Audits confirmed that visual generations (Gen8, Gen14) and all DiT/SiT runs bypass the `dim=freq_dim` assignment, leaving all headline results and visual pipelines untouched and fully valid.
+
+***
+
+## Gen14 NOFIX Analysis: UNet Architecture Comparison (August 5, 2026)
+
+**Keywords**: Gen14, Mix-ML, UNet, architecture comparison, capacity control.
+
+1. **Controlled Capacity**: Audited the `diffusion`, `fm`, `mf`, and `af` arms to verify if their cross-arm comparisons are capacity-controlled. Confirmed the two-time `mf/af` backbones add only +131k params (~3%) over the one-time backbones.
+2. **Structural Necessity**: The additional modules (`h_mlp` and `v_final_conv`) in the `mf/af` arms are structurally required to express the two-time objective. The comparison is legitimate, and any performance differences are purely attributable to the objective formulations.
+
+***
+
+## Gen12 DA: HardFlow Pareto Study (August 5, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC, Pareto optimality, K-ladder.
+
+1. **Pareto Dominance at K=10**: HardFlow strictly dominates DPCC (better quality, fewer steps, less time) only at K=10 under the neutral `-r` selection rule.
+2. **Equivalent Time Fails at K≤2**: At the low-K operating point (K=1-2), HardFlow costs 2.1-3.3x the wall clock time of DPCC, failing the "equivalent time" requirement because both projectors run exactly one active projection step, but HardFlow's NLP is heavier.
+3. **K=5 Gate Rounding Confound**: The one regime where HardFlow appeared to dominate completely (K=5) was identified as confounded due to a pre-fix gate rounding bug that gave HardFlow 33% fewer NLP solves.
+
+***
+
+## Gen12 DA: Low-K Ablation (MFAF vs FM/DPCC) (August 5, 2026)
+
+**Keywords**: Low-K ablation, AlphaFlow, MeanFlow, DPCC, confound, backbone.
+
+1. **Structural Low-K Advantage**: AlphaFlow at K=2 cleared 70% success in every environment at 1.3-7.0s/episode. Matched against DPCC at K=1 (identical 3.3s wall clock budget), AlphaFlow scored 22/30 compared to DPCC's 2/30, proving the AlphaFlow/MeanFlow low-K advantage is structural and not merely a cost discount.
+2. **Tightened Metric Pathology**: Demonstrated that the "tightened" success metric measures the projector, not the generator (a 1/30 unprojected generator scores 30/30 once tightened), rendering published tightened arms useless for evaluating the underlying generative models.
+3. **The Backbone Confound**: The cross-family performance comparisons are confounded by architecture (AF-SiT vs DPCC-UNet). The architecture-matched comparison currently cannot be resolved because AF-UNet and MF-UNet collapse completely to 0 success in 20/24 projected cells, indicating an incompatibility rather than a capacity limit.
+
+***
+
+## Gen0 Fix 2 DA: Cluster Validation T1 (August 5, 2026)
+
+**Keywords**: Gen0 Fix 2, cluster validation, A/B test, post_processing.
+
+1. **Byte-level Proof**: Validated the DPCC threshold wiring fix via a strict A/B test at T=1. `diffuser` remained bit-identical while all projector variants moved, proving the fix applied correctly without side effects.
+2. **Baseline Restored**: Proved that `post_processing` is no longer a duplicate of `dpcc-r`, operating exactly as a single final projection (+0.014 s/step) in alignment with the paper's definition.
