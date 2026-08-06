@@ -1,0 +1,114 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Aug  1 22:50:50 UTC 2026
+JOB NAME:  eval_meanflow
+JOB ID:    24121
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   ff3f3c2
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval.yaml
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 97000 (lr=1.132e-06)
+[ utils/training ] Restored loss history from checkpoint at step 97000
+[ utils/training ] Recovered best_test_loss=0.814825 from restored history (98 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE/7)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (7) - K=2----------------------------
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_744bec72-8dfb-11f1-a54a-d85ed34e311e.xml' with default provider at slot 1
+
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.50 +- 7.50
+Avg number of constraint violations: 21.50 +- 6.50
+Avg total violation: 4.325 +- 1.180
+Average computation time per step: 0.018
+Tracking error: 0.028
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 71.00 +- 2.00
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.030 +- 0.030
+Average computation time per step: 0.024
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.025
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (7) - K=2----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.023
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.023
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (7) - K=2----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.009 +- 0.009
+Average computation time per step: 0.024
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (7) - K=2----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py:374: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.00 +- 8.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.025
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (7) - K=2----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py:353: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py", line 491, in <module>
+    curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
+IndexError: index 1 is out of bounds for axis 0 with size 1
+================================================================================
+JOB END:   Sat Aug  1 22:52:57 UTC 2026
+================================================================================

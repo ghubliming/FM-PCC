@@ -1,0 +1,578 @@
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - ======================================================================
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - FM v3 ODE-Selectable: Multi-Candidate Batch Analysis (v2)
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - ======================================================================
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - Start time: 2026-08-02 09:23:08
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - Output directory: Data_Analysis/analysis_results/batch_avoiding_combined_20260802_092307
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - 
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - [PHASE 1/5] AUTO-DISCOVERING CANDIDATES
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - === Candidates Discovered ===
+Total: 113
+
+  1: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/fm_visual_avoiding(unfull)/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  2: (old_no_mpc_traj)H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/(old_no_mpc_traj)H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  3: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  4: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/fm_visual_avoiding/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  5: H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc(unfull)/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  6: H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il-visual/plans/visual_avoiding_dpcc/H8_K20_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64/H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  7: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  8: H8_K1_T0.5_Dmodels.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K1_Dmodels.GaussianDiffusion_aw10/H8_K1_T0.5_Dmodels.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  9: H8_K20_T0.5_Dmodels.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  10: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  11: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  12: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  13: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  14: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  15: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  16: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  17: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  18: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  19: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  20: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  21: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  22: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  23: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  24: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  25: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  26: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  27: H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  28: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  29: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  30: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [7, 8, 9, 10]
+      WARNING: Missing Seeds [6]
+
+  31: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [7, 8, 9, 10]
+      WARNING: Missing Seeds [6]
+
+  32: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  33: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds Found: [7, 8, 9, 10]
+      WARNING: Missing Seeds [6]
+
+  34: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  35: K10_thres0_mpc1_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres0_mpc1_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  36: K20_thres0.5_mpc1_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc1_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  37: K20_thres0_mpc1_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0_mpc1_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  38: K20_thres0_mpc4_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0_mpc4_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  39: K2_thres0_mpc1_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres0_mpc1_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  40: K5_thres0_mpc1_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K5_thres0_mpc1_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  41: H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  42: K20_thres0.5_mpc4_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_bf_Fix6_wrong_batch_parallel)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc4_n2
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  43: H8_K10_Dmodels.diffusion.FlowMatchingODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_bf_Fix6_wrong_batch_parallel)/H8_K10_Dmodels.diffusion.FlowMatchingODE
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  44: K20_thres0.5_mpc4_n2
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc4_n2
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  45: H8_K10_Dmodels.diffusion.FlowMatchingODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_K10_Dmodels.diffusion.FlowMatchingODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  46: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_U5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  47: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_U5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  48: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  49: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e5_U5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  50: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e5_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  51: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e5_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  52: (legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/(legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  53: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  54: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  55: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  56: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3p2Final)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  57: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  58: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U9)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  59: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U9)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbunet_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  60: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(CFG_OFF_U9)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  61: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(U6_DiT_1e4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  62: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(aw1, 1e4train, dit)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  63: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  64: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  65: H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  66: H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  67: H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  68: H8_K10_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw20_objmeanflow_jvp_bbdit/H8_K10_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  69: H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  70: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  71: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  72: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(uniform_no_aux_U4_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  73: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(with_CFG_default_config_U9_DiT)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  74: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(with_o4_cfg_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  75: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(with_o4_cfg_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  76: H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  77: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  78: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  79: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  80: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  81: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  82: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  83: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  84: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  85: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup3_2e5)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  86: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup3_5e4)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  87: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  88: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  89: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  90: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  91: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  92: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  93: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  94: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  95: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  96: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_U3)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbdit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  97: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_U3)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  98: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_U3)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  99: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  100: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  101: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  102: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  103: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  104: H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw1/H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  105: H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  106: H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+  107: H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  108: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  109: H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  110: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  111: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  112: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds Found: [6, 7, 8, 9, 10]
+
+  113: H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      Path: /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/fm_visual_avoiding/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching/H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      Seeds Found: [6]
+      WARNING: Missing Seeds [7, 8, 9, 10]
+
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - [PHASE 3/5] BATCH LOADING DATA
+[2026-08-02 09:23:08] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-08-02 09:23:26] DA_Batch_v2 - INFO - 
+[2026-08-02 09:23:26] DA_Batch_v2 - INFO - [PHASE 4/5] BATCH AGGREGATION
+[2026-08-02 09:23:26] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-08-02 09:23:29] DA_Batch_v2 - INFO - 
+[2026-08-02 09:23:29] DA_Batch_v2 - INFO - [PHASE 5B/5] GENERATING REPORTS
+[2026-08-02 09:23:29] DA_Batch_v2 - INFO - ----------------------------------------------------------------------
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - 
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - ======================================================================
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - BATCH ANALYSIS COMPLETE
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - ======================================================================
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - End time: 2026-08-02 09:23:30
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - Results saved to: Data_Analysis/analysis_results/batch_avoiding_combined_20260802_092307
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - 
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - Key outputs:
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO -   - Plots: Data_Analysis/analysis_results/batch_avoiding_combined_20260802_092307/plots
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO -   - Summary: Data_Analysis/analysis_results/batch_avoiding_combined_20260802_092307/candidates_summary.txt
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO -   - Rankings: Data_Analysis/analysis_results/batch_avoiding_combined_20260802_092307/candidates_ranking.csv
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO -   - Logs: Data_Analysis/analysis_results/batch_avoiding_combined_20260802_092307/logs
+[2026-08-02 09:23:30] DA_Batch_v2 - INFO - ======================================================================

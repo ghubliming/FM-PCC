@@ -1,0 +1,163 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Jul 27 14:50:41 UTC 2026
+JOB NAME:  train_meanflow
+JOB ID:    23918
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   b82e290
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260727_145048-l3vf1hfu
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MeanFlow-seed-6-slurm-23918
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-MeanFlow
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-MeanFlow/runs/l3vf1hfu
+================================================================================
+[ train ] MeanFlow Training (Gen3v6 — MeanFlow-PCC)
+[ train ] Engine: MeanFlow (arXiv 2505.13447), ANALYTIC-v JVP tangent, no CFG
+[ train ] Role:   controlled baseline for Gen3v4-iMF (predicted-v_c tangent)
+[ train ] Seeds: [6] (cli --seeds)
+[ train ] W&B: True (project: FMPCC-MeanFlow)
+================================================================================
+
+[ train ] Seed 6
+[ utils/setup ] Made savepath: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/dataset_config.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_meanflow.models.mf_engine.MeanFlowEngine'>
+    depth: 8
+    dit_aux_head_depth: 2
+    dit_condition_on_t: False
+    dit_depth: 8
+    dit_hidden_size: 256
+    dit_num_heads: 4
+    dit_patch_size: 1
+    dropout_rate: 0.1
+    dual_head: True
+    freq_dim: 256
+    imf_backbone: mf_dit
+    interval_cfg: False
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/model_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_meanflow.models.mf_diffusion.MeanFlowODE'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 0.0
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_schedule: balanced
+    loss_type: l2
+    meanflow_data_proportion: 0.5
+    mf_adp_eps: 0.01
+    mf_adp_p: 1.0
+    mf_objective: meanflow
+    observation_dim: 4
+    ode_inference_steps_v3: 10
+    p_mean: -0.4
+    p_std: 1.0
+    predict_epsilon: True
+    returns_condition: True
+    t_schedule: logit_normal
+    time_beta_alpha_v3: 1.0
+    time_beta_beta_v3: 1.0
+    transition_epochs: 0
+    u_loss_weight: 1.0
+    v_loss_weight: 1.0
+    warmup_epochs: 0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_meanflow.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    gradient_clip: 1.0
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/6/trainer_config.json
+
+[ train ] Starting training (steps: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1000 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 629, in save
+    _save(obj, opened_zipfile, pickle_module, pickle_protocol, _disable_byteorder_record)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 863, in _save
+    zip_file.write_record(name, storage.data_ptr(), num_bytes)
+RuntimeError: [enforce fail at inline_container.cc:764] . PytorchStreamWriter failed writing file data/101: file write failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_meanflow_test/train_flow_matching_v3_meanflow.py", line 335, in <module>
+    trainer.train(on_epoch_end=_flush_wandb)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/utils/training.py", line 268, in train
+    self.train_epoch(steps_this_epoch, epoch)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/utils/training.py", line 190, in train_epoch
+    self.save(label)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/utils/training.py", line 350, in save
+    torch.save(self._checkpoint_payload(), savepath)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 628, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 476, in __exit__
+    self.file_like.write_end_of_file()
+RuntimeError: [enforce fail at inline_container.cc:595] . unexpected pos 74560 vs 74448
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.018 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: - 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: \ 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: | 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: / 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: - 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: \ 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: | 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)wandb: / 0.033 MB of 0.033 MB uploaded (0.004 MB deduped)slurmstepd-i6-gpu-1: error: *** JOB 23918 ON i6-gpu-1 CANCELLED AT 2026-07-27T14:51:12 ***
+================================================================================
+JOB END:   Mon Jul 27 14:51:12 UTC 2026
+================================================================================

@@ -1,0 +1,624 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Jul 28 12:58:34 UTC 2026
+JOB NAME:  hf_ml_train   ID: 23967   NODE: i6-gpu-1
+CONDA ENV: hardflow_clone   (clone of FMPCC — live env untouched)
+HARDFLOW_REPO: /u/home/llim/FMPCC/FM-PCC/HardFlow
+LOG COLLECT:   /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+HARDFLOW GIT: 0857b8c
+================================================================================
+[ HF-BRIDGE ] python: /u/home/llim/miniconda3/envs/hardflow_clone/bin/python
+[ HF-BRIDGE ] tyro OK, gym==0.20.0
+[ HF-BRIDGE ] W&B key found -> WANDB_MODE=online
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=7  MUJOCO_EGL_DEVICE_ID=7
+[ HF-BRIDGE ] /u/home/llim/FMPCC/FM-PCC/HardFlow/logs -> /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+[ HF-BRIDGE ] cwd: /u/home/llim/FMPCC/FM-PCC/HardFlow
+[ HF-ML-TRAIN ] shared gates first: python run/imf_gates.py
+
+=== G0: TemporalImfUnet mechanics (avoiding config) ===
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ PASS ] G0 shapes: tau=float: u(3, 16, 6) v(3, 16, 6)
+[ PASS ] G0 shapes: tau=Tensor: u(3, 16, 6) v(3, 16, 6)
+[ PASS ] G0 shapes: tau=float: u(3, 16, 6) v(3, 16, 6)
+[ info ] TemporalImfUnet params: 3.69M
+
+=== G1: 1D GMM end-to-end (convention / loss / sampler) ===
+[ train ] step 0: raw_mse_u 5.3623 raw_mse_v 5.3333
+[ train ] step 1000: raw_mse_u 25.7487 raw_mse_v 3.9826
+[ train ] step 2000: raw_mse_u 24.1426 raw_mse_v 4.1025
+[ train ] step 3000: raw_mse_u 16.5437 raw_mse_v 3.7099
+[ PASS ] G1-A h->0 (u ~= v): rel err 0.0008
+[ PASS ] G1-B 1-NFE lands on data (sign): mean|x| 2.089 (target ~2), near-mode frac 0.98, min-mode frac 0.48, W1 0.276
+[ PASS ] G1-C K1 ~ K2 (W1): W1(K1,K2) 0.067
+[ PASS ] G1-D jump composition (W1): W1 0.084
+
+ALL GATES PASSED — cleared for Phase 2 (training).
+[ HF-ML-TRAIN ] ML_TYPE=mf  ->  bash run_scripts/train_ml.sh
+bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by bash)
+=== Gen13 U11 Mix-ML train: ml_type=mf env=avoiding-v0 horizon=16 steps=100000 ===
+    exp_name=H16_ml_mf_100k  lr=2e-4  grad_clip=1.0
+[ train_ml ] ml_type=mf  exp_name=H16_ml_mf_100k
+[ datasets/buffer ] Finalized replay buffer | 96 episodes
+[ datasets/sequence ] Calculating normalizer...
+[ datasets/sequence ] Normalizer saved at logs/avoiding-v0/normalizer/normalizer_H16.pth
+[ datasets/sequence ] Normalizer acquired
+[ datasets/sequence ] Indices made
+Normalizing...
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 2559.84it/s]
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in ./logs/avoiding-v0/flow/H16_ml_mf_100k/wandb/run-20260728_125902-eamig2he
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run HF-ML-mf-H16_ml_mf_100k-seed0-slurm-23967
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-HF-Mix-ML
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-HF-Mix-ML/runs/eamig2he
+[ datasets/sequence ] Normalized
+[ datasets/buffer ] Fields:
+    observations: (96, 200, 4)
+    actions: (96, 200, 2)
+    rewards: (96, 200, 1)
+    terminals: (96, 200, 1)
+    timeouts: (96, 200, 1)
+    normed_observations: (96, 200, 4)
+    normed_actions: (96, 200, 2)
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ train_ml ] tensorboard not installed -> metrics.csv only
+[ train_ml ] W&B online: project=FMPCC-HF-Mix-ML run=HF-ML-mf-H16_ml_mf_100k-seed0-slurm-23967
+[ train_ml ] non-tty (batch) mode: progress bar disabled, logging every 200 steps of 100000
+[ train_ml:mf ] step 0  raw_mse_u 140.3792  raw_mse_v 131.0064  a0 1.51261  gnorm 2.77  (adaptive loss 1.9998 — flat by design)
+[ train_ml:mf ] step 200  raw_mse_u 67.5784  raw_mse_v 67.1240  a0 0.96622  gnorm 4.24  (adaptive loss 1.9997 — flat by design)
+[ train_ml:mf ] step 400  raw_mse_u 44.5705  raw_mse_v 40.7809  a0 1.37169  gnorm 6.45  (adaptive loss 1.9995 — flat by design)
+[ train_ml:mf ] step 600  raw_mse_u 42.8749  raw_mse_v 34.8606  a0 0.98083  gnorm 9.57  (adaptive loss 1.9994 — flat by design)
+[ train_ml:mf ] step 800  raw_mse_u 36.9834  raw_mse_v 31.1489  a0 0.86569  gnorm 9.70  (adaptive loss 1.9993 — flat by design)
+[ train_ml:mf ] step 1000  raw_mse_u 30.9674  raw_mse_v 23.6241  a0 0.62492  gnorm 16.27  (adaptive loss 1.9990 — flat by design)
+[ train_ml:mf ] step 1200  raw_mse_u 46.7577  raw_mse_v 28.7873  a0 0.93344  gnorm 14.47  (adaptive loss 1.9991 — flat by design)
+[ train_ml:mf ] step 1400  raw_mse_u 30.6000  raw_mse_v 22.1716  a0 0.52889  gnorm 15.87  (adaptive loss 1.9990 — flat by design)
+[ train_ml:mf ] step 1600  raw_mse_u 38.9258  raw_mse_v 25.6048  a0 0.72260  gnorm 14.67  (adaptive loss 1.9990 — flat by design)
+[ train_ml:mf ] step 1800  raw_mse_u 32.4815  raw_mse_v 26.8264  a0 0.83472  gnorm 12.51  (adaptive loss 1.9990 — flat by design)
+[ train_ml:mf ] step 2000  raw_mse_u 29.7374  raw_mse_v 23.7280  a0 0.65399  gnorm 17.68  (adaptive loss 1.9990 — flat by design)
+[ train_ml:mf ] step 2200  raw_mse_u 29.8731  raw_mse_v 23.3822  a0 1.08235  gnorm 19.07  (adaptive loss 1.9989 — flat by design)
+[ train_ml:mf ] step 2400  raw_mse_u 46.8694  raw_mse_v 31.4252  a0 1.17416  gnorm 12.27  (adaptive loss 1.9990 — flat by design)
+[ train_ml:mf ] step 2600  raw_mse_u 26.5804  raw_mse_v 17.7621  a0 0.57082  gnorm 16.84  (adaptive loss 1.9988 — flat by design)
+[ train_ml:mf ] step 2800  raw_mse_u 46.4575  raw_mse_v 18.3353  a0 0.90773  gnorm 9.50  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 3000  raw_mse_u 78.8441  raw_mse_v 20.8028  a0 2.99862  gnorm 9.38  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 3200  raw_mse_u 29.2754  raw_mse_v 19.2976  a0 0.57624  gnorm 9.91  (adaptive loss 1.9986 — flat by design)
+[ train_ml:mf ] step 3400  raw_mse_u 40.3032  raw_mse_v 20.7659  a0 0.63350  gnorm 9.22  (adaptive loss 1.9988 — flat by design)
+[ train_ml:mf ] step 3600  raw_mse_u 29.5920  raw_mse_v 15.4342  a0 0.69003  gnorm 12.25  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 3800  raw_mse_u 17.7499  raw_mse_v 15.5585  a0 0.52183  gnorm 20.54  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 4000  raw_mse_u 39.0989  raw_mse_v 18.7811  a0 0.66832  gnorm 10.83  (adaptive loss 1.9988 — flat by design)
+[ train_ml:mf ] step 4200  raw_mse_u 30.7350  raw_mse_v 18.4717  a0 0.51609  gnorm 7.32  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 4400  raw_mse_u 42.2010  raw_mse_v 16.4624  a0 2.10214  gnorm 9.57  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 4600  raw_mse_u 33.8410  raw_mse_v 17.3591  a0 0.37010  gnorm 9.02  (adaptive loss 1.9986 — flat by design)
+[ train_ml:mf ] step 4800  raw_mse_u 37.7296  raw_mse_v 17.2265  a0 0.40222  gnorm 12.74  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 5000  raw_mse_u 32.6108  raw_mse_v 17.0761  a0 0.41169  gnorm 10.84  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 5200  raw_mse_u 23.4973  raw_mse_v 15.9137  a0 0.45287  gnorm 12.43  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 5400  raw_mse_u 42.7399  raw_mse_v 25.0089  a0 0.82253  gnorm 9.26  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 5600  raw_mse_u 35.3093  raw_mse_v 15.3247  a0 0.91741  gnorm 9.38  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 5800  raw_mse_u 41.9619  raw_mse_v 18.3530  a0 0.32171  gnorm 11.86  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 6000  raw_mse_u 157.2628  raw_mse_v 23.5167  a0 3.02632  gnorm 10.24  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 6200  raw_mse_u 27.5758  raw_mse_v 13.2333  a0 0.94070  gnorm 11.17  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 6400  raw_mse_u 63.6818  raw_mse_v 26.2385  a0 0.86786  gnorm 12.35  (adaptive loss 1.9987 — flat by design)
+[ train_ml:mf ] step 6600  raw_mse_u 23.2509  raw_mse_v 14.2373  a0 0.70534  gnorm 9.68  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 6800  raw_mse_u 33.1560  raw_mse_v 17.8290  a0 1.10394  gnorm 8.11  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 7000  raw_mse_u 39.2769  raw_mse_v 19.4992  a0 0.85510  gnorm 14.38  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 7200  raw_mse_u 46.2898  raw_mse_v 17.7088  a0 0.75999  gnorm 9.06  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 7400  raw_mse_u 37.6033  raw_mse_v 20.3937  a0 1.94775  gnorm 10.66  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 7600  raw_mse_u 28.8471  raw_mse_v 16.5683  a0 0.62767  gnorm 7.53  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 7800  raw_mse_u 172.1958  raw_mse_v 16.3538  a0 2.55292  gnorm 13.22  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 8000  raw_mse_u 27.3975  raw_mse_v 13.4404  a0 0.59237  gnorm 7.66  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 8200  raw_mse_u 44.7789  raw_mse_v 17.3667  a0 0.90504  gnorm 10.62  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 8400  raw_mse_u 28.2131  raw_mse_v 15.2832  a0 0.85215  gnorm 8.96  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 8600  raw_mse_u 29.5508  raw_mse_v 14.5289  a0 1.26415  gnorm 7.14  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 8800  raw_mse_u 83.4620  raw_mse_v 20.4542  a0 1.70430  gnorm 9.17  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 9000  raw_mse_u 38.7365  raw_mse_v 20.7260  a0 1.12212  gnorm 6.93  (adaptive loss 1.9988 — flat by design)
+[ train_ml:mf ] step 9200  raw_mse_u 77.3913  raw_mse_v 17.8808  a0 3.31377  gnorm 8.64  (adaptive loss 1.9986 — flat by design)
+[ train_ml:mf ] step 9400  raw_mse_u 27.7059  raw_mse_v 12.7121  a0 0.57558  gnorm 9.06  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 9600  raw_mse_u 36.2467  raw_mse_v 15.7717  a0 0.62659  gnorm 7.74  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 9800  raw_mse_u 43.4187  raw_mse_v 16.3700  a0 0.70974  gnorm 10.41  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 10000  raw_mse_u 124.7090  raw_mse_v 15.5832  a0 14.11101  gnorm 9.49  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 10200  raw_mse_u 36.6208  raw_mse_v 10.6534  a0 1.47561  gnorm 9.49  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 10400  raw_mse_u 37.7336  raw_mse_v 15.2583  a0 1.82614  gnorm 10.74  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 10600  raw_mse_u 38.9468  raw_mse_v 19.6195  a0 0.67031  gnorm 15.66  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 10800  raw_mse_u 42.2925  raw_mse_v 16.4427  a0 1.92901  gnorm 9.55  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 11000  raw_mse_u 72.5644  raw_mse_v 14.1505  a0 4.54503  gnorm 10.67  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 11200  raw_mse_u 30.6453  raw_mse_v 18.8859  a0 0.62133  gnorm 8.65  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 11400  raw_mse_u 38.4800  raw_mse_v 16.2528  a0 1.26880  gnorm 8.38  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 11600  raw_mse_u 138.0609  raw_mse_v 11.4743  a0 3.83549  gnorm 9.73  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 11800  raw_mse_u 33.6280  raw_mse_v 16.7022  a0 0.58521  gnorm 9.08  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 12000  raw_mse_u 42.6632  raw_mse_v 17.4360  a0 0.77565  gnorm 8.56  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 12200  raw_mse_u 65.3422  raw_mse_v 16.8313  a0 2.31245  gnorm 9.17  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 12400  raw_mse_u 30.8254  raw_mse_v 15.2120  a0 0.97127  gnorm 7.64  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 12600  raw_mse_u 27.7406  raw_mse_v 14.5683  a0 1.03669  gnorm 13.61  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 12800  raw_mse_u 59.0494  raw_mse_v 14.6630  a0 1.68759  gnorm 16.32  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 13000  raw_mse_u 61.7462  raw_mse_v 16.1949  a0 4.12657  gnorm 9.71  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 13200  raw_mse_u 32.1623  raw_mse_v 12.4840  a0 1.21335  gnorm 12.61  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 13400  raw_mse_u 97.9243  raw_mse_v 13.8423  a0 1.76695  gnorm 10.30  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 13600  raw_mse_u 25.2481  raw_mse_v 15.7159  a0 0.27063  gnorm 9.98  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 13800  raw_mse_u 129.4548  raw_mse_v 15.9209  a0 3.07167  gnorm 9.14  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 14000  raw_mse_u 127.1074  raw_mse_v 19.3309  a0 5.46805  gnorm 8.53  (adaptive loss 1.9986 — flat by design)
+[ train_ml:mf ] step 14200  raw_mse_u 446.9957  raw_mse_v 16.9503  a0 13.21729  gnorm 7.13  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 14400  raw_mse_u 69.0933  raw_mse_v 15.3883  a0 1.11630  gnorm 6.99  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 14600  raw_mse_u 34.7133  raw_mse_v 12.7972  a0 1.24374  gnorm 8.49  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 14800  raw_mse_u 105.5357  raw_mse_v 15.8791  a0 3.25167  gnorm 10.33  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 15000  raw_mse_u 28.3306  raw_mse_v 14.0216  a0 0.53639  gnorm 11.41  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 15200  raw_mse_u 290.0998  raw_mse_v 16.0822  a0 26.76651  gnorm 8.46  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 15400  raw_mse_u 102.4348  raw_mse_v 13.1486  a0 3.01292  gnorm 10.42  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 15600  raw_mse_u 41.8841  raw_mse_v 17.5579  a0 1.49551  gnorm 8.37  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 15800  raw_mse_u 111.4728  raw_mse_v 12.4410  a0 6.51353  gnorm 6.77  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 16000  raw_mse_u 170.3825  raw_mse_v 12.5655  a0 0.81908  gnorm 11.55  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 16200  raw_mse_u 87.1144  raw_mse_v 18.8402  a0 4.90834  gnorm 9.27  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 16400  raw_mse_u 30.1508  raw_mse_v 17.3709  a0 0.62260  gnorm 8.88  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 16600  raw_mse_u 30.5003  raw_mse_v 11.0006  a0 0.31262  gnorm 9.71  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 16800  raw_mse_u 96.3683  raw_mse_v 13.8883  a0 3.29504  gnorm 10.45  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 17000  raw_mse_u 39.7652  raw_mse_v 10.3804  a0 1.16916  gnorm 12.60  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 17200  raw_mse_u 25.9530  raw_mse_v 13.7700  a0 0.77440  gnorm 10.00  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 17400  raw_mse_u 33.4107  raw_mse_v 15.6519  a0 0.80311  gnorm 9.52  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 17600  raw_mse_u 51.7591  raw_mse_v 18.2242  a0 0.60973  gnorm 7.11  (adaptive loss 1.9986 — flat by design)
+[ train_ml:mf ] step 17800  raw_mse_u 302.4643  raw_mse_v 21.4948  a0 37.50845  gnorm 11.77  (adaptive loss 1.9988 — flat by design)
+[ train_ml:mf ] step 18000  raw_mse_u 39.9354  raw_mse_v 10.9141  a0 0.61595  gnorm 8.28  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 18200  raw_mse_u 53.1376  raw_mse_v 14.7302  a0 0.53700  gnorm 7.86  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 18400  raw_mse_u 36.7354  raw_mse_v 13.3225  a0 1.48051  gnorm 6.07  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 18600  raw_mse_u 91.8123  raw_mse_v 13.4659  a0 4.50836  gnorm 9.17  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 18800  raw_mse_u 65.6519  raw_mse_v 16.1637  a0 2.66779  gnorm 6.00  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 19000  raw_mse_u 85.5873  raw_mse_v 20.6595  a0 2.77993  gnorm 11.18  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 19200  raw_mse_u 58.8771  raw_mse_v 13.6864  a0 0.68108  gnorm 7.56  (adaptive loss 1.9984 — flat by design)
+[ train_ml:mf ] step 19400  raw_mse_u 36.8941  raw_mse_v 15.8593  a0 1.25030  gnorm 6.66  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 19600  raw_mse_u 26.1008  raw_mse_v 12.3770  a0 0.42619  gnorm 8.86  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 19800  raw_mse_u 276.6953  raw_mse_v 12.5008  a0 2.79182  gnorm 9.83  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 20000  raw_mse_u 54.4296  raw_mse_v 13.1351  a0 1.85980  gnorm 6.18  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 20200  raw_mse_u 48.3040  raw_mse_v 13.6748  a0 1.76901  gnorm 8.36  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 20400  raw_mse_u 39.6180  raw_mse_v 13.3758  a0 1.47878  gnorm 11.26  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 20600  raw_mse_u 46.0915  raw_mse_v 16.6567  a0 0.90118  gnorm 7.05  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 20800  raw_mse_u 74.7211  raw_mse_v 15.2646  a0 2.64114  gnorm 14.92  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 21000  raw_mse_u 71.7786  raw_mse_v 13.5944  a0 2.41323  gnorm 9.73  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 21200  raw_mse_u 99.2320  raw_mse_v 11.8927  a0 2.34995  gnorm 12.00  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 21400  raw_mse_u 49.3419  raw_mse_v 16.0838  a0 2.05930  gnorm 7.74  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 21600  raw_mse_u 119.1706  raw_mse_v 15.3295  a0 4.91555  gnorm 7.74  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 21800  raw_mse_u 121.6177  raw_mse_v 14.3243  a0 2.89518  gnorm 7.41  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 22000  raw_mse_u 632.3069  raw_mse_v 15.7747  a0 15.22888  gnorm 9.96  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 22200  raw_mse_u 106.5944  raw_mse_v 13.9280  a0 1.92820  gnorm 7.03  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 22400  raw_mse_u 42.7914  raw_mse_v 14.6178  a0 1.61522  gnorm 6.66  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 22600  raw_mse_u 284.4752  raw_mse_v 15.0006  a0 16.74677  gnorm 9.90  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 22800  raw_mse_u 70.4913  raw_mse_v 9.9684  a0 1.41820  gnorm 9.81  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 23000  raw_mse_u 41.7942  raw_mse_v 12.3163  a0 1.30772  gnorm 9.40  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 23200  raw_mse_u 41.8676  raw_mse_v 12.7329  a0 1.10123  gnorm 8.99  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 23400  raw_mse_u 76.2810  raw_mse_v 15.2143  a0 2.45988  gnorm 7.44  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 23600  raw_mse_u 285.9417  raw_mse_v 14.2179  a0 2.70094  gnorm 7.74  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 23800  raw_mse_u 238.8355  raw_mse_v 12.4024  a0 12.63245  gnorm 10.15  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 24000  raw_mse_u 59.1756  raw_mse_v 14.0339  a0 2.11002  gnorm 7.70  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 24200  raw_mse_u 34.2267  raw_mse_v 13.0391  a0 0.78547  gnorm 10.11  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 24400  raw_mse_u 86.5054  raw_mse_v 13.2679  a0 4.62801  gnorm 10.22  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 24600  raw_mse_u 41.9656  raw_mse_v 10.9749  a0 0.66465  gnorm 19.63  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 24800  raw_mse_u 85.5617  raw_mse_v 11.4440  a0 3.41385  gnorm 8.53  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 25000  raw_mse_u 152.3196  raw_mse_v 15.2620  a0 1.36092  gnorm 6.03  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 25200  raw_mse_u 51.9970  raw_mse_v 11.1778  a0 0.90119  gnorm 11.57  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 25400  raw_mse_u 148.4433  raw_mse_v 15.1823  a0 7.14385  gnorm 8.64  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 25600  raw_mse_u 57.7460  raw_mse_v 14.7524  a0 2.56634  gnorm 8.06  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 25800  raw_mse_u 118.2787  raw_mse_v 15.6785  a0 1.93643  gnorm 6.58  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 26000  raw_mse_u 41.3718  raw_mse_v 12.7659  a0 1.29843  gnorm 7.34  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 26200  raw_mse_u 32.8951  raw_mse_v 14.6128  a0 1.16281  gnorm 10.19  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 26400  raw_mse_u 36.6067  raw_mse_v 11.7897  a0 1.01255  gnorm 8.58  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 26600  raw_mse_u 971.0398  raw_mse_v 10.1045  a0 57.70110  gnorm 10.55  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 26800  raw_mse_u 162.6593  raw_mse_v 12.8178  a0 3.56968  gnorm 9.31  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 27000  raw_mse_u 41.6090  raw_mse_v 13.3203  a0 1.45037  gnorm 9.04  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 27200  raw_mse_u 1813.0059  raw_mse_v 13.0753  a0 10.96553  gnorm 8.12  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 27400  raw_mse_u 89.7898  raw_mse_v 14.1315  a0 2.11573  gnorm 8.37  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 27600  raw_mse_u 464.2752  raw_mse_v 12.7739  a0 22.36143  gnorm 7.19  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 27800  raw_mse_u 39.7712  raw_mse_v 10.8461  a0 0.82327  gnorm 13.42  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 28000  raw_mse_u 73.7826  raw_mse_v 19.3110  a0 4.11518  gnorm 7.50  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 28200  raw_mse_u 58.3153  raw_mse_v 17.8955  a0 2.05694  gnorm 6.29  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 28400  raw_mse_u 154.6373  raw_mse_v 18.1142  a0 6.00585  gnorm 6.91  (adaptive loss 1.9986 — flat by design)
+[ train_ml:mf ] step 28600  raw_mse_u 586.2992  raw_mse_v 15.2368  a0 26.74953  gnorm 9.80  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 28800  raw_mse_u 37.4071  raw_mse_v 17.4080  a0 0.82621  gnorm 9.45  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 29000  raw_mse_u 198.7229  raw_mse_v 12.9395  a0 1.01824  gnorm 7.53  (adaptive loss 1.9968 — flat by design)
+[ train_ml:mf ] step 29200  raw_mse_u 33.8582  raw_mse_v 15.2107  a0 0.68018  gnorm 13.31  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 29400  raw_mse_u 46.0851  raw_mse_v 14.8976  a0 1.32867  gnorm 9.32  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 29600  raw_mse_u 199.2981  raw_mse_v 14.2370  a0 2.67759  gnorm 7.10  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 29800  raw_mse_u 54.7094  raw_mse_v 11.8521  a0 1.61733  gnorm 5.96  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 30000  raw_mse_u 238.6995  raw_mse_v 14.9534  a0 13.83531  gnorm 8.13  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 30200  raw_mse_u 41.9403  raw_mse_v 12.5472  a0 0.76327  gnorm 9.55  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 30400  raw_mse_u 66.1782  raw_mse_v 12.1460  a0 2.63998  gnorm 9.09  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 30600  raw_mse_u 38.3261  raw_mse_v 14.1296  a0 0.95866  gnorm 14.25  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 30800  raw_mse_u 63.5963  raw_mse_v 14.6855  a0 2.98611  gnorm 7.66  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 31000  raw_mse_u 35.8201  raw_mse_v 13.8863  a0 0.88728  gnorm 7.53  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 31200  raw_mse_u 123.1255  raw_mse_v 11.6343  a0 6.94904  gnorm 8.08  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 31400  raw_mse_u 67.3405  raw_mse_v 15.7838  a0 2.30224  gnorm 6.64  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 31600  raw_mse_u 137.2791  raw_mse_v 13.5255  a0 4.16757  gnorm 8.19  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 31800  raw_mse_u 32.2941  raw_mse_v 15.6132  a0 1.04364  gnorm 7.84  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 32000  raw_mse_u 132.1647  raw_mse_v 14.7563  a0 6.71377  gnorm 6.49  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 32200  raw_mse_u 80.7980  raw_mse_v 12.0295  a0 0.99272  gnorm 9.90  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 32400  raw_mse_u 72.8798  raw_mse_v 16.6922  a0 2.13338  gnorm 6.40  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 32600  raw_mse_u 197.0064  raw_mse_v 13.3274  a0 2.61832  gnorm 7.06  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 32800  raw_mse_u 111.4108  raw_mse_v 14.3928  a0 3.85697  gnorm 8.65  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 33000  raw_mse_u 49.4180  raw_mse_v 11.9864  a0 1.09744  gnorm 8.19  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 33200  raw_mse_u 43.1810  raw_mse_v 10.8183  a0 1.08676  gnorm 9.91  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 33400  raw_mse_u 203.5490  raw_mse_v 12.3068  a0 5.96166  gnorm 9.36  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 33600  raw_mse_u 61.5545  raw_mse_v 14.8166  a0 1.57308  gnorm 6.99  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 33800  raw_mse_u 61.9919  raw_mse_v 13.6907  a0 3.14084  gnorm 9.69  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 34000  raw_mse_u 72.7296  raw_mse_v 8.3714  a0 2.36377  gnorm 12.28  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 34200  raw_mse_u 78.1451  raw_mse_v 12.2303  a0 2.33717  gnorm 9.80  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 34400  raw_mse_u 78.2959  raw_mse_v 12.1360  a0 2.43262  gnorm 7.93  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 34600  raw_mse_u 67.2654  raw_mse_v 13.6419  a0 1.06336  gnorm 8.92  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 34800  raw_mse_u 86.5942  raw_mse_v 10.6890  a0 2.67904  gnorm 6.89  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 35000  raw_mse_u 43.1197  raw_mse_v 15.2385  a0 0.99310  gnorm 12.88  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 35200  raw_mse_u 126.0314  raw_mse_v 12.1275  a0 7.64503  gnorm 19.31  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 35400  raw_mse_u 39.4263  raw_mse_v 14.9101  a0 0.88566  gnorm 6.11  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 35600  raw_mse_u 34.4348  raw_mse_v 11.4239  a0 0.98904  gnorm 7.31  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 35800  raw_mse_u 389.2733  raw_mse_v 10.9392  a0 3.91313  gnorm 8.32  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 36000  raw_mse_u 99.2116  raw_mse_v 11.8717  a0 10.30755  gnorm 11.26  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 36200  raw_mse_u 49.2128  raw_mse_v 10.0227  a0 1.61693  gnorm 6.88  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 36400  raw_mse_u 60.4185  raw_mse_v 8.6327  a0 0.63135  gnorm 10.30  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 36600  raw_mse_u 62.0531  raw_mse_v 12.8710  a0 2.02999  gnorm 7.62  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 36800  raw_mse_u 173.2227  raw_mse_v 15.6600  a0 5.91997  gnorm 10.41  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 37000  raw_mse_u 63.8305  raw_mse_v 13.8658  a0 0.88586  gnorm 6.12  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 37200  raw_mse_u 76.0413  raw_mse_v 12.5434  a0 1.12760  gnorm 8.71  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 37400  raw_mse_u 347.0535  raw_mse_v 15.4417  a0 16.29881  gnorm 9.73  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 37600  raw_mse_u 73.7730  raw_mse_v 11.9219  a0 1.34537  gnorm 12.36  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 37800  raw_mse_u 967.6964  raw_mse_v 11.9729  a0 93.36759  gnorm 9.18  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 38000  raw_mse_u 746.7317  raw_mse_v 16.1407  a0 38.63041  gnorm 10.27  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 38200  raw_mse_u 43.1571  raw_mse_v 17.0315  a0 0.93968  gnorm 6.75  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 38400  raw_mse_u 56.7620  raw_mse_v 10.9550  a0 0.54121  gnorm 8.37  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 38600  raw_mse_u 70.2874  raw_mse_v 17.4881  a0 4.91090  gnorm 9.05  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 38800  raw_mse_u 405.8381  raw_mse_v 10.7089  a0 22.26831  gnorm 6.59  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 39000  raw_mse_u 99.6815  raw_mse_v 12.2197  a0 1.65074  gnorm 8.01  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 39200  raw_mse_u 2157.7571  raw_mse_v 12.4464  a0 136.54536  gnorm 13.27  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 39400  raw_mse_u 82.7084  raw_mse_v 10.9156  a0 1.59539  gnorm 10.77  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 39600  raw_mse_u 25.9395  raw_mse_v 10.3764  a0 0.43317  gnorm 6.66  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 39800  raw_mse_u 162.0671  raw_mse_v 16.1553  a0 4.30165  gnorm 8.75  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 40000  raw_mse_u 75.4827  raw_mse_v 24.2351  a0 2.29308  gnorm 12.72  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 40200  raw_mse_u 112.7677  raw_mse_v 14.7468  a0 3.12777  gnorm 8.02  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 40400  raw_mse_u 134.1232  raw_mse_v 12.3229  a0 2.49079  gnorm 8.50  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 40600  raw_mse_u 86.2623  raw_mse_v 13.0104  a0 4.47676  gnorm 10.72  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 40800  raw_mse_u 152.0189  raw_mse_v 12.6978  a0 2.26429  gnorm 8.19  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 41000  raw_mse_u 54.5408  raw_mse_v 11.9212  a0 1.35052  gnorm 7.39  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 41200  raw_mse_u 31.7875  raw_mse_v 8.4862  a0 0.76804  gnorm 8.24  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 41400  raw_mse_u 58.4860  raw_mse_v 9.6171  a0 1.88760  gnorm 7.20  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 41600  raw_mse_u 380.1151  raw_mse_v 10.3243  a0 6.76689  gnorm 8.12  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 41800  raw_mse_u 202.5607  raw_mse_v 10.7310  a0 8.40180  gnorm 14.63  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 42000  raw_mse_u 99.7052  raw_mse_v 12.2060  a0 3.41777  gnorm 7.41  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 42200  raw_mse_u 121.0111  raw_mse_v 12.2316  a0 4.27213  gnorm 7.33  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 42400  raw_mse_u 266.4538  raw_mse_v 14.4017  a0 7.23062  gnorm 8.98  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 42600  raw_mse_u 127.8615  raw_mse_v 17.1344  a0 2.88065  gnorm 9.43  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 42800  raw_mse_u 126.1194  raw_mse_v 12.4999  a0 1.59386  gnorm 10.82  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 43000  raw_mse_u 120.0135  raw_mse_v 12.7050  a0 3.54637  gnorm 8.38  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 43200  raw_mse_u 99.2539  raw_mse_v 12.2034  a0 1.05330  gnorm 6.45  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 43400  raw_mse_u 70.2497  raw_mse_v 14.1701  a0 1.52216  gnorm 9.31  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 43600  raw_mse_u 47.5884  raw_mse_v 14.2814  a0 1.11436  gnorm 11.00  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 43800  raw_mse_u 153.2441  raw_mse_v 17.2649  a0 4.82634  gnorm 6.99  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 44000  raw_mse_u 78.8682  raw_mse_v 14.9136  a0 2.99713  gnorm 8.48  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 44200  raw_mse_u 1264.2429  raw_mse_v 14.3376  a0 10.11712  gnorm 16.32  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 44400  raw_mse_u 70.4050  raw_mse_v 10.9009  a0 3.88501  gnorm 9.28  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 44600  raw_mse_u 69.4649  raw_mse_v 13.2393  a0 0.87498  gnorm 8.61  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 44800  raw_mse_u 53.3861  raw_mse_v 12.0280  a0 1.17312  gnorm 11.69  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 45000  raw_mse_u 112.6106  raw_mse_v 13.2684  a0 5.86687  gnorm 7.07  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 45200  raw_mse_u 177.2638  raw_mse_v 12.8853  a0 3.84276  gnorm 6.95  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 45400  raw_mse_u 101.0056  raw_mse_v 8.9929  a0 2.09891  gnorm 8.77  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 45600  raw_mse_u 45.8130  raw_mse_v 10.7627  a0 1.16146  gnorm 7.99  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 45800  raw_mse_u 25.4211  raw_mse_v 14.6530  a0 0.62047  gnorm 8.73  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 46000  raw_mse_u 186.8545  raw_mse_v 13.7592  a0 4.53289  gnorm 8.99  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 46200  raw_mse_u 39.9087  raw_mse_v 13.2766  a0 0.97193  gnorm 6.93  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 46400  raw_mse_u 87.0314  raw_mse_v 12.5782  a0 1.26996  gnorm 10.56  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 46600  raw_mse_u 44.3364  raw_mse_v 11.6450  a0 1.20294  gnorm 8.99  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 46800  raw_mse_u 94.5819  raw_mse_v 11.1618  a0 2.81193  gnorm 11.10  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 47000  raw_mse_u 34.0149  raw_mse_v 9.2567  a0 1.25266  gnorm 7.91  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 47200  raw_mse_u 282.5211  raw_mse_v 16.1131  a0 15.89283  gnorm 8.33  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 47400  raw_mse_u 262.8907  raw_mse_v 10.4041  a0 11.04237  gnorm 9.70  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 47600  raw_mse_u 456.6430  raw_mse_v 19.5724  a0 11.49910  gnorm 13.26  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 47800  raw_mse_u 23.8856  raw_mse_v 10.2348  a0 0.60313  gnorm 9.07  (adaptive loss 1.9964 — flat by design)
+[ train_ml:mf ] step 48000  raw_mse_u 65.0018  raw_mse_v 7.7687  a0 1.31309  gnorm 9.84  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 48200  raw_mse_u 159.5718  raw_mse_v 14.5659  a0 1.90892  gnorm 6.53  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 48400  raw_mse_u 96.4415  raw_mse_v 10.4006  a0 2.37456  gnorm 9.28  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 48600  raw_mse_u 108.6254  raw_mse_v 13.0020  a0 1.38079  gnorm 7.30  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 48800  raw_mse_u 1878.0884  raw_mse_v 12.3553  a0 27.62813  gnorm 11.99  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 49000  raw_mse_u 1367.5948  raw_mse_v 14.7683  a0 41.48263  gnorm 9.15  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 49200  raw_mse_u 90.7134  raw_mse_v 15.8517  a0 3.98286  gnorm 15.43  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 49400  raw_mse_u 54.4016  raw_mse_v 12.0559  a0 1.25365  gnorm 18.66  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 49600  raw_mse_u 337.3753  raw_mse_v 10.7816  a0 8.15501  gnorm 10.29  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 49800  raw_mse_u 242.4170  raw_mse_v 11.0854  a0 4.37054  gnorm 12.61  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 50000  raw_mse_u 168.3201  raw_mse_v 13.1746  a0 2.21466  gnorm 12.94  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 50200  raw_mse_u 300.6032  raw_mse_v 12.6895  a0 6.31494  gnorm 8.06  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 50400  raw_mse_u 98.1302  raw_mse_v 10.1715  a0 2.60677  gnorm 8.48  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 50600  raw_mse_u 72.8058  raw_mse_v 9.4352  a0 2.67860  gnorm 7.59  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 50800  raw_mse_u 217.7130  raw_mse_v 15.5685  a0 3.61008  gnorm 10.31  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 51000  raw_mse_u 34.6703  raw_mse_v 12.7539  a0 2.08139  gnorm 11.90  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 51200  raw_mse_u 127.3877  raw_mse_v 19.4212  a0 2.78015  gnorm 7.00  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 51400  raw_mse_u 1474.2599  raw_mse_v 13.2725  a0 8.54330  gnorm 8.90  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 51600  raw_mse_u 224.5386  raw_mse_v 12.8039  a0 2.97283  gnorm 6.48  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 51800  raw_mse_u 118.4582  raw_mse_v 14.9173  a0 2.92911  gnorm 6.98  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 52000  raw_mse_u 375.9034  raw_mse_v 10.3673  a0 9.04284  gnorm 10.71  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 52200  raw_mse_u 77.4149  raw_mse_v 9.5105  a0 3.57341  gnorm 10.06  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 52400  raw_mse_u 84.6980  raw_mse_v 9.6740  a0 1.91476  gnorm 8.94  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 52600  raw_mse_u 51.9162  raw_mse_v 10.2067  a0 0.96347  gnorm 7.58  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 52800  raw_mse_u 31.8147  raw_mse_v 13.7162  a0 1.01379  gnorm 8.81  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 53000  raw_mse_u 115.5247  raw_mse_v 13.4013  a0 2.49459  gnorm 6.48  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 53200  raw_mse_u 297.0670  raw_mse_v 10.3054  a0 17.14073  gnorm 8.92  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 53400  raw_mse_u 59.3763  raw_mse_v 10.1872  a0 1.86141  gnorm 13.08  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 53600  raw_mse_u 249.5284  raw_mse_v 12.3013  a0 1.73659  gnorm 16.59  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 53800  raw_mse_u 433.1664  raw_mse_v 14.3903  a0 14.55900  gnorm 15.63  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 54000  raw_mse_u 53.7360  raw_mse_v 12.9357  a0 1.16115  gnorm 16.10  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 54200  raw_mse_u 155.9395  raw_mse_v 10.8212  a0 2.47420  gnorm 8.02  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 54400  raw_mse_u 26.7734  raw_mse_v 16.6071  a0 0.35265  gnorm 5.46  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 54600  raw_mse_u 121.6225  raw_mse_v 11.2539  a0 5.48608  gnorm 7.65  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 54800  raw_mse_u 134.3278  raw_mse_v 10.8807  a0 6.65607  gnorm 9.75  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 55000  raw_mse_u 76.9481  raw_mse_v 10.2347  a0 1.13555  gnorm 9.49  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 55200  raw_mse_u 165.5493  raw_mse_v 19.1080  a0 3.23030  gnorm 9.45  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 55400  raw_mse_u 103.5812  raw_mse_v 16.2281  a0 5.81332  gnorm 7.92  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 55600  raw_mse_u 235.6029  raw_mse_v 12.3412  a0 9.28859  gnorm 11.03  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 55800  raw_mse_u 143.8568  raw_mse_v 16.6443  a0 3.71370  gnorm 7.02  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 56000  raw_mse_u 237.4436  raw_mse_v 13.1711  a0 3.84721  gnorm 10.52  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 56200  raw_mse_u 92.0809  raw_mse_v 10.4616  a0 1.71258  gnorm 10.02  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 56400  raw_mse_u 95.5407  raw_mse_v 15.0687  a0 3.65976  gnorm 7.39  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 56600  raw_mse_u 109.5210  raw_mse_v 13.0139  a0 3.00163  gnorm 10.44  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 56800  raw_mse_u 76.1374  raw_mse_v 15.2370  a0 1.81804  gnorm 6.61  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 57000  raw_mse_u 95.8518  raw_mse_v 10.8276  a0 2.55131  gnorm 8.40  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 57200  raw_mse_u 3091.3494  raw_mse_v 12.3590  a0 174.60417  gnorm 11.11  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 57400  raw_mse_u 39.8020  raw_mse_v 10.2111  a0 1.06331  gnorm 6.19  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 57600  raw_mse_u 276.5096  raw_mse_v 10.0090  a0 7.15465  gnorm 7.82  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 57800  raw_mse_u 54.7708  raw_mse_v 11.2402  a0 1.51414  gnorm 7.29  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 58000  raw_mse_u 137.3929  raw_mse_v 11.7203  a0 2.24255  gnorm 5.53  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 58200  raw_mse_u 55.3167  raw_mse_v 14.9753  a0 2.17212  gnorm 7.69  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 58400  raw_mse_u 65.4032  raw_mse_v 9.3893  a0 1.18394  gnorm 10.18  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 58600  raw_mse_u 106.8097  raw_mse_v 11.1346  a0 1.50524  gnorm 7.25  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 58800  raw_mse_u 107.6665  raw_mse_v 12.2383  a0 4.23722  gnorm 6.91  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 59000  raw_mse_u 129.7590  raw_mse_v 10.2589  a0 3.19901  gnorm 7.19  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 59200  raw_mse_u 80.1524  raw_mse_v 12.4288  a0 1.67544  gnorm 8.35  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 59400  raw_mse_u 61.4198  raw_mse_v 11.3813  a0 1.39405  gnorm 10.14  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 59600  raw_mse_u 160.6835  raw_mse_v 9.9633  a0 10.89131  gnorm 9.08  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 59800  raw_mse_u 35.1679  raw_mse_v 11.1568  a0 0.59762  gnorm 10.04  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 60000  raw_mse_u 177.6786  raw_mse_v 11.6805  a0 2.38181  gnorm 8.77  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 60200  raw_mse_u 82.7433  raw_mse_v 10.4900  a0 1.32521  gnorm 6.04  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 60400  raw_mse_u 123.6200  raw_mse_v 8.6075  a0 3.32601  gnorm 8.10  (adaptive loss 1.9968 — flat by design)
+[ train_ml:mf ] step 60600  raw_mse_u 89.1830  raw_mse_v 14.9843  a0 1.64628  gnorm 11.53  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 60800  raw_mse_u 74.9750  raw_mse_v 8.9970  a0 3.47066  gnorm 9.10  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 61000  raw_mse_u 78.4023  raw_mse_v 10.8710  a0 1.48239  gnorm 7.02  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 61200  raw_mse_u 114.4203  raw_mse_v 14.8177  a0 4.03374  gnorm 7.43  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 61400  raw_mse_u 246.5246  raw_mse_v 14.3537  a0 9.99481  gnorm 7.58  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 61600  raw_mse_u 159.2376  raw_mse_v 13.3692  a0 2.07144  gnorm 9.07  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 61800  raw_mse_u 66.5160  raw_mse_v 10.4608  a0 1.50940  gnorm 7.00  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 62000  raw_mse_u 138.7529  raw_mse_v 11.9250  a0 1.85653  gnorm 18.79  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 62200  raw_mse_u 273.2133  raw_mse_v 14.8645  a0 1.72190  gnorm 15.02  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 62400  raw_mse_u 45.1957  raw_mse_v 10.5613  a0 1.92802  gnorm 8.76  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 62600  raw_mse_u 162.5957  raw_mse_v 9.7919  a0 6.52305  gnorm 17.43  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 62800  raw_mse_u 119.8190  raw_mse_v 9.8906  a0 3.73952  gnorm 13.43  (adaptive loss 1.9964 — flat by design)
+[ train_ml:mf ] step 63000  raw_mse_u 43.7009  raw_mse_v 13.2707  a0 0.96117  gnorm 16.65  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 63200  raw_mse_u 136.5466  raw_mse_v 13.4679  a0 3.00197  gnorm 8.14  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 63400  raw_mse_u 36.9125  raw_mse_v 10.0084  a0 0.67352  gnorm 8.62  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 63600  raw_mse_u 148.1161  raw_mse_v 11.3714  a0 7.48727  gnorm 7.92  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 63800  raw_mse_u 140.8608  raw_mse_v 8.2621  a0 4.28642  gnorm 9.73  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 64000  raw_mse_u 606.8782  raw_mse_v 13.1496  a0 2.88864  gnorm 25.79  (adaptive loss 1.9968 — flat by design)
+[ train_ml:mf ] step 64200  raw_mse_u 316.1140  raw_mse_v 13.5463  a0 14.00828  gnorm 10.43  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 64400  raw_mse_u 126.3465  raw_mse_v 7.8904  a0 3.85951  gnorm 7.66  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 64600  raw_mse_u 74.5957  raw_mse_v 9.5303  a0 3.52349  gnorm 25.97  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 64800  raw_mse_u 110.2810  raw_mse_v 7.2254  a0 2.13066  gnorm 8.25  (adaptive loss 1.9964 — flat by design)
+[ train_ml:mf ] step 65000  raw_mse_u 74.0073  raw_mse_v 12.4682  a0 1.40668  gnorm 11.96  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 65200  raw_mse_u 172.9522  raw_mse_v 13.5911  a0 1.54096  gnorm 6.84  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 65400  raw_mse_u 111.7227  raw_mse_v 12.3616  a0 1.93745  gnorm 22.59  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 65600  raw_mse_u 192.8981  raw_mse_v 9.9330  a0 7.73197  gnorm 9.40  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 65800  raw_mse_u 448.6683  raw_mse_v 13.1269  a0 3.16667  gnorm 7.39  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 66000  raw_mse_u 90.1460  raw_mse_v 10.9351  a0 3.98436  gnorm 11.41  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 66200  raw_mse_u 217.9054  raw_mse_v 10.6284  a0 6.21491  gnorm 11.07  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 66400  raw_mse_u 26.9922  raw_mse_v 9.4098  a0 1.31300  gnorm 6.81  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 66600  raw_mse_u 213.4191  raw_mse_v 10.4483  a0 12.80348  gnorm 8.15  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 66800  raw_mse_u 78.3823  raw_mse_v 10.2278  a0 2.56386  gnorm 6.30  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 67000  raw_mse_u 125.5445  raw_mse_v 13.4557  a0 2.52297  gnorm 12.54  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 67200  raw_mse_u 101.7933  raw_mse_v 11.8377  a0 2.26713  gnorm 8.75  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 67400  raw_mse_u 364.8025  raw_mse_v 9.5528  a0 26.50186  gnorm 11.85  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 67600  raw_mse_u 149.6389  raw_mse_v 14.7627  a0 8.72479  gnorm 9.69  (adaptive loss 1.9985 — flat by design)
+[ train_ml:mf ] step 67800  raw_mse_u 104.0072  raw_mse_v 14.6921  a0 1.93182  gnorm 6.88  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 68000  raw_mse_u 62.1006  raw_mse_v 8.3059  a0 1.12563  gnorm 10.22  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 68200  raw_mse_u 401.8618  raw_mse_v 18.1416  a0 8.79749  gnorm 13.49  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 68400  raw_mse_u 153.8327  raw_mse_v 14.2080  a0 5.61061  gnorm 7.51  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 68600  raw_mse_u 125.8192  raw_mse_v 13.5236  a0 2.53254  gnorm 9.03  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 68800  raw_mse_u 206.3438  raw_mse_v 12.0288  a0 3.39545  gnorm 8.16  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 69000  raw_mse_u 187.4297  raw_mse_v 9.1350  a0 4.45676  gnorm 8.51  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 69200  raw_mse_u 59.5166  raw_mse_v 13.2093  a0 1.31960  gnorm 12.86  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 69400  raw_mse_u 165.7369  raw_mse_v 15.2955  a0 2.50589  gnorm 9.37  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 69600  raw_mse_u 177.1316  raw_mse_v 11.3405  a0 2.07299  gnorm 10.83  (adaptive loss 1.9966 — flat by design)
+[ train_ml:mf ] step 69800  raw_mse_u 177.2385  raw_mse_v 13.5475  a0 3.02708  gnorm 9.34  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 70000  raw_mse_u 47.2722  raw_mse_v 8.5842  a0 0.91556  gnorm 13.40  (adaptive loss 1.9964 — flat by design)
+[ train_ml:mf ] step 70200  raw_mse_u 96.6747  raw_mse_v 9.6748  a0 1.93330  gnorm 9.63  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 70400  raw_mse_u 277.5446  raw_mse_v 14.9379  a0 7.07325  gnorm 15.35  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 70600  raw_mse_u 4526.1440  raw_mse_v 9.8760  a0 34.74821  gnorm 13.06  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 70800  raw_mse_u 88.2993  raw_mse_v 11.5615  a0 2.02948  gnorm 6.53  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 71000  raw_mse_u 90.4138  raw_mse_v 10.4911  a0 2.95661  gnorm 7.49  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 71200  raw_mse_u 120.0821  raw_mse_v 16.7031  a0 4.04257  gnorm 5.53  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 71400  raw_mse_u 143.8832  raw_mse_v 11.4461  a0 6.79912  gnorm 9.23  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 71600  raw_mse_u 580.9919  raw_mse_v 11.8175  a0 6.40209  gnorm 20.06  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 71800  raw_mse_u 277.4940  raw_mse_v 15.1237  a0 6.68393  gnorm 8.41  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 72000  raw_mse_u 128.9676  raw_mse_v 17.0122  a0 6.52807  gnorm 8.63  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 72200  raw_mse_u 77.6253  raw_mse_v 10.2298  a0 2.12142  gnorm 11.50  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 72400  raw_mse_u 89.9558  raw_mse_v 8.4482  a0 4.47537  gnorm 10.93  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 72600  raw_mse_u 132.6604  raw_mse_v 10.6625  a0 10.36381  gnorm 9.78  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 72800  raw_mse_u 124.6464  raw_mse_v 12.4168  a0 2.73424  gnorm 8.59  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 73000  raw_mse_u 221.5045  raw_mse_v 11.7448  a0 5.69683  gnorm 13.44  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 73200  raw_mse_u 67.2272  raw_mse_v 12.0576  a0 2.37480  gnorm 9.24  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 73400  raw_mse_u 57.3134  raw_mse_v 11.4683  a0 0.78743  gnorm 13.22  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 73600  raw_mse_u 86.8487  raw_mse_v 11.8766  a0 1.95097  gnorm 7.66  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 73800  raw_mse_u 440.7956  raw_mse_v 11.5794  a0 9.01754  gnorm 9.89  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 74000  raw_mse_u 768.3920  raw_mse_v 17.0107  a0 17.09066  gnorm 12.60  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 74200  raw_mse_u 677.4227  raw_mse_v 15.1021  a0 28.70331  gnorm 10.58  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 74400  raw_mse_u 114.1067  raw_mse_v 14.5525  a0 2.54382  gnorm 7.71  (adaptive loss 1.9983 — flat by design)
+[ train_ml:mf ] step 74600  raw_mse_u 101.7997  raw_mse_v 9.8696  a0 1.94323  gnorm 12.04  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 74800  raw_mse_u 32.8447  raw_mse_v 9.9168  a0 1.29410  gnorm 10.35  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 75000  raw_mse_u 335.5098  raw_mse_v 11.8122  a0 1.41803  gnorm 10.11  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 75200  raw_mse_u 231.4239  raw_mse_v 10.0913  a0 2.97826  gnorm 11.44  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 75400  raw_mse_u 74.0683  raw_mse_v 11.3346  a0 3.41829  gnorm 12.95  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 75600  raw_mse_u 146.4285  raw_mse_v 16.1110  a0 3.86250  gnorm 7.34  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 75800  raw_mse_u 473.7561  raw_mse_v 9.4844  a0 22.85209  gnorm 7.88  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 76000  raw_mse_u 69.8375  raw_mse_v 17.9242  a0 1.16673  gnorm 7.79  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 76200  raw_mse_u 11.1362  raw_mse_v 5.8189  a0 0.09607  gnorm 19.39  (adaptive loss 1.9961 — flat by design)
+[ train_ml:mf ] step 76400  raw_mse_u 151.6376  raw_mse_v 9.5971  a0 4.48859  gnorm 11.83  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 76600  raw_mse_u 65.7726  raw_mse_v 10.7989  a0 1.84214  gnorm 18.02  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 76800  raw_mse_u 66.5424  raw_mse_v 13.2021  a0 1.43491  gnorm 15.08  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 77000  raw_mse_u 42.1532  raw_mse_v 10.4126  a0 1.09716  gnorm 7.51  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 77200  raw_mse_u 156.3214  raw_mse_v 10.1725  a0 2.41152  gnorm 15.01  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 77400  raw_mse_u 48.0751  raw_mse_v 8.4766  a0 1.46731  gnorm 10.14  (adaptive loss 1.9967 — flat by design)
+[ train_ml:mf ] step 77600  raw_mse_u 104.6199  raw_mse_v 15.1301  a0 7.62907  gnorm 11.52  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 77800  raw_mse_u 174.6527  raw_mse_v 9.3541  a0 3.17127  gnorm 11.58  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 78000  raw_mse_u 484.3506  raw_mse_v 13.8137  a0 6.58892  gnorm 10.22  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 78200  raw_mse_u 118.6080  raw_mse_v 14.1717  a0 1.49176  gnorm 6.45  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 78400  raw_mse_u 273.2879  raw_mse_v 12.6966  a0 8.30106  gnorm 11.91  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 78600  raw_mse_u 57.7565  raw_mse_v 10.1806  a0 0.66021  gnorm 16.58  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 78800  raw_mse_u 157.4053  raw_mse_v 11.2209  a0 7.07740  gnorm 7.69  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 79000  raw_mse_u 87.0389  raw_mse_v 11.4703  a0 2.36888  gnorm 8.23  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 79200  raw_mse_u 694.2148  raw_mse_v 9.6425  a0 45.53809  gnorm 10.27  (adaptive loss 1.9967 — flat by design)
+[ train_ml:mf ] step 79400  raw_mse_u 234.1598  raw_mse_v 11.6273  a0 3.49944  gnorm 8.91  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 79600  raw_mse_u 55.0735  raw_mse_v 11.7201  a0 1.58838  gnorm 8.08  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 79800  raw_mse_u 129.5294  raw_mse_v 13.0392  a0 8.16779  gnorm 7.99  (adaptive loss 1.9968 — flat by design)
+[ train_ml:mf ] step 80000  raw_mse_u 408.7986  raw_mse_v 10.8165  a0 14.88474  gnorm 7.98  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 80200  raw_mse_u 664.8243  raw_mse_v 14.7596  a0 20.11170  gnorm 10.42  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 80400  raw_mse_u 71.5777  raw_mse_v 8.5363  a0 2.22160  gnorm 8.70  (adaptive loss 1.9961 — flat by design)
+[ train_ml:mf ] step 80600  raw_mse_u 138.2219  raw_mse_v 13.1110  a0 2.49214  gnorm 8.25  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 80800  raw_mse_u 129.7588  raw_mse_v 8.9540  a0 1.83276  gnorm 11.98  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 81000  raw_mse_u 75.7782  raw_mse_v 8.6467  a0 1.56571  gnorm 7.19  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 81200  raw_mse_u 55.0487  raw_mse_v 13.3471  a0 0.96838  gnorm 7.10  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 81400  raw_mse_u 333.8736  raw_mse_v 13.6933  a0 3.05341  gnorm 9.06  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 81600  raw_mse_u 191.8504  raw_mse_v 9.3993  a0 3.38429  gnorm 7.82  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 81800  raw_mse_u 88.3955  raw_mse_v 10.4719  a0 3.63947  gnorm 17.81  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 82000  raw_mse_u 175.0248  raw_mse_v 10.6375  a0 8.76203  gnorm 11.48  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 82200  raw_mse_u 92.7053  raw_mse_v 11.6239  a0 2.25602  gnorm 8.82  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 82400  raw_mse_u 103.0281  raw_mse_v 9.6959  a0 5.33652  gnorm 6.34  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 82600  raw_mse_u 65.6065  raw_mse_v 7.6352  a0 2.23796  gnorm 6.49  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 82800  raw_mse_u 277.9853  raw_mse_v 9.1356  a0 3.91158  gnorm 23.26  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 83000  raw_mse_u 55.9168  raw_mse_v 13.0320  a0 2.60535  gnorm 8.78  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 83200  raw_mse_u 96.9283  raw_mse_v 10.1113  a0 2.33783  gnorm 8.20  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 83400  raw_mse_u 85.4588  raw_mse_v 13.8222  a0 2.25783  gnorm 10.97  (adaptive loss 1.9981 — flat by design)
+[ train_ml:mf ] step 83600  raw_mse_u 138.8958  raw_mse_v 14.3616  a0 3.37772  gnorm 17.77  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 83800  raw_mse_u 59.5628  raw_mse_v 13.0676  a0 0.68458  gnorm 11.92  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 84000  raw_mse_u 1482.0839  raw_mse_v 8.2758  a0 34.28683  gnorm 13.66  (adaptive loss 1.9963 — flat by design)
+[ train_ml:mf ] step 84200  raw_mse_u 168.7245  raw_mse_v 15.8334  a0 1.82497  gnorm 8.11  (adaptive loss 1.9982 — flat by design)
+[ train_ml:mf ] step 84400  raw_mse_u 309.2342  raw_mse_v 10.7501  a0 3.35469  gnorm 13.13  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 84600  raw_mse_u 226.0247  raw_mse_v 11.0913  a0 3.78638  gnorm 8.65  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 84800  raw_mse_u 253.7551  raw_mse_v 13.4680  a0 8.87930  gnorm 24.64  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 85000  raw_mse_u 784.0206  raw_mse_v 8.6295  a0 29.37952  gnorm 11.43  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 85200  raw_mse_u 1126.8337  raw_mse_v 12.1276  a0 11.36726  gnorm 16.80  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 85400  raw_mse_u 185.9531  raw_mse_v 11.3216  a0 3.97084  gnorm 8.88  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 85600  raw_mse_u 139.2244  raw_mse_v 15.0594  a0 2.69122  gnorm 6.83  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 85800  raw_mse_u 105.9711  raw_mse_v 10.8805  a0 1.97378  gnorm 5.92  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 86000  raw_mse_u 127.2168  raw_mse_v 13.7942  a0 2.82396  gnorm 13.99  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 86200  raw_mse_u 196.6272  raw_mse_v 8.6724  a0 6.80139  gnorm 10.52  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 86400  raw_mse_u 1581.4590  raw_mse_v 9.9851  a0 36.62144  gnorm 12.77  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 86600  raw_mse_u 157.0813  raw_mse_v 11.8244  a0 6.54920  gnorm 16.86  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 86800  raw_mse_u 48.5766  raw_mse_v 8.6966  a0 1.20542  gnorm 7.84  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 87000  raw_mse_u 105.9664  raw_mse_v 12.6129  a0 3.96133  gnorm 10.72  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 87200  raw_mse_u 221.0524  raw_mse_v 10.1265  a0 8.31772  gnorm 11.27  (adaptive loss 1.9965 — flat by design)
+[ train_ml:mf ] step 87400  raw_mse_u 96.9100  raw_mse_v 10.3383  a0 2.35089  gnorm 8.69  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 87600  raw_mse_u 80.0922  raw_mse_v 7.0989  a0 1.54872  gnorm 13.35  (adaptive loss 1.9961 — flat by design)
+[ train_ml:mf ] step 87800  raw_mse_u 144.4284  raw_mse_v 10.3270  a0 4.63520  gnorm 10.73  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 88000  raw_mse_u 123.7698  raw_mse_v 13.4738  a0 2.76692  gnorm 18.44  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 88200  raw_mse_u 296.9124  raw_mse_v 16.2945  a0 7.23984  gnorm 21.36  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 88400  raw_mse_u 3495.4758  raw_mse_v 15.5809  a0 304.88104  gnorm 8.88  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 88600  raw_mse_u 85.4558  raw_mse_v 12.4255  a0 2.87500  gnorm 7.78  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 88800  raw_mse_u 334.4197  raw_mse_v 14.4442  a0 13.64419  gnorm 16.25  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 89000  raw_mse_u 927.0439  raw_mse_v 11.4688  a0 4.55872  gnorm 12.18  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 89200  raw_mse_u 60.7892  raw_mse_v 10.0559  a0 4.32525  gnorm 7.86  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 89400  raw_mse_u 651.0428  raw_mse_v 12.6301  a0 20.40705  gnorm 17.61  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 89600  raw_mse_u 60.2500  raw_mse_v 11.5542  a0 0.88441  gnorm 11.87  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 89800  raw_mse_u 202.0511  raw_mse_v 10.5664  a0 13.02530  gnorm 11.87  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 90000  raw_mse_u 142.8031  raw_mse_v 11.3413  a0 3.94436  gnorm 9.77  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 90200  raw_mse_u 228.0181  raw_mse_v 9.2564  a0 6.57750  gnorm 6.49  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 90400  raw_mse_u 105.5043  raw_mse_v 9.0376  a0 3.82969  gnorm 9.17  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 90600  raw_mse_u 183.5799  raw_mse_v 11.1275  a0 3.14880  gnorm 9.43  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 90800  raw_mse_u 97.9462  raw_mse_v 11.0526  a0 2.17714  gnorm 11.53  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 91000  raw_mse_u 351.4290  raw_mse_v 9.5282  a0 2.15051  gnorm 9.51  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 91200  raw_mse_u 223.0951  raw_mse_v 14.4659  a0 2.64856  gnorm 7.65  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 91400  raw_mse_u 103.9106  raw_mse_v 11.1072  a0 1.12044  gnorm 17.21  (adaptive loss 1.9961 — flat by design)
+[ train_ml:mf ] step 91600  raw_mse_u 194.2489  raw_mse_v 12.7091  a0 7.17801  gnorm 14.68  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 91800  raw_mse_u 417.7417  raw_mse_v 8.0729  a0 4.75917  gnorm 17.94  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 92000  raw_mse_u 1825.9044  raw_mse_v 11.7128  a0 54.46664  gnorm 10.07  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 92200  raw_mse_u 851.2534  raw_mse_v 11.4813  a0 1.27645  gnorm 35.07  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 92400  raw_mse_u 143.9608  raw_mse_v 14.4608  a0 2.30491  gnorm 11.55  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 92600  raw_mse_u 170.9050  raw_mse_v 11.6969  a0 8.23232  gnorm 9.16  (adaptive loss 1.9980 — flat by design)
+[ train_ml:mf ] step 92800  raw_mse_u 284.1816  raw_mse_v 11.7134  a0 3.65817  gnorm 10.24  (adaptive loss 1.9974 — flat by design)
+[ train_ml:mf ] step 93000  raw_mse_u 71.4723  raw_mse_v 12.0325  a0 0.98197  gnorm 7.05  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 93200  raw_mse_u 107.9516  raw_mse_v 9.4889  a0 2.93370  gnorm 9.95  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 93400  raw_mse_u 214.6673  raw_mse_v 16.4622  a0 28.21705  gnorm 9.78  (adaptive loss 1.9963 — flat by design)
+[ train_ml:mf ] step 93600  raw_mse_u 126.0358  raw_mse_v 10.5554  a0 7.29372  gnorm 11.26  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 93800  raw_mse_u 214.8769  raw_mse_v 11.0964  a0 6.67232  gnorm 8.57  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 94000  raw_mse_u 154.3373  raw_mse_v 11.3242  a0 6.51374  gnorm 11.01  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 94200  raw_mse_u 77.7950  raw_mse_v 11.0756  a0 0.71328  gnorm 7.42  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 94400  raw_mse_u 142.8759  raw_mse_v 12.3574  a0 6.38163  gnorm 10.36  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 94600  raw_mse_u 34.6848  raw_mse_v 14.1809  a0 0.80877  gnorm 6.20  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 94800  raw_mse_u 2231.5684  raw_mse_v 12.1306  a0 10.66335  gnorm 8.93  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 95000  raw_mse_u 124.0108  raw_mse_v 9.7412  a0 2.46288  gnorm 9.16  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 95200  raw_mse_u 90.0317  raw_mse_v 8.4418  a0 8.36344  gnorm 7.78  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 95400  raw_mse_u 226.4772  raw_mse_v 7.8164  a0 9.68148  gnorm 12.24  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 95600  raw_mse_u 99.2711  raw_mse_v 10.6591  a0 4.99693  gnorm 9.40  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 95800  raw_mse_u 284.4473  raw_mse_v 15.8807  a0 8.75385  gnorm 20.42  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 96000  raw_mse_u 91.8648  raw_mse_v 9.2511  a0 1.46702  gnorm 9.31  (adaptive loss 1.9970 — flat by design)
+[ train_ml:mf ] step 96200  raw_mse_u 95.7670  raw_mse_v 10.1844  a0 4.90666  gnorm 9.47  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 96400  raw_mse_u 241.5862  raw_mse_v 7.5582  a0 0.73939  gnorm 10.90  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 96600  raw_mse_u 81.9011  raw_mse_v 8.5691  a0 3.27390  gnorm 8.80  (adaptive loss 1.9971 — flat by design)
+[ train_ml:mf ] step 96800  raw_mse_u 211.9059  raw_mse_v 10.8014  a0 5.38671  gnorm 7.74  (adaptive loss 1.9973 — flat by design)
+[ train_ml:mf ] step 97000  raw_mse_u 80.8676  raw_mse_v 10.9945  a0 3.40668  gnorm 7.40  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 97200  raw_mse_u 246.6881  raw_mse_v 9.1344  a0 8.96784  gnorm 8.77  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 97400  raw_mse_u 94.3041  raw_mse_v 10.5910  a0 1.80542  gnorm 6.79  (adaptive loss 1.9969 — flat by design)
+[ train_ml:mf ] step 97600  raw_mse_u 3383.9414  raw_mse_v 15.3129  a0 68.08925  gnorm 19.82  (adaptive loss 1.9979 — flat by design)
+[ train_ml:mf ] step 97800  raw_mse_u 110.5169  raw_mse_v 12.1893  a0 5.58185  gnorm 11.72  (adaptive loss 1.9976 — flat by design)
+[ train_ml:mf ] step 98000  raw_mse_u 160.0124  raw_mse_v 14.0291  a0 3.58645  gnorm 9.10  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 98200  raw_mse_u 35.8452  raw_mse_v 12.8509  a0 0.57959  gnorm 13.20  (adaptive loss 1.9965 — flat by design)
+[ train_ml:mf ] step 98400  raw_mse_u 723.4277  raw_mse_v 12.3038  a0 11.43958  gnorm 11.62  (adaptive loss 1.9968 — flat by design)
+[ train_ml:mf ] step 98600  raw_mse_u 119.6552  raw_mse_v 13.2623  a0 2.12047  gnorm 8.30  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 98800  raw_mse_u 329.0732  raw_mse_v 11.0501  a0 12.73207  gnorm 9.95  (adaptive loss 1.9972 — flat by design)
+[ train_ml:mf ] step 99000  raw_mse_u 119.7825  raw_mse_v 8.2871  a0 4.98919  gnorm 12.02  (adaptive loss 1.9956 — flat by design)
+[ train_ml:mf ] step 99200  raw_mse_u 1252.3550  raw_mse_v 12.5042  a0 32.32751  gnorm 29.01  (adaptive loss 1.9975 — flat by design)
+[ train_ml:mf ] step 99400  raw_mse_u 106.4878  raw_mse_v 15.2139  a0 4.15102  gnorm 7.57  (adaptive loss 1.9978 — flat by design)
+[ train_ml:mf ] step 99600  raw_mse_u 207.2609  raw_mse_v 8.9807  a0 10.60306  gnorm 11.07  (adaptive loss 1.9977 — flat by design)
+[ train_ml:mf ] step 99800  raw_mse_u 344.3615  raw_mse_v 10.6711  a0 4.59144  gnorm 10.05  (adaptive loss 1.9982 — flat by design)
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.019 MB of 0.095 MB uploadedwandb: / 0.085 MB of 0.095 MB uploadedwandb: - 0.089 MB of 0.095 MB uploadedwandb: \ 0.089 MB of 0.095 MB uploadedwandb: | 0.089 MB of 0.095 MB uploadedwandb: / 0.089 MB of 0.095 MB uploadedwandb: - 0.089 MB of 0.095 MB uploadedwandb: \ 0.089 MB of 0.095 MB uploadedwandb: | 0.089 MB of 0.095 MB uploadedwandb: / 0.089 MB of 0.095 MB uploadedwandb: - 0.089 MB of 0.095 MB uploadedwandb: \ 0.089 MB of 0.095 MB uploadedwandb: | 0.089 MB of 0.095 MB uploadedwandb: / 0.089 MB of 0.095 MB uploadedwandb: - 0.089 MB of 0.095 MB uploadedwandb: \ 0.089 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb: | 0.095 MB of 0.095 MB uploadedwandb: / 0.095 MB of 0.095 MB uploadedwandb: - 0.095 MB of 0.095 MB uploadedwandb: \ 0.095 MB of 0.095 MB uploadedwandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:    a0_mse ▁▂▁▂▁▁▂▁▁▁▃▁▁▂▂▁▂▂▁▁▁▁▂▂▃▂▂▁▃█▁▁▂▁▂▆▂▁▂▂
+wandb:   fm_frac ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: grad_norm ▃▃▃▅▃▅▁▂▁▃▂▅▁▃▂▁▃▁▁▁▄▅▁▁▂▃▄▂▂▃█▂▂▄▃██▁▂▄
+wandb:    h_mean ▇▇▃▆▅▃▄▅▄▅▄▃▅▅▄▅▅▃▄▄▂▂▆▅▂▄▄▅▅█▂▁▆▃▆▄▅▂▅▃
+wandb:      loss █▇▇▆▅▆▅▆▆▅▅▅▅▅▅▆▆▆▅▆▄▄▆▅▄▄▅▅▅▅▅▄▅▄▄▄▅▄▄▁
+wandb: raw_mse_u ▁▂▁▃▁▁▂▁▁▁▂▁▁▃▅▁▂▂▁▂▁▁▂▂▃▂▃▂▄█▁▂▄▁▂█▅▂▂▂
+wandb: raw_mse_v █▄▅▃▂▃▂▃▃▂▃▂▃▂▂▃▂▃▂▂▂▂▃▂▃▁▂▂▃▃▂▂▂▂▂▂▁▂▁▁
+wandb: 
+wandb: Run summary:
+wandb:    a0_mse 4.59144
+wandb:   fm_frac 0.25
+wandb: grad_norm 10.04762
+wandb:    h_mean 0.22392
+wandb:      loss 1.99816
+wandb: raw_mse_u 344.36151
+wandb: raw_mse_v 10.6711
+wandb: 
+wandb: 🚀 View run HF-ML-mf-H16_ml_mf_100k-seed0-slurm-23967 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-HF-Mix-ML/runs/eamig2he
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-HF-Mix-ML
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./logs/avoiding-v0/flow/H16_ml_mf_100k/wandb/run-20260728_125902-eamig2he/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+[ train_ml ] done. final checkpoints saved with cp index 4
+Total runtime: 8h 35m 29s
+[ HF-ML-TRAIN ] done. checkpoints:
+total 144856
+drwxr-xr-x  3 llim tumuser     4096 Jul 28 21:28 .
+drwxr-xr-x 10 llim tumuser     4096 Jul 28 12:59 ..
+-rw-r--r--  1 llim tumuser      890 Jul 28 12:59 config.yaml
+-rw-r--r--  1 llim tumuser    62067 Jul 28 21:26 metrics.csv
+-rw-r--r--  1 llim tumuser 14823362 Jul 28 12:59 model_0.pth
+-rw-r--r--  1 llim tumuser 14823362 Jul 28 15:06 model_1.pth
+-rw-r--r--  1 llim tumuser 14823362 Jul 28 17:14 model_2.pth
+-rw-r--r--  1 llim tumuser 14823362 Jul 28 19:21 model_3.pth
+-rw-r--r--  1 llim tumuser 14823362 Jul 28 21:28 model_4.pth
+-rw-r--r--  1 llim tumuser 14824562 Jul 28 12:59 model_ema_0.pth
+-rw-r--r--  1 llim tumuser 14824562 Jul 28 15:06 model_ema_1.pth
+-rw-r--r--  1 llim tumuser 14824562 Jul 28 17:14 model_ema_2.pth
+-rw-r--r--  1 llim tumuser 14824562 Jul 28 19:21 model_ema_3.pth
+-rw-r--r--  1 llim tumuser 14824562 Jul 28 21:28 model_ema_4.pth
+drwxr-xr-x  3 llim tumuser      123 Jul 28 12:59 wandb
+================================================================================
+JOB END: Tue Jul 28 21:34:26 UTC 2026
+================================================================================

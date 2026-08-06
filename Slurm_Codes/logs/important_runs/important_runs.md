@@ -1178,6 +1178,16 @@ Eval -> 23733/4
 - U10
 23832
 
+- U11
+mf 23966
++ 
+af 23978 
+
+- Fix/U12 Orgize and better naming
+
+(disk full) 23991 to finish it (ML_EXP_NAME=H16_ml_af_100k ML_CP=4 ML_METHODS="hfproj" ML_KS="2" RANDOM_REPEAT=200 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_ml_hardflow.sh)
+
 ---
 
 # Gen3v6 mean flow
@@ -1187,12 +1197,55 @@ EVAL in 23777
 
 try unet 23812
 
+- U2 
+23925
+
+- U3
+23981
+
+24021 K1 
+24022 K5
+24023 K20
+
+- Fix4 
+24034-8
+K1,2,5,10,20
+
+- Fix5 
+24074 - 24078
+
+
+- Fix6
+resume train, 24100
+
+---
+Mean flow train the seed 78910 -> 24069
+Eval 24121 BUG -> Fix7
+24126
+
+- Fix6
+24316
+
 # Gen3v7 alpha flow 
 1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
 EVAL 23786
 
 try unet
 23809
+
+- U2
+23928
+
+- U3 
+24044 - 24048
+
+- U4 (similar v6 U5 fix)
+24101
+
+---
+alpha flow train the seed 78910 -> 24070
+
+eval 24104
 
 # Gen12 
 init pipeline run 23767 -> All killed, not run
@@ -1207,3 +1260,40 @@ U4
 23826 to smoke test
 23827/8 : thres 0(baseline) and 0.5 test FAIL (quick patch 23830/1 0+0.3 retest)
 23829 mpc batch=4 test
+
+- U5
+23890
+
+- Fix7 23903
+
+- Test NFE 
+HF 24179 0.1thres
+FMv3ODE equiv 24180 DEAD -> Fix in 24196, write wrong aw (K10 run, K20 run is 24210)
+
+24187 0.05thres
+vs 24198 0.05thres (K10, K20 run -> 24207)
+
+Ablation DPCC baseline 0.1thres 24215 / 0.05thres 24226
+- Claude Claim the diffusion_timestep_threshold: 1 for DPCC not working, lets see if ture, set it to 1, 24254, feels run it beofre but we rerun it again. --> Gen0F2
+
+# Gen14 
+Test -> 24082
+faile fix2 24907
+
+mf run 24110 DEAD disk full -> 24122
+
+af ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh af 6 (24154)
+
+- U6 K2 run 10rollout
+af/mf 24224/5 
+
+- U7 
+24255
+
+---
+
+24281/82 rerun massive run 3->30
+
+# Gen0 
+- Fix2
+thres test 24279 T

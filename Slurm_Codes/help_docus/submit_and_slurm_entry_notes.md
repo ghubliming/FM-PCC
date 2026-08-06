@@ -80,3 +80,13 @@ scontrol show node i6-gpu-1 | grep -E "CfgTRES|AllocTRES"
 # misc
 ## HF data aggregate for download
 python3 Slurm_Codes/sbatch/hardflow/collect_hf_results.py
+
+## disk util
+du -h --max-depth=2 /u/home/llim/FMPCC/FM-PCC/logs
+du -h --max-depth=2 /u/home/llim
+
+## clean weights
+python tools/clean_weights/clean_weights.py --apply
+
+## DA shortcut
+./Slurm_Codes/submit.sh /u/home/llim/FMPCC/FM-PCC/Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh

@@ -1,0 +1,18 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Tue Jul 28 12:37:36 UTC 2026   JOB ID: 23966
+================================================================================
+[ HF-ML-PIPE ] ml_type    : mf
+[ HF-ML-PIPE ] exp_name   : H16_ml_mf_100k   (steps=100000)
+[ HF-ML-PIPE ] eval cp    : 4
+[ HF-ML-PIPE ] checkpoint : logs/hardflow/avoiding-v0/flow/H16_ml_mf_100k/model_ema_4.pth
+[ HF-ML-PIPE ] eval       : methods='original hardflow_new' K='1 2' n=200
+Step 1: Training submitted (gates run inside it first). Job ID: 23967
+Step 2: Evaluation scheduled (afterok:23967). Job ID: 23968
+--------------------------------------------------------------------------------
+Mix-ML pipeline submitted (ml_type=mf). Monitor with 'squeue -u llim'.
+If training fails, evaluation is auto-cancelled by Slurm (afterok).
+Results land in logs/hardflow/avoiding-v0/eval/*_from_H16_ml_mf_100k*/
+================================================================================
+PIPELINE END:   Tue Jul 28 12:37:36 UTC 2026
+================================================================================
