@@ -1,15 +1,13 @@
-# DA_VA_v2 U2 — new `Visualizer_VA_v2` page, and the old-viewer accommodations backed out
+# DA_VA_v2 U2 — `Visualizer_VA_v2`, derived from the DAv3 page
 
 **Date:** 2026-08-06 · **Epoch:** U2
-**New:** `Data_Analysis/Visualizer_VA_v2/index.html`
-**Changed:** `Data_Analysis/DA_VA_v2/{config,utils,reporter,main_da_batch,README}.py|md`
+**New:** `Data_Analysis/Visualizer_VA_v2/{index.html, build_from_dav3.py, test_page_offline.py}`
+**Changed:** `Data_Analysis/DA_VA_v2/{config,utils,reporter,main_da_batch,README}`
 **Untouched:** `Data_Analysis/Visualizer/index.html`, `Data_Analysis/Visualizer_Visual_Aligning/index.html`
 
 ---
 
-## 0. First, the requested revert — there was nothing in the HTML to revert
-
-Checked before changing anything:
+## 0. The requested revert had no target in the HTML
 
 ```
 Visualizer/index.html                  last commit 1b3c0800  2026-08-03  (DAv3 viz U11)
@@ -17,173 +15,144 @@ Visualizer_Visual_Aligning/index.html  last commit 9539edfa  2026-07-03
 git diff HEAD -- "*.html"              (empty)
 ```
 
-Neither page was edited today, by me or otherwise, so "revert the HTML" had no
-target. What *had* bent toward those pages was on the **DA side**, added in Fix_1
-this morning, and that is what was backed out (§1).
-
-Both old pages remain byte-identical and fully usable; the git history holds them
-either way.
+Neither page was edited today. What *had* bent toward them was on the DA side,
+added in Fix_1 this morning — that is what was backed out (§1).
 
 ---
 
 ## 1. Backed out: the Fix_1 accommodations for the old viewers
 
-Fix_1 solved "the run does not appear in the HTML quick list" by making the
-*pipeline* bend around two old pages that disagree on a folder-name prefix. That
-was the wrong direction — it grew a symlink and duplicated CSV columns to keep a
-page alive that is superseded and known-buggy.
+Fix_1 fixed "the run does not appear in the quick list" by making the **pipeline**
+bend around two pages that disagree on a folder-name prefix. Wrong direction.
 
-| removed | was for | replaced by |
-|---|---|---|
-| `utils.create_viewer_alias()` — wrote a `va_batch_va2_*` **symlink** beside every run | VA v1's `href="(va_batch_…)"` regex | nothing; `batch_va2_*` satisfies the new viewer and the DAv3 page on its own |
-| **legacy alias columns** in `per_rollout_detail.csv` (`success`, `mean_dist_m`, `steps`, `phys_err_m`, `context_xy_dist_m`, `avg_time_s`, `final_xy_dist_m`, `constraint_sat_rate`, `n_violated_steps`) | VA v1's rollout table looked those names up | the new viewer reads the canonical names |
-| **`va_candidates_dynamic.csv`** output + `Reporter._dynamic_table()` | VA v1's only aggregate input | `va2_aggregated_long.csv`, which is strictly richer (mask, split, geo, seeds) |
-
-Replacing the symlink: `utils.check_viewer_visibility()` — a *warning* when
-`--output-path` is named something the viewer's QUICK_LIST will not match, with
-the CUSTOM_PATH box as the answer. It changes nothing on disk.
-
-**Kept on purpose:** `candidates_multidimensional_raw.csv` / `_aggregated.csv`.
-Those feed `Visualizer/index.html`, which is current, actively developed (U11 on
-Aug 3) and the tool of record for the avoiding side — not old code being propped
-up. Being able to open a VA batch there was an explicit requirement of the
-original task.
-
-Output-folder naming stays `batch_va2_<timestamp>`: it matches the new viewer's
-`batch_va2_*` **and** the DAv3 page's `batch_*` with a single name.
-
----
-
-## 2. New: `Data_Analysis/Visualizer_VA_v2/index.html`
-
-Fresh page, no code taken from either old file beyond the parts of their design
-that had earned their place. Reads the **native** DA_VA_v2 CSVs directly:
-
-| file | used for |
+| removed | was for |
 |---|---|
-| `va2_aggregated_long.csv` | everything aggregate (required) |
-| `va2_units_long.csv` | per-seed compare (optional) |
-| `per_rollout_detail.csv` | rollout table + compare view (optional) |
-| `data_quality.csv` | quality view + mask banner (optional) |
+| `utils.create_viewer_alias()` — a `va_batch_va2_*` **symlink** beside every run | VA v1's `va_batch_` regex |
+| **legacy alias columns** in `per_rollout_detail.csv` (`success`, `mean_dist_m`, `steps`, `phys_err_m`, `context_xy_dist_m`, `avg_time_s`, …) | VA v1's rollout table |
+| **`va_candidates_dynamic.csv`** + `Reporter._dynamic_table()` | VA v1's only aggregate input |
 
-A missing optional file degrades that one view with a message; it never breaks
-the page.
+Replaced by `utils.check_viewer_visibility()` — a warning, nothing written to disk.
+Output folders stay `batch_va2_<timestamp>`, which the new viewer lists and which
+also satisfies DAv3's own `batch_*` pattern, so one name serves both with no alias.
 
-### Taken from DAv3 (`Visualizer/index.html`)
-
-* batch picker off the directory listing, `results_manifest.json` as fallback,
-  plus a CUSTOM_PATH box;
-* checkbox filters with **nothing pre-checked** — a big batch locks the page up
-  if it draws everything on load, and an auto-picked first bar gets mistaken for
-  a meaningful default (their U10 lesson);
-* grouped bar chart with std whiskers and **manually annotated** value labels —
-  `ax.bar_label` couples to the ErrorbarContainer that `yerr` adds and crashes on
-  an absent (NaN) combo (their U8 fix);
-* paper-style **result matrices** (rows = checked candidates, cols = every
-  variant, `mean ± sem`) with **LaTeX export**, rendered from the candidate
-  selection alone so they populate before any variant is ticked;
-* path audit map, scorecard, and a single-ZIP export (PNG + `.tex` + audit log).
-
-### Taken from VA v1 (`Visualizer_Visual_Aligning/index.html`)
-
-* the view-mode toggle as the page's primary structure;
-* the **per-rollout table**, sortable, now with frozen rollouts tinted and
-  flagged ❄, selectable columns, and its own CSV download;
-* the rollout-level **compare** view — scatter / bar / box, free choice of x and
-  y from any per-rollout column, series grouped by variant or candidate.
-
-### New in v2
-
-* **The mask is a first-class global switch.** `all` vs `unfrozen`, applied to
-  every view, with a permanent banner stating what is currently hidden:
-  *"mask = UNFROZEN — 152 of 2358 rollouts excluded (D1 box-obstacle conflict…)"*.
-  Every plot title and every exported file records the mask it used.
-* **Geometry and split are real dropdowns**, not a `geo/variant` name prefix the
-  page has to re-split, because the CSVs now carry them as columns.
-* **X-axis is selectable** — Candidate, variant, or geometry — instead of the two
-  fixed modes.
-* **QUALITY view**: the `data_quality.csv` rows worth distrusting (frozen
-  rollouts, projector circuit-breaker trips, `npz_complete=0`), with a plain
-  statement of why each invalidates a number.
-* Per-seed compare reads `va2_units_long.csv` and degrades to pooled with a
-  message when that file is absent.
-
-### Deliberately not carried over
-
-DAv3's U11 **"download this run folder as .zip"** crawler (~120 lines of async
-directory walking). It is genuinely useful but it is the one feature that cannot
-be exercised outside a browser, and an untested async crawler in a brand-new page
-is a bad trade. It stays available in the DAv3 page. Everything else in the
-export path (PNG + LaTeX + audit log in one ZIP) is here.
+**Kept:** `candidates_multidimensional_*.csv`. DAv3's page is current (U11, Aug 3)
+and the tool of record for the avoiding side — not old code being propped up.
 
 ---
 
-## 3. Validation
+## 2. The first attempt at the viewer was wrong, and why
 
-No browser is available here, so the page was built with its **data layer as pure
-pandas functions with no DOM access** (`normalise`, `apply_global`, `agg_pivot`,
-`matrix_stats`, `rollout_view`, `compare_frame`, `mask_summary`, `quality_flags`,
-`build_latex`), and those are lifted straight out of the HTML by a harness and
-run against real CSVs — no hand-maintained copy to drift.
+The first U2 page was written **from scratch**, borrowing DAv3's patterns rather
+than its code. Two consequences, both fair to call malfunctioning:
 
-`scratchpad/test_viewer_core.py` — 38 checks, all passing against a real Gen14 U7
-+ state-only batch:
+1. **The aggregate controls never appeared.** `#agg-controls` was `display:none`
+   and only `setViewMode()` — an onclick handler — ever revealed it. After
+   SYNC_SOURCE you got the global filters and nothing else: no metric, no
+   variants, no candidates, no export, and a plot area asking you to tick boxes
+   that were not on screen. Clicking another view tab and back "fixed" it, which
+   is exactly how a page earns the word malfunction.
+2. **It was thinner than DAv3 everywhere else.** No U9 plot legend, no U11 folder
+   ZIP, no U7 seed-missing warnings, no fail flags in the matrices, a reduced
+   LaTeX export. Hence "feels like the old VA viz" — it *was* closer to VA v1's
+   scope than to DAv3's.
 
-* mask splits the long frame exactly (6210 + 6210 = 12420) and forgetting it
-  double-counts;
-* all three x-axes pivot, std aligns to mean, unknown variant returns empty
-  instead of raising;
-* the real bar-plot call with `yerr` plus manual labels renders (12 bars);
-* 191 matrix cells, sem present, LaTeX emits `tabular`, escapes `_`, marks
-  missing cells `--`, one row per candidate;
-* **the mask changes the answer**: `constraint_exec_sat_rate` on the tightened
-  geometry 0.9157 (all) → 0.9027 (unfrozen);
-* rollout sorting ascending/descending per metric, empty selection safe;
-* compare view builds, and bad column / empty selection / missing CSV each return
-  a message rather than raising;
-* all three chart paths draw;
-* quality flags 38 of 115 units; banner text correct with and without each CSV.
+That page was discarded, not patched.
 
-`scratchpad/lint_viewer.py` — static wiring check, clean: every `getElementById`
-target exists in the markup, every `py-click` names a Python function, every
-inline `onclick`/`onchange` names a JS function, every `window.document.X` has a
-`create_proxy`, every checkbox class read is one that gets created.
+## 3. What replaced it: a real DAv3 derivative
 
-### Two real bugs the harness caught
+`Visualizer_VA_v2/index.html` is now **`Visualizer/index.html` plus 20 surgical
+edits**, applied by `build_from_dav3.py`. Of 1676 lines, ~1000 are DAv3 verbatim.
+Every edit asserts its anchor, so a future DAv3 change that moves the ground fails
+loudly instead of silently producing half a page. Re-run the script after DAv3
+gains something worth having.
 
-1. **The global mask did nothing in the rollout and compare views.**
-   `per_rollout_detail.csv` has no `mask` column — it is one row per rollout with
-   a `frozen` flag — so `apply_global` silently passed every row through.
-   Switching to UNFROZEN would have changed the aggregate numbers while the
-   rollout table underneath kept showing the frozen rollouts, which is exactly
-   the kind of quiet inconsistency this page exists to prevent. `apply_global`
-   now handles both shapes: filter the `mask` column when present, drop
-   `frozen == 1` rows otherwise. Verified: 2358 → 2206 rows, 30 → 26 rollouts in
-   a tightened variant's own table, 2280 → 2128 compare points.
-2. **Rollout table showed duplicate-looking rows.** With split/geo on ALL the
-   same `rollout_idx` appears once per (seed, geo). The table now prepends
-   whichever of seed/split/geo actually varies.
+*(DAv3's file is CRLF; the builder normalises to LF — that mismatch is what made
+the first anchor attempts fail.)*
 
-Also pre-empted from reading the old pages: `ax.boxplot(labels=)` vs
-`tick_labels=` swapped over matplotlib 3.9 and pyodide pins an older build, so
-ticks are set afterwards instead; `plt.get_cmap` is wrapped with a
-`matplotlib.colormaps` fallback.
+### Inherited by construction, not reimplemented
 
-**Not verified:** an actual browser load. The data contract and the wiring are
-checked statically; rendering is not. → **open the page and click through it.**
+U7 no-data messages and seed-missing warnings · U8 manual bar value labels (the
+`bar_label`/`yerr` IndexError fix) · U9 plot legend in x-axis order · U10 paper
+result matrices with fail flags · U10.1 full standalone LaTeX export · U11
+browser-side folder ZIP download · seed modes · zoom · fig width · scorecard ·
+path audit map · single-ZIP export · the numeric-Candidate `astype(str)` fix.
+
+### The v2 grafts
+
+* **Native CSV loader.** Reads `va2_aggregated_long.csv`, `va2_units_long.csv`,
+  `per_rollout_detail.csv`, `data_quality.csv`, then `derive_frames()` projects
+  them onto the column names the DAv3 core already speaks
+  (`halfspace_variant` ← `geo`, `count` ← `n`, `value` ← `mean`). That is why the
+  inherited half needs no edits — and why the compat CSVs are no longer what the
+  page reads.
+* **Mask is a live global switch** (`all` / `unfrozen`), plus a **split** switch.
+  Changing either re-derives both frames and bumps `data_version`, which is what
+  invalidates DAv3's result-matrix cache. A permanent banner states what is
+  hidden: *"mask = ALL — every rollout kept, of which 152 of 2358 rollouts are
+  D1-FROZEN…"*.
+* **Geometry is the environment axis** — DAv3's "Environment Focus" now lists
+  `geo`, relabelled "Geometry Focus".
+* **Seeds are read from the batch**, replacing the hardcoded 6/7/8/9/10
+  checkboxes; a single-seed VA run no longer shows four dead boxes.
+* **Four views** (VA v1's structure): AGGREGATE (all of DAv3), PER-ROLLOUT
+  (sortable table, frozen rows tinted, selectable columns, CSV download), COMPARE
+  (scatter/bar/box over any two per-rollout columns), QUALITY (the units with
+  frozen rollouts, breaker trips, or a partial npz).
+* `applyViewMode()` is separate from the tab click **and is called by
+  `load_data`**, so the active view's panel is visible the moment data lands —
+  the §2.1 bug cannot recur.
 
 ---
 
-## 4. How to use
+## 4. Validation
+
+`test_page_offline.py` execs the page's **entire** Python block against stubbed
+`document` / `window` / `pyscript` objects, feeds it real CSVs, and calls the real
+handlers the way the DOM would. 43 checks, all passing:
+
+* 1318 lines of page Python exec clean;
+* filters populate — 54 metrics, 5 geometries, 25 variants, 3 candidates, seeds
+  `['6']` from the data;
+* `derive_frames` yields the DAv3 schema, applies the mask (6210 of 12420 rows —
+  forgetting it would double-count), and carries seeds into `df_raw`;
+* aggregate view: plot drawn, scorecard filled, **U9 legend**, **4 result
+  matrices** with never-run cells marked, path map, U10 empty-selection message,
+  U7 no-data message, per-seed mode;
+* export: summary context, LaTeX with `\documentclass` … `\end{document}`, one
+  table per metric, candidate source paths;
+* **the mask moves real numbers** — `constraint_exec_sat_rate` on the tightened
+  geometry 0.9157 (all) → 0.9027 (unfrozen) — and `data_version` bumps;
+* per-rollout: table renders, shrinks under the mask, re-sorts, and explains a
+  missing selection;
+* compare: all three charts draw (120 rollouts), and both failure modes — nothing
+  selected, and an all-NaN pairing — produce a message rather than a blank;
+* quality: 38 of 115 units flagged;
+* `refresh_global` drives every view without raising.
+
+Static wiring lint also clean: all 60 ids referenced exist, every `py-click` names
+a Python function, every inline handler names a JS function, every
+`window.document.X` has a `create_proxy`, every checkbox class read is created.
+
+**Not verified: an actual browser render.** The data flow and wiring are checked;
+pixels are not. → **open it and click through.**
+
+A note on the harness's own findings: two "failures" it reported were the page
+behaving correctly on the state-only avoiding candidate (no
+`context_init_xy_dist` / `mean_dist_per_rollout` columns exist there), so the test
+now exercises both that path and a real visual-aligning one.
+
+---
+
+## 5. Use
 
 ```bash
-# cluster: produce a batch
 sbatch Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh logs/aligning-d3il-visual/plans
-
-# locally: serve the repo root and open the viewer
-python3 -m http.server 8000
+python3 -m http.server 8000        # from the repo root
 # → http://localhost:8000/Data_Analysis/Visualizer_VA_v2/index.html
 ```
 
-Pick the batch in QUICK_LIST → SYNC_SOURCE → set the mask → tick candidates and
-variants. The Result Matrices need candidates only.
+QUICK_LIST → SYNC_SOURCE → set mask/split → tick candidates and variants.
+Result Matrices need candidates only.
+
+Maintenance: `python Data_Analysis/Visualizer_VA_v2/build_from_dav3.py` to
+re-derive after a DAv3 update, then `test_page_offline.py` to check it.

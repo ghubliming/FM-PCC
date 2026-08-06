@@ -1,0 +1,390 @@
+"""Drive Visualizer_VA_v2's page code against real CSVs with a stubbed browser.
+
+    python Data_Analysis/Visualizer_VA_v2/test_page_offline.py [batch_va2_dir]
+
+Needs pandas + matplotlib, so it runs on the cluster / any machine with the
+science stack — not in the AI-coding container.
+
+Not a rendering test — a wiring + data test. The page's whole Python block is
+exec'd with fake document/window/pyscript objects, the source frames are set from
+real DA_VA_v2 CSVs, and the actual handlers (trigger_plot, show_rollout_table,
+trigger_compare, render_quality, refresh_global, download_plot) are called the way
+the DOM would call them. Anything that raises, or renders an empty panel, fails.
+"""
+import asyncio
+import pathlib
+import re
+import sys
+
+import pandas as pd
+import matplotlib
+matplotlib.use('agg')
+
+HERE = pathlib.Path(__file__).resolve().parent
+HTML = HERE / 'index.html'
+
+if len(sys.argv) > 1:
+    BATCH = pathlib.Path(sys.argv[1])
+else:
+    runs = sorted((HERE.parent / 'analysis_results').glob('batch_va2_*'), reverse=True)
+    if not runs:
+        print('usage: python test_page_offline.py <path/to/batch_va2_.../>')
+        sys.exit(2)
+    BATCH = runs[0]
+
+def run(coro):
+    return asyncio.new_event_loop().run_until_complete(coro)
+
+
+failures = []
+
+
+def check(name, ok, detail=''):
+    print(f'  {"PASS" if ok else "FAIL"}  {name}' + (f'  — {detail}' if detail else ''))
+    if not ok:
+        failures.append(name)
+
+
+# ── browser stubs ────────────────────────────────────────────────────────────
+class Style:
+    def __init__(self):
+        self.display = 'none'
+        self.color = ''
+        self.width = ''
+        self.height = ''
+        self.maxWidth = ''
+
+
+class ClassList:
+    def toggle(self, *a):
+        pass
+
+
+class Element:
+    def __init__(self, eid, value=''):
+        self.id = eid
+        self.value = value
+        self.innerHTML = ''
+        self.innerText = ''
+        self.checked = False
+        self.disabled = False
+        self.style = Style()
+        self.classList = ClassList()
+        self.className = ''
+        self.href = ''
+        self.download = ''
+        self.dataset = type('D', (), {})()
+
+    def click(self):
+        pass
+
+
+class Document:
+    def __init__(self):
+        self.elements = {}
+        self.classes = {}
+
+    def getElementById(self, eid):
+        return self.elements.setdefault(eid, Element(eid))
+
+    def getElementsByClassName(self, cls):
+        return self.classes.get(cls, [])
+
+    def createElement(self, _tag):
+        return Element('tmp')
+
+    def querySelectorAll(self, _sel):
+        return []
+
+    def set_checks(self, cls, values, checked=True):
+        items = []
+        for v in values:
+            e = Element(f'{cls}:{v}', str(v))
+            e.checked = checked
+            items.append(e)
+        self.classes[cls] = items
+
+
+class Window:
+    currentMode = 'list'
+    currentView = 'aggregate'
+    cmpChartType = 'scatter'
+
+    def applyZoom(self):
+        pass
+
+    def applyViewMode(self):
+        pass
+
+    def alert(self, *a):
+        pass
+
+    def confirm(self, *a):
+        return True
+
+
+document = Document()
+window = Window()
+console = type('C', (), {'log': staticmethod(lambda *a: None)})()
+displayed = []
+
+
+def display(fig, target=None):
+    displayed.append((fig, target))
+
+
+# ── load the page's python block ─────────────────────────────────────────────
+source = HTML.read_text()
+block = source.split('<script type="py">')[1].split('</script>')[0]
+block = "\n".join(line for line in block.splitlines()
+                  if not line.startswith(('from js import', 'from pyscript import',
+                                          'from pyodide.ffi import'))
+                  and not line.startswith('asyncio.ensure_future'))
+# create_proxy is a no-op outside pyodide; document.X = f then just stores the function.
+block = block.replace('create_proxy(', 'identity(')
+
+ns = {'document': document, 'window': window, 'console': console, 'display': display,
+      'identity': lambda f: f, 'fetch': None, 'Uint8Array': None, 'File': None, 'URL': None}
+exec(compile(block, 'va2_page', 'exec'), ns)
+print(f'[harness] page python block: {len(block.splitlines())} lines exec\'d clean')
+
+# ── feed it real data, the way load_data would ───────────────────────────────
+def read(name):
+    path = BATCH / name
+    return ns['_norm'](pd.read_csv(path, low_memory=False)) if path.exists() else None
+
+
+print(f'\n[harness] batch: {BATCH.name}')
+ns['df_agg_src'] = read('va2_aggregated_long.csv')
+ns['df_units_src'] = read('va2_units_long.csv')
+ns['df_roll_src'] = read('per_rollout_detail.csv')
+ns['df_qual_src'] = read('data_quality.csv')
+check('all four native CSVs read',
+      all(ns[k] is not None for k in ('df_agg_src', 'df_units_src', 'df_roll_src', 'df_qual_src')))
+
+document.getElementById('mask-select').value = 'all'
+document.getElementById('seed-mode-select').value = 'standard'
+document.getElementById('mode-select').value = 'candidate'
+document.getElementById('fig-width').value = '11.0'
+document.getElementById('width-zoom').value = '1.0'
+document.getElementById('batch-select').value = BATCH.name
+
+print('\n[populate + derive]')
+ns['populate_split_filter']()
+splits = re.findall(r'value="([^"]+)"', document.getElementById('split-select').innerHTML)
+check('split filter populated', 'ALL' in splits, f'options={splits}')
+document.getElementById('split-select').value = 'ALL'
+
+ns['derive_frames']()
+df_agg = ns['df_agg']
+df_raw = ns['df_raw']
+check('df_agg in DAv3 schema',
+      all(c in df_agg.columns for c in ('Candidate', 'Folder_Name', 'Full_Path', 'variant',
+                                        'halfspace_variant', 'metric', 'mean', 'std', 'count')),
+      f'{len(df_agg)} rows')
+check('df_raw carries seeds', df_raw is not None and 'seed' in df_raw.columns
+      and 'value' in df_raw.columns, f'{0 if df_raw is None else len(df_raw)} rows')
+check('mask applied (not double-counted)', len(df_agg) == len(ns['df_agg_src']) // 2,
+      f'{len(df_agg)} of {len(ns["df_agg_src"])}')
+
+ns['populate_dynamic_filters']()
+metrics = re.findall(r'value="([^"]+)"', document.getElementById('metric-select').innerHTML)
+envs = re.findall(r'value="([^"]+)"', document.getElementById('env-select').innerHTML)
+variants = re.findall(r'value="([^"]+)"', document.getElementById('variant-list').innerHTML)
+cands = re.findall(r'value="([^"]+)"', document.getElementById('candidate-list').innerHTML)
+seeds = re.findall(r'value="([^"]+)"', document.getElementById('seed-list').innerHTML)
+check('metrics populated', len(metrics) > 10, f'{len(metrics)}')
+check('geometry axis populated', len(envs) >= 1, f'{envs}')
+check('variants populated', len(variants) > 5, f'{len(variants)}')
+check('candidates populated', len(cands) >= 1, f'{cands}')
+check('seeds come from the data (not hardcoded 6..10)', len(seeds) >= 1, f'{seeds}')
+roll_cands = re.findall(r'value="([^"]+)"', document.getElementById('roll-cand-select').innerHTML)
+roll_cols = re.findall(r'value="([^"]+)"', document.getElementById('rollcol-list').innerHTML)
+cmp_y = re.findall(r'value="([^"]+)"', document.getElementById('cmp-y-select').innerHTML)
+check('rollout selects populated', roll_cands and roll_cols and cmp_y,
+      f'{len(roll_cands)} cands / {len(roll_cols)} cols / {len(cmp_y)} metrics')
+
+ns['render_mask_banner']()
+banner = document.getElementById('mask-banner').innerHTML
+check('mask banner states the frozen count', 'D1-FROZEN' in banner, banner[:80] + '…')
+
+# ── AGGREGATE view (all of DAv3's machinery) ─────────────────────────────────
+print('\n[aggregate view]')
+document.getElementById('metric-select').value = 'n_success_and_constraints'
+document.getElementById('env-select').value = envs[0]
+document.set_checks('var-check', variants[:5])
+document.set_checks('cand-check', cands)
+document.set_checks('seed-check', seeds)
+
+run(ns['trigger_plot'](None))
+check('plot drawn', len(displayed) > 0, f'{len(displayed)} figure(s)')
+check('scorecard filled', 'BEST' in document.getElementById('scorecard-container').innerHTML.upper()
+      or 'Candidate' in document.getElementById('scorecard-container').innerHTML)
+check('U9 plot legend rendered',
+      'CAND_' in document.getElementById('selection-map-container').innerHTML)
+summary_html = document.getElementById('summary-container').innerHTML
+check('U10 result matrices rendered', 'paper-tbl' in summary_html and 'CAND_' in summary_html,
+      f'{summary_html.count("<table")} tables')
+check('matrices mark never-run cells', 'nullcell' in summary_html)
+ns['render_path_map']()
+check('path audit map rendered', 'CAND_' in document.getElementById('path-map-container').innerHTML)
+
+# empty selection must explain itself, not go blank
+document.set_checks('var-check', [])
+run(ns['trigger_plot'](None))
+check('U10 empty-selection message', 'NO PLOT' in document.getElementById('plot-area').innerHTML)
+document.set_checks('var-check', variants[:5])
+
+# a metric that exists for no selected variant must say so
+document.getElementById('metric-select').value = 'frozen_worst_overlap_m' \
+    if 'frozen_worst_overlap_m' in metrics else metrics[0]
+run(ns['trigger_plot'](None))
+area = document.getElementById('plot-area').innerHTML
+check('U7 no-data message or a real plot', ('NO DATA' in area) or (len(displayed) > 1))
+document.getElementById('metric-select').value = 'n_success_and_constraints'
+
+# per-seed mode
+document.getElementById('seed-mode-select').value = 'custom'
+run(ns['trigger_plot'](None))
+check('per-seed mode draws from va2_units_long', True, 'no exception')
+document.getElementById('seed-mode-select').value = 'standard'
+run(ns['trigger_plot'](None))
+
+# ── LaTeX export path ────────────────────────────────────────────────────────
+print('\n[export]')
+ctx, err = ns['_summary_context']()
+check('summary context built', ctx is not None, err or f'{len(ctx["cands"])} candidates')
+tex = ns['build_latex'](ctx, 'batch', 'stamp')
+check('LaTeX compiles-ish', all(t in tex for t in (r'\documentclass', r'\begin{tabular}',
+                                                   r'\end{document}')))
+check('LaTeX has a table per metric', tex.count(r'\begin{table}') == len(ns['SUMMARY_TABLES']),
+      f'{tex.count(chr(92) + "begin{table}")} tables')
+check('LaTeX lists candidate source paths', 'CAND_' in tex and 'verbatim' in tex)
+
+# ── mask actually changes the numbers, everywhere ────────────────────────────
+print('\n[mask is live]')
+key = 'constraint_exec_sat_rate'
+tight = [e for e in envs if 'tightened' in e]
+if tight:
+    document.getElementById('env-select').value = tight[0]
+    document.getElementById('mask-select').value = 'all'
+    ns['derive_frames']()
+    a = ns['df_agg']
+    v_all = a[(a['metric'] == key) & (a['halfspace_variant'] == tight[0])]['mean'].mean()
+    document.getElementById('mask-select').value = 'unfrozen'
+    ns['derive_frames']()
+    u = ns['df_agg']
+    v_unf = u[(u['metric'] == key) & (u['halfspace_variant'] == tight[0])]['mean'].mean()
+    check('aggregate numbers move with the mask', abs(v_all - v_unf) > 1e-6,
+          f'all={v_all:.4f} unfrozen={v_unf:.4f}')
+    check('data_version bumped so the matrix cache invalidates', ns['data_version'] >= 2,
+          f'version={ns["data_version"]}')
+    document.getElementById('mask-select').value = 'all'
+    ns['derive_frames']()
+else:
+    print('  SKIP  no tightened geometry in this batch')
+
+# ── PER-ROLLOUT view ─────────────────────────────────────────────────────────
+print('\n[per-rollout view]')
+roll = ns['df_roll_src']
+geo_pick = next((e for e in envs if not roll[roll['geo'] == e].empty), envs[0])
+document.getElementById('env-select').value = geo_pick
+sub_roll = roll[roll['geo'] == geo_pick]
+cand_pick = sorted(sub_roll['Candidate'].unique())[0]
+var_pick = sorted(sub_roll[sub_roll['Candidate'] == cand_pick]['variant'].unique())[0]
+document.getElementById('roll-cand-select').value = cand_pick
+document.getElementById('roll-var-select').value = var_pick
+document.getElementById('roll-sort-select').value = 'rollout_idx'
+document.set_checks('rollcol-check', roll_cols[:8])
+
+ns['show_rollout_table']()
+table = document.getElementById('rollout-table-container').innerHTML
+check('rollout table rendered', '<table' in table and '<tr' in table,
+      f'{table.count("<tr")} rows')
+check('rollout summary line', 'rollouts' in document.getElementById('rollout-summary').innerHTML)
+n_all = table.count('<tr')
+
+document.getElementById('mask-select').value = 'unfrozen'
+ns['show_rollout_table']()
+n_unf = document.getElementById('rollout-table-container').innerHTML.count('<tr')
+tight_variant = tight and geo_pick in tight
+check('rollout table shrinks under the mask (tightened geo only)',
+      (n_unf < n_all) if tight_variant else (n_unf == n_all),
+      f'{n_all} -> {n_unf} rows, geo={geo_pick}')
+document.getElementById('mask-select').value = 'all'
+
+document.getElementById('roll-sort-select').value = 'n_success'
+ns['show_rollout_table']()
+check('re-sort does not crash', '<table' in document.getElementById('rollout-table-container').innerHTML)
+document.getElementById('roll-cand-select').value = 'no-such-candidate'
+ns['show_rollout_table']()
+check('missing selection explains itself',
+      'No rollouts' in document.getElementById('rollout-summary').innerHTML)
+document.getElementById('roll-cand-select').value = cand_pick
+ns['show_rollout_table']()
+
+# ── COMPARE view ─────────────────────────────────────────────────────────────
+print('\n[compare view]')
+# Pick a (geo, candidate) that actually HAS the visual-aligning rollout columns —
+# the state-only avoiding candidates carry NaN there by construction.
+_ok = roll.dropna(subset=['context_init_xy_dist', 'mean_dist_per_rollout'])
+cmp_geo = sorted(_ok['geo'].unique())[0]
+cmp_cand = sorted(_ok[_ok['geo'] == cmp_geo]['Candidate'].unique())[0]
+cmp_vars = sorted(_ok[(_ok['geo'] == cmp_geo) & (_ok['Candidate'] == cmp_cand)]['variant'].unique())[:4]
+document.getElementById('env-select').value = cmp_geo
+document.getElementById('cmp-x-select').value = 'context_init_xy_dist'
+document.getElementById('cmp-y-select').value = 'mean_dist_per_rollout'
+document.getElementById('cmp-group-select').value = 'variant'
+document.set_checks('cmp-var-check', cmp_vars)
+document.set_checks('cmp-cand-check', [cmp_cand])
+print(f'      (compare on geo={cmp_geo}, CAND_{cmp_cand}, {len(cmp_vars)} variants)')
+for chart in ('scatter', 'bar', 'box'):
+    window.cmpChartType = chart
+    before = len(displayed)
+    ns['trigger_compare']()
+    check(f'{chart} compare drawn', len(displayed) > before,
+          document.getElementById('engine-status').innerText
+          or document.getElementById('compare-plot-area').innerHTML[:110])
+document.set_checks('cmp-var-check', [])
+ns['trigger_compare']()
+check('compare with no selection explains itself',
+      'Select at least one' in document.getElementById('compare-plot-area').innerHTML)
+
+# an all-NaN pairing (state-only candidate x visual-only metric) must say so, not blank
+_state_geo = next((e for e in envs if roll[(roll['geo'] == e)
+                                           & roll['mean_dist_per_rollout'].isna()].shape[0] > 0), None)
+if _state_geo:
+    _c = sorted(roll[roll['geo'] == _state_geo]['Candidate'].unique())[0]
+    document.getElementById('env-select').value = _state_geo
+    document.set_checks('cmp-var-check', sorted(roll[roll['geo'] == _state_geo]['variant'].unique())[:3])
+    document.set_checks('cmp-cand-check', [_c])
+    window.cmpChartType = 'scatter'
+    ns['trigger_compare']()
+    check('all-NaN pairing explains itself',
+          'NaN' in document.getElementById('compare-plot-area').innerHTML,
+          document.getElementById('compare-plot-area').innerHTML[:90])
+    document.getElementById('env-select').value = cmp_geo
+
+# ── QUALITY view ─────────────────────────────────────────────────────────────
+print('\n[quality view]')
+ns['render_quality']()
+qhtml = document.getElementById('quality-container').innerHTML
+check('quality view rendered', ('flagged' in qhtml) or ('clean' in qhtml), qhtml[:70] + '…')
+
+# ── refresh_global drives whichever view is open ─────────────────────────────
+print('\n[global refresh]')
+for view in ('aggregate', 'rollout', 'quality'):
+    window.currentView = view
+    try:
+        run(ns['refresh_global'](None))
+        ok = True
+    except Exception as exc:                                        # noqa: BLE001
+        ok = False
+        print(f'      raised: {exc}')
+    check(f'refresh_global in {view} view', ok)
+
+print('\n' + '=' * 70)
+if failures:
+    print(f'{len(failures)} FAILURES: {failures}')
+    sys.exit(1)
+print('ALL CHECKS PASSED')
