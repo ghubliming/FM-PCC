@@ -357,9 +357,17 @@ async def trigger_plot(event=None):
         pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df_agg.columns else None
         active_subset = subset
 
-    cols = [v for v in checked_vars if v in pivot_mean.columns]
-    pivot_mean = pivot_mean[cols]
-    if pivot_std is not None: pivot_std = pivot_std[cols]
+    # U12: reindex instead of filtering. A selected variant with no rows at all used to be
+    # dropped from the frame entirely, so it vanished from the plot AND from the legend —
+    # indistinguishable from "not selected". Reindexing keeps it as an ALL-NaN column, which
+    # gets an x-slot and an explicit n/a mark below. Same for a selected candidate that never
+    # ran in this environment (candidate mode only; in environment mode the x-axis is
+    # whatever environments exist, there is no user-supplied list to reindex against).
+    pivot_mean = pivot_mean.reindex(columns=list(checked_vars))
+    if pivot_std is not None: pivot_std = pivot_std.reindex(columns=list(checked_vars))
+    if x_axis == 'Candidate':
+        pivot_mean = pivot_mean.reindex(index=[c for c in checked_cands])
+        if pivot_std is not None: pivot_std = pivot_std.reindex(index=[c for c in checked_cands])
     
     try:
         calc_width = float(document.getElementById("fig-width").value)
@@ -376,18 +384,45 @@ async def trigger_plot(event=None):
     # degenerate (1-D) error array, so bar_label crashes in err[:, 1] (IndexError).
     # Manual annotation reads only the bar height and skips NaN bars, so it never touches
     # the error data. Extra top margin keeps the rotated labels on-canvas.
+    #
+    # U12: a NaN bar and a genuine 0.000 bar are BOTH nothing at the axis line, so the chart
+    # was silently equating "this method scored zero" with "this combination was never run".
+    # NaN bars are now marked n/a at the baseline, in red, and counted under the axes.
+    # pandas' bar plotter runs fillna(0) on the frame before handing it to matplotlib, so a
+    # never-run combination arrives here as a REAL 0-height bar — a measured 0.000 and "no
+    # data at all" drew the identical mark. The truth is still in pivot_mean, so the mask is
+    # read from THERE and paired back onto the rects: one BarContainer per column, one rect
+    # per index row, both in frame order. If that pairing ever stops holding (a matplotlib
+    # or pandas change), fall back to the rect height and mark nothing rather than mislabel.
     from matplotlib.container import BarContainer
-    for container in ax.containers:
-        if not isinstance(container, BarContainer):
-            continue
-        for rect in container:
+    bars = [c for c in ax.containers if isinstance(c, BarContainer)]
+    paired = (len(bars) == len(pivot_mean.columns)
+              and all(len(b) == len(pivot_mean.index) for b in bars))
+    n_missing = n_bars = 0
+    for ci, container in enumerate(bars):
+        for ri, rect in enumerate(container):
+            n_bars += 1
             h = rect.get_height()
-            if h != h:  # NaN -> absent combo, no label
+            value = pivot_mean.iat[ri, ci] if paired else h
+            xc = rect.get_x() + rect.get_width() / 2.0
+            if value != value:  # NaN -> nothing was measured here; say so, do not imply zero
+                n_missing += 1
+                # height NaN, NOT set_visible(False): an invisible patch makes matplotlib
+                # draw an empty swatch for that variant in the legend too, which loses the
+                # colour key. A NaN height just isn't drawn, and the legend stays intact.
+                rect.set_height(float('nan'))
+                ax.annotate("n/a", xy=(xc, 0.0), xytext=(0, 3), textcoords="offset points",
+                            ha="center", va="bottom", fontsize=6, rotation=90,
+                            color="#b71c1c", fontweight="bold")
                 continue
-            ax.annotate(f"{h:.3g}", xy=(rect.get_x() + rect.get_width() / 2.0, h),
+            ax.annotate(f"{h:.3g}", xy=(xc, h),
                         xytext=(0, 3), textcoords="offset points",
                         ha="center", va="bottom", fontsize=7, rotation=90)
     ax.margins(y=0.15)
+    if n_missing:
+        ax.set_xlabel(f"{n_missing} of {n_bars} bars have NO DATA (marked n/a) - "
+                      f"an absent bar is not a zero",
+                      fontsize=8, color="#b71c1c", fontweight="bold")
 
     ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
 

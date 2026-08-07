@@ -4128,6 +4128,36 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 ***
 
+## Gen14 U7: Code Study on Determinism and Gen6v4/Gen7 Equivalence (August 6, 2026)
+
+**Keywords**: Gen14, Gen6v4, Gen7, determinism, equivalence, Visual-Mix-ML.
+
+1. **Code Equivalence Confirmed**: The generative paths for `fm` and `diffusion` arms in Gen14 are verbatim copies of Gen7 and Gen6v4 respectively, satisfying the zero-interference design.
+2. **Config Divergence**: Identified that Gen14's `diffusion` arm uses `mpc_batch_size: 4` (inherited from Gen7) instead of Gen6v4's `1`, meaning it employs a different controller setup.
+3. **Determinism Flaws**: The evaluation is not guaranteed to be bit-reproducible run-to-run because the projector's circuit breakers branch on wall-clock time, and episode length data-dependency means one perturbed rollout desynchronizes the RNG stream for the rest of the batch.
+
+***
+
+## Gen14 U7: Spec for DA Tool Output Processing (August 6, 2026)
+
+**Keywords**: Gen14, DA_VA_v2, data analysis, visual-aligning, metric layout.
+
+1. **DA Tool Feasibility**: Confirmed Gen14 evaluation outputs can successfully feed the `DA_Code_v3` standard.
+2. **Layout & Metric Gaps Identified**: Mapped out 4 directory layout mismatches (e.g., extra `{variant}` folder level, tightening defined at the geo directory rather than variant suffix) and missing cumulative `total_violations` metric.
+3. **Solutions Proposed**: Charted specific fixes for the DA tool discovery phase and metric derivation (e.g., calculating `n_success_and_constraints` from `constraint_exec_*`), enabling a seamless data analysis pipeline upgrade.
+
+***
+
+## DA_VA_v2 U3: Result Matrices, Run Coverage, and INIT XY (August 7, 2026)
+
+**Keywords**: DA_VA_v2, Visualizer_VA_v2, result matrices, relaxed success, INIT XY, run coverage.
+
+1. **Result Matrices Expanded**: Added three new matrices (`success_relaxed`, `n_success_relaxed_and_constraints`, `mean_dist_per_rollout`) to the visualizer and LaTeX exports, addressing visual-aligning specific eval modes and distance metrics.
+2. **In-Page Metric Derivation**: Since the pipeline only computes strict success products, the visualizer was engineered to properly derive `relaxed + constraint` success per-rollout internally from `per_rollout_detail.csv` before grouping.
+3. **Data Transparency Improvements**: Added a "Run coverage" table to explicitly flag unbalanced batches (e.g., candidates evaluated on differing amounts of rollouts). Added an "INIT XY" reference row to contextualize final distance metrics against their starting box-target distances.
+
+***
+
 ## Gen3v6/Gen3v7 Fix 9: Config Provenance & Threshold Variables (August 7, 2026)
 
 **Keywords**: Gen3v6, Gen3v7, config provenance, results path collision, threshold variables, HardFlow.
