@@ -38,7 +38,7 @@ sub('<title>FM-PCC Matrix Explorer</title>',
 sub('<h1>FM-PCC EXPLORER</h1>',
     '<h1>FM-PCC VA EXPLORER v2</h1>')
 sub('<div>SCIENTIFIC_SUITE_v3.12</div>',
-    '<div>DA_VA_v2 &nbsp;|&nbsp; VISUAL ALIGNING SUITE U2</div>')
+    '<div>DA_VA_v2 &nbsp;|&nbsp; VISUAL ALIGNING SUITE U3</div>')
 sub('placeholder="../analysis_results/batch_v3_.../candidates_multidimensional_aggregated.csv"',
     'placeholder="../analysis_results/batch_va2_.../  (folder, not a file)"')
 
@@ -272,6 +272,41 @@ def _slice(df, use_mask=True):
     return out
 
 
+# U3: the relaxed goal+constraint rate. The DA pipeline only derives the STRICT
+# product (n_success * zero_violation), and the relaxed one canNOT be recovered
+# from the long CSVs after the fact — mean(a*b) != mean(a)*mean(b) once the two
+# flags disagree on any single rollout. per_rollout_detail is the only frame that
+# still has both side by side, so it is rebuilt here, per rollout, then reduced
+# exactly like the pipeline reduces everything else. A future batch that ships
+# the column natively wins: the synthesis is skipped (see derive_frames).
+DERIVED_METRIC = 'n_success_relaxed_and_constraints'
+DERIVED_INPUTS = ('success_relaxed', 'constraint_exec_zero_violation')
+
+
+def _derived_rows(roll, keys):
+    """mean/std/n of DERIVED_METRIC over rollouts, grouped by `keys`. None if unavailable.
+
+    Grouping mirrors the pipeline's own reduction (split included), so with
+    split=ALL these rows duplicate per split exactly like the native ones and the
+    matrices average them the same way. per_rollout_detail carries FolderName but
+    NOT FullPath, so the path column is filled from df_agg afterwards.
+    """
+    if roll is None or len(roll) == 0:
+        return None
+    if any(c not in roll.columns for c in DERIVED_INPUTS):
+        return None
+    keys = [k for k in keys if k in roll.columns]
+    if not keys:
+        return None
+    work = roll[keys].copy()
+    work['__v'] = (pd.to_numeric(roll[DERIVED_INPUTS[0]], errors='coerce').values
+                   * pd.to_numeric(roll[DERIVED_INPUTS[1]], errors='coerce').values)
+    grouped = work.groupby(keys, observed=True, dropna=False)['__v']
+    out = pd.DataFrame({'mean': grouped.mean(), 'std': grouped.std(),
+                        'n': grouped.count()}).reset_index()
+    return out[out['n'] > 0]
+
+
 def derive_frames():
     """Rebuild df_agg / df_raw for the current mask+split, in DAv3's schema."""
     global df_agg, df_raw, data_version
@@ -287,6 +322,23 @@ def derive_frames():
         'std': agg['std'].values,
         'count': agg['n'].values,                   # pooled rollouts -> SEM is over rollouts
     })
+    roll = _slice(df_roll_src)                      # mask here drops the frozen ROWS
+    paths = dict(zip(df_agg['Candidate'], df_agg['Full_Path']))
+    if DERIVED_METRIC not in set(df_agg['metric'].unique()):
+        extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
+                                     'geo', 'variant'])
+        if extra is not None and len(extra):
+            df_agg = pd.concat([df_agg, pd.DataFrame({
+                'Candidate': extra['Candidate'].values,
+                'Folder_Name': extra['FolderName'].values,
+                'Full_Path': extra['Candidate'].map(paths).values,
+                'variant': extra['variant'].values,
+                'halfspace_variant': extra['geo'].values,
+                'metric': DERIVED_METRIC,
+                'mean': extra['mean'].values,
+                'std': extra['std'].values,
+                'count': extra['n'].values,
+            })], ignore_index=True)
     if df_units_src is not None:
         units = _slice(df_units_src)
         df_raw = pd.DataFrame({
@@ -299,6 +351,20 @@ def derive_frames():
             'metric': units['metric'].values,
             'value': units['mean'].values,
         })
+        if DERIVED_METRIC not in set(df_raw['metric'].unique()):
+            extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
+                                         'seed', 'geo', 'variant'])
+            if extra is not None and len(extra):
+                df_raw = pd.concat([df_raw, pd.DataFrame({
+                    'Candidate': extra['Candidate'].values,
+                    'Folder_Name': extra['FolderName'].values,
+                    'Full_Path': extra['Candidate'].map(paths).values,
+                    'seed': extra['seed'].values,
+                    'variant': extra['variant'].values,
+                    'halfspace_variant': extra['geo'].values,
+                    'metric': DERIVED_METRIC,
+                    'value': extra['mean'].values,
+                })], ignore_index=True)
     else:
         df_raw = None
     data_version += 1      # busts the result-matrix cache: mask/split changed the numbers
@@ -704,6 +770,40 @@ document.show_rollout_table = create_proxy(show_rollout_table)
 document.trigger_compare = create_proxy(trigger_compare)
 document.render_quality = create_proxy(render_quality)
 asyncio.ensure_future(init_manifest())""")
+
+# ── 12b. U3: three more Result Matrices (VA distance + the relaxed pair) ─────
+# DAv3 ships four tables, all of them state-only-safe. The visual-aligning eval
+# adds a distance-to-goal and a second, position-only success definition, and
+# neither has anywhere else to appear in a paper table. Rows/columns/SEM/flag
+# machinery is untouched — this is purely three more entries in the list that
+# drives BOTH the on-page tables and the LaTeX export.
+sub("""SUMMARY_TABLES = [
+    ("n_success", "N_SUCCESS -- success rate (goal reached)", "{:.3f}", False),
+    ("n_success_and_constraints", "N_SUCCESS + CONSTRAINT -- success rate (goal reached AND constraints satisfied)", "{:.3f}", False),
+    ("n_steps", "N_STEPS -- steps taken (episode length)", "{:.1f}", True),
+    ("avg_time", "AVG_TIME -- average computation time per planning step [s]", "{:.4f}", True),
+]""",
+    """SUMMARY_TABLES = [
+    ("n_success", "N_SUCCESS -- success rate (goal reached: strict, position AND rotation)", "{:.3f}", False),
+    ("n_success_and_constraints", "N_SUCCESS + CONSTRAINT -- success rate (goal reached AND constraints satisfied)", "{:.3f}", False),
+    # U3 (visual-aligning only; the state-only avoiding trees leave these columns
+    # absent, so their cells render as the honest NULL dash rather than a zero).
+    ("success_relaxed", "N_SUCCESS RELAXED -- success rate (position only: final box-target XY distance within pos_min_dist; final angle ignored)", "{:.3f}", False),
+    ("n_success_relaxed_and_constraints", "N_SUCCESS RELAXED + CONSTRAINT -- relaxed success AND constraints satisfied", "{:.3f}", False),
+    ("mean_dist_per_rollout", "MIN_DIST -- final box-target distance [m], the env's own score (half the position error plus half the rotation error) measured against pos/rot_min_dist -- lower is better", "{:.4f}", True),
+    ("n_steps", "N_STEPS -- steps taken (episode length)", "{:.1f}", True),
+    ("avg_time", "AVG_TIME -- average computation time per planning step [s]", "{:.4f}", True),
+]""")
+
+# the caption block above the tables counts them and names the flagged ones
+sub("""              'In the N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '""",
+    """              'In the MIN_DIST, N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '""")
+sub("""              '<b>EXPORT ZIP</b> writes exactly these four tables to a .tex file inside the archive.'""",
+    """              f'<b>EXPORT ZIP</b> writes exactly these {len(SUMMARY_TABLES)} tables to a .tex file inside the archive.'""")
+sub("""    # 2. LaTeX — the four Result Matrices, exactly as rendered on the page.""",
+    """    # 2. LaTeX — every Result Matrix, exactly as rendered on the page.""")
+sub("""# U10.1: LaTeX export of the same four matrices — one standalone, compilable .tex file.""",
+    """# U10.1: LaTeX export of the same matrices — one standalone, compilable .tex file.""")
 
 # ── 13. matplotlib module handle for the colormap fallback ───────────────────
 sub("""import pandas as pd

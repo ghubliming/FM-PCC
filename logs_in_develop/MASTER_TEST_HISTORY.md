@@ -4116,3 +4116,23 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Backward Compatibility Fixes**: Resolved critical bugs with loading early-Gen7 data. Implemented dual-schema JSON loading to handle both flat and nested rollout-stats schemas transparently, preventing early-Gen7 units from loading as silent NaNs. Fixed output directory naming so that runs correctly appear in the HTML visualizer dropdowns.
 3. **Visualizer_VA_v2 Integration**: Created `Visualizer_VA_v2/index.html` by deriving directly from the state-of-the-art DAv3 visualizer (`Visualizer/index.html`). Implemented a build script (`build_from_dav3.py`) to surgically apply 20 visual-aligning-specific modifications over the DAv3 core, inheriting all advanced features (result matrices, seed modes, LaTeX exports, zip downloads) without diverging the codebases. Reverted earlier brittle hacks that attempted to force old legacy visualizers to parse the new outputs.
 
+***
+
+## Gen3v6 Fix 8 DA: UNet Architecture Control Verification (August 6, 2026)
+
+**Keywords**: Gen3v6, Fix 8, UNet width, capacity artifact, MeanFlow, Pareto-dominance.
+
+1. **UNet Fixed and Converging**: Confirmed that at the correct width (`freq_dim=32`, 4.0M params), the UNet backbone trains successfully on the MeanFlow objective (loss dropped from 1.0 to 0.912). It converges cleanly and is faster to train (8h) than the DiT.
+2. **Fix_1 Falsified**: Overturned the previous conclusion ("MeanFlow needs the DiT"). The failure of the original UNet was purely a capacity artifact (it was 63.8x oversized) rather than an architectural limitation. The UNet is empirically a viable Gen3v6 backbone.
+3. **Pareto Dominance at K=2**: The correctly sized UNet at K=2 dominates 8 configs on `dpcc-t-tightened` and `dpcc-r-tightened` (including DPCC K10/K20, FM ODE K20, and its own DiT sibling) on both success-and-constraints and computational time. It proves that MeanFlow's low-K claim holds strong on a UNet architecture.
+
+***
+
+## Gen3v6/Gen3v7 Fix 9: Config Provenance & Threshold Variables (August 7, 2026)
+
+**Keywords**: Gen3v6, Gen3v7, config provenance, results path collision, threshold variables, HardFlow.
+
+1. **Provenance Drift Identified**: Discovered that evaluation scripts were naming output directories based on a fallback yaml (`projection_eval.yaml`) instead of the generation-specific yamls they actually loaded. Threshold parameters (`DPCC_THRESHOLD`, `HFFM_ACT_THRESHOLD`) were not reaching the directory name, causing silent collisions and overwrites (e.g., between runs differing only in activation threshold).
+2. **Environment Handshake Fix**: Resolved the issue by publishing the actually loaded config path and threshold values (`FMPCC_PROJ_CFG`, `FMPCC_DPCC_THRESHOLD`, `HFFM_ACT_THRESHOLD`, `HFFM_BATCH`) to environment variables before `utils.Parser` initializes. This guarantees a single resolver for HardFlow constraints.
+3. **Collision Prevention**: Output directory paths now accurately reflect the real evaluation gates (e.g. `_T0.5_A0.5_B4_`). This isolates HardFlow evaluations from DPCC settings and prevents unrecorded working-tree edits from masking the active constraints.
+

@@ -184,8 +184,36 @@ check('df_agg in DAv3 schema',
       f'{len(df_agg)} rows')
 check('df_raw carries seeds', df_raw is not None and 'seed' in df_raw.columns
       and 'value' in df_raw.columns, f'{0 if df_raw is None else len(df_raw)} rows')
-check('mask applied (not double-counted)', len(df_agg) == len(ns['df_agg_src']) // 2,
-      f'{len(df_agg)} of {len(ns["df_agg_src"])}')
+# The source CSV holds both masks, so exactly half of it must survive. U3's derived
+# relaxed-success+constraint rows are appended on top of that half (one per unit),
+# and are counted separately so a double-count would still be caught.
+n_derived = int((df_agg['metric'] == ns['DERIVED_METRIC']).sum())
+check('mask applied (not double-counted)',
+      len(df_agg) - n_derived == len(ns['df_agg_src']) // 2,
+      f'{len(df_agg)} of {len(ns["df_agg_src"])} (+{n_derived} derived)')
+n_native = int((df_agg['metric'] == 'n_success').sum())
+_roll = ns['df_roll_src']
+# A state-only avoiding batch has no relaxed-success column at all — then the
+# right answer is NO derived rows (and a dash in the table), not a column of zeros.
+_has_relaxed = _roll is not None and all(c in _roll.columns for c in ns['DERIVED_INPUTS'])
+check('U3 relaxed success + constraint derived per unit',
+      (0 < n_derived <= n_native) if _has_relaxed else n_derived == 0,
+      f'{n_derived} rows vs {n_native} n_success rows'
+      + ('' if _has_relaxed else ' (state-only batch: none expected)'))
+
+# and it must be the mean of the per-rollout PRODUCT, not the product of the means
+if _has_relaxed:
+    _key = df_agg[df_agg['metric'] == ns['DERIVED_METRIC']].iloc[0]
+    _sub = _roll[(_roll['Candidate'] == _key['Candidate'])
+                 & (_roll['geo'] == _key['halfspace_variant'])
+                 & (_roll['variant'] == _key['variant'])]
+    _manual = (pd.to_numeric(_sub['success_relaxed'], errors='coerce')
+               * pd.to_numeric(_sub['constraint_exec_zero_violation'], errors='coerce')).mean()
+    check('U3 derived value matches the raw rollouts',
+          abs(float(_key['mean']) - float(_manual)) < 1e-9,
+          f'{_key["variant"]}: page={_key["mean"]:.4f} raw={_manual:.4f} over {len(_sub)} rollouts')
+else:
+    check('U3 derived value matches the raw rollouts', True, 'SKIP — state-only batch')
 
 ns['populate_dynamic_filters']()
 metrics = re.findall(r'value="([^"]+)"', document.getElementById('metric-select').innerHTML)
@@ -225,7 +253,14 @@ check('U9 plot legend rendered',
 summary_html = document.getElementById('summary-container').innerHTML
 check('U10 result matrices rendered', 'paper-tbl' in summary_html and 'CAND_' in summary_html,
       f'{summary_html.count("<table")} tables')
-check('matrices mark never-run cells', 'nullcell' in summary_html)
+# Only meaningful when this environment actually HAS a hole — a batch whose every
+# candidate ran every variant has no never-run cell to mark, and demanding one is a
+# test bug, not a page bug.
+_d = df_agg[(df_agg['halfspace_variant'] == document.getElementById('env-select').value)
+            & (df_agg['metric'] == 'n_success')]
+_grid_full = len(set(zip(_d['Candidate'], _d['variant']))) >= len(cands) * _d['variant'].nunique()
+check('matrices mark never-run cells', 'nullcell' in summary_html or _grid_full,
+      'SKIP — full grid, nothing to mark' if _grid_full else '')
 ns['render_path_map']()
 check('path audit map rendered', 'CAND_' in document.getElementById('path-map-container').innerHTML)
 
