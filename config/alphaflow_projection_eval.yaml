@@ -130,7 +130,11 @@ hardflow:
   #   1.0 -> every step (full; the safe default, matches old behaviour)
   #   0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
   #   0.0 -> terminal-only NLP (~ post-hoc projection of the final sample)
-  activation_threshold: 1.0
+  # 🔴 FIX_9 (2026-08-07): 1.0 -> 0.5, matching this file's top-level
+  # diffusion_timestep_threshold so arms B and C are gated alike unless a run says otherwise.
+  # Set it per job with HFFM_ACT_THRESHOLD (and DPCC_THRESHOLD for arm B); both land in the
+  # results-folder name as the A and T tokens, so sweep values can no longer overwrite each other.
+  activation_threshold: 0.5
   # Back-compat alias, used only if activation_threshold is absent: all|late -> 1.0|0.5
   activation: all
 

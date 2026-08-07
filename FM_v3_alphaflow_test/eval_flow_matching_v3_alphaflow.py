@@ -68,6 +68,40 @@ with open(_cfg_path, 'r') as file:
     config = yaml.safe_load(file)
 print(f'[ eval ] config: {_cfg_path}')
 
+# 🔴 FIX_9_CFG_PROVENANCE (2026-08-07) — publish the yaml THIS eval loaded. config/avoiding-d3il.py
+# builds the results-folder tokens from it and utils/setup.py snapshots it; both used to hard-code
+# config/projection_eval.yaml, a file this eval never opens. That is why job 24334 landed in a path
+# saying `T1` while the Projector was gated at 0.5. Must be set BEFORE the first
+# Parser().parse_args() / importlib.import_module('config.…'), which is what imports that module.
+os.environ['FMPCC_PROJ_CFG'] = _cfg_path
+
+# 🔴 FIX_9_CFG_PROVENANCE — DPCC_THRESHOLD makes arm B's threshold settable per job, the way the
+# HFFM_* knobs already are for arm C (runs are configured at submit time on the cluster, not in git).
+diffusion_timestep_threshold = float(os.environ.get(
+    'DPCC_THRESHOLD', config.get('diffusion_timestep_threshold', 0.5)))
+
+# ── arm C (HardFlow) knobs, resolved once (verbatim Gen12 semantics) ──────────────────────
+hardflow_cfg = config.get('hardflow', {})
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   hardflow_cfg.get('activation_threshold',
+                                    hardflow_cfg.get('activation', 1.0))))
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
+
+# 🔴 FIX_9_CFG_PROVENANCE — republish the RESOLVED values (aliases mapped, yaml fallbacks applied)
+# so the results path is built from what actually runs. resolve_activation_threshold() stays the
+# single resolver; the config module only reads the number back out. Arm B's and arm C's thresholds
+# are SEPARATE knobs by design (a threshold sweep needs them independent) — this line is what makes
+# a mismatch visible instead of silent, and what stops HFFM_ACT_THRESHOLD=0.5 and =1.0 from
+# overwriting each other's results directory.
+os.environ['FMPCC_DPCC_THRESHOLD'] = '%g' % float(diffusion_timestep_threshold)
+os.environ['HFFM_ACT_THRESHOLD'] = '%g' % float(hf_act_threshold)
+os.environ['HFFM_BATCH'] = str(int(hf_batch_size))
+print(f'[ eval ] resolved  cfg={_cfg_path}  dpcc_threshold={diffusion_timestep_threshold}  '
+      f'hf_act_threshold={hf_act_threshold}  hf_batch={hf_batch_size}  '
+      f'hf_candidate_cost={hf_candidate_cost}')
+
 exps = config['exps']
 seeds = config['seeds']
 if args_cli.seed is not None:
@@ -98,16 +132,10 @@ halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps
 n_trials = config['n_trials']
 plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
-diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
-
-# ── Gen3v7 U3 — arm C (HardFlow) knobs, resolved once (verbatim Gen3v6/Gen12 semantics) ──────
-hardflow_cfg = config.get('hardflow', {})
-hf_act_threshold = resolve_activation_threshold(
-    os.environ.get('HFFM_ACT_THRESHOLD',
-                   hardflow_cfg.get('activation_threshold',
-                                    hardflow_cfg.get('activation', 1.0))))
-hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
-hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
+# 🔴 FIX_9_CFG_PROVENANCE — diffusion_timestep_threshold and the hf_* knobs were resolved ABOVE,
+# immediately after the yaml load. They had to move: the --flow-steps branch below calls
+# importlib.import_module('config.' + exp), and Python caches modules, so publishing the resolved
+# values here would have been too late for the folder name on any --flow-steps run.
 # Matched-K note: K is set for EVERY arm via HFFM_FLOW_STEPS (or --flow-steps), which the plan
 # block reads into args.flow_steps_v3 / args.flow_steps — so it also drives the results-dir name
 # (`_K{K}_`) and distinct-K runs never collide. Resolved per-seed below.

@@ -2,14 +2,49 @@ from diffuser.utils import watch
 import yaml
 import os
 
+# 🔴 FIX_9_CFG_PROVENANCE (2026-08-07) — the results-folder name MUST describe the run that
+# produced it. This module is imported lazily by utils.Parser.read_config
+# (`importlib.import_module`) during Parser().parse_args(), i.e. AFTER the eval script has
+# resolved its own projection yaml and the HFFM_*/DPCC_THRESHOLD overrides. Those scripts
+# publish what they resolved into the environment; the tokens below are built from it:
+#   FMPCC_PROJ_CFG        -> the projection yaml the eval ACTUALLY loaded (also snapshotted)
+#   FMPCC_DPCC_THRESHOLD  -> resolved DPCC diffusion_timestep_threshold   ('T' token)
+#   HFFM_ACT_THRESHOLD    -> resolved HardFlow NLP activation threshold   ('A' token)
+#   HFFM_BATCH            -> resolved HardFlow candidate-fan size         ('B' token)
+# With none of them set this falls back to exactly the old behaviour, so train jobs and every
+# generation still on config/projection_eval.yaml are unaffected.
+# Why it exists: job 24334 was written to a path saying `T1` — read from a file that eval never
+# opens — while the Projector was gated at the meanflow yaml's 0.5.
+# Full writeup: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/CHANGELOG_Fix_9_config_provenance.md
+_PROJ_CFG = os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml')
+
+
+def _num(value):
+    """Keep folder tokens stable: 1.0 -> 1 (so 'T1', not 'T1.0'), 0.5 -> 0.5."""
+    f = float(value)
+    return int(f) if f == int(f) else f
+
+
 # Read the threshold dynamically from the YAML config, abort if not found
-with open('config/projection_eval.yaml', 'r') as f:
+with open(_PROJ_CFG, 'r') as f:
     _proj_config = yaml.safe_load(f)
 
 if 'diffusion_timestep_threshold' not in _proj_config:
-    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/projection_eval.yaml")
+    raise ValueError(f"CRITICAL: 'diffusion_timestep_threshold' MUST be defined in {_PROJ_CFG}")
 
-_yaml_threshold = _proj_config['diffusion_timestep_threshold']
+# 🔴 FIX_9_CFG_PROVENANCE — the eval's RESOLVED value wins over the file: it is the number the
+# Projector was actually handed. Absent (train jobs, other generations) => the file, unchanged.
+_env_threshold = os.environ.get('FMPCC_DPCC_THRESHOLD')
+_yaml_threshold = (_num(_env_threshold) if _env_threshold is not None
+                   else _proj_config['diffusion_timestep_threshold'])
+
+# 🔴 FIX_9_CFG_PROVENANCE — HardFlow (arm C) knobs, consumed by args_to_watch_fmv3_hf_plan.
+# The eval publishes these ALREADY RESOLVED (the 'all'/'late' aliases mapped and the yaml
+# fallbacks applied), so resolve_activation_threshold() in hardflow_projection.py stays the one
+# and only resolver and this module never has to reimplement it. The defaults below apply only
+# when no eval published them — in which case no HardFlow arm is running anyway.
+_hf_act_threshold = _num(os.environ.get('HFFM_ACT_THRESHOLD', 1.0))
+_hf_batch_size = int(os.environ.get('HFFM_BATCH', 1))
 
 #------------------------ base ------------------------#
 
@@ -61,6 +96,25 @@ args_to_watch_fmv3_ode_plan = [
     ('flow_steps_v3', 'K'),
     ('ode_solver_method_v3', 'M'),
     ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
+
+# 🔴 FIX_9_CFG_PROVENANCE — HardFlow-arm plan blocks ONLY (Gen3v6 MeanFlow, Gen3v7 AlphaFlow).
+# Identical to args_to_watch_fmv3_ode_plan plus the two arm-C knobs that change results but used
+# to be invisible in the path:  A = NLP activation threshold,  B = candidate-fan (mpc) size.
+# Before this, `HFFM_ACT_THRESHOLD=0.5` and `=1.0` wrote to the SAME directory and silently
+# overwrote each other — Gen12 worked around it by hand-tagging folders
+# (logs_in_develop/Gen12/DA/DA_20260803_HardFlow_activation_threshold_0p1.md).
+# Deliberately NOT added to the shared ode_plan list: plan_fm_v3_ode_selectable / _drifting /
+# _imeanflow have no HardFlow arm and must keep their existing result paths.
+args_to_watch_fmv3_hf_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('hf_act_threshold', 'A'),
+    ('hf_batch_size', 'B'),
     ('diffusion', 'D'),
 ]
 
@@ -1260,7 +1314,8 @@ base = {
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_meanflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_obj{mf_objective}_bb{imf_backbone}_ts{t_schedule}_dp{meanflow_data_proportion}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        # 🔴 FIX_9_CFG_PROVENANCE — was args_to_watch_fmv3_ode_plan; the _hf_ list adds the A/B tokens.
+        'exp_name': watch(args_to_watch_fmv3_hf_plan),
 
         ## MeanFlow model
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
@@ -1296,6 +1351,11 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
+        # 🔴 FIX_9_CFG_PROVENANCE — arm-C knobs, present so they reach the results path as the
+        # A/B tokens. Resolved by the eval script (see the FMPCC_PROJ_CFG header); inert for the
+        # DPCC-only arms, which is the price of a path that never lies about what ran.
+        'hf_act_threshold': _hf_act_threshold,
+        'hf_batch_size': _hf_batch_size,
 
         ## architecture — MUST equal the trained checkpoint
         'dual_head': True,
@@ -1351,7 +1411,8 @@ base = {
         'prefix': 'f:plans/flow_matching_v3_alphaflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
                   '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        # 🔴 FIX_9_CFG_PROVENANCE — was args_to_watch_fmv3_ode_plan; the _hf_ list adds the A/B tokens.
+        'exp_name': watch(args_to_watch_fmv3_hf_plan),
 
         ## α-Flow model
         'diffusion': 'flow_matcher_v3_alphaflow.models.AlphaFlowODE',
@@ -1397,6 +1458,11 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
+        # 🔴 FIX_9_CFG_PROVENANCE — arm-C knobs, present so they reach the results path as the
+        # A/B tokens. Resolved by the eval script (see the FMPCC_PROJ_CFG header); inert for the
+        # DPCC-only arms, which is the price of a path that never lies about what ran.
+        'hf_act_threshold': _hf_act_threshold,
+        'hf_batch_size': _hf_batch_size,
 
         ## architecture — MUST equal the trained checkpoint
         'dual_head': True,

@@ -4094,3 +4094,25 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 
 1. **Byte-level Proof**: Validated the DPCC threshold wiring fix via a strict A/B test at T=1. `diffuser` remained bit-identical while all projector variants moved, proving the fix applied correctly without side effects.
 2. **Baseline Restored**: Proved that `post_processing` is no longer a duplicate of `dpcc-r`, operating exactly as a single final projection (+0.014 s/step) in alignment with the paper's definition.
+
+***
+
+## Gen14 DA vs Gen7 & Gen6V4: Cross-Generation Visual Comparison (August 6, 2026)
+
+**Keywords**: Gen14, Gen7, Gen6V4, DA_VA_v2, Visual-Mix-ML, dead run, computational cost.
+
+1. **Comparison Limitations**: Attempted to compare Gen14's massive K=2 run against older Gen7 (Visual Flow Matching) and Gen6V4 (Visual DPCC 9D) runs. Discovered that the comparison is heavily constrained because the 30-context data exists on different splits (Gen14 on `train`, Gen7/Gen6V4 on `test`). Only 3 overlapping contexts on the train split could be directly paired.
+2. **Gen6V4 Dead Run Discovery**: Identified that the Gen6V4 baseline in this batch is a "dead run" and unusable for comparison. In 89% of its test rollouts, the box never moved (displacement <1 mm). Its median physical tracking error is 1.80 m, indicating that the commanded trajectories completely diverge from the arm's physical capabilities.
+3. **Goal Success Rates**: Neither older generation completed the task in any rollout (0 successes across 812 rollouts). Gen14 K=2 scored 42 successes in 2280 rollouts (1.8%) — low, but non-zero.
+4. **Computational Cost Dominance**: Cost comparisons remain robust across splits. Gen14 K=2 is vastly more efficient, running at 28–56 ms/replan. In matched variants, Gen6V4 and Gen7 are 19× to 21× slower (up to 19.3 s/replan for Gen7 `bounds_free`), confirming that projection costs cripple the older architectures.
+
+***
+
+## Infrastructure: DA_VA_v2 Pipeline & Visualizer (August 6, 2026)
+
+**Keywords**: DA_VA_v2, Visualizer_VA_v2, data analysis, backward compatibility, path-shape discovery, DAv3.
+
+1. **New DA_VA_v2 Pipeline**: Built a new parallel Data Analysis package (`Data_Analysis/DA_VA_v2/`) to read both old Gen7 visual-aligning runs and new Gen14 (Visual-Mix-ML) runs in a single pass. It utilizes path-shape driven discovery to correctly process four different directory layouts simultaneously, effectively bringing the modern CSV-first analysis standard to older visual pipelines.
+2. **Backward Compatibility Fixes**: Resolved critical bugs with loading early-Gen7 data. Implemented dual-schema JSON loading to handle both flat and nested rollout-stats schemas transparently, preventing early-Gen7 units from loading as silent NaNs. Fixed output directory naming so that runs correctly appear in the HTML visualizer dropdowns.
+3. **Visualizer_VA_v2 Integration**: Created `Visualizer_VA_v2/index.html` by deriving directly from the state-of-the-art DAv3 visualizer (`Visualizer/index.html`). Implemented a build script (`build_from_dav3.py`) to surgically apply 20 visual-aligning-specific modifications over the DAv3 core, inheriting all advanced features (result matrices, seed modes, LaTeX exports, zip downloads) without diverging the codebases. Reverted earlier brittle hacks that attempted to force old legacy visualizers to parse the new outputs.
+
