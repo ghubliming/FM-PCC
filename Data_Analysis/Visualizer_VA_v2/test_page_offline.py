@@ -261,6 +261,34 @@ _d = df_agg[(df_agg['halfspace_variant'] == document.getElementById('env-select'
 _grid_full = len(set(zip(_d['Candidate'], _d['variant']))) >= len(cands) * _d['variant'].nunique()
 check('matrices mark never-run cells', 'nullcell' in summary_html or _grid_full,
       'SKIP — full grid, nothing to mark' if _grid_full else '')
+
+# U3: the run tally. The whole point is that the candidates are NOT comparable by
+# volume, so the table must state a number for every selected candidate.
+_cov = re.search(r'<table class="paper-tbl cov-tbl">.*?</table>', summary_html, re.S)
+_cov_rows = re.findall(r'<td class="rowhead">CAND_([^<]+)</td>', _cov.group(0)) if _cov else []
+check('U3 run-coverage table rendered', sorted(_cov_rows) == sorted(cands),
+      f'{len(_cov_rows)} candidates tallied')
+check('U3 coverage flags an unbalanced batch',
+      ('UNBALANCED' in summary_html) == (len(set(
+          int(pd.to_numeric(df_agg[(df_agg['metric'] == 'n_success')
+                                   & (df_agg['Candidate'] == c)]['count'],
+                            errors='coerce').fillna(0).sum()) for c in cands)) > 1),
+      'UNBALANCED' if 'UNBALANCED' in summary_html else 'balanced batch, no warning')
+
+# U3: the INIT XY reference row — only where THIS environment has a start distance.
+# (A state-only avoiding geometry has none, and inventing one there would be worse
+# than leaving the row out.)
+_has_init = bool(((df_agg['metric'] == ns['REF_METRIC'])
+                  & (df_agg['halfspace_variant'] == document.getElementById('env-select').value)
+                  & (df_agg['Candidate'].isin(cands))
+                  & df_agg['mean'].notna()).any())
+# Match the row's CSS class, not its label — the label also appears in the caption
+# text that explains the row, which would pass this check with no row rendered.
+check('U3 INIT XY reference row on the MIN_DIST table',
+      ('class="refrow"' in summary_html) == _has_init,
+      f'{"present" if _has_init else "absent"} — batch {"has" if _has_init else "lacks"} '
+      + ns['REF_METRIC'])
+
 ns['render_path_map']()
 check('path audit map rendered', 'CAND_' in document.getElementById('path-map-container').innerHTML)
 
@@ -295,6 +323,9 @@ check('LaTeX compiles-ish', all(t in tex for t in (r'\documentclass', r'\begin{t
 check('LaTeX has a table per metric', tex.count(r'\begin{table}') == len(ns['SUMMARY_TABLES']),
       f'{tex.count(chr(92) + "begin{table}")} tables')
 check('LaTeX lists candidate source paths', 'CAND_' in tex and 'verbatim' in tex)
+check('LaTeX carries the INIT XY reference row',
+      (ns['REF_LABEL'] in tex) == _has_init,
+      f'{"present" if _has_init else "absent"}, as expected')
 
 # ── mask actually changes the numbers, everywhere ────────────────────────────
 print('\n[mask is live]')

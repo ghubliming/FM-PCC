@@ -72,6 +72,9 @@
         .warn { color: #c62828; font-weight: bold; }
         .muted { color: #888; }
         .view-toggle { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+        tr.refrow td { background: #eef4fa; font-style: italic; border-top: 2px solid #000; }
+        .cov-tbl td, .cov-tbl th { text-align: right; }
+        .cov-tbl td.rowhead { text-align: left; }
     </style>
 
     <py-config>
@@ -1015,6 +1018,22 @@ SUMMARY_TABLES = [
     ("n_steps", "N_STEPS -- steps taken (episode length)", "{:.1f}", True),
     ("avg_time", "AVG_TIME -- average computation time per planning step [s]", "{:.4f}", True),
 ]
+
+# U3: the MIN_DIST table gets one extra row — where each rollout STARTED. A final
+# distance of 0.33 means nothing on its own; against a start of ~0.28 it means the
+# box barely moved. Position-only (there is no composite score at t=0), pooled over
+# the selected candidates; every variant shares the same contexts, so the row being
+# flat across columns is itself the check that the comparison is fair.
+REF_METRIC = 'context_init_xy_dist'
+REF_FOR = 'mean_dist_per_rollout'
+REF_LABEL = 'INIT XY (ref)'
+
+# U3: how many rollouts each candidate actually contributed. VA batches are NOT
+# balanced — candidates come from different eval jobs, with different seed counts
+# and different variant lists — so two cells in the same column can rest on very
+# different amounts of data. n_success exists in every unit, so its `count` is the
+# honest rollout tally.
+COVERAGE_METRIC = 'n_success'
 summary_cache_key = None
 
 def _seed_context():
@@ -1027,7 +1046,7 @@ def _seed_context():
 
 def _summary_stats(env, seed_mode, seeds):
     # -> ({(metric, cand, variant): {mean, std, count}}, candidates, variants)
-    metrics = [t[0] for t in SUMMARY_TABLES]
+    metrics = [t[0] for t in SUMMARY_TABLES] + [REF_METRIC]
     if seed_mode == "custom":
         d = df_raw[(df_raw['halfspace_variant'] == env) & (df_raw['metric'].isin(metrics)) & (df_raw['seed'].isin(list(seeds)))]
         if d.empty: return {}, [], []
@@ -1045,8 +1064,11 @@ def _summary_stats(env, seed_mode, seeds):
             'std': g['std'].mean() if 'std' in d.columns else float('nan'),
             'count': g['count'].max() if 'count' in d.columns else 1,
         })
-    cands = sorted(d['Candidate'].astype(str).unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
-    variants = sorted(d['variant'].unique())
+    core = d[d['metric'] != REF_METRIC]
+    if core.empty:
+        core = d
+    cands = sorted(core['Candidate'].astype(str).unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    variants = sorted(core['variant'].unique())
     return stats.to_dict('index'), cands, variants
 
 def _cell_stats(rec, metric, cand, var):
@@ -1092,6 +1114,73 @@ def _fail_flags(rec, cand, var):
             flags.append("constraint")
     return flags
 
+def _ref_cells(rec, cands, variants):
+    """Per-variant INIT XY, pooled over the selected candidates (rollout-weighted).
+
+    -> [(variant, mean_or_None, n_rollouts)]. Empty means nothing to show, which is
+    the normal case on a state-only avoiding batch: no context_init_xy_dist column.
+    """
+    out = []
+    for v in variants:
+        total, weight = 0.0, 0
+        for c in cands:
+            st = _cell_stats(rec, REF_METRIC, c, v)
+            if st is None:
+                continue
+            total += st[0] * st[2]
+            weight += st[2]
+        out.append((v, (total / weight) if weight else None, weight))
+    return out if any(m is not None for _, m, _ in out) else []
+
+
+def _coverage_html(ctx):
+    """'CAND_2 ran 570 rollouts, CAND_1 ran 180' — stated once, up front.
+
+    Without this the matrices quietly compare a 5-seed candidate against a 1-seed
+    one: the SEM shrinks, the mean looks steadier, and nothing on screen says why.
+    """
+    if df_agg is None:
+        return ''
+    base = df_agg[df_agg['metric'] == COVERAGE_METRIC]
+    if base.empty:
+        return ''
+    here = base[base['halfspace_variant'] == ctx["env"]]
+    rows, totals = [], []
+    for c in ctx["cands"]:
+        b_all = base[base['Candidate'] == c]
+        b_env = here[here['Candidate'] == c]
+        n_env = int(pd.to_numeric(b_env['count'], errors='coerce').fillna(0).sum())
+        n_all = int(pd.to_numeric(b_all['count'], errors='coerce').fillna(0).sum())
+        if df_raw is not None and len(df_raw):
+            n_seeds = int(df_raw[df_raw['Candidate'] == c]['seed'].nunique())
+        else:
+            n_seeds = 0
+        totals.append(n_all)
+        warn = ' class="warn"' if n_all == 0 else ''
+        rows.append(f'<tr><td class="rowhead">CAND_{c}</td>'
+                    f'<td{warn}>{n_all}</td><td>{n_env}</td>'
+                    f'<td>{b_env["variant"].nunique()}</td>'
+                    f'<td>{b_all["halfspace_variant"].nunique()}</td>'
+                    f'<td>{n_seeds if n_seeds else "&mdash;"}</td></tr>')
+    if not rows:
+        return ''
+    note = ''
+    if len(set(totals)) > 1:
+        note = ('<span class="warn">UNBALANCED</span> &mdash; these candidates did not run '
+                f'the same amount ({min(totals)}&hellip;{max(totals)} rollouts). '
+                'Cells are still mean &plusmn; SEM over whatever each one actually ran; '
+                'the SEM is narrower where there is more data, not where the method is better.')
+    else:
+        note = f'All selected candidates ran the same {totals[0]} rollouts.'
+    return ('<div class="tbl-caption">Run coverage &mdash; how much data is behind each row</div>'
+            '<div class="paper-tbl-wrap"><table class="paper-tbl cov-tbl"><thead><tr>'
+            '<th class="corner">Candidate</th><th>Rollouts (total)</th>'
+            f'<th>Rollouts in {ctx["env"]}</th><th>Variants here</th>'
+            '<th>Geometries</th><th>Seeds</th></tr></thead><tbody>'
+            + "".join(rows) + '</tbody></table></div>'
+            f'<div class="tbl-note">{note} Counts follow the global mask and split.</div>')
+
+
 def _render_matrix(rec, metric, fmt, annotate, cands, variants):
     head = '<thead><tr><th class="corner">Candidate</th>' + "".join(f'<th>{v}</th>' for v in variants) + '</tr></thead>'
     rows = []
@@ -1109,6 +1198,14 @@ def _render_matrix(rec, metric, fmt, annotate, cands, variants):
                     txt += ' <span class="flag">(' + ", ".join(flags) + ')</span>'
             cells.append(f'<td title="n={st[2]} seed(s)">{txt}</td>')
         rows.append("<tr>" + "".join(cells) + "</tr>")
+    if metric == REF_FOR:
+        ref = _ref_cells(rec, cands, variants)
+        if ref:
+            cells = [f'<td class="rowhead">{REF_LABEL}</td>']
+            for _v, mean, weight in ref:
+                cells.append('<td class="nullcell">&mdash;</td>' if mean is None
+                             else f'<td title="n={weight} rollouts">{fmt.format(mean)}</td>')
+            rows.append('<tr class="refrow">' + "".join(cells) + "</tr>")
     return ('<div class="paper-tbl-wrap"><table class="paper-tbl">' + head
             + '<tbody>' + "".join(rows) + '</tbody></table></div>')
 
@@ -1167,8 +1264,14 @@ def render_summary_tables(force=False):
               'N_SUCCESS+CONSTRAINT did <b>not</b> win &mdash; <span class="flag">goal</span> = goal not always reached, '
               '<span class="flag">constraint</span> = a constraint was violated. Unmarked numbers are fully successful runs.<br>'
               'Rows follow <b>6. Candidates</b>; columns are always every variant. '
+              'The MIN_DIST table carries a final <b>INIT XY (ref)</b> row: the mean box-target '
+              'distance the rollouts <b>started</b> from, so a final distance can be read as '
+              'progress rather than as a bare number. It is position-only (there is no composite '
+              'score at t=0) and pooled over the selected candidates &mdash; the contexts are '
+              'shared, so that row staying flat across columns is itself the fairness check.<br>'
               f'<b>EXPORT ZIP</b> writes exactly these {len(SUMMARY_TABLES)} tables to a .tex file inside the archive.'
               '</div>']
+    blocks.append(_coverage_html(ctx))
     for i, (metric, caption, fmt, annotate) in enumerate(SUMMARY_TABLES, start=1):
         blocks.append(f'<div class="tbl-caption">Table {i} &mdash; {caption.replace(" -- ", " &mdash; ")}</div>')
         blocks.append(_render_matrix(ctx["rec"], metric, fmt, annotate, cands, variants))
@@ -1214,6 +1317,13 @@ def _tex_table(ctx, metric, caption, fmt, annotate, idx):
                            _fail_flags(rec, c, v) if annotate else [])
                  for v in variants]
         lines.append(_tex_escape("CAND_" + str(c)) + " & " + " & ".join(cells) + r" \\")
+    if metric == REF_FOR:
+        ref = _ref_cells(rec, cands, variants)
+        if ref:
+            lines.append(r"\midrule")
+            cells = ["--" if mean is None else "$" + fmt.format(mean) + "$"
+                     for _v, mean, _w in ref]
+            lines.append(_tex_escape(REF_LABEL) + " & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}%", "}", r"\end{table}", ""]
     return "\n".join(lines)
 
@@ -1243,7 +1353,7 @@ def build_latex(ctx, batch_label, stamp):
            r"\bigskip\noindent Cells aggregating more than one seed report "
            r"$\mathrm{mean} \pm \mathrm{SEM}$ ($\mathrm{std}/\sqrt{n}$); single-seed cells report the "
            r"plain value. \texttt{--} marks a candidate/variant combination that was never run. "
-           r"In Tables~3 and~4 a trailing {\tiny (goal, constraint)} marks a cell whose "
+           r"In the MIN\_DIST, N\_STEPS and AVG\_TIME tables a trailing {\tiny (goal, constraint)} marks a cell whose "
            r"N\_SUCCESS+CONSTRAINT did not win: \emph{goal} = the goal was not always reached, "
            r"\emph{constraint} = a constraint was violated.",
            ""]

@@ -1,4 +1,4 @@
-# DA_VA_v2 U3 — three more Result Matrices (VA distance + the relaxed success pair)
+# DA_VA_v2 U3 — three more Result Matrices, a run tally, and a start-distance reference
 
 **Date:** 2026-08-07 · **Epoch:** U3
 **Changed:** `Data_Analysis/Visualizer_VA_v2/{build_from_dav3.py, index.html, test_page_offline.py}`
@@ -87,24 +87,80 @@ derived rows is filled from `df_agg`'s candidate→path map (one path per candid
 
 ---
 
+## 2b. Run coverage — the VA batches are not balanced, and now the page says so
+
+Candidates in a VA batch come out of **different eval jobs**: different seed counts,
+different variant lists, sometimes a different geometry set entirely. Two cells in the same
+column can therefore rest on very different amounts of data — and the SEM gets *narrower*
+where there is more data, which reads as "steadier method" if nothing on screen contradicts
+it.
+
+A **Run coverage** table now sits at the top of the Result Matrices section, above table 1:
+
+| Candidate | Rollouts (total) | Rollouts in <env> | Variants here | Geometries | Seeds |
+|---|---|---|---|---|---|
+| CAND_1 | 78 | 0 | 0 | 3 | 1 |
+| CAND_2 | 1140 | 570 | 19 | 2 | 1 |
+| CAND_3 | 1140 | 570 | 19 | 2 | 1 |
+
+followed by one line of verdict — either
+
+> **UNBALANCED** — these candidates did not run the same amount (78…1140 rollouts). Cells
+> are still mean ± SEM over whatever each one actually ran; the SEM is narrower where there
+> is more data, not where the method is better.
+
+or `All selected candidates ran the same N rollouts.` Counts come from `n_success`'s `count`
+(the metric every unit has) and follow the global mask and split, so switching to *unfrozen*
+lowers them. A candidate with **0** rollouts in the shown environment is flagged red — that
+is the case above, where CAND_1 is a state-only avoiding tree that never ran `combined_5`.
+
+## 2c. INIT XY — where the rollouts started
+
+`MIN_DIST = 0.33` says nothing on its own. The MIN_DIST table therefore ends with a
+separated, tinted reference row:
+
+```
+INIT XY (ref)   0.4547  0.4547  0.4547  0.4547  …
+```
+
+the mean box-target distance **at rollout start** (`context_init_xy_dist`), pooled over the
+selected candidates and weighted by rollout count. So a final 0.33 against a start of 0.45
+is a quarter of the way closed, not a good absolute number.
+
+Two honest caveats, both stated in the caption on the page:
+
+* it is **position-only** — there is no composite ½pos+½rot score at t=0, while MIN_DIST is
+  the composite. It is a scale reference, not a strict upper bound.
+* it is **flat across columns by construction** — every variant replays the same contexts.
+  That flatness is itself the check that the columns are comparable; if it ever stops being
+  flat, the variants were not run on the same scenes.
+
+The row is emitted only where the data exists: on a state-only avoiding geometry
+(`both-hard` etc.) there is no `context_init_xy_dist`, and the table simply ends without it
+rather than inventing a zero. It is carried into the LaTeX export too, below a `\midrule`.
+
+---
+
 ## 3. Where the edits live
 
 `Visualizer_VA_v2/index.html` is **generated**. All of the above is in
 `build_from_dav3.py` — edit that, then:
 
 ```bash
-python Data_Analysis/Visualizer_VA_v2/build_from_dav3.py     # 25 edits (was 20)
+python Data_Analysis/Visualizer_VA_v2/build_from_dav3.py     # 33 edits (was 20)
 ```
 
 Editing `index.html` directly would be overwritten by the next DAv3 re-derive.
-New build steps: `12b` (the SUMMARY_TABLES block + the three caption/comment strings that
-counted "four tables"), and the `derive_frames` graft in step `10`.
+New build steps: `12b` (the SUMMARY_TABLES block + the caption/comment strings that counted
+"four tables") and `12c` (the INIT XY row and the run tally, threaded through
+`_summary_stats` / `_render_matrix` / `_tex_table` / `render_summary_tables` plus two CSS
+rules), with the `derive_frames` graft living in step `10`.
 
 ---
 
 ## 4. Validation
 
-`test_page_offline.py`, both real batches, **all checks passing** (43 on out1, up from 41):
+`test_page_offline.py`, both real batches, **all checks passing** (47 on out1, up from 41):
 
 ```
 out1 (3 candidates, 115 units, 5 geometries, mixed VA + state-only)   ALL CHECKS PASSED
@@ -124,9 +180,21 @@ New checks:
 * `matrices mark never-run cells` only fires when this environment actually has a hole —
   it was failing on the single-candidate batch that ran every variant, which was a test
   bug, not a page bug.
+* `U3 run-coverage table rendered` — one tallied row per selected candidate, no more, no
+  fewer; `U3 coverage flags an unbalanced batch` — the UNBALANCED warning appears if and
+  only if the candidates' rollout totals actually differ (out1 unbalanced, out5 balanced,
+  both correct).
+* `U3 INIT XY reference row on the MIN_DIST table` and `LaTeX carries the INIT XY reference
+  row` — present exactly where this environment has a non-NaN `context_init_xy_dist`,
+  absent on the state-only geometry. The check matches the row's CSS class, not its label:
+  the label also occurs in the caption that explains the row, so a label match would pass
+  with no row rendered.
 
 Rendered output spot-checked out of the stub DOM: 7 captions in order, CAND_1 (state-only)
-all dashes in tables 3–5, MIN_DIST cells carrying their `(goal)` flags.
+all dashes in tables 3–5, MIN_DIST cells carrying their `(goal)` flags, the coverage table
+reporting 78 / 1140 / 1140 rollouts with the UNBALANCED verdict, and the INIT XY row flat
+at 0.4547 across all 19 variants — which is exactly the shared-context property it is
+supposed to demonstrate.
 
 **Still not verified: an actual browser render** — same standing caveat as U2.
 
