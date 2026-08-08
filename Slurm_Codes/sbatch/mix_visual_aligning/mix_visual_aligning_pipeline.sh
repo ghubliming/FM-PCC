@@ -79,7 +79,9 @@ SBATCH_DIR="Slurm_Codes/sbatch/mix_visual_aligning"
 ENGINE="${1:-fm}"
 SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 # ── Gen14 U6 ── $3 = NFE override, forwarded to every eval in the fan-out. Blank -> config
-# default (mf/af: 2, fm: 100). Training is unaffected: flow_steps_v3 is an inference-only key.
+# default (mf/af: 2, fm: 20 since U7 2026-08-08). Training is unaffected: flow_steps_v3 is an
+# inference-only key. engine=diffusion has no override — its K is n_diffusion_steps (20), a
+# training key, so changing it means retraining.
 #   sbatch mix_visual_aligning_pipeline.sh mf "6 7" 2
 FLOW_STEPS="${3:-}"
 

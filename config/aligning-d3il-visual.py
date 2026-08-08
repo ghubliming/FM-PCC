@@ -966,11 +966,24 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
 
 # ─── arm: diffusion (Gen6V4) ────────────────────────────────────────────────────────────────
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
-# Gen6V4's own hyperparameters (action_weight=10, live n_diffusion_steps=100), otherwise
-# it is not the Gen6V4 baseline it claims to be.
+# Gen6V4's own hyperparameters (action_weight=10), otherwise it is not the Gen6V4 baseline
+# it claims to be.
 base['mix_visual_aligning_diffusion'] = _mix_train_block('diffusion', 'visual_aligning_dpcc', {
     'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
     'diffusion': 'mix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+    # ── U7 2026-08-08 ── K=20, matching the ARCHIVED Gen6V4 run (its checkpoint and results
+    # folders are both `H8_K20_...`). The parent block says 100; that value post-dates the
+    # Gen6V4 artefacts everyone actually compares against (commit 2c87cb70), so inheriting it
+    # made the arm a 5×-NFE variant of Gen6V4 rather than Gen6V4 — see
+    # logs_in_develop/Gen14/U7/DA_20260808_gen14_diffu_fm_arms.md §1.2.
+    # 🔴 UNLIKE the fm/mf/af arms, this is NOT an inference-only knob. n_diffusion_steps is the
+    # DDPM chain length: it sets the training noise schedule AND is a checkpoint-path key in
+    # args_to_watch_mix_visual_train ('K{n_diffusion_steps}'). Changing it here therefore
+    # REQUIRES A RETRAIN — the eval's --flow-steps override explicitly refuses this arm
+    # (mix_visual_aligning_test/eval_mix_visual_aligning.py:2444). The plan block picks 20 up
+    # automatically via _mix_plan_block's training-key mirror loop; do not set it there too.
+    # Overriding here and not in visual_aligning_dpcc keeps Gen6V4's own blocks untouched.
+    'n_diffusion_steps': 20,
 })
 
 # ─── arm: fm (Gen7) — THE REFERENCE ARM ────────────────────────────────────────────────
@@ -1055,7 +1068,23 @@ base['plan_mix_visual_aligning_diffusion'] = _mix_plan_block(
           'time_beta_alpha_v3', 'time_beta_beta_v3'))
 
 base['plan_mix_visual_aligning_fm'] = _mix_plan_block(
-    'fm', base['mix_visual_aligning_fm'], {})
+    'fm', base['mix_visual_aligning_fm'], {
+        # ── U7 2026-08-08 ── K=20, matching Gen7's own eval folders (`H8_K20_Meuler_...`).
+        # Overrides the 100 inherited from plan_fm_visual_aligning via _mix_plan_common — that
+        # 100 is the DDPM-parity number and it made the reference arm a 5×-NFE variant of Gen7,
+        # which is not what "compare this arm against Gen7" means. At K=100 this arm diverged
+        # (peak tracking error > 1 m) in 77% of unprojected rollouts against Gen7's 20–27%:
+        # logs_in_develop/Gen14/U7/DA_20260808_gen14_diffu_fm_arms.md §3.
+        # Inference-only and safe to set here, exactly as for the mf/af arms below:
+        # flow_steps_v3 lives in args_to_watch_mix_visual_plan ONLY, so the training-key mirror
+        # loop cannot clobber it and diffusion_loadpath is unchanged — same checkpoint, new
+        # H8_K20_... results folder. Sweep per run with `--flow-steps N`; no config edit needed.
+        # 🔴 This ALSO halves-then-some the projection budget: the sampler projects from
+        # int((1 - diffusion_timestep_threshold) * K) to the end, so at T=0.5 K=100 -> 50 SLSQP
+        # solves per replan and K=20 -> 10. That is the half that made the K=100 eval miss the
+        # 24 h cap after 2 of 32 items.
+        'flow_steps_v3': 20,
+    })
 
 base['plan_mix_visual_aligning_mf'] = _mix_plan_block(
     'mf', base['mix_visual_aligning_mf'], {
