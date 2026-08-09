@@ -81,14 +81,38 @@ fi
 # 4) HardFlow-arm knobs (all optional; defaults come from the YAML `hardflow:` block).
 #    HFFM_BATCH          candidate fan (mpc); 1 = faithful (‑r/‑c/‑t collapse), 4 = DPCC‑parity
 #    HFFM_ACT_THRESHOLD  fraction of late steps the NLP is active (0.5 == DPCC threshold 0.5)
-#    HFFM_FLOW_STEPS     matched K for EVERY arm (overrides plan-block flow_steps)
+#    HFFM_FLOW_STEPS     matched K for EVERY arm (overrides plan-block flow_steps).
+#                        🔵 U9: when set it PINS this job to that single K; leave it unset to
+#                        get the whole {1,2,5,10} grid in one job (see §5).
 export HFFM_BATCH="${HFFM_BATCH:-1}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
 echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"
 
-# 5) Run the unified Gen3v6 evaluation (reads config/meanflow_projection_eval.yaml by default).
+# 5) 🔵 U9 MATCHED-K AUTO-EVAL — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7 / fix_7.3 §9).
+#    fix_4's K sweep was four separate submits, hand-typed with HFFM_FLOW_STEPS=1/2/5/20
+#    (CHANGELOG_Gen3v6_fix_4 §"post-fix sweep"). One forgotten resubmit and the decisive
+#    matched-K control silently does not exist — which is exactly how the Gen13 claim died.
+#    The grid is now a loop in here, as it has been in the Gen3v7 sibling from day one.
+#    Each K writes its OWN results dir ('K' token in args_to_watch_fmv3_hf_plan), no collisions.
+#
+#    HFFM_FLOW_STEPS still wins when set, so every documented single-K command keeps working:
+#      HFFM_FLOW_STEPS=2 HFFM_BATCH=4 ./Slurm_Codes/submit.sh <this script>   -> K=2 only
+#    Otherwise the whole grid runs; override it with MF_FLOW_STEPS="1 2".
 cd "$REPO"
-python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py
+if [ -n "$HFFM_FLOW_STEPS" ]; then
+    FLOW_STEPS_GRID="$HFFM_FLOW_STEPS"
+    echo "[ eval ] HFFM_FLOW_STEPS is set -> single-K run: $FLOW_STEPS_GRID"
+else
+    FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10}"
+    echo "[ eval ] NFE budgets to evaluate: $FLOW_STEPS_GRID"
+fi
+
+for K in $FLOW_STEPS_GRID; do
+    echo "================================================================================"
+    echo "[ eval ] K = $K   ($(date))"
+    echo "================================================================================"
+    python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py --flow-steps "$K"
+done
 
 echo "Evaluation completed successfully."

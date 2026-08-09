@@ -4166,3 +4166,33 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Environment Handshake Fix**: Resolved the issue by publishing the actually loaded config path and threshold values (`FMPCC_PROJ_CFG`, `FMPCC_DPCC_THRESHOLD`, `HFFM_ACT_THRESHOLD`, `HFFM_BATCH`) to environment variables before `utils.Parser` initializes. This guarantees a single resolver for HardFlow constraints.
 3. **Collision Prevention**: Output directory paths now accurately reflect the real evaluation gates (e.g. `_T0.5_A0.5_B4_`). This isolates HardFlow evaluations from DPCC settings and prevents unrecorded working-tree edits from masking the active constraints.
 
+***
+
+## Clean Gifs Tool (August 8, 2026)
+
+**Keywords**: clean_gifs, tooling, rollout renders, disk space.
+
+1. **New Tool**: Introduced `tools/clean_gifs/clean_gifs.py` for safe, recursive removal of evaluation render files (`.gif` and `.mp4`). Modeled on the existing `clean_weights` tool with dry-run support by default and audit logging.
+2. **Features**: Supports `--keep-per-dir N` to retain visual samples, `--exclude` to protect specific files/directories (like expert references), and `--rm-empty-dirs` for bottom-up cleanup.
+3. **Safety**: Enforces a required positional root argument and refuses to operate on root `/` or `$HOME`, preventing accidental sweeping of the full logs tree.
+
+***
+
+## Gen14 U7: Default K (NFE) Alignment for `diffusion` and `fm` Arms (August 8, 2026)
+
+**Keywords**: Gen14, default K, diffusion arm, fm arm, inference cost.
+
+1. **K-Value Inheritances Corrected**: Identified that the `fm` and `diffusion` arms had silently inherited a default `K=100` (NFE=100) from disconnected prior code, placing them off-parity with their corresponding reference generations (Gen7 and Gen6V4 ran at `K=20`).
+2. **Cost Implications**: Operating at `K=100` resulted in evaluation jobs hitting the 24-hour time limit inside the cluster, especially on projected variants (`dpcc-r`), running ~50 SLSQP solves per replan at a cost of 7.7–8.5 seconds per replan.
+3. **The Fix**: Explicitly aligned both arms to `K=20`. For `fm` (`flow_steps_v3: 20`), this is an inference-only change. For `diffusion` (`n_diffusion_steps: 20`), this dictates the noise schedule and explicitly requires a model retrain.
+
+***
+
+## Gen14 U7 DA: `diffusion` and `fm` Arms vs Gen6V4 and Gen7 (August 8, 2026)
+
+**Keywords**: Gen14, Data Analysis, diffusion arm, fm arm, Gen6V4, Gen7, divergence.
+
+1. **`diffusion` Arm Healthier than Gen6V4 Baseline**: The new `diffusion` arm diverges significantly less than the archived Gen6V4 baseline (43% vs 87% divergence) and actively moves the box (median 0.27m displacement vs 0.00m). This exonerates the core DDPM engine—the total failure was a symptom of the specific archived Gen6V4 run, not the architecture itself.
+2. **`fm` Arm Regressed vs Gen7**: The `fm` arm (the theoretical reference for Visual Flow Matching) proved much worse than archived Gen7 models. Unprojected, it diverges completely in 77% of contexts, losing the arm entirely with peak tracking errors averaging ~2.8m. 
+3. **The Projector Masks Errors**: Applying `dpcc-r` to the `fm` arm forces its divergence back to 0%, but the resulting policy fails to move the box at all in 55% of rollouts and logs the highest constraint violations. The projector makes the policy inert rather than accurate.
+4. **Task Success Remains Zero**: Despite relative improvements in the `diffusion` arm's aliveness, both new arms scored 0 goal successes across approximately 100 rollouts. The task remains unsolved by these variants.

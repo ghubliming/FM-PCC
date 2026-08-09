@@ -39,6 +39,15 @@ class Tee(object):
 parser = argparse.ArgumentParser(description='Evaluation script with aggregation mode.')
 parser.add_argument('--seed', type=int, help='Run only this specific seed.')
 parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results into all_seeds plots.')
+# 🔵 U9 MATCHED-K AUTO-EVAL — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7; fix_7.3 §9 — one hard-coded
+# k_steps=10 made the decisive control unrunnable and killed an entire generation's claim). K is a
+# first-class CLI knob here so the {1,2,5,10} grid is a loop in the sbatch, not an HFFM_FLOW_STEPS
+# edit someone has to remember. Ported verbatim from the Gen3v7 sibling
+# (FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py), which had it from day one.
+# `flow_steps_v3` is in args_to_watch_fmv3_hf_plan (label 'K'), so each K writes its OWN results
+# directory and no two budgets can overwrite each other.
+parser.add_argument('--flow-steps', type=int, default=None, metavar='K',
+                    help='override flow_steps_v3 (NFE budget K) for this run')
 args_cli, remaining_argv = parser.parse_known_args()
 # Pass remaining args to Parser if needed
 sys.argv = [sys.argv[0]] + remaining_argv
@@ -60,17 +69,6 @@ print(f'[ eval ] config: {_cfg_path}')
 # Parser().parse_args() / importlib.import_module('config.…'), which is what imports that module.
 os.environ['FMPCC_PROJ_CFG'] = _cfg_path
 
-exps = config['exps']
-seeds = config['seeds']
-if args_cli.seed is not None:
-    seeds = [args_cli.seed]
-    print(f'[ eval ] Overriding seeds from config to: {seeds}')
-
-projection_variants = config['projection_variants']
-halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
-n_trials = config['n_trials']
-plot_how_many = config['plot_how_many']
-constraint_types = config['constraint_types']
 # 🔴 FIX_9_CFG_PROVENANCE — DPCC_THRESHOLD makes arm B's threshold settable per job, the way the
 # HFFM_* knobs already are for arm C (runs are configured at submit time on the cluster, not in git).
 diffusion_timestep_threshold = float(os.environ.get(
@@ -97,8 +95,44 @@ os.environ['HFFM_BATCH'] = str(int(hf_batch_size))
 print(f'[ eval ] resolved  cfg={_cfg_path}  dpcc_threshold={diffusion_timestep_threshold}  '
       f'hf_act_threshold={hf_act_threshold}  hf_batch={hf_batch_size}  '
       f'hf_candidate_cost={hf_candidate_cost}')
-# Matched-K note: K is set for EVERY arm via HFFM_FLOW_STEPS, which the plan block reads into
-# args.flow_steps / flow_steps_v3 (so it also drives the results-dir name). Resolved per-seed below.
+
+exps = config['exps']
+seeds = config['seeds']
+if args_cli.seed is not None:
+    seeds = [args_cli.seed]
+    print(f'[ eval ] Overriding seeds from config to: {seeds}')
+
+if args_cli.flow_steps is not None:
+    # 🔵 U9 — patch the config MODULE's dict before any Parser reads it. utils.Parser.read_config
+    # does `importlib.import_module(args.config)` and copies `base[experiment]` key by key, and
+    # Python caches modules — so this is the intended data path, not a monkey-patch: exp_name,
+    # savepath and the diffusion kwargs all follow automatically.
+    import importlib
+    for _exp in exps:
+        _mod = importlib.import_module('config.' + _exp)
+        _blk = _mod.base['plan_fm_v3_meanflow']
+        _blk['flow_steps_v3'] = args_cli.flow_steps
+        if 'ode_inference_steps_v3' in _blk:
+            _blk['ode_inference_steps_v3'] = args_cli.flow_steps
+        # Gen3v6 U3 — matched-K: `flow_steps` is arm C's Euler K. Patch it with the SAME value
+        # or --flow-steps would move arms A/B only and every arm-B-vs-arm-C table would be
+        # comparing different NFE budgets. The env path (HFFM_FLOW_STEPS) sets both in the
+        # plan block itself; this is the CLI path doing the same.
+        _blk['flow_steps'] = args_cli.flow_steps
+    print(f'[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: {args_cli.flow_steps}')
+
+projection_variants = config['projection_variants']
+halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
+n_trials = config['n_trials']
+plot_how_many = config['plot_how_many']
+constraint_types = config['constraint_types']
+# 🔴 FIX_9_CFG_PROVENANCE — diffusion_timestep_threshold and the hf_* knobs are resolved ABOVE,
+# immediately after the yaml load. 🔵 U9 moved them there: the --flow-steps branch above calls
+# importlib.import_module('config.' + exp), and Python caches modules, so publishing the resolved
+# values here would be too late for the folder name on any --flow-steps run.
+# Matched-K note: K is set for EVERY arm via HFFM_FLOW_STEPS (or --flow-steps), which the plan
+# block reads into args.flow_steps_v3 / args.flow_steps — so it also drives the results-dir name
+# (`_K{K}_`) and distinct-K runs never collide. Resolved per-seed below.
 
 for exp in exps:
     for halfspace_variant in halfspace_variants:

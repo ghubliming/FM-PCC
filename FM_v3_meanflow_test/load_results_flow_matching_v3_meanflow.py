@@ -1,17 +1,49 @@
+import argparse
+import importlib
+import sys
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import flow_matcher_v3_meanflow.utils as utils
 
+# 🔵 U9 MATCHED-K AUTO-EVAL — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7). Mirrors the eval script's
+# --flow-steps so the aggregation reads the SAME K that was evaluated; results live in a per-K
+# directory (flow_steps_v3 is watched as 'K'), so without this the HFFM_FLOW_STEPS default (2)
+# would be reported no matter which budget was actually run.
+_ap = argparse.ArgumentParser(description='Aggregate MeanFlow (Gen3v6) eval results.')
+_ap.add_argument('--flow-steps', type=int, default=None, metavar='K',
+                 help='override flow_steps_v3 (NFE budget K) when locating results')
+_cli, _remaining = _ap.parse_known_args()
+sys.argv = [sys.argv[0]] + _remaining
+
 # Load configuration
 # Gen3v6 U3: repointed to the Gen3v6-dedicated unified eval config (DPCC + HardFlow arms).
-with open('config/meanflow_projection_eval.yaml', 'r') as file:
+_cfg_path = 'config/meanflow_projection_eval.yaml'
+with open(_cfg_path, 'r') as file:
     config = yaml.safe_load(file)
+
+# 🔴 FIX_9_CFG_PROVENANCE — publish the yaml THIS script loaded, exactly as the eval does. The
+# 'T' token in the results-folder name is built from it by config/avoiding-d3il.py; without this
+# line the aggregation would look for a path derived from the SHARED config/projection_eval.yaml,
+# a file Gen3v6 never opens. Must be set BEFORE the first Parser().parse_args().
+os.environ['FMPCC_PROJ_CFG'] = _cfg_path
 
 projection_variants = config['projection_variants']
 
 exp = 'avoiding-d3il'
+
+if _cli.flow_steps is not None:
+    # 🔵 U9 — same data path as the eval script: patch the cached config module's plan block so
+    # exp_name/savepath pick up '_K{K}_'. Arm C's `flow_steps` is patched with the SAME value
+    # (matched budget) so a HardFlow aggregation reads the directory arm C actually wrote.
+    _blk = importlib.import_module('config.' + exp).base['plan_fm_v3_meanflow']
+    _blk['flow_steps_v3'] = _cli.flow_steps
+    if 'ode_inference_steps_v3' in _blk:
+        _blk['ode_inference_steps_v3'] = _cli.flow_steps
+    _blk['flow_steps'] = _cli.flow_steps
+    print(f'[ load_results ] Overriding flow_steps_v3 / flow_steps (K) to: {_cli.flow_steps}')
+
 class Parser(utils.Parser):
     dataset: str = exp
     config: str = 'config.' + exp
