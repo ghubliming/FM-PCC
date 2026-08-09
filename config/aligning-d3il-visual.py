@@ -964,6 +964,102 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
     return blk
 
 
+# ─── FiLM conditioning backbone — the `film_mode` knob, all four arms ──────────────────
+# Each of the four mix candidates has its OWN film_mode entry, resolved by its OWN knob via
+# _film_mode('<arm>'). The DEFAULT is 'v1' on every arm — identical to what the parent blocks
+# already supplied (visual_aligning_dpcc:377 and fm_visual_aligning:461 both say 'v1') — so
+# with no env var set, nothing changes anywhere.
+#
+#     MIX_FILM_MODE_DIFFUSION   MIX_FILM_MODE_FM   MIX_FILM_MODE_MF   MIX_FILM_MODE_AF
+#
+# and a bare MIX_FILM_MODE as the all-arms fallback. Per-arm is the primary form because the
+# arms are separate experiments with separate checkpoint trees: putting mf on v2 must not
+# drag fm — the Gen7 reference arm — along with it.
+#
+# Selecting v2 is a LAUNCH-TIME choice, not a config edit. The pipeline derives the arm-
+# specific variable from its own $1, so the ordinary case needs no thought:
+#
+#     MIX_FILM_MODE=v2 ./Slurm_Codes/submit.sh \
+#         Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh mf "6"
+#
+# ...submits the mf arm at v2 and exports MIX_FILM_MODE_MF=v2 onto the child jobs, leaving
+# the other three arms resolving 'v1' even inside that job's own config import.
+#
+# This mirrors the env-var pattern already used for the HardFlow knobs in
+# config/avoiding-d3il.py:1334 (HFFM_FLOW_STEPS) and exists because there is NO --film-mode
+# CLI override anywhere in the repo: diffuser's generic add_extras is dead (the call is
+# commented out at mix_visual_aligning/utils/setup.py:77, and the Tap parser that supplied
+# `extra_args` was dropped upstream). film_mode is also a TRAINING key, so the eval-side
+# dict-mutation trick that gives --flow-steps its override (U6) cannot work here — the
+# checkpoint path has to move with the value.
+#
+# 🔴 SCOPE: these env vars are read by the four Gen14 arms ONLY. The Gen6V4/Gen7 parent
+#    blocks keep their own hardcoded 'v1' (lines 377 / 461) and are unaffected, so a stray
+#    MIX_FILM_MODE in the environment can never move a Gen6V4 or Gen7 run.
+#
+# ✅ A propagation failure is LOUD, not silent: film_mode is a path key, so the savepath
+#    reads '..._filmv1_E..' vs '..._filmv2_E..', and both the train and eval scripts print
+#    the resolved mode (Gen14 Fix_9). Check the log line before trusting a v2 run.
+#
+#   'v1'  (default)  Additive-bias "Fake FiLM". The visual latent is concatenated into the
+#                    time embedding, so conditioning reaches each residual block as a bias.
+#   'v2'              TRUE FiLM: per-block gamma scale + beta shift. Same
+#                    `FiLMResidualTemporalBlock` class object on every arm — diffusion/fm
+#                    reach it via Gen7's `unet1d_temporal_film.py`, mf/af via
+#                    `unet1d_twotime_film.py` (Gen14 U5), which imports that block rather
+#                    than reimplementing it and keeps `h_mlp` so the MeanFlow / alpha-Flow
+#                    forward-mode JVP survives the multiplicative gate.
+#
+# 🔴 This is a TRAINING key, not an inference knob — SWITCHING TO v2 REQUIRES A RETRAIN.
+#    v1 and v2 state_dicts are NOT interchangeable: `embed_dim` is `dim + cond_embed_dim`
+#    under v1 but `dim` under v2, and `film_proj` has no v1 counterpart. v2 costs ~+1.0M
+#    backbone parameters. There is no --film-mode CLI override anywhere in the repo
+#    (diffuser's generic add_extras is disabled — mix_visual_aligning/utils/setup.py:77),
+#    so this config entry is the only switch.
+#
+# ✅ Safe to flip one arm at a time: film_mode is in args_to_watch_mix_visual_train, so v1
+#    and v2 checkpoints land in PARALLEL trees ('..._bs64_filmv1_E..' / '..._filmv2_E..')
+#    and no existing run is overwritten. Set it in the TRAINING block only —
+#    _mix_plan_block's training-key mirror loop copies it into the plan block, and setting
+#    it there too is exactly the double-set that loop exists to prevent.
+#
+# ⚠️ Before reading a v1-vs-v2 curve: `W_f` is zero-initialised and under v2 the visual
+#    latent reaches the network through `W_f` and nowhere else, so at step 0 a v2 model is
+#    exactly v1-with-no-vision. Early-epoch curves are not comparable step-for-step
+#    (logs_in_develop/Gen14/U5/CHANGELOG_Gen14_U5_engine_rename_and_twotime_filmv2.md §2.8).
+#
+# 🔴 v2 has never executed a tensor op on any Gen14 arm. Gate G7 builds all four arms at
+#    v2 and asserts film_proj is live and one mf loss step is finite under the JVP; it runs
+#    by default (gates_mix_visual.sh -> --gate all). Do not bypass the gate job on a v2 run.
+_MIX_FILM_MODES = ('v1', 'v2')
+
+
+def _film_mode(engine):
+    """Resolve ONE arm's FiLM mode. Each of the four mix candidates has its own knob.
+
+    Precedence, most specific first:
+        1. MIX_FILM_MODE_<ENGINE>   e.g. MIX_FILM_MODE_MF=v2   — this arm only
+        2. MIX_FILM_MODE            — every arm that has no specific setting
+        3. 'v1'                     — the default, identical to the inherited parent value
+
+    Per-arm is the primary form: the arms are separate experiments with separate checkpoint
+    trees, so "mf at v2" must be expressible without also moving af, fm and diffusion. The
+    bare MIX_FILM_MODE remains as a convenience for sweeping every arm at once.
+
+    Unknown values RAISE. A silent fallback to v1 would train the wrong architecture into a
+    directory whose name claims otherwise — the one failure the path key exists to prevent.
+    """
+    specific_key = f'MIX_FILM_MODE_{engine.upper()}'
+    for key in (specific_key, 'MIX_FILM_MODE'):
+        val = os.environ.get(key)
+        if val:
+            if val not in _MIX_FILM_MODES:
+                raise ValueError(
+                    f"CRITICAL: {key}='{val}' is not a known FiLM mode "
+                    f"(want one of {list(_MIX_FILM_MODES)}).")
+            return val
+    return 'v1'
+
 # ─── arm: diffusion (Gen6V4) ────────────────────────────────────────────────────────────────
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
 # Gen6V4's own hyperparameters (action_weight=10), otherwise it is not the Gen6V4 baseline
@@ -984,6 +1080,10 @@ base['mix_visual_aligning_diffusion'] = _mix_train_block('diffusion', 'visual_al
     # automatically via _mix_plan_block's training-key mirror loop; do not set it there too.
     # Overriding here and not in visual_aligning_dpcc keeps Gen6V4's own blocks untouched.
     'n_diffusion_steps': 20,
+    # FiLM backbone — this arm's OWN knob. Default 'v1' == the inherited value;
+    # MIX_FILM_MODE_DIFFUSION=v2 selects TRUE FiLM for this arm alone (retrain required).
+    # Backbone: VisualUNet -> unet1d_temporal_film.
+    'film_mode': _film_mode('diffusion'),
 })
 
 # ─── arm: fm (Gen7) — THE REFERENCE ARM ────────────────────────────────────────────────
@@ -992,6 +1092,13 @@ base['mix_visual_aligning_diffusion'] = _mix_train_block('diffusion', 'visual_al
 base['mix_visual_aligning_fm'] = _mix_train_block('fm', 'fm_visual_aligning', {
     'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
     'diffusion': 'mix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching',
+    # FiLM backbone — this arm's OWN knob (MIX_FILM_MODE_FM). This is NOT tuning: the
+    # default 'v1' is byte-for-byte the value fm_visual_aligning:461 already supplied, so
+    # G1's Gen7 training-parity check is unaffected. 🔴 Running this arm at v2 WOULD break
+    # that parity by design — the fm arm is the Gen7 reference, so a v2 fm run is a NEW arm,
+    # not the reference. Do not compare it to Gen7 and call it a reproduction. Having a
+    # per-arm knob is what keeps a v2 sweep of mf/af from silently dragging this arm along.
+    'film_mode': _film_mode('fm'),
 })
 
 # ─── arm: mf (Gen3v6 MeanFlow) ─────────────────────────────────────────────────────────
@@ -1022,6 +1129,11 @@ base['mix_visual_aligning_mf'] = _mix_train_block('mf', 'fm_visual_aligning', {
     # as in Gen6V4/Gen7. Pre-encoding the latent is what zeroes the JVP tangent — freezing
     # is NOT required for that, and turning this on changes what is learned.
     'mf_freeze_vision_encoder': False,
+    # FiLM backbone — this arm's OWN knob. Default 'v1' == the inherited value;
+    # MIX_FILM_MODE_MF=v2 selects TRUE FiLM (retrain required). Backbone: VisualUNetTwoTime
+    # -> unet1d_twotime_film.Flow_matcher_U_Net_v2_FiLM, which retains h_mlp (U5).
+    # ⚠️ For an mf-vs-af comparison, move this arm and the af arm TOGETHER (see af block).
+    'film_mode': _film_mode('mf'),
 })
 
 # ─── arm: af (Gen3v7 alpha-Flow) ───────────────────────────────────────────────────────
@@ -1055,6 +1167,13 @@ base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
     'gradient_clip': 1.0,
     'split_seed': 42,
     'mf_freeze_vision_encoder': False,
+    # FiLM backbone — this arm's OWN knob (MIX_FILM_MODE_AF), independent of mf's.
+    # ⚠️ The mf-vs-af comparison is architecture-controlled ONLY if both arms run the same
+    # mode. Independent knobs make that YOUR responsibility rather than the config's: set
+    # MIX_FILM_MODE=v2 (the all-arms form) when you want the pair moved together, or set
+    # MIX_FILM_MODE_MF and MIX_FILM_MODE_AF to the same value. Comparing mf@v2 against
+    # af@v1 confounds the objective with the conditioning route.
+    'film_mode': _film_mode('af'),
 })
 
 # ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────

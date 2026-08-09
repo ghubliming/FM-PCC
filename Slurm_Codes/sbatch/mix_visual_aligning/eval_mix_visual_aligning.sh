@@ -97,6 +97,30 @@ echo "[ eval ] seeds='$SEEDS'"
 RECORD_MODE="${3:-all}"
 echo "[ eval ] Recording mode set to: $RECORD_MODE"
 
+# ── Gen14 Fix_9 ── FiLM backbone. Each Gen14 arm has its own knob, MIX_FILM_MODE_<ENGINE>,
+# with a bare MIX_FILM_MODE as the all-arms fallback (default v1). Accepted either way:
+#   MIX_FILM_MODE_MF=v2 ./Slurm_Codes/submit.sh <this script> mf 6 all
+#   MIX_FILM_MODE=v2    ./Slurm_Codes/submit.sh <this script> mf 6 all
+#
+# 🔴 MUST match the checkpoint being evaluated: film_mode is baked into diffusion_loadpath
+# ('..._film{mode}_E<arm>'), so evaluating a v2 checkpoint at v1 resolves to a directory that
+# may not exist. The backbone itself is always rebuilt from the train-time model_config.pkl,
+# so the architecture cannot diverge from the weights — the failure mode here is a
+# wrong/missing PATH, not wrong math. eval_mix_visual_aligning.py also prints the mode it
+# read out of the pkl, and warns if the eval config disagrees.
+#
+# Same narrowing as the train script: resolve for THIS arm, re-publish arm-specifically,
+# drop the broadcast form so the other three arm blocks resolve 'v1' on import.
+ENGINE_UC=$(echo "$ENGINE" | tr '[:lower:]' '[:upper:]')
+eval "FILM_MODE=\${MIX_FILM_MODE_${ENGINE_UC}:-\${MIX_FILM_MODE:-v1}}"
+case "$FILM_MODE" in
+    v1|v2) ;;
+    *) echo "[ eval ] ERROR: FiLM mode '$FILM_MODE' is not known (want: v1 | v2)"; exit 1 ;;
+esac
+unset MIX_FILM_MODE
+export "MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
+echo "[ eval ] film_mode = $FILM_MODE  (MIX_FILM_MODE_${ENGINE_UC}; must match the checkpoint)"
+
 # ── Gen14 U6 ── $4 = NFE override (flow_steps_v3), fm/mf/af only. Blank -> config default
 # (mf/af: 2, fm: 100). Changes BOTH the sampler and the results folder, so a sweep lands in
 # sibling H8_K<N>_... directories instead of overwriting. Also changes the projection budget:

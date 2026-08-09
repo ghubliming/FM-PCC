@@ -88,6 +88,30 @@ case "$ENGINE" in
     *) echo "[ train ] ERROR: unknown engine '$ENGINE' (want: diffusion | fm | mf | af)"; exit 1 ;;
 esac
 echo "[ train ] engine=$ENGINE  seeds='$SEEDS'"
+
+# ── Gen14 Fix_9 ── FiLM backbone. Each Gen14 arm has its own knob, MIX_FILM_MODE_<ENGINE>,
+# with a bare MIX_FILM_MODE as the all-arms fallback (default v1). Accepted either way:
+#   MIX_FILM_MODE_MF=v2 ./Slurm_Codes/submit.sh <this script> mf 6
+#   MIX_FILM_MODE=v2    ./Slurm_Codes/submit.sh <this script> mf 6
+#
+# 🔴 ARCHITECTURE key: v1 and v2 train into separate '..._film{mode}_E<arm>' trees and their
+# state_dicts are NOT interchangeable.
+#
+# NARROWING. This job trains exactly one arm, so the mode is resolved here and re-published
+# as the ARM-SPECIFIC variable, then the broadcast form is unset. Without the unset, a bare
+# MIX_FILM_MODE inherited through --export=ALL would also be visible to the other three arm
+# blocks when the config module imports — harmless today (only $ENGINE's block is consumed)
+# but it would make the config's own resolution disagree with what this job is doing, and
+# that is exactly the kind of latent disagreement this generation keeps getting bitten by.
+ENGINE_UC=$(echo "$ENGINE" | tr '[:lower:]' '[:upper:]')
+eval "FILM_MODE=\${MIX_FILM_MODE_${ENGINE_UC}:-\${MIX_FILM_MODE:-v1}}"
+case "$FILM_MODE" in
+    v1|v2) ;;
+    *) echo "[ train ] ERROR: FiLM mode '$FILM_MODE' is not known (want: v1 | v2)"; exit 1 ;;
+esac
+unset MIX_FILM_MODE
+export "MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
+echo "[ train ] film_mode = $FILM_MODE  (MIX_FILM_MODE_${ENGINE_UC}; unset -> v1)"
 if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then
     echo "[ train ] WARNING: $(echo $SEEDS | wc -w) seeds will run SEQUENTIALLY in this one job"
     echo "[ train ]          against the 24 h wall. Prefer mix_visual_aligning_pipeline.sh,"

@@ -2294,6 +2294,29 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     if target_class is not None:
         diffusion_config._class = utils.config.import_class(target_class)
 
+    # ── Gen14 Fix_9 ── FiLM backbone breadcrumb + agreement check.
+    # The backbone is rebuilt from the TRAIN-time model_config pkl (`model = model_config()`
+    # below), which holds the training args under 'config' (diffusion/fm) or 'vis_config'
+    # (mf/af). film_mode therefore comes from the checkpoint, never from the eval config —
+    # the architecture cannot silently diverge from the weights. Two guards already exist
+    # (the pkl wins; and '..._film{film_mode}' is in diffusion_loadpath, so a mismatch
+    # usually fails as a missing directory). This prints which mode was actually loaded, and
+    # catches the one case the others miss: pkl and eval config disagreeing while the path
+    # still resolves — where exp_name (built from the EVAL args) would label the results
+    # folder with a film mode the weights do not have.
+    _film_holder = model_config._dict.get('vis_config', model_config._dict.get('config'))
+    _film_pkl = getattr(_film_holder, 'film_mode', 'v1') or 'v1'
+    print(f"[ eval loading ] film_mode = {_film_pkl} (from train-time model_config.pkl; the "
+          f"backbone is rebuilt from the pkl, so it always matches the checkpoint)")
+    if override_args is not None:
+        _film_cfg = getattr(override_args, 'film_mode', _film_pkl) or _film_pkl
+        if _film_cfg != _film_pkl:
+            print(f"[ config->pkl ] WARNING  film_mode: train-pkl={_film_pkl!r} vs "
+                  f"eval-config={_film_cfg!r} -- identity/architecture key; KEEPING the train "
+                  f"value to protect the checkpoint. 🔴 The results folder is named from the "
+                  f"EVAL config, so it will read 'film{_film_cfg}' while the weights are "
+                  f"'{_film_pkl}'. Fix the config to match the checkpoint, or retrain.")
+
     # CONFIG-OVERRIDES-PKL (fix_1, 2026-07-14): the pkl PRESERVES training-time params; the eval
     # config is compared against it and reconciled in TWO tiers (see
     # logs_in_develop/config_override_pkl/fix_1/):

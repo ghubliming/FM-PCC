@@ -334,6 +334,23 @@ for seed in selected_seeds:
     _transition_dim = args.action_dim + _obs_dim
     _n_diff_steps   = getattr(args, 'n_diffusion_steps', 100)
 
+    # ── Gen14 Fix_9 ── FiLM conditioning backbone. Set per arm in the config block
+    # (config/aligning-d3il-visual.py, `film_mode`); reaches the backbone through
+    # `config=args` (diffusion/fm -> VisualUNet) or `vis_config=args` (mf/af ->
+    # VisualUNetTwoTime), both of which do getattr(config, 'film_mode', 'v1').
+    # It is an ARCHITECTURE + PATH key: it is in args_to_watch_mix_visual_train, so v1 and
+    # v2 train into parallel '..._film{film_mode}_E..' trees and their state_dicts are NOT
+    # interchangeable. Validated and printed here so a v1/v2 mix-up is visible at the top of
+    # the log rather than only in a directory name — and so an unknown mode dies in seconds
+    # instead of after the dataset load.
+    _film_mode = getattr(args, 'film_mode', 'v1') or 'v1'
+    if _film_mode not in ('v1', 'v2'):
+        raise SystemExit(
+            f"[ train ] ERROR: film_mode='{_film_mode}' is not a known mode (want 'v1' or 'v2').")
+    print(f"[ train ] film_mode = {_film_mode} "
+          f"({'TRUE FiLM — per-block gamma scale + beta shift' if _film_mode == 'v2' else 'additive-bias FiLM (default)'})"
+          f" — architecture key; v1/v2 checkpoints are NOT interchangeable")
+
     ModelCls     = import_class(ENGINE_SPEC['model'])
     DiffusionCls = import_class(ENGINE_SPEC['diffusion'])
 
