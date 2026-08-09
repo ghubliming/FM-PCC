@@ -39,6 +39,13 @@ TIGHTENED_SUFFIX = '-tightened'
 # `results/{variant}/{variant}.npz`).
 GEO_NONE = 'none'
 
+# `utils/setup.py::snapshot_configs` writes `<seed>/config_snapshot_<config>/`
+# and drops a marker file `snapshot_<YYYYMMDD_HHMMSS>` in it on every Parser()
+# call — i.e. once per eval launch, never deleting the previous markers. That
+# makes the newest marker the wall-clock time this seed's results were last
+# (re)generated, and the marker count the number of times the folder was reused.
+SNAPSHOT_DIR_PREFIX = 'config_snapshot'
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # npz keys

@@ -309,7 +309,8 @@ ROLL_SORT_OPTIONS = [('rollout_idx', 'Rollout index'), ('n_success', 'Success'),
 def _norm(df):
     if df is None:
         return None
-    for col in ('Candidate', 'variant', 'geo', 'split', 'mask', 'metric', 'FolderName'):
+    for col in ('Candidate', 'variant', 'geo', 'split', 'mask', 'metric', 'FolderName',
+                'LatestSnapshot'):
         if col in df.columns:
             df[col] = df[col].astype(str)
     return df
@@ -397,13 +398,19 @@ def derive_frames():
         'std': agg['std'].values,
         'count': agg['n'].values,                   # pooled rollouts -> SEM is over rollouts
     })
+    # "Last Run" for the path tables — DA_VA_v2 writes it as LatestSnapshot, the
+    # DAv3 page reads Latest_Snapshot. Absent in batches predating the column.
+    if 'LatestSnapshot' in agg.columns:
+        df_agg['Latest_Snapshot'] = agg['LatestSnapshot'].values
     roll = _slice(df_roll_src)                      # mask here drops the frozen ROWS
     paths = dict(zip(df_agg['Candidate'], df_agg['Full_Path']))
+    stamps = (dict(zip(df_agg['Candidate'], df_agg['Latest_Snapshot']))
+              if 'Latest_Snapshot' in df_agg.columns else {})
     if DERIVED_METRIC not in set(df_agg['metric'].unique()):
         extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
                                      'geo', 'variant'])
         if extra is not None and len(extra):
-            df_agg = pd.concat([df_agg, pd.DataFrame({
+            block = pd.DataFrame({
                 'Candidate': extra['Candidate'].values,
                 'Folder_Name': extra['FolderName'].values,
                 'Full_Path': extra['Candidate'].map(paths).values,
@@ -413,7 +420,10 @@ def derive_frames():
                 'mean': extra['mean'].values,
                 'std': extra['std'].values,
                 'count': extra['n'].values,
-            })], ignore_index=True)
+            })
+            if stamps:
+                block['Latest_Snapshot'] = extra['Candidate'].map(stamps).values
+            df_agg = pd.concat([df_agg, block], ignore_index=True)
     if df_units_src is not None:
         units = _slice(df_units_src)
         df_raw = pd.DataFrame({
@@ -426,6 +436,8 @@ def derive_frames():
             'metric': units['metric'].values,
             'value': units['mean'].values,
         })
+        if 'LatestSnapshot' in units.columns:    # per-SEED stamp in this frame
+            df_raw['Latest_Snapshot'] = units['LatestSnapshot'].values
         if DERIVED_METRIC not in set(df_raw['metric'].unique()):
             extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
                                          'seed', 'geo', 'variant'])
@@ -950,9 +962,13 @@ def download_plot(event):
     metadata += f"SELECTED VARIANTS ({len(checked_vars)}):\n"
     metadata += "\n".join([f" - {v}" for v in checked_vars]) + "\n\n"
     metadata += f"SELECTED CANDIDATES ({len(checked_cands)}):\n"
+    stamp_map = _stamp_map()
     for c in checked_cands:
         path = path_map.get(c, "Path not found")
+        stamp = stamp_map.get(str(c), "")
         metadata += f" - CAND_{c} (Source: {path})\n"
+        if stamp:
+            metadata += f"     last run: {stamp}\n"
 
     bundle.append((f"{base_name}.txt", metadata.encode()))
     written.append("TXT")
@@ -995,6 +1011,42 @@ def update_scorecard(subset, metric):
     
     document.getElementById("scorecard-container").innerHTML = html
 
+# ---------------------------------------------------------------------------------------
+# "Last Run" column — the newest `config_snapshot_*/snapshot_<YYYYMMDD_HHMMSS>` marker the
+# DA pipeline found in the candidate's seed folders, i.e. when those results were last
+# (re)generated. Without it, two rows of the audit map that differ only by a re-run are
+# indistinguishable. Batches produced before the pipeline wrote `Latest_Snapshot` simply
+# have no such column and both tables drop it rather than showing a blank one.
+# ---------------------------------------------------------------------------------------
+STAMP_COL = 'Latest_Snapshot'
+
+def _fmt_stamp(stamp):
+    # '20260506_034806' -> '2026-05-06 03:48:06'. Anything unexpected passes through.
+    t = str(stamp or "").strip()
+    if t in ("", "nan", "NaN", "None"):
+        return ""
+    if len(t) == 15 and t[8] == "_" and t.replace("_", "").isdigit():
+        return f"{t[0:4]}-{t[4:6]}-{t[6:8]} {t[9:11]}:{t[11:13]}:{t[13:15]}"
+    return t
+
+def _stamp_map():
+    # Candidate -> newest stamp. The aggregated CSV already carries one value per
+    # candidate, but max() keeps this honest if a future file ever splits it finer.
+    if df_agg is None or STAMP_COL not in df_agg.columns:
+        return {}
+    out = {}
+    pairs = df_agg[['Candidate', STAMP_COL]].drop_duplicates()
+    for cand, stamp in zip(pairs['Candidate'], pairs[STAMP_COL]):
+        text = _fmt_stamp(stamp)
+        if text:
+            key = str(cand)
+            out[key] = max(out.get(key, ""), text)
+    return out
+
+def _stamp_cell(stamp_map, cand):
+    return (f'<td style="width:150px;white-space:nowrap;font-size:11px">'
+            f'{stamp_map.get(str(cand), "&mdash;")}</td>')
+
 def render_selection_map(x_categories, x_axis, checked_cands):
     # Compact "plot legend" shown directly under the chart: only the candidates actually
     # in THIS plot, numbered in plot x-axis order, each mapped to its source path. The
@@ -1002,6 +1054,7 @@ def render_selection_map(x_categories, x_axis, checked_cands):
     if df_agg is None: return
     p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
     path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+    stamp_map = _stamp_map()
 
     if x_axis == 'Candidate':
         # candidate mode: the x-axis categories ARE the candidates, in plotted order.
@@ -1022,13 +1075,17 @@ def render_selection_map(x_categories, x_axis, checked_cands):
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{j%6}">{s}</span>' for j, s in enumerate(segs) if s])
         rows += (f'<tr><td style="text-align:center;width:80px"><strong>{i}</strong></td>'
                  f'<td style="width:100px"><strong>CAND_{c}</strong></td>'
+                 + (_stamp_cell(stamp_map, c) if stamp_map else '') +
                  f'<td><code>{c_path}</code>{_folder_btn(path, c)}</td></tr>')
 
     html = (f'<div style="font-size:10px;color:#666;margin-bottom:6px;">{len(ordered)} selected — {note}'
-            f' &middot; <b>&#8681; ZIP</b> downloads that run folder from the serving host</div>'
+            f' &middot; <b>&#8681; ZIP</b> downloads that run folder from the serving host'
+            + (' &middot; <b>Last Run</b> = newest config snapshot in the run folder' if stamp_map else '')
+            + f'</div>'
             f'<table><thead><tr>'
             f'<th style="width:80px">{pos_header}</th>'
             f'<th style="width:100px">ID</th>'
+            + ('<th style="width:150px">Last Run</th>' if stamp_map else '') +
             f'<th>Source Path</th></tr></thead><tbody>{rows}</tbody></table>')
     document.getElementById("selection-map-container").innerHTML = html
     document.getElementById("selection-map-section").style.display = "block"
@@ -1397,8 +1454,11 @@ def build_latex(ctx, batch_label, stamp):
 
     # Candidate -> source path audit. verbatim so the long cluster paths need no escaping.
     out += [r"\section*{Candidate source paths}", r"{\footnotesize", r"\begin{verbatim}"]
+    stamp_map = _stamp_map()
     for c in cands:
         out.append(f"CAND_{c}  {path_map.get(c, 'path not found')}")
+        if stamp_map.get(str(c)):
+            out.append(f"          last run {stamp_map[str(c)]}")
     out += [r"\end{verbatim}", "}", "", r"\end{document}", ""]
     return "\n".join(out)
 
@@ -1406,10 +1466,11 @@ def render_path_map():
     if df_agg is None: return
     p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
     has_missing = 'Missing_Seeds' in df_agg.columns
-    
+    stamp_map = _stamp_map()
+
     cols_to_get = ['Candidate', p_col]
     if has_missing: cols_to_get.append('Missing_Seeds')
-    
+
     # same numeric-vs-lexicographic concern as populate_dynamic_filters() above.
     _dedup = df_agg[cols_to_get].drop_duplicates()
     try:
@@ -1419,12 +1480,13 @@ def render_path_map():
     
     html = '<table><thead><tr><th style="width:100px">ID</th>'
     if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'
+    if stamp_map: html += '<th style="width:150px">Last Run</th>'
     html += '<th>Source Path (Audit)</th></tr></thead><tbody>'
-    
+
     for _, row in mapping.iterrows():
         segs = str(row[p_col]).split('/')
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
-        
+
         html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td>'
         if has_missing:
             missing_val = row["Missing_Seeds"]
@@ -1432,7 +1494,10 @@ def render_path_map():
                 html += '<td style="color: green; font-weight: bold;">ALL SEEDS</td>'
             else:
                 html += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
-                
+
+        if stamp_map:
+            html += _stamp_cell(stamp_map, row["Candidate"])
+
         html += f'<td><code>{c_path}</code>{_folder_btn(row[p_col], row["Candidate"])}</td></tr>'
 
     document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"

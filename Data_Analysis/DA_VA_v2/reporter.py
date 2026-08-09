@@ -28,6 +28,7 @@ import numpy as np
 import pandas as pd
 
 from config import PERCENTAGE_METRICS, PRIMARY_METRICS
+from discovery import format_snapshot_ts, snapshot_by_seed_str
 
 logger = logging.getLogger(__name__)
 
@@ -90,13 +91,23 @@ class Reporter:
             extra['n'] = 1
             extra['mask'] = 'all'
             if table is None or table.empty:
-                return extra
+                return self._with_seed_snapshot(extra)
             columns = [c for c in table.columns if c in extra.columns]
-            return pd.concat([table, extra[columns]], ignore_index=True, sort=False)
-        return table
+            table = pd.concat([table, extra[columns]], ignore_index=True, sort=False)
+        return self._with_seed_snapshot(table)
 
     def _agg_long_table(self):
-        return self.agg.agg_long
+        """Seeds are pooled here, so the stamp is the candidate's NEWEST run.
+
+        This is the column `Visualizer_VA_v2` reads for its "Last Run" columns;
+        `va2_units_long.csv` keeps the per-seed breakdown.
+        """
+        table = self.agg.agg_long
+        if table is None or table.empty:
+            return table
+        out = table.copy()
+        out['LatestSnapshot'] = out['Candidate'].map(self._latest_snapshot_map()).fillna('')
+        return out
 
     def _quality_table(self):
         """One row per unit. Read this before believing any constraint number.
@@ -129,6 +140,7 @@ class Reporter:
             'Folder_Name': rows['FolderName'],
             'Full_Path': rows['FullPath'],
             'Missing_Seeds': rows['Candidate'].map(self._missing_seeds_map()),
+            'Latest_Snapshot': self._seed_snapshot_column(rows),
             'seed': rows['seed'],
             'variant': rows['variant'].astype(str),
             'constraint_type': rows['split'],
@@ -148,6 +160,7 @@ class Reporter:
             'Folder_Name': rows['FolderName'],
             'Full_Path': rows['FullPath'],
             'Missing_Seeds': rows['Candidate'].map(self._missing_seeds_map()),
+            'Latest_Snapshot': rows['Candidate'].map(self._latest_snapshot_map()).fillna(''),
             'variant': rows['variant'].astype(str),
             'constraint_type': rows['split'],
             'halfspace_variant': _compat_env(rows),
@@ -178,6 +191,7 @@ class Reporter:
                 'Robustness': entry.get('robustness', np.nan),
                 'Seeds': entry.get('n_seeds', np.nan),
                 'Missing_Seeds': str(info.get('missing_seeds', []) or ''),
+                'Latest_Snapshot': self._latest_snapshot(candidate),
             })
         return pd.DataFrame(rows)
 
@@ -186,10 +200,15 @@ class Reporter:
         for candidate in sorted(self.agg.candidate_stats):
             entry = self.agg.candidate_stats[candidate]
             info = self.candidates_info.get(candidate, {})
+            snapshots = self._snapshots(candidate)
             rows.append({
                 'Candidate': candidate,
                 'Folder_Name': entry['FolderName'],
                 'Full_Path': entry['FullPath'],
+                'Latest_Snapshot': snapshots.get('latest', '') or '',
+                'First_Snapshot': snapshots.get('first', '') or '',
+                'Snapshot_Count': snapshots.get('count', 0),
+                'Snapshot_By_Seed': snapshot_by_seed_str(snapshots.get('per_seed')),
                 'Accuracy': entry.get('accuracy', np.nan),
                 'Accuracy_Std': entry.get('accuracy_std', np.nan),
                 'Major_Accuracy': entry.get('major_accuracy', np.nan),
@@ -240,6 +259,17 @@ class Reporter:
             lines.append(f'      seeds={info["seeds"]}'
                          + (f'  MISSING={info["missing_seeds"]}'
                             if info.get('missing_seeds') else ''))
+            snapshots = info.get('snapshots') or {}
+            if snapshots.get('latest'):
+                lines.append(
+                    f'      last run {format_snapshot_ts(snapshots["latest"])}'
+                    f'   ({snapshots["count"]} config snapshot(s) over '
+                    f'{snapshots["n_seeds_stamped"]} seed(s))')
+                per_seed = snapshots.get('per_seed') or {}
+                if len(set(per_seed.values())) > 1:
+                    lines.append(f'      per seed: {snapshot_by_seed_str(per_seed)}')
+            else:
+                lines.append('      last run unknown (no config_snapshot marker)')
 
         lines += ['', 'RANKING (goal + constraint success, mask=all, all geos pooled)',
                   '-' * 78]
@@ -280,6 +310,9 @@ class Reporter:
                         f'complete={row.get("npz_complete")}')
 
         lines += ['', 'NOTES', '-' * 78,
+                  '  LatestSnapshot / Latest_Snapshot  newest config_snapshot marker,',
+                  '    i.e. when that folder was last (re)run. Per SEED in the units /',
+                  '    *_raw files, newest over all seeds in the aggregated ones.',
                   '  mask=all      every rollout',
                   '  mask=unfrozen D1 box-obstacle-conflict rollouts removed',
                   '  total_violations is NaN for visual runs — that eval records',
@@ -296,6 +329,45 @@ class Reporter:
     def _missing_seeds_map(self):
         return {key: (str(info.get('missing_seeds')) if info.get('missing_seeds') else '')
                 for key, info in self.candidates_info.items()}
+
+    # ── config-snapshot timestamps ("when was this run produced?") ────────────
+    # Filled in by discovery.scan_snapshot_timestamps(). A candidates_info built
+    # by older code has no 'snapshots' key — everything below then yields '' and
+    # the columns come out blank rather than breaking.
+    def _snapshots(self, candidate):
+        return (self.candidates_info.get(candidate, {}) or {}).get('snapshots') or {}
+
+    def _latest_snapshot(self, candidate):
+        return self._snapshots(candidate).get('latest', '') or ''
+
+    def _latest_snapshot_map(self):
+        return {key: self._latest_snapshot(key) for key in self.candidates_info}
+
+    def _seed_snapshot_column(self, rows):
+        """Per-row stamp for a frame carrying a seed axis.
+
+        Deliberately no fallback to the candidate's `latest`: a seed that was
+        never re-run must stay visibly blank instead of borrowing a sibling
+        seed's freshness.
+        """
+        per_candidate = {key: (self._snapshots(key).get('per_seed') or {})
+                         for key in self.candidates_info}
+
+        def stamp(candidate, seed):
+            try:
+                return per_candidate.get(candidate, {}).get(int(seed), '') or ''
+            except (TypeError, ValueError):
+                return ''
+
+        return [stamp(c, s) for c, s in zip(rows['Candidate'], rows['seed'])]
+
+    def _with_seed_snapshot(self, table):
+        """Append the per-seed `LatestSnapshot` column to a frame with a seed axis."""
+        if table is None or table.empty or 'seed' not in table.columns:
+            return table
+        out = table.copy()
+        out['LatestSnapshot'] = self._seed_snapshot_column(out)
+        return out
 
     def _write(self, output_dir, filename, table):
         path = os.path.join(output_dir, filename)

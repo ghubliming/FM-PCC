@@ -292,6 +292,23 @@ check('U3 INIT XY reference row on the MIN_DIST table',
 ns['render_path_map']()
 check('path audit map rendered', 'CAND_' in document.getElementById('path-map-container').innerHTML)
 
+# "Last Run" (config-snapshot timestamp): the column must appear exactly when the
+# batch's CSVs carry a usable LatestSnapshot, and must be absent — not blank — for
+# batches produced before DA_VA_v2 wrote that column.
+_stamp_map = ns['_stamp_map']()
+_path_html = document.getElementById('path-map-container').innerHTML
+_legend_html = document.getElementById('selection-map-container').innerHTML
+check('Last Run column matches the data', ('Last Run' in _path_html) == bool(_stamp_map),
+      f'{len(_stamp_map)} candidate(s) stamped' if _stamp_map
+      else 'SKIP-ish — pre-timestamp batch, column correctly omitted')
+check('Last Run column in the plot legend too',
+      ('Last Run' in _legend_html) == bool(_stamp_map))
+if _stamp_map:
+    _sample = next(iter(_stamp_map.values()))
+    check('Last Run is rendered human-readable',
+          bool(re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', _sample))
+          and _sample in _path_html, _sample)
+
 # empty selection must explain itself, not go blank
 document.set_checks('var-check', [])
 run(ns['trigger_plot'](None))

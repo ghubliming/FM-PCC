@@ -27,6 +27,7 @@ same variant line up in the tables rather than masquerading as two variants.
 import json
 import logging
 import os
+import re
 
 from config import (
     GEO_DIR_PREFIXES,
@@ -34,11 +35,14 @@ from config import (
     NON_VARIANT_DIRS,
     RESULTS_DIR_NAMES,
     SKIP_NPZ_SUFFIXES,
+    SNAPSHOT_DIR_PREFIX,
     TIGHTENED_SUFFIX,
     TRAIN_SET_SUFFIX,
 )
 
 logger = logging.getLogger(__name__)
+
+_SNAPSHOT_FILE_RE = re.compile(r'^snapshot_(\d{8}_\d{6})$')
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -95,6 +99,97 @@ def _seed_dirs(candidate_path):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# config-snapshot timestamps — "when was this folder last run?"
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _snapshot_stamps_in_seed(seed_dir):
+    """Every `snapshot_<ts>` stamp under `<seed_dir>/config_snapshot*/`."""
+    stamps = []
+    try:
+        entries = sorted(os.listdir(seed_dir))
+    except OSError:
+        return stamps
+    for entry in entries:
+        if not entry.startswith(SNAPSHOT_DIR_PREFIX):
+            continue
+        snapshot_dir = os.path.join(seed_dir, entry)
+        if not os.path.isdir(snapshot_dir):
+            continue
+        try:
+            names = os.listdir(snapshot_dir)
+        except OSError:
+            continue
+        for name in names:
+            match = _SNAPSHOT_FILE_RE.match(name)
+            if match:
+                stamps.append(match.group(1))
+    return stamps
+
+
+def scan_snapshot_timestamps(candidate_path, seeds=None):
+    """Collect the config-snapshot timestamps of one candidate folder.
+
+    Args:
+        candidate_path: candidate folder (the one holding the seed subdirs).
+        seeds: seeds to inspect (None = every numeric subdirectory).
+
+    Returns:
+        latest           newest stamp over all seeds, `YYYYMMDD_HHMMSS` ('' if none)
+        first            oldest stamp over all seeds ('' if none)
+        count            total stamp files found
+        per_seed         {seed:int -> newest stamp of that seed}
+        n_seeds_stamped  how many seeds carried at least one stamp
+
+    Never raises: a tree written before config snapshots existed (or assembled
+    by hand) just reports empty strings and count 0.
+    """
+    if seeds is None:
+        try:
+            seeds = sorted(int(entry) for entry in os.listdir(candidate_path)
+                           if entry.isdigit()
+                           and os.path.isdir(os.path.join(candidate_path, entry)))
+        except OSError:
+            seeds = []
+
+    per_seed = {}
+    all_stamps = []
+    for seed in seeds:
+        stamps = _snapshot_stamps_in_seed(os.path.join(candidate_path, str(seed)))
+        if not stamps:
+            continue
+        all_stamps.extend(stamps)
+        per_seed[int(seed)] = max(stamps)
+
+    return {
+        'latest': max(all_stamps) if all_stamps else '',
+        'first': min(all_stamps) if all_stamps else '',
+        'count': len(all_stamps),
+        'per_seed': per_seed,
+        'n_seeds_stamped': len(per_seed),
+    }
+
+
+def format_snapshot_ts(stamp):
+    """'20260506_034806' -> '2026-05-06 03:48:06'. Anything else passes through."""
+    text = str(stamp or '').strip()
+    if len(text) == 15 and text[8] == '_' and text.replace('_', '').isdigit():
+        return (f'{text[0:4]}-{text[4:6]}-{text[6:8]} '
+                f'{text[9:11]}:{text[11:13]}:{text[13:15]}')
+    return text
+
+
+def snapshot_by_seed_str(per_seed):
+    """'6:20260506_034806 | 7:20260506_041233' — the per-seed audit trail.
+
+    Worth its own column: the seeds of one candidate are usually launched by
+    separate jobs, so a single stale seed hides behind a fresh `latest`.
+    """
+    if not per_seed:
+        return ''
+    return ' | '.join(f'{seed}:{per_seed[seed]}' for seed in sorted(per_seed))
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # candidates
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -132,6 +227,7 @@ def discover_candidates(parent_paths, seed_list=None, max_depth=10):
                 'seeds': sorted(seeds),
                 'missing_seeds': ([s for s in seed_list if s not in seeds]
                                   if seed_list else []),
+                'snapshots': scan_snapshot_timestamps(path, seeds),
             })
             return   # a candidate is a leaf — do not recurse into its seeds
         try:
@@ -204,6 +300,11 @@ def get_candidate_summary(candidates):
         lines.append(f'  {key}: {info["name"]}')
         lines.append(f'      Path:  {info["path"]}')
         lines.append(f'      Seeds: {info["seeds"]}')
+        snapshots = info.get('snapshots') or {}
+        if snapshots.get('latest'):
+            lines.append(f'      Last run: {format_snapshot_ts(snapshots["latest"])}'
+                         f'  ({snapshots["count"]} config snapshot(s) over '
+                         f'{snapshots["n_seeds_stamped"]} seed(s))')
         if info.get('missing_seeds'):
             lines.append(f'      WARNING missing seeds: {info["missing_seeds"]}')
         if info.get('custom_name'):
@@ -358,6 +459,7 @@ def write_discovery_manifest(path, candidates, units):
                 'path': v['path'],
                 'seeds': v['seeds'],
                 'missing_seeds': v.get('missing_seeds', []),
+                'snapshots': v.get('snapshots', {}),
             } for k, v in sorted(candidates.items())
         },
         'units': [

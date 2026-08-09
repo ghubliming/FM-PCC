@@ -138,6 +138,28 @@ never ranked on.
 | `candidates_summary.txt` | human-readable ranking + a data-quality section |
 | `logs/analysis.log`, `logs/loading.log`, `logs/discovery_manifest.json` | what ran, what loaded, what discovery saw |
 
+### `LatestSnapshot` / `Latest_Snapshot` — when was this run produced?
+
+Every eval launch drops a marker file `snapshot_<YYYYMMDD_HHMMSS>` into
+`<candidate>/<seed>/config_snapshot_<config>/` (`utils/setup.py::snapshot_configs`)
+and never deletes the previous ones. Discovery scans them, so the CSVs carry the
+answer to "is this candidate's result from last night or from three weeks ago?"
+without opening the run folder:
+
+| where | grain |
+|---|---|
+| `va2_units_long.csv`, `candidates_multidimensional_raw.csv` | that **seed's** newest marker (blank if that seed has none) |
+| `va2_aggregated_long.csv`, `candidates_multidimensional_aggregated.csv`, `candidates_ranking.csv` | newest marker over all the candidate's seeds |
+| `candidates_detailed.csv` | plus `First_Snapshot`, `Snapshot_Count`, `Snapshot_By_Seed` (`6:2026… \| 7:2026…`) |
+| `candidates_summary.txt` | human-readable, with the per-seed line when the seeds disagree |
+
+Both HTML viewers show it as a **Last Run** column in the Path Audit Map and in
+the Plot Legend, and it is repeated in the exported audit `.txt` / LaTeX. Batches
+produced before this column existed simply have no column and the viewers drop
+it rather than showing blanks. `Snapshot_By_Seed` is the one to read when a
+candidate looks half-stale: seeds are usually launched as separate jobs, so a
+single fresh seed can hide four old ones behind a recent `Latest_Snapshot`.
+
 The `DA_Code_v3`-compat schema has no geometry or split axis of its own, so:
 `halfspace_variant ← geo` (suffixed `@train_set` for train-split rows) and
 `constraint_type ← split`. The suffix stops a train-set run from being pooled

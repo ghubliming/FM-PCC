@@ -70,6 +70,24 @@ The script creates a timestamped output directory with the following structure:
     └── warnings.log
 ```
 
+### `Latest_Snapshot` — when was this run produced?
+
+Batch mode (`main_da_batch.py`) records, per candidate, the config-snapshot
+markers the eval pipeline leaves behind: every launch writes
+`snapshot_<YYYYMMDD_HHMMSS>` into `<candidate>/<seed>/config_snapshot_<config>/`
+and never deletes the earlier ones (`utils/setup.py::snapshot_configs`).
+
+| file | grain |
+|---|---|
+| `candidates_multidimensional_raw.csv` | that **seed's** newest marker (blank when that seed has none) |
+| `candidates_multidimensional_aggregated.csv`, `candidates_ranking.csv` | newest marker over all the candidate's seeds |
+| `candidates_detailed.csv` | plus `First_Snapshot`, `Snapshot_Count`, `Snapshot_By_Seed` |
+| `candidates_summary.txt` | human-readable, with a per-seed line when the seeds disagree |
+
+`Visualizer/index.html` renders it as a **Last Run** column in the Path Audit Map
+and the Plot Legend, and repeats it in the exported audit `.txt` / LaTeX. Older
+batches have no such column and the page drops it instead of showing blanks.
+
 ## Key Metrics
 
 The tool analyzes:

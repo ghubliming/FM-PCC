@@ -11,6 +11,8 @@ import pandas as pd
 import numpy as np
 from typing import Dict
 
+from multi_candidate_discovery import format_snapshot_ts, snapshot_by_seed_str
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,35 @@ class BatchReporter:
         self.ranked_candidates = ranked_candidates
         self.candidates_info = candidates_info or {}
         self.aggregator = aggregator
-    
+
+    # ── config-snapshot timestamps ("when was this run produced?") ───────────
+    # Filled in by multi_candidate_discovery.scan_snapshot_timestamps(). A
+    # candidate discovered by an older code path simply has no 'snapshots' key,
+    # in which case every accessor below returns '' and the columns are blank.
+    def _snapshots(self, letter):
+        return (self.candidates_info.get(letter, {}) or {}).get('snapshots') or {}
+
+    def _latest_snapshot(self, letter):
+        return self._snapshots(letter).get('latest', '') or ''
+
+    def _seed_snapshot(self, letter, seed):
+        """Newest stamp of ONE seed — deliberately not falling back to the
+        candidate's `latest`, so a seed that was never re-run stays visibly
+        blank instead of borrowing a sibling seed's freshness."""
+        per_seed = self._snapshots(letter).get('per_seed') or {}
+        try:
+            return per_seed.get(int(seed), '') or ''
+        except (TypeError, ValueError):
+            return ''
+
+    def _seed_snapshot_column(self, df):
+        """Per-row stamp for a frame that has a seed axis; candidate-level otherwise."""
+        seed_col = 'seed' if 'seed' in df.columns else ('Seed' if 'Seed' in df.columns else None)
+        if seed_col is None:
+            return df['Candidate'].apply(self._latest_snapshot)
+        return [self._seed_snapshot(c, s)
+                for c, s in zip(df['Candidate'], df[seed_col])]
+
     def save_candidates_summary_txt(self, output_path):
         """
         Save human-readable summary of cross-candidate comparison.
@@ -56,7 +86,18 @@ class BatchReporter:
         for letter in sorted(self.candidates_info.keys()):
             info = self.candidates_info[letter]
             lines.append(f"  {letter}: {info.get('name', 'Unknown')}")
-        
+            snapshots = info.get('snapshots') or {}
+            if snapshots.get('latest'):
+                lines.append(
+                    f"      last run {format_snapshot_ts(snapshots['latest'])}"
+                    f"   ({snapshots['count']} config snapshot(s) over "
+                    f"{snapshots['n_seeds_stamped']} seed(s))")
+                per_seed = snapshots.get('per_seed') or {}
+                if len(set(per_seed.values())) > 1:
+                    lines.append(f"      per seed: {snapshot_by_seed_str(per_seed)}")
+            else:
+                lines.append("      last run unknown (no config_snapshot marker)")
+
         lines.append("")
         
         # Rankings
@@ -153,7 +194,8 @@ class BatchReporter:
                 'Accuracy Std (%)': stats.get('accuracy_std', '') * 100 if stats.get('accuracy_std') else '',
                 'Time (ms)': stats.get('time_ms', ''),
                 'Time Std (ms)': stats.get('time_std', ''),
-                'Robustness': stats.get('robustness', '')
+                'Robustness': stats.get('robustness', ''),
+                'Latest_Snapshot': self._latest_snapshot(letter)
             }
             rows.append(row)
         
@@ -176,10 +218,15 @@ class BatchReporter:
             info = self.candidates_info.get(letter, {})
             
             if 'error' not in stats:
+                snapshots = self._snapshots(letter)
                 row = {
                     'Candidate_Letter': letter,
                     'Folder_Name': info.get('name', 'Unknown'),
                     'Full_Path': info.get('path', 'Unknown'),
+                    'Latest_Snapshot': snapshots.get('latest', '') or '',
+                    'First_Snapshot': snapshots.get('first', '') or '',
+                    'Snapshot_Count': snapshots.get('count', 0),
+                    'Snapshot_By_Seed': snapshot_by_seed_str(snapshots.get('per_seed')),
                     'Accuracy': stats.get('accuracy', ''),
                     'Accuracy_Std': stats.get('accuracy_std', ''),
                     'Time_ms': stats.get('time_ms', ''),
@@ -210,6 +257,9 @@ class BatchReporter:
                 df['Folder_Name'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
                 df['Full_Path'] = df['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
                 df['Missing_Seeds'] = df['Candidate'].apply(lambda c: str(self.candidates_info.get(c, {}).get('missing_seeds', [])) if self.candidates_info.get(c, {}).get('missing_seeds') else '')
+                # This frame has a seed axis, so the stamp is that SEED's own last
+                # run — the granularity the aggregated file cannot express.
+                df['Latest_Snapshot'] = self._seed_snapshot_column(df)
                 df.to_csv(output_path, index=False)
                 logger.info(f"Saved multidimensional CSV ({len(df)} rows): {output_path}")
             else:
@@ -236,9 +286,13 @@ class BatchReporter:
                 grouped['Folder_Name'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('name', 'Unknown'))
                 grouped['Full_Path'] = grouped['Candidate'].apply(lambda c: self.candidates_info.get(c, {}).get('path', 'Unknown'))
                 grouped['Missing_Seeds'] = grouped['Candidate'].apply(lambda c: str(self.candidates_info.get(c, {}).get('missing_seeds', [])) if self.candidates_info.get(c, {}).get('missing_seeds') else '')
-                
+                # Seeds are collapsed here, so this is the NEWEST stamp over all of
+                # them; the raw file keeps the per-seed breakdown. This is also the
+                # column the HTML visualizers read for their "Last Run" columns.
+                grouped['Latest_Snapshot'] = grouped['Candidate'].apply(self._latest_snapshot)
+
                 # Reorder columns
-                cols = ['Candidate', 'Folder_Name', 'Full_Path', 'Missing_Seeds', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
+                cols = ['Candidate', 'Folder_Name', 'Full_Path', 'Missing_Seeds', 'Latest_Snapshot', 'variant', 'constraint_type', 'halfspace_variant', 'metric', 'mean', 'std', 'count']
                 grouped = grouped[cols]
                 
                 grouped.to_csv(output_path, index=False)

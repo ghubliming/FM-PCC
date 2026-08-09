@@ -7,11 +7,115 @@ A candidate is any subfolder that contains the required seed directories.
 
 import os
 import logging
+import re
 from pathlib import Path
 from typing import Dict, Optional
 
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Config-snapshot timestamps — "when was this folder last run?"
+# ============================================================================
+# `diffuser/utils/setup.py::snapshot_configs` copies the config into
+# `<savepath>/config_snapshot_<config>/` and then drops a marker file named
+# `snapshot_<YYYYMMDD_HHMMSS>` next to it, once per Parser() call. For a
+# `.../plans/<exp>/<seed>/` folder that is one marker per EVAL LAUNCH, so:
+#   newest marker  = when the results in this folder were last (re)generated
+#   marker count   = how many times the folder has been written into
+# Re-running an eval never deletes the older markers, which is exactly what
+# makes them an audit trail rather than a single mtime.
+SNAPSHOT_DIR_PREFIX = 'config_snapshot'
+_SNAPSHOT_FILE_RE = re.compile(r'^snapshot_(\d{8}_\d{6})$')
+
+
+def _snapshot_stamps_in_seed(seed_dir):
+    """Every `snapshot_<ts>` stamp under `<seed_dir>/config_snapshot*/`."""
+    stamps = []
+    try:
+        entries = sorted(os.listdir(seed_dir))
+    except OSError:
+        return stamps
+    for entry in entries:
+        if not entry.startswith(SNAPSHOT_DIR_PREFIX):
+            continue
+        snapshot_dir = os.path.join(seed_dir, entry)
+        if not os.path.isdir(snapshot_dir):
+            continue
+        try:
+            names = os.listdir(snapshot_dir)
+        except OSError:
+            continue
+        for name in names:
+            match = _SNAPSHOT_FILE_RE.match(name)
+            if match:
+                stamps.append(match.group(1))
+    return stamps
+
+
+def scan_snapshot_timestamps(candidate_path, seeds=None):
+    """Collect the config-snapshot timestamps of one candidate folder.
+
+    Args:
+        candidate_path: candidate folder (the one holding the seed subdirs)
+        seeds: seeds to look at (None = every numeric subdirectory)
+
+    Returns:
+        dict:
+            latest    newest stamp over all seeds, 'YYYYMMDD_HHMMSS' ('' if none)
+            first     oldest stamp over all seeds ('' if none)
+            count     total number of stamp files found
+            per_seed  {seed:int -> newest stamp of that seed}
+            n_seeds_stamped  how many seeds carried at least one stamp
+
+    Never raises: a tree with no snapshots at all (pre-snapshot runs, or a
+    hand-assembled folder) simply reports empty strings and count 0.
+    """
+    if seeds is None:
+        try:
+            seeds = sorted(int(e) for e in os.listdir(candidate_path)
+                           if e.isdigit()
+                           and os.path.isdir(os.path.join(candidate_path, e)))
+        except OSError:
+            seeds = []
+
+    per_seed = {}
+    all_stamps = []
+    for seed in seeds:
+        stamps = _snapshot_stamps_in_seed(os.path.join(candidate_path, str(seed)))
+        if not stamps:
+            continue
+        all_stamps.extend(stamps)
+        per_seed[int(seed)] = max(stamps)
+
+    return {
+        'latest': max(all_stamps) if all_stamps else '',
+        'first': min(all_stamps) if all_stamps else '',
+        'count': len(all_stamps),
+        'per_seed': per_seed,
+        'n_seeds_stamped': len(per_seed),
+    }
+
+
+def format_snapshot_ts(stamp):
+    """'20260506_034806' -> '2026-05-06 03:48:06'. Anything else passes through."""
+    text = str(stamp or '').strip()
+    if len(text) == 15 and text[8] == '_' and text.replace('_', '').isdigit():
+        return (f'{text[0:4]}-{text[4:6]}-{text[6:8]} '
+                f'{text[9:11]}:{text[11:13]}:{text[13:15]}')
+    return text
+
+
+def snapshot_by_seed_str(per_seed):
+    """'6:20260506_034806 | 7:20260506_041233' — the per-seed audit trail.
+
+    Worth a column of its own: seeds of the same candidate are often launched
+    by separate jobs, so one stale seed hides behind a fresh `latest`.
+    """
+    if not per_seed:
+        return ''
+    return ' | '.join(f'{seed}:{per_seed[seed]}' for seed in sorted(per_seed))
 
 
 def get_existing_seeds(seed_list, folder_path):
@@ -99,7 +203,8 @@ def discover_candidates(parent_path, seed_list=None):
                 'path': os.path.abspath(subfolder_path),
                 'name': subfolder_name,
                 'seeds': existing_seeds,
-                'missing_seeds': missing_seeds
+                'missing_seeds': missing_seeds,
+                'snapshots': scan_snapshot_timestamps(subfolder_path, existing_seeds)
             }
 
             logger.info(f"Candidate {cand_idx}: {subfolder_name}")
@@ -166,7 +271,8 @@ def discover_candidates_recursive(parent_path, seed_list=None, max_depth=3):
                     'path': os.path.abspath(entry_path),
                     'name': entry,
                     'seeds': existing_seeds,
-                    'missing_seeds': missing_seeds
+                    'missing_seeds': missing_seeds,
+                    'snapshots': scan_snapshot_timestamps(entry_path, existing_seeds)
                 }
                 logger.info(f"Candidate {cand_idx}: {entry}")
                 letter_index += 1
@@ -261,6 +367,11 @@ def get_candidate_summary(candidates):
         lines.append(f"  {letter}: {info['name']}")
         lines.append(f"      Path: {info['path']}")
         lines.append(f"      Seeds Found: {info['seeds']}")
+        snapshots = info.get('snapshots') or {}
+        if snapshots.get('latest'):
+            lines.append(f"      Last Run: {format_snapshot_ts(snapshots['latest'])}"
+                         f"  ({snapshots['count']} config snapshot(s) over "
+                         f"{snapshots['n_seeds_stamped']} seed(s))")
         if info.get('missing_seeds'):
             lines.append(f"      WARNING: Missing Seeds {info['missing_seeds']}")
         if 'custom_name' in info:

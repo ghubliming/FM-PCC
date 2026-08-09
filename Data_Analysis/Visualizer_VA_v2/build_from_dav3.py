@@ -234,7 +234,8 @@ ROLL_SORT_OPTIONS = [('rollout_idx', 'Rollout index'), ('n_success', 'Success'),
 def _norm(df):
     if df is None:
         return None
-    for col in ('Candidate', 'variant', 'geo', 'split', 'mask', 'metric', 'FolderName'):
+    for col in ('Candidate', 'variant', 'geo', 'split', 'mask', 'metric', 'FolderName',
+                'LatestSnapshot'):
         if col in df.columns:
             df[col] = df[col].astype(str)
     return df
@@ -322,13 +323,19 @@ def derive_frames():
         'std': agg['std'].values,
         'count': agg['n'].values,                   # pooled rollouts -> SEM is over rollouts
     })
+    # "Last Run" for the path tables — DA_VA_v2 writes it as LatestSnapshot, the
+    # DAv3 page reads Latest_Snapshot. Absent in batches predating the column.
+    if 'LatestSnapshot' in agg.columns:
+        df_agg['Latest_Snapshot'] = agg['LatestSnapshot'].values
     roll = _slice(df_roll_src)                      # mask here drops the frozen ROWS
     paths = dict(zip(df_agg['Candidate'], df_agg['Full_Path']))
+    stamps = (dict(zip(df_agg['Candidate'], df_agg['Latest_Snapshot']))
+              if 'Latest_Snapshot' in df_agg.columns else {})
     if DERIVED_METRIC not in set(df_agg['metric'].unique()):
         extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
                                      'geo', 'variant'])
         if extra is not None and len(extra):
-            df_agg = pd.concat([df_agg, pd.DataFrame({
+            block = pd.DataFrame({
                 'Candidate': extra['Candidate'].values,
                 'Folder_Name': extra['FolderName'].values,
                 'Full_Path': extra['Candidate'].map(paths).values,
@@ -338,7 +345,10 @@ def derive_frames():
                 'mean': extra['mean'].values,
                 'std': extra['std'].values,
                 'count': extra['n'].values,
-            })], ignore_index=True)
+            })
+            if stamps:
+                block['Latest_Snapshot'] = extra['Candidate'].map(stamps).values
+            df_agg = pd.concat([df_agg, block], ignore_index=True)
     if df_units_src is not None:
         units = _slice(df_units_src)
         df_raw = pd.DataFrame({
@@ -351,6 +361,8 @@ def derive_frames():
             'metric': units['metric'].values,
             'value': units['mean'].values,
         })
+        if 'LatestSnapshot' in units.columns:    # per-SEED stamp in this frame
+            df_raw['Latest_Snapshot'] = units['LatestSnapshot'].values
         if DERIVED_METRIC not in set(df_raw['metric'].unique()):
             extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
                                          'seed', 'geo', 'variant'])
