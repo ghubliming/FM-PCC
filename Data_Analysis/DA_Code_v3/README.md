@@ -88,6 +88,29 @@ and never deletes the earlier ones (`utils/setup.py::snapshot_configs`).
 and the Plot Legend, and repeats it in the exported audit `.txt` / LaTeX. Older
 batches have no such column and the page drops it instead of showing blanks.
 
+## Plot Legend: highlight + seed coverage (viewer only)
+
+The **Plot Legend — Selected Candidates** table under the chart carries two
+columns that exist only in the page, not in any CSV:
+
+- **HL** — a checkbox. Ticking it paints that candidate's *name* red wherever it
+  is printed: the plot's x tick label, the legend row, every row head in the
+  Result Matrices, and the Path Audit Map. Nothing else changes — no number, no
+  cell background — so a highlight can never be mistaken for a data annotation
+  the way the `(goal, constraint)` flags can. Purely a way to follow one row
+  across ~18 variant columns. `[CLEAR HIGHLIGHTS]` in the legend header resets
+  them all, including candidates you have since unticked in the sidebar. The
+  exported `.txt` and `.tex` have no colour, so they say `[HIGHLIGHTED]` /
+  `<-- highlighted in the viewer` in words instead.
+- **Seeds** — which seeds that candidate actually has, from
+  `candidates_multidimensional_raw.csv`, with a red **⚠ NOT FULL** naming the
+  ones it is missing (against the batch's full seed set, or against the ticked
+  seeds in Custom Seed Compare). A bar averaged over one seed and a bar averaged
+  over five are identical on the chart; this is the only place next to the plot
+  that says which you are looking at. With no raw CSV the page falls back to the
+  `Missing_Seeds` column and says `n/a` for the present-seed list rather than
+  claiming the candidate has none.
+
 ## Key Metrics
 
 The tool analyzes:

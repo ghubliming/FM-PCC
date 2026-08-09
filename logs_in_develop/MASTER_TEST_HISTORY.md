@@ -4196,3 +4196,67 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **`fm` Arm Regressed vs Gen7**: The `fm` arm (the theoretical reference for Visual Flow Matching) proved much worse than archived Gen7 models. Unprojected, it diverges completely in 77% of contexts, losing the arm entirely with peak tracking errors averaging ~2.8m. 
 3. **The Projector Masks Errors**: Applying `dpcc-r` to the `fm` arm forces its divergence back to 0%, but the resulting policy fails to move the box at all in 55% of rollouts and logs the highest constraint violations. The projector makes the policy inert rather than accurate.
 4. **Task Success Remains Zero**: Despite relative improvements in the `diffusion` arm's aliveness, both new arms scored 0 goal successes across approximately 100 rollouts. The task remains unsolved by these variants.
+
+***
+
+## Gen14 Fix 9: FiLM Mode Config Entry (August 9, 2026)
+
+**Keywords**: Gen14, Fix 9, FiLM v2, config entry, discoverability.
+
+1. **Config Discoverability**: Added explicit `film_mode` configuration entries to all four Gen14 arms (`diffusion`, `fm`, `mf`, `af`) in `aligning-d3il-visual.py`. Previously, FiLM v2 support was inherited invisibly, causing a risk of unnoticed silent fallbacks.
+2. **Per-Arm Control**: Each of the four Gen14 candidates gets its own environment variable (e.g., `MIX_FILM_MODE_MF`) to resolve the mode, alongside a broadcast `MIX_FILM_MODE`. This allows fine-grained, independent control of the mode across different arms without silently migrating reference arms (like `fm` which must remain `v1` to match Gen7).
+3. **Safety and Validation**: Added an explicit rejection for unknown modes to fail fast. Furthermore, eval scripts now read the mode directly from the `model_config.pkl` to log the true backbone architecture and warn if the loaded model mismatches the config path.
+
+***
+
+## Gen14 U7 DA: Horizontal 4-Engines Comparison (August 9, 2026)
+
+**Keywords**: Gen14, DA, 4-engines, DPCC, HardFlow, projector ablations, visual-aligning, bounds constraint.
+
+1. **Projector Ablation (The Bounds Constraint)**: Found that dropping the bounds constraint (`bounds_free`) is the absolute best projector configuration. It improves constraint satisfaction by +7.7 percentage points, reduces violations significantly, and is cheaper to run than the full `dpcc-c` projector (46.7 ms vs 57.9 ms). The bounds constraint was actively hurting performance.
+2. **Selection Rule Refutation**: Statistically proved that the "smart" minimum-projection-cost selection rule (`-c`) is worse than random selection (`-r`) across both DPCC and HardFlow. This rule reliably degrades trajectories and should be dropped from defaults.
+3. **HardFlow vs DPCC**: HardFlow beats DPCC post-hoc projection on constraints but at a heavy 3.4x computational cost, indicating a trade-off rather than strict dominance. `bounds_free` DPCC is found to Pareto-dominate HardFlow.
+4. **Engine Comparisons at K=2**: MeanFlow (`mf`) narrowly but significantly beats AlphaFlow (`af`) at K=2 on constraint satisfaction across the 19 projector variants. Flow Matching (`fm`) is decisively broken compared to the others, showing high divergence rates that turn into complete inertia under projection.
+5. **Cost Independence**: Confirmed that K=2 evaluation costs ~33x less compute than K=100 with no degradation in constraint satisfaction.
+
+***
+
+## Gen3v6 U9: Matched-K Auto-Eval Pipeline (August 9, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, NFE budget, K-sweep, automated evaluation, parity.
+
+1. **NFE Sweep Automation**: Ported the AlphaFlow (Gen3v7) automated K-sweep mechanism back to MeanFlow (Gen3v6). Previously, testing different NFE budgets for MeanFlow required manual SLURM resubmissions, which risked mismatched K-budget comparisons.
+2. **Mechanism**: Introduced a `--flow-steps K` CLI flag that directly patches the config module's plan block at runtime. The SLURM job scripts now execute a `{1, 2, 5, 10}` loop directly to generate isolated per-K result directories cleanly.
+3. **Backward Compatibility**: Preserved the original single-K behavior via `HFFM_FLOW_STEPS` for legacy `fix_4` reproduction, while enabling the full grid sweep when left unset.
+
+***
+
+## Gen3v7 AlphaFlow: UNet@32 Full Seed Evaluation (August 9, 2026)
+
+**Keywords**: Gen3v7, AlphaFlow, Fix 8, UNet, benchmark, provenance hazard.
+
+1. **Provenance Defect Discovered**: The full 5-seed run actually contained a stale pre-fix checkpoint for seed 6 (the 100k step resume skipped it). Analysis of the raw MPC foresight revealed seed 6 planned leaps larger than the arena diagonal, completely failing constraint satisfaction. Seed 6 must be deleted and retrained.
+2. **Pareto-Dominance Over DPCC K20 (Valid Seeds)**: On the valid seeds (7-10), AlphaFlow-UNet@32 at K=2 Pareto-dominates the DPCC K20 baseline on the `dpcc-t-tightened` arm (equal safety, 27% fewer steps, 18x cheaper per step). It also decisively beats naive FM K20.
+3. **Cross-Architecture Wins**: AF-UNet@32 outperforms both the AlphaFlow SiT backbone and the MeanFlow DiT backbone at K=2. It specifically eliminates the timeout-failure mode seen in the DiT models under the `dpcc-c` projector.
+4. **Conclusion**: At 2 NFE, AlphaFlow-UNet@32 reclaims DPCC K20's constraint safety at a fraction of the cost, solidifying it as the best AlphaFlow backbone for the DPCC pipeline.
+
+***
+
+## Infrastructure: DA Snapshot Timestamps (August 9, 2026)
+
+**Keywords**: DA_VA_v2, DA_Code_v3, HTML viewer, timestamps, provenance.
+
+1. **Audit Trail Visibility**: Implemented snapshot timestamps in CSV and HTML outputs for both `DA_VA_v2` and `DA_Code_v3` pipelines. This solves the provenance issue where candidate evaluations looked identical regardless of when they were actually generated.
+2. **Marker Scanning**: The discovery module now reads the `config_snapshot_*` marker files generated at eval launch, extracting the latest snapshot date.
+3. **Integration**: Plumbed the `Latest_Snapshot` data through the CSV aggregations and directly into the "Last Run" column in the Path Audit Map and Plot Legends of the HTML visualizers. Includes robust fallbacks for legacy batches without snapshot metadata.
+
+***
+
+## External Research: Self-Flow Evaluation for FM-PCC (August 9, 2026)
+
+**Keywords**: Self-Flow, literature review, architecture, evaluation.
+
+1. **Verdict**: Decided NOT to adopt the Self-Flow architecture (ICML 2026) for FM-PCC. The repository (`aux_repo/Self-Flow`) is an inference-only release lacking the core representation loss and training loop.
+2. **Structural Incompatibilities**: The dual-timestep masking mechanism requires a large token grid (e.g., 256 tokens) to exploit information asymmetry, which is incompatible with FM-PCC's 8-token trajectory horizon. The mechanism acts as data augmentation, not valid for our low-token setup.
+3. **Misaligned Objectives**: Self-Flow evaluates on proxy generation metrics (FID) and does not improve NFE/latency, whereas FM-PCC prioritizes low-NFE constraint satisfaction and closed-loop control latency.
+4. **Key Takeaway**: The idea of heterogeneous noise levels across horizon steps (far future vs near future) is valid for MPC but should be sourced from models designed for sequential decision making (like Diffusion Forcing), not from Self-Flow.

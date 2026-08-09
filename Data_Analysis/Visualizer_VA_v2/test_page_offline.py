@@ -265,7 +265,10 @@ check('matrices mark never-run cells', 'nullcell' in summary_html or _grid_full,
 # U3: the run tally. The whole point is that the candidates are NOT comparable by
 # volume, so the table must state a number for every selected candidate.
 _cov = re.search(r'<table class="paper-tbl cov-tbl">.*?</table>', summary_html, re.S)
-_cov_rows = re.findall(r'<td class="rowhead">CAND_([^<]+)</td>', _cov.group(0)) if _cov else []
+# the optional <span class="hl-name"> is U13's highlight wrapper — match around it so a
+# highlighted candidate does not silently drop out of this tally.
+_cov_rows = re.findall(r'<td class="rowhead">(?:<span[^>]*>)?CAND_([^<]+?)(?:</span>)?</td>',
+                       _cov.group(0)) if _cov else []
 check('U3 run-coverage table rendered', sorted(_cov_rows) == sorted(cands),
       f'{len(_cov_rows)} candidates tallied')
 check('U3 coverage flags an unbalanced batch',
@@ -308,6 +311,105 @@ if _stamp_map:
     check('Last Run is rendered human-readable',
           bool(re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', _sample))
           and _sample in _path_html, _sample)
+
+# ── U13: seed coverage in the plot legend ────────────────────────────────────
+print('\n[U13 legend seed coverage]')
+_seed_map = ns['_seed_map']()
+check('seed map built from the per-seed frame',
+      bool(_seed_map) and set(_seed_map) >= set(cands),
+      f'{len(_seed_map)} candidates')
+check('Seeds column in the plot legend', ('>Seeds<' in _legend_html) == bool(_seed_map))
+# what the page claims a candidate has must be what df_raw actually holds
+_probe = cands[0]
+_truth = sorted(int(s) for s in pd.to_numeric(
+    df_raw[df_raw['Candidate'] == _probe]['seed'], errors='coerce').dropna().unique())
+check('Seeds cell matches df_raw', _seed_map.get(_probe, ([], []))[0] == _truth,
+      f'CAND_{_probe}: page={_seed_map.get(_probe, ([], []))[0]} raw={_truth}')
+# the caution is the point of the column: it must appear exactly when a candidate is
+# short of the batch's full seed set, never as decoration.
+_short = any(miss for _have, miss in _seed_map.values())
+check('NOT FULL caution matches the data', ('NOT FULL' in _legend_html) == _short,
+      f'{sum(1 for _h, m in _seed_map.values() if m)} of {len(_seed_map)} candidates short'
+      if _short else 'every candidate has every seed — no caution, correctly')
+
+# ── U13: candidate highlight ─────────────────────────────────────────────────
+print('\n[U13 candidate highlight]')
+document.getElementById('env-select').value = envs[0]
+document.set_checks('cand-check', cands)
+run(ns['trigger_plot'](None))
+check('HL checkbox on every legend row',
+      document.getElementById('selection-map-container').innerHTML.count('class="hl-check hl-box"')
+      == len(cands), f'{len(cands)} rows')
+
+_pick = cands[0]
+_other = cands[1] if len(cands) > 1 else None
+
+
+async def _toggle(cand, on):
+    # exactly what the JS onchange does — set_highlight schedules the redraw
+    ns['set_highlight'](cand, on)
+    await asyncio.sleep(0.3)
+
+
+run(_toggle(_pick, True))
+_leg = document.getElementById('selection-map-container').innerHTML
+_sum = document.getElementById('summary-container').innerHTML
+_path = document.getElementById('path-map-container').innerHTML
+_marked = f'<span class="hl-name">CAND_{_pick}</span>'
+_marked_cell = f'<td class="rowhead">{_marked}</td>'
+_plain_cell = f'<td class="rowhead">CAND_{_pick}</td>'
+check('highlight reaches the plot legend', _marked in _leg)
+# one row head per Result Matrix, plus the run-coverage table — and NOT ONE left plain,
+# which is what a half-applied highlight would look like.
+check('highlight reaches every result matrix',
+      _sum.count(_marked_cell) >= len(ns['SUMMARY_TABLES']) and _plain_cell not in _sum,
+      f'{_sum.count(_marked_cell)} row heads marked over {len(ns["SUMMARY_TABLES"])} tables')
+check('highlight reaches the path audit map', _marked in _path)
+check('highlight leaves other candidates alone',
+      _other is None or f'<span class="hl-name">CAND_{_other}</span>' not in _sum,
+      'SKIP — single-candidate batch' if _other is None else f'CAND_{_other} untouched')
+# the set lives in Python precisely so the box survives the wholesale re-render
+check('legend checkbox comes back checked after the re-render',
+      f'value="{_pick}" checked' in _leg)
+check('[CLEAR HIGHLIGHTS] offered while something is highlighted', 'hl-clear' in _leg)
+
+# the x tick label of the highlighted candidate — the "PLOT naming" half of the feature
+_ax = ns['current_ax']
+_ticks = {lbl.get_text(): lbl for lbl in _ax.get_xticklabels()}
+check('highlighted candidate gets a red bold x tick',
+      _pick in _ticks
+      and _ticks[_pick].get_color() == ns['HL_COLOR']
+      and str(_ticks[_pick].get_fontweight()) == 'bold',
+      f'ticks={list(_ticks)[:6]}')
+check('other x ticks stay black',
+      _other is None or _other not in _ticks or _ticks[_other].get_color() == 'black')
+
+# a .tex / .txt has no colour, so the exports say it in words
+_ctx_hl, _ = ns['_summary_context']()
+_tex_hl = ns['build_latex'](_ctx_hl, 'batch', 'stamp')
+check('LaTeX marks the highlighted candidate', 'highlighted in the viewer' in _tex_hl)
+
+run(_toggle(_pick, False))
+check('un-ticking removes the highlight everywhere',
+      _marked not in document.getElementById('summary-container').innerHTML
+      and _marked not in document.getElementById('path-map-container').innerHTML)
+
+ns['highlighted_cands'].update(cands)
+run(ns['_redraw_highlight']())
+check('every candidate can be highlighted at once',
+      len(ns['highlighted_cands']) == len(cands))
+
+
+async def _clear():
+    ns['clear_highlights']()
+    await asyncio.sleep(0.3)
+
+
+run(_clear())
+check('clear_highlights wipes all of them',
+      not ns['highlighted_cands']
+      and 'hl-name' not in document.getElementById('summary-container').innerHTML)
+run(ns['trigger_plot'](None))
 
 # empty selection must explain itself, not go blank
 document.set_checks('var-check', [])

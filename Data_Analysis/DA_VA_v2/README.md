@@ -177,6 +177,27 @@ python3 -m http.server 8000        # from the repo root
 # → http://localhost:8000/Data_Analysis/Visualizer_VA_v2/index.html
 ```
 
+#### Plot Legend: highlight + seed coverage
+
+The **Plot Legend — Selected Candidates** table under the chart carries two
+columns that exist only in the page, not in any CSV (inherited from the DAv3
+page via `build_from_dav3.py`, so both viewers behave identically):
+
+- **HL** — a checkbox that paints that candidate's *name* red everywhere it is
+  printed: the plot's x tick label, the legend row, every row head in the Result
+  Matrices **and** in the U3 run-coverage table, and the Path Audit Map. Only the
+  name changes — no number, no cell background — so it can never be misread as a
+  data annotation the way the `(goal, constraint)` flags can. `[CLEAR
+  HIGHLIGHTS]` in the legend header resets them all, including candidates you
+  have since unticked in the sidebar. The exported `.txt` / `.tex` have no
+  colour, so they mark the same candidates in words.
+- **Seeds** — the seeds this candidate actually has (from `va2_units_long.csv`),
+  with a red **⚠ NOT FULL** naming the ones it is missing, measured against the
+  batch's full seed set or against the ticked seeds in Custom Seed Compare. VA
+  batches are routinely unbalanced — see the run-coverage table above the
+  matrices for the rollout counts — and a bar averaged over one seed looks
+  exactly like a bar averaged over five on the chart.
+
 The old `Visualizer_Visual_Aligning/index.html` (VA v1) is superseded and is not
 fed by this pipeline any more; `Visualizer/index.html` (DAv3) still opens a VA
 batch through the `candidates_multidimensional_*.csv` pair.

@@ -4,7 +4,8 @@
 
 This page IS `Data_Analysis/Visualizer/index.html` plus the edits below, so every
 DAv3 fix (U7 no-data messages, U8 value labels, U9 plot legend, U10 result
-matrices, U10.1 LaTeX, U11 folder ZIP, seed modes, zoom) is inherited rather than
+matrices, U10.1 LaTeX, U11 folder ZIP, U13 candidate highlight + legend seed
+coverage, Last Run stamps, seed modes, zoom) is inherited rather than
 reimplemented. Re-run this after DAv3 gains something worth having; each edit
 asserts its anchor, so a moved anchor fails loudly instead of silently dropping
 half the page. Validate the result with test_page_offline.py.
@@ -898,7 +899,7 @@ def _coverage_html(ctx):
             n_seeds = 0
         totals.append(n_all)
         warn = ' class="warn"' if n_all == 0 else ''
-        rows.append(f'<tr><td class="rowhead">CAND_{c}</td>'
+        rows.append(f'<tr><td class="rowhead">{_cand_name_html(c)}</td>'
                     f'<td{warn}>{n_all}</td><td>{n_env}</td>'
                     f'<td>{b_env["variant"].nunique()}</td>'
                     f'<td>{b_all["halfspace_variant"].nunique()}</td>'

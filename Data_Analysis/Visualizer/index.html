@@ -63,6 +63,20 @@
                      background: #eaf3ff; color: #0056b3; cursor: pointer; white-space: nowrap; vertical-align: middle; }
         .dl-folder:hover { background: #007bff; color: #fff; }
         .dl-folder:disabled { opacity: 0.45; cursor: wait; }
+        /* U13: candidate HIGHLIGHT. A checkbox in the Plot Legend paints ONE candidate's
+           NAME red everywhere it is printed (plot x tick, legend row, every result matrix,
+           the audit map) so a single row stays findable across ~18 variant columns. Only the
+           name changes — never a number, never a cell background — so a highlight can never
+           be misread as a data annotation the way the (goal, constraint) flags are. */
+        .hl-name { color: #d32f2f; font-weight: bold; }
+        /* the global `select, input { width:100% }` rule would blow this up to a full-width
+           box, exactly like .checkbox-item has to override it in the sidebar. */
+        input.hl-box[type="checkbox"] { width: auto; padding: 0; margin: 0; border: none;
+                                        cursor: pointer; transform: scale(1.25); vertical-align: middle; }
+        .hl-clear { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; color: #d32f2f; }
+        /* U13: seed coverage in the Plot Legend. */
+        .seed-ok { color: #2e7d32; }
+        .seed-miss { color: #c62828; font-weight: bold; }
     </style>
 
     <py-config>
@@ -147,6 +161,21 @@ df_raw = None
 current_fig = None
 # U10: bumped on every SYNC_SOURCE so the result-matrix cache invalidates on new data.
 data_version = 0
+
+# U13: candidates ticked in the Plot Legend's HL column. Held in PYTHON, not read back out
+# of the DOM, because all three tables are rebuilt wholesale on every redraw — a checkbox's
+# checked state would not survive a single replot. Deliberately NOT cleared by SYNC_SOURCE:
+# re-loading the same batch after a re-run should keep whatever you were tracking (use
+# [CLEAR HIGHLIGHTS] in the legend header, which also reaches candidates you have since
+# unticked in the sidebar and so can no longer see a checkbox for).
+highlighted_cands = set()
+HL_COLOR = "#d32f2f"
+# The last figure's axes + x categories, so toggling a highlight can recolour the tick
+# labels of the EXISTING figure instead of recomputing the whole plot.
+current_ax = None
+last_plot_axis = None
+last_plot_cats = []
+last_selection_args = None
 
 async def init_manifest():
     import re
@@ -428,6 +457,10 @@ async def trigger_plot(event=None):
 
     ax.grid(True, alpha=0.2, axis='y')
     ax.set_title(f"Dynamic Analysis: {metric.upper()}", fontsize=12, fontweight='bold'); ax.set_ylabel(metric)
+    # U13: the x tick label of every highlighted candidate goes red + bold, so the bar group
+    # belonging to the ticked legend row is findable at a glance in a 40-candidate plot.
+    _remember_plot(ax, x_axis, list(pivot_mean.index))
+    _apply_tick_highlight()
     plt.tight_layout()
     current_fig = fig
     area = document.getElementById("plot-area")
@@ -680,7 +713,7 @@ def download_plot(event):
     for c in checked_cands:
         path = path_map.get(c, "Path not found")
         stamp = stamp_map.get(str(c), "")
-        metadata += f" - CAND_{c} (Source: {path})\n"
+        metadata += f" - CAND_{c}{' [HIGHLIGHTED]' if _hl(c) else ''} (Source: {path})\n"
         if stamp:
             metadata += f"     last run: {stamp}\n"
 
@@ -761,14 +794,147 @@ def _stamp_cell(stamp_map, cand):
     return (f'<td style="width:150px;white-space:nowrap;font-size:11px">'
             f'{stamp_map.get(str(cand), "&mdash;")}</td>')
 
+# ---------------------------------------------------------------------------------------
+# U13: candidate highlight. One checkbox in the Plot Legend, one red name everywhere.
+# ---------------------------------------------------------------------------------------
+def _hl(cand):
+    return str(cand) in highlighted_cands
+
+
+def _cand_name_html(cand):
+    # THE single place "CAND_x" becomes markup, so one ticked box marks the same candidate
+    # in the legend, in all result matrices and in the audit map without three copies of
+    # the styling rule drifting apart.
+    return f'<span class="hl-name">CAND_{cand}</span>' if _hl(cand) else f'CAND_{cand}'
+
+
+def _remember_plot(ax, x_axis, categories):
+    global current_ax, last_plot_axis, last_plot_cats
+    current_ax, last_plot_axis, last_plot_cats = ax, x_axis, list(categories)
+
+
+def _apply_tick_highlight():
+    # Recolour the x tick labels in place. Candidate mode only: in environment mode the
+    # x-axis is the environment, so there is no candidate name on it to mark.
+    if current_ax is None or last_plot_axis != 'Candidate':
+        return
+    labels = current_ax.get_xticklabels()
+    # Pairing tick i <-> category i is the whole basis of this; if matplotlib ever returns a
+    # different number of labels, mark NOTHING rather than paint the wrong bar group red.
+    if len(labels) != len(last_plot_cats):
+        return
+    for lbl, cat in zip(labels, last_plot_cats):
+        on = _hl(cat)
+        lbl.set_color(HL_COLOR if on else "black")
+        lbl.set_fontweight("bold" if on else "normal")
+
+
+async def _redraw_highlight():
+    # A highlight is a colour, not new data: the existing figure is recoloured and
+    # re-displayed (no replot, no groupby on the plot path), then the three tables that
+    # print candidate names are re-rendered.
+    if current_fig is not None and current_ax is not None:
+        _apply_tick_highlight()
+        area = document.getElementById("plot-area")
+        area.innerHTML = ""
+        display(current_fig, target="plot-area")
+        await asyncio.sleep(0.1)
+        window.applyZoom()
+    if (last_selection_args is not None
+            and document.getElementById("selection-map-section").style.display != "none"):
+        render_selection_map(*last_selection_args)
+    render_summary_tables(force=True)
+    render_path_map()
+
+
+def set_highlight(cand, on):
+    c = str(cand)
+    if on:
+        highlighted_cands.add(c)
+    else:
+        highlighted_cands.discard(c)
+    asyncio.ensure_future(_redraw_highlight())
+
+
+def clear_highlights(event=None):
+    if not highlighted_cands:
+        return
+    highlighted_cands.clear()
+    asyncio.ensure_future(_redraw_highlight())
+
+
+# ---------------------------------------------------------------------------------------
+# U13: seed coverage for the Plot Legend. A bar averaged over five seeds and a bar averaged
+# over one look IDENTICAL on the chart, and until now the legend said nothing about it —
+# the only hint was the Warnings column of the full Path Audit Map further down the page.
+# ---------------------------------------------------------------------------------------
+def _seed_map():
+    """Candidate -> (seeds present, seeds missing).
+
+    df_raw is the only frame with a seed axis. In Custom Seed Compare the reference set is
+    what the user TICKED (so "missing" means: a seed you asked to compare that this
+    candidate cannot supply — the same seeds trigger_plot already warns about); otherwise it
+    is every seed present anywhere in the batch, which is what makes "NOT FULL" meaningful.
+    Falls back to the discovery pipeline's own Missing_Seeds column when the per-seed CSV is
+    absent, and returns {} when neither exists — then the column is simply not rendered.
+    Candidate-global (not per environment/metric), exactly like Missing_Seeds itself.
+    """
+    if df_raw is not None and 'seed' in df_raw.columns:
+        seed_mode = document.getElementById("seed-mode-select").value
+        if seed_mode == "custom":
+            ref = sorted(int(s) for s in get_checked("seed-check"))
+        else:
+            ref = sorted(int(s) for s in
+                         pd.to_numeric(df_raw['seed'], errors='coerce').dropna().unique())
+        out = {}
+        for cand, grp in df_raw.groupby('Candidate')['seed']:
+            have = sorted(int(s) for s in pd.to_numeric(grp, errors='coerce').dropna().unique())
+            if seed_mode == "custom":
+                have = [s for s in have if s in ref]
+            out[str(cand)] = (have, [s for s in ref if s not in have])
+        return out
+    if df_agg is not None and 'Missing_Seeds' in df_agg.columns:
+        out = {}
+        pairs = df_agg[['Candidate', 'Missing_Seeds']].drop_duplicates()
+        for cand, miss in zip(pairs['Candidate'], pairs['Missing_Seeds']):
+            text = str(miss or "").strip()
+            gone = [] if text in ("", "nan", "NaN", "None") else [int(t) for t in re.findall(r'\d+', text)]
+            # present-seed list is None, not []: this fallback knows only what is MISSING,
+            # and printing "none" here would claim the candidate has no data at all.
+            out[str(cand)] = (None, gone)
+        return out
+    return {}
+
+
+def _seed_cell(seed_map, cand):
+    entry = seed_map.get(str(cand))
+    if entry is None:
+        return '<td style="width:160px;font-size:11px">&mdash;</td>'
+    have, missing = entry
+    if have is None:
+        body = '<span style="color:#888">n/a &mdash; no per-seed CSV</span>'
+    elif have:
+        body = '<span class="seed-ok">' + ", ".join(str(s) for s in have) + '</span>'
+    else:
+        body = '<span style="color:#888">none</span>'
+    if missing:
+        body += ('<br><span class="seed-miss">&#9888; NOT FULL &mdash; missing '
+                 + ", ".join(str(s) for s in missing) + '</span>')
+    return f'<td style="width:160px;font-size:11px">{body}</td>'
+
+
 def render_selection_map(x_categories, x_axis, checked_cands):
     # Compact "plot legend" shown directly under the chart: only the candidates actually
     # in THIS plot, numbered in plot x-axis order, each mapped to its source path. The
     # full Path Audit Map below still lists every candidate in the batch.
+    global last_selection_args
     if df_agg is None: return
+    # remembered so a highlight toggle can re-render this table without a replot
+    last_selection_args = (list(x_categories), x_axis, list(checked_cands))
     p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
     path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
     stamp_map = _stamp_map()
+    seed_map = _seed_map()
 
     if x_axis == 'Candidate':
         # candidate mode: the x-axis categories ARE the candidates, in plotted order.
@@ -787,18 +953,31 @@ def render_selection_map(x_categories, x_axis, checked_cands):
         path = path_map.get(c, "— path not found —")
         segs = str(path).split('/')
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{j%6}">{s}</span>' for j, s in enumerate(segs) if s])
-        rows += (f'<tr><td style="text-align:center;width:80px"><strong>{i}</strong></td>'
-                 f'<td style="width:100px"><strong>CAND_{c}</strong></td>'
+        rows += (f'<tr><td style="text-align:center;width:44px">'
+                 f'<input type="checkbox" class="hl-check hl-box" value="{_esc_attr(c)}"'
+                 f'{" checked" if _hl(c) else ""} onchange="toggle_highlight(this)"'
+                 f' title="Highlight CAND_{c} in red on the plot and in every result matrix"></td>'
+                 f'<td style="text-align:center;width:80px"><strong>{i}</strong></td>'
+                 f'<td style="width:100px"><strong>{_cand_name_html(c)}</strong></td>'
+                 + (_seed_cell(seed_map, c) if seed_map else '')
                  + (_stamp_cell(stamp_map, c) if stamp_map else '') +
                  f'<td><code>{c_path}</code>{_folder_btn(path, c)}</td></tr>')
 
     html = (f'<div style="font-size:10px;color:#666;margin-bottom:6px;">{len(ordered)} selected — {note}'
-            f' &middot; <b>&#8681; ZIP</b> downloads that run folder from the serving host'
+            f' &middot; tick <b>HL</b> to paint that candidate red on the plot x-axis and in every result matrix'
+            + (f' <span class="hl-clear" onclick="clear_highlights()">[CLEAR '
+               f'{len(highlighted_cands)} HIGHLIGHT(S)]</span>' if highlighted_cands else '')
+            + f'<br><b>&#8681; ZIP</b> downloads that run folder from the serving host'
+            + (' &middot; <b>Seeds</b> = the seeds this candidate actually has; '
+               '<b>&#9888; NOT FULL</b> names the ones it is missing, so a bar averaged over '
+               'one seed is not mistaken for a bar averaged over five' if seed_map else '')
             + (' &middot; <b>Last Run</b> = newest config snapshot in the run folder' if stamp_map else '')
             + f'</div>'
             f'<table><thead><tr>'
+            f'<th style="width:44px" title="Highlight this candidate in red everywhere it is named">HL</th>'
             f'<th style="width:80px">{pos_header}</th>'
             f'<th style="width:100px">ID</th>'
+            + ('<th style="width:160px">Seeds</th>' if seed_map else '')
             + ('<th style="width:150px">Last Run</th>' if stamp_map else '') +
             f'<th>Source Path</th></tr></thead><tbody>{rows}</tbody></table>')
     document.getElementById("selection-map-container").innerHTML = html
@@ -900,7 +1079,7 @@ def _render_matrix(rec, metric, fmt, annotate, cands, variants):
     head = '<thead><tr><th class="corner">Candidate</th>' + "".join(f'<th>{v}</th>' for v in variants) + '</tr></thead>'
     rows = []
     for c in cands:
-        cells = [f'<td class="rowhead">CAND_{c}</td>']
+        cells = [f'<td class="rowhead">{_cand_name_html(c)}</td>']
         for v in variants:
             st = _cell_stats(rec, metric, c, v)
             if st is None:
@@ -1058,7 +1237,9 @@ def build_latex(ctx, batch_label, stamp):
     out += [r"\section*{Candidate source paths}", r"{\footnotesize", r"\begin{verbatim}"]
     stamp_map = _stamp_map()
     for c in cands:
-        out.append(f"CAND_{c}  {path_map.get(c, 'path not found')}")
+        # the page marks these in red; a .tex has no colour, so say it in words
+        out.append(f"CAND_{c}  {path_map.get(c, 'path not found')}"
+                   + ("   <-- highlighted in the viewer" if _hl(c) else ""))
         if stamp_map.get(str(c)):
             out.append(f"          last run {stamp_map[str(c)]}")
     out += [r"\end{verbatim}", "}", "", r"\end{document}", ""]
@@ -1089,7 +1270,7 @@ def render_path_map():
         segs = str(row[p_col]).split('/')
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
 
-        html += f'<tr><td><strong>CAND_{row["Candidate"]}</strong></td>'
+        html += f'<tr><td><strong>{_cand_name_html(row["Candidate"])}</strong></td>'
         if has_missing:
             missing_val = row["Missing_Seeds"]
             if pd.isna(missing_val) or str(missing_val).strip() == '':
@@ -1104,6 +1285,8 @@ def render_path_map():
 
     document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
 
+document.set_highlight = create_proxy(set_highlight)
+document.clear_highlights = create_proxy(clear_highlights)
 document.trigger_plot = create_proxy(trigger_plot)
 document.download_folder = create_proxy(download_folder)
 asyncio.ensure_future(init_manifest())
@@ -1172,6 +1355,21 @@ asyncio.ensure_future(init_manifest())
         }
         window.document.download_folder(btn.dataset.path, btn.dataset.cand || "");
     });
+
+    // U13: the Plot Legend's HL checkboxes. Python owns the highlighted set (every table
+    // is re-rendered wholesale on each redraw, so DOM checked-state alone would not survive
+    // a single replot); JS only forwards the click and lets Python re-render.
+    function toggle_highlight(el) {
+        if (window.document.set_highlight) {
+            window.document.set_highlight(el.value, el.checked);
+        } else {
+            el.checked = !el.checked;
+            alert("PyScript engine still loading — try again in a moment.");
+        }
+    }
+    function clear_highlights() {
+        if (window.document.clear_highlights) window.document.clear_highlights();
+    }
 
     function bulkSelect(className, state) {
         const elements = document.getElementsByClassName(className);
