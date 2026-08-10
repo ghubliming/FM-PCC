@@ -129,6 +129,15 @@ where it would only restate the bar's own height. It is computed on the plot's
 **own** x-axis grouping, so it stays correct in `By Environment` mode where the
 selected candidates are averaged into each bar.
 
+### Variant colours
+
+Every variant gets its **own** colour, and the page verifies that on each draw.
+(It used to pass `colormap='tab10'`, which holds ten colours — with more than ten
+variants selected, several were sampled onto the same entry and two methods drew
+identically.) Colours are keyed to the variant's position in the batch's full
+variant list, so a variant keeps its colour as you tick others on and off, and
+two screenshots of the same batch stay comparable.
+
 ## Key Metrics
 
 The tool analyzes:

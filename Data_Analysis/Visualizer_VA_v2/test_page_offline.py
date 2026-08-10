@@ -312,6 +312,37 @@ if _stamp_map:
           bool(re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', _sample))
           and _sample in _path_html, _sample)
 
+# ── U15: no two variants may draw in the same colour ─────────────────────────
+print('\n[U15 variant colours]')
+_all_vars = sorted(df_agg['variant'].astype(str).unique())
+_pal = ns['_palette'](len(_all_vars))
+check('the real colormaps supply one distinct colour per variant',
+      len(_pal) == len(_all_vars)
+      and len({tuple(round(c[i], 3) for i in range(3)) for c in _pal}) == len(_all_vars),
+      f'{len(_all_vars)} variants in this batch')
+# the failure the old colormap='tab10' produced: draw every variant and demand that the
+# patches matplotlib actually rendered are pairwise distinct.
+document.set_checks('var-check', _all_vars)
+document.set_checks('cand-check', cands)
+document.getElementById('metric-select').value = 'n_success_and_constraints'
+run(ns['trigger_plot'](None))
+from matplotlib.container import BarContainer                        # noqa: E402
+_containers = [c for c in ns['current_ax'].containers if isinstance(c, BarContainer)]
+_face = [tuple(round(v, 3) for v in c.patches[0].get_facecolor()[:3])
+         for c in _containers if c.patches]
+check('every drawn bar series has its own colour',
+      len(set(_face)) == len(_face),
+      f'{len(_face)} series, {len(set(_face))} distinct')
+# and a variant must keep its colour when the selection changes, or two screenshots of
+# the same batch cannot be compared
+_before = dict(zip(_all_vars, ns['_variant_colors'](_all_vars)))
+document.set_checks('var-check', _all_vars[:3])
+run(ns['trigger_plot'](None))
+_after = dict(zip(_all_vars[:3], ns['_variant_colors'](_all_vars[:3])))
+check('a variant keeps its colour when others are unticked',
+      all(_before[v] == _after[v] for v in _all_vars[:3]))
+document.set_checks('var-check', variants[:5])
+
 # ── U14: the plot's (G, C) hint must agree with the matrices' own flags ──────
 print('\n[U14 plot failure flags]')
 _env = document.getElementById('env-select').value

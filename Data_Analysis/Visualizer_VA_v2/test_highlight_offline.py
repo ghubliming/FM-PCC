@@ -29,10 +29,33 @@ def check(name, ok, detail=''):
         failures.append(name)
 
 
-# ── stub the science stack: none of the functions under test touch it ────────
+# ── stub the science stack ───────────────────────────────────────────────────
+# Only _palette actually reaches into it, and it reaches for COLORMAPS — which is exactly
+# what wants testing, so they are stubbed with known contents (including a deliberate
+# overlap between two maps) rather than left absent.
 for name in ('pandas', 'matplotlib', 'matplotlib.pyplot'):
     sys.modules.setdefault(name, types.ModuleType(name))
 sys.modules['matplotlib'].pyplot = sys.modules['matplotlib.pyplot']
+
+FAKE_CMAPS = {
+    'tab10': [(i / 10.0, 0.0, 0.0) for i in range(10)],
+    # tab20 really does contain every tab10 colour: the generator must not count them twice
+    'tab20': [(i / 10.0, 0.0, 0.0) for i in range(10)]
+             + [(0.0, i / 10.0, 0.0) for i in range(10)],
+    'tab20b': [(0.0, 0.0, i / 10.0) for i in range(10)],
+}
+FAKE_UNIQUE = 30      # 10 + 10 new + 10 new
+
+
+def _fake_get_cmap(name):
+    if name in FAKE_CMAPS:
+        return types.SimpleNamespace(colors=FAKE_CMAPS[name])
+    if name in ('turbo', 'hsv'):                      # continuous top-up
+        return lambda x: (x, 1.0 - x, (x * 7.0) % 1.0, 1.0)
+    raise ValueError(name)                            # the maps this stub does not define
+
+
+sys.modules['matplotlib.pyplot'].get_cmap = _fake_get_cmap
 
 
 class _Doc:
@@ -145,6 +168,29 @@ def run_page(tag, ns):
           set(ns['FLAG_INPUTS']) <= ns['FLAG_SKIP'],
           f'skip={sorted(ns["FLAG_SKIP"])}')
 
+    # ── U15: no two variants may share a colour ──────────────────────────────
+    palette = ns['_palette']
+    check('an empty request gives an empty palette', palette(0) == [])
+    bad = []
+    for want in (1, 2, 9, 10, 11, 20, 25, 30, 31, 48, 96):
+        got = palette(want)
+        keys = {tuple(round(c[i], 3) for i in range(3)) for c in got}
+        if len(got) != want or len(keys) != want:
+            bad.append(f'n={want}: {len(got)} colours, {len(keys)} distinct')
+    check('every palette size is exactly n distinct colours', not bad, '; '.join(bad))
+    # the overlap between the fake tab10 and tab20 must be collapsed, not counted twice —
+    # this is the real tab10 ⊂ tab20 relationship, and the reason a naive concat is wrong
+    check('duplicate colours across maps are collapsed',
+          len({tuple(round(c[i], 3) for i in range(3)) for c in palette(FAKE_UNIQUE)})
+          == FAKE_UNIQUE, f'{FAKE_UNIQUE} unique across the qualitative maps')
+    # past the qualitative maps the continuous top-up takes over and must still not repeat
+    check('the continuous top-up stays distinct',
+          len({tuple(round(c[i], 3) for i in range(3))
+               for c in palette(FAKE_UNIQUE + 40)}) == FAKE_UNIQUE + 40)
+    check('a palette is a prefix of every larger one (stable ordering)',
+          palette(5) == palette(40)[:5])
+    check('colours are 4-tuple RGBA', all(len(c) == 4 and c[3] == 1.0 for c in palette(12)))
+
     hl.clear()
     check('clearing puts every name back', ns['_cand_name_html']('65') == 'CAND_65')
 
@@ -180,7 +226,8 @@ if len(loaded) == 2:
     # relaxed success pair to the skip set, which is the one intended difference.
     for fn in ('_hl', '_cand_name_html', '_remember_plot', '_apply_tick_highlight',
                '_seed_map', '_seed_cell', 'set_highlight', 'clear_highlights',
-               'render_selection_map', '_flag_label', '_flag_pivot'):
+               'render_selection_map', '_flag_label', '_flag_pivot',
+               '_cmap', '_palette', '_variant_colors'):
         a = def_source(loaded['DAv3'][1], fn)
         b = def_source(loaded['DA_VA_v2'][1], fn)
         check(f'{fn} identical on both pages', a == b,

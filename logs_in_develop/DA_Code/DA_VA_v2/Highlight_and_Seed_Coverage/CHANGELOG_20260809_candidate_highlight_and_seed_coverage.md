@@ -1,9 +1,9 @@
-# U13/U14 — Candidate highlight, seed coverage, and (G, C) failure hints on the plot
+# U13/U14/U15 — Candidate highlight, seed coverage, (G, C) failure hints, and one colour per variant
 
 **Date:** 2026-08-09
 **Scope:** both HTML viewers — `Data_Analysis/Visualizer/index.html` (DAv3) and
 `Data_Analysis/Visualizer_VA_v2/index.html` (regenerated from it)
-**Status:** written + tested here (stdlib harness, 57/57); **the full page test
+**Status:** written + tested here (stdlib harness, 72/72); **the full page test
 still to be run on the cluster** (needs pandas + matplotlib)
 **Follows:** `../Timestamp_in_CSV_HTML/CHANGELOG_20260809_timestamp_in_csv_html.md`
 
@@ -11,7 +11,7 @@ still to be run on the cluster** (needs pandas + matplotlib)
 
 ## Why
 
-Three blind spots, all in what the page shows next to the bars.
+Four ways the chart was less trustworthy than it looked.
 
 **1. You cannot follow one candidate across the page.** The Result Matrices are
 ~18 variant columns wide and the plot puts 40 bar groups on one axis. Having
@@ -32,6 +32,13 @@ not; `0.004 s` is the fastest planner on the chart right up until you notice it
 is the one violating a constraint. The Result Matrices have said this since U10
 with a trailing `(goal, constraint)` flag — the plot, which is what actually
 gets screenshotted into a slide, said nothing.
+
+**4. Two variants could draw in the same colour.** `colormap='tab10'` — tab10 is
+a `ListedColormap` holding exactly **ten** colours, and pandas samples a colormap
+at `linspace(0, 1, n_columns)`. Select 18 variants and several samples round to
+the *same* entry: two different methods drew identically and the legend then
+claimed they were one. Nothing warned. The chart quietly lied about which bar
+belonged to which method — the single worst failure mode a comparison plot has.
 
 ## What was added
 
@@ -130,6 +137,33 @@ for integers and slightly *generous* for decimals (a `.` is narrower than a
 digit): it errs towards a wider gap, never an overlap. `ax.margins(y=…)` goes
 0.15 → 0.24 when anything is flagged, so the stacked hint stays on-canvas.
 
+### 4. One colour per variant, guaranteed (U15)
+
+`colormap='tab10'` is gone. `_palette(n)` returns **n pairwise-distinct** RGBA
+colours, drawn from the qualitative maps in decreasing distinguishability
+(`tab10, tab20, tab20b, tab20c, Set1, Set2, Dark2, Accent` — ~93 unique colours
+between them) with a de-duplicating guard, because those maps overlap: every
+tab10 colour is also in tab20, and a naive concatenation would hand the same
+colour out twice. Past the qualitative maps a continuous map (`turbo`, `hsv`
+fallback) tops up — still distinct, but no longer *chosen* to be far apart,
+which is honest about the fact that colour alone has stopped being a usable key
+at 60+ variants.
+
+Two further properties, both of which the old code got wrong:
+
+* **Colours are keyed to the variant's position in the batch's full sorted
+  variant list**, not in the current selection. Previously ticking one more
+  variant re-coloured every other bar on the chart, so two screenshots of the
+  same batch could not be compared. A variant now keeps its colour throughout.
+* **The guarantee is checked, not assumed.** Every draw verifies the colours
+  handed to pandas are pairwise distinct and falls back to a fresh positional
+  palette (with a console note) if they are not. A safeguard that is never
+  evaluated is just a comment.
+
+The DA_VA_v2 COMPARE view had the same defect in a different spelling —
+`colours[i % len(colours)]` over tab20's twenty entries, so the 21st series
+silently reused the 1st series' colour. It now uses the same `_palette`.
+
 ## How it is wired
 
 The highlighted set lives in **Python** (`highlighted_cands`), not in the DOM.
@@ -160,10 +194,13 @@ Data_Analysis/Visualizer/index.html                  U13 CSS, highlight state + 
                                                      columns, matrices + audit map use
                                                      _cand_name_html, export markers, JS wiring;
                                                      U14 _flag_label/_flag_pivot + the stacked
-                                                     (G, C) annotation and the axes note
+                                                     (G, C) annotation and the axes note;
+                                                     U15 _cmap/_palette/_variant_colors and the
+                                                     per-draw collision safeguard
 Data_Analysis/Visualizer_VA_v2/build_from_dav3.py    U3 coverage table row head -> _cand_name_html,
-                                                     FLAG_SKIP extended with the relaxed pair
-Data_Analysis/Visualizer_VA_v2/index.html            REGENERATED (34 edits, 2259 lines)
+                                                     FLAG_SKIP extended with the relaxed pair,
+                                                     COMPARE view uses _palette (was i % 20)
+Data_Analysis/Visualizer_VA_v2/index.html            REGENERATED (34 edits, 2350 lines)
 Data_Analysis/Visualizer_VA_v2/test_highlight_offline.py   NEW — stdlib regression test
 Data_Analysis/Visualizer_VA_v2/test_page_offline.py  U13 checks + a rowhead regex made
                                                      highlight-proof
@@ -178,7 +215,7 @@ No pipeline, CSV or config change — this release is viewer-only.
 **Ran here (container, stdlib only — pandas/matplotlib stubbed out):**
 
 ```bash
-python3 Data_Analysis/Visualizer_VA_v2/test_highlight_offline.py    # 57/57 PASS
+python3 Data_Analysis/Visualizer_VA_v2/test_highlight_offline.py    # 72/72 PASS
 ```
 
 Covers, on **both** pages: the name renderer (plain vs `.hl-name`, int and str
@@ -187,6 +224,13 @@ explicitly reset to black, environment mode marks nothing, a tick/category count
 mismatch marks nothing), and the Seeds cell (complete, short-with-caution,
 `n/a` fallback, unknown candidate → dash), and the U14 flag label (`''`, `(G)`,
 `(C)`, `(G, C)`) plus `FLAG_INPUTS ⊆ FLAG_SKIP`.
+
+For U15 the colormaps are **stubbed with known contents**, including a fake
+`tab20` that fully contains the fake `tab10` — the real relationship, and the
+reason a naive concatenation is wrong. `_palette(n)` is then required to return
+exactly *n* distinct colours for n = 1…96, to collapse the cross-map duplicates,
+to stay distinct once the continuous top-up takes over, and to be prefix-stable
+(`_palette(5) == _palette(40)[:5]`).
 
 It also asserts the two pages have **byte-identical** implementations of the
 eleven highlight/seed/flag functions and carry the same markup hooks. `Visualizer_VA_v2` is
@@ -216,10 +260,17 @@ the flag is empty on `n_success` / `n_success_and_constraints`, that environment
 mode re-keys the flags by environment, and that the axes note never explains a
 mark it did not draw.
 
+The `[U15 …]` section runs against the **real** colormaps: every variant in the
+batch gets a distinct colour, the bar patches matplotlib actually rendered are
+pairwise distinct (the end-to-end version of the check — the old code would fail
+here), and a variant keeps its colour when other variants are unticked.
+
 Then, by eye in a browser: tick `HL` on a candidate, confirm the bar group's x
 label and every matrix row head go red together, and that `EXPORT ZIP`'s `.txt`
 carries `[HIGHLIGHTED]`. On an `n_steps` plot, confirm the red `(G, C)` sits
 clear of the value above each flagged bar and matches that row's flag in Table 3.
+Then tick **[ALL]** variants and check the legend swatches really are all
+different — that is the case the old `tab10` sampling failed.
 
 ## Known limitations
 
@@ -228,6 +279,12 @@ clear of the value above each flagged bar and matches that row's flag in Table 3
 * Environment mode (`2. Analysis Mode → By Environment`) highlights the tables
   but not the plot: the x-axis is the environment there, candidates are averaged
   into each bar group, so there is no candidate label to paint.
+* Past ~93 variants the palette falls through to a continuous map: the colours
+  stay distinct but stop being far apart. There is no warning for this — at that
+  width the chart is unreadable for reasons colour cannot fix.
+* Variant colours are stable within a batch, not across batches: the key is the
+  variant's index in that batch's sorted variant list, so adding a variant to a
+  re-run shifts the ones after it.
 * The `(G, C)` gap above the value is estimated, not measured (see above). It is
   generous by design, so on a plot mixing `1e+03` with `0.5` the hints do not sit
   at a perfectly even height — they are markers, not a second data series.

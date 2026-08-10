@@ -4260,3 +4260,35 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Structural Incompatibilities**: The dual-timestep masking mechanism requires a large token grid (e.g., 256 tokens) to exploit information asymmetry, which is incompatible with FM-PCC's 8-token trajectory horizon. The mechanism acts as data augmentation, not valid for our low-token setup.
 3. **Misaligned Objectives**: Self-Flow evaluates on proxy generation metrics (FID) and does not improve NFE/latency, whereas FM-PCC prioritizes low-NFE constraint satisfaction and closed-loop control latency.
 4. **Key Takeaway**: The idea of heterogeneous noise levels across horizon steps (far future vs near future) is valid for MPC but should be sourced from models designed for sequential decision making (like Diffusion Forcing), not from Self-Flow.
+
+***
+
+## Gen14 / Gen3v6 U9: Automated NFE Budget (K) Grid Sweep & `submit_after.sh` Tool (August 9, 2026)
+
+**Keywords**: Gen14, Gen3v6, NFE sweep, SLURM dependency, submit_after, auto-eval, MeanFlow.
+
+1. **Automated NFE Grid Sweeps**: Integrated an automated `--flow-steps K` CLI flag into `eval_flow_matching_v3_meanflow.py` and SLURM evaluation wrappers (`eval_meanflow.sh`, `eval_meanflow_hardflow.sh`), enabling isolated batch generation across NFE budgets `K={1, 2, 5, 10}` in a single job submission.
+2. **SLURM Dependency Orchestration**: Created `Slurm_Codes/submit_after.sh` to automate chaining evaluation launches to active training jobs (`sbatch --dependency=afterok:<job_id>`), eliminating manual monitoring of checkpoint completion.
+3. **Pipeline Parity**: Ensured backward compatibility via `HFFM_FLOW_STEPS` environment variable fallbacks for legacy single-K reproduction while providing clean per-K directory outputs for Data Analysis pipelines.
+
+***
+
+## Infrastructure: Visualizer Candidate Highlighting & Seed Coverage (DAv3 + DA_VA_v2 U13) (August 9, 2026)
+
+**Keywords**: Visualizer, Visualizer_VA_v2, candidate highlight, seed coverage, Plot Legend, DAv3.
+
+1. **Cross-Page Candidate Highlighting (`HL`)**: Added a highlight checkbox column to the Plot Legend across both `Visualizer` and `Visualizer_VA_v2` HTML viewers. Selecting a candidate highlights its ID in red and bold across the Plot Legend, chart x-axis labels, all Result Matrices row heads, and the Path Audit Map, preserving tracking context during deep batch inspections.
+2. **Seed Coverage Transparency (`Seeds`)**: Added an explicit `Seeds` column in the Plot Legend detailing present seeds and surfacing `⚠ NOT FULL — missing ...` warnings directly next to candidate bars when seed coverage is incomplete relative to the batch.
+3. **Export & Test Parity**: Plumbed highlight markers into text and LaTeX exports (`[HIGHLIGHTED]`). Built `test_highlight_offline.py` (45/45 pass) to enforce strict function and markup parity between DAv3 and Visualizer_VA_v2 viewers.
+
+***
+
+## Gen3v6 MeanFlow: UNet@32 K2 vs FMv3/DPCC K20 Bootstrap Verification (August 9, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, UNet32, bootstrap CI, DPCC, FMv3, Pareto trade-off, claim adjudication.
+
+1. **Rigorous Bootstrap Adjudication**: Conducted a 20,000-resample percentile bootstrap study (`GUIDE_bootstrap_UNet32K2_vs_FMv3K20_DPCCK20.md`) on seed 6 within-batch data to evaluate whether MeanFlow `bbunet`@32 K2 beats FMv3 K20 and DPCC K20 baselines.
+2. **Pareto Dominance on `dpcc-t-tightened`**: Confirmed UNet@32 K2 Pareto-dominates both baselines on `dpcc-t-tightened` with equal 1.00 S&C, −4.8 and −3.3 step reductions (95% CIs excluding 0), and a 19–23× wall-clock speedup (0.027 s/step).
+3. **Nuanced Multi-Arm Verdict**: The claim is non-dominated on `dpcc-r-tightened` (20× time win, step CI straddling 0) and refuted on `dpcc-c-tightened` (+32 steps due to minimal-correction rule dawdling). Pooled across tightened arms, S&C is tied (0.944 vs 0.944), steps are slightly higher (+6 to +9), but wall-clock is 18.7× lower.
+4. **Adjudicated Headline & Protocol**: Reframed the finding as a 19× compute-advantage Pareto trade-off. Pre-registered multi-seed training (seeds 7–10) and multi-trial evaluation requirements to finalize the cross-model comparison.
+

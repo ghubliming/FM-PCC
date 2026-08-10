@@ -212,6 +212,15 @@ pair (`success_relaxed`, `n_success_relaxed_and_constraints`, via `FLAG_SKIP` in
 Computed on the plot's own x-axis grouping, so it stays correct in `By
 Environment` mode where the selected candidates are averaged into each bar.
 
+#### Variant colours
+
+Every variant gets its own colour, verified on each draw — the page used to pass
+`colormap='tab10'` (ten colours), so with more than ten variants selected two
+methods drew identically. Colours are keyed to the variant's position in the
+batch's full variant list, so a variant keeps its colour as you tick others on
+and off. The COMPARE view shares the same generator (it previously wrapped with
+`i % 20`, giving the 21st series the 1st series' colour).
+
 The old `Visualizer_Visual_Aligning/index.html` (VA v1) is superseded and is not
 fed by this pipeline any more; `Visualizer/index.html` (DAv3) still opens a VA
 batch through the `candidates_multidimensional_*.csv` pair.

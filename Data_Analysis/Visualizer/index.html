@@ -162,6 +162,89 @@ current_fig = None
 # U10: bumped on every SYNC_SOURCE so the result-matrix cache invalidates on new data.
 data_version = 0
 
+# ---------------------------------------------------------------------------------------
+# U15: one colour per variant, and never the same colour twice.
+#
+# The bug this replaces: `colormap='tab10'`. tab10 is a ListedColormap holding exactly TEN
+# colours, and pandas samples a colormap at linspace(0, 1, n_columns). Select 18 variants
+# and several of those samples round to the SAME entry — two different methods drew in the
+# identical colour, and the legend then claimed they were one. Nothing warned; the chart
+# just quietly lied about which bar belonged to which variant.
+#
+# Colours are keyed to the variant's position in the BATCH's full sorted variant list, not
+# in the current selection, so a variant keeps its colour as you tick others on and off.
+# (Previously every bar on the chart changed colour whenever one more variant was ticked,
+# which made two screenshots of the same batch impossible to compare.)
+#
+# Qualitative maps first, in decreasing distinguishability; a continuous map only tops up
+# past ~60 variants, where colour alone has stopped being a usable key anyway.
+# ---------------------------------------------------------------------------------------
+PALETTE_CMAPS = ('tab10', 'tab20', 'tab20b', 'tab20c', 'Set1', 'Set2', 'Dark2', 'Accent')
+variant_color_cache = (None, {})
+
+
+def _cmap(name):
+    # matplotlib moved colormap lookup around (cm.get_cmap removed in 3.9, colormaps added
+    # in 3.5); pyodide pins an older build than the cluster, so try both spellings.
+    try:
+        from matplotlib import colormaps
+        return colormaps[name]
+    except Exception:
+        try:
+            return plt.get_cmap(name)
+        except Exception:
+            return None
+
+
+def _palette(n_colors):
+    """-> n_colors RGBA tuples, guaranteed pairwise distinct."""
+    seen, out = set(), []
+
+    def _add(rgba):
+        key = tuple(round(float(x), 3) for x in tuple(rgba)[:3])
+        if key in seen:
+            return
+        seen.add(key)
+        out.append(tuple(float(x) for x in tuple(rgba)[:3]) + (1.0,))
+
+    for name in PALETTE_CMAPS:
+        cmap = _cmap(name)
+        for colour in getattr(cmap, 'colors', ()) or ():
+            _add(colour)
+            if len(out) >= n_colors:
+                return out[:n_colors]
+    if len(out) < n_colors:
+        # Past the qualitative maps. These stay distinct (the guard above enforces it) but
+        # they are no longer CHOSEN to be far apart — oversample so adjacent variants at
+        # least land on different hues.
+        cont = _cmap('turbo') or _cmap('hsv')
+        if cont is not None:
+            steps = max(n_colors * 4, 1)
+            for i in range(steps):
+                _add(cont(i / float(steps)))
+                if len(out) >= n_colors:
+                    break
+    return out[:n_colors]
+
+
+def _variant_colors(variants):
+    """Colours for these variants, stable for the whole batch."""
+    global variant_color_cache
+    if variant_color_cache[0] != data_version:
+        all_variants = (sorted(df_agg['variant'].astype(str).unique())
+                        if df_agg is not None and 'variant' in df_agg.columns else [])
+        variant_color_cache = (data_version,
+                               dict(zip(all_variants, _palette(max(len(all_variants), 1)))))
+    table = variant_color_cache[1]
+    # A variant the cache predates (a frame derived after it was built) must EXTEND the
+    # table, not wrap around into a colour already in use.
+    missing = [v for v in (str(x) for x in variants) if v not in table]
+    if missing:
+        topped = _palette(len(table) + len(missing))
+        for name, colour in zip(missing, topped[len(table):]):
+            table[name] = colour
+    return [table[str(v)] for v in variants]
+
 # U13: candidates ticked in the Plot Legend's HL column. Held in PYTHON, not read back out
 # of the DOM, because all three tables are rebuilt wholesale on every redraw — a checkbox's
 # checked state would not survive a single replot. Deliberately NOT cleared by SYNC_SOURCE:
@@ -405,7 +488,15 @@ async def trigger_plot(event=None):
     
     plt.close('all')
     fig, ax = plt.subplots(figsize=(calc_width, 6))
-    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', colormap='tab10', alpha=0.9, yerr=pivot_std, capsize=4)
+    # U15: explicit per-variant colours instead of `colormap='tab10'` — see _palette. The
+    # duplicate check is the safeguard proper: two variants sharing a colour is the exact
+    # failure this exists to prevent, so it is verified on every draw rather than assumed,
+    # and a collision falls back to a fresh positional palette instead of shipping the lie.
+    bar_colors = _variant_colors(pivot_mean.columns)
+    if len({tuple(round(c[i], 3) for i in range(3)) for c in bar_colors}) != len(bar_colors):
+        console.log("[ palette ] colour collision across variants - falling back to positional")
+        bar_colors = _palette(len(bar_colors))
+    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', color=bar_colors, alpha=0.9, yerr=pivot_std, capsize=4)
 
     # U8: print the exact value directly above each bar. Annotate manually instead of
     # ax.bar_label — bar_label auto-couples to the ErrorbarContainer that yerr adds, and

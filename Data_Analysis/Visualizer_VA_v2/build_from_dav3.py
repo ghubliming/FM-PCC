@@ -5,7 +5,8 @@
 This page IS `Data_Analysis/Visualizer/index.html` plus the edits below, so every
 DAv3 fix (U7 no-data messages, U8 value labels, U9 plot legend, U10 result
 matrices, U10.1 LaTeX, U11 folder ZIP, U13 candidate highlight + legend seed
-coverage, Last Run stamps, seed modes, zoom) is inherited rather than
+coverage, U14 (G, C) plot flags, U15 distinct variant colours, Last Run stamps,
+seed modes, zoom) is inherited rather than
 reimplemented. Re-run this after DAv3 gains something worth having; each edit
 asserts its anchor, so a moved anchor fails loudly instead of silently dropping
 half the page. Validate the result with test_page_offline.py.
@@ -668,10 +669,10 @@ def trigger_compare(event=None):
 
     chart = window.cmpChartType
     groups = sorted(subset[group_by].astype(str).unique())
-    try:
-        colours = matplotlib.colormaps['tab20'].colors
-    except Exception:
-        colours = plt.get_cmap('tab20').colors
+    # U15: was `colours[i % len(colours)]` over tab20's twenty entries — the 21st series
+    # silently reused the 1st series' colour. _palette hands out as many DISTINCT colours
+    # as there are groups, and is the same generator the aggregate bar chart uses.
+    colours = _palette(len(groups))
 
     plt.close('all')
     fig, ax = plt.subplots(figsize=(11, 6))
@@ -679,14 +680,14 @@ def trigger_compare(event=None):
         for i, name in enumerate(groups):
             block = subset[subset[group_by].astype(str) == name]
             ax.scatter(block[x_metric], block[y_metric], s=38, alpha=0.75, edgecolors='k',
-                       linewidths=0.3, label=name, color=colours[i % len(colours)])
+                       linewidths=0.3, label=name, color=colours[i])
         ax.set_xlabel(x_metric)
         ax.legend(fontsize=8, bbox_to_anchor=(1.02, 1), loc='upper left')
     elif chart == 'bar':
         means = subset.groupby(group_by)[y_metric].mean().reindex(groups)
         stds = subset.groupby(group_by)[y_metric].std().reindex(groups)
         ax.bar(range(len(groups)), means.values, yerr=stds.values, capsize=4, edgecolor='k',
-               color=[colours[i % len(colours)] for i in range(len(groups))])
+               color=colours)
         ax.set_xticks(list(range(len(groups))))
         ax.set_xticklabels(groups, rotation=35, ha='right', fontsize=8)
     else:
