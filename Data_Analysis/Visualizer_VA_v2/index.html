@@ -709,11 +709,23 @@ async def trigger_plot(event=None):
     # read from THERE and paired back onto the rects: one BarContainer per column, one rect
     # per index row, both in frame order. If that pairing ever stops holding (a matplotlib
     # or pandas change), fall back to the rect height and mark nothing rather than mislabel.
+    #
+    # U14: a bar's NUMBER cannot tell you whether it was bought by failing. "199 steps" is
+    # excellent if the goal was reached every time and meaningless if it was not, and
+    # "0.004 s" is the fastest planner on the chart when it is also the one violating a
+    # constraint. The Result Matrices already say this with a trailing (goal, constraint)
+    # flag; the plot said nothing, so the same rule is evaluated here and printed as a
+    # compact (G, C) above the value label. Same source, same tolerance, same meaning —
+    # if the two ever disagree, one of them is a bug.
     from matplotlib.container import BarContainer
     bars = [c for c in ax.containers if isinstance(c, BarContainer)]
     paired = (len(bars) == len(pivot_mean.columns)
               and all(len(b) == len(pivot_mean.index) for b in bars))
-    n_missing = n_bars = 0
+    flag_map = ({} if not paired else
+                _flag_pivot(x_axis, env, checked_vars, checked_cands, metric))
+    cats = [str(c) for c in pivot_mean.index]
+    cols = [str(c) for c in pivot_mean.columns]
+    n_missing = n_bars = n_flagged = 0
     for ci, container in enumerate(bars):
         for ri, rect in enumerate(container):
             n_bars += 1
@@ -730,14 +742,37 @@ async def trigger_plot(event=None):
                             ha="center", va="bottom", fontsize=6, rotation=90,
                             color="#b71c1c", fontweight="bold")
                 continue
-            ax.annotate(f"{h:.3g}", xy=(xc, h),
+            txt = f"{h:.3g}"
+            ax.annotate(txt, xy=(xc, h),
                         xytext=(0, 3), textcoords="offset points",
                         ha="center", va="bottom", fontsize=7, rotation=90)
-    ax.margins(y=0.15)
+            label = _flag_label(flag_map.get((cats[ri], cols[ci]), ""))
+            if label:
+                n_flagged += 1
+                # Stacked ABOVE the value, in the value's own reading direction (both are
+                # rotated 90 deg, so "above" is further out along y). The gap is estimated
+                # from the value's character count rather than measured: measuring needs a
+                # renderer, and the pyodide backend does not reliably hand one out before
+                # the figure is displayed. DejaVu digits advance ~0.64 em, so the estimate
+                # is exact for integers and slightly GENEROUS for decimals (a '.' is
+                # narrower than a digit) — it errs towards a wider gap, never an overlap.
+                ax.annotate(label, xy=(xc, h),
+                            xytext=(0, 3.0 + len(txt) * 4.45 + 3.0),
+                            textcoords="offset points",
+                            ha="center", va="bottom", fontsize=6, rotation=90,
+                            color="#b71c1c", fontweight="bold")
+    # the stacked hint needs more headroom than a bare value label
+    ax.margins(y=0.24 if n_flagged else 0.15)
+    notes = []
     if n_missing:
-        ax.set_xlabel(f"{n_missing} of {n_bars} bars have NO DATA (marked n/a) - "
-                      f"an absent bar is not a zero",
-                      fontsize=8, color="#b71c1c", fontweight="bold")
+        notes.append(f"{n_missing} of {n_bars} bars have NO DATA (marked n/a) - "
+                     f"an absent bar is not a zero")
+    if n_flagged:
+        notes.append(f"(G) = goal not always reached, (C) = a constraint was violated - "
+                     f"{n_flagged} of {n_bars} bars flagged; an unflagged number is a "
+                     f"fully successful run")
+    if notes:
+        ax.set_xlabel("\n".join(notes), fontsize=8, color="#b71c1c", fontweight="bold")
 
     ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
 
@@ -1384,6 +1419,75 @@ def _fail_flags(rec, cand, var):
         if nsc[0] < base - tol:
             flags.append("constraint")
     return flags
+
+
+# ---------------------------------------------------------------------------------------
+# U14: the same goal/constraint rule, evaluated on the PLOT's own axes.
+#
+# Not reused from _fail_flags/_summary_stats on purpose: those are keyed by (candidate,
+# variant) at one environment, which is the wrong grain in environment mode — there the
+# x-axis is the environment and the selected candidates are averaged into each bar, so a
+# per-candidate flag would not describe the bar that is actually drawn. This groups by
+# whatever the plot's x-axis is, so the flag always describes exactly one bar.
+#
+# The two metrics that DEFINE the flags are skipped: on an n_success plot a (G) on every
+# bar below 1.0 restates the bar's own height and is pure noise.
+# ---------------------------------------------------------------------------------------
+FLAG_TOL = 1e-9
+FLAG_INPUTS = ('n_success', 'n_success_and_constraints')
+# Metrics the flag is NOT drawn on, because there it would restate the bar's own height.
+# Extended on the DA_VA_v2 page, which has a second (relaxed) success definition.
+FLAG_SKIP = set(FLAG_INPUTS) | {'success_relaxed', 'n_success_relaxed_and_constraints'}
+
+
+def _flag_label(flags):
+    # 'GC' -> '(G, C)'. The initials of the matrices' own (goal, constraint) words — the
+    # plot has no room for the words, and the two must not drift into different names.
+    return "(" + ", ".join(flags) + ")" if flags else ""
+
+
+def _flag_pivot(x_axis, env, checked_vars, checked_cands, metric):
+    """{(x_category, variant): 'G' | 'C' | 'GC'} for the currently plotted selection.
+
+    Empty when the metric is one of the flag inputs, when the batch lacks them, or when
+    nothing failed. Never raises: a missing column or an all-NaN facet simply yields no
+    flag, because "we could not tell" must not render as "this one is clean".
+    """
+    if metric in FLAG_SKIP:
+        return {}
+    seed_mode, seeds = _seed_context()
+    if seed_mode == "custom" and df_raw is not None:
+        d = df_raw[df_raw['metric'].isin(FLAG_INPUTS)
+                   & df_raw['variant'].isin(checked_vars)
+                   & df_raw['Candidate'].isin(checked_cands)
+                   & df_raw['seed'].isin(list(seeds))]
+        val_col = 'value'
+    else:
+        d = df_agg[df_agg['metric'].isin(FLAG_INPUTS)
+                   & df_agg['variant'].isin(checked_vars)
+                   & df_agg['Candidate'].isin(checked_cands)]
+        val_col = 'mean' if 'mean' in df_agg.columns else 'value'
+    if x_axis == 'Candidate':
+        d = d[d['halfspace_variant'] == env]
+    if d.empty:
+        return {}
+    means = d.groupby(['metric', x_axis, 'variant'])[val_col].mean().to_dict()
+    out = {}
+    for (_m, cat, var) in means:
+        key = (str(cat), str(var))
+        if key in out:
+            continue
+        ns = means.get(('n_success', cat, var))
+        nsc = means.get(('n_success_and_constraints', cat, var))
+        flags = ""
+        if ns is not None and ns == ns and ns < 1.0 - FLAG_TOL:
+            flags += "G"
+        base = ns if (ns is not None and ns == ns) else 1.0
+        if nsc is not None and nsc == nsc and nsc < base - FLAG_TOL:
+            flags += "C"
+        if flags:
+            out[key] = flags
+    return out
 
 def _ref_cells(rec, cands, variants):
     """Per-variant INIT XY, pooled over the selected candidates (rollout-weighted).

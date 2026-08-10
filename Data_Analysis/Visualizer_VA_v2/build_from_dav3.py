@@ -824,6 +824,13 @@ REF_LABEL = 'INIT XY (ref)'
 # honest rollout tally.
 COVERAGE_METRIC = 'n_success'""")
 
+# U14: the plot's (G, C) hint restates the bar on a success plot, so it is skipped there.
+# This page has a SECOND success definition (position-only), and the relaxed pair is just
+# as circular — flagging "(C)" on an n_success_relaxed_and_constraints bar says nothing the
+# bar does not already say. The flag itself stays the STRICT one, exactly as in the tables.
+sub("""FLAG_SKIP = set(FLAG_INPUTS)""",
+    """FLAG_SKIP = set(FLAG_INPUTS) | {'success_relaxed', 'n_success_relaxed_and_constraints'}""")
+
 # the caption block above the tables counts them and names the flagged ones
 sub("""              'In the N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '""",
     """              'In the MIN_DIST, N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '""")

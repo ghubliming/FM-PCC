@@ -135,6 +135,16 @@ def run_page(tag, ns):
     check('an unknown candidate degrades to a dash',
           '&mdash;' in ns['_seed_cell']({}, '65'))
 
+    # ── U14: the plot's (G, C) failure hint ──────────────────────────────────
+    check('no flag renders as nothing at all', ns['_flag_label']("") == "")
+    check('goal-only flag', ns['_flag_label']("G") == "(G)")
+    check('constraint-only flag', ns['_flag_label']("C") == "(C)")
+    check('both flags', ns['_flag_label']("GC") == "(G, C)")
+    # the flag must never be drawn on the metrics that define it
+    check('the flag inputs are skipped on their own plots',
+          set(ns['FLAG_INPUTS']) <= ns['FLAG_SKIP'],
+          f'skip={sorted(ns["FLAG_SKIP"])}')
+
     hl.clear()
     check('clearing puts every name back', ns['_cand_name_html']('65') == 'CAND_65')
 
@@ -166,9 +176,11 @@ if len(loaded) == 2:
             out.append(line)
         return "\n".join(out).rstrip()
 
+    # _flag_pivot is in the list but FLAG_SKIP deliberately is NOT: the VA page adds its
+    # relaxed success pair to the skip set, which is the one intended difference.
     for fn in ('_hl', '_cand_name_html', '_remember_plot', '_apply_tick_highlight',
                '_seed_map', '_seed_cell', 'set_highlight', 'clear_highlights',
-               'render_selection_map'):
+               'render_selection_map', '_flag_label', '_flag_pivot'):
         a = def_source(loaded['DAv3'][1], fn)
         b = def_source(loaded['DA_VA_v2'][1], fn)
         check(f'{fn} identical on both pages', a == b,

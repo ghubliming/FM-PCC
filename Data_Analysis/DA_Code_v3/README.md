@@ -111,6 +111,24 @@ columns that exist only in the page, not in any CSV:
   `Missing_Seeds` column and says `n/a` for the present-seed list rather than
   claiming the candidate has none.
 
+## Plot: `(G, C)` failure hints (viewer only)
+
+Every bar carries its value above it. A red **`(G, C)`** stacked above that value
+marks a bar whose run was not clean — the same rule as the Result Matrices'
+trailing `(goal, constraint)` flag:
+
+* `(G)` — goal not always reached (`n_success < 1`)
+* `(C)` — a constraint was violated (`n_success_and_constraints < n_success`)
+* nothing — a fully successful run
+
+Read it as: *an unflagged 199 steps and a flagged 199 steps are not comparable
+numbers.* The note under the x-axis spells the marks out and counts them.
+
+The flag is skipped on `n_success` and `n_success_and_constraints` themselves,
+where it would only restate the bar's own height. It is computed on the plot's
+**own** x-axis grouping, so it stays correct in `By Environment` mode where the
+selected candidates are averaged into each bar.
+
 ## Key Metrics
 
 The tool analyzes:

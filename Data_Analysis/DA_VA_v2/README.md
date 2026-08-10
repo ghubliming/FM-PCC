@@ -198,6 +198,20 @@ page via `build_from_dav3.py`, so both viewers behave identically):
   matrices for the rollout counts — and a bar averaged over one seed looks
   exactly like a bar averaged over five on the chart.
 
+#### Plot: `(G, C)` failure hints
+
+A red **`(G, C)`** stacked above a bar's value marks a bar whose run was not
+clean — `(G)` = goal not always reached, `(C)` = a constraint was violated, the
+same rule (and the same strict `n_success` pair) as the Result Matrices' trailing
+`(goal, constraint)` flag. An unflagged number is a fully successful run; the
+note under the x-axis spells the marks out and counts them.
+
+Skipped on the four success metrics themselves — including this page's relaxed
+pair (`success_relaxed`, `n_success_relaxed_and_constraints`, via `FLAG_SKIP` in
+`build_from_dav3.py`) — where the flag would only restate the bar's own height.
+Computed on the plot's own x-axis grouping, so it stays correct in `By
+Environment` mode where the selected candidates are averaged into each bar.
+
 The old `Visualizer_Visual_Aligning/index.html` (VA v1) is superseded and is not
 fed by this pipeline any more; `Visualizer/index.html` (DAv3) still opens a VA
 batch through the `candidates_multidimensional_*.csv` pair.

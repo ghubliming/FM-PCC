@@ -312,6 +312,49 @@ if _stamp_map:
           bool(re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', _sample))
           and _sample in _path_html, _sample)
 
+# ── U14: the plot's (G, C) hint must agree with the matrices' own flags ──────
+print('\n[U14 plot failure flags]')
+_env = document.getElementById('env-select').value
+document.getElementById('metric-select').value = 'n_steps'
+document.set_checks('var-check', variants[:5])
+document.set_checks('cand-check', cands)
+run(ns['trigger_plot'](None))
+_fmap = ns['_flag_pivot']('Candidate', _env, variants[:5], cands, 'n_steps')
+_ctx_f, _ = ns['_summary_context']()
+# In candidate mode both sides are keyed by (candidate, variant) and MUST agree — they are
+# the same rule on the same numbers, and a disagreement means one of the two is lying.
+_mismatch = []
+for _c in _ctx_f['cands']:
+    for _v in variants[:5]:
+        _tbl = ns['_fail_flags'](_ctx_f['rec'], _c, _v)
+        _plot = _fmap.get((str(_c), str(_v)), '')
+        _want = ('G' if 'goal' in _tbl else '') + ('C' if 'constraint' in _tbl else '')
+        if _want != _plot:
+            _mismatch.append(f'CAND_{_c}/{_v}: table={_want!r} plot={_plot!r}')
+check('plot flags match the Result Matrices exactly', not _mismatch,
+      f'{len(_fmap)} flagged bars over {len(_ctx_f["cands"]) * 5} facets'
+      if not _mismatch else '; '.join(_mismatch[:4]))
+check('flag labels are the compact initials',
+      ns['_flag_label']('GC') == '(G, C)' and ns['_flag_label']('') == '')
+# a success plot must NOT be flagged — the flag would restate the bar's own height
+check('the flag is skipped on its own inputs',
+      ns['_flag_pivot']('Candidate', _env, variants[:5], cands, 'n_success') == {}
+      and ns['_flag_pivot']('Candidate', _env, variants[:5], cands,
+                            'n_success_and_constraints') == {})
+# environment mode groups by the environment, so the keys change with the axis
+_emap = ns['_flag_pivot']('halfspace_variant', _env, variants[:5], cands, 'n_steps')
+check('environment mode flags are keyed by environment',
+      all(k[0] in set(envs) for k in _emap), f'{len(_emap)} flagged bars')
+# and the axis note has to explain the marks it drew
+_xlab = ns['current_ax'].get_xlabel()
+# one direction only: a flagged facet whose n_steps bar is itself missing draws no mark,
+# so "flags exist" does not oblige a note — but a note with nothing flagged would be a lie.
+check('the axes note never explains marks it did not draw',
+      ('(G) = goal not always reached' not in _xlab) or bool(_fmap),
+      _xlab[:90] or '(no note)')
+document.getElementById('metric-select').value = 'n_success_and_constraints'
+run(ns['trigger_plot'](None))
+
 # ── U13: seed coverage in the plot legend ────────────────────────────────────
 print('\n[U13 legend seed coverage]')
 _seed_map = ns['_seed_map']()
