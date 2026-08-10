@@ -312,6 +312,36 @@ if _stamp_map:
           bool(re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', _sample))
           and _sample in _path_html, _sample)
 
+# ── U16: the "5. Variants" quick presets ─────────────────────────────────────
+print('\n[U16 variant presets]')
+_presets = {k: ns['_preset_members'](k, variants) for k, _l, _t in ns['VARIANT_PRESETS']}
+_panel = document.getElementById('variant-presets').innerHTML
+check('the preset panel renders one box per non-empty preset',
+      _panel.count('class="preset-check"') == sum(1 for m in _presets.values() if m),
+      ' / '.join(f'{k}:{len(v)}' for k, v in _presets.items()))
+# every member has to exist as a real checkbox value, or ticking the preset selects nothing
+_orphans = sorted({m for members in _presets.values() for m in members} - set(variants))
+check('every preset member is a real variant checkbox', not _orphans, _orphans)
+# the exclusions carry the meaning: a dt sweep folded in would put four near-identical
+# bars beside the arm being read
+_leak = sorted({m for members in _presets.values() for m in members
+                if '-dt' in m or m.split('-')[0] in ('gradient', 'post_processing',
+                                                     'model_free', 'geo_free', 'bounds_free')})
+check('no preset leaks a dt sweep or a non-projection baseline', not _leak, _leak)
+if _presets['dpcc_hf']:
+    # ticking a preset must produce a selection the plot can actually draw
+    document.set_checks('var-check', _presets['dpcc_hf'])
+    document.set_checks('cand-check', cands)
+    _before_figs = len(displayed)
+    run(ns['trigger_plot'](None))
+    check('a preset selection draws', len(displayed) > _before_figs
+          or 'NO DATA' in document.getElementById('plot-area').innerHTML,
+          f'{len(_presets["dpcc_hf"])} variants')
+    check('the preset panel survives a redraw',
+          'class="preset-check"' in document.getElementById('variant-presets').innerHTML)
+else:
+    print('  SKIP  this batch has no dpcc/hardflow arms at all')
+
 # ── U15: no two variants may draw in the same colour ─────────────────────────
 print('\n[U15 variant colours]')
 _all_vars = sorted(df_agg['variant'].astype(str).unique())

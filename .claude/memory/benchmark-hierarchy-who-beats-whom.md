@@ -34,6 +34,8 @@ to the wrong opponent proves nothing.
 
 **How to apply:**
 - Before reporting any result, name the opponent it is supposed to beat, and check that one first.
+  Concretely, the diffusion-DPCC opponent is the baseline's **best** variant row in that batch, and
+  any of our variants may be the one that beats it — see [[da-target-is-best-baseline-variant]].
 - For MF/AF, always include **both** diffusion-DPCC and naive FM in the table.
 - For HardFlow, compare against **arm B on the same checkpoint** — not against the generator or
   another generation — and sweep the activation threshold rather than reporting a single point.

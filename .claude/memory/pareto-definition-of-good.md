@@ -22,6 +22,11 @@ loses on the other, say so plainly: it is a **trade-off, not a win**.
 If nothing dominates it, the claim to make is **"Pareto-non-dominated"** — not "best". Only when a
 config is beaten on *every* axis (strictly Pareto-worst) may you conclude it is simply bad.
 
+**Scope:** the strict "both axes or it's only a trade-off" rule above is for crowning a config the
+*best overall*. It is **not** the bar for beating the baseline: against the DPCC Target, S&C is the
+only gate and a win on **either** `n_steps` or `avg_time` counts as a win — see
+[[da-target-is-best-baseline-variant]].
+
 **Why:** the user is building a low-NFE control argument. "Fast at K=2" is worthless if it costs
 success or takes more steps to get there — any generator can be made cheap by discounting K (see
 `logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260805_LowK_Ablation_MFAF_vs_FM_DPCC.md` L3). Dominance

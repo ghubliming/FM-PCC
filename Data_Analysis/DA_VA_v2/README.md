@@ -177,6 +177,22 @@ python3 -m http.server 8000        # from the repo root
 # → http://localhost:8000/Data_Analysis/Visualizer_VA_v2/index.html
 ```
 
+#### Variant quick presets
+
+Three checkboxes above `5. Variants` tick a whole comparison at once — **DPCC +
+HF**, **DPCC + HF (tightened)**, **DPCC (tightened)** — each being `diffuser` plus
+the matching `dpcc-{r,c,t}` / `hardflow_new*` arms. They are a shortcut for the
+boxes below them, not a second filter. The `dpcc-c-dt*` timestep sweep and the
+non-projection baselines (`gradient`, `post_processing`, `model_free`,
+`geo_free`, `bounds_free`) are excluded from all three.
+
+**On a visual-aligning batch only the first preset usually appears.** Tightening
+here is a property of the **geometry**, not of the variant name, so there are no
+`-tightened` variants for the other two to select and they are dropped rather
+than left dead — the panel says so and points at `4. Geometry Focus`, which is
+where tightening is actually chosen on this page. A batch read from a state-only
+*avoiding* tree does carry `-tightened` variant names, and there all three appear.
+
 #### Plot Legend: highlight + seed coverage
 
 The **Plot Legend — Selected Candidates** table under the chart carries two

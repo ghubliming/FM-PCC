@@ -58,15 +58,24 @@ def _fake_get_cmap(name):
 sys.modules['matplotlib.pyplot'].get_cmap = _fake_get_cmap
 
 
+class _El:
+    def __init__(self, eid):
+        self.id = eid
+        self.value = ''
+        self.innerHTML = ''
+        self.innerText = ''
+        self.checked = False
+        self.style = types.SimpleNamespace(display='block')
+
+
 class _Doc:
-    """Minimal document: only seed-mode/checkbox reads reach it from these helpers."""
+    """Minimal document. Elements are CACHED so a renderer's innerHTML can be read back."""
 
     def __init__(self):
-        self.values = {}
+        self.elements = {}
 
     def getElementById(self, eid):
-        return types.SimpleNamespace(value=self.values.get(eid, ''), innerHTML='',
-                                     style=types.SimpleNamespace(display='block'))
+        return self.elements.setdefault(eid, _El(eid))
 
     def getElementsByClassName(self, _cls):
         return []
@@ -191,6 +200,69 @@ def run_page(tag, ns):
           palette(5) == palette(40)[:5])
     check('colours are 4-tuple RGBA', all(len(c) == 4 and c[3] == 1.0 for c in palette(12)))
 
+    # ── U16: the "5. Variants" quick presets ─────────────────────────────────
+    members = ns['_preset_members']
+    # a realistic DAv3 variant list, deliberately including everything a preset must NOT take
+    all_vars = sorted([
+        'diffuser',
+        'dpcc-r', 'dpcc-c', 'dpcc-t',
+        'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened',
+        'dpcc-c-tightened-dt0p25', 'dpcc-c-tightened-dt4p0',      # scaling sweep, not an arm
+        'hardflow_new', 'hardflow_new-c', 'hardflow_new-c-tightened',
+        'gradient', 'gradient-tightened', 'post_processing',      # not projection arms
+        'model_free', 'geo_free', 'bounds_free',
+    ])
+    _full = members('dpcc_hf', all_vars)
+    check('DPCC + HF takes diffuser, every dpcc arm and every hardflow arm',
+          _full == ['diffuser', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-r', 'dpcc-r-tightened',
+                    'dpcc-t', 'dpcc-t-tightened', 'hardflow_new', 'hardflow_new-c',
+                    'hardflow_new-c-tightened'], f'{len(_full)}: {_full}')
+    _t = members('dpcc_hf_tight', all_vars)
+    check('DPCC + HF (tightened) takes only the tightened arms',
+          _t == ['diffuser', 'dpcc-c-tightened', 'dpcc-r-tightened', 'dpcc-t-tightened',
+                 'hardflow_new-c-tightened'], f'{len(_t)}: {_t}')
+    _d = members('dpcc_tight', all_vars)
+    check('DPCC (tightened) drops HardFlow too',
+          _d == ['diffuser', 'dpcc-c-tightened', 'dpcc-r-tightened', 'dpcc-t-tightened'],
+          f'{len(_d)}: {_d}')
+    # the exclusions are the point: a silently-included dt sweep puts four near-identical
+    # bars next to the one that matters
+    _leaked = {v for key, _l, _t2 in ns['VARIANT_PRESETS'] for v in members(key, all_vars)
+               if 'dt0p' in v or 'dt4p' in v or v.split('-')[0] in
+               ('gradient', 'post_processing', 'model_free', 'geo_free', 'bounds_free')}
+    check('no preset leaks a dt sweep or a non-projection baseline', not _leaked, sorted(_leaked))
+    check('every preset is a subset of the batch variants',
+          all(set(members(k, all_vars)) <= set(all_vars) for k, _l, _t3 in ns['VARIANT_PRESETS']))
+    check('presets nest: tightened-dpcc <= tightened-both <= all',
+          set(_d) <= set(_t) <= set(_full))
+    # a batch with nothing but the baseline must offer NO preset, not a diffuser-only one
+    check('diffuser alone is not a preset',
+          all(members(k, ['diffuser', 'gradient']) == [] for k, _l, _t4 in ns['VARIANT_PRESETS']))
+    check('an empty batch yields no preset',
+          all(members(k, []) == [] for k, _l, _t5 in ns['VARIANT_PRESETS']))
+
+    # and the rendered control
+    ns['render_variant_presets'](all_vars)
+    _panel = ns['document'].getElementById('variant-presets')
+    check('all three presets render for a full DAv3 batch',
+          _panel.innerHTML.count('class="preset-check"') == 3
+          and _panel.style.display == 'block',
+          f'{_panel.innerHTML.count(chr(34) + "preset-check" + chr(34))} rendered')
+    check('each preset carries its members in data-members',
+          f'data-members="{"|".join(_d)}"' in _panel.innerHTML)
+    # a visual-aligning batch keeps tightening on the geometry axis, so the two tightened
+    # presets have no members — they must be dropped AND explained, not left dead
+    ns['render_variant_presets'](['diffuser', 'dpcc-c', 'dpcc-r', 'hardflow_new-c', 'gradient'])
+    _panel = ns['document'].getElementById('variant-presets')
+    check('a batch without -tightened names offers only the one preset that applies',
+          _panel.innerHTML.count('class="preset-check"') == 1
+          and 'Not offered by this batch' in _panel.innerHTML
+          and '4. Geometry Focus' in _panel.innerHTML)
+    ns['render_variant_presets'](['gradient', 'model_free'])
+    _panel = ns['document'].getElementById('variant-presets')
+    check('a batch with no projection arms hides the panel entirely',
+          _panel.innerHTML == '' and _panel.style.display == 'none')
+
     hl.clear()
     check('clearing puts every name back', ns['_cand_name_html']('65') == 'CAND_65')
 
@@ -227,7 +299,8 @@ if len(loaded) == 2:
     for fn in ('_hl', '_cand_name_html', '_remember_plot', '_apply_tick_highlight',
                '_seed_map', '_seed_cell', 'set_highlight', 'clear_highlights',
                'render_selection_map', '_flag_label', '_flag_pivot',
-               '_cmap', '_palette', '_variant_colors'):
+               '_cmap', '_palette', '_variant_colors',
+               '_preset_members', 'render_variant_presets'):
         a = def_source(loaded['DAv3'][1], fn)
         b = def_source(loaded['DA_VA_v2'][1], fn)
         check(f'{fn} identical on both pages', a == b,
@@ -239,7 +312,9 @@ if len(loaded) == 2:
     for marker in ('class="hl-check hl-box"', 'onchange="toggle_highlight(this)"',
                    'function toggle_highlight(el)', 'function clear_highlights()',
                    'document.set_highlight = identity(set_highlight)'.replace('identity', 'create_proxy'),
-                   'NOT FULL', '>Seeds<', '>HL<'):
+                   'NOT FULL', '>Seeds<', '>HL<',
+                   'id="variant-presets"', 'onchange="toggle_variant_preset(this)"',
+                   'function sync_variant_presets()', 'sync_variant_presets();'):
         check(f'both pages carry {marker!r}',
               all(marker in loaded[t][1] for t in loaded),
               ' / '.join(f'{t}:{loaded[t][1].count(marker)}' for t in loaded))

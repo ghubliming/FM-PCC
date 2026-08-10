@@ -88,6 +88,29 @@ and never deletes the earlier ones (`utils/setup.py::snapshot_configs`).
 and the Plot Legend, and repeats it in the exported audit `.txt` / LaTeX. Older
 batches have no such column and the page drops it instead of showing blanks.
 
+## Variant quick presets (viewer only)
+
+Three checkboxes above `5. Variants` tick a whole comparison at once. They are a
+shortcut for the boxes below them, not a second filter — what is plotted is
+always exactly what the main list shows.
+
+| preset | ticks |
+|---|---|
+| **DPCC + HF** | `diffuser` + every `dpcc-{r,c,t}` and `hardflow_new*` arm, tightened or not |
+| **DPCC + HF (tightened)** | `diffuser` + only the `-tightened` `dpcc-{r,c,t}` / `hardflow_new-{r,c,t}` arms |
+| **DPCC (tightened)** | `diffuser` + only the `-tightened` `dpcc-{r,c,t}` arms |
+
+`diffuser` is in all three: it is the unconstrained generator the projection arms
+are read against, and it has no tightened twin. Deliberately excluded everywhere:
+the `dpcc-c-tightened-dt*` timestep sweep (a sweep, not an arm — four
+near-identical bars beside the one that matters) and the non-projection baselines
+`gradient` / `post_processing` / `model_free` / `geo_free` / `bounds_free`.
+
+Membership is a rule over the variant name, so a batch that gains an arm gets it
+for free and a preset with no members in this batch is not rendered at all. A
+preset box shows the grey indeterminate mark when only some of its variants are
+selected.
+
 ## Plot Legend: highlight + seed coverage (viewer only)
 
 The **Plot Legend — Selected Candidates** table under the chart carries two

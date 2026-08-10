@@ -77,6 +77,16 @@
         /* U13: seed coverage in the Plot Legend. */
         .seed-ok { color: #2e7d32; }
         .seed-miss { color: #c62828; font-weight: bold; }
+        /* U16: the variant quick presets sit ON TOP of the variant list and share its
+           border, so they read as one control rather than a second, competing filter. */
+        .preset-list { border: 1px solid #000; border-bottom: none; background: #eef4fa;
+                       padding: 9px 10px 3px; font-size: 12px; text-align: left; }
+        .preset-item { display: flex !important; align-items: flex-start !important; margin-bottom: 7px !important; }
+        .preset-item input[type="checkbox"] { margin: 2px 8px 0 0 !important; flex-shrink: 0 !important;
+                                              width: auto !important; padding: 0 !important; }
+        .preset-n { color: #666; font-weight: normal; }
+        .preset-hint { font-size: 9px; color: #555; line-height: 1.45; margin-bottom: 7px;
+                       text-transform: none; letter-spacing: 0; font-weight: normal; }
     /* ---- DA_VA_v2 additions ---- */
         .mask-banner { border: 2px solid #000; padding: 9px 13px; font-size: 12px; background: #f1f8e9; margin-bottom: 4px; }
         .mask-banner.unfrozen { background: #e3f2fd; border-color: #1565c0; }
@@ -155,7 +165,7 @@
         </div>
         <div class="control-group"><label>3. Metric</label><select id="metric-select" onchange="trigger_plot()"></select></div>
         <div class="control-group"><label>4. Geometry Focus</label><select id="env-select" onchange="trigger_plot()"></select></div>
-        <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-list" class="checkbox-list"></div></div>
+        <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-presets" class="preset-list" style="display:none"></div><div id="variant-list" class="checkbox-list"></div></div>
         <div class="control-group"><label>6. Candidates</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('cand-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('cand-check', false)">[NONE]</span></div><div id="candidate-list" class="checkbox-list"></div></div>
         <button class="btn-main" style="background:#444;" py-click="trigger_plot">REFRESH_RE_DRAW</button>
     </div>
@@ -648,12 +658,109 @@ def populate_dynamic_filters():
     # meaningful default. The user checks what they want (or hits [ALL]).
     vars_list = sorted(df_agg['variant'].unique())
     document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
+    render_variant_presets(vars_list)
     # numeric-labeled batches (Candidate = "1".."48") must sort as numbers, not
     # lexicographically ("1","10","11",...,"2",...) — alphabetic labels ("A","B",...)
     # are untouched since they never match .isdigit().
     cands_list = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
     document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
     populate_va2_filters(vars_list, cands_list)
+
+# ---------------------------------------------------------------------------------------
+# U16: quick presets over "5. Variants".
+#
+# The batch carries ~18 variants and the comparison that is actually run over and over is a
+# handful of them: the diffusion baseline, the DPCC projection arms, and the HardFlow arms.
+# Ticking those eight boxes by hand — and mis-ticking one — was the routine cost of every
+# read. A preset checkbox ticks its members in the main list; it is a shortcut for the
+# boxes below it, NOT a second filter, so what is plotted is always exactly what the main
+# list shows.
+#
+# Membership is a RULE over the variant name, not a hardcoded list, so a batch that gains
+# an arm gets it for free and a batch that lacks one is not left with a dead entry:
+#
+#   diffuser                     the unconstrained generator - the baseline every
+#                                comparison needs, and it has no tightened twin
+#   dpcc-{r,c,t}[-tightened]     the DPCC projection arms
+#   hardflow_new[-{r,c,t}][-tightened]
+#
+# Anything with a further suffix is excluded: `dpcc-c-tightened-dt0p25` and friends are a
+# timestep-scaling SWEEP, not an arm of the comparison, and silently folding them in would
+# put four near-identical bars next to the one that matters.
+# ---------------------------------------------------------------------------------------
+BASELINE_VARIANT = 'diffuser'
+PRESET_ARM_RE = re.compile(
+    r'^(?P<fam>dpcc|hardflow_new)(?:-(?P<sel>[rct]))?(?P<tight>-tightened)?(?P<extra>-.+)?$')
+
+# (key, label, tooltip)
+VARIANT_PRESETS = [
+    ('dpcc_hf', 'DPCC + HF',
+     'diffuser + every dpcc-{r,c,t} and hardflow_new arm, tightened or not. Excludes the '
+     'dt-scaled dpcc sweeps and the non-projection baselines (gradient, post_processing, '
+     'model_free, geo_free, bounds_free).'),
+    ('dpcc_hf_tight', 'DPCC + HF (tightened)',
+     'diffuser + only the -tightened dpcc-{r,c,t} and hardflow_new-{r,c,t} arms.'),
+    ('dpcc_tight', 'DPCC (tightened)',
+     'diffuser + only the -tightened dpcc-{r,c,t} arms. No HardFlow.'),
+]
+
+
+def _preset_members(key, variants):
+    """The variants a preset ticks, in the order they appear in the list."""
+    out = []
+    for raw in variants:
+        name = str(raw)
+        if name == BASELINE_VARIANT:
+            out.append(name)
+            continue
+        m = PRESET_ARM_RE.match(name)
+        if m is None or m.group('extra'):
+            continue
+        tight = bool(m.group('tight'))
+        if key == 'dpcc_hf':
+            keep = True
+        elif key == 'dpcc_hf_tight':
+            keep = tight
+        else:                                   # dpcc_tight
+            keep = tight and m.group('fam') == 'dpcc'
+        if keep:
+            out.append(name)
+    # diffuser alone is not a preset — it is the baseline the others are read against.
+    return out if any(v != BASELINE_VARIANT for v in out) else []
+
+
+def render_variant_presets(vars_list):
+    rows, empty = [], []
+    for key, label, tip in VARIANT_PRESETS:
+        members = _preset_members(key, vars_list)
+        if not members:
+            # No dead checkbox: a batch without tightened variant names (DA_VA_v2 puts
+            # tightening on the GEOMETRY axis instead) simply does not offer that preset.
+            empty.append(label)
+            continue
+        rows.append(
+            f'<div class="checkbox-item preset-item" title="{_esc_attr(tip)}">'
+            f'<input type="checkbox" class="preset-check" '
+            # names are [a-z0-9_-] so "|" is a safe separator here
+            f'data-members="{_esc_attr("|".join(members))}" '
+            f'onchange="toggle_variant_preset(this)">'
+            f'<span><b>{label}</b> <span class="preset-n">&middot; {len(members)} variants</span></span></div>')
+    el = document.getElementById("variant-presets")
+    if not rows:
+        el.innerHTML = ""
+        el.style.display = "none"
+        return
+    hint = ('<div class="preset-hint">Quick picks &mdash; ticking one ticks its variants in '
+            'the list below (untick to clear them). Grey tick = only some of its variants '
+            'are selected.')
+    if empty:
+        hint += ('<br>Not offered by this batch: <b>' + ", ".join(empty) + '</b> '
+                 '&mdash; no <code>-tightened</code> variant names here. On a DA_VA_v2 batch '
+                 'tightening lives on the geometry axis instead: use <b>4. Geometry Focus</b>.')
+    hint += '</div>'
+    el.innerHTML = hint + "".join(rows)
+    el.style.display = "block"
+
 
 def show_no_data(metric, checked_vars, checked_cands, env):
     # U7 fix: never leave the "CHOOSE_EXPERIMENT_TO_START" placeholder (or a silent
@@ -2292,7 +2399,38 @@ asyncio.ensure_future(init_manifest())
         document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
         applyZoom();
     }
-    async function trigger_plot() { 
+    // U16: variant quick presets. Pure JS on purpose — the membership is baked into each
+    // preset's data-members by Python at populate time, so ticking one is instant and works
+    // even while the PyScript engine is still warming up.
+    function _presetMembers(el) {
+        return (el.dataset.members || "").split("|").filter(Boolean);
+    }
+    function toggle_variant_preset(el) {
+        const want = new Set(_presetMembers(el));
+        for (const box of document.getElementsByClassName("var-check")) {
+            if (want.has(box.value)) box.checked = el.checked;
+        }
+        trigger_plot();          // re-syncs every preset box on its way through
+    }
+    // A preset box states a FACT about the main list, so it is recomputed from the list
+    // rather than remembered: hand-unticking one member drops the preset to the
+    // indeterminate mark instead of leaving it claiming a selection that is not there.
+    function sync_variant_presets() {
+        const checked = new Set();
+        for (const box of document.getElementsByClassName("var-check")) {
+            if (box.checked) checked.add(box.value);
+        }
+        for (const p of document.getElementsByClassName("preset-check")) {
+            const members = _presetMembers(p);
+            const hit = members.filter(m => checked.has(m)).length;
+            p.checked = members.length > 0 && hit === members.length;
+            p.indeterminate = hit > 0 && hit < members.length;
+        }
+    }
+    window.sync_variant_presets = sync_variant_presets;
+
+    async function trigger_plot() {
+        sync_variant_presets();
         if (window.document.trigger_plot) {
             try {
                 await window.document.trigger_plot();
