@@ -4292,3 +4292,23 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Nuanced Multi-Arm Verdict**: The claim is non-dominated on `dpcc-r-tightened` (20× time win, step CI straddling 0) and refuted on `dpcc-c-tightened` (+32 steps due to minimal-correction rule dawdling). Pooled across tightened arms, S&C is tied (0.944 vs 0.944), steps are slightly higher (+6 to +9), but wall-clock is 18.7× lower.
 4. **Adjudicated Headline & Protocol**: Reframed the finding as a 19× compute-advantage Pareto trade-off. Pre-registered multi-seed training (seeds 7–10) and multi-trial evaluation requirements to finalize the cross-model comparison.
 
+***
+
+## Infrastructure: Failure Hints `(G, C)` & One-Color-Per-Variant Palette (DAv3 + DA_VA_v2 U14/U15) (August 10, 2026)
+
+**Keywords**: Visualizer, Visualizer_VA_v2, DAv3, failure hints, G C flags, palette, variant colors, colormap, plot reliability.
+
+1. **Plot Failure Hints (`(G, C)`)**: Integrated red `(G)` (goal not reached, $n_{\text{success}} < 1$) and `(C)` (constraint violation, $n_{\text{success\_and\_constraints}} < n_{\text{success}}$) annotations directly above plot bar value labels. Solved the problem where screenshot plots of latency or step counts hid whether low values were achieved by failing tasks or violating safety cage constraints.
+2. **One-Color-Per-Variant Palette (`_palette`)**: Replaced matplotlib's default 10-color `tab10` colormap (which caused silent color collisions across batches with 18+ variants) with `_palette(n)`, delivering up to 93 pairwise-distinct RGBA colors from qualitative color maps with deduplication guards.
+3. **Color Stability & Verification**: Variant colors are now deterministically bound to each variant's sorted index in the full batch rather than the active selection, preventing bars from changing color when toggling variants. Added a runtime collision check that verifies color distinctness on every draw.
+
+***
+
+## Infrastructure: Variant Quick Presets in Data Visualizers (DAv3 + DA_VA_v2 U16) (August 10, 2026)
+
+**Keywords**: Visualizer, Visualizer_VA_v2, DAv3, variant presets, DPCC, HardFlow, DOM sync, plot workflow.
+
+1. **Variant Selection Overhead Solved**: Standard evaluation batches contain ~18–26 variants, making manual checkbox selection error-prone and tedious when repeatedly comparing core baseline diffusion and projection arms.
+2. **Three Standard Presets Introduced**: Added three quick-preset checkboxes (`DPCC + HF`, `DPCC + HF (tightened)`, `DPCC (tightened)`) directly above the variant checklist in both `Visualizer` (DAv3) and `Visualizer_VA_v2` HTML viewers.
+3. **Rule-Based Membership**: Used regex `PRESET_ARM_RE` in Python to automatically identify family arms (`dpcc`, `hardflow_new`) while excluding noise parameter sweeps (e.g. `-dt0p25`) and secondary baselines. Member attributes (`data-members`) are computed at sync time, with pure JavaScript toggling and indeterminate state handling for zero-latency UI response.
+

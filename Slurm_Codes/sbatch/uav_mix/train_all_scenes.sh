@@ -1,0 +1,48 @@
+#!/bin/bash
+#SBATCH --job-name=uav_mix_train_all
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=00:10:00
+#SBATCH --partition=gpu-1-student
+#
+# Gen11 E6 U2 — outer loop: ONE train job PER SCENE (seeds loop internally inside
+# train_fm_uav.sh, not as separate sbatch calls). Thin submitter; exits immediately.
+# Per-scene models (state-only FM cannot tell scenes apart → one model per scene). See U2 PLAN.
+#
+# Usage (from repo root):
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh "pillars" "6 7 8 9 10"
+# Args: $1=engine (fm|mf|af) [fm]   $2=scenes (quoted, space-sep) [all 4]   $3=seeds (quoted) ["6"]
+set -e
+
+ENGINE="${1:-fm}"
+case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+SCENES="${2:-empty corridor s_curve pillars}"
+# Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10".
+SEEDS="${3:-6}"
+JOB="Slurm_Codes/sbatch/uav_mix/train_mix_uav.sh"
+
+N_SEEDS=$(echo $SEEDS | wc -w)
+TRAIN_HOURS=$((N_SEEDS * 24))
+
+echo "================================================================================"
+echo "UAV-MIX TRAIN ALL (per-scene, seed-loop internal)  $(date)   engine=$ENGINE  scenes=[$SCENES]  seeds=[$SEEDS]"
+echo "================================================================================"
+
+DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}; TIME=${SUBMIT_TIME:-$(date +%H_%M_%S)}
+LOG_DIR="Slurm_Codes/logs/$DATE"; mkdir -p "$LOG_DIR"
+LOG_OPTS="--output=$LOG_DIR/${TIME}_%x_%j.log --error=$LOG_DIR/${TIME}_%x_%j.log"
+
+n=0
+for scene in $SCENES; do
+    ID=$(sbatch --parsable --time="${TRAIN_HOURS}:00:00" $LOG_OPTS "$JOB" "$ENGINE" "$scene" "$SEEDS")
+    echo "  train  engine=$ENGINE scene=$scene seeds=[$SEEDS]  → Job $ID"
+    n=$((n+1))
+done
+echo "--------------------------------------------------------------------------------"
+echo "Submitted $n train jobs (one per scene; seeds run sequentially inside each job)."
+echo "Outputs: logs/UAV_MIX/uav-<scene>/mix_uav_$ENGINE/.../<seed>/"
+echo "Then eval:  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_all_scenes.sh \"$ENGINE\" \"$SCENES\" \"$SEEDS\""
+echo "================================================================================"
