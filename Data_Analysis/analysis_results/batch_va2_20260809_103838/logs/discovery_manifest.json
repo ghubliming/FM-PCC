@@ -1,0 +1,1723 @@
+{
+  "n_candidates": 11,
+  "n_units": 202,
+  "candidates": {
+    "1": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(Bf_U8_Legacy_complex_struct)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "2": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(legacy_correcct_besides_bounds_for_comapre)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "3": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "4": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64_filmv1/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "5": {
+      "name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "display_name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "6": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "7": {
+      "name": "H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "display_name": "H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K100_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "8": {
+      "name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "display_name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "9": {
+      "name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "10": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    },
+    "11": {
+      "name": "H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2",
+      "display_name": "H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": []
+    }
+  },
+  "units": [
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "json"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "json"
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "json"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json"
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json"
+    },
+    {
+      "Candidate": 9,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 9,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "json"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz"
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz"
+    }
+  ]
+}

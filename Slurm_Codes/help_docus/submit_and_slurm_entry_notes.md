@@ -90,3 +90,11 @@ python tools/clean_weights/clean_weights.py --apply
 
 ## DA shortcut
 ./Slurm_Codes/submit.sh /u/home/llim/FMPCC/FM-PCC/Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh
+
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh
+
+- Local Fallback 
+cd ~/FMPCC/FM-PCC
+nohup bash Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh \
+      > ~/da_avoiding_combined_manual.log 2>&1 &
+tail -f ~/da_avoiding_combined_manual.log

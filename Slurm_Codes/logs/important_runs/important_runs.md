@@ -1224,7 +1224,12 @@ Eval 24121 BUG -> Fix7
 24126
 
 - Fix6
-24316
+24316 + Eval 24334
+
+seed 78910 for UNET 24396 train -> 24415 seed 10
+24416 eval
+& rerun seed 6 24470
+
 
 # Gen3v7 alpha flow 
 1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
@@ -1245,7 +1250,12 @@ try unet
 ---
 alpha flow train the seed 78910 -> 24070
 
-eval 24104
+eval 24104 s78910+ 25399 s6
+
+---
+
+unet validation 24348 KILLED try full seeds train
+-> 24385
 
 # Gen12 
 init pipeline run 23767 -> All killed, not run
@@ -1293,6 +1303,18 @@ af/mf 24224/5
 ---
 
 24281/82 rerun massive run 3->30
+
+- test diffu+FM vs the old run
+24638 diffu
+24343 fm
+(K100! too big!)
+
+20 run 24405 Diffu
+24409 FM
+
+- FiLM v2 
+24417 mf
+14418 af
 
 # Gen0 
 - Fix2
