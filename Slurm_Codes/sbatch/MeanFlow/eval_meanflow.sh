@@ -89,7 +89,7 @@ cd "$REPO"
 # so nothing overwrites anything.
 #
 # Override the grid without editing this file:  MF_FLOW_STEPS="2" sbatch ...
-FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10}"
+FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10 20}"
 echo "[ eval ] NFE budgets to evaluate: $FLOW_STEPS_GRID"
 
 for K in $FLOW_STEPS_GRID; do

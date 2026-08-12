@@ -83,7 +83,7 @@ fi
 #    HFFM_ACT_THRESHOLD  fraction of late steps the NLP is active (0.5 == DPCC threshold 0.5)
 #    HFFM_FLOW_STEPS     matched K for EVERY arm (overrides plan-block flow_steps).
 #                        🔵 U9: when set it PINS this job to that single K; leave it unset to
-#                        get the whole {1,2,5,10} grid in one job (see §5).
+#                        get the whole {1,2,5,10,20} grid in one job (see §5).
 export HFFM_BATCH="${HFFM_BATCH:-1}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
@@ -104,7 +104,7 @@ if [ -n "$HFFM_FLOW_STEPS" ]; then
     FLOW_STEPS_GRID="$HFFM_FLOW_STEPS"
     echo "[ eval ] HFFM_FLOW_STEPS is set -> single-K run: $FLOW_STEPS_GRID"
 else
-    FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10}"
+    FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10 20}"
     echo "[ eval ] NFE budgets to evaluate: $FLOW_STEPS_GRID"
 fi
 
