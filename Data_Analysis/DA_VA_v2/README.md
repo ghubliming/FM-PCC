@@ -34,7 +34,19 @@ python Data_Analysis/DA_VA_v2/main_da.py --input-path <.../H8_K2_..._Eaf>
 python Data_Analysis/DA_VA_v2/discovery.py logs/aligning-d3il-visual/plans
 ```
 
-On the cluster: `sbatch Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh`.
+On the cluster, **zero arguments**:
+
+```bash
+sbatch Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh
+```
+
+With no path the job **auto-scans**: the fixed roots in the script's `AUTO_ROOTS`
+(the Gen14/Gen7 plans tree, the state-only avoiding tree) **plus every D3IL-baseline
+export root it finds** — `_DA_VA_BRIDGE_*` (bridged) and `DA_VA_*` (native), to depth 3
+under `logs/`. Missing roots are skipped, the resolved list is echoed at the top of the
+log, and a newly bridged or newly evaluated baseline joins the comparison on its own.
+Passing a path as `$1` overrides the auto-scan; to change it permanently, edit
+`AUTO_ROOTS` in the sbatch rather than the command line.
 
 ---
 

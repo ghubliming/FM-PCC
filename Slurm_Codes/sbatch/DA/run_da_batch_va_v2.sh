@@ -9,26 +9,41 @@
 
 set -e
 
-# DA_VA_v2 — visual-aligning batch analysis (Gen7 + Gen14 in one run).
+# DA_VA_v2 — visual-aligning batch analysis (Gen7 + Gen14 + D3IL baseline in one run).
 #
-# Args:  $1  = parent path(s), comma-separated; each is scanned for candidate
-#              folders and the results are merged into a single comparison run
-#        $2+ = forwarded verbatim to main_da_batch.py
+# ZERO-ARGUMENT BY DEFAULT:
+#
+#     sbatch run_da_batch_va_v2.sh
+#
+# With no argument the script AUTO-SCANS: it takes the fixed roots listed in
+# AUTO_ROOTS below, plus every D3IL-baseline export root it can find
+# (`_DA_VA_BRIDGE_*` bridged / `DA_VA_*` native), keeps the ones that exist, and
+# analyses them all in one comparison. Nothing to type, nothing to remember —
+# to change what is scanned, edit AUTO_ROOTS, not the command line.
+#
+# Args (all optional):
+#   $1  = parent path(s), comma-separated — OVERRIDES the auto-scan entirely
+#   $2+ = forwarded verbatim to main_da_batch.py
 #
 # Examples:
-#   # every Gen14 engine arm under the visual-aligning plans tree
-#   sbatch run_da_batch_va_v2.sh logs/aligning-d3il-visual/plans
-#
-#   # Gen14 + Gen7 + the state-only avoiding tree side by side
-#   sbatch run_da_batch_va_v2.sh \
-#       "logs/aligning-d3il-visual/plans,logs/avoiding-d3il/plans"
-#
-#   # test split only, both geometries, with PNGs
-#   sbatch run_da_batch_va_v2.sh logs/aligning-d3il-visual/plans --splits test --plots
+#   sbatch run_da_batch_va_v2.sh                          # auto-scan everything
+#   sbatch run_da_batch_va_v2.sh "" --splits test --plots # auto-scan + extra flags
+#   sbatch run_da_batch_va_v2.sh logs/aligning-d3il-visual/plans      # one tree only
 #
 # Plots are OFF unless --plots is passed: the CSVs are the product and matplotlib
 # is by far the slowest stage.
-PARENT_PATH=${1:-"logs/aligning-d3il-visual/plans"}
+
+# Fixed roots to scan when no path is given. Add a line to include a tree
+# permanently; a root that does not exist is skipped without failing the job.
+AUTO_ROOTS=(
+    "logs/aligning-d3il-visual/plans"       # Gen14 engine arms + Gen7 visual aligning
+    "logs/avoiding-d3il/plans"              # state-only avoiding (DA_Code_v3 shape)
+)
+# Every D3IL-baseline export root is picked up automatically, so a newly bridged
+# or newly evaluated baseline joins the comparison without touching this file.
+AUTO_EXPORT_GLOB_DEPTH=3
+
+USER_PARENT="${1:-}"
 if [ "$#" -ge 1 ]; then shift 1; fi
 
 # 1) Workspace paths
@@ -48,6 +63,32 @@ export MPLBACKEND="agg"
 
 # 4) Run
 cd "$REPO"
+
+# ─── Resolve what to scan (paths are relative to $REPO, hence after the cd) ───
+if [ -n "$USER_PARENT" ]; then
+    PARENT_PATH="$USER_PARENT"
+    echo "[ DA_VA_v2 ] parent path from CLI: ${PARENT_PATH}"
+else
+    FOUND=()
+    for root in "${AUTO_ROOTS[@]}"; do
+        if [ -d "$root" ]; then FOUND+=("$root"); else echo "[ skip ] not present: $root"; fi
+    done
+    # Bridged (`_DA_VA_BRIDGE_*`) and native (`DA_VA_*`) D3IL-baseline export roots.
+    # -maxdepth keeps this off the deep run trees; the sort makes the order stable.
+    while IFS= read -r found_root; do
+        [ -n "$found_root" ] && FOUND+=("$found_root")
+    done < <(find logs -maxdepth "$AUTO_EXPORT_GLOB_DEPTH" -type d \
+                  \( -name '_DA_VA_BRIDGE_*' -o -name 'DA_VA_*' \) 2>/dev/null | sort)
+
+    if [ "${#FOUND[@]}" -eq 0 ]; then
+        echo "[ FATAL ] auto-scan found no tree to analyse under $REPO/logs"
+        echo "[ FATAL ] edit AUTO_ROOTS in $(basename "$0"), or pass a path as \$1"
+        exit 1
+    fi
+    PARENT_PATH=$(IFS=, ; echo "${FOUND[*]}")
+    echo "[ DA_VA_v2 ] auto-scan found ${#FOUND[@]} root(s):"
+    for root in "${FOUND[@]}"; do echo "[ DA_VA_v2 ]   $root"; done
+fi
 
 # The folder name matters: both HTML visualizers pick runs out of the
 # analysis_results/ directory listing by leading prefix ("batch_" for
