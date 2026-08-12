@@ -11,5 +11,5 @@
 - [Archived_Codes = dead code](archived-codes-is-dead-code.md) — Archived_Codes/ & *(legacy/Abandoned/Outdated) folders are dead/wrong; never run/edit/list-as-work; read-only to learn in rare cases
 - ["Good" = Pareto-dominant](pareto-definition-of-good.md) — at equal success+constraints, fewer steps AND lower avg_time; else say "trade-off"/"non-dominated", never "best"
 - [Benchmark hierarchy: who must beat whom](benchmark-hierarchy-who-beats-whom.md) — diffusion-DPCC is THE baseline; MF/AF must also beat naive FM; HardFlow must beat the DPCC projector via lower proj threshold
-- [DA target = best baseline DPCC row](da-target-is-best-baseline-variant.md) — baseline is always DPCC; fix its best row as Target; any variant of ours beating it on ANY axis (S&C held) = win; run this check in every DA
+- [DA target = best variant of DPCC K20/aw10](da-target-is-best-baseline-variant.md) — paper baseline is pinned to K20+aw10+GaussianDiffusion; pick its best projection variant as Target (other K = additional/conservative check); beating it on ANY axis (S&C held) = win; run in every DA
 - [MeanFlow-family upstreams in aux_repo](meanflow-family-upstreams.md) — MeanFlow (PyTorch, only real iMF trainer) vs imeanflow (JAX official, torch branch inference-only) vs alphaflow (bootstrapped target, α-anneal)

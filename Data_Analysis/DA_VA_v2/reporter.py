@@ -123,7 +123,8 @@ class Reporter:
         if table is None or table.empty:
             return table
         lead = ['Candidate', 'FolderName', 'seed', 'split', 'geo', 'variant',
-                'source', 'n_rollouts', 'n_frozen', 'frozen_rate',
+                'source', 'legacy', 'legacy_kind', 'has_projector',
+                'n_rollouts', 'n_frozen', 'frozen_rate',
                 'n_cb_tripped', 'cb_skipped_steps', 'npz_complete']
         lead = [c for c in lead if c in table.columns]
         rest = [c for c in table.columns if c not in lead]
@@ -277,7 +278,15 @@ class Reporter:
             lines.append('  (nothing rankable — check logs/loading.log)')
         for rank, (candidate, accuracy) in enumerate(self.agg.ranked_candidates, 1):
             entry = self.agg.candidate_stats[candidate]
-            lines.append(f'  {rank}. Candidate {candidate} — {entry["FolderName"]}')
+            info = self.candidates_info.get(candidate, {})
+            tag = ''
+            if info.get('legacy'):
+                tag = f'   [LEGACY {info.get("legacy_kind") or "unknown"}]'
+            if not info.get('has_projector', True):
+                # Its "goal+constraint" number is really plain goal success — the
+                # aggregator falls back when the constraint column is all-NaN.
+                tag += '   [no projector: ranked on goal success only]'
+            lines.append(f'  {rank}. Candidate {candidate} — {entry["FolderName"]}{tag}')
             lines.append(f'      goal+constraint {accuracy * 100:6.2f}%   '
                          f'goal {entry.get("success_rate", np.nan) * 100:6.2f}%   '
                          f'collision-free {entry.get("collision_free", np.nan) * 100:6.2f}%   '
@@ -318,6 +327,11 @@ class Reporter:
                   '  total_violations is NaN for visual runs — that eval records',
                   '    per-family maxima, never a cumulative sum. Use',
                   '    constraint_exec_total_viol_count / max_viol_depth_m instead.',
+                  '  legacy=1 units come from a `_`-prefixed bridged tree (e.g. the',
+                  '    D3IL baseline via bridge_d3il_va_to_da_va_v2.py), not from a',
+                  '    Gen14-shaped eval. has_projector=0 means every constraint_*',
+                  '    column is absent BY DESIGN — that pipeline runs no projector,',
+                  '    so it can only be compared on goal success / distance / time.',
                   '=' * 78]
 
         with open(path, 'w') as f:

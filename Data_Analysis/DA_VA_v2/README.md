@@ -69,6 +69,51 @@ nested Gen14/late-Gen7 one (`success.strict`, `outcome.*`, `timing.*`,
 `mean_distance`, `steps`, `context_info.*`, `constraint_metrics.exec_*`). A tree
 mixing both loads without a flag.
 
+### Legacy (bridged) trees — the `_` prefix
+
+A pipeline that predates this API can be **bridged** into shape C instead of
+being re-run. The contract is one character: a candidate under a folder whose
+name starts with `_` is legacy, and `data_loader` applies that pipeline's rescues
+on top of the normal load. Nothing else changes — same discovery, same tables.
+
+| tree | root | read as |
+|---|---|---|
+| bridged D3IL baseline (old runs) | `logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/` | legacy path |
+| native D3IL baseline (new runs) | `logs/d3il_visual_aligning_baseline/DA_VA_d3il_baseline/` | normal Gen14 path |
+
+```bash
+# convert finished old runs (cluster; --json-only needs no numpy)
+python d3il_visual_aligning_baseline_test/bridge_d3il_va_to_da_va_v2.py \
+    --source-root logs/d3il_visual_aligning_baseline
+
+# a SECOND source tree that reuses the same agent+seed needs its own root + label,
+# or it overwrites the first (the bridge refuses and says so). Pin the scale when
+# the run was killed before writing results_seed_*.json:
+python d3il_visual_aligning_baseline_test/bridge_d3il_va_to_da_va_v2.py \
+    --source-root "logs/d3il_visual_aligning_baseline(Bf_U3)" \
+    --out-root    logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3 \
+    --label Bf_U3 --n-contexts 60 --n-trajectories 18
+
+# then analyse any root exactly like a Gen14 tree (comma-separated = one comparison)
+python Data_Analysis/DA_VA_v2/main_da_batch.py \
+    --parent-path logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline
+```
+
+The D3IL visual-aligning baseline (`variant=d3il_baseline`, `geo=none`) has **no
+projector**: every `constraint_*` metric, `collision_free_completed` and
+`n_success_and_constraints` is NaN *by design*, never 0. `data_quality.csv` says
+so per unit (`legacy`, `legacy_kind`, `has_projector`), and candidate ranking
+falls back from goal+constraint to plain goal success for such a candidate — so
+compare it on success / distance / time only. Its `avg_time` is **seconds per
+control step** (D3IL calls the policy every step), not per replan like Gen14.
+
+Point `--parent-path` at ONE root: both roots live under
+`logs/d3il_visual_aligning_baseline/`, so passing the shared parent discovers the
+bridged and native copies of the same seed as two candidates.
+
+Regression test (stdlib, runs in this container):
+`python Data_Analysis/DA_VA_v2/test_legacy_bridge_scan.py`
+
 ---
 
 ## Metrics
@@ -290,7 +335,13 @@ utils.py         logging, output dirs, HTML manifest
 main_da_batch.py / main_da.py   CLIs
 ```
 
+```
+test_snapshot_scan.py        "Last Run" timestamps            (stdlib)
+test_legacy_bridge_scan.py   legacy/bridged tree handling     (stdlib)
+```
+
 Note the environment split: this container has no scientific Python, so only
-`discovery.py` runs here. The full pipeline runs on the cluster (`FMPCC` env).
+`discovery.py` and the two stdlib tests run here. The full pipeline runs on the
+cluster (`FMPCC` env).
 
 Changelog: `logs_in_develop/DA_Code/DA_VA_v2/`.

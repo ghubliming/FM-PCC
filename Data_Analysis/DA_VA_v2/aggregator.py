@@ -281,14 +281,32 @@ def _variant_categories(present):
 
 
 def _metric_mean(block, metric, fallback=None):
+    """Mean of a metric over a block, falling back when it is missing OR all-NaN.
+
+    The all-NaN case is what a projector-free pipeline looks like: the D3IL
+    baseline HAS an `n_success_and_constraints` column (`_finalise_frame` creates
+    it) but every value is NaN, because there are no constraints to satisfy.
+    Without the NaN check such a candidate would rank as NaN and drop out of the
+    comparison entirely instead of ranking on plain goal success.
+    """
+    value = _mean_of(block, metric)
+    if np.isnan(value) and fallback:
+        value = _mean_of(block, fallback)
+    return value
+
+
+def _mean_of(block, metric):
     rows = block[block['metric'] == metric]
-    if rows.empty and fallback:
-        rows = block[block['metric'] == fallback]
     return float(rows['mean'].mean()) if not rows.empty else float('nan')
 
 
 def _metric_std(block, metric, fallback=None):
+    value = _std_of(block, metric)
+    if np.isnan(value) and fallback:
+        value = _std_of(block, fallback)
+    return value
+
+
+def _std_of(block, metric):
     rows = block[block['metric'] == metric]
-    if rows.empty and fallback:
-        rows = block[block['metric'] == fallback]
     return float(rows['mean'].std(ddof=0)) if len(rows) > 1 else float('nan')

@@ -21,6 +21,20 @@ Output layout:
             …
         results_seed_{s}.json
     logs/d3il_visual_aligning_baseline/{agent_name}/aggregate_results.json
+
+U4.3 — DA export (on by default, `--no-da-export` to skip):
+a second, additive copy of the results is written in the Gen14 API shape that
+`Data_Analysis/DA_VA_v2` reads natively, so this baseline lands in the same
+tables as the FM/MF/AF/diffusion arms without any bridging:
+
+    logs/d3il_visual_aligning_baseline/DA_VA_d3il_baseline/
+        d3il_baseline_{agent_name}/{seed}/results[_train_set]/d3il_baseline/
+            d3il_baseline.npz  unit_meta.json  diagnostics/rollout_{r}_stats.json
+
+The schema lives in `da_va_export.py` and is shared with
+`bridge_d3il_va_to_da_va_v2.py`, which produces the identical layout for runs
+that finished before this export existed (those land under a `_`-prefixed root
+so DA_VA_v2 knows to apply its legacy reader).
 """
 
 import argparse
@@ -58,6 +72,10 @@ from agents.utils.sim_path import sim_framework_path
 # FM-PCC fm_overhead is measured against (IDEAS.md §Priority: do the baseline first).
 import time as _time
 from realtime_recording.behavior_logger import RTRecorder
+
+# U4.3 — DA_VA_v2 export schema, shared with bridge_d3il_va_to_da_va_v2.py.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import da_va_export as da_api
 RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
 
 OmegaConf.register_new_resolver("add", lambda *numbers: sum(numbers), replace=True)
@@ -93,6 +111,7 @@ class D3ILBaselineWrapper:
         self.video_frames      = []
         self.ee_traj           = []   # list[np.array(3,)] — des_robot_pos each step
         self.dist_curve        = []   # list[float]        — mean_distance each step
+        self.step_times_ms     = []   # U4.3 — agent.predict() wall time per step
         self.step_count        = 0
         self.curr_context_info = {}
 
@@ -108,6 +127,7 @@ class D3ILBaselineWrapper:
         self.video_frames.clear()
         self.ee_traj.clear()
         self.dist_curve.clear()
+        self.step_times_ms.clear()
         self.step_count    = 0
         self.curr_context_info = {}
 
@@ -131,12 +151,16 @@ class D3ILBaselineWrapper:
             'init_xy_dist':       init_xy_dist,
         }
 
-    def record_step(self, des_robot_pos, frame_bgr, mean_distance):
+    def record_step(self, des_robot_pos, frame_bgr, mean_distance, infer_ms=None):
         """Called from our rollout loop after each env.step().
         frame_bgr: HxWxC uint8 BGR image or None (state-only mode).
+        infer_ms:  agent.predict() wall time for this step (U4.3 — the only
+                   timing the old runs kept outside the realtime text logs).
         """
         self.ee_traj.append(des_robot_pos[:3].copy())
         self.dist_curve.append(float(mean_distance))
+        if infer_ms is not None:
+            self.step_times_ms.append(float(infer_ms))
         self.step_count += 1
         if frame_bgr is not None and self.record_mode != 'none':
             # BGR → RGB for video
@@ -176,9 +200,19 @@ class D3ILBaselineWrapper:
             'steps':         int(self.step_count),
             'mean_distance': float(info.get('mean_distance', 0.0)),
             'mode':          int(info.get('mode',            0)),
+            # U4.1 bug B1 fix: the context index MUST live on the record.
+            # compute_behavior_entropy() reads `rec['context']`; it was never
+            # stored, so every rollout was skipped and entropy was a hard 0.0 in
+            # every results_seed_*.json ever written by this script.
+            'context':       int(info.get('context',
+                                          self.curr_context_info.get('context_idx', -1))),
             'context_info':  dict(self.curr_context_info),
             'ee_traj':       ee_arr,
             'dist_curve':    list(self.dist_curve),
+            # U4.3 — mean seconds per control step (D3IL predicts every step;
+            # the action chunk is served from the agent's internal buffer).
+            'avg_time':      (float(np.mean(self.step_times_ms)) / 1e3
+                              if self.step_times_ms else float('nan')),
         }
         self.master_history[f'rollout_{ridx}'] = rec
 
@@ -246,6 +280,11 @@ class D3ILBaselineWrapper:
             'mean_distance': rec['mean_distance'],
             'mode':          rec['mode'],
             'context_info':  rec['context_info'],
+            # U4.3 — additive; DA_VA_v2's flat-schema JSON reader picks this up
+            # under exactly this name, so even a hand-copied tree carries timing.
+            # NaN → null: json.dump would otherwise emit bare `NaN`, which the
+            # HTML viewers' JSON.parse rejects.
+            'avg_inference_time_per_replan': da_api.json_safe(rec['avg_time']),
         }
         with open(os.path.join(diag_path, f'rollout_{ridx}_stats.json'), 'w') as f:
             json.dump(stats, f, indent=4)
@@ -347,13 +386,18 @@ def compute_behavior_entropy(records, n_contexts, n_trajs, n_modes=2):
 
     `records` is the list of per-rollout dicts (each has 'context', 'mode', 'success').
     Returns a float in [0, 1]; 1 = even use of all modes, 0 = mode collapse.
+
+    U4.1 bug B1: `update_rollout_info()` never stored 'context', so this loop
+    skipped every rollout and returned exactly 0.0 for every run. The record now
+    carries it; the `context_info` fallback below keeps this function correct for
+    any caller that builds records the older way.
     """
     if n_contexts <= 0 or n_trajs <= 0:
         return 0.0
     # bucket modes of SUCCESSFUL rollouts per context
     counts = np.zeros((n_contexts, n_modes), dtype=np.float64)
     for r in records:
-        c = int(r.get('context', -1))
+        c = int(r.get('context', r.get('context_info', {}).get('context_idx', -1)))
         if not (0 <= c < n_contexts):
             continue
         if not bool(r.get('success', False)):
@@ -474,6 +518,7 @@ def run_eval_seed(seed, cfg_eval, record_mode):
                     wrapper.record_step(
                         des_robot_pos, frame_bgr,
                         float(info.get('mean_distance', 0.0)),
+                        infer_ms=_rt_ms,
                     )
 
                     des_robot_pos       = pred_xyz[:3]
@@ -501,6 +546,7 @@ def run_eval_seed(seed, cfg_eval, record_mode):
                     wrapper.record_step(
                         pred_xyz, None,
                         float(info.get('mean_distance', 0.0)),
+                        infer_ms=_rt_ms,
                     )
 
             # REAL_TIME_RECORDING_UPDATE — write per-rollout realtime baseline log + SUMMARY.
@@ -549,6 +595,10 @@ def run_eval_seed(seed, cfg_eval, record_mode):
         'n_steps_mean':         float(np.mean(steps)),
         'n_steps_std':          float(np.std(steps)),
         'mode_0_rate':          float(sum(m == 0 for m in modes) / max(len(modes), 1)),
+        # U4.3 — seconds per control step, averaged over rollouts (see the module
+        # docstring on timing semantics before comparing this to Gen14 avg_time).
+        'avg_time_mean':        float(np.nanmean([r['avg_time'] for r in all_rec])),
+        'avg_time_std':         float(np.nanstd([r['avg_time'] for r in all_rec])),
     }
 
     print(f'\n{"─" * 60}')
@@ -570,7 +620,77 @@ def run_eval_seed(seed, cfg_eval, record_mode):
         json.dump(results, f, indent=4)
     print(f'[ saved ] {result_file}')
 
+    # ── U4.3: DA_VA_v2-native export ──────────────────────────────────────────
+    if cfg_eval.get('da_export', True):
+        try:
+            export_da_unit(cfg_eval, seed, agent_name, all_rec, results,
+                           n_contexts, n_trajs, eval_on_train)
+        except Exception as e:                                    # noqa: BLE001
+            # The DA copy is a convenience; never let it lose a finished eval.
+            print(f'[ WARNING ] DA export failed (results above are unaffected): {e}')
+
     return results
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# U4.3 — DA_VA_v2 export
+# ─────────────────────────────────────────────────────────────────────────────
+
+def export_da_unit(cfg_eval, seed, agent_name, all_rec, results,
+                   n_contexts, n_trajs, eval_on_train):
+    """Write this seed's results in the shape `Data_Analysis/DA_VA_v2` reads.
+
+    Same schema module the legacy bridge uses, so a bridged old run and a fresh
+    run are byte-compatible on the DA side — the only difference is the root
+    folder name (`DA_VA_d3il_baseline/` here, `_DA_VA_BRIDGE_…/` there).
+    """
+    root = os.path.join(
+        cfg_eval.get('save_root',
+                     cfg_eval.get('checkpoint_root', 'logs/d3il_visual_aligning_baseline')),
+        cfg_eval.get('da_export_root_name', da_api.DA_NATIVE_ROOT_NAME))
+    split = 'train' if eval_on_train else 'test'
+
+    records = []
+    for ridx, rec in enumerate(all_rec):
+        ctx = int(rec.get('context', rec['context_info'].get('context_idx', ridx // max(n_trajs, 1))))
+        records.append(da_api.make_record(
+            rollout_index=ridx,
+            context_idx=ctx,
+            traj_idx=ridx % max(n_trajs, 1),
+            success=rec['success'],
+            steps=rec['steps'],
+            mean_distance=rec['mean_distance'],
+            mode=rec['mode'],
+            context_info=rec['context_info'],
+            avg_time_s=rec['avg_time'],
+        ))
+
+    scalars = da_api.summarise(records, n_contexts, n_trajs)
+    out_dir = da_api.write_unit(
+        root, agent_name, seed, records, scalars, split=split,
+        args_extra={
+            'export_source': 'native_eval',
+            'n_contexts': n_contexts,
+            'n_trajectories_per_context': n_trajs,
+            'eval_on_train': bool(eval_on_train),
+            'max_episode_length': int(cfg_eval.get('max_episode_length', 400)),
+            'device': cfg_eval.get('device', 'cuda'),
+            'agent_cfg_group': cfg_eval.get('agent_cfg_group', ''),
+        })
+    print(f'[ DA export ] {out_dir}')
+    print(f'[ DA export ] read it with: python Data_Analysis/DA_VA_v2/main_da_batch.py '
+          f'--parent-path {root}')
+
+    # The scalars here are computed by the shared module; if they disagree with
+    # the eval's own numbers something is wrong with one of the two paths.
+    if abs(scalars['success_rate'] - results['success_rate']) > 1e-9 or \
+            abs(scalars['entropy'] - results['entropy']) > 1e-9:
+        print(f'[ WARNING ] DA export scalars differ from the eval summary — '
+              f'export(success={scalars["success_rate"]:.4f}, '
+              f'entropy={scalars["entropy"]:.4f}) vs '
+              f'eval(success={results["success_rate"]:.4f}, '
+              f'entropy={results["entropy"]:.4f})')
+    return out_dir
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -592,6 +712,14 @@ def parse_args():
                    help='recording mode override')
     p.add_argument('--eval-on-train', action='store_true', help='eval on training contexts')
     p.add_argument('--device',      default=None, help='cuda or cpu override')
+    p.add_argument('--no-da-export', action='store_true',
+                   help='skip the DA_VA_v2-shaped copy of the results (U4.3). '
+                        'The copy is additive and cheap; only skip it if the '
+                        'DA tool is not wanted for this run.')
+    p.add_argument('--da-export-root', default=None,
+                   help=f'folder name for the DA export, under save_root '
+                        f'(default: {da_api.DA_NATIVE_ROOT_NAME}). Do NOT start it '
+                        f'with "_" — that prefix means "legacy/bridged" to DA_VA_v2.')
     return p.parse_args()
 
 
@@ -619,6 +747,10 @@ def main():
         cfg['eval_on_train'] = True
     if args.device:
         cfg['device'] = args.device
+    if args.no_da_export:
+        cfg['da_export'] = False
+    if args.da_export_root:
+        cfg['da_export_root_name'] = args.da_export_root
 
     record_mode = cfg.get('record_mode', 'all')
 

@@ -39,6 +39,30 @@ TIGHTENED_SUFFIX = '-tightened'
 # `results/{variant}/{variant}.npz`).
 GEO_NONE = 'none'
 
+# ── Legacy / bridged trees ────────────────────────────────────────────────────
+# A candidate under a folder whose name starts with `_` is LEGACY: it was not
+# written by a Gen14-shaped eval, it was re-emitted from an older pipeline's
+# outputs by a bridge script (today: `d3il_visual_aligning_baseline_test/
+# bridge_d3il_va_to_da_va_v2.py`). The prefix is the whole contract — no
+# registry to keep in sync — and it flips on the legacy reader in
+# `data_loader`, plus the `legacy` / `has_projector` columns in data_quality.csv.
+#
+# Once a pipeline exports the Gen14 API natively it drops the underscore
+# (`DA_VA_d3il_baseline/`) and is read on the normal path with no special code.
+LEGACY_DIR_PREFIX = '_'
+
+# Written at the bridged root by the bridge script; carries `legacy_kind`,
+# `has_projector` and the per-unit provenance list.
+BRIDGE_MANIFEST_NAME = '_bridge_manifest.json'
+
+# Pipelines with no constraint projector. Their `constraint_*` metrics are
+# absent BY DESIGN — never read a NaN there as a failed load.
+PIPELINES_WITHOUT_PROJECTOR = ('d3il_visual_aligning_baseline',)
+
+# Legacy timing rescue: the D3IL baseline never wrote a per-rollout inference
+# time into its JSONs, only into the RTRecorder text logs next to them.
+LEGACY_REALTIME_LOG_GLOB = 'realtime_*.log'
+
 # `utils/setup.py::snapshot_configs` writes `<seed>/config_snapshot_<config>/`
 # and drops a marker file `snapshot_<YYYYMMDD_HHMMSS>` in it on every Parser()
 # call — i.e. once per eval launch, never deleting the previous markers. That
@@ -155,6 +179,12 @@ METRIC_LABELS = {
     'frozen':                           'D1-Frozen Rollout Rate',
     'contact_first_step':               'First Contact Step',
     'contact_last_step':                'Last Contact Step',
+    # D3IL baseline (legacy/bridged and native) — paper metrics with no
+    # constraint counterpart.
+    'entropy':                          'Behavior Entropy (D3IL Eq. 2)',
+    'score':                            'D3IL Score  0.5·(success + entropy)',
+    'mode_encoding':                    'Behavior Mode',
+    'context_index':                    'Context Index',
 }
 
 # Rendered as percentages by the reporter/visualizer.

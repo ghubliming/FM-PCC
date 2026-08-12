@@ -90,10 +90,16 @@ fi
 
 echo "[ eval ] agent=${AGENT_NAME}  record_mode=${RECORD_MODE}"
 
+# U4.3: the eval also writes a DA_VA_v2-readable copy under
+#   logs/d3il_visual_aligning_baseline/DA_VA_d3il_baseline/
+# (config key `da_export`, disable with --no-da-export). Analyse it with:
+#   python Data_Analysis/DA_VA_v2/main_da_batch.py \
+#       --parent-path logs/d3il_visual_aligning_baseline/DA_VA_d3il_baseline
 python d3il_visual_aligning_baseline_test/eval_d3il_visual_aligning.py \
     $AGENT_ARG \
     $SEED_ARG \
     $PAPER_ARG \
     --record "${RECORD_MODE}"
 
+echo "[ eval ] DA export: ${REPO}/logs/d3il_visual_aligning_baseline/DA_VA_d3il_baseline"
 echo "Job completed successfully."

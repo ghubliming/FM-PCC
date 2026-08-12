@@ -1,0 +1,481 @@
+==============================================================================
+DA — FiLM V2 vs FiLM V1, Gen14 mix arms (aligning-d3il-visual, seed 6)
+==============================================================================
+batch: /workspaces/FM-PCC/temp/1208/Gen14_Mix_FilmV2/batch_va2_20260812_114647
+rollouts loaded: 5634
+
+### candidate inventory
+  C1   fm_visual (legacy Bf_U8)   FiLM v2  K=20   n=   70 frozen=  0 succ=  0 collfree=   0 sat=0.6575 t=   479.3ms 
+  C2   fm_visual (legacy bounds)  FiLM v2  K=20   n=   35 frozen=  0 succ=  0 collfree=   1 sat=0.7288 t=  4894.6ms 
+  C3   fm_visual                  FiLM v2  K=20   n=   82 frozen=  0 succ=  0 collfree=   7 sat=0.5732 t=  2580.0ms 
+  C4   fm_visual                  FiLM v1  K=20   n=  348 frozen=  0 succ=  0 collfree=  73 sat=0.8289 t=   920.9ms 
+  C5   mix af                     FiLM v1  K=100  n=   41 frozen=  0 succ=  2 collfree=   9 sat=0.7849 t=  5065.2ms 
+  C6   mix af                     FiLM v1  K=2    n= 1140 frozen= 76 succ= 13 collfree= 511 sat=0.8664 t=    62.8ms 
+  C7   mix af                     FiLM v2  K=2    n=  960 frozen= 64 succ=  0 collfree= 249 sat=0.7377 t=    58.5ms 
+  C8   mix diffusion              FiLM v1  K=100  n=   49 frozen=  0 succ=  0 collfree=  14 sat=0.7658 t=  4236.6ms 
+  C9   mix diffusion              FiLM v1  K=20   n=  159 frozen=  0 succ=  0 collfree=  31 sat=0.6474 t=  1288.0ms 
+  C10  mix fm                     FiLM v1  K=100  n=   52 frozen=  0 succ=  0 collfree=   6 sat=0.5283 t=  4080.5ms 
+  C11  mix fm                     FiLM v1  K=20   n=  280 frozen=  0 succ=  0 collfree=  21 sat=0.5416 t=   703.8ms 
+  C12  mix mf                     FiLM v1  K=100  n=   41 frozen=  0 succ=  1 collfree=   8 sat=0.8218 t=  4674.6ms 
+  C13  mix mf                     FiLM v1  K=2    n= 1140 frozen= 76 succ= 29 collfree= 563 sat=0.8845 t=    62.3ms 
+  C14  mix mf                     FiLM v2  K=2    n=  960 frozen= 64 succ= 12 collfree= 329 sat=0.7641 t=    50.0ms 
+  C15  dpcc diffuser (baseline)   FiLM v2  K=20   n=  277 frozen=  0 succ=  0 collfree=  39 sat=0.5928 t=  1044.7ms 
+
+
+==============================================================================
+PRIMARY 1 — mix MeanFlow K=2: FiLM V1 (C13) vs FiLM V2 (C14)
+==============================================================================
+  pairing: 896 usable pairs, 64 dropped frozen, 180 V1 rollouts with no V2 partner, 0 context mismatches
+
+------------------------------------------------------------------------------
+MeanFlow K=2 — all matched variants and geos pooled   (n = 896 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.8660      0.7472     -0.1188   896   0.0000   0.0004 ***  V1 better
+  violated steps                     53.5078    101.1016    +47.5938   896   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0875      0.0809     -0.0066   896   0.0000   0.0004 ***  V1 better
+  max phys tracking err (m)           0.2743      0.4565     +0.1822   896   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.2907      0.3540     +0.0633   896   0.0000   0.0004 ***  V1 better
+  time per replan (ms)               45.9941     53.5934     +7.5993   896   0.0000   0.0004 ***  V1 better
+  episode steps                     391.9888    396.3672     +4.3783   896   0.0051   0.0154 *    V1 better
+  max obstacle pen (m)                0.0066      0.0081     +0.0015   896   0.0125   0.0250 *    V1 better
+  mean distance to goal (m)           0.3473      0.3659     +0.0186   896   0.0444   0.0444 *    V1 better
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  collision-free completed               385         265       186/66   896   0.0000   0.0000 ***  V1 better
+  zero-violation rollout                 385         265       186/66   896   0.0000   0.0000 ***  V1 better
+  goal success (relaxed)                  68          19        60/11   896   0.0000   0.0000 ***  V1 better
+  goal success                            25          12         20/7   896   0.0192   0.0192 *    V1 better
+
+------------------------------------------------------------------------------
+MeanFlow K=2 — geo combined_5 (nominal)   (n = 480 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.8342      0.7041     -0.1301   480   0.0000   0.0004 ***  V1 better
+  violated steps                     66.2375    118.3625    +52.1250   480   0.0000   0.0004 ***  V1 better
+  max phys tracking err (m)           0.2751      0.4660     +0.1908   480   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0852      0.0790     -0.0062   480   0.0001   0.0006 ***  V1 better
+  max obstacle pen (m)                0.0068      0.0093     +0.0024   480   0.0031   0.0155 *    V1 better
+  final xy dist to target (m)         0.3035      0.3551     +0.0515   480   0.0034   0.0155 *    V1 better
+  time per replan (ms)               47.8138     55.3884     +7.5746   480   0.0472   0.1417 ns 
+  episode steps                     391.5688    393.2188     +1.6500   480   0.4742   0.9485 ns 
+  mean distance to goal (m)           0.3545      0.3608     +0.0063   480   0.6225   0.9485 ns 
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  collision-free completed               141          52       120/31   480   0.0000   0.0000 ***  V1 better
+  zero-violation rollout                 141          52       120/31   480   0.0000   0.0000 ***  V1 better
+  goal success (relaxed)                  38          14         31/7   480   0.0001   0.0002 ***  V1 better
+  goal success                            15          12         10/7   480   0.6291   0.6291 ns 
+
+------------------------------------------------------------------------------
+MeanFlow K=2 — geo combined_5-tightened   (n = 416 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.9028      0.7970     -0.1057   416   0.0000   0.0004 ***  V1 better
+  violated steps                     38.8197     81.1851    +42.3654   416   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0902      0.0831     -0.0071   416   0.0000   0.0004 ***  V1 better
+  max phys tracking err (m)           0.2733      0.4456     +0.1722   416   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.2759      0.3528     +0.0769   416   0.0000   0.0004 ***  V1 better
+  time per replan (ms)               43.8944     51.5223     +7.6279   416   0.0000   0.0004 ***  V1 better
+  episode steps                     392.4736    400.0000     +7.5264   416   0.0001   0.0004 ***  V1 better
+  mean distance to goal (m)           0.3389      0.3718     +0.0329   416   0.0126   0.0252 *    V1 better
+  max obstacle pen (m)                0.0064      0.0067     +0.0003   416   0.7064   0.7064 ns 
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  goal success (relaxed)                  30           5         29/4   416   0.0000   0.0000 ***  V1 better
+  goal success                            10           0         10/0   416   0.0020   0.0059 **   V1 better
+  collision-free completed               244         213        66/35   416   0.0027   0.0059 **   V1 better
+  zero-violation rollout                 244         213        66/35   416   0.0027   0.0059 **   V1 better
+
+  per-variant: constraint sat rate  (V1 -> V2)
+  variant                         V1        V2         Δ    n        p
+  bounds_free                 0.9451    0.8795   -0.0656   56   0.0022 **
+  diffuser                    0.7890    0.5426   -0.2464   56   0.0002 ***
+  dpcc-c                      0.8900    0.8450   -0.0451   56   0.0542 ns
+  dpcc-c-dt0p25               0.9333    0.8743   -0.0590   56   0.0346 *
+  dpcc-c-dt0p5                0.9100    0.8603   -0.0497   56   0.0776 ns
+  dpcc-c-dt2p0                0.9156    0.8652   -0.0504   56   0.0018 **
+  dpcc-c-dt4p0                0.9700    0.8978   -0.0722   56   0.0004 ***
+  dpcc-r                      0.9158    0.8899   -0.0260   56   0.2094 ns
+  dpcc-t                      0.9113    0.8770   -0.0343   56   0.1388 ns
+  geo_free                    0.7908    0.5799   -0.2108   56   0.0004 ***
+  geo_free-bounds_free        0.7629    0.5435   -0.2194   56   0.0002 ***
+  geo_free-model_free         0.8021    0.5995   -0.2026   56   0.0002 ***
+  gradient                    0.7698    0.6152   -0.1546   56   0.0078 **
+  model_free                  0.8041    0.5963   -0.2078   56   0.0002 ***
+  model_free-bounds_free      0.8300    0.6000   -0.2301   56   0.0002 ***
+  post_processing             0.9170    0.8901   -0.0269   56   0.1888 ns
+  significant cells: V2 better in 0, V1 better in 11
+
+  per-variant: mean distance to goal (m)  (V1 -> V2)
+  variant                         V1        V2         Δ    n        p
+  bounds_free                 0.2834    0.3539   +0.0706   56   0.0204 *
+  diffuser                    0.4080    0.3897   -0.0183   56   0.7319 ns
+  dpcc-c                      0.3872    0.3805   -0.0067   56   0.9084 ns
+  dpcc-c-dt0p25               0.3016    0.3432   +0.0415   56   0.1990 ns
+  dpcc-c-dt0p5                0.3103    0.3687   +0.0584   56   0.0788 ns
+  dpcc-c-dt2p0                0.3697    0.3885   +0.0187   56   0.0246 *
+  dpcc-c-dt4p0                0.3868    0.3857   -0.0012   56   0.8760 ns
+  dpcc-r                      0.3255    0.3820   +0.0565   56   0.1800 ns
+  dpcc-t                      0.2915    0.3812   +0.0897   56   0.0076 **
+  geo_free                    0.3714    0.3859   +0.0145   56   0.7027 ns
+  geo_free-bounds_free        0.3543    0.3700   +0.0157   56   0.6317 ns
+  geo_free-model_free         0.3547    0.3346   -0.0201   56   0.5943 ns
+  gradient                    0.3414    0.3382   -0.0032   56   0.9420 ns
+  model_free                  0.3613    0.3351   -0.0262   56   0.4899 ns
+  model_free-bounds_free      0.3517    0.3336   -0.0181   56   0.6259 ns
+  post_processing             0.3574    0.3836   +0.0262   56   0.6075 ns
+  significant cells: V2 better in 0, V1 better in 3
+
+
+==============================================================================
+PRIMARY 2 — mix AlphaFlow K=2: FiLM V1 (C6) vs FiLM V2 (C7)
+==============================================================================
+  pairing: 896 usable pairs, 64 dropped frozen, 180 V1 rollouts with no V2 partner, 0 context mismatches
+
+------------------------------------------------------------------------------
+AlphaFlow K=2 — all matched variants and geos pooled   (n = 896 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.8429      0.7190     -0.1239   896   0.0000   0.0004 ***  V1 better
+  violated steps                     62.7444    112.4018    +49.6574   896   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0845      0.0734     -0.0110   896   0.0000   0.0004 ***  V1 better
+  max obstacle pen (m)                0.0080      0.0007     -0.0074   896   0.0000   0.0004 ***  V2 better
+  mean distance to goal (m)           0.3692      0.4195     +0.0503   896   0.0000   0.0004 ***  V1 better
+  max phys tracking err (m)           0.2567      1.1956     +0.9389   896   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.3071      0.4951     +0.1880   896   0.0000   0.0004 ***  V1 better
+  time per replan (ms)               45.5642     62.6744    +17.1102   896   0.0000   0.0004 ***  V1 better
+  episode steps                     396.2600    400.0000     +3.7400   896   0.0007   0.0007 ***  V1 better
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  collision-free completed               334         185       246/97   896   0.0000   0.0000 ***  V1 better
+  zero-violation rollout                 334         185       246/97   896   0.0000   0.0000 ***  V1 better
+  goal success (relaxed)                  25           0         25/0   896   0.0000   0.0000 ***  V1 better
+  goal success                            12           0         12/0   896   0.0005   0.0005 ***  V1 better
+
+------------------------------------------------------------------------------
+AlphaFlow K=2 — geo combined_5 (nominal)   (n = 480 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.8199      0.7194     -0.1005   480   0.0000   0.0004 ***  V1 better
+  violated steps                     71.9125    112.2333    +40.3208   480   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0828      0.0731     -0.0098   480   0.0000   0.0004 ***  V1 better
+  max obstacle pen (m)                0.0082      0.0010     -0.0072   480   0.0000   0.0004 ***  V2 better
+  max phys tracking err (m)           0.2468      1.1628     +0.9159   480   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.3050      0.4831     +0.1781   480   0.0000   0.0004 ***  V1 better
+  time per replan (ms)               45.5901     61.0653    +15.4752   480   0.0000   0.0004 ***  V1 better
+  mean distance to goal (m)           0.3678      0.4148     +0.0470   480   0.0001   0.0004 ***  V1 better
+  episode steps                     394.8083    400.0000     +5.1917   480   0.0039   0.0039 **   V1 better
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  goal success (relaxed)                  15           0         15/0   480   0.0001   0.0002 ***  V1 better
+  collision-free completed               121          70       110/59   480   0.0001   0.0003 ***  V1 better
+  zero-violation rollout                 121          70       110/59   480   0.0001   0.0003 ***  V1 better
+  goal success                             9           0          9/0   480   0.0039   0.0039 **   V1 better
+
+------------------------------------------------------------------------------
+AlphaFlow K=2 — geo combined_5-tightened   (n = 416 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.8695      0.7185     -0.1510   416   0.0000   0.0004 ***  V1 better
+  violated steps                     52.1659    112.5962    +60.4303   416   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0863      0.0739     -0.0125   416   0.0000   0.0004 ***  V1 better
+  max obstacle pen (m)                0.0078      0.0003     -0.0075   416   0.0000   0.0004 ***  V2 better
+  max phys tracking err (m)           0.2681      1.2334     +0.9653   416   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.3095      0.5089     +0.1994   416   0.0000   0.0004 ***  V1 better
+  time per replan (ms)               45.5343     64.5311    +18.9968   416   0.0000   0.0004 ***  V1 better
+  mean distance to goal (m)           0.3709      0.4249     +0.0540   416   0.0001   0.0004 ***  V1 better
+  episode steps                     397.9351    400.0000     +2.0649   416   0.2474   0.2474 ns 
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  collision-free completed               213         115       136/38   416   0.0000   0.0000 ***  V1 better
+  zero-violation rollout                 213         115       136/38   416   0.0000   0.0000 ***  V1 better
+  goal success (relaxed)                  10           0         10/0   416   0.0020   0.0039 **   V1 better
+  goal success                             3           0          3/0   416   0.2500   0.2500 ns 
+
+  per-variant: constraint sat rate  (V1 -> V2)
+  variant                         V1        V2         Δ    n        p
+  bounds_free                 0.9583    0.8767   -0.0816   56   0.0004 ***
+  diffuser                    0.7809    0.5020   -0.2789   56   0.0002 ***
+  dpcc-c                      0.8604    0.7995   -0.0609   56   0.1534 ns
+  dpcc-c-dt0p25               0.8914    0.5892   -0.3021   56   0.0002 ***
+  dpcc-c-dt0p5                0.8800    0.5230   -0.3570   56   0.0002 ***
+  dpcc-c-dt2p0                0.8629    0.9705   +0.1076   56   0.0002 ***
+  dpcc-c-dt4p0                0.8818    0.9858   +0.1040   56   0.0002 ***
+  dpcc-r                      0.9334    0.8055   -0.1279   56   0.0002 ***
+  dpcc-t                      0.9281    0.9547   +0.0266   56   0.1478 ns
+  geo_free                    0.7429    0.8386   +0.0957   56   0.0422 *
+  geo_free-bounds_free        0.8052    0.8536   +0.0484   56   0.2683 ns
+  geo_free-model_free         0.7501    0.4932   -0.2569   56   0.0002 ***
+  gradient                    0.7807    0.5170   -0.2637   56   0.0002 ***
+  model_free                  0.7490    0.4932   -0.2558   56   0.0002 ***
+  model_free-bounds_free      0.7473    0.4932   -0.2542   56   0.0002 ***
+  post_processing             0.9346    0.8083   -0.1262   56   0.0002 ***
+  significant cells: V2 better in 3, V1 better in 10
+
+  per-variant: mean distance to goal (m)  (V1 -> V2)
+  variant                         V1        V2         Δ    n        p
+  bounds_free                 0.3339    0.4012   +0.0674   56   0.0218 *
+  diffuser                    0.3396    0.3829   +0.0433   56   0.1262 ns
+  dpcc-c                      0.3539    0.5157   +0.1618   56   0.0006 ***
+  dpcc-c-dt0p25               0.3371    0.4180   +0.0809   56   0.0030 **
+  dpcc-c-dt0p5                0.3185    0.4552   +0.1367   56   0.0002 ***
+  dpcc-c-dt2p0                0.3832    0.4196   +0.0364   56   0.1240 ns
+  dpcc-c-dt4p0                0.3857    0.3958   +0.0101   56   0.7964 ns
+  dpcc-r                      0.4068    0.4378   +0.0310   56   0.4835 ns
+  dpcc-t                      0.3414    0.4207   +0.0794   56   0.0082 **
+  geo_free                    0.4540    0.4384   -0.0156   56   0.7191 ns
+  geo_free-bounds_free        0.4027    0.4461   +0.0434   56   0.1600 ns
+  geo_free-model_free         0.3636    0.3859   +0.0223   56   0.4457 ns
+  gradient                    0.3671    0.3850   +0.0179   56   0.5705 ns
+  model_free                  0.3536    0.3859   +0.0323   56   0.2535 ns
+  model_free-bounds_free      0.3600    0.3859   +0.0259   56   0.3653 ns
+  post_processing             0.4069    0.4378   +0.0309   56   0.4993 ns
+  significant cells: V2 better in 0, V1 better in 5
+
+
+==============================================================================
+REPLICATION — is the V2 effect the same in both engines?
+==============================================================================
+  metric                                 MF Δ         AF Δ  agree?
+  constraint sat rate                 -0.1188      -0.1239  yes
+  violated steps                     +47.5938     +49.6574  yes
+  constraint margin (m)               -0.0066      -0.0110  yes
+  max obstacle pen (m)                +0.0015      -0.0074  NO
+  mean distance to goal (m)           +0.0186      +0.0503  yes
+  max phys tracking err (m)           +0.1822      +0.9389  yes
+  final xy dist to target (m)         +0.0633      +0.1880  yes
+  time per replan (ms)                +7.5993     +17.1102  yes
+  episode steps                       +4.3783      +3.7400  yes
+
+
+==============================================================================
+POOLED — both mix engines stacked (MF + AF, K=2)
+==============================================================================
+
+------------------------------------------------------------------------------
+FiLM V1 vs V2, MeanFlow and AlphaFlow pooled   (n = 1792 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  constraint sat rate                 0.8545      0.7331     -0.1214  1792   0.0000   0.0004 ***  V1 better
+  violated steps                     58.1261    106.7517    +48.6256  1792   0.0000   0.0004 ***  V1 better
+  constraint margin (m)               0.0860      0.0772     -0.0088  1792   0.0000   0.0004 ***  V1 better
+  max obstacle pen (m)                0.0073      0.0044     -0.0030  1792   0.0000   0.0004 ***  V2 better
+  mean distance to goal (m)           0.3583      0.3927     +0.0344  1792   0.0000   0.0004 ***  V1 better
+  max phys tracking err (m)           0.2655      0.8260     +0.5605  1792   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.2989      0.4245     +0.1256  1792   0.0000   0.0004 ***  V1 better
+  time per replan (ms)               45.7791     58.1339    +12.3548  1792   0.0000   0.0004 ***  V1 better
+  episode steps                     394.1244    398.1836     +4.0592  1792   0.0000   0.0004 ***  V1 better
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  collision-free completed               719         450      432/163  1792   0.0000   0.0000 ***  V1 better
+  zero-violation rollout                 719         450      432/163  1792   0.0000   0.0000 ***  V1 better
+  goal success (relaxed)                  93          19        85/11  1792   0.0000   0.0000 ***  V1 better
+  goal success                            37          12         32/7  1792   0.0001   0.0001 ***  V1 better
+
+
+==============================================================================
+DIAGNOSTIC A — unprojected plan quality (is the damage upstream of the projector?)
+==============================================================================
+  cand  variant                    sat   physerr    dist finaldist collfree    n
+  C13   diffuser                 0.789     0.495   0.408     0.339       17   56   mix mf v1
+  C13   model_free               0.804     0.422   0.361     0.251       14   56   mix mf v1
+  C13   geo_free-model_free      0.802     0.422   0.355     0.259       14   56   mix mf v1
+  C14   diffuser                 0.543     0.798   0.390     0.377        4   56   mix mf v2
+  C14   model_free               0.596     0.799   0.335     0.326        5   56   mix mf v2
+  C14   geo_free-model_free      0.599     0.799   0.335     0.322        5   56   mix mf v2
+  C6    diffuser                 0.781     0.488   0.340     0.255        8   56   mix af v1
+  C6    model_free               0.749     0.498   0.354     0.264        9   56   mix af v1
+  C6    geo_free-model_free      0.750     0.498   0.364     0.273        9   56   mix af v1
+  C7    diffuser                 0.502     2.165   0.383     0.451        2   56   mix af v2
+  C7    model_free               0.493     2.200   0.386     0.451        0   56   mix af v2
+  C7    geo_free-model_free      0.493     2.200   0.386     0.451        0   56   mix af v2
+
+
+==============================================================================
+DIAGNOSTIC B — behavioural spread across contexts (collapse check, variant=model_free)
+==============================================================================
+  cand  metric                           mean      std      min      max    n
+  -- C13 mix mf FiLM v1
+        context_final_xy_dist          0.2505   0.2486   0.0115   0.8905   56
+        mean_dist_per_rollout          0.3613   0.2317   0.0140   1.0239   56
+        max_phys_error_per_rollout     0.4223   0.6647   0.0342   2.5033   56
+  -- C14 mix mf FiLM v2
+        context_final_xy_dist          0.3264   0.2434   0.0066   1.3620   56
+        mean_dist_per_rollout          0.3351   0.2134   0.0088   1.0862   56
+        max_phys_error_per_rollout     0.7989   0.7824   0.0283   2.4132   56
+  -- C6 mix af FiLM v1
+        context_final_xy_dist          0.2642   0.2305   0.0098   1.1389   56
+        mean_dist_per_rollout          0.3536   0.2220   0.0213   0.9176   56
+        max_phys_error_per_rollout     0.4976   0.6491   0.0366   2.5118   56
+  -- C7 mix af FiLM v2
+        context_final_xy_dist          0.4511   0.0617   0.3064   0.5872   56
+        mean_dist_per_rollout          0.3859   0.1339   0.1843   0.7141   56
+        max_phys_error_per_rollout     2.1998   0.3199   0.6046   2.4168   56
+
+
+==============================================================================
+DIAGNOSTIC C — dt sweep: projector authority vs plan quality (AlphaFlow K=2)
+==============================================================================
+  variant            V1 sat   V2 sat   V1 phys   V2 phys  V1 cf  V2 cf  V1 succ  V2 succ
+  dpcc-c-dt0p25       0.891    0.589     0.105     1.689     25      3        1        0
+  dpcc-c-dt0p5        0.880    0.523     0.135     1.866     27      0        0        0
+  dpcc-c              0.860    0.799     0.123     0.636     23     20        0        0
+  dpcc-c-dt2p0        0.863    0.971     0.071     0.117     16     46        0        0
+  dpcc-c-dt4p0        0.882    0.986     0.053     0.050     18     52        0        0
+
+
+==============================================================================
+DIAGNOSTIC D — FiLM V2 training curves (temp/1208/Gen14_Mix_FilmV2/*_losses.pkl)
+==============================================================================
+
+  MF FiLM V2 (slurm 24454)
+    test_raw_mse: min 8.265 @ step 91000  ->  final 9.965 @ 99000   (1.21x the minimum)
+    raw_mse /10k:  0k:95.0  10k:12.4  20k:9.6  30k:9.8  40k:9.7  50k:10.5  60k:9.6  70k:14.3  80k:9.6  90k:9.6
+    norm loss/10k: 0k:1.000  10k:0.997  20k:0.993  30k:0.988  40k:0.981  50k:0.977  60k:0.968  70k:0.960  80k:0.952  90k:0.947
+    a0 anchor loss: median 0.322, max 1.354 @ step 0
+    raw_mse 68-80k: 68k:10.67  69k:15.76  70k:14.35  71k:10.78  72k:10.34  73k:11.37  74k:10.92  75k:11.54  76k:14.41  77k:11.10  78k:11.04  79k:13.87  80k:9.64
+    a0      68-80k: 68k:0.38  69k:0.32  70k:0.63  71k:0.25  72k:0.20  73k:0.85  74k:0.92  75k:0.79  76k:0.15  77k:0.10  78k:0.33  79k:0.21  80k:0.14
+
+  AF FiLM V2 (slurm 24457)
+    test_raw_mse: min 3.174 @ step 65000  ->  final 11.398 @ 99000   (3.59x the minimum)
+    raw_mse /10k:  0k:93.9  10k:10.2  20k:7.6  30k:7.2  40k:6.5  50k:4.7  60k:3.3  70k:3.2  80k:11.8  90k:9.4
+    norm loss/10k: 0k:1.000  10k:1.000  20k:0.999  30k:0.997  40k:0.979  50k:0.872  60k:0.759  70k:0.746  80k:0.994  90k:0.993
+    a0 anchor loss: median 0.265, max 2.312 @ step 75000
+    raw_mse 68-80k: 68k:3.22  69k:3.21  70k:3.20  71k:3.21  72k:9.71  73k:9.47  74k:14.69  75k:24.08  76k:11.85  77k:12.50  78k:15.34  79k:10.02  80k:11.77
+    a0      68-80k: 68k:0.36  69k:0.24  70k:0.19  71k:0.10  72k:0.28  73k:0.16  74k:0.99  75k:2.31  76k:0.19  77k:0.20  78k:0.38  79k:0.25  80k:0.34
+
+  NOTE: no FiLM V1 loss curves were exported with this batch — the V1 side of this
+  comparison cannot be made here.
+
+
+==============================================================================
+SECONDARY — legacy fm_visual_aligning K=20: V1 (C4) vs V2 (C3)
+==============================================================================
+  pairing: 46 usable pairs, 0 dropped frozen, 269 V1 rollouts with no V2 partner, 18 context mismatches
+  NOTE: different training runs / step counts (900 vs 1000) — confounded, read as directional only.
+
+------------------------------------------------------------------------------
+fm_visual K=20 — matched variants and geos   (n = 46 paired rollouts)
+------------------------------------------------------------------------------
+  metric                                  V1          V2    Δ(V2−V1)     n    p_raw   p_holm
+  mean distance to goal (m)           0.3225      0.5520     +0.2294    46   0.0000   0.0004 ***  V1 better
+  final xy dist to target (m)         0.2912      0.6164     +0.3252    46   0.0000   0.0004 ***  V1 better
+  constraint sat rate                 0.7949      0.5624     -0.2325    27   0.0096   0.0672 ns 
+  violated steps                     82.0370    175.0370    +93.0000    27   0.0103   0.0672 ns 
+  constraint margin (m)               0.1057      0.0933     -0.0124    27   0.0784   0.3920 ns 
+  max obstacle pen (m)                0.0237      0.0150     -0.0087    27   0.1091   0.4364 ns 
+  time per replan (ms)             2208.4042    791.2991  -1417.1051    46   0.3840   1.0000 ns 
+  max phys tracking err (m)           0.7557      0.7421     -0.0137    46   0.9550   1.0000 ns 
+  episode steps                     400.0000    400.0000     +0.0000    46   1.0000   1.0000 ns 
+
+  binary outcome                          V1          V2   discordant     n    p_raw   p_holm
+  goal success                             0           0          0/0    46   1.0000   1.0000 ns 
+  goal success (relaxed)                   0           0          0/0    27   1.0000   1.0000 ns 
+  collision-free completed                 5           6          5/6    27   1.0000   1.0000 ns 
+  zero-violation rollout                   5           6          5/6    27   1.0000   1.0000 ns 
+
+
+==============================================================================
+TARGET — best baseline DPCC row (C15, diffuser_visual_aligning, FiLM V2)
+==============================================================================
+
+  C15 dpcc diffuser (baseline) FiLM v2 K=20
+    variant                   succ  collfree     sat    dist      t_ms    n
+    bounds_free                  0         1   0.790   0.382    1014.4    6
+    diffuser                     0         5   0.396   0.421     336.3   36
+    dpcc-c                       0         3   0.717   0.408    1727.3   36
+    dpcc-c-dt0p25                0         1   0.718   0.397    2611.1    6
+    dpcc-c-dt0p5                 0         0   0.591   0.416    1432.1    6
+    dpcc-c-dt2p0                 0         4   0.891   0.382     921.2    6
+    dpcc-c-dt4p0                 0         2   0.950   0.382     752.1    6
+    dpcc-r                       0         3   0.719   0.407    1621.3   36
+    dpcc-t                       0         6   0.785   0.431    1500.5   36
+    geo_free                     0         0   0.548   0.382     633.4    6
+    geo_free-bounds_free         0         0   0.279   0.382     647.8    6
+    geo_free-model_free          0         2   0.568   0.383     433.9    6
+    gradient                     0         6   0.338   0.400     353.9   36
+    model_free                   0         4   0.487   0.351    1942.0   13
+    post_processing              0         2   0.541   0.408     390.0   36
+
+  C13 mix mf FiLM v1 K=2
+    variant                   succ  collfree     sat    dist      t_ms    n
+    bounds_free                  2        37   0.945   0.283      46.1   56
+    diffuser                     3        17   0.789   0.408      27.7   56
+    dpcc-c                       1        25   0.890   0.387      59.9   56
+    dpcc-c-dt0p25                3        29   0.933   0.302      55.1   56
+    dpcc-c-dt0p5                 2        25   0.910   0.310      57.7   56
+    dpcc-c-dt2p0                 0        24   0.916   0.370      69.8   56
+    dpcc-c-dt4p0                 0        39   0.970   0.387      44.0   56
+    dpcc-r                       2        34   0.916   0.325      52.4   56
+    dpcc-t                       2        34   0.911   0.292      51.0   56
+    geo_free                     2        16   0.791   0.371      40.7   56
+    geo_free-bounds_free         0        14   0.763   0.354      38.3   56
+    geo_free-model_free          1        14   0.802   0.355      34.7   56
+    gradient                     3        15   0.770   0.341      29.4   56
+    hardflow_new-c               3        30   0.916   0.306     183.4   56
+    hardflow_new-r               0        32   0.929   0.305     176.3   56
+    hardflow_new-t               1        40   0.946   0.305     171.6   56
+    model_free                   1        14   0.804   0.361      39.7   56
+    model_free-bounds_free       1        14   0.830   0.352      36.5   56
+    post_processing              2        34   0.917   0.357      52.8   56
+
+  C14 mix mf FiLM v2 K=2
+    variant                   succ  collfree     sat    dist      t_ms    n
+    bounds_free                  2        23   0.879   0.354      50.8   56
+    diffuser                     1         4   0.543   0.390      30.8   56
+    dpcc-c                       0        23   0.845   0.381      67.0   56
+    dpcc-c-dt0p25                1        24   0.874   0.343      70.7   56
+    dpcc-c-dt0p5                 0        22   0.860   0.369      76.6   56
+    dpcc-c-dt2p0                 0        26   0.865   0.388      48.1   56
+    dpcc-c-dt4p0                 0        30   0.898   0.386      47.7   56
+    dpcc-r                       1        26   0.890   0.382      78.7   56
+    dpcc-t                       0        29   0.877   0.381      58.7   56
+    geo_free                     1         5   0.580   0.386      44.0   56
+    geo_free-bounds_free         1         6   0.544   0.370      41.9   56
+    geo_free-model_free          1         5   0.599   0.335      37.9   56
+    gradient                     1         6   0.615   0.338      32.4   56
+    model_free                   1         5   0.596   0.335      48.3   56
+    model_free-bounds_free       1         5   0.600   0.334      44.8   56
+    post_processing              1        26   0.890   0.384      78.8   56
+
+  C6 mix af FiLM v1 K=2
+    variant                   succ  collfree     sat    dist      t_ms    n
+    bounds_free                  1        41   0.958   0.334      47.2   56
+    diffuser                     3         8   0.781   0.340      26.8   56
+    dpcc-c                       0        23   0.860   0.354      56.0   56
+    dpcc-c-dt0p25                1        25   0.891   0.337      60.1   56
+    dpcc-c-dt0p5                 0        27   0.880   0.319      57.0   56
+    dpcc-c-dt2p0                 0        16   0.863   0.383      50.5   56
+    dpcc-c-dt4p0                 0        18   0.882   0.386      46.0   56
+    dpcc-r                       1        31   0.933   0.407      54.3   56
+    dpcc-t                       0        36   0.928   0.341      51.4   56
+    geo_free                     1        14   0.743   0.454      42.5   56
+    geo_free-bounds_free         1        21   0.805   0.403      39.0   56
+    geo_free-model_free          0         9   0.750   0.364      34.3   56
+    gradient                     3        15   0.781   0.367      28.7   56
+    hardflow_new-c               0        31   0.917   0.332     187.8   56
+    hardflow_new-r               1        39   0.954   0.327     177.9   56
+    hardflow_new-t               0        31   0.921   0.353     183.3   56
+    model_free                   0         9   0.749   0.354      41.9   56
+    model_free-bounds_free       0         9   0.747   0.360      38.9   56
+    post_processing              1        32   0.935   0.407      54.5   56
+
+  C7 mix af FiLM v2 K=2
+    variant                   succ  collfree     sat    dist      t_ms    n
+    bounds_free                  0        13   0.877   0.401      62.1   56
+    diffuser                     0         2   0.502   0.383      30.9   56
+    dpcc-c                       0        20   0.799   0.516      76.2   56
+    dpcc-c-dt0p25                0         3   0.589   0.418     118.3   56
+    dpcc-c-dt0p5                 0         0   0.523   0.455     127.3   56
+    dpcc-c-dt2p0                 0        46   0.971   0.420      51.0   56
+    dpcc-c-dt4p0                 0        52   0.986   0.396      48.3   56
+    dpcc-r                       0         8   0.805   0.438      77.3   56
+    dpcc-t                       0        25   0.955   0.421      60.5   56
+    geo_free                     0         2   0.839   0.438      47.8   56
+    geo_free-bounds_free         0         4   0.854   0.446      43.3   56
+    geo_free-model_free          0         0   0.493   0.386      41.6   56
+    gradient                     0         2   0.517   0.385      32.8   56
+    model_free                   0         0   0.493   0.386      56.7   56
+    model_free-bounds_free       0         0   0.493   0.386      51.3   56
+    post_processing              0         8   0.808   0.438      77.3   56

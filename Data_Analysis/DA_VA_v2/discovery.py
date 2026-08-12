@@ -22,6 +22,11 @@ Path shapes handled (all four seen across Gen7 / Gen14 / state-only):
 Variant names get the `_train_set` suffix stripped (Gen14 spec §4 L4); the split
 is preserved as its own column instead, so a train-set run and a test run of the
 same variant line up in the tables rather than masquerading as two variants.
+
+Legacy trees: a candidate sitting under a `_`-prefixed folder (or under a
+`_bridge_manifest.json`) is flagged `legacy=True` and the flag is carried on every
+unit, so the loader can apply the per-pipeline rescues an old layout needs. See
+`detect_legacy()` and `config.LEGACY_DIR_PREFIX`.
 """
 
 import json
@@ -30,8 +35,10 @@ import os
 import re
 
 from config import (
+    BRIDGE_MANIFEST_NAME,
     GEO_DIR_PREFIXES,
     GEO_NONE,
+    LEGACY_DIR_PREFIX,
     NON_VARIANT_DIRS,
     RESULTS_DIR_NAMES,
     SKIP_NPZ_SUFFIXES,
@@ -96,6 +103,64 @@ def _seed_dirs(candidate_path):
         if any(os.path.isdir(os.path.join(seed_path, r)) for r in RESULTS_DIR_NAMES):
             out.append(int(entry))
     return out
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# legacy (bridged) trees
+# ──────────────────────────────────────────────────────────────────────────────
+
+def detect_legacy(candidate_path, parent_root=None):
+    """Is this candidate a bridged legacy tree, and what do we know about it?
+
+    Two independent signals, either is enough:
+
+      * a `_`-prefixed directory anywhere between the parent root and the
+        candidate (the naming contract — see config.LEGACY_DIR_PREFIX);
+      * a `_bridge_manifest.json` at the candidate or any ancestor up to the
+        parent root (the bridge's own marker, which also carries `legacy_kind`
+        and `has_projector`).
+
+    Returns {legacy, legacy_kind, has_projector, bridge_manifest_path, manifest}.
+    A tree written by a normal Gen14-shaped eval returns legacy=False and is
+    then read with no special handling at all.
+    """
+    candidate_path = os.path.abspath(candidate_path)
+    root = os.path.abspath(parent_root) if parent_root else None
+
+    manifest, manifest_path = {}, ''
+    node = candidate_path
+    while True:
+        probe = os.path.join(node, BRIDGE_MANIFEST_NAME)
+        if os.path.isfile(probe):
+            manifest_path = probe
+            try:
+                with open(probe) as f:
+                    manifest = json.load(f) or {}
+            except (OSError, ValueError) as exc:
+                logger.warning(f'Unreadable bridge manifest {probe}: {exc}')
+            break
+        parent = os.path.dirname(node)
+        if node == root or parent == node:
+            break
+        node = parent
+
+    names = [os.path.basename(candidate_path)]
+    if root:
+        names.append(os.path.basename(root))
+        rel = os.path.relpath(candidate_path, root)
+        names.extend(part for part in rel.split(os.sep) if part not in ('.', '..'))
+    underscored = any(name.startswith(LEGACY_DIR_PREFIX) for name in names if name)
+
+    legacy = bool(manifest) or underscored
+    return {
+        'legacy': legacy,
+        'legacy_kind': manifest.get('legacy_kind', 'unknown' if legacy else ''),
+        # Absent manifest + legacy naming: assume a projector until told
+        # otherwise, so nothing silently claims constraint-freedom.
+        'has_projector': bool(manifest.get('has_projector', True)) if manifest else True,
+        'bridge_manifest_path': manifest_path,
+        'manifest': manifest,
+    }
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -220,7 +285,7 @@ def discover_candidates(parent_paths, seed_list=None, max_depth=10):
         if seed_list is not None:
             seeds = [s for s in seeds if s in seed_list]
         if seeds:
-            found.append({
+            entry = {
                 'path': os.path.abspath(path),
                 'name': os.path.basename(os.path.normpath(path)),
                 'parent': parent_root,
@@ -228,7 +293,9 @@ def discover_candidates(parent_paths, seed_list=None, max_depth=10):
                 'missing_seeds': ([s for s in seed_list if s not in seeds]
                                   if seed_list else []),
                 'snapshots': scan_snapshot_timestamps(path, seeds),
-            })
+            }
+            entry.update(detect_legacy(path, parent_root))
+            found.append(entry)
             return   # a candidate is a leaf — do not recurse into its seeds
         try:
             entries = sorted(os.listdir(path))
@@ -252,7 +319,8 @@ def discover_candidates(parent_paths, seed_list=None, max_depth=10):
     candidates = {i + 1: info for i, info in enumerate(found)}
 
     for idx, info in candidates.items():
-        logger.info(f'Candidate {idx}: {info["name"]}  seeds={info["seeds"]}')
+        tag = f'  [legacy: {info.get("legacy_kind") or "unknown"}]' if info.get('legacy') else ''
+        logger.info(f'Candidate {idx}: {info["name"]}  seeds={info["seeds"]}{tag}')
         if info['missing_seeds']:
             logger.warning(f'Candidate {idx} ({info["name"]}) missing seeds: '
                            f'{info["missing_seeds"]}')
@@ -305,6 +373,9 @@ def get_candidate_summary(candidates):
             lines.append(f'      Last run: {format_snapshot_ts(snapshots["latest"])}'
                          f'  ({snapshots["count"]} config snapshot(s) over '
                          f'{snapshots["n_seeds_stamped"]} seed(s))')
+        if info.get('legacy'):
+            lines.append(f'      LEGACY (bridged): kind={info.get("legacy_kind") or "unknown"}'
+                         f'  projector={"yes" if info.get("has_projector", True) else "no"}')
         if info.get('missing_seeds'):
             lines.append(f'      WARNING missing seeds: {info["missing_seeds"]}')
         if info.get('custom_name'):
@@ -436,6 +507,10 @@ def _make_unit(candidate_idx, candidate_info, seed, split, geo_raw, variant_raw,
         'variant_dir': variant_dir,
         'diagnostics_dir': os.path.join(variant_dir, 'diagnostics'),
         'constraint_metrics_json': os.path.join(variant_dir, 'constraint_metrics.json'),
+        # Legacy flags ride on the unit so the loader never has to re-stat the tree.
+        'legacy': bool(candidate_info.get('legacy', False)),
+        'legacy_kind': candidate_info.get('legacy_kind', ''),
+        'has_projector': bool(candidate_info.get('has_projector', True)),
     }
 
 
@@ -460,6 +535,10 @@ def write_discovery_manifest(path, candidates, units):
                 'seeds': v['seeds'],
                 'missing_seeds': v.get('missing_seeds', []),
                 'snapshots': v.get('snapshots', {}),
+                'legacy': bool(v.get('legacy', False)),
+                'legacy_kind': v.get('legacy_kind', ''),
+                'has_projector': bool(v.get('has_projector', True)),
+                'bridge_manifest': v.get('bridge_manifest_path', ''),
             } for k, v in sorted(candidates.items())
         },
         'units': [
@@ -467,6 +546,7 @@ def write_discovery_manifest(path, candidates, units):
                 'Candidate': u['Candidate'], 'seed': u['seed'], 'split': u['split'],
                 'geo': u['geo'], 'variant': u['variant'],
                 'source': 'npz' if u['npz_path'] else 'json',
+                'legacy': bool(u.get('legacy', False)),
             } for u in units
         ],
     }

@@ -21,17 +21,32 @@ Sources:
   json — `diagnostics/rollout_*_stats.json`, for pre-npz Gen7 runs or a variant
          that died before its final write
   auto — npz when present, else json (default)
+
+Legacy units (`unit['legacy']`, set by discovery for `_`-prefixed / bridged
+trees) get one extra pass on top of the normal load — see `_apply_legacy()`.
+Today that means the D3IL visual-aligning baseline: no projector, so every
+`constraint_*` metric is legitimately absent, and no per-rollout inference time
+in the JSONs, so `avg_time` is rescued from the RTRecorder text logs sitting next
+to them. Nothing here fabricates a value: a metric the old pipeline never
+measured stays NaN.
 """
 
 import glob
 import json
 import logging
 import os
+import re
 
 import numpy as np
 import pandas as pd
 
-from config import BOOLEAN_METRICS, HEAVY_KEYS, META_KEYS, RUN_CONFIG_FIELDS
+from config import (
+    BOOLEAN_METRICS,
+    HEAVY_KEYS,
+    LEGACY_REALTIME_LOG_GLOB,
+    META_KEYS,
+    RUN_CONFIG_FIELDS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +97,16 @@ class UnitLoader:
                 if name not in per_rollout.columns:
                     per_rollout[name] = values
 
+        if unit.get('legacy'):
+            self._apply_legacy(unit, per_rollout, quality)
+
         per_rollout = _finalise_frame(per_rollout)
         quality.update(_quality_from_frame(per_rollout))
         quality['source'] = source_used
         quality['n_rollouts'] = int(len(per_rollout))
+        quality['legacy'] = 1.0 if unit.get('legacy') else 0.0
+        quality['legacy_kind'] = unit.get('legacy_kind', '')
+        quality['has_projector'] = 1.0 if unit.get('has_projector', True) else 0.0
 
         self.n_loaded += 1
         if self.verbose:
@@ -314,6 +335,56 @@ class UnitLoader:
         out['diagnostics_found'] = np.array(found)
         return out
 
+    # ── legacy rescue pass ────────────────────────────────────────────────────
+    def _apply_legacy(self, unit, frame, quality):
+        """Fill what an older pipeline recorded somewhere other than its results.
+
+        Runs for `_`-prefixed / bridged trees only, after the normal load, and
+        mutates `frame` in place. Two rescues today, both for the D3IL
+        visual-aligning baseline:
+
+        1. `avg_time` — the old eval wrote per-step timing ONLY into
+           `realtime_*.log` (RTRecorder SUMMARY, `total_ms mean=…`). The bridge
+           already parses those into its npz, so this only fires for a tree
+           bridged with `--json-only` or copied by hand.
+        2. `has_projector=False` — recorded on the quality row so a reader knows
+           the empty `constraint_*` columns are by design, not a broken load.
+
+        Deliberately NOT done: filling constraint metrics with zeros. A pipeline
+        with no projector has no constraint satisfaction rate, and a 0/1 there
+        would flow straight into `n_success_and_constraints`.
+        """
+        if frame.empty:
+            return
+
+        needs_time = ('avg_time' not in frame.columns
+                      or frame['avg_time'].isna().all())
+        if needs_time:
+            values = _legacy_avg_time_from_logs(unit['variant_dir'], len(frame))
+            if values is not None:
+                frame['avg_time'] = values
+                quality['legacy_avg_time_source'] = 'realtime_log'
+                self._note('OK', f'{_uid(unit)}: avg_time rescued from '
+                                 f'{LEGACY_REALTIME_LOG_GLOB} SUMMARY blocks')
+            else:
+                quality['legacy_avg_time_source'] = 'missing'
+                self._note('WARN', f'{_uid(unit)}: no per-rollout timing anywhere '
+                                   f'(no avg_time in the results, no realtime logs) '
+                                   f'— avg_time stays NaN')
+
+        if not unit.get('has_projector', True):
+            # All-NaN constraint columns are normal (the JSON reader always
+            # creates them); a column with real numbers in a projector-free
+            # pipeline is not, and means the bridge invented something.
+            populated = [c for c in frame.columns
+                         if (c.startswith('constraint_')
+                             or c in ('collision_free_completed', 'n_violations'))
+                         and frame[c].notna().any()]
+            if populated:
+                self._note('WARN', f'{_uid(unit)}: pipeline has no projector but '
+                                   f'{populated} carry values — left untouched, '
+                                   f'check the bridge')
+
     # ── misc ──────────────────────────────────────────────────────────────────
     def _note(self, level, message):
         self.log.append((level, message))
@@ -492,6 +563,59 @@ def _extract_run_config(value):
 # ──────────────────────────────────────────────────────────────────────────────
 # small helpers
 # ──────────────────────────────────────────────────────────────────────────────
+
+# `#            total_ms mean=12.3  max=…` — the RTRecorder SUMMARY line.
+_TOTAL_MS_RE = re.compile(r'total_ms\s+mean=([0-9.eE+-]+)')
+# `realtime_baseline_ctx3_traj7.log` / `realtime_{variant}_rollout12.log`
+_RT_INDEX_RE = re.compile(r'ctx(\d+)_traj(\d+)|rollout(\d+)')
+
+
+def _legacy_avg_time_from_logs(variant_dir, n_rollouts):
+    """Per-rollout seconds/step from the RTRecorder logs beside a legacy unit.
+
+    Returns an (n_rollouts,) array, or None when no log yields a SUMMARY. Logs
+    are matched to rollouts by the index in their filename — `ctx{c}_traj{t}`
+    (the D3IL baseline's context-major loop, rollout = c*n_trajs + t) or a plain
+    `rollout{r}`. Files that do not parse are skipped, leaving NaN.
+    """
+    paths = sorted(glob.glob(os.path.join(variant_dir, LEGACY_REALTIME_LOG_GLOB)))
+    if not paths:
+        return None
+
+    by_ctx_traj, by_rollout = {}, {}
+    for path in paths:
+        match = _RT_INDEX_RE.search(os.path.basename(path))
+        if not match:
+            continue
+        try:
+            with open(path, errors='replace') as f:
+                hits = _TOTAL_MS_RE.findall(f.read())
+        except OSError:
+            continue
+        if not hits:
+            continue
+        try:
+            seconds = float(hits[-1]) / 1000.0
+        except ValueError:
+            continue
+        if match.group(3) is not None:
+            by_rollout[int(match.group(3))] = seconds
+        else:
+            by_ctx_traj[(int(match.group(1)), int(match.group(2)))] = seconds
+
+    if not by_rollout and not by_ctx_traj:
+        return None
+
+    if by_ctx_traj and not by_rollout:
+        # Recover the trajectories-per-context the run used, then flatten in the
+        # eval's own loop order.
+        n_trajs = max(t for _, t in by_ctx_traj) + 1
+        for (ctx, traj), seconds in by_ctx_traj.items():
+            by_rollout[ctx * n_trajs + traj] = seconds
+
+    return np.array([by_rollout.get(i, np.nan) for i in range(n_rollouts)],
+                    dtype=float)
+
 
 def _read_rollout_stats(diag_dir):
     """All `rollout_*_stats.json` in a diagnostics dir, ordered by rollout index."""

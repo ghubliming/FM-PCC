@@ -1,15 +1,27 @@
 ---
 name: da-target-is-best-baseline-variant
-description: "DA first principle — target = BEST baseline DPCC row in the batch; any of our variants beating it on ANY axis (S&C held) is a win; always run this check in every DA"
+description: "DA first principle — Target = best row of the PAPER's DPCC config (K20 + aw10 + GaussianDiffusion); any of our variants beating it on ANY axis (S&C held) is a win; always run this check in every DA"
 metadata:
   type: feedback
 ---
 
-In every Data_Analysis batch, first pick **one Target row**: the **best-performing baseline
-(diffusion-)DPCC variant**, whichever variant name that happens to be — `dpcc-c`, `dpcc-r`,
-`dpcc-t`, `diffuser`, … "Best" is read the [[pareto-definition-of-good]] way: gate on S&C, then
-the row that is Pareto-non-dominated on `(n_steps, avg_time)` — fewest steps at acceptable time,
-*or* fastest time at only marginally worse steps.
+In every Data_Analysis batch, first pick **one Target row**: the **best-performing variant of the
+paper's baseline DPCC configuration**. "Best" is read the [[pareto-definition-of-good]] way: gate on
+S&C, then the row that is Pareto-non-dominated on `(n_steps, avg_time)`.
+
+🔴 **The paper's DPCC config is pinned: `K = 20`, `aw = 10`, `models.GaussianDiffusion`.**
+Target selection ranges over the **projection variants** of that config (`dpcc-c`, `dpcc-r`,
+`dpcc-t`, `-tightened`, `diffuser`, …) — **not** over K and **not** over `aw`. Rows at other K or
+other `aw` are ineligible as Target no matter how good they look.
+On `avoiding-d3il` the Target resolves to `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5`,
+variant `dpcc-c-tightened`.
+
+**Other K values are additional diagnostics, and must be reported as such.** They are worth
+analysing — e.g. on `avoiding` the baseline's own **K10 strictly Pareto-dominates its K20**
+(1.000 / 68.70 steps / 0.3217 s vs 1.000 / 70.13 / 0.5534, 5 seeds), so doubling the diffusion
+budget buys nothing — but that does *not* move the Target. Report the K20 margin as the headline
+(it is the paper comparison) and the K10 margin as the **conservative check**: "does it also beat
+the best DPCC can do on this task?" Both belong in the write-up; only K20 is the Target.
 
 **The baseline is always the DPCC results.** Every batch must contain them; without a DPCC row
 there is no Target and no claim.
@@ -40,6 +52,12 @@ wins.
 **How to apply:**
 - State the Target explicitly at the top of any DA writeup: variant, seed/trial count, and the
   `(S&C, n_steps, avg_time)` triple it is defined by.
+- **Check `aw` and `K` before fixing the Target.** Several `diffusion/` candidates in a batch are
+  `aw1` or non-K20 and look competitive; they are not the paper's DPCC. Grep the `Full_Path` for
+  `K20` + `aw10` first, and say in the DA which candidates were excluded and why.
+- Give a **candidate-index table** near the top mapping every quoted row to its `Candidate` ID and
+  `Full_Path`, so the reader can re-derive any number. Candidate IDs are per-batch and unstable —
+  never carry them between CSVs.
 - Compare within the **same batch / same env / same seeds** — the Target must come from the same
   run set as the challengers, or the comparison is unmatched.
 - Report as "**Target reached**: <our row> beats <baseline best row> on <axis>", and always name
