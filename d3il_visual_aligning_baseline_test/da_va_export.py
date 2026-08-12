@@ -267,6 +267,25 @@ def build_args(agent_name, seed, split, extra=None):
 # writing
 # ──────────────────────────────────────────────────────────────────────────────
 
+def require_numpy():
+    """Import numpy, or raise with the actual fix.
+
+    Called as a PREFLIGHT before anything is written: the npz step is the only
+    numpy-dependent one, and discovering that at the end of a 1080-rollout unit
+    leaves a half-written folder behind.
+    """
+    try:
+        import numpy as np
+    except ImportError as exc:
+        raise ImportError(
+            'numpy is required to write the npz. On the cluster the base conda '
+            'env does not have it:\n'
+            '    source ~/miniconda3/etc/profile.d/conda.sh && conda activate FMPCC\n'
+            'Or run with --json-only to skip the npz entirely (DA_VA_v2 then '
+            'reads the diagnostics JSONs for these units).') from exc
+    return np
+
+
 def write_unit(root, agent_name, seed, records, scalars, args_extra=None,
                split='test', write_npz=True, snapshot_stamp=None, label=''):
     """Write one complete DA_VA_v2 unit. Returns the unit directory.
@@ -277,6 +296,10 @@ def write_unit(root, agent_name, seed, records, scalars, args_extra=None,
 
     `label` disambiguates two runs of the same agent+seed (see candidate_name).
     """
+    # Preflight: fail before writing anything rather than after N rollout JSONs.
+    if write_npz:
+        require_numpy()
+
     out_dir = unit_dir(root, agent_name, seed, split, label)
     diag_dir = os.path.join(out_dir, 'diagnostics')
     os.makedirs(diag_dir, exist_ok=True)
@@ -302,19 +325,22 @@ def write_unit(root, agent_name, seed, records, scalars, args_extra=None,
         'note': ('No projector in this pipeline: every constraint_* metric is '
                  'intentionally absent (NaN in DA_VA_v2), never zero.'),
     }
+
+    # npz BEFORE the metadata: unit_meta.json is the human-readable record of what
+    # this folder contains, so it must never claim an npz that failed to write.
+    if write_npz:
+        _write_npz(os.path.join(out_dir, f'{DA_VARIANT_NAME}.npz'),
+                   records, scalars, args)
+
     with open(os.path.join(out_dir, 'unit_meta.json'), 'w') as f:
         json.dump(json_safe(meta), f, indent=2)
 
     write_snapshot_marker(root, agent_name, seed, snapshot_stamp, label)
-
-    if write_npz:
-        _write_npz(os.path.join(out_dir, f'{DA_VARIANT_NAME}.npz'),
-                   records, scalars, args)
     return out_dir
 
 
 def _write_npz(path, records, scalars, args):
-    import numpy as np                      # lazy: only the npz step needs it
+    np = require_numpy()                    # lazy: only the npz step needs it
 
     payload = {key: np.asarray(value, dtype=float)
                for key, value in build_arrays(records).items()}

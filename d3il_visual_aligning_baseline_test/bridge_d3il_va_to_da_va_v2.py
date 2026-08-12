@@ -402,6 +402,16 @@ def main(argv=None):
         print(f'[ FATAL ] source root not found: {source_root}')
         return 1
 
+    # Preflight the npz dependency once, before any seed is touched. The cluster's
+    # `base` conda env has no numpy, and finding that out per-seed would leave
+    # half-written unit folders behind.
+    if not args.json_only:
+        try:
+            api.require_numpy()
+        except ImportError as exc:
+            print(f'[ FATAL ] {exc}')
+            return 2
+
     out_root = args.out_root or os.path.join(source_root, api.DA_BRIDGE_ROOT_NAME)
     wanted = None
     if args.seeds:
