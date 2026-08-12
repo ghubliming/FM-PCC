@@ -37,8 +37,12 @@ set -e
 # permanently; a root that does not exist is skipped without failing the job.
 AUTO_ROOTS=(
     "logs/aligning-d3il-visual/plans"       # Gen14 engine arms + Gen7 visual aligning
-    "logs/avoiding-d3il/plans"              # state-only avoiding (DA_Code_v3 shape)
 )
+# NOT in the default set: `logs/avoiding-d3il/plans` (state-only AVOIDING). This
+# tool can read it, but it is a different task with its own metric set, and it
+# carries candidates x 6 seeds x 3 geometries x ~7 variants — merging it into a
+# visual-aligning comparison multiplies every table for rows nobody reads. Pass
+# it explicitly as $1 when you actually want that comparison.
 # Every D3IL-baseline export root is picked up automatically, so a newly bridged
 # or newly evaluated baseline joins the comparison without touching this file.
 AUTO_EXPORT_GLOB_DEPTH=3

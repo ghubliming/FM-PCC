@@ -266,6 +266,20 @@ def _reduce(per_rollout, keys):
 
     table = pd.concat(blocks, ignore_index=True)
     table = table.rename(columns={'count': 'n'})
+
+    # Drop all-NaN rows (n == 0). `_build_per_rollout` concatenates units with
+    # different column sets, so every unit ends up carrying every OTHER unit's
+    # metrics as NaN padding — and the melt then emits one empty row per
+    # (group, metric it never measured). Harmless in a single-pipeline run,
+    # quadratic in a merged one: a D3IL baseline unit (~20 metrics) next to
+    # Gen14 (~50) is mostly padding, and the CSV grew large enough to OOM the
+    # HTML viewer's parser. A row with no observations carries no information.
+    empty = int((table['n'] == 0).sum())
+    if empty:
+        table = table[table['n'] > 0].copy()
+        logger.info(f'  dropped {empty} all-NaN metric rows '
+                    f'(metrics a unit never measured)')
+
     table['metric_order'] = table['metric'].map(
         {name: i for i, name in enumerate(PRIMARY_METRICS)}).fillna(len(PRIMARY_METRICS))
     table = table.sort_values(keys + ['mask', 'metric_order', 'metric'])

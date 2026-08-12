@@ -390,7 +390,16 @@ class Reporter:
             pd.DataFrame(table if table is not None else []).to_csv(path, index=False)
         else:
             table.to_csv(path, index=False)
-            logger.info(f'{filename}: {len(table)} rows')
+            size_mb = os.path.getsize(path) / (1024 * 1024)
+            logger.info(f'{filename}: {len(table)} rows, {size_mb:.1f} MB')
+            # The HTML viewers parse these in the browser; a merge of several
+            # trees can produce a file their CSV parser cannot hold.
+            if size_mb > 50:
+                logger.warning(
+                    f'{filename} is {size_mb:.0f} MB — the HTML viewer may fail to '
+                    f'load it ("out of memory" while tokenizing). Narrow the run '
+                    f'with --candidates / --variants / --geos / --splits, or point '
+                    f'--parent-path at fewer trees.')
         self.written.append(path)
 
 
