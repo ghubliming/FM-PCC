@@ -436,6 +436,34 @@ check('NOT FULL caution matches the data', ('NOT FULL' in _legend_html) == _shor
       f'{sum(1 for _h, m in _seed_map.values() if m)} of {len(_seed_map)} candidates short'
       if _short else 'every candidate has every seed — no caution, correctly')
 
+# ── U17: the Path Audit Map names WHICH seeds ────────────────────────────────
+# This page's df_agg is built from the native long CSVs, which carry no Missing_Seeds
+# column, so before U17 the audit map said nothing at all about seeds here.
+print('\n[U17 audit map seeds]')
+ns['render_path_map']()
+_audit = document.getElementById('path-map-container').innerHTML
+_audit_map = ns['_seed_map'](use_mode=False, raw_only=True)
+check('audit seed map covers every candidate in the batch',
+      set(_audit_map) == set(df_agg['Candidate'].astype(str).unique()),
+      f'{len(_audit_map)} mapped vs {df_agg["Candidate"].nunique()} in df_agg')
+check('Seeds column in the audit map', ('>Seeds<' in _audit) == bool(_audit_map))
+check('the audit map does not need Missing_Seeds',
+      bool(_audit_map) or 'Missing_Seeds' in df_agg.columns,
+      'no per-seed frame AND no Missing_Seeds — nothing could be shown')
+_bad = [c for c, (have, _m) in _audit_map.items()
+        if have and ", ".join(str(s) for s in have) not in _audit]
+check('every candidate\'s seed list is printed', not _bad, f'missing: {_bad[:4]}')
+# the audit describes the batch on disk: a plot-side seed filter must not narrow it
+document.getElementById('seed-mode-select').value = 'custom'
+document.set_checks('seed-check', [str(seeds[0])])
+check('Custom Seed Compare does not narrow the audit map',
+      ns['_seed_map'](use_mode=False, raw_only=True) == _audit_map)
+check('...but it does narrow the plot legend map',
+      len(seeds) == 1 or ns['_seed_map']() != _audit_map,
+      'single-seed batch — the two maps coincide, correctly')
+document.getElementById('seed-mode-select').value = 'standard'
+document.set_checks('seed-check', seeds)
+
 # ── U13: candidate highlight ─────────────────────────────────────────────────
 print('\n[U13 candidate highlight]')
 document.getElementById('env-select').value = envs[0]

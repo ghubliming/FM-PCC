@@ -4312,3 +4312,47 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Three Standard Presets Introduced**: Added three quick-preset checkboxes (`DPCC + HF`, `DPCC + HF (tightened)`, `DPCC (tightened)`) directly above the variant checklist in both `Visualizer` (DAv3) and `Visualizer_VA_v2` HTML viewers.
 3. **Rule-Based Membership**: Used regex `PRESET_ARM_RE` in Python to automatically identify family arms (`dpcc`, `hardflow_new`) while excluding noise parameter sweeps (e.g. `-dt0p25`) and secondary baselines. Member attributes (`data-members`) are computed at sync time, with pure JavaScript toggling and indeterminate state handling for zero-latency UI response.
 
+
+
+***
+
+## Gen15 UAV Mix-ML: Architecture Initialization (August 11, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, MeanFlow, AlphaFlow, Gen11, config handshake, DPCC variants.
+
+1. **Architecture Initialization**: Initialized the Gen15 UAV Mix-ML pipeline, integrating the advanced ML engines from Gen14 (Gen3v6 MeanFlow and Gen3v7 AlphaFlow) into the Gen11 UAV visual-trajectory pipeline. This extends the continuous real-time constraints testing from the aligning environment into the UAV domain.
+2. **Metadata Handshake**: Implemented a robust `model_config.pkl` and `agent.pkl` metadata handshake system across the pipeline (training, inference, and plotting) to guarantee provenance and parameter integrity.
+3. **Evaluation Upgrades**: Propagated the latest DPCC projector variant suite (including `bounds_free`, `dt0p25`, `dt0p5`, etc.) into the UAV evaluation loop, aligning it with the Gen14 evaluation standards. 
+4. **Status**: The pipeline is code-complete and awaiting cluster execution to empirically test these engines under real-time UAV flight constraints.
+
+***
+
+## Gen14 / Gen11: Visual Conditioning for DiT/SiT Backbones Study (August 11, 2026)
+
+**Keywords**: DiT, SiT, VisualUNet, visual conditioning, Gen11 UAV.
+
+1. **Architectural Gap Identified**: An investigation into adding visual conditioning to the advanced DiT/SiT backbones revealed that all current visual pipelines rely heavily on the `VisualUNet` (1D Convolution) architecture. The DiT/SiT models are strictly state-only.
+2. **Implementation Complexity**: Integrating proper visual embeddings (FiLM or cross-attention) into the DiT/SiT backbones requires significant structural reworking of the ML models and handling the flattened visual context.
+3. **UAV Visual Model Strategy (Epoch 10)**: For the Gen11 UAV Visual Model, the strategy remains to feed visual observations (e.g., target location) as concatenated state vectors to the existing state-only ML backbones, bypassing the need for complex image encoders while maintaining spatial awareness.
+
+***
+
+## Gen14 DA vs D3IL Baseline: Legacy Bridge & Code Verification (August 12, 2026)
+
+**Keywords**: D3IL baseline, bridge script, DA_VA_v2, legacy reader, entropy bug.
+
+1. **Code Verification (U4.1)**: Audited the D3IL visual-aligning baseline run (which yielded a 0.0 success rate). The code was largely correct and the zero success rate was likely due to a poor checkpoint selection cadence (10 single-rollout probes vs upstream's 100). Discovered Bug B1: `entropy` was hard-wired to 0.0 due to a missing context key.
+2. **Legacy Bridge (U4.2)**: Developed a bridge script (`bridge_d3il_va_to_da_va_v2.py`) to re-emit the finished D3IL baseline outputs into the existing Gen14 DA API format (`DA_VA_v2`). The bridged runs are prefixed with `_` to denote legacy data.
+3. **Data Recovery & Fixes**: The bridge recomputes the true `entropy` metric, parses missing `avg_time` from real-time logs, and accurately maps legacy context/trajectory indices without overwriting the original files.
+4. **Native DA API (U4.3)**: Upgraded the D3IL evaluation script to natively export the Gen14 `DA_VA_v2` format moving forward, complete with the `entropy` fix and explicit per-control-step timing metrics.
+
+***
+
+## Gen14 U7 DA: FiLM V2 vs FiLM V1 Visual Conditioning Route (August 12, 2026)
+
+**Keywords**: Gen14, FiLM V2, FiLM V1, visual conditioning, MeanFlow, AlphaFlow, regression.
+
+1. **True FiLM vs Fake FiLM**: Evaluated whether upgrading the visual conditioning route from "Fake FiLM" (V1, concatenated into time embedding) to "True FiLM" (V2, per-channel scale/shift in residual blocks) improves policy performance.
+2. **Decisive Regression (MeanFlow)**: On the MeanFlow arm (896 paired rollouts), FiLM V2 was decisively worse across every measured metric: constraint satisfaction dropped from 0.866 to 0.747, maximum physical tracking error nearly doubled, collision-free rollouts fell from 385 to 265, and the model was 7.6 ms slower per replan.
+3. **Pre-Projector Damage**: Unprojected variants (`diffuser`, `model_free`) showed massive degradation in constraint satisfaction (e.g., 0.804 -> 0.596), proving that the regression occurred fundamentally within the conditioned U-Net, not via interaction with the projector.
+4. **AlphaFlow Collapse**: The AlphaFlow V2 run collapsed during training around step 72k, leading to a post-collapse checkpoint with essentially zero task successes and massive tracking errors. The run is invalid as a FiLM comparison and must be re-run, although it highlighted that constraint metrics without non-zero success rates only measure the projector's authority, not the policy's quality.

@@ -259,6 +259,17 @@ page via `build_from_dav3.py`, so both viewers behave identically):
   matrices for the rollout counts — and a bar averaged over one seed looks
   exactly like a bar averaged over five on the chart.
 
+The same **Seeds** column is repeated in the **Path Audit Map** at the bottom of
+the page, for *every* candidate in the batch rather than only the plotted ones,
+and there it always describes the batch as it sits on disk — Custom Seed Compare
+does not narrow it. DAv3 answers this with a `Missing_Seeds` column the DA
+pipeline writes; `va2_aggregated_long.csv` has no such column (only an `n_seeds`
+count), so until U17 this page's audit map said nothing about seeds at all. It
+now reads `va2_units_long.csv` instead, which both pages have. Batches without
+that file keep the pre-U17 table — the `Missing_Seeds` fallback is deliberately
+refused here, since it knows only what is *absent* and cannot name what is
+present.
+
 #### Plot: `(G, C)` failure hints
 
 A red **`(G, C)`** stacked above a bar's value marks a bar whose run was not

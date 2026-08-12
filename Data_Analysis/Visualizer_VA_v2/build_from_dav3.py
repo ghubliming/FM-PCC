@@ -832,6 +832,70 @@ COVERAGE_METRIC = 'n_success'""")
 sub("""FLAG_SKIP = set(FLAG_INPUTS)""",
     """FLAG_SKIP = set(FLAG_INPUTS) | {'success_relaxed', 'n_success_relaxed_and_constraints'}""")
 
+# ---------------------------------------------------------------------------------------
+# U17: the Path Audit Map names WHICH seeds each candidate has.
+#
+# DAv3 answers that question with the `Missing_Seeds` column its pipeline writes, and its
+# audit map is gated on that column. This page builds df_agg in derive_frames() out of
+# va2_aggregated_long.csv, which has an `n_seeds` COUNT and no Missing_Seeds at all (the
+# DA_VA_v2 reporter writes that column only into the DAv3-compat CSVs, which this page
+# never fetches) — so the gate was permanently false and the audit map said nothing about
+# seeds. The fix reads the per-seed frame instead, which both pages have.
+#
+# DAv3-side is deliberately untouched: its audit map already answers this well enough, and
+# every edit there is one more thing to keep in sync.
+# ---------------------------------------------------------------------------------------
+sub("""def _seed_map():
+    \"\"\"Candidate -> (seeds present, seeds missing).""",
+    """def _seed_map(use_mode=True, raw_only=False):
+    \"\"\"Candidate -> (seeds present, seeds missing).""")
+
+sub("""    Candidate-global (not per environment/metric), exactly like Missing_Seeds itself.
+    \"\"\"
+    if df_raw is not None and 'seed' in df_raw.columns:
+        seed_mode = document.getElementById("seed-mode-select").value
+""",
+    """    Candidate-global (not per environment/metric), exactly like Missing_Seeds itself.
+
+    U17: use_mode=False ignores Custom Seed Compare - the Path Audit Map audits the batch as
+    it sits on disk, not the current plot selection. raw_only=True drops the Missing_Seeds
+    fallback, which knows only what is ABSENT: rendered in an audit row it would print
+    "n/a - no per-seed CSV" on every line and say nothing.
+    \"\"\"
+    if df_raw is not None and 'seed' in df_raw.columns:
+        seed_mode = document.getElementById("seed-mode-select").value if use_mode else "standard"
+""")
+
+sub("""        return out
+    if df_agg is not None and 'Missing_Seeds' in df_agg.columns:""",
+    """        return out
+    if raw_only:
+        return {}
+    if df_agg is not None and 'Missing_Seeds' in df_agg.columns:""")
+
+sub("""    has_missing = 'Missing_Seeds' in df_agg.columns
+    stamp_map = _stamp_map()
+""",
+    """    has_missing = 'Missing_Seeds' in df_agg.columns
+    stamp_map = _stamp_map()
+    # U17: which seeds, from va2_units_long.csv. has_missing is always False on this page,
+    # so before this the audit map carried no seed information whatsoever.
+    seed_map = _seed_map(use_mode=False, raw_only=True)
+""")
+
+sub("""    html = '<table><thead><tr><th style="width:100px">ID</th>'
+    if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'""",
+    """    html = '<table><thead><tr><th style="width:100px">ID</th>'
+    if seed_map: html += '<th style="width:160px" title="the seeds this candidate actually has on disk">Seeds</th>'
+    if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'""")
+
+sub("""        html += f'<tr><td><strong>{_cand_name_html(row["Candidate"])}</strong></td>'
+        if has_missing:""",
+    """        html += f'<tr><td><strong>{_cand_name_html(row["Candidate"])}</strong></td>'
+        if seed_map:
+            html += _seed_cell(seed_map, row["Candidate"])
+        if has_missing:""")
+
 # the caption block above the tables counts them and names the flagged ones
 sub("""              'In the N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '""",
     """              'In the MIN_DIST, N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '""")

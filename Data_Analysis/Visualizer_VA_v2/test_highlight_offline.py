@@ -58,6 +58,88 @@ def _fake_get_cmap(name):
 sys.modules['matplotlib.pyplot'].get_cmap = _fake_get_cmap
 
 
+# ── the two pandas entry points the seed/audit code actually uses ────────────
+class _Series(list):
+    def dropna(self):
+        return _Series(x for x in self if x is not None and x == x)
+
+    def unique(self):
+        out = []
+        for x in self:
+            if x not in out:
+                out.append(x)
+        return out
+
+    def astype(self, cast):
+        return _Series(cast(x) for x in self)      # ValueError on a non-numeric id
+
+
+class _Frame:
+    """Enough DataFrame for _seed_map + render_path_map: rows of dicts."""
+
+    def __init__(self, rows, columns=None):
+        self.rows = [dict(r) for r in rows]
+        self.columns = list(columns) if columns else (list(self.rows[0]) if self.rows else [])
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __getitem__(self, key):
+        if isinstance(key, list):
+            return _Frame([{k: r[k] for k in key} for r in self.rows], key)
+        return _Series(r[key] for r in self.rows)
+
+    def groupby(self, col):
+        keys = []
+        for r in self.rows:
+            if r[col] not in keys:
+                keys.append(r[col])
+        return _GroupBy([(c, _Frame([r for r in self.rows if r[col] == c], self.columns))
+                         for c in keys])
+
+    def drop_duplicates(self):
+        seen, out = [], []
+        for r in self.rows:
+            sig = tuple(sorted(r.items()))
+            if sig not in seen:
+                seen.append(sig)
+                out.append(r)
+        return _Frame(out, self.columns)
+
+    def sort_values(self, col, key=None):
+        vals = self[col]
+        keyed = list(key(vals)) if key is not None else list(vals)
+        order = sorted(range(len(self.rows)), key=lambda i: keyed[i])
+        return _Frame([self.rows[i] for i in order], self.columns)
+
+    def iterrows(self):
+        return enumerate(self.rows)
+
+
+class _GroupBy:
+    """df.groupby('Candidate')['seed'] -> iterable of (key, values)."""
+
+    def __init__(self, pairs):
+        self.pairs = pairs
+
+    def __getitem__(self, col):
+        return [(k, sub[col]) for k, sub in self.pairs]
+
+
+def _to_numeric(seq, errors=None):
+    out = _Series()
+    for x in seq:
+        try:
+            out.append(float(x))
+        except (TypeError, ValueError):
+            out.append(None if errors == 'coerce' else x)
+    return out
+
+
+sys.modules['pandas'].to_numeric = _to_numeric
+sys.modules['pandas'].isna = lambda v: v is None or (isinstance(v, float) and v != v)
+
+
 class _El:
     def __init__(self, eid):
         self.id = eid
@@ -263,8 +345,73 @@ def run_page(tag, ns):
     check('a batch with no projection arms hides the panel entirely',
           _panel.innerHTML == '' and _panel.style.display == 'none')
 
+    # ── U17: the Path Audit Map names WHICH seeds ────────────────────────────
+    # DA_VA_v2 ONLY. DAv3's page is deliberately left alone: its audit map already
+    # answers this through the Missing_Seeds column its pipeline writes, and the VA
+    # page is the one whose native CSVs have no such column.
+    if tag == 'DA_VA_v2':
+        run_u17(ns)
+
     hl.clear()
     check('clearing puts every name back', ns['_cand_name_html']('65') == 'CAND_65')
+
+
+def run_u17(ns):
+    # DAv3-shaped input: a per-seed frame AND a Missing_Seeds column.
+    raw = _Frame([{'Candidate': c, 'seed': s}
+                  for c, seeds in (('6', [6, 7]), ('65', [6, 7, 8]))
+                  for s in seeds])
+    agg_v3 = _Frame([{'Candidate': '6', 'Full_Path': '/runs/a', 'Missing_Seeds': '[8]'},
+                     {'Candidate': '65', 'Full_Path': '/runs/b', 'Missing_Seeds': ''}])
+    ns['df_raw'], ns['df_agg'] = raw, agg_v3
+    ns['document'].getElementById('seed-mode-select').value = 'standard'
+    audit_map = ns['_seed_map'](use_mode=False, raw_only=True)
+    check('the audit seed map names present AND missing seeds',
+          audit_map == {'6': ([6, 7], [8]), '65': ([6, 7, 8], [])}, str(audit_map))
+
+    # the audit map describes the batch on disk, so a plot-side seed filter must not
+    # reach it — the stub has no ticked boxes, so use_mode=True collapses to nothing
+    ns['document'].getElementById('seed-mode-select').value = 'custom'
+    check('Custom Seed Compare does not narrow the audit map',
+          ns['_seed_map'](use_mode=False, raw_only=True) == audit_map)
+    check('...but it still narrows the plot legend map',
+          ns['_seed_map']() == {'6': ([], []), '65': ([], [])}, str(ns['_seed_map']()))
+    ns['document'].getElementById('seed-mode-select').value = 'standard'
+
+    # raw_only: the Missing_Seeds fallback cannot answer "which seeds are HERE"
+    ns['df_raw'] = None
+    check('raw_only refuses the Missing_Seeds fallback',
+          ns['_seed_map'](use_mode=False, raw_only=True) == {})
+    check('the legend still takes that fallback',
+          ns['_seed_map']() == {'6': (None, [8]), '65': (None, [])})
+
+    ns['df_raw'] = raw
+    ns['render_path_map']()
+    audit = ns['document'].getElementById('path-map-container').innerHTML
+    check('the audit map gains a Seeds column', '>Seeds<' in audit)
+    check('it names each candidate\'s seeds and cautions the short one',
+          '6, 7, 8' in audit and 'NOT FULL' in audit and 'missing 8' in audit)
+    check('the DAv3 Warnings column is untouched beside it',
+          'ALL SEEDS' in audit and 'MISSING:' in audit)
+
+    # DA_VA_v2 shape: the native long CSVs have NO Missing_Seeds column, which is why
+    # that page's audit map used to say nothing at all about seeds. This is the fix.
+    ns['df_agg'] = _Frame([{'Candidate': '6', 'Full_Path': '/runs/a'},
+                           {'Candidate': '65', 'Full_Path': '/runs/b'}])
+    ns['render_path_map']()
+    audit = ns['document'].getElementById('path-map-container').innerHTML
+    check('a batch without Missing_Seeds still gets the Seeds column',
+          '>Seeds<' in audit and '6, 7, 8' in audit)
+    check('and grows no phantom Warnings column',
+          'ALL SEEDS' not in audit and 'MISSING:' not in audit)
+
+    # no per-seed frame at all -> the table is exactly what it was before U17
+    ns['df_raw'] = None
+    ns['render_path_map']()
+    audit = ns['document'].getElementById('path-map-container').innerHTML
+    check('without a per-seed frame the audit map is unchanged',
+          '>Seeds<' not in audit and 'CAND_65' in audit)
+    ns['df_raw'] = ns['df_agg'] = None
 
 
 loaded = {}
@@ -297,7 +444,7 @@ if len(loaded) == 2:
     # _flag_pivot is in the list but FLAG_SKIP deliberately is NOT: the VA page adds its
     # relaxed success pair to the skip set, which is the one intended difference.
     for fn in ('_hl', '_cand_name_html', '_remember_plot', '_apply_tick_highlight',
-               '_seed_map', '_seed_cell', 'set_highlight', 'clear_highlights',
+               '_seed_cell', 'set_highlight', 'clear_highlights',
                'render_selection_map', '_flag_label', '_flag_pivot',
                '_cmap', '_palette', '_variant_colors',
                '_preset_members', 'render_variant_presets'):
@@ -309,6 +456,14 @@ if len(loaded) == 2:
     b = def_source(loaded['DA_VA_v2'][1], '_redraw_highlight').replace('async def', 'def')
     check('_redraw_highlight identical on both pages', a == b)
     # the markup the two pages emit has to match too, not just the python
+    # U17 is a build-script edit, NOT shared code: DAv3's page must stay as it was.
+    check('only DA_VA_v2 carries the U17 audit-map seed column',
+          'def _seed_map(use_mode=True, raw_only=False):' in loaded['DA_VA_v2'][1]
+          and 'def _seed_map():' in loaded['DAv3'][1],
+          'the U17 subs in build_from_dav3.py did not land, or DAv3 was edited')
+    check('DAv3 keeps its Missing_Seeds-only audit map',
+          '_seed_map(use_mode=False, raw_only=True)' not in loaded['DAv3'][1])
+
     for marker in ('class="hl-check hl-box"', 'onchange="toggle_highlight(this)"',
                    'function toggle_highlight(el)', 'function clear_highlights()',
                    'document.set_highlight = identity(set_highlight)'.replace('identity', 'create_proxy'),

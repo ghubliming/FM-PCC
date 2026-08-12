@@ -1387,7 +1387,7 @@ def clear_highlights(event=None):
 # over one look IDENTICAL on the chart, and until now the legend said nothing about it —
 # the only hint was the Warnings column of the full Path Audit Map further down the page.
 # ---------------------------------------------------------------------------------------
-def _seed_map():
+def _seed_map(use_mode=True, raw_only=False):
     """Candidate -> (seeds present, seeds missing).
 
     df_raw is the only frame with a seed axis. In Custom Seed Compare the reference set is
@@ -1397,9 +1397,14 @@ def _seed_map():
     Falls back to the discovery pipeline's own Missing_Seeds column when the per-seed CSV is
     absent, and returns {} when neither exists — then the column is simply not rendered.
     Candidate-global (not per environment/metric), exactly like Missing_Seeds itself.
+
+    U17: use_mode=False ignores Custom Seed Compare - the Path Audit Map audits the batch as
+    it sits on disk, not the current plot selection. raw_only=True drops the Missing_Seeds
+    fallback, which knows only what is ABSENT: rendered in an audit row it would print
+    "n/a - no per-seed CSV" on every line and say nothing.
     """
     if df_raw is not None and 'seed' in df_raw.columns:
-        seed_mode = document.getElementById("seed-mode-select").value
+        seed_mode = document.getElementById("seed-mode-select").value if use_mode else "standard"
         if seed_mode == "custom":
             ref = sorted(int(s) for s in get_checked("seed-check"))
         else:
@@ -1412,6 +1417,8 @@ def _seed_map():
                 have = [s for s in have if s in ref]
             out[str(cand)] = (have, [s for s in ref if s not in have])
         return out
+    if raw_only:
+        return {}
     if df_agg is not None and 'Missing_Seeds' in df_agg.columns:
         out = {}
         pairs = df_agg[['Candidate', 'Missing_Seeds']].drop_duplicates()
@@ -1950,6 +1957,9 @@ def render_path_map():
     p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
     has_missing = 'Missing_Seeds' in df_agg.columns
     stamp_map = _stamp_map()
+    # U17: which seeds, from va2_units_long.csv. has_missing is always False on this page,
+    # so before this the audit map carried no seed information whatsoever.
+    seed_map = _seed_map(use_mode=False, raw_only=True)
 
     cols_to_get = ['Candidate', p_col]
     if has_missing: cols_to_get.append('Missing_Seeds')
@@ -1962,6 +1972,7 @@ def render_path_map():
         mapping = _dedup.sort_values('Candidate')
     
     html = '<table><thead><tr><th style="width:100px">ID</th>'
+    if seed_map: html += '<th style="width:160px" title="the seeds this candidate actually has on disk">Seeds</th>'
     if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'
     if stamp_map: html += '<th style="width:150px">Last Run</th>'
     html += '<th>Source Path (Audit)</th></tr></thead><tbody>'
@@ -1971,6 +1982,8 @@ def render_path_map():
         c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
 
         html += f'<tr><td><strong>{_cand_name_html(row["Candidate"])}</strong></td>'
+        if seed_map:
+            html += _seed_cell(seed_map, row["Candidate"])
         if has_missing:
             missing_val = row["Missing_Seeds"]
             if pd.isna(missing_val) or str(missing_val).strip() == '':
