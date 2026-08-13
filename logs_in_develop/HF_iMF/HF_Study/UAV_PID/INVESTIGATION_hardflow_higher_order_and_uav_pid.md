@@ -15,7 +15,7 @@ more complicated control-system research direction to build on HF."*
 - Ours: `flow_matcher_v3_uav/sampling/projection.py`, `flow_matcher_v3_uav/utils/constraints_helpers.py`,
   `FM_v3_uav_test/eval_fm_uav.py`, `FM_v3_uav_test/mjpc_tracker.py`, `uav_env_test/flight_controller.py`,
   `config/uav_projection.yaml`, `config/uav.py`.
-- Prior HF_Study / Gen11 docs, cited inline in §9.
+- Prior HF_Study / Gen11 docs, cited inline in §11.
 
 ---
 
@@ -33,7 +33,7 @@ replans. Each broken assumption is a concrete, publishable direction, and two of
 actuation constraints, §5.4 tracker tube) are the *only* places where HardFlow's NLP can express
 something the DPCC linear projector structurally cannot — which is exactly the axis on which HardFlow
 has to beat the DPCC projector for us. **Recommended entry point: §5.3 → §5.1 → §5.4.** The gating
-constraint on all of it is the 30.3 ms real-time budget (§6), which HF's published 190 ms/replan misses
+constraint on all of it is the 30.3 ms real-time budget (§8), which HF's published 190 ms/replan misses
 by 6.3×.
 
 ---
@@ -42,7 +42,7 @@ by 6.3×.
 
 | # | Axis | What "order" means | HardFlow's status | Open for us? |
 |---|---|---|---|---|
-| **A** | **Sampling-time solver order** | Euler vs Heun vs RK on $\dot{x}_\tau = v^\theta_\tau(x_\tau)$, $\tau\in[0,1]$ | **Solved & published.** Appendix "High-Order Solvers and Non-Uniform Time Grids": swap $\Psi_i^\theta$, all theory carries. Heun measured *faster* than default on image editing (38.4 s vs 51.3 s). | **No.** Nothing to invent. It *is* a compute lever (§6). |
+| **A** | **Sampling-time solver order** | Euler vs Heun vs RK on $\dot{x}_\tau = v^\theta_\tau(x_\tau)$, $\tau\in[0,1]$ | **Solved & published.** Appendix "High-Order Solvers and Non-Uniform Time Grids": swap $\Psi_i^\theta$, all theory carries. Heun measured *faster* than default on image editing (38.4 s vs 51.3 s). | **No.** Nothing to invent. It *is* a compute lever (§8). |
 | **B** | **Plant order / relative degree** in physical time, i.e. what $h(x)\le 0$ asserts about physics | D3IL avoiding: **1st order** (single integrator, $a$ = desired velocity). Maze2d: **2nd order** but **LTI** (double integrator, $a$ = force). PDE: linear FD stencil. | **Partly open.** HF handles 2nd-order *linear*. It has never handled *nonlinear, underactuated, high relative degree*. **This is the UAV.** |
 | **C** | **MPC-layer order** — how many receding-horizon loops are stacked and which are formalized | HF formalizes **one** MPC layer, in *sampling* time (Problem 3, horizon = 1 step, terminal proxy = posterior mean). The *physical-time* receding-horizon loop is left entirely informal. | **Wide open, and the deepest hole.** See §5.5. |
 
@@ -398,7 +398,7 @@ the theory upgrade. Recommend D4 → measure → D6 only if the tube proves too 
 ### 5.7 D7 — Sampling-time order and step count as the *compute* lever, not a research question
 
 Axis A of §1 is closed as research but decisive as engineering: every direction above adds NLP work per
-sampling step, and §6 shows we have no headroom. The levers, in order of leverage:
+sampling step, and §8 shows we have no headroom. The levers, in order of leverage:
 
 1. **Fewer function evaluations** — MeanFlow / iMF (Gen3v6, Gen3v7, Gen13) collapse the ODE to $K\approx5$
    steps. [`ANALYSIS_hardflow_vs_dpcc_planning_structure.md`](../../Research/ANALYSIS_hardflow_vs_dpcc_planning_structure.md)
@@ -435,7 +435,602 @@ scenes today, so there is nothing to be robust *to* without first building one.
 
 ---
 
-## 6. The wall everything hits: 30.3 ms
+## 6. Case study — could HardFlow solve the velocity/PID problem Gen11 dropped?
+
+*(Added 2026-08-13, in response to: "we intended to control the velocity at first, then dropped into
+`pid_stopgo`.")*
+
+**Short answer: partially, and in a specific and interesting way.** HardFlow cannot fix the half of the
+problem that is a *conditioning* problem — it never changes what the network sees. But the half that
+killed velocity control in Gen11 was a **consistency and boundary-condition problem**, and that half is
+exactly what a hard terminal constraint is for. Concretely: **HF can restore momentum awareness to the
+current velocity-blind 9D checkpoint at inference time, with no retrain, via three linear rows.** That is
+a cheap, decisive, and — as far as I can tell — unclaimed experiment.
+
+### 6.0 First, disambiguate "velocity" — it means three different things in this project
+
+Same trap as §1. These get conflated constantly and the arguments below are unreadable if they blur:
+
+| symbol | name | lives in | who produces it |
+|---|---|---|---|
+| $v_\tau^\theta(x)$ | **flow velocity** — the learned field, in sampling time $\tau\in[0,1]$ | the U-Net | training |
+| $v$ | **physical velocity** of the drone, m/s | `data.qvel[:3]`; tensor cols 9–11 *in 12D only* | the simulator |
+| $v_{des}$ | **commanded velocity** — PID feed-forward | computed at runtime in `rollout_one` | `eval_fm_uav.py:986–990` |
+
+Worth noting in passing: for the standard scheduler $(\alpha_t{=}t,\ \beta_t{=}1{-}t)$ we get
+$\Lambda_t=-1$, so HF's posterior mean collapses to $\mathcal{M}_t(x)=x+(1-t)\,v^\theta_t(x)$ — "where
+the *flow* velocity says this sample is heading." The name collision with physical velocity is
+unfortunate and is not a relationship.
+
+### 6.1 What actually happened in Gen11 (the record)
+
+| | FM obs / transition | $v_{des}$ to PID | Flight | Status |
+|---|---|---|---|---|
+| **E7 Option 1** | `[p_des\|p\|v]` / **12D** | $\Delta p_{des}/dt_{fm}$ | continuous | ✅ called "working baseline" |
+| **U2 Option 2** | `[p_des\|p]` / **9D** | $\mathbf{0}$ | **strict stop-and-go** | ⬅ **current default** (`config/uav.py:133–134`, `:190–191`) |
+| **E8 Option 3** | 9D | ignored (MJPC internal) | continuous-ish | ⚠ deprioritised (~50× PID cost) |
+| **Option 4** | 9D | $\Delta p_{des}/dt_{fm}$ | continuous | ❌ **rejected — "unreliable by design"** |
+| **U3 `pid_const_v`** | 9D | $\text{unit}(a)\cdot\bar v$, $\bar v = \overline{\lVert\Delta p_{des}\rVert}\times 33$ | continuous | implemented, timing-free but magnitude-blind |
+
+Sources: [`MEMO_controller_options.md`](../../../Gen11/Epoch8_UAV_Mjpc_thrust_control/U2_PID_Stop_Go/MEMO_controller_options.md),
+[`PLAN_PID_Stop_Go.md`](../../../Gen11/Epoch8_UAV_Mjpc_thrust_control/U2_PID_Stop_Go/PLAN_PID_Stop_Go.md),
+[`PLAN_pid_const_v.md`](../../../Gen11/Epoch8_UAV_Mjpc_thrust_control/U3_v_des_Patch/PLAN_pid_const_v.md),
+`eval_fm_uav.py:986–990`, `:1205–1209`.
+
+**The memo's verdict, which is the thing to engage with:**
+
+> *"`v` in the FM tensor does two jobs — FM planning (momentum awareness) and implicit timing
+> self-correction. Dropping it to 9D breaks both; **no controller can recover this at the tracker
+> level**."*
+
+That is correct, and HF does not contradict it. **HF's move is to stop trying to recover it at the
+tracker level and recover it at the *planner constraint* level instead.** The memo enumerated four
+options and all four are choices of *how to post-process the FM's blind action into a $v_{des}$*. None of
+them touches the plan. That is the unexplored axis.
+
+Note also what `pid_stopgo` costs physically: because the UAV replans **every control step** (§8, no
+`replan_steps`), $v_{des}=0$ is issued **33 times per second**. The velocity loop's error is
+$v_{real}-0=v_{real}$, so the PID is commanded to brake to a standstill continuously while the position
+loop simultaneously pulls it forward. That is a controller fighting itself at 33 Hz, and it is a
+plausible contributor to the 2.07 m `max_track_err` of §3.3.
+
+### 6.2 The three things HF actually offers here
+
+**(a) Velocity as a *constrained* quantity rather than a *derived* one.**
+Option 4 was rejected because $v_{des}=\Delta p_{des}/dt_{fm}$ is computed after the fact from an
+unconstrained output, with no guarantee of self-consistency and no correction path. Under HF, the
+velocity relation becomes a row of $h(x)\le0$ and is enforced *inside* the sampler, jointly with obstacle
+avoidance, before anything is executed. The quantity being differenced stops being a hallucination.
+
+**(b) The initial-condition anchor — momentum awareness without the tensor channel.**
+This is the sharp one. HF anchors $s_0$ of the plan to the *measured* state
+(`flow_policy.py:423–439`). For our 9D tensor $x=[\,a_t \mid p_{des,t}\mid p_t\,]_{t=0}^{H-1}$ there is
+no $v$ channel — but physical velocity is a **linear functional of channels that do exist**:
+
+$$ \underbrace{\frac{p_1-p_0}{\Delta t_{phys}} = v_{\text{meas}}}_{\textbf{3 linear equality rows}},
+\qquad
+\underbrace{\lVert p_{t+1}-p_t\rVert_\infty \le v_{max}\Delta t_{phys}}_{\text{linear speed bound}},
+\qquad
+\underbrace{\lVert \Delta^{(2)}p_t\rVert \le a_{max}\Delta t_{phys}^2}_{\S5.1}$$
+
+with $\Delta t_{phys}=1/33$ s. **Three equality rows inject the drone's measured momentum into the plan
+even though the network never sees velocity and was never trained on it.** The plan is forced to *depart
+from where the drone is actually going*, which is precisely job #1 of the `v` channel the memo said was
+lost. Training-free inference-time constraint restoring a capability that was dropped from training is
+about as on-thesis for HardFlow as it gets.
+
+Note the channel choice matters and mirrors DC_FIX: differencing `p_des` just returns `act` (they are
+tied by construction), so the velocity rows must act on the **`p` channel**.
+
+**(c) The speed target becomes a cost, not a runtime hack.**
+`pid_const_v`'s $\bar v$ is the dataset's mean speed, applied blindly to the action direction. Under HF
+the same intent is a terminal cost, traded off against obstacle constraints by the same optimizer:
+
+$$ C(x) = \sum_t \Big( \tfrac{\lVert p_{t+1}-p_t\rVert}{\Delta t_{phys}} - \bar v \Big)^2 $$
+
+Slow down near obstacles, resume speed in the open — automatically, instead of one constant for the whole
+flight. HF supports exactly this ($C$ plus $h\le0$ in one problem); the DPCC projector has no cost slot
+at all.
+
+### 6.3 Why this is a *good* test of HF's central thesis, not just a UAV fix
+
+HF's core claim is that **pathwise** projection is over-restrictive and damages sample quality, while
+terminal-only constraint does not. Velocity is where that claim should bite hardest:
+
+> The velocity channel of a generated trajectory is a **finite difference** — a high-frequency functional
+> of the sample. Pathwise projection perturbs every intermediate iterate; those perturbations are
+> low-amplitude in position but get **differentiated**, so they are amplified in velocity. Terminal-only
+> constraint touches the sample once, at the end.
+
+**Testable prediction:** DPCC-projector variants and HardFlow should look similar on *position*
+smoothness and diverge sharply on *velocity/acceleration* consistency — HF better by a margin that grows
+with derivative order. If true, this is a clean quantitative demonstration of HF's thesis on a metric the
+paper never reports (it reports safety, steps, time — never smoothness; see
+[`DISCUSSION_foresight_fan_and_smoothness_paradigms.md`](../../Research/DISCUSSION_foresight_fan_and_smoothness_paradigms.md)).
+It also predicts the U_13 ordering anomaly should be *worse* in velocity than in position — a free
+retrospective check on data we already have.
+
+### 6.4 What HF does **not** solve here — four honest limits
+
+1. **Conditioning ≠ constraint.** The 9D network's *prior* remains velocity-blind. §6.2(b) gives the plan
+   the right boundary condition, but the U-Net still has no learned notion of momentum, so the NLP has to
+   drag the sample further from its nominal — larger $\lVert\widehat x_N-\bar x_N\rVert$, and HF's own
+   appendix warns that over-steering produces "spurious samples." **Constraint-based momentum awareness
+   is strictly weaker than putting `v` back in the tensor.** The honest experimental design is a
+   three-way: 9D+stopgo (current) vs 9D+HF-velocity-rows vs 12D+`v` (E7).
+2. **Wall-clock jitter is not a constraint problem.** If a replan takes 145 ms instead of 30.3 ms
+   (§8), the drone has moved further than any plan assumed. The constraint fixes *plan* self-consistency,
+   not real time. The genuine fix is orthogonal and worth its own note: a constrained plan has a
+   meaningful time parameterization, so it can be tracked **time-indexed** (evaluate the reference at
+   actual elapsed time) instead of **waypoint-indexed** — which is what makes Option 4's failure mode
+   disappear rather than merely shrink.
+3. **A feasible plan velocity is not an achieved velocity.** Gap G1 again: the tracker still has a 0.667 s
+   time constant (§3.3). Velocity rows without §5.3's closed-loop model just move the 22× optimism from
+   position to velocity. **§6.2 must be built on top of D3, not instead of it.**
+4. **`p` for $t>0$ is FM-imagined, not measured** (per [`CRITIQUE…` §0.1](../../../Gen11/Epoch7_fm_pcc_FULL_PCC_MPC/Real_Time_eval_loggging/data_example_anlysis/CRITIQUE_three_layer_absurdity.md)),
+   so the velocity rows constrain finite differences of an imagined channel. This is not a new sin — the
+   existing `p ← act` row already does exactly this — but it does mean the guarantee is "the plan is
+   self-consistent," not "the world is."
+
+### 6.5 The experiment to run
+
+Cheapest first, and note that **step 1 needs no HF port at all** — the velocity rows are linear, so they
+drop into the existing DPCC projector via the §5.1 `fd_bound` + per-row-`dt` infrastructure. HF is only
+required once the cost term (§6.2c) or the cones (§5.2) enter.
+
+| Step | What | Needs | Cost |
+|---|---|---|---|
+| 0 | On existing logs: how far is $\big(p_{t+1}-p_t\big)/\Delta t$ in current plans from measured $v$? Quantifies the inconsistency before fixing it. | nothing (offline) | hours |
+| 1 | Add the 3 initial-velocity rows + speed bound to the projector; re-run `pid_const_v` with $v_{des}$ read from the **plan's** finite difference instead of $\text{unit}(a)\bar v$ | §5.1 infra | S; **cluster** |
+| 2 | Three-way comparison: 9D+`pid_stopgo` vs 9D+velocity-rows vs 12D+`v` (E7 ckpt) | E7 checkpoint still exists? | M; **cluster** |
+| 3 | HF arm with the speed cost $C(x)$ + velocity rows; compare velocity-consistency vs DPCC-projector variants (the §6.3 prediction) | Stage 2 of §9 | L; **cluster** |
+
+**Metrics that decide it:** executed speed profile vs planned; $\lVert v_{real}-v_{des}\rVert$; fraction of
+steps with $\lVert v\rVert<0.05$ m/s (the stop-and-go signature — should collapse); `max_track_err`;
+motor saturation fraction; and steps-to-goal, which is where the payoff should show up if the drone stops
+braking 33 times a second.
+
+> **One caveat on framing.** U2 was explicitly designed as *"a baseline to measure the cost of dropping
+> velocity"* — i.e. `pid_stopgo` was never meant to be the destination, and it is currently the default in
+> both config blocks. Before building anything here, it is worth confirming whether the U2-vs-E7
+> measurement was ever actually completed. If 12D+`v` simply wins, the cheapest fix for the *product* is
+> to go back to it, and §6 becomes a research question (can constraints substitute for conditioning?)
+> rather than an engineering fix. Both are worth doing; they should not be confused with each other.
+
+---
+
+## 7. Is HardFlow's math actually bound to a 1st-order Euler / stop-and-go system? **No — but its 2nd-order experiment is open-loop, so the regime we need is still unclaimed**
+
+*(Added 2026-08-13, answering: "is HF math only located to a 1st-order Euler system, stop-and-go only,
+like the avoiding coding — or can it expand to higher order and solve the velocity-speed and
+instantaneous-calculation problem we hit in Gen11?")*
+
+**Answer in one line: the first-order-ness and the stop-and-go are both properties of the *avoiding
+experiment*, not of HardFlow. The paper's own maze2d experiment is second-order, velocity-in-the-plan,
+PD-tracked — and its code is sitting in our `aux_repo` on an unread branch.**
+
+### 7.1 There are two Eulers in this method and they have nothing to do with each other
+
+| | Where it lives | What it discretizes | Is it a limitation? |
+|---|---|---|---|
+| **Euler #1** — *sampling* | Problem 2: $x_{j+1}=x_j+v^\theta_{t_j}(x_j)\Delta t_j+u_j\Delta t_j$, over $\tau\in[0,1]$ | the **generative ODE**. Has no robot in it at all. | **No.** The paper's appendix replaces it with any one-step map $\Psi_i^\theta$ (Heun shown, measured faster) and states *"all results in the Theoretical Analysis section extend naturally."* |
+| **Euler #2** — *physics* | inside $h(x)\le0$: $s_{i+1}=As_i+Ba_i+c$ | the **plant**, in physical time | **Not even Euler.** $(A,B,c)$ is *least-squares fitted to real transitions* — it absorbs whatever the true discrete-time map is, including exact ZOH. Calling it "Euler" is our import, not theirs. |
+
+> **Sharpening of §3.1:** the "explicit Euler" wording is **ours**. `DynamicConstraints`' docstring
+> (`projection.py:435–447`) literally specifies $x_{t+1}=x_t+\Delta t\,\dot x_t$ (or trapezoidal). *We*
+> hard-code an integrator; HardFlow *fits* a transition. That is a second protocol asymmetry on top of
+> the asserted-vs-fitted one from [`FIT_DYNAMICS…` §6b](../FIT_DYNAMICS_what_the_linear_dynamics_model_is.md).
+
+### 7.2 The guarantee makes **no assumption whatsoever** about $h$
+
+The proof of Prop. 1 (Appendix A.1) is four lines, and this is its entirety: at $i=N-1$, the scheduler
+boundary conditions $\alpha_1=1,\ \beta_1=0$ collapse Alg. 1's update to
+
+$$ x_N=\alpha_1\widehat{x}_N^{*}+\beta_1(\cdots)=\widehat{x}_N^{*}\ \Longrightarrow\ h(x_N)=h(\widehat{x}_N^{*})\le0 .$$
+
+**That is the whole proof.** It uses: the scheduler's endpoint values, and the fact that the last NLP was
+solved feasibly. It does **not** use linearity of $h$, convexity of $h$, any dynamics model, any order,
+any relative degree, any smoothness. $h:\mathbb{R}^d\to\mathbb{R}^m$ is an arbitrary black box.
+
+So the algorithm is **order-agnostic by construction**. Everything about "first order" enters through one
+choice — *what the experimenter wrote into $h$* — and D3IL avoiding wrote in a single integrator because
+that is what a velocity-commanded, quasi-static robot arm **is**.
+
+### 7.3 "First-order recursion" ≠ "first-order physics" — the state-augmentation point
+
+This is likely the crux of the confusion, and it is worth stating flatly:
+
+$$ s_{i+1}=As_i+Ba_i+c \quad\text{is a \emph{first-order recursion in the state vector }} s . $$
+
+State-space form makes **every** system first-order in $s$; the *physical* order is set by what you put
+**in** $s$. With $s=(p,v)$ and $a=$ force,
+
+$$ \begin{bmatrix}p_{i+1}\\ v_{i+1}\end{bmatrix}=\begin{bmatrix}I&\Delta t\,I\\ 0&I\end{bmatrix}\begin{bmatrix}p_i\\ v_i\end{bmatrix}+\begin{bmatrix}\tfrac12\Delta t^2 I\\ \Delta t\,I\end{bmatrix}a_i $$
+
+is a **double integrator** — a second-order plant — written as a first-order recursion, and it is *exactly
+the shape HardFlow's constraint already has*. Relative degree 3 or 4 follows the same way: augment to
+$s=(p,v,a)$ or $(p,v,a,j)$, or (equivalently, and cheaper for us) impose multi-step finite differences
+directly on $x$ as in §5.1. **All of it stays linear.** Nothing in HF resists this.
+
+So the D3IL avoiding case is not "HF's math is first order." It is "HF was pointed at a first-order robot."
+
+### 7.4 The receipt — with a large asterisk: maze2d is **open-loop, planned once**
+
+> [!IMPORTANT]
+> **Correction to the first draft of this section.** I initially presented maze2d as "our exact problem
+> shape." It is not, and the objection that prompted this revision is correct. **maze2d plans exactly
+> once per episode and never replans.** The code comment is literal:
+> ```python
+> pbar = tqdm.tqdm(range(env.max_episode_steps), desc="Episode")
+> for t in pbar:
+>     # only plan once at t=0
+>     if t == 0:
+>         conditions[0] = observation
+>         action, samples, _, _, info = policy(conditions, batch_size=cfg.batch_size)
+>         state_sequence = samples.observations[0]
+> ```
+> — `origin/maze2d:run/eval.py:341–352`. There is no `replan_steps` key in the maze2d config at all,
+> whereas the d3il/avoiding branch has one and uses it (`origin/d3il:run/eval.py:381–403`:
+> `if planned_actions is None or action_index >= cfg.replan_steps`). One $H{=}384$ plan is generated at
+> $t{=}0$ and PD-tracked open-loop for up to 800 steps.
+
+| | D3IL avoiding | **maze2d** | **Gen11 UAV** |
+|---|---|---|---|
+| state $s$ | $(p_{cur},p_{des})\in\mathbb{R}^4$ — **no velocity** | $(p,v)\in\mathbb{R}^4$ — **velocity in state** | $(p_{des},p,v)$ 12D; $(p_{des},p)$ 9D |
+| action $a$ | desired velocity | **force** | $\Delta p_{des}$ |
+| plant order | 1 (single integrator) | **2 (double integrator)**, fully actuated | 2+, **underactuated**, rel. deg. 4 |
+| tracker | none — actions executed directly | **PD**, $K_p{=}5,K_d{=}1$ | **cascaded PID** |
+| $v_{des}$ source | n/a | **read out of the plan** | $\Delta p_{des}/dt_{fm}$, or $0$, or $\text{unit}(a)\bar v$ |
+| horizon $H$ | 16 | **384** | 8 |
+| **replanning** | **every 8 steps** | ❗ **never — plan once at $t{=}0$** | ❗ **every step, 33 Hz** |
+| environment | static, novel test obstacles | **static, fully known at $t{=}0$**, `fixed_start=True`, goal = $[\,target,0,0\,]$ | static geometry, but 4.8× over real-time budget |
+| plan cost | 0.190 s **per replan** (~7/episode) | 4.09 s **once per episode** | 30.3 ms budget **per step** |
+| HF result | 1.00 safety, 52.5 steps | 1.00 safety, 0.0 violations, best score | — |
+
+**The structural finding this exposes is more useful than the one I claimed.** HardFlow's two robotics
+experiments each have *one* of the two features our UAV needs, and **never both**:
+
+| | replanning (receding horizon) | velocity in the state |
+|---|:--:|:--:|
+| avoiding | ✅ | ❌ |
+| maze2d | ❌ | ✅ |
+| **Gen11 UAV** | ✅ **required** | ✅ **required** |
+
+> **So HardFlow has never demonstrated velocity-in-state *together with* replanning.** That is a genuine
+> gap in the paper, not just in our reading of it — and it is exactly the regime the UAV lives in. This
+> is better news for us than a ready-made template would have been: it is unclaimed ground, and §5.5
+> (recursive feasibility across replans) is precisely the theory that regime needs.
+
+The tracking code (`origin/maze2d:run/eval.py:361–371`) is still worth reading closely:
+
+```python
+if cfg.controller == "pd":            # proportional-derivative
+    px, py, vx, vy = observation
+    idx_t   = min(t, len(state_sequence) - 1)      # ← TIME-indexed into the plan
+    pdes_t  = state_sequence[idx_t][:2]            # ← position  from the plan
+    vdes_t  = state_sequence[idx_t][2:]            # ← VELOCITY  from the plan
+    Kp = np.array([1.0, 1.0]) * 5.0
+    Kd = np.array([1.0, 1.0]) * 1.0
+    action = Kp * (pdes_t - np.array([px, py])) + Kd * (vdes_t - np.array([vx, vy]))
+```
+
+with the velocity channel held consistent by the dynamics rows at
+`origin/maze2d:hardflow/models_flow/flow_policy.py:299`.
+
+**What survives the correction, and what does not:**
+
+| Claim | Verdict |
+|---|---|
+| `v_des` is **read from the plan**, never computed by runtime differencing — the "instantaneous calculation" problem is *deleted*, not mitigated | ✅ **survives.** The mechanism is real and transfers: it needs a velocity channel + dynamics rows, not open-loop planning. |
+| Velocity as a **generated, dynamically-constrained** channel; HF's constraint machinery handles $(p,v,a)$ | ✅ **survives** — `flow_policy.py:299` on that branch. |
+| Stop-and-go is a Gen11 choice, not an HF property | ✅ **survives.** |
+| Time-indexed tracking (`idx_t = min(t, …)`) is the fix for replan jitter | ⚠️ **weakened.** It is trivially easy when there is only *one* plan spanning the episode. Under replanning you must additionally stitch across plan boundaries — a problem maze2d never faces. Still the right idea; no longer free. |
+| maze2d's 1.00 safety / 0 violations proves HF works here | ❌ **retracted.** It proves HF works for a **one-shot open-loop plan in a fully-known static maze**. That is a strictly easier setting than 33 Hz closed-loop flight. |
+| maze2d's 4.09 s is comparable to our budget | ❌ **retracted.** It is **once per episode**, not per step. Only the avoiding number (0.190 s/replan) belongs in the §8 compute comparison — which is what §8 uses. |
+
+> **The actionable find:** `git branch -a` in `/workspaces/aux_repo/HardFlow` shows
+> `remotes/origin/{d3il, maze2d, burgers, image}`. We have been reading **`d3il`** — the *first-order,
+> no-velocity, no-tracker* branch — and generalising from it to a quadrotor. **`origin/maze2d` is fetched
+> and readable right now** (`git show origin/maze2d:<path>`), and it is the better template for Gen11:
+> second-order plant, velocity in the state, PD tracker, dynamics constraint over $(p,v,a)$. Reading it
+> should precede any UAV port. Gen12/Gen13 planning assumed `d3il` was *the* HardFlow codebase; that
+> assumption is worth revisiting.
+
+### 7.5 So: can HF solve the Gen11 velocity problem? The concrete recipe
+
+Mapping maze2d onto Gen11, the recipe is three changes to components we already have — and note that
+**maze2d's setup corresponds to E7's 12D config, not the current 9D**, because the network must *emit* a
+velocity channel for the tracker to read one:
+
+| # | Change | Gen11 status |
+|---|---|---|
+| 1 | Velocity **in the tensor** (so the plan has a $v$ channel to read) | **E7 12D already had this.** Dropped in U2. → un-drop it |
+| 2 | Velocity **constrained** to be consistent with position: the double-integrator rows | **missing entirely** — `v(9,10,11)` unconstrained (§3.1). Needs per-row `dt` (§5.1) |
+| 3 | $v_{des}$ **read from the plan, time-indexed** — not $\Delta p_{des}/dt_{fm}$, not $0$, not $\text{unit}(a)\bar v$ | **missing** — all four Gen11 options compute $v_{des}$ at runtime (§6.1) |
+
+Item 1 is a config revert. Item 2 is the §5.1 infrastructure. Item 3 is a few lines in `rollout_one`.
+**None of the three requires HardFlow.** They are the *maze2d recipe* — but note §7.4: maze2d applies it
+open-loop, so transplanting it into a **replanning** loop is new ground, not a port. They land in the DPCC projector
+just as well — which makes this the cheapest high-value experiment in the whole document, and it is a
+sharper version of §6.5 step 2. HF then adds, on top: the cost slot $C(x)$ for speed shaping (§6.2c), and
+the nonconvex/SOC constraints (§5.2) the linear projector cannot hold.
+
+### 7.6 Where the maze2d analogy stops — four honest limits
+
+1. **Maze2d is fully actuated.** A force-actuated ball has relative degree 2 and no attitude loop; the
+   thrust direction *is* the control. A quadrotor is underactuated with relative degree 4 (§3.2). So
+   maze2d validates *"velocity in the plan + PD tracking + dynamics constraint"*, **not** *"this works for
+   an underactuated vehicle."* §5.2's cones are still needed.
+2. **$H=384$ vs our $H=8$.** Time-indexed tracking is comfortable over a 384-step plan; over 8 steps
+   (0.242 s) the plan is exhausted almost immediately and `min(t, len-1)` degenerates to "hold the last
+   waypoint." **Time-indexed tracking probably requires growing $H$**, which re-inflates §8's compute
+   wall. This tension is real and should be sized before building.
+3. **Maze2d replans rarely; we replan every step.** Different regime; the per-replan cost budget is not
+   comparable.
+4. **Their PD is a single loop with $K_p{=}5,K_d{=}1$ on a point mass.** Ours is a cascade with an SO(3)
+   inner loop. The 0.667 s outer-loop time constant of §3.3 has no maze2d counterpart, so the D3
+   closed-loop model (§5.3) remains necessary regardless.
+
+### 7.7 So should we just plan once with a big $H$? **No — but the operating point is the real question**
+
+Two questions follow directly from §7.4, and they deserve separate answers.
+
+**Q1: "If the UAV planned once, would the instant-replan problem disappear in Gen11 too?"**
+Mechanically yes, and that is exactly *why* maze2d's velocity handling looks so clean — but it disappears
+by removing the feature that makes the system a controller. Replanning is not overhead we tolerate; **it
+is the entire mechanism by which model error, disturbance, and anything unseen get corrected.** Drop it
+and you have open-loop trajectory playback with a PD servo. That is a legitimate design (maze2d does it),
+but only under conditions the UAV does not meet:
+
+| maze2d can plan once because… | Gen11 UAV |
+|---|---|
+| environment fully known at $t{=}0$ — static maze, known target, `fixed_start=True` | geometry known, but the *drone's own response* is not (§3.3) |
+| plant is a deterministic point mass; the PD tracks near-exactly | 0.667 s tracker time constant, `max_track_err` 2.07 m |
+| nothing new is ever observed mid-episode | E10 will add **cameras** — the whole premise is new observation |
+| open-loop error does not accumulate meaningfully | it accumulates for 7.8 s over 256 steps |
+
+**Q2: "So extend to $H{=}256$ and one-shot Visual Aligning?" — no, and your instinct is right.** Three
+reasons, in increasing order of severity:
+
+1. **Partial observability.** Visual aligning is image-conditioned. A one-shot plan at $t{=}0$ must
+   predict the whole episode from the first frame. maze2d's target is *given as a hard condition*
+   (`conditions[H-1] = [*target, 0, 0]`); an image-conditioned task has no such oracle.
+2. **Multimodality.** D3IL's defining property is multiple valid behavior modes. One shot = one mode,
+   committed at $t{=}0$, with no opportunity to switch when the commitment turns out badly.
+3. **It deletes the "PC" from FM-PCC.** *Predictive Control* is receding-horizon by definition. A
+   one-shot planner is not a controller and cannot be compared against DPCC on DPCC's own terms — the
+   benchmark hierarchy would no longer mean anything.
+
+**But the useful question underneath is real: is Gen11's operating point sane?** Laid out on one axis:
+
+| | $H$ | lookahead | replan cadence | plans/episode |
+|---|---|---|---|---|
+| **Gen11 UAV** | 8 | **0.24 s** | **every step (33 Hz)** | ~600 |
+| HF avoiding | 16 | — | every 8 steps | ~7 |
+| HF maze2d | 384 | whole episode | once | 1 |
+
+**Gen11 sits at the extreme of both axes simultaneously — the shortest lookahead *and* the highest replan
+rate. That is the worst combination available.** And one number makes it concrete:
+
+> The plan spans **0.24 s**. The tracker's error time constant is **0.667 s** (§3.3). **The lookahead is
+> shorter than the tracker's own response time by ~2.7×** — the plan ends before the drone can respond to
+> its beginning. We are re-deciding the future 33 times a second while never looking far enough ahead for
+> any decision to have taken physical effect.
+
+That reframes several things in this document at once. Moving toward the middle of the axis — e.g.
+$H\approx32$–$64$ (1–2 s ≈ 1.5–3 tracker time constants) with replanning every ~8 steps (≈4 Hz) — would:
+
+- cut NLP solves by ~8× → **this, not solver tuning, is what makes §5.2/§5.6 affordable** (§8);
+- make lookahead exceed the tracker time constant → plans become physically trackable;
+- give time-indexed tracking something to index into (§7.6 limit 2);
+- give a terminal set somewhere to live (§5.5 — note maze2d's goal condition $[\,target,0,0\,]$ is
+  literally a zero-terminal-velocity constraint, i.e. an implicit stoppability condition);
+- **retain replanning**, so reactivity to the unseen is preserved.
+
+**Cost, stated honestly:** $H$ is a model property — changing it means retraining and re-windowing the
+dataset, and an FM trained at $H{=}8$ gives no evidence about its behaviour at $H{=}32$. Longer horizons
+also enlarge the NLP per solve (it scales with $H\times$transition-dim), partially offsetting the
+solve-count saving. **Net effect is an empirical question, and "sweep $(H,\text{replan cadence})$" is
+probably the single highest-value experiment in this document** — it is a config-and-retrain sweep with no
+new theory, it directly attacks the §8 compute wall, and every other direction here gets cheaper or more
+meaningful if it lands well.
+
+### 7.8 Proposal — long horizon + **replan-on-violation** instead of continuous replanning
+
+*(User proposal, 2026-08-13: "design into the new MPC like H256, meet violation — i.e. it happened — then
+replan, instead of keeping replan?" With the user's own assessment attached: "this is suboptimal, since
+violated then can replan, compared to real MPC — but it feels like it solves the instant-calculation
+problem related to velocity." **Both halves of that assessment are correct, and the second half is
+correct for a sharper reason than intuition suggests.** Recorded here in full.)*
+
+This is **event-triggered MPC** (as opposed to the time-triggered MPC we run now) — an established
+control-theory idea (Heemels / Johansson / Tabuada lineage, with a substantial event-triggered-MPC
+literature). It fits FM-PCC unusually well for one reason: event-triggering was invented for regimes where
+**computation is the scarce resource**, and our cost asymmetry is far more extreme than in the literature
+that motivated it.
+
+> **Context — there are two MPCs in this stack, and conflating them makes MPC look like the villain when
+> it isn't.** A classical quadrotor NMPC over the full state $(p,v,q,\omega)$ solves in **sub-ms to a few
+> ms** and runs at 50–100+ Hz onboard (acados/RTI-class solvers); velocity is simply a state, supplied by
+> the estimator. Our own `MJPCTracker` *is* such an MPC and already handles velocity (`mjx_vel_weight`
+> exists precisely to penalise it, "mirrors PID Kd"). The 145 ms is **not** MPC being too slow for
+> higher-order control — it is 10–20 U-Net forward passes plus a per-sampling-step NLP. **MPC is not the
+> bottleneck; the generative planner is.** Periodic replanning is free in classical MPC and nobody
+> event-triggers it; here one solve costs 4.8 replan budgets, which is exactly when triggering starts to
+> matter.
+
+#### 7.8.1 Why it is suboptimal — the user's assessment, made precise
+
+Three distinct losses versus time-triggered MPC, in increasing severity:
+
+1. **Staleness.** MPC's value *is* re-optimisation against fresh state. A plan held for $N$ steps is
+   suboptimal by construction, and standard MPC suboptimality bounds grow with the inter-solve interval.
+2. **Weakened disturbance rejection.** Between triggers only the PD/PID loop rejects disturbance; the
+   *plan* does not adapt. With our 0.667 s tracker time constant (§3.3), that is a long time to be riding
+   an open-loop reference.
+3. **The trigger as literally stated is too late.** "Violation happened → replan" is **reactive**: if the
+   drone has already entered the obstacle, the episode is already failed and there is nothing to replan
+   *for*. For safety constraints a post-hoc trigger buys nothing. **This is the one part of the proposal
+   that must change** — see §7.8.4.
+
+#### 7.8.2 Why the intuition is right anyway: **replan cadence *is* the velocity problem**
+
+This is the part worth keeping, and it is stronger than "it feels like it helps."
+
+Under $H{=}8$ replanning **every 30.3 ms**, each plan is a *fresh, independent sample* from a generative
+model, discarded one step later. Successive plans are not tied together by anything — there is no
+constraint that plan $k{+}1$ agrees with plan $k$ at the seam. Consequences:
+
+- A velocity read off plan $k$ and off plan $k{+}1$ can differ arbitrarily, because they are different
+  draws — even when each plan is *internally* consistent.
+- Differencing such a plan at runtime ($v_{des}=\Delta p_{des}/dt_{fm}$) differentiates that
+  plan-to-plan jitter. This is Option 4's "unreliable by design" (§6.1), now with a mechanism attached.
+- **Therefore `pid_stopgo` ($v_{des}=0$) is not an arbitrary choice — it is the rational response to a
+  velocity reference that is noise.** If the reference cannot be trusted, commanding zero is safer than
+  commanding garbage. **Stop-and-go is a *symptom of the 33 Hz replan cadence*, not an independent design
+  decision.**
+
+Now invert it. A long-horizon, rarely-replanned plan is a **stable object that lives for seconds**, so:
+
+| | 33 Hz replan, $H{=}8$ | long $H$, rare replan |
+|---|---|---|
+| $v_{des}$ source | runtime finite difference of a plan about to be discarded | **read from a stable plan, time-indexed** |
+| depends on $dt_{fm}$? | yes — timing-fragile | **no** |
+| plan-to-plan seams | ~33 per second | a handful per episode |
+| trustworthy velocity reference? | no → hence $v_{des}=0$ | **yes** |
+
+**That is exactly why maze2d's velocity handling looks so clean (§7.4) — it plans once.** So the user's
+intuition is correct and now has a mechanism: *the proposal attacks the root cause of the velocity
+problem rather than the symptom.* §6 and §7.7 are therefore **not two problems but one**: the velocity
+reference problem and the replan-cadence problem are the same problem viewed from two ends.
+
+#### 7.8.3 The sharper fix — keep fast replanning, constrain the **seam**
+
+The trade-off above looks forced: fast replanning gives good control and an unusable velocity reference;
+slow replanning gives a stable reference and sluggish control. **It is not forced.** The seam jitter is
+caused by successive plans being unconstrained relative to each other — and constraining a plan's initial
+condition is precisely what HardFlow's $s_0$ anchor does (`flow_policy.py:423–439`):
+
+$$ \underbrace{p_0^{(k+1)} = p_{\text{meas}}}_{\text{avoiding has this}},\qquad \underbrace{v_0^{(k+1)} = v_{\text{meas}}}_{\textbf{only if velocity is in }s}$$
+
+With velocity in the anchored state, **every new plan is forced to depart at the velocity the drone
+actually has**, so consecutive plans agree at the seam *by construction* and the reference stays
+continuous across replans — at 33 Hz or any other rate.
+
+This is exactly the avoiding-vs-maze2d split of §7.4: avoiding anchors position only (no velocity in $s$),
+maze2d anchors $(p,v)$. **Gen11's 9D config is in the avoiding camp; E7's 12D was in the maze2d camp but
+never had the anchor constraint.** So the ranking is:
+
+| option | velocity reference | control quality | cost |
+|---|---|---|---|
+| current: 9D, 33 Hz, $v_{des}{=}0$ | unusable → zeroed | poor (fights itself 33×/s) | 4.8× over budget |
+| **proposal: long $H$, event-triggered** | **stable** | **degraded (stale)** | much cheaper |
+| **velocity-anchored seam, keep fast replan** | **stable** | **best** | unchanged (rows are free) |
+
+**The third row dominates the second** — it gets the proposal's benefit without paying its cost. The
+proposal's real contribution is diagnostic: it is what made the seam mechanism visible.
+
+#### 7.8.4 If event-triggering is built anyway, use a **predictive** trigger
+
+| trigger | condition | cost | verdict |
+|---|---|---|---|
+| violation occurred | $h(p)>0$ | free | ❌ **too late — failure already happened** |
+| tracking error | $\lVert p-p_{plan}(t)\rVert>\varepsilon$ | free | ✅ classic; **already logged** (`max_track_err`) |
+| **tube exit** | drone about to leave the §5.4 tube | free | ✅ **carries a guarantee** |
+| predicted violation | forward-sim the §5.3 linear closed-loop model along the remaining plan | ~free (small matmul) | ✅ cheap lookahead |
+| novelty | observation/image changed materially | E10 | ✅ for the visual arm |
+
+**The tube trigger is the one worth building**, because it makes the scheme *rigorous* rather than
+heuristic. If obstacles are tightened by the tube radius $\varepsilon$ (§5.4), the plan is provably safe
+**as long as the drone remains inside the tube**; triggering on imminent tube exit means safety holds
+*continuously between replans*, by construction, and the trigger fires exactly when that guarantee is
+about to expire. That is the standard event-triggered-MPC certificate — and it means **this proposal is
+the mechanism that makes §5.4 (tube) and §5.5 (recursive feasibility) pay off** instead of remaining
+standalone nice-to-haves. Three previously separate directions collapse into one design.
+
+Add a **minimum dwell time** between triggers (guaranteed by the tube's finite escape time) to prevent
+chattering / Zeno behaviour.
+
+#### 7.8.5 The arithmetic — why $H{=}256$ specifically is the wrong size
+
+Solve cost scales with $H\times$transition-dim, and maze2d calibrates it: $384\times6=2304$ dims →
+**4.09 s per plan**. So UAV $H{=}256\times12=3072$ dims → **order 5 s per solve**. Against a
+$634\times30.3\text{ ms}\approx19$ s episode:
+
+| | NLP dims | ~s/solve | solves affordable per episode |
+|---|---|---|---|
+| now: $H{=}8$, every step | 96 | 0.145 | 634 needed → **4.8× over** |
+| $H{=}256$, event-triggered | 3072 | ~5 | **≈3.8 total** |
+| **$H{=}32$–$64$, event-triggered** | 384–768 | ~0.3–0.5 | **≈40 — comfortable** |
+
+> **The trap: long horizon and fast reaction are in direct tension.** At $H{=}256$ the trigger fires and
+> the response takes ~5 s, during which the drone flies the stale plan — so the trigger cannot actually
+> rescue anything. **A long horizon makes triggering less useful, not more.** This reinforces §7.7:
+> the operating point is $H\approx32$–$64$, not 256.
+
+Two architectural changes compose with this and are arguably prerequisites:
+
+- **Asynchronous replanning.** The FM currently *blocks* the control step, which is why "145 ms vs
+  30.3 ms" reads as fatal. Real drone stacks run the planner in its own thread at its own rate; the
+  tracker never waits. This requires the time-indexed plan of §7.4 so a late plan can be spliced in at the
+  correct time offset. Independent of HardFlow, and possibly the highest-impact change in this document.
+- **Hierarchical two-rate planning** — a long "route" plan (event-triggered, rare) supplying the terminal
+  condition for a short "local" plan (fast). Standard robotics architecture; it *dissolves* the
+  horizon-vs-reactivity tension rather than trading against it, and the route plan's endpoint is a natural
+  home for §5.5's terminal set.
+
+**Honest limitation of event-triggering in general:** it improves *average* compute, not *worst-case
+latency* — and triggers tend to fire during aggressive manoeuvres, exactly when a stall is least
+affordable. Async replanning is the mitigation.
+
+#### 7.8.6 What to actually build from this
+
+**The cadence ablation, and it is cheap.** Same checkpoint, same scenes, same everything — vary only the
+replan cadence (every step → every 8 → every 32 → once) and measure **velocity-reference stability**:
+plan-to-plan seam discontinuity $\lVert v^{(k+1)}_0 - v^{(k)}_1\rVert$, executed speed profile, fraction
+of steps with $\lVert v\rVert<0.05$ m/s. This isolates how much of the velocity problem is caused by
+cadence alone, it needs **no new theory and no retrain** (cadence is eval-side), and it decides whether
+§7.8.3's seam constraint or §7.8's slow-replanning is the right lever. **Run before building either.**
+
+> **Verdict.** The proposal is *diagnostically* valuable and *operationally* dominated. It correctly
+> identifies that continuous replanning is what makes the velocity reference untrustworthy — a link
+> nothing in Gen11's four-option memo (§6.1) saw, because all four options treated $v_{des}$ as a runtime
+> computation problem rather than a plan-stability problem. But its own mechanism (slow down, trigger on
+> violation) pays for that stability with stale control and an unusable-because-too-late trigger. **Keep
+> the diagnosis, replace the remedy:** anchor velocity at the seam (§7.8.3), trigger on the tube rather
+> than the violation (§7.8.4), and size the horizon at 32–64 rather than 256 (§7.8.5).
+
+### 7.9 Net effect on this document
+
+- §1 axis **B** should be read as: HF handles 2nd-order *linear, fully-actuated* — **demonstrated**, not
+  merely possible. The open ground is narrower and better-defined than §1 implied: *nonlinear,
+  underactuated, high relative degree, cascaded tracker.*
+- §6's conclusion is unchanged but its emphasis shifts. §6.2(b) — recovering momentum on the **9D**
+  checkpoint via finite-difference boundary rows — remains the interesting *research* question ("can
+  constraints substitute for conditioning?"). But §7.5 shows the **engineering** answer is simply to put
+  velocity back and constrain it, as HF's own second-order experiment does. Do not let the research
+  question delay the engineering fix.
+- **§5.9's ranking should be re-read in light of §7.7.** The $(H,\text{replan cadence})$ sweep is not in
+  that table and arguably outranks everything in it: it is pure config + retrain, it is the only lever
+  that changes the compute budget by an order of magnitude, and D1/D2/D4/D5 all become either cheaper or
+  more meaningful once the lookahead exceeds the tracker time constant. **Revised entry point: §7.7 sweep
+  → §5.3 (closed-loop model) → §5.1 (infrastructure) → §5.4 (tube).**
+- **HardFlow has never run velocity-in-state *with* replanning** (§7.4). Any UAV port is therefore
+  building something the paper does not cover, and should be scoped and written up as such rather than as
+  "porting the maze2d setup."
+- **§6 and §7.7–§7.8 are one problem, not two.** §7.8.2 establishes the link: continuous 33 Hz replanning
+  is *what makes the velocity reference untrustworthy*, and `pid_stopgo` is the rational response to an
+  untrustworthy reference. Every fix in §6 should be read as also being a statement about replan cadence,
+  and the §7.8.6 cadence ablation should precede all of them — it is eval-side, needs no retrain, and
+  tells us whether to spend effort on the seam constraint (§7.8.3) or on cadence itself.
+- **Three directions collapse into one design.** §5.4 (tube), §5.5 (recursive feasibility) and §7.8
+  (event-triggering) are not independent: the tube supplies the trigger, the trigger supplies the
+  inter-replan guarantee, and the terminal set supplies recursive feasibility across triggers. That
+  bundle — not any single one of them — is the paper-shaped contribution.
+
+---
+
+## 8. The wall everything hits: 30.3 ms
 
 | Quantity | Value | Source |
 |---|---|---|
@@ -463,7 +1058,7 @@ Three consequences, all of which shape the research rather than merely constrain
 
 ---
 
-## 7. A staged program
+## 9. A staged program
 
 **Stage 0 — offline, no new runs, no code changes to the pipeline.**
 Take existing Gen11 rollout logs. Compare one-step prediction error of three candidate dynamics models:
@@ -489,7 +1084,7 @@ D4 tube, then D5 terminal set, with the recursive-feasibility metric. This is wh
 
 ---
 
-## 8. Open questions to settle before committing
+## 10. Open questions to settle before committing
 
 1. **Which tracker is the object of study — PID or MJPC?** D3b/D4/D5 all assume an analyzable closed
    loop. MJPC (`mjpc_tracker.py`) is a sampling optimizer, not an LTI system. *Recommendation: PID for
@@ -499,7 +1094,7 @@ D4 tube, then D5 terminal set, with the recursive-feasibility metric. This is wh
    Measure it in Stage 0 — same logs, near-zero marginal cost.
 3. **$H=8$ / 0.242 s — is the horizon long enough for a terminal set to mean anything?** Stopping from
    typical plan speeds may take longer than the horizon, in which case D5 needs $H$ to grow, which
-   directly re-inflates §6. This tension is real and should be quantified before D5 is attempted.
+   directly re-inflates §8. This tension is real and should be quantified before D5 is attempted.
 4. **Do we have $T_{max}$, $\theta_{max}$, $j_{max}$ for the Skydio X2?** Mass and inertia are read from
    the MuJoCo model already; `u_max = max(2·u_hover, 6.0)` in `flight_controller.py` is a *heuristic
    cap*, not a datasheet figure. §5.2 is only as good as these numbers.
@@ -507,7 +1102,7 @@ D4 tube, then D5 terminal set, with the recursive-feasibility metric. This is wh
 
 ---
 
-## 9. Cross-references
+## 11. Cross-references
 
 **HF_Study (this folder's parent)**
 - [`FIT_DYNAMICS_what_the_linear_dynamics_model_is.md`](../FIT_DYNAMICS_what_the_linear_dynamics_model_is.md) — what $A,B,c$ is; DPCC-asserts-vs-HF-fits; the protocol asymmetry (§6b)

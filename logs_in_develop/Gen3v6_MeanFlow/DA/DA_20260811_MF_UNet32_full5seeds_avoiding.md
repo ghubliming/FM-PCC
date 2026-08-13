@@ -996,11 +996,34 @@ this pipeline.
 
 ## 11. 🔄 UPDATE 2026-08-13 — clean 5-seed ladders for `mf_dit` and `af_sit` arrive
 
-### 11.0 In one table — what was tested, and what it changed
+### 11.0 Exactly what was run, and exactly what came out
 
-**Tested:** the two comparison families re-run from scratch at **5 seeds × K {1,2,5,10,20}**, single
-clean config (`A0.5_B1`), fixing both defects §9.1 recorded — the missing K-ladders *and* the
-pre-Fix_9 HardFlow contamination. Nothing about our own arm was re-run.
+**Two eval jobs. No training. Nothing about our own arm was re-run.** Both were the commands from
+§9.4 / the AlphaFlow fix, executed 2026-08-12:
+
+| # | command run | → job | what it produced |
+|---|---|---|---|
+| 1 | `git checkout config/avoiding-d3il.py` *(`imf_backbone` → `mf_dit`)*<br>`meanflow_projection_eval.yaml` → `seeds: [6,7,8,9,10]`<br>`./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow.sh` | **24516**<br>11 h 15 m | `mf_dit` ladder: **5 seeds × K{1,2,5,10,20} × 13 variants × 3 envs × 2 trials = 975 eval cells** |
+| 2 | `alphaflow_projection_eval.yaml` → `seeds: [6,7,8,9,10]`<br>`./Slurm_Codes/submit.sh Slurm_Codes/sbatch/AlphaFlow/eval_alphaflow.sh` | **24515**<br>10 h 20 m | `af_sit` ladder: **975 eval cells**, same shape |
+
+Both logs print `[ eval ] NFE budgets to evaluate: 1 2 5 10 20` — the K20 rung is there because of
+the sbatch default edit made the same morning. Both print `hf_batch=1 · A=0.5`, so the HardFlow arms
+are finally on one configuration.
+
+**Why these two jobs existed at all:** §9.1 recorded two defects in the comparison families —
+(a) they had no multi-seed K-ladder, only K = 2; (b) their `hardflow_new-*` arms mixed seed 6
+(`batch=4, A=0.5`) with seeds 7–10 (`batch=1, A=1.0`) in one untokened folder. **Both jobs fixed
+both defects at once**, which is why they were worth ~11 h each.
+
+**What that bought — three claims re-tested, two of which failed:**
+
+1. *"The DiT's `-c` timeout collapse is a backbone property"* (§4.1.2) → **refuted.** It only
+   needed K ≠ 2 to disappear.
+2. *"The UNet is the better MeanFlow backbone"* (§4.1) → **narrowed to K = 2.**
+3. *"AlphaFlow is ahead of us"* (§4.4) → **confirmed, and by more than reported.**
+
+Plus two claims that got *stronger* because there is now cross-family evidence: the low-K result
+(§3) and, untouched, the Target beat (§0–§2).
 
 | what the new data tested | result | effect on this DA |
 |---|---|---|

@@ -32,6 +32,11 @@ flow-matching one and keep the safety, so diffusion-DPCC is the number every gen
 against. Each newer generation exists to beat the previous one for a *stated* reason; comparing it
 to the wrong opponent proves nothing.
 
+**Backbone matters as much as the opponent.** The baseline is a temporal UNet, so a win by our
+`sit`/`mf_dit` arms changes architecture *and* objective at once. Lead with the architecture-matched
+row and mark cross-architecture wins as secondary — see
+[[architecture-matched-beat-is-the-strong-claim]].
+
 **How to apply:**
 - Before reporting any result, name the opponent it is supposed to beat, and check that one first.
   Concretely, the diffusion-DPCC opponent is the baseline's **best** variant row in that batch, and

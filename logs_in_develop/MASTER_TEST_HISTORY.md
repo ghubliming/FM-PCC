@@ -4356,3 +4356,23 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Decisive Regression (MeanFlow)**: On the MeanFlow arm (896 paired rollouts), FiLM V2 was decisively worse across every measured metric: constraint satisfaction dropped from 0.866 to 0.747, maximum physical tracking error nearly doubled, collision-free rollouts fell from 385 to 265, and the model was 7.6 ms slower per replan.
 3. **Pre-Projector Damage**: Unprojected variants (`diffuser`, `model_free`) showed massive degradation in constraint satisfaction (e.g., 0.804 -> 0.596), proving that the regression occurred fundamentally within the conditioned U-Net, not via interaction with the projector.
 4. **AlphaFlow Collapse**: The AlphaFlow V2 run collapsed during training around step 72k, leading to a post-collapse checkpoint with essentially zero task successes and massive tracking errors. The run is invalid as a FiLM comparison and must be re-run, although it highlighted that constraint metrics without non-zero success rates only measure the projector's authority, not the policy's quality.
+
+***
+
+## Gen14 / Gen3v6 / Gen3v7: Custom Message Path Token & 20-Trial DA Campaign (August 13, 2026)
+
+**Keywords**: custom_msg, results path, eval token, FMPCC_RUN_MSG, 20-trial DA, DA campaign.
+
+1. **Eval Results Path Token (`custom_msg`)**: Implemented an opt-in `custom_msg` token appended to the evaluation results path in `config/avoiding-d3il.py`, `config/aligning-d3il-visual.py`, and `config/avoiding-d3il-visual.py`. This ensures that new multi-trial experiments do not silently overwrite older baseline runs (e.g., 2-trial data).
+2. **Mechanism**: Driven via the `FMPCC_RUN_MSG` environment variable at job submission time or via configuration. A dedicated wrapper `watch_plan` applies this suffix cleanly to evaluation (`plan`) blocks while leaving training checkpoint directories entirely untouched.
+3. **5-Seed MeanFlow Data Analysis Updated**: Extracted full 5-seed metrics for the Gen3v6 MeanFlow UNet@32 on `avoiding-d3il` using this campaign structure. Key conclusions adjudicated: MeanFlow UNet@32 K=1 with HardFlow-tightened projection successfully reached the paper baseline's safety target (S&C 1.000) while yielding ~13x faster inference. However, AlphaFlow SiT (Gen3v7) remains the frontier model, achieving perfect safety ~1.9x cheaper than MeanFlow's best arm.
+
+***
+
+## Research Investigation: HardFlow on UAV PID and Higher-Order Systems (August 13, 2026)
+
+**Keywords**: HardFlow, UAV PID, higher order, relative degree, nonlinear constraints, closed-loop model.
+
+1. **Theoretical Expansion**: Conducted an in-depth investigation on porting HardFlow (HF) constrained sampling to the Gen11 UAV PID system. Clarified that while HardFlow handles LTI 2nd-order plants (e.g. `maze2d`), our UAV requires handling relative degree 4 dynamics, underactuated tracking, and an inner-loop PID latency ~22x slower than a single control step.
+2. **Strategic Advantage over DPCC**: Identified that HF's nonlinear programming (NLP) formulation allows for expressing strictly richer, nonlinear physical constraints (such as Thrust/Tilt Second-Order Cones, High-Order CBFs) that the existing DPCC linear projector cannot structurally encode.
+3. **Actionable Roadmap**: Established a ranked research roadmap targeting the UAV gaps, heavily prioritizing a closed-loop tracker-in-the-loop dynamics model (D3) and multi-step finite-difference bounds (D1) to restore kinematic honesty to the UAV constraints before integrating more complex NLP boundaries.
