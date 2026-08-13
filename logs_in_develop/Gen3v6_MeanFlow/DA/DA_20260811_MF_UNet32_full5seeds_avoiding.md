@@ -1,6 +1,8 @@
 # DA — MeanFlow UNet@32 K-ladder on `avoiding-d3il`, full 5 seeds
 
-**Date:** 2026-08-11 · **Type:** data analysis / batch report · **Status:** Target reached (time axis, significant); low-K claim confirmed
+**Date:** 2026-08-11 · **Updated:** 2026-08-13 (see **§11**) · **Type:** data analysis / batch report
+**Status:** Target reached (time axis, significant); low-K confirmed across three families.
+🔴 **§4.1 and §4.4 are revised by §11 — read §11.2–11.4 before quoting the backbone or AlphaFlow verdicts.**
 **Batch:** `temp/1108/Revised_2/batch_avoiding_combined_20260811_221322/` — all rows below are **within-batch**
 **Runs:** eval **24416** (seeds 7–10, 4 h 17 m) · **24496** (seed 6, 1 h 02 m, git `ff4e3fb`) · train 24317 lineage (`backbone=unet freq_dim=32 params=4.0M`)
 **Scope:** 5 seeds {6,7,8,9,10} × 3 halfspaces × `n_trials=2` = **30 episodes per arm**; K ∈ {1,2,5,10}; 13 variants
@@ -95,15 +97,17 @@ s/episode** — is the conservative number to quote when robustness matters (§2
 2. ✅ **Low K is a capability, not a discount — confirmed monotonically.** MF `dpcc-t-tightened`
    S&C runs **0.967 (K1) → 0.967 (K2) → 0.933 (K5) → 0.933 (K10)** and steps **58.57 → 59.43 →
    60.60 → 63.63**. More NFE is *worse* on both axes (§3).
-3. ✅ **UNet@32 beats `mf_dit` decisively at matched K = 2 (§4.1)** — **fewer steps in 13 of 13
-   arms**, better S&C in 8 (tied 2, behind 3 by ≤ 0.167). The mechanism is one failure mode:
-   `mf_dit` **times out on 12 of 15 `-c` cells** (S&C 0.100) where the UNet times out on **0 of 15**
-   (S&C 0.933). On the matched `-t-tightened` arm it is −9.00 steps `CI[−16.03, −3.70]` at equal
-   S&C. The one-seed 1/6-permutation ceiling from the Fix_8 guide is gone.
+3. 🟡 **UNet@32 beats `mf_dit` at K = 2 — but only there (§4.1, revised by §11.3).** At K = 2:
+   fewer steps in 13 of 13 arms, −9.00 steps `CI[−16.03, −3.70]` at equal S&C, and `mf_dit` times
+   out on 12 of 15 `-c` cells where the UNet times out on 0. **The 2026-08-13 ladder shows both
+   findings are K = 2-scoped**: the DiT's `-c` collapse disappears at K ≥ 5 (§11.2), and across the
+   ladder the UNet trades **−7 to −18 steps for −0.033 S&C** at K = 1, 5 and 10 (§11.3). The
+   one-seed 1/6-permutation ceiling from the Fix_8 guide is gone.
 
-🔴 **But we are not the best config in the batch — `AlphaFlow bbsit K2` is** (§4.4). At equal
-S&C 1.000 it runs **1.9× cheaper per episode** than our Target-beating row, with the CI excluding 0,
-while our only lead (−3.83 steps) is not significant. The Target belongs to us; the frontier does
+🔴 **But we are not the best config — `AlphaFlow bbsit` is, at every K** (§4.4, and §11.4 with the
+full ladder). Its **K = 1** row reaches S&C 1.000 at **0.92 s/ep vs our 2.64 — 2.9× cheaper**,
+`Δs/ep +1.72 [+1.55, +1.87]`, winning on 5/5 seeds, while our only lead (−2.33 steps) is not
+significant. AF holds S&C 1.000 at **every** K from 1 to 20; we do so only at K = 1. The Target belongs to us; the frontier does
 not. Note also that **backbone preference is family-dependent** — MeanFlow prefers the UNet,
 AlphaFlow clearly prefers SiT (`af_sit` 1.000 vs `af_unet` 0.833) — so §4.1 must not be generalised.
 
@@ -320,7 +324,7 @@ distribution. The claim is "K = 1–2 is sufficient", not "K = 10 is broken".
 
 ## 4. Hierarchy obligations ([[benchmark-hierarchy-who-beats-whom]])
 
-### 4.1 MF must beat `mf_dit` — ✅ at matched K = 2
+### 4.1 MF must beat `mf_dit` — 🟡 at K = 2 only (revised by §11.3)
 
 | row (K = 2) | S&C | steps | s/step | s/ep |
 |---|---|---|---|---|
@@ -369,6 +373,10 @@ one-sided.
 losses is ≤ 0.167 while its two biggest wins are **+0.733 and +0.833**.
 
 #### 4.1.2 The mechanism: `mf_dit` times out on `-c`, the UNet never does
+
+> 🔴 **Revised by §11.2 (2026-08-13): this is a K = 2 pathology, not a backbone property.** At
+> K = 5, 10 and 20 the DiT's `-c` arm scores S&C 0.967–1.000 with no timeouts. Everything below is
+> correct **at K = 2** and must be scoped that way.
 
 Almost all of the aggregate difference is one failure mode. Counting cells whose `n_steps ≥ 198`
 (i.e. `max_episode_length − 1`, a **timeout**), out of 15 seed×env cells:
@@ -476,6 +484,11 @@ Only K = 5 and K = 10 have intermediate solves (2 and 4) that a lower threshold 
 are the only settings where the sweep can measure anything (§7.1).
 
 ### 4.4 vs AlphaFlow — the one family we do **not** beat
+
+> 🔄 **Superseded in magnitude by §11.4 (2026-08-13).** With the full 5-seed ladder, AlphaFlow's
+> best row is **K = 1 at 0.92 s/ep** (not K = 2 at 1.36), making it **2.9× cheaper than our
+> headline**, and it holds S&C 1.000 at every K. The direction of §4.4 is unchanged; the margin is
+> larger. The `hardflow_new-*` contamination caveat below is **retired** — clean arms now exist.
 
 `af_sit` also has all 5 seeds in this batch, so it gets a full comparison rather than a footnote.
 
@@ -978,3 +991,161 @@ and is the most interesting outcome available. If it falls, the solves were doin
 set because the yaml's `seeds:` key was stale or duplicated. **Check `grep -n '^seeds:'` returns one
 line with the intended value before every submit** — it is the single highest-yield 5 seconds in
 this pipeline.
+
+---
+
+## 11. 🔄 UPDATE 2026-08-13 — clean 5-seed ladders for `mf_dit` and `af_sit` arrive
+
+### 11.0 In one table — what was tested, and what it changed
+
+**Tested:** the two comparison families re-run from scratch at **5 seeds × K {1,2,5,10,20}**, single
+clean config (`A0.5_B1`), fixing both defects §9.1 recorded — the missing K-ladders *and* the
+pre-Fix_9 HardFlow contamination. Nothing about our own arm was re-run.
+
+| what the new data tested | result | effect on this DA |
+|---|---|---|
+| Is the `mf_dit` `-c` **timeout collapse** a backbone property? | **No — K = 2 only.** S&C 0.100 at K2, but **1.000 at K5 and K20** | 🔴 §4.1.2 rescoped to K = 2 (§11.2) |
+| Does "UNet > `mf_dit`" hold **across K**? | **No.** UNet has −7…−18 steps at every K but **−0.033 S&C at K1/5/10**; DiT hits 1.000 at K1/5/10/20, we only at K1 | 🔴 §4.1 downgraded to a K = 2 win + trade-off elsewhere (§11.3) |
+| Where is AlphaFlow's real best row? | **K = 1, 0.92 s/ep** (not K2 at 1.36) — **2.9× cheaper than us**, 5/5 seeds, S&C 1.000 at *every* K | 🔴 §4.4 same direction, **larger** margin (§11.4) |
+| Does **low-K** generalise beyond our arm? | **Yes, all three families.** AF: identical S&C 1.000 from K1→K20 at **0.92 vs 65.41 s/ep** | ✅ §3 strengthened to a cross-family claim (§11.5) |
+| Does the **Target beat** survive a fresh batch? | **Yes, exactly** — 1.000 / 63.77 / 2.64 s/ep, `Δs/ep −35.89 [−38.77, −32.91]` | ✅ §0–§2 unchanged (§11.1) |
+
+**One-line net:** *the headline (Target reached, low-K works) got stronger and broader; both
+comparison claims (backbone superiority, AlphaFlow's margin) moved against us — the DiT is only
+beaten at K = 2, and AlphaFlow is further ahead than §4.4 said.*
+
+**Two gaps remain:** our own **K = 20** was never run, and §10's threshold sweep is still seed-6-only.
+
+**Batch:** `temp/1308/batch_avoiding_combined_20260813_102739/` · **Runs:** eval **24515**
+(AlphaFlow, 10 h 20 m) · **24516** (`mf_dit`, 11 h 15 m), both git `760e524`, both 5 seeds, both
+`hf_batch=1 · A=0.5 · dpcc_threshold=0.5`, 0 tracebacks.
+Backbones confirmed in-log: `backbone=sit params=10.0M`, `backbone=mf_dit params=10.1M`.
+*(24514 was an aborted 11-second seed-6 run — junk, superseded.)*
+
+🔴 **New batch ⇒ new candidate IDs.** §0a's table is for the 08-11 batch and does **not** transfer.
+The IDs below are for `…20260813_102739` only. The Target happens to keep the same ID (**C14**) and
+identical numbers, so §1 and §2 are unaffected.
+
+| family | K1 | K2 | K5 | K10 | **K20** |
+|---|---|---|---|---|---|
+| MF `bbunet` (ours) | C128 | C130 | C134 | C126 | 🔴 **not run** |
+| MF `mf_dit` | C120 | C122 | C123 | C119 | C121 |
+| AF `bbsit` | C39 | C41 | C42 | C38 | C40 |
+
+✅ **§9.1's Gap A is closed and its contamination warning is retired** — both families now have
+full 5-seed ladders at a single `A0.5_B1` configuration. ⚠️ **A new gap opens: our own K20 was never
+run** (the K20 default landed in the eval sbatch after our ladder had already gone).
+
+### 11.1 What survives — the Target beat, unchanged
+
+The Target is still `C14 / dpcc-c-tightened` (1.000 / 70.13 / 0.5534 / 38.53) and our headline row
+reproduces exactly: **1.000 / 63.77 / 0.0413 / 2.64 s/ep**, `Δs/ep −35.89 [−38.77, −32.91]`.
+**§0, §1, §2 stand as written.**
+
+### 11.2 🔴 REVISION to §4.1.2 — the `mf_dit` "`-c` collapse" is a **K = 2 pathology**, not a backbone property
+
+§4.1.2 claimed the DiT's `dpcc-c-tightened` timeout collapse was "a property of the backbone, not of
+a seed or a map". The full ladder refutes that:
+
+| K | `mf_dit` `dpcc-c-tightened` S&C / steps | per-env S&C |
+|---|---|---|
+| 1 | 0.567 / 84.57 | — |
+| **2** | **0.100 / 186.13** | **0.10 / 0.10 / 0.10** ← the collapse |
+| **5** | **1.000 / 67.40** | **1.00 / 1.00 / 1.00** |
+| 10 | 0.967 / 72.63 | — |
+| **20** | **1.000 / 65.90** | **1.00 / 1.00 / 1.00** |
+
+**At K = 5, 10 and 20 the DiT's `-c` arm is fine** — 60–74 steps, no timeouts, S&C 0.967–1.000. The
+collapse exists only at K ∈ {1, 2}, worst at K = 2. §9.1 named this exact risk ("we cannot say
+whether the DiT's `-c` collapse is a K = 2 pathology or holds at every K") and the answer is: it is
+a K = 2 pathology. **§4.1.2 must be read as K = 2-scoped.** The U3 "crushed to a point" mechanism
+still explains it at that K — few-step generation producing near-motionless plans that `-c` then
+locks onto — but it is not a statement about the DiT backbone.
+
+### 11.3 🔴 REVISION to §4.1 — the backbone verdict is a **trade-off**, not "decisive"
+
+§4.1 said the UNet beats `mf_dit` "decisively", on evidence drawn entirely from K = 2. Across the
+ladder it is mixed:
+
+**Same-arm diagnostic** (`dpcc-t-tightened`, the matched control):
+
+| K | `bbunet` S&C / steps | `mf_dit` S&C / steps | ΔS&C | Δsteps |
+|---|---|---|---|---|
+| 1 | 0.967 / 58.57 | **1.000** / 76.90 | **−0.033** | **−18.33** |
+| 2 | 0.967 / 59.43 | 0.967 / 68.43 | +0.000 | **−9.00** `*` |
+| 5 | 0.933 / 60.60 | **0.967** / 70.20 | **−0.033** | **−9.60** |
+| 10 | 0.933 / 63.63 | **0.967** / 71.00 | **−0.033** | **−7.37** |
+
+**Best-arm-per-K:**
+
+| K | `bbunet` best | `mf_dit` best |
+|---|---|---|
+| 1 | 1.000 / 63.77 / **2.64** (HF-t) | 1.000 / 76.90 / **2.25** (dpcc-t-t) |
+| 2 | **0.967 / 59.43 / 1.65** (dpcc-t-t) | 0.967 / 68.43 / 1.72 (dpcc-t-t) |
+| 5 | 0.933 / 60.60 / 13.56 | **1.000** / 67.40 / 13.89 |
+| 10 | 0.933 / 63.63 / 25.59 | **1.000** / 68.27 / 26.71 |
+
+> **Corrected verdict: the UNet produces shorter paths at every K (−7 to −18 steps), but the DiT
+> holds higher S&C at K = 1, 5 and 10, and is cheaper per episode at K = 1.** The UNet's only clean
+> win is **K = 2**, where it matches S&C and takes 9 fewer steps. Everywhere else it is a genuine
+> trade-off: fewer steps for less reliability.
+
+§4.1's "fewer steps in 13 of 13 arms" remains true **at K = 2**, and §4.1.3's bootstrap
+(`−9.00 [−16.03, −3.70]`, S&C tied) reproduces in the new batch. What does **not** survive is the
+generalisation to "the better MeanFlow backbone" — that was a K = 2 result, exactly as §9.1 warned.
+
+### 11.4 🔴 REVISION to §4.4 — AlphaFlow's lead is larger than reported, and it now owns every K
+
+`af_sit` reaches **S&C 1.000 at every K from 1 to 20**, and its K = 1 row is far cheaper than
+anything in this DA:
+
+| row | S&C | steps | s/step | **s/episode** |
+|---|---|---|---|---|
+| **AF `bbsit` K1 `dpcc-t-tightened`** (C39) | **1.000** | 66.10 | **0.0140** | **0.92** |
+| MF `bbunet` K1 HF-tightened (ours, headline) | 1.000 | **63.77** | 0.0413 | 2.64 |
+| MF `mf_dit` K1 `dpcc-t-tightened` | 1.000 | 76.90 | 0.0293 | 2.25 |
+| **TARGET** DPCC K20 `aw10` `dpcc-c-tightened` | 1.000 | 70.13 | 0.5534 | 38.53 |
+
+Head-to-head, **ours − AF K1** (seed-cluster bootstrap): S&C `+0.000 [0,0]` · steps
+`−2.33 [−6.37, +1.47]` (ns) · **s/ep `+1.72 [+1.55, +1.87]` `*` — AF is 2.9× cheaper.**
+AF wins the time axis on **5/5 seeds** (0.87–0.99 s/ep vs our 2.40–2.85).
+
+Against the Target, AF posts `Δs/ep −37.61 [−40.51, −34.65]` — a **41.9× reduction**, versus our
+14.6×. **§4.4's conclusion is unchanged in direction and stronger in magnitude:** we reach the
+Target; AlphaFlow reaches it roughly three times harder, and unlike us it never drops below
+S&C 1.000 anywhere on the ladder.
+
+### 11.5 ✅ REINFORCEMENT to §3 — low-K now confirmed across all three families
+
+s/episode of each family's best row, by K:
+
+| K | AF `bbsit` | MF `mf_dit` | MF `bbunet` (ours) |
+|---|---|---|---|
+| **1** | **0.92** (S&C 1.000) | **2.25** (1.000) | **2.64** (1.000) |
+| 2 | 2.39 (1.000) | 1.72 (0.967) | 1.65 (0.967) |
+| 5 | 13.71 (1.000) | 13.89 (1.000) | 13.56 (0.933) |
+| 10 | 22.42 (1.000) | 26.71 (1.000) | 25.59 (0.933) |
+| 20 | 65.41 (1.000) | 63.15 (1.000) | *(not run)* |
+
+**Every family's cheapest S&C = 1.000 row is at K = 1 or K = 2, and every family's K = 20 row is
+40–70× more expensive for no gain in S&C.** AlphaFlow makes the point most cleanly: identical
+S&C 1.000 from K = 1 to K = 20, at 0.92 vs 65.41 s/ep — a **71× cost difference for zero benefit**.
+§3's "low K is a capability, not a discount" was demonstrated on our arm alone; it now holds for
+three independent model families, and for the diffusion baseline too (§1.1, K10 dominating K20).
+
+### 11.6 Net effect on this DA
+
+| section | status after the update |
+|---|---|
+| §0, §1, §2 (Target beat) | ✅ unchanged — reproduces exactly |
+| §3 (low-K) | ✅ **strengthened** — now cross-family (§11.5) |
+| §4.1 (backbone) | 🔴 **revised** — K = 2 result only; trade-off elsewhere (§11.3) |
+| §4.1.2 (`-c` collapse) | 🔴 **revised** — K = 2 pathology, not a backbone property (§11.2) |
+| §4.4 (AlphaFlow) | 🔴 **revised** — same direction, larger margin (§11.4) |
+| §9.1 (Gap A + contamination) | ✅ **closed** for `mf_dit` and `af_sit`; new gap: our K20 |
+| §10 (HF threshold) | ⚠️ unchanged — still seed-6-only, still owed at 5 seeds |
+
+**Next, in order:** (1) run **our K20** to complete the ladder — one job, now the default grid;
+(2) finish the §10.4 threshold sweep at 5 seeds; (3) re-examine why `bbunet` loses 0.033 S&C to
+`mf_dit` at K = 5 and 10 (§11.3) — that is the gap standing between us and AlphaFlow's
+every-K reliability.

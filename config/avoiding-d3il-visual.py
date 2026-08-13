@@ -18,6 +18,7 @@ Single camera: bp-cam only (no inhand-cam — avoiding has no grasping).
 """
 
 from diffuser.utils import watch
+import os
 import yaml
 
 # Read the threshold dynamically from the visual-avoiding eval YAML, abort if not found
@@ -81,6 +82,41 @@ args_to_watch_fm_visual_plan = [
 ]
 
 logbase = 'logs'
+
+# ── CUSTOM RUN MESSAGE (2026-08-13) — opt-in results-path tag, EVAL ONLY ──────────────────
+# Mirror of config/avoiding-d3il.py (see the long note there). Lets a re-run of the SAME config
+# at a different budget write to its OWN results folder instead of overwriting the old numbers.
+# Empty (the default) => paths are byte-identical to before.
+#   FMPCC_RUN_MSG=20trials ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/<eval>.sh
+# 🔴 PLAN BLOCKS ONLY — never let this reach a training exp_name (it would move every
+#    checkpoint folder and break every diffusion_loadpath).
+def _sanitize_msg(text):
+    """Filesystem-safe, stable token: keep [A-Za-z0-9._-], collapse everything else to '-'."""
+    raw = str(text if text is not None else '').strip()
+    if not raw:
+        return ''
+    out = ''.join(ch if (ch.isalnum() or ch in '._-') else '-' for ch in raw)
+    while '--' in out:
+        out = out.replace('--', '-')
+    return out.strip('-._')[:40]
+
+
+custom_msg = _sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+if custom_msg:
+    print(f'[ config/avoiding-d3il-visual ] custom_msg="{custom_msg}" -> results dirs end in "_msg{custom_msg}"')
+
+
+def _msg_suffix(args):
+    """'_msg<token>' for a plan block that carries a non-empty custom_msg, else ''."""
+    msg = _sanitize_msg(getattr(args, 'custom_msg', ''))
+    return f'_msg{msg}' if msg else ''
+
+
+def watch_plan(args_to_watch_list):
+    """watch(), plus the plan block's custom_msg suffix. Use in PLAN blocks ONLY."""
+    _fn = watch(args_to_watch_list)
+    return lambda args: _fn(args) + _msg_suffix(args)
+
 
 # ─────────────────────────── The 6 fixed obstacles ───────────────────────────
 # Positions sourced verbatim from
@@ -191,7 +227,8 @@ base = {
             'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}/'
         ),
-        'exp_name':         watch(args_to_watch_dpcc_plan),
+        'exp_name':         watch_plan(args_to_watch_dpcc_plan),
+        'custom_msg':       custom_msg,   # '' => path unchanged; else '..._msg<value>'
         'diffusion':        'diffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
         'predict_epsilon':  True,
@@ -241,7 +278,8 @@ base = {
             'f:plans/fm_visual_avoiding/'
             'H{horizon}_K{flow_steps_v3}_M{ode_solver_method_v3}_T{diffusion_timestep_threshold}_D{diffusion}/'
         ),
-        'exp_name':         watch(args_to_watch_fm_visual_plan),
+        'exp_name':         watch_plan(args_to_watch_fm_visual_plan),
+        'custom_msg':       custom_msg,   # '' => path unchanged; else '..._msg<value>'
         'diffusion':        'fm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching',
         'returns_condition': False,
         'predict_epsilon':  True,

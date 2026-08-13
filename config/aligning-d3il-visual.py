@@ -103,6 +103,44 @@ args_to_watch_imf_visual_train = [
 
 logbase = 'logs'
 
+# ── CUSTOM RUN MESSAGE (2026-08-13) — opt-in results-path tag, EVAL ONLY ──────────────────
+# Mirror of config/avoiding-d3il.py (see the long note there). Lets a re-run of the SAME config
+# at a different budget write to its OWN results folder instead of overwriting the old numbers.
+# Empty (the default) => paths are byte-identical to before.
+#   FMPCC_RUN_MSG=20trials ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/<eval>.sh
+# ⚠️ Visual-aligning has no n_trials — it rolls out `n_contexts` contexts
+#    (config/visual_aligning_eval.yaml). "More trials" here means raising n_contexts; the tag
+#    itself is budget-agnostic and works the same either way.
+# 🔴 PLAN BLOCKS ONLY — never let this reach a training exp_name (it would move every
+#    checkpoint folder and break every diffusion_loadpath).
+def _sanitize_msg(text):
+    """Filesystem-safe, stable token: keep [A-Za-z0-9._-], collapse everything else to '-'."""
+    raw = str(text if text is not None else '').strip()
+    if not raw:
+        return ''
+    out = ''.join(ch if (ch.isalnum() or ch in '._-') else '-' for ch in raw)
+    while '--' in out:
+        out = out.replace('--', '-')
+    return out.strip('-._')[:40]
+
+
+custom_msg = _sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+if custom_msg:
+    print(f'[ config/aligning-d3il-visual ] custom_msg="{custom_msg}" -> results dirs end in "_msg{custom_msg}"')
+
+
+def _msg_suffix(args):
+    """'_msg<token>' for a plan block that carries a non-empty custom_msg, else ''."""
+    msg = _sanitize_msg(getattr(args, 'custom_msg', ''))
+    return f'_msg{msg}' if msg else ''
+
+
+def watch_plan(args_to_watch_list):
+    """watch(), plus the plan block's custom_msg suffix. Use in PLAN blocks ONLY."""
+    _fn = watch(args_to_watch_list)
+    return lambda args: _fn(args) + _msg_suffix(args)
+
+
 base = {
 
     # ══════════════════════════════════════════════════════════════════════════════
@@ -521,7 +559,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
-        'exp_name': watch(args_to_watch_dpcc_plan),
+        'exp_name': watch_plan(args_to_watch_dpcc_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
@@ -571,7 +610,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/fm_encdec_vision/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         'diffusion': 'fm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
@@ -625,7 +665,8 @@ base = {
             'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}/'
         ),
-        'exp_name': watch(args_to_watch_dpcc_plan),
+        'exp_name': watch_plan(args_to_watch_dpcc_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
         'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
         'returns_condition': False,
         # MUST match the TRAINING block's film_mode — the architecture must agree with the
@@ -709,7 +750,8 @@ base = {
             'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
             '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}/'
         ),
-        'exp_name': watch(args_to_watch_fm_visual_plan),
+        'exp_name': watch_plan(args_to_watch_fm_visual_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
         'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
         'returns_condition': False,
         # MUST match the TRAINING block's film_mode — the architecture must agree with the
@@ -955,7 +997,9 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
     _ckpt_id = _mix_loadpath(
         args_to_watch_mix_visual_train, train_blk, '', _MIX_TRAIN_TO_PLAN_KEY)[2:]
     blk['prefix']   = f'f:plans/mix_visual_aligning_{engine}/{_ckpt_id}/'
-    blk['exp_name'] = watch(args_to_watch_mix_visual_plan)
+    # custom_msg is inherited via _mix_plan_common (copied from plan_fm_visual_aligning),
+    # so the four mix arms carry the same tag as every other plan block.
+    blk['exp_name'] = watch_plan(args_to_watch_mix_visual_plan)
 
     # diffusion_loadpath must reproduce the TRAINING block's exp_name exactly, key for key.
     blk['diffusion_loadpath'] = _mix_loadpath(

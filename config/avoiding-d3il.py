@@ -168,6 +168,62 @@ args_to_watch_fmv3_af_train = [
 
 logbase = 'logs'
 
+# ── CUSTOM RUN MESSAGE (2026-08-13) — opt-in results-path tag, EVAL ONLY ──────────────────
+# Lets a re-run of the SAME config at a different budget (e.g. n_trials 2 -> 20) write to its
+# OWN results folder instead of overwriting the old numbers. Empty (the default) => every path
+# is byte-identical to before, so no existing folder is renamed, moved or overwritten.
+#
+# Three ways to set it, in order of convenience:
+#   1. env, at submit time — no git edit (submit.sh passes --export=ALL):
+#        FMPCC_RUN_MSG=20trials ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/<eval>.sh
+#   2. edit the `custom_msg` default below — applies to every arm at once, git-tracked.
+#   3. a literal inside ONE plan block — `'custom_msg': 'ode_only_rerun',` — to tag a single arm.
+#
+# 🔴 PLAN BLOCKS ONLY. This must never reach a TRAINING exp_name: that would move every
+#    checkpoint folder and break every diffusion_loadpath. Two traps make this easy to get
+#    wrong, which is why the token is applied by a WRAPPER (watch_plan) instead of by editing
+#    the args_to_watch_* lists:
+#      · args_to_watch_v3  is shared by the train block 'flow_matching_v3' AND the plan blocks
+#        'plan_fm_v3' / 'plan_fm_v3_hardflow'.
+#      · args_to_watch     is shared by 'flow_matching' / 'flow_matching_unet_v2' /
+#        'flow_matching_v2' and their plan_* counterparts.
+#    Second line of defence: watch_plan reads args.custom_msg, and no train block defines that
+#    key, so a misapplied wrapper still renders the empty token.
+#
+# Why an eval ARG and not a projection-yaml key: the message describes THIS eval run, not the
+# constraint projection, so it belongs next to diffusion_epoch / suffix. It also avoids a real
+# footgun — scripts/eval.py and eval_flow_matching_v3_ode_selectable.py never publish
+# FMPCC_PROJ_CFG, so a yaml-sourced message would have been read from the right file only by
+# coincidence. As a config key it is also captured in args.json + the config snapshot, so the
+# folder tag is provable from the run's own artifacts.
+def _sanitize_msg(text):
+    """Filesystem-safe, stable token: keep [A-Za-z0-9._-], collapse everything else to '-'."""
+    raw = str(text if text is not None else '').strip()
+    if not raw:
+        return ''
+    out = ''.join(ch if (ch.isalnum() or ch in '._-') else '-' for ch in raw)
+    while '--' in out:
+        out = out.replace('--', '-')
+    return out.strip('-._')[:40]
+
+
+custom_msg = _sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+if custom_msg:
+    print(f'[ config/avoiding-d3il ] custom_msg="{custom_msg}" -> results dirs end in "_msg{custom_msg}"')
+
+
+def _msg_suffix(args):
+    """'_msg<token>' for a plan block that carries a non-empty custom_msg, else ''."""
+    msg = _sanitize_msg(getattr(args, 'custom_msg', ''))
+    return f'_msg{msg}' if msg else ''
+
+
+def watch_plan(args_to_watch_list):
+    """watch(), plus the plan block's custom_msg suffix. Use in PLAN blocks ONLY."""
+    _fn = watch(args_to_watch_list)
+    return lambda args: _fn(args) + _msg_suffix(args)
+
+
 base = {
     'diffusion': {
         ## model
@@ -908,7 +964,8 @@ base = {
             ('n_diffusion_steps', 'K'),
             ('diffusion_timestep_threshold', 'T'),
             ('diffusion', 'D')
-        ])(args),
+        ])(args) + _msg_suffix(args),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## diffusion model
         'diffusion': 'models.GaussianDiffusion',
@@ -943,7 +1000,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -976,7 +1034,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_unet_v2/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching unet v2 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -1009,7 +1068,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v2/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v2 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -1044,7 +1104,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3/',
-        'exp_name': watch(args_to_watch_v3),
+        'exp_name': watch_plan(args_to_watch_v3),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -1102,7 +1163,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_hardflow/',
-        'exp_name': watch(args_to_watch_v3),
+        'exp_name': watch_plan(args_to_watch_v3),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## FMv3ODE model + loadpath — copied from plan_fm_v3_ode_selectable
         'diffusion': 'models.diffusion.FlowMatchingODE',
@@ -1138,7 +1200,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_ode_selectable/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.FlowMatchingODE',
@@ -1188,7 +1251,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_drifting/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 drifting model
         'diffusion': 'models.diffusion.FlowMatchingDrifting',
@@ -1234,7 +1298,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}_ts{t_schedule}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 imeanflow model
         'diffusion': 'flow_matcher_v3_imeanflow.models.iMeanFlowODE',
@@ -1315,7 +1380,8 @@ base = {
         'prefix': 'f:plans/flow_matching_v3_meanflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_obj{mf_objective}_bb{imf_backbone}_ts{t_schedule}_dp{meanflow_data_proportion}/',
         # 🔴 FIX_9_CFG_PROVENANCE — was args_to_watch_fmv3_ode_plan; the _hf_ list adds the A/B tokens.
-        'exp_name': watch(args_to_watch_fmv3_hf_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_hf_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## MeanFlow model
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
@@ -1412,7 +1478,8 @@ base = {
                   'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
                   '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}/',
         # 🔴 FIX_9_CFG_PROVENANCE — was args_to_watch_fmv3_ode_plan; the _hf_ list adds the A/B tokens.
-        'exp_name': watch(args_to_watch_fmv3_hf_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_hf_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## α-Flow model
         'diffusion': 'flow_matcher_v3_alphaflow.models.AlphaFlowODE',
@@ -1563,7 +1630,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_hp_tune1/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching model (same as base flow_matching)
         'diffusion': 'models.diffusion.GaussianDiffusion',
