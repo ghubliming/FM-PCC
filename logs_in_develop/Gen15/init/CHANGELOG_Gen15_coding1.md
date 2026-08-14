@@ -273,7 +273,7 @@ One job per scene, seeds loop inside; `--time` scales with seed count (24 h cap)
 ```bash
 for e in fm mf af; do
   bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh \
-      $e corridor "6 7 8 9 10" "1 2 4 10 20"
+      $e corridor "6 7 8 9 10" "1 2 5 10 20"
 done
 ```
 🔴 **Matched budget or nothing** — same K list for every arm. Each K writes its own
@@ -324,3 +324,101 @@ bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/uav_mix_all_pipeline.sh \
 4. **iMF stays out** (plan §1.4). The registry has room for a 4th key.
 5. **DiT/SiT arms** are buildable today (§4 D1) but off by config — a deferred appendix, to be
    run only after the UNet-locked comparison lands.
+
+---
+
+## 11. 🔄 PRE-RUN DRIFT SCAN — 2026-08-14 (9 commits after `eebdeb94` "Gen15 init")
+
+Asked before the first run: *did anything Gen15 copied change since the init commit?*
+**Answer: no source code drifted. Two things were synced, three are informational.**
+
+### 11.1 Source-code drift: NONE
+
+```
+git diff --stat eebdeb94..HEAD -- flow_matcher_v3_uav/ FM_v3_uav_test/ config/uav.py \
+      config/uav_projection.yaml flow_matcher_v3_meanflow/ flow_matcher_v3_alphaflow/ \
+      FM_v3_meanflow_test/ FM_v3_alphaflow_test/ Slurm_Codes/sbatch/uav_fm/ \
+      diffuser/ uav_expert_data_collect/ d3il/
+→ (no model/test/config files; only config/avoiding-d3il.py + 3 MF/AF sbatch files)
+```
+
+File-level re-verification against **current** HEAD sources — every Gen15 copy is still exact:
+
+| comparison | differing lines | expected |
+|---|---|---|
+| `mix_uav/**` vs `flow_matcher_v3_uav/**` | only `datasets/d4rl.py` (2, path comment), `sampling/policies.py` (21, the `fix_5` graft), `models/__init__.py`, `utils/__init__.py` | ✅ exactly the four intended edits |
+| `mf_*.py`, `af_*.py`, DiT/SiT backbones, `unet1d_twotime_cond.py`, `training_twotime.py` | **0** — except `mf/af_trajectory_model.py` (2 lines: the import retarget) | ✅ |
+
+### 11.2 ✅ Synced: K grid `{1,2,4,10,20}` → **`{1,2,5,10,20}`**
+
+Commit `760e524c` raised Gen3v6/Gen3v7's eval grids to `1 2 5 10 20`. Gen15 had `1 2 4 10 20`,
+which would have made every Gen15 rung except K∈{1,2,10,20} incomparable with the avoiding-d3il
+ladders. Changed in `eval_k_sweep.sh` (default), `gates_mix_uav.py` (G6), the plan §7.3, the
+README, and §8 of this changelog. **No K=4 run exists anywhere, so nothing is invalidated.**
+
+### 11.3 ✅ Synced: eval output path is built by hand — plan-block `exp_name` is DEAD for pathing
+
+`CHANGELOG_custom_msg_path_token.md` §6 documents this for the whole UAV family, citing
+`mix_uav_test/eval_mix_uav.py:1341` (i.e. Gen15 was read when that decision was made). Verified in
+our code:
+
+```python
+scene_root = os.path.join(parsed.logbase, parsed.dataset)          # logs/UAV_MIX/uav-<scene>
+_model_dir = os.path.relpath(os.path.dirname(parsed.savepath), scene_root)   # TRAIN block
+seed_dir   = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str)
+```
+
+Two consequences, both checked:
+
+- **The `plan_mix_uav_*` blocks' `prefix`/`exp_name` never reach disk.** Harmless (they still make
+  `build_experiment` resolve), but the identity tokens duplicated into those blocks are belt-and-
+  braces, not load-bearing. A stale comment naming `flow_matching_v3_uav` was corrected and the
+  rule written into the code.
+- **The aggregator glob is CORRECT.** `_model_dir` starts with the train block's `prefix`
+  (`mix_uav_<engine>/`), so `plans/mix_uav_<engine>/**/<proj>/results.json` does match. This was
+  the one thing that could have silently returned zero rows.
+
+### 11.4 ℹ️ `custom_msg` path token — deliberately NOT ours
+
+Commit `e58690dc` added an opt-in `_msg<token>` results-path tag to every `plan_*` block in
+`config/avoiding-d3il.py`. `config/uav.py` **and `config/uav_mix.py` were explicitly dropped from
+that patch** (checklist §0, changelog §6) — precisely because of §11.3: a plan-block knob there
+would silently do nothing. **No action.** If the campaign ever wants it for UAV, the correct hook
+is `config/uav_projection.yaml` + `_uav_eval_tag()`, ~3 lines in each eval script.
+
+### 11.5 🔴 New evidence that reframes Gen15's expectations (no code change)
+
+[`Gen3v6_MeanFlow/DA/DA_20260811_MF_UNet32_full5seeds_avoiding.md`](../../Gen3v6_MeanFlow/DA/DA_20260811_MF_UNet32_full5seeds_avoiding.md)
+now carries a **§11 revision (2026-08-13)** from two fresh 5-seed ladders. It bears directly on the
+backbone lock (plan §6):
+
+- ✅ **`bbunet` @ `freq_dim=32`, 4.0 M params — Gen15's exact config — is validated** on
+  avoiding-d3il: it reaches the DPCC Target (1.000 / 63.77 steps / 2.64 s/ep, Δs/ep −35.89
+  [−38.77, −32.91]) and the low-K result holds.
+- 🔴 **"UNet is the better MeanFlow backbone" was narrowed to K = 2 only.** `mf_dit` reaches
+  S&C 1.000 at K1/5/10/20; the UNet only at K1. The earlier "DiT `-c` collapse" turned out to be a
+  K = 2 pathology, not a backbone property.
+- 🔴 **α-Flow's best row is `bbsit` at K = 1** (0.92 s/ep, S&C 1.000 at every K) — 2.9× cheaper
+  than the MeanFlow UNet arm. Gen15 locks `af` to `unet` (10.0 M → 4.0 M), so **Gen15's `af` arm is
+  not α-Flow's best-known configuration.**
+
+**Effect on Gen15:** the lock still stands — it is what makes the three-way comparison
+architecture-controlled, and it is the only backbone measured inside a 30.3 ms budget. But the
+framing must change: a Gen15 result is *"at a matched architecture and matched K"*, **not** *"the
+best each objective can do"*. The DiT/SiT appendix (§10 item 5) is now better motivated than it was
+at init. Gen3v6's own **K = 20 rung was never run**, so a Gen15-vs-avoiding K20 comparison has no
+counterpart on that side yet.
+
+### 11.6 ℹ️ Gen11 E10 (UAV Visual Mode) exists as a plan — no collision
+
+[`Gen11/Epoch10_Visual_UAV/PLAN_E10_uav_visual_mode.md`](../../Gen11/Epoch10_Visual_UAV/PLAN_E10_uav_visual_mode.md)
+(2026-08-11, no code) adds the **observation axis** (state | visual) to the same UAV host that
+Gen15 gives the **engine axis**. Its §3.3 states the rule: *"E10 ships `fm`-only … keep the config
+key names compatible with Gen15's registry (`engine='fm'`, `if_vision=True`) so the merge is later
+mechanical."* Gen15 already carries `engine` as a first-class config key in every block, so nothing
+is required here. The visual × engine cross-product is a later generation.
+
+### 11.7 Verdict
+
+**Gen15 is up to date and ready to run.** §1–§10 stand as written, with the K grid corrected and
+§11.5's framing caveat attached. The Step-0 gate job is still the first thing to run.

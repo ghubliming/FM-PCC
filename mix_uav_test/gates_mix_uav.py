@@ -412,7 +412,7 @@ def gate_G5(device='cpu'):
 
 # ── G6 ──────────────────────────────────────────────────────────────────────────────────────
 
-def gate_G6(device='cpu', k_values=(1, 2, 4, 10, 20)):
+def gate_G6(device='cpu', k_values=(1, 2, 5, 10, 20)):
     """Per-plan wall clock, per arm, per K.
 
     NOT a pass/fail on the 33 Hz deadline — whether an arm meets it IS the experiment

@@ -64,7 +64,7 @@ bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh af "em
 ```bash
 for e in fm mf af; do
   bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh \
-      $e corridor "6 7 8 9 10" "1 2 4 10 20"
+      $e corridor "6 7 8 9 10" "1 2 5 10 20"
 done
 ```
 

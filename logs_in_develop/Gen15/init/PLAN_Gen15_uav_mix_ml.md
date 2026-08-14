@@ -498,7 +498,7 @@ not a result.
 
 ### 7.3 The K sweep is the experiment
 
-Run every arm at **K ∈ {1, 2, 4, 10, 20}** (Gen11's default is 20). The claim Gen15 exists to test is
+Run every arm at **K ∈ {1, 2, 5, 10, 20}** (Gen11's default is 20). The claim Gen15 exists to test is
 that `mf`/`af` hold success at K ≤ 4 where `fm` collapses, and that the released ~15–25 ms/plan shows
 up as **fewer circuit-breaker trips** (metric 4 above). If success holds but projector health does
 not improve, the result is "cheaper, not better" — report it that way.

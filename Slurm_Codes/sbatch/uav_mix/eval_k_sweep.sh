@@ -16,14 +16,14 @@ set -e
 # the SAME K list, never with per-arm K lists.
 #
 # Usage (from repo root):
-#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh mf corridor "6" "1 2 4 10 20"
+#   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh mf corridor "6" "1 2 5 10 20"
 # Args: $1=engine (fm|mf|af) [fm]  $2=scene [all]  $3=seeds (quoted) ["6"]
-#       $4=K list (quoted, space-sep) ["1 2 4 10 20"]  $5=n_trials [omit → yaml]  $6=projection [fm_only]
+#       $4=K list (quoted, space-sep) ["1 2 5 10 20"]  $5=n_trials [omit → yaml]  $6=projection [fm_only]
 ENGINE="${1:-fm}"
 case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
 SEEDS="${3:-6}"
-KS="${4:-1 2 4 10 20}"
+KS="${4:-1 2 5 10 20}"
 NTRIALS="${5:-}"
 PROJ="${6:-fm_only}"
 EVAL="Slurm_Codes/sbatch/uav_mix/eval_mix_uav.sh"

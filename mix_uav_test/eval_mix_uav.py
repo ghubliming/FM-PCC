@@ -1331,7 +1331,12 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                 variant, trajectory_dim=_tdim, current_x=current_x)
 
     # Path: scene_root / plans / <model_exp_noseed> / <eval_params> / <seed> / <geo_tag> / <variant> /
-    # savepath = scene_root / flow_matching_v3_uav / H8_...9D / <seed>
+    # savepath = scene_root / mix_uav_<engine> / H8_...9D[_dp..._bb...] / <seed>
+    # NOTE: the eval output path is built HERE, by hand, from the TRAIN block's savepath — the
+    # plan block's `exp_name` / `prefix` are DEAD for pathing in the whole UAV family. Anything
+    # that wants to tag the results folder must go into `_uav_eval_tag` (or the yaml it reads),
+    # never into a plan-block exp_name. See logs_in_develop/more_trials_folder_Path/
+    # CHANGELOG_custom_msg_path_token.md §6.
     # E9 fix1: `<geo_tag>` restores the old avoiding-task `results/halfspace_<variant>/` path
     # level — a second, swappable axis (which geometry/constraint-combo produced this run)
     # alongside the projection `<variant>` folder. Without it, two runs of the SAME scene under
