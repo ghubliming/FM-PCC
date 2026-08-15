@@ -202,7 +202,7 @@ def build_experiment(scene, seed, epoch, device, flow_steps=None):
     # value (10) survives. The plan block's K therefore never reached the sampler in Gen11.
     # Setting it explicitly after load closes that path for every engine.
     if flow_steps is not None:
-        k = engine_registry.apply_nfe(diffusion, flow_steps)
+        k = engine_registry.apply_nfe(diffusion, flow_steps, engine=ENGINE)
         print(f'[ eval ] engine={ENGINE}  NFE budget K={k} pinned on the loaded model '
               f'(flow_steps_v3 / ode_inference_steps_v3)')
 
@@ -300,6 +300,13 @@ def _load_base_cfg(scene, seed):
     # which is the half that has to match for the comparison to mean anything.
     cfg['hardflow'] = dict(getattr(plan_args, 'hardflow', {}) or {})
     _hf_variants = list(getattr(plan_args, 'hardflow_variants', []) or [])
+    if not engine_registry.get(ENGINE)['supports_hardflow']:
+        # e.g. the `diffusion` arm: HardFlow's NLP needs v = f(x, t) and a DDPM has no velocity
+        # field. Drop the arm rather than crash inside the sampler hours into a job.
+        if _hf_variants:
+            print(f"[ eval ] engine '{ENGINE}' does not support HardFlow (no instantaneous "
+                  f'velocity field) → dropping {_hf_variants}')
+        _hf_variants = []
     if os.environ.get('UAV_MIX_HF_OFF'):
         _hf_variants = []
         print('[ eval ] UAV_MIX_HF_OFF set → HardFlow arm disabled for this run')

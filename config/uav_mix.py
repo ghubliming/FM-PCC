@@ -313,6 +313,51 @@ base = {
         'time_beta_beta_v3': 1.0,
     },
 
+    # ══ arm: diffusion — the DPCC baseline (DDPM), U3 ════════════════════════════════════════
+    # 🔴 WHY THIS ARM EXISTS: on avoiding-d3il the DPCC `GaussianDiffusion` model IS the Target
+    # every DA is measured against. On UAV it had never been trained, so Gen15's claim was capped
+    # at "vs naive FM". This block closes that gap.
+    #
+    # 🔴 action_weight = 1, NOT DPCC's 10. Deliberate deviation: the paper baseline uses aw10,
+    # but every other Gen15 arm (and all of Gen11) uses aw1, and Gen15's question is "which
+    # OBJECTIVE wins on this task", not "reproduce DPCC's hyperparameters". Keeping aw1 makes
+    # this arm comparable to fm/mf/af (same task config, same backbone, same budget). It is
+    # therefore NOT a like-for-like reproduction of the avoiding-d3il Target row — say so in any
+    # write-up, and train a second aw10 variant if that comparison is ever wanted (the `_aw`
+    # token is not in exp_name, so change action_weight AND add a token before doing that).
+    'mix_uav_diffusion': {
+        **_UAV_TASK,
+        'engine': 'diffusion',
+        'model': 'models.unet1d_ddpm_cond.UNet1DTemporalCondModel',
+        'diffusion': 'models.ddpm_diffusion.GaussianDiffusion',
+        'prefix': 'mix_uav_diffusion/',
+
+        # 🔴 K, and it is a TRAINING-time property here (the beta schedule is built from it).
+        # It is in exp_name as `_K{n}` so two budgets cannot share a checkpoint folder. A K
+        # sweep on this arm = separate training runs (as on avoiding-d3il).
+        'n_diffusion_steps': 20,
+
+        # U-Net sizing — identical to the `fm` arm so the four-way stays architecture-matched.
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'hidden_dim': 256,
+        'attention': False,
+        'condition_dropout': 0.25,
+        'condition_guidance_w': 1.2,
+    },
+
+    'plan_mix_uav_diffusion': {
+        **_UAV_PLAN,
+        'engine': 'diffusion',
+        'diffusion': 'models.ddpm_diffusion.GaussianDiffusion',
+        'prefix': 'plans/mix_uav_diffusion/',
+        'diffusion_loadpath': 'f:mix_uav_diffusion/H{horizon}_D{diffusion}',
+        # ⚠️ MUST match the training block — exp_name reads it to rebuild the same savepath.
+        'n_diffusion_steps': 20,
+        # HardFlow is unavailable on this arm (no velocity field); the eval drops it and says so.
+        'hardflow_variants': [],
+    },
+
     # ══ arm: mf — Gen3v6 MeanFlow ════════════════════════════════════════════════════════════
     'mix_uav_mf': {
         **_UAV_TASK,

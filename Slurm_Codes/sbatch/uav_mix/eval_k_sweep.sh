@@ -17,13 +17,13 @@ set -e
 #
 # Usage (from repo root):
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh mf corridor "6" "1 2 5 10 20"
-# Args: $1=engine (fm|mf|af) [fm]  $2=scene [all]  $3=seeds (quoted) ["6"]
+# Args: $1=engine (fm|mf|af|diffusion) [fm]  $2=scene [all]  $3=seeds (quoted) ["6"]
 #       $4=K list (quoted, space-sep) ["1 2 5 10 20"]  $5=n_trials [omit → yaml]  $6=projection [fm_only]
 #       $7=record (none|gif|all) [none]
 # ⚠️ record=gif/all renders one GIF per rollout (variants x trials of them) and the render
 # time lands inside the measured per-step wall clock. Use none for timing-critical sweeps.
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
 SEEDS="${3:-6}"
 KS="${4:-1 2 5 10 20}"

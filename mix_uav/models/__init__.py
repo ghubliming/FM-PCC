@@ -32,5 +32,12 @@ from .af_sit_trajectory import AFSiTTrajectory
 from .af_engine import AlphaFlowEngine
 from .af_diffusion import AlphaFlowODE
 
+# ── arm: diffusion (U3) — the DPCC baseline (DDPM) ────────────────────────────────────────
+# ⚠️ Another `Flow_matcher_U_Net_v2`-shaped name clash risk: `unet1d_ddpm_cond` defines
+# `UNet1DTemporalCondModel`, a DIFFERENT class from the fm arm's `Flow_matcher_U_Net_v2`
+# (same family, plus an optional cond_mlp branch). Distinct names, so no alias needed.
+from .unet1d_ddpm_cond import UNet1DTemporalCondModel
+from .ddpm_diffusion import GaussianDiffusion
+
 # ── the dispatch table ────────────────────────────────────────────────────────────────────
 from . import engine_registry

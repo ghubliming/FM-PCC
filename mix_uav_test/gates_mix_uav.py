@@ -107,13 +107,14 @@ def _args_for(engine, device='cpu'):
     a.savepath = os.path.join('/tmp', f'gen15_gates_{engine}')
     a.flow_steps_v3 = 10
     a.ode_inference_steps_v3 = 10
-    if engine == 'fm':
+    if engine in ('fm', 'diffusion'):
         a.dim = 32
         a.dim_mults = (1, 2, 4, 8)
         a.condition_dropout = 0.25
         a.condition_guidance_w = 1.2
         a.time_beta_alpha_v3 = 1.5
         a.time_beta_beta_v3 = 1.0
+        a.n_diffusion_steps = 20      # `diffusion` arm only: K, baked into the checkpoint
     else:
         a.freq_dim = 32
         a.depth = 8
@@ -275,6 +276,8 @@ def gate_G2():
         return _uav_mix_exp_name(a)
 
     combos = [('fm', {})]
+    for k in (1, 5, 10, 20):          # U3: `diffusion` K is train-time → it IS a folder token
+        combos.append(('diffusion', dict(n_diffusion_steps=k)))
     for dp in (0.25, 0.5, 0.75):
         for bb in ('unet', 'dit', 'mf_dit'):
             combos.append(('mf', dict(meanflow_data_proportion=dp, imf_backbone=bb)))
@@ -289,6 +292,28 @@ def gate_G2():
             ok = False
         seen[name] = (engine, kw)
     print(f'  {"✓" if ok else "✗"} (a) {len(combos)} knob combinations → {len(seen)} distinct exp_names')
+
+    # (d) 🔴 U3 — every declared exp_name token must actually EXIST in that engine's train
+    # block. `_uav_mix_exp_name` renders a token only `if hasattr(args, key)`, so a misspelled
+    # key is SILENT: the token simply never appears and two runs differing only in that knob
+    # share a checkpoint directory. This gate found exactly that — the `af` row declared
+    # `af_alpha_start` while the config key is `af_alpha_init`, so the `as` token had never
+    # rendered on any α-Flow path.
+    try:
+        import importlib
+        _cfg = importlib.import_module('config.uav_mix')
+        for _eng in engine_registry.ENGINE_KEYS:
+            _blk = _cfg.base[engine_registry.experiment_name(_eng)]
+            _missing = [k for k, _lbl in engine_registry.get(_eng)['exp_name_tokens']
+                        if k not in _blk]
+            if _missing:
+                print(f'  ✗ (d) engine {_eng!r} declares exp_name tokens absent from its train '
+                      f'block: {_missing} — these render as NOTHING and cause silent collisions')
+                ok = False
+            else:
+                print(f'  ✓ (d) {_eng}: all exp_name token keys present in the train block')
+    except Exception as e:
+        print(f'  ⊘ (d) could not import config.uav_mix ({type(e).__name__}: {e})')
 
     # (b) Gen15 never writes under Gen11's root.
     if logbase != 'logs/UAV_MIX':
@@ -443,8 +468,14 @@ def gate_G6(device='cpu', k_values=(1, 2, 5, 10, 20)):
         row = engine_registry.get(engine)
         cond = {0: torch.zeros(4, OBS_DIM, device=device)}   # mpc_batch_size=4
         line = []
-        for k in k_values:
-            engine_registry.apply_nfe(diffusion, k)
+        if engine_registry.get(engine)['nfe_is_train_time']:
+            # U3: K is baked into this checkpoint's beta schedule; sweeping it here would time a
+            # sampler that cannot exist. Report the single budget it actually has.
+            k_values_eng = (int(getattr(diffusion, 'n_timesteps', 20)),)
+        else:
+            k_values_eng = k_values
+        for k in k_values_eng:
+            engine_registry.apply_nfe(diffusion, k, engine=engine)
             kw = engine_registry.sample_kwargs_for(engine, k)
             with torch.no_grad():
                 diffusion.conditional_sample(cond, horizon=HORIZON, **kw)   # warm-up
@@ -538,10 +569,24 @@ def gate_G8(device='cpu'):
     import inspect
     import mix_uav.utils as utils
 
-    EXPECTED = {'fm': (0.5, False), 'mf': (1.0, True), 'af': (1.0, True)}
+    EXPECTED = {'fm': (0.5, False), 'mf': (1.0, True), 'af': (1.0, True),
+                'diffusion': (0.5, False)}
     ok = True
     for engine in ARMS:
         row = engine_registry.get(engine)
+        if not row['supports_hardflow']:
+            # U3: the `diffusion` arm has no `_predict_velocity` at all — HardFlow cannot host
+            # it, so there is nothing here to get wrong. Assert the exclusion instead.
+            import mix_uav.utils as _u
+            _cls = _u.import_class(row['diffusion'])
+            if hasattr(_cls, '_predict_velocity'):
+                print(f'  ✗ {engine}: supports_hardflow=False but {_cls.__name__} HAS '
+                      f'_predict_velocity — the exclusion may be wrong')
+                ok = False
+            else:
+                print(f'  ✓ {engine}: supports_hardflow=False and {_cls.__name__} has no '
+                      f'velocity field — correctly excluded from the HardFlow arm')
+            continue
         want_sigma, want_tt = EXPECTED[engine]
         got_sigma = float(row.get('init_noise_scale', -1))
         got_tt = bool(row.get('two_time', False))

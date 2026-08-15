@@ -14,11 +14,11 @@
 # Usage (from repo root):
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh "pillars" "6 7 8 9 10"
-# Args: $1=engine (fm|mf|af) [fm]   $2=scenes (quoted, space-sep) [all 4]   $3=seeds (quoted) ["6"]
+# Args: $1=engine (fm|mf|af|diffusion) [fm]   $2=scenes (quoted, space-sep) [all 4]   $3=seeds (quoted) ["6"]
 set -e
 
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENES="${2:-empty corridor s_curve pillars}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10".
 SEEDS="${3:-6}"

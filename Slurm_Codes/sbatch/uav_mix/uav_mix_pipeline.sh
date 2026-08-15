@@ -14,7 +14,7 @@ set -e
 #        $6=record (none|gif|all, def none)  $7=K / flow_steps (omit → plan-block value)
 # n_trials: omit $4 (or pass "") → reads from config/uav_projection.yaml; pass int → CLI override.
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
 SEED="${3:-6}"
 NTRIALS="${4:-}"          # empty = let config/uav_projection.yaml n_trials apply

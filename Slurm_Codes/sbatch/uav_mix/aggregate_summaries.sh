@@ -11,12 +11,12 @@
 # + cross-scene fm_uav_ALL_SCENES_SUMMARY.json. Pure stdlib (no GPU/torch).
 #
 # Usage:  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/aggregate_summaries.sh mf "empty corridor s_curve pillars" fm_only
-# Args: $1=engine (fm|mf|af) [fm]   $2=scenes [all 4]   $3=projection [fm_only]
+# Args: $1=engine (fm|mf|af|diffusion) [fm]   $2=scenes [all 4]   $3=projection [fm_only]
 # 🔴 Arms are rolled up SEPARATELY — pooling them would average three different objectives.
 set -e
 
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENES="${2:-empty corridor s_curve pillars}"
 PROJ="${3:-fm_only}"
 

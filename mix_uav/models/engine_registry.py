@@ -82,6 +82,25 @@ def _twotime_kwargs(args, dataset):
     )
 
 
+def _ddpm_unet_kwargs(args, dataset):
+    """`diffusion` arm — the DPCC baseline U-Net (`UNet1DTemporalCondModel`).
+
+    Same temporal-U-Net family and same sizing as the `fm` arm's `Flow_matcher_U_Net_v2`
+    (dim=32, dim_mults=(1,2,4,8)); the only structural difference upstream is an optional
+    `use_cond_projection`/`cond_mlp` branch that the FM fork dropped. It is left OFF so the two
+    are parameter-matched and gate G3 stays meaningful.
+    """
+    return dict(
+        horizon=args.horizon,
+        transition_dim=dataset.observation_dim + dataset.action_dim,
+        cond_dim=dataset.observation_dim,
+        dim_mults=args.dim_mults,
+        returns_condition=args.returns_condition,
+        dim=args.dim,
+        condition_dropout=args.condition_dropout,
+    )
+
+
 # ── diffusion (objective) kwarg builders ───────────────────────────────────────────────────
 
 def _common_diffusion_kwargs(args, dataset):
@@ -112,6 +131,21 @@ def _fm_kwargs(args, dataset):
         time_beta_alpha_v3=args.time_beta_alpha_v3,
         time_beta_beta_v3=args.time_beta_beta_v3,
     )
+    return kw
+
+
+def _ddpm_kwargs(args, dataset):
+    """`diffusion` arm — DPCC's GaussianDiffusion.
+
+    🔴 `n_timesteps` here is K, and it is BAKED INTO THE CHECKPOINT: the beta schedule is built
+    from it in __init__ and `p_sample_loop` counts down from it. Unlike the flow arms, it cannot
+    be re-pointed at eval time — a K sweep on this arm is separate TRAINING runs, which is how
+    the avoiding-d3il baselines are organised. `engine_registry.apply_nfe` refuses to touch it.
+    """
+    kw = _common_diffusion_kwargs(args, dataset)
+    kw.pop('flow_steps_v3', None)            # meaningless for a denoiser
+    kw.pop('ode_inference_steps_v3', None)
+    kw.update(n_timesteps=int(getattr(args, 'n_diffusion_steps', 20)))
     return kw
 
 
@@ -238,6 +272,8 @@ ENGINES = {
         # start from the same distribution the field was trained/deployed on; a wrong scale is
         # silent (it just degrades the field). See hardflow_projection.py's fix_4 warning.
         init_noise_scale=0.5,
+        supports_hardflow=True,
+        nfe_is_train_time=False,
         backbones=('unet',),
         # Extra folder-name tokens beyond H{h}_D{diffusion} — empty keeps the `fm` path
         # Gen11-shaped (modulo prefix/logbase), so gate G1 compares like with like.
@@ -255,6 +291,8 @@ ENGINES = {
         two_time=True,
         supports_num_steps=True,   # MeanFlowODE.p_sample_loop(..., num_steps=K)
         init_noise_scale=1.0,   # mf_diffusion.py:205 -> `torch.randn` (sigma=1.0)
+        supports_hardflow=True,
+        nfe_is_train_time=False,
         backbones=('unet', 'dit', 'mf_dit'),
         # `dp` is a first-class ablation axis in Gen3v6 and MUST be in the path, or two runs
         # differing only in data-proportion overwrite each other. Same for the backbone.
@@ -272,11 +310,36 @@ ENGINES = {
         two_time=True,
         supports_num_steps=True,
         init_noise_scale=1.0,   # af_diffusion.py:261 -> `torch.randn` (sigma=1.0)
+        supports_hardflow=True,
+        nfe_is_train_time=False,
         backbones=('unet', 'dit', 'sit'),
-        exp_name_tokens=(('af_alpha_start', 'as'), ('af_alpha_end', 'ae'),
+        exp_name_tokens=(('af_alpha_init', 'as'), ('af_alpha_end', 'ae'),   # 'af_alpha_init', NOT '..._start' — see G2(d)
                          ('imf_backbone', 'bb')),
     ),
-    # A 4th arm (iMF, or a DDPM/DPCC baseline) drops in as one more row — no restructuring.
+    'diffusion': dict(
+        label='DDPM / DPCC baseline (GaussianDiffusion)',
+        model='models.unet1d_ddpm_cond.UNet1DTemporalCondModel',
+        diffusion='models.ddpm_diffusion.GaussianDiffusion',
+        trainer='utils.training.Trainer',            # one-time engine → Gen11's trainer
+        model_kwargs=_ddpm_unet_kwargs,
+        diffusion_kwargs=_ddpm_kwargs,
+        trainer_kwargs=_fm_trainer_kwargs,
+        wraps_backbone=False,                        # model_config describes the U-Net itself
+        two_time=False,
+        supports_num_steps=False,
+        # 🔴 K is a TRAINING-time property on this arm (the beta schedule is built from it), so
+        # it must appear in the CHECKPOINT folder name or two K's overwrite each other. This is
+        # the only arm whose exp_name carries a K token.
+        nfe_is_train_time=True,
+        # 🔴 NO HardFlow. The NLP needs an instantaneous velocity field v = f(x, t); a DDPM
+        # predicts noise/x0 and has no `_predict_velocity`. The eval drops `hardflow_*` for
+        # this engine rather than crashing inside the sampler.
+        supports_hardflow=False,
+        init_noise_scale=0.5,                        # ddpm_diffusion.py: `0.5 * torch.randn`
+        backbones=('unet',),
+        exp_name_tokens=(('n_diffusion_steps', 'K'),),
+    ),
+    # A 4th arm (iMF) drops in as one more row — no restructuring.
     # Neither is built in Gen15: see PLAN §1.4 (iMF abandoned/refuted) and §1.5 (no UAV DDPM
     # checkpoint exists anywhere in this repo, which caps Gen15's claim at "vs naive FM").
 }
@@ -316,8 +379,14 @@ def check_backbone(engine, backbone):
     return backbone
 
 
-def apply_nfe(diffusion, flow_steps):
+def apply_nfe(diffusion, flow_steps, engine=None):
     """Pin the NFE budget K onto a BUILT diffusion object, whatever the engine.
+
+    🔴 Gen15 U3 — NO-OP on an engine whose K is a TRAINING-time property. The `diffusion` arm
+    builds its beta schedule from `n_timesteps` in __init__ and counts down from it, so writing
+    a new value here would desynchronise the schedule from the loop bound and silently corrupt
+    the sampler. Its K comes from the checkpoint (and is in the folder name); a K sweep on that
+    arm means separate training runs.
 
     Both attributes are set on every arm so a checkpoint's stale pickled value can never win
     at eval time: `flow_steps_v3` is what FlowMatchingODE.p_sample_loop reads, and the
@@ -325,6 +394,11 @@ def apply_nfe(diffusion, flow_steps):
     Pair with `sample_kwargs_for()`, which supplies the explicit `num_steps=K` the two-time
     samplers prefer.
     """
+    if engine is not None and get(engine)['nfe_is_train_time']:
+        k = int(getattr(diffusion, 'n_timesteps', flow_steps))
+        print(f"[ registry ] engine '{engine}': K is train-time (n_timesteps={k}); "
+              f'ignoring the eval-side flow_steps={flow_steps}')
+        return k
     k = int(flow_steps)
     diffusion.flow_steps_v3 = k
     diffusion.ode_inference_steps_v3 = k

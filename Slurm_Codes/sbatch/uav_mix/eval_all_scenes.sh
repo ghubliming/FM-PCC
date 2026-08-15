@@ -14,14 +14,14 @@
 # Usage (from repo root):
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_all_scenes.sh
 #   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_all_scenes.sh "pillars" "6 7 8 9 10" 20 fm_only
-# Args: $1=engine (fm|mf|af) [fm]  $2=scenes [all 4]  $3=seeds ["6"]  $4=n_trials [omit → yaml default]
+# Args: $1=engine (fm|mf|af|diffusion) [fm]  $2=scenes [all 4]  $3=seeds ["6"]  $4=n_trials [omit → yaml default]
 #       $5=projection [fm_only]  $6=K / flow_steps [omit → plan-block value]
 # n_trials: omit $4 → reads from config/uav_projection.yaml; pass int → CLI override.
 # 🔴 K: when comparing arms, pass the SAME K to every arm (matched budget or nothing).
 set -e
 
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENES="${2:-empty corridor s_curve pillars}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10".
 SEEDS="${3:-6}"

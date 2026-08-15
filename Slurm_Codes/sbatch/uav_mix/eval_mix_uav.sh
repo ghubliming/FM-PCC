@@ -21,7 +21,7 @@ set -e
 # NOTHING: when comparing arms, pass the SAME K to every one of them. K appears in the output
 # path as K{n}, so distinct-K runs never overwrite each other.
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10".
 SEEDS="${3:-6}"

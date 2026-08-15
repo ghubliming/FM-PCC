@@ -11,12 +11,12 @@ set -e
 
 # ---- Args: $1=engine (fm|mf|af, def fm)  $2=scene (all|empty|corridor|s_curve|pillars, def all)
 #            $3=seeds (quoted, space-sep, def "6") ----
-# Gen15: `engine` is the ML objective — fm (Gen11 flow matching) | mf (Gen3v6 MeanFlow) |
-# af (Gen3v7 alpha-Flow). It selects the config block AND the checkpoint tree, so the three
-# arms never collide. Seeds are looped INSIDE this one job allocation — never submit one
-# sbatch job per seed. If you add seeds, bump --time proportionally.
+# Gen15: `engine` is the ML objective — fm (Gen11 FM) | mf (Gen3v6 MeanFlow) |
+# af (Gen3v7 alpha-Flow) | diffusion (U3: the DPCC DDPM baseline). It selects the config block
+# AND the checkpoint tree, so the arms never collide. Seeds loop INSIDE one job allocation —
+# never one sbatch job per seed. If you add seeds, bump --time proportionally.
 ENGINE="${1:-fm}"
-case "$ENGINE" in fm|mf|af) ;; *) echo "[ ERROR ] engine must be fm|mf|af (got '$ENGINE')"; exit 1 ;; esac
+case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10".
 SEEDS="${3:-6}"
