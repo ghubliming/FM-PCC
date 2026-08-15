@@ -1,6 +1,6 @@
 """Gen15 (UAV Mix-ML) gates — run this BEFORE any science run.
 
-    python mix_uav_test/gates_mix_uav.py              # G0, G2, G3, G4, G5, G6, G7
+    python mix_uav_test/gates_mix_uav.py              # G0, G2, G3, G4, G5, G6, G7, G8
     python mix_uav_test/gates_mix_uav.py --gates G3 G4
     python mix_uav_test/gates_mix_uav.py --gen11-savepath <dir> --gen15-savepath <dir>   # + G1
 
@@ -17,6 +17,7 @@ Gate list (PLAN §8):
   G5  projector receives the FULL trajectory once goal_dim is forced to 0
   G6  per-plan wall clock is measured and reported per arm
   G7  every arm returns the same `infos` contract AND actually times the projector (Fix_1)
+  G8  HardFlow arm: per-engine init_noise_scale + two_time match the engine source (U2)
 """
 
 import argparse
@@ -509,6 +510,80 @@ def gate_G7(device='cpu'):
     return ok
 
 
+
+# ── G8 ──────────────────────────────────────────────────────────────────────────────────────
+
+def gate_G8(device='cpu'):
+    """Gen15 U2 — the HardFlow arm's two engine-specific values are correct per arm.
+
+    🔴 Both are silent when wrong, which is why they are asserted rather than reviewed:
+
+      `init_noise_scale`  the HardFlow sampler must start its ODE from the SAME distribution
+                          the host engine trains and deploys with. `fm` uses `0.5 * randn`
+                          (diffusion.py:184); `mf`/`af` use `randn` (sigma=1.0). Gen3v6's port
+                          defaulted this to 1.0 because it hosted one engine — on Gen15's `fm`
+                          arm that default would start at TWICE the trained scale and merely
+                          look like a slightly worse model. This is the fix_4 bug, re-armed by
+                          multi-engine hosting.
+
+      `two_time`          decides which FIELD the NLP is handed. `mf`/`af` emit the interval
+                          average u(x,r,t) and must be queried at h=0, where the mean-flow
+                          identity gives u(x,t,0) = v(x,t) exactly. `fm` emits v directly and
+                          its `_predict_velocity` has NO `h` parameter — passing one is a
+                          TypeError, omitting it on a two-time arm silently swaps the field.
+
+    Checked against the engines' own `p_sample_loop` source, so the gate cannot drift from the
+    thing it is guarding.
+    """
+    import inspect
+    import mix_uav.utils as utils
+
+    EXPECTED = {'fm': (0.5, False), 'mf': (1.0, True), 'af': (1.0, True)}
+    ok = True
+    for engine in ARMS:
+        row = engine_registry.get(engine)
+        want_sigma, want_tt = EXPECTED[engine]
+        got_sigma = float(row.get('init_noise_scale', -1))
+        got_tt = bool(row.get('two_time', False))
+
+        if got_sigma != want_sigma or got_tt != want_tt:
+            print(f'  ✗ {engine}: registry says init_noise_scale={got_sigma}, two_time={got_tt}; '
+                  f'expected {want_sigma}, {want_tt}')
+            ok = False
+            continue
+
+        # Cross-check sigma against the engine's ACTUAL sampler source.
+        diff_cls = utils.import_class(row['diffusion'])
+        src = inspect.getsource(diff_cls.p_sample_loop)
+        has_half = '0.5 * torch.randn(shape' in src
+        src_sigma = 0.5 if has_half else 1.0
+        if src_sigma != want_sigma:
+            print(f'  ✗ {engine}: {diff_cls.__name__}.p_sample_loop starts at sigma={src_sigma} '
+                  f'but the registry says {want_sigma} — the port would run off-distribution')
+            ok = False
+            continue
+
+        # Cross-check two_time against the velocity signature.
+        params = inspect.signature(diff_cls._predict_velocity).parameters
+        src_tt = 'h' in params
+        if src_tt != want_tt:
+            print(f'  ✗ {engine}: {diff_cls.__name__}._predict_velocity '
+                  f"{'has' if src_tt else 'lacks'} an `h` arg but two_time={want_tt}")
+            ok = False
+            continue
+
+        print(f'  ✓ {engine}: init_noise_scale={got_sigma} and two_time={got_tt} '
+              f'both match {diff_cls.__name__} source')
+
+    # The NLP itself needs casadi, which lives in the cluster env only.
+    try:
+        import casadi  # noqa: F401
+        print('  ✓ casadi importable — the HardFlow NLP can be built')
+    except ImportError:
+        print('  ⊘ casadi not installed here (cluster-only dep); NLP construction not exercised')
+    return ok
+
+
 GATES = {
     'G0': ('every arm builds', lambda a: gate_G0(a.device)),
     'G1': ('fm parity vs Gen11', lambda a: gate_G1(a.gen11_savepath, a.gen15_savepath)),
@@ -518,6 +593,7 @@ GATES = {
     'G5': ('projector sees full trajectory', lambda a: gate_G5(a.device)),
     'G6': ('per-plan wall clock', lambda a: gate_G6(a.device)),
     'G7': ('infos contract + projector timing', lambda a: gate_G7(a.device)),
+    'G8': ('hardflow arm: noise scale + field', lambda a: gate_G8(a.device)),
 }
 
 

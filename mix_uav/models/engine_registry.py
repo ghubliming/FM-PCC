@@ -233,6 +233,11 @@ ENGINES = {
         # apply_nfe below), not by passing a sample kwarg.
         supports_num_steps=False,
         # Backbones this arm can select. The FM lineage never grew a transformer backbone.
+        # 🔴 Gen15 U2 (HardFlow arm) — the ODE start scale, read off THIS engine's own
+        # p_sample_loop (diffusion.py:184 -> `0.5 * torch.randn`). The HardFlow sampler must
+        # start from the same distribution the field was trained/deployed on; a wrong scale is
+        # silent (it just degrades the field). See hardflow_projection.py's fix_4 warning.
+        init_noise_scale=0.5,
         backbones=('unet',),
         # Extra folder-name tokens beyond H{h}_D{diffusion} — empty keeps the `fm` path
         # Gen11-shaped (modulo prefix/logbase), so gate G1 compares like with like.
@@ -249,6 +254,7 @@ ENGINES = {
         wraps_backbone=True,       # model_config.pkl describes the ENGINE
         two_time=True,
         supports_num_steps=True,   # MeanFlowODE.p_sample_loop(..., num_steps=K)
+        init_noise_scale=1.0,   # mf_diffusion.py:205 -> `torch.randn` (sigma=1.0)
         backbones=('unet', 'dit', 'mf_dit'),
         # `dp` is a first-class ablation axis in Gen3v6 and MUST be in the path, or two runs
         # differing only in data-proportion overwrite each other. Same for the backbone.
@@ -265,6 +271,7 @@ ENGINES = {
         wraps_backbone=True,
         two_time=True,
         supports_num_steps=True,
+        init_noise_scale=1.0,   # af_diffusion.py:261 -> `torch.randn` (sigma=1.0)
         backbones=('unet', 'dit', 'sit'),
         exp_name_tokens=(('af_alpha_start', 'as'), ('af_alpha_end', 'ae'),
                          ('imf_backbone', 'bb')),

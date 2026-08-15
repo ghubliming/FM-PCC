@@ -68,6 +68,10 @@ sys.path.insert(0, _REPO)
 
 import mix_uav.utils as utils
 from mix_uav.sampling.policies import Policy
+# Gen15 U2 — the HardFlow arm. Imported lazily-tolerant: casadi lives in the cluster env, so a
+# machine without it can still run every DPCC variant. The ImportError only fires if a
+# `hardflow*` variant is actually requested.
+from mix_uav.sampling.hardflow_projection import HardFlowPolicy, resolve_activation_threshold
 from mix_uav.models import engine_registry
 import mix_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
@@ -287,6 +291,23 @@ def _load_base_cfg(scene, seed):
     cfg['flow_steps_v3']                = int(os.environ.get(
         'UAV_MIX_FLOW_STEPS', getattr(plan_args, 'flow_steps_v3', 20)))
     cfg['engine']                       = ENGINE
+
+    # ── Gen15 U2: the HardFlow arm is declared in Gen15's OWN config, never in the yaml ──────
+    # `config/uav_projection.yaml` is SHARED READ-ONLY with Gen11 (init plan §1.9 / drift-scan
+    # §11.4). Adding `hardflow_new` to its `projection_variants` would make Gen11's next eval
+    # try to run an arm Gen11 has no code for. So the extra variants and the solver knobs come
+    # from `plan_mix_uav_<engine>` instead. The CONSTRAINTS still come from the shared yaml —
+    # which is the half that has to match for the comparison to mean anything.
+    cfg['hardflow'] = dict(getattr(plan_args, 'hardflow', {}) or {})
+    _hf_variants = list(getattr(plan_args, 'hardflow_variants', []) or [])
+    if os.environ.get('UAV_MIX_HF_OFF'):
+        _hf_variants = []
+        print('[ eval ] UAV_MIX_HF_OFF set → HardFlow arm disabled for this run')
+    if _hf_variants:
+        _existing = list(cfg.get('projection_variants') or [])
+        cfg['projection_variants'] = _existing + [v for v in _hf_variants if v not in _existing]
+        print(f'[ eval ] HardFlow arm: +{len(_hf_variants)} variants {_hf_variants} '
+              f'(from config/uav_mix.py, NOT the shared yaml)')
 
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
     cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
@@ -685,7 +706,7 @@ def _normalize_halfspace(hs):
 
 
 def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
-                         trajectory_dim=12, current_x=None):
+                         trajectory_dim=12, current_x=None, return_constraint_list=False):
     """Build the DPCC projector (mirrors visual-aligning `setup_dpcc_projector`).
 
     UAV 12-D transition: [dx(0) dy(1) dz(2) | p_des(3,4,5) | p(6,7,8) | v(9,10,11)].
@@ -810,6 +831,12 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     is_post_proc     = 'post_processing' in variant
     threshold        = 0.0 if is_post_proc else config.get('diffusion_timestep_threshold', 0.5)
 
+    # Gen15 U2 — the HardFlow NLP is built from the SAME `constraint_list` the DPCC Projector
+    # consumes. That is not a convenience: if the two arms enforced different constraint sets
+    # the comparison would be void (the Gen12 port's first design rule).
+    if return_constraint_list:
+        return constraint_list
+
     return Projector(
         horizon=int(getattr(args, 'horizon', 8)),
         transition_dim=trajectory_dim,
@@ -827,11 +854,27 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     )
 
 
+def _is_hardflow(variant):
+    """True for the Gen15 U2 arm-C variants (`hardflow_new`, `hardflow_new-c`, ...).
+
+    These are NOT projection variants of the DPCC projector — they select a different
+    guidance MECHANISM (an in-loop prox-NLP inside each ODE step, instead of generate-then-
+    project). The DPCC `Projector` is never constructed for them.
+    """
+    return str(variant).startswith('hardflow')
+
+
 def _selection_for(variant):
-    """FMv3ODE variant → trajectory_selection (verbatim semantics)."""
-    if 'dpcc-t' in variant:
+    """FMv3ODE variant → trajectory_selection (verbatim semantics).
+
+    Gen15 U2: the `-c` / `-t` suffixes compose with the hardflow arm too, so
+    `hardflow_new-c` gets minimum-projection-cost selection exactly like `dpcc-c`. The
+    substring tests below already cover it — `hardflow_new-c` contains neither 'dpcc-t' nor
+    'dpcc-c', so it is spelled out here rather than left to luck.
+    """
+    if 'dpcc-t' in variant or variant.endswith('-t') or '-t-' in variant:
         return 'temporal_consistency'
-    if 'dpcc-c' in variant:
+    if 'dpcc-c' in variant or variant.endswith('-c') or '-c-' in variant:
         return 'minimum_projection_cost'
     return 'random'
 
@@ -1283,7 +1326,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     eval_params_dir = _uav_eval_tag(config, controller)
 
     projector = None
-    if variant != 'diffuser':
+    if variant != 'diffuser' and not _is_hardflow(variant):
         # UAV has no semantic goal columns. SequenceDataset.get_goal_dim() can false-positive
         # on incidentally-constant channels (e.g. corridor altitude, constant p_des).
         # DC_FIX dynamics constraints touch p indices 6,7,8 — if goal_dim>0 shrinks traj_dim
@@ -1307,11 +1350,55 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # pinned on the model itself by build_experiment). This is the only engine-dependent line
     # in the whole rollout path.
     _sample_kwargs = engine_registry.sample_kwargs_for(ENGINE, config['flow_steps_v3'])
-    policy = Policy(model=model_fm, normalizer=dataset.normalizer,
-                    preprocess_fns=getattr(parsed, 'preprocess_fns', []),
-                    test_ret=getattr(parsed, 'test_ret', 0),
-                    projector=projector, trajectory_selection=_selection_for(variant),
-                    **_sample_kwargs)
+
+    if _is_hardflow(variant):
+        # ── Gen15 U2: arm C — HardFlow's in-loop constrained sampler ────────────────────────
+        # A DIFFERENT guidance mechanism, not a projection variant: DPCC generates then
+        # projects; HardFlow solves a prox-NLP INSIDE each ODE step. It replaces the Policy
+        # wholesale (drop-in: same call signature, same (action, Trajectories) return).
+        _hf = config.get('hardflow', {}) or {}
+        _row = engine_registry.get(ENGINE)
+        _traj_dim = int(dataset.observation_dim + dataset.action_dim)
+        _clist = setup_dpcc_projector(
+            parsed, config,
+            dataset.normalizer.normalizers['observations'],
+            dataset.normalizer.normalizers['actions'],
+            variant, trajectory_dim=_traj_dim, return_constraint_list=True)
+        policy = HardFlowPolicy(
+            model=model_fm, normalizer=dataset.normalizer,
+            horizon=int(getattr(parsed, 'horizon', 8)),
+            transition_dim=_traj_dim, action_dim=int(dataset.action_dim),
+            constraint_list=_clist,
+            dt=float(config.get('dt', 1.0)),          # action IS Δp_des → Euler dt=1.0
+            flow_steps=int(config['flow_steps_v3']),
+            preprocess_fns=getattr(parsed, 'preprocess_fns', []),
+            test_ret=getattr(parsed, 'test_ret', 0),
+            reg_scale=float(_hf.get('reg_scale', 1.0)),
+            activation_threshold=resolve_activation_threshold(
+                _hf.get('activation_threshold', config.get('diffusion_timestep_threshold', 0.5))),
+            trajectory_selection=_selection_for(variant),
+            candidate_cost=_hf.get('candidate_cost', 'prox'),
+            dynamics_mode=_hf.get('dynamics_mode', 'deriv'),
+            linear_dynamics=None,
+            print_level=int(_hf.get('ipopt_print_level', 0)),
+            print_time=bool(_hf.get('casadi_print_time', False)),
+            device=getattr(parsed, 'device', 'cuda'),
+            goal_dim=0,
+            # 🔴 Both REQUIRED and both engine-specific — see engine_registry. A defaulted
+            # init_noise_scale would start the `fm` arm at 2x its trained noise, silently.
+            init_noise_scale=float(_row['init_noise_scale']),
+            two_time=bool(_row['two_time']),
+        )
+        print(f'[hardflow] engine={ENGINE} K={config["flow_steps_v3"]} '
+              f'noise_sigma={_row["init_noise_scale"]} two_time={_row["two_time"]} '
+              f'dyn={_hf.get("dynamics_mode", "deriv")} '
+              f'A={policy.sampler.activation_threshold} sel={_selection_for(variant)}')
+    else:
+        policy = Policy(model=model_fm, normalizer=dataset.normalizer,
+                        preprocess_fns=getattr(parsed, 'preprocess_fns', []),
+                        test_ret=getattr(parsed, 'test_ret', 0),
+                        projector=projector, trajectory_selection=_selection_for(variant),
+                        **_sample_kwargs)
 
     # E9 s_curve: per-replan active-set switching. If the scene declares any `x_active`
     # halfspaces, the active wall set depends on the drone's current x, so the projector must
@@ -1498,6 +1585,23 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'total_skipped_steps': int(sum(r.get('projection_health', {}).get('cb_skipped_steps', 0) for r in rollouts)),
             'tripped_trials': [i for i, r in enumerate(rollouts) if r.get('projection_health', {}).get('cb_tripped')],
         },
+        # ── Gen15 U2 — HardFlow accounting. ⚠️ FAIRNESS: `hardflow_new` evaluates the network
+        # TWICE per ODE step (reference step + terminal predict), so an arm-C run at K costs
+        # 2K network evals while a DPCC arm at K costs K. Comparing the two at "the same K" is
+        # therefore comparing HALF the generation budget on the DPCC side. Record the real
+        # count so the DA can normalise; `nfe_per_plan` is the number to quote.
+        'hardflow': ({
+            'is_hardflow': True,
+            'nfe_total': int(getattr(policy.sampler, 'nfe', 0)),
+            'nlp_solves_total': int(getattr(policy.nlp, 'n_solves', 0)),
+            'nlp_failures_total': int(getattr(policy.nlp, 'n_failures', 0)),
+            # one 'plan' = one outer FM/MPC step; summed over all rollouts of this variant.
+            'nfe_per_plan': (float(getattr(policy.sampler, 'nfe', 0))
+                             / max(sum(int(r['n_fm_steps']) for r in rollouts), 1)),
+            'activation_threshold': float(getattr(policy.sampler, 'activation_threshold', 0.0)),
+            'init_noise_scale': float(getattr(policy.sampler, 'init_noise_scale', 0.0)),
+            'two_time': bool(getattr(policy.sampler, 'two_time', False)),
+        } if _is_hardflow(variant) else {'is_hardflow': False}),
     }
 
     # ── Artifacts (legacy schema): results.json + npz + log + 2-D overview ──

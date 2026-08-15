@@ -190,6 +190,34 @@ _UAV_PLAN = {
     'behavior_log': True,
     'control_hz': 33,
 
+    # ── Gen15 U2 — HardFlow arm (arm C) ──────────────────────────────────────────────────────
+    # A different guidance MECHANISM, not another DPCC projection variant: DPCC generates then
+    # projects; HardFlow solves a prox-NLP inside every ODE step (`hardflow_new`, the only
+    # portable upstream mode — the other three compile the U-Net into the NLP via l4casadi).
+    #
+    # 🔴 These variants live HERE and not in `config/uav_projection.yaml`, which is shared
+    # read-only with Gen11. Putting them in the yaml would make Gen11's next eval try to run an
+    # arm it has no code for. The CONSTRAINTS still come from the shared yaml — that is the half
+    # that must match for a DPCC-vs-HardFlow comparison to be valid at all.
+    #
+    # Set to [] (or export UAV_MIX_HF_OFF=1) to run a DPCC-only eval.
+    'hardflow_variants': ['hardflow_new', 'hardflow_new-c', 'hardflow_new-t'],
+    'hardflow': {
+        # `dynamics_mode='deriv'` needs NO fitted linear-dynamics .npz — it writes the UAV's own
+        # x[t+1] = x[t] + dt*dx[t] rows straight into the NLP. This is why HardFlow is portable
+        # to UAV at all; the init plan §1.9 blocker applies only to 'linear_fit', which would
+        # need an A/B/c refit in UAV normalizer units (the Gen12 warning) and is NOT used.
+        'dynamics_mode': 'deriv',
+        # Fraction of the LATE trajectory over which the NLP is active — same polarity as DPCC's
+        # diffusion_timestep_threshold (higher = more projection), so 0.5 here == 0.5 there and
+        # the two arms are threshold-matched by construction.
+        'activation_threshold': 0.5,
+        'reg_scale': 1.0,
+        'candidate_cost': 'prox',      # 'prox' | 'control'
+        'ipopt_print_level': 0,        # keep IPOPT silent in batch logs
+        'casadi_print_time': False,
+    },
+
     # MJX predictive-sampling knobs (controller='mjpc' only).
     'mjx_n_samples':  16,
     'mjx_horizon':    0.3,
