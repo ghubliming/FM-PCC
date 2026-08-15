@@ -1,6 +1,6 @@
 """Gen15 (UAV Mix-ML) gates — run this BEFORE any science run.
 
-    python mix_uav_test/gates_mix_uav.py              # G0, G2, G3, G4, G5, G6
+    python mix_uav_test/gates_mix_uav.py              # G0, G2, G3, G4, G5, G6, G7
     python mix_uav_test/gates_mix_uav.py --gates G3 G4
     python mix_uav_test/gates_mix_uav.py --gen11-savepath <dir> --gen15-savepath <dir>   # + G1
 
@@ -16,6 +16,7 @@ Gate list (PLAN §8):
   G4  two-time sampling stays inside the trained (t, h) domain
   G5  projector receives the FULL trajectory once goal_dim is forced to 0
   G6  per-plan wall clock is measured and reported per arm
+  G7  every arm returns the same `infos` contract AND actually times the projector (Fix_1)
 """
 
 import argparse
@@ -49,20 +50,31 @@ class _FakeDataset:
 
 
 class _StubProjector:
-    """Records the trajectory shape the sampler hands to a projector (for G5)."""
+    """Records the trajectory shape the sampler hands to a projector (G5, G7).
 
-    def __init__(self, gradient=False, threshold=0.5):
+    `sleep_s` burns a known amount of wall-clock inside each projector call so G7 can prove the
+    sampler actually TIMED the call rather than reporting a hard 0.0.
+    """
+
+    def __init__(self, gradient=False, threshold=0.5, sleep_s=0.0):
         self.gradient = gradient
         self.diffusion_timestep_threshold = threshold
+        self.sleep_s = sleep_s
         self.seen_shapes = []
 
-    def project(self, x, constraints):
+    def _tick(self, x):
         self.seen_shapes.append(tuple(x.shape))
+        if self.sleep_s:
+            import time as _t
+            _t.sleep(self.sleep_s)
+
+    def project(self, x, constraints):
+        self._tick(x)
         import numpy as np
         return x, np.zeros(x.shape[0])
 
     def compute_gradient(self, x, constraints):
-        self.seen_shapes.append(tuple(x.shape))
+        self._tick(x)
         return torch.zeros_like(x)
 
 
@@ -444,6 +456,59 @@ def gate_G6(device='cpu', k_values=(1, 2, 5, 10, 20)):
     return True
 
 
+# ── G7 ──────────────────────────────────────────────────────────────────────────────────────
+
+def gate_G7(device='cpu'):
+    """Every arm's sampler returns the SAME `infos` contract, and actually times the projector.
+
+    🔴 This gate exists because Gen15 Fix_1 was exactly this bug. `FlowMatchingODE` emitted
+    `infos['projection_ms']`; `MeanFlowODE`/`AlphaFlowODE`, written in Gen3v6/v7 where
+    `policies.py` had no real-time logging, did not. `Policy` falls back to
+    `infos.get('projection_ms', 0.0)`, so the two-time arms silently reported `proj_ms=0.0`
+    while `fm` reported the real number — a fabricated cross-arm difference in the metric this
+    generation is built to measure, visible only by reading a log line closely.
+
+    A `.get(..., default)` on a cross-engine boundary is invisible when it goes wrong. Assert
+    the contract instead: same keys everywhere, and a projector that burns 2 ms per call must
+    show up as a non-zero `projection_ms`.
+    """
+    REQUIRED = {'projection_costs', 'projection_ms'}
+    ok = True
+    keysets = {}
+    for engine in ARMS:
+        _model, diffusion, _args = _build(engine, device)
+        diffusion.goal_dim = 0
+        proj = _StubProjector(gradient=False, threshold=0.5, sleep_s=0.002)
+        cond = {0: torch.zeros(2, OBS_DIM, device=device)}
+        with torch.no_grad():
+            _x, infos = diffusion.conditional_sample(
+                cond, horizon=HORIZON, projector=proj, constraints={})
+        keysets[engine] = set(infos)
+
+        missing = REQUIRED - set(infos)
+        if missing:
+            print(f'  ✗ {engine}: infos is missing {sorted(missing)} — the UAV frame reads these')
+            ok = False
+            continue
+        measured = float(infos['projection_ms'])
+        expected_floor = 1000 * proj.sleep_s * len(proj.seen_shapes) * 0.5   # generous margin
+        if measured <= expected_floor:
+            print(f'  ✗ {engine}: projection_ms={measured:.2f} ms after {len(proj.seen_shapes)} '
+                  f'projector calls of {proj.sleep_s * 1e3:.0f} ms — the call is not being timed')
+            ok = False
+        else:
+            print(f'  ✓ {engine}: projection_ms={measured:.2f} ms over '
+                  f'{len(proj.seen_shapes)} projector calls; keys={sorted(infos)}')
+
+    if len(set(map(frozenset, keysets.values()))) > 1:
+        print(f'  ✗ arms disagree on the infos key set: '
+              + '; '.join(f'{e}={sorted(k)}' for e, k in keysets.items()))
+        ok = False
+    elif ok:
+        print(f'  ✓ all {len(ARMS)} arms return an identical infos contract')
+    return ok
+
+
 GATES = {
     'G0': ('every arm builds', lambda a: gate_G0(a.device)),
     'G1': ('fm parity vs Gen11', lambda a: gate_G1(a.gen11_savepath, a.gen15_savepath)),
@@ -452,6 +517,7 @@ GATES = {
     'G4': ('two-time (t, h) domain', lambda a: gate_G4(a.device)),
     'G5': ('projector sees full trajectory', lambda a: gate_G5(a.device)),
     'G6': ('per-plan wall clock', lambda a: gate_G6(a.device)),
+    'G7': ('infos contract + projector timing', lambda a: gate_G7(a.device)),
 }
 
 

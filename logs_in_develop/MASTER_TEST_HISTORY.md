@@ -4376,3 +4376,66 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Theoretical Expansion**: Conducted an in-depth investigation on porting HardFlow (HF) constrained sampling to the Gen11 UAV PID system. Clarified that while HardFlow handles LTI 2nd-order plants (e.g. `maze2d`), our UAV requires handling relative degree 4 dynamics, underactuated tracking, and an inner-loop PID latency ~22x slower than a single control step.
 2. **Strategic Advantage over DPCC**: Identified that HF's nonlinear programming (NLP) formulation allows for expressing strictly richer, nonlinear physical constraints (such as Thrust/Tilt Second-Order Cones, High-Order CBFs) that the existing DPCC linear projector cannot structurally encode.
 3. **Actionable Roadmap**: Established a ranked research roadmap targeting the UAV gaps, heavily prioritizing a closed-loop tracker-in-the-loop dynamics model (D3) and multi-step finite-difference bounds (D1) to restore kinematic honesty to the UAV constraints before integrating more complex NLP boundaries.
+
+***
+
+## Infrastructure: DA_VA_v2 Path Audit Map Seed List & Transparency (August 12, 2026)
+
+**Keywords**: DA_VA_v2, Visualizer_VA_v2, Path Audit Map, Missing_Seeds, va2_units_long, seed transparency, build_from_dav3.
+
+1. **Seed Visibility Defect in Path Audit Map**: Discovered that the `DA_VA_v2` Path Audit Map showed no seed information at all for visual-aligning runs. While the DAv3 core gated the seed warning column on `Missing_Seeds` (which exists only in `DA_Code_v3`), `DA_VA_v2` builds aggregated frames from `va2_aggregated_long.csv` where only `n_seeds` (a count) is present, leaving the table gate permanently false. As a result, single-seed batches and multi-seed bridged baselines (such as D3IL's seed {0..4, 42} vs seed 42) looked identical in the audit table without any warnings.
+2. **Surgical Non-Invasive Fix**: Resolved the defect purely within `Data_Analysis/Visualizer_VA_v2/build_from_dav3.py` via 6 code substitutions (+6 subs, total 40) without modifying the shared `Visualizer/index.html` (DAv3) template. Updated `_seed_map(use_mode=False, raw_only=True)` to extract present seeds directly from `va2_units_long.csv` (`df_raw`), which is always loaded.
+3. **Decoupled Disk Audit from Legend Filter**: Enforced `use_mode=False` so that Custom Seed Compare filters do not misrepresent on-disk batch contents in the audit map, while `raw_only=True` avoids misleading fallback strings. The audit table now displays the exact comma-separated list of present seeds and surfaces `⚠ NOT FULL` warnings next to incomplete candidates.
+4. **Validation**: Verified with 114 passing offline checks (`test_highlight_offline.py`), ensuring complete markup integrity, DataFrame emulation without pandas dependencies, and structural isolation between DAv3 and Visualizer_VA_v2 viewers.
+
+***
+
+## Gen3v6 MeanFlow & Gen3v7 AlphaFlow: 5-Seed K-Ladder Multi-Model Adjudication (August 13, 2026)
+
+**Keywords**: Gen3v6, Gen3v7, MeanFlow, AlphaFlow, 5-seed ladder, mf_dit, af_sit, UNet32, DiT collapse, low-K, threshold sweep.
+
+1. **Multi-Seed Benchmark Execution**: Completed clean 5-seed evaluations (seeds 6–10) across full K ∈ {1, 2, 5, 10, 20} ladders on `avoiding-d3il` for both `mf_dit` (Job 24516, 10.1M params) and `af_sit` (Job 24515, 10.0M params) under standardized `hf_batch=1, A=0.5` settings (975 eval cells per family), closing previous multi-seed contamination and missing ladder gaps.
+2. **DiT `-c` Timeout Collapse Refuted as a Backbone Property**: Overturned the earlier finding that the `dpcc-c-tightened` timeout collapse was an inherent defect of the DiT architecture. The full ladder proved it is strictly a K=2 pathology: at K ∈ {5, 10, 20}, `mf_dit` on `dpcc-c-tightened` achieves S&C 0.967–1.000 with 60–74 steps and zero timeouts.
+3. **UNet vs DiT MeanFlow Verdict Rescoped**: The claim that UNet@32 is the strictly superior MeanFlow backbone was rescoped to K=2 only. Across the wider ladder, UNet produces shorter trajectories at every K (−7 to −18 steps), but `mf_dit` maintains higher constraint satisfaction at K ∈ {1, 5, 10} (1.000 vs 0.967 / 0.933) and lower episode latency at K=1 (2.25 s vs 2.64 s), making the architecture choice a genuine speed-versus-reliability trade-off.
+4. **AlphaFlow SiT Confirmed as Frontier Architecture**: `af_sit` achieved S&C 1.000 across every single evaluated K (1 to 20). At K=1 (`dpcc-t-tightened`), it completed episodes in 0.92 s/episode (2.9× cheaper than MeanFlow UNet@32 K1 and 41.9× cheaper than the DPCC K20 baseline at 38.53 s/ep), winning on 5 out of 5 seeds.
+5. **Cross-Family Low-K Generalization**: Low-NFE efficiency was definitively confirmed across all three independent generative families (MeanFlow, AlphaFlow, Diffusion): every family's cheapest S&C 1.000 configuration sits at K=1 or K=2, while K=20 runs are 40–70× more expensive for zero measurable gain in safety or task success.
+6. **HardFlow Threshold Sweep Cost Model (Seed 6)**: Evaluated activation thresholds $A \in \{0.0, 0.1, 0.25, 0.5\}$ on HardFlow. Dropping $A$ from 0.5 to 0.0 (reducing in-loop solves to terminal-only projection) cut episode latency by 41% at K=5 (8.82 s → 5.18 s) and 47% at K=10 (16.03 s → 8.53 s) with zero loss in S&C (1.000) on tightened arms, confirming that intermediate in-loop NLP solves add substantial latency without buying extra safety on saturated policies.
+
+***
+
+## Gen11 Epoch 10: UAV Visual Mode Architecture & Dual-Camera Graft Plan (August 14, 2026)
+
+**Keywords**: Gen11, UAV Visual Mode, Epoch 10, dual-camera, overhead cam, FPV cam, VisualUNet, uav_camera_rig, transition parity.
+
+1. **Comprehensive Architectural Plan**: Established `PLAN_E10_uav_visual_mode.md` to formalize the upgrade of the Gen11 UAV framework from a state-only receding-horizon controller to a dual-camera visual Flow Matching policy in MuJoCo, addressing multi-homotopy mode collapse upstream via visual scene context.
+2. **Natural 9-D Transition Parity**: Identified a critical architectural alignment: Gen11 UAV's `cond_mode='pos_only'` and the Gen7 visual aligning arm share the exact same 9-D transition layout `[Δp_des(3) | p_des(3) | p(3)]`. Consequently, `VisualUNet` (dual ResNet-18 @ 96×96 → 128-D latent → FiLM) and `VisualFlowMatching` require zero tensor dimensionality surgery and can be grafted directly into the UAV pipeline.
+3. **`uav_camera_rig.py` Unified Interface (T1)**: Designed a dedicated camera rig module to eliminate visual distribution shift between offline expert dataset rendering (`collect_camera_images.py`) and online closed-loop simulation (`eval_fm_uav.py`). The rig unifies overhead free-cam (following drone at 5 m) and nose-mounted body FPV views, enforcing strict runtime image↔observation metadata fingerprints.
+4. **Offline Collector Defect Remediation**: Audited and documented fixes for legacy collector defects (D-1 camera naming mismatch, D-2 undeclared following overhead camera semantics, D-3 attitude quaternion fallbacks, and D-4 frame count assertions).
+5. **Isolation & Composition with Gen15**: Configured Epoch 10 to ship initially on Flow Matching (`engine='fm'`, `if_vision=True`), maintaining strict config key compatibility with Gen15's multi-engine registry for future multi-engine visual UAV benchmarks.
+
+***
+
+## Research Investigation: Universal Vision Encoder & Visual DiT/SiT Conditioning (August 14, 2026)
+
+**Keywords**: Visual DiT, SiT, MultiImageObsEncoder, universal vision interface, adaLN injection, prefix tokens, JVP safety.
+
+1. **State vs Visual Architecture Landscape**: Completed an in-depth investigation (`INVESTIGATION_visual_dit_sit_backbones.md`) analyzing why all visual pipelines across Gen6–Gen14 rely on 1-D convolutional `VisualUNet`, while all Transformer/DiT backbones (`MFDiTTrajectory`, `MFDiTOfficialTrajectory`, `AFDiTTrajectory`, `AFSiTTrajectory`) remain strictly state-only.
+2. **Universal Vision Encoder Boundary**: Verified that across all 11 D3IL vision agent architectures and all 5 benchmark scenes, D3IL utilizes an identical `MultiImageObsEncoder` configuration (2× ResNet-18 with GroupNorm → flat 128-D latent). The 128-D embedding acts as a clean, backbone-agnostic interface boundary: downstream generative models only ever consume this vector, never raw pixels.
+3. **Conditioning Injection Strategies Evaluated**:
+   - **Strategy A (adaLN Injection - Recommended for `MFDiTOfficialTrajectory` / `AFSiTTrajectory`)**: Linearly projects the 128-D visual latent and sums it into the global conditioning vector $c = t_{\text{emb}} + r_{\text{emb}} + w_{\text{emb}} + v_{\text{emb}}$, modulating every Transformer block via adaptive LayerNorm. Requires only ~100 LOC per backbone, stays faithful to the official DiT design, and preserves exact JVP mathematical safety.
+   - **Strategy B (In-Context Prefix Tokens for `MFDiTTrajectory` / `AFDiTTrajectory`)**: Projects the visual latent into prefix tokens prepended to the trajectory token sequence, requiring RoPE buffer table resizing.
+   - **Strategy C (Spatial Cross-Attention)**: Rejected for run 1 due to high parameter overhead, need for spatial ResNet feature maps, and untested forward-AD memory scaling inside JVP closures.
+4. **Mathematical JVP Safety Confirmed**: Proved that under the pre-encode short-circuit pattern (encoding images once outside the `torch.func.jvp` closure), the visual latent is treated as a captured constant with zero tangent ($d\text{vis}/dr = 0$), ensuring exact analytical forward-mode derivative evaluation for MeanFlow and AlphaFlow objectives.
+5. **Proposed Implementation**: Outlined the `VisualDiTTwoTime` wrapper architecture to house `MultiImageObsEncoder` and delegate to DiT/SiT backbones, laying the foundation for future Gen10 / Visual DiT implementations.
+
+***
+
+## Gen15 UAV Mix-ML: Pre-Run Drift Scan, K-Grid Alignment & Framing Calibration (August 14, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, drift scan, K-grid alignment, eval pathing, framing calibration, UNet32.
+
+1. **Pre-Run Drift Audit Passed**: Executed a comprehensive code drift scan across 9 commits following Gen15 initialization. Confirmed zero unexpected drift between `mix_uav/` and upstream sources (`flow_matcher_v3_uav/`, `flow_matcher_v3_meanflow/`, `flow_matcher_v3_alphaflow/`), validating that all copied engine abstractions, two-time U-Net modules, and the `fix_5` temporal-consistency graft remain exact.
+2. **K-Grid Evaluation Alignment ({1, 2, 5, 10, 20})**: Updated the automated evaluation sweep grid from `{1, 2, 4, 10, 20}` to `{1, 2, 5, 10, 20}` across `eval_k_sweep.sh`, `gates_mix_uav.py` (G6), and documentation. This synchronizes Gen15's evaluation rungs directly with the avoiding-d3il benchmark ladders, eliminating cross-task NFE step discrepancies.
+3. **Dynamic Evaluation Pathing & Isolation**: Verified that UAV evaluation scripts construct output paths dynamically (`logs/UAV_MIX/uav-<scene>/plans/<model_dir>/...`), confirming that plan-block `exp_name` settings are non-load-bearing and that candidate aggregation correctly matches training prefix directories (`mix_uav_<engine>/`) without requiring avoiding-d3il `custom_msg` tokens.
+4. **Research Framing Calibration**: Refined Gen15's empirical claims based on the August 13 multi-seed findings: locking Gen15 to the 4.0M UNet backbone (`freq_dim=32`) provides an architecture-controlled, 30.3 ms real-time compliant comparison across Flow Matching, MeanFlow, and AlphaFlow. While not representing unconstrained SiT/DiT model ceilings, it isolates the pure mathematical objective's impact on high-speed 3D UAV receding-horizon constraint satisfaction. Pipeline confirmed code-complete and ready for cluster execution.
+

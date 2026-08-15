@@ -88,10 +88,25 @@ answers a different question: at an equal sampling budget, is the flow engine be
 | MeanFlow-DiT K1 | `dpcc-t-tight` | **1.000** | 76.90 | 2.25 | **+0.333 `[+0.03,+0.63]`** `*` | +4.83 `[−11.3,+18.2]` | −0.44 `[−2.25,+0.72]` |
 | AlphaFlow-SiT K1 | `dpcc-t-tight` | **1.000** | 66.10 | **0.92** | **+0.333 `[+0.03,+0.63]`** `*` | −5.97 `[−21.7,+6.4]` | **−1.76 `[−3.53,−0.73]`** `*` |
 
-**At one network evaluation, diffusion-DPCC reaches S&C 0.667; all three flow engines reach 1.000,
-CI excluding zero.** This is the only matched-budget axis on which the flow engines win
-significantly. Cost at K = 1 is a tie for MeanFlow-UNet (2.67 vs 2.68 — its in-loop NLP consumes the
-saving) and a significant win only for AlphaFlow-SiT.
+**At one network evaluation the published DPCC config (`aw10`) reaches S&C 0.667; all three flow
+engines reach 1.000, CI excluding zero.** Cost at K = 1 is a tie for MeanFlow-UNet (2.67 vs 2.68 —
+its in-loop NLP consumes the saving) and a significant win only for AlphaFlow-SiT.
+
+🔴 **This does not generalise to all diffusion configs.** A second K = 1 diffusion row exists —
+`ode_selectable / GaussianDiffusion, aw1, Euler, T0.5` (**C146**, 5 seeds) — and it **does** reach
+S&C 1.000, at 1.17 s/ep. Against that opponent the matched-K = 1 picture is different:
+
+| engine (K = 1) | S&C | steps | s/ep | ΔS&C | Δ steps | Δ s/ep |
+|---|---|---|---|---|---|---|
+| C146 diffusion-as-ODE `aw1` *(opponent)* | 1.000 | 67.50 | **1.17** | — | — | — |
+| **MeanFlow-UNet** | 1.000 | **63.77** | 2.64 | +0.000 | **−3.73 `[−6.50,−1.07]`** `*` | **+1.47 `[+1.31,+1.63]`** `*` |
+| AlphaFlow-SiT | 1.000 | 66.10 | **0.92** | +0.000 | −1.40 `[−4.27,+1.77]` | **−0.24 `[−0.29,−0.19]`** `*` |
+| MeanFlow-DiT | 1.000 | 76.90 | 2.25 | +0.000 | **+9.40 `[+5.13,+16.13]`** `*` | **+1.08 `[+0.83,+1.43]`** `*` |
+
+**MeanFlow-UNet wins the step axis significantly here (−3.73) and loses cost (2.3×).** AlphaFlow
+wins cost (1.3×) with steps a tie. MeanFlow-DiT loses both. So "diffusion fails at K = 1" is a
+property of the `aw10` DPCC configuration, not of diffusion — and the `aw1` variant is the harder
+low-K opponent.
 
 **K = 10, 5 seeds — opponent: diffusion-DPCC K10 (C7)**
 
@@ -117,16 +132,115 @@ AlphaFlow ties on cost and wins on steps. MeanFlow-UNet also drops below the gat
 At equal K and equal S&C, naive FM is **1.7–1.8× cheaper per episode** than either few-step engine;
 MeanFlow-UNet and AlphaFlow take fewer steps. Single seed — directional only.
 
+### 2.2 naive FM (FMv3ODE) and diffusion-as-ODE across K — reference ladders
+
+Both live in `flow_matching_v3_ode_selectable`. 5-seed rows are marked; the rest are seed 6 only
+(6 episodes). Best `dpcc-*-tightened` arm per row.
+
+| engine | K | solver | `aw` | `T` | seeds | S&C | steps | s/step | s/ep | cand |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **diffusion-as-ODE** | **1** | Euler | 1 | 0.5 | **5** | **1.000** | 67.50 | 0.0173 | **1.17** | C146 |
+| diffusion-as-ODE | 5 | **midpoint** | 1 | — | **5** | 1.000 | 63.53 | 0.1538 | 9.74 | C148 |
+| diffusion-as-ODE | 10 | — | 1 | — | **5** | 1.000 | 63.90 | 0.1818 | 11.65 | C144 |
+| diffusion-as-ODE | 10 | Euler | 10 | — | **5** | 1.000 | 62.27 | 0.1917 | 11.92 | C149 |
+| diffusion-as-ODE | 10 | Euler | 1 | **1.0** | **5** | 1.000 | 63.80 | 0.9400 | 59.72 | C145 |
+| diffusion-as-ODE | 20 | Euler | 1 | — | **5** | 1.000 | 62.87 | 0.4785 | 29.60 | C147 |
+| **naive FM (FMv3ODE)** | 5 | Euler | 10 | 0.5 | 1 | 1.000 | 62.67 | 0.1154 | 7.07 | C143 |
+| naive FM (FMv3ODE) | 10 | Euler | 10 | 0.05 | 1 | 1.000 | 64.83 | 0.0943 | 6.11 | C138 |
+| naive FM (FMv3ODE) | 10 | Euler | 10 | 0.1 | 1 | 1.000 | 64.83 | 0.0945 | 6.12 | C139 |
+| naive FM (FMv3ODE) | 20 | Euler | 10 | 0.05 | 1 | 1.000 | 63.50 | 0.1797 | 11.41 | C140 |
+| naive FM (FMv3ODE) | 20 | Euler | 10 | 0.1 | 1 | 1.000 | 62.33 | 0.1890 | 11.78 | C141 |
+| **naive FM (FMv3ODE)** | **20** | Euler | 10 | 0.5 | **5** | 1.000 | 63.23 | 0.4767 | 29.65 | C142 |
+
+**S&C is 1.000 for every row in this table**, at every K from 1 to 20. Neither reference engine has
+a reliability problem on this task; they differ only in cost. Cost is governed by K and by the
+projection threshold `T`, not by the engine: C145 (K10, `T=1.0`) costs 59.72 s/ep versus C144
+(K10, `T` default) at 11.65 — a 5× spread at identical K and S&C.
+
+#### FMv3ODE at K = 2 — the `flow_matching_v3_hardflow` family
+
+A second set of FMv3ODE runs exists under a different leaf naming (`K{n}_thres{x}_mpc{n}_n{n}`),
+including **K = 2**. Seed 6 only, best available arm:
+
+| K | candidate | S&C | steps | s/step | s/ep |
+|---|---|---|---|---|---|
+| **2** | C52 `K2_thres0_mpc1_n2` | **1.000** | 73.33 | 0.0261 | **1.91** |
+| 5 | C53 `K5_thres0_mpc1_n2` | 1.000 | 63.33 | 0.1101 | 6.94 |
+| 10 | C48 `K10_thres0_mpc1_n2` | 1.000 | 63.17 | 0.1996 | 12.58 |
+| 20 | C50 `K20_thres0_mpc1_n2` | 1.000 | 62.17 | 0.4745 | 29.18 |
+
+The `thres` token is not a confound: at K = 20 this family gives 29.18 / 29.21 / 29.44 / 29.03 s/ep
+at `thres` 0 / 0.5 / 0.05 / 0.1 — a 1 % spread. **K = 1 still does not exist for FMv3ODE.**
+
+**Matched K = 2, seed 6 — does low-K naive FM beat MeanFlow? Depends on the arm rule.**
+
+| rule | naive FM K2 | MeanFlow-UNet K2 | AlphaFlow-SiT K2 |
+|---|---|---|---|
+| **each engine's best arm** | 1.000 / 73.33 / **1.91** | **1.000 / 58.67 / 1.59** | **1.000 / 63.17 / 1.28** |
+| **same arm** (`dpcc-c-tightened`) | **1.000 / 73.33 / 1.91** | 0.833 / 94.00 / 2.57 | **0.000** / 199.0 / 3.72 |
+
+- **Best-arm rule: MeanFlow-UNet beats naive FM K2 on both axes** — **−14.66 steps and −0.32 s/ep**
+  at equal S&C 1.000. AlphaFlow-SiT beats it too (−10.16 steps, −0.63 s/ep).
+- **Same-arm rule: naive FM wins.** `dpcc-c-tightened` is the only tightened arm C52 carries, and it
+  is precisely the arm on which the few-step engines collapse at K = 2 — MeanFlow-UNet drops to
+  0.833/94 steps, MeanFlow-DiT and AlphaFlow-SiT time out entirely (199 steps, S&C 0.000).
+
+Both readings are seed 6, 6 episodes. The honest statement is that **MeanFlow-UNet beats naive FM at
+K = 2 when each engine uses its best projection rule, and loses when both are forced onto `-c`** —
+and that the `-c` collapse at K = 2 is a known few-step pathology, not a property of the comparison.
+
+⚠️ **Qualitative, not measured: trajectory quality of FMv3ODE at low K.** Visual inspection of the
+plotted rollouts reports **trajectory explosion / non-smooth paths for FMv3ODE at low K**, which the
+few-step engines do not show. **No metric in this DA measures smoothness**, so this observation is
+neither supported nor refuted by the numbers above, and must be reported as a qualitative finding
+with figures — not asserted as a quantitative result.
+
+What the available metrics do say, for the record (seed 6, unprojected `diffuser` arm — the raw
+field, before projection):
+
+| K | naive FM: avg # viol | total violation mass | steps |
+|---|---|---|---|
+| 2 | 16.67 | 3.29 | **61.00** |
+| 5 | 18.17 | 4.68 | 65.00 |
+| 10 | 16.17 | 3.52 | 64.50 |
+| 20 | 18.50 | 4.85 | 65.00 |
+
+**Constraint violation of the raw field is flat in K** — K = 2 is not worse than K = 20 on either
+count or mass. So if the low-K trajectories are rougher, that roughness is **not** expressing itself
+as more constraint violation, and after projection the residual is 0.000000 at K = 2.
+
+The one number consistent with rough low-K paths is **path length after projection: naive FM K2
+takes 73.33 steps, versus 62–63 at K = 5–20** — the longest in its own ladder, while every other
+row in that ladder sits within 1.2 steps. A wandering trajectory costs steps even when it is
+projected to be safe. This is suggestive, single-seed, and not a smoothness measurement.
+
+**To make this claim quantitatively**, the eval must log a smoothness statistic per rollout —
+mean |Δaction| between consecutive steps, path curvature, or jerk. None is currently recorded.
+
+**ODE solver (Euler / midpoint / RK4).** No matched solver A/B exists:
+
+| solver | where it exists | matched Euler counterpart? |
+|---|---|---|
+| Euler | everywhere (default) | — |
+| midpoint | C148 only — diffusion-as-ODE, K5, `aw1`, 5 seeds | ❌ no K5 Euler at same engine/`aw` |
+| RK4 | iMeanFlow K2/K20, seed 6 only | ❌ K20 pair exists but seed 6 only |
+
+C148 (midpoint, K5, 9.74 s/ep) sits between the K1 (1.17) and K10 (11.65) Euler rows of the same
+parent, i.e. on the same cost-vs-K curve — no solver effect is separable from the K effect.
+**A midpoint-vs-Euler claim requires a matched run and is not supported by current data.**
+
 **Reading.** The matched-budget result is narrow and specific:
 
-- **Won:** reliability at K = 1. Diffusion-DPCC does not work at one step (0.667); the flow engines
-  do (1.000, significant). Path length is shorter for MeanFlow-UNet and AlphaFlow at K = 1, 5 and
-  10, though only AlphaFlow's K = 10 step margin resolves.
-- **Not won:** wall-clock at equal K. At K = 5 and K = 10 the baselines are equal or cheaper per
-  episode; our per-step cost is higher at the same budget.
-- **Therefore** the 14.6×/41.7× in §2 does **not** come from being faster at equal compute. It comes
-  from **being usable at K = 1 while the baseline requires K = 20** — the baseline cannot follow us
-  down the ladder (S&C 0.667 at K1), and that gap is the result.
+- **Won:** path length. MeanFlow-UNet takes significantly fewer steps than the working K = 1
+  diffusion opponent (−3.73 `*`) and than DPCC K10 (−5.07, ns); AlphaFlow wins steps at K = 10
+  (−6.30 `*`). Also won: reliability against the *published* `aw10` DPCC at K = 1 (1.000 vs 0.667 `*`).
+- **Not won:** wall-clock at equal K. At K = 1 (vs C146), K = 5 and K = 10 the reference engines are
+  equal or cheaper per episode; our per-step cost is higher at the same budget.
+- **Therefore** the 14.6×/41.7× in §2 does **not** come from being faster at equal compute, and not
+  from diffusion being unusable at low K in general — the `aw1` diffusion-as-ODE row reaches
+  S&C 1.000 at 1.17 s/ep. It comes from **the published `aw10` DPCC configuration requiring K = 20**
+  to stay reliable (0.667 at K = 1). The result is against that configuration, which is the paper's
+  baseline, and should be stated that way rather than as a general claim about diffusion.
 
 ---
 
@@ -172,16 +286,17 @@ separately for that reason. Protocol-matched rows require `T = 0.5`; the K10 row
 | 20 | C142 | 6–10 | `dpcc-c-tightened` | 1.000 | 63.23 | 0.4767 | 29.65 |
 | *(K10)* | C138/C139 | 6 only | — | — | — | — | *excluded, `T=0.05`/`0.1`* |
 
-Naive FM at K5 costs **4.3× less than its own K20** at S&C 1.000 (7.07 vs 30.06 s/ep, seed 6), so
-its 1.3× margin over the Target in §2 is an artifact of pinning it at K20; at K5 it is ≈5.5×
-(single seed). Seed 6 is not optimistic for this engine — its K20 seed-6 numbers match the 5-seed
+Naive FM at K5 costs **4.3× less than its own K20** at S&C 1.000 (7.07 vs 30.06 s/ep, seed 6), and
+at K2 (§2.2, `hardflow` family) **1.91 s/ep — 15.7× less than its K20**. Its 1.3× margin over the
+Target in §2 is therefore an artifact of pinning it at K20; at K2 it is ≈20× (single seed). Seed 6 is not optimistic for this engine — its K20 seed-6 numbers match the 5-seed
 values (1.000 / 62.17 vs 1.000 / 63.23).
 
-**Consequence for §4:** MeanFlow-UNet's advantage over naive flow matching is **11.2× against
-naive FM K20 but only 2.7× against naive FM K5** (2.64 vs 7.07 s/ep). The low-K benefit is not
-exclusive to the few-step objective — naive FM captures much of it by simply reducing K. A
-multi-seed naive-FM K1/K2 ladder is required before the few-step claim can be separated from the
-low-K claim.
+**Consequence for §4:** MeanFlow-UNet's advantage over naive flow matching collapses as naive FM is
+allowed lower K — **11.2× vs naive FM K20, 2.7× vs K5, and at matched K = 2 the margin is 1.2× on
+cost (1.59 vs 1.91) with −14.7 steps** (§2.2, seed 6). The low-K benefit is largely *not* exclusive
+to the few-step objective: naive FM captures most of it by reducing K. What survives at matched K
+is the **step advantage**, and the fact that naive FM at K = 2 needs the `-c` arm the few-step
+engines fail on. A multi-seed naive-FM K1/K2 ladder is required to settle this.
 
 ---
 
@@ -193,7 +308,10 @@ low-K claim.
 - Architecture confound unresolved (§1). Baseline and naive FM on SiT/DiT not run.
 - Adjacent-window train/test overlap at H = 8 affects all engines equally.
 - Not run: MeanFlow-UNet K20; HardFlow activation-threshold sweep at 5 seeds (single-seed only);
-  **naive FM below K20 at multi-seed** (K5 is seed-6 only, K1/K2 absent) — see §4.1.
+  **naive FM below K20 at multi-seed** (K2 and K5 are seed-6 only; **K1 absent entirely**) — §2.2, §4.1.
+- **No smoothness metric is recorded.** Trajectory explosion / roughness reported visually for
+  low-K FMv3ODE (§2.2) cannot be quantified from this data; adding mean |Δaction|, curvature or
+  jerk to the eval would close this.
 - Matched-K coverage (§2.1) is limited by what the baselines have: DPCC exists at K1/K10/K20 only
   (no K2, K5); naive FM at `T=0.5` exists at K5 (seed 6) and K20 only. K = 1 and K = 10 are the only
   matched points with 5 seeds on both sides.

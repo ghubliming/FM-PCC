@@ -34,6 +34,7 @@ See logs_in_develop/Gen3v7_AlphaFlow/init/PLAN_Gen3v7_alphaflow.md.
 """
 
 from collections import OrderedDict
+import time
 import math
 from typing import Dict, Optional, Tuple
 import warnings
@@ -262,6 +263,9 @@ class AlphaFlowODE(nn.Module):
 
         diffusion = [x] if return_diffusion else None
         costs = {}
+        # 🔴 Gen15 Fix_1 — wall-clock ms spent inside projector calls during THIS sample.
+        # Mirrors FlowMatchingODE.p_sample_loop so all three arms report the same field.
+        proj_ms = 0.0
 
         total_steps = flow_steps + int(repeat_last)
         dt = 1.0 / max(flow_steps, 1)
@@ -342,19 +346,24 @@ class AlphaFlowODE(nn.Module):
                 snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * flow_steps)
                 near_end = (loop_idx >= snapping_start_idx) or (loop_idx == flow_steps - 1)
                 if near_end and projector.gradient:
+                    # 🔴 Gen15 Fix_1 — accumulate CPU projector wall-time.
+                    _t_proj = time.perf_counter()
                     if self.goal_dim > 0:
                         grad = projector.compute_gradient(x[:, :, :-self.goal_dim], constraints)
                     else:
                         grad = projector.compute_gradient(x, constraints)
+                    proj_ms += (time.perf_counter() - _t_proj) * 1e3
                     x = x + grad
                     if hasattr(projector, 'compute_cost'):
                         costs[loop_idx] = projector.compute_cost(x, constraints)
 
                 if near_end and not projector.gradient:
+                    _t_proj = time.perf_counter()
                     if self.goal_dim > 0:
                         x[:, :, :-self.goal_dim], step_cost = projector.project(x[:, :, :-self.goal_dim], constraints)
                     else:
                         x, step_cost = projector.project(x, constraints)
+                    proj_ms += (time.perf_counter() - _t_proj) * 1e3
                     costs[loop_idx] = step_cost
 
                 x = apply_conditioning(x, cond, self.action_dim, goal_dim=self.goal_dim)
@@ -366,6 +375,13 @@ class AlphaFlowODE(nn.Module):
         if return_diffusion:
             infos['diffusion'] = torch.stack(diffusion, dim=1)
         infos['projection_costs'] = costs
+        # 🔴 Gen15 Fix_1 — part of the infos CONTRACT the UAV frame relies on: policies.py reads
+        # it into `policy.last_proj_ms`, which eval_mix_uav.py prints as `proj_ms=` on the
+        # per-variant TIMING line. Gen3v6/Gen3v7 never emitted it (their policies.py has no
+        # real-time logging), so the af/mf arms silently reported 0.0 while `fm` reported the
+        # real number. Total wall-clock was never wrong — the projector runs inside this loop,
+        # so its cost was always inside `fm_ms`. What was missing is the split.
+        infos['projection_ms'] = proj_ms
         return x, infos
 
     @torch.no_grad()
