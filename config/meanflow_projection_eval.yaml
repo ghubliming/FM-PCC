@@ -46,6 +46,19 @@ action_indices: {
 # Policy
 diffusion_timestep_threshold: 0.5
 
+# ── H8+8 (U10) receding-horizon cadence ───────────────────────────────────────
+# How many actions of each plan are executed before a new plan is generated.
+#   1  -> replan every env step, execute action[0]  (DPCC/FM-PCC convention, and
+#         every result in this generation to date). THE DEFAULT — do not change
+#         it to "fix" a run; it changes what the controller IS.
+#   8  -> HardFlow's own setting at H16 (upstream run/eval.py:390-397): plan H
+#         steps, execute the first 8, discard the rest, replan.
+# Must be < horizon. Env override: MF_REPLAN_STEPS.
+# ⚠️ A non-default value auto-tags the results path (FMPCC_RUN_MSG=r<N>) because
+# the cadence is not one of the folder-name tokens — without that an r1 and an r8
+# run at the same K would overwrite each other.
+replan_steps: 1
+
 # The three arms of PLAN §5. Keep them together in one run so K, seeds and env
 # resets are shared by construction.
 # U4.2: arm C accepts DPCC-parity selection suffixes (only meaningful at batch_size>1):

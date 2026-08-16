@@ -3,14 +3,24 @@
 All submitted via `bash Slurm_Codes/submit.sh <script> [args]` from repo root.
 Seeds always loop **inside** one job — adding seeds adds time, not jobs.
 
-**`engine` is always the FIRST argument** (`fm` | `mf` | `af`). This is the only CLI difference
-from Gen11's `uav_fm/` scripts; everything after it keeps Gen11's argument order.
+> ## 🔴 SEED POLICY — seed 6 only, for now
+> **Every default in this generation is `seeds = "6"`** (`train_mix_uav.py:DEFAULT_SEEDS`, all
+> six sbatch scripts, and the eval's fallback to `config/uav_projection.yaml: seed: 6`). Omit
+> the seed argument and you get seed 6.
+>
+> The 5-seed set `"6 7 8 9 10"` is a **LATER phase** — it multiplies every train and eval job's
+> wall clock by 5. Do not pass it until the single-seed pipeline has produced a result worth
+> replicating. §6 below is that phase, kept separate on purpose.
 
-| engine | objective | source |
-|---|---|---|
-| `fm` | Flow Matching + Euler ODE | Gen11 (the incumbent / parity arm) |
-| `mf` | MeanFlow, arXiv 2505.13447 | Gen3v6 |
-| `af` | α-Flow, arXiv 2510.20771 | Gen3v7 |
+**`engine` is always the FIRST argument** (`fm` | `mf` | `af` | `diffusion`). This is the only
+CLI difference from Gen11's `uav_fm/` scripts; everything after it keeps Gen11's argument order.
+
+| engine | objective | source | arms |
+|---|---|---|---|
+| `fm` | Flow Matching + Euler ODE | Gen11 (the incumbent / parity arm) | 20 DPCC + 3 HardFlow |
+| `mf` | MeanFlow, arXiv 2505.13447 | Gen3v6 | 20 DPCC + 3 HardFlow |
+| `af` | α-Flow, arXiv 2510.20771 | Gen3v7 | 20 DPCC + 3 HardFlow |
+| `diffusion` | DDPM — **the DPCC baseline** | `diffuser/` (U3) | 20 DPCC (no HardFlow: no velocity field) |
 
 Gen15 writes to **`logs/UAV_MIX/`**. Gen11's `logs/UAV_FM/` is never touched.
 
@@ -44,38 +54,53 @@ bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/gates_mix_uav.sh
 **1. Smoke train, one arm, one scene, one seed** (confirms the arm learns at all):
 
 ```bash
-bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_mix_uav.sh mf corridor "6"
+bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_mix_uav.sh mf corridor
 ```
+(the trailing `"6"` is the default and can be omitted)
 
 **2. Parity check on the `fm` arm** — Gen15-`fm` must reproduce Gen11. See the Gen15 changelog
 for the G1 procedure (structural half is `gates_mix_uav.py --gates G1`, behavioural half is a
 rollout comparison on the `diffuser` + `dpcc-c` variants).
 
-**3. Full train, one arm at a time:**
+**3. Train, one arm at a time — SEED 6 ONLY** (omit the seeds argument; the default is `"6"`):
 
 ```bash
-bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh fm "empty corridor s_curve pillars" "6 7 8 9 10"
-bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh mf "empty corridor s_curve pillars" "6 7 8 9 10"
-bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh af "empty corridor s_curve pillars" "6 7 8 9 10"
+for e in fm mf af diffusion; do
+  bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh $e "empty corridor s_curve pillars"
+done
 ```
 
 **4. The K sweep — the actual experiment.** Same K list for every arm:
 
 ```bash
 for e in fm mf af; do
-  bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh \
-      $e corridor "6 7 8 9 10" "1 2 5 10 20"
+  bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh $e corridor "6" "1 2 5 10 20"
 done
 ```
+⚠️ `diffusion` is **not** in that loop: its K is baked into the checkpoint (the beta schedule is
+built from `n_diffusion_steps`), so a K sweep on that arm means separate *training* runs. See
+[`Gen15/U3`](../../../logs_in_develop/Gen15/U3/CHANGELOG_U3_diffusion_dpcc_baseline_arm.md) §4a.
 
-**5. Aggregate per arm** (never pooled — three different objectives):
+**5. Aggregate per arm** (never pooled — four different objectives):
 
 ```bash
-for e in fm mf af; do
+for e in fm mf af diffusion; do
   bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/aggregate_summaries.sh \
       $e "empty corridor s_curve pillars" dpcc-c
 done
 ```
+
+**6. ⏳ LATER — the 5-seed replication.** Only once single-seed results justify it. Every job
+below costs 5× the wall clock of its step-3/4 equivalent:
+
+```bash
+for e in fm mf af diffusion; do
+  bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/train_all_scenes.sh \
+      $e "empty corridor s_curve pillars" "6 7 8 9 10"
+done
+```
+⚠️ The eval's seed fallback lives in the **shared** `config/uav_projection.yaml` (`seed: 6`).
+Pass seeds on the CLI instead of editing that file — changing it moves Gen11's default too.
 
 ---
 
@@ -83,7 +108,7 @@ done
 
 ```bash
 bash Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/uav_mix_all_pipeline.sh \
-    mf "empty corridor s_curve pillars" "6 7 8 9 10" 20 dpcc-c
+    mf "empty corridor s_curve pillars" "6" 10 dpcc-c
 ```
 
 ---

@@ -89,6 +89,15 @@ export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
 echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"
 
+# ── H8+8 (U10) knobs — all optional, all defaulting to the historic behaviour ──────────
+#   MF_HORIZON        checkpoint horizon; MUST equal what the checkpoint was TRAINED at
+#                     (the eval aborts on a mismatch — horizon is not a sampling knob).
+#   MF_BACKBONE       unet|dit|mf_dit; MUST equal the trained backbone.
+#   MF_REPLAN_STEPS   actions executed per plan. 1 = replan every env step (default, every
+#                     result to date). 8 = HardFlow's own H16 cadence. Must be < horizon.
+#                     A value != 1 auto-tags the results path (FMPCC_RUN_MSG=r<N>).
+echo "[ h8+8 ] MF_HORIZON=${MF_HORIZON:-8 (default)}  MF_BACKBONE=${MF_BACKBONE:-mf_dit (default)}  MF_REPLAN_STEPS=${MF_REPLAN_STEPS:-1 (default)}"
+
 # 5) 🔵 U9 MATCHED-K AUTO-EVAL — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7 / fix_7.3 §9).
 #    fix_4's K sweep was four separate submits, hand-typed with HFFM_FLOW_STEPS=1/2/5/20
 #    (CHANGELOG_Gen3v6_fix_4 §"post-fix sweep"). One forgotten resubmit and the decisive

@@ -46,6 +46,19 @@ _yaml_threshold = (_num(_env_threshold) if _env_threshold is not None
 _hf_act_threshold = _num(os.environ.get('HFFM_ACT_THRESHOLD', 1.0))
 _hf_batch_size = int(os.environ.get('HFFM_BATCH', 1))
 
+# ── H8+8 (U10) — Gen3v6 MeanFlow horizon / backbone, read ONCE ────────────────────────
+# `horizon` is a TRAINING property (dataset windows in datasets/sequence.py:71-83 and the
+# per-step loss weights in models/helpers.py:295-314 are both sized by it), so an H16 study
+# needs its own checkpoint — and the train block and the plan block must agree or
+# diffusion_loadpath resolves to a directory that does not exist (trap #6 above). Reading
+# both from one env var makes that impossible to half-apply.
+#   MF_HORIZON=16 MF_BACKBONE=unet <command>
+# ⚠️ CLI flags cannot do this job: utils.Parser.add_extras is commented out
+# (diffuser/utils/setup.py:77), so `--horizon 16` is silently ignored.
+# Defaults reproduce the pre-U10 literals exactly — every existing command is unchanged.
+_mf_horizon = int(os.environ.get('MF_HORIZON', 8))
+_mf_backbone = os.environ.get('MF_BACKBONE', 'mf_dit')
+
 #------------------------ base ------------------------#
 
 ## automatically make experiment names for planning
@@ -723,7 +736,7 @@ base = {
         ## model & engine
         'model': 'flow_matcher_v3_meanflow.models.MeanFlowEngine',
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
-        'horizon': 8,
+        'horizon': _mf_horizon,   # U10: MF_HORIZON (default 8). MUST equal the plan block.
 
         ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
         # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
@@ -767,7 +780,7 @@ base = {
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
         ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'mf_dit' (U2: official-MeanFlow DiT).
-        'imf_backbone': 'mf_dit',    # U2 default: MeanFlow's own DiT (was 'dit'); use 'dit'/'unet' for A/B
+        'imf_backbone': _mf_backbone,  # U2 default 'mf_dit'; U10: MF_BACKBONE (unet|dit|mf_dit). MUST equal the plan block.
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -1385,7 +1398,7 @@ base = {
 
         ## MeanFlow model
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
-        'horizon': 8,
+        'horizon': _mf_horizon,   # U10: MF_HORIZON (default 8). MUST equal the train block.
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 1.0,
@@ -1427,7 +1440,7 @@ base = {
         'dual_head': True,
         'interval_cfg': False,
         ## valid: 'unet' | 'dit' | 'mf_dit' (U2) — MUST equal the train block's value.
-        'imf_backbone': 'mf_dit',
+        'imf_backbone': _mf_backbone,  # U10: MF_BACKBONE (default 'mf_dit'). MUST equal the train block.
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,

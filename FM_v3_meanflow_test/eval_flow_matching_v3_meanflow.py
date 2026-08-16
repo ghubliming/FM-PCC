@@ -96,6 +96,28 @@ print(f'[ eval ] resolved  cfg={_cfg_path}  dpcc_threshold={diffusion_timestep_t
       f'hf_act_threshold={hf_act_threshold}  hf_batch={hf_batch_size}  '
       f'hf_candidate_cost={hf_candidate_cost}')
 
+# ── H8+8 (U10) — RECEDING-HORIZON CADENCE ────────────────────────────────────────────────
+# How many actions of each plan are executed before replanning. 1 == every env step gets a
+# fresh plan, which is what every FM-PCC result to date used and remains the DEFAULT.
+# HardFlow's own eval runs `replan_steps = 8` at H16 (run/eval.py:390-397) — reproducing that
+# planning structure is what this knob exists for. `replan_steps < horizon` is asserted below,
+# once the checkpoint's horizon is known (HardFlow asserts the same, run/eval.py:380-382).
+replan_steps = int(os.environ.get('MF_REPLAN_STEPS', config.get('replan_steps', 1)))
+if replan_steps < 1:
+    raise ValueError(f'MF_REPLAN_STEPS must be >= 1, got {replan_steps}')
+# 🔴 PATH COLLISION GUARD — the replan cadence is NOT one of the results-folder tokens, so an
+# r1 and an r8 run at the same K/A/T would write to the same directory and clobber each other
+# (the hazard args_to_watch_fmv3_hf_plan exists to prevent). Promoting it to a real token
+# would rename every historic H8 path, so instead a non-default cadence auto-tags itself via
+# the existing custom-message slot. An explicit FMPCC_RUN_MSG always wins. Must be set BEFORE
+# the first Parser().parse_args(), which is what imports config/<exp>.py.
+if replan_steps != 1 and not os.environ.get('FMPCC_RUN_MSG'):
+    os.environ['FMPCC_RUN_MSG'] = f'r{replan_steps}'
+    print(f'[ eval ] replan_steps={replan_steps} -> auto-tagged results path with '
+          f'FMPCC_RUN_MSG=r{replan_steps} (set it yourself to override)')
+print(f'[ eval ] replan_steps={replan_steps} '
+      f'({"per-step replanning (historic default)" if replan_steps == 1 else "receding horizon, HardFlow-style"})')
+
 exps = config['exps']
 seeds = config['seeds']
 if args_cli.seed is not None:
@@ -258,6 +280,34 @@ for exp in exps:
                 use_ema = bool(getattr(args, 'eval_use_ema', True))
                 fm_model = fm_experiment.ema if use_ema else fm_experiment.diffusion
                 print(f'[ eval ] weight source: {"EMA (official)" if use_ema else "raw/live (dpcc-legacy)"}')
+                # ── H8+8 (U10) G1: HORIZON GUARD — abort, do not warn ────────────────────
+                # `horizon` is a TRAINING property (dataset windows + per-step loss weights),
+                # so evaluating a checkpoint at a horizon it was not trained on is invalid.
+                # It is also SILENT on the UNet arm: ResidualTemporalBlock takes `horizon` and
+                # never uses it (models/unet1d_temporal_cond.py:55-70) — the weights are Conv1d
+                # + Linear, both length-agnostic — so an H8 checkpoint runs happily at H16 and
+                # returns a clean-looking, meaningless number. ('mf_dit' would crash on its
+                # learned pos_embed; 'dit' would silently extrapolate RoPE. Only the crash is
+                # safe, and we do not rely on it.) The CONFIG-OVERRIDES-PKL reconciler above
+                # only prints a WARNING for architecture keys and keeps the pkl value, which is
+                # not enough: args.horizon still drives the Projector and the policy call.
+                _ckpt_horizon = getattr(fm_model, 'horizon', None)
+                if _ckpt_horizon is not None and int(_ckpt_horizon) != int(args.horizon):
+                    raise SystemExit(
+                        f'\n[ eval ] 🔴 HORIZON MISMATCH — checkpoint was trained at '
+                        f'horizon={int(_ckpt_horizon)}, this eval is configured for '
+                        f'horizon={int(args.horizon)}.\n'
+                        f'         Loaded: {args.diffusion_loadpath}\n'
+                        f'         A checkpoint can only be evaluated at its OWN horizon; '
+                        f'horizon is a training property, not a sampling knob.\n'
+                        f'         Set MF_HORIZON={int(_ckpt_horizon)}, or train a '
+                        f'horizon={int(args.horizon)} checkpoint first.\n')
+                # G2: HardFlow asserts replan_steps < horizon (run/eval.py:380-382); a plan
+                # cannot supply more actions than it holds. Same check, same reason.
+                if replan_steps >= int(args.horizon):
+                    raise SystemExit(
+                        f'\n[ eval ] 🔴 MF_REPLAN_STEPS={replan_steps} must be < horizon='
+                        f'{int(args.horizon)} — a plan cannot supply more actions than it has.\n')
                 # Apply plan-time solver selection after loading checkpoint config.
                 fm_model.flow_steps_v3 = int(getattr(args, 'flow_steps_v3', getattr(fm_model, 'flow_steps_v3', 10)))
                 fm_model.ode_inference_steps_v3 = int(getattr(args, 'ode_inference_steps_v3', getattr(fm_model, 'ode_inference_steps_v3', fm_model.flow_steps_v3)))
@@ -415,6 +465,10 @@ for exp in exps:
                         if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
                         if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
                         policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
+                    # 🔵 U10 — hand the cadence to BOTH policy classes (they expose the same
+                    # attribute). The policy does not loop; it needs this only so the
+                    # temporal-consistency (-t) selection compares plans at the right shift.
+                    policy.replan_steps = replan_steps
                     fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
                     fig.suptitle(f'{exp} - {variant}')
                     save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
@@ -457,6 +511,13 @@ for exp in exps:
                         action_buffer = []
                         sampled_trajectories = []
                         disable_projection = False
+                        # 🔵 U10 — per-episode replan state. `plan_idx` counts how many actions
+                        # of the current plan have been consumed; at replan_steps=1 the cache is
+                        # refilled on every step, so these are inert. Reset per trial so no plan
+                        # ever leaks across an env reset.
+                        plan_actions = None
+                        plan_obs = None
+                        plan_idx = 0
                         # REAL_TIME_RECORDING_UPDATE — one recorder per rollout episode.
                         rt_rec = RTRecorder(episode_id=f'{exp}_{variant}_seed{seed}_trial{i}',
                                             variant=variant, scene=exp,
@@ -485,18 +546,41 @@ for exp in exps:
                                 act_obs = np.concatenate((action, obs)) if action_dim > 0 else obs
                                 total_violations[i] += np.sum(np.maximum(0, act_obs - upper_bound)) + np.sum(np.maximum(0, lower_bound - act_obs))
                             n_violations[i] += violated_this_timestep
-                            start = time.time()
-                            action, samples = policy(conditions={0: obs}, batch_size=batch_size, horizon=args.horizon, disable_projection=disable_projection)
-                            _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
-                            avg_time[i] += _rt_total_ms / 1e3
-                            # Gen3v6 U3 — accumulate HardFlow-arm metrics (nlp solves/failures per plan).
-                            if is_hardflow:
-                                nlp_solves_total += policy.last_info.get('nlp_solves', 0)
-                                nlp_failures_total += policy.last_info.get('nlp_failures', 0)
+                            # ── 🔵 U10 RECEDING HORIZON ────────────────────────────────────
+                            # Replan when the cache is empty or exhausted; otherwise replay the
+                            # next action of the plan already in hand. At replan_steps=1 the
+                            # condition is true on EVERY step, `action` comes straight from
+                            # policy() and nothing below this block changes — byte-identical to
+                            # the pre-U10 loop.
+                            _replanned = (plan_actions is None) or (plan_idx >= replan_steps)
+                            if _replanned:
+                                start = time.time()
+                                action, samples = policy(conditions={0: obs}, batch_size=batch_size, horizon=args.horizon, disable_projection=disable_projection)
+                                _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
+                                avg_time[i] += _rt_total_ms / 1e3
+                                # Gen3v6 U3 — accumulate HardFlow-arm metrics (nlp solves/failures per plan).
+                                if is_hardflow:
+                                    nlp_solves_total += policy.last_info.get('nlp_solves', 0)
+                                    nlp_failures_total += policy.last_info.get('nlp_failures', 0)
+                                # Cache the EXECUTED candidate's plan (the policy publishes it;
+                                # `which_trajectory` is not visible here, so `samples.actions[0]`
+                                # would be the wrong candidate under -c/-t selection).
+                                plan_actions = getattr(policy, 'last_executed_actions', None)
+                                plan_obs = getattr(policy, 'last_executed_observations', None)
+                                if replan_steps > 1 and plan_actions is None:
+                                    raise SystemExit(
+                                        f'\n[ eval ] 🔴 replan_steps={replan_steps} needs the executed plan, but '
+                                        f'{type(policy).__name__} did not publish `last_executed_actions`.\n')
+                                plan_idx = 0
+                            else:
+                                # No compute this step: the plan was paid for when it was made.
+                                _rt_total_ms = 0.0
+                                action = plan_actions[plan_idx]
+                            plan_idx += 1
                             # REAL_TIME_RECORDING_UPDATE — record per-step timing (proj bundled inside policy()).
                             rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
                                         action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
-                                        proj_active=(variant != 'diffuser' and not disable_projection),
+                                        proj_active=(variant != 'diffuser' and not disable_projection and _replanned),   # 🔵 U10: no plan, no projection
                                         contact=bool(violated_this_timestep), step_idx=_)
                             if 'avoiding' in exp:
                                 next_pos_des = action + obs[:2]
@@ -513,7 +597,16 @@ for exp in exps:
                                 obs = np.concatenate((next_pos_des[:2], obs))
                             if _ >= 1:
                                 pos_tracking_errors[i, _-1] = np.linalg.norm(obs[obs_indices['x']:obs_indices['y']+1] - desired_next_pos)
-                            desired_next_pos = samples.observations[0, 1, [obs_indices['x'], obs_indices['y']]]
+                            # 🔵 U10 — the tracking reference is the NEXT state of the plan being
+                            # executed. At replan_steps=1 that is the fresh plan's step 1, i.e.
+                            # the original expression, untouched. Under replan>1 the plan is
+                            # `plan_idx` steps in, so the reference walks along the cached plan
+                            # instead of freezing on step 1 of a plan made several steps ago.
+                            if replan_steps == 1 or plan_obs is None:
+                                desired_next_pos = samples.observations[0, 1, [obs_indices['x'], obs_indices['y']]]
+                            else:
+                                _ref_k = min(plan_idx, plan_obs.shape[0] - 1)
+                                desired_next_pos = plan_obs[_ref_k, [obs_indices['x'], obs_indices['y']]]
                             if _ % save_samples_every == 0:
                                 sampled_trajectories.append(samples.observations[:, :, :])
                             obs_buffer.append(obs)

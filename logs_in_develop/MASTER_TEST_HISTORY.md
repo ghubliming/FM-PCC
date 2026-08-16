@@ -4439,3 +4439,66 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 3. **Dynamic Evaluation Pathing & Isolation**: Verified that UAV evaluation scripts construct output paths dynamically (`logs/UAV_MIX/uav-<scene>/plans/<model_dir>/...`), confirming that plan-block `exp_name` settings are non-load-bearing and that candidate aggregation correctly matches training prefix directories (`mix_uav_<engine>/`) without requiring avoiding-d3il `custom_msg` tokens.
 4. **Research Framing Calibration**: Refined Gen15's empirical claims based on the August 13 multi-seed findings: locking Gen15 to the 4.0M UNet backbone (`freq_dim=32`) provides an architecture-controlled, 30.3 ms real-time compliant comparison across Flow Matching, MeanFlow, and AlphaFlow. While not representing unconstrained SiT/DiT model ceilings, it isolates the pure mathematical objective's impact on high-speed 3D UAV receding-horizon constraint satisfaction. Pipeline confirmed code-complete and ready for cluster execution.
 
+***
+
+## Gen15 UAV Mix-ML: First Arm (MeanFlow Corridor K=10) & Fix 1 Projection Telemetry Contract (August 15, 2026)
+
+**Keywords**: Gen15, MeanFlow, corridor, K=10, run report, Fix 1, projection_ms, telemetry contract, Gate G7, gradient clipping, h-stratified residual.
+
+1. **First Arm Execution & Validation**: Completed end-to-end training (Job 24579, 100k steps, 3.97M UNet@32) and evaluation (Job 24583, 20 variants × 10 trials) for MeanFlow on `uav-corridor` at K=10. Confirmed all core Gen15 architectural additions active: dynamic engine dispatch, truthful K-tag propagation (`Emf_K10_...`), Fix_12 feasibility margin (0.33 m), and clean projector health (0 circuit-breaker trips across all variants). MeanFlow + DPCC successfully solved the corridor (`dpcc-r`, `dpcc-c`, `dpcc-t` achieved 1.00 strict task success / goal reach, with `dpcc-r` reaching 0.80 S&C).
+2. **Training Diagnostics & Caveats**: `raw_mse_u` showed monotone convergence (93.26 → 0.154 train / 0.717 test). However, training diagnostics revealed two crucial insights:
+   - **100% Binding Gradient Clip**: `grad_norm_history` (median 265.7) was clipped on 100% of steps by `gradient_clip=1.0` (inherited unscaled from `avoiding-d3il`), acting as normalized gradient descent.
+   - **Large-$h$ Residual Warning**: The $h$-stratified residual in bucket b3 (large interval $h$, corresponding to K=1/2 sampling) had a 7.5× higher residual (0.555 vs 0.074 in b2) with low sample count (11/100), forecasting potential performance drops at low NFE budgets.
+   - **Unguided Failure**: The unguided policy (`diffuser`) scored 0.00 success (368.8 violating steps), confirming DPCC provides 100% of guidance on this checkpoint. Tightening inverted performance (0.60 vs 1.00) due to over-closing the narrow feasible channel.
+3. **Real-Time Latency Reality**: At K=10, generation alone took 88.5 ms and total replan averaged 269.7 ms (p95 342.6 ms), exceeding the 30.3 ms (33 Hz) control deadline by 8.9×. This confirms K=10 serves as a quality baseline while real-time feasibility rests on K=1/2 (8.8 ms / 17.7 ms generation).
+4. **Fix 1 (`projection_ms` Telemetry Contract)**: Discovered that `MeanFlowODE` and `AlphaFlowODE` samplers lacked `infos['projection_ms'] = proj_ms` emission. In `eval_mix_uav.py`, this caused `step_proj_ms` to default to 0.0, which erroneously caused `step_fm_ms = step_total_ms - step_proj_ms` to absorb the entire SLSQP CPU projection cost (e.g. reporting 269.7 ms pure FM instead of ~88 ms). Added timing reads around all projection branches, restored truthful metric splits, and introduced Gate G7 (`_StubProjector`) to assert non-zero `projection_ms` and exact matching key sets across all engines.
+
+***
+
+## Gen15 U2: HardFlow In-Loop Constrained Sampling Arm for UAV (August 15, 2026)
+
+**Keywords**: Gen15, U2, HardFlow, in-loop sampling, derivative dynamics, init_noise_scale, two_time, Gate G8, pillars, s_curve, NFE fairness.
+
+1. **HardFlow Feasibility Unblocked**: Corrected the initial plan assumption that HardFlow was blocked by missing linear dynamics models. Confirmed HardFlow's default `dynamics_mode='deriv'` (`dt=1.0`, action as $\Delta p_{\text{des}}$) writes kinematic state-difference equations directly into the IPOPT NLP without fitted $A, B, c$ matrices, natively supporting all UAV constraint types (`ineq`, `lb/ub`, `sphere_outside/inside`, `deriv`).
+2. **Engine-Specific Parameter Gating**: Identified two critical engine differences that would have caused silent failures:
+   - **`init_noise_scale`**: Must be 0.5 for `fm` and 1.0 for `mf`/`af` (preventing 2× OOD initial noise).
+   - **`two_time`**: Must query interval average $u(x, r, t)$ at $h=0$ (where $u(x,t,0)=v(x,t)$) for MF/AF, whereas FM consumes $v$ directly without $h$.
+   - Made both explicit required arguments (`assert ... is not None`) and enforced them via Gate G8 with AST and source code inspection.
+3. **Isolation & Selection Rules**: Registered `hardflow_new`, `hardflow_new-c`, `hardflow_new-t` in `config/uav_mix.py` (preserving read-only integrity of `uav_projection.yaml` for Gen11). Fixed selection rule substring matching for `-c` and `-t` variants.
+4. **HardFlowPolicy Telemetry Patch**: Caught and resolved the Fix 1 gap in `HardFlowPolicy` by accumulating IPOPT `solve_ms` into `infos['projection_ms']` and publishing `last_proj_ms` / `last_proj_cost`.
+5. **Fairness & Multi-Scene Campaign**: Formalized the NFE fairness rule: `hardflow_new` evaluates the network twice per ODE step (2K NFE vs DPCC K NFE), requiring `nfe_effective` / `nfe_per_plan` rather than K to be quoted in comparisons. Extended pipeline to `pillars` (sphere obstacles) and `s_curve` (non-convex channels) with rollout rendering guidance.
+
+***
+
+## Gen15 U3: Diffusion (DDPM / DPCC Baseline) Engine Arm (August 15, 2026)
+
+**Keywords**: Gen15, U3, diffusion, DDPM, GaussianDiffusion, UNet1D, baseline arm, Gate G2(d), config sanitation.
+
+1. **Baseline Target Row Established**: Implemented the `diffusion` engine arm (`ddpm_diffusion.py`, `unet1d_ddpm_cond.py`) using an isolated copy of DPCC's `GaussianDiffusion` paired with the architecture-matched 4.0M UNet1D backbone (`dim=32`, `dim_mults=(1,2,4,8)`), expanding Gen15 to a unified four-engine registry (`fm | mf | af | diffusion`).
+2. **Distinct Engine Properties Handled**:
+   - **K is a Training-Time Property**: Governed by a discrete cosine beta schedule with `_K{n}` embedded in exp_name/checkpoint directories; runtime NFE overriding is a no-op.
+   - **HardFlow Unsupported**: Registry marks `supports_hardflow=False` because DDPM predicts noise/$\mathbf{x}_0$ rather than an instantaneous velocity field $v(x,t)$, dropping `hardflow_*` variants cleanly at eval launch.
+3. **Telemetry & Config Sanitation**: Patched `infos['projection_ms']` into `ddpm_diffusion.py` and set `action_weight=1` for consistent cross-engine ablation. Discovered and fixed a silent config misspelling (`af_alpha_start` → `af_alpha_init`) in AlphaFlow exp_name tokens, adding Gate G2(d) to ensure all declared token keys exist in train blocks.
+
+***
+
+## Gen15 U4: DA_UAV_v1 Analysis Framework & Visualizer_UAV_v1 Viewer (August 15, 2026)
+
+**Keywords**: Gen15, U4, DA_UAV_v1, Visualizer_UAV_v1, K-sweep, candidate axes, projection circuit breaker mask, metric mapping, offline testing.
+
+1. **Dedicated UAV Analysis Suite**: Built `Data_Analysis/DA_UAV_v1/` and `Data_Analysis/Visualizer_UAV_v1/` as a third parallel tool suite adhering to sibling isolation, addressing UAV-specific structural differences (no `results/` path level, JSON-only timing diagnostics, variant-level tightening, and circuit breaker masks).
+2. **First-Class Experimental Axes**: Implemented `discovery.parse_axes()` to extract `scene`, `engine`, `K`, `controller`, `threshold`, and `backbone` into native DataFrame columns, generating `uav_k_sweep.csv` for multi-K performance curves and surfacing `nfe_effective` (2K for HardFlow vs K for DPCC). Protected against the Gen11 K-tagging bug via dual `path_K` vs `flow_steps` auditing.
+3. **Mandatory Diagnostics & Circuit Breaker Mask**: Plumbed per-plan wall clock (`avg_time`, `fm_ms`, `proj_ms`) exclusively from `diagnostics/rollout_*_stats.json`. Implemented `mask ∈ {all, proj_valid}` to filter rollouts where the SLSQP projection circuit breaker tripped and unprojected steps were executed. Unified Fix_10 group-prefixed npz keys into standard `DA_Code_v3` metrics.
+4. **Interactive Visualizer Generation**: Generated `Visualizer_UAV_v1/index.html` via `build_from_va2.py` (41 anchored substitutions), inheriting LaTeX matrices, candidate highlighting, one-color palettes, and failure hints while adding a "1.7 UAV Axes" filter panel, episode step-budget reference rows, and constraint ablation quick presets. Verified with 60 offline tests (`test_discovery_offline.py`) and PyScript compilation checks.
+
+***
+
+## Gen3v6 MeanFlow: 20-Trial vs 2-Trial Stability Audit & Grand Table Recalibration (August 15, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, UNet32, n_trials=20, stability audit, binomial sampling, false certainty, S&C inversion, Pareto dominance.
+
+1. **Rigorous 20-Trial Stability Audit**: Conducted a full 5-seed × 20-trial evaluation (300 episodes/candidate, Jobs 24559–24563) on `avoiding-d3il` across K ∈ {1, 2, 5, 10} comparing against the 2-trial baseline (`n_trials=2`). Confirmed `n_trials=20` decisively reduces uncertainty (95% CI widths shrink 5–8×, between-seed SD drops ~7×, per-cell absolute error drops to 0.055).
+2. **S&C Rare-Event Inversion & False Certainty**: Proved that `n=2` binomial sampling noise created false certainty at the ceiling ($1.000 \pm 0.000$ at n=2 fell to 0.950 at n=20 for `hardflow-tightened` K1, with 51% of 1.000 cells falling below 1.000). Conversely, DPCC arms were underestimated (+0.03 to +0.05 shift). Continuous cost metrics (`n_steps`, `avg_time`) were confirmed stable at n=2 (<4% median relative error), validating all prior step/speed conclusions.
+3. **Grand Table Recalibration**: `dpcc-t-tightened` at K=1/K=2 emerged as the undisputed top MeanFlow-UNet configuration (S&C 0.993, 60.99 steps, 1.10 s/episode — Pareto-dominating DPCC K20 by 35.0× speedup and −9.15 steps). `hardflow-tightened` is dominated across all three axes (0.950 S&C, 63.40 steps, 2.66 s/ep). S&C safety parity with the baseline holds within statistical error (`ΔS&C = −0.01 [-0.02, +0.00]`), but claims of absolute 1.000 S&C are withdrawn pending n=20 baseline re-runs.
+
+

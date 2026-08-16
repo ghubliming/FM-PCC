@@ -630,6 +630,15 @@ class HardFlowPolicy:
         self.prev_observations = None
         self.last_info = {}
 
+        # ── H8+8 (U10) — receding-horizon cadence; mirrors sampling.Policy exactly ──────
+        # `replan_steps` is how many actions of each plan the CALLER executes before asking
+        # for a new one. Used here only by the temporal-consistency shift in _select().
+        # DEFAULT 1 == the historic behaviour. `last_executed_*` publish the executed
+        # candidate's full plan, which the caller cannot otherwise identify.
+        self.replan_steps = 1
+        self.last_executed_actions = None
+        self.last_executed_observations = None
+
     def __call__(self, conditions, batch_size=1, horizon=None, test_ret=None,
                  constraints=None, disable_projection=False):
         conditions = {k: self.preprocess_fn(v) for k, v in conditions.items()}
@@ -665,6 +674,11 @@ class HardFlowPolicy:
         actions = self.normalizer.unnormalize(actions, 'actions')
         action = actions[which_trajectory, 0]
 
+        # 🔵 U10 — publish the executed candidate's FULL plan (see __init__). _select()
+        # returns an index and never reorders `observations`, so one index serves both.
+        self.last_executed_actions = actions[which_trajectory]
+        self.last_executed_observations = observations[which_trajectory]
+
         return action, Trajectories(actions, observations)
 
     def _select(self, observations, infos, batch_size, disable_projection):
@@ -673,9 +687,14 @@ class HardFlowPolicy:
             return 0
         sel = self.trajectory_selection
         if sel == 'temporal_consistency' and self.prev_observations is not None:
-            # closest to the previously-executed plan (shifted by one step)
+            # closest to the previously-executed plan, shifted by the REPLAN CADENCE:
+            # the previous plan was executed for `replan_steps` steps, so its step `n` is
+            # this plan's step 0. 🔵 U10 — at the default replan_steps=1 this is the
+            # original `[:, :-1] vs [:, 1:]` expression, byte-for-byte.
+            _n = max(1, int(getattr(self, 'replan_steps', 1)))
+            _n = min(_n, observations.shape[1] - 1)   # keep at least one overlapping step
             order = np.argsort(np.linalg.norm(
-                observations[:, :-1, :] - self.prev_observations[:, 1:, :], axis=(1, 2)))
+                observations[:, :-_n, :] - self.prev_observations[:, _n:, :], axis=(1, 2)))
             return int(order[0])
         if sel == 'minimum_projection_cost':
             key = ('candidate_costs' if self.candidate_cost == 'prox'
