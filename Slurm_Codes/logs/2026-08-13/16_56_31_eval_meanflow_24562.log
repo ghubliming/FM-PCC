@@ -1,0 +1,2018 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Aug 13 21:52:23 UTC 2026
+JOB NAME:  eval_meanflow
+JOB ID:    24562
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   6ee3519
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+[ eval ] NFE budgets to evaluate: 10
+================================================================================
+[ eval ] K = 10   (Thu Aug 13 21:52:24 UTC 2026)
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval.yaml
+[ eval ] resolved  cfg=config/meanflow_projection_eval.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=1  hf_candidate_cost=prox
+[ config/avoiding-d3il ] custom_msg="20trials" -> results dirs end in "_msg20trials"
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 10
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/6)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=10----------------------------
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_47089750-9761-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+Success rate: 0.85
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 66.59 +- 6.77
+Avg number of constraint violations: 22.30 +- 10.00
+Avg total violation: 3.857 +- 2.705
+Average computation time per step: 0.091
+Tracking error: 0.039
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (6) - K=10----------------------------
+Success rate: 0.6
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 68.17 +- 11.14
+Avg number of constraint violations: 3.55 +- 4.77
+Avg total violation: 0.059 +- 0.088
+Average computation time per step: 0.339
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (6) - K=10----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+Success rate: 0.75
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 69.33 +- 8.32
+Avg number of constraint violations: 0.25 +- 1.09
+Avg total violation: 0.002 +- 0.010
+Average computation time per step: 0.414
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (6) - K=10----------------------------
+Success rate: 0.75
+Constraints satisfied: 0.4
+Success rate (goal and constraints): 0.4
+Avg number of steps: 66.07 +- 7.08
+Avg number of constraint violations: 1.85 +- 2.73
+Avg total violation: 0.022 +- 0.040
+Average computation time per step: 0.310
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6) - K=10----------------------------
+Success rate: 0.6
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 63.25 +- 6.07
+Avg number of constraint violations: 0.40 +- 0.97
+Avg total violation: 0.002 +- 0.004
+Average computation time per step: 0.409
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (6) - K=10----------------------------
+Success rate: 0.7
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 60.43 +- 6.55
+Avg number of constraint violations: 1.55 +- 2.84
+Avg total violation: 0.011 +- 0.026
+Average computation time per step: 0.317
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (6) - K=10----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py:439: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
+Success rate: 0.9
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 63.28 +- 7.05
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.397
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (6) - K=10----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py:418: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
+Success rate: 0.55
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 67.64 +- 8.39
+Avg number of constraint violations: 1.00 +- 1.95
+Avg total violation: 0.015 +- 0.034
+Average computation time per step: 0.230
+[hardflow] NFE=18045  NLP solves=6015  NLP failures=35  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (6) - K=10----------------------------
+Success rate: 0.55
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 67.64 +- 8.39
+Avg number of constraint violations: 1.00 +- 1.95
+Avg total violation: 0.015 +- 0.034
+Average computation time per step: 0.230
+[hardflow] NFE=18045  NLP solves=6015  NLP failures=35  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (6) - K=10----------------------------
+Success rate: 0.55
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 67.64 +- 8.39
+Avg number of constraint violations: 1.00 +- 1.95
+Avg total violation: 0.015 +- 0.034
+Average computation time per step: 0.233
+[hardflow] NFE=18045  NLP solves=6015  NLP failures=35  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+Success rate: 0.85
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 71.06 +- 8.89
+Avg number of constraint violations: 0.25 +- 0.77
+Avg total violation: 0.001 +- 0.004
+Average computation time per step: 0.248
+[hardflow] NFE=21825  NLP solves=7275  NLP failures=120  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+Success rate: 0.85
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 71.06 +- 8.89
+Avg number of constraint violations: 0.25 +- 0.77
+Avg total violation: 0.001 +- 0.004
+Average computation time per step: 0.252
+[hardflow] NFE=21825  NLP solves=7275  NLP failures=120  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+Success rate: 0.85
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 71.06 +- 8.89
+Avg number of constraint violations: 0.25 +- 0.77
+Avg total violation: 0.001 +- 0.004
+Average computation time per step: 0.248
+[hardflow] NFE=21825  NLP solves=7275  NLP failures=120  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_5a2fb572-976e-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/7
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/7)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 67.25 +- 19.41
+Avg number of constraint violations: 20.55 +- 9.80
+Avg total violation: 3.972 +- 3.315
+Average computation time per step: 0.095
+Tracking error: 0.229
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 72.90 +- 11.61
+Avg number of constraint violations: 3.30 +- 4.28
+Avg total violation: 0.048 +- 0.084
+Average computation time per step: 0.353
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 72.55 +- 8.86
+Avg number of constraint violations: 0.25 +- 0.77
+Avg total violation: 0.001 +- 0.003
+Average computation time per step: 0.416
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 65.15 +- 6.99
+Avg number of constraint violations: 1.75 +- 3.16
+Avg total violation: 0.062 +- 0.205
+Average computation time per step: 0.335
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 68.00 +- 9.42
+Avg number of constraint violations: 1.05 +- 1.83
+Avg total violation: 0.008 +- 0.014
+Average computation time per step: 0.393
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 66.65 +- 20.06
+Avg number of constraint violations: 2.80 +- 4.39
+Avg total violation: 0.069 +- 0.139
+Average computation time per step: 0.345
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 63.10 +- 7.36
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.001 +- 0.004
+Average computation time per step: 0.414
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 68.25 +- 8.13
+Avg number of constraint violations: 1.05 +- 2.09
+Avg total violation: 0.016 +- 0.041
+Average computation time per step: 0.236
+[hardflow] NFE=20775  NLP solves=6925  NLP failures=20  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 68.25 +- 8.13
+Avg number of constraint violations: 1.05 +- 2.09
+Avg total violation: 0.016 +- 0.041
+Average computation time per step: 0.237
+[hardflow] NFE=20775  NLP solves=6925  NLP failures=20  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 68.25 +- 8.13
+Avg number of constraint violations: 1.05 +- 2.09
+Avg total violation: 0.016 +- 0.041
+Average computation time per step: 0.242
+[hardflow] NFE=20775  NLP solves=6925  NLP failures=20  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 72.00 +- 6.40
+Avg number of constraint violations: 0.60 +- 1.46
+Avg total violation: 0.005 +- 0.012
+Average computation time per step: 0.254
+[hardflow] NFE=21900  NLP solves=7300  NLP failures=260  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 72.00 +- 6.40
+Avg number of constraint violations: 0.60 +- 1.46
+Avg total violation: 0.005 +- 0.012
+Average computation time per step: 0.252
+[hardflow] NFE=21900  NLP solves=7300  NLP failures=260  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 72.00 +- 6.40
+Avg number of constraint violations: 0.60 +- 1.46
+Avg total violation: 0.005 +- 0.012
+Average computation time per step: 0.254
+[hardflow] NFE=21900  NLP solves=7300  NLP failures=260  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_c5f20df6-977c-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/8
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/8)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 62.10 +- 5.77
+Avg number of constraint violations: 21.35 +- 9.23
+Avg total violation: 4.207 +- 2.646
+Average computation time per step: 0.095
+Tracking error: 0.035
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.4
+Success rate (goal and constraints): 0.4
+Avg number of steps: 74.20 +- 17.80
+Avg number of constraint violations: 3.30 +- 4.51
+Avg total violation: 0.070 +- 0.177
+Average computation time per step: 0.330
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 70.60 +- 9.52
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.001 +- 0.002
+Average computation time per step: 0.414
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (8) - K=10----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 65.40 +- 6.07
+Avg number of constraint violations: 2.35 +- 2.94
+Avg total violation: 0.046 +- 0.068
+Average computation time per step: 0.312
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 68.70 +- 7.86
+Avg number of constraint violations: 0.95 +- 1.94
+Avg total violation: 0.010 +- 0.020
+Average computation time per step: 0.410
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.35
+Success rate (goal and constraints): 0.35
+Avg number of steps: 69.55 +- 12.46
+Avg number of constraint violations: 4.25 +- 4.86
+Avg total violation: 0.088 +- 0.141
+Average computation time per step: 0.344
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 67.90 +- 5.48
+Avg number of constraint violations: 0.25 +- 1.09
+Avg total violation: 0.003 +- 0.010
+Average computation time per step: 0.426
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 67.80 +- 6.95
+Avg number of constraint violations: 0.80 +- 1.89
+Avg total violation: 0.007 +- 0.017
+Average computation time per step: 0.242
+[hardflow] NFE=20640  NLP solves=6880  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 67.80 +- 6.95
+Avg number of constraint violations: 0.80 +- 1.89
+Avg total violation: 0.007 +- 0.017
+Average computation time per step: 0.240
+[hardflow] NFE=20640  NLP solves=6880  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 67.80 +- 6.95
+Avg number of constraint violations: 0.80 +- 1.89
+Avg total violation: 0.007 +- 0.017
+Average computation time per step: 0.239
+[hardflow] NFE=20640  NLP solves=6880  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 69.55 +- 8.22
+Avg number of constraint violations: 0.35 +- 1.06
+Avg total violation: 0.003 +- 0.009
+Average computation time per step: 0.250
+[hardflow] NFE=21165  NLP solves=7055  NLP failures=140  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 69.55 +- 8.22
+Avg number of constraint violations: 0.35 +- 1.06
+Avg total violation: 0.003 +- 0.009
+Average computation time per step: 0.250
+[hardflow] NFE=21165  NLP solves=7055  NLP failures=140  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 69.55 +- 8.22
+Avg number of constraint violations: 0.35 +- 1.06
+Avg total violation: 0.003 +- 0.009
+Average computation time per step: 0.257
+[hardflow] NFE=21165  NLP solves=7055  NLP failures=140  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb3_281ea5d0-978b-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/9
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/9)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 67.05 +- 11.02
+Avg number of constraint violations: 19.85 +- 11.64
+Avg total violation: 4.118 +- 3.540
+Average computation time per step: 0.095
+Tracking error: 0.129
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 70.90 +- 8.95
+Avg number of constraint violations: 1.00 +- 1.79
+Avg total violation: 0.005 +- 0.011
+Average computation time per step: 0.352
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 72.65 +- 9.47
+Avg number of constraint violations: 0.30 +- 0.95
+Avg total violation: 0.001 +- 0.006
+Average computation time per step: 0.422
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 66.85 +- 8.13
+Avg number of constraint violations: 1.25 +- 2.34
+Avg total violation: 0.017 +- 0.042
+Average computation time per step: 0.336
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 67.95 +- 7.17
+Avg number of constraint violations: 0.55 +- 1.40
+Avg total violation: 0.006 +- 0.018
+Average computation time per step: 0.413
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 66.75 +- 17.20
+Avg number of constraint violations: 3.20 +- 5.65
+Avg total violation: 0.096 +- 0.271
+Average computation time per step: 0.336
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 65.30 +- 8.11
+Avg number of constraint violations: 0.05 +- 0.22
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.424
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 70.90 +- 10.19
+Avg number of constraint violations: 1.20 +- 2.60
+Avg total violation: 0.017 +- 0.044
+Average computation time per step: 0.241
+[hardflow] NFE=21570  NLP solves=7190  NLP failures=55  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 70.90 +- 10.19
+Avg number of constraint violations: 1.20 +- 2.60
+Avg total violation: 0.017 +- 0.044
+Average computation time per step: 0.241
+[hardflow] NFE=21570  NLP solves=7190  NLP failures=55  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 70.90 +- 10.19
+Avg number of constraint violations: 1.20 +- 2.60
+Avg total violation: 0.017 +- 0.044
+Average computation time per step: 0.253
+[hardflow] NFE=21570  NLP solves=7190  NLP failures=55  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 73.85 +- 8.05
+Avg number of constraint violations: 0.20 +- 0.87
+Avg total violation: 0.002 +- 0.009
+Average computation time per step: 0.253
+[hardflow] NFE=22455  NLP solves=7485  NLP failures=70  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 73.85 +- 8.05
+Avg number of constraint violations: 0.20 +- 0.87
+Avg total violation: 0.002 +- 0.009
+Average computation time per step: 0.250
+[hardflow] NFE=22455  NLP solves=7485  NLP failures=70  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 73.85 +- 8.05
+Avg number of constraint violations: 0.20 +- 0.87
+Avg total violation: 0.002 +- 0.009
+Average computation time per step: 0.249
+[hardflow] NFE=22455  NLP solves=7485  NLP failures=70  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb4_f97c5894-9799-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/10
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.009e-06)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/10)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.55 +- 6.89
+Avg number of constraint violations: 22.20 +- 8.63
+Avg total violation: 4.804 +- 3.781
+Average computation time per step: 0.095
+Tracking error: 0.122
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 70.80 +- 10.99
+Avg number of constraint violations: 2.40 +- 3.10
+Avg total violation: 0.023 +- 0.037
+Average computation time per step: 0.348
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 74.95 +- 22.61
+Avg number of constraint violations: 0.10 +- 0.44
+Avg total violation: 0.000 +- 0.002
+Average computation time per step: 0.416
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 66.70 +- 7.74
+Avg number of constraint violations: 2.30 +- 3.38
+Avg total violation: 0.040 +- 0.072
+Average computation time per step: 0.306
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.70 +- 7.23
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.386
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (10) - K=10----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 61.89 +- 7.52
+Avg number of constraint violations: 2.80 +- 3.12
+Avg total violation: 0.118 +- 0.259
+Average computation time per step: 0.324
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.90 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.424
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 68.55 +- 6.12
+Avg number of constraint violations: 2.10 +- 3.21
+Avg total violation: 0.029 +- 0.055
+Average computation time per step: 0.238
+[hardflow] NFE=20865  NLP solves=6955  NLP failures=21  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 68.55 +- 6.12
+Avg number of constraint violations: 2.10 +- 3.21
+Avg total violation: 0.029 +- 0.055
+Average computation time per step: 0.238
+[hardflow] NFE=20865  NLP solves=6955  NLP failures=21  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 68.55 +- 6.12
+Avg number of constraint violations: 2.10 +- 3.21
+Avg total violation: 0.029 +- 0.055
+Average computation time per step: 0.253
+[hardflow] NFE=20865  NLP solves=6955  NLP failures=21  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 69.55 +- 7.79
+Avg number of constraint violations: 0.95 +- 1.91
+Avg total violation: 0.010 +- 0.028
+Average computation time per step: 0.256
+[hardflow] NFE=21165  NLP solves=7055  NLP failures=235  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 69.55 +- 7.79
+Avg number of constraint violations: 0.95 +- 1.91
+Avg total violation: 0.010 +- 0.028
+Average computation time per step: 0.253
+[hardflow] NFE=21165  NLP solves=7055  NLP failures=235  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 69.55 +- 7.79
+Avg number of constraint violations: 0.95 +- 1.91
+Avg total violation: 0.010 +- 0.028
+Average computation time per step: 0.251
+[hardflow] NFE=21165  NLP solves=7055  NLP failures=235  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb5_50dbe650-97a8-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/6)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 66.80 +- 6.43
+Avg number of constraint violations: 16.80 +- 6.60
+Avg total violation: 1.907 +- 3.128
+Average computation time per step: 0.095
+Tracking error: 0.062
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 72.40 +- 10.93
+Avg number of constraint violations: 3.70 +- 3.54
+Avg total violation: 0.025 +- 0.031
+Average computation time per step: 0.356
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (6) - K=10----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.95 +- 7.47
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.382
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 62.50 +- 7.12
+Avg number of constraint violations: 2.00 +- 2.81
+Avg total violation: 0.021 +- 0.046
+Average computation time per step: 0.318
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.75 +- 8.36
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.404
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 62.15 +- 11.93
+Avg number of constraint violations: 1.60 +- 4.36
+Avg total violation: 0.012 +- 0.046
+Average computation time per step: 0.355
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.15 +- 6.41
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.390
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 65.85 +- 9.69
+Avg number of constraint violations: 1.20 +- 1.94
+Avg total violation: 0.009 +- 0.017
+Average computation time per step: 0.240
+[hardflow] NFE=20055  NLP solves=6685  NLP failures=4  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 65.85 +- 9.69
+Avg number of constraint violations: 1.20 +- 1.94
+Avg total violation: 0.009 +- 0.017
+Average computation time per step: 0.241
+[hardflow] NFE=20055  NLP solves=6685  NLP failures=4  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 65.85 +- 9.69
+Avg number of constraint violations: 1.20 +- 1.94
+Avg total violation: 0.009 +- 0.017
+Average computation time per step: 0.240
+[hardflow] NFE=20055  NLP solves=6685  NLP failures=4  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.60 +- 9.79
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.247
+[hardflow] NFE=20580  NLP solves=6860  NLP failures=90  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.60 +- 9.79
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.248
+[hardflow] NFE=20580  NLP solves=6860  NLP failures=90  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.60 +- 9.79
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.248
+[hardflow] NFE=20580  NLP solves=6860  NLP failures=90  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb6_02f0aa94-97b6-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/7)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 67.25 +- 19.41
+Avg number of constraint violations: 22.10 +- 22.41
+Avg total violation: 4.209 +- 7.395
+Average computation time per step: 0.097
+Tracking error: 0.229
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 69.35 +- 7.36
+Avg number of constraint violations: 2.10 +- 2.83
+Avg total violation: 0.019 +- 0.044
+Average computation time per step: 0.350
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.25 +- 6.13
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.402
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 60.50 +- 7.05
+Avg number of constraint violations: 0.85 +- 1.88
+Avg total violation: 0.012 +- 0.032
+Average computation time per step: 0.343
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 4.21
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.412
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 58.70 +- 3.90
+Avg number of constraint violations: 1.10 +- 1.30
+Avg total violation: 0.005 +- 0.010
+Average computation time per step: 0.353
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.45 +- 7.37
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.411
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 62.65 +- 6.84
+Avg number of constraint violations: 0.50 +- 0.92
+Avg total violation: 0.003 +- 0.006
+Average computation time per step: 0.238
+[hardflow] NFE=19095  NLP solves=6365  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 62.65 +- 6.84
+Avg number of constraint violations: 0.50 +- 0.92
+Avg total violation: 0.003 +- 0.006
+Average computation time per step: 0.239
+[hardflow] NFE=19095  NLP solves=6365  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 62.65 +- 6.84
+Avg number of constraint violations: 0.50 +- 0.92
+Avg total violation: 0.003 +- 0.006
+Average computation time per step: 0.239
+[hardflow] NFE=19095  NLP solves=6365  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.95 +- 6.95
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.262
+[hardflow] NFE=19485  NLP solves=6495  NLP failures=16  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.95 +- 6.95
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.253
+[hardflow] NFE=19485  NLP solves=6495  NLP failures=16  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.95 +- 6.95
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.250
+[hardflow] NFE=19485  NLP solves=6495  NLP failures=16  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb7_88b5e704-97c3-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/8)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 62.10 +- 5.77
+Avg number of constraint violations: 9.25 +- 9.21
+Avg total violation: 0.802 +- 1.408
+Average computation time per step: 0.096
+Tracking error: 0.035
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.4
+Success rate (goal and constraints): 0.4
+Avg number of steps: 67.35 +- 9.73
+Avg number of constraint violations: 2.05 +- 2.09
+Avg total violation: 0.015 +- 0.024
+Average computation time per step: 0.336
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.20 +- 7.43
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.420
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 61.70 +- 6.88
+Avg number of constraint violations: 1.25 +- 1.58
+Avg total violation: 0.008 +- 0.014
+Average computation time per step: 0.304
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (8) - K=10----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.35 +- 5.61
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.359
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 61.60 +- 8.34
+Avg number of constraint violations: 0.80 +- 1.36
+Avg total violation: 0.004 +- 0.010
+Average computation time per step: 0.335
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.15 +- 6.04
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.386
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 61.55 +- 5.77
+Avg number of constraint violations: 0.50 +- 1.07
+Avg total violation: 0.002 +- 0.005
+Average computation time per step: 0.252
+[hardflow] NFE=18765  NLP solves=6255  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 61.55 +- 5.77
+Avg number of constraint violations: 0.50 +- 1.07
+Avg total violation: 0.002 +- 0.005
+Average computation time per step: 0.255
+[hardflow] NFE=18765  NLP solves=6255  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 61.55 +- 5.77
+Avg number of constraint violations: 0.50 +- 1.07
+Avg total violation: 0.002 +- 0.005
+Average computation time per step: 0.246
+[hardflow] NFE=18765  NLP solves=6255  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.90 +- 6.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.251
+[hardflow] NFE=18870  NLP solves=6290  NLP failures=35  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.90 +- 6.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.250
+[hardflow] NFE=18870  NLP solves=6290  NLP failures=35  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.90 +- 6.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.248
+[hardflow] NFE=18870  NLP solves=6290  NLP failures=35  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb8_9772014e-97d0-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/9)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 67.05 +- 11.02
+Avg number of constraint violations: 20.40 +- 15.87
+Avg total violation: 3.983 +- 5.615
+Average computation time per step: 0.096
+Tracking error: 0.129
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.4
+Success rate (goal and constraints): 0.4
+Avg number of steps: 69.05 +- 6.40
+Avg number of constraint violations: 2.60 +- 2.54
+Avg total violation: 0.019 +- 0.028
+Average computation time per step: 0.368
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 72.10 +- 5.51
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.001 +- 0.004
+Average computation time per step: 0.400
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.20 +- 11.37
+Avg number of constraint violations: 1.85 +- 2.22
+Avg total violation: 0.012 +- 0.015
+Average computation time per step: 0.302
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.05 +- 4.39
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.347
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 61.85 +- 4.81
+Avg number of constraint violations: 1.00 +- 1.79
+Avg total violation: 0.004 +- 0.008
+Average computation time per step: 0.339
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.30 +- 5.71
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.408
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 65.20 +- 8.15
+Avg number of constraint violations: 0.80 +- 1.96
+Avg total violation: 0.006 +- 0.017
+Average computation time per step: 0.271
+[hardflow] NFE=19860  NLP solves=6620  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 65.20 +- 8.15
+Avg number of constraint violations: 0.80 +- 1.96
+Avg total violation: 0.006 +- 0.017
+Average computation time per step: 0.258
+[hardflow] NFE=19860  NLP solves=6620  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 65.20 +- 8.15
+Avg number of constraint violations: 0.80 +- 1.96
+Avg total violation: 0.006 +- 0.017
+Average computation time per step: 0.252
+[hardflow] NFE=19860  NLP solves=6620  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.20 +- 7.48
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.255
+[hardflow] NFE=20160  NLP solves=6720  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.20 +- 7.48
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.253
+[hardflow] NFE=20160  NLP solves=6720  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.20 +- 7.48
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.251
+[hardflow] NFE=20160  NLP solves=6720  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb9_48f9bef4-97de-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.009e-06)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/10)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 64.55 +- 6.89
+Avg number of constraint violations: 16.50 +- 11.42
+Avg total violation: 2.061 +- 3.004
+Average computation time per step: 0.097
+Tracking error: 0.122
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (10) - K=10----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 69.11 +- 9.05
+Avg number of constraint violations: 2.15 +- 3.61
+Avg total violation: 0.018 +- 0.043
+Average computation time per step: 0.332
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.409
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 65.30 +- 11.10
+Avg number of constraint violations: 1.05 +- 2.33
+Avg total violation: 0.007 +- 0.023
+Average computation time per step: 0.340
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.65 +- 6.62
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.377
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 63.55 +- 11.53
+Avg number of constraint violations: 1.70 +- 2.12
+Avg total violation: 0.011 +- 0.027
+Average computation time per step: 0.320
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.45 +- 5.24
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.375
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 67.45 +- 8.42
+Avg number of constraint violations: 1.55 +- 2.42
+Avg total violation: 0.023 +- 0.042
+Average computation time per step: 0.246
+[hardflow] NFE=20535  NLP solves=6845  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 67.45 +- 8.42
+Avg number of constraint violations: 1.55 +- 2.42
+Avg total violation: 0.023 +- 0.042
+Average computation time per step: 0.276
+[hardflow] NFE=20535  NLP solves=6845  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 67.45 +- 8.42
+Avg number of constraint violations: 1.55 +- 2.42
+Avg total violation: 0.023 +- 0.042
+Average computation time per step: 0.263
+[hardflow] NFE=20535  NLP solves=6845  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.65 +- 7.86
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.257
+[hardflow] NFE=19695  NLP solves=6565  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.65 +- 7.86
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.254
+[hardflow] NFE=19695  NLP solves=6565  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.65 +- 7.86
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.253
+[hardflow] NFE=19695  NLP solves=6565  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb10_348e1d30-97ec-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/6)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 66.80 +- 6.43
+Avg number of constraint violations: 9.35 +- 7.72
+Avg total violation: 0.808 +- 1.432
+Average computation time per step: 0.096
+Tracking error: 0.062
+------------------------Running avoiding-d3il - both-hard - dpcc-r (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 76.90 +- 31.20
+Avg number of constraint violations: 4.00 +- 7.57
+Avg total violation: 0.471 +- 1.889
+Average computation time per step: 0.330
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (6) - K=10----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 67.00 +- 15.03
+Avg number of constraint violations: 1.40 +- 4.32
+Avg total violation: 0.275 +- 1.164
+Average computation time per step: 0.355
+------------------------Running avoiding-d3il - both-hard - dpcc-c (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 58.00 +- 3.35
+Avg number of constraint violations: 0.55 +- 1.02
+Avg total violation: 0.016 +- 0.028
+Average computation time per step: 0.331
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 59.80 +- 3.93
+Avg number of constraint violations: 0.25 +- 0.43
+Avg total violation: 0.006 +- 0.011
+Average computation time per step: 0.362
+------------------------Running avoiding-d3il - both-hard - dpcc-t (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 64.20 +- 13.50
+Avg number of constraint violations: 1.10 +- 2.00
+Avg total violation: 0.019 +- 0.049
+Average computation time per step: 0.337
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 60.90 +- 8.32
+Avg number of constraint violations: 0.10 +- 0.44
+Avg total violation: 0.002 +- 0.010
+Average computation time per step: 0.378
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 67.40 +- 10.04
+Avg number of constraint violations: 1.00 +- 1.26
+Avg total violation: 0.023 +- 0.038
+Average computation time per step: 0.248
+[hardflow] NFE=20520  NLP solves=6840  NLP failures=20  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 67.40 +- 10.04
+Avg number of constraint violations: 1.00 +- 1.26
+Avg total violation: 0.023 +- 0.038
+Average computation time per step: 0.248
+[hardflow] NFE=20520  NLP solves=6840  NLP failures=20  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 67.40 +- 10.04
+Avg number of constraint violations: 1.00 +- 1.26
+Avg total violation: 0.023 +- 0.038
+Average computation time per step: 0.248
+[hardflow] NFE=20520  NLP solves=6840  NLP failures=20  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 66.90 +- 7.00
+Avg number of constraint violations: 0.70 +- 0.95
+Avg total violation: 0.023 +- 0.032
+Average computation time per step: 0.274
+[hardflow] NFE=20370  NLP solves=6790  NLP failures=195  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 66.90 +- 7.00
+Avg number of constraint violations: 0.70 +- 0.95
+Avg total violation: 0.023 +- 0.032
+Average computation time per step: 0.305
+[hardflow] NFE=20370  NLP solves=6790  NLP failures=195  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 66.90 +- 7.00
+Avg number of constraint violations: 0.70 +- 0.95
+Avg total violation: 0.023 +- 0.032
+Average computation time per step: 0.294
+[hardflow] NFE=20370  NLP solves=6790  NLP failures=195  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb11_e249e794-97f9-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/7)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 67.25 +- 19.41
+Avg number of constraint violations: 10.30 +- 8.16
+Avg total violation: 1.421 +- 1.678
+Average computation time per step: 0.097
+Tracking error: 0.229
+------------------------Running avoiding-d3il - both-hard - dpcc-r (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 85.75 +- 31.76
+Avg number of constraint violations: 8.50 +- 11.68
+Avg total violation: 0.152 +- 0.198
+Average computation time per step: 0.309
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 68.05 +- 7.27
+Avg number of constraint violations: 0.50 +- 0.97
+Avg total violation: 0.007 +- 0.020
+Average computation time per step: 0.382
+------------------------Running avoiding-d3il - both-hard - dpcc-c (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 61.00 +- 7.44
+Avg number of constraint violations: 0.85 +- 1.39
+Avg total violation: 0.023 +- 0.051
+Average computation time per step: 0.335
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 59.35 +- 4.13
+Avg number of constraint violations: 0.50 +- 0.92
+Avg total violation: 0.015 +- 0.029
+Average computation time per step: 0.388
+------------------------Running avoiding-d3il - both-hard - dpcc-t (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 62.85 +- 14.75
+Avg number of constraint violations: 2.90 +- 8.39
+Avg total violation: 0.061 +- 0.209
+Average computation time per step: 0.361
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 56.65 +- 5.79
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.393
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 65.00 +- 5.60
+Avg number of constraint violations: 1.85 +- 1.53
+Avg total violation: 0.049 +- 0.054
+Average computation time per step: 0.257
+[hardflow] NFE=19800  NLP solves=6600  NLP failures=65  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 65.00 +- 5.60
+Avg number of constraint violations: 1.85 +- 1.53
+Avg total violation: 0.049 +- 0.054
+Average computation time per step: 0.256
+[hardflow] NFE=19800  NLP solves=6600  NLP failures=65  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 65.00 +- 5.60
+Avg number of constraint violations: 1.85 +- 1.53
+Avg total violation: 0.049 +- 0.054
+Average computation time per step: 0.251
+[hardflow] NFE=19800  NLP solves=6600  NLP failures=65  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 66.60 +- 6.05
+Avg number of constraint violations: 0.75 +- 0.94
+Avg total violation: 0.017 +- 0.026
+Average computation time per step: 0.260
+[hardflow] NFE=20280  NLP solves=6760  NLP failures=165  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 66.60 +- 6.05
+Avg number of constraint violations: 0.75 +- 0.94
+Avg total violation: 0.017 +- 0.026
+Average computation time per step: 0.260
+[hardflow] NFE=20280  NLP solves=6760  NLP failures=165  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (7) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 66.60 +- 6.05
+Avg number of constraint violations: 0.75 +- 0.94
+Avg total violation: 0.017 +- 0.026
+Average computation time per step: 0.260
+[hardflow] NFE=20280  NLP solves=6760  NLP failures=165  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb12_6e2e8d70-9807-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/8)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 62.10 +- 5.77
+Avg number of constraint violations: 5.90 +- 6.24
+Avg total violation: 0.636 +- 1.174
+Average computation time per step: 0.091
+Tracking error: 0.035
+------------------------Running avoiding-d3il - both-hard - dpcc-r (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 69.40 +- 16.11
+Avg number of constraint violations: 5.50 +- 11.69
+Avg total violation: 0.196 +- 0.407
+Average computation time per step: 0.315
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.70 +- 7.17
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.363
+------------------------Running avoiding-d3il - both-hard - dpcc-c (8) - K=10----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 63.00 +- 13.94
+Avg number of constraint violations: 3.15 +- 9.72
+Avg total violation: 0.079 +- 0.182
+Average computation time per step: 0.324
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 61.00 +- 5.50
+Avg number of constraint violations: 0.10 +- 0.44
+Avg total violation: 0.003 +- 0.014
+Average computation time per step: 0.373
+------------------------Running avoiding-d3il - both-hard - dpcc-t (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 60.90 +- 17.24
+Avg number of constraint violations: 2.85 +- 8.43
+Avg total violation: 0.052 +- 0.162
+Average computation time per step: 0.346
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 58.45 +- 6.36
+Avg number of constraint violations: 0.15 +- 0.48
+Avg total violation: 0.003 +- 0.013
+Average computation time per step: 0.371
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 65.45 +- 7.82
+Avg number of constraint violations: 1.05 +- 1.12
+Avg total violation: 0.033 +- 0.043
+Average computation time per step: 0.242
+[hardflow] NFE=19935  NLP solves=6645  NLP failures=40  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 65.45 +- 7.82
+Avg number of constraint violations: 1.05 +- 1.12
+Avg total violation: 0.033 +- 0.043
+Average computation time per step: 0.241
+[hardflow] NFE=19935  NLP solves=6645  NLP failures=40  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 65.45 +- 7.82
+Avg number of constraint violations: 1.05 +- 1.12
+Avg total violation: 0.033 +- 0.043
+Average computation time per step: 0.240
+[hardflow] NFE=19935  NLP solves=6645  NLP failures=40  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 64.65 +- 6.34
+Avg number of constraint violations: 0.45 +- 0.67
+Avg total violation: 0.010 +- 0.019
+Average computation time per step: 0.251
+[hardflow] NFE=19695  NLP solves=6565  NLP failures=125  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 64.65 +- 6.34
+Avg number of constraint violations: 0.45 +- 0.67
+Avg total violation: 0.010 +- 0.019
+Average computation time per step: 0.251
+[hardflow] NFE=19695  NLP solves=6565  NLP failures=125  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (8) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 64.65 +- 6.34
+Avg number of constraint violations: 0.45 +- 0.67
+Avg total violation: 0.010 +- 0.019
+Average computation time per step: 0.251
+[hardflow] NFE=19695  NLP solves=6565  NLP failures=125  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb13_4d5dfa88-9814-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/9)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 67.05 +- 11.02
+Avg number of constraint violations: 10.05 +- 9.75
+Avg total violation: 1.372 +- 1.883
+Average computation time per step: 0.091
+Tracking error: 0.129
+------------------------Running avoiding-d3il - both-hard - dpcc-r (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 75.15 +- 18.73
+Avg number of constraint violations: 6.20 +- 8.81
+Avg total violation: 0.076 +- 0.091
+Average computation time per step: 0.295
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 64.90 +- 7.27
+Avg number of constraint violations: 0.35 +- 0.85
+Avg total violation: 0.011 +- 0.029
+Average computation time per step: 0.396
+------------------------Running avoiding-d3il - both-hard - dpcc-c (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.10 +- 27.32
+Avg number of constraint violations: 2.25 +- 4.30
+Avg total violation: 0.047 +- 0.087
+Average computation time per step: 0.312
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 58.35 +- 5.40
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.004 +- 0.019
+Average computation time per step: 0.365
+------------------------Running avoiding-d3il - both-hard - dpcc-t (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 65.15 +- 17.93
+Avg number of constraint violations: 9.05 +- 17.29
+Avg total violation: 0.165 +- 0.326
+Average computation time per step: 0.329
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 57.70 +- 6.92
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.364
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 69.80 +- 19.90
+Avg number of constraint violations: 6.35 +- 14.23
+Avg total violation: 0.113 +- 0.275
+Average computation time per step: 0.232
+[hardflow] NFE=21240  NLP solves=7080  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 69.80 +- 19.90
+Avg number of constraint violations: 6.35 +- 14.23
+Avg total violation: 0.113 +- 0.275
+Average computation time per step: 0.261
+[hardflow] NFE=21240  NLP solves=7080  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 69.80 +- 19.90
+Avg number of constraint violations: 6.35 +- 14.23
+Avg total violation: 0.113 +- 0.275
+Average computation time per step: 0.255
+[hardflow] NFE=21240  NLP solves=7080  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 64.95 +- 5.68
+Avg number of constraint violations: 0.45 +- 0.74
+Avg total violation: 0.010 +- 0.019
+Average computation time per step: 0.268
+[hardflow] NFE=19785  NLP solves=6595  NLP failures=150  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 64.95 +- 5.68
+Avg number of constraint violations: 0.45 +- 0.74
+Avg total violation: 0.010 +- 0.019
+Average computation time per step: 0.260
+[hardflow] NFE=19785  NLP solves=6595  NLP failures=150  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (9) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 64.95 +- 5.68
+Avg number of constraint violations: 0.45 +- 0.74
+Avg total violation: 0.010 +- 0.019
+Average computation time per step: 0.258
+[hardflow] NFE=19785  NLP solves=6595  NLP failures=150  batch(mpc)=1  act_threshold=0.5
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb14_a71f06f4-9821-11f1-8ac5-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.009e-06)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 10 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials/10)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 64.55 +- 6.89
+Avg number of constraint violations: 9.10 +- 8.92
+Avg total violation: 0.881 +- 1.408
+Average computation time per step: 0.092
+Tracking error: 0.122
+------------------------Running avoiding-d3il - both-hard - dpcc-r (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 67.60 +- 18.63
+Avg number of constraint violations: 4.95 +- 9.99
+Avg total violation: 0.086 +- 0.175
+Average computation time per step: 0.330
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 65.10 +- 5.80
+Avg number of constraint violations: 0.05 +- 0.22
+Avg total violation: 0.001 +- 0.006
+Average computation time per step: 0.348
+------------------------Running avoiding-d3il - both-hard - dpcc-c (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 65.50 +- 20.16
+Avg number of constraint violations: 2.90 +- 6.77
+Avg total violation: 0.044 +- 0.069
+Average computation time per step: 0.316
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 59.05 +- 4.96
+Avg number of constraint violations: 0.05 +- 0.22
+Avg total violation: 0.000 +- 0.001
+Average computation time per step: 0.367
+------------------------Running avoiding-d3il - both-hard - dpcc-t (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 60.35 +- 7.02
+Avg number of constraint violations: 2.00 +- 2.30
+Avg total violation: 0.025 +- 0.040
+Average computation time per step: 0.330
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 56.90 +- 4.64
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.412
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (10) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 66.90 +- 13.32
+Avg number of constraint violations: 1.45 +- 2.80
+Avg total violation: 0.027 +- 0.052
+Average computation time per step: 0.233
+[hardflow] NFE=20370  NLP solves=6790  NLP failures=15  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (10) - K=10----------------------------
+slurmstepd-i6-gpu-1: error: *** JOB 24562 ON i6-gpu-1 CANCELLED AT 2026-08-14T21:52:52 DUE TO TIME LIMIT ***
+================================================================================
+JOB END:   Fri Aug 14 21:52:52 UTC 2026
+================================================================================

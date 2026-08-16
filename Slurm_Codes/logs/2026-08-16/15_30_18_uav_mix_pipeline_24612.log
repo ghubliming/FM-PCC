@@ -1,0 +1,9 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-MIX PIPELINE START: Sun Aug 16 13:30:19 UTC 2026  engine=mf scene=pillars seed=6 n_trials=3 K=10
+================================================================================
+Step 1: train submitted — Job 24613
+Step 2: eval scheduled (afterok:24613) — Job 24614
+--------------------------------------------------------------------------------
+Outputs: logs/UAV_MIX/uav-pillars/mix_uav_mf/.../6/  (+ plans/ for eval)
+================================================================================

@@ -98,3 +98,8 @@ cd ~/FMPCC/FM-PCC
 nohup bash Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh \
       > ~/da_avoiding_combined_manual.log 2>&1 &
 tail -f ~/da_avoiding_combined_manual.log
+
+cd ~/FMPCC/FM-PCC
+nohup bash Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh \
+      > ~/da_va_v2_manual.log 2>&1 &
+tail -f ~/da_va_v2_manual.log

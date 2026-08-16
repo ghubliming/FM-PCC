@@ -1,0 +1,125 @@
+{
+  "n_candidates": 2,
+  "n_units": 7,
+  "candidates": {
+    "1": {
+      "name": "d3il_baseline_ddpm_encdec_vision",
+      "display_name": "d3il_baseline_ddpm_encdec_vision",
+      "path": "/u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision",
+      "seeds": [
+        42
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260701_013505",
+        "first": "20260701_013505",
+        "count": 1,
+        "per_seed": {
+          "42": "20260701_013505"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": true,
+      "legacy_kind": "d3il_visual_aligning_baseline",
+      "has_projector": false,
+      "bridge_manifest": "/u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/_bridge_manifest.json"
+    },
+    "2": {
+      "name": "d3il_baseline_ddpm_encdec_vision__Bf_U3",
+      "display_name": "d3il_baseline_ddpm_encdec_vision__Bf_U3",
+      "path": "/u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        42
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260620_215600",
+        "first": "20260620_130306",
+        "count": 6,
+        "per_seed": {
+          "0": "20260620_170326",
+          "1": "20260620_135000",
+          "2": "20260620_175026",
+          "3": "20260620_130306",
+          "4": "20260620_210858",
+          "42": "20260620_215600"
+        },
+        "n_seeds_stamped": 6
+      },
+      "legacy": true,
+      "legacy_kind": "d3il_visual_aligning_baseline",
+      "has_projector": false,
+      "bridge_manifest": "/u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/_bridge_manifest.json"
+    }
+  },
+  "units": [
+    {
+      "Candidate": 1,
+      "seed": 42,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 2,
+      "seed": 0,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 2,
+      "seed": 1,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 2,
+      "seed": 2,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 2,
+      "seed": 3,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 2,
+      "seed": 4,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 2,
+      "seed": 42,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    }
+  ]
+}

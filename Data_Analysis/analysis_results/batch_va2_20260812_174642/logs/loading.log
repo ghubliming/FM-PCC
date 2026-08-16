@@ -1,0 +1,12 @@
+=== DA_VA_v2 loading log ===
+
+Loaded:  7
+Failed:  0
+Skipped: 0
+
+[WARN   ] cand2/seed0/test/none/d3il_baseline: no per-rollout timing anywhere (no avg_time in the results, no realtime logs) — avg_time stays NaN
+[WARN   ] cand2/seed1/test/none/d3il_baseline: no per-rollout timing anywhere (no avg_time in the results, no realtime logs) — avg_time stays NaN
+[WARN   ] cand2/seed2/test/none/d3il_baseline: no per-rollout timing anywhere (no avg_time in the results, no realtime logs) — avg_time stays NaN
+[WARN   ] cand2/seed3/test/none/d3il_baseline: no per-rollout timing anywhere (no avg_time in the results, no realtime logs) — avg_time stays NaN
+[WARN   ] cand2/seed4/test/none/d3il_baseline: no per-rollout timing anywhere (no avg_time in the results, no realtime logs) — avg_time stays NaN
+[WARN   ] cand2/seed42/test/none/d3il_baseline: no per-rollout timing anywhere (no avg_time in the results, no realtime logs) — avg_time stays NaN

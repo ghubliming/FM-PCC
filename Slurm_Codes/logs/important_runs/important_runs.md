@@ -1230,6 +1230,22 @@ seed 78910 for UNET 24396 train -> 24415 seed 10
 24416 eval
 & rerun seed 6 24470
 
+- Sweep of HF thres  (for K in 5 10; do
+  for A in 0.0 0.1 0.25; do
+    HFFM_ACT_THRESHOLD=$A HFFM_FLOW_STEPS=$K \
+      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+  done
+done)
+
+24507 - 24511
+
+---
+
+23561 rerun the mf_dit
+
+---
+20 trails
+24559 - 24560
 
 # Gen3v7 alpha flow 
 1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
@@ -1256,6 +1272,11 @@ eval 24104 s78910+ 25399 s6
 
 unet validation 24348 KILLED try full seeds train
 -> 24385
+
+---
+24515 rerun ensure safety of all data
+
+24594/5 ntrail 20 run
 
 # Gen12 
 init pipeline run 23767 -> All killed, not run
@@ -1319,3 +1340,12 @@ af/mf 24224/5
 # Gen0 
 - Fix2
 thres test 24279 T
+
+
+# Gen15
+test 24578
+mf_unet corridor 24579, 24583( mf eval at K=10 (chained to the train))
+
+scurve 24588 + 89
+
+24612 mf pillars

@@ -1,0 +1,3 @@
+Rank,Candidate,Folder,Accuracy (%),Accuracy Std (%),Success (%),CollisionFree (%),Time (ms),MeanDist_m,MaxPhysErr_m,Robustness,Seeds,Missing_Seeds,Latest_Snapshot
+1,2,Bf_U3,0.28530670470756064,,0.28530670470756064,,,0.39175294010190875,,,6,,20260620_215600
+2,1,post_U3,0.0,,0.0,,22.660185185185185,0.40088680340144456,,,1,,20260701_013505

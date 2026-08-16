@@ -1,0 +1,66 @@
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - ======================================================================
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - DA_VA_v2 — visual-aligning batch analysis
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - ======================================================================
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - Start:  2026-08-12 17:46:43
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - Parent: logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - Output: Data_Analysis/analysis_results/batch_va2_20260812_174642
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - Manifest: /u/home/llim/FMPCC/FM-PCC/Data_Analysis/analysis_results/results_manifest.json
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - [1/5] Discovering candidates
+[2026-08-12 17:46:43] discovery - INFO - Candidate 1: d3il_baseline_ddpm_encdec_vision  seeds=[42]  [legacy: d3il_visual_aligning_baseline]
+[2026-08-12 17:46:43] discovery - INFO - Candidate 2: d3il_baseline_ddpm_encdec_vision__Bf_U3  seeds=[0, 1, 2, 3, 4, 42]  [legacy: d3il_visual_aligning_baseline]
+[2026-08-12 17:46:43] discovery - INFO - Total candidates discovered: 2
+[2026-08-12 17:46:43] discovery - INFO - Applied custom names: ['post_U3', 'Bf_U3']
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - 
+=== Candidates Discovered ===
+Total: 2
+
+  1: d3il_baseline_ddpm_encdec_vision
+      Path:  /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision
+      Seeds: [42]
+      Last run: 2026-07-01 01:35:05  (1 config snapshot(s) over 1 seed(s))
+      LEGACY (bridged): kind=d3il_visual_aligning_baseline  projector=no
+      Display: post_U3
+
+  2: d3il_baseline_ddpm_encdec_vision__Bf_U3
+      Path:  /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3
+      Seeds: [0, 1, 2, 3, 4, 42]
+      Last run: 2026-06-20 21:56:00  (6 config snapshot(s) over 6 seed(s))
+      LEGACY (bridged): kind=d3il_visual_aligning_baseline  projector=no
+      Display: Bf_U3
+
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - [2/5] Enumerating result units
+[2026-08-12 17:46:43] DA_VA_v2 - INFO -   Candidate 1 (d3il_baseline_ddpm_encdec_vision): 1 units
+[2026-08-12 17:46:43] DA_VA_v2 - INFO -   Candidate 2 (d3il_baseline_ddpm_encdec_vision__Bf_U3): 6 units
+[2026-08-12 17:46:43] discovery - INFO - Discovery manifest written: Data_Analysis/analysis_results/batch_va2_20260812_174642/logs/discovery_manifest.json
+[2026-08-12 17:46:43] DA_VA_v2 - INFO - [3/5] Loading 7 units
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   7/7 units processed
+[2026-08-12 17:46:44] data_loader - INFO - Loading log written: Data_Analysis/analysis_results/batch_va2_20260812_174642/logs/loading.log
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   loaded=7 failed=0 skipped=0
+[2026-08-12 17:46:44] DA_VA_v2 - INFO - [4/5] Aggregating
+[2026-08-12 17:46:44] aggregator - INFO - Aggregating 7 units...
+[2026-08-12 17:46:44] aggregator - INFO - per_rollout=3884 rows, units_long=336 rows, agg_long=96 rows
+[2026-08-12 17:46:44] aggregator - INFO - 
+=== Cross-candidate ranking ===
+  1. Candidate 2 (Bf_U3): 0.3% goal+constraint, nan ms/replan
+  2. Candidate 1 (post_U3): 0.0% goal+constraint, 22.7 ms/replan
+[2026-08-12 17:46:44] DA_VA_v2 - INFO - [5/5] Writing reports
+[2026-08-12 17:46:44] reporter - INFO - per_rollout_detail.csv: 3884 rows
+[2026-08-12 17:46:44] reporter - INFO - va2_units_long.csv: 378 rows
+[2026-08-12 17:46:44] reporter - INFO - va2_aggregated_long.csv: 96 rows
+[2026-08-12 17:46:44] reporter - INFO - data_quality.csv: 7 rows
+[2026-08-12 17:46:44] reporter - INFO - run_config.csv: 7 rows
+[2026-08-12 17:46:44] reporter - INFO - candidates_multidimensional_raw.csv: 168 rows
+[2026-08-12 17:46:44] reporter - INFO - candidates_multidimensional_aggregated.csv: 48 rows
+[2026-08-12 17:46:44] reporter - INFO - candidates_ranking.csv: 2 rows
+[2026-08-12 17:46:44] reporter - INFO - candidates_detailed.csv: 2 rows
+[2026-08-12 17:46:44] reporter - INFO - candidates_per_variant.csv: 4 rows
+[2026-08-12 17:46:44] reporter - INFO - Summary written: Data_Analysis/analysis_results/batch_va2_20260812_174642/candidates_summary.txt
+[2026-08-12 17:46:44] reporter - INFO - 11 report files written to Data_Analysis/analysis_results/batch_va2_20260812_174642
+[2026-08-12 17:46:44] DA_VA_v2 - INFO - ======================================================================
+[2026-08-12 17:46:44] DA_VA_v2 - INFO - COMPLETE in 1.8s — Data_Analysis/analysis_results/batch_va2_20260812_174642
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   per_rollout_detail.csv               every rollout, wide
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   va2_units_long.csv                   per seed/geo/variant/mask
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   va2_aggregated_long.csv              pooled over seeds
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   candidates_multidimensional_*.csv    DA_Code_v3 visualizer
+[2026-08-12 17:46:44] DA_VA_v2 - INFO -   data_quality.csv                     frozen / circuit breaker
+[2026-08-12 17:46:44] DA_VA_v2 - INFO - ======================================================================
