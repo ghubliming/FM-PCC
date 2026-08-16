@@ -18,7 +18,8 @@ class iMFTrajectoryModel(nn.Module):
         self,
         state_dim: int,
         seq_len: int,
-        freq_dim: int = 256,
+        freq_dim: int = 32,          # 🔴 FIX_8_UNET_WIDTH — UNet CHANNEL width (was 256 => 253 M params);
+                                     # ignored by the DiT/SiT backbones. See logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
         depth: int = 8,
         num_heads: int = 4,
         mlp_dim: int = 256,
@@ -47,11 +48,25 @@ class iMFTrajectoryModel(nn.Module):
                 horizon=seq_len,
                 transition_dim=state_dim,
                 cond_dim=state_dim,
+                # 🔴 FIX_8_UNET_WIDTH — `dim` is BOTH the channel width and the time-embed
+                # width (unet1d_temporal_cond.py:106,110). `freq_dim` is this repo's
+                # only source for it, so its value IS the backbone size: 32 => 3.97 M,
+                # 256 => 253.0 M. Never raise freq_dim to "improve the embedding".
                 dim=freq_dim,
                 dim_mults=(1, 2, 4, 8),
                 returns_condition=False,
                 condition_dropout=dropout_rate,
             )
+
+        # 🔴 FIX_8_UNET_WIDTH — announce the backbone size at BUILD time. A width defect is
+        # otherwise invisible: the model builds, trains, and logs plausible losses at any
+        # width, and nothing in the train log states a parameter count. One line here
+        # would have caught the 253 M UNet on run 1 instead of ~3 months later.
+        # 32 => 3.97 M (DPCC/FMv3ODE baseline) | 256 => 253.0 M. UNet arm only; the
+        # DiT/SiT arms size from dit_hidden_size and are unaffected by freq_dim.
+        _n_params = sum(p.numel() for p in self.velocity_net.parameters())
+        print(f'[ iMFTrajectoryModel ] vision={self.if_vision}  unet_width(freq_dim)={freq_dim}  '
+              f'params={_n_params / 1e6:.1f}M')
 
         self.state_dim = state_dim
 

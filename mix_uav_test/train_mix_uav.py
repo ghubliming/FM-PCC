@@ -1,0 +1,355 @@
+# Gen15 (UAV Mix-ML) trainer — Gen11's train_fm_uav.py with a selectable ML engine.
+#
+# Everything UAV-specific is UNCHANGED from Gen11: --scene, the seed resolver, the per-scene
+# max_path_length lookup, the seed manifest, W&B naming, auto-resume. The ONLY additions are
+# `--engine {fm,mf,af}` and routing the three utils.Config blocks through the registry, which
+# owns every per-engine difference (mix_uav/models/engine_registry.py).
+#
+#   python mix_uav_test/train_mix_uav.py --engine mf --scene corridor --seed 6
+#
+import argparse
+import glob
+import json
+import os
+import pickle
+import sys
+from datetime import datetime
+
+import torch
+import wandb
+import mix_uav.utils as utils
+from mix_uav.models import engine_registry
+
+exp = 'uav_mix'                   # → config.uav_mix, blocks 'mix_uav_<engine>'
+SCENES = ['empty', 'corridor', 's_curve', 'pillars']
+# Single seed=6 for testing. For the full run use [6, 7, 8, 9, 10].
+DEFAULT_SEEDS = [6]
+# DEFAULT_SEEDS = [6, 7, 8, 9, 10]   # full run (5 seeds)
+
+def sanitize_wandb_env():
+    """Clear malformed W&B service tokens that can crash wandb.init in Colab."""
+    service_env_keys = ('WANDB_SERVICE', 'WANDB__SERVICE')
+
+    for env_key in service_env_keys:
+        token = os.environ.get(env_key)
+        if token is None:
+            continue
+
+        # W&B expects exactly 5 '-' separated token parts.
+        if len(token.split('-')) != 5:
+            print(f'[ train ] Clearing malformed {env_key}: {token}')
+            os.environ.pop(env_key, None)
+
+def log_wandb_curves_from_losses(losses_path, run):
+    if not os.path.exists(losses_path):
+        return
+
+    with open(losses_path, 'rb') as f:
+        losses = pickle.load(f)
+
+    training_losses = losses.get('training_losses', [])
+    test_losses = losses.get('test_losses', [])
+    training_a0_losses = losses.get('training_a0_losses', [])
+    test_a0_losses = losses.get('test_a0_losses', [])
+
+    test_by_step = {step: value for step, value in test_losses}
+    train_a0_by_step = {step: value for step, value in training_a0_losses}
+    test_a0_by_step = {step: value for step, value in test_a0_losses}
+
+    # Gen15: the two-time arms (mf/af) additionally persist training_<key>_losses /
+    # test_<key>_losses for every EXTRA_METRIC_KEYS entry (raw_mse_u, h_mse_b0..b3, fm_frac,
+    # alpha, clamp_frac, ...). These are the ONLY readable convergence signals on those arms —
+    # their adaptive loss is pinned at its ceiling by construction and says nothing. NaN points
+    # (empty h-buckets) are already dropped by the trainer; forward whatever is present.
+    extra_by_step = {}
+    for key, series in losses.items():
+        if not key.startswith(('training_', 'test_')) or not key.endswith('_losses'):
+            continue
+        if key in ('training_losses', 'test_losses', 'training_a0_losses', 'test_a0_losses'):
+            continue
+        split, metric = key.split('_', 1)
+        metric = metric[:-len('_losses')]
+        tag = f"{'train' if split == 'training' else 'test'}/{metric}"
+        extra_by_step[tag] = {step: value for step, value in series}
+
+    for step, train_loss in training_losses:
+        log_dict = {'train/loss': train_loss}
+        if step in test_by_step:
+            log_dict['test/loss'] = test_by_step[step]
+        if step in train_a0_by_step:
+            log_dict['train/a0_loss'] = train_a0_by_step[step]
+        if step in test_a0_by_step:
+            log_dict['test/a0_loss'] = test_a0_by_step[step]
+        for tag, series in extra_by_step.items():
+            if step in series:
+                log_dict[tag] = series[step]
+        run.log(log_dict, step=step)
+
+    if len(training_losses) > 0:
+        run.summary['final_train_loss'] = training_losses[-1][1]
+    if len(test_losses) > 0:
+        run.summary['final_test_loss'] = test_losses[-1][1]
+
+def upload_wandb_artifact(run, seed, args):
+    artifact = wandb.Artifact(
+        name=f'{args.dataset}-seed-{seed}-model',
+        type='model',
+        metadata={
+            'dataset': args.dataset,
+            'seed': seed,
+            'savepath': args.savepath,
+            'n_train_steps': args.n_train_steps,
+            'engine': getattr(args, 'engine', 'fm'),
+        },
+    )
+
+    files_to_add = ['losses.pkl', 'args.json'] # 'state_best.pt' commented out to save space
+    for filename in files_to_add:
+        filepath = os.path.join(args.savepath, filename)
+        if os.path.exists(filepath):
+            artifact.add_file(filepath)
+
+    run.log_artifact(artifact)
+
+
+class Parser(utils.Parser):
+    dataset: str = exp                # overridden per-scene to 'uav-<scene>' below
+    config: str = 'config.' + exp     # = 'config.uav_mix'
+
+def parse_top_level_args():
+    parser = argparse.ArgumentParser(description='Train a UAV Mix-ML model with configurable seeds.')
+    parser.add_argument('--engine', type=str, default=engine_registry.DEFAULT_ENGINE,
+                        choices=list(engine_registry.ENGINE_KEYS),
+                        help="ML engine: 'fm' (Gen11 flow matching), 'mf' (Gen3v6 MeanFlow), "
+                             "'af' (Gen3v7 alpha-Flow).")
+    parser.add_argument('--scene', type=str, default='all', choices=['all', *SCENES],
+                        help="UAV scene to train on: 'all' pools the 4 scenes, or a single scene.")
+    parser.add_argument('--seed', type=int, help='Train a single seed.')
+    parser.add_argument('--seeds', type=int, nargs='+', help='Train an explicit list of seeds, e.g. --seeds 5 6 7.')
+    parser.add_argument('--seeds-from-config', type=str, help='Path to JSON file with `seed_list` or `seeds`.')
+    parser.add_argument('--num-seeds', type=int, help='Train only the first N seeds from the resolved seed list.')
+    parser.add_argument('--resume-seed', type=int, help='Seed for manual resume step loading.')
+    parser.add_argument('--resume-step', type=int, help='Checkpoint step to resume from, e.g. 80000.')
+    parser.add_argument('--auto-resume', action='store_true', help='Auto-resume each seed from latest local checkpoint if present.')
+    parser.add_argument('--use-wandb', action='store_true', help='Enable W&B runs per seed.')
+    parser.add_argument('--wandb-project', type=str, default='fm-pcc-uav-mix', help='W&B project name.')
+    parser.add_argument('--wandb-entity', type=str, default=None, help='W&B entity/team name.')
+    parser.add_argument('--wandb-group', type=str, default=None, help='W&B group name for per-seed runs.')
+    parser.add_argument('--wandb-mode', type=str, default='online', choices=['online', 'offline', 'disabled'], help='W&B mode.')
+    args, remaining = parser.parse_known_args()
+    if args.seed is not None and args.seeds is not None:
+        raise ValueError('Use either --seed or --seeds, not both.')
+    if args.num_seeds is not None and args.num_seeds <= 0:
+        raise ValueError('--num-seeds must be > 0.')
+    if args.resume_step is not None and args.resume_step < 0:
+        raise ValueError('--resume-step must be >= 0.')
+    return args, remaining
+
+def load_seeds_from_config(path):
+    with open(path, 'r', encoding='utf-8') as f:
+        payload = json.load(f)
+    if isinstance(payload, dict):
+        if 'seed_list' in payload:
+            seeds = payload['seed_list']
+        elif 'seeds' in payload:
+            seeds = payload['seeds']
+        else:
+            raise ValueError(f'No `seed_list` or `seeds` found in {path}.')
+    elif isinstance(payload, list):
+        seeds = payload
+    else:
+        raise ValueError(f'Unsupported seed config format in {path}.')
+    return [int(seed) for seed in seeds]
+
+def resolve_seed_list(cli_args):
+    if cli_args.seed is not None:
+        seeds = [cli_args.seed]
+        source = 'cli --seed'
+    elif cli_args.seeds is not None:
+        seeds = [int(seed) for seed in cli_args.seeds]
+        source = 'cli --seeds'
+    elif cli_args.seeds_from_config is not None:
+        seeds = load_seeds_from_config(cli_args.seeds_from_config)
+        source = f'config {cli_args.seeds_from_config}'
+    else:
+        seeds = list(DEFAULT_SEEDS)
+        source = 'default'
+    if cli_args.num_seeds is not None:
+        seeds = seeds[:cli_args.num_seeds]
+    if len(seeds) == 0:
+        raise ValueError('Resolved seed list is empty.')
+    return seeds, source
+
+def find_latest_checkpoint_step(results_dir):
+    pattern = os.path.join(results_dir, 'state_*.pt')
+    steps = []
+    for checkpoint_path in glob.glob(pattern):
+        filename = os.path.basename(checkpoint_path)
+        step_token = filename.replace('state_', '').replace('.pt', '')
+        try:
+            steps.append(int(step_token))
+        except ValueError:
+            continue
+    return max(steps) if len(steps) > 0 else None
+
+def write_seed_manifest(run_root, selected_seeds, seed_source, cli_args):
+    manifest_path = os.path.join(run_root, 'seeds_config.json')
+    payload = {
+        'generation_date': datetime.utcnow().isoformat() + 'Z',
+        'engine': cli_args.engine,
+        'total_seeds': len(selected_seeds),
+        'seed_list': selected_seeds,
+        'seed_source': seed_source,
+        'num_seeds_applied': cli_args.num_seeds,
+        'resume_seed': cli_args.resume_seed,
+        'resume_step': cli_args.resume_step,
+        'auto_resume': cli_args.auto_resume,
+    }
+    with open(manifest_path, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, indent=2)
+    print(f'[ train ] Saved seed manifest to: {manifest_path}')
+
+def should_apply_manual_resume(seed, selected_seeds, cli_args):
+    if cli_args.resume_step is None:
+        return False
+    if cli_args.resume_seed is not None:
+        return seed == cli_args.resume_seed
+    return seed == selected_seeds[0]
+
+cli_args, parser_remaining = parse_top_level_args()
+selected_seeds, seed_source = resolve_seed_list(cli_args)
+ENGINE = cli_args.engine
+_row = engine_registry.get(ENGINE)
+print('=' * 80)
+print(f'[ train ] Gen15 UAV Mix-ML — engine: {ENGINE}  ({_row["label"]})')
+print(f'[ train ] UAV scene: {cli_args.scene}  (dataset string: uav-{cli_args.scene})')
+print(f'[ train ] Seed source: {seed_source}')
+print(f'[ train ] Training seeds: {selected_seeds}')
+print('=' * 80)
+original_argv = list(sys.argv)
+sys.argv = [sys.argv[0], *parser_remaining]
+manifest_written = False
+for seed in selected_seeds:
+    parser_obj = Parser()
+    parser_obj.dataset = f'uav-{cli_args.scene}'   # → data branch + output path segregation
+    args = parser_obj.parse_args(experiment=engine_registry.experiment_name(ENGINE), seed=seed)
+    # Resolve per-scene max_path_length (avoid over-allocating replay buffer for short scenes).
+    # NOTE: Gen15's OWN copy of the table — config/uav.py is never imported here.
+    from config.uav_mix import MAX_PATH_LENGTH_PER_SCENE
+    resolved_max_path = MAX_PATH_LENGTH_PER_SCENE.get(cli_args.scene, args.max_path_length)
+    if resolved_max_path != args.max_path_length:
+        print(f'[ train ] max_path_length: {args.max_path_length} → {resolved_max_path} (scene={cli_args.scene})')
+        args.max_path_length = resolved_max_path
+    # Fail fast on an engine/backbone pair that cannot be built — otherwise this surfaces as a
+    # ValueError from inside the trajectory-model constructor, after the dataset has loaded.
+    if _row['two_time']:
+        engine_registry.check_backbone(ENGINE, getattr(args, 'imf_backbone', 'unet'))
+    torch.manual_seed(args.seed)
+    if not manifest_written:
+        run_root = os.path.dirname(args.savepath)
+        write_seed_manifest(run_root, selected_seeds, seed_source, cli_args)
+        manifest_written = True
+    run = None
+    if cli_args.use_wandb and cli_args.wandb_mode != 'disabled':
+        sanitize_wandb_env()
+        savepath_rel = os.path.relpath(args.savepath, args.logbase)
+        wandb_name = savepath_rel.replace('/', '-').replace('models.diffusion.', '').replace('models.', '')
+
+        # Label seed part clearly as S<seed>
+        name_parts = wandb_name.split('-')
+        if name_parts[-1].isdigit():
+            name_parts[-1] = f'S{name_parts[-1]}'
+        wandb_name = '-'.join(name_parts)
+
+        # Group name clusters seeds of the same experiment together
+        default_group = '-'.join(name_parts[:-1]) if len(name_parts) > 1 else wandb_name
+        wandb_group = cli_args.wandb_group if cli_args.wandb_group is not None else default_group
+
+        # Tag the run name with the Slurm job id (no-op off-cluster); group stays clean
+        if os.environ.get('SLURM_JOB_ID'):
+            wandb_name = f"{wandb_name}-slurm-{os.environ['SLURM_JOB_ID']}"
+
+        run = wandb.init(
+            project=cli_args.wandb_project,
+            entity=cli_args.wandb_entity,
+            group=wandb_group,
+            name=wandb_name,
+            mode=cli_args.wandb_mode,
+            config={
+                **vars(args),
+                'engine': ENGINE,
+                'selected_seeds': selected_seeds,
+                'seed_source': seed_source,
+            },
+        )
+    # Get dataset
+    dataset_config = utils.Config(
+        args.loader,
+        savepath=(args.savepath, 'dataset_config.pkl'),
+        env=args.dataset,
+        horizon=args.horizon,
+        normalizer=args.normalizer,
+        preprocess_fns=args.preprocess_fns,
+        use_padding=args.use_padding,
+        max_path_length=args.max_path_length,
+        include_returns=args.include_returns,
+        returns_scale=args.max_path_length,
+        discount=args.discount,
+        # 'p_des' (default → obs=[p_des|p|v] 9D, action=Δp_des, transition=12) or
+        # 'real_p'/'pos_only' (→ obs 6D, action=Δp, transition=9). The model auto-sizes from
+        # observation_dim+action_dim via the registry, so no model edit is needed.
+        cond_mode=getattr(args, 'cond_mode', 'pos_only'),
+    )
+    dataset = dataset_config()
+
+    # ── Model / diffusion / trainer — every per-engine difference lives in the registry ──────
+    # model_config describes the U-NET on `fm` and the ENGINE on `mf`/`af`. Do not assume a
+    # shape here; ask the registry. (engine_registry.py, "Why the model_kwargs are per-engine")
+    model_config = utils.Config(
+        _row['model'],
+        savepath=(args.savepath, 'model_config.pkl'),
+        device=args.device,
+        **_row['model_kwargs'](args, dataset),
+    )
+    diffusion_config = utils.Config(
+        _row['diffusion'],
+        savepath=(args.savepath, 'diffusion_config.pkl'),
+        device=args.device,
+        **_row['diffusion_kwargs'](args, dataset),
+    )
+    trainer_config = utils.Config(
+        utils.import_class(_row['trainer']),
+        savepath=(args.savepath, 'trainer_config.pkl'),
+        **_row['trainer_kwargs'](args),
+    )
+    model = model_config()
+    diffusion = diffusion_config(model)
+    trainer = trainer_config(diffusion, dataset)
+
+    n_params = sum(p.numel() for p in model.parameters())
+    print(f'[ train ] engine={ENGINE}  backbone={getattr(args, "imf_backbone", "unet")}  '
+          f'params={n_params:,} ({n_params / 1e6:.2f} M)')
+    print(f'[ train ] savepath: {args.savepath}')
+
+    resume_step = None
+    if cli_args.auto_resume:
+        resume_step = find_latest_checkpoint_step(args.savepath)
+    if should_apply_manual_resume(seed, selected_seeds, cli_args):
+        resume_step = cli_args.resume_step
+    if resume_step is not None:
+        checkpoint_path = os.path.join(args.savepath, f'state_{resume_step}.pt')
+        if os.path.exists(checkpoint_path):
+            print(f'[ train ] Resuming seed {seed} from step {resume_step}')
+            trainer.load(resume_step)
+        else:
+            print(f'[ train ] Resume requested but checkpoint not found: {checkpoint_path}')
+    trainer.train()
+    if run is not None:
+        losses_path = os.path.join(args.savepath, 'losses.pkl')
+        log_wandb_curves_from_losses(losses_path, run)
+        upload_wandb_artifact(run, seed, args)
+        run.summary['status'] = 'completed'
+        run.summary['seed'] = seed
+        run.summary['engine'] = ENGINE
+        run.finish()
+print(f'Gen15 UAV Mix-ML training completed (engine={ENGINE}).')

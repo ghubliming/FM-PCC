@@ -75,10 +75,18 @@ fi
 
 cd "$REPO"
 
-# 4) Aggregate the table for the plan block's K bucket (K<K>_n<n>). Buckets are never
-#    mixed (PLAN §5 / Gen13 fix_7). If you swept K with --flow-steps in the eval job,
-#    report each bucket the same way here, e.g.:
-#        for K in 2 5 10; do python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py --flow-steps "$K"; done
-python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py
+# 4) Aggregate one table per K bucket (K<K>_n<n>). Buckets are never mixed (PLAN §5 /
+#    Gen13 fix_7): --flow-steps selects exactly one bucket. Mirrors the eval job —
+#    DEFAULT reports the single plan-block K; set HFFM_FLOW_STEPS to report a swept grid.
+if [ -n "${HFFM_FLOW_STEPS:-}" ]; then
+    for K in $HFFM_FLOW_STEPS; do
+        echo "================================================================================"
+        echo "[ load_results ] K = $K"
+        echo "================================================================================"
+        python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py --flow-steps "$K"
+    done
+else
+    python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py
+fi
 
 echo "Aggregation completed successfully."

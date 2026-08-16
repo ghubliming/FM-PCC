@@ -1,0 +1,72 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Jul 24 02:06:16 UTC 2026
+JOB NAME:  hffm_gates
+JOB ID:    23783
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   d0263ad
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+Gen12 gates | device = cuda | K = 5 | config = config/hardflow_projection_eval.yaml
+
+-- G0: dof layout vs HardFlow, index by index ------------------------------
+  dof = 44   expected 44
+  step | Gen12 a_t | Gen12 s_t | HardFlow s_t (2*ad + i*(ad+sd))
+     0  |      0     |   pinned  |   n/a (s_0 is the condition)
+     1  |      2     |      4    |     4   OK
+     2  |      8     |     10    |    10   OK
+     3  |     14     |     16    |    16   OK
+     4  |     20     |     22    |    22   OK
+     5  |     26     |     28    |    28   OK
+     6  |     32     |     34    |    34   OK
+     7  |     38     |     40    |    40   OK
+  to_dof -> from_dof round trip exact: True
+  transition columns : 0=vx 1=vy 2=x_des 3=y_des 4=x 5=y  (both repos)
+  HardFlow reads x,y at obs offsets +2,+3 -> transition cols 4,5  OK
+  G0 -> PASS
+
+-- G1: time direction tau = 0 (noise) -> 1 (data) --------------------------
+  K = 5, constant field v = 0.3
+  max |x_K - (x_0 + v)|                = 0.000e+00
+  terminal predictor exact at every k  = True
+  FMv3 p_sample_loop uses t = k/K (increasing) : True
+  FMv3 p_mean_variance uses x + v*dt           : True
+  G1 -> PASS
+
+-- G2: prox-NLP feasibility and tau bookkeeping -----------------------------
+  tau = 0.25  min obstacle distance = 0.1262 (radius 0.080)  -> feasible
+  tau = 1.0   min obstacle distance = 0.1262 (radius 0.080)  -> feasible
+  solution invariant to tau (pure prox objective): False
+    ^ expected True. The tau^2 factor scales the ONLY cost term, so it cannot move
+      the argmin; the real schedule is the linear tau in the pull-back.
+  solves = 2, failures = 0
+  G2 -> FAIL
+
+-- G3: end-to-end constrained sampler --------------------------------------
+  output shape (1, 8, 6) expected (1, 8, 6)
+  min obstacle distance = 0.0849 (radius 0.080) -> feasible
+  NFE = 10 (expected 10)   NLP solves = 5 (expected 5)   failures = 0
+    ^ arm C costs 2 network evals per ODE step vs arm B's 1. Any matched-K
+      comparison must report this (PLAN §5).
+  G3 -> PASS
+
+============================================================
+  G0 layout        PASS
+  G1 direction     PASS
+  G2 NLP           FAIL
+  G3 end-to-end    PASS
+============================================================
+
+A gate failed. PLAN §4: do not proceed past a failing step.
+================================================================================
+JOB END:   Fri Jul 24 02:06:23 UTC 2026
+================================================================================

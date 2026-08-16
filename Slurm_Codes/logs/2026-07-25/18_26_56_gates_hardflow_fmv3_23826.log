@@ -1,0 +1,97 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Jul 25 16:26:56 UTC 2026
+JOB NAME:  gates_hardflow_fmv3
+JOB ID:    23826
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   18fa5c2
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+Gen12 gates | device = cuda | K = 5 | config = config/hardflow_projection_eval.yaml
+
+-- G0: dof layout vs HardFlow, index by index ------------------------------
+  dof = 44   expected 44
+  step | Gen12 a_t | Gen12 s_t | HardFlow s_t (2*ad + i*(ad+sd))
+     0  |      0     |   pinned  |   n/a (s_0 is the condition)
+     1  |      2     |      4    |     4   OK
+     2  |      8     |     10    |    10   OK
+     3  |     14     |     16    |    16   OK
+     4  |     20     |     22    |    22   OK
+     5  |     26     |     28    |    28   OK
+     6  |     32     |     34    |    34   OK
+     7  |     38     |     40    |    40   OK
+  to_dof -> from_dof round trip exact: True
+  transition columns : 0=vx 1=vy 2=x_des 3=y_des 4=x 5=y  (both repos)
+  HardFlow reads x,y at obs offsets +2,+3 -> transition cols 4,5  OK
+  G0 -> PASS
+
+-- G1: time direction tau = 0 (noise) -> 1 (data) --------------------------
+  K = 5, constant field v = 0.3
+  max |x_K - (x_0 + v)|                = 0.000e+00
+  terminal predictor exact at every k  = True
+  FMv3 p_sample_loop uses t = k/K (increasing) : True
+  FMv3 p_mean_variance uses x + v*dt           : True
+  G1 -> PASS
+
+-- G2: prox-NLP feasibility and tau bookkeeping -----------------------------
+  tau = 0.25  min obstacle distance = 0.1262 (radius 0.080)  -> feasible
+  tau = 1.0   min obstacle distance = 0.1262 (radius 0.080)  -> feasible
+  binding (min-dist) invariant to tau: True  (|Δ| = 8.69e-11)
+  raw DOF drift (INFO only): 2.61e-04
+    ^ the TRUE argmin is tau-invariant (tau^2 scales the ONLY cost term); any raw
+      drift is IPOPT numerics on non-binding DOFs, not a bug. The real schedule is
+      the LINEAR tau in the pull-back x_next = x_ref + tau*(x1_proj - x1_ref).
+  solves = 2, failures = 0
+  G2 -> PASS
+
+-- G3: end-to-end constrained sampler --------------------------------------
+  output shape (1, 8, 6) expected (1, 8, 6)
+  min obstacle distance = 0.0849 (radius 0.080) -> feasible
+  NFE = 10 (expected 10)   NLP solves = 5 (expected 5)   failures = 0
+    ^ arm C costs 2 network evals per ODE step vs arm B's 1. Any matched-K
+      comparison must report this (PLAN §5).
+  G3 -> PASS
+
+-- G4: U4 activation threshold — final-step invariant + count --------------
+  K= 2 thr=0.0  solves= 2 (exp  2)  min_d=0.085 feasible  OK
+  K= 2 thr=0.5  solves= 2 (exp  2)  min_d=0.085 feasible  OK
+  K= 2 thr=0.9  solves= 1 (exp  1)  min_d=0.085 feasible  OK
+  K= 2 thr=1.0  solves= 1 (exp  1)  min_d=0.085 feasible  OK
+  K= 5 thr=0.0  solves= 5 (exp  5)  min_d=0.085 feasible  OK
+  K= 5 thr=0.5  solves= 3 (exp  3)  min_d=0.085 feasible  OK
+  K= 5 thr=0.9  solves= 1 (exp  1)  min_d=0.085 feasible  OK
+  K= 5 thr=1.0  solves= 1 (exp  1)  min_d=0.085 feasible  OK
+  K=10 thr=0.0  solves=10 (exp 10)  min_d=0.085 feasible  OK
+  K=10 thr=0.5  solves= 6 (exp  6)  min_d=0.085 feasible  OK
+  K=10 thr=0.9  solves= 2 (exp  2)  min_d=0.085 feasible  OK
+  K=10 thr=1.0  solves= 1 (exp  1)  min_d=0.085 feasible  OK
+  G4 -> PASS
+
+-- G5: U4.2 candidate fan + selection --------------------------------------
+  candidate_costs present, len==4: True  values=[43.8785 29.8991 38.1808 28.0184]
+  all 4 candidate terminals feasible: True
+  minimum_projection_cost -> 3 (argmin 3)  OK
+  random -> 0 (expect 0)  OK
+  G5 -> PASS
+
+============================================================
+  G0 layout        PASS
+  G1 direction     PASS
+  G2 NLP           PASS
+  G3 end-to-end    PASS
+  G4 U4 threshold  PASS
+  G5 U4.2 selection PASS
+============================================================
+Gates completed successfully.
+================================================================================
+JOB END:   Sat Jul 25 16:27:06 UTC 2026
+================================================================================

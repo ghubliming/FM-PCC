@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 import flow_matcher_v3_meanflow.utils as utils
 from flow_matcher_v3_meanflow.sampling.policies import Policy
 from flow_matcher_v3_meanflow.sampling.projection import Projector
+# Gen3v6 U3 — arm C: HardFlow in-loop constrained sampler (verbatim Gen12 port; queried at h=0).
+from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
+    HardFlowPolicy, resolve_activation_threshold)
 # REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
 from realtime_recording.behavior_logger import RTRecorder
 RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
@@ -36,12 +39,62 @@ class Tee(object):
 parser = argparse.ArgumentParser(description='Evaluation script with aggregation mode.')
 parser.add_argument('--seed', type=int, help='Run only this specific seed.')
 parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results into all_seeds plots.')
+# 🔵 U9 MATCHED-K AUTO-EVAL — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7; fix_7.3 §9 — one hard-coded
+# k_steps=10 made the decisive control unrunnable and killed an entire generation's claim). K is a
+# first-class CLI knob here so the {1,2,5,10} grid is a loop in the sbatch, not an HFFM_FLOW_STEPS
+# edit someone has to remember. Ported verbatim from the Gen3v7 sibling
+# (FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py), which had it from day one.
+# `flow_steps_v3` is in args_to_watch_fmv3_hf_plan (label 'K'), so each K writes its OWN results
+# directory and no two budgets can overwrite each other.
+parser.add_argument('--flow-steps', type=int, default=None, metavar='K',
+                    help='override flow_steps_v3 (NFE budget K) for this run')
 args_cli, remaining_argv = parser.parse_known_args()
 # Pass remaining args to Parser if needed
 sys.argv = [sys.argv[0]] + remaining_argv
 
-with open('config/projection_eval.yaml', 'r') as file:
+# Gen3v6 U3: repointed from the SHARED config/projection_eval.yaml to the Gen3v6-dedicated
+# unified file (DPCC arms + HardFlow arm in one document). --config overrides it.
+_default_cfg = 'config/meanflow_projection_eval.yaml'
+_cfg_path = _default_cfg
+if '--config' in remaining_argv:
+    _cfg_path = remaining_argv[remaining_argv.index('--config') + 1]
+with open(_cfg_path, 'r') as file:
     config = yaml.safe_load(file)
+print(f'[ eval ] config: {_cfg_path}')
+
+# 🔴 FIX_9_CFG_PROVENANCE (2026-08-07) — publish the yaml THIS eval loaded. config/avoiding-d3il.py
+# builds the results-folder tokens from it and utils/setup.py snapshots it; both used to hard-code
+# config/projection_eval.yaml, a file this eval never opens. That is why job 24334 landed in a path
+# saying `T1` while the Projector was gated at 0.5. Must be set BEFORE the first
+# Parser().parse_args() / importlib.import_module('config.…'), which is what imports that module.
+os.environ['FMPCC_PROJ_CFG'] = _cfg_path
+
+# 🔴 FIX_9_CFG_PROVENANCE — DPCC_THRESHOLD makes arm B's threshold settable per job, the way the
+# HFFM_* knobs already are for arm C (runs are configured at submit time on the cluster, not in git).
+diffusion_timestep_threshold = float(os.environ.get(
+    'DPCC_THRESHOLD', config.get('diffusion_timestep_threshold', 0.5)))
+
+# ── arm C (HardFlow) knobs, resolved once (verbatim Gen12 semantics) ──────────────────────
+hardflow_cfg = config.get('hardflow', {})
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   hardflow_cfg.get('activation_threshold',
+                                    hardflow_cfg.get('activation', 1.0))))
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
+
+# 🔴 FIX_9_CFG_PROVENANCE — republish the RESOLVED values (aliases mapped, yaml fallbacks applied)
+# so the results path is built from what actually runs. resolve_activation_threshold() stays the
+# single resolver; the config module only reads the number back out. Arm B's and arm C's thresholds
+# are SEPARATE knobs by design (a threshold sweep needs them independent) — this line is what makes
+# a mismatch visible instead of silent, and what stops HFFM_ACT_THRESHOLD=0.5 and =1.0 from
+# overwriting each other's results directory.
+os.environ['FMPCC_DPCC_THRESHOLD'] = '%g' % float(diffusion_timestep_threshold)
+os.environ['HFFM_ACT_THRESHOLD'] = '%g' % float(hf_act_threshold)
+os.environ['HFFM_BATCH'] = str(int(hf_batch_size))
+print(f'[ eval ] resolved  cfg={_cfg_path}  dpcc_threshold={diffusion_timestep_threshold}  '
+      f'hf_act_threshold={hf_act_threshold}  hf_batch={hf_batch_size}  '
+      f'hf_candidate_cost={hf_candidate_cost}')
 
 exps = config['exps']
 seeds = config['seeds']
@@ -49,12 +102,37 @@ if args_cli.seed is not None:
     seeds = [args_cli.seed]
     print(f'[ eval ] Overriding seeds from config to: {seeds}')
 
+if args_cli.flow_steps is not None:
+    # 🔵 U9 — patch the config MODULE's dict before any Parser reads it. utils.Parser.read_config
+    # does `importlib.import_module(args.config)` and copies `base[experiment]` key by key, and
+    # Python caches modules — so this is the intended data path, not a monkey-patch: exp_name,
+    # savepath and the diffusion kwargs all follow automatically.
+    import importlib
+    for _exp in exps:
+        _mod = importlib.import_module('config.' + _exp)
+        _blk = _mod.base['plan_fm_v3_meanflow']
+        _blk['flow_steps_v3'] = args_cli.flow_steps
+        if 'ode_inference_steps_v3' in _blk:
+            _blk['ode_inference_steps_v3'] = args_cli.flow_steps
+        # Gen3v6 U3 — matched-K: `flow_steps` is arm C's Euler K. Patch it with the SAME value
+        # or --flow-steps would move arms A/B only and every arm-B-vs-arm-C table would be
+        # comparing different NFE budgets. The env path (HFFM_FLOW_STEPS) sets both in the
+        # plan block itself; this is the CLI path doing the same.
+        _blk['flow_steps'] = args_cli.flow_steps
+    print(f'[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: {args_cli.flow_steps}')
+
 projection_variants = config['projection_variants']
 halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
 n_trials = config['n_trials']
 plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
-diffusion_timestep_threshold = config.get('diffusion_timestep_threshold', 0.5)
+# 🔴 FIX_9_CFG_PROVENANCE — diffusion_timestep_threshold and the hf_* knobs are resolved ABOVE,
+# immediately after the yaml load. 🔵 U9 moved them there: the --flow-steps branch above calls
+# importlib.import_module('config.' + exp), and Python caches modules, so publishing the resolved
+# values here would be too late for the folder name on any --flow-steps run.
+# Matched-K note: K is set for EVERY arm via HFFM_FLOW_STEPS (or --flow-steps), which the plan
+# block reads into args.flow_steps_v3 / args.flow_steps — so it also drives the results-dir name
+# (`_K{K}_`) and distinct-K runs never collide. Resolved per-seed below.
 
 for exp in exps:
     for halfspace_variant in halfspace_variants:
@@ -188,6 +266,14 @@ for exp in exps:
                 fm_model.ode_solver_rtol_v3 = getattr(args, 'ode_solver_rtol_v3', getattr(fm_model, 'ode_solver_rtol_v3', None))
                 fm_model.ode_solver_atol_v3 = getattr(args, 'ode_solver_atol_v3', getattr(fm_model, 'ode_solver_atol_v3', None))
                 fm_model.ode_solver_step_size_v3 = getattr(args, 'ode_solver_step_size_v3', getattr(fm_model, 'ode_solver_step_size_v3', None))
+                # Gen3v6 U3 — matched-K. K arrives via the config (args.flow_steps / flow_steps_v3,
+                # both reading HFFM_FLOW_STEPS), so args.savepath already encodes _K{K}_ (distinct-K
+                # runs never collide). Force it onto the native sampler too — line 185's getattr can
+                # otherwise pick up a stale checkpoint ode_inference_steps_v3 instead of this K.
+                flow_steps = int(getattr(args, 'flow_steps', 0)) or int(getattr(fm_model, 'flow_steps_v3', 10))
+                fm_model.ode_inference_steps_v3 = flow_steps
+                fm_model.flow_steps_v3 = flow_steps
+                print(f'[ eval ] matched K (flow_steps) = {flow_steps} for every arm (savepath: {args.savepath})')
                 dataset = fm_experiment.dataset
                 if 'pointmaze' in exp or 'antmaze' in exp:
                     minari_dataset = minari.load_dataset(exp, download=True)
@@ -262,7 +348,16 @@ for exp in exps:
                 sys.stdout = Tee(sys.stdout, log_file)
                 
                 try:
-                    print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
+                    is_hardflow = variant.startswith('hardflow')
+                    print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed}) - K={flow_steps}----------------------------')
+                    # [Gen0fix2] Restore the per-variant threshold deleted by upstream DPCC commit 7f09d3a.
+                    # threshold 0 => the activation gate fires only on the FINAL step, i.e. ONE projection
+                    # applied after the last denoising/ODE step -- the paper's definition of post-processing
+                    # ("modifying them after the last denoising step, usually by solving an optimization
+                    # problem"). Without it, `post_processing` inherits the normal schedule and is a
+                    # byte-identical duplicate of `dpcc-r`.
+                    threshold = 0.0 if 'post_processing' in variant else diffusion_timestep_threshold
+
                     gradient = True if 'gradient' in variant else False
                     if 'model_free' in variant and 'tightened' in variant:
                         constraints = constraint_list_without_prior_tightened
@@ -281,13 +376,45 @@ for exp in exps:
                         delta_t = 2.0 * dt
                     elif 'dt4p0' in variant:
                         delta_t = 4.0 * dt
-                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
-                                            diffusion_timestep_threshold=diffusion_timestep_threshold)
-                    projector = None if variant == 'diffuser' else projector
-                    trajectory_selection = 'random'
-                    if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
-                    if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
-                    policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
+                    if is_hardflow:
+                        # ---------------- arm C (HardFlow) — verbatim Gen12 construction ----------------
+                        batch_size = hf_batch_size
+                        # DPCC-parity selection from the variant suffix; strip '-tightened' FIRST so the
+                        # selection suffix composes with the geometry (hardflow_new-c-tightened → min-cost
+                        # AND enlarged). At batch_size==1 all of -r/-c/-t collapse to index 0.
+                        _sel_base = variant.replace('-tightened', '')
+                        hf_selection = 'random'
+                        if _sel_base.endswith('-t'): hf_selection = 'temporal_consistency'
+                        elif _sel_base.endswith('-c'): hf_selection = 'minimum_projection_cost'
+                        policy = HardFlowPolicy(
+                            model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
+                            transition_dim=trajectory_dim, action_dim=action_dim,
+                            constraint_list=constraints, dt=delta_t, flow_steps=flow_steps,
+                            preprocess_fns=args.preprocess_fns, test_ret=args.test_ret,
+                            reg_scale=float(hardflow_cfg.get('reg_scale', 1.0)),
+                            activation_threshold=hf_act_threshold,
+                            trajectory_selection=hf_selection,
+                            candidate_cost=hf_candidate_cost,
+                            dynamics_mode=hardflow_cfg.get('dynamics_mode', 'deriv'),
+                            linear_dynamics=None,
+                            print_level=int(hardflow_cfg.get('ipopt_print_level', 0)),
+                            print_time=bool(hardflow_cfg.get('casadi_print_time', False)),
+                            # fix_4: arm C must start from the SAME noise law as arms A/B.
+                            # Gen3v6's MeanFlow sampler is sigma=1.0 (mf_diffusion.py:204);
+                            # the U3 port had inherited Gen12's 0.5. Stated explicitly here
+                            # so a generation swap can't reintroduce it silently.
+                            init_noise_scale=1.0,
+                            device=args.device, goal_dim=fm_model.goal_dim)
+                    else:
+                        # ---------------- arms A / B (diffuser / DPCC) — unchanged ----------------
+                        batch_size = args.batch_size
+                        projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
+                                                diffusion_timestep_threshold=threshold)   # [Gen0fix2] post_processing override
+                        projector = None if variant == 'diffuser' else projector
+                        trajectory_selection = 'random'
+                        if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
+                        if 'dpcc-c' in variant: trajectory_selection = 'minimum_projection_cost'
+                        policy = Policy(model=fm_model, normalizer=dataset.normalizer, preprocess_fns=args.preprocess_fns, test_ret=args.test_ret, projector=projector, trajectory_selection=trajectory_selection)
                     fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
                     fig.suptitle(f'{exp} - {variant}')
                     save_samples_every = 1  # fix_1: save full-resolution MPC foresight every step (was: args.horizon // 2)
@@ -301,7 +428,11 @@ for exp in exps:
                     avg_time = np.zeros(n_trials)
                     collision_free_completed = np.ones(n_trials)
                     pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
-                    
+                    # Gen3v6 U3 — HardFlow-arm metrics (0 for arms A/B).
+                    nfe_total = 0
+                    nlp_solves_total = 0
+                    nlp_failures_total = 0
+
                     obs_all = []
                     act_all = []
 
@@ -331,7 +462,7 @@ for exp in exps:
                                             variant=variant, scene=exp,
                                             system='FMv3_MeanFlow',
                                             control_hz=RT_CONTROL_HZ,
-                                            batch_size=args.batch_size, horizon=args.horizon,
+                                            batch_size=batch_size, horizon=args.horizon,
                                             text_log=config.get('write_to_file', True))
                         for _ in range(args.max_episode_length):
                             violated_this_timestep = 0
@@ -355,9 +486,13 @@ for exp in exps:
                                 total_violations[i] += np.sum(np.maximum(0, act_obs - upper_bound)) + np.sum(np.maximum(0, lower_bound - act_obs))
                             n_violations[i] += violated_this_timestep
                             start = time.time()
-                            action, samples = policy(conditions={0: obs}, batch_size=args.batch_size, horizon=args.horizon, disable_projection=disable_projection)
+                            action, samples = policy(conditions={0: obs}, batch_size=batch_size, horizon=args.horizon, disable_projection=disable_projection)
                             _rt_total_ms = (time.time() - start) * 1e3   # REAL_TIME_RECORDING_UPDATE — bundled FM+projection wall-time
                             avg_time[i] += _rt_total_ms / 1e3
+                            # Gen3v6 U3 — accumulate HardFlow-arm metrics (nlp solves/failures per plan).
+                            if is_hardflow:
+                                nlp_solves_total += policy.last_info.get('nlp_solves', 0)
+                                nlp_failures_total += policy.last_info.get('nlp_failures', 0)
                             # REAL_TIME_RECORDING_UPDATE — record per-step timing (proj bundled inside policy()).
                             rt_rec.step(t=_ / RT_CONTROL_HZ, total_ms=_rt_total_ms, obs=obs,
                                         action=action, pos=obs[[obs_indices['x'], obs_indices['y']]],
@@ -416,7 +551,13 @@ for exp in exps:
                         axes_all_seeds[variant_idx].plot(np.array(obs_buffer)[:, obs_indices['x']], np.array(obs_buffer)[:, obs_indices['y']], colors[seed % len(colors)], linewidth=2)
                         axes = [ax[i, 5], ax_all[i, variant_idx]]
                         for __ in range(0, len(sampled_trajectories_all[i]), plot_samples_every):
-                            for ___ in range(min(args.batch_size, 4)):
+                            # 🔴 fix_7 — iterate the LOCAL batch, not args.batch_size. Arm C
+                            # overrides it (batch_size = hf_batch_size, :316) and the yaml
+                            # default is 1, so with HFFM_BATCH unset this asked for index 1 of
+                            # a 1-row candidate array -> IndexError. Arms A/B are unaffected
+                            # (batch_size = args.batch_size, :345). Restores parity with the
+                            # alphaflow/hardflow siblings, which already read `batch_size`.
+                            for ___ in range(min(batch_size, 4)):
                                 for curr_ax in axes:
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['x']], sampled_trajectories_all[i][__][___, :args.horizon, obs_indices['y']], 'b')
                                     curr_ax.plot(sampled_trajectories_all[i][__][___, 0, obs_indices['x']], sampled_trajectories_all[i][__][___, 0, obs_indices['y']], 'go', label='Start')
@@ -437,17 +578,30 @@ for exp in exps:
                     print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
                     print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                     if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
-                    
+                    # Gen3v6 U3 — HardFlow-arm metric summary (nfe accumulated on the sampler).
+                    if is_hardflow:
+                        nfe_total = int(getattr(policy, 'nfe', 0))
+                        print(f'[hardflow] NFE={nfe_total}  NLP solves={nlp_solves_total}  '
+                              f'NLP failures={nlp_failures_total}  batch(mpc)={batch_size}  '
+                              f'act_threshold={hf_act_threshold}')
+
                     if config['write_to_file']:
-                        np.savez(f'{save_path}/{variant}.npz', 
-                                 n_success=n_success, 
-                                 n_success_and_constraints=n_success_and_constraints, 
-                                 n_steps=n_steps, 
-                                 n_violations=n_violations, 
-                                 total_violations=total_violations, 
-                                 avg_time=avg_time, 
-                                 collision_free_completed=collision_free_completed, 
+                        np.savez(f'{save_path}/{variant}.npz',
+                                 n_success=n_success,
+                                 n_success_and_constraints=n_success_and_constraints,
+                                 n_steps=n_steps,
+                                 n_violations=n_violations,
+                                 total_violations=total_violations,
+                                 avg_time=avg_time,
+                                 collision_free_completed=collision_free_completed,
                                  args=args,
+                                 # Gen3v6 U3 — HardFlow-arm metrics (0 for arms A/B).
+                                 is_hardflow=bool(is_hardflow),
+                                 nfe_total=int(nfe_total),
+                                 nlp_solves_total=int(nlp_solves_total),
+                                 nlp_failures_total=int(nlp_failures_total),
+                                 hf_batch_size=int(batch_size),
+                                 hf_act_threshold=float(hf_act_threshold),
                                  obs_all=np.array(obs_all, dtype=object),
                                  act_all=np.array(act_all, dtype=object),
                                  sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))
@@ -461,6 +615,8 @@ for exp in exps:
             
             if not args_cli.aggregate_only:
                 fig_all.savefig(f'{save_path}/all.png')
+                plt.close(fig_all)   # fix_7: was the only figure never closed -> "More than 20
+                                     # figures have been opened" once the variant list grew to 13.
                 env.close()
         
         # Save aggregate plots for all seeds

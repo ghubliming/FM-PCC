@@ -43,10 +43,30 @@ diffusion_timestep_threshold: 0.5
 
 # The three arms of PLAN §5. Keep them together in one run so K, seeds and env
 # resets are shared by construction.
+# U4.2: arm C accepts DPCC-parity selection suffixes (only meaningful at batch_size>1):
+#   hardflow_new / hardflow_new-r  -> random (index 0)
+#   hardflow_new-t                 -> temporal_consistency
+#   hardflow_new-c                 -> minimum_projection_cost (least NLP intervention)
+# U5: full DPCC-parity naming for arm C — {-r,-c,-t} selection x {'', -tightened}
+# geometry, mirroring DPCC's own 6-variant set (dpcc-{r,t,c}[-tightened]). The selection
+# suffix (-r random / -c minimum_projection_cost / -t temporal_consistency) is only
+# MEANINGFUL at batch_size (mpc) > 1; at mpc==1 all three collapse to the same single
+# candidate (HardFlowPolicy._select returns index 0), so running the trio there is just
+# redundant compute. '-tightened' adds the same 0.025 margin dpcc-c-tightened gets, so
+# arm B vs hardflow_new-c-tightened is matched on the feasible set.
+#
+# DEFAULT below = the two hardflow arms that are non-redundant at mpc==1:
+#   hardflow_new             (untightened baseline; == -r/-c/-t at mpc==1)
+#   hardflow_new-c-tightened (tightened; the matched partner of dpcc-c-tightened)
+# For an mpc>1 sweep, set batch_size>1 and uncomment the full parity set.
 projection_variants: [
-  'diffuser',              # arm A — unguided (field quality floor)
-  'dpcc-c-tightened',      # arm B — the incumbent post-hoc projection
-  'hardflow_new',          # arm C — in-loop constrained sampling (the contribution)
+  'diffuser',                    # arm A — unguided (field quality floor)
+  'dpcc-c-tightened',            # arm B — incumbent post-hoc projection + SAFEGUARD:
+                                 #         cross-check vs the FMv3ODE eval's dpcc-c-tightened
+                                 #         (same DPCC code + checkpoint) to prove the port is clean
+  # arm C, full DPCC-parity matrix (needs HFFM_BATCH>1 to differ; at mpc==1 the -r/-c/-t collapse)
+  'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',
+  'hardflow_new-r-tightened', 'hardflow_new-c-tightened', 'hardflow_new-t-tightened',
 ]
 
 projection_cost: 'pos_vel'
@@ -59,13 +79,12 @@ constraint_types: [
 
 # ── arm C only ────────────────────────────────────────────────────────────────
 hardflow:
-  # PLAN §3.4, decided explicitly: FAITHFUL BATCH-1 is the headline. Upstream
-  # hard-asserts batch_size == 1 (no candidate fan), and batch-1 is also the
-  # honest comparison against Gen13's numbers. The sampler DOES generalise —
-  # values > 1 solve one independent NLP chain per candidate, so wall time scales
-  # linearly — but candidate selection then falls back to index 0, because arm C
-  # has no per-candidate projection cost to rank by. Raise this only to answer
-  # "does the candidate fan explain arm B's advantage?", and say so in the write-up.
+  # PLAN §3.4: FAITHFUL BATCH-1 is the default headline (upstream asserts batch==1;
+  # honest vs Gen13). U4.2 adds a real candidate fan: batch_size>1 solves one NLP
+  # chain per candidate (wall time scales linearly) and selects among them by the
+  # variant suffix (-c/-r/-t) — the same MPC machinery as DPCC. Set batch_size: 4
+  # to close the fix_3 confound (B ran batch-4 + selection, C ran batch-1).
+  # Env override: HFFM_BATCH.
   batch_size: 1
 
   # 'deriv'      -> reuse FMPCC's own Euler kinematics constraints, so arms B and C
@@ -83,9 +102,22 @@ hardflow:
   # upstream and becomes live only if a competing objective term is added.
   reg_scale: 1.0
 
-  # 'all'  -> project at every ODE step (upstream default, K NLP solves)
-  # 'late' -> only the second half of the ODE (K//2 solves, cheaper, less guided)
+  # ── U4 late-activation threshold (fix_6: DPCC polarity) ────────────────────
+  # SAME meaning as DPCC's diffusion_timestep_threshold: the fraction of the (late)
+  # trajectory over which the NLP is active — HIGHER = MORE projection. The NLP is
+  # solved when tau_next >= (1 - threshold); the FINAL step is ALWAYS solved (the
+  # terminal solve is what the safety guarantee rides on). Env override: HFFM_ACT_THRESHOLD.
+  #   1.0 -> every step (full; the safe default, matches old behaviour)
+  #   0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
+  #   0.0 -> terminal-only NLP (~ post-hoc projection of the final sample)
+  activation_threshold: 1.0
+  # Back-compat alias, used only if activation_threshold is absent: all|late -> 1.0|0.5
   activation: all
+
+  # ── U4.2: candidate-selection ranking key (for hardflow_new-c) ──────────────
+  # 'prox'    -> rank by total NLP intervention  Σ||x1_proj - x1_ref||^2 (recommended)
+  # 'control' -> rank by control effort  Σ||u_k||
+  candidate_cost: prox
 
   # PLAN §3.5. Gen13 hit console spam THREE times; one log was 91% CasADi timing
   # tables. `ipopt_print_level` and `casadi_print_time` are SEPARATE switches —

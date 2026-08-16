@@ -1,0 +1,151 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun Aug  9 11:18:08 UTC 2026
+JOB NAME:  gates_mix_visual
+JOB ID:    24406
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   31a4995
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ gates ] running: all
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+=== G0: copy fidelity ===
+  ok   mix_visual_aligning/models/helpers.py
+  ok   mix_visual_aligning/models/unet1d_temporal_cond.py
+  ok   mix_visual_aligning/models/unet1d_temporal_film.py
+  ok   mix_visual_aligning/models/visual_unet.py
+  ok   mix_visual_aligning/models/fm_diffusion.py
+  ok   mix_visual_aligning/sampling/projection.py
+  ok   mix_visual_aligning/datasets/sequence.py
+  ok   mix_visual_aligning/datasets/normalization.py
+  ok   mix_visual_aligning/utils/training.py
+  ok   mix_visual_aligning/utils/arrays.py
+  ok   mix_visual_aligning/utils/serialization.py
+  ok   mix_visual_aligning/utils/setup.py
+  ok   mix_visual_aligning/utils/config.py
+  ok   mix_visual_aligning/models/diffusion.py
+  ok   mix_visual_aligning/models/visual_gaussian_diffusion.py
+  ok   mix_visual_aligning/models/mf_diffusion.py
+  ok   mix_visual_aligning/models/mf_dit_trajectory.py
+  ok   mix_visual_aligning/models/mf_dit_official_trajectory.py
+  ok   mix_visual_aligning/models/mlp.py
+  ok   mix_visual_aligning/models/af_diffusion.py
+  ok   mix_visual_aligning/models/af_dit_trajectory.py
+  ok   mix_visual_aligning/models/af_sit_trajectory.py
+  ok   mix_visual_aligning/utils/training_twotime.py
+
+  grafted (diff expected, 5 files):
+    ok   mix_visual_aligning/models/unet1d_twotime_cond.py  <- Gen3v6 Flow_matcher_U_Net_v2 + Gen7 cond_mlp block (2 additive hunks)
+    ok   mix_visual_aligning/models/mf_trajectory_model.py  <- Gen3v6 + if_vision/vis_config visual branch
+    ok   mix_visual_aligning/models/af_trajectory_model.py  <- Gen3v7 + if_vision/vis_config visual branch (same graft, copied)
+    ok   mix_visual_aligning/models/mf_engine.py  <- Gen3v6 + if_vision/vis_config passthrough
+    ok   mix_visual_aligning/models/af_engine.py  <- Gen3v7 + if_vision/vis_config passthrough
+  new (6 files):
+    ok   mix_visual_aligning/models/engine_registry.py
+    ok   mix_visual_aligning/models/visual_unet_twotime.py
+    ok   mix_visual_aligning/models/unet1d_twotime_film.py
+    ok   mix_visual_aligning/models/visual_mf_diffusion.py
+    ok   mix_visual_aligning/models/visual_af_diffusion.py
+    ok   mix_visual_aligning/models/__init__.py
+
+  G0 PASS — 23 verbatim files match their sources.
+
+=== G1: reference-arm wiring ===
+  ok   diffusion: Diffusion / DDPM (Gen6V4)
+  ok   fm: Flow Matching ODE (Gen7)
+  ok   mf: MeanFlow (Gen3v6)
+  ok   af: alpha-Flow (Gen3v7)
+  G1 PASS
+
+=== G2: JVP survives the visual path ===
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.4M
+  loss=1.999870 finite=True  raw_mse_u=155.168991  peak=280 MiB
+  G2 PASS
+  NOTE: compare peak against the fm arm by hand; >1.3x means the pre-encoded latent (PLAN §6.1) is NOT live and the ResNets are inside the JVP.
+
+=== G3: MeanFlow identity at h=0 ===
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.4M
+  h_mean=0.000e+00 (want 0)   fm_frac=1.000 (want 1.0)
+  G3 PASS
+
+=== G4: alpha spans the real budget ===
+  step       0 -> alpha 1.0000
+  step   25000 -> alpha 1.0000
+  step   50000 -> alpha 0.5000
+  step   75000 -> alpha 0.0000
+  step  100000 -> alpha 0.0000
+  G4 PASS
+
+=== G5: alpha->0 limit is MeanFlow ===
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ AFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.4M
+  alpha=0.000000 (want 0)   discrete_frac=0.000000 (want 0 -> JVP branch only)
+  G5 PASS
+
+=== G6: projector fires at K=1 (RUNTIME) ===
+  threshold = 0.5 (from config/visual_aligning_eval.yaml — the deployed value)
+  building state-only (if_vision=False) models on cpu: no vision encoder needed
+
+[ MFTrajectoryModel ] backbone=unet  vision=False  unet_width(freq_dim)=32  params=4.0M
+  ok   mf: project() called 1x at K=1
+[ AFTrajectoryModel ] backbone=unet  vision=False  unet_width(freq_dim)=32  params=4.0M
+  ok   af: project() called 1x at K=1
+  ok   fm: project() called 1x at K=1 (upstream Gen7 appears to have been fixed — update this gate)
+
+  G6 PASS (runtime)
+  End-to-end confirmation (optional): run eval with --engine mf and flow_steps_v3=1 and check projection_costs[0] is populated and non-trivial.
+
+=== G7: film_mode=v2 on all four arms ===
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualUNet ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE
+  ok   diffusion: 16 FiLM heads, time-only embed (32), h_mlp=n/a
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualUNet ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE
+  ok   fm: 16 FiLM heads, time-only embed (32), h_mlp=n/a
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualUNetTwoTime ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE, h_mlp retained
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.5M
+  ok   mf: 16 FiLM heads, time-only embed (32), h_mlp=yes
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualUNetTwoTime ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE, h_mlp retained
+[ AFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.5M
+  ok   af: 16 FiLM heads, time-only embed (32), h_mlp=yes
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualUNetTwoTime ] film_mode=v2 — TRUE FiLM backbone (per-block γ scale + β shift) ACTIVE, h_mlp retained
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.5M
+  mf@v2 JVP: loss=1.999840 finite=True  raw_mse_u=137.719650
+
+  G7 PASS
+  NOTE: v1 and v2 state_dicts are NOT interchangeable (embed_dim differs and film_proj is new). film_mode is a path key, so they land in parallel dirs — but a v2 config pointed at a v1 checkpoint still dies in load_state_dict.
+
+============================================================
+  G0: PASS
+  G1: PASS
+  G2: PASS
+  G3: PASS
+  G4: PASS
+  G5: PASS
+  G6: PASS
+  G7: PASS
+============================================================
+Job completed successfully.

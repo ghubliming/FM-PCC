@@ -257,6 +257,14 @@ for exp in exps:
                 
                 try:
                     print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
+                    # [Gen0fix2] Restore the per-variant threshold deleted by upstream DPCC commit 7f09d3a.
+                    # threshold 0 => the activation gate fires only on the FINAL step, i.e. ONE projection
+                    # applied after the last denoising/ODE step -- the paper's definition of post-processing
+                    # ("modifying them after the last denoising step, usually by solving an optimization
+                    # problem"). Without it, `post_processing` inherits the normal schedule and is a
+                    # byte-identical duplicate of `dpcc-r`.
+                    threshold = 0.0 if 'post_processing' in variant else diffusion_timestep_threshold
+
                     gradient = True if 'gradient' in variant else False
                     if 'model_free' in variant and 'tightened' in variant:
                         constraints = constraint_list_without_prior_tightened
@@ -276,7 +284,7 @@ for exp in exps:
                     elif 'dt4p0' in variant:
                         delta_t = 4.0 * dt
                     projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
-                                            diffusion_timestep_threshold=diffusion_timestep_threshold)
+                                            diffusion_timestep_threshold=threshold)   # [Gen0fix2] post_processing override
                     projector = None if variant == 'diffuser' else projector
                     trajectory_selection = 'random'
                     if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'

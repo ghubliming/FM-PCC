@@ -1,0 +1,1174 @@
+# DA — MeanFlow UNet@32 K-ladder on `avoiding-d3il`, full 5 seeds
+
+**Date:** 2026-08-11 · **Updated:** 2026-08-13 (see **§11**) · **Type:** data analysis / batch report
+**Status:** Target reached (time axis, significant); low-K confirmed across three families.
+🔴 **§4.1 and §4.4 are revised by §11 — read §11.2–11.4 before quoting the backbone or AlphaFlow verdicts.**
+**Batch:** `temp/1108/Revised_2/batch_avoiding_combined_20260811_221322/` — all rows below are **within-batch**
+**Runs:** eval **24416** (seeds 7–10, 4 h 17 m) · **24496** (seed 6, 1 h 02 m, git `ff4e3fb`) · train 24317 lineage (`backbone=unet freq_dim=32 params=4.0M`)
+**Scope:** 5 seeds {6,7,8,9,10} × 3 halfspaces × `n_trials=2` = **30 episodes per arm**; K ∈ {1,2,5,10}; 13 variants
+**Convention:** [[da-target-is-best-baseline-variant]] · [[pareto-definition-of-good]] · [[benchmark-hierarchy-who-beats-whom]]
+
+---
+
+## 0a. Candidate index — every row quoted in this DA, for self-checking
+
+**All `Candidate` IDs below refer to
+`temp/1108/Revised_2/batch_avoiding_combined_20260811_221322/candidates_multidimensional_raw.csv`.**
+🔴 Candidate numbering is **per-batch and not stable** — the same config has different IDs in the
+2026-08-07 and 2026-08-11 batches. Do not carry these IDs to another CSV.
+
+| # | label used in this DA | `Candidate` | seeds | `Full_Path` (under `logs/avoiding-d3il/plans/`) | used in |
+|---|---|---|---|---|---|
+| 1 | **TARGET** — DPCC **K20 `aw10`** `dpcc-c-tightened` | **C14** | 6–10 | `diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5` | §1, §2 |
+| 1b | *additional* — DPCC K10 `aw10` `dpcc-t-tightened` | C7 | 6–10 | `diffusion/H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5` | §1.1, §2.4 |
+| 2 | **Our headline** — MF `bbunet` **K1** | **C115** | 6–10 | `flow_matching_v3_meanflow/…_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B1_…MeanFlowODE` | §2.1, §3 |
+| 3 | MF `bbunet` **K2** | **C117** | 6–10 | `…/H8_K2_Meuler_T0.5_A0.5_B1_…MeanFlowODE` | §2.2, §3, §4.1 |
+| 4 | MF `bbunet` **K5** | **C119** | 6–10 | `…/H8_K5_Meuler_T0.5_A0.5_B1_…MeanFlowODE` | §3, §10 |
+| 5 | MF `bbunet` **K10** | **C114** | 6–10 | `…/H8_K10_Meuler_T0.5_A0.5_B1_…MeanFlowODE` | §3, §10 |
+| 6 | MF **`mf_dit`** K2 | **C112** | 6–10 | `flow_matching_v3_meanflow/…_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_…MeanFlowODE` | §4.1 |
+| 7 | **AF `bbsit`** K2 | **C36** | 6–10 | `flow_matching_v3_alphaflow/…_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_…AlphaFlowODE` | §4.4 |
+| 8 | AF `bbunet` K2 | **C40** | 6–10 | `flow_matching_v3_alphaflow/…_bbunet_…_rf0.5/H8_K2_Meuler_T0.5_…AlphaFlowODE` | §4.4 |
+| 9 | **naive FM** — FMv3 K20 | **C126** | 6–10 | `flow_matching_v3_ode_selectable/…FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_…FlowMatchingODE` | §4.2 |
+| 10 | *(same as row 1 — the Target)* | C14 | — | — | — |
+| 11 | DPCC K20 (`T1`) | **C16** | 6–10 | `diffusion/H8_K20_T1_Dmodels.GaussianDiffusion_aw10` | §1 |
+| 12 | ~~DPCC K20 `aw1`~~ — **not the paper config, excluded** | C15 | 6–10 | `diffusion/H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1` | §1 (exclusion only) |
+| 13 | DPCC K1 | **C8** | 6–10 | `diffusion/H8_K1_Dmodels.GaussianDiffusion_aw10/H8_K1_T0.5_…GaussianDiffusion` | §1 |
+
+**§1's baseline table, row by row** (all 5-seed, so `agg` over 30 episodes):
+
+| §1 row | resolves to |
+|---|---|
+| **TARGET** `DPCC K20 / dpcc-c-tightened` — 1.000 / 70.13 / 0.5534 | **C14**, variant `dpcc-c-tightened` |
+| `DPCC K20 / dpcc-t-tightened` — 1.000 / 76.13 / 0.5630 | **C14**, variant `dpcc-t-tightened` |
+| `DPCC K20 T1 / dpcc-c-tightened` — 1.000 / 70.13 / 0.5560 | **C16** (duplicate of C14) |
+| §1.1 `DPCC K10 / dpcc-t-tightened` — 1.000 / 68.70 / 0.3217 | **C7**, variant `dpcc-t-tightened` |
+| §1.1 `DPCC K1 / dpcc-c-tightened` — 0.667 / 72.07 / 0.0333 | **C8**, variant `dpcc-c-tightened` |
+
+⚠️ **C16 is a duplicate of C14** (`dpcc-c-tightened` 70.13 steps in both, `t` differing by 0.5 %) —
+same underlying run reached by two exp_name spellings. Treat them as one row.
+
+**§10's threshold sweep has no candidate IDs** — it was never loaded into a batch. Those numbers are
+parsed directly from `temp/1208/00_38_11_eval_meanflow_hardflow_245{06..11}.log`, one job per
+`(K, A)` cell. The `A = 0.5` reference column in §10 comes from **C119** (K5) and **C114** (K10),
+seed 6 only.
+
+**How every aggregate in this DA is computed** — so you can reproduce a cell exactly:
+
+```
+filter: Candidate == <ID>, seed ∈ {6,7,8,9,10}, halfspace_variant ∈ {top-right-hard, top-left-hard, both-hard}
+value:  mean over the 15 (seed × halfspace) cells of the metric
+        S&C   -> n_success_and_constraints
+        steps -> n_steps
+        s/step-> avg_time
+        s/ep  -> mean of (n_steps × avg_time) per cell   [NOT mean(steps) × mean(time)]
+```
+
+⚠️ `s/episode` is the **per-cell product then averaged**, not the product of the two column means.
+The two differ by a few percent; every s/ep figure in this DA uses the former.
+
+---
+
+## 0. TL;DR
+
+**Target reached.** The Target is the paper's baseline — **diffusion-DPCC K20, `aw10`**, best row
+`dpcc-c-tightened` (**C14**): **S&C 1.000, 70.13 steps, 0.5534 s/step**, 30 episodes. Our beating
+row is **MeanFlow UNet@32, K = 1, `hardflow_new-*-tightened`** (C115):
+
+| | S&C | steps | s/step | s/episode |
+|---|---|---|---|---|
+| **Target** — DPCC **K20 `aw10`** `dpcc-c-tightened` | 1.000 | 70.13 | 0.5534 | 38.53 |
+| **MF UNet@32 K1 `hardflow_new-tightened`** | **1.000** | **63.77** | **0.0413** | **2.64** |
+
+**Target reached: MF UNet@32 K1 HardFlow-tightened beats the Target on `avg_time`** — **13.4× per
+step, 14.6× per episode**, seed-cluster bootstrap `−35.89 s/ep, 95 % CI [−38.77, −32.91]`, at
+**equal S&C (1.000, and 5/5 seeds perfect on both sides)**. Steps are also lower (−6.37) but the CI
+straddles 0, so that axis is *not* claimed. Per the win rule this is a **win on one axis**, not a
+Pareto domination.
+
+📌 **The baseline's own K10 is stronger than its K20** (1.000 / 68.70 / 0.3217, §1.1). The Target is
+K20 because that is the paper's comparison point, but our margin against K10 — still **7.8× on
+s/episode** — is the conservative number to quote when robustness matters (§2.4).
+
+**Three further results, all new at 5 seeds:**
+
+1. 🔴 **The seed-6 "K2 dpcc-t-tightened = 1.000" does not survive.** At 5 seeds it is **0.967**
+   (29/30) and therefore **fails the S&C gate** against the Target — despite being −9.27 steps
+   `CI[−14.97, −3.67]` and 11.6× faster. One episode costs it the Target claim (§2.2).
+2. ✅ **Low K is a capability, not a discount — confirmed monotonically.** MF `dpcc-t-tightened`
+   S&C runs **0.967 (K1) → 0.967 (K2) → 0.933 (K5) → 0.933 (K10)** and steps **58.57 → 59.43 →
+   60.60 → 63.63**. More NFE is *worse* on both axes (§3).
+3. 🟡 **UNet@32 beats `mf_dit` at K = 2 — but only there (§4.1, revised by §11.3).** At K = 2:
+   fewer steps in 13 of 13 arms, −9.00 steps `CI[−16.03, −3.70]` at equal S&C, and `mf_dit` times
+   out on 12 of 15 `-c` cells where the UNet times out on 0. **The 2026-08-13 ladder shows both
+   findings are K = 2-scoped**: the DiT's `-c` collapse disappears at K ≥ 5 (§11.2), and across the
+   ladder the UNet trades **−7 to −18 steps for −0.033 S&C** at K = 1, 5 and 10 (§11.3). The
+   one-seed 1/6-permutation ceiling from the Fix_8 guide is gone.
+
+🔴 **But we are not the best config — `AlphaFlow bbsit` is, at every K** (§4.4, and §11.4 with the
+full ladder). Its **K = 1** row reaches S&C 1.000 at **0.92 s/ep vs our 2.64 — 2.9× cheaper**,
+`Δs/ep +1.72 [+1.55, +1.87]`, winning on 5/5 seeds, while our only lead (−2.33 steps) is not
+significant. AF holds S&C 1.000 at **every** K from 1 to 20; we do so only at K = 1. The Target belongs to us; the frontier does
+not. Note also that **backbone preference is family-dependent** — MeanFlow prefers the UNet,
+AlphaFlow clearly prefers SiT (`af_sit` 1.000 vs `af_unet` 0.833) — so §4.1 must not be generalised.
+
+**Per-environment (§2.3):** the Target beat **holds in all three halfspaces** — S&C 1.00 everywhere
+on both sides, time win significant in each (**14.3× / 15.7× / 13.1×**). But the step advantage is
+significant only on `top-left-hard` (−10.10) and **reverses on `both-hard` (+0.80)**, and every S&C
+loss in this DA sits on **`top-right-hard`** — including the §2.2 gate miss, which is the *same*
+(seed 7, top-right) cell at both K = 1 and K = 2.
+
+⚠️ The unprojected `diffuser` arm scores **S&C 0.000–0.167** at every K. All safety comes from
+projection; the MeanFlow field alone is not a controller (§5).
+
+---
+
+## 1. The Target
+
+**The paper baseline is diffusion-DPCC at K = 20, `aw10`.** Per
+[[da-target-is-best-baseline-variant]] the Target is that method's **best row** — gated on S&C, then
+Pareto-read on `(n_steps, avg_time)`. Eligible rows must be **K20 + `aw10` + GaussianDiffusion**;
+5 seeds throughout:
+
+| K20 baseline row | `Candidate` | `aw` | S&C | steps | s/step | s/ep |
+|---|---|---|---|---|---|---|
+| **`DPCC K20` / `dpcc-c-tightened`** ← **TARGET** | **C14** | **10** | **1.000** | **70.13** | **0.5534** | **38.53** |
+| `DPCC K20 T1` / `dpcc-c-tightened` *(dup of C14)* | C16 | 10 | 1.000 | 70.13 | 0.5560 | 38.72 |
+| `DPCC K20` / `dpcc-t-tightened` | C14 | 10 | 1.000 | 76.13 | 0.5630 | 42.54 |
+| ~~`DPCC K20 T0.5` / `dpcc-r-tightened`~~ | C15 | **1** | 1.000 | 78.67 | 0.5973 | 46.70 |
+| ~~`DPCC K20 T0.5` / `dpcc-c-tightened`~~ | C15 | **1** | 0.967 | 71.47 | 0.5684 | 40.69 |
+
+🔴 **C15 is `aw1`, not `aw10` — it is not the paper's DPCC and is excluded from Target selection.**
+It is kept in the table only so the exclusion is visible; do not quote it as a baseline.
+
+**Target = `DPCC K20 / dpcc-c-tightened` (C14: `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5`) —
+S&C 1.000, 70.13 steps, 0.5534 s/step, 38.53 s/episode, 30 episodes.** It is Pareto-dominant within
+the eligible K20 `aw10` family: fewest steps *and* lowest time of every row clearing S&C = 1.000.
+
+📌 **K = 10 is an additional diagnostic, not the Target.** For reference, the best K10 row
+(`C7 / dpcc-t-tightened`) posts **1.000 / 68.70 / 0.3217 / 22.14** — 2.4 steps fewer and 1.7×
+cheaper than the K20 Target, i.e. **the baseline's own K10 setting beats its K20 setting on this
+task**. That is a finding about DPCC worth reporting (§1.1), but it does not move the Target: the
+paper's comparison point is K20, and every verdict in §2 is measured against C14.
+
+### 1.1 Side-finding — DPCC's own K20 is dominated by its K10
+
+| DPCC setting | best row | S&C | steps | s/step | s/ep |
+|---|---|---|---|---|---|
+| **K10** (C7) | `dpcc-t-tightened` | 1.000 | **68.70** | **0.3217** | **22.14** |
+| **K20** (C14) ← Target | `dpcc-c-tightened` | 1.000 | 70.13 | 0.5534 | 38.53 |
+| K1 (C8) | `dpcc-c-tightened` | 0.667 | 72.07 | 0.0333 | 2.68 |
+
+At equal perfect S&C, K10 is **strictly Pareto-dominant over K20** — fewer steps and 1.7× less
+time. Doubling the diffusion budget from 10 to 20 buys nothing on `avoiding`. Worth stating in any
+write-up that quotes the K20 baseline, since it means **the K20 Target is not the strongest
+configuration the baseline method can reach** — our margins against K10 (§2.4) are the conservative
+ones.
+
+---
+
+## 2. Target check — which of our rows beat it
+
+### 2.1 The beat: K = 1, HardFlow-tightened
+
+| axis | Target | MF K1 HF-tightened | Δ (seed-cluster bootstrap, B = 20000) | verdict |
+|---|---|---|---|---|
+| **S&C** (gate) | 1.000 | **1.000** | +0.000 `[0, 0]` | ✅ gate cleared, exactly tied |
+| **avg_time** | 0.5534 | **0.0413** | **−0.512 `[−0.534, −0.490]`** | ✅ **BEAT — 13.4×**, CI excludes 0 |
+| **s/episode** | 38.53 | **2.64** | **−35.89 `[−38.77, −32.91]`** | ✅ **BEAT — 14.6×**, CI excludes 0 |
+| n_steps | 70.13 | 63.77 | −6.37 `[−13.60, +0.23]` | 🟡 favourable, not significant |
+
+Per-seed S&C is **1.000 on all five seeds** for both rows — the gate is not a rounding artifact.
+Per-seed steps: ours `[64.8, 60.2, 66.0, 67.5, 60.3]` vs Target `[61.5, 82.3, 64.0, 70.2, 72.7]`;
+we win 4/5 seeds, and the pooled −6.37 is driven largely by the Target's seed-7 outlier (82.3),
+which is why the step CI still touches 0.
+
+> **Target reached: `MF UNet@32 K1 hardflow_new-tightened` beats the Target on `avg_time`
+> (13.4× per step, 14.6× per episode) at equal S&C.** Steps favour us but are not claimable.
+> This is a **one-axis win**, not a domination.
+
+`-r` / `-c` / `-t` are numerically identical here — at `hardflow.batch_size: 1` all three selection
+rules collapse to index 0, exactly as the yaml documents. Report them as one arm.
+
+### 2.2 The near-miss: K = 1 and K = 2 DPCC-projected
+
+| row | S&C | steps | Δsteps vs Target | Δtime | gate |
+|---|---|---|---|---|---|
+| MF K1 `dpcc-t-tightened` | **0.967** | 58.57 | **−11.57 `[−18.50, −5.23]`** | −0.535 `[−0.557, −0.513]` | ❌ 0.967 < 1.000 |
+| MF K2 `dpcc-t-tightened` | **0.967** | 59.43 | **−10.70 `[−17.57, −4.50]`** | −0.526 `[−0.548, −0.504]` | ❌ 0.967 < 1.000 |
+
+Both would be **strict Pareto dominations of the Target** — significantly fewer steps *and* ~30×
+less time (36 s/ep cheaper) — but **S&C is the only gate, and they miss it.** 0.967 = **29 of 30 episodes**; the
+single failure is seed 7 (`S&C 0.83` on one of its three halfspaces). The ΔS&C CI is
+`[−0.100, +0.000]`, i.e. not significantly worse than the Target — but "not significantly worse"
+does not clear a gate defined on the point estimate.
+
+🔴 **This is the correction to the earlier seed-6-only reading.** On seed 6 alone `dpcc-t-tightened`
+scored S&C 1.000 at both K1 and K2 and looked like a clean Target beat. Four more seeds turn it into
+a near-miss. The Fix_8 guide's §3 headline
+([`../Fix_8_Unet/GUIDE_bootstrap_UNet32K2_vs_FMv3K20_DPCCK20.md`](../Fix_8_Unet/GUIDE_bootstrap_UNet32K2_vs_FMv3K20_DPCCK20.md))
+should be read as superseded on that point — its own §5 said exactly this would happen.
+
+### 2.3 Per-environment breakdown — does the Target beat hold in all three?
+
+The pooled figure is the headline (paper convention), but the three halfspaces are genuinely
+different problems and must be inspected separately. Cells are **S&C / steps / s-per-episode**,
+10 episodes each (5 seeds × 2 trials).
+
+| row | `top-right-hard` | `top-left-hard` | `both-hard` |
+|---|---|---|---|
+| **Target** DPCC K20 `-c-tight` | 1.00 / 77.2 / 38.42 | 1.00 / 68.4 / 38.91 | 1.00 / 64.8 / 38.27 |
+| **MF K1 HF-tightened** | **1.00** / 67.4 / **2.68** | **1.00** / **58.3** / **2.33** | **1.00** / 65.6 / **2.91** |
+| MF K1 `dpcc-t-tightened` | **0.90** / 60.1 / 1.03 | 1.00 / 58.6 / 1.10 | 1.00 / 57.0 / 1.08 |
+| MF K2 `dpcc-t-tightened` | **0.90** / 62.2 / 1.76 | 1.00 / 58.9 / 1.63 | 1.00 / 57.2 / 1.57 |
+
+Per-env seed-cluster bootstrap, **MF K1 HF-tightened − Target**:
+
+| env | ΔS&C | Δsteps | Δ s/episode |
+|---|---|---|---|
+| `top-right-hard` | +0.00 `[0, 0]` | −9.80 `[−21.00, +0.80]` | **−35.74 `[−39.49, −32.69]`** `*` |
+| `top-left-hard` | +0.00 `[0, 0]` | **−10.10 `[−18.50, −2.70]`** `*` | **−36.58 `[−43.44, −29.64]`** `*` |
+| `both-hard` | +0.00 `[0, 0]` | **+0.80** `[−3.80, +6.10]` | **−35.36 `[−37.61, −33.01]`** `*` |
+
+**Two things this changes:**
+
+1. ✅ **The Target beat is robust — it holds in all three environments.** S&C is exactly 1.00 in
+   every env on both sides, and the time win is significant in every env (**14.3×, 15.7×, 13.1×**).
+   The pooled claim is not carried by one easy environment.
+2. 🔴 **The step advantage is only significant on `top-left-hard`, and reverses on `both-hard`.**
+   The pooled −6.37 decomposes into −10.10 (significant, top-left), −9.80 (ns, top-right) and
+   **+0.80 — we are nominally *worse* on `both-hard`**. This is the concrete reason §2.1 does not
+   claim the step axis; the honest phrasing is *"13–16× faster in every environment, shorter paths
+   in one of three"*.
+
+**Failure localisation — the §2.2 gate miss is one cell, and it is reproducible:**
+
+```
+K1  seed 7  top-right-hard : S&C = 0.5   (1 of 2 trials)
+K2  seed 7  top-right-hard : S&C = 0.5   (1 of 2 trials)
+```
+
+The *same seed in the same environment* fails at both K = 1 and K = 2, and nowhere else. So 0.967 is
+not "one unlucky episode out of thirty" — it is **a specific (seed 7, top-right-hard) initial
+condition this checkpoint family cannot solve under DPCC projection**, which the HardFlow arm *does*
+solve (1.00 there). That is a far more actionable statement than a pooled rate, and it makes §7.3 a
+single-episode debugging task rather than a statistics problem.
+
+📌 **`top-right-hard` is the hard environment for the whole MeanFlow family**, consistent with the
+history: it was the width-256 run's catastrophic cell (RESULTS §4). Every MF row that loses S&C in
+this DA loses it there.
+
+### 2.4 Conservative check — the same beat against DPCC's *stronger* K10
+
+§1.1 shows the baseline's K10 setting dominates its own K20. Since the Target is fixed at K20 by the
+paper's framing, the K10 comparison is the tougher, more conservative version of our claim — and it
+still holds:
+
+| axis | DPCC K10 `dpcc-t-tightened` (C7) | MF K1 HF-tightened | Δ (seed-cluster bootstrap) |
+|---|---|---|---|
+| **S&C** (gate) | 1.000 | **1.000** | +0.000 `[0, 0]` — tied |
+| **avg_time** | 0.3217 | **0.0413** | **−0.280 `[−0.293, −0.271]`** `*` — **7.8×** |
+| **s/episode** | 22.14 | **2.64** | **−19.50 `[−21.83, −17.14]`** `*` — **8.4×** |
+| n_steps | 68.70 | 63.77 | −4.93 `[−11.07, +1.07]` — ns |
+
+**Same verdict, smaller margin: one-axis win on time, 7.8–8.4× instead of 13.4–14.6×.** Quote the
+K20 numbers when reporting against the paper baseline, and these when the question is *"does it beat
+the best DPCC can do on this task?"* — the answer is yes either way, and the step axis is
+unclaimable in both.
+
+---
+
+## 3. The K-ladder — low K is a capability, not a discount
+
+MF UNet@32, `dpcc-t-tightened` (its best DPCC arm at every K), 30 episodes each:
+
+| K | S&C | steps | s/step | s/episode |
+|---|---|---|---|---|
+| **1** | **0.967** | **58.57** | **0.0183** | **1.07** |
+| **2** | **0.967** | 59.43 | 0.0277 | 1.65 |
+| 5 | 0.933 | 60.60 | 0.2238 | 13.56 |
+| 10 | 0.933 | 63.63 | 0.4023 | 25.59 |
+
+**Monotone in the wrong direction for K.** Extra NFE buys nothing: S&C falls, steps rise, and time
+rises ~22×. The same shape holds on `hardflow_new-tightened` (1.000 → 0.933 → 0.933 → 0.833).
+
+**Per-environment** (S&C / steps / s-per-episode), same rows:
+
+| K | `top-right-hard` | `top-left-hard` | `both-hard` |
+|---|---|---|---|
+| **1** | 0.90 / 60.1 / 1.03 | 1.00 / 58.6 / 1.10 | 1.00 / 57.0 / 1.08 |
+| **2** | 0.90 / 62.2 / 1.76 | 1.00 / 58.9 / 1.63 | 1.00 / 57.2 / 1.57 |
+| 5 | **0.80** / 65.7 / 14.78 | 1.00 / 59.6 / 13.79 | 1.00 / 56.5 / 12.09 |
+| 10 | 0.90 / 68.6 / 28.43 | 1.00 / 62.4 / 24.76 | **0.90** / 59.9 / 23.59 |
+
+**The K-monotonicity is real but env-localised.** `top-left-hard` and `both-hard` sit at S&C 1.00
+for K ∈ {1, 2, 5} and only `both-hard` slips at K = 10; the entire pooled S&C decline comes from
+`top-right-hard` (0.90 → 0.90 → **0.80** → 0.90). **The step trend, by contrast, is monotone in
+every environment** (top-right 60.1→68.6, top-left 58.6→62.4, both-hard 57.0→59.9) — that is the
+sturdier half of the low-K claim.
+
+⚠️ The HardFlow ladder degrades differently and worse: `hardflow_new-tightened` on `both-hard` goes
+**1.00 (K1) → 0.90 → 0.90 → 0.50 (K10)**. Its K = 1 dominance (§4.3) is not a mild edge; at K = 10
+the arm half-fails on that env.
+
+This is the ladder [`RESULTS_Fix_8…md`](../Fix_8_Unet/RESULTS_Fix_8_unet_width32_rerun_24317_24334.md) §8.7
+asked for, and it strengthens the L3 leg of
+[`DA_20260805_LowK_Ablation_MFAF_vs_FM_DPCC.md`](./DA_20260805_LowK_Ablation_MFAF_vs_FM_DPCC.md),
+which previously rested on AlphaFlow alone: **a second K = 1–2 family now dominates its own K = 10.**
+
+⚠️ Do not read the K5/K10 drop as "MeanFlow degrades with integration". These are the *same
+checkpoint* sampled at different NFE; a two-time model trained for few-step generation has no
+reason to improve with more Euler steps, and the projector sees a different (slower) trajectory
+distribution. The claim is "K = 1–2 is sufficient", not "K = 10 is broken".
+
+---
+
+## 4. Hierarchy obligations ([[benchmark-hierarchy-who-beats-whom]])
+
+### 4.1 MF must beat `mf_dit` — 🟡 at K = 2 only (revised by §11.3)
+
+| row (K = 2) | S&C | steps | s/step | s/ep |
+|---|---|---|---|---|
+| **MF UNet@32 `dpcc-t-tightened`** | 0.967 | **59.43** | 0.0277 | **1.65** |
+| MF `mf_dit` `dpcc-t-tightened` | 0.967 | 68.43 | 0.0253 | 1.73 |
+
+Equal S&C, **−9.00 steps**, marginally slower per step (+9 %, within contention noise) but lower
+per episode. Per-seed S&C shows the two fail on *different* seeds (ours seed 7, `mf_dit` seed 10).
+**The UNet is the better MeanFlow backbone at matched K**, now on 5 real seeds — the Fix_8 guide's
+§4 could only assert this against a 1/6 permutation floor with one UNet seed.
+
+**Per-env — the win is almost entirely `top-right-hard`:**
+
+| row (K = 2) | `top-right-hard` | `top-left-hard` | `both-hard` |
+|---|---|---|---|
+| **MF UNet@32 `-t-tight`** | 0.90 / **62.2** | 1.00 / **58.9** | 1.00 / **57.2** |
+| `mf_dit` `-t-tight` | 0.90 / **83.7** | 1.00 / 61.0 | 1.00 / 60.6 |
+
+−21.5 steps on `top-right-hard`, versus −2.1 and −3.4 elsewhere. Both backbones lose the same
+0.10 of S&C on that env. So on the *matched headline arm* the reading is **"the UNet is far better
+where the MeanFlow family is weak, and roughly equal where it is strong"**.
+
+But `dpcc-t-tightened` is the arm that flatters the DiT most. Across the full arm set the picture is
+one-sided.
+
+#### 4.1.1 All 13 arms at K = 2 — the UNet has fewer steps in **13 / 13**
+
+| arm | UNet@32 S&C / steps | `mf_dit` S&C / steps | ΔS&C | Δsteps |
+|---|---|---|---|---|
+| `diffuser` | 0.033 / 62.70 | 0.067 / 68.07 | −0.033 | −5.37 |
+| `dpcc-r` | 0.467 / 63.03 | 0.633 / 79.50 | −0.167 | −16.47 |
+| **`dpcc-c`** | **0.800 / 97.30** | **0.067 / 185.93** | **+0.733** | **−88.63** |
+| `dpcc-t` | 0.467 / 58.77 | 0.433 / 68.37 | +0.033 | −9.60 |
+| `dpcc-r-tightened` | 0.967 / 65.07 | 0.967 / 70.80 | +0.000 | −5.73 |
+| **`dpcc-c-tightened`** | **0.933 / 97.20** | **0.100 / 186.13** | **+0.833** | **−88.93** |
+| `dpcc-t-tightened` | 0.967 / 59.43 | 0.967 / 68.43 | +0.000 | −9.00 |
+| `hardflow_new-r` | 0.567 / 59.37 | 0.533 / 75.87 | +0.033 | −16.50 |
+| `hardflow_new-c` | 0.567 / 59.37 | 0.400 / 102.93 | +0.167 | −43.57 |
+| `hardflow_new-t` | 0.567 / 59.37 | 0.467 / 75.90 | +0.100 | −16.53 |
+| `hardflow_new-r-tightened` | 0.933 / 64.80 | 0.900 / 69.77 | +0.033 | −4.97 |
+| `hardflow_new-c-tightened` | 0.933 / 64.80 | 0.767 / 96.93 | +0.167 | −32.13 |
+| `hardflow_new-t-tightened` | 0.933 / 64.80 | 0.967 / 70.23 | −0.033 | −5.43 |
+
+**Δsteps is negative in every single arm — 13 of 13.** On S&C the UNet is ahead in 8 arms, tied in
+2, behind in 3 (`diffuser`, `dpcc-r`, `hardflow_new-t-tightened`), and every one of those three
+losses is ≤ 0.167 while its two biggest wins are **+0.733 and +0.833**.
+
+#### 4.1.2 The mechanism: `mf_dit` times out on `-c`, the UNet never does
+
+> 🔴 **Revised by §11.2 (2026-08-13): this is a K = 2 pathology, not a backbone property.** At
+> K = 5, 10 and 20 the DiT's `-c` arm scores S&C 0.967–1.000 with no timeouts. Everything below is
+> correct **at K = 2** and must be scoped that way.
+
+Almost all of the aggregate difference is one failure mode. Counting cells whose `n_steps ≥ 198`
+(i.e. `max_episode_length − 1`, a **timeout**), out of 15 seed×env cells:
+
+| config | `dpcc-c` | `dpcc-c-tightened` |
+|---|---|---|
+| **`mf_dit`** | **12 / 15 timeouts** | **12 / 15 timeouts** |
+| **UNet@32** | **0 / 15** | **0 / 15** |
+
+Per-env, `dpcc-c-tightened` (S&C / steps):
+
+| config | `top-right-hard` | `top-left-hard` | `both-hard` |
+|---|---|---|---|
+| **UNet@32** | 0.90 / 96.3 | 1.00 / 96.0 | 0.90 / 99.3 |
+| `mf_dit` | **0.10 / 187.1** | **0.10 / 185.0** | **0.10 / 186.3** |
+
+This is the U3 "crushed to a point" collapse
+([`../U3/INVESTIGATION_dpcc-c_stuck_at_point_K2.md`](../U3/INVESTIGATION_dpcc-c_stuck_at_point_K2.md)):
+at K = 2 the DiT emits plans that barely move, `-c` locks onto them because a motionless plan is
+trivially the cheapest to leave alone, and the agent never departs. **It reproduces on 4 of 5 seeds
+and uniformly across all three environments** — a property of the backbone, not of a seed or a map.
+
+**The UNet does not have this failure mode at all.** It is slow on `-c` (97.20 steps vs 59.43 on
+`-t`, §7.4) but it always moves and it almost always arrives. That single difference is worth
++0.833 S&C and −89 steps, and it is why the *pooled* backbone verdict is decisive even though the
+matched `-t-tightened` arm looks close.
+
+#### 4.1.3 On the matched arm, the win is steps — and it is significant
+
+Seed-cluster bootstrap, `dpcc-t-tightened`, **UNet − `mf_dit`**:
+
+| axis | Δ | verdict |
+|---|---|---|
+| S&C | +0.000 `[−0.067, +0.067]` | tied at 0.967 |
+| **n_steps** | **−9.00 `[−16.03, −3.70]`** `*` | **UNet wins** |
+| avg_time | **+0.002 `[+0.002, +0.003]`** `*` | DiT wins, but +8 % on a 0.027 s base |
+| s/episode | −0.078 `[−0.243, +0.062]` | tie |
+
+Per-seed `S&C / steps` (seeds 6–10):
+
+| config | s6 | s7 | s8 | s9 | s10 |
+|---|---|---|---|---|---|
+| **UNet@32** | 1.00 / **58.7** | **0.83** / **60.5** | 1.00 / 62.3 | 1.00 / **58.5** | 1.00 / **57.2** |
+| `mf_dit` | 1.00 / 65.5 | 1.00 / 66.7 | 1.00 / **61.2** | 1.00 / 67.0 | **0.83** / 81.8 |
+
+**UNet has fewer steps on 4 of 5 seeds.** The two backbones drop their single S&C failure on
+*different* seeds (ours 7, the DiT's 10), which is why ΔS&C is a clean tie rather than either
+winning. The DiT's per-step time edge is real but tiny and does not survive into `s/episode`,
+where the UNet's shorter paths cancel it.
+
+#### 4.1.4 What it costs — and the limits of this comparison
+
+The UNet is also the **cheaper model**: 4.0 M parameters vs the DiT's ~10 M, and 8 h 07 m to train
+vs ~11 h (RESULTS §1). So it wins on steps, ties on safety and per-episode time, avoids a
+catastrophic failure mode, and costs less to train.
+
+⚠️ **Limits.** `mf_dit` has 5 seeds only at **K = 2**, so this is a single-K comparison — there is
+no DiT K-ladder to set against §3, and "the UNet is better" is established at K = 2 and nowhere
+else. ⚠️ And per §4.4, this result is **MeanFlow-specific**: AlphaFlow prefers SiT decisively.
+
+### 4.2 MF must beat naive FM — ✅ on time, tie on steps
+
+| row | S&C | steps | s/step | s/ep |
+|---|---|---|---|---|
+| **MF UNet@32 K1 HF-tightened** | 1.000 | 63.77 | **0.0417** | **2.64** |
+| FMv3 K20 `dpcc-c-tightened` (best naive-FM row) | 1.000 | **63.23** | 0.4767 | 29.65 |
+
+Equal S&C, steps a statistical tie (+0.54), **time 11.4× better, wall 11.2× better.** Naive FM is
+cleared on the compute axis, not on path length.
+
+### 4.3 HardFlow must beat the DPCC projector — ✅ only at K = 1
+
+Same checkpoint, `hardflow_new-tightened` vs `dpcc-t-tightened`:
+
+| K | HF-tightened S&C / steps | DPCC-projected S&C / steps | verdict |
+|---|---|---|---|
+| **1** | **1.000** / 63.77 | 0.967 / 58.57 | ✅ HF wins the gate (+0.033), loses steps (+5.2) |
+| 2 | 0.933 / 64.80 | **0.967** / 59.43 | ❌ HF loses both |
+| 5 | 0.933 / 66.57 | 0.933 / **60.60** | ❌ tie on gate, HF loses steps |
+| 10 | 0.833 / 66.37 | **0.933** / 63.63 | ❌ HF loses both |
+
+**HardFlow's advantage exists only at K = 1** — and that is precisely where the Target beat lives.
+The in-loop NLP buys the last 1/30 of safety exactly when there is almost no trajectory to correct;
+by K = 2 post-hoc projection is already better.
+
+🔴 **But measure what the arm is actually doing before calling it "in-loop".** NLP solves per
+environment step, at the `A = 0.5` every run here used:
+
+| K | solves / env step | fraction of integration steps projected |
+|---|---|---|
+| **1** | **1.02** | **1 of 1 — 100 %** |
+| 2 | 1.02 | 1 of 2 — 50 % |
+| 5 | 3.05 | 3 of 5 |
+| 10 | 5.08 | 5 of 10 |
+
+**At K = 1 the HardFlow arm is terminal-only projection.** There is one integration step, the final
+solve always fires, so exactly one NLP is solved — the same count post-hoc projection would use.
+The §2.1 Target beat is therefore *not* evidence that in-loop constrained sampling works; it is
+evidence that **the cheapest possible configuration of arm C works**, and that its NLP (which
+carries the flow-dynamics constraint) is a better single projection than DPCC's.
+
+⚠️ **Consequence for the threshold sweep this obligation demands: it is a no-op at K = 1 and K = 2.**
+`activation_threshold` cannot push below one solve, and at A = 0.5 both K values are already there.
+Only K = 5 and K = 10 have intermediate solves (2 and 4) that a lower threshold can remove — those
+are the only settings where the sweep can measure anything (§7.1).
+
+### 4.4 vs AlphaFlow — the one family we do **not** beat
+
+> 🔄 **Superseded in magnitude by §11.4 (2026-08-13).** With the full 5-seed ladder, AlphaFlow's
+> best row is **K = 1 at 0.92 s/ep** (not K = 2 at 1.36), making it **2.9× cheaper than our
+> headline**, and it holds S&C 1.000 at every K. The direction of §4.4 is unchanged; the margin is
+> larger. The `hardflow_new-*` contamination caveat below is **retired** — clean arms now exist.
+
+`af_sit` also has all 5 seeds in this batch, so it gets a full comparison rather than a footnote.
+
+| row (5 seeds) | S&C | steps | s/step | s/ep |
+|---|---|---|---|---|
+| **AF `bbsit` K2 `dpcc-r-tightened`** | **1.000** | 67.60 | **0.0202** | **1.36** |
+| **MF `bbunet` K1 `hardflow_new-tightened`** (our Target beat) | **1.000** | **63.77** | 0.0417 | 2.64 |
+| MF `bbunet` K2 `dpcc-t-tightened` | 0.967 | 59.43 | 0.0277 | 1.65 |
+| MF `bbmf_dit` K2 `dpcc-t-tightened` | 0.967 | 68.43 | 0.0253 | 1.73 |
+| AF `bbunet` K2 `dpcc-t-tightened` | 0.833 | 61.77 | 0.0732 | 5.08 |
+
+Head-to-head, **MF UNet K1 HF-tightened − AF sit K2 `-r-tightened`** (seed-cluster bootstrap):
+
+| axis | Δ | verdict |
+|---|---|---|
+| S&C | +0.000 `[0, 0]` | tied at 1.000 |
+| n_steps | −3.83 `[−12.23, +2.07]` | favours us, **not significant** |
+| avg_time | **+0.021 `[+0.020, +0.022]`** `*` | **AF wins, 2.1×** |
+| s/episode | **+1.28 `[+1.06, +1.47]`** `*` | **AF wins, 1.9×** |
+
+🔴 **AlphaFlow-sit is the strongest row in this batch, and we do not beat it.** At equal, perfect
+S&C our only lead (steps) is inside the noise, while its time advantage is significant on both
+time axes. Applying the same win rule that granted us the Target in §2.1, **AF beats us on
+`avg_time`** — the verdict has to run both ways. Per-env confirms it is not a pooling artifact:
+AF sit is **1.00 / 1.00 / 1.00** across the three halfspaces, the same clean sweep our K1 arm has.
+
+#### 4.4.1 How it beats us — it never has to pay for the expensive arm
+
+This is *not* a case of AlphaFlow having a faster model. Per-arm cost, side by side:
+
+| config | arm | S&C | s/step | s/ep | |
+|---|---|---|---|---|---|
+| **MF unet K1** | `dpcc-t-tightened` | 0.967 | **0.0183** | **1.07** | ← **our cheapest arm, cheaper than anything AF has** |
+| MF unet K1 | `dpcc-c-tightened` | 0.933 | 0.0183 | 1.32 | |
+| **MF unet K1** | `hardflow_new-tightened` | **1.000** | 0.0413 | 2.64 | ← the only MF arm that reaches 1.000 |
+| **AF sit K2** | `dpcc-r-tightened` | **1.000** | 0.0202 | **1.36** | ← **reaches 1.000 on cheap post-hoc projection** |
+| AF sit K2 | `dpcc-t-tightened` | 0.933 | 0.0228 | 1.61 | |
+| AF sit K2 | `hardflow_new-tightened` | 1.000 | 0.0686 | 4.58 | AF's HF arm is *more* expensive than ours — and unnecessary |
+
+**Read the first and fourth rows together.** Our cheapest arm is **21 % cheaper per episode than
+AlphaFlow's winner** (1.07 vs 1.36 s/ep) — MeanFlow at K = 1 is genuinely the fastest generative
+engine in this batch. But it stalls at S&C 0.967. To buy the last episode we must switch to the
+HardFlow arm, which costs **2.3× more per step** (0.0413 vs 0.0183) and lands at 2.64 s/ep.
+
+> **AlphaFlow's entire advantage is that it never needs the expensive arm.** It gets perfect safety
+> out of ordinary post-hoc DPCC projection; we have to buy ours with an in-loop NLP.
+
+#### 4.4.2 Why — its unprojected field is 8× more often constraint-clean
+
+The `diffuser` arm (no projection at all) explains the whole thing:
+
+| config | unprojected S&C | avg # violations | total violation mass |
+|---|---|---|---|
+| **AF `bbsit` K2** | **0.267** | 15.27 | 2.811 |
+| AF `bbunet` K2 | 0.067 | 14.30 | 1.747 |
+| MF `bbmf_dit` K2 | 0.067 | 17.57 | 3.274 |
+| MF `bbunet` K2 | 0.033 | 15.47 | 2.526 |
+| MF `bbunet` K1 | 0.033 | 15.50 | 2.102 |
+
+**AF sit produces a fully constraint-satisfying trajectory 8× more often than MF UNet** (0.267 vs
+0.033) — roughly 1 episode in 4 versus 1 in 30. Note this is *not* visible in the average violation
+count (15.27 vs 15.50, essentially identical) or the violation mass (2.81 vs 2.10, where MF is
+actually **better**). The difference is in the *tail*: AF's field puts a meaningful fraction of its
+mass entirely inside the feasible set, so the projector starts from a solvable place far more often.
+MF's field is on average no worse — it is just never *clean*.
+
+That is the mechanism to attack if MeanFlow is to close this gap, and it is a **training-side**
+problem, not a projection-side one.
+
+#### 4.4.3 Our step "lead" is one seed
+
+Per-seed, `S&C / steps / s-per-episode` (seeds 6, 7, 8, 9, 10):
+
+| config | s6 | s7 | s8 | s9 | s10 |
+|---|---|---|---|---|---|
+| AF sit K2 `-r-tight` | 1.00/64.3/**1.28** | 1.00/**83.3**/**1.65** | 1.00/62.8/**1.28** | 1.00/64.7/**1.31** | 1.00/62.8/**1.28** |
+| MF unet K1 HF-tight | 1.00/64.8/2.85 | 1.00/**60.2**/2.40 | 1.00/66.0/2.77 | 1.00/67.5/2.73 | 1.00/60.3/2.46 |
+
+- **Time: AF wins 5/5 seeds**, every one by ~2×. That is why the CI is tight and the verdict is safe.
+- **Steps: AF wins 3/5** (seeds 6, 8, 9); we win seeds 7 and 10. Our −3.83 pooled lead comes almost
+  entirely from **seed 7, where AF takes 83.3 steps** — its own worst seed by 19 steps. Drop seed 7
+  and AlphaFlow leads on steps as well.
+
+🔴 **So the step axis should not be reported as a MeanFlow strength at all.** It is a single-seed
+artifact of one bad AlphaFlow seed, and §4.4's table already marks it non-significant. The honest
+summary of this head-to-head is: **AlphaFlow-sit is better, on the axis that resolves, on every
+seed.**
+
+So the honest standing of this DA's headline: *we reached the Target, and a sibling generation
+reached it harder.* [[benchmark-hierarchy-who-beats-whom]] puts diffusion-DPCC as the bar we must
+clear — which we did — but AlphaFlow is the internal state of the art on `avoiding` and any
+"best config" language belongs to it, not to MeanFlow.
+
+**⚠️ Backbone preference is family-dependent — do not generalise §4.1.**
+
+| family | DiT/SiT backbone | UNet backbone | winner |
+|---|---|---|---|
+| **MeanFlow** | `mf_dit` 0.967 / 68.43 | **`bbunet` 0.967 / 59.43** | **UNet** |
+| **AlphaFlow** | **`bbsit` 1.000 / 67.60** | `bbunet` 0.833 / 61.77 | **SiT** |
+
+AlphaFlow + UNet is markedly worse (per-env S&C **0.80 / 0.80 / 0.60**) while MeanFlow + UNet is
+better. §4.1's "the UNet is the better backbone" is a **MeanFlow-specific** result; transplanting it
+to AlphaFlow would be a mistake, and `fix_1`'s original error was exactly this kind of
+over-generalisation from one arm.
+
+📌 **One thing UNet-MeanFlow alone gets right:** the `dpcc-c-tightened` collapse. `mf_dit` scores
+**0.100 / 186.13 steps** and `af_sit` **0.200 / 181.00** there — both timing out — while MF `bbunet`
+holds **0.933 / 97.20**. It is slow on `-c` (§7.4) but it is the only one of the three that does not
+fail on it.
+
+---
+
+## 5. The unprojected field
+
+`diffuser` (no projection), S&C by K: **0.033 (K1) · 0.033 (K2) · 0.000 (K5) · 0.167 (K10)**, with
+14–16 average violations throughout. Goal-reaching is fine; constraint satisfaction is absent.
+
+**The DPCC design intent holds:** the generative brain plans, the projector supplies safety
+(0.03 → 1.00 at K1). It also means **none of our numbers are a property of the MeanFlow field
+alone** — every S&C ≥ 0.9 row in this DA is a projector result on a MeanFlow prior.
+
+---
+
+## 6. Caveats
+
+- 🔴 **`n_steps` averages over goal-successful trials only** (`eval_flow_matching_v3_meanflow.py:518`),
+  so step counts are only comparable between rows at equal S&C. The §2.1 and §4.1 comparisons are
+  gate-matched; the §2.2 rows are *not* (0.967 vs 1.000) and their flattering step counts carry
+  that bias.
+- 🔴 **30 episodes, `n_trials = 2` per cell.** Per-seed S&C resolves to 1/6; the pooled figure to
+  1/30. The bootstrap resamples **seeds** (5 clusters) — the honest unit — which is why the step CIs
+  are wide. `n_trials ≥ 10` would resolve §2.2's one-episode miss.
+- ⚠️ **`avg_time` is wall-clock on shared GPUs** and includes the NLP solve. Differences under
+  ~10–20 % are noise; only the order-of-magnitude gaps (0.018–0.042 vs 0.31–0.60 s) are claimed.
+- ⚠️ **No activation-threshold sweep** — HardFlow ran `A0.5_B1` only (§4.3).
+- ⚠️ **`-r`/`-c`/`-t` are identical for the HardFlow arms** at `batch_size: 1` by construction, not
+  by coincidence. Do not read them as three independent results.
+- ⚠️ **Window-level train/test split leak** (inherited, POST_U10_III §4.2) affects all arms equally.
+- ✅ **Provenance is clean this time:** seeds 6–10 all ran `batch_size: 1`, `activation_threshold:
+  0.5`, `T = 0.5`, `n_trials = 2`, with the eval yaml snapshotted per seed (Fix_9). Seed 6's
+  earlier `HFFM_BATCH=4` run is **superseded and must not be pooled** with these.
+- ✅ **Reproducibility spot-check:** the accidental 24470 re-run of seeds 7–10 reproduced
+  **624/624 cells identically** on S&C and `n_steps`, confirming the eval is deterministic on the
+  outcome axes.
+
+---
+
+## 7. Next
+
+1. **Activation-threshold sweep for the HardFlow arm — at K = 5 and K = 10, _not_ K = 1.**
+   §4.3's solve-density table shows the threshold has no reachable effect at K ∈ {1, 2}: the
+   terminal solve always fires and A = 0.5 already yields exactly one solve, so the knob cannot go
+   lower. Sweep where intermediate solves exist:
+
+   ```bash
+   for K in 5 10; do for A in 0.0 0.1 0.25; do
+     HFFM_ACT_THRESHOLD=$A HFFM_FLOW_STEPS=$K \
+       ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+   done; done
+   ```
+
+   Six jobs, ~15 min each; Fix_9's `A` token keeps the results directories distinct. Hold
+   `DPCC_THRESHOLD` at 0.5 as the fixed arm-B reference — the two knobs are independent by design
+   (`eval_flow_matching_v3_meanflow.py:75`), and moving both makes the result unreadable.
+   `A = 0.0` is the terminal-only floor and answers the question the K = 1 result raises: **do the
+   intermediate solves buy anything at all?**
+2. **`n_trials ≥ 10`** to resolve the §2.2 one-episode gate miss. At 150 episodes/arm the K1/K2
+   DPCC-projected rows either clear 1.000 and become strict Target dominations, or they do not —
+   currently undecidable.
+3. **Probe the `(seed 7, top-right-hard)` cell** on MF K1/K2 `dpcc-t-tightened` (§2.3). It is the
+   *same* initial condition failing at both K, and it is the entire difference between a one-axis
+   win and a Pareto domination of the Target. The HardFlow arm solves it — diffing the two
+   trajectories on that one episode is the cheapest available explanation of when in-loop
+   projection actually matters. Start from the saved `.npz` in
+   `.../H8_K2_…_A0.5_B1_…/7/results/halfspace_top-right-hard/dpcc-t-tightened.npz`.
+4. **Re-check the `-c` arm.** MF `dpcc-c-tightened` posts 97.20 steps at K = 2 (vs 59.43 for `-t`) —
+   the dawdling documented in RESULTS §4.2 reproduces across all 5 seeds and is still unexplained.
+5. **Close the AlphaFlow gap on the training side, not the projection side (§4.4.2).** The gap is
+   *not* that MeanFlow's field violates more — average violations (15.50 vs 15.27) and violation
+   mass (2.10 vs 2.81) are equal-or-better than AF sit. It is that AF's field is **fully clean 8×
+   more often** (0.267 vs 0.033 unprojected S&C). Chasing lower mean violation will not help;
+   what is needed is more probability mass entirely inside the feasible set. Worth checking whether
+   AlphaFlow's bootstrapped target / α-annealing ([[meanflow-family-upstreams]]) is what produces
+   that tail, since that is a portable training change rather than an architecture one.
+6. **Fold this into `MASTER_TEST_HISTORY.md`** — Gen3v6 row. **Not edited here** (standing
+   convention: never self-edit the master index).
+
+## 8. One-line verdict
+
+**At K = 1, MeanFlow UNet@32 with HardFlow-tightened projection matches the best diffusion-DPCC (§9 lists the two sweeps this DA is missing)
+configuration's perfect safety (S&C 1.000, 5/5 seeds, all three halfspaces) while running 8.4×
+faster per episode** — Target reached on the time axis, the step axis favourable but not
+significant, the DPCC-projected K1/K2 rows missing the same Target by one reproducible
+`(seed 7, top-right-hard)` episode — **and AlphaFlow-sit reaching that same Target 1.9× cheaper
+still, so the frontier on `avoiding` remains Gen3v7's, not ours.**
+
+---
+
+## 9. ⚠️ Known gaps — two sweeps this DA does **not** have (deferred to 2026-08-12)
+
+Recorded explicitly so nothing in §0–§8 is read as more complete than it is. **Both gaps are
+comparison-side, not data-side:** every number above is real, matched and 5-seed. What is missing is
+*coverage of the configuration space around* those numbers.
+
+### 9.1 Gap A — the K study is one-sided
+
+Only our own arm has a full multi-seed ladder. The two families we compare against do not:
+
+| family | K1 | K2 | K5 | K10 | K20 |
+|---|---|---|---|---|---|
+| **MF `bbunet` (ours)** | **5 seeds** | **5** | **5** | **5** | — |
+| **MF `mf_dit`** | seed 6 only | **5** | seed 6 only | seed 6 only | seed 6 only |
+| **AF `bbsit`** | 7–10 (4) | **5** | 7–10 (4) | 7–10 (4) | — |
+
+**Consequences for what is claimed above:**
+
+- §4.1's "the UNet is the better MeanFlow backbone" is established **at K = 2 and nowhere else**.
+  There is no `mf_dit` ladder, so we cannot say whether the DiT's `-c` collapse (§4.1.2) is a
+  K = 2 pathology or holds at every K — and we cannot rule out a K at which the DiT is the better
+  backbone.
+- §3's low-K claim is **internal to our own arm**. "K = 1–2 is sufficient" is demonstrated for
+  `bbunet`; that it generalises to the MeanFlow objective is an inference, not a measurement.
+- §4.4's AlphaFlow verdict is at K = 2 only. AF's own ladder is 4-seed and unmerged with seed 6.
+
+🔴 **Additional finding — the `hardflow_new-*` arms of BOTH comparison families are
+provenance-contaminated and must not be quoted.** Every run except our own `bbunet` ladder predates
+Fix_9 (`808cb1a4`, 2026-08-07), so their folders carry no `A`/`B` token and two different HardFlow
+configurations wrote into the same directory:
+
+| candidate | folder | seed 6 | seeds 7–10 |
+|---|---|---|---|
+| **AF `bbsit` K2** (C36) | `H8_K2_Meuler_T0.5_D…` — no A/B token | `hf_batch=4`, `A=0.5` | `hf_batch=1`, **`A=1.0`** |
+| **MF `mf_dit` K2** (C112) | `H8_K2_Meuler_T0.5_D…` — no A/B token | `hf_batch=4`, `A=0.5` | `hf_batch=1`, **`A=1.0`** |
+| *(ours)* MF `bbunet` (C114–119) | `…_T0.5_A0.5_B1_D…` ✅ | `hf_batch=1`, `A=0.5` | `hf_batch=1`, `A=0.5` |
+
+Visible in the timings: `mf_dit`'s HF arm runs **0.113 s/step on seed 6 vs 0.069–0.076 on seeds
+7–10** — a 1.6× split that is configuration, not noise.
+
+**What this invalidates:** the six `hardflow_new-*` rows for `mf_dit` in §4.1.1's table, and AF's
+`hardflow_new-*` rows including the **4.58 s/ep** figure in §4.4.1. Treat all of them as unusable.
+
+**What survives — everything the DA's conclusions actually rest on**, because the HF knobs do not
+touch arm B and the `T0.5` token is identical across seeds in both families:
+
+- §4.1's headline (fewer steps in 13/13) holds on its **7 `dpcc-*` rows**; the `-c` collapse
+  (§4.1.2, 12/15 timeouts) and the matched bootstrap (§4.1.3) are both `dpcc-*` arms.
+- §4.4's headline rests on `dpcc-r-tightened` — a DPCC arm. **Unaffected.**
+- §2 and §3 are entirely our own post-Fix_9 ladder.
+
+**Fix for both: one eval re-run each, all five seeds** (§9.4). Post-Fix_9 output lands in a new
+`A0.5_B1` folder that will not merge with the old one, so re-running seeds 7–10 only would leave the
+result split across two directories — run 6–10 together and retire the old folder.
+
+### 9.2 Gap B — no HardFlow activation-threshold study
+
+Every arm in this DA ran at a single `activation_threshold = 0.5` (`A0.5_B1`). The hierarchy
+obligation ([[benchmark-hierarchy-who-beats-whom]]) asks for arm C to be swept over its threshold
+before any HardFlow claim is complete, and that sweep does not exist yet.
+
+📌 **One structural fact makes this gap narrower than it looks — and one makes it wider.**
+
+*Narrower:* per §4.3, the threshold is **saturated at K = 1 and K = 2** — the terminal solve always
+fires, `A = 0.5` already yields exactly one NLP solve per step, and no lower value can reduce it.
+**Our winning row (K = 1 HF-tightened) therefore cannot improve under this sweep.** Its Target beat
+in §2.1 is threshold-independent and is not at risk.
+
+*Wider:* the corollary is that **only the losers can move.** Every configuration currently ranked
+below the winner sits at K ≥ 5, where 2–4 intermediate solves exist and a lower threshold would make
+them cheaper. So the sweep can only ever *promote* a currently-bad arm — never demote the winner.
+
+### 9.3 The "best horse" decision, and its one real risk
+
+**Decision (deliberate, taken 2026-08-11):** sweep the threshold on the configuration that already
+wins, rather than sweeping the full K × A grid, and accept the cost in coverage.
+
+That is the right call for throughput — the full grid is 4 K × 4 A × 2 families ≈ 32 jobs, versus 6
+for the targeted sweep in §7.1. But it carries a specific, named failure mode:
+
+> 🔴 **Selection-on-the-winner.** We picked the best horse *at `A = 0.5`*. A configuration that
+> looks bad at `A = 0.5` can be the best at a different `A`, and sweeping only the current winner
+> will never find it — especially since §9.2 shows the winner is the one arm that *cannot* move.
+
+Where that risk is concretely live in this batch — the arms worth a look even though they lost:
+
+| arm | at `A = 0.5` | why it could move |
+|---|---|---|
+| MF `bbunet` **K10** `hardflow_new-tightened` | S&C 0.833, 16.35 s/ep | 5 solves/step; at low `A` it drops toward 1 and gets ~5× cheaper. If S&C holds it becomes a serious row. |
+| MF `bbunet` **K5** `hardflow_new-tightened` | S&C 0.933, 9.11 s/ep | 3 solves/step, same logic, and it is already only 0.067 off the gate. |
+| MF `bbunet` **K10** on `both-hard` | S&C **0.50** | The worst cell in the DA (§3). If this is *over*-projection rather than a weak field, a lower `A` fixes it — and that would be the "magical" case. |
+| `mf_dit` HF arms at K ≠ 2 | unmeasured | Gap A: no data at all. |
+
+⚠️ **Note the `both-hard` K10 row specifically.** It is the one place where more projection plausibly
+*hurts* — an arm that half-fails at high solve density and would be expected to *improve* as the
+threshold drops. If that happens it inverts the §4.3 story ("HardFlow only works at K = 1") into
+"HardFlow works at the extremes of solve density and fails in the middle", which is a different and
+more interesting claim.
+
+### 9.4 What to run tomorrow
+
+Ordered so the cheapest thing that could overturn a conclusion runs first.
+
+```bash
+# 1) HF threshold sweep — only K=5,10 have headroom (§4.3). 6 jobs, ~15 min each.
+cd ~/FMPCC/FM-PCC
+for K in 5 10; do for A in 0.0 0.1 0.25; do
+  HFFM_ACT_THRESHOLD=$A HFFM_FLOW_STEPS=$K \
+    ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+done; done
+
+# 2) mf_dit K-ladder, ALL 5 seeds — eval only, checkpoints exist. ~6h with K20.
+#    Fixes both gaps at once: the missing K's AND the HF-arm contamination (S9.1).
+git checkout config/avoiding-d3il.py            # restores imf_backbone: 'mf_dit' (lines 714 AND 1364)
+grep -n "'imf_backbone':" config/avoiding-d3il.py
+# meanflow_projection_eval.yaml -> seeds: [6, 7, 8, 9, 10]   (verify ONE seeds key)
+grep -n '^seeds:' config/meanflow_projection_eval.yaml
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow.sh
+# 🔴 flip imf_backbone back to 'unet' afterwards, before any further UNet run
+
+# 3) AlphaFlow ladder, all 5 seeds, post-Fix_9 provenance. ~6h with K20.
+#    Use eval_alphaflow.sh, NOT eval_alphaflow_hardflow.sh - the latter exports
+#    HFFM_BATCH=4 by default and would reintroduce the very mismatch being fixed.
+# alphaflow_projection_eval.yaml -> seeds: [6, 7, 8, 9, 10]
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/AlphaFlow/eval_alphaflow.sh
+```
+
+**Pre-registration, so tomorrow's results cannot be read post-hoc:** the §2.1 Target beat is
+**not** revisable by any of these runs (§9.2 — the winner is threshold-saturated). What *is* open is
+the **best-config** question: if any K ≥ 5 arm reaches S&C ≥ 1.000 at a lower `A` and a lower
+s/episode than 2.64, it replaces K = 1 HF-tightened as our headline row, and §0 must be rewritten.
+Decide that rule now, before seeing the numbers.
+
+⚠️ Two hazards that already cost a day each this week — check both before submitting:
+duplicate `seeds:` keys in a yaml are silently legal and **the last one wins** (this is what made
+24416 and 24470 evaluate the wrong seeds), and `imf_backbone` is a config edit with **no env
+override**, so a stale working copy silently evaluates the wrong backbone.
+
+### 9.5 Expected impact — why §0 will most likely survive both sweeps
+
+Recorded *before* running them (2026-08-11), so tomorrow's outcome can be checked against a
+prediction rather than rationalised after the fact.
+
+**Prediction: neither sweep changes any conclusion in §0.** Grounds:
+
+1. **The Target beat cannot move.** §9.2 — K = 1 is threshold-saturated at one NLP solve. No value
+   of `A` reduces it further, so §2.1 is immune by construction.
+2. **Most of the DA does not involve arm C at all.** §2.2, §3 and §4.4's headline all rest on
+   `dpcc-*` rows, which the HardFlow threshold does not govern.
+3. **The best-config ranking is immune on arithmetic, not just on structure.** To displace K = 1
+   HF-tightened a challenger must beat **2.64 s/ep**. But the K ≥ 5 arms are expensive *before* any
+   NLP: their cheapest rows are **0.2238 (K5)** and **0.4023 (K10)** s/step against K = 1's
+   **0.0183** — 12× and 22×. K5 HF-tightened is 9.11 s/ep at `A = 0.5`; going from 3 solves to 1
+   might reach ~6 s/ep, still **more than double** the incumbent. K10 is further away again.
+   **A lower threshold cannot close a 12–22× base-cost gap.**
+
+**What could genuinely move, in order of value:**
+
+| candidate | can it change a claim? |
+|---|---|
+| **`mf_dit` K-ladder (§9.4 step 2)** | **Yes** — §4.1's backbone verdict is currently K = 2-only. This is the higher-value job of the two and the only one with a live claim attached. |
+| K10 `both-hard` S&C 0.50 at low `A` | Scientifically yes, for §4.3's story (over-projection vs weak field); **not** for the ranking — the arm is 16.35 s/ep either way. |
+| Everything else in the threshold sweep | Discharges a formal hierarchy obligation. Expect no ranking change. |
+
+> **Bottom line: run the sweeps to close the obligations, not because the result is in doubt.**
+> If §0 *does* change, the most likely cause is the `mf_dit` ladder, not the threshold sweep —
+> and if the threshold sweep alone overturns something, treat that as a signal to re-examine the
+> cost model above, since it would contradict a straightforward arithmetic argument.
+
+---
+
+## 10. HF activation-threshold sweep — first results (2026-08-12, **seed 6 only, preliminary**)
+
+**Runs:** 24506–24511, `temp/1208/`, 2026-08-11 22:54 → 23:44 · 6 jobs, all clean (0 tracebacks)
+**Resolved config, verified in every log:** `dpcc_threshold=0.5 · hf_batch=1 · hf_candidate_cost=prox`,
+with `hf_act_threshold` = 0.0 / 0.1 / 0.25 as intended, at K ∈ {5, 10}.
+🔴 **Seeds: `[6]` only** — the yaml still carried `seeds: [6]` from the 24496 seed-6 fix job, so this
+is **6 episodes per cell**, not 30. Everything below is directional.
+
+### 10.1 The cost result — solid, and it answers §9.3's question
+
+`hardflow_new-t-tightened`, seed 6, 6 episodes. `A = 0.5` column is the same seed-6 slice of the
+§3 ladder, so this is a matched within-seed comparison.
+
+| K | `A` | S&C | steps | s/step | **s/episode** | NLP solves |
+|---|---|---|---|---|---|---|
+| **5** | **0.0** | 1.000 | 68.50 | 0.0757 | **5.18** | **417** |
+| 5 | 0.1 | 1.000 | 68.50 | 0.0767 | 5.25 | 417 |
+| 5 | 0.25 | 1.000 | 68.17 | 0.1040 | 7.09 | 830 |
+| 5 | *0.5 (ref)* | 1.000 | 67.67 | 0.1304 | *8.82* | *1236* |
+| **10** | **0.0** | 1.000 | 69.00 | 0.1237 | **8.53** | **420** |
+| 10 | 0.1 | 1.000 | 69.00 | 0.1240 | 8.56 | 420 |
+| 10 | 0.25 | 1.000 | 68.00 | 0.1733 | 11.79 | 1242 |
+| 10 | *0.5 (ref)* | 1.000 | 69.33 | 0.2312 | *16.03* | *2110* |
+
+**Dropping `A` from 0.5 to 0.0 cuts cost by 41 % at K = 5 (8.82 → 5.18 s/ep) and 47 % at K = 10
+(16.03 → 8.53), with S&C unchanged at 1.000 and steps flat to within 1.3.** Solve counts fall
+3.0× and 5.0×, exactly as the gating arithmetic predicts.
+
+📌 **`A = 0.0` and `A = 0.1` are the same run** — identical solve counts (417 / 420) and identical
+steps. Both reduce to terminal-only projection, so the effective sweep is three points
+(`{0.0 ≡ 0.1}`, `0.25`, `0.5`), not four.
+
+✅ **Sanity check passed:** the `dpcc-*` arms are byte-identical across all three `A` values
+(`dpcc-t-tightened` K5 steps = `69.0 / 56.0 / 53.0` in every job), confirming `A` governs arm C
+only — and confirming the eval is deterministic.
+
+> **On the tightened arm, two-thirds to four-fifths of the NLP solves can be removed with no change
+> in S&C, violations or path length — at seed 6.** But see §10.2: that arm is *saturated*, so this
+> is an upper bound on what the solves could have been doing, not a demonstration that they are
+> useless. The untightened arm, which can move, is noise-dominated at n = 6.
+
+### 10.2 Where the safety signal could live — all 13 arms, not just the headline one
+
+§10.1 reports the *tightened* HardFlow arm. That arm is **saturated**: `1.000 / 0.00 violations /
+0.0000 violation mass` at every `A`, both K. It cannot move, so it carries no information about
+whether the removed solves mattered. The discriminating arms are the **untightened** ones, where
+constraint satisfaction is far from ceiling. Full sweep, seed 6:
+
+| arm | K=5 `A`=0.0 | K=5 `A`=0.25 | K=10 `A`=0.0 | K=10 `A`=0.25 |
+|---|---|---|---|---|
+| `diffuser` (control) | 0.000 / 14.50 | 0.000 / 14.50 | 0.000 / 15.50 | 0.000 / 15.50 |
+| `dpcc-*` (all 6, control) | *identical across `A`* | *identical* | *identical* | *identical* |
+| **`hardflow_new-{r,c,t}`** | **0.167** / 2.17 | **0.167** / 2.17 | **0.500** / 0.33 | **0.333** / 0.67 |
+| `hardflow_new-*-tightened` | 1.000 / 0.00 | 1.000 / 0.00 | 1.000 / 0.00 | 1.000 / 0.00 |
+
+*(S&C / avg # violations. `-r`/`-c`/`-t` are identical to each other, as expected at `batch=1`.)*
+
+✅ **Two controls pass**, which is what makes the rest readable: the `dpcc-*` arms are byte-identical
+across every `A` (correct — `A` governs arm C only), and `diffuser` is untouched. So any movement in
+the `hardflow_new-*` rows is genuinely the threshold.
+
+**Now the full trend on the untightened arm, with `A = 0.5` added:**
+
+| K | `A` | S&C | avg # viol | total violation | NLP solves |
+|---|---|---|---|---|---|
+| 5 | 0.0 ≡ 0.1 | 0.167 | 2.17 | 0.0177 | 363 |
+| 5 | 0.25 | 0.167 | 2.17 | 0.0243 | 740 |
+| 5 | **0.5** | **0.333** | 2.17 | 0.0203 | 1119 |
+| 10 | 0.0 ≡ 0.1 | 0.500 | 0.33 | 0.0117 | 349 |
+| 10 | 0.25 | 0.333 | 0.67 | 0.0177 | 1062 |
+| 10 | **0.5** | **0.667** | **0.17** | **0.0019** | 1890 |
+
+🔴 **The trend is non-monotonic, and `A = 0.5` — the most projection — is nominally the best.**
+Reading only the `0.0` vs `0.25` pair suggests "fewer solves is better" (K10: 0.500 → 0.333); adding
+`0.5` inverts it (0.667, and a 6× lower violation mass). **Both readings are one-episode effects:**
+S&C moves in units of 1/6 here, and per-env total violation has no consistent ordering either
+(K5: `A=0.0` wins 2 of 3 envs; K10: `A=0.5` wins 1 and ties 2).
+
+> **Conclusion: at seed 6 the sweep yields no usable safety signal in either direction.** The arm
+> that could move is noise-dominated at n = 6; the arm with clean numbers is saturated. Only the
+> cost result (§10.1) survives, and it survives because NLP solve counts are deterministic — not
+> because the sample is adequate.
+
+⚠️ This also retires the seed-6 route to §9.3's "magical" case. The **`both-hard` K10 = 0.50 cell**
+scores **1.000** on seed 6 at every `A`, so the hypothesis that a lower threshold rescues it cannot
+be tested here at all. It needs seeds 7–10, which is where that failure actually lives.
+
+### 10.3 Ranking impact — none, as predicted
+
+§9.5 predicted the threshold sweep would not change §0, on the arithmetic that K ≥ 5 arms start
+12–22× more expensive per step than K = 1. **Confirmed:**
+
+| row | s/episode |
+|---|---|
+| **MF K1 HF-tightened, `A = 0.5`** (headline, 5 seeds) | **2.64** |
+| MF K5 HF-tightened, `A = 0.0` (best sweep row, seed 6) | 5.18 |
+| MF K10 HF-tightened, `A = 0.0` (seed 6) | 8.53 |
+
+**The cheapest thing the sweep produced is still 2.0× more expensive than the incumbent**, and that
+comparison already flatters it (seed 6 vs 5-seed). No promotion; §0 stands unchanged. The predicted
+cost reduction (~6 s/ep for K5 at one solve) came in at 5.18 — close enough that the cost model in
+§9.5 can be trusted for planning.
+
+### 10.4 To finish this sweep
+
+Same six jobs, all five seeds. This is the only outstanding piece of the arm-C obligation.
+
+```bash
+cd ~/FMPCC/FM-PCC
+# meanflow_projection_eval.yaml -> seeds: [6, 7, 8, 9, 10]   (ONE seeds key — this is what bit 24506-24511)
+grep -n '^seeds:' config/meanflow_projection_eval.yaml
+for K in 5 10; do for A in 0.0 0.25; do
+  HFFM_ACT_THRESHOLD=$A HFFM_FLOW_STEPS=$K \
+    ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+done; done
+```
+
+**Drop `A = 0.1`** — §10.1 shows it is identical to `A = 0.0`. Four jobs, ~1 h each.
+
+**Report the untightened arms too** — §10.2 shows the tightened ones are saturated and carry no
+information about the threshold. `hardflow_new-t` (no `-tightened`) is the arm to read.
+
+**The question these must answer**, stated before they run: at `A = 0.0`, do K5 and K10 hold their
+`A = 0.5` five-seed S&C of **0.933 / 0.833**? If S&C is preserved, the intermediate solves are pure
+waste and the HardFlow arm should default to terminal-only. If S&C *rises* — particularly on
+`both-hard` at K10, currently 0.50 — then more projection was actively hurting, which inverts §4.3
+and is the most interesting outcome available. If it falls, the solves were doing real work and
+§10.1's cost saving is not free.
+
+⚠️ **Process note:** three consecutive jobs this week (24416, 24470, 24506–24511) ran the wrong seed
+set because the yaml's `seeds:` key was stale or duplicated. **Check `grep -n '^seeds:'` returns one
+line with the intended value before every submit** — it is the single highest-yield 5 seconds in
+this pipeline.
+
+---
+
+## 11. 🔄 UPDATE 2026-08-13 — clean 5-seed ladders for `mf_dit` and `af_sit` arrive
+
+### 11.0 Exactly what was run, and exactly what came out
+
+**Two eval jobs. No training. Nothing about our own arm was re-run.** Both were the commands from
+§9.4 / the AlphaFlow fix, executed 2026-08-12:
+
+| # | command run | → job | what it produced |
+|---|---|---|---|
+| 1 | `git checkout config/avoiding-d3il.py` *(`imf_backbone` → `mf_dit`)*<br>`meanflow_projection_eval.yaml` → `seeds: [6,7,8,9,10]`<br>`./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow.sh` | **24516**<br>11 h 15 m | `mf_dit` ladder: **5 seeds × K{1,2,5,10,20} × 13 variants × 3 envs × 2 trials = 975 eval cells** |
+| 2 | `alphaflow_projection_eval.yaml` → `seeds: [6,7,8,9,10]`<br>`./Slurm_Codes/submit.sh Slurm_Codes/sbatch/AlphaFlow/eval_alphaflow.sh` | **24515**<br>10 h 20 m | `af_sit` ladder: **975 eval cells**, same shape |
+
+Both logs print `[ eval ] NFE budgets to evaluate: 1 2 5 10 20` — the K20 rung is there because of
+the sbatch default edit made the same morning. Both print `hf_batch=1 · A=0.5`, so the HardFlow arms
+are finally on one configuration.
+
+**Why these two jobs existed at all:** §9.1 recorded two defects in the comparison families —
+(a) they had no multi-seed K-ladder, only K = 2; (b) their `hardflow_new-*` arms mixed seed 6
+(`batch=4, A=0.5`) with seeds 7–10 (`batch=1, A=1.0`) in one untokened folder. **Both jobs fixed
+both defects at once**, which is why they were worth ~11 h each.
+
+**What that bought — three claims re-tested, two of which failed:**
+
+1. *"The DiT's `-c` timeout collapse is a backbone property"* (§4.1.2) → **refuted.** It only
+   needed K ≠ 2 to disappear.
+2. *"The UNet is the better MeanFlow backbone"* (§4.1) → **narrowed to K = 2.**
+3. *"AlphaFlow is ahead of us"* (§4.4) → **confirmed, and by more than reported.**
+
+Plus two claims that got *stronger* because there is now cross-family evidence: the low-K result
+(§3) and, untouched, the Target beat (§0–§2).
+
+| what the new data tested | result | effect on this DA |
+|---|---|---|
+| Is the `mf_dit` `-c` **timeout collapse** a backbone property? | **No — K = 2 only.** S&C 0.100 at K2, but **1.000 at K5 and K20** | 🔴 §4.1.2 rescoped to K = 2 (§11.2) |
+| Does "UNet > `mf_dit`" hold **across K**? | **No.** UNet has −7…−18 steps at every K but **−0.033 S&C at K1/5/10**; DiT hits 1.000 at K1/5/10/20, we only at K1 | 🔴 §4.1 downgraded to a K = 2 win + trade-off elsewhere (§11.3) |
+| Where is AlphaFlow's real best row? | **K = 1, 0.92 s/ep** (not K2 at 1.36) — **2.9× cheaper than us**, 5/5 seeds, S&C 1.000 at *every* K | 🔴 §4.4 same direction, **larger** margin (§11.4) |
+| Does **low-K** generalise beyond our arm? | **Yes, all three families.** AF: identical S&C 1.000 from K1→K20 at **0.92 vs 65.41 s/ep** | ✅ §3 strengthened to a cross-family claim (§11.5) |
+| Does the **Target beat** survive a fresh batch? | **Yes, exactly** — 1.000 / 63.77 / 2.64 s/ep, `Δs/ep −35.89 [−38.77, −32.91]` | ✅ §0–§2 unchanged (§11.1) |
+
+**One-line net:** *the headline (Target reached, low-K works) got stronger and broader; both
+comparison claims (backbone superiority, AlphaFlow's margin) moved against us — the DiT is only
+beaten at K = 2, and AlphaFlow is further ahead than §4.4 said.*
+
+**Two gaps remain:** our own **K = 20** was never run, and §10's threshold sweep is still seed-6-only.
+
+**Batch:** `temp/1308/batch_avoiding_combined_20260813_102739/` · **Runs:** eval **24515**
+(AlphaFlow, 10 h 20 m) · **24516** (`mf_dit`, 11 h 15 m), both git `760e524`, both 5 seeds, both
+`hf_batch=1 · A=0.5 · dpcc_threshold=0.5`, 0 tracebacks.
+Backbones confirmed in-log: `backbone=sit params=10.0M`, `backbone=mf_dit params=10.1M`.
+*(24514 was an aborted 11-second seed-6 run — junk, superseded.)*
+
+🔴 **New batch ⇒ new candidate IDs.** §0a's table is for the 08-11 batch and does **not** transfer.
+The IDs below are for `…20260813_102739` only. The Target happens to keep the same ID (**C14**) and
+identical numbers, so §1 and §2 are unaffected.
+
+| family | K1 | K2 | K5 | K10 | **K20** |
+|---|---|---|---|---|---|
+| MF `bbunet` (ours) | C128 | C130 | C134 | C126 | 🔴 **not run** |
+| MF `mf_dit` | C120 | C122 | C123 | C119 | C121 |
+| AF `bbsit` | C39 | C41 | C42 | C38 | C40 |
+
+✅ **§9.1's Gap A is closed and its contamination warning is retired** — both families now have
+full 5-seed ladders at a single `A0.5_B1` configuration. ⚠️ **A new gap opens: our own K20 was never
+run** (the K20 default landed in the eval sbatch after our ladder had already gone).
+
+### 11.1 What survives — the Target beat, unchanged
+
+The Target is still `C14 / dpcc-c-tightened` (1.000 / 70.13 / 0.5534 / 38.53) and our headline row
+reproduces exactly: **1.000 / 63.77 / 0.0413 / 2.64 s/ep**, `Δs/ep −35.89 [−38.77, −32.91]`.
+**§0, §1, §2 stand as written.**
+
+### 11.2 🔴 REVISION to §4.1.2 — the `mf_dit` "`-c` collapse" is a **K = 2 pathology**, not a backbone property
+
+§4.1.2 claimed the DiT's `dpcc-c-tightened` timeout collapse was "a property of the backbone, not of
+a seed or a map". The full ladder refutes that:
+
+| K | `mf_dit` `dpcc-c-tightened` S&C / steps | per-env S&C |
+|---|---|---|
+| 1 | 0.567 / 84.57 | — |
+| **2** | **0.100 / 186.13** | **0.10 / 0.10 / 0.10** ← the collapse |
+| **5** | **1.000 / 67.40** | **1.00 / 1.00 / 1.00** |
+| 10 | 0.967 / 72.63 | — |
+| **20** | **1.000 / 65.90** | **1.00 / 1.00 / 1.00** |
+
+**At K = 5, 10 and 20 the DiT's `-c` arm is fine** — 60–74 steps, no timeouts, S&C 0.967–1.000. The
+collapse exists only at K ∈ {1, 2}, worst at K = 2. §9.1 named this exact risk ("we cannot say
+whether the DiT's `-c` collapse is a K = 2 pathology or holds at every K") and the answer is: it is
+a K = 2 pathology. **§4.1.2 must be read as K = 2-scoped.** The U3 "crushed to a point" mechanism
+still explains it at that K — few-step generation producing near-motionless plans that `-c` then
+locks onto — but it is not a statement about the DiT backbone.
+
+### 11.3 🔴 REVISION to §4.1 — the backbone verdict is a **trade-off**, not "decisive"
+
+§4.1 said the UNet beats `mf_dit` "decisively", on evidence drawn entirely from K = 2. Across the
+ladder it is mixed:
+
+**Same-arm diagnostic** (`dpcc-t-tightened`, the matched control):
+
+| K | `bbunet` S&C / steps | `mf_dit` S&C / steps | ΔS&C | Δsteps |
+|---|---|---|---|---|
+| 1 | 0.967 / 58.57 | **1.000** / 76.90 | **−0.033** | **−18.33** |
+| 2 | 0.967 / 59.43 | 0.967 / 68.43 | +0.000 | **−9.00** `*` |
+| 5 | 0.933 / 60.60 | **0.967** / 70.20 | **−0.033** | **−9.60** |
+| 10 | 0.933 / 63.63 | **0.967** / 71.00 | **−0.033** | **−7.37** |
+
+**Best-arm-per-K:**
+
+| K | `bbunet` best | `mf_dit` best |
+|---|---|---|
+| 1 | 1.000 / 63.77 / **2.64** (HF-t) | 1.000 / 76.90 / **2.25** (dpcc-t-t) |
+| 2 | **0.967 / 59.43 / 1.65** (dpcc-t-t) | 0.967 / 68.43 / 1.72 (dpcc-t-t) |
+| 5 | 0.933 / 60.60 / 13.56 | **1.000** / 67.40 / 13.89 |
+| 10 | 0.933 / 63.63 / 25.59 | **1.000** / 68.27 / 26.71 |
+
+> **Corrected verdict: the UNet produces shorter paths at every K (−7 to −18 steps), but the DiT
+> holds higher S&C at K = 1, 5 and 10, and is cheaper per episode at K = 1.** The UNet's only clean
+> win is **K = 2**, where it matches S&C and takes 9 fewer steps. Everywhere else it is a genuine
+> trade-off: fewer steps for less reliability.
+
+§4.1's "fewer steps in 13 of 13 arms" remains true **at K = 2**, and §4.1.3's bootstrap
+(`−9.00 [−16.03, −3.70]`, S&C tied) reproduces in the new batch. What does **not** survive is the
+generalisation to "the better MeanFlow backbone" — that was a K = 2 result, exactly as §9.1 warned.
+
+### 11.4 🔴 REVISION to §4.4 — AlphaFlow's lead is larger than reported, and it now owns every K
+
+`af_sit` reaches **S&C 1.000 at every K from 1 to 20**, and its K = 1 row is far cheaper than
+anything in this DA:
+
+| row | S&C | steps | s/step | **s/episode** |
+|---|---|---|---|---|
+| **AF `bbsit` K1 `dpcc-t-tightened`** (C39) | **1.000** | 66.10 | **0.0140** | **0.92** |
+| MF `bbunet` K1 HF-tightened (ours, headline) | 1.000 | **63.77** | 0.0413 | 2.64 |
+| MF `mf_dit` K1 `dpcc-t-tightened` | 1.000 | 76.90 | 0.0293 | 2.25 |
+| **TARGET** DPCC K20 `aw10` `dpcc-c-tightened` | 1.000 | 70.13 | 0.5534 | 38.53 |
+
+Head-to-head, **ours − AF K1** (seed-cluster bootstrap): S&C `+0.000 [0,0]` · steps
+`−2.33 [−6.37, +1.47]` (ns) · **s/ep `+1.72 [+1.55, +1.87]` `*` — AF is 2.9× cheaper.**
+AF wins the time axis on **5/5 seeds** (0.87–0.99 s/ep vs our 2.40–2.85).
+
+Against the Target, AF posts `Δs/ep −37.61 [−40.51, −34.65]` — a **41.9× reduction**, versus our
+14.6×. **§4.4's conclusion is unchanged in direction and stronger in magnitude:** we reach the
+Target; AlphaFlow reaches it roughly three times harder, and unlike us it never drops below
+S&C 1.000 anywhere on the ladder.
+
+### 11.5 ✅ REINFORCEMENT to §3 — low-K now confirmed across all three families
+
+s/episode of each family's best row, by K:
+
+| K | AF `bbsit` | MF `mf_dit` | MF `bbunet` (ours) |
+|---|---|---|---|
+| **1** | **0.92** (S&C 1.000) | **2.25** (1.000) | **2.64** (1.000) |
+| 2 | 2.39 (1.000) | 1.72 (0.967) | 1.65 (0.967) |
+| 5 | 13.71 (1.000) | 13.89 (1.000) | 13.56 (0.933) |
+| 10 | 22.42 (1.000) | 26.71 (1.000) | 25.59 (0.933) |
+| 20 | 65.41 (1.000) | 63.15 (1.000) | *(not run)* |
+
+**Every family's cheapest S&C = 1.000 row is at K = 1 or K = 2, and every family's K = 20 row is
+40–70× more expensive for no gain in S&C.** AlphaFlow makes the point most cleanly: identical
+S&C 1.000 from K = 1 to K = 20, at 0.92 vs 65.41 s/ep — a **71× cost difference for zero benefit**.
+§3's "low K is a capability, not a discount" was demonstrated on our arm alone; it now holds for
+three independent model families, and for the diffusion baseline too (§1.1, K10 dominating K20).
+
+### 11.6 Net effect on this DA
+
+| section | status after the update |
+|---|---|
+| §0, §1, §2 (Target beat) | ✅ unchanged — reproduces exactly |
+| §3 (low-K) | ✅ **strengthened** — now cross-family (§11.5) |
+| §4.1 (backbone) | 🔴 **revised** — K = 2 result only; trade-off elsewhere (§11.3) |
+| §4.1.2 (`-c` collapse) | 🔴 **revised** — K = 2 pathology, not a backbone property (§11.2) |
+| §4.4 (AlphaFlow) | 🔴 **revised** — same direction, larger margin (§11.4) |
+| §9.1 (Gap A + contamination) | ✅ **closed** for `mf_dit` and `af_sit`; new gap: our K20 |
+| §10 (HF threshold) | ⚠️ unchanged — still seed-6-only, still owed at 5 seeds |
+
+**Next, in order:** (1) run **our K20** to complete the ladder — one job, now the default grid;
+(2) finish the §10.4 threshold sweep at 5 seeds; (3) re-examine why `bbunet` loses 0.033 S&C to
+`mf_dit` at K = 5 and 10 (§11.3) — that is the gap standing between us and AlphaFlow's
+every-K reliability.

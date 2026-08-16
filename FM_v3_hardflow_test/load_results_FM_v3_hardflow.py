@@ -1,17 +1,22 @@
 """Gen12 results aggregator — arms A/B/C at matched K (PLAN §5).
 
-Reads the provenance-encoding directories written by eval_FM_v3_hardflow.py
-(`results/halfspace_<variant>/K<K>_n<n>/<arm>.npz`) and prints one table per arm.
-`--flow-steps` selects which matched-K bucket to report; mixing buckets in one
-table is exactly the Gen13 fix_7 error and is not possible here by construction.
+fix_5: reads the FMv3ODE-style layout written by eval_FM_v3_hardflow.py —
+    <train-name>/<eval-name: K…_thres…_mpc…_n…>/<seed>/results/halfspace_<hv>/<arm>.npz
+and prints one table per arm. The eval-name folder (activation threshold + MPC count
+from the config/env, K from `--flow-steps` or the plan block) pins one matched bucket;
+mixing buckets is the Gen13 fix_7 error and is not possible here by construction.
 """
 import argparse
 import os
+import sys
 
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import flow_matcher_v3_hardflow.utils as utils
+from flow_matcher_v3_hardflow.sampling.hardflow_projection import resolve_activation_threshold
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 
 cli = argparse.ArgumentParser(description=__doc__)
 cli.add_argument('--config', default='config/hardflow_projection_eval.yaml')
@@ -35,7 +40,16 @@ seeds = config['seeds']
 # --flow-steps overrides which K bucket to report.
 _args0 = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seeds[0])
 flow_steps = args_cli.flow_steps if args_cli.flow_steps is not None else getattr(_args0, 'flow_steps', None)
-run_tag = f'K{flow_steps}_n{n_trials}'
+# U4/U4.2: the eval-name folder encodes the arm-C activation threshold + MPC count (must
+# match eval). fix_5: FMv3ODE-style path <train>/<eval>/<seed>/results/... via hf_paths.
+_hf = config.get('hardflow', {})
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   _hf.get('activation_threshold', _hf.get('activation', 1.0))))
+hf_batch_size = int(os.environ.get('HFFM_BATCH', _hf.get('batch_size', 1)))
+_train_name = hf_paths.train_name(getattr(_args0, 'checkpoint_dir', None), _args0.diffusion_loadpath)
+_eval_name = hf_paths.eval_name(flow_steps, hf_act_threshold, hf_batch_size, n_trials)
+run_tag = _eval_name  # for the summary-plot filename
 
 avoiding_halfspace_variants = config['avoiding_halfspace_variants']
 
@@ -56,10 +70,11 @@ for variant in projection_variants:
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             args = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seed)
+            eval_root = hf_paths.eval_root(args.logbase, args.dataset, _train_name, _eval_name, seed)
 
             # Get data
             try:
-                path = f'{args.savepath}/results/halfspace_{halfspace_variant}/{run_tag}/{variant}.npz'
+                path = f'{eval_root}/results/halfspace_{halfspace_variant}/{variant}.npz'
                 data = np.load(path, allow_pickle=True)
                 for key, sink in (('nfe', nfe_all), ('nlp_solves', nlp_solves_all),
                                   ('nlp_failures', nlp_failures_all)):
@@ -158,7 +173,7 @@ else:
                         xytext=(0, 3), textcoords='offset points',
                         ha='center', va='bottom')
     fig.tight_layout()
-    dest = os.path.join(out_dir, f'success_rates_K{flow_steps}_n{n_trials}.png')
+    dest = os.path.join(out_dir, f'success_rates_{run_tag}.png')
     fig.savefig(dest)
     plt.close(fig)
     print(f'\nWrote {dest}')

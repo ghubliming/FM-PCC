@@ -1,0 +1,186 @@
+# Gen3v7 U3 — UNIFIED α-Flow evaluation config (DPCC arms + HardFlow arm in ONE file).
+#
+# This is the SINGLE source of truth for the Gen3v7 (α-Flow) eval. The Gen3v7 driver reads
+# ONLY this file (repointed away from the shared config/projection_eval.yaml). We do NOT edit
+# config/projection_eval.yaml because it is read by ~50 files across every generation, so adding
+# 'hardflow_new' there would inject arm C into Gen3/Gen7/MeanFlow/etc. and crash the gens without
+# HardFlowPolicy. One dedicated file per generation keeps Gen3v7 isolated AND single-file —
+# the sibling of config/meanflow_projection_eval.yaml.
+#
+# One run emits BOTH the DPCC arms and the HardFlow arm on the α-Flow checkpoint. The HF arm
+# is gated by variant.startswith('hardflow'); a DPCC-only run = list only 'dpcc-*'/'diffuser'
+# variants below. Everything outside the `hardflow:` block matches the shared projection_eval.yaml
+# so the DPCC arms are the identical experiment as the incumbent.
+#
+# ⚠️ Gen3v7 U2 finding — `dpcc-c` at K=2 on the `sit` backbone freezes on the start pose
+# (INVESTIGATION_dpcc-c_Gen3v7.md §3). That is a DPCC-arm defect, not an arm-C one, but it means
+# a K=2 run's `dpcc-c` / `dpcc-c-tightened` cells are expected to read 0.0 — do not read that as
+# a HardFlow-port regression. PORT_GUIDE caution 5 says the same about `hardflow_new-c`:
+# min-projection-cost selects whichever candidate needs least intervention, which is a
+# motionless one whenever the field or the NLP produces one.
+
+write_to_file: True
+exps: [
+  'avoiding-d3il',
+  ]
+seeds: [6]
+
+#seeds: [6, 7, 8, 9, 10]
+
+# NOTE: `flow_steps` (the HardFlow-arm Euler K) lives in the `plan_fm_v3_alphaflow` block in
+# config/avoiding-d3il.py, and one --flow-steps / HFFM_FLOW_STEPS override sets K for ALL arms
+# (matched-K, PLAN §8). This file holds only the experiment knobs (seeds, arms, constraint
+# geometry, arm-C tuning).
+
+avoiding_halfspace_variants: [
+  'top-right-hard',    # /
+  'top-left-hard',     # \
+  'both-hard',         # / and \
+  ]
+n_trials: 2
+
+dt: {
+  'avoiding': 1,    # Since a = [delta_x, delta_y] and not [vx, vy]
+}
+observation_indices: {
+  'avoiding': {'x_des': 0, 'y_des': 1, 'x': 2, 'y': 3},
+}
+
+action_indices: {
+  'avoiding': {'vx': 0, 'vy': 1},
+}
+
+# Policy
+diffusion_timestep_threshold: 0.5
+
+# The three arms of PLAN §5. Keep them together in one run so K, seeds and env
+# resets are shared by construction.
+# U4.2: arm C accepts DPCC-parity selection suffixes (only meaningful at batch_size>1):
+#   hardflow_new / hardflow_new-r  -> random (index 0)
+#   hardflow_new-t                 -> temporal_consistency
+#   hardflow_new-c                 -> minimum_projection_cost (least NLP intervention)
+# U5: full DPCC-parity naming for arm C — {-r,-c,-t} selection x {'', -tightened}
+# geometry, mirroring DPCC's own 6-variant set (dpcc-{r,t,c}[-tightened]). The selection
+# suffix (-r random / -c minimum_projection_cost / -t temporal_consistency) is only
+# MEANINGFUL at batch_size (mpc) > 1; at mpc==1 all three collapse to the same single
+# candidate (HardFlowPolicy._select returns index 0), so running the trio there is just
+# redundant compute. '-tightened' adds the same 0.025 margin dpcc-c-tightened gets, so
+# arm B vs hardflow_new-c-tightened is matched on the feasible set.
+#
+# DEFAULT below = the two hardflow arms that are non-redundant at mpc==1:
+#   hardflow_new             (untightened baseline; == -r/-c/-t at mpc==1)
+#   hardflow_new-c-tightened (tightened; the matched partner of dpcc-c-tightened)
+# For an mpc>1 sweep, set batch_size>1 and uncomment the full parity set.
+projection_variants: [
+  'diffuser',                    # arm A — unguided mean-flow ODE (field-quality floor)
+  # ── arm B: DPCC post-hoc projection (the incumbent; same set as projection_eval.yaml) ──
+  'dpcc-r', 'dpcc-r-tightened',
+  'dpcc-c', 'dpcc-c-tightened', # dpcc-c-tightened doubles as the parity SAFEGUARD vs hardflow_new-c-tightened
+  'dpcc-t', 'dpcc-t-tightened',
+  # ── arm C: HardFlow in-loop constrained sampling (Gen3v7 U3 port; queried at h=0 ⇒
+  # u(x,t,0)=v, an anchor α-Flow trains directly via af_ratio_fm=0.5) ──
+  # full DPCC-parity matrix; -r/-c/-t only DIFFER at HFFM_BATCH>1 (at mpc==1 they collapse to
+  # index 0). '-tightened' adds the same 0.025 margin dpcc-c-tightened gets → matched feasible set.
+  'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',
+  'hardflow_new-r-tightened', 'hardflow_new-c-tightened', 'hardflow_new-t-tightened',
+]
+
+projection_cost: 'pos_vel'
+constraint_types: [
+  'halfspace',
+  'obstacles',
+  'dynamics',
+  'bounds',
+  ]
+
+# ── arm C only ────────────────────────────────────────────────────────────────
+hardflow:
+  # PLAN §3.4: FAITHFUL BATCH-1 is the default headline (upstream asserts batch==1;
+  # honest vs Gen13). U4.2 adds a real candidate fan: batch_size>1 solves one NLP
+  # chain per candidate (wall time scales linearly) and selects among them by the
+  # variant suffix (-c/-r/-t) — the same MPC machinery as DPCC. Set batch_size: 4
+  # to close the fix_3 confound (B ran batch-4 + selection, C ran batch-1).
+  # Env override: HFFM_BATCH.
+  #
+  # ⚠️ Gen3v7 note: `plan_fm_v3_alphaflow.batch_size` is 4, so arms A/B run a 4-candidate
+  # fan. Leaving this at 1 reproduces exactly the fix_3 confound. Use HFFM_BATCH=4 for any
+  # arm-B-vs-arm-C claim.
+  batch_size: 1
+
+  # 'deriv'      -> reuse FMPCC's own Euler kinematics constraints, so arms B and C
+  #                 enforce an IDENTICAL feasible set and differ only in WHEN the
+  #                 constraint is applied. This is the matched comparison and the
+  #                 default.
+  # 'linear_fit' -> HardFlow-faithful s' = A s + B a + c. Requires the .npz from
+  #                 FM_v3_hardflow_test/fit_dynamics_fmv3.py; loading refuses if the
+  #                 normalizer does not match (PLAN §3.1).
+  dynamics_mode: deriv
+  linear_dynamics_path: null    # null -> logs/<env>/dynamics_gen12/linear_model_H8_mpl150.npz
+
+  # Prox weight on ||x1 - x1_ref||^2. With a pure proximal objective this does not
+  # move the argmin (see gates_hardflow.py::gate_g2) — it is kept faithful to
+  # upstream and becomes live only if a competing objective term is added.
+  reg_scale: 1.0
+
+  # ── U4 late-activation threshold (fix_6: DPCC polarity) ────────────────────
+  # SAME meaning as DPCC's diffusion_timestep_threshold: the fraction of the (late)
+  # trajectory over which the NLP is active — HIGHER = MORE projection. The NLP is
+  # solved when tau_next >= (1 - threshold); the FINAL step is ALWAYS solved (the
+  # terminal solve is what the safety guarantee rides on). Env override: HFFM_ACT_THRESHOLD.
+  #   1.0 -> every step (full; the safe default, matches old behaviour)
+  #   0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
+  #   0.0 -> terminal-only NLP (~ post-hoc projection of the final sample)
+  # 🔴 FIX_9 (2026-08-07): 1.0 -> 0.5, matching this file's top-level
+  # diffusion_timestep_threshold so arms B and C are gated alike unless a run says otherwise.
+  # Set it per job with HFFM_ACT_THRESHOLD (and DPCC_THRESHOLD for arm B); both land in the
+  # results-folder name as the A and T tokens, so sweep values can no longer overwrite each other.
+  activation_threshold: 0.5
+  # Back-compat alias, used only if activation_threshold is absent: all|late -> 1.0|0.5
+  activation: all
+
+  # ── U4.2: candidate-selection ranking key (for hardflow_new-c) ──────────────
+  # 'prox'    -> rank by total NLP intervention  Σ||x1_proj - x1_ref||^2 (recommended)
+  # 'control' -> rank by control effort  Σ||u_k||
+  candidate_cost: prox
+
+  # PLAN §3.5. Gen13 hit console spam THREE times; one log was 91% CasADi timing
+  # tables. `ipopt_print_level` and `casadi_print_time` are SEPARATE switches —
+  # silencing only the first is what went wrong before.
+  ipopt_print_level: 0
+  casadi_print_time: False
+
+enlarge_constraints: {
+  'avoiding': 0.025,
+}
+halfspace_constraints: {
+  'avoiding-d3il': [
+    [[0.8, -0.5], [0.4, 0.5], 'below'],     # hard (\ shape)
+    [[0.2, -0.5], [0.6, 0.5], 'below'],     # hard (/ shape)
+    [[0.8, -0.3], [0.575, 0.5], 'below'],   # easier (\ shape)
+    [[0.2, -0.3], [0.425, 0.5], 'below'],   # easier (/ shape)
+    ],
+}
+obstacle_constraints: {
+  'avoiding-d3il': [
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.4, 0.08], 'radius': 0.06},
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.6, 0.08], 'radius': 0.06},
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.5, -0.1], 'radius': 0.06},
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.4, 0.08], 'radius': 0.08},
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.6, 0.08], 'radius': 0.08},
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.5, -0.09], 'radius': 0.08},
+  ]
+}
+bounds: {   # need to be within the limits of the dataset due to the normalization
+  'avoiding-d3il': [
+    {'type': 'lower', 'dimensions': ['vx', 'vy'], 'values': [-0.01, 0]},
+    {'type': 'upper', 'dimensions': ['vx', 'vy'], 'values': [0.01, 0.01]},
+    {'type': 'lower', 'dimensions': ['vx', 'vy'], 'values': [-0.012, 0]},
+    {'type': 'upper', 'dimensions': ['vx', 'vy'], 'values': [0.012, 0.012]},
+  ],
+}
+
+# Plotting
+plot_how_many: 10
+ax_limits: {
+  'avoiding-d3il': [[0.2, 0.8], [-0.3, 0.4]]
+}

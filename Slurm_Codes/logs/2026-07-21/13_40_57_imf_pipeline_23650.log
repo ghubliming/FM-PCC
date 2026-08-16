@@ -1,0 +1,16 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Tue Jul 21 11:40:58 UTC 2026
+JOB ID:    23650
+================================================================================
+Launching iMF Pipeline...
+Step 1: Training submitted. Job ID: 23651
+Step 2: Evaluation scheduled (afterok:23651). Job ID: 23652
+--------------------------------------------------------------------------------
+iMF Pipeline submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+If training fails, evaluation will be cancelled automatically by Slurm.
+================================================================================
+================================================================================
+PIPELINE END:   Tue Jul 21 11:40:58 UTC 2026
+================================================================================

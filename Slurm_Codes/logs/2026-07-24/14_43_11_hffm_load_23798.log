@@ -1,0 +1,57 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Jul 24 12:53:44 UTC 2026
+JOB NAME:  hffm_load
+JOB ID:    23798
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   46fa799
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=  MUJOCO_EGL_DEVICE_ID=
+------------------ Variant: diffuser  (K = 20) ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 0.00
+Success rate (constraints): 0.00
+Average steps: 65.00 +- 8.00
+Average violations: 18.50 +- 10.42
+Average total violations: 4.855 +- 4.592
+Average time (s/plan): 0.173 +- 0.001
+NFE (sum over runs): 31680   NLP solves: 0   NLP failures: 0
+Success per second (goal+constraints / s per plan): 0.00
+$65.0 \pm 8.0$ & $1.00$ & $0.00$ & $18.5 \pm 10.4$ \\\\
+------------------ Variant: dpcc-c-tightened  (K = 20) ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 62.17 +- 5.27
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time (s/plan): 0.474 +- 0.132
+NFE (sum over runs): 30320   NLP solves: 0   NLP failures: 0
+Success per second (goal+constraints / s per plan): 2.11
+$62.2 \pm 5.3$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\\\
+------------------ Variant: hardflow_new  (K = 20) ------------------
+Success rate (goal): 1.00
+Success rate (goal + constraints): 1.00
+Success rate (constraints): 1.00
+Average steps: 69.00 +- 10.80
+Average violations: 0.00 +- 0.00
+Average total violations: 0.000 +- 0.000
+Average time (s/plan): 0.746 +- 0.021
+NFE (sum over runs): 16800   NLP solves: 8400   NLP failures: 0
+Success per second (goal+constraints / s per plan): 1.34
+$69.0 \pm 10.8$ & $1.00$ & $1.00$ & $0.0 \pm 0.0$ \\\\
+
+Wrote FM_v3_hardflow_test/results_plots/success_rates_K20_n2.png
+Aggregation completed successfully.
+================================================================================
+JOB END:   Fri Jul 24 12:53:47 UTC 2026
+================================================================================

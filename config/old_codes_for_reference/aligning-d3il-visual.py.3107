@@ -1,0 +1,807 @@
+from diffuser.utils import watch
+import yaml
+import os
+
+# Read the threshold dynamically from the YAML config, abort if not found
+with open('config/visual_aligning_eval.yaml', 'r') as f:
+    _proj_config = yaml.safe_load(f)
+
+if 'diffusion_timestep_threshold' not in _proj_config:
+    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/visual_aligning_eval.yaml")
+
+_yaml_threshold = _proj_config['diffusion_timestep_threshold']
+
+args_to_watch_dpcc_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion', 'D'),
+    ('action_weight', 'aw'),
+    ('if_vision', 'V'),
+    # NOTE: In visual_aligning_dpcc, max_path_length is max_n_episodes (not rollout steps).
+    ('max_path_length', 'steps'),
+    ('batch_size', 'bs'),           # training mini-batch size (bs32/bs64) — distinct from MPC candidate pool
+    # FiLM_V2: emits 'filmv1'/'filmv2' so v1 and v2 checkpoints save in PARALLEL dirs.
+    # watch() skips this for blocks that don't define film_mode (e.g. ddpm_encdec_vision).
+    ('film_mode', 'film'),
+]
+
+args_to_watch_dpcc_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('n_diffusion_steps', 'K'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+    ('if_vision', 'V'),
+    # NOTE: max_episode_length is forwarded to Robot_Push_Env(max_steps_per_episode=...).
+    #       max_path_length is a loadpath key only (checkpoint directory name fragment).
+    ('max_episode_length', 'steps'),
+    ('mpc_batch_size', 'mpc'),          # MPC candidate pool size in plan folder name (mpc4)
+    # FiLM_V2: separates v1/v2 EVAL result folders.
+    ('film_mode', 'film'),
+]
+
+args_to_watch_fmv3_ode_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+]
+
+args_to_watch_fmv3_ode_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+]
+
+# Gen7 Visual-FM (fm_visual_aligning) — FM-style naming (Beta params, not DDPM K)
+args_to_watch_fm_visual_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),     # Beta distribution α — FM training dist identity key
+    ('time_beta_beta_v3', 'b'),      # Beta distribution β — FM training dist identity key
+    ('action_weight', 'aw'),
+    ('if_vision', 'V'),
+    ('max_path_length', 'steps'),
+    ('batch_size', 'bs'),            # training mini-batch size (bs32/bs64) — distinct from MPC candidate pool
+    # FiLM_V2: emits 'filmv1'/'filmv2' so v1 and v2 checkpoints save in PARALLEL dirs.
+    ('film_mode', 'film'),
+]
+
+args_to_watch_fm_visual_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),   # identifies solver variant (euler/rk4/dopri5)
+    ('diffusion_timestep_threshold', 'T'),
+    ('diffusion', 'D'),
+    ('if_vision', 'V'),
+    ('mpc_batch_size', 'mpc'),       # MPC candidate pool size in plan folder name (mpc4)
+    # FiLM_V2: separates v1/v2 EVAL result folders.
+    ('film_mode', 'film'),
+]
+
+args_to_watch_imf_visual_train = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('diffusion', 'D'),
+    ('time_beta_alpha_v3', 'a'),
+    ('time_beta_beta_v3', 'b'),
+    ('action_weight', 'aw'),
+    ('if_vision', 'V'),
+    ('max_path_length', 'steps'),
+    ('batch_size', 'bs'),
+    ('imf_objective', 'obj'),   # encodes training objective in folder name
+    ('t_schedule', 'ts'),       # U7: time-schedule selector (logit_normal | beta | uniform)
+]
+
+logbase = 'logs'
+
+base = {
+
+    # ══════════════════════════════════════════════════════════════════════════════
+    # TRAINING CONFIGS
+    # ══════════════════════════════════════════════════════════════════════════════
+
+    # ─── 1. DDPM ENCDEC VISION (Training) ───
+    'ddpm_encdec_vision': {
+        # ======================================================================================
+        # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
+        # ======================================================================================
+        'model': 'ddpm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', # Bridge container model
+        'action_dim': 3,            # Dimension of spatial actions (D3IL default: 3)
+
+        # --- Temporal Sequence Dimensions ---
+        # NOTE FOR RESEARCHERS:
+        # - VAE Transformer Path: These are ACTIVE. Tied to window_size via: 5 + 4 - 1 = 8.
+        # - U-Net Path: These are IGNORED during training/planning. U-Net loads contiguous
+        #   state & action sequences at the full 'horizon' length (8) from the dataset.
+        #   If mismatched during rollout (e.g. state context of 5 frames vs image context of 8),
+        #   VisualUNet's internal safety lock (FIX #12) automatically stretches/repeats state history to 8.
+        #   For absolute U-Net parity, set obs_seq_len = 8 and action_seq_size = 8.
+        'obs_seq_len': 5,           # Length of historical observation frames (D3IL default: 5)
+        'action_seq_size': 4,       # Sequential chunk size of decoded action predictions (D3IL default: 4)
+
+        # --- Backbone-Specific Sequence Lengths ---
+        # 1. U-Net Horizon: Only active for the U-Net Backbone. Must be a multiple of 8 (e.g. 8)
+        #    to satisfy the 3-stage downsampling block divisions inside UNet1DTemporalCondModel.
+        'horizon': 8,               # Target sequence length. [Active for U-Net / Ignored by VAE Transformer] (D3IL baseline default: N/A)
+
+        # 2. VAE Window Size: Only active for VAE Transformer. Mathematically locked to:
+        #    window_size = obs_seq_len + action_seq_size - 1 = 8.
+        #    If window_size does not match (5 + 4 - 1 = 8), the Transformer positional embedding table
+        #    size (seq_size) will mismatch the token sequence length, causing a runtime tensor crash.
+        'window_size': 8,           # Context window size. [Active for VAE Transformer / Ignored by U-Net] (D3IL VAE default: 8)
+
+        # --- Denoising & Optimization parameters ---
+        'n_diffusion_steps': 16,    # Number of denoising timesteps. Must match exactly in training and eval. (D3IL baseline default: 16)
+        'action_weight': 10,        # Prioritizes immediate next physical action loss over state prediction. (D3IL baseline default: N/A)
+        'loss_type': 'l2',          # L2 (MSE) reconstruction loss type. Must remain 'l2' for DDPM scheduling. (D3IL baseline default: 'l2')
+
+        # --- Architectural Channel Widths ---
+        # For U-Net: 'dim' controls convolutional block size. Set 'dim: 32' for smaller GPU footprints,
+        #            'dim: 128' or '256' for deep feature extraction.
+        # For Transformer: 'embed_dim' controls token size. Set 'hidden_dim: 256' inside
+        #                  the transformer adapter for stable attention learning.
+        'dim': 32,                  # Core channel depth of U-Net convolutional layers. (D3IL baseline default: N/A)
+        'dim_mults': (1, 2, 4, 8),  # Down/up temporal block multiplier for U-Net. (D3IL baseline default: N/A)
+        'hidden_dim': 256,          # Token embedding size for VAE Transformer. (D3IL VAE default: 64)
+
+        # --- Training Dropout and Regularization ---
+        # - PCC/DPCC CFG: Set to 0.25 (vs D3IL 0.1). 25% dropout trains a strong unconditional prior
+        #   needed for stable Classifier-Free Guidance (CFG, w=1.2) to prevent rollout drift.
+        #   D3IL uses 0.1 because it bypasses guided planning to maximize conditional exposure.
+        'condition_dropout': 0.25,  # Dropout on conditional image embeddings. (D3IL baseline default: 0.1)
+
+
+        # ======================================================================================
+        # 🪆 DUMMY / UNUSED CONFIGURATION PARAMETERS (Kept for compatibility with legacy parser)
+        # ======================================================================================
+        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'obs_dim': 128,             # Ignored; visual features are encoded to 128D under the hood (D3IL baseline default: 128)
+        'visual_input': True,       # Always True for visual encoders (D3IL baseline default: True)
+        'loss_discount': 1.0,       # Gaussian diffusion is not temporally discounted (D3IL baseline default: N/A)
+        'returns_condition': False, # Must remain False; visual tasks lack return-reward tokens (D3IL baseline default: False)
+        'predict_epsilon': True,    # Hardcoded True in the diffusion engine (D3IL baseline default: True)
+        'dynamic_loss': False,      # Unused; standard MSE loss operates (D3IL baseline default: False)
+        'attention': False,         # Ignored; CNN kernels handle spatial filtering for U-Net (D3IL baseline default: N/A)
+        'condition_guidance_w': 1.2,# Guidance scale is evaluated dynamically during rollout (D3IL baseline default: N/A)
+        'test_ret': 0.9,            # Unused (returns_condition=False) (D3IL baseline default: N/A)
+
+
+        # ======================================================================================
+        # 📊 DATASET LOADERS & PATH CONSTRAINTS
+        # ======================================================================================
+        'max_path_length': 512,     # Max training path length (D3IL default: 512)
+
+        # --- Unused Legacy Dataset Keys ---
+        'loader': 'ignored',        # Ignored; custom Aligning_Img_Dataset is imported directly
+        'normalizer': 'LimitsNormalizer', # Scaler stats are computed and saved dynamically (D3IL baseline default: LimitsNormalizer)
+        'preprocess_fns': [],
+        'clip_denoised': False,     # The engine explicitly forces clip_denoised=True (D3IL baseline default: True)
+        'use_padding': True,        # The dataset loader padding is hardcoded to True
+        'include_returns': True,    # Dataset loading handles returns internally
+        'returns_scale': 400,       # Unused
+        'discount': 0.99,           # Unused (D3IL baseline default: 0.99)
+
+
+        # ======================================================================================
+        # 💾 SERIALIZATION & EXPERIMENT LOGS
+        # ======================================================================================
+        'logbase': logbase,
+        'prefix': 'ddpm_encdec_vision/',
+        'exp_name': watch(args_to_watch_dpcc_train),
+
+
+        # ======================================================================================
+        # 🏋️‍♂️ ACTIVE TRAINING HYPERPARAMETERS (Tuning bounds for optimal convergence)
+        # ======================================================================================
+        # Batch Size: Keep at 64. Higher batch sizes risk GPU OOM due to parallel camera ResNet passes.
+        'batch_size': 64,           # Training batch size. (D3IL baseline default: 64)
+
+        # Learning Rate (lr) Tuning Bounds:
+        # - For U-Net: Set lr to 2e-4. Setting above 5e-4 causes convolutional gradient explosion.
+        # - For Transformer: Set lr to 5e-4 (D3IL default). Stable attention allows higher base rates.
+        'learning_rate': 5e-4,      # Target base learning rate. (D3IL baseline default: 5e-4)
+
+        # Parameter Smoothing (EMA):
+        # - For U-Net: Highly crucial for physical path continuity. Keep ema_decay at 0.995.
+        # - For Transformer VAE: Standard parameters work without EMA, but decay = 0.995 stabilizes.
+        'ema_decay': 0.995,         # Exponential Moving Average parameter decay. (D3IL baseline default: 0.995)
+
+        # Training Steps:
+        'n_steps_per_epoch': 1000,  # Epoch steps limit
+        'n_train_steps': 1e5,       # Total training steps (D3IL baseline trains for epoch: 4)
+        'gradient_accumulate_every': 2, # Gradient accumulation steps
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    # ─── 2. FM ENCDEC VISION (Training) ───
+    'fm_encdec_vision': {
+        # ======================================================================================
+        # 🔑 KEY MODEL BACKBONE PARAMETERS (Active configurations that shape networks)
+        # ======================================================================================
+        'model': 'fm_encdec_vision.models.d3il_visual_bridge.VisualDiffusionBridge', # Bridge container model
+        'action_dim': 3,            # Dimension of spatial actions (D3IL default: 3)
+
+        # --- Temporal Sequence Dimensions ---
+        # NOTE FOR RESEARCHERS:
+        # - VAE Transformer Path: These are ACTIVE. Tied to window_size via: 5 + 4 - 1 = 8.
+        # - U-Net Path: These are IGNORED during training/planning. U-Net loads contiguous
+        #   state & action sequences at the full 'horizon' length (8) from the dataset.
+        #   If mismatched during rollout (e.g. state context of 5 frames vs image context of 8),
+        #   VisualUNet's internal safety lock (FIX #12) automatically stretches/repeats state history to 8.
+        #   For absolute U-Net parity, set obs_seq_len = 8 and action_seq_size = 8.
+        'obs_seq_len': 5,           # Length of historical observation frames (D3IL default: 5)
+        'action_seq_size': 4,       # Sequential chunk size of decoded action predictions (D3IL default: 4)
+
+        # --- Backbone-Specific Sequence Lengths ---
+        # 1. U-Net Horizon: Only active for the U-Net Backbone. Must be a multiple of 8 (e.g. 8)
+        #    to satisfy the 3-stage downsampling block divisions inside UNet1DTemporalCondModel.
+        'horizon': 8,               # Target sequence length. [Active for U-Net / Ignored by VAE Transformer] (D3IL baseline default: N/A)
+
+        # 2. VAE Window Size: Only active for VAE Transformer. Mathematically locked to:
+        #    window_size = obs_seq_len + action_seq_size - 1 = 8.
+        #    If window_size does not match (5 + 4 - 1 = 8), the Transformer positional embedding table
+        #    size (seq_size) will mismatch the token sequence length, causing a runtime tensor crash.
+        'window_size': 8,           # Context window size. [Active for VAE Transformer / Ignored by U-Net] (D3IL VAE default: 8)
+
+        # --- Continuous Time Flow Matching (FMv3ODE) Parameters ---
+        # Note: ODE integration steps and solver options are planning-only parameters and are omitted here.
+        'time_beta_alpha_v3': 1.5,  # Alpha parameter for continuous-time Beta distribution sampling (Gen7 default: 1.5)
+        'time_beta_beta_v3': 1.0,   # Beta parameter for continuous-time Beta distribution sampling (Gen7 default: 1.0)
+
+        # --- Denoising & Optimization parameters ---
+        'n_diffusion_steps': 16,    # Number of legacy timesteps. Must match exactly in training and eval. (D3IL baseline default: 16)
+        'action_weight': 10,        # Prioritizes immediate next physical action loss over state prediction. (D3IL baseline default: N/A)
+        'loss_type': 'l2',          # L2 (MSE) reconstruction loss type. Must remain 'l2' for continuous-time target velocity modeling.
+
+        # --- Architectural Channel Widths ---
+        # For U-Net: 'dim' controls convolutional block size. Set 'dim: 32' for smaller GPU footprints,
+        #            'dim: 128' or '256' for deep feature extraction.
+        # For Transformer: 'embed_dim' controls token size. Set 'hidden_dim: 256' inside
+        #                  the transformer adapter for stable attention learning.
+        'dim': 32,                  # Core channel depth of U-Net convolutional layers. (D3IL baseline default: N/A)
+        'dim_mults': (1, 2, 4, 8),  # Down/up temporal block multiplier for U-Net. (D3IL baseline default: N/A)
+        'hidden_dim': 256,          # Token embedding size for VAE Transformer. (D3IL VAE default: 64)
+
+        # --- Training Dropout and Regularization ---
+        # - PCC/DPCC CFG: Set to 0.25 (vs D3IL 0.1). 25% dropout trains a strong unconditional prior
+        #   needed for stable Classifier-Free Guidance (CFG, w=1.2) to prevent rollout drift.
+        #   D3IL uses 0.1 because it bypasses guided planning to maximize conditional exposure.
+        'condition_dropout': 0.25,  # Dropout on conditional image embeddings. (D3IL baseline default: 0.1)
+
+        # ======================================================================================
+        # 🪆 DUMMY / UNUSED CONFIGURATION PARAMETERS (Kept for compatibility with legacy parser)
+        # ======================================================================================
+        'diffusion': 'fm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'obs_dim': 128,             # Ignored; visual features are encoded to 128D under the hood (D3IL baseline default: 128)
+        'visual_input': True,       # Always True for visual encoders (D3IL baseline default: True)
+        'loss_discount': 1.0,       # Gaussian diffusion is not temporally discounted (D3IL baseline default: N/A)
+        'returns_condition': False, # Must remain False; visual tasks lack return-reward tokens (D3IL baseline default: False)
+        'predict_epsilon': True,    # Hardcoded True in the diffusion engine (D3IL baseline default: True)
+        'dynamic_loss': False,      # Unused; standard MSE loss operates (D3IL baseline default: False)
+        'attention': False,         # Ignored; CNN kernels handle spatial filtering for U-Net (D3IL baseline default: N/A)
+        'condition_guidance_w': 1.2,# Guidance scale is evaluated dynamically during rollout (D3IL baseline default: N/A)
+        'test_ret': 0.9,            # Unused (returns_condition=False) (D3IL baseline default: N/A)
+
+        # ======================================================================================
+        # 📊 DATASET LOADERS & PATH CONSTRAINTS
+        # ======================================================================================
+        'max_path_length': 512,     # Max training path length (D3IL default: 512)
+
+        # --- Unused Legacy Dataset Keys ---
+        'loader': 'ignored',        # Ignored; custom Aligning_Img_Dataset is imported directly
+        'normalizer': 'LimitsNormalizer', # Scaler stats are computed and saved dynamically (D3IL baseline default: LimitsNormalizer)
+        'preprocess_fns': [],
+        'clip_denoised': False,     # The engine explicitly forces clip_denoised=True (D3IL baseline default: True)
+        'use_padding': True,        # The dataset loader padding is hardcoded to True
+        'include_returns': True,    # Dataset loading handles returns internally
+        'returns_scale': 400,       # Unused
+        'discount': 0.99,           # Unused (D3IL baseline default: 0.99)
+
+        # ======================================================================================
+        # 💾 SERIALIZATION & EXPERIMENT LOGS
+        # ======================================================================================
+        'logbase': logbase,
+        'prefix': 'fm_encdec_vision/',
+        'exp_name': watch(args_to_watch_fmv3_ode_train),
+
+        # ======================================================================================
+        # 🏋️‍♂️ ACTIVE TRAINING HYPERPARAMETERS (Tuning bounds for optimal convergence)
+        # ======================================================================================
+        # Batch Size: Keep at 64. Higher batch sizes risk GPU OOM due to parallel camera ResNet passes.
+        'batch_size': 64,           # Training batch size. (D3IL baseline default: 64)
+
+        # Learning Rate (lr) Tuning Bounds:
+        # - For U-Net: Set lr to 2e-4. Setting above 5e-4 causes convolutional gradient explosion.
+        # - For Transformer: Set lr to 5e-4 (D3IL default). Stable attention allows higher base rates.
+        'learning_rate': 2e-4,      # Target base learning rate. (D3IL baseline default: 5e-4)
+
+        # Parameter Smoothing (EMA):
+        # - For U-Net: Highly crucial for physical path continuity. Keep ema_decay at 0.995.
+        # - For Transformer VAE: Standard parameters work without EMA, but decay = 0.995 stabilizes.
+        'ema_decay': 0.995,         # Exponential Moving Average parameter decay. (D3IL baseline default: 0.995)
+
+        # Training Steps:
+        'n_steps_per_epoch': 1000,  # Epoch steps limit
+        'n_train_steps': 1e5,       # Total training steps (D3IL baseline trains for epoch: 4)
+        'gradient_accumulate_every': 2, # Gradient accumulation steps
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    # ─── 3. DIFFUSER VISUAL ALIGNING (Training) ───
+    'visual_aligning_dpcc': {
+        # ======================================================================================
+        # 🔑 KEY MODEL BACKBONE PARAMETERS
+        # Gen6V4 — Visual-DPCC: 9D trajectory [act(3) | des_c_pos(3) | c_pos(3)]
+        # DPCC SLSQP projector enforces workspace bounds on c_pos (indices 6-8).
+        # ======================================================================================
+        'model': 'diffuser_visual_aligning.models.visual_unet.VisualUNet',
+        'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'action_dim': 3,            # 3D velocity: [dx, dy, dz]
+        'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)] — MUST be 6, never 3 or 128
+        'if_vision': True,
+        'horizon': 8,               # Must be divisible by 8 for U-Net stride-2 downsampling (padded internally)
+        # n_diffusion_steps = denoising chain length T (d3il vision baseline: 4; encdec baseline: 16; state-only: 50).
+        # 100 gives high sample quality but 25× inference cost vs d3il vision default.
+        # MUST stay identical in visual_aligning_dpcc and plan_visual_aligning_dpcc —
+        # it is embedded in the checkpoint directory name (K{n_diffusion_steps}) via args_to_watch_dpcc_train.
+        # If you retrain with a different K, update both blocks together.
+        'n_diffusion_steps': 20,
+        'action_weight': 10,
+        'loss_type': 'l2',
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'condition_dropout': 0.1,
+        'returns_condition': False,
+
+        # FiLM backbone selector (FiLM_V2 upgrade, 2026-06-27). OPTIONAL knob.
+        #   'v1' (default) → UNet1DTemporalCondModel (current Fake-FiLM additive-bias).
+        #   'v2'           → UNet1DTemporalFiLMModel (True FiLM: per-block γ scale + β shift).
+        # film_mode is now a PATH key (via args_to_watch_dpcc_train → '..._filmv1'/'..._filmv2'),
+        # so v1 and v2 checkpoints/results save in PARALLEL dirs automatically — just flip this
+        # value, no prefix edit needed. v2 is OPT-IN and requires fresh training.
+        # ⚠ Existing pre-2026-06-27 checkpoints were saved WITHOUT the '_filmv1' suffix; to eval
+        #   them either rename their folder to add '_filmv1' or retrain.
+        'film_mode': 'v2',
+
+        # ======================================================================================
+        # 📊 DATASET
+        # ParityAligningDataset loads 9D trajectories from raw pkl files.
+        # max_path_length serves TWO roles here (not a per-trajectory step cap):
+        #   1. Passed as max_n_episodes to ParityAligningDataset — a soft ceiling.
+        #      The aligning dataset has 900 episodes, so min(900, 1000)=900: all episodes
+        #      load and the cap is never hit. Raise if you add more demos; lower to subsample.
+        #   2. Embedded in the checkpoint directory name via args_to_watch_dpcc_train
+        #      (as 'steps1000'). plan_visual_aligning_dpcc.max_path_length MUST match
+        #      exactly, or diffusion_loadpath resolves to a non-existent directory.
+        # ======================================================================================
+        'max_path_length': 1000,
+
+        # ======================================================================================
+        # 💾 SERIALIZATION & EXPERIMENT LOGS
+        # ======================================================================================
+        'logbase': logbase,
+        'prefix': 'visual_aligning_dpcc/',
+        'exp_name': watch(args_to_watch_dpcc_train),
+
+        # ======================================================================================
+        # 🏋️‍♂️ TRAINING HYPERPARAMETERS
+        # ======================================================================================
+        'batch_size': 64,             # d3il vision baseline: 64
+        'learning_rate': 2e-4,
+        'ema_decay': 0.995,
+        'n_steps_per_epoch': 1000,
+        # d3il trains for epoch=4 (epoch-based). We use steps-based training.
+        # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
+        'n_train_steps': 1e5,
+        'gradient_accumulate_every': 2,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    # ─── 4. FM VISUAL ALIGNING (Training) ───
+    'fm_visual_aligning': {
+        # ======================================================================================
+        # 🔑 KEY MODEL BACKBONE PARAMETERS
+        # Gen7 — Visual-FM: 9D trajectory [act(3) | des_c_pos(3) | c_pos(3)]
+        # FM ODE engine: continuous-time Beta sampling, deterministic Euler forward ODE 0→1.
+        # DPCC SLSQP projector enforces workspace bounds on c_pos (indices 6-8).
+        # ======================================================================================
+        'model': 'fm_visual_aligning.models.visual_unet.VisualUNet',
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
+        'action_dim': 3,            # 3D velocity: [dx, dy, dz]
+        'obs_dim': 6,               # 6D obs: [des_c_pos(3), c_pos(3)] — MUST be 6, never 3 or 128
+        'if_vision': True,
+        'horizon': 8,               # Must be divisible by 8 for U-Net stride-2 downsampling (padded internally)
+        # FM uses continuous time — there is no discrete denoising chain.
+        # n_diffusion_steps is DEAD here; kept only as a fallback buffer-size hint in the
+        # GaussianDiffusion constructor (does not affect training dynamics or checkpoint naming).
+        # 'n_diffusion_steps': 100, # DEAD (FM continuous time — see above)
+        #
+        # time_beta_alpha_v3 / time_beta_beta_v3: Beta(α, β) distribution for sampling
+        # training timesteps t ~ Beta(α, β), then inverted to t = 1 - t to concentrate
+        # samples near t=1 (data side) where velocity learning is most informative.
+        # These ARE the training identity keys — embedded in the checkpoint directory name
+        # as 'a{alpha}_b{beta}' via args_to_watch_fm_visual_train. If you change either
+        # value, update the matching plan_fm_visual_aligning block and retrain from scratch.
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        # flow_steps_v3 / ode_solver_* are INFERENCE-ONLY — they live in plan_fm_visual_aligning.
+        # 'flow_steps_v3': 100,             # DEAD in training
+        # 'ode_solver_backend_v3': ...,     # DEAD in training
+        # 'ode_solver_method_v3': ...,      # DEAD in training
+        'action_weight': 1,
+        'loss_type': 'l2',
+        'dim': 32,
+        'dim_mults': (1, 2, 4, 8),
+        'condition_dropout': 0.1,
+        'returns_condition': False,
+
+        # FiLM backbone selector (FiLM_V2 upgrade, 2026-06-27). OPTIONAL knob.
+        #   'v1' (default) → UNet1DTemporalCondModel (current Fake-FiLM additive-bias).
+        #   'v2'           → UNet1DTemporalFiLMModel (True FiLM: per-block γ scale + β shift).
+        # film_mode is now a PATH key (via args_to_watch_fm_visual_train → '..._filmv1'/'..._filmv2'),
+        # so v1 and v2 checkpoints/results save in PARALLEL dirs automatically — just flip this
+        # value, no prefix edit needed. v2 is OPT-IN and requires fresh training.
+        # ⚠ Existing pre-2026-06-27 checkpoints were saved WITHOUT the '_filmv1' suffix; to eval
+        #   them either rename their folder to add '_filmv1' or retrain.
+        'film_mode': 'v1',
+
+        # ======================================================================================
+        # 📊 DATASET
+        # ParityAligningDataset loads 9D trajectories from raw pkl files.
+        # max_path_length serves TWO roles here (not a per-trajectory step cap):
+        #   1. Passed as max_n_episodes to ParityAligningDataset — a soft ceiling.
+        #      The aligning dataset has 900 episodes, so min(900, 1000)=900: all episodes
+        #      load and the cap is never hit. Raise if you add more demos; lower to subsample.
+        #   2. Embedded in the checkpoint directory name via args_to_watch_fm_visual_train
+        #      (as 'steps1000'). plan_fm_visual_aligning.max_path_length MUST match
+        #      exactly, or diffusion_loadpath resolves to a non-existent directory.
+        # ======================================================================================
+        'max_path_length': 1000,
+
+        # ======================================================================================
+        # 💾 SERIALIZATION & EXPERIMENT LOGS
+        # ======================================================================================
+        'logbase': logbase,
+        'prefix': 'fm_visual_aligning/',
+        'exp_name': watch(args_to_watch_fm_visual_train),
+
+        # ======================================================================================
+        # 🏋️‍♂️ TRAINING HYPERPARAMETERS
+        # ======================================================================================
+        'batch_size': 64,             # d3il vision baseline: 64
+        'learning_rate': 2e-4,
+        'ema_decay': 0.995,
+        'n_steps_per_epoch': 1000,
+        # d3il trains for epoch=4 (epoch-based). We use steps-based training.
+        # 5e5 steps @ batch=32 / gradient_accumulate=2 ≈ effective 333 optimizer steps/epoch-equivalent.
+        'n_train_steps': 1e5,
+        'gradient_accumulate_every': 2,
+        'train_test_split': 0.9,
+        'device': 'cuda',
+        'seed': 0,
+    },
+
+    # ══════════════════════════════════════════════════════════════════════════════
+    # PLANNING CONFIGS (EVALUATION / MPC)
+    # ══════════════════════════════════════════════════════════════════════════════
+
+    # ─── 1. DDPM ENCDEC VISION (Planning) ───
+    'plan_ddpm_encdec_vision': {
+        # ======================================================================================
+        # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
+        # ======================================================================================
+        'horizon': 8,               # Target planning horizon (D3IL default: 8)
+        'window_size': 8,           # Explicitly define for evaluation rollout buffer (D3IL default: 8)
+        'n_diffusion_steps': 16,    # Denoising inference steps (D3IL default: 16)
+        'max_episode_length': 1000, # Allowed rollout steps (more than learned steps to allow recovery)
+        'max_path_length': 512,     # Physical rollout execution threshold (D3IL default: 512)
+        'action_weight': 10,
+
+        'policy': 'sampling.Policy',
+        'batch_size': 1,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
+        'exp_name': watch(args_to_watch_dpcc_plan),
+
+        'diffusion': 'ddpm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+
+        'diffusion_loadpath': 'f:ddpm_encdec_vision/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
+        'value_loadpath': 'f:values/H{horizon}_K{n_diffusion_steps}',
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    # ─── 2. FM ENCDEC VISION (Planning) ───
+    'plan_fm_encdec_vision': {
+        # ======================================================================================
+        # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
+        # ======================================================================================
+        'horizon': 8,               # Target planning horizon (D3IL default: 8)
+        'window_size': 8,           # Explicitly define for evaluation rollout buffer (D3IL default: 8)
+        'max_episode_length': 1000, # Allowed rollout steps (more than learned steps to allow recovery)
+        'max_path_length': 512,     # Physical rollout execution threshold (D3IL default: 512)
+        'action_weight': 10,
+
+        # --- Continuous Time Flow Matching Parameters ---
+        'time_beta_alpha_v3': 1.5,  # Alpha parameter for Beta prior continuous-time integration
+        'time_beta_beta_v3': 1.0,   # Beta parameter for Beta prior continuous-time integration
+        'flow_steps_v3': 16,        # Continuous time ODE solver path steps (Gen7 default: 16)
+        # Available backend options: legacy_euler, torchdiffeq.
+        'ode_solver_backend_v3': 'legacy_euler',
+        # Available method options (torchdiffeq backend):
+        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
+        # euler, midpoint, heun2, heun3, rk4,
+        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
+        'ode_solver_method_v3': 'euler',
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+
+        'policy': 'sampling.Policy',
+        'batch_size': 1,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'test_ret': 0,
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': 'f:plans/fm_encdec_vision/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
+        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+
+        'diffusion': 'fm_encdec_vision.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'returns_condition': False,
+        'predict_epsilon': True,
+        'dynamic_loss': False,
+        'diffusion_timestep_threshold': _yaml_threshold,
+
+        'diffusion_loadpath': 'f:fm_encdec_vision/H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}',
+        'value_loadpath': 'f:values/H{horizon}',
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    # ─── 3. DIFFUSER VISUAL ALIGNING (Planning) ───
+    'plan_visual_aligning_dpcc': {
+        # ======================================================================================
+        # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
+        # ======================================================================================
+        'horizon': 8,
+        # MUST equal visual_aligning_dpcc.n_diffusion_steps — both are embedded as K{n_diffusion_steps} in the
+        # checkpoint directory name. A mismatch here produces a FileNotFoundError (wrong K in loadpath).
+        'n_diffusion_steps': 20,
+        # D3IL Robot_Push_Env default is 400 (hardcoded, proven stable for the aligning task).
+        # Fix 10 wired this field so it now actually reaches the env. Start at 400 (proven baseline).
+        # Increase only after confirming the model benefits from a longer rollout budget.
+        'max_episode_length': 400,
+        'max_path_length': 1000,   # MUST match visual_aligning_dpcc.max_path_length (fix_1.3): loadpath key only
+        'action_weight': 10,
+        # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
+        # provides single-frame images per sample, so the model is trained on T_win=1.
+        # Using window_size>1 at eval would mean-pool multiple frames and shift the
+        # FiLM conditioning distribution away from what the model learned.
+        'window_size': 1,
+        'obs_seq_len': 1,
+        'if_vision': True,
+        # mpc_batch_size: MPC candidate pool — all B trajectories compete under trajectory_selection.
+        # DPCC reference (avoiding-d3il.py) uses batch_size=4. diffuser variant overrides to 1 in eval script.
+        # Distinct from train batch_size (32) — renamed to avoid path ambiguity.
+        'mpc_batch_size': 4,
+        # train_batch_size: reflects visual_aligning_dpcc.batch_size (32) for diffusion_loadpath construction.
+        # MUST match the training config exactly or diffusion_loadpath resolves to a non-existent directory.
+        'train_batch_size': 64,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': (
+            'f:plans/visual_aligning_dpcc/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}/'
+        ),
+        'exp_name': watch(args_to_watch_dpcc_plan),
+        'diffusion': 'diffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        'returns_condition': False,
+        # MUST match the TRAINING block's film_mode — the architecture must agree with the
+        # checkpoint, and film_mode is baked into diffusion_loadpath ('..._film{film_mode}'),
+        # so this auto-resolves to the v1 or v2 checkpoint dir. Flip both blocks together.
+        'film_mode': 'v2',
+        'predict_epsilon': True,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        # D1: original DPCC always evaluates with clip_denoised=False (cosine schedule ~9.4× amplification
+        # at early steps corrupts the chain if clamped). Must be False; set True only to ablate.
+        'clip_denoised': False,
+        'diffusion_loadpath': (
+            'f:visual_aligning_dpcc/'
+            'H{horizon}_K{n_diffusion_steps}_D{diffusion}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}'
+        ),
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+
+    # ─── 4. FM VISUAL ALIGNING (Planning) ───
+    'plan_fm_visual_aligning': {
+        # ======================================================================================
+        # 🎮 INFERENCE PLANNING AND MULTI-THREAD SIMULATOR CONSTRAINTS
+        # ======================================================================================
+        'horizon': 8,
+        # flow_steps_v3: number of Euler ODE steps integrating the velocity field 0→1.
+        # More steps = smoother trajectories, higher inference cost. 100 matches the
+        # visual_aligning_dpcc baseline (K=100 denoising steps) for fair comparison.
+        'flow_steps_v3': 20,
+        # Available backend options: 'legacy_euler', 'torchdiffeq'.
+        'ode_solver_backend_v3': 'legacy_euler',
+        # Available method options (torchdiffeq backend only):
+        # dopri8, dopri5, bosh3, fehlberg2, adaptive_heun,
+        # euler, midpoint, heun2, heun3, rk4,
+        # explicit_adams, implicit_adams, fixed_adams, scipy_solver.
+        'ode_solver_method_v3': 'euler',
+        # Tolerance / step-size params — unused by legacy_euler; set to None.
+        # Must be present: Config passes ALL keys to the constructor, and
+        # VisualGaussianDiffusion.__init__ intercepts them to avoid TypeError.
+        'ode_solver_rtol_v3': None,
+        'ode_solver_atol_v3': None,
+        'ode_solver_step_size_v3': None,
+        # Beta params MUST match fm_visual_aligning training block exactly —
+        # they are embedded in diffusion_loadpath as 'a{alpha}_b{beta}'.
+        # A mismatch here produces a FileNotFoundError (wrong a/b in loadpath).
+        'time_beta_alpha_v3': 1.5,
+        'time_beta_beta_v3': 1.0,
+        # D3IL Robot_Push_Env default is 400 (hardcoded, proven stable for the aligning task).
+        # Fix 10 wired this field so it now actually reaches the env. Start at 400 (proven baseline).
+        # Increase only after confirming the model benefits from a longer rollout budget.
+        'max_episode_length': 400,
+        'max_path_length': 900,    # MUST match fm_visual_aligning.max_path_length: loadpath key only
+        'action_weight': 1,
+        # window_size=1 / obs_seq_len=1 must match training: ParityAligningDataset
+        # provides single-frame images per sample, so the model is trained on T_win=1.
+        # Using window_size>1 at eval would mean-pool multiple frames and shift the
+        # FiLM conditioning distribution away from what the model learned.
+        'window_size': 1,
+        'obs_seq_len': 1,
+        'if_vision': True,
+        # mpc_batch_size: MPC candidate pool — all B trajectories compete under trajectory_selection.
+        # DPCC reference (avoiding-d3il.py) uses batch_size=4. diffuser variant overrides to 1 in eval script.
+        # Distinct from train batch_size (32) — renamed to avoid path ambiguity (also fixes b{mpc} vs b{beta} clash).
+        'mpc_batch_size': 4,
+        # train_batch_size: reflects fm_visual_aligning.batch_size (32) for diffusion_loadpath construction.
+        # MUST match the training config exactly or diffusion_loadpath resolves to a non-existent directory.
+        'train_batch_size': 64,
+        'preprocess_fns': [],
+        'device': 'cuda',
+        'seed': 0,
+
+        # ======================================================================================
+        # 💾 SERIALIZATION & MODEL LOADING
+        # ======================================================================================
+        'loadbase': None,
+        'logbase': logbase,
+        'prefix': (
+            'f:plans/fm_visual_aligning/'
+            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}/'
+        ),
+        'exp_name': watch(args_to_watch_fm_visual_plan),
+        'diffusion': 'fm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching',
+        'returns_condition': False,
+        # MUST match the TRAINING block's film_mode — the architecture must agree with the
+        # checkpoint, and film_mode is baked into diffusion_loadpath ('..._film{film_mode}'),
+        # so this auto-resolves to the v1 or v2 checkpoint dir. Flip both blocks together.
+        'film_mode': 'v1',
+        'predict_epsilon': True,
+        'diffusion_timestep_threshold': _yaml_threshold,
+        # D1: FM ODE does not use a denoising schedule, so clip_denoised has no effect on the chain.
+        # Kept False (same as reference DPCC default) for consistency. Set True only to ablate.
+        'clip_denoised': False,
+        # diffusion_loadpath resolves the training checkpoint directory.
+        # The a/b/aw/V/steps/bs fragments MUST match fm_visual_aligning's exp_name exactly
+        # (generated by args_to_watch_fm_visual_train). Any mismatch → FileNotFoundError.
+        'diffusion_loadpath': (
+            'f:fm_visual_aligning/'
+            'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+            '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_film{film_mode}'
+        ),
+        'diffusion_epoch': 'best',
+        'verbose': False,
+        'suffix': '0',
+    },
+}
+
+# ─── Gen6 State-Only Non-Visual Configuration Appends ────────────────────────
+base['ddpm_encdec_vision_nonvisual'] = {
+    **base['ddpm_encdec_vision'],
+    'action_dim': 3,   # UF-17: 3D velocity [dx,dy,dz] — matches visual path and DPCC principle
+    'obs_dim': 20,     # full state: des_c_pos(3)+c_pos(3)+box(3)+box_q(4)+tgt(3)+tgt_q(4)
+    'if_vision': False,
+    'prefix': 'ddpm_encdec_vision_nonvisual/',
+}
+
+base['plan_ddpm_encdec_vision_nonvisual'] = {
+    **base['plan_ddpm_encdec_vision'],
+    'prefix': 'f:plans/ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}/',
+    'diffusion_loadpath': 'f:ddpm_encdec_vision_nonvisual/H{horizon}_K{n_diffusion_steps}_D{diffusion}_aw{action_weight}_steps{max_path_length}',
+}
+
+# ─── Gen8 iMF Visual Aligning (Training) ─────────────────────────────────────
+# Same task/data/dims as Gen7 fm_visual_aligning (9D, dual-cam, D3IL aligning).
+# Engine swap: FlowMatchingODE → iMeanFlowODE (mean-flow target, h-conditioning, u/v dual heads).
+# Dims unchanged: action_dim=3, obs_dim=6, transition_dim=9.
+# u_loss_weight / v_loss_weight / loss_schedule: iMF-specific; not in fm_visual_aligning.
+base['imf_visual_aligning'] = {
+    **base['fm_visual_aligning'],
+    'model':     'imf_visual_aligning.models.imf_engine.iMeanFlowEngine',
+    'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
+    'prefix':    'imf_visual_aligning/',
+    'exp_name':  watch(args_to_watch_imf_visual_train),
+    # iMF-specific loss mixing weights (inherited by VisualIMF from iMeanFlowODE)
+    'u_loss_weight':  1.0,   # weight on main u-head (mean-flow target)
+    'v_loss_weight':  0.1,   # weight on aux v-head (instantaneous velocity)
+    'loss_schedule':  'balanced',
+    # U3/imfv2 — training objective selector (see logs_in_develop/Gen8/Epoch_1/U3).
+    # 'fm_equivalent': legacy finite-diff = FM baseline arm.
+    # 'meanflow_jvp' : real MeanFlow-Identity (JVP). NFE is set in the plan block, not here.
+    'imf_objective': 'fm_equivalent',
+    'meanflow_r_equals_t_frac': 0.25,
+    'meanflow_adaptive_p': 0.5,
+    'meanflow_adaptive_c': 1e-3,
+    'meanflow_aux_weight': 0.0,
+    # U7: time-schedule. 'logit_normal' = canonical iMF default (reference imf.py, DEFAULT).
+    # 'beta' = legacy 1-Beta(α,β). NOTE: plan block diffusion_loadpath must match.
+    't_schedule': 'logit_normal',     # U7 DEFAULT
+    'p_mean': -0.4,                   # logit-normal P_mean (sigmoid median ≈ 0.40)
+    'p_std': 1.0,                     # logit-normal P_std
+    # iMF guardrails against E4 spike (Gen3v4 lesson):
+    # lower lr (2e-4 already set via fm_visual_aligning inherit) + smaller action_weight
+    'action_weight': 1,
+    'learning_rate': 2e-4,
+}
+
+# ─── Gen8 iMF Visual Aligning (Planning/Eval) ────────────────────────────────
+base['plan_imf_visual_aligning'] = {
+    **base['plan_fm_visual_aligning'],
+    'diffusion': 'imf_visual_aligning.models.visual_imf_diffusion.VisualIMF',
+    'imf_objective': 'fm_equivalent',   # must match training block to resolve diffusion_loadpath
+    # U7: MUST match training block. Set 'beta' to load pre-U7 checkpoints.
+    't_schedule': 'logit_normal',       # U7 DEFAULT
+    'p_mean': -0.4,
+    'p_std': 1.0,
+    'prefix': (
+        'f:plans/imf_visual_aligning/'
+        'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}/'
+    ),
+    # diffusion_loadpath MUST match args_to_watch_imf_visual_train exactly
+    'diffusion_loadpath': (
+        'f:imf_visual_aligning/'
+        'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}'
+        '_aw{action_weight}_V{if_vision}_steps{max_path_length}_bs{train_batch_size}_obj{imf_objective}_ts{t_schedule}'
+    ),
+}

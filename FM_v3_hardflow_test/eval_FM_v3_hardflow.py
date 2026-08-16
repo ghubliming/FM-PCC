@@ -28,7 +28,10 @@ import yaml
 import flow_matcher_v3_hardflow.utils as utils
 from flow_matcher_v3_hardflow.sampling.policies import Policy
 from flow_matcher_v3_hardflow.sampling.projection import Projector
-from flow_matcher_v3_hardflow.sampling.hardflow_projection import HardFlowPolicy
+from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
+    HardFlowPolicy, resolve_activation_threshold)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
 
 parser = argparse.ArgumentParser(description='Gen12 HardFlow-into-FMv3 evaluation.')
@@ -50,6 +53,28 @@ plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
 hardflow_cfg = config.get('hardflow', {})
 FORCE_OVERWRITE = os.environ.get('FORCE_OVERWRITE', '0') == '1'
+# ── arm C (hardflow_new) knobs, resolved once ────────────────────────────────
+# U4 + fix_6: late-activation threshold in DPCC polarity (higher = MORE projection;
+# 1.0 = every step, 0.5 = last half, 0.0 = terminal-only). Accepts a float in [0,1] or
+# the alias 'all'(=1.0)/'late'(=0.5). HFFM_ACT_THRESHOLD env overrides for sweeps.
+hf_act_threshold = resolve_activation_threshold(
+    os.environ.get('HFFM_ACT_THRESHOLD',
+                   hardflow_cfg.get('activation_threshold',
+                                    hardflow_cfg.get('activation', 1.0))))
+# U4.2: candidate fan + selection. batch_size>1 fans candidates; selection rule comes
+# from the variant suffix (hardflow_new-c/-r/-t), like DPCC.
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
+# [Gen12fix8] DPCC threshold was ORPHANED CONFIG. `diffusion_timestep_threshold` exists in
+# config/hardflow_projection_eval.yaml (copied verbatim from config/projection_eval.yaml) but
+# was never read here, so arms A/B silently used Projector's hardcoded default of 0.5 — the
+# YAML knob did nothing. The FMv3ODE sibling reads it correctly
+# (FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py:54 -> Projector(...:242));
+# Gen12's port dropped both lines. Restored here + passed to Projector below.
+# Harmless so far (YAML said 0.5 == the default), but it blocks any theta != 0.5 sweep.
+# Env override DPCC_THRESHOLD added for parity with HFFM_ACT_THRESHOLD on the arm-C side.
+dpcc_threshold = float(os.environ.get('DPCC_THRESHOLD',
+                                      config.get('diffusion_timestep_threshold', 0.5)))
 # `checkpoint_dir` and `flow_steps` now live in the plan_fm_v3_hardflow block in
 # config/avoiding-d3il.py (read from `args` inside the seed loop), so the eval has a
 # single tidy control entry. CLI `--flow-steps N` still overrides the block's K.
@@ -167,6 +192,15 @@ for exp in exps:
                 fm_model.ode_inference_steps_v3 = int(flow_steps_override)
             flow_steps = int(fm_model.flow_steps_v3)
             print(f'[ eval ] matched K (flow_steps_v3) = {flow_steps} for every arm')
+            # fix_5: FMv3ODE-style path — <train-name>/<eval-name>/<seed>/results/...
+            # The eval knobs (K, threshold, mpc, n) live in the EVAL-NAME folder, matching
+            # flow_matching_v3_ode_selectable (…T0.5_D…_mpc4/6/results/…), NOT as a run_tag
+            # buried under results/.
+            _train_name = hf_paths.train_name(checkpoint_dir, args.diffusion_loadpath)
+            _eval_name = hf_paths.eval_name(flow_steps, hf_act_threshold, hf_batch_size, n_trials)
+            args.savepath = hf_paths.eval_root(args.logbase, args.dataset, _train_name, _eval_name, seed)
+            os.makedirs(args.savepath, exist_ok=True)
+            print(f'[ eval ] savepath: {args.savepath}')
             if 'pointmaze' in exp or 'antmaze' in exp:
                 minari_dataset = minari.load_dataset(exp, download=True)
                 env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()
@@ -237,6 +271,14 @@ for exp in exps:
             for variant_idx, variant in enumerate(projection_variants):
                 is_hardflow = variant.startswith('hardflow')
                 print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed}) - K={flow_steps}----------------------------')
+                # [Gen0fix2] Restore the per-variant threshold deleted by upstream DPCC commit 7f09d3a.
+                # threshold 0 => the activation gate fires only on the FINAL step, i.e. ONE projection
+                # applied after the last denoising/ODE step -- the paper's definition of post-processing
+                # ("modifying them after the last denoising step, usually by solving an optimization
+                # problem"). Without it, `post_processing` inherits the normal schedule and is a
+                # byte-identical duplicate of `dpcc-r`.
+                threshold = 0.0 if 'post_processing' in variant else dpcc_threshold
+
                 gradient = True if 'gradient' in variant else False
                 if 'model_free' in variant and 'tightened' in variant:
                     constraints = constraint_list_without_prior_tightened
@@ -256,10 +298,11 @@ for exp in exps:
                 elif 'dt4p0' in variant:
                     delta_t = 4.0 * dt
 
-                # ---- PLAN §3.6: provenance-encoding output dir, refuse to clobber ----
-                run_tag = f'K{flow_steps}_n{n_trials}'
-                save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}/{run_tag}'
-                             if 'avoiding' in exp else f'{args.savepath}/results/{run_tag}')
+                # ---- fix_5: FMv3ODE-style path (K/thres/mpc are in the EVAL-NAME folder
+                # already, via args.savepath), so results is just results/halfspace_<hv>/.
+                # PLAN §3.6: refuse to clobber a finished dir.
+                save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}'
+                             if 'avoiding' in exp else f'{args.savepath}/results')
                 npz_path = f'{save_path}/{variant}.npz'
                 if os.path.exists(npz_path) and not FORCE_OVERWRITE:
                     print(f'[ eval ] {npz_path} already exists — skipping. '
@@ -269,14 +312,28 @@ for exp in exps:
 
                 if is_hardflow:
                     # ---------------- arm C ----------------
-                    batch_size = int(hardflow_cfg.get('batch_size', 1))
+                    batch_size = hf_batch_size
+                    # U4.2 + U5: DPCC-parity selection from the variant suffix. Strip the
+                    # '-tightened' marker FIRST so the selection suffix composes with it —
+                    # hardflow_new-c-tightened -> minimum_projection_cost AND enlarged
+                    # constraints — exactly like DPCC parses 'dpcc-c' independently of
+                    # 'tightened'. (The old endswith('-c') broke here, silently falling back
+                    # to random for every -tightened variant.) At batch_size==1 all of
+                    # -r/-c/-t collapse to index 0 (see HardFlowPolicy._select), so they are
+                    # identical there and only diverge once the candidate fan is on (mpc>1).
+                    _sel_base = variant.replace('-tightened', '')
+                    hf_selection = 'random'
+                    if _sel_base.endswith('-t'): hf_selection = 'temporal_consistency'
+                    elif _sel_base.endswith('-c'): hf_selection = 'minimum_projection_cost'
                     policy = HardFlowPolicy(
                         model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
                         transition_dim=trajectory_dim, action_dim=action_dim,
                         constraint_list=constraints, dt=delta_t, flow_steps=flow_steps,
                         preprocess_fns=args.preprocess_fns, test_ret=args.test_ret,
                         reg_scale=float(hardflow_cfg.get('reg_scale', 1.0)),
-                        activation=hardflow_cfg.get('activation', 'all'),
+                        activation_threshold=hf_act_threshold,
+                        trajectory_selection=hf_selection,
+                        candidate_cost=hf_candidate_cost,
                         dynamics_mode=hardflow_cfg.get('dynamics_mode', 'deriv'),
                         linear_dynamics=linear_dynamics,
                         print_level=int(hardflow_cfg.get('ipopt_print_level', 0)),
@@ -285,7 +342,9 @@ for exp in exps:
                 else:
                     # ---------------- arms A / B ----------------
                     batch_size = args.batch_size
-                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy')
+                    # [Gen12fix8] diffusion_timestep_threshold=... restored (was omitted by the
+                    # Gen12 port -> Projector fell back to its hardcoded 0.5 default).
+                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=fm_model.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, gradient=gradient, gradient_weights=[1, 0.5, 2], variant=fm_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy', diffusion_timestep_threshold=threshold)   # [Gen0fix2] post_processing override
                     projector = None if variant == 'diffuser' else projector
                     trajectory_selection = 'random'
                     if 'dpcc-t' in variant: trajectory_selection = 'temporal_consistency'
@@ -433,12 +492,20 @@ for exp in exps:
                 print(f'Avg total violation: {np.mean(total_violations):.3f} +- {np.std(total_violations):.3f}')
                 print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                 # PLAN §5: compute must be reported alongside success, per arm.
+                # U4/U4.2: also report the activation threshold and selection for arm C.
+                hf_report = (f'  act_thr={hf_act_threshold:g}  sel={hf_selection}'
+                             if is_hardflow else '')
                 print(f'Compute: K={flow_steps}  batch={batch_size}  '
                       f'NFE={nfe_total}  NLP solves={nlp_solves_total}  '
-                      f'NLP failures={nlp_failures_total}')
+                      f'NLP failures={nlp_failures_total}{hf_report}')
                 if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
                 if config['write_to_file']:
-                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, hardflow_cfg=json.dumps(hardflow_cfg))
+                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
+                    # [Gen12fix8] dpcc_threshold recorded. The results dir name
+                    # (hf_paths.eval_name) encodes only the HF activation threshold, so with
+                    # DPCC's threshold now independently settable a run could otherwise be
+                    # silently mislabeled (folder says thres0.1 while arms A/B ran at 0.5).
+                    # Keep the two equal unless you deliberately want them to differ.
                 fig.savefig(f'{save_path}/{variant}.png')
                 plt.close(fig)
                 ax_all[0, variant_idx].set_title(variant)
@@ -446,7 +513,9 @@ for exp in exps:
             if save_path is not None:
                 fig_all.savefig(f'{save_path}/all.png')
         variant_idx = 0
-        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}/K{flow_steps}_n{n_trials}'
+        # fix_5: eval knobs already live in the eval-name folder; all_seeds sits beside
+        # the per-seed dirs at <train>/<eval>/all_seeds/halfspace_<hv>/.
+        path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
         for fig, ax in zip(figs_all_seeds, axes_all_seeds):
             ax.set_xlim(ax_limits[0])

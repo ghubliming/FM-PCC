@@ -373,6 +373,12 @@ for exp in exps:
                 try:
                     print(f'--- {exp} {halfspace_variant} {variant} seed={seed} ---')
 
+                    # [Gen0fix2] threshold 0 => exactly ONE projection on the final ODE step
+                    # (the terminal guard in fm_visual_avoiding/models/diffusion.py, added by
+                    # this same fix), i.e. post-processing as the paper defines it. Without the
+                    # override the arm runs the full schedule and duplicates `dpcc-r`.
+                    threshold = 0.0 if 'post_processing' in variant else diffusion_timestep_threshold
+
                     gradient = 'gradient' in variant
                     if 'model_free' in variant and 'tightened' in variant:
                         constraints = constraint_list_without_prior_tightened
@@ -397,7 +403,7 @@ for exp in exps:
                         gradient=gradient, gradient_weights=[1, 0.5, 2],
                         variant=fm_variant, dt=delta_t, cost_dims=None,
                         device=args.device, solver='scipy',
-                        diffusion_timestep_threshold=diffusion_timestep_threshold)
+                        diffusion_timestep_threshold=threshold)   # [Gen0fix2] post_processing override
                     projector = None if variant == 'diffuser' else projector
 
                     agent = VisualAgent(fm_model, obs_normalizer, act_normalizer,

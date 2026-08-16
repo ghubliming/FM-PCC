@@ -63,7 +63,13 @@ fi
 # 4) Run MeanFlow (Gen3v6) Results Analysis
 cd "$REPO"
 
-# Load results automatically detects the plan path using the experiment parser
-python FM_v3_meanflow_test/load_results_flow_matching_v3_meanflow.py
+# Load results automatically detects the plan path using the experiment parser.
+# 🔵 U9 — same K grid as eval_meanflow.sh: results live in a per-K directory, so aggregating
+# without the matching --flow-steps would silently report only the HFFM_FLOW_STEPS default (K=2).
+FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10}"
+for K in $FLOW_STEPS_GRID; do
+    echo "[ load_results ] K = $K"
+    python FM_v3_meanflow_test/load_results_flow_matching_v3_meanflow.py --flow-steps "$K"
+done
 
 echo "Results analysis completed successfully."

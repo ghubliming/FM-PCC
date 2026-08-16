@@ -1,0 +1,19 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Wed Jul 22 21:48:49 UTC 2026
+JOB ID:    23733
+================================================================================
+[ HF-IMF-PIPE ] exp_name   : H16_imf_lrfix_800k   (steps=100000)
+[ HF-IMF-PIPE ] eval cp    : 22
+[ HF-IMF-PIPE ] checkpoint : logs/hardflow/avoiding-v0/flow/H16_imf_lrfix_800k/model_ema_22.pth
+[ HF-IMF-PIPE ] lr=2e-4 (default)  grad_clip=1.0 (default)
+[ HF-IMF-PIPE ] eval       : methods='original hardflow_new' K='1 2' n=200
+[ HF-IMF-PIPE ] SKIP_TRAIN=1 -> eval only, on the existing checkpoint.
+Eval submitted standalone. Job ID: 23734
+--------------------------------------------------------------------------------
+iMF pipeline submitted. Use 'squeue -u llim' to monitor.
+If training fails, evaluation is auto-cancelled by Slurm (afterok).
+Results land in logs/hardflow/avoiding-v0/eval/*_from_H16_imf_lrfix_800k*/
+================================================================================
+PIPELINE END:   Wed Jul 22 21:48:49 UTC 2026
+================================================================================

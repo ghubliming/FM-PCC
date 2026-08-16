@@ -401,3 +401,64 @@ geo_constraint_variants:
         center: [0.50, 0.00]
         radius: 0.06
 
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Gen14 U7 — HardFlow (`hardflow_new`) arm C
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔴 This file is SHARED with the Gen6V4 and Gen7 evals, neither of which has HardFlow
+# code. Both keys below are read ONLY by mix_visual_aligning_test/eval_mix_visual_aligning.py;
+# every other consumer ignores them (an unknown top-level key is inert in all of them).
+#
+# ⚠️ NEVER put 'hardflow_new-*' into `projection_variants` above — that list IS shared, and
+# injecting arm C there would crash Gen6V4/Gen7. Same trap
+# `config/meanflow_projection_eval.yaml:6` documents.
+
+# Opt-in arm-C variant list, APPENDED to projection_variants by the Gen14 eval only.
+# Empty = HardFlow off (the default; every existing run reproduces byte-for-byte).
+# Selection suffix mirrors DPCC's, so hardflow_new-c is the matched partner of dpcc-c:
+#   hardflow_new-r  -> random (index 0)      hardflow_new-t -> temporal_consistency
+#   hardflow_new-c  -> minimum_projection_cost
+#
+# ⚠️ Do NOT append '-tightened' here. In Gen14 tightening is a GEO-level flag — the
+# '<geo>-tightened' twin is auto-generated for every entry with spatial families and every
+# variant is run under both — unlike Gen3v6/v7 where '-tightened' is part of the variant
+# name. Adding the suffix would create a variant that is never tightened and whose selection
+# suffix no longer parses.
+# Env override for a one-off sweep: HFFM_VARIANTS="hardflow_new-r hardflow_new-c"
+#
+# HOSTS: fm / mf / af only. The `diffusion` arm is a DDPM reverse chain with no velocity
+# field, so `hardflow_new` — which integrates v = f(x, t) outside the solver — is undefined
+# on it; the eval skips those cells with an explicit message rather than crashing.
+hardflow_variants: []
+# hardflow_variants: ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']
+
+hardflow:
+  # 'deriv'      -> reuse FMPCC's own Euler kinematics constraints, so arms B and C
+  #                 enforce an IDENTICAL feasible set and differ only in WHEN the
+  #                 constraint is applied. This is the matched comparison and the default.
+  # 'linear_fit' -> HardFlow-faithful s' = A s + B a + c. Needs a fitted .npz; not wired
+  #                 for the visual task yet.
+  dynamics_mode: deriv
+
+  # Prox weight on ||x1 - x1_ref||^2. With a pure proximal objective this does not move
+  # the argmin (Gen12 gates_hardflow.py::gate_g2); kept faithful to upstream.
+  reg_scale: 1.0
+
+  # ── late-activation threshold (Gen3v6 fix_6: DPCC polarity) ──────────────────
+  # SAME meaning as diffusion_timestep_threshold above: fraction of the LATE trajectory
+  # over which the NLP is active — HIGHER = MORE projection. Solved when
+  # tau_next >= (1 - threshold); the FINAL step is ALWAYS solved (the terminal solve is
+  # what the safety guarantee rides on). Env override: HFFM_ACT_THRESHOLD.
+  #   1.0 -> every step        0.5 -> last half        0.0 -> terminal-only
+  # Default here is `null` = inherit `diffusion_timestep_threshold` (0.5), so arms B and C
+  # project over the same fraction of the ODE unless you deliberately break the match.
+  #
+  # ⚠️ At K=2 this knob has almost no resolution: int((1-T)*2) is 1 for T in (0, 0.5] and
+  # 0 for T > 0.5, so 0.5 and 0.0 give the same single terminal solve. See Gen14 U5 DA §12.1.
+  activation_threshold: null
+
+  # Solver chatter. Gen13 hit console spam three times; these are SEPARATE switches and
+  # silencing only the first is what went wrong before.
+  ipopt_print_level: 0
+  casadi_print_time: False

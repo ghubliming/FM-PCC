@@ -70,6 +70,97 @@ The script creates a timestamped output directory with the following structure:
     └── warnings.log
 ```
 
+### `Latest_Snapshot` — when was this run produced?
+
+Batch mode (`main_da_batch.py`) records, per candidate, the config-snapshot
+markers the eval pipeline leaves behind: every launch writes
+`snapshot_<YYYYMMDD_HHMMSS>` into `<candidate>/<seed>/config_snapshot_<config>/`
+and never deletes the earlier ones (`utils/setup.py::snapshot_configs`).
+
+| file | grain |
+|---|---|
+| `candidates_multidimensional_raw.csv` | that **seed's** newest marker (blank when that seed has none) |
+| `candidates_multidimensional_aggregated.csv`, `candidates_ranking.csv` | newest marker over all the candidate's seeds |
+| `candidates_detailed.csv` | plus `First_Snapshot`, `Snapshot_Count`, `Snapshot_By_Seed` |
+| `candidates_summary.txt` | human-readable, with a per-seed line when the seeds disagree |
+
+`Visualizer/index.html` renders it as a **Last Run** column in the Path Audit Map
+and the Plot Legend, and repeats it in the exported audit `.txt` / LaTeX. Older
+batches have no such column and the page drops it instead of showing blanks.
+
+## Variant quick presets (viewer only)
+
+Three checkboxes above `5. Variants` tick a whole comparison at once. They are a
+shortcut for the boxes below them, not a second filter — what is plotted is
+always exactly what the main list shows.
+
+| preset | ticks |
+|---|---|
+| **DPCC + HF** | `diffuser` + every `dpcc-{r,c,t}` and `hardflow_new*` arm, tightened or not |
+| **DPCC + HF (tightened)** | `diffuser` + only the `-tightened` `dpcc-{r,c,t}` / `hardflow_new-{r,c,t}` arms |
+| **DPCC (tightened)** | `diffuser` + only the `-tightened` `dpcc-{r,c,t}` arms |
+
+`diffuser` is in all three: it is the unconstrained generator the projection arms
+are read against, and it has no tightened twin. Deliberately excluded everywhere:
+the `dpcc-c-tightened-dt*` timestep sweep (a sweep, not an arm — four
+near-identical bars beside the one that matters) and the non-projection baselines
+`gradient` / `post_processing` / `model_free` / `geo_free` / `bounds_free`.
+
+Membership is a rule over the variant name, so a batch that gains an arm gets it
+for free and a preset with no members in this batch is not rendered at all. A
+preset box shows the grey indeterminate mark when only some of its variants are
+selected.
+
+## Plot Legend: highlight + seed coverage (viewer only)
+
+The **Plot Legend — Selected Candidates** table under the chart carries two
+columns that exist only in the page, not in any CSV:
+
+- **HL** — a checkbox. Ticking it paints that candidate's *name* red wherever it
+  is printed: the plot's x tick label, the legend row, every row head in the
+  Result Matrices, and the Path Audit Map. Nothing else changes — no number, no
+  cell background — so a highlight can never be mistaken for a data annotation
+  the way the `(goal, constraint)` flags can. Purely a way to follow one row
+  across ~18 variant columns. `[CLEAR HIGHLIGHTS]` in the legend header resets
+  them all, including candidates you have since unticked in the sidebar. The
+  exported `.txt` and `.tex` have no colour, so they say `[HIGHLIGHTED]` /
+  `<-- highlighted in the viewer` in words instead.
+- **Seeds** — which seeds that candidate actually has, from
+  `candidates_multidimensional_raw.csv`, with a red **⚠ NOT FULL** naming the
+  ones it is missing (against the batch's full seed set, or against the ticked
+  seeds in Custom Seed Compare). A bar averaged over one seed and a bar averaged
+  over five are identical on the chart; this is the only place next to the plot
+  that says which you are looking at. With no raw CSV the page falls back to the
+  `Missing_Seeds` column and says `n/a` for the present-seed list rather than
+  claiming the candidate has none.
+
+## Plot: `(G, C)` failure hints (viewer only)
+
+Every bar carries its value above it. A red **`(G, C)`** stacked above that value
+marks a bar whose run was not clean — the same rule as the Result Matrices'
+trailing `(goal, constraint)` flag:
+
+* `(G)` — goal not always reached (`n_success < 1`)
+* `(C)` — a constraint was violated (`n_success_and_constraints < n_success`)
+* nothing — a fully successful run
+
+Read it as: *an unflagged 199 steps and a flagged 199 steps are not comparable
+numbers.* The note under the x-axis spells the marks out and counts them.
+
+The flag is skipped on `n_success` and `n_success_and_constraints` themselves,
+where it would only restate the bar's own height. It is computed on the plot's
+**own** x-axis grouping, so it stays correct in `By Environment` mode where the
+selected candidates are averaged into each bar.
+
+### Variant colours
+
+Every variant gets its **own** colour, and the page verifies that on each draw.
+(It used to pass `colormap='tab10'`, which holds ten colours — with more than ten
+variants selected, several were sampled onto the same entry and two methods drew
+identically.) Colours are keyed to the variant's position in the batch's full
+variant list, so a variant keeps its colour as you tick others on and off, and
+two screenshots of the same batch stay comparable.
+
 ## Key Metrics
 
 The tool analyzes:

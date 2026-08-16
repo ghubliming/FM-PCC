@@ -266,7 +266,19 @@ after config_override_pkl and turn off CFG rerun
 
 from setup 1 to setup 2
 see ((Post_U10 Results Analysis default K2 --coding --U10 --(iMF, Gen3v4 --(Gen3 --Works - Develop Iterations--Plan & Works (Replace, Update to FM--DPCC Code & Replace Code Works)))) (SS26-Thesis-Flow_matching))
-23551
+23551(K2)
+
+23572 K1
+23574 K10
+23581 K50
+
+---
+
+setup3
+23650 (5e4 train)
+
+-> 2e5 train
+23680
 
 ---
 # Visual 
@@ -1128,4 +1140,182 @@ init 15/07
 "METHODS="original" ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_hardflow.sh"
 23486
 fix1 -> 23491 succes test 
-run pipeline -> 23507
+run pipeline -> 23559 
+fail, fix 2
+23565 (METHODS="original" ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_hardflow.sh)
+success
+RUN constraint 23566
+
+
+# Gen13
+23575 test
+23578
+23586/7 (K45 follow the guide)
+U5 23602
+Smooth test (fix7) 23608 / fix.2 23610
+U8 fig11 but imf -> 23609 / fix.2 23611
+23612 same NFE test
+
+U9 Incrase train step to 300k for imf and wandb logging 
+23613
+EVAL on it -> 23624
+
+23634 - check smooth of new 300k trian of imf
+23636 U9.2 tune the learning rate, since loss curve so bad
+23668 inspect the smooth
+23669 + 23672 u9.2 follow up next step run, arm A&B
+(IV)
+
+23683 80k train
+(Stop as 55k)
+Eval -> 23733/4 
+(
+    SKIP_TRAIN=1 IMF_EXP_NAME=H16_imf_lrfix_800k IMF_CP=22 \
+    > IMF_KS="1 2" RANDOM_REPEAT=200 \
+    >   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/imf_pipeline_hardflow.sh
+)
+
+- U10
+23832
+
+- U11
+mf 23966
++ 
+af 23978 
+
+- Fix/U12 Orgize and better naming
+
+(disk full) 23991 to finish it (ML_EXP_NAME=H16_ml_af_100k ML_CP=4 ML_METHODS="hfproj" ML_KS="2" RANDOM_REPEAT=200 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/hardflow/eval_ml_hardflow.sh)
+
+---
+
+# Gen3v6 mean flow
+23734 FAIL 
+23744 trian seed 6
+EVAL in 23777
+
+try unet 23812
+
+- U2 
+23925
+
+- U3
+23981
+
+24021 K1 
+24022 K5
+24023 K20
+
+- Fix4 
+24034-8
+K1,2,5,10,20
+
+- Fix5 
+24074 - 24078
+
+
+- Fix6
+resume train, 24100
+
+---
+Mean flow train the seed 78910 -> 24069
+Eval 24121 BUG -> Fix7
+24126
+
+- Fix6
+24316 + Eval 24334
+
+seed 78910 for UNET 24396 train -> 24415 seed 10
+24416 eval
+& rerun seed 6 24470
+
+
+# Gen3v7 alpha flow 
+1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
+EVAL 23786
+
+try unet
+23809
+
+- U2
+23928
+
+- U3 
+24044 - 24048
+
+- U4 (similar v6 U5 fix)
+24101
+
+---
+alpha flow train the seed 78910 -> 24070
+
+eval 24104 s78910+ 25399 s6
+
+---
+
+unet validation 24348 KILLED try full seeds train
+-> 24385
+
+# Gen12 
+init pipeline run 23767 -> All killed, not run
+fix1(.3) -> debug_chain_23782 
+FAIL Gate fix2
+23795
+
+fix3
+sweep run 23815
+
+U4
+23826 to smoke test
+23827/8 : thres 0(baseline) and 0.5 test FAIL (quick patch 23830/1 0+0.3 retest)
+23829 mpc batch=4 test
+
+- U5
+23890
+
+- Fix7 23903
+
+- Test NFE 
+HF 24179 0.1thres
+FMv3ODE equiv 24180 DEAD -> Fix in 24196, write wrong aw (K10 run, K20 run is 24210)
+
+24187 0.05thres
+vs 24198 0.05thres (K10, K20 run -> 24207)
+
+Ablation DPCC baseline 0.1thres 24215 / 0.05thres 24226
+- Claude Claim the diffusion_timestep_threshold: 1 for DPCC not working, lets see if ture, set it to 1, 24254, feels run it beofre but we rerun it again. --> Gen0F2
+
+# Gen14 
+Test -> 24082
+faile fix2 24907
+
+mf run 24110 DEAD disk full -> 24122
+
+af ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh af 6 (24154)
+
+- U6 K2 run 10rollout
+af/mf 24224/5 
+
+- U7 
+24255
+
+---
+
+24281/82 rerun massive run 3->30
+
+- test diffu+FM vs the old run
+24638 diffu
+24343 fm
+(K100! too big!)
+
+20 run 24405 Diffu
+24409 FM
+
+- FiLM v2 
+24417 mf
+14418 af
+
+# Gen0 
+- Fix2
+thres test 24279 T

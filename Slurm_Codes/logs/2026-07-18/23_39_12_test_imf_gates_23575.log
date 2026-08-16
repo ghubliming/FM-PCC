@@ -1,0 +1,45 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Jul 18 21:39:13 UTC 2026
+JOB NAME:  test_imf_gates   ID: 23575   NODE: i6-gpu-1
+CONDA ENV: hardflow_clone   (clone of FMPCC — live env untouched)
+HARDFLOW_REPO: /u/home/llim/FMPCC/FM-PCC/HardFlow
+LOG COLLECT:   /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+HARDFLOW GIT: ec50ca0
+================================================================================
+[ HF-BRIDGE ] python: /u/home/llim/miniconda3/envs/hardflow_clone/bin/python
+[ HF-BRIDGE ] tyro OK, gym==0.20.0
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ HF-BRIDGE ] /u/home/llim/FMPCC/FM-PCC/HardFlow/logs -> /u/home/llim/FMPCC/FM-PCC/logs/hardflow
+[ HF-BRIDGE ] cwd: /u/home/llim/FMPCC/FM-PCC/HardFlow
+[ HF-IMF-GATES ] python run/imf_gates.py
+
+=== G0: TemporalImfUnet mechanics (avoiding config) ===
+[ models/temporal_imf ] Channel dimensions: [(6, 32), (32, 128), (128, 256)]
+[ PASS ] G0 shapes: tau=float: u(3, 16, 6) v(3, 16, 6)
+[ PASS ] G0 shapes: tau=Tensor: u(3, 16, 6) v(3, 16, 6)
+[ PASS ] G0 shapes: tau=float: u(3, 16, 6) v(3, 16, 6)
+[ info ] TemporalImfUnet params: 3.69M
+
+=== G1: 1D GMM end-to-end (convention / loss / sampler) ===
+[ train ] step 0: raw_mse_u 5.3623 raw_mse_v 5.3333
+[ train ] step 1000: raw_mse_u 25.7487 raw_mse_v 3.9826
+[ train ] step 2000: raw_mse_u 24.1426 raw_mse_v 4.1025
+[ train ] step 3000: raw_mse_u 16.5437 raw_mse_v 3.7099
+[ PASS ] G1-A h->0 (u ~= v): rel err 0.0008
+[ PASS ] G1-B 1-NFE lands on data (sign): mean|x| 2.089 (target ~2), near-mode frac 0.98, min-mode frac 0.48, W1 0.276
+[ PASS ] G1-C K1 ~ K2 (W1): W1(K1,K2) 0.067
+[ PASS ] G1-D jump composition (W1): W1 0.084
+
+ALL GATES PASSED — cleared for Phase 2 (training).
+================================================================================
+JOB END: Sat Jul 18 21:39:41 UTC 2026
+================================================================================

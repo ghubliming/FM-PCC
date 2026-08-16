@@ -1,16 +1,49 @@
+import argparse
+import importlib
+import sys
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import flow_matcher_v3_meanflow.utils as utils
 
+# 🔵 U9 MATCHED-K AUTO-EVAL — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7). Mirrors the eval script's
+# --flow-steps so the aggregation reads the SAME K that was evaluated; results live in a per-K
+# directory (flow_steps_v3 is watched as 'K'), so without this the HFFM_FLOW_STEPS default (2)
+# would be reported no matter which budget was actually run.
+_ap = argparse.ArgumentParser(description='Aggregate MeanFlow (Gen3v6) eval results.')
+_ap.add_argument('--flow-steps', type=int, default=None, metavar='K',
+                 help='override flow_steps_v3 (NFE budget K) when locating results')
+_cli, _remaining = _ap.parse_known_args()
+sys.argv = [sys.argv[0]] + _remaining
+
 # Load configuration
-with open('config/projection_eval.yaml', 'r') as file:
+# Gen3v6 U3: repointed to the Gen3v6-dedicated unified eval config (DPCC + HardFlow arms).
+_cfg_path = 'config/meanflow_projection_eval.yaml'
+with open(_cfg_path, 'r') as file:
     config = yaml.safe_load(file)
+
+# 🔴 FIX_9_CFG_PROVENANCE — publish the yaml THIS script loaded, exactly as the eval does. The
+# 'T' token in the results-folder name is built from it by config/avoiding-d3il.py; without this
+# line the aggregation would look for a path derived from the SHARED config/projection_eval.yaml,
+# a file Gen3v6 never opens. Must be set BEFORE the first Parser().parse_args().
+os.environ['FMPCC_PROJ_CFG'] = _cfg_path
 
 projection_variants = config['projection_variants']
 
 exp = 'avoiding-d3il'
+
+if _cli.flow_steps is not None:
+    # 🔵 U9 — same data path as the eval script: patch the cached config module's plan block so
+    # exp_name/savepath pick up '_K{K}_'. Arm C's `flow_steps` is patched with the SAME value
+    # (matched budget) so a HardFlow aggregation reads the directory arm C actually wrote.
+    _blk = importlib.import_module('config.' + exp).base['plan_fm_v3_meanflow']
+    _blk['flow_steps_v3'] = _cli.flow_steps
+    if 'ode_inference_steps_v3' in _blk:
+        _blk['ode_inference_steps_v3'] = _cli.flow_steps
+    _blk['flow_steps'] = _cli.flow_steps
+    print(f'[ load_results ] Overriding flow_steps_v3 / flow_steps (K) to: {_cli.flow_steps}')
+
 class Parser(utils.Parser):
     dataset: str = exp
     config: str = 'config.' + exp
@@ -33,6 +66,11 @@ for variant in projection_variants:
     n_violations_all = np.array([])
     total_violations_all = np.array([])
     collision_free_completed_all = np.array([])
+    # Gen3v6 U3 — HardFlow-arm metric accumulators (stay 0 for arms A/B).
+    nfe_sum = 0
+    nlp_solves_sum = 0
+    nlp_failures_sum = 0
+    is_hardflow_variant = False
     for halfspace_variant in avoiding_halfspace_variants:
         for i, seed in enumerate(seeds):
             args = Parser().parse_args(experiment='plan_fm_v3_meanflow', seed=seed)
@@ -67,6 +105,12 @@ for variant in projection_variants:
                 n_violations_all = np.append(n_violations_all, n_violations)
                 total_violations_all = np.append(total_violations_all, total_violations)
                 collision_free_completed_all = np.append(collision_free_completed_all, collision_free_completed)
+                # Gen3v6 U3 — pull HardFlow-arm metrics if present (older npz without them → skip).
+                if 'is_hardflow' in data and bool(data['is_hardflow']):
+                    is_hardflow_variant = True
+                    nfe_sum += int(data['nfe_total'])
+                    nlp_solves_sum += int(data['nlp_solves_total'])
+                    nlp_failures_sum += int(data['nlp_failures_total'])
             except FileNotFoundError:
                 print(f"[ Error ] Could not find results at: {args.savepath}/results/halfspace_{halfspace_variant}/{variant}.npz")
                 continue
@@ -93,6 +137,10 @@ for variant in projection_variants:
     print(f'Average violations: {n_violations_avg:.2f} +- {n_violations_std:.2f}')
     print(f'Average total violations: {total_violations_avg:.3f} +- {total_violations_std:.3f}')
     print(f'Average time: {avg_time.mean():.2f} +- {avg_time.std():.2f}')
+    # Gen3v6 U3 — HardFlow-arm compute metrics (summed over halfspace×seed).
+    if is_hardflow_variant:
+        print(f'[hardflow] NFE(sum)={nfe_sum}  NLP solves(sum)={nlp_solves_sum}  '
+              f'NLP failures(sum)={nlp_failures_sum}')
     print(f'${steps_avg:.1f} \pm {steps_std:.1f}$ & ${success_rate_goal:.2f}$ & ${success_rate_constraints:.2f}$ & ${n_violations_avg:.1f} \pm {n_violations_std:.1f}$ \\\\')
 
     sr_goal_all[variant] = success_rate_goal

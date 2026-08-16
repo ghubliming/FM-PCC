@@ -1,0 +1,306 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Aug 10 15:23:11 UTC 2026
+JOB NAME:  train_meanflow
+JOB ID:    24415
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   1335b97
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ DISK ] /dev/md2p1      7.0T  6.8T  195G  98% /data   <- repo/logs
+[ DISK ] /dev/md2p1      7.0T  6.8T  195G  98% /data   <- $HOME (wandb cache + conda)
+[ train ] seeds='10'  resume='--auto-resume'  extra=''
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260810_152319-lqrvev3f
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run MeanFlow-seed-10-slurm-24415
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-MeanFlow
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-MeanFlow/runs/lqrvev3f
+================================================================================
+[ train ] MeanFlow Training (Gen3v6 — MeanFlow-PCC)
+[ train ] Engine: MeanFlow (arXiv 2505.13447), ANALYTIC-v JVP tangent, no CFG
+[ train ] Role:   controlled baseline for Gen3v4-iMF (predicted-v_c tangent)
+[ train ] Seeds: [10] (cli --seeds)
+[ train ] Resume: auto=True step=None seed=None force_restart=False
+[ train ] W&B: True (project: FMPCC-MeanFlow)
+================================================================================
+
+[ train ] Seed 10
+
+[utils/config ] Config: <class 'diffuser.datasets.sequence.SequenceDataset'>
+    discount: 0.99
+    env: avoiding-d3il
+    horizon: 8
+    include_returns: True
+    max_path_length: 150
+    normalizer: LimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 400
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10/dataset_config_resume_1.json
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+
+[utils/config ] Config: <class 'flow_matcher_v3_meanflow.models.mf_engine.MeanFlowEngine'>
+    depth: 8
+    dit_aux_head_depth: 2
+    dit_condition_on_t: False
+    dit_depth: 8
+    dit_hidden_size: 256
+    dit_num_heads: 4
+    dit_patch_size: 1
+    dropout_rate: 0.1
+    dual_head: True
+    freq_dim: 32
+    imf_backbone: unet
+    interval_cfg: False
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 6
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10/model_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_meanflow.models.mf_diffusion.MeanFlowODE'>
+    action_dim: 2
+    action_weight: 10
+    clip_denoised: False
+    condition_guidance_w: 0.0
+    flow_steps_v3: 10
+    goal_dim: 0
+    horizon: 8
+    loss_discount: 1.0
+    loss_schedule: balanced
+    loss_type: l2
+    meanflow_data_proportion: 0.5
+    mf_adp_eps: 0.01
+    mf_adp_p: 1.0
+    mf_objective: meanflow
+    observation_dim: 4
+    ode_inference_steps_v3: 10
+    p_mean: -0.4
+    p_std: 1.0
+    predict_epsilon: True
+    returns_condition: True
+    t_schedule: logit_normal
+    time_beta_alpha_v3: 1.0
+    time_beta_beta_v3: 1.0
+    transition_epochs: 0
+    u_loss_weight: 1.0
+    v_loss_weight: 1.0
+    warmup_epochs: 0
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10/diffusion_config_resume_1.json
+
+
+[utils/config ] Config: <class 'flow_matcher_v3_meanflow.utils.training.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    gradient_clip: 1.0
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+    train_batch_size: 32
+    train_device: cuda
+    train_lr: 0.0005
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10/trainer_config_resume_1.json
+
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ train ] Resuming seed 10 from state_best.pt
+[ utils/training ] Restored optimizer + LR schedule (lr=4.790e-04)
+[ utils/training ] Restored loss history from checkpoint at step 14000
+[ train ] Restored step 14000; 86000 of 100000 steps remain
+[ train ] Starting training at step 14000 (budget: 100000)
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 14: 100%|██████████| 1000/1000 [04:28<00:00,  3.73it/s, a0_loss=0.221, a0_loss_test=0.728, aux_loss=4.79, diffusion_loss=1.97, loss=0.985, loss_test=0.988, lr=0.000476, per_dim_rms_u=0.316, raw_mse=4.79, raw_mse_u=4.79, step=14999]Epoch 14: 100%|██████████| 1000/1000 [04:28<00:00,  3.73it/s, a0_loss=0.221, a0_loss_test=0.728, aux_loss=4.79, diffusion_loss=1.97, loss=0.985, loss_test=0.988, lr=0.000476, per_dim_rms_u=0.316, raw_mse=4.79, raw_mse_u=4.79, step=14999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 15: 100%|██████████| 1000/1000 [04:21<00:00,  3.83it/s, a0_loss=0.738, a0_loss_test=1.75, aux_loss=3.87, diffusion_loss=1.97, loss=0.987, loss_test=0.986, lr=0.000472, per_dim_rms_u=0.499, raw_mse=12, raw_mse_u=12, step=15999]Epoch 15: 100%|██████████| 1000/1000 [04:21<00:00,  3.83it/s, a0_loss=0.738, a0_loss_test=1.75, aux_loss=3.87, diffusion_loss=1.97, loss=0.987, loss_test=0.986, lr=0.000472, per_dim_rms_u=0.499, raw_mse=12, raw_mse_u=12, step=15999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 16: 100%|██████████| 1000/1000 [04:24<00:00,  3.79it/s, a0_loss=0.466, a0_loss_test=1.07, aux_loss=7.13, diffusion_loss=1.97, loss=0.984, loss_test=0.986, lr=0.000468, per_dim_rms_u=0.477, raw_mse=10.9, raw_mse_u=10.9, step=16999]Epoch 16: 100%|██████████| 1000/1000 [04:24<00:00,  3.79it/s, a0_loss=0.466, a0_loss_test=1.07, aux_loss=7.13, diffusion_loss=1.97, loss=0.984, loss_test=0.986, lr=0.000468, per_dim_rms_u=0.477, raw_mse=10.9, raw_mse_u=10.9, step=16999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 17: 100%|██████████| 1000/1000 [04:23<00:00,  3.79it/s, a0_loss=0.512, a0_loss_test=1.76, aux_loss=5.84, diffusion_loss=1.97, loss=0.984, loss_test=0.987, lr=0.000464, per_dim_rms_u=0.4, raw_mse=7.69, raw_mse_u=7.69, step=17999]Epoch 17: 100%|██████████| 1000/1000 [04:23<00:00,  3.79it/s, a0_loss=0.512, a0_loss_test=1.76, aux_loss=5.84, diffusion_loss=1.97, loss=0.984, loss_test=0.987, lr=0.000464, per_dim_rms_u=0.4, raw_mse=7.69, raw_mse_u=7.69, step=17999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 18: 100%|██████████| 1000/1000 [04:21<00:00,  3.83it/s, a0_loss=7.66, a0_loss_test=1.15, aux_loss=6.24, diffusion_loss=1.97, loss=0.984, loss_test=0.984, lr=0.00046, per_dim_rms_u=1.11, raw_mse=59.5, raw_mse_u=59.5, step=18999]Epoch 18: 100%|██████████| 1000/1000 [04:21<00:00,  3.83it/s, a0_loss=7.66, a0_loss_test=1.15, aux_loss=6.24, diffusion_loss=1.97, loss=0.984, loss_test=0.984, lr=0.00046, per_dim_rms_u=1.11, raw_mse=59.5, raw_mse_u=59.5, step=18999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 19: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=6.41, a0_loss_test=1.14, aux_loss=6.56, diffusion_loss=1.98, loss=0.991, loss_test=0.983, lr=0.000456, per_dim_rms_u=1.54, raw_mse=114, raw_mse_u=114, step=2e+4]Epoch 19: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=6.41, a0_loss_test=1.14, aux_loss=6.56, diffusion_loss=1.98, loss=0.991, loss_test=0.983, lr=0.000456, per_dim_rms_u=1.54, raw_mse=114, raw_mse_u=114, step=2e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 20: 100%|██████████| 1000/1000 [04:28<00:00,  3.73it/s, a0_loss=0.38, a0_loss_test=0.756, aux_loss=4.47, diffusion_loss=1.97, loss=0.986, loss_test=0.984, lr=0.000451, per_dim_rms_u=0.384, raw_mse=7.06, raw_mse_u=7.06, step=20999]Epoch 20: 100%|██████████| 1000/1000 [04:28<00:00,  3.73it/s, a0_loss=0.38, a0_loss_test=0.756, aux_loss=4.47, diffusion_loss=1.97, loss=0.986, loss_test=0.984, lr=0.000451, per_dim_rms_u=0.384, raw_mse=7.06, raw_mse_u=7.06, step=20999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 21: 100%|██████████| 1000/1000 [04:28<00:00,  3.73it/s, a0_loss=0.43, a0_loss_test=1.37, aux_loss=5.68, diffusion_loss=1.97, loss=0.986, loss_test=0.983, lr=0.000447, per_dim_rms_u=0.345, raw_mse=5.7, raw_mse_u=5.7, step=21999]Epoch 21: 100%|██████████| 1000/1000 [04:28<00:00,  3.73it/s, a0_loss=0.43, a0_loss_test=1.37, aux_loss=5.68, diffusion_loss=1.97, loss=0.986, loss_test=0.983, lr=0.000447, per_dim_rms_u=0.345, raw_mse=5.7, raw_mse_u=5.7, step=21999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 22: 100%|██████████| 1000/1000 [04:30<00:00,  3.69it/s, a0_loss=0.267, a0_loss_test=2.37, aux_loss=5.11, diffusion_loss=1.95, loss=0.975, loss_test=0.984, lr=0.000442, per_dim_rms_u=0.314, raw_mse=4.73, raw_mse_u=4.73, step=22999]Epoch 22: 100%|██████████| 1000/1000 [04:30<00:00,  3.69it/s, a0_loss=0.267, a0_loss_test=2.37, aux_loss=5.11, diffusion_loss=1.95, loss=0.975, loss_test=0.984, lr=0.000442, per_dim_rms_u=0.314, raw_mse=4.73, raw_mse_u=4.73, step=22999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 23: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.451, a0_loss_test=0.961, aux_loss=5.14, diffusion_loss=1.95, loss=0.976, loss_test=0.98, lr=0.000436, per_dim_rms_u=0.388, raw_mse=7.23, raw_mse_u=7.23, step=23999]Epoch 23: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.451, a0_loss_test=0.961, aux_loss=5.14, diffusion_loss=1.95, loss=0.976, loss_test=0.98, lr=0.000436, per_dim_rms_u=0.388, raw_mse=7.23, raw_mse_u=7.23, step=23999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 24: 100%|██████████| 1000/1000 [04:40<00:00,  3.56it/s, a0_loss=0.261, a0_loss_test=0.656, aux_loss=5.38, diffusion_loss=1.97, loss=0.986, loss_test=0.981, lr=0.000431, per_dim_rms_u=0.389, raw_mse=7.28, raw_mse_u=7.28, step=24999]Epoch 24: 100%|██████████| 1000/1000 [04:40<00:00,  3.56it/s, a0_loss=0.261, a0_loss_test=0.656, aux_loss=5.38, diffusion_loss=1.97, loss=0.986, loss_test=0.981, lr=0.000431, per_dim_rms_u=0.389, raw_mse=7.28, raw_mse_u=7.28, step=24999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 25: 100%|██████████| 1000/1000 [04:37<00:00,  3.60it/s, a0_loss=0.428, a0_loss_test=1.11, aux_loss=5.48, diffusion_loss=1.98, loss=0.99, loss_test=0.981, lr=0.000425, per_dim_rms_u=0.329, raw_mse=5.19, raw_mse_u=5.19, step=25999]Epoch 25: 100%|██████████| 1000/1000 [04:37<00:00,  3.60it/s, a0_loss=0.428, a0_loss_test=1.11, aux_loss=5.48, diffusion_loss=1.98, loss=0.99, loss_test=0.981, lr=0.000425, per_dim_rms_u=0.329, raw_mse=5.19, raw_mse_u=5.19, step=25999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 26: 100%|██████████| 1000/1000 [04:30<00:00,  3.69it/s, a0_loss=0.48, a0_loss_test=1.44, aux_loss=4.16, diffusion_loss=1.98, loss=0.989, loss_test=0.98, lr=0.00042, per_dim_rms_u=0.592, raw_mse=16.8, raw_mse_u=16.8, step=26999]Epoch 26: 100%|██████████| 1000/1000 [04:30<00:00,  3.69it/s, a0_loss=0.48, a0_loss_test=1.44, aux_loss=4.16, diffusion_loss=1.98, loss=0.989, loss_test=0.98, lr=0.00042, per_dim_rms_u=0.592, raw_mse=16.8, raw_mse_u=16.8, step=26999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 27: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=0.264, a0_loss_test=0.801, aux_loss=4.62, diffusion_loss=1.95, loss=0.976, loss_test=0.977, lr=0.000414, per_dim_rms_u=0.292, raw_mse=4.1, raw_mse_u=4.1, step=27999]Epoch 27: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=0.264, a0_loss_test=0.801, aux_loss=4.62, diffusion_loss=1.95, loss=0.976, loss_test=0.977, lr=0.000414, per_dim_rms_u=0.292, raw_mse=4.1, raw_mse_u=4.1, step=27999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 28: 100%|██████████| 1000/1000 [04:33<00:00,  3.66it/s, a0_loss=0.351, a0_loss_test=0.937, aux_loss=4.35, diffusion_loss=1.95, loss=0.975, loss_test=0.979, lr=0.000408, per_dim_rms_u=0.334, raw_mse=5.35, raw_mse_u=5.35, step=28999]Epoch 28: 100%|██████████| 1000/1000 [04:33<00:00,  3.66it/s, a0_loss=0.351, a0_loss_test=0.937, aux_loss=4.35, diffusion_loss=1.95, loss=0.975, loss_test=0.979, lr=0.000408, per_dim_rms_u=0.334, raw_mse=5.35, raw_mse_u=5.35, step=28999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 29: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=1.21, a0_loss_test=0.808, aux_loss=6.98, diffusion_loss=1.97, loss=0.985, loss_test=0.979, lr=0.000401, per_dim_rms_u=0.663, raw_mse=21.1, raw_mse_u=21.1, step=3e+4]Epoch 29: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=1.21, a0_loss_test=0.808, aux_loss=6.98, diffusion_loss=1.97, loss=0.985, loss_test=0.979, lr=0.000401, per_dim_rms_u=0.663, raw_mse=21.1, raw_mse_u=21.1, step=3e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 30: 100%|██████████| 1000/1000 [04:34<00:00,  3.64it/s, a0_loss=0.269, a0_loss_test=1.07, aux_loss=5.9, diffusion_loss=1.98, loss=0.99, loss_test=0.979, lr=0.000395, per_dim_rms_u=0.346, raw_mse=5.73, raw_mse_u=5.73, step=30999]Epoch 30: 100%|██████████| 1000/1000 [04:34<00:00,  3.64it/s, a0_loss=0.269, a0_loss_test=1.07, aux_loss=5.9, diffusion_loss=1.98, loss=0.99, loss_test=0.979, lr=0.000395, per_dim_rms_u=0.346, raw_mse=5.73, raw_mse_u=5.73, step=30999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 31: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.223, a0_loss_test=0.56, aux_loss=2.8, diffusion_loss=1.93, loss=0.967, loss_test=0.975, lr=0.000388, per_dim_rms_u=0.277, raw_mse=3.67, raw_mse_u=3.67, step=31999]Epoch 31: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.223, a0_loss_test=0.56, aux_loss=2.8, diffusion_loss=1.93, loss=0.967, loss_test=0.975, lr=0.000388, per_dim_rms_u=0.277, raw_mse=3.67, raw_mse_u=3.67, step=31999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 32: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=1.01, a0_loss_test=0.897, aux_loss=5.05, diffusion_loss=1.97, loss=0.983, loss_test=0.976, lr=0.000382, per_dim_rms_u=0.519, raw_mse=12.9, raw_mse_u=12.9, step=32999]Epoch 32: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=1.01, a0_loss_test=0.897, aux_loss=5.05, diffusion_loss=1.97, loss=0.983, loss_test=0.976, lr=0.000382, per_dim_rms_u=0.519, raw_mse=12.9, raw_mse_u=12.9, step=32999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 33: 100%|██████████| 1000/1000 [04:29<00:00,  3.71it/s, a0_loss=0.192, a0_loss_test=0.52, aux_loss=4.1, diffusion_loss=1.98, loss=0.989, loss_test=0.973, lr=0.000375, per_dim_rms_u=0.293, raw_mse=4.11, raw_mse_u=4.11, step=33999]Epoch 33: 100%|██████████| 1000/1000 [04:29<00:00,  3.71it/s, a0_loss=0.192, a0_loss_test=0.52, aux_loss=4.1, diffusion_loss=1.98, loss=0.989, loss_test=0.973, lr=0.000375, per_dim_rms_u=0.293, raw_mse=4.11, raw_mse_u=4.11, step=33999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 34: 100%|██████████| 1000/1000 [04:37<00:00,  3.61it/s, a0_loss=0.605, a0_loss_test=1.21, aux_loss=2.71, diffusion_loss=1.96, loss=0.979, loss_test=0.973, lr=0.000368, per_dim_rms_u=0.54, raw_mse=14, raw_mse_u=14, step=34999]Epoch 34: 100%|██████████| 1000/1000 [04:37<00:00,  3.61it/s, a0_loss=0.605, a0_loss_test=1.21, aux_loss=2.71, diffusion_loss=1.96, loss=0.979, loss_test=0.973, lr=0.000368, per_dim_rms_u=0.54, raw_mse=14, raw_mse_u=14, step=34999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 35: 100%|██████████| 1000/1000 [04:27<00:00,  3.73it/s, a0_loss=1.2, a0_loss_test=0.885, aux_loss=7.1, diffusion_loss=1.97, loss=0.983, loss_test=0.974, lr=0.000361, per_dim_rms_u=0.682, raw_mse=22.3, raw_mse_u=22.3, step=35999]Epoch 35: 100%|██████████| 1000/1000 [04:27<00:00,  3.73it/s, a0_loss=1.2, a0_loss_test=0.885, aux_loss=7.1, diffusion_loss=1.97, loss=0.983, loss_test=0.974, lr=0.000361, per_dim_rms_u=0.682, raw_mse=22.3, raw_mse_u=22.3, step=35999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 36: 100%|██████████| 1000/1000 [04:35<00:00,  3.62it/s, a0_loss=0.284, a0_loss_test=0.518, aux_loss=3.51, diffusion_loss=1.95, loss=0.973, loss_test=0.976, lr=0.000354, per_dim_rms_u=0.272, raw_mse=3.55, raw_mse_u=3.55, step=36999]Epoch 36: 100%|██████████| 1000/1000 [04:35<00:00,  3.62it/s, a0_loss=0.284, a0_loss_test=0.518, aux_loss=3.51, diffusion_loss=1.95, loss=0.973, loss_test=0.976, lr=0.000354, per_dim_rms_u=0.272, raw_mse=3.55, raw_mse_u=3.55, step=36999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 37: 100%|██████████| 1000/1000 [04:26<00:00,  3.75it/s, a0_loss=0.0755, a0_loss_test=0.824, aux_loss=4.45, diffusion_loss=1.91, loss=0.954, loss_test=0.974, lr=0.000347, per_dim_rms_u=0.297, raw_mse=4.22, raw_mse_u=4.22, step=37999]Epoch 37: 100%|██████████| 1000/1000 [04:26<00:00,  3.75it/s, a0_loss=0.0755, a0_loss_test=0.824, aux_loss=4.45, diffusion_loss=1.91, loss=0.954, loss_test=0.974, lr=0.000347, per_dim_rms_u=0.297, raw_mse=4.22, raw_mse_u=4.22, step=37999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 38: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.337, a0_loss_test=1.66, aux_loss=4.78, diffusion_loss=1.95, loss=0.977, loss_test=0.973, lr=0.000339, per_dim_rms_u=0.349, raw_mse=5.85, raw_mse_u=5.85, step=38999]Epoch 38: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.337, a0_loss_test=1.66, aux_loss=4.78, diffusion_loss=1.95, loss=0.977, loss_test=0.973, lr=0.000339, per_dim_rms_u=0.349, raw_mse=5.85, raw_mse_u=5.85, step=38999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 39: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.178, a0_loss_test=0.676, aux_loss=4.87, diffusion_loss=1.93, loss=0.965, loss_test=0.971, lr=0.000332, per_dim_rms_u=0.294, raw_mse=4.15, raw_mse_u=4.15, step=4e+4]Epoch 39: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.178, a0_loss_test=0.676, aux_loss=4.87, diffusion_loss=1.93, loss=0.965, loss_test=0.971, lr=0.000332, per_dim_rms_u=0.294, raw_mse=4.15, raw_mse_u=4.15, step=4e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 40: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.558, a0_loss_test=0.464, aux_loss=3.95, diffusion_loss=1.93, loss=0.967, loss_test=0.972, lr=0.000324, per_dim_rms_u=0.579, raw_mse=16.1, raw_mse_u=16.1, step=40999]Epoch 40: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.558, a0_loss_test=0.464, aux_loss=3.95, diffusion_loss=1.93, loss=0.967, loss_test=0.972, lr=0.000324, per_dim_rms_u=0.579, raw_mse=16.1, raw_mse_u=16.1, step=40999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 41: 100%|██████████| 1000/1000 [04:32<00:00,  3.66it/s, a0_loss=0.126, a0_loss_test=0.969, aux_loss=4.18, diffusion_loss=1.97, loss=0.983, loss_test=0.971, lr=0.000317, per_dim_rms_u=0.442, raw_mse=9.4, raw_mse_u=9.4, step=41999]Epoch 41: 100%|██████████| 1000/1000 [04:32<00:00,  3.66it/s, a0_loss=0.126, a0_loss_test=0.969, aux_loss=4.18, diffusion_loss=1.97, loss=0.983, loss_test=0.971, lr=0.000317, per_dim_rms_u=0.442, raw_mse=9.4, raw_mse_u=9.4, step=41999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 42: 100%|██████████| 1000/1000 [04:34<00:00,  3.64it/s, a0_loss=0.603, a0_loss_test=0.588, aux_loss=3.93, diffusion_loss=1.94, loss=0.97, loss_test=0.968, lr=0.000309, per_dim_rms_u=0.447, raw_mse=9.59, raw_mse_u=9.59, step=42999]Epoch 42: 100%|██████████| 1000/1000 [04:34<00:00,  3.64it/s, a0_loss=0.603, a0_loss_test=0.588, aux_loss=3.93, diffusion_loss=1.94, loss=0.97, loss_test=0.968, lr=0.000309, per_dim_rms_u=0.447, raw_mse=9.59, raw_mse_u=9.59, step=42999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 43: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.483, a0_loss_test=1.52, aux_loss=4.61, diffusion_loss=1.93, loss=0.963, loss_test=0.969, lr=0.000301, per_dim_rms_u=0.327, raw_mse=5.12, raw_mse_u=5.12, step=43999]Epoch 43: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.483, a0_loss_test=1.52, aux_loss=4.61, diffusion_loss=1.93, loss=0.963, loss_test=0.969, lr=0.000301, per_dim_rms_u=0.327, raw_mse=5.12, raw_mse_u=5.12, step=43999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 44: 100%|██████████| 1000/1000 [04:36<00:00,  3.62it/s, a0_loss=7.32, a0_loss_test=0.505, aux_loss=4.92, diffusion_loss=1.93, loss=0.964, loss_test=0.969, lr=0.000293, per_dim_rms_u=1.38, raw_mse=91.1, raw_mse_u=91.1, step=44999]Epoch 44: 100%|██████████| 1000/1000 [04:36<00:00,  3.62it/s, a0_loss=7.32, a0_loss_test=0.505, aux_loss=4.92, diffusion_loss=1.93, loss=0.964, loss_test=0.969, lr=0.000293, per_dim_rms_u=1.38, raw_mse=91.1, raw_mse_u=91.1, step=44999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 45: 100%|██████████| 1000/1000 [04:21<00:00,  3.82it/s, a0_loss=0.181, a0_loss_test=5.57, aux_loss=2.31, diffusion_loss=1.9, loss=0.95, loss_test=0.964, lr=0.000286, per_dim_rms_u=0.414, raw_mse=8.23, raw_mse_u=8.23, step=45999]Epoch 45: 100%|██████████| 1000/1000 [04:21<00:00,  3.82it/s, a0_loss=0.181, a0_loss_test=5.57, aux_loss=2.31, diffusion_loss=1.9, loss=0.95, loss_test=0.964, lr=0.000286, per_dim_rms_u=0.414, raw_mse=8.23, raw_mse_u=8.23, step=45999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 46: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.255, a0_loss_test=0.72, aux_loss=3.4, diffusion_loss=1.9, loss=0.948, loss_test=0.964, lr=0.000278, per_dim_rms_u=0.764, raw_mse=28, raw_mse_u=28, step=46999]Epoch 46: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.255, a0_loss_test=0.72, aux_loss=3.4, diffusion_loss=1.9, loss=0.948, loss_test=0.964, lr=0.000278, per_dim_rms_u=0.764, raw_mse=28, raw_mse_u=28, step=46999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 47: 100%|██████████| 1000/1000 [04:27<00:00,  3.73it/s, a0_loss=0.51, a0_loss_test=1.18, aux_loss=6.32, diffusion_loss=1.9, loss=0.949, loss_test=0.965, lr=0.00027, per_dim_rms_u=0.438, raw_mse=9.19, raw_mse_u=9.19, step=47999]Epoch 47: 100%|██████████| 1000/1000 [04:27<00:00,  3.73it/s, a0_loss=0.51, a0_loss_test=1.18, aux_loss=6.32, diffusion_loss=1.9, loss=0.949, loss_test=0.965, lr=0.00027, per_dim_rms_u=0.438, raw_mse=9.19, raw_mse_u=9.19, step=47999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 48: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=1.39, a0_loss_test=0.842, aux_loss=3.59, diffusion_loss=1.95, loss=0.974, loss_test=0.964, lr=0.000262, per_dim_rms_u=0.757, raw_mse=27.5, raw_mse_u=27.5, step=48999]Epoch 48: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=1.39, a0_loss_test=0.842, aux_loss=3.59, diffusion_loss=1.95, loss=0.974, loss_test=0.964, lr=0.000262, per_dim_rms_u=0.757, raw_mse=27.5, raw_mse_u=27.5, step=48999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 49: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.359, a0_loss_test=0.825, aux_loss=2.94, diffusion_loss=1.91, loss=0.957, loss_test=0.96, lr=0.000254, per_dim_rms_u=0.438, raw_mse=9.21, raw_mse_u=9.21, step=5e+4]Epoch 49: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.359, a0_loss_test=0.825, aux_loss=2.94, diffusion_loss=1.91, loss=0.957, loss_test=0.96, lr=0.000254, per_dim_rms_u=0.438, raw_mse=9.21, raw_mse_u=9.21, step=5e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 50: 100%|██████████| 1000/1000 [04:40<00:00,  3.56it/s, a0_loss=0.381, a0_loss_test=0.799, aux_loss=6.97, diffusion_loss=1.92, loss=0.96, loss_test=0.96, lr=0.000246, per_dim_rms_u=0.592, raw_mse=16.8, raw_mse_u=16.8, step=50999]Epoch 50: 100%|██████████| 1000/1000 [04:40<00:00,  3.56it/s, a0_loss=0.381, a0_loss_test=0.799, aux_loss=6.97, diffusion_loss=1.92, loss=0.96, loss_test=0.96, lr=0.000246, per_dim_rms_u=0.592, raw_mse=16.8, raw_mse_u=16.8, step=50999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 51: 100%|██████████| 1000/1000 [04:41<00:00,  3.55it/s, a0_loss=0.301, a0_loss_test=0.487, aux_loss=4, diffusion_loss=1.94, loss=0.968, loss_test=0.966, lr=0.000238, per_dim_rms_u=0.34, raw_mse=5.55, raw_mse_u=5.55, step=51999]Epoch 51: 100%|██████████| 1000/1000 [04:41<00:00,  3.55it/s, a0_loss=0.301, a0_loss_test=0.487, aux_loss=4, diffusion_loss=1.94, loss=0.968, loss_test=0.966, lr=0.000238, per_dim_rms_u=0.34, raw_mse=5.55, raw_mse_u=5.55, step=51999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 52: 100%|██████████| 1000/1000 [04:47<00:00,  3.48it/s, a0_loss=0.214, a0_loss_test=0.518, aux_loss=3.99, diffusion_loss=1.94, loss=0.968, loss_test=0.957, lr=0.00023, per_dim_rms_u=0.327, raw_mse=5.14, raw_mse_u=5.14, step=52999]Epoch 52: 100%|██████████| 1000/1000 [04:47<00:00,  3.48it/s, a0_loss=0.214, a0_loss_test=0.518, aux_loss=3.99, diffusion_loss=1.94, loss=0.968, loss_test=0.957, lr=0.00023, per_dim_rms_u=0.327, raw_mse=5.14, raw_mse_u=5.14, step=52999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 53: 100%|██████████| 1000/1000 [04:44<00:00,  3.52it/s, a0_loss=1.08, a0_loss_test=0.537, aux_loss=2.09, diffusion_loss=1.89, loss=0.944, loss_test=0.961, lr=0.000222, per_dim_rms_u=0.317, raw_mse=4.82, raw_mse_u=4.82, step=53999]Epoch 53: 100%|██████████| 1000/1000 [04:44<00:00,  3.52it/s, a0_loss=1.08, a0_loss_test=0.537, aux_loss=2.09, diffusion_loss=1.89, loss=0.944, loss_test=0.961, lr=0.000222, per_dim_rms_u=0.317, raw_mse=4.82, raw_mse_u=4.82, step=53999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 54: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.122, a0_loss_test=0.71, aux_loss=2.21, diffusion_loss=1.91, loss=0.953, loss_test=0.96, lr=0.000214, per_dim_rms_u=0.233, raw_mse=2.6, raw_mse_u=2.6, step=54999]Epoch 54: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.122, a0_loss_test=0.71, aux_loss=2.21, diffusion_loss=1.91, loss=0.953, loss_test=0.96, lr=0.000214, per_dim_rms_u=0.233, raw_mse=2.6, raw_mse_u=2.6, step=54999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 55: 100%|██████████| 1000/1000 [04:41<00:00,  3.55it/s, a0_loss=0.153, a0_loss_test=0.731, aux_loss=4.35, diffusion_loss=1.98, loss=0.99, loss_test=0.952, lr=0.000207, per_dim_rms_u=0.259, raw_mse=3.22, raw_mse_u=3.22, step=55999]Epoch 55: 100%|██████████| 1000/1000 [04:41<00:00,  3.55it/s, a0_loss=0.153, a0_loss_test=0.731, aux_loss=4.35, diffusion_loss=1.98, loss=0.99, loss_test=0.952, lr=0.000207, per_dim_rms_u=0.259, raw_mse=3.22, raw_mse_u=3.22, step=55999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 56: 100%|██████████| 1000/1000 [04:45<00:00,  3.50it/s, a0_loss=0.645, a0_loss_test=0.866, aux_loss=6.75, diffusion_loss=1.93, loss=0.964, loss_test=0.956, lr=0.000199, per_dim_rms_u=0.509, raw_mse=12.5, raw_mse_u=12.5, step=56999]Epoch 56: 100%|██████████| 1000/1000 [04:45<00:00,  3.50it/s, a0_loss=0.645, a0_loss_test=0.866, aux_loss=6.75, diffusion_loss=1.93, loss=0.964, loss_test=0.956, lr=0.000199, per_dim_rms_u=0.509, raw_mse=12.5, raw_mse_u=12.5, step=56999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 57: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.318, a0_loss_test=1.04, aux_loss=4.89, diffusion_loss=1.91, loss=0.956, loss_test=0.952, lr=0.000191, per_dim_rms_u=0.361, raw_mse=6.25, raw_mse_u=6.25, step=57999]Epoch 57: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.318, a0_loss_test=1.04, aux_loss=4.89, diffusion_loss=1.91, loss=0.956, loss_test=0.952, lr=0.000191, per_dim_rms_u=0.361, raw_mse=6.25, raw_mse_u=6.25, step=57999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 58: 100%|██████████| 1000/1000 [04:54<00:00,  3.40it/s, a0_loss=0.239, a0_loss_test=1.24, aux_loss=6.15, diffusion_loss=1.94, loss=0.969, loss_test=0.955, lr=0.000183, per_dim_rms_u=0.359, raw_mse=6.18, raw_mse_u=6.18, step=58999]Epoch 58: 100%|██████████| 1000/1000 [04:54<00:00,  3.40it/s, a0_loss=0.239, a0_loss_test=1.24, aux_loss=6.15, diffusion_loss=1.94, loss=0.969, loss_test=0.955, lr=0.000183, per_dim_rms_u=0.359, raw_mse=6.18, raw_mse_u=6.18, step=58999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 59: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.227, a0_loss_test=1.22, aux_loss=2.67, diffusion_loss=1.88, loss=0.942, loss_test=0.95, lr=0.000176, per_dim_rms_u=0.715, raw_mse=24.5, raw_mse_u=24.5, step=6e+4]Epoch 59: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.227, a0_loss_test=1.22, aux_loss=2.67, diffusion_loss=1.88, loss=0.942, loss_test=0.95, lr=0.000176, per_dim_rms_u=0.715, raw_mse=24.5, raw_mse_u=24.5, step=6e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 60: 100%|██████████| 1000/1000 [04:43<00:00,  3.52it/s, a0_loss=0.112, a0_loss_test=2.26, aux_loss=3.62, diffusion_loss=1.95, loss=0.973, loss_test=0.945, lr=0.000168, per_dim_rms_u=0.452, raw_mse=9.81, raw_mse_u=9.81, step=60999]Epoch 60: 100%|██████████| 1000/1000 [04:43<00:00,  3.52it/s, a0_loss=0.112, a0_loss_test=2.26, aux_loss=3.62, diffusion_loss=1.95, loss=0.973, loss_test=0.945, lr=0.000168, per_dim_rms_u=0.452, raw_mse=9.81, raw_mse_u=9.81, step=60999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 61: 100%|██████████| 1000/1000 [04:40<00:00,  3.57it/s, a0_loss=0.2, a0_loss_test=0.649, aux_loss=4.12, diffusion_loss=1.89, loss=0.946, loss_test=0.951, lr=0.000161, per_dim_rms_u=0.513, raw_mse=12.6, raw_mse_u=12.6, step=61999]Epoch 61: 100%|██████████| 1000/1000 [04:40<00:00,  3.57it/s, a0_loss=0.2, a0_loss_test=0.649, aux_loss=4.12, diffusion_loss=1.89, loss=0.946, loss_test=0.951, lr=0.000161, per_dim_rms_u=0.513, raw_mse=12.6, raw_mse_u=12.6, step=61999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 62: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.317, a0_loss_test=0.663, aux_loss=3.81, diffusion_loss=1.9, loss=0.95, loss_test=0.943, lr=0.000153, per_dim_rms_u=0.315, raw_mse=4.77, raw_mse_u=4.77, step=62999]Epoch 62: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.317, a0_loss_test=0.663, aux_loss=3.81, diffusion_loss=1.9, loss=0.95, loss_test=0.943, lr=0.000153, per_dim_rms_u=0.315, raw_mse=4.77, raw_mse_u=4.77, step=62999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 63: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.197, a0_loss_test=0.862, aux_loss=4.95, diffusion_loss=1.91, loss=0.954, loss_test=0.948, lr=0.000146, per_dim_rms_u=0.33, raw_mse=5.24, raw_mse_u=5.24, step=63999]Epoch 63: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.197, a0_loss_test=0.862, aux_loss=4.95, diffusion_loss=1.91, loss=0.954, loss_test=0.948, lr=0.000146, per_dim_rms_u=0.33, raw_mse=5.24, raw_mse_u=5.24, step=63999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 64: 100%|██████████| 1000/1000 [04:47<00:00,  3.48it/s, a0_loss=0.147, a0_loss_test=2.44, aux_loss=3.33, diffusion_loss=1.83, loss=0.913, loss_test=0.941, lr=0.000139, per_dim_rms_u=0.956, raw_mse=43.9, raw_mse_u=43.9, step=64999]Epoch 64: 100%|██████████| 1000/1000 [04:47<00:00,  3.48it/s, a0_loss=0.147, a0_loss_test=2.44, aux_loss=3.33, diffusion_loss=1.83, loss=0.913, loss_test=0.941, lr=0.000139, per_dim_rms_u=0.956, raw_mse=43.9, raw_mse_u=43.9, step=64999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 65: 100%|██████████| 1000/1000 [04:39<00:00,  3.57it/s, a0_loss=0.216, a0_loss_test=0.647, aux_loss=3.43, diffusion_loss=1.91, loss=0.953, loss_test=0.943, lr=0.000132, per_dim_rms_u=0.256, raw_mse=3.15, raw_mse_u=3.15, step=65999]Epoch 65: 100%|██████████| 1000/1000 [04:39<00:00,  3.57it/s, a0_loss=0.216, a0_loss_test=0.647, aux_loss=3.43, diffusion_loss=1.91, loss=0.953, loss_test=0.943, lr=0.000132, per_dim_rms_u=0.256, raw_mse=3.15, raw_mse_u=3.15, step=65999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 66: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.0846, a0_loss_test=0.393, aux_loss=2.85, diffusion_loss=1.84, loss=0.922, loss_test=0.948, lr=0.000125, per_dim_rms_u=0.24, raw_mse=2.77, raw_mse_u=2.77, step=66999]Epoch 66: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.0846, a0_loss_test=0.393, aux_loss=2.85, diffusion_loss=1.84, loss=0.922, loss_test=0.948, lr=0.000125, per_dim_rms_u=0.24, raw_mse=2.77, raw_mse_u=2.77, step=66999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 67: 100%|██████████| 1000/1000 [04:36<00:00,  3.62it/s, a0_loss=0.129, a0_loss_test=0.701, aux_loss=4.98, diffusion_loss=1.92, loss=0.959, loss_test=0.944, lr=0.000118, per_dim_rms_u=0.293, raw_mse=4.11, raw_mse_u=4.11, step=67999]Epoch 67: 100%|██████████| 1000/1000 [04:36<00:00,  3.62it/s, a0_loss=0.129, a0_loss_test=0.701, aux_loss=4.98, diffusion_loss=1.92, loss=0.959, loss_test=0.944, lr=0.000118, per_dim_rms_u=0.293, raw_mse=4.11, raw_mse_u=4.11, step=67999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 68: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.0988, a0_loss_test=2.99, aux_loss=3.28, diffusion_loss=1.85, loss=0.924, loss_test=0.945, lr=0.000112, per_dim_rms_u=0.279, raw_mse=3.74, raw_mse_u=3.74, step=68999]Epoch 68: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.0988, a0_loss_test=2.99, aux_loss=3.28, diffusion_loss=1.85, loss=0.924, loss_test=0.945, lr=0.000112, per_dim_rms_u=0.279, raw_mse=3.74, raw_mse_u=3.74, step=68999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 69: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.199, a0_loss_test=1.03, aux_loss=3.3, diffusion_loss=1.93, loss=0.967, loss_test=0.938, lr=0.000105, per_dim_rms_u=0.27, raw_mse=3.5, raw_mse_u=3.5, step=7e+4]Epoch 69: 100%|██████████| 1000/1000 [04:39<00:00,  3.58it/s, a0_loss=0.199, a0_loss_test=1.03, aux_loss=3.3, diffusion_loss=1.93, loss=0.967, loss_test=0.938, lr=0.000105, per_dim_rms_u=0.27, raw_mse=3.5, raw_mse_u=3.5, step=7e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 70: 100%|██████████| 1000/1000 [04:35<00:00,  3.64it/s, a0_loss=2.28, a0_loss_test=0.384, aux_loss=5.51, diffusion_loss=1.84, loss=0.919, loss_test=0.937, lr=9.86e-5, per_dim_rms_u=0.457, raw_mse=10, raw_mse_u=10, step=70999]Epoch 70: 100%|██████████| 1000/1000 [04:35<00:00,  3.64it/s, a0_loss=2.28, a0_loss_test=0.384, aux_loss=5.51, diffusion_loss=1.84, loss=0.919, loss_test=0.937, lr=9.86e-5, per_dim_rms_u=0.457, raw_mse=10, raw_mse_u=10, step=70999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 71: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=0.24, a0_loss_test=0.947, aux_loss=4.71, diffusion_loss=1.8, loss=0.902, loss_test=0.939, lr=9.24e-5, per_dim_rms_u=0.488, raw_mse=11.4, raw_mse_u=11.4, step=71999]Epoch 71: 100%|██████████| 1000/1000 [04:30<00:00,  3.70it/s, a0_loss=0.24, a0_loss_test=0.947, aux_loss=4.71, diffusion_loss=1.8, loss=0.902, loss_test=0.939, lr=9.24e-5, per_dim_rms_u=0.488, raw_mse=11.4, raw_mse_u=11.4, step=71999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 72: 100%|██████████| 1000/1000 [04:34<00:00,  3.64it/s, a0_loss=0.128, a0_loss_test=0.887, aux_loss=4.23, diffusion_loss=1.87, loss=0.936, loss_test=0.934, lr=8.63e-5, per_dim_rms_u=0.231, raw_mse=2.57, raw_mse_u=2.57, step=72999]Epoch 72: 100%|██████████| 1000/1000 [04:34<00:00,  3.64it/s, a0_loss=0.128, a0_loss_test=0.887, aux_loss=4.23, diffusion_loss=1.87, loss=0.936, loss_test=0.934, lr=8.63e-5, per_dim_rms_u=0.231, raw_mse=2.57, raw_mse_u=2.57, step=72999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 73: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=3.65, a0_loss_test=0.681, aux_loss=4.66, diffusion_loss=1.9, loss=0.948, loss_test=0.935, lr=8.04e-5, per_dim_rms_u=1.35, raw_mse=86.9, raw_mse_u=86.9, step=73999]Epoch 73: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=3.65, a0_loss_test=0.681, aux_loss=4.66, diffusion_loss=1.9, loss=0.948, loss_test=0.935, lr=8.04e-5, per_dim_rms_u=1.35, raw_mse=86.9, raw_mse_u=86.9, step=73999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 74: 100%|██████████| 1000/1000 [04:35<00:00,  3.63it/s, a0_loss=0.181, a0_loss_test=0.645, aux_loss=4.16, diffusion_loss=1.89, loss=0.945, loss_test=0.931, lr=7.46e-5, per_dim_rms_u=0.285, raw_mse=3.9, raw_mse_u=3.9, step=74999]Epoch 74: 100%|██████████| 1000/1000 [04:35<00:00,  3.63it/s, a0_loss=0.181, a0_loss_test=0.645, aux_loss=4.16, diffusion_loss=1.89, loss=0.945, loss_test=0.931, lr=7.46e-5, per_dim_rms_u=0.285, raw_mse=3.9, raw_mse_u=3.9, step=74999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 75: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.0914, a0_loss_test=1.05, aux_loss=2.86, diffusion_loss=1.81, loss=0.903, loss_test=0.932, lr=6.91e-5, per_dim_rms_u=0.334, raw_mse=5.35, raw_mse_u=5.35, step=75999]Epoch 75: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.0914, a0_loss_test=1.05, aux_loss=2.86, diffusion_loss=1.81, loss=0.903, loss_test=0.932, lr=6.91e-5, per_dim_rms_u=0.334, raw_mse=5.35, raw_mse_u=5.35, step=75999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 76: 100%|██████████| 1000/1000 [04:44<00:00,  3.52it/s, a0_loss=0.433, a0_loss_test=0.578, aux_loss=2.49, diffusion_loss=1.92, loss=0.959, loss_test=0.933, lr=6.37e-5, per_dim_rms_u=0.395, raw_mse=7.47, raw_mse_u=7.47, step=76999]Epoch 76: 100%|██████████| 1000/1000 [04:44<00:00,  3.52it/s, a0_loss=0.433, a0_loss_test=0.578, aux_loss=2.49, diffusion_loss=1.92, loss=0.959, loss_test=0.933, lr=6.37e-5, per_dim_rms_u=0.395, raw_mse=7.47, raw_mse_u=7.47, step=76999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 77: 100%|██████████| 1000/1000 [04:40<00:00,  3.57it/s, a0_loss=0.404, a0_loss_test=0.328, aux_loss=5.62, diffusion_loss=1.84, loss=0.918, loss_test=0.928, lr=5.85e-5, per_dim_rms_u=0.521, raw_mse=13, raw_mse_u=13, step=77999]Epoch 77: 100%|██████████| 1000/1000 [04:40<00:00,  3.57it/s, a0_loss=0.404, a0_loss_test=0.328, aux_loss=5.62, diffusion_loss=1.84, loss=0.918, loss_test=0.928, lr=5.85e-5, per_dim_rms_u=0.521, raw_mse=13, raw_mse_u=13, step=77999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 78: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.262, a0_loss_test=1.14, aux_loss=6.3, diffusion_loss=1.88, loss=0.939, loss_test=0.925, lr=5.35e-5, per_dim_rms_u=0.474, raw_mse=10.8, raw_mse_u=10.8, step=78999]Epoch 78: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.262, a0_loss_test=1.14, aux_loss=6.3, diffusion_loss=1.88, loss=0.939, loss_test=0.925, lr=5.35e-5, per_dim_rms_u=0.474, raw_mse=10.8, raw_mse_u=10.8, step=78999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 79: 100%|██████████| 1000/1000 [04:37<00:00,  3.61it/s, a0_loss=0.648, a0_loss_test=0.385, aux_loss=2.82, diffusion_loss=1.76, loss=0.881, loss_test=0.927, lr=4.87e-5, per_dim_rms_u=0.708, raw_mse=24, raw_mse_u=24, step=8e+4]Epoch 79: 100%|██████████| 1000/1000 [04:37<00:00,  3.61it/s, a0_loss=0.648, a0_loss_test=0.385, aux_loss=2.82, diffusion_loss=1.76, loss=0.881, loss_test=0.927, lr=4.87e-5, per_dim_rms_u=0.708, raw_mse=24, raw_mse_u=24, step=8e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 80: 100%|██████████| 1000/1000 [04:38<00:00,  3.59it/s, a0_loss=0.165, a0_loss_test=1.5, aux_loss=2.81, diffusion_loss=1.78, loss=0.889, loss_test=0.924, lr=4.41e-5, per_dim_rms_u=1.19, raw_mse=68.4, raw_mse_u=68.4, step=80999]Epoch 80: 100%|██████████| 1000/1000 [04:38<00:00,  3.59it/s, a0_loss=0.165, a0_loss_test=1.5, aux_loss=2.81, diffusion_loss=1.78, loss=0.889, loss_test=0.924, lr=4.41e-5, per_dim_rms_u=1.19, raw_mse=68.4, raw_mse_u=68.4, step=80999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 81: 100%|██████████| 1000/1000 [04:25<00:00,  3.76it/s, a0_loss=1.68, a0_loss_test=1.39, aux_loss=2.22, diffusion_loss=1.8, loss=0.9, loss_test=0.922, lr=3.97e-5, per_dim_rms_u=0.482, raw_mse=11.1, raw_mse_u=11.1, step=81999]Epoch 81: 100%|██████████| 1000/1000 [04:25<00:00,  3.76it/s, a0_loss=1.68, a0_loss_test=1.39, aux_loss=2.22, diffusion_loss=1.8, loss=0.9, loss_test=0.922, lr=3.97e-5, per_dim_rms_u=0.482, raw_mse=11.1, raw_mse_u=11.1, step=81999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 82: 100%|██████████| 1000/1000 [04:41<00:00,  3.55it/s, a0_loss=0.0943, a0_loss_test=0.372, aux_loss=3.5, diffusion_loss=1.84, loss=0.92, loss_test=0.921, lr=3.55e-5, per_dim_rms_u=0.323, raw_mse=5.02, raw_mse_u=5.02, step=82999]Epoch 82: 100%|██████████| 1000/1000 [04:41<00:00,  3.55it/s, a0_loss=0.0943, a0_loss_test=0.372, aux_loss=3.5, diffusion_loss=1.84, loss=0.92, loss_test=0.921, lr=3.55e-5, per_dim_rms_u=0.323, raw_mse=5.02, raw_mse_u=5.02, step=82999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 83: 100%|██████████| 1000/1000 [04:36<00:00,  3.61it/s, a0_loss=0.195, a0_loss_test=0.46, aux_loss=2.4, diffusion_loss=1.8, loss=0.901, loss_test=0.92, lr=3.15e-5, per_dim_rms_u=0.699, raw_mse=23.4, raw_mse_u=23.4, step=83999]Epoch 83: 100%|██████████| 1000/1000 [04:36<00:00,  3.61it/s, a0_loss=0.195, a0_loss_test=0.46, aux_loss=2.4, diffusion_loss=1.8, loss=0.901, loss_test=0.92, lr=3.15e-5, per_dim_rms_u=0.699, raw_mse=23.4, raw_mse_u=23.4, step=83999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 84: 100%|██████████| 1000/1000 [04:36<00:00,  3.61it/s, a0_loss=0.162, a0_loss_test=0.767, aux_loss=3.18, diffusion_loss=1.77, loss=0.887, loss_test=0.92, lr=2.78e-5, per_dim_rms_u=0.568, raw_mse=15.5, raw_mse_u=15.5, step=84999]Epoch 84: 100%|██████████| 1000/1000 [04:36<00:00,  3.61it/s, a0_loss=0.162, a0_loss_test=0.767, aux_loss=3.18, diffusion_loss=1.77, loss=0.887, loss_test=0.92, lr=2.78e-5, per_dim_rms_u=0.568, raw_mse=15.5, raw_mse_u=15.5, step=84999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 85: 100%|██████████| 1000/1000 [04:50<00:00,  3.44it/s, a0_loss=1.5, a0_loss_test=0.459, aux_loss=5.63, diffusion_loss=1.8, loss=0.902, loss_test=0.918, lr=2.43e-5, per_dim_rms_u=1.69, raw_mse=137, raw_mse_u=137, step=85999]Epoch 85: 100%|██████████| 1000/1000 [04:50<00:00,  3.44it/s, a0_loss=1.5, a0_loss_test=0.459, aux_loss=5.63, diffusion_loss=1.8, loss=0.902, loss_test=0.918, lr=2.43e-5, per_dim_rms_u=1.69, raw_mse=137, raw_mse_u=137, step=85999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 86: 100%|██████████| 1000/1000 [04:41<00:00,  3.56it/s, a0_loss=0.265, a0_loss_test=2.22, aux_loss=1.69, diffusion_loss=1.85, loss=0.927, loss_test=0.917, lr=2.1e-5, per_dim_rms_u=0.266, raw_mse=3.39, raw_mse_u=3.39, step=86999]Epoch 86: 100%|██████████| 1000/1000 [04:41<00:00,  3.56it/s, a0_loss=0.265, a0_loss_test=2.22, aux_loss=1.69, diffusion_loss=1.85, loss=0.927, loss_test=0.917, lr=2.1e-5, per_dim_rms_u=0.266, raw_mse=3.39, raw_mse_u=3.39, step=86999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 87: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.246, a0_loss_test=3.04, aux_loss=2.97, diffusion_loss=1.91, loss=0.955, loss_test=0.916, lr=1.79e-5, per_dim_rms_u=0.256, raw_mse=3.14, raw_mse_u=3.14, step=87999]Epoch 87: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.246, a0_loss_test=3.04, aux_loss=2.97, diffusion_loss=1.91, loss=0.955, loss_test=0.916, lr=1.79e-5, per_dim_rms_u=0.256, raw_mse=3.14, raw_mse_u=3.14, step=87999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 88: 100%|██████████| 1000/1000 [04:31<00:00,  3.69it/s, a0_loss=0.122, a0_loss_test=0.327, aux_loss=4.4, diffusion_loss=1.85, loss=0.925, loss_test=0.916, lr=1.51e-5, per_dim_rms_u=0.294, raw_mse=4.14, raw_mse_u=4.14, step=88999]Epoch 88: 100%|██████████| 1000/1000 [04:31<00:00,  3.69it/s, a0_loss=0.122, a0_loss_test=0.327, aux_loss=4.4, diffusion_loss=1.85, loss=0.925, loss_test=0.916, lr=1.51e-5, per_dim_rms_u=0.294, raw_mse=4.14, raw_mse_u=4.14, step=88999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 89: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.269, a0_loss_test=0.305, aux_loss=2.31, diffusion_loss=1.84, loss=0.921, loss_test=0.914, lr=1.25e-5, per_dim_rms_u=0.201, raw_mse=1.93, raw_mse_u=1.93, step=9e+4]Epoch 89: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.269, a0_loss_test=0.305, aux_loss=2.31, diffusion_loss=1.84, loss=0.921, loss_test=0.914, lr=1.25e-5, per_dim_rms_u=0.201, raw_mse=1.93, raw_mse_u=1.93, step=9e+4]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 90: 100%|██████████| 1000/1000 [04:47<00:00,  3.47it/s, a0_loss=0.126, a0_loss_test=0.506, aux_loss=3.86, diffusion_loss=1.82, loss=0.912, loss_test=0.915, lr=1.01e-5, per_dim_rms_u=0.495, raw_mse=11.8, raw_mse_u=11.8, step=90999]Epoch 90: 100%|██████████| 1000/1000 [04:47<00:00,  3.47it/s, a0_loss=0.126, a0_loss_test=0.506, aux_loss=3.86, diffusion_loss=1.82, loss=0.912, loss_test=0.915, lr=1.01e-5, per_dim_rms_u=0.495, raw_mse=11.8, raw_mse_u=11.8, step=90999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 91: 100%|██████████| 1000/1000 [04:45<00:00,  3.51it/s, a0_loss=0.0941, a0_loss_test=0.353, aux_loss=3.74, diffusion_loss=1.76, loss=0.878, loss_test=0.911, lr=8.01e-6, per_dim_rms_u=0.256, raw_mse=3.15, raw_mse_u=3.15, step=91999]Epoch 91: 100%|██████████| 1000/1000 [04:45<00:00,  3.51it/s, a0_loss=0.0941, a0_loss_test=0.353, aux_loss=3.74, diffusion_loss=1.76, loss=0.878, loss_test=0.911, lr=8.01e-6, per_dim_rms_u=0.256, raw_mse=3.15, raw_mse_u=3.15, step=91999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 92: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.0452, a0_loss_test=0.329, aux_loss=1.51, diffusion_loss=1.85, loss=0.923, loss_test=0.911, lr=6.14e-6, per_dim_rms_u=0.162, raw_mse=1.27, raw_mse_u=1.27, step=92999]Epoch 92: 100%|██████████| 1000/1000 [04:32<00:00,  3.67it/s, a0_loss=0.0452, a0_loss_test=0.329, aux_loss=1.51, diffusion_loss=1.85, loss=0.923, loss_test=0.911, lr=6.14e-6, per_dim_rms_u=0.162, raw_mse=1.27, raw_mse_u=1.27, step=92999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.067, a0_loss_test=0.563, aux_loss=1.54, diffusion_loss=1.71, loss=0.857, loss_test=0.912, lr=4.52e-6, per_dim_rms_u=0.199, raw_mse=1.9, raw_mse_u=1.9, step=93999]Epoch 93: 100%|██████████| 1000/1000 [04:33<00:00,  3.65it/s, a0_loss=0.067, a0_loss_test=0.563, aux_loss=1.54, diffusion_loss=1.71, loss=0.857, loss_test=0.912, lr=4.52e-6, per_dim_rms_u=0.199, raw_mse=1.9, raw_mse_u=1.9, step=93999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.312, a0_loss_test=0.592, aux_loss=2.33, diffusion_loss=1.86, loss=0.929, loss_test=0.913, lr=3.14e-6, per_dim_rms_u=0.211, raw_mse=2.13, raw_mse_u=2.13, step=94999]Epoch 94: 100%|██████████| 1000/1000 [04:43<00:00,  3.53it/s, a0_loss=0.312, a0_loss_test=0.592, aux_loss=2.33, diffusion_loss=1.86, loss=0.929, loss_test=0.913, lr=3.14e-6, per_dim_rms_u=0.211, raw_mse=2.13, raw_mse_u=2.13, step=94999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [04:29<00:00,  3.71it/s, a0_loss=0.0444, a0_loss_test=0.401, aux_loss=2.1, diffusion_loss=1.72, loss=0.861, loss_test=0.913, lr=2.01e-6, per_dim_rms_u=0.199, raw_mse=1.91, raw_mse_u=1.91, step=95999]Epoch 95: 100%|██████████| 1000/1000 [04:29<00:00,  3.71it/s, a0_loss=0.0444, a0_loss_test=0.401, aux_loss=2.1, diffusion_loss=1.72, loss=0.861, loss_test=0.913, lr=2.01e-6, per_dim_rms_u=0.199, raw_mse=1.91, raw_mse_u=1.91, step=95999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [04:18<00:00,  3.87it/s, a0_loss=0.0785, a0_loss_test=0.451, aux_loss=4.63, diffusion_loss=1.9, loss=0.952, loss_test=0.909, lr=1.13e-6, per_dim_rms_u=0.306, raw_mse=4.5, raw_mse_u=4.5, step=96999]Epoch 96: 100%|██████████| 1000/1000 [04:18<00:00,  3.87it/s, a0_loss=0.0785, a0_loss_test=0.451, aux_loss=4.63, diffusion_loss=1.9, loss=0.952, loss_test=0.909, lr=1.13e-6, per_dim_rms_u=0.306, raw_mse=4.5, raw_mse_u=4.5, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [04:37<00:00,  3.61it/s, a0_loss=0.0571, a0_loss_test=0.551, aux_loss=3.22, diffusion_loss=1.86, loss=0.931, loss_test=0.911, lr=5.03e-7, per_dim_rms_u=0.225, raw_mse=2.42, raw_mse_u=2.42, step=97999]Epoch 97: 100%|██████████| 1000/1000 [04:37<00:00,  3.61it/s, a0_loss=0.0571, a0_loss_test=0.551, aux_loss=3.22, diffusion_loss=1.86, loss=0.931, loss_test=0.911, lr=5.03e-7, per_dim_rms_u=0.225, raw_mse=2.42, raw_mse_u=2.42, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [04:21<00:00,  3.82it/s, a0_loss=0.0666, a0_loss_test=0.603, aux_loss=3.95, diffusion_loss=1.79, loss=0.893, loss_test=0.91, lr=1.26e-7, per_dim_rms_u=0.318, raw_mse=4.84, raw_mse_u=4.84, step=98999]Epoch 98: 100%|██████████| 1000/1000 [04:21<00:00,  3.82it/s, a0_loss=0.0666, a0_loss_test=0.603, aux_loss=3.95, diffusion_loss=1.79, loss=0.893, loss_test=0.91, lr=1.26e-7, per_dim_rms_u=0.318, raw_mse=4.84, raw_mse_u=4.84, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [04:24<00:00,  3.78it/s, a0_loss=0.217, a0_loss_test=0.222, aux_loss=3.23, diffusion_loss=1.73, loss=0.866, loss_test=0.909, lr=1.26e-13, per_dim_rms_u=0.26, raw_mse=3.25, raw_mse_u=3.25, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [04:24<00:00,  3.78it/s, a0_loss=0.217, a0_loss_test=0.222, aux_loss=3.23, diffusion_loss=1.73, loss=0.866, loss_test=0.909, lr=1.26e-13, per_dim_rms_u=0.26, raw_mse=3.25, raw_mse_u=3.25, step=1e+5]
+wandb: - 0.053 MB of 0.053 MB uploadedwandb: \ 0.053 MB of 0.053 MB uploadedwandb: | 0.053 MB of 0.053 MB uploadedwandb: / 0.053 MB of 0.053 MB uploadedwandb: - 0.053 MB of 0.053 MB uploadedwandb: \ 0.102 MB of 0.102 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 3.6%
+wandb: 
+wandb: Run history:
+wandb:        test/a0_loss ▃▂▂▂▂▂▃▃▂▄▂▂▂▁▂▃▁▃█▂▂▁▂▂▄▂▁▅▂▂▁▂▃▁▄▁▁▁▁▁
+wandb:       test/aux_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:           test/loss ███▇▇▇▇▇▇▇▇▆▆▆▆▆▆▆▅▅▅▅▄▅▄▄▄▄▃▃▃▂▂▂▂▂▁▁▁▁
+wandb:       train/a0_loss ▆▃▂▃▃▂▆▄▃▃▂▂▂▂▂▁█▁▂▁▁▁▂▃▃▂▂▁▂▁▅▂▁▁▁▁▂▁▁▁
+wandb:      train/aux_loss █▂▂▂▁▁▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       train/fm_frac ▅▃▅▆▄▄▅▅▅▃▄█▅▄▃▆▄▅▆▃▄▆▁▄▃▄▅▄▅▄▇▃▅▄▂▂▇▅▄▁
+wandb:     train/grad_norm ▁▃▃▃▄▃▃▃▃▄▃▄▃▄▃▃▄▄▄▄▅▅▆▆▄▅▆▆▆▇█▅█▆▅▆▇▅█▇
+wandb:        train/h_mean ▅▇▃▂▅▅▃▅▅▆▅▁▆▆▄▁▅▃▂▃▁▄▄▃▆▃▆▄▂▃▁▅▆▃▇▆▂▃▆█
+wandb:      train/h_mse_b0 █▂▂▂▁▂▂▂▂▂▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      train/h_mse_b1 █▃▂▂▂▂▄▂▂▂▁▃▁▂▂▁▂▁▁▁▁▁▁█▁▂▁▁▂▂▃▁▁▁▁▁▂▁▅▁
+wandb:      train/h_mse_b2 ▆▂▁▃▁▁▁▁▂▂▁▁▁▂▁▂█▁▂▂▁▁▁▇▁▂▁▁▁▁▁▂▁▁▁▂▁▁▁▁
+wandb:      train/h_mse_b3 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:          train/loss ████▇▇▇▇▇▇▇▇▇▇▇▇▇▆▆▆▅▇▆▆▅▃▆▅▆▅▃▃▆▃▃▁▂▄▄▄
+wandb:            train/lr ▁███████▇▇▇▇▇▆▆▆▆▅▅▅▅▄▄▄▃▃▃▃▂▂▂▂▂▁▁▁▁▁▁▁
+wandb: train/per_dim_rms_u █▄▂▃▂▃▃▅▃▃▃▃▂▄▂▁▅▄▁▂▂▁▁▆▂▂▂▁▂▂▂▂▁▁▁▂▂▂▄▁
+wandb:       train/raw_mse █▂▂▂▂▂▂▄▂▂▂▂▁▃▁▁▃▃▁▁▁▁▁▅▁▁▁▁▁▁▂▁▁▁▁▁▁▁▂▁
+wandb:     train/raw_mse_u █▂▂▂▂▂▂▄▂▂▂▂▁▃▁▁▃▃▁▁▁▁▁▅▁▁▁▁▁▁▂▁▁▁▁▁▁▁▂▁
+wandb:     train/raw_mse_v █▂▂▂▁▁▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:        val/h_mse_b0 █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:        val/h_mse_b1 █▂▂▂▂▂▂▅▂▂▁▁▂▁▁▂▁▃▁▁▂▁▂▂▂▁▁▂▁▂▁▂▂▂▁▁▁▃▁▁
+wandb:        val/h_mse_b2 ▂▁▂▁▁▁▂▃▁▆▂▂▃▁▂▄▁▂█▂▁▁▃▃▆▂▁▃▂▁▁▂▂▂▃▁▁▄▁▁
+wandb:        val/h_mse_b3 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁
+wandb:   val/per_dim_rms_u █▃▃▂▂▂▃▃▂▃▂▂▂▂▂▃▁▂▄▂▂▂▂▂▃▂▁▂▁▁▁▂▂▄▂▁▁▃▂▁
+wandb:         val/raw_mse ▂▁▁▁▁▁▁▂▁▂▁▁▁▁▁▂▁▁▅▁▁▁▁▂▂▁▁▂▁▁▁▁▁█▂▁▁▂▁▁
+wandb:       val/raw_mse_u ▂▁▁▁▁▁▁▂▁▂▁▁▁▁▁▂▁▁▅▁▁▁▁▂▂▁▁▂▁▁▁▁▁█▂▁▁▂▁▁
+wandb:       val/raw_mse_v █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:      final_test_loss 0.90939
+wandb: final_train_h_mse_b0 2.45619
+wandb: final_train_h_mse_b1 0.19374
+wandb: final_train_h_mse_b2 1.25836
+wandb: final_train_h_mse_b3 0.01969
+wandb:     final_train_loss 0.93019
+wandb:    final_val_raw_mse 7.45688
+wandb: first_train_h_mse_b0 64.98708
+wandb: first_train_h_mse_b1 64.72405
+wandb: first_train_h_mse_b2 69.10274
+wandb: first_train_h_mse_b3 64.15305
+wandb:         test/a0_loss 0.22213
+wandb:        test/aux_loss 3.7127
+wandb:            test/loss 0.90939
+wandb:        train/a0_loss 0.07176
+wandb:       train/aux_loss 2.49367
+wandb:        train/fm_frac 0.34375
+wandb:      train/grad_norm 56.27955
+wandb:         train/h_mean 0.17235
+wandb:       train/h_mse_b0 2.45619
+wandb:       train/h_mse_b1 0.19374
+wandb:       train/h_mse_b2 1.25836
+wandb:       train/h_mse_b3 0.01969
+wandb:           train/loss 0.93019
+wandb:             train/lr 0.0
+wandb:  train/per_dim_rms_u 0.16057
+wandb:        train/raw_mse 1.23761
+wandb:      train/raw_mse_u 1.23761
+wandb:      train/raw_mse_v 2.49367
+wandb:         val/h_mse_b0 3.79915
+wandb:         val/h_mse_b1 9.08354
+wandb:         val/h_mse_b2 15.5856
+wandb:         val/h_mse_b3 8.39246
+wandb:    val/per_dim_rms_u 0.34872
+wandb:          val/raw_mse 7.45688
+wandb:        val/raw_mse_u 7.45688
+wandb:        val/raw_mse_v 3.7127
+wandb: 
+wandb: 🚀 View run MeanFlow-seed-10-slurm-24415 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-MeanFlow/runs/lqrvev3f
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FMPCC-MeanFlow
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260810_152319-lqrvev3f/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+[ train ] Seed 10 complete → logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+================================================================================
+[ train ] Training complete for all seeds
+================================================================================
+Job completed successfully.
+================================================================================
+JOB END:   Mon Aug 10 21:57:31 UTC 2026
+================================================================================

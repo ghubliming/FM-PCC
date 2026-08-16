@@ -15,6 +15,7 @@ squeue -o "%.10i %.10P %.30j %.10u %.2t %.10M %.10D %R"
 
 or 
 squeue -o "%.10i %.12u %.2t %.10M %.6D %.12P %.15R %.15b %.25b %.20T %.30j"
+squeue -o "%.10i %.12u %.10M %.6D %.15P %.25R %.20b %.12T %.50j"
 
 ## shutdown sbatch
 scancel XXXXX
@@ -75,3 +76,25 @@ scontrol show node i6-gpu-1 | grep -E "CfgTRES|AllocTRES"
 ## 4. Controlling Jobs
 *   **`scancel <JOB_ID>`**: Kills a specific job.
 *   **`scancel -u $USER`**: Kills **all** of your jobs at once.
+
+# misc
+## HF data aggregate for download
+python3 Slurm_Codes/sbatch/hardflow/collect_hf_results.py
+
+## disk util
+du -h --max-depth=2 /u/home/llim/FMPCC/FM-PCC/logs
+du -h --max-depth=2 /u/home/llim
+
+## clean weights
+python tools/clean_weights/clean_weights.py --apply
+
+## DA shortcut
+./Slurm_Codes/submit.sh /u/home/llim/FMPCC/FM-PCC/Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh
+
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh
+
+- Local Fallback 
+cd ~/FMPCC/FM-PCC
+nohup bash Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh \
+      > ~/da_avoiding_combined_manual.log 2>&1 &
+tail -f ~/da_avoiding_combined_manual.log

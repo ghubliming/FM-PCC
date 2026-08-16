@@ -175,8 +175,22 @@ class GaussianDiffusion(nn.Module):
             t_cont = torch.full((batch_size,), loop_idx / max(self.flow_steps_v3, 1), device=device, dtype=torch.float32)
 
             # Apply projector near the END of integration (near t=1, near data)
-            near_end = loop_idx >= (1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3 \
-                       if projector is not None else False
+            # [Gen0fix2] Was the BARE FLOAT form `near_end = loop_idx >= (1 - T) * K`: no int(),
+            # no terminal guard. It could return ZERO projected steps -- at T = 0 always, and
+            # whenever ceil((1-T)*K) == K. That made `post_processing` (defined as T = 0,
+            # "project once after the last step", per the DPCC paper) degenerate into no
+            # projection at all, i.e. into the plain `diffuser` arm. Now matched to the guarded
+            # form already used by ode_selectable/meanflow/imeanflow/alphaflow/drifting/uav:
+            #     n_active = max(K - int((1 - T) * K), 1)
+            # UNCHANGED whenever (1 - T) * K is an integer, which covers every threshold used to
+            # date (K=20, T in {0.5,0.1,0.05} -> 10,18,19; K=100 T=0.5 -> 50; K=2 T=0.5 -> 1),
+            # so no past result moves. Differs only at T = 0 and on non-integer (1-T)*K, e.g.
+            # K=10 T=0.25: 2 -> 3. See Fix2/GATE_ARITHMETIC_audit.md.
+            if projector is not None:
+                snapping_start_idx = int((1.0 - projector.diffusion_timestep_threshold) * self.flow_steps_v3)
+                near_end = (loop_idx >= snapping_start_idx) or (loop_idx == self.flow_steps_v3 - 1)
+            else:
+                near_end = False
 
             if projector is not None and projector.gradient and near_end:
                 x = self.p_sample(x, cond, t_cont, returns, projector=projector, constraints=constraints)

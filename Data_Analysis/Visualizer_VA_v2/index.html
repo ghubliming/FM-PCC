@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FM-PCC — Visual Aligning Explorer v2</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 360px; background: #f8f8f8; border-right: 2px solid #000; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        h1 { font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; margin: 0; text-transform: uppercase; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        label { font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input { padding: 10px; border: 1px solid #000; width: 100%; box-sizing: border-box; font-family: inherit; background: #fff; }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 10px; }
+        .mode-btn { font-size: 10px; padding: 5px 10px; border: 1px solid #000; cursor: pointer; background: #eee; text-transform: uppercase; font-weight: bold; }
+        .mode-btn.active { background: #000; color: #fff; }
+        .bulk-actions { display: flex; gap: 10px; margin-bottom: 5px; }
+        .bulk-link { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; color: #666; }
+        .checkbox-list { border: 1px solid #000; background: #fff; padding: 10px; max-height: 140px; overflow-y: auto; font-size: 12px; text-align: left !important; }
+        .checkbox-item { display: flex !important; align-items: flex-start !important; justify-content: flex-start !important; margin-bottom: 6px !important; text-align: left !important; }
+        .checkbox-item input[type="checkbox"] { margin: 2px 8px 0 0 !important; flex-shrink: 0 !important; display: inline-block !important; width: auto !important; }
+        .checkbox-item span { text-align: left !important; word-break: break-word !important; }
+        .btn-main { padding: 12px; background: #000; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
+        .btn-download { padding: 12px; background: #007bff; color: #fff; border: none; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; text-transform: uppercase; }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+        .toolbar { padding: 8px 20px; background: #000; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .status { font-size: 11px; font-weight: bold; color: #0f0; }
+        .content { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 30px; }
+        .scorecard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .score-card { border: 1px solid #000; padding: 10px; background: #fff; }
+        .score-val { font-size: 20px; font-weight: bold; }
+        .score-label { font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; }
+        #plot-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 500px; text-align: center; overflow-x: auto; }
+        .path-section { border-top: 2px solid #000; padding-top: 20px; margin-bottom: 50px; }
+        table { border-collapse: collapse; width: 100%; font-size: 11px; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; overflow-wrap: break-word; }
+        .p-seg-0 { color: #c62828; font-weight: bold; }
+        .p-seg-1 { color: #1565c0; font-weight: bold; }
+        .p-seg-2 { color: #2e7d32; font-weight: bold; }
+        .p-seg-3 { color: #ef6c00; font-weight: bold; }
+        .p-seg-4 { color: #6a1b9a; font-weight: bold; }
+        .p-seg-5 { color: #00838f; font-weight: bold; }
+        /* U10: paper-style result matrices (candidates x variants). These must NOT inherit
+           the global `table-layout: fixed; width: 100%` above — with ~18 variant columns
+           fixed layout squeezes every "mean ± sem" cell into an unreadable wrap. */
+        .paper-tbl-wrap { overflow: auto; max-height: 560px; border: 1px solid #000; margin-bottom: 26px; }
+        .paper-tbl { border-collapse: collapse; table-layout: auto; width: auto; min-width: 100%; font-size: 10px; }
+        .paper-tbl th, .paper-tbl td { border: 1px solid #ccc; padding: 4px 7px; text-align: right; white-space: nowrap; overflow-wrap: normal; }
+        .paper-tbl thead th { position: sticky; top: 0; background: #ececec; z-index: 2; text-align: center; font-size: 9px; font-weight: bold; }
+        .paper-tbl td.rowhead { position: sticky; left: 0; background: #fafafa; text-align: left; font-weight: bold; z-index: 1; }
+        .paper-tbl thead th.corner { left: 0; z-index: 3; background: #ececec; text-align: left; }
+        .paper-tbl tbody tr:hover td { background: #fffde7; }
+        .paper-tbl tbody tr:hover td.rowhead { background: #fff59d; }
+        .paper-tbl .nullcell { color: #bbb; text-align: center; }
+        .paper-tbl .sem { color: #666; }
+        .paper-tbl .flag { color: #c62828; font-size: 9px; font-weight: bold; }
+        .tbl-caption { font-size: 12px; font-weight: bold; margin: 16px 0 4px; }
+        .tbl-note { font-size: 10px; color: #666; margin-bottom: 6px; }
+        /* U11: per-row "download this source folder as .zip" button (Plot Legend + Path Audit Map). */
+        .dl-folder { margin-left: 8px; padding: 2px 7px; font-size: 10px; font-weight: bold; border: 1px solid #007bff;
+                     background: #eaf3ff; color: #0056b3; cursor: pointer; white-space: nowrap; vertical-align: middle; }
+        .dl-folder:hover { background: #007bff; color: #fff; }
+        .dl-folder:disabled { opacity: 0.45; cursor: wait; }
+        /* U13: candidate HIGHLIGHT. A checkbox in the Plot Legend paints ONE candidate's
+           NAME red everywhere it is printed (plot x tick, legend row, every result matrix,
+           the audit map) so a single row stays findable across ~18 variant columns. Only the
+           name changes — never a number, never a cell background — so a highlight can never
+           be misread as a data annotation the way the (goal, constraint) flags are. */
+        .hl-name { color: #d32f2f; font-weight: bold; }
+        /* the global `select, input { width:100% }` rule would blow this up to a full-width
+           box, exactly like .checkbox-item has to override it in the sidebar. */
+        input.hl-box[type="checkbox"] { width: auto; padding: 0; margin: 0; border: none;
+                                        cursor: pointer; transform: scale(1.25); vertical-align: middle; }
+        .hl-clear { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; color: #d32f2f; }
+        /* U13: seed coverage in the Plot Legend. */
+        .seed-ok { color: #2e7d32; }
+        .seed-miss { color: #c62828; font-weight: bold; }
+        /* U16: the variant quick presets sit ON TOP of the variant list and share its
+           border, so they read as one control rather than a second, competing filter. */
+        .preset-list { border: 1px solid #000; border-bottom: none; background: #eef4fa;
+                       padding: 9px 10px 3px; font-size: 12px; text-align: left; }
+        .preset-item { display: flex !important; align-items: flex-start !important; margin-bottom: 7px !important; }
+        .preset-item input[type="checkbox"] { margin: 2px 8px 0 0 !important; flex-shrink: 0 !important;
+                                              width: auto !important; padding: 0 !important; }
+        .preset-n { color: #666; font-weight: normal; }
+        .preset-hint { font-size: 9px; color: #555; line-height: 1.45; margin-bottom: 7px;
+                       text-transform: none; letter-spacing: 0; font-weight: normal; }
+    /* ---- DA_VA_v2 additions ---- */
+        .mask-banner { border: 2px solid #000; padding: 9px 13px; font-size: 12px; background: #f1f8e9; margin-bottom: 4px; }
+        .mask-banner.unfrozen { background: #e3f2fd; border-color: #1565c0; }
+        .roll-tbl { table-layout: auto; font-size: 11px; }
+        .roll-tbl th { background: #ececec; position: sticky; top: 0; z-index: 2; }
+        tr.frozen-row td { background: #fff3e0; }
+        .warn { color: #c62828; font-weight: bold; }
+        .muted { color: #888; }
+        .view-toggle { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+        tr.refrow td { background: #eef4fa; font-style: italic; border-top: 2px solid #000; }
+        .cov-tbl td, .cov-tbl th { text-align: right; }
+        .cov-tbl td.rowhead { text-align: left; }
+    </style>
+
+    <py-config>
+        packages = ["pandas", "matplotlib"]
+    </py-config>
+</head>
+<body>
+
+<div class="sidebar">
+    <h1>FM-PCC VA EXPLORER v2</h1>
+    <div class="control-group">
+        <label>View</label>
+        <div class="view-toggle">
+            <div id="btn-agg"  class="mode-btn active" onclick="setViewMode('aggregate')">AGGREGATE</div>
+            <div id="btn-roll" class="mode-btn"        onclick="setViewMode('rollout')">PER-ROLLOUT</div>
+            <div id="btn-cmp"  class="mode-btn"        onclick="setViewMode('compare')">COMPARE</div>
+            <div id="btn-qual" class="mode-btn"        onclick="setViewMode('quality')">QUALITY</div>
+        </div>
+    </div>
+    <div class="control-group">
+        <label>1. Experiment Batch Source</label>
+        <div class="mode-toggle">
+            <div id="btn-list" class="mode-btn active" onclick="switchMode('list')">QUICK_LIST</div>
+            <div id="btn-path" class="mode-btn" onclick="switchMode('path')">CUSTOM_PATH</div>
+        </div>
+        <div id="input-list"><select id="batch-select"></select></div>
+        <div id="input-path" style="display:none"><input type="text" id="custom-path" placeholder="../analysis_results/batch_va2_.../  (folder, not a file)"></div>
+    <div class="control-group">
+        <label>7. Visual Zoom (Magnify)</label>
+        <div style="display:flex; gap:5px;">
+            <button class="mode-btn" onclick="adjustZoom(-0.2)" style="flex:1">SMALLER</button>
+            <button class="mode-btn" onclick="adjustZoom(0.2)" style="flex:1">LARGER</button>
+        </div>
+        <div style="text-align:center; font-size:10px; font-weight:bold; margin-top:5px;">
+            Scale: <span id="zoom-val">1.0x</span>
+            <input type="hidden" id="width-zoom" value="1.0">
+        </div>
+    </div>
+    <div class="control-group">
+        <label>8. Matplotlib FigWidth</label>
+        <input type="number" id="fig-width" value="10.0" step="1.0" onchange="trigger_plot()">
+    </div>
+    <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
+        <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">EXPORT ZIP (PNG + LATEX + LOG)</button>
+    </div>
+    <div id="controls-panel" style="display:none; flex-direction: column; gap: 20px;">
+        <div class="control-group">
+            <label>1.5 Rollout Mask (global)</label>
+            <select id="mask-select" onchange="refresh_global()">
+                <option value="all">all — every rollout</option>
+                <option value="unfrozen">unfrozen — drop D1 box-obstacle conflicts</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>1.6 Split (global)</label>
+            <select id="split-select" onchange="refresh_global()"></select>
+        </div>
+        <div class="control-group"><label>2. Analysis Mode</label><select id="mode-select" onchange="trigger_plot()"><option value="candidate">By Candidate</option><option value="env">By Environment</option></select></div>
+        <div class="control-group"><label>2.5 Seed Mode</label><select id="seed-mode-select" onchange="toggle_seed_mode()"><option value="standard">Standard (Avg All Available)</option><option value="custom">Custom Seed Compare</option></select></div>
+        <div class="control-group" id="custom-seed-panel" style="display:none;">
+            <label>Select Seeds to Compare</label>
+            <div id="seed-list" class="checkbox-list" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+            <div id="seed-error-msg" style="color:red; font-size: 11px; margin-top:5px; font-weight:bold;"></div>
+        </div>
+        <div class="control-group"><label>3. Metric</label><select id="metric-select" onchange="trigger_plot()"></select></div>
+        <div class="control-group"><label>4. Geometry Focus</label><select id="env-select" onchange="trigger_plot()"></select></div>
+        <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-presets" class="preset-list" style="display:none"></div><div id="variant-list" class="checkbox-list"></div></div>
+        <div class="control-group"><label>6. Candidates</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('cand-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('cand-check', false)">[NONE]</span></div><div id="candidate-list" class="checkbox-list"></div></div>
+        <button class="btn-main" style="background:#444;" py-click="trigger_plot">REFRESH_RE_DRAW</button>
+    </div>
+
+    <!-- PER-ROLLOUT (VA v1 specialty, rebuilt on the v2 axes) -->
+    <div id="roll-controls" style="display:none; flex-direction:column; gap:16px;">
+        <div class="control-group"><label>Candidate</label><select id="roll-cand-select" onchange="show_rollout_table()"></select></div>
+        <div class="control-group"><label>Variant</label><select id="roll-var-select" onchange="show_rollout_table()"></select></div>
+        <div class="control-group"><label>Sort by</label><select id="roll-sort-select" onchange="show_rollout_table()"></select></div>
+        <div class="control-group">
+            <label>Columns</label>
+            <div class="bulk-actions">
+                <span class="bulk-link" onclick="bulkSelect('rollcol-check', true)">[ALL]</span>
+                <span class="bulk-link" onclick="bulkSelect('rollcol-check', false)">[NONE]</span>
+            </div>
+            <div id="rollcol-list" class="checkbox-list"></div>
+        </div>
+        <button class="btn-download" py-click="download_rollout_csv">DOWNLOAD THIS TABLE (CSV)</button>
+    </div>
+
+    <!-- COMPARE (VA v1 specialty) -->
+    <div id="cmp-controls" style="display:none; flex-direction:column; gap:16px;">
+        <div class="control-group"><label>Y metric (per rollout)</label><select id="cmp-y-select"></select></div>
+        <div class="control-group"><label>X metric (per rollout)</label><select id="cmp-x-select"></select></div>
+        <div class="control-group">
+            <label>Chart</label>
+            <div class="view-toggle">
+                <div id="btn-scatter" class="mode-btn active" onclick="setCmpChart('scatter')">SCATTER</div>
+                <div id="btn-bar"     class="mode-btn"        onclick="setCmpChart('bar')">BAR</div>
+                <div id="btn-box"     class="mode-btn"        onclick="setCmpChart('box')">BOX</div>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Series</label>
+            <select id="cmp-group-select"><option value="variant">Variant</option><option value="Candidate">Candidate</option></select>
+        </div>
+        <div class="control-group">
+            <label>Variants</label>
+            <div class="bulk-actions">
+                <span class="bulk-link" onclick="bulkSelect('cmp-var-check', true)">[ALL]</span>
+                <span class="bulk-link" onclick="bulkSelect('cmp-var-check', false)">[NONE]</span>
+            </div>
+            <div id="cmp-variant-list" class="checkbox-list"></div>
+        </div>
+        <div class="control-group">
+            <label>Candidates</label>
+            <div class="bulk-actions">
+                <span class="bulk-link" onclick="bulkSelect('cmp-cand-check', true)">[ALL]</span>
+                <span class="bulk-link" onclick="bulkSelect('cmp-cand-check', false)">[NONE]</span>
+            </div>
+            <div id="cmp-candidate-list" class="checkbox-list"></div>
+        </div>
+        <button class="btn-main" style="background:#c62828" py-click="trigger_compare">DRAW COMPARE</button>
+        <button class="btn-download" id="cmp-download-btn" py-click="download_compare" style="display:none">DOWNLOAD PNG</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>DA_VA_v2 &nbsp;|&nbsp; VISUAL ALIGNING SUITE U3</div></div>
+    <div class="content">
+        <div id="mask-banner" class="mask-banner" style="display:none"></div>
+        <div id="aggregate-area">
+        <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
+        <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
+        <div class="path-section" id="selection-map-section" style="display:none; border-top: 2px dashed #007bff; margin-bottom: 0;"><label style="color:#007bff;">Plot Legend — Selected Candidates (this plot only)</label><div id="selection-map-container"></div></div>
+        <div class="path-section" id="summary-section" style="display:none; border-top: 2px solid #000;"><label>Result Matrices — Selected Candidates &times; All Variants</label><div id="summary-container"></div></div>
+        <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map</label><div id="path-map-container"></div></div>
+        </div><!-- /aggregate-area -->
+
+        <div id="rollout-area" style="display:none">
+            <div id="rollout-summary"></div>
+            <div id="rollout-table-container" style="max-height:72vh;overflow:auto;border:1px solid #000"></div>
+        </div>
+
+        <div id="compare-area" style="display:none">
+            <div id="compare-plot-area" style="background:#fff;border:1px solid #000;padding:14px;min-height:460px;text-align:center;overflow-x:auto">
+                <p style="padding-top:180px;color:#999">SELECT VARIANTS AND DRAW</p>
+            </div>
+        </div>
+
+        <div id="quality-area" style="display:none">
+            <div id="quality-container"></div>
+        </div>
+    </div>
+</div>
+
+<script type="py">
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+import io, json, re, zipfile, asyncio
+from urllib.parse import quote, unquote
+from pyscript import display
+from js import document, console, fetch, window, Uint8Array, File, URL
+from pyodide.ffi import create_proxy
+
+df = None
+df_agg = None
+df_raw = None
+current_fig = None
+# U10: bumped on every SYNC_SOURCE so the result-matrix cache invalidates on new data.
+data_version = 0
+
+# ---------------------------------------------------------------------------------------
+# U15: one colour per variant, and never the same colour twice.
+#
+# The bug this replaces: `colormap='tab10'`. tab10 is a ListedColormap holding exactly TEN
+# colours, and pandas samples a colormap at linspace(0, 1, n_columns). Select 18 variants
+# and several of those samples round to the SAME entry — two different methods drew in the
+# identical colour, and the legend then claimed they were one. Nothing warned; the chart
+# just quietly lied about which bar belonged to which variant.
+#
+# Colours are keyed to the variant's position in the BATCH's full sorted variant list, not
+# in the current selection, so a variant keeps its colour as you tick others on and off.
+# (Previously every bar on the chart changed colour whenever one more variant was ticked,
+# which made two screenshots of the same batch impossible to compare.)
+#
+# Qualitative maps first, in decreasing distinguishability; a continuous map only tops up
+# past ~60 variants, where colour alone has stopped being a usable key anyway.
+# ---------------------------------------------------------------------------------------
+PALETTE_CMAPS = ('tab10', 'tab20', 'tab20b', 'tab20c', 'Set1', 'Set2', 'Dark2', 'Accent')
+variant_color_cache = (None, {})
+
+
+def _cmap(name):
+    # matplotlib moved colormap lookup around (cm.get_cmap removed in 3.9, colormaps added
+    # in 3.5); pyodide pins an older build than the cluster, so try both spellings.
+    try:
+        from matplotlib import colormaps
+        return colormaps[name]
+    except Exception:
+        try:
+            return plt.get_cmap(name)
+        except Exception:
+            return None
+
+
+def _palette(n_colors):
+    """-> n_colors RGBA tuples, guaranteed pairwise distinct."""
+    seen, out = set(), []
+
+    def _add(rgba):
+        key = tuple(round(float(x), 3) for x in tuple(rgba)[:3])
+        if key in seen:
+            return
+        seen.add(key)
+        out.append(tuple(float(x) for x in tuple(rgba)[:3]) + (1.0,))
+
+    for name in PALETTE_CMAPS:
+        cmap = _cmap(name)
+        for colour in getattr(cmap, 'colors', ()) or ():
+            _add(colour)
+            if len(out) >= n_colors:
+                return out[:n_colors]
+    if len(out) < n_colors:
+        # Past the qualitative maps. These stay distinct (the guard above enforces it) but
+        # they are no longer CHOSEN to be far apart — oversample so adjacent variants at
+        # least land on different hues.
+        cont = _cmap('turbo') or _cmap('hsv')
+        if cont is not None:
+            steps = max(n_colors * 4, 1)
+            for i in range(steps):
+                _add(cont(i / float(steps)))
+                if len(out) >= n_colors:
+                    break
+    return out[:n_colors]
+
+
+def _variant_colors(variants):
+    """Colours for these variants, stable for the whole batch."""
+    global variant_color_cache
+    if variant_color_cache[0] != data_version:
+        all_variants = (sorted(df_agg['variant'].astype(str).unique())
+                        if df_agg is not None and 'variant' in df_agg.columns else [])
+        variant_color_cache = (data_version,
+                               dict(zip(all_variants, _palette(max(len(all_variants), 1)))))
+    table = variant_color_cache[1]
+    # A variant the cache predates (a frame derived after it was built) must EXTEND the
+    # table, not wrap around into a colour already in use.
+    missing = [v for v in (str(x) for x in variants) if v not in table]
+    if missing:
+        topped = _palette(len(table) + len(missing))
+        for name, colour in zip(missing, topped[len(table):]):
+            table[name] = colour
+    return [table[str(v)] for v in variants]
+
+# U13: candidates ticked in the Plot Legend's HL column. Held in PYTHON, not read back out
+# of the DOM, because all three tables are rebuilt wholesale on every redraw — a checkbox's
+# checked state would not survive a single replot. Deliberately NOT cleared by SYNC_SOURCE:
+# re-loading the same batch after a re-run should keep whatever you were tracking (use
+# [CLEAR HIGHLIGHTS] in the legend header, which also reaches candidates you have since
+# unticked in the sidebar and so can no longer see a checkbox for).
+highlighted_cands = set()
+HL_COLOR = "#d32f2f"
+# The last figure's axes + x categories, so toggling a highlight can recolour the tick
+# labels of the EXISTING figure instead of recomputing the whole plot.
+current_ax = None
+last_plot_axis = None
+last_plot_cats = []
+last_selection_args = None
+
+async def init_manifest():
+    import re
+    try:
+        # Fetch the directory listing directly (works with python -m http.server)
+        response = await fetch("../analysis_results/")
+        if response.ok:
+            html = await response.text()
+            # DA_VA_v2 runs only — a batch_va2_* folder is the one carrying the
+            # native va2_*.csv cube this page reads.
+            batches = re.findall(r'href="(batch_va2_[^/"]+)/?"', html)
+            # Remove duplicates and sort descending
+            batches = sorted(list(set(batches)), reverse=True)
+            
+            if len(batches) > 0:
+                options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
+                document.getElementById("batch-select").innerHTML = options
+                document.getElementById("engine-status").innerHTML = "ENGINE_READY"
+                document.getElementById("engine-status").style.color = "#0f0"
+            else:
+                document.getElementById("engine-status").innerHTML = "NO_BATCHES_FOUND"
+                document.getElementById("engine-status").style.color = "orange"
+        else:
+            # Fallback to manifest if directory listing is forbidden
+            resp2 = await fetch("../analysis_results/results_manifest.json")
+            if resp2.ok:
+                data = await resp2.json()
+                batches = [b for b in data.get("batches", []) if str(b).startswith("batch_va2_")]
+                if len(batches) > 0:
+                    options = "".join([f'<option value="{b}">{b}</option>' for b in batches])
+                    document.getElementById("batch-select").innerHTML = options
+                    document.getElementById("engine-status").innerHTML = "ENGINE_READY"
+                    document.getElementById("engine-status").style.color = "#0f0"
+    except Exception as e:
+        console.log(f"[ manifest error ] {e}")
+        pass
+
+# ---------------------------------------------------------------------------------------
+# DA_VA_v2 source frames. The page reads the NATIVE cube and projects it onto the column
+# names the DAv3 core below already speaks (halfspace_variant / mean / std / count / value),
+# so every inherited feature keeps working while mask + split become live switches.
+# ---------------------------------------------------------------------------------------
+VA2_FILES = {'agg': 'va2_aggregated_long.csv', 'units': 'va2_units_long.csv',
+             'roll': 'per_rollout_detail.csv', 'qual': 'data_quality.csv'}
+df_agg_src = None      # va2_aggregated_long.csv   (pooled over seeds)
+df_units_src = None    # va2_units_long.csv        (per seed)
+df_roll_src = None     # per_rollout_detail.csv    (per rollout)
+df_qual_src = None     # data_quality.csv          (per unit)
+current_roll_table = None
+compare_fig = None
+
+ROLL_DEFAULT_COLUMNS = ['rollout_idx', 'frozen', 'n_success', 'success_relaxed',
+                        'mean_dist_per_rollout', 'context_final_xy_dist',
+                        'constraint_exec_sat_rate', 'n_violations', 'max_viol_depth_m',
+                        'n_steps', 'avg_time_ms', 'max_phys_error_per_rollout']
+ROLL_SORT_OPTIONS = [('rollout_idx', 'Rollout index'), ('n_success', 'Success'),
+                     ('mean_dist_per_rollout', 'Final distance'),
+                     ('context_final_xy_dist', 'Final XY distance'),
+                     ('constraint_exec_sat_rate', 'Constraint sat rate'),
+                     ('n_violations', 'Violated steps'), ('avg_time_ms', 'Replan time')]
+
+
+def _norm(df):
+    if df is None:
+        return None
+    for col in ('Candidate', 'variant', 'geo', 'split', 'mask', 'metric', 'FolderName',
+                'LatestSnapshot'):
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+    return df
+
+
+def current_mask():
+    el = document.getElementById("mask-select")
+    return el.value if el is not None else "all"
+
+
+def current_split():
+    el = document.getElementById("split-select")
+    return el.value if el is not None else "ALL"
+
+
+def _slice(df, use_mask=True):
+    """Global mask + split, on either CSV shape.
+
+    The long CSVs carry BOTH reductions of every metric in a `mask` COLUMN — pick
+    one or every row counts twice. per_rollout_detail has no such column, just a
+    `frozen` flag per rollout, so the same switch has to drop rows there instead;
+    without this the mask silently does nothing in the rollout/compare views.
+    """
+    if df is None or len(df) == 0:
+        return df
+    out = df
+    mask, split = current_mask(), current_split()
+    if use_mask:
+        if 'mask' in out.columns:
+            out = out[out['mask'] == mask]
+        elif mask == 'unfrozen' and 'frozen' in out.columns:
+            out = out[out['frozen'].fillna(0) != 1]
+    if split != 'ALL' and 'split' in out.columns:
+        out = out[out['split'] == split]
+    return out
+
+
+# U3: the relaxed goal+constraint rate. The DA pipeline only derives the STRICT
+# product (n_success * zero_violation), and the relaxed one canNOT be recovered
+# from the long CSVs after the fact — mean(a*b) != mean(a)*mean(b) once the two
+# flags disagree on any single rollout. per_rollout_detail is the only frame that
+# still has both side by side, so it is rebuilt here, per rollout, then reduced
+# exactly like the pipeline reduces everything else. A future batch that ships
+# the column natively wins: the synthesis is skipped (see derive_frames).
+DERIVED_METRIC = 'n_success_relaxed_and_constraints'
+DERIVED_INPUTS = ('success_relaxed', 'constraint_exec_zero_violation')
+
+
+def _derived_rows(roll, keys):
+    """mean/std/n of DERIVED_METRIC over rollouts, grouped by `keys`. None if unavailable.
+
+    Grouping mirrors the pipeline's own reduction (split included), so with
+    split=ALL these rows duplicate per split exactly like the native ones and the
+    matrices average them the same way. per_rollout_detail carries FolderName but
+    NOT FullPath, so the path column is filled from df_agg afterwards.
+    """
+    if roll is None or len(roll) == 0:
+        return None
+    if any(c not in roll.columns for c in DERIVED_INPUTS):
+        return None
+    keys = [k for k in keys if k in roll.columns]
+    if not keys:
+        return None
+    work = roll[keys].copy()
+    work['__v'] = (pd.to_numeric(roll[DERIVED_INPUTS[0]], errors='coerce').values
+                   * pd.to_numeric(roll[DERIVED_INPUTS[1]], errors='coerce').values)
+    grouped = work.groupby(keys, observed=True, dropna=False)['__v']
+    out = pd.DataFrame({'mean': grouped.mean(), 'std': grouped.std(),
+                        'n': grouped.count()}).reset_index()
+    return out[out['n'] > 0]
+
+
+def derive_frames():
+    """Rebuild df_agg / df_raw for the current mask+split, in DAv3's schema."""
+    global df_agg, df_raw, data_version
+    agg = _slice(df_agg_src)
+    df_agg = pd.DataFrame({
+        'Candidate': agg['Candidate'].values,
+        'Folder_Name': agg['FolderName'].values,
+        'Full_Path': agg['FullPath'].values,
+        'variant': agg['variant'].values,
+        'halfspace_variant': agg['geo'].values,     # geometry IS this page's environment axis
+        'metric': agg['metric'].values,
+        'mean': agg['mean'].values,
+        'std': agg['std'].values,
+        'count': agg['n'].values,                   # pooled rollouts -> SEM is over rollouts
+    })
+    # "Last Run" for the path tables — DA_VA_v2 writes it as LatestSnapshot, the
+    # DAv3 page reads Latest_Snapshot. Absent in batches predating the column.
+    if 'LatestSnapshot' in agg.columns:
+        df_agg['Latest_Snapshot'] = agg['LatestSnapshot'].values
+    roll = _slice(df_roll_src)                      # mask here drops the frozen ROWS
+    paths = dict(zip(df_agg['Candidate'], df_agg['Full_Path']))
+    stamps = (dict(zip(df_agg['Candidate'], df_agg['Latest_Snapshot']))
+              if 'Latest_Snapshot' in df_agg.columns else {})
+    if DERIVED_METRIC not in set(df_agg['metric'].unique()):
+        extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
+                                     'geo', 'variant'])
+        if extra is not None and len(extra):
+            block = pd.DataFrame({
+                'Candidate': extra['Candidate'].values,
+                'Folder_Name': extra['FolderName'].values,
+                'Full_Path': extra['Candidate'].map(paths).values,
+                'variant': extra['variant'].values,
+                'halfspace_variant': extra['geo'].values,
+                'metric': DERIVED_METRIC,
+                'mean': extra['mean'].values,
+                'std': extra['std'].values,
+                'count': extra['n'].values,
+            })
+            if stamps:
+                block['Latest_Snapshot'] = extra['Candidate'].map(stamps).values
+            df_agg = pd.concat([df_agg, block], ignore_index=True)
+    if df_units_src is not None:
+        units = _slice(df_units_src)
+        df_raw = pd.DataFrame({
+            'Candidate': units['Candidate'].values,
+            'Folder_Name': units['FolderName'].values,
+            'Full_Path': units['FullPath'].values,
+            'seed': units['seed'].values,
+            'variant': units['variant'].values,
+            'halfspace_variant': units['geo'].values,
+            'metric': units['metric'].values,
+            'value': units['mean'].values,
+        })
+        if 'LatestSnapshot' in units.columns:    # per-SEED stamp in this frame
+            df_raw['Latest_Snapshot'] = units['LatestSnapshot'].values
+        if DERIVED_METRIC not in set(df_raw['metric'].unique()):
+            extra = _derived_rows(roll, ['Candidate', 'FolderName', 'split',
+                                         'seed', 'geo', 'variant'])
+            if extra is not None and len(extra):
+                df_raw = pd.concat([df_raw, pd.DataFrame({
+                    'Candidate': extra['Candidate'].values,
+                    'Folder_Name': extra['FolderName'].values,
+                    'Full_Path': extra['Candidate'].map(paths).values,
+                    'seed': extra['seed'].values,
+                    'variant': extra['variant'].values,
+                    'halfspace_variant': extra['geo'].values,
+                    'metric': DERIVED_METRIC,
+                    'value': extra['mean'].values,
+                })], ignore_index=True)
+    else:
+        df_raw = None
+    data_version += 1      # busts the result-matrix cache: mask/split changed the numbers
+
+
+async def _fetch_csv(base, name, required=False):
+    try:
+        response = await fetch(f"{base}/{name}")
+        if not response.ok:
+            if required:
+                raise Exception(f"HTTP {response.status} for {name}")
+            return None
+        return _norm(pd.read_csv(io.StringIO(await response.text()), low_memory=False))
+    except Exception as e:
+        if required:
+            raise
+        console.log(f"[ loader ] optional {name} unavailable: {e}")
+        return None
+
+
+async def load_data(event=None):
+    global df_agg_src, df_units_src, df_roll_src, df_qual_src, data_version
+    mode = window.currentMode
+    if mode == "list":
+        batch = document.getElementById("batch-select").value
+        if not batch:
+            document.getElementById("engine-status").innerText = "NO_BATCH_SELECTED"
+            return
+        base = f"../analysis_results/{batch}"
+    else:
+        base = document.getElementById("custom-path").value.strip().rstrip("/")
+        for name in VA2_FILES.values():          # accept a CSV path or the folder
+            if base.endswith(name):
+                base = base[: -len(name)].rstrip("/")
+
+    try:
+        document.getElementById("engine-status").innerText = "FETCHING..."
+        df_agg_src = await _fetch_csv(base, VA2_FILES['agg'], required=True)
+        df_units_src = await _fetch_csv(base, VA2_FILES['units'])
+        df_roll_src = await _fetch_csv(base, VA2_FILES['roll'])
+        df_qual_src = await _fetch_csv(base, VA2_FILES['qual'])
+
+        populate_split_filter()
+        derive_frames()
+        document.getElementById("controls-panel").style.display = "flex"
+        document.getElementById("download-btn").style.display = "block"
+        document.getElementById("path-section").style.display = "block"
+        document.getElementById("scorecard-area").style.display = "block"
+        populate_dynamic_filters()
+        render_path_map()
+        render_mask_banner()
+        window.applyViewMode()          # show the panels for whatever view is active
+        await trigger_plot(None)
+        document.getElementById("engine-status").innerText = "SYNC_COMPLETE"
+    except Exception as e:
+        document.getElementById("engine-status").innerText = "LOAD_ERROR"
+        console.log(str(e))
+        document.getElementById("plot-area").innerHTML = (
+            '<div style="padding:40px;color:#b71c1c;font-family:monospace;font-size:13px">'
+            f'<b>COULD NOT LOAD {VA2_FILES["agg"]}</b><br><br>{e}<br><br>'
+            f'tried <code>{base}/{VA2_FILES["agg"]}</code><br><br>'
+            'This page reads the DA_VA_v2 native CSVs — point it at a '
+            '<code>batch_va2_*</code> folder.</div>')
+
+
+def populate_dynamic_filters():
+    metrics = sorted(df_agg['metric'].unique())
+    # U7 fix: default to a CORE metric, not the alphabetically-first one. Adding the
+    # HardFlow-only metrics (activation_threshold, batch_size, ...) made 'a...' sort to
+    # the top, so the dropdown defaulted to a metric that only hardflow_new npz has —
+    # every non-hardflow variant then filtered to an empty subset (blank plot / stuck
+    # placeholder). Prefer the headline metric so the initial + typical selection has data.
+    default_metric = next((m for m in ["n_success_and_constraints", "n_success", "avg_time"] if m in metrics), metrics[0] if metrics else None)
+    document.getElementById("metric-select").innerHTML = "".join([f'<option value="{m}"{" selected" if m == default_metric else ""}>{m.upper()}</option>' for m in metrics])
+    envs = sorted(df_agg['halfspace_variant'].unique())
+    document.getElementById("env-select").innerHTML = "".join([f'<option value="{e}">{e.upper()}</option>' for e in envs])
+    # Do NOT auto-check any box on first load: large batches (many variants x candidates)
+    # freeze the page trying to render the full matrix at once. U10 also drops the old
+    # "pre-check the first item" behaviour — the plot starts empty on purpose, because the
+    # Result Matrices section below now gives the full unfiltered picture without any
+    # selection, and an auto-picked CAND_1/first-variant bar was routinely mistaken for a
+    # meaningful default. The user checks what they want (or hits [ALL]).
+    vars_list = sorted(df_agg['variant'].unique())
+    document.getElementById("variant-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="var-check" value="{v}" onchange="trigger_plot()"> <span>{v}</span></div>' for v in vars_list])
+    render_variant_presets(vars_list)
+    # numeric-labeled batches (Candidate = "1".."48") must sort as numbers, not
+    # lexicographically ("1","10","11",...,"2",...) — alphabetic labels ("A","B",...)
+    # are untouched since they never match .isdigit().
+    cands_list = sorted(df_agg['Candidate'].unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    document.getElementById("candidate-list").innerHTML = "".join([f'<div class="checkbox-item"><input type="checkbox" class="cand-check" value="{c}" onchange="trigger_plot()"> <span>CAND_{c}</span></div>' for c in cands_list])
+    populate_va2_filters(vars_list, cands_list)
+
+# ---------------------------------------------------------------------------------------
+# U16: quick presets over "5. Variants".
+#
+# The batch carries ~18 variants and the comparison that is actually run over and over is a
+# handful of them: the diffusion baseline, the DPCC projection arms, and the HardFlow arms.
+# Ticking those eight boxes by hand — and mis-ticking one — was the routine cost of every
+# read. A preset checkbox ticks its members in the main list; it is a shortcut for the
+# boxes below it, NOT a second filter, so what is plotted is always exactly what the main
+# list shows.
+#
+# Membership is a RULE over the variant name, not a hardcoded list, so a batch that gains
+# an arm gets it for free and a batch that lacks one is not left with a dead entry:
+#
+#   diffuser                     the unconstrained generator - the baseline every
+#                                comparison needs, and it has no tightened twin
+#   dpcc-{r,c,t}[-tightened]     the DPCC projection arms
+#   hardflow_new[-{r,c,t}][-tightened]
+#
+# Anything with a further suffix is excluded: `dpcc-c-tightened-dt0p25` and friends are a
+# timestep-scaling SWEEP, not an arm of the comparison, and silently folding them in would
+# put four near-identical bars next to the one that matters.
+# ---------------------------------------------------------------------------------------
+BASELINE_VARIANT = 'diffuser'
+PRESET_ARM_RE = re.compile(
+    r'^(?P<fam>dpcc|hardflow_new)(?:-(?P<sel>[rct]))?(?P<tight>-tightened)?(?P<extra>-.+)?$')
+
+# (key, label, tooltip)
+VARIANT_PRESETS = [
+    ('dpcc_hf', 'DPCC + HF',
+     'diffuser + every dpcc-{r,c,t} and hardflow_new arm, tightened or not. Excludes the '
+     'dt-scaled dpcc sweeps and the non-projection baselines (gradient, post_processing, '
+     'model_free, geo_free, bounds_free).'),
+    ('dpcc_hf_tight', 'DPCC + HF (tightened)',
+     'diffuser + only the -tightened dpcc-{r,c,t} and hardflow_new-{r,c,t} arms.'),
+    ('dpcc_tight', 'DPCC (tightened)',
+     'diffuser + only the -tightened dpcc-{r,c,t} arms. No HardFlow.'),
+]
+
+
+def _preset_members(key, variants):
+    """The variants a preset ticks, in the order they appear in the list."""
+    out = []
+    for raw in variants:
+        name = str(raw)
+        if name == BASELINE_VARIANT:
+            out.append(name)
+            continue
+        m = PRESET_ARM_RE.match(name)
+        if m is None or m.group('extra'):
+            continue
+        tight = bool(m.group('tight'))
+        if key == 'dpcc_hf':
+            keep = True
+        elif key == 'dpcc_hf_tight':
+            keep = tight
+        else:                                   # dpcc_tight
+            keep = tight and m.group('fam') == 'dpcc'
+        if keep:
+            out.append(name)
+    # diffuser alone is not a preset — it is the baseline the others are read against.
+    return out if any(v != BASELINE_VARIANT for v in out) else []
+
+
+def render_variant_presets(vars_list):
+    rows, empty = [], []
+    for key, label, tip in VARIANT_PRESETS:
+        members = _preset_members(key, vars_list)
+        if not members:
+            # No dead checkbox: a batch without tightened variant names (DA_VA_v2 puts
+            # tightening on the GEOMETRY axis instead) simply does not offer that preset.
+            empty.append(label)
+            continue
+        rows.append(
+            f'<div class="checkbox-item preset-item" title="{_esc_attr(tip)}">'
+            f'<input type="checkbox" class="preset-check" '
+            # names are [a-z0-9_-] so "|" is a safe separator here
+            f'data-members="{_esc_attr("|".join(members))}" '
+            f'onchange="toggle_variant_preset(this)">'
+            f'<span><b>{label}</b> <span class="preset-n">&middot; {len(members)} variants</span></span></div>')
+    el = document.getElementById("variant-presets")
+    if not rows:
+        el.innerHTML = ""
+        el.style.display = "none"
+        return
+    hint = ('<div class="preset-hint">Quick picks &mdash; ticking one ticks its variants in '
+            'the list below (untick to clear them). Grey tick = only some of its variants '
+            'are selected.')
+    if empty:
+        hint += ('<br>Not offered by this batch: <b>' + ", ".join(empty) + '</b> '
+                 '&mdash; no <code>-tightened</code> variant names here. On a DA_VA_v2 batch '
+                 'tightening lives on the geometry axis instead: use <b>4. Geometry Focus</b>.')
+    hint += '</div>'
+    el.innerHTML = hint + "".join(rows)
+    el.style.display = "block"
+
+
+def show_no_data(metric, checked_vars, checked_cands, env):
+    # U7 fix: never leave the "CHOOSE_EXPERIMENT_TO_START" placeholder (or a silent
+    # blank) when a valid-looking selection has no rows — tell the user WHICH facet is
+    # empty. Most common cause: a hardflow-only metric (activation_threshold / nlp_solves)
+    # selected against non-hardflow variants, or a candidate that lacks the chosen env.
+    env_line = f"<br>env = <b>{env}</b>" if env else ""
+    msg = (f'<div style="padding:24px;color:#b71c1c;font-family:monospace;font-size:13px;line-height:1.6;">'
+           f'<b>NO DATA FOR THIS SELECTION</b><br><br>'
+           f'metric = <b>{metric}</b><br>'
+           f'variants = {", ".join(checked_vars)}<br>'
+           f'candidates = {", ".join("CAND_"+c for c in checked_cands)}{env_line}<br><br>'
+           f'Tip: hardflow-only metrics (activation_threshold, nlp_solves, nfe, batch_size, '
+           f'flow_steps) exist only for <b>hardflow_new*</b> variants. Pick a core metric '
+           f'(n_success_and_constraints, avg_time) to compare across all variants.</div>')
+    document.getElementById("plot-area").innerHTML = msg
+
+def show_empty_selection(checked_vars, checked_cands):
+    # U10: with nothing pre-checked, an un-drawn plot is the normal start state — say so
+    # explicitly instead of leaving the stale "CHOOSE_EXPERIMENT_TO_START" placeholder (or a
+    # previous plot) sitting there, and point at the matrices that ARE already populated.
+    missing = []
+    if not checked_vars: missing.append("variant")
+    if not checked_cands: missing.append("candidate")
+    document.getElementById("plot-area").innerHTML = (
+        '<div style="padding:60px 24px;color:#666;font-family:monospace;font-size:13px;line-height:1.7;">'
+        f'<b style="color:#000;font-size:15px;">NO PLOT — SELECT AT LEAST ONE {" AND ONE ".join(m.upper() for m in missing)}</b><br><br>'
+        'Sidebar &rarr; <b>5. Variants</b> and <b>6. Candidates</b> (use <b>[ALL]</b> for everything).<br>'
+        'Nothing is pre-checked by design.<br><br>'
+        'The <b>Result Matrices</b> below only need <b>candidates</b> &mdash; tick those alone and '
+        'they (and the LaTeX export) fill in with every variant as a column.</div>')
+    document.getElementById("scorecard-container").innerHTML = (
+        '<div class="score-card" style="grid-column: span 4; text-align:center; color:#999;">'
+        'No selection &mdash; scorecard idle</div>')
+    document.getElementById("selection-map-section").style.display = "none"
+
+async def trigger_plot(event=None):
+    global df_agg, df_raw, current_fig
+    if df_agg is None: return
+    metric, mode, env = document.getElementById("metric-select").value, document.getElementById("mode-select").value, document.getElementById("env-select").value
+    checked_vars, checked_cands = get_checked("var-check"), get_checked("cand-check")
+
+    # U10: the Result Matrices ignore the VARIANT checkboxes (all variants are always
+    # columns) and only follow the candidate ones, so they are rendered BEFORE the
+    # early-return below — with candidates but no variants ticked the plot can't draw, yet
+    # the matrices are perfectly well defined.
+    render_summary_tables()
+
+    if not checked_vars or not checked_cands or not metric:
+        plt.close('all')
+        current_fig = None
+        show_empty_selection(checked_vars, checked_cands)
+        return
+
+    seed_mode = document.getElementById("seed-mode-select").value
+    document.getElementById("seed-error-msg").innerText = ""
+    x_axis = 'Candidate' if mode == "candidate" else 'halfspace_variant'
+    
+    if seed_mode == "custom" and df_raw is not None:
+        checked_seeds = [int(x) for x in get_checked("seed-check")]
+        if not checked_seeds:
+            document.getElementById("seed-error-msg").innerText = "Select >= 1 seed."
+            return
+            
+        mask = (df_raw['metric'] == metric) & (df_raw['variant'].isin(checked_vars)) & (df_raw['Candidate'].isin(checked_cands)) & (df_raw['seed'].isin(checked_seeds))
+        if mode == "candidate": mask &= (df_raw['halfspace_variant'] == env)
+        subset = df_raw[mask]
+        
+        # U7 fix: WARN about candidates missing a selected seed, but do NOT abort the
+        # whole plot (that wiped everything the moment a partial-seed candidate — e.g.
+        # a seed-6-only hardflow run — was included). Plot whatever seeds exist; the
+        # groupby mean below just uses the available rows per candidate.
+        warn = []
+        for cand in checked_cands:
+            cand_subset = subset[subset['Candidate'] == cand]
+            found = set(cand_subset['seed'].unique())
+            missing = set(checked_seeds) - found
+            if missing:
+                warn.append(f"CAND_{cand}: {sorted(missing)}")
+        if warn:
+            document.getElementById("seed-error-msg").innerText = "Note: plotting available seeds only — missing " + "; ".join(warn)
+        if subset.empty:
+            plt.close('all')
+            show_no_data(metric, checked_vars, checked_cands, env if mode == "candidate" else None)
+            return
+
+        pivot_mean = subset.groupby([x_axis, 'variant'])['value'].mean().unstack()
+        pivot_std = subset.groupby([x_axis, 'variant'])['value'].std().unstack() if len(checked_seeds) > 1 else None
+        active_subset = subset
+    else:
+        mask = (df_agg['metric'] == metric) & (df_agg['variant'].isin(checked_vars)) & (df_agg['Candidate'].isin(checked_cands))
+        if mode == "candidate": mask &= (df_agg['halfspace_variant'] == env)
+        subset = df_agg[mask]
+        if subset.empty:
+            show_no_data(metric, checked_vars, checked_cands, env if mode == "candidate" else None)
+            return
+        val_col = 'mean' if 'mean' in df_agg.columns else 'value'
+        pivot_mean = subset.groupby([x_axis, 'variant'])[val_col].mean().unstack()
+        pivot_std = subset.groupby([x_axis, 'variant'])['std'].mean().unstack() if 'std' in df_agg.columns else None
+        active_subset = subset
+
+    # U12: reindex instead of filtering. A selected variant with no rows at all used to be
+    # dropped from the frame entirely, so it vanished from the plot AND from the legend —
+    # indistinguishable from "not selected". Reindexing keeps it as an ALL-NaN column, which
+    # gets an x-slot and an explicit n/a mark below. Same for a selected candidate that never
+    # ran in this environment (candidate mode only; in environment mode the x-axis is
+    # whatever environments exist, there is no user-supplied list to reindex against).
+    pivot_mean = pivot_mean.reindex(columns=list(checked_vars))
+    if pivot_std is not None: pivot_std = pivot_std.reindex(columns=list(checked_vars))
+    if x_axis == 'Candidate':
+        pivot_mean = pivot_mean.reindex(index=[c for c in checked_cands])
+        if pivot_std is not None: pivot_std = pivot_std.reindex(index=[c for c in checked_cands])
+    
+    try:
+        calc_width = float(document.getElementById("fig-width").value)
+    except:
+        calc_width = 10.0
+    
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(calc_width, 6))
+    # U15: explicit per-variant colours instead of `colormap='tab10'` — see _palette. The
+    # duplicate check is the safeguard proper: two variants sharing a colour is the exact
+    # failure this exists to prevent, so it is verified on every draw rather than assumed,
+    # and a collision falls back to a fresh positional palette instead of shipping the lie.
+    bar_colors = _variant_colors(pivot_mean.columns)
+    if len({tuple(round(c[i], 3) for i in range(3)) for c in bar_colors}) != len(bar_colors):
+        console.log("[ palette ] colour collision across variants - falling back to positional")
+        bar_colors = _palette(len(bar_colors))
+    pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', color=bar_colors, alpha=0.9, yerr=pivot_std, capsize=4)
+
+    # U8: print the exact value directly above each bar. Annotate manually instead of
+    # ax.bar_label — bar_label auto-couples to the ErrorbarContainer that yerr adds, and
+    # when a selected variant/candidate combo doesn't exist its bar is NaN with a
+    # degenerate (1-D) error array, so bar_label crashes in err[:, 1] (IndexError).
+    # Manual annotation reads only the bar height and skips NaN bars, so it never touches
+    # the error data. Extra top margin keeps the rotated labels on-canvas.
+    #
+    # U12: a NaN bar and a genuine 0.000 bar are BOTH nothing at the axis line, so the chart
+    # was silently equating "this method scored zero" with "this combination was never run".
+    # NaN bars are now marked n/a at the baseline, in red, and counted under the axes.
+    # pandas' bar plotter runs fillna(0) on the frame before handing it to matplotlib, so a
+    # never-run combination arrives here as a REAL 0-height bar — a measured 0.000 and "no
+    # data at all" drew the identical mark. The truth is still in pivot_mean, so the mask is
+    # read from THERE and paired back onto the rects: one BarContainer per column, one rect
+    # per index row, both in frame order. If that pairing ever stops holding (a matplotlib
+    # or pandas change), fall back to the rect height and mark nothing rather than mislabel.
+    #
+    # U14: a bar's NUMBER cannot tell you whether it was bought by failing. "199 steps" is
+    # excellent if the goal was reached every time and meaningless if it was not, and
+    # "0.004 s" is the fastest planner on the chart when it is also the one violating a
+    # constraint. The Result Matrices already say this with a trailing (goal, constraint)
+    # flag; the plot said nothing, so the same rule is evaluated here and printed as a
+    # compact (G, C) above the value label. Same source, same tolerance, same meaning —
+    # if the two ever disagree, one of them is a bug.
+    from matplotlib.container import BarContainer
+    bars = [c for c in ax.containers if isinstance(c, BarContainer)]
+    paired = (len(bars) == len(pivot_mean.columns)
+              and all(len(b) == len(pivot_mean.index) for b in bars))
+    flag_map = ({} if not paired else
+                _flag_pivot(x_axis, env, checked_vars, checked_cands, metric))
+    cats = [str(c) for c in pivot_mean.index]
+    cols = [str(c) for c in pivot_mean.columns]
+    n_missing = n_bars = n_flagged = 0
+    for ci, container in enumerate(bars):
+        for ri, rect in enumerate(container):
+            n_bars += 1
+            h = rect.get_height()
+            value = pivot_mean.iat[ri, ci] if paired else h
+            xc = rect.get_x() + rect.get_width() / 2.0
+            if value != value:  # NaN -> nothing was measured here; say so, do not imply zero
+                n_missing += 1
+                # height NaN, NOT set_visible(False): an invisible patch makes matplotlib
+                # draw an empty swatch for that variant in the legend too, which loses the
+                # colour key. A NaN height just isn't drawn, and the legend stays intact.
+                rect.set_height(float('nan'))
+                ax.annotate("n/a", xy=(xc, 0.0), xytext=(0, 3), textcoords="offset points",
+                            ha="center", va="bottom", fontsize=6, rotation=90,
+                            color="#b71c1c", fontweight="bold")
+                continue
+            txt = f"{h:.3g}"
+            ax.annotate(txt, xy=(xc, h),
+                        xytext=(0, 3), textcoords="offset points",
+                        ha="center", va="bottom", fontsize=7, rotation=90)
+            label = _flag_label(flag_map.get((cats[ri], cols[ci]), ""))
+            if label:
+                n_flagged += 1
+                # Stacked ABOVE the value, in the value's own reading direction (both are
+                # rotated 90 deg, so "above" is further out along y). The gap is estimated
+                # from the value's character count rather than measured: measuring needs a
+                # renderer, and the pyodide backend does not reliably hand one out before
+                # the figure is displayed. DejaVu digits advance ~0.64 em, so the estimate
+                # is exact for integers and slightly GENEROUS for decimals (a '.' is
+                # narrower than a digit) — it errs towards a wider gap, never an overlap.
+                ax.annotate(label, xy=(xc, h),
+                            xytext=(0, 3.0 + len(txt) * 4.45 + 3.0),
+                            textcoords="offset points",
+                            ha="center", va="bottom", fontsize=6, rotation=90,
+                            color="#b71c1c", fontweight="bold")
+    # the stacked hint needs more headroom than a bare value label
+    ax.margins(y=0.24 if n_flagged else 0.15)
+    notes = []
+    if n_missing:
+        notes.append(f"{n_missing} of {n_bars} bars have NO DATA (marked n/a) - "
+                     f"an absent bar is not a zero")
+    if n_flagged:
+        notes.append(f"(G) = goal not always reached, (C) = a constraint was violated - "
+                     f"{n_flagged} of {n_bars} bars flagged; an unflagged number is a "
+                     f"fully successful run")
+    if notes:
+        ax.set_xlabel("\n".join(notes), fontsize=8, color="#b71c1c", fontweight="bold")
+
+    ax.legend(title="Variant", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+    ax.grid(True, alpha=0.2, axis='y')
+    ax.set_title(f"Dynamic Analysis: {metric.upper()}", fontsize=12, fontweight='bold'); ax.set_ylabel(metric)
+    # U13: the x tick label of every highlighted candidate goes red + bold, so the bar group
+    # belonging to the ticked legend row is findable at a glance in a 40-candidate plot.
+    _remember_plot(ax, x_axis, list(pivot_mean.index))
+    _apply_tick_highlight()
+    plt.tight_layout()
+    current_fig = fig
+    area = document.getElementById("plot-area")
+    area.innerHTML = ""
+    display(fig, target="plot-area")
+    
+    # Re-apply the Visual Zoom (CSS)
+    import asyncio
+    await asyncio.sleep(0.1)
+    window.applyZoom()
+
+    # Selected-candidates legend, in the exact left-to-right order they appear on the
+    # plot's x-axis (pivot_mean.index). Lets the user read each plotted bar-group's ID
+    # straight off to its source path without hunting through the full Path Audit Map.
+    render_selection_map(pivot_mean.index.tolist(), x_axis, checked_cands)
+    update_scorecard(active_subset, metric)
+
+def _download_bytes(payload, filename, mime):
+    js_array = Uint8Array.new(payload)
+    f = File.new([js_array], filename, { "type": mime })
+    url = URL.createObjectURL(f)
+    link = document.createElement("a"); link.href = url; link.download = filename; link.click()
+    URL.revokeObjectURL(url)
+
+# ---------------------------------------------------------------------------------------
+# U11: "download this candidate's SOURCE FOLDER as a .zip", the browser equivalent of
+# right-click -> Download on the folder in VS Code.
+#
+# How it can work at all: the CSV's Full_Path is an ABSOLUTE path on the machine that ran the
+# analysis (e.g. /data/home/llim/FMPCC/FM-PCC/logs/...), and the README tells you to serve the
+# REPO ROOT over `python3 -m http.server`. So the very same http.server that hands out this
+# page also hands out `<repo-root>/logs/...` — we just have to turn the absolute path back
+# into a root-relative one, walk the directory listing recursively, and zip the files client
+# side. Nothing server-side is added; if the listing isn't reachable we say so instead of
+# pretending. Only works when serving from the repo root of the machine holding the runs.
+# ---------------------------------------------------------------------------------------
+MAX_CRAWL_DEPTH = 8       # runs nest a few levels (seed/ -> rollouts/); 8 is far past that
+MAX_CRAWL_FILES = 4000    # runaway guard: a mis-resolved path could point at the whole repo
+CONFIRM_FILE_COUNT = 150  # above this, ask first — .npz rollout dumps get big fast
+_folder_dl_busy = False
+
+def _esc_attr(s):
+    return (str(s).replace("&", "&amp;").replace('"', "&quot;")
+                  .replace("<", "&lt;").replace(">", "&gt;"))
+
+def _folder_btn(path, label=""):
+    # Rendered into the Source Path cell of both path tables. The path travels in a data-
+    # attribute (NOT an inline onclick arg) because real run folders contain characters that
+    # break naive JS string quoting — e.g. "fm_visual_avoiding(unfull)" and single quotes.
+    p = "" if path is None else str(path).strip()
+    if p in ("", "Unknown", "nan", "— path not found —"):
+        return ""
+    return (f'<button class="dl-folder" data-path="{_esc_attr(p)}" data-cand="{_esc_attr(label)}"'
+            f' title="Download this folder as .zip (served by the same host as this page)">'
+            f'&#8681; ZIP</button>')
+
+def _rel_path_candidates(full_path):
+    # Absolute run path -> ordered guesses at the path RELATIVE to the served root, most
+    # specific first. The page lives at <root>/Data_Analysis/Visualizer/, so each guess is
+    # later probed as "../../<guess>/" and the first one that returns a directory listing wins.
+    p = str(full_path).replace("\\", "/").strip()
+    segs = [s for s in p.split("/") if s and s != "."]
+    outs = []
+    for i in range(len(segs) - 1, -1, -1):        # everything after the last repo-root marker
+        if segs[i] == "FM-PCC":
+            outs.append(segs[i + 1:])
+            break
+    if "logs" in segs:                            # …/logs/<task>/plans/… (repo-relative by convention)
+        outs.append(segs[segs.index("logs"):])
+    outs.append(segs)                             # last resort: the whole path, leading / dropped
+    seen, uniq = set(), []
+    for o in outs:
+        key = "/".join(o)
+        if key and key not in seen:
+            seen.add(key)
+            uniq.append(o)
+    return uniq
+
+def _enc(segs):
+    return "/".join(quote(s) for s in segs)
+
+async def _fetch_listing(url):
+    # -> directory-listing HTML, or None if this URL isn't a browsable directory.
+    try:
+        r = await fetch(url)
+    except Exception:
+        return None
+    if not r.ok:
+        return None
+    ctype = r.headers.get("content-type") or ""
+    if "text/html" not in ctype:
+        return None
+    text = await r.text()
+    # http.server emits <title>Directory listing for /…</title>; requiring it stops a stray
+    # index.html (or an SPA fallback) from being mistaken for a directory full of files.
+    if "Directory listing" not in text:
+        return None
+    return text
+
+def _listing_entries(html):
+    out = []
+    for h in re.findall(r'<a href="([^"]+)"', html):
+        if h.startswith(("/", "?", "#", "..", "http://", "https://")):
+            continue
+        out.append(h)
+    return out
+
+async def _crawl_dir(base_url, rel_prefix, depth, files):
+    html = await _fetch_listing(base_url)
+    if html is None:
+        return
+    for h in _listing_entries(html):
+        name = unquote(h.rstrip("/"))
+        if not name or name in (".", ".."):
+            continue
+        if h.endswith("/"):
+            if depth < MAX_CRAWL_DEPTH:
+                await _crawl_dir(base_url + h, rel_prefix + name + "/", depth + 1, files)
+        else:
+            files.append((rel_prefix + name, base_url + h))
+        if len(files) >= MAX_CRAWL_FILES:
+            return
+
+async def _download_folder(full_path, label):
+    global _folder_dl_busy
+    status = document.getElementById("engine-status")
+    if _folder_dl_busy:
+        status.innerText = "FOLDER_ZIP_BUSY"
+        return
+    _folder_dl_busy = True
+    for b in document.getElementsByClassName("dl-folder"):
+        b.disabled = True
+    try:
+        status.innerText = "RESOLVING FOLDER..."
+        root_url, segs_used = None, None
+        for segs in _rel_path_candidates(full_path):
+            url = "../../" + _enc(segs) + "/"
+            if await _fetch_listing(url) is not None:
+                root_url, segs_used = url, segs
+                break
+        if root_url is None:
+            status.innerText = "FOLDER_NOT_SERVED"
+            window.alert(
+                "Could not reach this folder over HTTP:\n\n" + str(full_path) +
+                "\n\nThe folder is only downloadable when this page is served with "
+                "`python3 -m http.server` FROM THE REPO ROOT of the machine that holds the runs "
+                "(directory listing enabled). Viewing a cluster-generated CSV from a machine "
+                "without those log folders cannot work.")
+            return
+
+        status.innerText = "SCANNING FOLDER..."
+        files = []
+        await _crawl_dir(root_url, "", 0, files)
+        if not files:
+            status.innerText = "FOLDER_EMPTY"
+            window.alert("Folder resolved but contains no files:\n\n" + str(full_path))
+            return
+
+        folder = segs_used[-1]
+        zip_name = (f"CAND_{label}__{folder}.zip" if str(label).strip() else f"{folder}.zip")
+        if len(files) > CONFIRM_FILE_COUNT and not window.confirm(
+                f"{folder}\n\n{len(files)} files found"
+                + (" (crawl limit hit — folder may be even larger)" if len(files) >= MAX_CRAWL_FILES else "")
+                + ".\n\nDownload them all as one .zip?\n"
+                  "Rollout dumps (.npz / videos) can run to hundreds of MB, and the whole "
+                  "archive is built in browser memory."):
+            status.innerText = "FOLDER_ZIP_CANCELLED"
+            return
+
+        total = 0
+        zbuf = io.BytesIO()
+        with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED) as z:
+            for i, (rel_name, url) in enumerate(files, start=1):
+                r = await fetch(url)
+                if not r.ok:
+                    console.log(f"[ folder zip ] skip HTTP {r.status}: {url}")
+                    continue
+                data = bytes(Uint8Array.new(await r.arrayBuffer()).to_py())
+                total += len(data)
+                # Everything nests under the folder name, so unzipping never litters cwd.
+                z.writestr(folder + "/" + rel_name, data)
+                status.innerText = f"ZIPPING {i}/{len(files)} — {total/1e6:.1f} MB"
+                await asyncio.sleep(0)
+        _download_bytes(zbuf.getvalue(), zip_name, "application/zip")
+        status.innerText = f"FOLDER ZIP: {len(files)} files, {total/1e6:.1f} MB"
+    except Exception as e:
+        status.innerText = "FOLDER_ZIP_ERROR"
+        console.log(f"[ folder zip ] {e}")
+        window.alert("Folder download failed:\n\n" + str(e))
+    finally:
+        _folder_dl_busy = False
+        for b in document.getElementsByClassName("dl-folder"):
+            b.disabled = False
+
+def download_folder(path, label=""):
+    # Sync entry point for the JS click handler — schedules the coroutine so JS never has to
+    # deal with (or swallow) an unhandled promise rejection.
+    asyncio.ensure_future(_download_folder(str(path), str(label)))
+
+def download_plot(event):
+    global current_fig
+    if df_agg is None: return
+
+    from datetime import datetime
+    now = datetime.now().strftime("%Y%m%d_%H%M")
+    stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    metric = document.getElementById('metric-select').value
+    env = document.getElementById('env-select').value
+    checked_vars = get_checked("var-check")
+    checked_cands = get_checked("cand-check")
+    batch_label = document.getElementById("batch-select").value if window.currentMode == "list" else document.getElementById("custom-path").value
+
+    base_name = f"plot_{metric}_{env}_{len(checked_vars)}v_{len(checked_cands)}c_{now}"
+    written = []
+    # U11: everything goes into ONE .zip instead of firing three separate <a download> clicks.
+    # Browsers throttle / prompt on multi-file auto-downloads, and the three pieces (figure,
+    # tables, audit log) only make sense together anyway. bundle = [(name_in_zip, bytes)].
+    bundle = []
+
+    # 1. PNG — only if a figure is actually on screen. U10.1: the export no longer bails out
+    # when there is no plot, because the LaTeX tables below depend on the candidate selection
+    # alone and are perfectly exportable with zero variants ticked.
+    if current_fig is not None:
+        buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
+        bundle.append((f"{base_name}.png", buf.read()))
+        written.append("PNG")
+
+    # 2. LaTeX — every Result Matrix, exactly as rendered on the page.
+    ctx, err = _summary_context()
+    if ctx is not None:
+        tex = build_latex(ctx, batch_label, stamp)
+        bundle.append((f"{base_name}_tables.tex", tex.encode()))
+        written.append("TEX")
+    else:
+        console.log(f"[ export ] no LaTeX tables: {err}")
+
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+    
+    metadata = f"AUDIT LOG: {base_name}\n"
+    metadata += "="*40 + "\n"
+    metadata += f"TIMESTAMP: {stamp}\n"
+    metadata += f"BATCH:     {batch_label}\n"
+    metadata += f"METRIC:    {metric}\n"
+    metadata += f"ENV:       {env}\n\n"
+    metadata += f"SELECTED VARIANTS ({len(checked_vars)}):\n"
+    metadata += "\n".join([f" - {v}" for v in checked_vars]) + "\n\n"
+    metadata += f"SELECTED CANDIDATES ({len(checked_cands)}):\n"
+    stamp_map = _stamp_map()
+    for c in checked_cands:
+        path = path_map.get(c, "Path not found")
+        stamp = stamp_map.get(str(c), "")
+        metadata += f" - CAND_{c}{' [HIGHLIGHTED]' if _hl(c) else ''} (Source: {path})\n"
+        if stamp:
+            metadata += f"     last run: {stamp}\n"
+
+    bundle.append((f"{base_name}.txt", metadata.encode()))
+    written.append("TXT")
+
+    zbuf = io.BytesIO()
+    with zipfile.ZipFile(zbuf, "w", zipfile.ZIP_DEFLATED) as z:
+        for fname, payload in bundle:
+            z.writestr(fname, payload)
+    _download_bytes(zbuf.getvalue(), f"{base_name}.zip", "application/zip")
+    document.getElementById("engine-status").innerText = "EXPORTED ZIP: " + " + ".join(written)
+
+def get_checked(class_name):
+    elements = document.getElementsByClassName(class_name)
+    return [e.value for e in elements if e.checked]
+
+def update_scorecard(subset, metric):
+    if subset is None or subset.empty: return
+    val_col = 'mean' if 'mean' in subset.columns else 'value'
+    subset_clean = subset.dropna(subset=[val_col])
+    if subset_clean.empty:
+        document.getElementById("scorecard-container").innerHTML = '<div class="score-card" style="grid-column: span 4;">No valid data</div>'
+        return
+        
+    if 'success' in metric.lower() or 'reward' in metric.lower():
+        best_idx = subset_clean[val_col].idxmax()
+    else:
+        best_idx = subset_clean[val_col].idxmin()
+        
+    best_row = subset_clean.loc[best_idx]
+    best_cand = best_row['Candidate']
+    best_var = best_row['variant']
+    best_env = best_row['halfspace_variant'] if 'halfspace_variant' in best_row else 'N/A'
+    best_val = best_row[val_col]
+    
+    html = f'<div class="score-card" style="grid-column: span 4; background: #e8f5e9; border: 2px solid #2e7d32; text-align: center; padding: 15px;">'
+    html += f'<div class="score-label" style="color: #2e7d32; font-size: 14px;">🏆 OVERALL BEST FOR: {metric.upper()}</div>'
+    html += f'<div class="score-val" style="margin-top: 10px; font-size: 16px;">Candidate <strong>{best_cand}</strong> in <strong>{best_var}</strong> ({best_env})<br>'
+    html += f'<span style="font-size: 32px; color: #000; font-weight: 900; display: inline-block; margin-top: 8px;">{best_val:.4f}</span></div>'
+    html += f'</div>'
+    
+    document.getElementById("scorecard-container").innerHTML = html
+
+# ---------------------------------------------------------------------------------------
+# "Last Run" column — the newest `config_snapshot_*/snapshot_<YYYYMMDD_HHMMSS>` marker the
+# DA pipeline found in the candidate's seed folders, i.e. when those results were last
+# (re)generated. Without it, two rows of the audit map that differ only by a re-run are
+# indistinguishable. Batches produced before the pipeline wrote `Latest_Snapshot` simply
+# have no such column and both tables drop it rather than showing a blank one.
+# ---------------------------------------------------------------------------------------
+STAMP_COL = 'Latest_Snapshot'
+
+def _fmt_stamp(stamp):
+    # '20260506_034806' -> '2026-05-06 03:48:06'. Anything unexpected passes through.
+    t = str(stamp or "").strip()
+    if t in ("", "nan", "NaN", "None"):
+        return ""
+    if len(t) == 15 and t[8] == "_" and t.replace("_", "").isdigit():
+        return f"{t[0:4]}-{t[4:6]}-{t[6:8]} {t[9:11]}:{t[11:13]}:{t[13:15]}"
+    return t
+
+def _stamp_map():
+    # Candidate -> newest stamp. The aggregated CSV already carries one value per
+    # candidate, but max() keeps this honest if a future file ever splits it finer.
+    if df_agg is None or STAMP_COL not in df_agg.columns:
+        return {}
+    out = {}
+    pairs = df_agg[['Candidate', STAMP_COL]].drop_duplicates()
+    for cand, stamp in zip(pairs['Candidate'], pairs[STAMP_COL]):
+        text = _fmt_stamp(stamp)
+        if text:
+            key = str(cand)
+            out[key] = max(out.get(key, ""), text)
+    return out
+
+def _stamp_cell(stamp_map, cand):
+    return (f'<td style="width:150px;white-space:nowrap;font-size:11px">'
+            f'{stamp_map.get(str(cand), "&mdash;")}</td>')
+
+# ---------------------------------------------------------------------------------------
+# U13: candidate highlight. One checkbox in the Plot Legend, one red name everywhere.
+# ---------------------------------------------------------------------------------------
+def _hl(cand):
+    return str(cand) in highlighted_cands
+
+
+def _cand_name_html(cand):
+    # THE single place "CAND_x" becomes markup, so one ticked box marks the same candidate
+    # in the legend, in all result matrices and in the audit map without three copies of
+    # the styling rule drifting apart.
+    return f'<span class="hl-name">CAND_{cand}</span>' if _hl(cand) else f'CAND_{cand}'
+
+
+def _remember_plot(ax, x_axis, categories):
+    global current_ax, last_plot_axis, last_plot_cats
+    current_ax, last_plot_axis, last_plot_cats = ax, x_axis, list(categories)
+
+
+def _apply_tick_highlight():
+    # Recolour the x tick labels in place. Candidate mode only: in environment mode the
+    # x-axis is the environment, so there is no candidate name on it to mark.
+    if current_ax is None or last_plot_axis != 'Candidate':
+        return
+    labels = current_ax.get_xticklabels()
+    # Pairing tick i <-> category i is the whole basis of this; if matplotlib ever returns a
+    # different number of labels, mark NOTHING rather than paint the wrong bar group red.
+    if len(labels) != len(last_plot_cats):
+        return
+    for lbl, cat in zip(labels, last_plot_cats):
+        on = _hl(cat)
+        lbl.set_color(HL_COLOR if on else "black")
+        lbl.set_fontweight("bold" if on else "normal")
+
+
+async def _redraw_highlight():
+    # A highlight is a colour, not new data: the existing figure is recoloured and
+    # re-displayed (no replot, no groupby on the plot path), then the three tables that
+    # print candidate names are re-rendered.
+    if current_fig is not None and current_ax is not None:
+        _apply_tick_highlight()
+        area = document.getElementById("plot-area")
+        area.innerHTML = ""
+        display(current_fig, target="plot-area")
+        await asyncio.sleep(0.1)
+        window.applyZoom()
+    if (last_selection_args is not None
+            and document.getElementById("selection-map-section").style.display != "none"):
+        render_selection_map(*last_selection_args)
+    render_summary_tables(force=True)
+    render_path_map()
+
+
+def set_highlight(cand, on):
+    c = str(cand)
+    if on:
+        highlighted_cands.add(c)
+    else:
+        highlighted_cands.discard(c)
+    asyncio.ensure_future(_redraw_highlight())
+
+
+def clear_highlights(event=None):
+    if not highlighted_cands:
+        return
+    highlighted_cands.clear()
+    asyncio.ensure_future(_redraw_highlight())
+
+
+# ---------------------------------------------------------------------------------------
+# U13: seed coverage for the Plot Legend. A bar averaged over five seeds and a bar averaged
+# over one look IDENTICAL on the chart, and until now the legend said nothing about it —
+# the only hint was the Warnings column of the full Path Audit Map further down the page.
+# ---------------------------------------------------------------------------------------
+def _seed_map(use_mode=True, raw_only=False):
+    """Candidate -> (seeds present, seeds missing).
+
+    df_raw is the only frame with a seed axis. In Custom Seed Compare the reference set is
+    what the user TICKED (so "missing" means: a seed you asked to compare that this
+    candidate cannot supply — the same seeds trigger_plot already warns about); otherwise it
+    is every seed present anywhere in the batch, which is what makes "NOT FULL" meaningful.
+    Falls back to the discovery pipeline's own Missing_Seeds column when the per-seed CSV is
+    absent, and returns {} when neither exists — then the column is simply not rendered.
+    Candidate-global (not per environment/metric), exactly like Missing_Seeds itself.
+
+    U17: use_mode=False ignores Custom Seed Compare - the Path Audit Map audits the batch as
+    it sits on disk, not the current plot selection. raw_only=True drops the Missing_Seeds
+    fallback, which knows only what is ABSENT: rendered in an audit row it would print
+    "n/a - no per-seed CSV" on every line and say nothing.
+    """
+    if df_raw is not None and 'seed' in df_raw.columns:
+        seed_mode = document.getElementById("seed-mode-select").value if use_mode else "standard"
+        if seed_mode == "custom":
+            ref = sorted(int(s) for s in get_checked("seed-check"))
+        else:
+            ref = sorted(int(s) for s in
+                         pd.to_numeric(df_raw['seed'], errors='coerce').dropna().unique())
+        out = {}
+        for cand, grp in df_raw.groupby('Candidate')['seed']:
+            have = sorted(int(s) for s in pd.to_numeric(grp, errors='coerce').dropna().unique())
+            if seed_mode == "custom":
+                have = [s for s in have if s in ref]
+            out[str(cand)] = (have, [s for s in ref if s not in have])
+        return out
+    if raw_only:
+        return {}
+    if df_agg is not None and 'Missing_Seeds' in df_agg.columns:
+        out = {}
+        pairs = df_agg[['Candidate', 'Missing_Seeds']].drop_duplicates()
+        for cand, miss in zip(pairs['Candidate'], pairs['Missing_Seeds']):
+            text = str(miss or "").strip()
+            gone = [] if text in ("", "nan", "NaN", "None") else [int(t) for t in re.findall(r'\d+', text)]
+            # present-seed list is None, not []: this fallback knows only what is MISSING,
+            # and printing "none" here would claim the candidate has no data at all.
+            out[str(cand)] = (None, gone)
+        return out
+    return {}
+
+
+def _seed_cell(seed_map, cand):
+    entry = seed_map.get(str(cand))
+    if entry is None:
+        return '<td style="width:160px;font-size:11px">&mdash;</td>'
+    have, missing = entry
+    if have is None:
+        body = '<span style="color:#888">n/a &mdash; no per-seed CSV</span>'
+    elif have:
+        body = '<span class="seed-ok">' + ", ".join(str(s) for s in have) + '</span>'
+    else:
+        body = '<span style="color:#888">none</span>'
+    if missing:
+        body += ('<br><span class="seed-miss">&#9888; NOT FULL &mdash; missing '
+                 + ", ".join(str(s) for s in missing) + '</span>')
+    return f'<td style="width:160px;font-size:11px">{body}</td>'
+
+
+def render_selection_map(x_categories, x_axis, checked_cands):
+    # Compact "plot legend" shown directly under the chart: only the candidates actually
+    # in THIS plot, numbered in plot x-axis order, each mapped to its source path. The
+    # full Path Audit Map below still lists every candidate in the batch.
+    global last_selection_args
+    if df_agg is None: return
+    # remembered so a highlight toggle can re-render this table without a replot
+    last_selection_args = (list(x_categories), x_axis, list(checked_cands))
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+    stamp_map = _stamp_map()
+    seed_map = _seed_map()
+
+    if x_axis == 'Candidate':
+        # candidate mode: the x-axis categories ARE the candidates, in plotted order.
+        ordered = [str(c) for c in x_categories]
+        pos_header = "Plot X-Pos"
+        note = "numbered left-to-right as they appear on the plot"
+    else:
+        # env mode: x-axis is the environment; candidates are averaged into each group.
+        # Still list the selected candidates so the user knows what fed the bars.
+        ordered = [str(c) for c in checked_cands]
+        pos_header = "#"
+        note = "averaged across the plotted environments (not an x-axis order)"
+
+    rows = ""
+    for i, c in enumerate(ordered, start=1):
+        path = path_map.get(c, "— path not found —")
+        segs = str(path).split('/')
+        c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{j%6}">{s}</span>' for j, s in enumerate(segs) if s])
+        rows += (f'<tr><td style="text-align:center;width:44px">'
+                 f'<input type="checkbox" class="hl-check hl-box" value="{_esc_attr(c)}"'
+                 f'{" checked" if _hl(c) else ""} onchange="toggle_highlight(this)"'
+                 f' title="Highlight CAND_{c} in red on the plot and in every result matrix"></td>'
+                 f'<td style="text-align:center;width:80px"><strong>{i}</strong></td>'
+                 f'<td style="width:100px"><strong>{_cand_name_html(c)}</strong></td>'
+                 + (_seed_cell(seed_map, c) if seed_map else '')
+                 + (_stamp_cell(stamp_map, c) if stamp_map else '') +
+                 f'<td><code>{c_path}</code>{_folder_btn(path, c)}</td></tr>')
+
+    html = (f'<div style="font-size:10px;color:#666;margin-bottom:6px;">{len(ordered)} selected — {note}'
+            f' &middot; tick <b>HL</b> to paint that candidate red on the plot x-axis and in every result matrix'
+            + (f' <span class="hl-clear" onclick="clear_highlights()">[CLEAR '
+               f'{len(highlighted_cands)} HIGHLIGHT(S)]</span>' if highlighted_cands else '')
+            + f'<br><b>&#8681; ZIP</b> downloads that run folder from the serving host'
+            + (' &middot; <b>Seeds</b> = the seeds this candidate actually has; '
+               '<b>&#9888; NOT FULL</b> names the ones it is missing, so a bar averaged over '
+               'one seed is not mistaken for a bar averaged over five' if seed_map else '')
+            + (' &middot; <b>Last Run</b> = newest config snapshot in the run folder' if stamp_map else '')
+            + f'</div>'
+            f'<table><thead><tr>'
+            f'<th style="width:44px" title="Highlight this candidate in red everywhere it is named">HL</th>'
+            f'<th style="width:80px">{pos_header}</th>'
+            f'<th style="width:100px">ID</th>'
+            + ('<th style="width:160px">Seeds</th>' if seed_map else '')
+            + ('<th style="width:150px">Last Run</th>' if stamp_map else '') +
+            f'<th>Source Path</th></tr></thead><tbody>{rows}</tbody></table>')
+    document.getElementById("selection-map-container").innerHTML = html
+    document.getElementById("selection-map-section").style.display = "block"
+
+# ---------------------------------------------------------------------------------------
+# U10: paper-style Result Matrices — rows = the CHECKED candidates, cols = ALL variants.
+# The variant checkboxes are deliberately ignored (a paper table wants every method side by
+# side); the candidate checkboxes are honoured (U10.1 — the batches carry 70+ candidates and
+# nobody wants all of them in a paper table).
+# (metric, caption, value format, annotate-with-failure-flags?)
+# Captions are plain ASCII with " -- " so the same string feeds both the HTML (rendered as an
+# em dash) and the LaTeX export (rendered as an en dash) without an entity/escaping split.
+# ---------------------------------------------------------------------------------------
+SUMMARY_TABLES = [
+    ("n_success", "N_SUCCESS -- success rate (goal reached: strict, position AND rotation)", "{:.3f}", False),
+    ("n_success_and_constraints", "N_SUCCESS + CONSTRAINT -- success rate (goal reached AND constraints satisfied)", "{:.3f}", False),
+    # U3 (visual-aligning only; the state-only avoiding trees leave these columns
+    # absent, so their cells render as the honest NULL dash rather than a zero).
+    ("success_relaxed", "N_SUCCESS RELAXED -- success rate (position only: final box-target XY distance within pos_min_dist; final angle ignored)", "{:.3f}", False),
+    ("n_success_relaxed_and_constraints", "N_SUCCESS RELAXED + CONSTRAINT -- relaxed success AND constraints satisfied", "{:.3f}", False),
+    ("mean_dist_per_rollout", "MIN_DIST -- final box-target distance [m], the env's own score (half the position error plus half the rotation error) measured against pos/rot_min_dist -- lower is better", "{:.4f}", True),
+    ("n_steps", "N_STEPS -- steps taken (episode length)", "{:.1f}", True),
+    ("avg_time", "AVG_TIME -- average computation time per planning step [s]", "{:.4f}", True),
+]
+
+# U3: the MIN_DIST table gets one extra row — where each rollout STARTED. A final
+# distance of 0.33 means nothing on its own; against a start of ~0.28 it means the
+# box barely moved. Position-only (there is no composite score at t=0), pooled over
+# the selected candidates; every variant shares the same contexts, so the row being
+# flat across columns is itself the check that the comparison is fair.
+REF_METRIC = 'context_init_xy_dist'
+REF_FOR = 'mean_dist_per_rollout'
+REF_LABEL = 'INIT XY (ref)'
+
+# U3: how many rollouts each candidate actually contributed. VA batches are NOT
+# balanced — candidates come from different eval jobs, with different seed counts
+# and different variant lists — so two cells in the same column can rest on very
+# different amounts of data. n_success exists in every unit, so its `count` is the
+# honest rollout tally.
+COVERAGE_METRIC = 'n_success'
+summary_cache_key = None
+
+def _seed_context():
+    # Mirrors trigger_plot's own branch: custom seed mode only applies when the raw
+    # per-seed CSV actually loaded, otherwise everything falls back to the aggregate.
+    seed_mode = document.getElementById("seed-mode-select").value
+    if seed_mode == "custom" and df_raw is not None:
+        return "custom", tuple(sorted(int(x) for x in get_checked("seed-check")))
+    return "standard", ()
+
+def _summary_stats(env, seed_mode, seeds):
+    # -> ({(metric, cand, variant): {mean, std, count}}, candidates, variants)
+    metrics = [t[0] for t in SUMMARY_TABLES] + [REF_METRIC]
+    if seed_mode == "custom":
+        d = df_raw[(df_raw['halfspace_variant'] == env) & (df_raw['metric'].isin(metrics)) & (df_raw['seed'].isin(list(seeds)))]
+        if d.empty: return {}, [], []
+        g = d.groupby(['metric', 'Candidate', 'variant'])['value']
+        stats = pd.DataFrame({'mean': g.mean(), 'std': g.std(), 'count': g.count()})
+    else:
+        d = df_agg[(df_agg['halfspace_variant'] == env) & (df_agg['metric'].isin(metrics))]
+        if d.empty: return {}, [], []
+        val_col = 'mean' if 'mean' in d.columns else 'value'
+        g = d.groupby(['metric', 'Candidate', 'variant'])
+        # In the aggregated CSV 'std'/'count' are already across seeds, so just carry them
+        # through (the groupby is a de-dup, one row per facet — mean/max are no-ops).
+        stats = pd.DataFrame({
+            'mean': g[val_col].mean(),
+            'std': g['std'].mean() if 'std' in d.columns else float('nan'),
+            'count': g['count'].max() if 'count' in d.columns else 1,
+        })
+    core = d[d['metric'] != REF_METRIC]
+    if core.empty:
+        core = d
+    cands = sorted(core['Candidate'].astype(str).unique(), key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    variants = sorted(core['variant'].unique())
+    return stats.to_dict('index'), cands, variants
+
+def _cell_stats(rec, metric, cand, var):
+    # None for a facet that simply wasn't run (the NULL case) or whose mean is NaN.
+    e = rec.get((metric, cand, var))
+    if e is None: return None
+    try:
+        m = float(e.get('mean'))
+    except (TypeError, ValueError):
+        return None
+    if m != m: return None
+    try:
+        cnt = int(e.get('count'))
+    except (TypeError, ValueError):
+        cnt = 1
+    try:
+        sd = float(e.get('std'))
+    except (TypeError, ValueError):
+        sd = float('nan')
+    return m, sd, cnt
+
+def _fmt_cell(st, fmt):
+    # Single seed -> bare number. Multiple seeds -> mean +- standard error of the mean.
+    m, sd, cnt = st
+    txt = fmt.format(m)
+    if cnt > 1 and sd == sd:
+        txt += ' <span class="sem">&plusmn; ' + fmt.format(sd / (cnt ** 0.5)) + '</span>'
+    return txt
+
+def _fail_flags(rec, cand, var):
+    # "did N_SUCCESS+CONSTRAINT win for this candidate/variant?" — a perfect cell is
+    # n_success == 1 (goal always reached) AND n_success_and_constraints == n_success
+    # (constraints never cost a success). Anything less is flagged with the reason(s).
+    tol = 1e-9
+    ns = _cell_stats(rec, 'n_success', cand, var)
+    nsc = _cell_stats(rec, 'n_success_and_constraints', cand, var)
+    flags = []
+    if ns is not None and ns[0] < 1.0 - tol:
+        flags.append("goal")
+    if nsc is not None:
+        base = ns[0] if ns is not None else 1.0
+        if nsc[0] < base - tol:
+            flags.append("constraint")
+    return flags
+
+
+# ---------------------------------------------------------------------------------------
+# U14: the same goal/constraint rule, evaluated on the PLOT's own axes.
+#
+# Not reused from _fail_flags/_summary_stats on purpose: those are keyed by (candidate,
+# variant) at one environment, which is the wrong grain in environment mode — there the
+# x-axis is the environment and the selected candidates are averaged into each bar, so a
+# per-candidate flag would not describe the bar that is actually drawn. This groups by
+# whatever the plot's x-axis is, so the flag always describes exactly one bar.
+#
+# The two metrics that DEFINE the flags are skipped: on an n_success plot a (G) on every
+# bar below 1.0 restates the bar's own height and is pure noise.
+# ---------------------------------------------------------------------------------------
+FLAG_TOL = 1e-9
+FLAG_INPUTS = ('n_success', 'n_success_and_constraints')
+# Metrics the flag is NOT drawn on, because there it would restate the bar's own height.
+# Extended on the DA_VA_v2 page, which has a second (relaxed) success definition.
+FLAG_SKIP = set(FLAG_INPUTS) | {'success_relaxed', 'n_success_relaxed_and_constraints'}
+
+
+def _flag_label(flags):
+    # 'GC' -> '(G, C)'. The initials of the matrices' own (goal, constraint) words — the
+    # plot has no room for the words, and the two must not drift into different names.
+    return "(" + ", ".join(flags) + ")" if flags else ""
+
+
+def _flag_pivot(x_axis, env, checked_vars, checked_cands, metric):
+    """{(x_category, variant): 'G' | 'C' | 'GC'} for the currently plotted selection.
+
+    Empty when the metric is one of the flag inputs, when the batch lacks them, or when
+    nothing failed. Never raises: a missing column or an all-NaN facet simply yields no
+    flag, because "we could not tell" must not render as "this one is clean".
+    """
+    if metric in FLAG_SKIP:
+        return {}
+    seed_mode, seeds = _seed_context()
+    if seed_mode == "custom" and df_raw is not None:
+        d = df_raw[df_raw['metric'].isin(FLAG_INPUTS)
+                   & df_raw['variant'].isin(checked_vars)
+                   & df_raw['Candidate'].isin(checked_cands)
+                   & df_raw['seed'].isin(list(seeds))]
+        val_col = 'value'
+    else:
+        d = df_agg[df_agg['metric'].isin(FLAG_INPUTS)
+                   & df_agg['variant'].isin(checked_vars)
+                   & df_agg['Candidate'].isin(checked_cands)]
+        val_col = 'mean' if 'mean' in df_agg.columns else 'value'
+    if x_axis == 'Candidate':
+        d = d[d['halfspace_variant'] == env]
+    if d.empty:
+        return {}
+    means = d.groupby(['metric', x_axis, 'variant'])[val_col].mean().to_dict()
+    out = {}
+    for (_m, cat, var) in means:
+        key = (str(cat), str(var))
+        if key in out:
+            continue
+        ns = means.get(('n_success', cat, var))
+        nsc = means.get(('n_success_and_constraints', cat, var))
+        flags = ""
+        if ns is not None and ns == ns and ns < 1.0 - FLAG_TOL:
+            flags += "G"
+        base = ns if (ns is not None and ns == ns) else 1.0
+        if nsc is not None and nsc == nsc and nsc < base - FLAG_TOL:
+            flags += "C"
+        if flags:
+            out[key] = flags
+    return out
+
+def _ref_cells(rec, cands, variants):
+    """Per-variant INIT XY, pooled over the selected candidates (rollout-weighted).
+
+    -> [(variant, mean_or_None, n_rollouts)]. Empty means nothing to show, which is
+    the normal case on a state-only avoiding batch: no context_init_xy_dist column.
+    """
+    out = []
+    for v in variants:
+        total, weight = 0.0, 0
+        for c in cands:
+            st = _cell_stats(rec, REF_METRIC, c, v)
+            if st is None:
+                continue
+            total += st[0] * st[2]
+            weight += st[2]
+        out.append((v, (total / weight) if weight else None, weight))
+    return out if any(m is not None for _, m, _ in out) else []
+
+
+def _coverage_html(ctx):
+    """'CAND_2 ran 570 rollouts, CAND_1 ran 180' — stated once, up front.
+
+    Without this the matrices quietly compare a 5-seed candidate against a 1-seed
+    one: the SEM shrinks, the mean looks steadier, and nothing on screen says why.
+    """
+    if df_agg is None:
+        return ''
+    base = df_agg[df_agg['metric'] == COVERAGE_METRIC]
+    if base.empty:
+        return ''
+    here = base[base['halfspace_variant'] == ctx["env"]]
+    rows, totals = [], []
+    for c in ctx["cands"]:
+        b_all = base[base['Candidate'] == c]
+        b_env = here[here['Candidate'] == c]
+        n_env = int(pd.to_numeric(b_env['count'], errors='coerce').fillna(0).sum())
+        n_all = int(pd.to_numeric(b_all['count'], errors='coerce').fillna(0).sum())
+        if df_raw is not None and len(df_raw):
+            n_seeds = int(df_raw[df_raw['Candidate'] == c]['seed'].nunique())
+        else:
+            n_seeds = 0
+        totals.append(n_all)
+        warn = ' class="warn"' if n_all == 0 else ''
+        rows.append(f'<tr><td class="rowhead">{_cand_name_html(c)}</td>'
+                    f'<td{warn}>{n_all}</td><td>{n_env}</td>'
+                    f'<td>{b_env["variant"].nunique()}</td>'
+                    f'<td>{b_all["halfspace_variant"].nunique()}</td>'
+                    f'<td>{n_seeds if n_seeds else "&mdash;"}</td></tr>')
+    if not rows:
+        return ''
+    note = ''
+    if len(set(totals)) > 1:
+        note = ('<span class="warn">UNBALANCED</span> &mdash; these candidates did not run '
+                f'the same amount ({min(totals)}&hellip;{max(totals)} rollouts). '
+                'Cells are still mean &plusmn; SEM over whatever each one actually ran; '
+                'the SEM is narrower where there is more data, not where the method is better.')
+    else:
+        note = f'All selected candidates ran the same {totals[0]} rollouts.'
+    return ('<div class="tbl-caption">Run coverage &mdash; how much data is behind each row</div>'
+            '<div class="paper-tbl-wrap"><table class="paper-tbl cov-tbl"><thead><tr>'
+            '<th class="corner">Candidate</th><th>Rollouts (total)</th>'
+            f'<th>Rollouts in {ctx["env"]}</th><th>Variants here</th>'
+            '<th>Geometries</th><th>Seeds</th></tr></thead><tbody>'
+            + "".join(rows) + '</tbody></table></div>'
+            f'<div class="tbl-note">{note} Counts follow the global mask and split.</div>')
+
+
+def _render_matrix(rec, metric, fmt, annotate, cands, variants):
+    head = '<thead><tr><th class="corner">Candidate</th>' + "".join(f'<th>{v}</th>' for v in variants) + '</tr></thead>'
+    rows = []
+    for c in cands:
+        cells = [f'<td class="rowhead">{_cand_name_html(c)}</td>']
+        for v in variants:
+            st = _cell_stats(rec, metric, c, v)
+            if st is None:
+                cells.append('<td class="nullcell">&mdash;</td>')
+                continue
+            txt = _fmt_cell(st, fmt)
+            if annotate:
+                flags = _fail_flags(rec, c, v)
+                if flags:
+                    txt += ' <span class="flag">(' + ", ".join(flags) + ')</span>'
+            cells.append(f'<td title="n={st[2]} seed(s)">{txt}</td>')
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    if metric == REF_FOR:
+        ref = _ref_cells(rec, cands, variants)
+        if ref:
+            cells = [f'<td class="rowhead">{REF_LABEL}</td>']
+            for _v, mean, weight in ref:
+                cells.append('<td class="nullcell">&mdash;</td>' if mean is None
+                             else f'<td title="n={weight} rollouts">{fmt.format(mean)}</td>')
+            rows.append('<tr class="refrow">' + "".join(cells) + "</tr>")
+    return ('<div class="paper-tbl-wrap"><table class="paper-tbl">' + head
+            + '<tbody>' + "".join(rows) + '</tbody></table></div>')
+
+def _summary_context():
+    # Single source of truth for BOTH the on-page matrices and the LaTeX export, so the .tex
+    # can never disagree with what is on screen. -> (ctx_dict, error_message)
+    if df_agg is None:
+        return None, "No batch loaded — hit SYNC_SOURCE first."
+    env = document.getElementById("env-select").value
+    seed_mode, seeds = _seed_context()
+    if seed_mode == "custom" and not seeds:
+        return None, "Custom Seed Compare: select at least one seed."
+    checked_cands = get_checked("cand-check")
+    if not checked_cands:
+        return None, "No candidates selected — tick some in the sidebar (6. Candidates)."
+    rec, _avail_cands, variants = _summary_stats(env, seed_mode, seeds)
+    if not variants:
+        return None, f"No data at all for environment {env}."
+    # Rows = every CHECKED candidate, numeric-aware order (same as the sidebar). A candidate
+    # with no run in this env is kept as an all-NULL row rather than silently dropped — the
+    # user asked for it, so its absence is itself the result.
+    cands = sorted(checked_cands, key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    return {"env": env, "seed_mode": seed_mode, "seeds": seeds,
+            "rec": rec, "cands": cands, "variants": variants}, None
+
+def _seed_txt(ctx):
+    return "all available seeds per cell" if ctx["seed_mode"] == "standard" \
+        else "seeds " + ", ".join(str(s) for s in ctx["seeds"])
+
+def render_summary_tables(force=False):
+    global summary_cache_key
+    if df_agg is None: return
+    env = document.getElementById("env-select").value
+    seed_mode, seeds = _seed_context()
+    # U10.1: the candidate checkboxes now DO drive these tables, so they join the cache key.
+    # The variant checkboxes still don't (all variants are always columns), which is what
+    # keeps ticking through variants cheap.
+    key = (env, seed_mode, seeds, tuple(get_checked("cand-check")), data_version)
+    if key == summary_cache_key and not force: return
+    summary_cache_key = key
+
+    container = document.getElementById("summary-container")
+    document.getElementById("summary-section").style.display = "block"
+
+    ctx, err = _summary_context()
+    if ctx is None:
+        container.innerHTML = f'<div class="tbl-note" style="color:#c62828"><b>{err}</b></div>'
+        return
+
+    cands, variants = ctx["cands"], ctx["variants"]
+    blocks = ['<div class="tbl-note">'
+              f'Environment <b>{ctx["env"]}</b> &middot; {_seed_txt(ctx)} &middot; {len(cands)} selected candidates &times; {len(variants)} variants.<br>'
+              'A cell aggregating &gt;1 seed shows <b>mean &plusmn; standard error</b> (std&nbsp;/&nbsp;&radic;n); a single-seed cell shows the plain value '
+              '(hover a cell for its seed count). <b>&mdash;</b> = that candidate/variant combination was never run.<br>'
+              'In the MIN_DIST, N_STEPS and AVG_TIME tables a trailing <span class="flag">(goal, constraint)</span> marks a cell where '
+              'N_SUCCESS+CONSTRAINT did <b>not</b> win &mdash; <span class="flag">goal</span> = goal not always reached, '
+              '<span class="flag">constraint</span> = a constraint was violated. Unmarked numbers are fully successful runs.<br>'
+              'Rows follow <b>6. Candidates</b>; columns are always every variant. '
+              'The MIN_DIST table carries a final <b>INIT XY (ref)</b> row: the mean box-target '
+              'distance the rollouts <b>started</b> from, so a final distance can be read as '
+              'progress rather than as a bare number. It is position-only (there is no composite '
+              'score at t=0) and pooled over the selected candidates &mdash; the contexts are '
+              'shared, so that row staying flat across columns is itself the fairness check.<br>'
+              f'<b>EXPORT ZIP</b> writes exactly these {len(SUMMARY_TABLES)} tables to a .tex file inside the archive.'
+              '</div>']
+    blocks.append(_coverage_html(ctx))
+    for i, (metric, caption, fmt, annotate) in enumerate(SUMMARY_TABLES, start=1):
+        blocks.append(f'<div class="tbl-caption">Table {i} &mdash; {caption.replace(" -- ", " &mdash; ")}</div>')
+        blocks.append(_render_matrix(ctx["rec"], metric, fmt, annotate, cands, variants))
+    container.innerHTML = "".join(blocks)
+
+# ---------------------------------------------------------------------------------------
+# U10.1: LaTeX export of the same matrices — one standalone, compilable .tex file.
+# ---------------------------------------------------------------------------------------
+def _tex_escape(s):
+    s = str(s)
+    for a, b in (("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("$", r"\$"),
+                 ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                 ("~", r"\textasciitilde{}"), ("^", r"\textasciicircum{}")):
+        s = s.replace(a, b)
+    return s
+
+def _tex_cell(st, fmt, flags):
+    if st is None:
+        return "--"
+    m, sd, cnt = st
+    body = fmt.format(m)
+    if cnt > 1 and sd == sd:
+        body += r" \pm " + fmt.format(sd / (cnt ** 0.5))
+    txt = "$" + body + "$"
+    if flags:
+        txt += r"\,{\tiny (" + ", ".join(flags) + ")}"
+    return txt
+
+def _tex_table(ctx, metric, caption, fmt, annotate, idx):
+    rec, cands, variants = ctx["rec"], ctx["cands"], ctx["variants"]
+    lines = [r"\begin{table}[htbp]", r"\centering",
+             r"\caption{" + _tex_escape(caption) + "}",
+             r"\label{tab:" + metric.replace("_", "-") + "}",
+             # 18-ish variant columns never fit \textwidth at a readable font size; let
+             # LaTeX shrink the box instead of silently overflowing into the margin.
+             r"\resizebox{\textwidth}{!}{%",
+             r"\begin{tabular}{l" + "r" * len(variants) + "}",
+             r"\toprule",
+             "Candidate & " + " & ".join(_tex_escape(v) for v in variants) + r" \\",
+             r"\midrule"]
+    for c in cands:
+        cells = [_tex_cell(_cell_stats(rec, metric, c, v), fmt,
+                           _fail_flags(rec, c, v) if annotate else [])
+                 for v in variants]
+        lines.append(_tex_escape("CAND_" + str(c)) + " & " + " & ".join(cells) + r" \\")
+    if metric == REF_FOR:
+        ref = _ref_cells(rec, cands, variants)
+        if ref:
+            lines.append(r"\midrule")
+            cells = ["--" if mean is None else "$" + fmt.format(mean) + "$"
+                     for _v, mean, _w in ref]
+            lines.append(_tex_escape(REF_LABEL) + " & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}%", "}", r"\end{table}", ""]
+    return "\n".join(lines)
+
+def build_latex(ctx, batch_label, stamp):
+    env, cands, variants = ctx["env"], ctx["cands"], ctx["variants"]
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    path_map = df_agg[['Candidate', p_col]].drop_duplicates().set_index('Candidate')[p_col].to_dict()
+
+    # Keep every emitted byte ASCII: the file carries no \usepackage[utf8]{inputenc}, and a
+    # stray em dash even inside a % comment trips older TeX installs.
+    out = ["% FM-PCC Matrix Explorer - Data_Analysis/Visualizer/index.html (SCIENTIFIC_SUITE_v3.12)",
+           f"% generated {stamp}",
+           f"% batch: {batch_label}",
+           r"\documentclass[10pt]{article}",
+           r"\usepackage[landscape,margin=1.5cm]{geometry}",
+           r"\usepackage{booktabs}",
+           r"\usepackage{graphicx}",
+           r"\begin{document}",
+           "",
+           r"\section*{FM-PCC results -- " + _tex_escape(env) + "}",
+           "",
+           r"\noindent\textbf{Batch:} \texttt{" + _tex_escape(batch_label) + r"}\\",
+           r"\textbf{Environment:} " + _tex_escape(env) + r"\\",
+           r"\textbf{Seeds:} " + _tex_escape(_seed_txt(ctx)) + r"\\",
+           r"\textbf{Generated:} " + _tex_escape(stamp),
+           "",
+           r"\bigskip\noindent Cells aggregating more than one seed report "
+           r"$\mathrm{mean} \pm \mathrm{SEM}$ ($\mathrm{std}/\sqrt{n}$); single-seed cells report the "
+           r"plain value. \texttt{--} marks a candidate/variant combination that was never run. "
+           r"In the MIN\_DIST, N\_STEPS and AVG\_TIME tables a trailing {\tiny (goal, constraint)} marks a cell whose "
+           r"N\_SUCCESS+CONSTRAINT did not win: \emph{goal} = the goal was not always reached, "
+           r"\emph{constraint} = a constraint was violated.",
+           ""]
+    for i, (metric, caption, fmt, annotate) in enumerate(SUMMARY_TABLES, start=1):
+        out.append(_tex_table(ctx, metric, caption, fmt, annotate, i))
+
+    # Candidate -> source path audit. verbatim so the long cluster paths need no escaping.
+    out += [r"\section*{Candidate source paths}", r"{\footnotesize", r"\begin{verbatim}"]
+    stamp_map = _stamp_map()
+    for c in cands:
+        # the page marks these in red; a .tex has no colour, so say it in words
+        out.append(f"CAND_{c}  {path_map.get(c, 'path not found')}"
+                   + ("   <-- highlighted in the viewer" if _hl(c) else ""))
+        if stamp_map.get(str(c)):
+            out.append(f"          last run {stamp_map[str(c)]}")
+    out += [r"\end{verbatim}", "}", "", r"\end{document}", ""]
+    return "\n".join(out)
+
+def render_path_map():
+    if df_agg is None: return
+    p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
+    has_missing = 'Missing_Seeds' in df_agg.columns
+    stamp_map = _stamp_map()
+    # U17: which seeds, from va2_units_long.csv. has_missing is always False on this page,
+    # so before this the audit map carried no seed information whatsoever.
+    seed_map = _seed_map(use_mode=False, raw_only=True)
+
+    cols_to_get = ['Candidate', p_col]
+    if has_missing: cols_to_get.append('Missing_Seeds')
+
+    # same numeric-vs-lexicographic concern as populate_dynamic_filters() above.
+    _dedup = df_agg[cols_to_get].drop_duplicates()
+    try:
+        mapping = _dedup.sort_values('Candidate', key=lambda s: s.astype(int))
+    except ValueError:
+        mapping = _dedup.sort_values('Candidate')
+    
+    html = '<table><thead><tr><th style="width:100px">ID</th>'
+    if seed_map: html += '<th style="width:160px" title="the seeds this candidate actually has on disk">Seeds</th>'
+    if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'
+    if stamp_map: html += '<th style="width:150px">Last Run</th>'
+    html += '<th>Source Path (Audit)</th></tr></thead><tbody>'
+
+    for _, row in mapping.iterrows():
+        segs = str(row[p_col]).split('/')
+        c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
+
+        html += f'<tr><td><strong>{_cand_name_html(row["Candidate"])}</strong></td>'
+        if seed_map:
+            html += _seed_cell(seed_map, row["Candidate"])
+        if has_missing:
+            missing_val = row["Missing_Seeds"]
+            if pd.isna(missing_val) or str(missing_val).strip() == '':
+                html += '<td style="color: green; font-weight: bold;">ALL SEEDS</td>'
+            else:
+                html += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
+
+        if stamp_map:
+            html += _stamp_cell(stamp_map, row["Candidate"])
+
+        html += f'<td><code>{c_path}</code>{_folder_btn(row[p_col], row["Candidate"])}</td></tr>'
+
+    document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
+
+document.set_highlight = create_proxy(set_highlight)
+document.clear_highlights = create_proxy(clear_highlights)
+
+# =======================================================================================
+# DA_VA_v2 views: seeds/split widgets, mask banner, per-rollout table, rollout compare,
+# data quality. Everything above this point is the DAv3 page, unchanged.
+# =======================================================================================
+
+def populate_split_filter():
+    splits = sorted(df_agg_src['split'].unique()) if 'split' in df_agg_src.columns else []
+    options = ['ALL'] + splits
+    document.getElementById("split-select").innerHTML = "".join(
+        f'<option value="{s}">{s.upper()}</option>' for s in options)
+
+
+def populate_va2_filters(vars_list, cands_list):
+    # Seeds come from the batch, not a hardcoded 6..10 — a visual-aligning run is
+    # routinely single-seed, and five dead checkboxes read as a broken filter.
+    seeds = []
+    if df_units_src is not None and 'seed' in df_units_src.columns:
+        seeds = sorted(int(s) for s in pd.to_numeric(df_units_src['seed'], errors='coerce').dropna().unique())
+    document.getElementById("seed-list").innerHTML = "".join(
+        f'<div class="checkbox-item"><input type="checkbox" class="seed-check" value="{s}" '
+        f'checked onchange="trigger_plot()"><span>{s}</span></div>' for s in seeds)
+
+    document.getElementById("roll-cand-select").innerHTML = "".join(
+        f'<option value="{c}">CAND_{c}</option>' for c in cands_list)
+    document.getElementById("roll-var-select").innerHTML = "".join(
+        f'<option value="{v}">{v}</option>' for v in vars_list)
+    document.getElementById("roll-sort-select").innerHTML = "".join(
+        f'<option value="{k}">{lbl}</option>' for k, lbl in ROLL_SORT_OPTIONS)
+
+    document.getElementById("cmp-variant-list").innerHTML = "".join(
+        f'<div class="checkbox-item"><input type="checkbox" class="cmp-var-check" value="{v}"> '
+        f'<span>{v}</span></div>' for v in vars_list)
+    document.getElementById("cmp-candidate-list").innerHTML = "".join(
+        f'<div class="checkbox-item"><input type="checkbox" class="cmp-cand-check" value="{c}"> '
+        f'<span>CAND_{c}</span></div>' for c in cands_list)
+
+    if df_roll_src is not None:
+        skip = {'Candidate', 'FolderName', 'FullPath', 'seed', 'split', 'geo',
+                'geo_base', 'tightened', 'variant', 'variant_raw'}
+        metrics = [c for c in df_roll_src.columns if c not in skip]
+        def _opts(sel):
+            return "".join(f'<option value="{m}"{" selected" if m == sel else ""}>{m}</option>'
+                           for m in metrics)
+        document.getElementById("cmp-y-select").innerHTML = _opts('mean_dist_per_rollout')
+        document.getElementById("cmp-x-select").innerHTML = _opts('context_init_xy_dist')
+        shown = [c for c in ROLL_DEFAULT_COLUMNS if c in metrics]
+        rest = [c for c in metrics if c not in shown]
+        document.getElementById("rollcol-list").innerHTML = "".join(
+            f'<div class="checkbox-item"><input type="checkbox" class="rollcol-check" value="{c}" '
+            f'{"checked" if c in shown else ""} onchange="show_rollout_table()"> <span>{c}</span></div>'
+            for c in shown + rest)
+
+
+def render_mask_banner():
+    total = frozen = None
+    if df_qual_src is not None and len(df_qual_src):
+        if 'n_rollouts' in df_qual_src.columns:
+            total = int(pd.to_numeric(df_qual_src['n_rollouts'], errors='coerce').fillna(0).sum())
+        if 'n_frozen' in df_qual_src.columns:
+            frozen = int(pd.to_numeric(df_qual_src['n_frozen'], errors='coerce').fillna(0).sum())
+    elif df_roll_src is not None and len(df_roll_src):
+        total = int(len(df_roll_src))
+        frozen = int(pd.to_numeric(df_roll_src.get('frozen', 0), errors='coerce').fillna(0).sum())
+
+    mask, split = current_mask(), current_split()
+    if total is None or frozen is None:
+        text = "frozen-rollout counts unavailable (data_quality.csv not in this batch)"
+    elif mask == 'unfrozen':
+        text = (f"mask = UNFROZEN — {frozen} of {total} rollouts excluded (D1 box-obstacle "
+                f"conflict: the eval held position and never called the model, so they report "
+                f"sat_rate 1.0 and inflate every constraint number)")
+    else:
+        text = (f"mask = ALL — every rollout kept, of which {frozen} of {total} rollouts are "
+                f"D1-FROZEN (model never called; they inflate constraint aggregates). "
+                f"Switch to UNFROZEN to exclude them.")
+    banner = document.getElementById("mask-banner")
+    banner.className = "mask-banner unfrozen" if mask == "unfrozen" else "mask-banner"
+    banner.innerHTML = (f"<b>{text}</b><br><span class='muted'>split = {split} &middot; "
+                        f"geometry axis = geo &middot; SEM in the matrices is over rollouts</span>")
+    banner.style.display = "block"
+
+
+async def refresh_global(event=None):
+    """A global (mask / split) change re-derives every frame and redraws the view."""
+    if df_agg_src is None:
+        return
+    derive_frames()
+    render_mask_banner()
+    view = window.currentView
+    if view == "aggregate":
+        await trigger_plot(None)
+    elif view == "rollout":
+        show_rollout_table()
+    elif view == "quality":
+        render_quality()
+
+
+# ── per-rollout table ──────────────────────────────────────────────────────────────────
+
+def show_rollout_table(event=None):
+    global current_roll_table
+    render_mask_banner()
+    container = document.getElementById("rollout-table-container")
+    summary = document.getElementById("rollout-summary")
+    if df_roll_src is None:
+        container.innerHTML = ""
+        summary.innerHTML = ('<p class="warn">per_rollout_detail.csv is not in this batch — '
+                             'the per-rollout view needs it.</p>')
+        return
+
+    data = _slice(df_roll_src)
+    geo = document.getElementById("env-select").value
+    if geo and 'geo' in data.columns:
+        data = data[data['geo'] == geo]
+    cand = document.getElementById("roll-cand-select").value
+    variant = document.getElementById("roll-var-select").value
+    sort_by = document.getElementById("roll-sort-select").value
+
+    subset = data[(data['Candidate'] == cand) & (data['variant'] == variant)]
+    if subset.empty:
+        container.innerHTML = ""
+        summary.innerHTML = (f'<p class="warn">No rollouts for CAND_{cand} / {variant} at '
+                             f'geo={geo}, mask={current_mask()}, split={current_split()}.</p>')
+        current_roll_table = None
+        return
+
+    ascending = sort_by not in ('n_success', 'success_relaxed', 'constraint_exec_sat_rate')
+    if sort_by in subset.columns:
+        subset = subset.sort_values(sort_by, ascending=ascending, kind='stable')
+
+    columns = [c for c in get_checked("rollcol-check") if c in subset.columns]
+    if not columns:
+        columns = [c for c in ROLL_DEFAULT_COLUMNS if c in subset.columns]
+    # With split on ALL the same rollout_idx appears once per (seed, split) — show
+    # whichever identifier actually varies or the rows read as duplicates.
+    context = [c for c in ('seed', 'split') if c in subset.columns
+               and subset[c].nunique() > 1 and c not in columns]
+    columns = context + columns
+    current_roll_table = subset[['Candidate', 'seed', 'split', 'geo', 'variant']
+                                + [c for c in columns if c not in ('seed', 'split')]]
+
+    n_frozen = int(pd.to_numeric(subset.get('frozen', 0), errors='coerce').fillna(0).sum())
+    succ = pd.to_numeric(subset.get('n_success'), errors='coerce').mean() if 'n_success' in subset.columns else float('nan')
+    summary.innerHTML = (
+        f'<p><b>CAND_{cand} &middot; {variant} &middot; geo {geo}</b> &mdash; {len(subset)} rollouts, '
+        f'{n_frozen} frozen, success {"n/a" if succ != succ else f"{succ * 100:.1f}%"} '
+        f'&middot; sorted by <code>{sort_by}</code> &middot; frozen rows are tinted</p>')
+
+    head = "".join(f'<th>{c}</th>' for c in columns)
+    rows = []
+    for _, row in subset.iterrows():
+        cells = []
+        for c in columns:
+            v = row[c]
+            if isinstance(v, float):
+                cells.append('<td>&mdash;</td>' if v != v else f'<td>{v:.4g}</td>')
+            else:
+                cells.append(f'<td>{v}</td>')
+        klass = ' class="frozen-row"' if float(row.get('frozen', 0) or 0) == 1 else ''
+        rows.append(f'<tr{klass}>' + "".join(cells) + '</tr>')
+    container.innerHTML = (f'<table class="roll-tbl"><thead><tr>{head}</tr></thead>'
+                           f'<tbody>{"".join(rows)}</tbody></table>')
+
+
+def download_rollout_csv(event=None):
+    if current_roll_table is None:
+        document.getElementById("engine-status").innerText = "NOTHING_TO_DOWNLOAD"
+        return
+    _download_bytes(current_roll_table.to_csv(index=False).encode(),
+                    f"rollouts_{current_mask()}.csv", "text/csv")
+    document.getElementById("engine-status").innerText = "ROLLOUT_CSV_SAVED"
+
+
+# ── rollout compare ────────────────────────────────────────────────────────────────────
+
+def trigger_compare(event=None):
+    global compare_fig
+    render_mask_banner()
+    area = document.getElementById("compare-plot-area")
+    if df_roll_src is None:
+        area.innerHTML = ('<p class="warn" style="padding-top:160px">per_rollout_detail.csv is '
+                          'not in this batch — the compare view needs it.</p>')
+        return
+
+    data = _slice(df_roll_src)
+    geo = document.getElementById("env-select").value
+    if geo and 'geo' in data.columns:
+        data = data[data['geo'] == geo]
+    x_metric = document.getElementById("cmp-x-select").value
+    y_metric = document.getElementById("cmp-y-select").value
+    group_by = document.getElementById("cmp-group-select").value
+    variants = get_checked("cmp-var-check")
+    cands = get_checked("cmp-cand-check")
+
+    if not variants or not cands:
+        area.innerHTML = ('<p style="padding-top:160px;color:#666">Select at least one variant '
+                          'and one candidate, then DRAW COMPARE.</p>')
+        return
+    subset = data[data['variant'].isin(variants) & data['Candidate'].isin(cands)]
+    if subset.empty:
+        area.innerHTML = (f'<p class="warn" style="padding-top:160px">No rollouts for that '
+                          f'selection at geo={geo}, mask={current_mask()}.</p>')
+        return
+    for col in (x_metric, y_metric):
+        if col not in subset.columns:
+            area.innerHTML = f'<p class="warn" style="padding-top:160px">Column {col} not in CSV.</p>'
+            return
+    subset = subset.dropna(subset=[x_metric, y_metric])
+    if subset.empty:
+        area.innerHTML = (f'<p class="warn" style="padding-top:160px">Every row is NaN for '
+                          f'{x_metric} / {y_metric}.</p>')
+        return
+
+    chart = window.cmpChartType
+    groups = sorted(subset[group_by].astype(str).unique())
+    # U15: was `colours[i % len(colours)]` over tab20's twenty entries — the 21st series
+    # silently reused the 1st series' colour. _palette hands out as many DISTINCT colours
+    # as there are groups, and is the same generator the aggregate bar chart uses.
+    colours = _palette(len(groups))
+
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(11, 6))
+    if chart == 'scatter':
+        for i, name in enumerate(groups):
+            block = subset[subset[group_by].astype(str) == name]
+            ax.scatter(block[x_metric], block[y_metric], s=38, alpha=0.75, edgecolors='k',
+                       linewidths=0.3, label=name, color=colours[i])
+        ax.set_xlabel(x_metric)
+        ax.legend(fontsize=8, bbox_to_anchor=(1.02, 1), loc='upper left')
+    elif chart == 'bar':
+        means = subset.groupby(group_by)[y_metric].mean().reindex(groups)
+        stds = subset.groupby(group_by)[y_metric].std().reindex(groups)
+        ax.bar(range(len(groups)), means.values, yerr=stds.values, capsize=4, edgecolor='k',
+               color=colours)
+        ax.set_xticks(list(range(len(groups))))
+        ax.set_xticklabels(groups, rotation=35, ha='right', fontsize=8)
+    else:
+        payload, labels = [], []
+        for name in groups:
+            vals = subset[subset[group_by].astype(str) == name][y_metric].dropna().values
+            if len(vals):
+                payload.append(vals)
+                labels.append(name)
+        if not payload:
+            area.innerHTML = '<p class="warn" style="padding-top:160px">Nothing to box.</p>'
+            return
+        # No labels=/tick_labels= kwarg: the two spellings swapped over matplotlib 3.9
+        # and pyodide pins an older build than the cluster.
+        ax.boxplot(payload)
+        ax.set_xticks(range(1, len(labels) + 1))
+        ax.set_xticklabels(labels, rotation=35, ha='right', fontsize=8)
+
+    ax.set_ylabel(y_metric)
+    ax.grid(True, alpha=0.2)
+    ax.set_title(f"{y_metric} by {group_by}  |  geo={geo}  mask={current_mask()}  "
+                 f"split={current_split()}", fontsize=12, fontweight='bold')
+    plt.tight_layout()
+    compare_fig = fig
+    area.innerHTML = ""
+    display(fig, target="compare-plot-area")
+    document.getElementById("cmp-download-btn").style.display = "block"
+    document.getElementById("engine-status").innerText = f"COMPARE_DRAWN ({len(subset)} rollouts)"
+
+
+def download_compare(event=None):
+    if compare_fig is None:
+        document.getElementById("engine-status").innerText = "NOTHING_TO_DOWNLOAD"
+        return
+    buf = io.BytesIO()
+    compare_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+    _download_bytes(buf.getvalue(), "compare.png", "image/png")
+    document.getElementById("engine-status").innerText = "COMPARE_PNG_SAVED"
+
+
+# ── data quality ───────────────────────────────────────────────────────────────────────
+
+def render_quality():
+    container = document.getElementById("quality-container")
+    if df_qual_src is None:
+        container.innerHTML = '<p class="warn">data_quality.csv is not in this batch.</p>'
+        return
+    data = _slice(df_qual_src, use_mask=False)      # quality rows have no mask axis
+    flags = None
+    for col in ('n_frozen', 'n_cb_tripped'):
+        if col in data.columns:
+            hit = pd.to_numeric(data[col], errors='coerce').fillna(0) > 0
+            flags = hit if flags is None else (flags | hit)
+    if 'npz_complete' in data.columns:
+        hit = pd.to_numeric(data['npz_complete'], errors='coerce').fillna(1) == 0
+        flags = hit if flags is None else (flags | hit)
+    flagged = data[flags] if flags is not None else data.iloc[0:0]
+
+    if flagged.empty:
+        container.innerHTML = (f'<p style="color:#2e7d32;font-weight:bold">All {len(data)} units '
+                               f'clean — no frozen rollouts, no circuit-breaker trips, no partial npz.</p>')
+        return
+    columns = [c for c in ('Candidate', 'seed', 'split', 'geo', 'variant', 'source', 'n_rollouts',
+                           'n_frozen', 'frozen_rate', 'n_cb_tripped', 'cb_skipped_steps',
+                           'npz_complete') if c in data.columns]
+    head = "".join(f'<th>{c}</th>' for c in columns)
+    rows = []
+    for _, row in flagged.iterrows():
+        cells = []
+        for c in columns:
+            v = row[c]
+            if isinstance(v, float):
+                cells.append('<td>&mdash;</td>' if v != v else f'<td>{v:.4g}</td>')
+            else:
+                cells.append(f'<td>{v}</td>')
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    container.innerHTML = (
+        f'<p><b>{len(flagged)} of {len(data)} units flagged.</b> <span class="muted">Frozen '
+        f'rollouts never called the model; circuit-breaker rollouts ran (partly) unprojected, so '
+        f'their constraint metrics do not describe the policy the variant name claims; '
+        f'npz_complete=0 is a crash-safety partial.</span></p>'
+        f'<table class="roll-tbl"><thead><tr>{head}</tr></thead><tbody>{"".join(rows)}</tbody></table>')
+
+
+document.trigger_plot = create_proxy(trigger_plot)
+document.download_folder = create_proxy(download_folder)
+document.refresh_global = create_proxy(refresh_global)
+document.show_rollout_table = create_proxy(show_rollout_table)
+document.trigger_compare = create_proxy(trigger_compare)
+document.render_quality = create_proxy(render_quality)
+asyncio.ensure_future(init_manifest())
+</script>
+
+<script>
+    window.currentMode = "list";
+    window.currentView = "aggregate";
+    window.cmpChartType = "scatter";
+
+    // Applying the view is a separate function from clicking a tab: load_data calls it
+    // so the active view's sidebar panel is visible the moment data arrives. (Without
+    // this the aggregate controls stay display:none until the user happens to click a
+    // tab, which reads as a completely broken page.)
+    function applyViewMode() {
+        const view  = window.currentView;
+        const btns  = {aggregate: "btn-agg", rollout: "btn-roll", compare: "btn-cmp", quality: "btn-qual"};
+        const ctrls = {aggregate: "controls-panel", rollout: "roll-controls", compare: "cmp-controls", quality: null};
+        const areas = {aggregate: "aggregate-area", rollout: "rollout-area", compare: "compare-area", quality: "quality-area"};
+        const loaded = document.getElementById("path-section").style.display !== "none";
+        for (const v of ["aggregate", "rollout", "compare", "quality"]) {
+            document.getElementById(btns[v]).classList.toggle("active", v === view);
+            if (ctrls[v]) {
+                const show = (v === view) && (v !== "aggregate" || loaded);
+                document.getElementById(ctrls[v]).style.display = show ? "flex" : "none";
+            }
+            document.getElementById(areas[v]).style.display = (v === view) ? "block" : "none";
+        }
+    }
+    window.applyViewMode = applyViewMode;
+
+    function setViewMode(view) {
+        window.currentView = view;
+        applyViewMode();
+        if (view === "rollout" && window.document.show_rollout_table) window.document.show_rollout_table();
+        if (view === "quality" && window.document.render_quality) window.document.render_quality();
+    }
+
+    function setCmpChart(type) {
+        window.cmpChartType = type;
+        document.getElementById("btn-scatter").classList.toggle("active", type === "scatter");
+        document.getElementById("btn-bar").classList.toggle("active", type === "bar");
+        document.getElementById("btn-box").classList.toggle("active", type === "box");
+    }
+
+    async function refresh_global() {
+        if (window.document.refresh_global) {
+            try { await window.document.refresh_global(); } catch (e) { console.error(e); }
+        }
+    }
+    function show_rollout_table() {
+        if (window.document.show_rollout_table) window.document.show_rollout_table();
+    }
+    function trigger_compare() {
+        if (window.document.trigger_compare) window.document.trigger_compare();
+    }
+
+    function switchMode(mode) {
+        window.currentMode = mode;
+        document.getElementById("btn-list").classList.toggle("active", mode === 'list');
+        document.getElementById("btn-path").classList.toggle("active", mode === 'path');
+        document.getElementById("input-list").style.display = mode === 'list' ? 'block' : 'none';
+        document.getElementById("input-path").style.display = mode === 'path' ? 'block' : 'none';
+    }
+    function applyZoom() {
+        const val = parseFloat(document.getElementById("width-zoom").value);
+        const imgs = document.querySelectorAll("#plot-area img");
+        if (imgs.length > 0) {
+            const img = imgs[0];
+            if (!img.dataset.baseWidth) {
+                img.dataset.baseWidth = img.naturalWidth || img.width || 800;
+            }
+            const bw = parseFloat(img.dataset.baseWidth);
+            if (bw > 0) {
+                img.style.width = (bw * val) + "px";
+                img.style.height = "auto";
+                img.style.maxWidth = "none";
+            }
+        }
+    }
+    
+    function adjustZoom(delta) {
+        const el = document.getElementById("width-zoom");
+        let val = parseFloat(el.value) + delta;
+        if (val < 0.1) val = 0.1;
+        el.value = val.toFixed(1);
+        document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
+        applyZoom();
+    }
+    // U16: variant quick presets. Pure JS on purpose — the membership is baked into each
+    // preset's data-members by Python at populate time, so ticking one is instant and works
+    // even while the PyScript engine is still warming up.
+    function _presetMembers(el) {
+        return (el.dataset.members || "").split("|").filter(Boolean);
+    }
+    function toggle_variant_preset(el) {
+        const want = new Set(_presetMembers(el));
+        for (const box of document.getElementsByClassName("var-check")) {
+            if (want.has(box.value)) box.checked = el.checked;
+        }
+        trigger_plot();          // re-syncs every preset box on its way through
+    }
+    // A preset box states a FACT about the main list, so it is recomputed from the list
+    // rather than remembered: hand-unticking one member drops the preset to the
+    // indeterminate mark instead of leaving it claiming a selection that is not there.
+    function sync_variant_presets() {
+        const checked = new Set();
+        for (const box of document.getElementsByClassName("var-check")) {
+            if (box.checked) checked.add(box.value);
+        }
+        for (const p of document.getElementsByClassName("preset-check")) {
+            const members = _presetMembers(p);
+            const hit = members.filter(m => checked.has(m)).length;
+            p.checked = members.length > 0 && hit === members.length;
+            p.indeterminate = hit > 0 && hit < members.length;
+        }
+    }
+    window.sync_variant_presets = sync_variant_presets;
+
+    async function trigger_plot() {
+        sync_variant_presets();
+        if (window.document.trigger_plot) {
+            try {
+                await window.document.trigger_plot();
+            } catch (e) {
+                console.error("Plot error:", e);
+            }
+        }
+    }
+    
+    function toggle_seed_mode() {
+        const mode = document.getElementById("seed-mode-select").value;
+        document.getElementById("custom-seed-panel").style.display = (mode === "custom") ? "block" : "none";
+        trigger_plot();
+    }
+    
+    // U11: delegated handler for the per-row "download this source folder" buttons. Delegation
+    // (not inline onclick) because both path tables are re-rendered wholesale on every redraw,
+    // and the folder paths contain characters that would break inline-attribute quoting.
+    document.addEventListener("click", function (ev) {
+        const btn = ev.target.closest ? ev.target.closest(".dl-folder") : null;
+        if (!btn) return;
+        ev.preventDefault();
+        if (!window.document.download_folder) {
+            alert("PyScript engine still loading — try again in a moment.");
+            return;
+        }
+        window.document.download_folder(btn.dataset.path, btn.dataset.cand || "");
+    });
+
+    // U13: the Plot Legend's HL checkboxes. Python owns the highlighted set (every table
+    // is re-rendered wholesale on each redraw, so DOM checked-state alone would not survive
+    // a single replot); JS only forwards the click and lets Python re-render.
+    function toggle_highlight(el) {
+        if (window.document.set_highlight) {
+            window.document.set_highlight(el.value, el.checked);
+        } else {
+            el.checked = !el.checked;
+            alert("PyScript engine still loading — try again in a moment.");
+        }
+    }
+    function clear_highlights() {
+        if (window.document.clear_highlights) window.document.clear_highlights();
+    }
+
+    function bulkSelect(className, state) {
+        const elements = document.getElementsByClassName(className);
+        for (let e of elements) { e.checked = state; }
+        if (className === "rollcol-check") show_rollout_table();
+        else if (className === "cmp-var-check" || className === "cmp-cand-check") { /* wait for DRAW */ }
+        else trigger_plot();
+    }
+</script>
+
+</body>
+</html>

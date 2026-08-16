@@ -13,10 +13,15 @@ See logs_in_develop/Gen3v6_MeanFlow/init/PLAN_Gen3v6_meanflow_baseline.md.
 
 Usage:
     python FM_v3_meanflow_test/train_flow_matching_v3_meanflow.py --seeds 6 7 8 9 10 --use-wandb
+
+    # resume every seed from its newest checkpoint; already-finished seeds are skipped
+    python FM_v3_meanflow_test/train_flow_matching_v3_meanflow.py \
+        --seeds 7 8 9 10 --auto-resume --use-wandb
 """
 
 import os
 import sys
+import glob
 import argparse
 import pickle
 
@@ -157,6 +162,19 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train MeanFlow (Gen3v6)')
     parser.add_argument('--seed', type=int, help='Single seed.')
     parser.add_argument('--seeds', type=int, nargs='+', help='List of seeds.')
+    # ── fix_6: resume ────────────────────────────────────────────────────────────
+    parser.add_argument('--auto-resume', action='store_true',
+                        help='Resume each seed from its newest local checkpoint, and skip '
+                             'seeds that already reached n_train_steps.')
+    parser.add_argument('--resume-step', type=int,
+                        help='Explicit checkpoint step to resume from, e.g. 60000. Use -1 '
+                             'for state_best.pt. Applies to --resume-seed, or to the first '
+                             'seed if that is not given.')
+    parser.add_argument('--resume-seed', type=int,
+                        help='Which seed --resume-step applies to.')
+    parser.add_argument('--force-restart', action='store_true',
+                        help='Ignore checkpoints and completion markers; train from step 0. '
+                             'Overwrites losses.pkl — the run history is lost.')
     parser.add_argument('--use-wandb', action='store_true', help='Enable W&B logging.')
     parser.add_argument('--wandb-project', type=str, default='FMPCC-MeanFlow', help='W&B project.')
     parser.add_argument('--wandb-entity', type=str, default=None, help='W&B entity.')
@@ -175,6 +193,110 @@ def resolve_seeds(cli_args):
         return DEFAULT_SEEDS, 'default'
 
 
+# ──────────────────────────────────────────────────────────────────────────────────────
+# fix_6 — resume. This existed in Gen1/Gen2/Gen3v1 (`FM_test/train_FM.py`,
+# `FM_v3_test/train_FM_v3.py`) and was dropped when Gen3v4-iMF rewrote the launcher;
+# Gen3v6 inherited the gap by copy-modify. The Trainer never lost the capability —
+# `Trainer.train()` is written against `self.step` and `Trainer.load()` restores it — the
+# only missing piece was the CLI wiring, so nothing ever called `load()`.
+# Trigger: job 24069 (2026-07-31) died at seed 9 / step 80000 on `[Errno 28] No space left
+# on device`, and there was no way to continue it.
+# ──────────────────────────────────────────────────────────────────────────────────────
+
+BEST_CHECKPOINT_LABEL = 'best'
+
+
+def checkpoint_path(savepath, label):
+    return os.path.join(savepath, f'state_{label}.pt')
+
+
+def find_latest_checkpoint(savepath):
+    """Newest resumable checkpoint as (label, step); (None, None) if there is none.
+
+    Two checkpoint families live side by side, and the periodic one is NOT always newer:
+      * `state_<step>.pt` — written every `n_train_steps // 5` steps (20000 for this config)
+      * `state_best.pt`   — written at every log step that improves val loss, so it usually
+                            sits far ahead of the last periodic file.
+    Job 24069 died at step 80000 with `state_60000.pt` as its newest periodic file while
+    `state_best.pt` was at ~79000; taking the periodic one alone would silently discard
+    19000 steps. `state_best.pt` carries the identical full payload, so resuming from it is
+    exact, not an approximation.
+    """
+    label, step = None, -1
+    for path in glob.glob(os.path.join(savepath, 'state_*.pt')):
+        token = os.path.basename(path)[len('state_'):-len('.pt')]
+        try:
+            candidate = int(token)
+        except ValueError:
+            continue                      # 'best', or anything else non-numeric
+        if candidate > step:
+            label, step = candidate, candidate
+
+    best_path = checkpoint_path(savepath, BEST_CHECKPOINT_LABEL)
+    if os.path.exists(best_path):
+        try:
+            best_step = int(torch.load(best_path, map_location='cpu')['step'])
+        except Exception as e:
+            print(f'[ train ] Could not read {best_path}: {e}')
+            best_step = -1
+        if best_step > step:
+            label, step = BEST_CHECKPOINT_LABEL, best_step
+
+    return (None, None) if step < 0 else (label, step)
+
+
+def last_logged_step(savepath):
+    """Highest training step recorded in losses.pkl, or None."""
+    losses_path = os.path.join(savepath, 'losses.pkl')
+    if not os.path.exists(losses_path):
+        return None
+    try:
+        with open(losses_path, 'rb') as f:
+            data = pickle.load(f)
+    except Exception as e:
+        print(f'[ train ] Could not read {losses_path}: {e}')
+        return None
+    steps = [step for step, _value in data.get('training_losses', [])]
+    return max(steps) if steps else None
+
+
+def training_already_complete(savepath, trainer):
+    """True if this seed already ran its full step budget.
+
+    Checkpoints alone cannot answer this. With `save_freq = n_train_steps // 5` the newest
+    periodic file of a FINISHED seed is `state_80000.pt` — indistinguishable from a seed
+    that died at 80000. In job 24069 both existed at once: seeds 7 and 8 had finished,
+    seed 9 had died, and all three looked identical on disk. losses.pkl does answer it:
+    a completed seed logs its last point at `n_train_steps - log_freq`.
+
+    Caveat: a seed killed inside its final log period reads as complete. That is at most
+    `log_freq` steps of loss, and the alternative — re-running the last 20 % with cold Adam
+    moments — is strictly worse.
+    """
+    last = last_logged_step(savepath)
+    if last is None:
+        return False
+    return last >= int(trainer.n_train_steps) - int(trainer.log_freq)
+
+
+def resolve_resume(seed, seeds, cli_args, savepath):
+    """(label, step) this seed should load, or (None, None) to start from scratch."""
+    if cli_args.resume_step is not None:
+        target_seed = cli_args.resume_seed if cli_args.resume_seed is not None else seeds[0]
+        if seed == target_seed:
+            label = (BEST_CHECKPOINT_LABEL if cli_args.resume_step < 0
+                     else cli_args.resume_step)
+            path = checkpoint_path(savepath, label)
+            # An explicit flag that silently does nothing is how a day gets lost — fail loud.
+            if not os.path.exists(path):
+                raise FileNotFoundError(f'--resume-step {cli_args.resume_step} given, but '
+                                        f'{path} does not exist')
+            return label, cli_args.resume_step
+    if cli_args.auto_resume:
+        return find_latest_checkpoint(savepath)
+    return None, None
+
+
 if __name__ == '__main__':
     sanitize_wandb_env()
     
@@ -186,6 +308,8 @@ if __name__ == '__main__':
     print("[ train ] Engine: MeanFlow (arXiv 2505.13447), ANALYTIC-v JVP tangent, no CFG")
     print("[ train ] Role:   controlled baseline for Gen3v4-iMF (predicted-v_c tangent)")
     print(f"[ train ] Seeds: {seeds} ({seed_source})")
+    print(f"[ train ] Resume: auto={cli_args.auto_resume} step={cli_args.resume_step} "
+          f"seed={cli_args.resume_seed} force_restart={cli_args.force_restart}")
     print(f"[ train ] W&B: {cli_args.use_wandb} (project: {cli_args.wandb_project})")
     print("=" * 80)
     print()
@@ -240,7 +364,8 @@ if __name__ == '__main__':
                 dual_head=getattr(args, 'dual_head', True),
                 interval_cfg=getattr(args, 'interval_cfg', False),
                 # backbone selector + DiT sizing — keep 'dit' to match Gen3v4's arm
-                imf_backbone=getattr(args, 'imf_backbone', 'unet'),
+                # 🔴 FIX_8_BACKBONE_DEFAULT — fall back to this generation's OWN backbone, never 'unet'.
+                imf_backbone=getattr(args, 'imf_backbone', 'mf_dit'),
                 dit_depth=getattr(args, 'dit_depth', 8),
                 dit_hidden_size=getattr(args, 'dit_hidden_size', 256),
                 dit_num_heads=getattr(args, 'dit_num_heads', 4),
@@ -303,6 +428,31 @@ if __name__ == '__main__':
             diffusion = diffusion_config(model)
             trainer = trainer_config(diffusion, dataset)
 
+            # ── fix_6: resume ────────────────────────────────────────────────────
+            # Runs BEFORE W&B init so a skipped seed does not create an empty run.
+            if cli_args.force_restart:
+                print(f'[ train ] --force-restart: seed {seed} starts at step 0, '
+                      f'existing losses.pkl will be overwritten')
+            else:
+                if cli_args.auto_resume and training_already_complete(args.savepath, trainer):
+                    print(f'[ train ] Seed {seed} already reached '
+                          f'{int(trainer.n_train_steps)} steps — skipping')
+                    print()
+                    continue
+                resume_label, resume_step = resolve_resume(seed, seeds, cli_args, args.savepath)
+                if resume_label is not None:
+                    print(f'[ train ] Resuming seed {seed} from state_{resume_label}.pt')
+                    trainer.load(resume_label)
+                    remaining = int(trainer.n_train_steps) - int(trainer.step)
+                    if remaining <= 0:
+                        print(f'[ train ] Seed {seed} is at the step budget — skipping')
+                        print()
+                        continue
+                    print(f'[ train ] Restored step {int(trainer.step)}; '
+                          f'{remaining} of {int(trainer.n_train_steps)} steps remain')
+                elif cli_args.auto_resume:
+                    print(f'[ train ] Seed {seed}: no checkpoint found, starting from step 0')
+
             # Setup W&B
             run = None
             if cli_args.use_wandb:
@@ -322,7 +472,8 @@ if __name__ == '__main__':
                     print(f"[ train ] W&B init failed: {e}")
 
             # Train
-            print(f"[ train ] Starting training (steps: {trainer.n_train_steps})")
+            print(f"[ train ] Starting training at step {int(trainer.step)} "
+                  f"(budget: {int(trainer.n_train_steps)})")
             # U9: flush losses.pkl to W&B after every epoch (live curves; timeout-safe)
             losses_path = os.path.join(args.savepath, 'losses.pkl')
             wandb_cursor = {'last_step': -1}

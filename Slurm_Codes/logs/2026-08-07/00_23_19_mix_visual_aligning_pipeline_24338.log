@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Thu Aug  6 22:23:20 UTC 2026
+JOB ID:    24338
+================================================================================
+Launching Visual-Mix-ML (Gen14) Pipeline — engine=diffusion seeds='6' ...
+Step 1: Gates submitted. Job ID: 24339
+  seed 6: train scheduled (afterok:24339). Job ID: 24340
+  seed 6: eval  scheduled (afterok:24340). Job ID: 24341
+--------------------------------------------------------------------------------
+Visual-Mix-ML (Gen14) Pipeline submitted — engine=diffusion seeds='6'.
+Use 'squeue -u llim' to monitor progress.
+A failed stage cancels its OWN downstream stage; other seeds are unaffected.
+================================================================================
+================================================================================
+PIPELINE END:   Thu Aug  6 22:23:20 UTC 2026
+================================================================================

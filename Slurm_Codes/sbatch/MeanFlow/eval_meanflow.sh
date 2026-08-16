@@ -78,7 +78,25 @@ fi
 # 4) Run MeanFlow (Gen3v6) Evaluation
 cd "$REPO"
 
-# Evaluation reads seeds and variants from config/projection_eval.yaml
-python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py
+# Evaluation reads seeds and variants from config/meanflow_projection_eval.yaml.
+#
+# 🔵 U9 — ⚠️ MATCHED BUDGET OR NOTHING (PLAN §7 / fix_7.3 §9). The entire Gen13 claim died because
+# one hard-coded k_steps=10 made the decisive control unrunnable, and the confound survived four
+# rounds of analysis. Gen3v7 (AlphaFlow) has had the K grid built into its eval sbatch since day
+# one; Gen3v6 did not, so every MeanFlow eval silently ran the single HFFM_FLOW_STEPS default (2)
+# and a K sweep meant remembering to resubmit with a different env var. The grid is now IN HERE.
+# Each K writes its own results directory (flow_steps_v3 is watched as 'K' in the plan exp_name),
+# so nothing overwrites anything.
+#
+# Override the grid without editing this file:  MF_FLOW_STEPS="2" sbatch ...
+FLOW_STEPS_GRID="${MF_FLOW_STEPS:-1 2 5 10 20}"
+echo "[ eval ] NFE budgets to evaluate: $FLOW_STEPS_GRID"
+
+for K in $FLOW_STEPS_GRID; do
+    echo "================================================================================"
+    echo "[ eval ] K = $K   ($(date))"
+    echo "================================================================================"
+    python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py --flow-steps "$K"
+done
 
 echo "Evaluation completed successfully."

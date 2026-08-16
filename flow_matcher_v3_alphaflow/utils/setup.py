@@ -207,11 +207,14 @@ class Parser(argparse.ArgumentParser):
             pass
 
         # 2. Copy associated yaml configs (e.g. projection_eval.yaml)
-        # We look in the 'config/' directory relative to the current working directory
-        yaml_path = 'config/projection_eval.yaml'
+        # 🔴 FIX_9_CFG_PROVENANCE — snapshot the projection yaml the EVAL loaded (published as
+        # FMPCC_PROJ_CFG), under its own basename. This used to hard-code projection_eval.yaml,
+        # so job 24334 archived a file it never read while the yaml that actually gated the run
+        # (config/meanflow_projection_eval.yaml) went unrecorded. Falls back to the shared file.
+        yaml_path = os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml')
         if os.path.exists(yaml_path):
             try:
-                dest = os.path.join(snapshot_dir, 'projection_eval.yaml')
+                dest = os.path.join(snapshot_dir, os.path.basename(yaml_path))
                 shutil.copy(yaml_path, dest)
                 # print(f'[ utils/setup ] Snapshotted config to {dest}')
             except Exception:

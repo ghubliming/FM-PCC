@@ -203,7 +203,8 @@ if __name__ == '__main__':
                 dual_head=getattr(args, 'dual_head', False),
                 interval_cfg=getattr(args, 'interval_cfg', False),
                 # U6 — backbone selector + DiT sizing (default 'unet' ⇒ unchanged)
-                imf_backbone=getattr(args, 'imf_backbone', 'unet'),
+                # 🔴 FIX_8_BACKBONE_DEFAULT — fall back to this generation's OWN backbone, never 'unet'.
+                imf_backbone=getattr(args, 'imf_backbone', 'dit'),
                 dit_depth=getattr(args, 'dit_depth', 8),
                 dit_hidden_size=getattr(args, 'dit_hidden_size', 256),
                 dit_num_heads=getattr(args, 'dit_num_heads', 4),

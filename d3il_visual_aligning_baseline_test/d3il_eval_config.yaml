@@ -31,3 +31,14 @@ if_vision:                   true    # true = capture bp_cam frames for video
 record_mode: "all"
 save_root:   "logs/d3il_visual_aligning_baseline"
 device:      "cuda"
+
+# ── DA_VA_v2 export (U4.3) ─────────────────────────────────────────────────────
+# Additive second copy of the results in the Gen14 API shape, so this baseline is
+# readable by Data_Analysis/DA_VA_v2 with no bridging:
+#   {save_root}/{da_export_root_name}/d3il_baseline_{agent}/{seed}/results/d3il_baseline/
+# Runs that finished BEFORE this existed are converted by
+# `bridge_d3il_va_to_da_va_v2.py` into a `_`-prefixed root instead (leading
+# underscore = legacy tree, DA_VA_v2 switches to its legacy reader).
+# Never give this a name starting with "_" — that would mark fresh runs legacy.
+da_export:           true
+da_export_root_name: "DA_VA_d3il_baseline"

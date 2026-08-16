@@ -51,6 +51,13 @@ plot_how_many = config['plot_how_many']
 # Constraint projection
 constraint_types = config['constraint_types']
 
+# [Gen0fix2] Echo the projection schedule the sampler will actually use. The savepath tag is
+# built from `args` and is NOT evidence of what ran -- before this fix the two could disagree
+# silently (folder said T0.05, sampler ran 0.5). The gate is `t <= T * n_timesteps` with t
+# counting DOWN from K-1, so the number of projected steps is floor(T*K) + 1. Printing the
+# resolved threshold here makes a repeat of that failure visible in the first lines of the log.
+print(f"[ eval ] diffusion_timestep_threshold (from YAML) = {config.get('diffusion_timestep_threshold', '<MISSING>')}")
+
 for exp in exps:
     for halfspace_variant in halfspace_variants:
         robot_name = exp.split('-')[0]
@@ -180,6 +187,15 @@ for exp in exps:
                 try:
                     print(f'------------------------Running {exp} - {halfspace_variant} - {variant} ({seed})----------------------------')
 
+                    # [Gen0fix2] Restore the per-variant threshold. Upstream DPCC had exactly this
+                    # line (7f09d3a^:scripts/eval.py:130) and commit 7f09d3a "Removed unused
+                    # configs" deleted it, which silently turned `post_processing` into a
+                    # duplicate of `dpcc-r`. threshold 0 makes the gate `t <= 0 * n_timesteps`
+                    # true only at t == 0, i.e. ONE projection applied AFTER the last denoising
+                    # step -- the paper's definition of post-processing ("modifying them after
+                    # the last denoising step, usually by solving an optimization problem").
+                    threshold = 0.0 if 'post_processing' in variant else args.diffusion_timestep_threshold
+
                     gradient = True if 'gradient' in variant else False
 
                     if 'model_free' in variant and 'tightened' in variant:
@@ -202,8 +218,20 @@ for exp in exps:
                         delta_t = 4.0 * dt
 
                     # Create projector
-                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=diffusion.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer, 
-                                            gradient=gradient, gradient_weights=[1, 0.5, 2], variant=diffuser_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy')
+                    # [Gen0fix2] diffusion_timestep_threshold was NOT forwarded here, so Projector
+                    # silently took its constructor default of 0.5 (diffuser/sampling/projection.py:8)
+                    # and the activation gate (diffuser/models/diffusion.py:179,186) read that default
+                    # instead of the YAML value. The value still reached `args`, so exp_name/watch
+                    # named the savepath after a threshold the sampler never used -- e.g. a folder
+                    # tagged T0.05 that actually ran theta=0.5. Inherited verbatim from upstream DPCC
+                    # (aux_repo/dpcc/scripts/eval.py:151), where it is latent because their YAML ships
+                    # 0.5, the same as the default. Proven by three jobs at theta in {0.05, 0.1, 1.0}
+                    # producing byte-identical trajectories -- see
+                    # logs_in_develop/Gen0_FMPCC_DPCC_Code_Updates/Fix2/.
+                    # `threshold` (not args....) so the post_processing override above applies.
+                    projector = Projector(horizon=args.horizon, transition_dim=trajectory_dim, action_dim=action_dim, goal_dim=diffusion.goal_dim, constraint_list=constraints, normalizer=dataset.normalizer,
+                                            gradient=gradient, gradient_weights=[1, 0.5, 2], variant=diffuser_variant, dt=delta_t, cost_dims=None, device=args.device, solver='scipy',
+                                            diffusion_timestep_threshold=threshold)
                     projector = None if variant == 'diffuser' else projector
 
                     trajectory_selection = 'random'

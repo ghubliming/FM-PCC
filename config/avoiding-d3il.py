@@ -1,14 +1,50 @@
 from diffuser.utils import watch
 import yaml
+import os
+
+# 🔴 FIX_9_CFG_PROVENANCE (2026-08-07) — the results-folder name MUST describe the run that
+# produced it. This module is imported lazily by utils.Parser.read_config
+# (`importlib.import_module`) during Parser().parse_args(), i.e. AFTER the eval script has
+# resolved its own projection yaml and the HFFM_*/DPCC_THRESHOLD overrides. Those scripts
+# publish what they resolved into the environment; the tokens below are built from it:
+#   FMPCC_PROJ_CFG        -> the projection yaml the eval ACTUALLY loaded (also snapshotted)
+#   FMPCC_DPCC_THRESHOLD  -> resolved DPCC diffusion_timestep_threshold   ('T' token)
+#   HFFM_ACT_THRESHOLD    -> resolved HardFlow NLP activation threshold   ('A' token)
+#   HFFM_BATCH            -> resolved HardFlow candidate-fan size         ('B' token)
+# With none of them set this falls back to exactly the old behaviour, so train jobs and every
+# generation still on config/projection_eval.yaml are unaffected.
+# Why it exists: job 24334 was written to a path saying `T1` — read from a file that eval never
+# opens — while the Projector was gated at the meanflow yaml's 0.5.
+# Full writeup: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/CHANGELOG_Fix_9_config_provenance.md
+_PROJ_CFG = os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml')
+
+
+def _num(value):
+    """Keep folder tokens stable: 1.0 -> 1 (so 'T1', not 'T1.0'), 0.5 -> 0.5."""
+    f = float(value)
+    return int(f) if f == int(f) else f
+
 
 # Read the threshold dynamically from the YAML config, abort if not found
-with open('config/projection_eval.yaml', 'r') as f:
+with open(_PROJ_CFG, 'r') as f:
     _proj_config = yaml.safe_load(f)
 
 if 'diffusion_timestep_threshold' not in _proj_config:
-    raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/projection_eval.yaml")
+    raise ValueError(f"CRITICAL: 'diffusion_timestep_threshold' MUST be defined in {_PROJ_CFG}")
 
-_yaml_threshold = _proj_config['diffusion_timestep_threshold']
+# 🔴 FIX_9_CFG_PROVENANCE — the eval's RESOLVED value wins over the file: it is the number the
+# Projector was actually handed. Absent (train jobs, other generations) => the file, unchanged.
+_env_threshold = os.environ.get('FMPCC_DPCC_THRESHOLD')
+_yaml_threshold = (_num(_env_threshold) if _env_threshold is not None
+                   else _proj_config['diffusion_timestep_threshold'])
+
+# 🔴 FIX_9_CFG_PROVENANCE — HardFlow (arm C) knobs, consumed by args_to_watch_fmv3_hf_plan.
+# The eval publishes these ALREADY RESOLVED (the 'all'/'late' aliases mapped and the yaml
+# fallbacks applied), so resolve_activation_threshold() in hardflow_projection.py stays the one
+# and only resolver and this module never has to reimplement it. The defaults below apply only
+# when no eval published them — in which case no HardFlow arm is running anyway.
+_hf_act_threshold = _num(os.environ.get('HFFM_ACT_THRESHOLD', 1.0))
+_hf_batch_size = int(os.environ.get('HFFM_BATCH', 1))
 
 #------------------------ base ------------------------#
 
@@ -63,6 +99,25 @@ args_to_watch_fmv3_ode_plan = [
     ('diffusion', 'D'),
 ]
 
+# 🔴 FIX_9_CFG_PROVENANCE — HardFlow-arm plan blocks ONLY (Gen3v6 MeanFlow, Gen3v7 AlphaFlow).
+# Identical to args_to_watch_fmv3_ode_plan plus the two arm-C knobs that change results but used
+# to be invisible in the path:  A = NLP activation threshold,  B = candidate-fan (mpc) size.
+# Before this, `HFFM_ACT_THRESHOLD=0.5` and `=1.0` wrote to the SAME directory and silently
+# overwrote each other — Gen12 worked around it by hand-tagging folders
+# (logs_in_develop/Gen12/DA/DA_20260803_HardFlow_activation_threshold_0p1.md).
+# Deliberately NOT added to the shared ode_plan list: plan_fm_v3_ode_selectable / _drifting /
+# _imeanflow have no HardFlow arm and must keep their existing result paths.
+args_to_watch_fmv3_hf_plan = [
+    ('prefix', ''),
+    ('horizon', 'H'),
+    ('flow_steps_v3', 'K'),
+    ('ode_solver_method_v3', 'M'),
+    ('diffusion_timestep_threshold', 'T'),
+    ('hf_act_threshold', 'A'),
+    ('hf_batch_size', 'B'),
+    ('diffusion', 'D'),
+]
+
 args_to_watch_fmv3_imf_train = [
     ('prefix', ''),
     ('horizon', 'H'),
@@ -112,6 +167,62 @@ args_to_watch_fmv3_af_train = [
 ]
 
 logbase = 'logs'
+
+# ── CUSTOM RUN MESSAGE (2026-08-13) — opt-in results-path tag, EVAL ONLY ──────────────────
+# Lets a re-run of the SAME config at a different budget (e.g. n_trials 2 -> 20) write to its
+# OWN results folder instead of overwriting the old numbers. Empty (the default) => every path
+# is byte-identical to before, so no existing folder is renamed, moved or overwritten.
+#
+# Three ways to set it, in order of convenience:
+#   1. env, at submit time — no git edit (submit.sh passes --export=ALL):
+#        FMPCC_RUN_MSG=20trials ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/<eval>.sh
+#   2. edit the `custom_msg` default below — applies to every arm at once, git-tracked.
+#   3. a literal inside ONE plan block — `'custom_msg': 'ode_only_rerun',` — to tag a single arm.
+#
+# 🔴 PLAN BLOCKS ONLY. This must never reach a TRAINING exp_name: that would move every
+#    checkpoint folder and break every diffusion_loadpath. Two traps make this easy to get
+#    wrong, which is why the token is applied by a WRAPPER (watch_plan) instead of by editing
+#    the args_to_watch_* lists:
+#      · args_to_watch_v3  is shared by the train block 'flow_matching_v3' AND the plan blocks
+#        'plan_fm_v3' / 'plan_fm_v3_hardflow'.
+#      · args_to_watch     is shared by 'flow_matching' / 'flow_matching_unet_v2' /
+#        'flow_matching_v2' and their plan_* counterparts.
+#    Second line of defence: watch_plan reads args.custom_msg, and no train block defines that
+#    key, so a misapplied wrapper still renders the empty token.
+#
+# Why an eval ARG and not a projection-yaml key: the message describes THIS eval run, not the
+# constraint projection, so it belongs next to diffusion_epoch / suffix. It also avoids a real
+# footgun — scripts/eval.py and eval_flow_matching_v3_ode_selectable.py never publish
+# FMPCC_PROJ_CFG, so a yaml-sourced message would have been read from the right file only by
+# coincidence. As a config key it is also captured in args.json + the config snapshot, so the
+# folder tag is provable from the run's own artifacts.
+def _sanitize_msg(text):
+    """Filesystem-safe, stable token: keep [A-Za-z0-9._-], collapse everything else to '-'."""
+    raw = str(text if text is not None else '').strip()
+    if not raw:
+        return ''
+    out = ''.join(ch if (ch.isalnum() or ch in '._-') else '-' for ch in raw)
+    while '--' in out:
+        out = out.replace('--', '-')
+    return out.strip('-._')[:40]
+
+
+custom_msg = _sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+if custom_msg:
+    print(f'[ config/avoiding-d3il ] custom_msg="{custom_msg}" -> results dirs end in "_msg{custom_msg}"')
+
+
+def _msg_suffix(args):
+    """'_msg<token>' for a plan block that carries a non-empty custom_msg, else ''."""
+    msg = _sanitize_msg(getattr(args, 'custom_msg', ''))
+    return f'_msg{msg}' if msg else ''
+
+
+def watch_plan(args_to_watch_list):
+    """watch(), plus the plan block's custom_msg suffix. Use in PLAN blocks ONLY."""
+    _fn = watch(args_to_watch_list)
+    return lambda args: _fn(args) + _msg_suffix(args)
+
 
 base = {
     'diffusion': {
@@ -493,7 +604,15 @@ base = {
         'horizon': 8,
         
         ## iMF architecture (matches official repo)
-        'freq_dim': 256,
+        # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
+        # Its only consumer anywhere is `dim=freq_dim` in models/*_trajectory_model.py,
+        # and Flow_matcher_U_Net_v2 uses that one argument for BOTH the channel width
+        # (:106) and the time-embed width (:110). At 256 the backbone was 253.0 M params
+        # (channels 256/512/1024/2048) against the DPCC/FMv3ODE baseline's 3.97 M at 32
+        # — a 63.8x capacity error on 96 demonstrations, which silently confounded every
+        # imf_backbone='unet' run. DiT / SiT / mf_dit ignore this key (they size from
+        # dit_hidden_size). Full audit: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
+        'freq_dim': 32,
         'depth': 8,
         'num_heads': 4,
         'mlp_dim': 256,
@@ -607,7 +726,15 @@ base = {
         'horizon': 8,
 
         ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
-        'freq_dim': 256,
+        # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
+        # Its only consumer anywhere is `dim=freq_dim` in models/*_trajectory_model.py,
+        # and Flow_matcher_U_Net_v2 uses that one argument for BOTH the channel width
+        # (:106) and the time-embed width (:110). At 256 the backbone was 253.0 M params
+        # (channels 256/512/1024/2048) against the DPCC/FMv3ODE baseline's 3.97 M at 32
+        # — a 63.8x capacity error on 96 demonstrations, which silently confounded every
+        # imf_backbone='unet' run. DiT / SiT / mf_dit ignore this key (they size from
+        # dit_hidden_size). Full audit: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
+        'freq_dim': 32,
         'depth': 8,
         'num_heads': 4,
         'mlp_dim': 256,
@@ -639,7 +766,8 @@ base = {
                                      # fed a constant default (guidance off) ⇒ inert.
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
-        'imf_backbone': 'dit',       # match Gen3v4's DiT arm so the A/B is controlled
+        ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'mf_dit' (U2: official-MeanFlow DiT).
+        'imf_backbone': 'mf_dit',    # U2 default: MeanFlow's own DiT (was 'dit'); use 'dit'/'unet' for A/B
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -706,7 +834,15 @@ base = {
         'horizon': 8,
 
         ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
-        'freq_dim': 256,
+        # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
+        # Its only consumer anywhere is `dim=freq_dim` in models/*_trajectory_model.py,
+        # and Flow_matcher_U_Net_v2 uses that one argument for BOTH the channel width
+        # (:106) and the time-embed width (:110). At 256 the backbone was 253.0 M params
+        # (channels 256/512/1024/2048) against the DPCC/FMv3ODE baseline's 3.97 M at 32
+        # — a 63.8x capacity error on 96 demonstrations, which silently confounded every
+        # imf_backbone='unet' run. DiT / SiT / mf_dit ignore this key (they size from
+        # dit_hidden_size). Full audit: logs_in_develop/Gen3v6_MeanFlow/Fix_8_Unet/.
+        'freq_dim': 32,
         'depth': 8,
         'num_heads': 4,
         'mlp_dim': 256,
@@ -755,7 +891,8 @@ base = {
                                      # the comparison to Gen3v6 clean.
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
-        'imf_backbone': 'dit',       # match Gen3v4/Gen3v6's DiT arm so the A/B is controlled
+        ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'sit' (U2: α-Flow's own SiT).
+        'imf_backbone': 'sit',       # U2 default: α-Flow's own SiT (was 'dit'); use 'dit'/'unet' for A/B
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -827,7 +964,8 @@ base = {
             ('n_diffusion_steps', 'K'),
             ('diffusion_timestep_threshold', 'T'),
             ('diffusion', 'D')
-        ])(args),
+        ])(args) + _msg_suffix(args),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## diffusion model
         'diffusion': 'models.GaussianDiffusion',
@@ -862,7 +1000,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -895,7 +1034,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_unet_v2/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching unet v2 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -928,7 +1068,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v2/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v2 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -963,7 +1104,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3/',
-        'exp_name': watch(args_to_watch_v3),
+        'exp_name': watch_plan(args_to_watch_v3),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.GaussianDiffusion',
@@ -1021,7 +1163,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_v3_hardflow/',
-        'exp_name': watch(args_to_watch_v3),
+        'exp_name': watch_plan(args_to_watch_v3),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## FMv3ODE model + loadpath — copied from plan_fm_v3_ode_selectable
         'diffusion': 'models.diffusion.FlowMatchingODE',
@@ -1057,7 +1200,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_ode_selectable/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 model
         'diffusion': 'models.diffusion.FlowMatchingODE',
@@ -1107,7 +1251,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_drifting/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 drifting model
         'diffusion': 'models.diffusion.FlowMatchingDrifting',
@@ -1153,7 +1298,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_imeanflow/' + 'H{horizon}_D{diffusion}_a{time_beta_alpha_v3}_b{time_beta_beta_v3}_aw{action_weight}_obj{imf_objective}_bb{imf_backbone}_ts{t_schedule}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        'exp_name': watch_plan(args_to_watch_fmv3_ode_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching v3 imeanflow model
         'diffusion': 'flow_matcher_v3_imeanflow.models.iMeanFlowODE',
@@ -1233,7 +1379,9 @@ base = {
         'logbase': logbase,
         'prefix': 'f:plans/flow_matching_v3_meanflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_obj{mf_objective}_bb{imf_backbone}_ts{t_schedule}_dp{meanflow_data_proportion}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        # 🔴 FIX_9_CFG_PROVENANCE — was args_to_watch_fmv3_ode_plan; the _hf_ list adds the A/B tokens.
+        'exp_name': watch_plan(args_to_watch_fmv3_hf_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## MeanFlow model
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
@@ -1244,7 +1392,13 @@ base = {
         ## ⚠️ MATCHED-BUDGET OR NOTHING (PLAN §7 / fix_7.3 §9): every MeanFlow-vs-X table
         ## must be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
         ## MeanFlow@K=5 against FM@K=10.
-        'flow_steps_v3': 2,
+        ## Gen3v6 U3 — matched-K for ALL arms. Both K knobs read HFFM_FLOW_STEPS (default 2) so a
+        ## K-sweep is `HFFM_FLOW_STEPS=<K> ./submit.sh …`. Because K flows through the CONFIG (not a
+        ## post-load model patch), args.flow_steps_v3 → exp_name '_K{K}_' → each K writes its OWN
+        ## results dir (no cross-K overwrite). flow_steps_v3 drives arms A/B (native sampler K);
+        ## flow_steps drives arm C (HardFlow Euler K); kept EQUAL (matched-budget, PLAN §7).
+        'flow_steps_v3': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
+        'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
         ## MUST match training (both are in diffusion_loadpath)
         'mf_objective': 'meanflow',
         'meanflow_data_proportion': 0.5,
@@ -1263,17 +1417,23 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
+        # 🔴 FIX_9_CFG_PROVENANCE — arm-C knobs, present so they reach the results path as the
+        # A/B tokens. Resolved by the eval script (see the FMPCC_PROJ_CFG header); inert for the
+        # DPCC-only arms, which is the price of a path that never lies about what ran.
+        'hf_act_threshold': _hf_act_threshold,
+        'hf_batch_size': _hf_batch_size,
 
         ## architecture — MUST equal the trained checkpoint
         'dual_head': True,
         'interval_cfg': False,
-        'imf_backbone': 'dit',
+        ## valid: 'unet' | 'dit' | 'mf_dit' (U2) — MUST equal the train block's value.
+        'imf_backbone': 'mf_dit',
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
-        'dit_aux_head_depth': 2,
+        'dit_aux_head_depth': 2,      # iMF 'dit' only (ignored by 'mf_dit'/'unet')
         'dit_patch_size': 1,
-        'dit_condition_on_t': False,
+        'dit_condition_on_t': False,  # iMF 'dit' only (ignored by 'mf_dit'/'unet')
 
         ## Gen3v6 has NO interval-CFG: there is no eval-time guidance operating point.
         ## condition_guidance_w=0 keeps the DPCC returns-CFG output mix off as well.
@@ -1317,7 +1477,9 @@ base = {
         'prefix': 'f:plans/flow_matching_v3_alphaflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
                   '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}/',
-        'exp_name': watch(args_to_watch_fmv3_ode_plan),
+        # 🔴 FIX_9_CFG_PROVENANCE — was args_to_watch_fmv3_ode_plan; the _hf_ list adds the A/B tokens.
+        'exp_name': watch_plan(args_to_watch_fmv3_hf_plan),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## α-Flow model
         'diffusion': 'flow_matcher_v3_alphaflow.models.AlphaFlowODE',
@@ -1328,7 +1490,17 @@ base = {
         ## ⚠️ MATCHED-BUDGET OR NOTHING (PLAN §8 / fix_7.3 §9): every α-Flow-vs-X table must
         ## be at equal K. Sweep flow_steps_v3 ∈ {1, 2, 5, 10}; never compare
         ## α-Flow@K=5 against FM@K=10. The comparator is FM @ K=2 → 100% safe, 0.1894 s/plan.
-        'flow_steps_v3': 2,
+        ## Gen3v7 U3 — matched-K for ALL arms (mirrors plan_fm_v3_meanflow L1252-1253). Both K
+        ## knobs read HFFM_FLOW_STEPS (default 2), so a K-sweep is
+        ## `HFFM_FLOW_STEPS=<K> ./submit.sh …` and `--flow-steps <K>` patches both (the eval
+        ## driver's CLI override sets flow_steps too). Because K flows through the CONFIG rather
+        ## than a post-load model patch, args.flow_steps_v3 → exp_name '_K{K}_' → each K writes
+        ## its OWN results dir and no two budgets can overwrite each other.
+        ##   flow_steps_v3 → arms A/B (the native α-Flow sampler's K)
+        ##   flow_steps    → arm C   (the HardFlow Euler K)
+        ## Kept EQUAL. Diverging them silently voids every arm-B-vs-arm-C comparison.
+        'flow_steps_v3': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
+        'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
         ## MUST match training (these four are in diffusion_loadpath)
         'af_alpha_init': 1.0,
         'af_alpha_end': 0.0,
@@ -1353,17 +1525,23 @@ base = {
         'ode_solver_atol_v3': None,
         'ode_solver_step_size_v3': None,
         'diffusion_timestep_threshold': _yaml_threshold,
+        # 🔴 FIX_9_CFG_PROVENANCE — arm-C knobs, present so they reach the results path as the
+        # A/B tokens. Resolved by the eval script (see the FMPCC_PROJ_CFG header); inert for the
+        # DPCC-only arms, which is the price of a path that never lies about what ran.
+        'hf_act_threshold': _hf_act_threshold,
+        'hf_batch_size': _hf_batch_size,
 
         ## architecture — MUST equal the trained checkpoint
         'dual_head': True,
         'interval_cfg': False,
-        'imf_backbone': 'dit',
+        ## valid: 'unet' | 'dit' | 'sit' (U2) — MUST equal the train block's value.
+        'imf_backbone': 'sit',
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
-        'dit_aux_head_depth': 2,
+        'dit_aux_head_depth': 2,      # iMF 'dit' only (ignored by 'sit'/'unet')
         'dit_patch_size': 1,
-        'dit_condition_on_t': False,
+        'dit_condition_on_t': False,  # iMF 'dit' only (ignored by 'sit'/'unet')
 
         ## Gen3v7 has NO interval-CFG: there is no eval-time guidance operating point.
         ## condition_guidance_w=0 keeps the DPCC returns-CFG output mix off as well.
@@ -1452,7 +1630,8 @@ base = {
         'loadbase': None,
         'logbase': logbase,
         'prefix': 'plans/flow_matching_hp_tune1/',
-        'exp_name': watch(args_to_watch),
+        'exp_name': watch_plan(args_to_watch),
+        'custom_msg': custom_msg,   # '' => path unchanged; else '..._msg<value>'
 
         ## flow matching model (same as base flow_matching)
         'diffusion': 'models.diffusion.GaussianDiffusion',
