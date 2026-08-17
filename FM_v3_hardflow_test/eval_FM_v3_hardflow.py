@@ -27,6 +27,7 @@ import yaml
 
 import flow_matcher_v3_hardflow.utils as utils
 from flow_matcher_v3_hardflow.sampling.policies import Policy
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 from flow_matcher_v3_hardflow.sampling.projection import Projector
 from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
     HardFlowPolicy, resolve_activation_threshold)
@@ -201,6 +202,29 @@ for exp in exps:
             args.savepath = hf_paths.eval_root(args.logbase, args.dataset, _train_name, _eval_name, seed)
             os.makedirs(args.savepath, exist_ok=True)
             print(f'[ eval ] savepath: {args.savepath}')
+
+            # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────────
+            # Gen12 builds savepath itself via hf_paths (not Parser.mkdir), so it gets
+            # neither args.json nor a config snapshot here — the env-resolved knobs
+            # (HFFM_ACT_THRESHOLD, HFFM_BATCH, DPCC_THRESHOLD, FORCE_OVERWRITE) survived
+            # only as the eval-name tokens. Written after savepath is final. Never fatal.
+            provenance.write(
+                args.savepath, role='eval',
+                yaml_path=args_cli.config,
+                resolved={
+                    'horizon': int(getattr(args, 'horizon', -1)),
+                    'flow_steps_K': int(flow_steps),
+                    'hf_act_threshold': float(hf_act_threshold),
+                    'hf_batch_size': int(hf_batch_size),
+                    'dpcc_threshold': float(dpcc_threshold),
+                    'force_overwrite': bool(FORCE_OVERWRITE),
+                    'checkpoint_dir': checkpoint_dir,
+                    'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
+                    'train_name': _train_name,
+                    'eval_name': _eval_name,
+                    'seed': int(seed),
+                    'n_trials': n_trials,
+                })
             if 'pointmaze' in exp or 'antmaze' in exp:
                 minari_dataset = minari.load_dataset(exp, download=True)
                 env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()

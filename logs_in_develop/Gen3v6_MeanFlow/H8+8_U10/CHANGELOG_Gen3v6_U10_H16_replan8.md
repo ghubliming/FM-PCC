@@ -188,6 +188,16 @@ possible here):
 
 ---
 
+## 5.1 Follow-up already done — U10.1 run provenance
+
+Making `horizon`/`imf_backbone` env-resolved cost provenance: `snapshot_configs` copies the config
+verbatim, so the snapshot now reads `'horizon': _mf_horizon` — identical bytes for an H8 and an H16
+run — and `MF_REPLAN_STEPS` never reaches `args` at all. Fixed in
+`../../CLI_Override_Snapshot/CHANGELOG_U10.1_run_provenance.md`: a `run_provenance.json` is written
+beside the results recording resolved values, which knobs were set explicitly versus inherited, the
+yaml digest, and the git commit + dirty flag. Wired into Gen3v6 train+eval and four other
+generations with the same env-override pattern.
+
 ## 6. Follow-ups
 
 - Sync to Gen3v7 (α-Flow) if the H16/8+8 result is worth reproducing there.

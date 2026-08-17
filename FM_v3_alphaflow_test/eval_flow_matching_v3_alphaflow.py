@@ -18,6 +18,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import flow_matcher_v3_alphaflow.utils as utils
 from flow_matcher_v3_alphaflow.sampling.policies import Policy
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 from flow_matcher_v3_alphaflow.sampling.projection import Projector
 # Gen3v7 U3 — arm C: HardFlow in-loop constrained sampler. Verbatim Gen12/Gen3v6 math, queried
 # at h=0 so u(x,t,0)=v — an anchor α-Flow trains directly (af_diffusion.py:694, af_ratio_fm).
@@ -281,6 +282,32 @@ for exp in exps:
                 fm_model.ode_inference_steps_v3 = flow_steps
                 fm_model.flow_steps_v3 = flow_steps
                 print(f'[ eval ] matched K (flow_steps) = {flow_steps} for every arm (savepath: {args.savepath})')
+
+                # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────
+                # This eval resolves DPCC_THRESHOLD / HFFM_ACT_THRESHOLD / HFFM_BATCH from
+                # the environment, but Parser.save writes args.json for TRAIN only
+                # (utils/setup.py:85) — so an eval's resolved knobs were recorded nowhere
+                # except the folder-name tokens. Records the values AND which of them were
+                # set explicitly versus inherited from the yaml. Never fatal.
+                provenance.write(
+                    args.savepath, role='eval',
+                    yaml_path=_cfg_path,
+                    resolved={
+                        'horizon': int(getattr(args, 'horizon', -1)),
+                        'imf_backbone': getattr(args, 'imf_backbone', None),
+                        'flow_steps_K': int(flow_steps),
+                        'dpcc_threshold': float(diffusion_timestep_threshold),
+                        'hf_act_threshold': float(hf_act_threshold),
+                        'hf_batch_size': int(hf_batch_size),
+                        'eval_use_ema': bool(use_ema),
+                        'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
+                        'exp_name': getattr(args, 'exp_name', None),
+                        'seed': int(seed),
+                        'seeds_in_yaml': seeds,
+                        'n_trials': n_trials,
+                        'projection_variants': projection_variants,
+                    })
+
                 dataset = fm_experiment.dataset
                 if 'pointmaze' in exp or 'antmaze' in exp:
                     minari_dataset = minari.load_dataset(exp, download=True)

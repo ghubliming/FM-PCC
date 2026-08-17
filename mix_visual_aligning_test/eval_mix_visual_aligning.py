@@ -63,6 +63,7 @@ os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
 
 import mix_visual_aligning.utils as utils
 from mix_visual_aligning.sampling.projection import Projector
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 # ── Gen14 U7 ── HardFlow arm C. Ported from Gen3v7; hosts fm/mf/af only (resolve_engine_hf
 # refuses 'diffusion' — a DDPM chain has no velocity field for the NLP to integrate).
 from mix_visual_aligning.sampling.hardflow_projection import (
@@ -2547,6 +2548,29 @@ if __name__ == '__main__':
         _base_results = (f'{args.savepath}/results_train_set'
                          if args_cli.eval_on_train else f'{args.savepath}/results')
         os.makedirs(_base_results, exist_ok=True)
+
+        # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────────────
+        # Gen7 has two env mechanisms the results path cannot express: HFFM_VARIANTS
+        # ADDS whole arms to the run, and MIX_FILM_MODE[_<ENGINE>] selects the FiLM
+        # architecture (config/aligning-d3il-visual.py — it raises on unknown values
+        # precisely because a silent fallback would train the wrong architecture into a
+        # directory whose name claims otherwise). Neither reaches args.json, which
+        # Parser.save writes for TRAIN only. Written next to the results. Never fatal.
+        provenance.write(
+            _base_results, role='eval',
+            yaml_path=os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml'),
+            resolved={
+                'projection_variants': list(projection_variants),
+                'hardflow_variants': _hf_variants,
+                'hardflow_variants_from_env': bool(os.environ.get('HFFM_VARIANTS')),
+                'horizon': getattr(args, 'horizon', None),
+                'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
+                'exp_name': getattr(args, 'exp_name', None),
+                'eval_on_train': bool(args_cli.eval_on_train),
+                'box_obs_guard': _BOX_OBS_GUARD,
+                'box_obs_max_overlap_m': _BOX_OBS_MAX_OVERLAP,
+                'box_half_side_m': _BOX_HALF_SIDE,
+            })
         generate_expert_reference(_base_results, n_rollouts=3)
         gc.collect()
         torch.cuda.empty_cache()

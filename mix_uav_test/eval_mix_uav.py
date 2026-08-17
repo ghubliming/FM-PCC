@@ -68,6 +68,7 @@ sys.path.insert(0, _REPO)
 
 import mix_uav.utils as utils
 from mix_uav.sampling.policies import Policy
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 # Gen15 U2 — the HardFlow arm. Imported lazily-tolerant: casadi lives in the cluster env, so a
 # machine without it can still run every DPCC variant. The ImportError only fires if a
 # `hardflow*` variant is actually requested.
@@ -1443,6 +1444,32 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     out_dir     = os.path.join(geo_dir, variant)
     diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
+
+    # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────────────────
+    # Gen15 builds its output path BY HAND from the train savepath (see the note above),
+    # so no Parser.mkdir runs here and neither args.json nor a config snapshot lands with
+    # the results. Meanwhile UAV_MIX_FLOW_STEPS and UAV_MIX_HF_OFF silently reshape the
+    # run — the latter DELETES the HardFlow arm, which is invisible in the path.
+    # Written at seed_dir (not out_dir) so one record covers every geometry/variant under
+    # this eval-params folder; identical configs de-duplicate. Never fatal.
+    provenance.write(
+        seed_dir, role='eval',
+        yaml_path=os.path.join(_REPO, 'config', 'uav_projection.yaml'),
+        resolved={
+            'engine': ENGINE,
+            'scene': scene,
+            'flow_steps_v3': config.get('flow_steps_v3'),
+            'diffusion_timestep_threshold': config.get('diffusion_timestep_threshold'),
+            'projection_variants': config.get('projection_variants'),
+            'hardflow': config.get('hardflow'),
+            'hardflow_arm_disabled_by_env': bool(os.environ.get('UAV_MIX_HF_OFF')),
+            'constraint_types': config.get('constraint_types'),
+            'geo_tag': config.get('geo_tag'),
+            'n_trials': config.get('n_trials'),
+            'model_savepath': parsed.savepath,
+            'eval_params_dir': eval_params_dir,
+            'seed': _seed_str,
+        })
 
     # E9 U2: constraint-geometry schematic (constraint_overview.png + .svg), mirroring
     # visual-aligning's `plot_geo_constraints` call site — once per geo_dir, before any

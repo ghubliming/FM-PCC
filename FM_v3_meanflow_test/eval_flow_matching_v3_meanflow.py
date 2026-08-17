@@ -13,6 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import flow_matcher_v3_meanflow.utils as utils
 from flow_matcher_v3_meanflow.sampling.policies import Policy
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 from flow_matcher_v3_meanflow.sampling.projection import Projector
 # Gen3v6 U3 — arm C: HardFlow in-loop constrained sampler (verbatim Gen12 port; queried at h=0).
 from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
@@ -324,6 +325,42 @@ for exp in exps:
                 fm_model.ode_inference_steps_v3 = flow_steps
                 fm_model.flow_steps_v3 = flow_steps
                 print(f'[ eval ] matched K (flow_steps) = {flow_steps} for every arm (savepath: {args.savepath})')
+
+                # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────
+                # The config snapshot copies avoiding-d3il.py verbatim, so since U10 it
+                # reads `'horizon': _mf_horizon` — identical bytes for an H8 and an H16
+                # run. And `Parser.save` writes args.json for TRAIN only (setup.py:85),
+                # so an eval otherwise records its resolved values nowhere. Written here
+                # (not at parse time) because this is the first point where every knob is
+                # final: K is matched onto the sampler and the checkpoint is loaded, so
+                # `horizon` below is the CHECKPOINT's, already agreed with args by G1.
+                provenance.write(
+                    args.savepath, role='eval',
+                    yaml_path=_cfg_path,
+                    resolved={
+                        'horizon': int(args.horizon),
+                        'checkpoint_horizon': int(getattr(fm_model, 'horizon', -1)),
+                        'imf_backbone': getattr(args, 'imf_backbone', None),
+                        'flow_steps_K': int(flow_steps),
+                        'replan_steps': int(replan_steps),
+                        'dpcc_threshold': float(diffusion_timestep_threshold),
+                        'hf_act_threshold': float(hf_act_threshold),
+                        'hf_batch_size': int(hf_batch_size),
+                        'hf_candidate_cost': hf_candidate_cost,
+                        'eval_use_ema': bool(use_ema),
+                        'diffusion_epoch': getattr(args, 'diffusion_epoch', None),
+                        'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
+                        'exp_name': getattr(args, 'exp_name', None),
+                        'seed': int(seed),
+                        'seeds_in_yaml': seeds,
+                        'n_trials': n_trials,
+                        'projection_variants': projection_variants,
+                        'constraint_types': constraint_types,
+                        'halfspace_variants': halfspace_variants,
+                        'max_episode_length': getattr(args, 'max_episode_length', None),
+                        'batch_size_dpcc_arms': getattr(args, 'batch_size', None),
+                    })
+
                 dataset = fm_experiment.dataset
                 if 'pointmaze' in exp or 'antmaze' in exp:
                     minari_dataset = minari.load_dataset(exp, download=True)
