@@ -41,6 +41,27 @@ every pre-U10 command behaves byte-identically (changelog §1).
 
 All of them reach the job through `submit.sh`'s `--export=ALL` — no plumbing, no file edits.
 
+### 0.2 TL;DR — the whole study is three commands
+
+**There is no config file to edit at any point.** Everything is set on the submit line.
+
+```bash
+# ① train the H16 checkpoint (the only training run this study needs)
+MF_HORIZON=16 MF_BACKBONE=unet TRAIN_SEEDS="6" \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/train_meanflow.sh
+
+# ② H16, replan every step  — the horizon rung
+MF_HORIZON=16 MF_BACKBONE=unet MF_FLOW_STEPS="1 2" \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+
+# ③ H16, execute 8 per plan — HardFlow's cadence, the goal
+MF_HORIZON=16 MF_BACKBONE=unet MF_REPLAN_STEPS=8 HFFM_FLOW_STEPS=5 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+```
+
+The only file you may want to touch is `config/meanflow_projection_eval.yaml`, and only to widen the
+run's **scope** — `seeds:` and `n_trials:` (§4). That is not part of the feature.
+
 ---
 
 ## 1. What is actually changing, and why each piece is legal
@@ -110,20 +131,73 @@ MF_HORIZON=16 MF_BACKBONE=unet TRAIN_SEEDS="6 7 8 9 10" \
 `TRAIN_SEEDS` and `AUTO_RESUME` are already env-overridable (`train_meanflow.sh:92-100`); extra
 flags pass through to `FM_v3_meanflow_test/train_flow_matching_v3_meanflow.py`.
 
-**Expected output path** (H token flips 8→16, everything else identical to the current UNet runs):
+**Confirm the env vars survived** — the log prints `[ train ] MF_HORIZON=16  MF_BACKBONE=unet` near
+the top. If either says `(default)`, the job is training an H8 `mf_dit` model instead; kill it. (The
+eval would catch it later via G1, but only after the GPU time is spent.)
+
+### 3.0 Chaining the eval onto a training job already submitted
+
+`Slurm_Codes/submit_after.sh <JOB_ID> <script>` submits with `--dependency=afterok` and the same
+`--export=ALL`, so env vars behave exactly as with `submit.sh`. Training does not have to be
+finished — or even started — to queue its eval:
+
+```bash
+# rung 2 — H16, replan every step (the horizon rung)
+MF_HORIZON=16 MF_BACKBONE=unet MF_FLOW_STEPS="1 2 5" \
+  ./Slurm_Codes/submit_after.sh <TRAIN_JOB_ID> Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+
+# rung 3 — H16, execute 8 per plan (auto-tags its results path _msgr8)
+MF_HORIZON=16 MF_BACKBONE=unet MF_REPLAN_STEPS=8 MF_FLOW_STEPS="1 2 5" \
+  ./Slurm_Codes/submit_after.sh <TRAIN_JOB_ID> Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+```
+
+Both hang off the same training job and start together when it finishes — fine at smoke scale
+(`seeds: [6]`, `n_trials: 2` — the shipped yaml), **not** fine at 5 seeds × 20 trials until §7's
+wall-time question is settled. `afterok` cancels the evals automatically if training fails.
+
+### 3.1 Will the folder name be correct? — yes, and here it is in full
+
+The training folder is built by `watch(args_to_watch_fmv3_mf_train)`
+(`config/avoiding-d3il.py:139-149`), and `savepath = logbase / dataset / exp_name / seed`
+(`diffuser/utils/setup.py:174-176`). With `MF_HORIZON=16 MF_BACKBONE=unet TRAIN_SEEDS="6"`:
 
 ```
-logs/avoiding-d3il/flow_matching_v3_meanflow/H16_D…MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/
+logs/avoiding-d3il/flow_matching_v3_meanflow/H16_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6/
 ```
 
-Compare against the existing H8 folder — it should differ **only** in the leading `H8_` → `H16_`.
-If any other token moved, a knob drifted; stop and fix before evaluating.
+The existing H8 UNet run, for comparison — **identical except the `H` token**:
+
+```
+logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6/
+```
+
+**Why the eval will find it.** The plan block reaches the checkpoint through
+`diffusion_loadpath` (`:1465-1466`), an f-string that must reproduce the train watch-list
+token-for-token. Both sides now read the same `_mf_horizon` / `_mf_backbone`, and the two
+constructions were checked to produce byte-identical strings at H8 and at H16:
+
+| token | source | value here |
+|---|---|---|
+| *(prefix)* | `'flow_matching_v3_meanflow/'` | note **matching**, while the module is `flow_matcher_…` — this asymmetry is original |
+| `H` | `horizon` ← `MF_HORIZON` | `H16` |
+| `D` | `diffusion` | `Dflow_matcher_v3_meanflow.models.MeanFlowODE` (full dotted path, not just the class) |
+| `aw` | `action_weight` | `aw10` |
+| `obj` | `mf_objective` | `objmeanflow` |
+| `bb` | `imf_backbone` ← `MF_BACKBONE` | `bbunet` |
+| `ts` | `t_schedule` | `tslogit_normal` |
+| `dp` | `meanflow_data_proportion` | `dp0.5` |
+
+Two mechanical details worth knowing, because they look like bugs and are not: `watch()` joins with
+`_` and then collapses `'/_' → '/'`, which is why the prefix's trailing slash absorbs the separator;
+and the `D` token carries the **whole import path**, so the folder name legitimately contains dots.
 
 **Verification before moving on**
 1. The folder above exists and holds `state_*.pt`.
-2. The H8 UNet folder is untouched (no collision — the H token guarantees this).
-3. Loss curve is comparable to the H8 UNet run at the same step count. A markedly worse curve is
-   the first place §6.1's longer padded tails would show up.
+2. The H8 UNet folder is untouched — the `H` token guarantees no collision.
+3. Only the `H` token differs between the two paths. If anything else moved, a knob drifted; stop
+   and fix before evaluating, because the eval resolves the checkpoint by this exact string.
+4. Loss curve comparable to the H8 UNet run at the same step count. A markedly worse curve is the
+   first place §6.1's longer padded tails would show up.
 
 ---
 
@@ -131,6 +205,18 @@ If any other token moved, a knob drifted; stop and fix before evaluating.
 
 This is today's eval, unmodified, pointed at the H16 checkpoint. It runs **arms A/B/C in one
 process** (unguided / DPCC post-hoc / HardFlow in-loop) at matched K, sharing seeds and env resets.
+
+**Where the results land.** The plan block nests under a checkpoint-identifying prefix and then a
+per-run folder from `watch_plan(args_to_watch_fmv3_hf_plan)` (`config/avoiding-d3il.py:123-131`),
+i.e. `H{H}_K{K}_M{solver}_T{dpcc_threshold}_A{hf_threshold}_B{hf_batch}_D{diffusion}` plus the
+`_msg…` suffix when one is set. At K=1 that is:
+
+```
+logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H16_D…_bbunet_tslogit_normal_dp0.5/H16_K1_Meuler_T0.5_A0.5_B1_D…MeanFlowODE/
+```
+
+So the horizon appears **twice** — once identifying the checkpoint, once in the run folder — and
+both flip to 16 together. Phase 3 adds `_msgr8` to the tail (§6.2); Phase 2 has no suffix.
 
 **Smoke test first — one seed, 2 trials, two cheap K:**
 
@@ -299,9 +385,24 @@ cross-check, not a row for our tables.
 
 ## 9. Order of operations
 
-0. **Regression check first.** Re-run one existing H8 cell with **no new env vars** and confirm the
-   results path carries no `_msg` token and the metrics match the recorded run. This is what proves
-   the U10 code left the defaults alone; do it before anything else depends on that claim.
+0. **Regression check first — this is an EVAL, not a train, and it edits nothing.**
+   U10 touched shared code (`policies.py`, `hardflow_projection.py`, the eval loop), so before
+   trusting any new number, confirm the **old** path still behaves. Runs on the H8 checkpoint you
+   already have:
+
+   ```bash
+   MF_BACKBONE=unet HFFM_FLOW_STEPS=1 \
+     ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+   ```
+
+   No `MF_HORIZON` (default 8 = the existing checkpoint), no `MF_REPLAN_STEPS` (default 1 = the old
+   controller). `MF_BACKBONE=unet` is required because the config default is `mf_dit` — it is
+   exactly the value that used to be hand-edited into the file.
+
+   **Pass condition:** the results path matches the historic shape
+   `…_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B1_…MeanFlowODE` with **no `_msg` token**,
+   and the seed-6 metrics match the recorded seed-6 row. Skippable, but then a surprising H16
+   result has two candidate causes instead of one.
 1. **Phase 1** — `MF_HORIZON=16 MF_BACKBONE=unet TRAIN_SEEDS="6"` train. Check the loss curve and
    that the folder differs from the H8 one in the `H` token only.
 2. **Phase 2** — smoke-test H16/replan-1 (`n_trials: 2, seeds: [6]`), measure wall time, then scale.

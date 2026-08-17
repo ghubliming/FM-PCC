@@ -39,7 +39,7 @@ sub('<title>FM-PCC Matrix Explorer</title>',
     '<title>FM-PCC — Visual Aligning Explorer v2</title>')
 sub('<h1>FM-PCC EXPLORER</h1>',
     '<h1>FM-PCC VA EXPLORER v2</h1>')
-sub('<div>SCIENTIFIC_SUITE_v3.12</div>',
+sub('<div>SCIENTIFIC_SUITE_v3.13</div>',
     '<div>DA_VA_v2 &nbsp;|&nbsp; VISUAL ALIGNING SUITE U3</div>')
 sub('placeholder="../analysis_results/batch_v3_.../candidates_multidimensional_aggregated.csv"',
     'placeholder="../analysis_results/batch_va2_.../  (folder, not a file)"')
@@ -100,6 +100,10 @@ sub("""            <div class="checkbox-list" style="display:flex; flex-wrap:wra
 # ── 6. geometry wording (this axis is geo here, not a halfspace name) ─────────
 sub("""<label>4. Environment Focus</label>""",
     """<label>4. Geometry Focus</label>""")
+
+# ── 6b. U18: the Pareto panel captions the environment axis by ITS name here ──
+sub("PARETO_ENV_LABEL = 'env'",
+    "PARETO_ENV_LABEL = 'geo'")
 
 # ── 7. per-rollout + compare sidebars, after the aggregate controls panel ─────
 sub("""        <button class="btn-main" style="background:#444;" py-click="trigger_plot">REFRESH_RE_DRAW</button>
