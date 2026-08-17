@@ -4501,4 +4501,90 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **S&C Rare-Event Inversion & False Certainty**: Proved that `n=2` binomial sampling noise created false certainty at the ceiling ($1.000 \pm 0.000$ at n=2 fell to 0.950 at n=20 for `hardflow-tightened` K1, with 51% of 1.000 cells falling below 1.000). Conversely, DPCC arms were underestimated (+0.03 to +0.05 shift). Continuous cost metrics (`n_steps`, `avg_time`) were confirmed stable at n=2 (<4% median relative error), validating all prior step/speed conclusions.
 3. **Grand Table Recalibration**: `dpcc-t-tightened` at K=1/K=2 emerged as the undisputed top MeanFlow-UNet configuration (S&C 0.993, 60.99 steps, 1.10 s/episode — Pareto-dominating DPCC K20 by 35.0× speedup and −9.15 steps). `hardflow-tightened` is dominated across all three axes (0.950 S&C, 63.40 steps, 2.66 s/ep). S&C safety parity with the baseline holds within statistical error (`ΔS&C = −0.01 [-0.02, +0.00]`), but claims of absolute 1.000 S&C are withdrawn pending n=20 baseline re-runs.
 
+***
 
+## Research Investigation: HardFlow Low-K Degeneracy Proof & Historical Reconciliation (August 16, 2026)
+
+**Keywords**: HardFlow, low-K degeneracy, update rule, terminal projection, D1 D2 D3 collapse, n_genuine steps, activation threshold, avoiding-d3il, NFE waste.
+
+1. **Mathematical Proof of Low-K Degeneracy**: Formally proved from HardFlow's per-step update equations that at $K=1$, in-loop guidance arithmetic is completely eliminated, and at $K=2$ under the shipped activation threshold ($A=0.5$), the floor gate deactivates step 0 ($n_{\text{genuine}} = 0$). The algorithm unconditionally degenerates to plain sample-then-project ($\Pi_S(\text{Euler sample})$) — the very baseline HardFlow was engineered to outperform.
+2. **Three Stacking Independent Collapses Identified**:
+   - **D1 (Endpoint-Space Collapse at $\tau^+ = 1$)**: On the terminal integration step, lookahead $(1-\tau^+)f(X_{\text{ref}}, \tau^+) = 0$ (the predicted endpoint collapses to the Euler point), pullback gain becomes 1.0 (full snap onto feasible set), and there is no subsequent step for the network to repair the trajectory.
+   - **D2 (No-op Schedule via Dropped Cost)**: In our port, omitting the task cost term $C(\cdot)$ leaves a pure quadratic proximal NLP; analytically, scaling by $\tau^{+2}$ or `reg_scale` does not move the Euclidean argmin $\Pi_S(X1_{\text{ref}})$.
+   - **D3 (Confounded Velocity Field on MF/AF)**: Arm C queries instantaneous velocity ($h=0$) while arms A/B integrate interval-average velocity ($h=\Delta t$), breaking the MeanFlow identity at low NFE.
+3. **Historical Data Reconciliation & Memory Clarification**: Re-examined the `avoiding-d3il` corpus. HardFlow's only win occurred at $K=1$ ($n_{\text{genuine}}=0$, 1.000 S&C), and performance degraded monotonically as genuine in-loop steps were added (1.000 $\rightarrow$ 0.933 $\rightarrow$ 0.933 $\rightarrow$ 0.833 for K = 1, 2, 5, 10). Clarified that the recollection of "K=2 HardFlow being better" was false (tied gate at 3.3× cost, retracted due to Fix_9 directory mixing); its only genuine low-K utility is rescuing the $-c$ selection rule by ranking predicted endpoints rather than half-integrated states.
+4. **NFE Waste & Corrected Roadmap**: At $K=1$, HardFlow executes a redundant second network call multiplied by $(1-\tau^+)=0$, wasting 50% of its network budget. Demonstrated that the proposed MeanFlow-exact endpoint fix is a no-op at $K \le 2$ under $A \le 0.5$ and must be evaluated at $K \ge 5, A=1.0$.
+
+***
+
+## Gen15 UAV Mix-ML: MeanFlow on `s_curve` (K=10) & Active-Set Structural Infeasibility Bug (August 16, 2026)
+
+**Keywords**: Gen15, MeanFlow, s_curve, K=10, bimodal failure, Mode A B C, x_active bug, 100% NLP failure, empty feasible set, Fix 1 verification.
+
+1. **Bimodal Failure Analysis (21/23 Variants)**: Evaluated Gen15 MeanFlow on the non-convex `s_curve` scene at $K=10$ ($n_{\text{trials}}=3$, Job 24588/24589). Mean metrics masked bimodal distributions: one trial reached the goal (`geo_free` trial 1, $0.30\,\text{m}$, unsafely scraping the floor) and six trials finished within $4\,\text{m}$. Identified three distinct modes: Mode A (stuck at start, ~6.5m), Mode B (reaches or nears goal by ground contact), and Mode C (clean cruise altitude flight at ~220m away, where DPCC sacrifices navigation for safety).
+2. **Discovery of Scene-Scoped HardFlow NLP Infeasibility Bug**: Discovered that `hardflow_new` suffered a 100% NLP failure rate (52,253 of 52,260 solves failed, costing $5.2\,\text{s}/\text{plan}$ for zero enforcement). Diagnosed that `s_curve` is the only scene with `x_active` halfspaces; while DPCC rebuilds per replan based on $x$-position, `HardFlowPolicy` built a static NLP holding all four disjoint wall halfspaces simultaneously, creating an empty feasible set by construction.
+3. **Production Telemetry Verification (Fix 1)**: Validated the Fix 1 telemetry contract in production: `fm_ms` remained constant at 89.0–90.5 ms across all DPCC variants, while `proj_ms` accurately reflected CPU projection time (82.6 ms for post-processing to 1,119 ms for `dpcc-c-tightened`).
+4. **Scene Contrast**: Showed that while training loss was healthy on `s_curve` (test loss 0.604 vs corridor's 0.717), the DPCC projector cost was 5.9× higher than corridor (~1,063 ms vs ~181 ms) and failed to achieve safe navigation.
+
+***
+
+## Gen3v6 U10: HardFlow-Style Planning Structure (H16 + Replan-8) for MeanFlow (August 16, 2026)
+
+**Keywords**: Gen3v6, U10, MeanFlow, H16 horizon, replan-8 cadence, receding horizon, G1 horizon guard, G2 cadence guard, path collision auto-tagging, temporal consistency.
+
+1. **Decoupled Planning Structure Architecture**: Implemented support for HardFlow's planning paradigm ($H=16$ planning horizon, executing the first 8 actions per plan) within the MeanFlow framework (`flow_matcher_v3_meanflow`), eliminating the confounding variable of comparing different receding-horizon controllers. Decoupled the training-time property (`MF_HORIZON=16`) from the eval-time cadence (`MF_REPLAN_STEPS=8`), maintaining byte-identical default behavior ($H=8$, replan-1) when environment variables are unset.
+2. **Safety Gates G1 & G2**: Implemented hard `SystemExit` guards: Gate G1 halts evaluation if the checkpoint's trained horizon mismatches `args.horizon` (critically protecting the length-agnostic UNet from silent evaluation corruption), while Gate G2 prevents executing cadences $\ge \text{horizon}$.
+3. **Multi-Step Replan Mechanics & Auto-Tagging**: Added plan caching and sequential replay in the rollout loop (`eval_flow_matching_v3_meanflow.py`). Corrected temporal-consistency candidate selection ($-t$) to shift by `replan_steps` instead of a hardcoded 1 step, and updated `desired_next_pos` to track the active cached waypoint. Non-default cadences automatically tag the evaluation directory with `_msgr<N>` to prevent path collisions.
+
+***
+
+## Gen15 UAV Mix-ML: MeanFlow on `pillars` (K=10) & HardFlow Goal-Reaching Milestone (August 17, 2026)
+
+**Keywords**: Gen15, MeanFlow, pillars, K=10, HardFlow goal reach, sphere obstacles, NLP convergence, altitude floor, DPCC vs HardFlow.
+
+1. **HardFlow Goal-Reaching Milestone (23/23 Variants Complete)**: Completed the first full Gen15 UAV evaluation on `pillars` (Job 24612 $\rightarrow$ 24613 $\rightarrow$ 24614). `hardflow_new` successfully reached the goal in 3/3 trials ($0.29\,\text{m}$ final distance, early exit at 503–512 steps), and `hardflow_new-t` achieved the only non-zero task success (0.67), while all 20 DPCC variants failed to reach the goal (stalling 2.1–4.4 m out).
+2. **Confirmation of `s_curve` Diagnosis**: On `pillars` (which features spherical obstacles and no `x_active` halfspaces), HardFlow's NLP failure rate plummeted from 100% to 4.1–5.8%, confirming that the earlier `s_curve` collapse was strictly a scene-specific static constraint bug rather than a broken port.
+3. **Computational & Spatial Advantage**: HardFlow's IPOPT NLP proved 2.2× cheaper than DPCC's SLSQP projection (786 ms vs 1,710–1,876 ms), making it 1.9× faster end-to-end ($940\,\text{ms}$ vs $1,805\,\text{ms}/\text{plan}$). In addition, HardFlow maintained proper cruising altitude ($z \approx 0.9\,\text{m}$), whereas DPCC pinned the drone to an altitude floor ($\text{min\_z} = 0.09\,\text{m}$), failing airborne safety.
+4. **Violation Magnitude Signal**: Although strict binary S&C read 0.00 due to minor boundary touches, total constraint violation magnitude revealed a massive 4-order-of-magnitude difference between unguided `diffuser` (47,237) and `hardflow_new-c` (0.55–1.48).
+
+***
+
+## Gen3v6 MeanFlow: H16 Horizon (Replan-1) Data Analysis & Projector Cost Inversion (August 17, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, H16 horizon, replan-1, NLP scaling, DPCC SLSQP explosion, IPOPT efficiency, cost inversion, degeneracy validation.
+
+1. **Generative vs Projection Cost Scaling**: Evaluated the newly trained H16 MeanFlow-UNet checkpoint (Job 24633/24634, K $\in \{1, 2, 5\}$). Proved that doubling the trajectory horizon costs the generative U-Net backbone virtually nothing (unprojected `diffuser` latency increased by only 1.01–1.06×). In contrast, DPCC's SLSQP projector cost exploded by 3.4–7.3× (reaching $1.27–1.64\,\text{s}/\text{step}$ at K=5).
+2. **Projector Cost Inversion**: HardFlow's IPOPT NLP scaled gracefully with horizon (only 1.42–1.49× increase). Consequently, the historical conclusion that "HardFlow is too expensive" was proven to be an H8-specific artifact: at H16, HardFlow was 1.26–1.29× cheaper than DPCC at K1/K2, and **6.37× cheaper at K5** ($0.20\,\text{s}$ vs $1.27\,\text{s}/\text{step}$).
+3. **Horizon-Independent Degeneracy Validation**: Confirmed that the low-K degeneracy counters reproduced with exact precision at H16 (NLP solves/plan = 1.02, 1.02, 3.05; NFE/plan = 2.03, 3.05, 8.13 for K = 1, 2, 5), demonstrating that low-K degeneracy is strictly a mathematical property of $(K, A)$ and is not rescued by extending the horizon.
+4. **Episode Length & Safety**: Trajectory lengths remained tightly controlled at H16 (58–63 steps), resolving a known H8 pathology where `dpcc-c-tightened` K2 dawdled for 98 steps. Tightened variants scored 1.000 S&C with zero constraint violations, though $n=6$ sample size leaves confidence intervals wide ($[0.541, 1.000]$).
+
+***
+
+## Gen3v7 AlphaFlow: 20-Trial (300-Episode) Grand Benchmark & Frontier Verification (August 17, 2026)
+
+**Keywords**: Gen3v7, AlphaFlow-SiT, n_trials=20, 300 episodes, S&C 1.000 verified, Pareto frontier, MeanFlow trade-off, rare event detection.
+
+1. **Frontier Verification at Scale**: Completed full 5-seed × 20-trial evaluations (300 episodes/cell) on `avoiding-d3il` for AlphaFlow-SiT at K1 and K2 (`_msg20trials`). `AlphaFlow-SiT K1 dpcc-r-tightened` achieved a perfect 300/300 ($1.000 \pm 0.000$ S&C across all 5 seeds and 3 halfspaces), becoming the only configuration in the entire research project with statistically verified 1.000 safety at scale.
+2. **Massive Efficiency Gain vs Paper Target**: `AF-SiT K1 dpcc-r-tightened` completed episodes in $1.03\,\text{s}/\text{ep}$, beating the DPCC K20 Target ($38.53\,\text{s}/\text{ep}$) by **37.5× speedup** with zero degradation in constraint satisfaction.
+3. **Two-Sided Trade-off with MeanFlow-UNet**: A rigorous head-to-head comparison at 300 episodes revealed a genuine Pareto trade-off between the two leading models: MeanFlow-UNet produced paths that were 6.74 steps shorter ($60.99$ vs $67.73$ steps, 95% CI $[-10.0, -4.4]$), while AlphaFlow-SiT was $0.13\,\text{s}/\text{ep}$ cheaper and strictly cleared the 1.000 safety gate ($1.000$ vs $0.993$).
+4. **Sampling Power & Detection Analysis**: Proved that 2-trial protocols ($n=30$) have only a 19–33% probability of detecting rare constraint failures in near-ceiling policies ($\text{S\&C} \ge 0.987$), explaining why 2-trial estimates created false certainty. Increasing to $n=20$ (300 episodes) provided the statistical power necessary to discern true frontier operating points.
+
+***
+
+## Infrastructure: Interactive Pareto Sub-Plot & S+C Gating Dashboard (DAv3 + DA_VA_v2 U18) (August 17, 2026)
+
+**Keywords**: DA_Code v3, DA_VA_v2, Visualizer, Pareto sub-plot, AVG_TIME, N_STEPS, S+C gating band, non-dominated front, Pyodide.
+
+1. **Integrated Pareto Visualization**: Implemented a synchronized secondary sub-plot (`AVG_TIME` $\times$ `N_STEPS`, lower-left is optimal) within the primary figure across both `Visualizer` (DAv3) and `Visualizer_VA_v2` (DA_VA_v2) HTML viewers (upgrading the suite to `v3.13`). Solved the fundamental limitation where single-metric bar charts obscured the trade-off between per-step inference latency and total episode length.
+2. **Rigorous S+C Gating & Frontier Extraction**: Introduced a configurable constraint-satisfaction filter (`pareto-band`, default 0.05). Points falling within the band of the highest scoring candidate ($\text{S\&C} \ge \text{best} - \text{band}$) are rendered as solid markers and evaluated for the empirical Pareto frontier staircase; inferior or failing candidates are displayed as hollow markers and excluded from the frontier.
+3. **Visual Synchrony & Offline Verification**: Synchronized marker colors directly with the active main plot's bar palette and mapped candidates to distinct geometric shapes. Added dual contextual legends explicitly enumerating non-perfect runs ($\text{S\&C} < 1.000$). Verified via 41-anchor build automation (`build_from_dav3.py`) and passing offline test suites.
+
+***
+
+## Infrastructure: Run Provenance Logging Utility for Environment Overrides (Gen3v6, Gen3v7, Gen12, Gen15) (August 17, 2026)
+
+**Keywords**: Run provenance, U10.1, provenance.py, environment overrides, reproducibility, SHA-256 digest, git dirty tracking, metadata.
+
+1. **Solving Environment Override Provenance Gap**: Developed `diffuser/utils/provenance.py` to eliminate configuration ambiguity in runs configured via environment variables (such as `MF_HORIZON`, `MF_REPLAN_STEPS`, `HFFM_FLOW_STEPS`, `UAV_MIX_HF_OFF`). Previously, verbatim config file snapshots recorded raw variable expressions rather than resolved values, obscuring experimental conditions.
+2. **Structured Provenance Schema (`run_provenance.json`)**: Emits a lightweight JSON beside evaluation results recording: explicitly resolved runtime values, the split between user-specified environment variables (`env_set`) and defaults (`env_absent`), loaded YAML configuration path and SHA-256 checksum, Git commit hash with working-tree dirty status, and SLURM execution metadata.
+3. **Zero-Overhead Multi-Generation Integration**: Integrated non-invasive provenance hooks across 6 evaluation scripts in Gen3v6 (MeanFlow), Gen3v7 (AlphaFlow), Gen12 (HardFlow), Gen7 (Visual Aligning), and Gen15 (UAV Mix-ML), featuring payload deduplication and non-fatal error isolation to ensure metadata logging never interrupts experimental execution.

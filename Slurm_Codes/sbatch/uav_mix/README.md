@@ -33,7 +33,7 @@ Gen15 writes to **`logs/UAV_MIX/`**. Gen11's `logs/UAV_FM/` is never touched.
 | `gates_mix_uav.sh` | **Run this first.** Wiring gates, ~minutes | `$1=device` `$2=gates` |
 | `train_mix_uav.sh` | Train one arm, one scene, N seeds sequentially | `$1=engine` `$2=scene` `$3=seeds` |
 | `eval_mix_uav.sh` | Eval one arm, one scene, N seeds sequentially | `$1=engine` `$2=scene` `$3=seeds` `$4=n_trials` `$5=projection` `$6=record` `$7=K` |
-| `eval_k_sweep.sh` | One eval job per K, in parallel — **the Gen15 experiment** | `$1=engine` `$2=scene` `$3=seeds` `$4=K list` `$5=n_trials` `$6=projection` |
+| `eval_k_sweep.sh` | One eval job per K, in parallel — **the Gen15 experiment** | `$1=engine` `$2=scene` `$3=seeds` `$4=K list` `$5=n_trials` `$6=projection` `$7=record` |
 | `aggregate_summaries.sh` | Roll up one arm's `results.json` → `SCENE_SUMMARY.json` + `ALL_SCENES_SUMMARY.json` | `$1=engine` `$2=scenes` `$3=projection` |
 | `train_all_scenes.sh` | One `train_mix_uav` job **per scene**, in parallel | `$1=engine` `$2=scenes` `$3=seeds` |
 | `eval_all_scenes.sh` | One `eval_mix_uav` job per scene in parallel, then auto-aggregate | `$1=engine` `$2=scenes` `$3=seeds` `$4=n_trials` `$5=projection` `$6=K` |

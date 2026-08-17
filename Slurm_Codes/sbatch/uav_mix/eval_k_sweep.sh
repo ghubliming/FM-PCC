@@ -20,8 +20,10 @@ set -e
 # Args: $1=engine (fm|mf|af|diffusion) [fm]  $2=scene [all]  $3=seeds (quoted) ["6"]
 #       $4=K list (quoted, space-sep) ["1 2 5 10 20"]  $5=n_trials [omit → yaml]  $6=projection [fm_only]
 #       $7=record (none|gif|all) [none]
-# ⚠️ record=gif/all renders one GIF per rollout (variants x trials of them) and the render
-# time lands inside the measured per-step wall clock. Use none for timing-critical sweeps.
+# NOTE record=gif/all renders one GIF per rollout (variants x trials of them) -> disk + job time.
+# It does NOT contaminate the metrics: eval_mix_uav.py times ONLY the policy() call, and
+# rendering happens outside that window. So a record=all run is timing-comparable to a
+# record=none run.
 ENGINE="${1:-fm}"
 case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
