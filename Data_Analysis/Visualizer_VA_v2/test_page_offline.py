@@ -165,8 +165,10 @@ check('all four native CSVs read',
 document.getElementById('mask-select').value = 'all'
 document.getElementById('seed-mode-select').value = 'standard'
 document.getElementById('mode-select').value = 'candidate'
-document.getElementById('fig-width').value = '11.0'
-document.getElementById('width-zoom').value = '1.0'
+document.getElementById('fig-width-main').value = '11.0'
+document.getElementById('fig-width-pareto').value = '14.0'
+document.getElementById('width-zoom-main').value = '1.0'
+document.getElementById('width-zoom-pareto').value = '1.0'
 document.getElementById('batch-select').value = BATCH.name
 
 print('\n[populate + derive]')
@@ -420,7 +422,7 @@ run(ns['trigger_plot'](None))
 # The panel makes exactly one claim — "these points are comparable, and THESE are the
 # cheapest of them" — so the tests are about that claim: the eligibility rule, the
 # non-dominance of the front, and that nothing imperfect goes unnamed.
-print('\n[U18 pareto sub-plot]')
+print('\n[U18 pareto plot — own figure, own controls]')
 _p_env = envs[0]
 document.getElementById('env-select').value = _p_env
 document.getElementById('mode-select').value = 'candidate'
@@ -472,6 +474,29 @@ check('the main plot no longer pays for the pareto legends',
       _main_axes[0].get_position().x1 >= _p_fig.axes[0].get_position().x1 - 1e-9,
       f'main x1={_main_axes[0].get_position().x1:.3f} '
       f'vs pareto x1={_p_fig.axes[0].get_position().x1:.3f}')
+# U18.2: each plot is sized from ITS OWN FigWidth store. The sidebar shows one number box
+# and a 'which plot' selector, so the failure to guard against is the box writing to — or
+# being read by — the plot the user was not pointing at.
+check('the main figure takes its width from fig-width-main, not the pareto store',
+      abs(ns['current_fig'].get_size_inches()[0] - 11.0) < 1e-6,
+      f"main figwidth = {ns['current_fig'].get_size_inches()[0]}")
+check('the pareto figure takes its width from fig-width-pareto',
+      abs(_p_fig.get_size_inches()[0] - 14.0) < 1e-6,
+      f'pareto figwidth = {_p_fig.get_size_inches()[0]}')
+document.getElementById('fig-width-pareto').value = '9.0'
+run(ns['trigger_plot'](None))
+check('resizing the pareto leaves the main plot exactly where it was',
+      abs(ns['pareto_fig'].get_size_inches()[0] - 9.0) < 1e-6
+      and abs(ns['current_fig'].get_size_inches()[0] - 11.0) < 1e-6,
+      f"pareto={ns['pareto_fig'].get_size_inches()[0]} "
+      f"main={ns['current_fig'].get_size_inches()[0]}")
+check('an unset / junk FigWidth store falls back to 10 rather than a 0-inch canvas',
+      abs(ns['_fig_width']('nope') - 10.0) < 1e-6,
+      f"_fig_width('nope') = {ns['_fig_width']('nope')}")
+document.getElementById('fig-width-pareto').value = '14.0'
+run(ns['trigger_plot'](None))
+_main_axes = ns['current_fig'].axes
+_p_fig = ns['pareto_fig']
 
 _pts, _sc_metric = ns['_pareto_points'](_p_env, variants[:5], cands)
 if not _pts:
