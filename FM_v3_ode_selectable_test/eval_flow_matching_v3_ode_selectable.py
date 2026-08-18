@@ -33,6 +33,15 @@ class Tee(object):
 parser = argparse.ArgumentParser(description='Evaluation script with aggregation mode.')
 parser.add_argument('--seed', type=int, help='Run only this specific seed.')
 parser.add_argument('--aggregate-only', action='store_true', help='Skip inference, only aggregate existing results into all_seeds plots.')
+# 🔵 MATCHED-K CLI — ported from the Gen3v6/Gen3v7 siblings
+# (FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py,
+#  FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py).
+# `plan_fm_v3_ode_selectable` hard-codes flow_steps_v3=10 and — unlike the HardFlow plan blocks —
+# has NO env override, so a K ladder used to mean editing config/avoiding-d3il.py once per K.
+# `flow_steps_v3` is watched as 'K' in args_to_watch_fmv3_ode_plan, so each K writes its OWN
+# results directory and no two budgets can overwrite each other.
+parser.add_argument('--flow-steps', type=int, default=None, metavar='K',
+                    help='override flow_steps_v3 (NFE budget K) for this run')
 args_cli, remaining_argv = parser.parse_known_args()
 # Pass remaining args to Parser if needed
 sys.argv = [sys.argv[0]] + remaining_argv
@@ -45,6 +54,25 @@ seeds = config['seeds']
 if args_cli.seed is not None:
     seeds = [args_cli.seed]
     print(f'[ eval ] Overriding seeds from config to: {seeds}')
+
+if args_cli.flow_steps is not None:
+    # Patch the config MODULE's dict before any Parser reads it. utils.Parser.read_config does
+    # `importlib.import_module(args.config)` and copies `base[experiment]` key by key, and Python
+    # caches modules — so this is the intended data path, not a monkey-patch: exp_name, savepath
+    # and the diffusion kwargs all follow automatically. Must run BEFORE the Parser() call below.
+    import importlib
+    for _exp in exps:
+        _mod = importlib.import_module('config.' + _exp)
+        _blk = _mod.base['plan_fm_v3_ode_selectable']
+        _blk['flow_steps_v3'] = args_cli.flow_steps
+        # Both aliases only if present — `ode_inference_steps_v3` is commented out in this plan
+        # block, and eval falls back to the checkpoint value for it; the sampler reads
+        # flow_steps_v3 exclusively (flow_matcher_v3_ode_selectable/models/diffusion.py).
+        if 'ode_inference_steps_v3' in _blk:
+            _blk['ode_inference_steps_v3'] = args_cli.flow_steps
+        if 'flow_steps' in _blk:
+            _blk['flow_steps'] = args_cli.flow_steps
+    print(f'[ eval ] Overriding flow_steps_v3 (K) from config to: {args_cli.flow_steps}')
 
 projection_variants = config['projection_variants']
 halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']

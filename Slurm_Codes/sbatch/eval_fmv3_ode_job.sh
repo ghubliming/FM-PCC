@@ -78,6 +78,20 @@ fi
 # 4) Run FM v3 ODE Evaluation
 cd "$REPO"
 
-python FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py
+# K (NFE budget) grid. `plan_fm_v3_ode_selectable` hard-codes flow_steps_v3=10 and has no env
+# override of its own, so K is driven here via --flow-steps (see the eval script). `flow_steps_v3`
+# is watched as 'K' in the plan exp_name, so each K writes its OWN results directory.
+# n_trials / seeds / projection_variants still come from config/projection_eval.yaml.
+#
+# Override the grid without editing this file:  FMV3_FLOW_STEPS="1 2" sbatch ...
+FLOW_STEPS_GRID="${FMV3_FLOW_STEPS:-1 2 5 10}"
+echo "[ eval ] NFE budgets to evaluate: $FLOW_STEPS_GRID"
+
+for K in $FLOW_STEPS_GRID; do
+    echo "================================================================================"
+    echo "[ eval ] K = $K   ($(date))"
+    echo "================================================================================"
+    python FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py --flow-steps "$K"
+done
 
 echo "Evaluation completed successfully."
