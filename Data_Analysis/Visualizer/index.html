@@ -156,7 +156,7 @@
 </div>
 
 <div class="main">
-    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.13</div></div>
+    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.14</div></div>
     <div class="content">
         <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
         <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
@@ -552,6 +552,10 @@ PARETO_SC_METRICS = ('n_success_and_constraints', 'n_success')
 PARETO_TOL = 1e-9
 PARETO_BAND_DEFAULT = 0.05
 PARETO_H = 5.5                      # sub-plot height in inches
+# U18.1: a FLOOR on the gap between the two stacked axes, applied AFTER tight_layout.
+# It must not be passed to the GridSpec (see trigger_plot) - there it silently disables
+# tight_layout for the whole figure.
+PARETO_HSPACE = 0.45
 # Shapes, in decreasing "tellable apart at 8 pt" order.
 PARETO_MARKERS = ('o', 's', '^', 'D', 'v', 'P', 'X', '*', '<', '>', 'h', 'p', 'd', '8')
 PARETO_MAX_LEGEND = 14              # entries per legend before it collapses into "+N more"
@@ -913,9 +917,14 @@ async def trigger_plot(event=None):
     # main plot's variant legend lives outside its right edge and a neighbour would sit on it.
     show_pareto = _pareto_enabled()
     if show_pareto:
+        # NOTE: height_ratios only. Putting 'hspace' (or left/right/top/bottom/wspace)
+        # in gridspec_kw marks the GridSpec as locally modified, and matplotlib then treats
+        # EVERY axes on it as "not compatible with tight_layout": the call below warns and
+        # then does nothing at all, so the legends outside the right edge run off the canvas.
+        # The gap is set after tight_layout instead - see PARETO_HSPACE below.
         fig, (ax, ax_pareto) = plt.subplots(
             2, 1, figsize=(calc_width, 6 + PARETO_H),
-            gridspec_kw={'height_ratios': [6, PARETO_H], 'hspace': 0.45})
+            gridspec_kw={'height_ratios': [6, PARETO_H]})
     else:
         fig, ax = plt.subplots(figsize=(calc_width, 6))
         ax_pareto = None
@@ -1030,6 +1039,10 @@ async def trigger_plot(event=None):
             _pareto_message(ax_pareto, ["PARETO PANEL FAILED — the main plot above is unaffected",
                                         str(e)[:160]])
     plt.tight_layout()
+    if ax_pareto is not None and fig.subplotpars.hspace < PARETO_HSPACE:
+        # Raise, never lower: tight_layout sizes the gap from the artists it can measure,
+        # which under-counts the main plot's rotated tick labels plus its red note line.
+        fig.subplots_adjust(hspace=PARETO_HSPACE)
     current_fig = fig
     area = document.getElementById("plot-area")
     area.innerHTML = ""

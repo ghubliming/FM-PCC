@@ -434,10 +434,31 @@ check('pareto off -> one axes', len(ns['current_fig'].axes) == 1,
       f'{len(ns["current_fig"].axes)} axes')
 
 document.getElementById('pareto-on').checked = True
-run(ns['trigger_plot'](None))
+# U18.1 regression: putting 'hspace' in gridspec_kw marked the GridSpec locally modified,
+# which makes matplotlib call EVERY axes on it "not compatible with tight_layout" — it then
+# warns loudly and adjusts NOTHING, so both right-hand legends ran off the canvas. The three
+# checks below are the three halves of that bug: the warning, its cause, and its effect.
+import warnings as _warnings
+with _warnings.catch_warnings(record=True) as _wcaught:
+    _warnings.simplefilter('always')
+    run(ns['trigger_plot'](None))
+_tl_warn = [str(w.message) for w in _wcaught if 'tight_layout' in str(w.message)]
+check('drawing the pareto raises no tight_layout warning', not _tl_warn,
+      '; '.join(_tl_warn[:1])[:120])
 _fig_axes = ns['current_fig'].axes
 check('pareto on -> a second axes in the SAME figure (so EXPORT ZIP carries it)',
       len(_fig_axes) == 2, f'{len(_fig_axes)} axes')
+_gs = _fig_axes[0].get_subplotspec().get_gridspec()
+check('the pareto gridspec sets no subplot params (that would disable tight_layout)',
+      not _gs.locally_modified_subplot_params(),
+      f'locally modified: {_gs.locally_modified_subplot_params()}')
+check('tight_layout actually ran — the right-hand legends are inside the canvas',
+      _fig_axes[0].get_position().x1 < 0.98,
+      f'main axes right edge = {_fig_axes[0].get_position().x1:.3f}')
+check('the two stacked plots keep their gap',
+      ns['current_fig'].subplotpars.hspace >= ns['PARETO_HSPACE'] - 1e-9,
+      f'hspace = {ns["current_fig"].subplotpars.hspace:.3f} '
+      f'(floor {ns["PARETO_HSPACE"]})')
 
 _pts, _sc_metric = ns['_pareto_points'](_p_env, variants[:5], cands)
 if not _pts:

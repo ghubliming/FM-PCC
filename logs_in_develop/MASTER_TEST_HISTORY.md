@@ -4588,3 +4588,34 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Solving Environment Override Provenance Gap**: Developed `diffuser/utils/provenance.py` to eliminate configuration ambiguity in runs configured via environment variables (such as `MF_HORIZON`, `MF_REPLAN_STEPS`, `HFFM_FLOW_STEPS`, `UAV_MIX_HF_OFF`). Previously, verbatim config file snapshots recorded raw variable expressions rather than resolved values, obscuring experimental conditions.
 2. **Structured Provenance Schema (`run_provenance.json`)**: Emits a lightweight JSON beside evaluation results recording: explicitly resolved runtime values, the split between user-specified environment variables (`env_set`) and defaults (`env_absent`), loaded YAML configuration path and SHA-256 checksum, Git commit hash with working-tree dirty status, and SLURM execution metadata.
 3. **Zero-Overhead Multi-Generation Integration**: Integrated non-invasive provenance hooks across 6 evaluation scripts in Gen3v6 (MeanFlow), Gen3v7 (AlphaFlow), Gen12 (HardFlow), Gen7 (Visual Aligning), and Gen15 (UAV Mix-ML), featuring payload deduplication and non-fatal error isolation to ensure metadata logging never interrupts experimental execution.
+
+***
+
+## Architecture & Roadmap: Unified FM-PCC Repository Rebuild Concept (August 17–18, 2026)
+
+**Keywords**: Architecture, Rebuild, unified repo, fmpcc package, engine registry, 4-axis Cartesian matrix, backward compatibility, CLI unification.
+
+1. **Consolidation of 15+ Generation Siblings**: Formulated the architectural blueprint (`logs_in_develop/Rebuild_repo/CONCEPT_unified_rebuild.md`) to resolve significant technical debt stemming from ~20 copy-modify sibling folders (`diffuser/`, `flow_matcher_v3/`, `mix_uav/`, `mix_visual_aligning/`, `imf_visual_aligning/`, etc.). Outlined the target structure centered around a single unified `fmpcc` Python package with clean separation between generative backbones, engines, constraint projectors, environments, and sampling pipelines.
+2. **Universal 4-Axis Dispatch Registry**: Generalized the `mix_uav` registry design into a universal dispatch architecture spanning Generative Engine (`fm`, `mf`, `af`, `ddpm`) $\times$ Projector (`dpcc`, `hardflow`) $\times$ Environment (`avoiding`, `visual_avoiding`, `visual_aligning`, `uav` with 4 sub-cases) $\times$ Seed (280 total candidate cells). The registry encodes validity rules (e.g. disallowing unsupported combinations such as DDPM + HardFlow) and provides automated experiment construction.
+3. **Unified CLI & Strict Output Contract**: Designed single-entry CLI interfaces (`scripts/train.py` and `scripts/eval.py`) supporting arbitrary experiment configurations, alongside an evaluation data contract preserving legacy path formats and JSON schemas to maintain seamless backward compatibility with existing visualization dashboards (`Data_Analysis/`, DAv3, DA_VA_v2).
+
+***
+
+## Gen3v6 MeanFlow: H16 + Replan-8 ("HardFlow-Style H8+8") Milestone & Amortized Cost Analysis (August 18, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, H16 horizon, replan-8 cadence, amortized cost, peak latency trade-off, constraint tightening coupling, open-loop tracking drift, provenance validation.
+
+1. **Identity Verification of Replan-8 Mechanism**: Evaluated the full 13-variant $\times$ 3-$K$ matrix on `avoiding-d3il` under $H=16, \text{replan}=8$ (Job 24650, seed 6, direct A/B with H16/r1). Confirmed that per-plan solver work was identical to r1 (NFE/plan remained constant at $8.11 \rightarrow 8.17$ at $K=5$, NLP solves at $3.05 \rightarrow 3.05$), while planning invocations dropped from $60.7$ to $8.0$ per episode (~87% reduction), proving the U10 cache-and-replay path operates with exact mechanical fidelity.
+2. **Amortized Cost Reduction vs Peak Latency Trade-off**: Amortized per-step runtime decreased by $5\times\text{--}10\times$ across all arms (`hardflow_new-c-tightened` at $K=5$ reached $0.0273\,\text{s}/\text{step}$, beating the $H8/\text{r}1$ $n=20$ reference of $0.1408\,\text{s}$ by $5.2\times$). However, per-tick peak latency during replanning ticks increased ($1.6\times$ for HardFlow, up to $6.0\times$ for DPCC at $K=5$), establishing that the throughput win is strictly an amortized gain rather than real-time per-tick speedup.
+3. **Coupling of Replan Cadence and Constraint Tightening**: Open-loop execution across 8 steps increased trajectory tracking error by up to $5.6\times$. Untightened variants collapsed from $0.5$ to $11\text{--}34$ constraint violations per episode (S&C dropping to $0.000\text{--}0.333$), whereas tightened variants (`-tightened`) absorbed open-loop drift seamlessly, sustaining $1.000$ S&C and zero violations.
+4. **First Production Run with U10.1 Provenance Logging**: Verified the `diffuser/utils/provenance.py` schema in production (`run_provenance.json`), recording resolved runtime environment overrides (`MF_HORIZON=16`, `MF_REPLAN_STEPS=8`, `HFFM_BATCH=1`), configuration SHA-256 checksums, and dirty-tree git metadata.
+
+***
+
+## Gen3v5 / FMv3ODE: Matched-K Flow Steps CLI Override & Automated Grid Search (August 18, 2026)
+
+**Keywords**: Gen3v5, FMv3ODE, eval_flow_matching_v3_ode_selectable, flow_steps CLI, dynamic config patching, FLOW_STEPS_GRID, SLURM sweep.
+
+1. **Dynamic Config Module Patching via `--flow-steps`**: Extended `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` with a `--flow-steps` CLI argument (ported from Gen3v6/Gen3v7 siblings). Dynamically patches the imported config module dict (`flow_steps_v3`, `ode_inference_steps_v3`, and `flow_steps`) prior to Parser instantiation, eliminating the legacy requirement of modifying `config/avoiding-d3il.py` for each budget test.
+2. **Automated SLURM Grid Search**: Enhanced `Slurm_Codes/sbatch/eval_fmv3_ode_job.sh` with a configurable loop over `FLOW_STEPS_GRID` (defaulting to `"1 2 5 10"`, overridable via `FMV3_FLOW_STEPS`). Because `flow_steps_v3` is watched as `K` in the plan experiment naming, each evaluation automatically targets and saves to isolated per-budget output directories without risk of overwrites.
+
