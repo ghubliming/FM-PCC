@@ -430,14 +430,20 @@ document.getElementById('pareto-band').value = '0.05'
 
 document.getElementById('pareto-on').checked = False
 run(ns['trigger_plot'](None))
-check('pareto off -> one axes', len(ns['current_fig'].axes) == 1,
-      f'{len(ns["current_fig"].axes)} axes')
+check('pareto off -> the main figure is one axes and nothing else',
+      len(ns['current_fig'].axes) == 1, f'{len(ns["current_fig"].axes)} axes')
+check('pareto off -> no pareto figure and the section is hidden',
+      ns['pareto_fig'] is None
+      and document.getElementById('pareto-section').style.display == 'none')
 
 document.getElementById('pareto-on').checked = True
-# U18.1 regression: putting 'hspace' in gridspec_kw marked the GridSpec locally modified,
-# which makes matplotlib call EVERY axes on it "not compatible with tight_layout" — it then
-# warns loudly and adjusts NOTHING, so both right-hand legends ran off the canvas. The three
-# checks below are the three halves of that bug: the warning, its cause, and its effect.
+# U18.1 regression. Two bugs are pinned here, both from the sub-plot era:
+#   (a) 'hspace' in gridspec_kw marked the GridSpec locally modified, which makes matplotlib
+#       call EVERY axes on it "not compatible with tight_layout" — it warned loudly and then
+#       adjusted nothing, so the right-hand legends ran off the canvas;
+#   (b) one shared figure gave both rows a single left/right margin, so the bar chart lost
+#       width to a legend that belongs to the panel.
+# Both are answered by the same thing: the Pareto is its own figure now.
 import warnings as _warnings
 with _warnings.catch_warnings(record=True) as _wcaught:
     _warnings.simplefilter('always')
@@ -445,25 +451,32 @@ with _warnings.catch_warnings(record=True) as _wcaught:
 _tl_warn = [str(w.message) for w in _wcaught if 'tight_layout' in str(w.message)]
 check('drawing the pareto raises no tight_layout warning', not _tl_warn,
       '; '.join(_tl_warn[:1])[:120])
-_fig_axes = ns['current_fig'].axes
-check('pareto on -> a second axes in the SAME figure (so EXPORT ZIP carries it)',
-      len(_fig_axes) == 2, f'{len(_fig_axes)} axes')
-_gs = _fig_axes[0].get_subplotspec().get_gridspec()
-check('the pareto gridspec sets no subplot params (that would disable tight_layout)',
-      not _gs.locally_modified_subplot_params(),
-      f'locally modified: {_gs.locally_modified_subplot_params()}')
-check('tight_layout actually ran — the right-hand legends are inside the canvas',
-      _fig_axes[0].get_position().x1 < 0.98,
-      f'main axes right edge = {_fig_axes[0].get_position().x1:.3f}')
-check('the two stacked plots keep their gap',
-      ns['current_fig'].subplotpars.hspace >= ns['PARETO_HSPACE'] - 1e-9,
-      f'hspace = {ns["current_fig"].subplotpars.hspace:.3f} '
-      f'(floor {ns["PARETO_HSPACE"]})')
+_main_axes = ns['current_fig'].axes
+check('the main plot stays a ONE-axes figure — the pareto is not in it',
+      len(_main_axes) == 1, f'{len(_main_axes)} axes')
+_p_fig = ns['pareto_fig']
+check('pareto on -> its OWN figure in its OWN section',
+      _p_fig is not None and _p_fig is not ns['current_fig']
+      and len(_p_fig.axes) == 1
+      and document.getElementById('pareto-section').style.display == 'block')
+check('the pareto figure is displayed into #pareto-area',
+      any(t == 'pareto-area' for _, t in displayed),
+      f'targets: {sorted({t for _, t in displayed})}')
+check('no gridspec on either figure carries locally-modified subplot params',
+      not any(a.get_subplotspec().get_gridspec().locally_modified_subplot_params()
+              for f in (ns['current_fig'], _p_fig) for a in f.axes))
+check('tight_layout ran on the pareto — its right-hand legends are inside the canvas',
+      _p_fig.axes[0].get_position().x1 < 0.98,
+      f'pareto axes right edge = {_p_fig.axes[0].get_position().x1:.3f}')
+check('the main plot no longer pays for the pareto legends',
+      _main_axes[0].get_position().x1 >= _p_fig.axes[0].get_position().x1 - 1e-9,
+      f'main x1={_main_axes[0].get_position().x1:.3f} '
+      f'vs pareto x1={_p_fig.axes[0].get_position().x1:.3f}')
 
 _pts, _sc_metric = ns['_pareto_points'](_p_env, variants[:5], cands)
 if not _pts:
     print(f'  SKIP  no {ns["PARETO_X"][0]}/{ns["PARETO_Y"][0]} pair at {_p_env}')
-    _p_ax = _fig_axes[1] if len(_fig_axes) > 1 else None
+    _p_ax = _p_fig.axes[0] if _p_fig is not None else None
     check('an empty pareto says so instead of drawing an empty box',
           _p_ax is not None and any('NO PARETO' in t.get_text() for t in _p_ax.texts))
 else:
@@ -530,7 +543,7 @@ else:
           '; '.join(f'CAND_{c}={t}' for c, t in list(_tags.items())[:3]))
 
     # nothing imperfect goes unnamed
-    _p_ax = _fig_axes[1]
+    _p_ax = _p_fig.axes[0]
     _legend_text = " ".join(t.get_text() for lg in _p_ax.get_children()
                             if hasattr(lg, 'get_texts') for t in lg.get_texts())
     _flagged = [p for p in _pts if p['sc'] is None or p['sc'] < 1.0 - ns['PARETO_TOL']]
