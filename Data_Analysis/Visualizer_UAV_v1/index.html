@@ -33,6 +33,7 @@
         .score-val { font-size: 20px; font-weight: bold; }
         .score-label { font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; }
         #plot-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 500px; text-align: center; overflow-x: auto; }
+        #pareto-area { background: #fff; border: 1px solid #000; padding: 15px; min-height: 420px; text-align: center; overflow-x: auto; }
         .path-section { border-top: 2px solid #000; padding-top: 20px; margin-bottom: 50px; }
         table { border-collapse: collapse; width: 100%; font-size: 11px; table-layout: fixed; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; overflow-wrap: break-word; }
@@ -133,19 +134,30 @@
         <div id="input-list"><select id="batch-select"></select></div>
         <div id="input-path" style="display:none"><input type="text" id="custom-path" placeholder="../analysis_results/batch_uav_.../  (folder, not a file)"></div>
     <div class="control-group">
-        <label>7. Visual Zoom (Magnify)</label>
+        <label>7. Visual Zoom (Magnify) &mdash; <span id="ctrl-target-label">MAIN PLOT</span></label>
+        <!-- U18.2: 7 and 8 edit ONE plot at a time. The Pareto is its own figure with its own
+             legends, so sizing it from the bar chart's width was always wrong; each plot now
+             keeps its own zoom and its own FigWidth in its own hidden store, and this selector
+             only decides which pair the two widgets below are currently editing. -->
+        <select id="plot-target" onchange="switch_plot_target()" style="margin-bottom:8px">
+            <option value="main">CONTROL: MAIN PLOT (bar chart)</option>
+            <option value="pareto">CONTROL: PARETO PLOT (avg_time &times; n_steps)</option>
+        </select>
         <div style="display:flex; gap:5px;">
             <button class="mode-btn" onclick="adjustZoom(-0.2)" style="flex:1">SMALLER</button>
             <button class="mode-btn" onclick="adjustZoom(0.2)" style="flex:1">LARGER</button>
         </div>
         <div style="text-align:center; font-size:10px; font-weight:bold; margin-top:5px;">
             Scale: <span id="zoom-val">1.0x</span>
-            <input type="hidden" id="width-zoom" value="1.0">
+            <input type="hidden" id="width-zoom-main" value="1.0">
+            <input type="hidden" id="width-zoom-pareto" value="1.0">
         </div>
     </div>
     <div class="control-group">
-        <label>8. Matplotlib FigWidth</label>
-        <input type="number" id="fig-width" value="10.0" step="1.0" onchange="trigger_plot()">
+        <label>8. Matplotlib FigWidth &mdash; <span id="ctrl-target-label-2">MAIN PLOT</span></label>
+        <input type="number" id="fig-width" value="10.0" step="1.0" onchange="commit_fig_width()">
+        <input type="hidden" id="fig-width-main" value="10.0">
+        <input type="hidden" id="fig-width-pareto" value="10.0">
     </div>
     <button class="btn-main" py-click="load_data">SYNC_SOURCE</button>
         <button class="btn-download" id="download-btn" py-click="download_plot" style="display:none">EXPORT ZIP (PNG + LATEX + LOG)</button>
@@ -188,6 +200,16 @@
         <div class="control-group"><label>4. Geo Tag Focus</label><select id="env-select" onchange="trigger_plot()"></select></div>
         <div class="control-group"><label>5. Variants</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('var-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('var-check', false)">[NONE]</span></div><div id="variant-presets" class="preset-list" style="display:none"></div><div id="variant-list" class="checkbox-list"></div></div>
         <div class="control-group"><label>6. Candidates</label><div class="bulk-actions"><span class="bulk-link" onclick="bulkSelect('cand-check', true)">[ALL]</span><span class="bulk-link" onclick="bulkSelect('cand-check', false)">[NONE]</span></div><div id="candidate-list" class="checkbox-list"></div></div>
+        <div class="control-group">
+            <label>6.5 Pareto Plot</label>
+            <div class="checkbox-item"><input type="checkbox" id="pareto-on" checked onchange="trigger_plot()"><span>AVG_TIME &times; N_STEPS as its OWN plot, in its own section</span></div>
+            <div style="font-size:10px; color:#666; margin-top:8px; line-height:1.5;">
+                <b>S+C band</b> &mdash; how far below the best goal+constraint score a point may
+                sit and still count as <i>similar</i>, i.e. still be compared. Points outside the
+                band are drawn hollow and named in the legend; only the ones inside form the front.
+            </div>
+            <input type="number" id="pareto-band" value="0.05" min="0" max="1" step="0.01" onchange="trigger_plot()">
+        </div>
         <button class="btn-main" style="background:#444;" py-click="trigger_plot">REFRESH_RE_DRAW</button>
     </div>
 
@@ -251,6 +273,7 @@
         <div id="aggregate-area">
         <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
         <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
+        <div class="path-section" id="pareto-section" style="display:none; border-top: 2px solid #000;"><label>Pareto Plot &mdash; AVG_TIME &times; N_STEPS (separate figure)</label><div id="pareto-area"></div></div>
         <div class="path-section" id="selection-map-section" style="display:none; border-top: 2px dashed #007bff; margin-bottom: 0;"><label style="color:#007bff;">Plot Legend — Selected Candidates (this plot only)</label><div id="selection-map-container"></div></div>
         <div class="path-section" id="summary-section" style="display:none; border-top: 2px solid #000;"><label>Result Matrices — Selected Candidates &times; All Variants</label><div id="summary-container"></div></div>
         <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map</label><div id="path-map-container"></div></div>
@@ -287,6 +310,10 @@ df = None
 df_agg = None
 df_raw = None
 current_fig = None
+# U18.1: the Pareto is a SEPARATE figure in a SEPARATE section — its own canvas, its own
+# width, its own PNG in the export. Kept apart from current_fig so neither can shrink the
+# other and so the main plot is never redrawn just to change the panel.
+pareto_fig = None
 # U10: bumped on every SYNC_SOURCE so the result-matrix cache invalidates on new data.
 data_version = 0
 
@@ -890,8 +917,366 @@ def show_empty_selection(checked_vars, checked_cands):
         'No selection &mdash; scorecard idle</div>')
     document.getElementById("selection-map-section").style.display = "none"
 
+# =======================================================================================
+# U18: the Pareto sub-plot — "is this method actually cheaper, at the same quality?"
+#
+# The main chart answers one metric at a time, so the trade-off that decides every one of
+# these comparisons (fewer STEPS vs less TIME per step) is never on screen at once, and the
+# only thing that makes such a comparison legitimate — that the methods reached the goal and
+# respected the constraints equally well — is on screen nowhere at all. A faster planner that
+# crashes is not on any frontier.
+#
+# So: one point per (candidate, variant), both cost axes at once, and the goal+constraint
+# score decides who is even ELIGIBLE to be compared:
+#
+#   colour   = variant  (the projection arm — the SAME colour the main plot's bars use, via
+#              _variant_colors, so the two charts are one key)
+#   shape    = candidate (the config type — H8_K20_AlphaFlowODE etc.)
+#   filled   = inside the S+C band, i.e. comparable -> forms the front
+#   hollow   = below the band, or with no S+C number at all -> drawn, named in the legend
+#              with its score, but kept OUT of the front
+#
+# Same selection as the main plot, deliberately: candidates, variants, environment focus and
+# seed mode all come from the same widgets, so the front never describes a set the user is
+# not looking at.
+# =======================================================================================
+PARETO_X = ('avg_time', 'AVG_TIME  (computation per planning step)')
+PARETO_Y = ('n_steps', 'N_STEPS  (episode length)')
+# First one present in the batch wins. n_success_and_constraints IS the "goal + constraint"
+# score; n_success alone is the fallback for a batch that never recorded the pair.
+PARETO_SC_METRICS = ('n_success_and_constraints', 'n_success')
+PARETO_TOL = 1e-9
+PARETO_BAND_DEFAULT = 0.05
+PARETO_H = 6.5                      # the Pareto FIGURE's height in inches (it is its own)
+# Shapes, in decreasing "tellable apart at 8 pt" order.
+PARETO_MARKERS = ('o', 's', '^', 'D', 'v', 'P', 'X', '*', '<', '>', 'h', 'p', 'd', '8')
+PARETO_MAX_LEGEND = 14              # entries per legend before it collapses into "+N more"
+PARETO_LOG_SPAN = 20.0              # x range wider than this decades-ish factor -> log x
+# What "4. Environment Focus" is CALLED on this page. The DA_VA_v2 build renames that axis
+# to `geo`, and a panel captioned with the other page's word for it is just wrong.
+PARETO_ENV_LABEL = 'geo'
+# The colours the LAST main plot actually drew with, {variant: rgba}. Read instead of
+# recomputed so the two panels cannot disagree: the bar chart has a collision fallback that
+# abandons _variant_colors for a positional palette, and a Pareto that re-derived its own
+# colours would then key the same variant to two different colours in one figure.
+last_bar_colors = {}
+
+
+def _pareto_enabled():
+    el = document.getElementById("pareto-on")
+    return el is not None and el.checked
+
+
+def _pareto_band():
+    el = document.getElementById("pareto-band")
+    try:
+        return max(0.0, min(1.0, float(el.value)))
+    except Exception:
+        return PARETO_BAND_DEFAULT
+
+
+def _cand_tag(cand):
+    """'31' -> 'H8 K20 AlphaFlowODE' — the candidate's CONFIG, read off its folder name.
+
+    A bare CAND_31 in a shape legend says nothing about what the shape IS. The three things
+    that actually distinguish these runs are the horizon (H8), the replan/step count (K20)
+    and the generative model, and all three are already in the folder name. Anything the
+    pattern does not recognise falls back to the truncated folder name rather than to a
+    guess — a WRONG tag in a legend is worse than a long one.
+    """
+    if df_agg is None or 'Folder_Name' not in df_agg.columns:
+        return ""
+    rows = df_agg[df_agg['Candidate'].astype(str) == str(cand)]['Folder_Name']
+    if rows.empty:
+        return ""
+    name = str(rows.iloc[0])
+    bits = []
+    h = re.search(r'(?:^|[^A-Za-z])H(\d+)', name)
+    if h:
+        bits.append("H" + h.group(1))
+    k = re.search(r'(?:^|_)K(\d+)', name)
+    if k:
+        bits.append("K" + k.group(1))
+    if '.' in name:
+        # last dotted component, cut at its first underscore:
+        # '...models.GaussianDiffusion_aw1' -> 'GaussianDiffusion'
+        model = name.rsplit('.', 1)[-1].split('_')[0]
+        if model:
+            bits.append(model)
+    if not bits:
+        return name[:24]
+    return " ".join(bits)
+
+
+def _candidate_markers(cands):
+    """-> ({candidate: marker}, shapes_repeat?).
+
+    Assigned over the SELECTED candidates, not over the whole batch (which is where
+    _variant_colors gets its stability): a batch carries 150 candidates and 14 shapes, so a
+    batch-stable map would collide inside almost every selection. Distinct-within-this-plot
+    wins over stable-across-plots here, and when even that is impossible the caller labels
+    the points instead of letting two configs share a shape silently.
+    """
+    order = sorted({str(c) for c in cands},
+                   key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    table = {c: PARETO_MARKERS[i % len(PARETO_MARKERS)] for i, c in enumerate(order)}
+    return table, len(order) > len(PARETO_MARKERS)
+
+
+def _pareto_points(env, checked_vars, checked_cands):
+    """-> ([{cand, var, x, y, sc}], sc_metric_used).
+
+    Same frames, same seed mode and the same environment filter the main plot uses, so a
+    point exists here exactly when the corresponding bar exists there. A facet missing
+    either cost metric is skipped (there is no position to draw it at); a facet missing only
+    the S+C score keeps sc=None and is treated as "cannot be shown to be comparable".
+    """
+    metrics = [PARETO_X[0], PARETO_Y[0]] + list(PARETO_SC_METRICS)
+    seed_mode, seeds = _seed_context()
+    if seed_mode == "custom" and df_raw is not None:
+        d = df_raw[df_raw['metric'].isin(metrics)
+                   & df_raw['variant'].isin(checked_vars)
+                   & df_raw['Candidate'].isin(checked_cands)
+                   & df_raw['seed'].isin(list(seeds))]
+        val_col = 'value'
+    else:
+        d = df_agg[df_agg['metric'].isin(metrics)
+                   & df_agg['variant'].isin(checked_vars)
+                   & df_agg['Candidate'].isin(checked_cands)]
+        val_col = 'mean' if 'mean' in df_agg.columns else 'value'
+    if 'halfspace_variant' in d.columns:
+        d = d[d['halfspace_variant'] == env]
+    if d.empty:
+        return [], None
+    means = d.groupby(['metric', 'Candidate', 'variant'])[val_col].mean().to_dict()
+    present = {k[0] for k in means}
+    sc_metric = next((m for m in PARETO_SC_METRICS if m in present), None)
+
+    points = []
+    for cand in checked_cands:
+        for var in checked_vars:
+            x = means.get((PARETO_X[0], cand, var))
+            y = means.get((PARETO_Y[0], cand, var))
+            if x is None or y is None or x != x or y != y:
+                continue
+            sc = means.get((sc_metric, cand, var)) if sc_metric else None
+            if sc is not None and sc != sc:
+                sc = None
+            points.append({'cand': str(cand), 'var': str(var),
+                           'x': float(x), 'y': float(y),
+                           'sc': None if sc is None else float(sc)})
+    return points, sc_metric
+
+
+def _pareto_front(points):
+    """The non-dominated subset, left to right. Lower is better on BOTH axes.
+
+    Exact ties are kept as ONE vertex (the staircase has one corner there); both points are
+    still drawn, so nothing disappears from the chart — only the line has fewer duplicates.
+    """
+    front, best_y = [], None
+    for p in sorted(points, key=lambda q: (q['x'], q['y'])):
+        if best_y is None or p['y'] < best_y - PARETO_TOL:
+            front.append(p)
+            best_y = p['y']
+    return front
+
+
+def _legend_left(leg):
+    # Left-align a multi-line legend TITLE against its entries. Cosmetic, and the attribute
+    # is private — a matplotlib that moves it must cost the alignment, not the panel.
+    try:
+        leg._legend_box.align = "left"
+    except Exception:
+        pass
+    return leg
+
+
+def _pareto_message(ax, lines):
+    ax.set_axis_off()
+    ax.text(0.5, 0.5, "\n".join(lines), ha='center', va='center', fontsize=10,
+            color="#b71c1c", fontweight='bold', transform=ax.transAxes)
+
+
+def draw_pareto(ax, env, checked_vars, checked_cands, env_is_x_axis):
+    """The cost trade-off, restricted to what is comparable. -> nothing; draws into ax."""
+    from matplotlib.lines import Line2D
+
+    points, sc_metric = _pareto_points(env, checked_vars, checked_cands)
+    if not points:
+        _pareto_message(ax, ["NO PARETO — this selection has no "
+                             f"{PARETO_X[0]} / {PARETO_Y[0]} pair at {PARETO_ENV_LABEL} = {env}",
+                             "(both cost metrics must exist for the same candidate+variant)"])
+        return
+
+    band = _pareto_band()
+    known = [p['sc'] for p in points if p['sc'] is not None]
+    best_sc = max(known) if known else None
+    for p in points:
+        # No S+C metric anywhere in the batch -> we cannot rank quality at all, so we do not
+        # get to exclude anyone: every point is compared and the title says why.
+        p['in'] = True if best_sc is None else (
+            p['sc'] is not None and p['sc'] >= best_sc - band - PARETO_TOL)
+
+    inside = [p for p in points if p['in']]
+    outside = [p for p in points if not p['in']]
+    front = _pareto_front(inside)
+
+    variants = sorted({p['var'] for p in points})
+    colour = dict(zip(variants, _variant_colors(variants)))
+    colour.update({v: c for v, c in last_bar_colors.items() if v in colour})
+    markers, shapes_repeat = _candidate_markers({p['cand'] for p in points})
+
+    # Drawn with plot(), not scatter(): the legend entries below are Line2D handles, and a
+    # Line2D swatch is then the point, not an approximation of it. (scatter also has to be
+    # argued with about color= vs edgecolors= before it will outline a filled marker.)
+    for p in outside:
+        ax.plot([p['x']], [p['y']], marker=markers[p['cand']], ls='none', markersize=9,
+                markerfacecolor='none', markeredgecolor=colour[p['var']],
+                markeredgewidth=1.5, alpha=0.9, zorder=2)
+    for p in inside:
+        ax.plot([p['x']], [p['y']], marker=markers[p['cand']], ls='none', markersize=9,
+                markerfacecolor=colour[p['var']], markeredgecolor='black',
+                markeredgewidth=0.6, zorder=3)
+    if shapes_repeat:
+        for p in points:
+            ax.annotate(f"C{p['cand']}", xy=(p['x'], p['y']), xytext=(5, 4),
+                        textcoords='offset points', fontsize=6, color="#555")
+
+    if front:
+        # Rings, not just the line: with a single comparable point the staircase has no
+        # length to draw and the front would otherwise be invisible.
+        ax.plot([p['x'] for p in front], [p['y'] for p in front], ls='none', marker='o',
+                markersize=17, markerfacecolor='none', markeredgecolor='#222',
+                markeredgewidth=1.0, zorder=1)
+        ax.plot([p['x'] for p in front], [p['y'] for p in front], drawstyle='steps-post',
+                color='#222', lw=1.2, ls='--', zorder=1)
+
+    xs = [p['x'] for p in points]
+    if min(xs) > 0 and max(xs) / min(xs) > PARETO_LOG_SPAN:
+        ax.set_xscale('log')
+        x_note = "  [log scale]"
+    else:
+        x_note = ""
+    ax.set_xlabel(f"faster  ←   {PARETO_X[1]}{x_note}", fontsize=9, fontweight='bold')
+    ax.set_ylabel(f"fewer  ↓   {PARETO_Y[1]}", fontsize=9, fontweight='bold')
+    ax.grid(True, alpha=0.25)
+    ax.margins(0.13)
+
+    if best_sc is None:
+        rule = (f"no {' / '.join(PARETO_SC_METRICS)} in this batch — "
+                f"EVERY point is on the front's terms, quality unverified")
+    else:
+        rule = (f"compared: {sc_metric} ≥ {best_sc - band:.3f} "
+                f"(best {best_sc:.3f}, band {band:.2f}) — "
+                f"{len(inside)} of {len(points)} points; {len(outside)} hollow = not comparable")
+    ax.set_title(f"PARETO — lower-left is better  |  {PARETO_ENV_LABEL} = {env}"
+                 + (f"  (the main plot spans every {PARETO_ENV_LABEL}; this panel does not)"
+                    if env_is_x_axis else "")
+                 + f"\n{rule}", fontsize=10, fontweight='bold')
+
+    # ── legend 1: what a shape means, plus the front itself ────────────────────────────
+    handles = [Line2D([], [], color='#222', lw=1.2, ls='--',
+                      label=f"Pareto front — {len(front)} of {len(inside)} comparable points")]
+    shown = sorted(markers, key=lambda c: (0, int(c)) if c.isdigit() else (1, c))
+    for cand in shown[:PARETO_MAX_LEGEND]:
+        tag = _cand_tag(cand)
+        handles.append(Line2D([], [], marker=markers[cand], color='#555', ls='none',
+                              markersize=7, label=f"CAND_{cand}" + (f" · {tag}" if tag else "")))
+    if len(shown) > PARETO_MAX_LEGEND:
+        handles.append(Line2D([], [], ls='none',
+                              label=f"+{len(shown) - PARETO_MAX_LEGEND} more candidates"))
+    leg = ax.legend(handles=handles, fontsize=7, loc='upper left', bbox_to_anchor=(1.02, 1.0),
+                    title="shape = candidate  ·  colour = variant (key above)"
+                          + ("\n⚠ more candidates than shapes — points are labelled"
+                             if shapes_repeat else ""),
+                    title_fontsize=7)
+    ax.add_artist(_legend_left(leg))
+
+    # ── legend 2: every point that is NOT a perfect goal+constraint run ─────────────────
+    # This is the honesty column of the whole panel: a point on the front at S+C 0.93 has
+    # bought its position with 7% failures, and nothing in its position says so.
+    flagged = sorted([p for p in points if p['sc'] is None or p['sc'] < 1.0 - PARETO_TOL],
+                     key=lambda p: (1.0 if p['sc'] is None else -p['sc'], p['cand'], p['var']))
+    marks = []
+    for p in flagged[:PARETO_MAX_LEGEND]:
+        score = "no score" if p['sc'] is None else f"S+C {p['sc']:.3f}"
+        marks.append(Line2D([], [], marker=markers[p['cand']], ls='none', markersize=7,
+                            color=colour[p['var']],
+                            markerfacecolor=(colour[p['var']] if p['in'] else 'none'),
+                            markeredgecolor=(colour[p['var']] if not p['in'] else 'black'),
+                            label=f"CAND_{p['cand']} · {p['var']} — {score}"
+                                  + ("" if p['in'] else "  (out)")))
+    if len(flagged) > PARETO_MAX_LEGEND:
+        marks.append(Line2D([], [], ls='none',
+                            label=f"+{len(flagged) - PARETO_MAX_LEGEND} more below 1.000"))
+    if not marks:
+        marks = [Line2D([], [], ls='none',
+                        label=f"none — every plotted point is at {sc_metric or 'S+C'} = 1.000")]
+    leg2 = ax.legend(handles=marks, fontsize=7, loc='lower left', bbox_to_anchor=(1.02, 0.0),
+                     title="not a perfect goal+constraint run\n(hollow = outside the band, "
+                           "excluded from the front)",
+                     title_fontsize=7)
+    _legend_left(leg2)
+
+
+def _fig_width(which):
+    """The FigWidth (inches) the sidebar has stored for 'main' or 'pareto'. -> float.
+
+    U18.2: one store per plot. The visible "8. Matplotlib FigWidth" box is only an editor for
+    whichever plot "7 -> CONTROL:" points at; the other plot's width waits in its own hidden
+    input, so changing one can never resize the other behind the user's back. A missing or
+    non-positive value falls back to the old single-width default rather than to a degenerate
+    figure — an unreadable 0-inch canvas is worse than the wrong-but-sane 10.
+    """
+    try:
+        w = float(document.getElementById(f"fig-width-{which}").value)
+    except Exception:
+        w = 0.0
+    return w if w > 0 else 10.0
+
+
+def _hide_pareto():
+    """There is no plot, so there is no trade-off to show. -> nothing."""
+    global pareto_fig
+    pareto_fig = None
+    document.getElementById("pareto-area").innerHTML = ""
+    document.getElementById("pareto-section").style.display = "none"
+
+
+def draw_pareto_section(env, checked_vars, checked_cands, env_is_x_axis):
+    """Draw the Pareto as its OWN figure, into its OWN page section. -> nothing.
+
+    Separate figure, separate <img>, separate PNG in the export. It still reads the same
+    widgets as the main plot (and the same bar colours via last_bar_colors), so it can never
+    describe a selection the user is not looking at — but it no longer competes with the bar
+    chart for canvas width, and either plot can be scrolled or screenshotted on its own.
+
+    U18.2: it also takes no width from the caller — it reads its OWN FigWidth store. The
+    Pareto carries two right-hand legends the bar chart does not have, so the width that
+    makes the bar chart readable is rarely the width that makes this one readable.
+    """
+    global pareto_fig
+    if not _pareto_enabled():
+        _hide_pareto()
+        return
+    pfig, pax = plt.subplots(figsize=(_fig_width("pareto"), PARETO_H))
+    try:
+        draw_pareto(pax, env, checked_vars, checked_cands, env_is_x_axis)
+    except Exception as e:
+        console.log(f"[ pareto ] {e}")
+        _pareto_message(pax, ["PARETO PLOT FAILED — the main plot above is unaffected",
+                              str(e)[:160]])
+    pfig.tight_layout()
+    pareto_fig = pfig
+    document.getElementById("pareto-section").style.display = "block"
+    area = document.getElementById("pareto-area")
+    area.innerHTML = ""
+    display(pfig, target="pareto-area")
+
+
 async def trigger_plot(event=None):
-    global df_agg, df_raw, current_fig
+    global df_agg, df_raw, current_fig, last_bar_colors, pareto_fig
     if df_agg is None: return
     metric, mode, env = document.getElementById("metric-select").value, document.getElementById("mode-select").value, document.getElementById("env-select").value
     checked_vars, checked_cands = get_checked("var-check"), get_checked("cand-check")
@@ -905,6 +1290,7 @@ async def trigger_plot(event=None):
     if not checked_vars or not checked_cands or not metric:
         plt.close('all')
         current_fig = None
+        _hide_pareto()
         show_empty_selection(checked_vars, checked_cands)
         return
 
@@ -937,6 +1323,7 @@ async def trigger_plot(event=None):
             document.getElementById("seed-error-msg").innerText = "Note: plotting available seeds only — missing " + "; ".join(warn)
         if subset.empty:
             plt.close('all')
+            _hide_pareto()
             show_no_data(metric, checked_vars, checked_cands, env if mode == "candidate" else None)
             return
 
@@ -948,6 +1335,7 @@ async def trigger_plot(event=None):
         if mode == "candidate": mask &= (df_agg['halfspace_variant'] == env)
         subset = df_agg[mask]
         if subset.empty:
+            _hide_pareto()
             show_no_data(metric, checked_vars, checked_cands, env if mode == "candidate" else None)
             return
         val_col = 'mean' if 'mean' in df_agg.columns else 'value'
@@ -967,12 +1355,15 @@ async def trigger_plot(event=None):
         pivot_mean = pivot_mean.reindex(index=[c for c in checked_cands])
         if pivot_std is not None: pivot_std = pivot_std.reindex(index=[c for c in checked_cands])
     
-    try:
-        calc_width = float(document.getElementById("fig-width").value)
-    except:
-        calc_width = 10.0
+    # U18.2: "main", not the bare box — the box is a shared editor now (see _fig_width).
+    calc_width = _fig_width("main")
     
     plt.close('all')
+    # U18.1: the main plot is its own figure and nothing else shares it. The Pareto lives in
+    # a SECOND figure in its own page section below (draw_pareto_section). Stacking them in
+    # one figure made tight_layout size a single left/right margin for both rows, so the bar
+    # chart lost width to a legend belonging to the panel; and one <img> cannot be zoomed,
+    # scrolled or screenshotted per plot.
     fig, ax = plt.subplots(figsize=(calc_width, 6))
     # U15: explicit per-variant colours instead of `colormap='tab10'` — see _palette. The
     # duplicate check is the safeguard proper: two variants sharing a colour is the exact
@@ -982,6 +1373,8 @@ async def trigger_plot(event=None):
     if len({tuple(round(c[i], 3) for i in range(3)) for c in bar_colors}) != len(bar_colors):
         console.log("[ palette ] colour collision across variants - falling back to positional")
         bar_colors = _palette(len(bar_colors))
+    # U18: whatever was decided above is what the Pareto panel below must use too.
+    last_bar_colors = dict(zip([str(c) for c in pivot_mean.columns], bar_colors))
     pivot_mean.plot(kind='bar', ax=ax, width=0.8, edgecolor='black', color=bar_colors, alpha=0.9, yerr=pivot_std, capsize=4)
 
     # U8: print the exact value directly above each bar. Annotate manually instead of
@@ -1073,11 +1466,16 @@ async def trigger_plot(event=None):
     # belonging to the ticked legend row is findable at a glance in a 40-candidate plot.
     _remember_plot(ax, x_axis, list(pivot_mean.index))
     _apply_tick_highlight()
-    plt.tight_layout()
+    # fig.tight_layout(), not plt.: there is a second figure now and "current" is ambiguous.
+    fig.tight_layout()
     current_fig = fig
     area = document.getElementById("plot-area")
     area.innerHTML = ""
     display(fig, target="plot-area")
+
+    # U18.1: the Pareto is drawn only after the main plot is already on the page, so a
+    # failure down there cannot cost the user the plot they actually asked for.
+    draw_pareto_section(env, checked_vars, checked_cands, x_axis != 'Candidate')
     
     # Re-apply the Visual Zoom (CSS)
     import asyncio
@@ -1273,7 +1671,7 @@ def download_folder(path, label=""):
     asyncio.ensure_future(_download_folder(str(path), str(label)))
 
 def download_plot(event):
-    global current_fig
+    global current_fig, pareto_fig
     if df_agg is None: return
 
     from datetime import datetime
@@ -1299,6 +1697,13 @@ def download_plot(event):
         buf = io.BytesIO(); current_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
         bundle.append((f"{base_name}.png", buf.read()))
         written.append("PNG")
+
+    # 1b. U18.1: the Pareto is its own figure, so it is its own PNG. It was folded into the
+    # plot PNG while it was a sub-plot; a separate file is the point of separating them.
+    if pareto_fig is not None:
+        buf = io.BytesIO(); pareto_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
+        bundle.append((f"{base_name}_pareto.png", buf.read()))
+        written.append("PARETO_PNG")
 
     # 2. LaTeX — every Result Matrix, exactly as rendered on the page.
     ctx, err = _summary_context()
@@ -2553,11 +2958,36 @@ asyncio.ensure_future(init_manifest())
         document.getElementById("input-list").style.display = mode === 'list' ? 'block' : 'none';
         document.getElementById("input-path").style.display = mode === 'path' ? 'block' : 'none';
     }
-    function applyZoom() {
-        const val = parseFloat(document.getElementById("width-zoom").value);
-        const imgs = document.querySelectorAll("#plot-area img");
-        if (imgs.length > 0) {
-            const img = imgs[0];
+    // U18.2: the Pareto is its own figure, so it gets its own zoom and its own FigWidth.
+    // Rather than a second copy of every widget (two SMALLER/LARGER pairs, two number boxes,
+    // twice the sidebar), section 7 carries ONE set plus a selector saying which plot it is
+    // currently editing. Each plot's values live in its own hidden input, so switching the
+    // selector only changes what the widgets show — it never writes to the other plot.
+    function _ctrlTarget() {
+        const el = document.getElementById("plot-target");
+        return (el && el.value === "pareto") ? "pareto" : "main";
+    }
+    function _zoomStore(which) { return document.getElementById("width-zoom-" + which); }
+    function _widthStore(which) { return document.getElementById("fig-width-" + which); }
+
+    function switch_plot_target() {
+        const which = _ctrlTarget();
+        const name = which === "pareto" ? "PARETO PLOT" : "MAIN PLOT";
+        for (const id of ["ctrl-target-label", "ctrl-target-label-2"]) {
+            const lab = document.getElementById(id);
+            if (lab) lab.innerText = name;
+        }
+        // Load, do not redraw: switching which plot you are about to resize must not resize
+        // anything. Both plots keep whatever they already had until a widget is actually used.
+        const z = parseFloat(_zoomStore(which).value);
+        document.getElementById("zoom-val").innerText = (z > 0 ? z : 1.0).toFixed(1) + "x";
+        document.getElementById("fig-width").value = _widthStore(which).value;
+    }
+
+    function _zoomArea(selector, val) {
+        if (!(val > 0)) val = 1.0;
+        const imgs = document.querySelectorAll(selector);
+        for (const img of imgs) {
             if (!img.dataset.baseWidth) {
                 img.dataset.baseWidth = img.naturalWidth || img.width || 800;
             }
@@ -2569,14 +2999,28 @@ asyncio.ensure_future(init_manifest())
             }
         }
     }
-    
+
+    // Called after every redraw, so it must apply BOTH stores — a fresh <img> has no inline
+    // width and would otherwise snap back to 1.0x for whichever plot is not selected.
+    function applyZoom() {
+        _zoomArea("#plot-area img", parseFloat(_zoomStore("main").value));
+        _zoomArea("#pareto-area img", parseFloat(_zoomStore("pareto").value));
+    }
+
     function adjustZoom(delta) {
-        const el = document.getElementById("width-zoom");
+        const el = _zoomStore(_ctrlTarget());
         let val = parseFloat(el.value) + delta;
-        if (val < 0.1) val = 0.1;
+        if (!(val > 0.1)) val = 0.1;
         el.value = val.toFixed(1);
         document.getElementById("zoom-val").innerText = val.toFixed(1) + "x";
         applyZoom();
+    }
+
+    // FigWidth is a real matplotlib figsize, not CSS, so it needs a redraw — but only the
+    // targeted plot's store is written first, and trigger_plot then reads each store per plot.
+    function commit_fig_width() {
+        _widthStore(_ctrlTarget()).value = document.getElementById("fig-width").value;
+        trigger_plot();
     }
     // U16: variant quick presets. Pure JS on purpose — the membership is baked into each
     // preset's data-members by Python at populate time, so ticking one is instant and works
