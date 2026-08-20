@@ -38,11 +38,13 @@ class AlphaFlowEngine(nn.Module):
         dual_head: bool = False,
         interval_cfg: bool = False,
         # U6 — backbone selector + DiT sizing (forwarded to AFTrajectoryModel).
-        # 🔴 FIX_8_BACKBONE_DEFAULT — 'unet' is CORRECT here and must stay. Gen14 never sets this key
-        # (config/aligning-d3il-visual.py has no imf_backbone anywhere), and the
-        # if_vision=True graft below REQUIRES it: `if imf_backbone not in ('unet',):
-        # raise`. Changing this default to a DiT/SiT the way the three state-only
-        # generations did would make every Gen14 mf/af visual job raise on construction.
+        # 🔴 FIX_8_BACKBONE_DEFAULT — 'unet' is CORRECT here and must stay THE DEFAULT.
+        # Pre-U8 the reason was hard: the if_vision graft raised for anything else. U8 lifted
+        # that (all four bones now carry a visual token), so the reason is now scientific
+        # rather than mechanical — 'unet' is the Gen14 baseline bone that every existing
+        # checkpoint and every published Gen14 number was trained with. A DiT is opted INTO
+        # per run via the `ml_bone` config key, which is a checkpoint-path key precisely so
+        # the two never collide. Flipping this default would silently re-point every job.
         imf_backbone: str = 'unet',
         dit_depth: int = 8,
         dit_hidden_size: int = 256,

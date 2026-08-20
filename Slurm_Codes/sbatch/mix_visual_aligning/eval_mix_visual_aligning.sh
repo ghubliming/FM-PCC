@@ -121,6 +121,29 @@ unset MIX_FILM_MODE
 export "MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
 echo "[ eval ] film_mode = $FILM_MODE  (MIX_FILM_MODE_${ENGINE_UC}; must match the checkpoint)"
 
+# ── Gen14 U8 ── ML BONE. Same knob as the train script; MUST match the checkpoint.
+#   MIX_BONE_MF=mf_dit ./Slurm_Codes/submit.sh <this script> mf 6 all
+#
+# 🔴 The bone is baked into diffusion_loadpath ('..._B{bone}_E<arm>'), and a DiT path
+# carries NO '_film..' fragment, so evaluating a DiT checkpoint without this set resolves to
+# the U-Net directory (or to nothing). The backbone itself is always rebuilt from the
+# train-time model_config.pkl, so the architecture cannot diverge from the weights — the
+# failure mode is a wrong/missing PATH, not wrong math. eval_mix_visual_aligning.py prints
+# the bone it read out of the pkl and warns if the eval config disagrees.
+eval "ML_BONE=\${MIX_BONE_${ENGINE_UC}:-\${MIX_BONE:-unet}}"
+case "$ENGINE" in
+    mf) VALID_BONES="unet mf_dit dit" ;;
+    af) VALID_BONES="unet sit dit" ;;
+    *)  VALID_BONES="unet" ;;
+esac
+if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
+    echo "[ eval ] ERROR: ml_bone '$ML_BONE' is not valid for engine '$ENGINE' (want: $VALID_BONES)"
+    exit 1
+fi
+unset MIX_BONE
+export "MIX_BONE_${ENGINE_UC}=$ML_BONE"
+echo "[ eval ] ml_bone = $ML_BONE  (MIX_BONE_${ENGINE_UC}; must match the checkpoint)"
+
 # ── Gen14 U6 ── $4 = NFE override (flow_steps_v3), fm/mf/af only. Blank -> config default
 # (mf/af: 2, fm: 100). Changes BOTH the sampler and the results folder, so a sweep lands in
 # sibling H8_K<N>_... directories instead of overwriting. Also changes the projection budget:

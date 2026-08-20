@@ -254,6 +254,11 @@ class AFDiTTrajectory(nn.Module):
         mlp_ratio: float = 8 / 3,
         aux_head_depth: int = 2,
         patch_size: int = 1,
+        # ── Gen14 U8 ── visual conditioning. 0 = state-only (byte-identical to pre-U8).
+        # >0 = the 128-D dual-cam latent enters as ONE extra in-context PREFIX TOKEN, the
+        # same way this backbone already ingests class / omega / t_min / t_max / time.
+        # See logs_in_develop/Gen14/U8/DECISION_Gen14_U8_injection_choice.md.
+        cond_dim: int = 0,
         condition_dropout: float = 0.1,      # accepted for signature parity (CFG via null class)
         condition_on_t: bool = False,        # official conditions only on h; t optional
         num_classes: int = 1,
@@ -294,8 +299,25 @@ class AFDiTTrajectory(nn.Module):
         self.t_min_tokens = nn.Parameter(tok(torch.empty(num_interval_tokens, hidden_size)))
         self.t_max_tokens = nn.Parameter(tok(torch.empty(num_interval_tokens, hidden_size)))
 
+        # ── Gen14 U8 ── the visual prefix token. Same learned-token + projection shape as
+        # class_tok / omega_tok / time_tok above: vision enters the way everything else does.
+        self.use_visual = cond_dim > 0
+        self.cond_dim = cond_dim
+        num_visual_tokens = 1 if self.use_visual else 0
+        if self.use_visual:
+            self.vis_tokens = nn.Parameter(tok(torch.empty(num_visual_tokens, hidden_size)))
+            self.vis_projector = TorchLinear(cond_dim, hidden_size, bias=True,
+                                             weight_init="scaled_variance",
+                                             init_constant=embedding_init_constant)
+
+        # 🔴 Gen14 U8 — these two MUST move together with num_visual_tokens.
+        # `prefix_tokens` strips the prefix before the u/v FinalLayers (see forward); the RoPE
+        # table is sized from `total_tokens`. Bumping one and not the other yields a model that
+        # trains fine and reads the WRONG positions. Gate G-B6 asserts they agree.
+        # The RoPE buffers are persistent=False, so resizing them cannot corrupt checkpoint
+        # loading — only the two constants matter.
         self.prefix_tokens = (num_classes + num_cfg_tokens + 2 * num_interval_tokens
-                              + num_time_tokens)
+                              + num_time_tokens + num_visual_tokens)
         total_tokens = self.prefix_tokens + self.num_patches
         head_dim = hidden_size // num_heads
         cos, sin = precompute_rope_cos_sin(head_dim, total_tokens)
@@ -328,7 +350,7 @@ class AFDiTTrajectory(nn.Module):
         b = x.shape[0]
         return x.reshape(b, self.num_patches * self.patch_size, self.transition_dim)
 
-    def _build_sequence(self, x, t, h, omega, t_min, t_max, force_dropout):
+    def _build_sequence(self, x, t, h, omega, t_min, t_max, force_dropout, visual_latent=None):
         b = x.shape[0]
         dev = x.device
         x_embed = self.x_embedder(x)
@@ -354,14 +376,34 @@ class AFDiTTrajectory(nn.Module):
             y_idx = torch.full((b,), self.num_classes if force_dropout else 0, dtype=torch.long, device=dev)
         class_tok = self.class_tokens[None] + self.y_embedder(y_idx)[:, None]
 
+        # ── Gen14 U8 ── the visual token, appended LAST in the prefix so every pre-existing
+        # token keeps its RoPE position (state-only checkpoints stay positionally comparable).
+        if self.use_visual:
+            if visual_latent is None:
+                raise ValueError(
+                    "[ AFDiTTrajectory ] cond_dim>0 but no visual latent reached the backbone. "
+                    "The wrapper (VisualDiTTwoTime) must resolve cond -> (B, cond_dim) and pass "
+                    "it as `cond`; training image-blind is exactly what this guard prevents.")
+            if visual_latent.ndim == 3:          # (B, T_win, C) -> pool the window
+                visual_latent = visual_latent.mean(dim=1)
+            vis_tok = self.vis_tokens[None] + self.vis_projector(visual_latent)[:, None]
+            return torch.cat([class_tok, omega_tok, tmin_tok, tmax_tok, time_tok,
+                              vis_tok, x_embed], dim=1)
+
         return torch.cat([class_tok, omega_tok, tmin_tok, tmax_tok, time_tok, x_embed], dim=1)
 
     # ── contract: matches Flow_matcher_U_Net_v2.forward ──────────────────────────
 
     def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False,
                 h=None, omega=None, t_min=None, t_max=None, return_v=False):
-        """x:[B,H,D] → u (or (u,v)). `cond`/`returns`/`use_dropout` accepted for parity."""
-        seq = self._build_sequence(x, time, h, omega, t_min, t_max, force_dropout)
+        """x:[B,H,D] → u (or (u,v)). `returns`/`use_dropout` accepted for parity.
+
+        Gen14 U8: when cond_dim>0, `cond` is the (B, cond_dim) visual latent — already encoded
+        upstream, so inside the MeanFlow/alpha-Flow JVP it is a captured CONSTANT and its
+        forward-mode tangent is zero by construction.
+        """
+        seq = self._build_sequence(x, time, h, omega, t_min, t_max, force_dropout,
+                                   visual_latent=cond if self.use_visual else None)
         cos, sin = self.rope_cos, self.rope_sin
 
         for block in self.shared_blocks:

@@ -351,6 +351,42 @@ for seed in selected_seeds:
           f"({'TRUE FiLM — per-block gamma scale + beta shift' if _film_mode == 'v2' else 'additive-bias FiLM (default)'})"
           f" — architecture key; v1/v2 checkpoints are NOT interchangeable")
 
+    # ── Gen14 U8 ── ML BONE (generative backbone for the two-time arms).
+    # Set per arm in the config block via _mix_bone_keys() / MIX_BONE_<ARM>. It is an
+    # ARCHITECTURE + PATH key ('B{ml_bone}' in args_to_watch_mix_visual_train), so each bone
+    # trains into its own tree and state_dicts are NOT interchangeable across bones.
+    # Validated and printed here so a bone mix-up is visible at the top of the log rather
+    # than only in a directory name.
+    _ML_BONE_BY_ARM = {'mf': ('unet', 'mf_dit', 'dit'), 'af': ('unet', 'sit', 'dit')}
+    _ml_bone = getattr(args, 'ml_bone', 'unet') or 'unet'
+    if ENGINE_SPEC['two_time']:
+        _allowed = _ML_BONE_BY_ARM[ENGINE]
+        if _ml_bone not in _allowed:
+            raise SystemExit(
+                f"[ train ] ERROR: ml_bone='{_ml_bone}' is not valid for the '{ENGINE}' arm "
+                f"(want one of {list(_allowed)}).")
+        if _ml_bone == 'unet':
+            print(f"[ train ] ml_bone = unet — VisualUNetTwoTime (FiLM {_film_mode}); "
+                  f"the Gen14 baseline bone")
+        else:
+            # 🔴 film_mode must NOT be defined on a DiT block: FiLM is a U-Net concept and the
+            # fragment would put a lying '_film..' in the checkpoint path. _mix_bone_keys()
+            # deletes it; this catches a hand-edited config that put it back.
+            if 'film_mode' in getattr(args, '_dict', {}) or hasattr(args, 'film_mode'):
+                if getattr(args, 'film_mode', None) is not None:
+                    raise SystemExit(
+                        f"[ train ] ERROR: ml_bone='{_ml_bone}' is a transformer bone but the "
+                        f"config block still defines film_mode={getattr(args,'film_mode')!r}. "
+                        f"FiLM is a U-Net concept; leave the key out (see _mix_bone_keys).")
+            print(f"[ train ] ml_bone = {_ml_bone} — VisualDiTTwoTime, visual latent enters as "
+                  f"ONE PREPENDED TOKEN (hidden={getattr(args,'dit_hidden_size',160)}, "
+                  f"depth={getattr(args,'dit_depth',8)}); "
+                  f"parameter-matched to the ~4.0M U-Net — see Gen14/U8 PLAN section 8")
+    elif _ml_bone != 'unet':
+        raise SystemExit(
+            f"[ train ] ERROR: ml_bone='{_ml_bone}' set on the '{ENGINE}' arm, which is "
+            f"single-time and has no transformer bone. Only mf/af accept a DiT (PLAN section 11).")
+
     ModelCls     = import_class(ENGINE_SPEC['model'])
     DiffusionCls = import_class(ENGINE_SPEC['diffusion'])
 
@@ -374,6 +410,18 @@ for seed in selected_seeds:
             # 🔴 interval_cfg=False in both Gen3v6 and Gen3v7 (no CFG in either). On the UNet arm
             # it changes the state_dict, so flipping it makes checkpoints non-interchangeable.
             interval_cfg=getattr(args, 'interval_cfg', False),
+            # ── Gen14 U8 ── the bone selector + its sizing. Before U8 these never reached the
+            # engine at all, so imf_backbone was stuck at its 'unet' default and the DiT/SiT
+            # ports were unreachable from a visual run. Because they are constructor kwargs of
+            # model_config, they are written into model_config.pkl and the eval loader
+            # reconstructs the right bone for free (eval_mix_visual_aligning.py:2291/2355).
+            imf_backbone=_ml_bone,
+            dit_hidden_size=getattr(args, 'dit_hidden_size', 160),
+            dit_depth=getattr(args, 'dit_depth', 8),
+            dit_num_heads=getattr(args, 'dit_num_heads', 4),
+            dit_patch_size=getattr(args, 'dit_patch_size', 1),
+            dit_aux_head_depth=getattr(args, 'dit_aux_head_depth', 2),
+            dit_condition_on_t=getattr(args, 'dit_condition_on_t', False),
         )
     else:
         # diffusion / fm — Gen6V4/Gen7 shape, unchanged.

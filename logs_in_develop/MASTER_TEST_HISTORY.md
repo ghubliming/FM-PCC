@@ -4689,4 +4689,69 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 2. **Automated Visualizer Re-generation**: Rebuilt `Visualizer_UAV_v1/index.html` from `Visualizer_VA_v2` via `build_from_va2.py` (41 anchor substitutions, expanding from 145 kB to 166 kB), seamlessly inheriting U18/U18.1/U18.2 independent Pareto figure sections, per-plot zoom, and FigWidth controls with zero manual HTML edits.
 3. **Cross-Tool Discovery Import Isolation**: Extended `Data_Analysis/DA_VA_v2/test_snapshot_scan.py` to cover all 6 DA discovery and HTML implementations. Resolved Python `sys.modules` namespace collisions between identical top-level `config` and `discovery` module names across tools by implementing a dynamic `load_discovery()` isolation wrapper with strict path validation.
 
+***
+
+## Gen15 UAV Mix-ML: Multi-Scene Evaluation (`corridor`, `pillars`, `s_curve`) at K=10 & Low-K Hypothesis (August 19, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, DA_UAV_v1, multi-scene evaluation, corridor, pillars, s_curve, K=10, Pareto dominance, low-K hypothesis, generalization gap, a0_loss.
+
+1. **Multi-Scene Benchmark Execution (Batch `batch_uav_20260819_135638`)**: Completed the first systematic multi-scene UAV Mix-ML evaluation using `DA_UAV_v1` on seed 6, testing 20 shared projection variants across `corridor` (10 trials), `pillars` (3 trials), and `s_curve` (3 trials) comparing Flow Matching (`fm`, Gen11 engine) against MeanFlow (`mf`, Gen3v6 engine) under matched 4.0M UNet backbones at $K=10$.
+2. **Corridor Pareto Dominance by Naive FM at K=10**: On `corridor`, naive Flow Matching Pareto-dominated MeanFlow across all three DPCC selection rows (`dpcc-r`, `dpcc-c`, `dpcc-t`), achieving perfect constraint satisfaction ($\text{S\&C} = 1.00$ vs $0.70\text{--}0.80$) and lower per-replan latency ($244\text{--}245\,\text{ms}$ vs $270\text{--}273\,\text{ms}$). In unguided rollouts (`diffuser`), FM generated near-feasible paths ($0.80\,\text{m}$ final goal distance) whereas MF strayed completely off course ($39.26\,\text{m}$ goal distance, a $49\times$ deficit).
+3. **Complex Non-Convex Scenes (`pillars` & `s_curve`)**: Both engines registered $0.00$ strict S&C on complex obstacle scenes, revealing distinct failure modes. On `pillars`, while FM produced tight but off-target plans ($0.69\text{--}5.83\,\text{m}$ band), MF produced the only goal-reaching trajectories via HardFlow ($0.29\,\text{m}$ goal distance $\times 3$, and $0.67$ success on `hardflow_new-t`) at $6.4\times$ lower projector solver time ($940\,\text{ms}$ vs $5,956\,\text{ms}$). On `s_curve`, FM closely approached the goal under `geo_free` ($0.49\,\text{m}$ distance), while MF experienced severe drift.
+4. **Resolution of the K=10 MeanFlow Anomaly**: Clarified why MeanFlow underperformed at $K=10$: MeanFlow's theoretical advantage is eliminating $O(1/K)$ Euler discretization error, which is already negligible at $K=10$ ($\Delta t = 0.1$). Analysis of training curves revealed a severe $9.5\times$ train/test generalization gap on action loss (`a0_loss`: $0.00302$ train vs $0.02855$ test for MF vs $2.1\times$ for FM), demonstrating that MeanFlow spent model capacity memorizing two-time interval consistency that is never queried during high-NFE ($K=10$) rollouts. Established that the true test of MeanFlow's low-NFE thesis on UAV requires a dedicated low-budget sweep ($K \in \{1, 2, 5\}$).
+
+***
+
+## Gen15 UAV Mix-ML: Corridor K-Sweep ($K \in \{1, 2, 5, 10, 20\}$) & Sharp Discretization Cliff (August 20, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, corridor K-sweep, Euler discretization cliff, navigation failure, precision failure, HardFlow K-robustness, real-time 33Hz budget, post_processing.
+
+1. **Measurement of the FM Discretization Cliff**: Evaluated naive Flow Matching across $K \in \{1, 2, 5, 10, 20\}$ on `corridor` (Jobs 24714–24718, 10 trials/cell, 23 variants). Identified a sharp step-function discretization cliff in constraint satisfaction between $K=2$ and $K=5$, with `dpcc-c` S&C progressing $0.00 \rightarrow 0.00 \rightarrow 0.90 \rightarrow 1.00 \rightarrow 1.00$.
+2. **Two Distinct Low-Budget Failure Regimes**:
+   - *K=1 (Navigation Failure)*: Single-step Euler integration from noise fails macro-navigation entirely ($0.00$ goal reach, $\sim 192$ constraint violations/episode, tracking error $36.4$), producing a single direction vector rather than a viable trajectory.
+   - *K=2 (Precision Failure)*: Goal reaching jumps to $0.70$ ($0.90$ for HardFlow), but S&C remains $0.00$ as the vehicle clips corridor boundaries ($58$ violations, tracking error $8.8$).
+   - *K=10 to K=20 (Saturation)*: Increasing $K$ from $10$ to $20$ yielded zero performance gain (identical $1.00$ S&C, tracking error $0.51$, steps-to-goal $270$ vs $272$) while increasing wall-clock latency by $1.7\times$.
+3. **HardFlow In-Loop Projection K-Robustness**: Discovered that HardFlow's in-loop constraint handling degrades more gracefully under low NFE than post-hoc DPCC projection. At $K=5$, all three HardFlow selectors achieved perfect $1.00$ S&C ($0$ violations), whereas DPCC selectors achieved $0.90$ ($1$ violation) and tightened DPCC collapsed to $0.30$ ($73$ violations), proving that HardFlow effectively buys back $\sim 1$ K-halving of compute budget.
+4. **Real-Time Control Budget Analysis (33 Hz / 30.3 ms)**: Decomposed computational bottlenecks against the 33 Hz real-time control window: pure network evaluation costs $\sim 8.6\,\text{ms}$ per NFE linearly ($9.1\,\text{ms}$ at $K=1$ to $171.9\,\text{ms}$ at $K=20$), establishing that only $K \le 3$ can fit within the total replanning budget before factoring in QP/NLP projection. The most efficient full-success operating point on corridor (`post_processing` @ $K=10$, $1.00$ S&C, $111.9\,\text{ms}$) operates at $3.7\times$ over the real-time budget.
+
+***
+
+## Checkpoint Architecture Audit: Repo-Wide Migration from `latest` to `best` & Resolution of 80% Training Bug (August 20, 2026)
+
+**Keywords**: Checkpoint audit, latest to best, serialization.py, state_best.pt, 80% training anomaly, UAV crash fix, repo-wide migration, defensive defaults.
+
+1. **UAV Launch Crash Investigation (Jobs 24708–24712)**: Investigated the immediate startup crash of all Gen15 MeanFlow corridor K-sweep jobs with `FileNotFoundError: state_-1.pt`. Traced the root cause to `mix_uav/utils/serialization.py::get_latest_epoch()`, which scanned for `state_*.pt`, encountered `state_best.pt`, raised a caught `ValueError`, and returned the default `-1` initialization when periodic numbered checkpoints had been cleaned from disk.
+2. **Discovery of the 80% Training Checkpoint Anomaly**: Discovered that periodic saves occur every `save_freq = 20000` steps for 100,000-step training runs. Because the training loop indexes steps $0 \dots 99999$, step $100000$ was never reached and never saved. As a result, `get_latest_epoch()` had consistently resolved to `state_80000.pt`, meaning **every historical UAV evaluation (across both Gen11 and Gen15) evaluated models at only 80% of training completion**. The final 20% of training resided exclusively in `state_best.pt`.
+3. **Data Impact Assessment**: Confirmed that because the 80% resolution was uniform across all UAV runs, internal within-UAV comparisons (such as the Gen15 FM vs MF comparison) remain apples-to-apples, but absolute performance metrics were systematically understated and direct cross-lineage UAV-vs-D3IL comparisons were invalidated.
+4. **Repo-Wide Code & Config Migration (40 Files, +136 / −41)**: Executed a repository-wide refactoring (commit `1ce49201`):
+   - Migrated all 20 `diffusion_epoch` configuration entries across `config/` from `'latest'` to `'best'`.
+   - Updated UAV evaluation drivers (`mix_uav_test/eval_mix_uav.py`, `FM_v3_uav_test/eval_fm_uav.py`) to properly accept `--epoch best` (preventing fatal `int('best')` casting errors).
+   - Replaced dead `latest` fallbacks across 19 `load_diffusion` / `load_diffusion_with_override` signatures across all generations.
+   - Enhanced `get_latest_epoch()` to emit descriptive, actionable `FileNotFoundError` diagnostics naming directory contents when numbered checkpoints are missing.
+
+***
+
+## Data Integrity & Parity Fix: HardFlow Candidate Fan Confound (`B1` vs `B4`) & Repo-Wide `B4_PARITY` Architecture (August 20, 2026)
+
+**Keywords**: Data integrity, B4_PARITY, resolve_hf_batch_size, candidate fan confound, IPOPT vs SLSQP cost, serial NLP loop, gate_h4, avoiding-d3il.
+
+1. **Discovery of the Arm-C Batch Confound (CAND_136 Anomaly)**: Investigated an apparent benchmark anomaly on `avoiding-d3il` where HardFlow (Arm C) exhibited lower per-step latency than DPCC (Arm B) (`0.243\,\text{s}` vs `0.324\,\text{s}/\text{step}`). Revealed that HardFlow had executed with an MPC candidate batch of $B=1$ while DPCC and Diffuser executed with $B=4$. Because both samplers loop serially over candidates during CPU optimization (`for i in range(batch_size)` around scipy SLSQP and CasADi IPOPT), Arm C had received an artificial $4\times$ computational discount.
+2. **True Matched-Batch Computational Hierarchy**: At matched candidate fans ($B=4$, verified on C109/C117 control runs), HardFlow costs $0.495\text{--}0.508\,\text{s}/\text{step}$ compared to DPCC's $0.252\text{--}0.259\,\text{s}/\text{step}$ (**HardFlow is $\sim 2\times$ slower**). Per individual NLP solve, IPOPT costs $18.9\text{--}20.4\,\text{ms}$ vs SLSQP's $8.7\text{--}11.5\,\text{ms}$ ($1.8\text{--}2.2\times$ more expensive), while Arm C additionally burns $15$ NFE per plan vs DPCC's $10$ NFE.
+3. **Implementation of `B4_PARITY` Architecture**: Established a deterministic, variant-driven batch resolution standard via `resolve_hf_batch_size(variant, configured_batch)` deployed across 5 live generation samplers (`flow_matcher_v3_meanflow`, `flow_matcher_v3_alphaflow`, `flow_matcher_v3_hardflow`, `mix_uav`, `mix_visual_aligning`):
+   - Bare `hardflow_new` is pinned to $B=1$ (faithful upstream control).
+   - Selection variants (`hardflow_new-r`, `-c`, `-t`) resolve to `configured_batch` ($B=4$), as selection rules require a candidate fan.
+   - Any mismatched or unexpected variant names raise an explicit `ValueError`.
+4. **Driver & Workflow Hardening**: Synchronized YAML configs (`hardflow.batch_size: 4`), updated SLURM entrypoints (`HFFM_BATCH:-4`), added automatic mismatch warnings in evaluation drivers when Arm-C fan diverges from `args.batch_size`, and created pre-flight validation gate `gate_h4` in `FM_v3_meanflow_test/gates_hardflow_meanflow.py`. Highlighted the pathological collapse of `-c` proximal ranking at $B > 1$ as an open research priority.
+
+***
+
+## Documentation Architecture: Obsidian Knowledge Vault Integration & AI Safety Protocol (August 20, 2026)
+
+**Keywords**: Documentation, Obsidian vault, historical archive, AI usage guidelines, quarantine directive, citation protocol, cross-verification.
+
+1. **Centralized Knowledge Vault Integration**: Integrated the author's historical Obsidian knowledge base archive into `logs_in_develop/Obsidian_knowledge_vault/`, aggregating research notes, continuous/discrete mathematical derivations, paper analyses, architecture ideation (Gen1–Gen15+), and exploratory bug investigation logs.
+2. **AI Safety & Quarantine Protocol (`AI_USAGE_GUIDELINES.md`, `README.md`)**: Formulated strict governance rules for AI coding assistants. Mandated that the vault be treated as a quarantined cold archive by default—strictly isolated from automatic context ingestion during normal development to prevent exploratory, superseded, or outdated derivations from contaminating production code.
+3. **Controlled Retrieval Triggers & Mandatory Disclosure**: Defined explicit access criteria (triggered solely by explicit user instruction or high-necessity historical retrieval). Mandated that any responses incorporating insights from the vault must include a standardized historical disclaimer alerting the user to verify against active repository code.
+
+
 

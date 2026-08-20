@@ -2307,10 +2307,34 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', dev
     # still resolves — where exp_name (built from the EVAL args) would label the results
     # folder with a film mode the weights do not have.
     _film_holder = model_config._dict.get('vis_config', model_config._dict.get('config'))
-    _film_pkl = getattr(_film_holder, 'film_mode', 'v1') or 'v1'
-    print(f"[ eval loading ] film_mode = {_film_pkl} (from train-time model_config.pkl; the "
-          f"backbone is rebuilt from the pkl, so it always matches the checkpoint)")
+
+    # ── Gen14 U8 ── which ML BONE produced this checkpoint. Read from the pkl's own
+    # constructor kwargs (the train script passes imf_backbone into model_config), so it is
+    # the bone that will actually be rebuilt, not what the eval config hopes for.
+    _bone_pkl = model_config._dict.get('imf_backbone', 'unet') or 'unet'
+    _is_dit = _bone_pkl != 'unet'
+    print(f"[ eval loading ] ml_bone = {_bone_pkl} "
+          f"({'VisualDiTTwoTime — visual latent as ONE PREPENDED TOKEN' if _is_dit else 'VisualUNetTwoTime / VisualUNet — FiLM'}) "
+          f"(from train-time model_config.pkl)")
     if override_args is not None:
+        _bone_cfg = getattr(override_args, 'ml_bone', _bone_pkl) or _bone_pkl
+        if _bone_cfg != _bone_pkl:
+            print(f"[ config->pkl ] WARNING  ml_bone: train-pkl={_bone_pkl!r} vs "
+                  f"eval-config={_bone_cfg!r} -- ARCHITECTURE key; KEEPING the train value to "
+                  f"protect the checkpoint. 🔴 The results folder is named from the EVAL "
+                  f"config, so it will read 'B{_bone_cfg}' while the weights are "
+                  f"'{_bone_pkl}'. Fix the config to match the checkpoint, or retrain.")
+
+    # 🔴 Gen14 U8 — FiLM is a U-NET concept. On a DiT/SiT bone there is no film_mode to
+    # report, and printing the 'v1' default would assert an architecture the weights do not
+    # have. Skip the whole breadcrumb rather than print a comfortable lie.
+    _film_pkl = getattr(_film_holder, 'film_mode', 'v1') or 'v1'
+    if _is_dit:
+        print("[ eval loading ] film_mode = n/a (transformer bone: no FiLM path exists)")
+    else:
+        print(f"[ eval loading ] film_mode = {_film_pkl} (from train-time model_config.pkl; the "
+              f"backbone is rebuilt from the pkl, so it always matches the checkpoint)")
+    if override_args is not None and not _is_dit:
         _film_cfg = getattr(override_args, 'film_mode', _film_pkl) or _film_pkl
         if _film_cfg != _film_pkl:
             print(f"[ config->pkl ] WARNING  film_mode: train-pkl={_film_pkl!r} vs "

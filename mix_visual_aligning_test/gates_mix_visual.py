@@ -171,8 +171,14 @@ def gate_g1():
     return ok
 
 
-def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode='v1'):
-    """Minimal in-memory build of one arm — no dataset, no checkpoint."""
+def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode='v1',
+           ml_bone='unet', dit_hidden_size=160, dit_depth=8):
+    """Minimal in-memory build of one arm — no dataset, no checkpoint.
+
+    Gen14 U8: `ml_bone` selects the generative backbone ('unet' | 'mf_dit' | 'sit' | 'dit').
+    On a transformer bone `film_mode` is not set on the cfg at all, mirroring what
+    `_mix_bone_keys()` does in the real config — FiLM is a U-Net concept.
+    """
     import torch
     from mix_visual_aligning.models.engine_registry import resolve, import_class
 
@@ -182,15 +188,311 @@ def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode=
     cfg.device, cfg.if_vision, cfg.horizon = device, if_vision, horizon
     cfg.action_dim, cfg.obs_dim, cfg.dim = 3, 6, 32
     cfg.dim_mults, cfg.condition_dropout, cfg.returns_condition = (1, 2, 4, 8), 0.1, False
-    cfg.film_mode = film_mode
+    if ml_bone == 'unet':
+        cfg.film_mode = film_mode
+    else:
+        cfg.dit_hidden_size, cfg.dit_depth = dit_hidden_size, dit_depth
+        cfg.dit_num_heads, cfg.dit_patch_size = 4, 1
 
     spec = resolve(engine)
     ModelCls, DiffCls = import_class(spec['model']), import_class(spec['diffusion'])
     obs_dim = 6 if if_vision else 20
     model = ModelCls(state_dim=3 + obs_dim, seq_len=horizon, freq_dim=32,
                      dropout_rate=0.1, device=device, if_vision=if_vision, vis_config=cfg,
-                     dual_head=True, interval_cfg=False)
+                     dual_head=True, interval_cfg=False, imf_backbone=ml_bone)
     return cfg, model, DiffCls, obs_dim
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Gen14 U8 — ML-bone gates (visual DiT/SiT). Plan: logs_in_develop/Gen14/U8/
+# ══════════════════════════════════════════════════════════════════════════════
+
+# (arm, ml_bone) pairs that must work after U8.
+_U8_BONES = (('mf', 'mf_dit'), ('mf', 'dit'), ('af', 'sit'), ('af', 'dit'))
+
+# module -> class, for the state-only regression check
+_U8_BONE_CLASSES = (
+    ('mix_visual_aligning.models.mf_dit_official_trajectory', 'MFDiTOfficialTrajectory'),
+    ('mix_visual_aligning.models.af_sit_trajectory',          'AFSiTTrajectory'),
+    ('mix_visual_aligning.models.mf_dit_trajectory',          'MFDiTTrajectory'),
+    ('mix_visual_aligning.models.af_dit_trajectory',          'AFDiTTrajectory'),
+)
+
+
+def gate_gb1():
+    """G-B1 — at cond_dim=0 every bone is byte-identical to its pre-U8 self.
+
+    The four transformer ports are shared with the STATE-ONLY generations (Gen3v4/v6/v7).
+    U8 must be provably additive there: no new parameter, no changed shape, when the
+    visual token is off. CPU-only, no vision encoder built.
+    """
+    print('\n=== G-B1: cond_dim=0 leaves every bone unchanged ===')
+    import importlib, torch
+    ok = True
+    for mod, cls_name in _U8_BONE_CLASSES:
+        Cls = getattr(importlib.import_module(mod), cls_name)
+        m0 = Cls(horizon=8, transition_dim=6, hidden_size=64, depth=2, num_heads=4)
+        keys0 = {k: tuple(v.shape) for k, v in m0.state_dict().items()}
+        new_keys = [k for k in keys0 if 'vis' in k.lower()]
+        if new_keys:
+            ok = False
+            print(f'  FAIL {cls_name}: state-only build leaked visual params {new_keys}')
+            continue
+        if getattr(m0, 'use_visual', False):
+            ok = False
+            print(f'  FAIL {cls_name}: use_visual is True at cond_dim=0')
+            continue
+        m1 = Cls(horizon=8, transition_dim=6, hidden_size=64, depth=2, num_heads=4, cond_dim=128)
+        keys1 = {k: tuple(v.shape) for k, v in m1.state_dict().items()}
+        added = set(keys1) - set(keys0)
+        changed = {k for k in set(keys0) & set(keys1) if keys0[k] != keys1[k]}
+        # pos_embed legitimately grows by one row on the adaLN pair (it owns the visual
+        # position); the RoPE pair keeps its table in a persistent=False buffer.
+        if changed - {'pos_embed'}:
+            ok = False
+            print(f'  FAIL {cls_name}: cond_dim>0 changed non-visual shapes {changed}')
+            continue
+        print(f'  ok   {cls_name}: {len(keys0)} params state-only; '
+              f'+{len(added)} visual ({sorted(added)}), grew={sorted(changed)}')
+    print('  G-B1 PASS' if ok else '  G-B1 FAIL')
+    return ok
+
+
+def gate_gb6():
+    """G-B6 — the prefix/RoPE bookkeeping, the one silent failure mode of Option 2.
+
+    On the RoPE bones `prefix_tokens` strips the prefix before the u/v heads and the RoPE
+    table is sized from `prefix_tokens + num_patches`. A half-applied +1 trains fine and
+    reads the WRONG positions. On the adaLN bones the same risk lives in `pos_embed`.
+    Both are checked here, plus the only thing that ultimately matters: output shape.
+    """
+    print('\n=== G-B6: prefix / pos-embed bookkeeping ===')
+    import importlib, torch
+    ok, H, D, B = True, 8, 9, 2
+    for mod, cls_name in _U8_BONE_CLASSES:
+        Cls = getattr(importlib.import_module(mod), cls_name)
+        for cond_dim in (0, 128):
+            m = Cls(horizon=H, transition_dim=D, hidden_size=64, depth=4, num_heads=4,
+                    cond_dim=cond_dim)
+            n_vis = 1 if cond_dim else 0
+            if hasattr(m, 'rope_cos'):                     # RoPE bones
+                want = m.prefix_tokens + m.num_patches
+                got = m.rope_cos.shape[0]
+                if got != want:
+                    ok = False
+                    print(f'  FAIL {cls_name} cond_dim={cond_dim}: RoPE table {got} != '
+                          f'prefix_tokens+num_patches {want} — HALF-APPLIED TOKEN BUMP')
+                    continue
+                base = 7                                    # class+omega+tmin+tmax+time
+                if m.prefix_tokens != base + n_vis:
+                    ok = False
+                    print(f'  FAIL {cls_name}: prefix_tokens={m.prefix_tokens}, want {base + n_vis}')
+                    continue
+            else:                                           # adaLN bones
+                if m.pos_embed.shape[1] != n_vis + m.num_patches:
+                    ok = False
+                    print(f'  FAIL {cls_name}: pos_embed len {m.pos_embed.shape[1]} != '
+                          f'{n_vis} + {m.num_patches}')
+                    continue
+            x = torch.randn(B, H, D)
+            cond = torch.randn(B, 128) if cond_dim else None
+            u, v = m(x, cond, torch.rand(B), h=torch.rand(B), return_v=True)
+            if tuple(u.shape) != (B, H, D) or tuple(v.shape) != (B, H, D):
+                ok = False
+                print(f'  FAIL {cls_name} cond_dim={cond_dim}: output {tuple(u.shape)} != '
+                      f'{(B, H, D)} — the prefix was not stripped correctly')
+                continue
+            print(f'  ok   {cls_name} cond_dim={cond_dim}: shapes clean, out={tuple(u.shape)}')
+    print('  G-B6 PASS' if ok else '  G-B6 FAIL')
+    return ok
+
+
+def gate_gb2(device='cuda'):
+    """G-B2 — every visual bone CONSTRUCTS, and lands near the U-Net's parameter count.
+
+    🔴 The parameter check is the whole point. `bb_unet_ablation` (2026-07-25) reported a
+    DiT beating a U-Net 3.5-7x; the 2026-08-19 STUDY showed its 'U-Net' was the 253 M
+    Fix_8 build and retracted the result. An unmatched visual A/B would repeat that.
+    The visual bone target is the ~4.0 M VisualUNetTwoTime (dim=32).
+    """
+    print('\n=== G-B2: visual bones build, parameter-matched ===')
+    ok = True
+    _, unet_model, _, _ = _build('mf', True, 8, 2, device, ml_bone='unet')
+    n_unet = sum(p.numel() for p in unet_model.velocity_net.backbone.parameters())
+    print(f'  reference: VisualUNetTwoTime bone = {n_unet / 1e6:.2f} M')
+    for arm, bone in _U8_BONES:
+        try:
+            _, model, _, _ = _build(arm, True, 8, 2, device, ml_bone=bone)
+        except Exception as e:
+            ok = False
+            print(f'  FAIL {arm}@{bone}: construction raised {type(e).__name__}: {e}')
+            continue
+        vnet = model.velocity_net
+        if type(vnet).__name__ != 'VisualDiTTwoTime':
+            ok = False
+            print(f'  FAIL {arm}@{bone}: velocity_net is {type(vnet).__name__}, not VisualDiTTwoTime')
+            continue
+        if not getattr(vnet.backbone, 'use_visual', False):
+            ok = False
+            print(f'  FAIL {arm}@{bone}: bone built with cond_dim=0 — it would train IMAGE-BLIND')
+            continue
+        n = sum(p.numel() for p in vnet.backbone.parameters())
+        ratio = n / n_unet
+        flag = 'ok  ' if 0.75 <= ratio <= 1.35 else 'WARN'
+        if flag == 'WARN':
+            ok = False
+            print(f'  FAIL {arm}@{bone}: bone {n / 1e6:.2f} M = {ratio:.2f}x the U-Net — '
+                  f'NOT parameter-matched. Fix dit_hidden_size (160 is the matched width).')
+            continue
+        print(f'  {flag} {arm}@{bone}: bone {n / 1e6:.2f} M ({ratio:.2f}x U-Net)')
+    print('  G-B2 PASS' if ok else '  G-B2 FAIL')
+    return ok
+
+
+def gate_gb3(device='cuda'):
+    """G-B3 — vision is LIVE: gradient actually flows into the visual projection.
+
+    The U5 lesson: a zero-initialised conditioning path can look perfectly wired and be
+    inert. Construction proving `vis_projector` exists proves nothing; only a non-zero
+    gradient after a real loss step does.
+    """
+    print('\n=== G-B3: the visual token receives gradient ===')
+    import torch
+    ok = True
+    for arm, bone in _U8_BONES:
+        cfg, model, DiffCls, obs_dim = _build(arm, True, 8, 2, device, ml_bone=bone)
+        kw = dict(horizon=8, observation_dim=obs_dim, action_dim=3, goal_dim=0,
+                  n_timesteps=100, loss_type='l2', if_vision=True,
+                  t_schedule='logit_normal', p_mean=-0.4, p_std=1.0)
+        if arm == 'mf':
+            kw.update(meanflow_data_proportion=0.5, mf_adp_p=1.0, mf_adp_eps=0.01)
+        else:
+            kw.update(af_ratio_fm=0.5, af_adp_eps=1e-3, af_clamp_utgt=4.0)
+        diffusion = DiffCls(model, **kw).to(device)
+        traj, cond = _fake_visual_batch(2, 8, device)
+        loss, _ = diffusion.loss(traj, cond)
+        loss.backward()
+        proj = model.velocity_net.backbone.vis_projector
+        w = proj.linear.weight if hasattr(proj, 'linear') else proj.weight
+        g = w.grad
+        live = g is not None and float(g.abs().sum()) > 0
+        if not live:
+            ok = False
+            print(f'  FAIL {arm}@{bone}: vis_projector grad is {"None" if g is None else "all zero"} '
+                  f'— the model is IMAGE-BLIND despite reporting if_vision=True')
+            continue
+        # and the encoder itself must be training end-to-end, as in Gen6V4/Gen7
+        enc_g = [p.grad for p in model.velocity_net.obs_encoder.parameters() if p.grad is not None]
+        enc_live = any(float(x.abs().sum()) > 0 for x in enc_g)
+        print(f'  ok   {arm}@{bone}: |grad vis_projector|={float(g.abs().sum()):.3e}, '
+              f'encoder trains={enc_live}, loss={float(loss):.4f}')
+    print('  G-B3 PASS' if ok else '  G-B3 FAIL')
+    return ok
+
+
+def gate_gb45(device='cuda'):
+    """G-B4/G-B5 — one loss step per (arm, bone) is FINITE under forward-mode AD.
+
+    mf takes a literal `torch.func.jvp`; af re-enters the backbone for its bootstrap
+    target. Both must survive the prepended token. This should hold by construction (the
+    latent is a captured constant, softmax/RoPE/adaLN are all forward-AD friendly) — gate
+    it anyway, because 'should' is what gates exist to disprove.
+    """
+    print('\n=== G-B4/5: JVP + bootstrap survive the visual token ===')
+    import torch
+    ok = True
+    for arm, bone in _U8_BONES:
+        cfg, model, DiffCls, obs_dim = _build(arm, True, 8, 2, device, ml_bone=bone)
+        kw = dict(horizon=8, observation_dim=obs_dim, action_dim=3, goal_dim=0,
+                  n_timesteps=100, loss_type='l2', if_vision=True,
+                  t_schedule='logit_normal', p_mean=-0.4, p_std=1.0)
+        if arm == 'mf':
+            kw.update(meanflow_data_proportion=0.5, mf_adp_p=1.0, mf_adp_eps=0.01)
+        else:
+            kw.update(af_ratio_fm=0.5, af_adp_eps=1e-3, af_clamp_utgt=4.0)
+        diffusion = DiffCls(model, **kw).to(device)
+        traj, cond = _fake_visual_batch(2, 8, device)
+        try:
+            loss, info = diffusion.loss(traj, cond)
+            loss.backward()
+        except Exception as e:
+            ok = False
+            print(f'  FAIL {arm}@{bone}: loss step raised {type(e).__name__}: {e}')
+            continue
+        finite = bool(torch.isfinite(loss))
+        if not finite:
+            ok = False
+            print(f'  FAIL {arm}@{bone}: non-finite loss')
+            continue
+        raw = float(info['raw_mse_u']) if 'raw_mse_u' in info else float('nan')
+        print(f'  ok   {arm}@{bone}: loss={float(loss):.6f} finite raw_mse_u={raw:.6f}')
+    print('  G-B4/5 PASS' if ok else '  G-B4/5 FAIL')
+    return ok
+
+
+def gate_gb7():
+    """G-B7 — path identity: two bones must NOT collide in one checkpoint directory.
+
+    This is the trap CHANGELOG_Gen14_U5...md:208 flagged in advance. It also checks that
+    a DiT block carries NO film_mode fragment (FiLM is a U-Net concept; the fragment would
+    be a lying directory name).
+    """
+    print('\n=== G-B7: bone is a checkpoint-path key ===')
+    import os, importlib.util, sys
+    ok = True
+    path = os.path.join('config', 'aligning-d3il-visual.py')
+
+    def _load(env):
+        for k in ('MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF'):
+            os.environ.pop(k, None)
+        os.environ.update(env)
+        spec = importlib.util.spec_from_file_location('_cfg_probe', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.base
+
+    try:
+        b_unet = _load({})['mix_visual_aligning_mf']
+        b_dit = _load({'MIX_BONE_MF': 'mf_dit'})['mix_visual_aligning_mf']
+    finally:
+        for k in ('MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF'):
+            os.environ.pop(k, None)
+        sys.modules.pop('_cfg_probe', None)
+
+    # 🔴 The U-Net block must NOT define ml_bone: watch() skips undefined keys, which is what
+    # keeps every pre-U8 checkpoint path byte-identical. The DiT block must define it.
+    if 'ml_bone' in b_unet:
+        ok = False
+        print(f"  FAIL the unet block defines ml_bone={b_unet['ml_bone']!r} — that adds a "
+              f"'_Bunet' fragment and ORPHANS every existing Gen14 U-Net checkpoint.")
+    else:
+        print('  ok   unet block omits ml_bone (pre-U8 paths preserved)')
+    if b_dit.get('ml_bone') != 'mf_dit':
+        ok = False
+        print(f"  FAIL the DiT block did not resolve ml_bone: {b_dit.get('ml_bone')!r}")
+    if 'film_mode' in b_dit:
+        ok = False
+        print(f"  FAIL the mf_dit block still carries film_mode={b_dit['film_mode']!r} — "
+              f"that fragment would put a lying '_film..' in the DiT checkpoint path.")
+    else:
+        print('  ok   film_mode absent from the DiT block')
+    if 'film_mode' not in b_unet:
+        ok = False
+        print('  FAIL the unet block LOST film_mode — existing U-Net paths would change.')
+    else:
+        print(f"  ok   unet block keeps film_mode={b_unet['film_mode']!r}")
+
+    exp_unet, exp_dit = str(b_unet['exp_name']), str(b_dit['exp_name'])
+    if exp_unet == exp_dit:
+        ok = False
+        print('  FAIL both bones produce the SAME exp_name — checkpoints WILL collide.')
+    else:
+        print(f'  ok   distinct exp_name templates (bone fragment present)')
+    print('  G-B7 PASS' if ok else '  G-B7 FAIL')
+    return ok
+
+
+
 
 
 def _fake_visual_batch(batch, horizon, device):
@@ -549,15 +851,17 @@ def gate_g7(device='cuda'):
     return ok
 
 
-GATES = {'g0': gate_g0, 'g1': gate_g1, 'g2': gate_g2,
+GATES = {'gb1': gate_gb1, 'gb6': gate_gb6, 'gb7': gate_gb7,
+         'gb2': gate_gb2, 'gb3': gate_gb3, 'gb45': gate_gb45,
+         'g0': gate_g0, 'g1': gate_g1, 'g2': gate_g2,
          'g3': gate_g3, 'g4': gate_g4, 'g5': gate_g5, 'g6': gate_g6,
          'g7': gate_g7}
-NEEDS_GPU = {'g2', 'g3', 'g5', 'g7'}
+NEEDS_GPU = {'g2', 'g3', 'g5', 'g7', 'gb2', 'gb3', 'gb45'}
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--gate', default='all',
-                    choices=['all', 'static'] + list(GATES))
+                    choices=['all', 'static', 'bone'] + list(GATES))
     ap.add_argument('--device', default='cuda')
     a = ap.parse_args()
 
@@ -565,6 +869,9 @@ if __name__ == '__main__':
         names = list(GATES)
     elif a.gate == 'static':
         names = [g for g in GATES if g not in NEEDS_GPU]
+    elif a.gate == 'bone':
+        # Gen14 U8 — just the ML-bone gates (G-B1..G-B7)
+        names = ['gb1', 'gb6', 'gb7', 'gb2', 'gb3', 'gb45']
     else:
         names = [a.gate]
 

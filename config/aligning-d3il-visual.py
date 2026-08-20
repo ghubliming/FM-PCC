@@ -890,6 +890,11 @@ args_to_watch_mix_visual_train = [
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),
     ('film_mode', 'film'),
+    # 🔴 Gen14 U8 — the ML-BONE key. MUST be in this list: film_mode is a path key and the
+    # bone was not, so a DiT run would have overwritten the U-Net checkpoint in the same
+    # directory (the trap CHANGELOG_Gen14_U5...md:208 flagged a year in advance). Blocks that
+    # do not define it are skipped by watch(), so every existing U-Net path is unchanged.
+    ('ml_bone', 'B'),
     ('engine', 'E'),                 # ← Gen14 arm identity key
     ('t_schedule', 'ts'),            # mf/af only
     ('af_alpha_scheduler', 'afsch'), # af only
@@ -906,6 +911,7 @@ args_to_watch_mix_visual_plan = [
     ('if_vision', 'V'),
     ('mpc_batch_size', 'mpc'),
     ('film_mode', 'film'),
+    ('ml_bone', 'B'),                # Gen14 U8 — see the training list
     ('engine', 'E'),
 ]
 
@@ -955,10 +961,23 @@ _mix_plan_common = {
 }
 
 
+# Gen14 U8 — sentinel meaning "REMOVE this inherited key from the block".
+# An override dict can add or replace, but the mf/af arms inherit `film_mode` from their
+# parent (`fm_visual_aligning`), and on a DiT bone the key must be GONE, not merely unset:
+# diffuser's watch() skips keys the args object lacks (utils/setup.py:25), so deleting it is
+# what keeps '_film..' out of a transformer checkpoint path.
+_DROP = object()
+
+
 def _mix_train_block(engine, parent, overrides):
-    """Assemble one training block: parent arm's config + Gen14 identity + arm overrides."""
+    """Assemble one training block: parent arm's config + Gen14 identity + arm overrides.
+
+    Keys whose override value is `_DROP` are removed from the merged block entirely.
+    """
     blk = {**base[parent], **overrides, 'engine': engine,
            'prefix': f'mix_visual_aligning_{engine}/'}
+    for k in [k for k, v in blk.items() if v is _DROP]:
+        del blk[k]
     blk['exp_name'] = watch(args_to_watch_mix_visual_train)
     return blk
 
@@ -991,6 +1010,17 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
         # Unconditional: for an IDENTITY key the training value is the only correct one.
         # Overriding it in a plan block is exactly the mistake this loop prevents.
         blk[plan_key] = train_blk[key]
+
+    # 🔴 Gen14 U8 — an identity key the TRAINING block does not have must not survive on the
+    # plan block. `film_mode` arrives here via _mix_plan_common (copied from the FM plan
+    # template), so on a DiT bone it would otherwise label the RESULTS folder '_filmv1_' for a
+    # model that has no FiLM path at all — the eval-side twin of the checkpoint-path lie.
+    # The mirror loop above only ADDS keys; this is the matching removal.
+    for _identity_key, _ in args_to_watch_mix_visual_train:
+        if _identity_key == 'prefix':
+            continue
+        if _identity_key not in train_blk:
+            blk.pop(_MIX_TRAIN_TO_PLAN_KEY.get(_identity_key, _identity_key), None)
 
     # Training-key fragments -> the CHECKPOINT identity, re-pointed at this arm's plan
     # namespace. `[2:]` strips the 'f:' marker; the whole prefix carries one of its own.
@@ -1104,6 +1134,88 @@ def _film_mode(engine):
             return val
     return 'v1'
 
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Gen14 U8 — the ML-BONE knob (generative backbone for the two-time arms)
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Plan:     logs_in_develop/Gen14/U8/PLAN_Gen14_U8_visual_dit_bone.md
+# Decision: logs_in_develop/Gen14/U8/DECISION_Gen14_U8_injection_choice.md
+#
+#   'unet'    VisualUNetTwoTime  — the Gen14 baseline. FiLM conditioning (film_mode v1/v2).
+#   'mf_dit'  official MeanFlow DiT (adaLN-zero trunk)          — mf arm only
+#   'sit'     alpha-Flow SiT      (adaLN-zero trunk)            — af arm only
+#   'dit'     iMF DiT             (RoPE, in-context tokens)     — both arms
+#
+# On every DiT/SiT bone the 128-D visual latent enters as ONE PREPENDED TOKEN, never as
+# adaLN modulation — that design point is already occupied by the U-Net's FiLM, and
+# diffusion_policy (the upstream of this repo's vision encoder) tokenises for its
+# transformer and reserves FiLM for its U-Net. See the DECISION doc §2.
+#
+# ⚠️ film_mode is a U-NET concept. On a DiT bone it is not merely unused, it would put a
+#    lying '_filmv1_' fragment in the checkpoint path — so `_mix_bone_keys()` DELETES the
+#    key for non-unet bones and watch() then skips it. Never re-add it by hand.
+#
+# ✅ Safe to flip one arm at a time: ml_bone is in args_to_watch_mix_visual_train, so each
+#    bone trains into its own '..._B{bone}_E..' tree and no existing run is overwritten.
+_MIX_ML_BONES = {
+    'mf': ('unet', 'mf_dit', 'dit'),
+    'af': ('unet', 'sit', 'dit'),
+}
+
+
+def _ml_bone(engine):
+    """Resolve ONE arm's generative bone. Same precedence shape as _film_mode().
+
+        1. MIX_BONE_<ENGINE>   e.g. MIX_BONE_MF=mf_dit   — this arm only
+        2. MIX_BONE            — every two-time arm that has no specific setting
+        3. 'unet'              — the default, identical to the pre-U8 behaviour
+
+    Unknown values RAISE, and so does a bone that belongs to the OTHER arm ('sit' on mf,
+    'mf_dit' on af) — those are separate classes with separate provenance, and silently
+    accepting one would train a model whose folder name names a different architecture.
+    """
+    allowed = _MIX_ML_BONES[engine]
+    for key in (f'MIX_BONE_{engine.upper()}', 'MIX_BONE'):
+        val = os.environ.get(key)
+        if val:
+            if val not in allowed:
+                raise ValueError(
+                    f"CRITICAL: {key}='{val}' is not a valid ML bone for the '{engine}' arm "
+                    f"(want one of {list(allowed)}).")
+            return val
+    return 'unet'
+
+
+def _mix_bone_keys(engine):
+    """The bone-dependent block fragment: ml_bone plus EITHER film_mode OR the DiT sizing.
+
+    Returns a dict to splat into the arm's training block. Exactly one conditioning-config
+    family is present at a time, so a block can never carry both a FiLM mode and a DiT width.
+    """
+    bone = _ml_bone(engine)
+    if bone == 'unet':
+        # 🔴 ml_bone is DELIBERATELY ABSENT on the baseline bone. watch() skips keys a block
+        # does not define, so the U-Net's exp_name / diffusion_loadpath stay BYTE-IDENTICAL to
+        # every pre-U8 Gen14 run — no existing checkpoint or results folder is orphaned. The
+        # DiT blocks below DO define it, so they carry a '_B{bone}' fragment the U-Net lacks
+        # and the two can never collide. Same trick n_diffusion_steps and film_mode already use.
+        return {'film_mode': _film_mode(engine)}
+    # DiT/SiT bone: film_mode is deliberately ABSENT (see the warning above).
+    # 🔴 dit_hidden_size=160 (not the state-only 256) is the PARAMETER-MATCHED width:
+    # 18*depth*d^2 => 160/8 ~ 3.9 M vs the visual U-Net's ~4.0 M (dim=32). 256/8 is ~9.9 M,
+    # i.e. 2.5x, and an unmatched backbone A/B is exactly the Fix_8 defect that already
+    # forced one public retraction (PLAN §1.2(c), §8). Both are ARCHITECTURE keys — changing
+    # either requires a retrain, and neither is in the watch list, so treat a change as
+    # needing a new bone name rather than silently overwriting.
+    return {
+        'ml_bone':         bone,
+        'film_mode':       _DROP,   # 🔴 inherited from fm_visual_aligning — must be DELETED
+        'dit_hidden_size': 160,
+        'dit_depth':       8,
+        'dit_num_heads':   4,
+        'dit_patch_size':  1,
+    }
+
+
 # ─── arm: diffusion (Gen6V4) ────────────────────────────────────────────────────────────────
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
 # Gen6V4's own hyperparameters (action_weight=10), otherwise it is not the Gen6V4 baseline
@@ -1177,7 +1289,9 @@ base['mix_visual_aligning_mf'] = _mix_train_block('mf', 'fm_visual_aligning', {
     # MIX_FILM_MODE_MF=v2 selects TRUE FiLM (retrain required). Backbone: VisualUNetTwoTime
     # -> unet1d_twotime_film.Flow_matcher_U_Net_v2_FiLM, which retains h_mlp (U5).
     # ⚠️ For an mf-vs-af comparison, move this arm and the af arm TOGETHER (see af block).
-    'film_mode': _film_mode('mf'),
+    # Gen14 U8: _mix_bone_keys emits ml_bone + film_mode on the U-Net bone, or ml_bone +
+    # the DiT sizing (film_mode ABSENT) on a transformer bone. MIX_BONE_MF=mf_dit|dit.
+    **_mix_bone_keys('mf'),
 })
 
 # ─── arm: af (Gen3v7 alpha-Flow) ───────────────────────────────────────────────────────
@@ -1217,7 +1331,10 @@ base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
     # MIX_FILM_MODE=v2 (the all-arms form) when you want the pair moved together, or set
     # MIX_FILM_MODE_MF and MIX_FILM_MODE_AF to the same value. Comparing mf@v2 against
     # af@v1 confounds the objective with the conditioning route.
-    'film_mode': _film_mode('af'),
+    # Gen14 U8: same bone treatment as the mf arm. MIX_BONE_AF=sit|dit. The mf-vs-af
+    # comparison is architecture-controlled only if BOTH arms sit on the same bone — use
+    # the bare MIX_BONE to move them together.
+    **_mix_bone_keys('af'),
 })
 
 # ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────

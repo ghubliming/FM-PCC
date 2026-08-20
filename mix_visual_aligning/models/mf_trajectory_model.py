@@ -43,11 +43,13 @@ class MFTrajectoryModel(nn.Module):
         # faithful official-iMF transformer (MFDiTTrajectory); 'mf_dit' (U2) swaps in the
         # faithful official-MeanFlow DiT (MFDiTOfficialTrajectory, adaLN-zero). All three
         # satisfy the same velocity_net forward contract, so objective/JVP/sampler are unchanged.
-        # 🔴 FIX_8_BACKBONE_DEFAULT — 'unet' is CORRECT here and must stay. Gen14 never sets this key
-        # (config/aligning-d3il-visual.py has no imf_backbone anywhere), and the
-        # if_vision=True graft below REQUIRES it: `if imf_backbone not in ('unet',):
-        # raise`. Changing this default to a DiT/SiT the way the three state-only
-        # generations did would make every Gen14 mf/af visual job raise on construction.
+        # 🔴 FIX_8_BACKBONE_DEFAULT — 'unet' is CORRECT here and must stay THE DEFAULT.
+        # Pre-U8 the reason was hard: the if_vision graft raised for anything else. U8 lifted
+        # that (all four bones now carry a visual token), so the reason is now scientific
+        # rather than mechanical — 'unet' is the Gen14 baseline bone that every existing
+        # checkpoint and every published Gen14 number was trained with. A DiT is opted INTO
+        # per run via the `ml_bone` config key, which is a checkpoint-path key precisely so
+        # the two never collide. Flipping this default would silently re-point every job.
         imf_backbone: str = 'unet',
         dit_depth: int = 8,
         dit_hidden_size: int = 256,
@@ -75,21 +77,40 @@ class MFTrajectoryModel(nn.Module):
         self.if_vision = if_vision
 
         if if_vision:
-            # ── Gen14 GRAFT ───────────────────────────────────────────────
-            # Visual backbone wins over imf_backbone: the DiT/SiT variants have
-            # no visual-conditioning input, so silently honouring them here
-            # would train an image-blind model that still reports if_vision.
-            if imf_backbone not in ('unet',):
+            # ── Gen14 GRAFT (U8: no longer U-Net-only) ────────────────────
+            # Until U8 this branch raised for every non-'unet' bone, because the DiT/SiT
+            # ports had no visual-conditioning input and would have trained image-blind.
+            # U8 gave all four of them one (a prepended visual TOKEN, cond_dim>0), so the
+            # bone is now a real choice here. The guard survives in stricter form: an
+            # unknown key still raises, and each bone's `cond_dim>0` path raises at
+            # forward() if no latent reaches it — image-blindness stays unrepresentable.
+            if imf_backbone == 'unet':
+                from .visual_unet_twotime import VisualUNetTwoTime
+                self.velocity_net = VisualUNetTwoTime(
+                    vis_config, dual_head=dual_head, interval_cfg=interval_cfg)
+                state_dim = VisualUNetTwoTime.TRANSITION_DIM
+            elif imf_backbone in ('mf_dit', 'dit'):
+                from .visual_dit_twotime import VisualDiTTwoTime
+                # 'dit' is the RoPE iMF bone; disambiguated per arm because the mf and af
+                # copies are separate classes with separate provenance.
+                variant = 'mf_dit' if imf_backbone == 'mf_dit' else 'dit_mf'
+                self.velocity_net = VisualDiTTwoTime(
+                    vis_config, variant=variant,
+                    dual_head=dual_head, interval_cfg=interval_cfg,
+                    # single source of truth for the sizing: these are the values the ENGINE
+                    # resolved, and they win over the same-named attrs on vis_config.
+                    dit_hidden_size=dit_hidden_size, dit_depth=dit_depth,
+                    dit_num_heads=dit_num_heads, dit_patch_size=dit_patch_size,
+                    dit_aux_head_depth=dit_aux_head_depth,
+                    dit_condition_on_t=dit_condition_on_t)
+                state_dim = VisualDiTTwoTime.TRANSITION_DIM
+            else:
                 raise ValueError(
-                    f"[ MFTrajectoryModel ] if_vision=True requires imf_backbone='unet' "
-                    f"(got '{imf_backbone}'). The DiT/SiT backbones have no visual "
-                    f"conditioning path and would train image-blind."
+                    f"[ MFTrajectoryModel ] if_vision=True with imf_backbone='{imf_backbone}' "
+                    f"is not supported (want 'unet', 'mf_dit' or 'dit'). The af-only bone "
+                    f"'sit' belongs to AFTrajectoryModel."
                 )
-            from .visual_unet_twotime import VisualUNetTwoTime
-            self.velocity_net = VisualUNetTwoTime(
-                vis_config, dual_head=dual_head, interval_cfg=interval_cfg)
             # state_dim is pinned to the visual transition dim for the aux head below
-            state_dim = VisualUNetTwoTime.TRANSITION_DIM
             self.state_dim = state_dim
         elif imf_backbone == 'dit':
             # The DiT always carries its dual heads + interval conditioning natively;

@@ -112,6 +112,43 @@ esac
 unset MIX_FILM_MODE
 export "MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
 echo "[ train ] film_mode = $FILM_MODE  (MIX_FILM_MODE_${ENGINE_UC}; unset -> v1)"
+
+# ── Gen14 U8 ── ML BONE (generative backbone). Same knob shape as MIX_FILM_MODE:
+# MIX_BONE_<ENGINE> for one arm, bare MIX_BONE for all two-time arms, default 'unet'.
+#   MIX_BONE_MF=mf_dit ./Slurm_Codes/submit.sh <this script> mf 6
+#   MIX_BONE=dit       ./Slurm_Codes/submit.sh <this script> mf 6     # moves mf AND af
+#
+#   unet    VisualUNetTwoTime      — the Gen14 baseline (FiLM v1/v2)
+#   mf_dit  official MeanFlow DiT  — mf arm only
+#   sit     alpha-Flow SiT         — af arm only
+#   dit     iMF RoPE DiT           — both arms
+#
+# On every transformer bone the 128-D visual latent enters as ONE PREPENDED TOKEN.
+# 🔴 ARCHITECTURE + PATH key: a DiT trains into '..._B{bone}_E<arm>' and carries NO
+# '_film..' fragment (FiLM is a U-Net concept). state_dicts are NOT interchangeable across
+# bones. The U-Net path is unchanged from pre-U8, so existing checkpoints are untouched.
+# See logs_in_develop/Gen14/U8/.
+#
+# Same NARROWING as MIX_FILM_MODE: resolve for THIS arm, re-publish arm-specifically, drop
+# the broadcast form so the other arm blocks resolve 'unet' on import.
+eval "ML_BONE=\${MIX_BONE_${ENGINE_UC}:-\${MIX_BONE:-unet}}"
+case "$ENGINE" in
+    mf) VALID_BONES="unet mf_dit dit" ;;
+    af) VALID_BONES="unet sit dit" ;;
+    *)  VALID_BONES="unet" ;;
+esac
+if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
+    echo "[ train ] ERROR: ml_bone '$ML_BONE' is not valid for engine '$ENGINE' (want: $VALID_BONES)"
+    exit 1
+fi
+unset MIX_BONE
+export "MIX_BONE_${ENGINE_UC}=$ML_BONE"
+if [ "$ML_BONE" = "unet" ]; then
+    echo "[ train ] ml_bone = unet (baseline; film_mode=$FILM_MODE applies)"
+else
+    echo "[ train ] ml_bone = $ML_BONE  -- VisualDiTTwoTime, visual latent as ONE TOKEN;"
+    echo "[ train ]           film_mode is N/A on this bone and is absent from the path."
+fi
 if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then
     echo "[ train ] WARNING: $(echo $SEEDS | wc -w) seeds will run SEQUENTIALLY in this one job"
     echo "[ train ]          against the 24 h wall. Prefer mix_visual_aligning_pipeline.sh,"

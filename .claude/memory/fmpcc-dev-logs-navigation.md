@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 1acee9f0-c0f1-4ab7-8468-d4aeb6a7f718
-  modified: 2026-07-22T15:34:17.447Z
+  modified: 2026-08-20T00:00:00.000Z
 ---
 
 FM-PCC is under heavy active development (unfinished, buggy in places; as of July 2026 Gen7/Gen8/Gen9/Gen11 and HardFlow+iMF are "working on"). To find the current state:
@@ -14,6 +14,7 @@ FM-PCC is under heavy active development (unfinished, buggy in places; as of Jul
 - `logs_in_develop/` — full per-generation dev logs (too many MDs to read blindly; navigate via the master file).
 - Commit messages carry generation tags like `(Gen11 Fix11 & Sync to Gen7/Gen6V4 C4)`; fixes are often mirrored across sibling generations.
 - Repo is majorly based on DPCC at `/workspaces/aux_repo/dpcc`, mixed with other upstream reference repos in `/workspaces/aux_repo/`. Current contents (2026-07-22, late): alphaflow, d3il, diffuser, dpcc, drifting, drifting_policy, flow_guidance, HardFlow, imeanflow, l4casadi, MeanFlow, mujoco_mpc, SafeFlowMPC, UAV-Flow — **this is a DYNAMIC, growing list; new reference repos get added over time, so always `ls /workspaces/aux_repo/` for the live set rather than trusting this snapshot.** (`MeanFlow` + `alphaflow` added 2026-07-22 — see [[meanflow-family-upstreams]].)
+- **Agent-pulled reference subfolders**: not every entry in `aux_repo/` is a repo clone — some are *subfolders* grouping upstreams pulled for one specific unit, named `<purpose>_(Claude_pulled)` and carrying a `README.md` that states who pulled them, when, for which plan, and which files matter. First one: `visual_transformer_refs_(Claude_pulled)/` (2026-08-20, for Gen14 U8) — see [[visual-transformer-refs-auxrepo]]. Read the subfolder README before using anything inside; all such folders are strictly read-only references, never imported or run.
 - `flow_guidance` and `l4casadi` were pulled in because HardFlow's README credits them: HardFlow's structure is inspired by flow_guidance, and l4casadi supplies the PyTorch↔CasADi bridges that HardFlow + the projection baselines need (the `hardflow_new` l4casadi-free variant does not). When HardFlow/iMF behavior is unclear, these are the upstreams to compare against.
 
 **Why:** README.md is intentionally minimal, and user prompts can be inaccurate or forget details — verify against logs and git history.

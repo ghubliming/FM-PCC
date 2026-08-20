@@ -129,7 +129,29 @@ esac
 # Arm-specific ONLY. Any bare MIX_FILM_MODE on the submitting environment still rides along
 # via ALL, but the arm-specific variable takes precedence in _film_mode(), so $ENGINE gets
 # what was resolved here either way.
-EXPORT_OPTS="--export=ALL,MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
+# ── Gen14 U8 ── ML BONE, resolved and narrowed exactly like FILM_MODE above.
+eval "ML_BONE=\${MIX_BONE_${ENGINE_UC}:-\${MIX_BONE:-unet}}"
+case "$ENGINE" in
+    mf) VALID_BONES="unet mf_dit dit" ;;
+    af) VALID_BONES="unet sit dit" ;;
+    *)  VALID_BONES="unet" ;;
+esac
+if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
+    echo "ERROR: ml_bone '$ML_BONE' is not valid for engine '$ENGINE' (want: $VALID_BONES). Set it via"
+    echo "       MIX_BONE_${ENGINE_UC}=<bone> (this arm) or MIX_BONE=<bone> (both two-time arms)."
+    exit 1
+fi
+
+EXPORT_OPTS="--export=ALL,MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE,MIX_BONE_${ENGINE_UC}=$ML_BONE"
+if [ "$ML_BONE" != "unet" ]; then
+    echo "[ pipeline ] ml_bone = $ML_BONE — VisualDiTTwoTime (visual latent as ONE PREPENDED"
+    echo "[ pipeline ]           TOKEN). RETRAIN into a separate '..._B${ML_BONE}_E${ENGINE}' tree;"
+    echo "[ pipeline ]           U-Net runs are untouched (their path has no _B fragment)."
+    echo "[ pipeline ]           film_mode is N/A on this bone and absent from the path."
+    echo "[ pipeline ]           🔴 Run \`gates_mix_visual.sh bone\` before trusting a DiT run."
+else
+    echo "[ pipeline ] ml_bone = unet (default, the Gen14 baseline bone)"
+fi
 if [ "$FILM_MODE" = "v2" ]; then
     echo "[ pipeline ] film_mode = v2 — TRUE FiLM backbone. This is a RETRAIN into a separate"
     echo "[ pipeline ]              '..._filmv2_E${ENGINE}' checkpoint tree; v1 runs are untouched."
@@ -139,7 +161,7 @@ else
     echo "[ pipeline ] film_mode = v1 (default, additive-bias FiLM)"
 fi
 
-echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS'${FLOW_STEPS:+ K=$FLOW_STEPS} film=$FILM_MODE ..."
+echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS'${FLOW_STEPS:+ K=$FLOW_STEPS} bone=$ML_BONE film=$FILM_MODE ..."
 
 # 1. Gates — ONE job, shared by every seed (seed-independent by construction).
 # G7 builds ALL FOUR arms at v2 regardless of MIX_FILM_MODE, so the gates are film-mode

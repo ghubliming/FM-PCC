@@ -69,7 +69,19 @@ cd "$REPO"
 # G6 projector fires at K=1
 #
 #   sbatch gates_mix_visual.sh          # all gates
-#   sbatch gates_mix_visual.sh static   # the no-GPU subset (g0, g1, g4, g6)
+#   sbatch gates_mix_visual.sh static   # the no-GPU subset (g0, g1, g4, g6, gb1, gb6, gb7)
+#   sbatch gates_mix_visual.sh bone     # Gen14 U8 only: G-B1/B2/B3/B4-5/B6/B7
+#
+# ── Gen14 U8 ── the ML-bone gates:
+#   G-B1  cond_dim=0 leaves all four transformer bones byte-identical (state-only gens safe)
+#   G-B2  every visual bone builds AND is parameter-matched to the ~4.0M U-Net
+#   G-B3  gradient actually reaches vis_projector -- the model is not image-blind
+#   G-B4/5 mf JVP and af bootstrap both stay finite with the visual token
+#   G-B6  prefix_tokens / RoPE-table / pos_embed bookkeeping agree (the silent failure mode)
+#   G-B7  bone is a checkpoint-path key, and no '_film..' fragment lands on a DiT path
+#
+# 🔴 Run `bone` before the first DiT training job. G-B6 is the one that matters most: a
+# half-applied token bump trains fine and reads the WRONG positions.
 #
 # Exit code is non-zero if ANY gate fails, so this is safe to chain ahead of training.
 #
