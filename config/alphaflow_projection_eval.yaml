@@ -95,17 +95,27 @@ constraint_types: [
 
 # ── arm C only ────────────────────────────────────────────────────────────────
 hardflow:
-  # PLAN §3.4: FAITHFUL BATCH-1 is the default headline (upstream asserts batch==1;
-  # honest vs Gen13). U4.2 adds a real candidate fan: batch_size>1 solves one NLP
-  # chain per candidate (wall time scales linearly) and selects among them by the
-  # variant suffix (-c/-r/-t) — the same MPC machinery as DPCC. Set batch_size: 4
-  # to close the fix_3 confound (B ran batch-4 + selection, C ran batch-1).
-  # Env override: HFFM_BATCH.
+  # ── B4_PARITY (2026-08-20) — 🔴 P0 FIX: was 1, is now 4 ────────────────────────
+  # THE CANDIDATE FAN FOR ARM C. Must match the DPCC arms' `batch_size` in
+  # config/avoiding-d3il.py (4), because BOTH arms loop serially over candidates around
+  # their CPU solve — DPCC `Projector.project` (`for i in range(batch_size)`, scipy SLSQP)
+  # and HardFlow `HardFlowSampler.sample` (`for b in range(batch_size)`, IPOPT). A
+  # mismatched fan scales projection wall-time almost linearly and makes every
+  # arm-B-vs-arm-C timing comparison void.
   #
-  # ⚠️ Gen3v7 note: `plan_fm_v3_alphaflow.batch_size` is 4, so arms A/B run a 4-candidate
-  # fan. Leaving this at 1 reproduces exactly the fix_3 confound. Use HFFM_BATCH=4 for any
-  # arm-B-vs-arm-C claim.
-  batch_size: 1
+  # It shipped as 1 against DPCC's 4 and produced the headline artefact that arm C is
+  # ~25% CHEAPER than DPCC, when its per-solve cost is in fact ~1.8-2.2x DPCC's. Every
+  # result whose folder name carries the `B1` token is on the wrong side of this — see
+  # logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260820_HF_lower_avgtime_batchsize_confound.md
+  # and logs_in_develop/HF_Batch_Parity/CHANGELOG_20260820_HF_batch_parity.md.
+  #
+  # The bare `hardflow_new` variant is pinned to 1 REGARDLESS of this value — that name
+  # means "faithful upstream batch-1" (upstream asserts batch==1) and is the control arm.
+  # Only the selection variants (-r/-c/-t, +/- -tightened) read this number. The rule is
+  # `sampling/hardflow_projection.py::resolve_hf_batch_size`.
+  #
+  # Env override for a one-off sweep: HFFM_BATCH.
+  batch_size: 4
 
   # 'deriv'      -> reuse FMPCC's own Euler kinematics constraints, so arms B and C
   #                 enforce an IDENTICAL feasible set and differ only in WHEN the

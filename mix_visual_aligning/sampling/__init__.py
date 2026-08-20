@@ -8,6 +8,7 @@ from .hardflow_projection import (
     HardFlowNLP,
     HardFlowSampler,
     resolve_activation_threshold,
+    resolve_hf_batch_size,          # B4_PARITY (2026-08-20)
     resolve_engine_hf,
     encode_visual_cond,
     ENGINE_INIT_NOISE,
@@ -17,6 +18,6 @@ from .hardflow_projection import (
 __all__ = [
     'Projector',
     'TrajectoryLayout', 'HardFlowNLP', 'HardFlowSampler',
-    'resolve_activation_threshold', 'resolve_engine_hf', 'encode_visual_cond',
+    'resolve_activation_threshold', 'resolve_hf_batch_size', 'resolve_engine_hf', 'encode_visual_cond',
     'ENGINE_INIT_NOISE', 'ENGINE_TWO_TIME',
 ]

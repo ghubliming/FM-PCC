@@ -201,7 +201,15 @@ _UAV_PLAN = {
     # that must match for a DPCC-vs-HardFlow comparison to be valid at all.
     #
     # Set to [] (or export UAV_MIX_HF_OFF=1) to run a DPCC-only eval.
-    'hardflow_variants': ['hardflow_new', 'hardflow_new-c', 'hardflow_new-t'],
+    # 🔴 B4_PARITY (2026-08-20) — was ['hardflow_new', 'hardflow_new-c', 'hardflow_new-t'].
+    # Arm C runs at `mpc_batch_size` (4), the same fan as arm B — and at B>1 bare
+    # `hardflow_new` and `hardflow_new-r` are BYTE-IDENTICAL (both select index 0), so the
+    # bare entry was the random arm under a name that promises upstream's batch-1 setting.
+    # Renamed to '-r': identical compute, identical numbers, honest name. Bare
+    # `hardflow_new` is still available and now resolves to B=1 (the faithful control) via
+    # mix_uav/sampling/hardflow_projection.py::resolve_hf_batch_size — add it back here if
+    # you want that arm, but know it is a DIFFERENT experiment, not a rename.
+    'hardflow_variants': ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t'],
     'hardflow': {
         # `dynamics_mode='deriv'` needs NO fitted linear-dynamics .npz — it writes the UAV's own
         # x[t+1] = x[t] + dt*dx[t] rows straight into the NLP. This is why HardFlow is portable

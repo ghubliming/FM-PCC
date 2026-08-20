@@ -6,4 +6,5 @@ from .hardflow_projection import (
     HardFlowSampler,
     HardFlowPolicy,
     resolve_activation_threshold,
+    resolve_hf_batch_size,          # B4_PARITY (2026-08-20)
 )

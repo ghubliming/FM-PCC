@@ -72,7 +72,8 @@ from diffuser.utils import provenance   # U10.1 — env-override provenance (sha
 # Gen15 U2 — the HardFlow arm. Imported lazily-tolerant: casadi lives in the cluster env, so a
 # machine without it can still run every DPCC variant. The ImportError only fires if a
 # `hardflow*` variant is actually requested.
-from mix_uav.sampling.hardflow_projection import HardFlowPolicy, resolve_activation_threshold
+from mix_uav.sampling.hardflow_projection import (
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size)
 from mix_uav.models import engine_registry
 import mix_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
@@ -1523,6 +1524,13 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     record = (args.record != 'none')
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
     batch_size = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
+    # 🔴 B4_PARITY (2026-08-20) — arm C's fan comes from the variant NAME. Gen15 already gave
+    # every arm the same `mpc_batch_size` (so it never had the Gen3v6/v7/Gen12 timing
+    # confound), but that also made bare `hardflow_new` byte-identical to `hardflow_new-r`
+    # at B=4 — both select index 0 — i.e. duplicated compute under two names. The bare name
+    # now means what it says upstream: the faithful batch-1 control.
+    if _is_hardflow(variant):
+        batch_size = resolve_hf_batch_size(variant, batch_size)
 
     # U_13: FIXED episode budget for every trial of this scene — CLI --max-episode-length
     # wins, else the yaml `max_episode_length` (scalar-all or per-scene dict), else the

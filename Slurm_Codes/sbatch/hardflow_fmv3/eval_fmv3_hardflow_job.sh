@@ -92,6 +92,16 @@ cd "$REPO"
 # (matched budget, PLAN §5) and writes its own results dir (K<K>_n<n>), so nothing overwrites:
 #   HFFM_FLOW_STEPS="2 5 10"  sbatch ...
 # Re-run a finished directory: FORCE_OVERWRITE=1 sbatch ...   (PLAN §3.6)
+#
+# 🔴 B4_PARITY (2026-08-20) — arm C's candidate fan. This script never exported HFFM_BATCH,
+# so it inherits config/hardflow_projection_eval.yaml `hardflow.batch_size`, which is NOW 4
+# (was 1). 4 == the plan block's batch_size, i.e. the fan arms A/B already use — required,
+# because both arms loop serially over candidates around their CPU solve and a 1-vs-4 fan
+# silently hands arm C a 4x compute discount. Bare `hardflow_new` stays at 1 regardless
+# (resolve_hf_batch_size), so the faithful upstream control is still one variant away.
+# Set HFFM_BATCH=1 only to deliberately reproduce an old `B1` run.
+export HFFM_BATCH="${HFFM_BATCH:-4}"
+echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)"
 if [ -n "${HFFM_FLOW_STEPS:-}" ]; then
     echo "[ eval ] K sweep: $HFFM_FLOW_STEPS   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
     for K in $HFFM_FLOW_STEPS; do

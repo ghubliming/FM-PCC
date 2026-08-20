@@ -79,12 +79,20 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
 fi
 
 # 4) HardFlow-arm knobs (all optional; defaults come from the YAML `hardflow:` block).
-#    HFFM_BATCH          candidate fan (mpc); 1 = faithful (‑r/‑c/‑t collapse), 4 = DPCC‑parity
+#    HFFM_BATCH          candidate fan (mpc) for the -r/-c/-t arms.
+#                        🔴 B4_PARITY (2026-08-20): DEFAULT IS NOW 4, was 1. arms A/B run
+#                        plan-block batch_size=4 and BOTH arms loop serially over candidates
+#                        around their CPU solve, so a 1-vs-4 fan is a 4x compute discount for
+#                        arm C that reads as a HardFlow SPEEDUP. Every historic result whose
+#                        folder carries the `B1` token was produced by the old default here.
+#                        Bare `hardflow_new` is pinned to 1 by resolve_hf_batch_size()
+#                        regardless of this value — that arm IS the faithful batch-1 control.
+#                        Set HFFM_BATCH=1 only to deliberately reproduce an old B1 run.
 #    HFFM_ACT_THRESHOLD  fraction of late steps the NLP is active (0.5 == DPCC threshold 0.5)
 #    HFFM_FLOW_STEPS     matched K for EVERY arm (overrides plan-block flow_steps).
 #                        🔵 U9: when set it PINS this job to that single K; leave it unset to
 #                        get the whole {1,2,5,10,20} grid in one job (see §5).
-export HFFM_BATCH="${HFFM_BATCH:-1}"
+export HFFM_BATCH="${HFFM_BATCH:-4}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
 echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"

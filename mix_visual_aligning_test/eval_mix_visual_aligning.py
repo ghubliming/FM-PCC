@@ -70,6 +70,7 @@ from mix_visual_aligning.sampling.hardflow_projection import (
     build_hardflow_sampler,
     encode_visual_cond,
     resolve_activation_threshold,
+    resolve_hf_batch_size,          # B4_PARITY (2026-08-20)
 )
 # Gen14 — the arm dispatch table. Every engine-specific branch lives there, not here.
 from mix_visual_aligning.models.engine_registry import (
@@ -2812,6 +2813,14 @@ if __name__ == '__main__':
                 # compared at equal candidate count.
                 if 'diffuser' in variant:
                     batch_size = 1
+                elif variant.startswith('hardflow'):
+                    # 🔴 B4_PARITY (2026-08-20) — arm C's fan comes from the variant NAME.
+                    # Gen14 already handed arm C the same pool as arm B (U7, correct), but
+                    # that made bare `hardflow_new` byte-identical to `hardflow_new-r` at
+                    # B=4 — both select index 0. The bare name is now the faithful
+                    # upstream batch-1 control instead of a duplicate.
+                    batch_size = resolve_hf_batch_size(
+                        variant, getattr(args, 'mpc_batch_size', 4))
                 else:
                     batch_size = getattr(args, 'mpc_batch_size', 4)
 

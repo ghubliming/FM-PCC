@@ -404,6 +404,51 @@ def resolve_activation_threshold(activation):
     return thr
 
 
+# ── B4_PARITY (2026-08-20) — per-variant MPC candidate-fan size for arm C ──────────────
+# 🔴 P0. This function exists because `hardflow.batch_size` used to default to 1 while the
+# DPCC arms ran `args.batch_size` (4). Both arms loop SERIALLY over candidates around their
+# CPU solve (DPCC: `projection.py::Projector.project`, `for i in range(batch_size)`;
+# HardFlow: `HardFlowSampler.sample`, `for b in range(batch_size)`), so a mismatched fan
+# scales the projection cost almost linearly and makes every arm-B-vs-arm-C wall-clock
+# comparison meaningless. It shipped: arm C looked ~25% CHEAPER than DPCC while its
+# PER-SOLVE cost is ~1.8-2.2x DPCC's. See
+# logs_in_develop/HF_Batch_Parity/CHANGELOG_20260820_HF_batch_parity.md and
+# logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260820_HF_lower_avgtime_batchsize_confound.md.
+#
+# THE RULE (one line): the NAME says the fan.
+#   `hardflow_new`            -> 1                  faithful upstream batch-1 control.
+#                                                   Upstream asserts batch==1; this arm is
+#                                                   what keeps that reading available.
+#   `hardflow_new-r|-c|-t`    -> `configured_batch` a selection RULE is only meaningful over
+#                                                   a fan, so asking for one asks for the fan.
+#                                                   Matches the DPCC arms by construction.
+#   `...-tightened`           -> composes          geometry suffix, stripped before parsing.
+#
+# ⚠️ At B>1 `hardflow_new` and `hardflow_new-r` would be byte-identical (both select index 0),
+# so running both at the same fan is duplicated compute. Pinning the bare name to 1 is what
+# gives it a distinct meaning instead.
+def resolve_hf_batch_size(variant, configured_batch):
+    """MPC candidate-fan size for one arm-C variant. See the block comment above.
+
+    `configured_batch` is the run-level fan (yaml `hardflow.batch_size` / `mpc_batch_size`,
+    env `HFFM_BATCH`) — i.e. what the SELECTION arms get. The bare `hardflow_new` name is
+    pinned to 1 regardless, because that is what the name means.
+
+    Raises on a non-arm-C variant: the DPCC/diffuser arms take `args.batch_size` directly
+    and must never be routed through here.
+    """
+    name = str(variant)
+    for _suffix in ('_train_set', '-tightened'):   # bookkeeping/geometry suffixes
+        if name.endswith(_suffix):
+            name = name[:-len(_suffix)]
+    if not name.startswith('hardflow'):
+        raise ValueError(
+            f'resolve_hf_batch_size is for arm-C (hardflow*) variants only, got {variant!r}')
+    if name.endswith(('-r', '-c', '-t')):
+        return max(1, int(configured_batch))
+    return 1                                        # bare `hardflow_new`: faithful batch-1
+
+
 class HardFlowSampler:
     """In-loop constrained ODE sampler (`hardflow_new`) for an FMv3 model.
 

@@ -30,7 +30,7 @@ from flow_matcher_v3_hardflow.sampling.policies import Policy
 from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 from flow_matcher_v3_hardflow.sampling.projection import Projector
 from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
-    HardFlowPolicy, resolve_activation_threshold)
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
@@ -64,7 +64,12 @@ hf_act_threshold = resolve_activation_threshold(
                                     hardflow_cfg.get('activation', 1.0))))
 # U4.2: candidate fan + selection. batch_size>1 fans candidates; selection rule comes
 # from the variant suffix (hardflow_new-c/-r/-t), like DPCC.
-hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+# 🔴 B4_PARITY (2026-08-20) — the run-level arm-C fan. Default is 4 (was 1), i.e. the DPCC
+# arms' `batch_size`, because both arms loop serially over candidates around their CPU solve
+# and a mismatched fan makes arm-B-vs-arm-C wall-clock comparisons void. This is the fan the
+# SELECTION variants (-r/-c/-t) get; bare `hardflow_new` is pinned to 1 by
+# resolve_hf_batch_size(). A yaml with no `hardflow.batch_size` key now also lands on 4.
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 4)))
 hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
 # [Gen12fix8] DPCC threshold was ORPHANED CONFIG. `diffusion_timestep_threshold` exists in
 # config/hardflow_projection_eval.yaml (copied verbatim from config/projection_eval.yaml) but
@@ -336,7 +341,17 @@ for exp in exps:
 
                 if is_hardflow:
                     # ---------------- arm C ----------------
-                    batch_size = hf_batch_size
+                    # 🔴 B4_PARITY (2026-08-20) — the candidate fan is resolved PER VARIANT, not per run:
+                    #   `hardflow_new`          -> 1              faithful upstream batch-1 control
+                    #   `hardflow_new-r/-c/-t`  -> hf_batch_size  (default 4 == args.batch_size, arms A/B)
+                    # Before this, EVERY arm-C variant took the yaml's `hardflow.batch_size` (which defaulted
+                    # to 1) while arms A/B took args.batch_size (4). Both arms loop SERIALLY over candidates
+                    # around their CPU solve, so that was a 4x compute discount for arm C — and it read as a
+                    # HardFlow speedup in every timing table. See logs_in_develop/HF_Batch_Parity/.
+                    batch_size = resolve_hf_batch_size(variant, hf_batch_size)
+                    if batch_size != args.batch_size:
+                        print(f'[ hardflow ] ⚠️  arm-C fan B={batch_size} != DPCC-arm fan B={args.batch_size} '
+                              f'for {variant!r} — wall-clock is NOT comparable across arms for this variant.')
                     # U4.2 + U5: DPCC-parity selection from the variant suffix. Strip the
                     # '-tightened' marker FIRST so the selection suffix composes with it —
                     # hardflow_new-c-tightened -> minimum_projection_cost AND enlarged
@@ -349,6 +364,19 @@ for exp in exps:
                     hf_selection = 'random'
                     if _sel_base.endswith('-t'): hf_selection = 'temporal_consistency'
                     elif _sel_base.endswith('-c'): hf_selection = 'minimum_projection_cost'
+                    # 🔴 B4_PARITY follow-up — `-c` IS NOT TRUSTWORTHY AT B>1 (open, not fixed here).
+                    # Pooled over the five 08-11..08-19 avoiding batches, 750 arm-C cells that DID run at
+                    # B=4:  -r  S&C 0.707 / succ 0.917 / 67.7 steps /   0 timeouts
+                    #       -t  S&C 0.707 / succ 0.883 / 71.2 steps /   5 timeouts
+                    #       -c  S&C 0.443 / succ 0.540 / 138.5 steps / 370 timeouts  (49%)
+                    # `candidate_costs` is Σ_k ||x1_proj − x1_ref||², so argmin picks the candidate the NLP
+                    # barely had to touch — on `avoiding` that is the candidate that barely MOVES, which
+                    # stalls the episode. DPCC's own -c does not degenerate this way. Until the ranking key
+                    # is fixed, treat arm-C `-c` numbers at B>1 as suspect. See logs_in_develop/HF_Batch_Parity/.
+                    if hf_selection == 'minimum_projection_cost' and batch_size > 1:
+                        print(f'[ hardflow ] 🔴 {variant}: `-c` selection at B={batch_size} is a KNOWN-BAD arm '
+                              f'(49% timeouts across 750 B=4 cells). Reported for completeness; do not cite '
+                              f'without re-checking. See logs_in_develop/HF_Batch_Parity/.')
                     policy = HardFlowPolicy(
                         model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
                         transition_dim=trajectory_dim, action_dim=action_dim,
