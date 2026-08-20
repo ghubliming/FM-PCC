@@ -82,7 +82,7 @@ dpcc_threshold = float(os.environ.get('DPCC_THRESHOLD',
 flow_steps_cli = args_cli.flow_steps
 
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0'):
     """Gen3v2's interceptor: the pickled config names the class that TRAINED the
     checkpoint (`flow_matcher_v3.models.diffusion.GaussianDiffusion`). Gen12 is a
     sibling package, so without this the loaded object would come from the ORIGINAL

@@ -2221,7 +2221,7 @@ class VisualAgentWrapper:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', override_args=None):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0', override_args=None):
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Loading from {lp}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')

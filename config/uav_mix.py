@@ -171,7 +171,7 @@ _UAV_PLAN = {
     'loadbase': None,
     'logbase': logbase,
     'exp_name': _uav_mix_exp_name,
-    'diffusion_epoch': 'latest',
+    'diffusion_epoch': 'best',
 
     # 🔴 K (NFE budget) — the primary experimental axis of Gen15 (PLAN §7.3).
     #

@@ -4619,3 +4619,74 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 1. **Dynamic Config Module Patching via `--flow-steps`**: Extended `FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py` with a `--flow-steps` CLI argument (ported from Gen3v6/Gen3v7 siblings). Dynamically patches the imported config module dict (`flow_steps_v3`, `ode_inference_steps_v3`, and `flow_steps`) prior to Parser instantiation, eliminating the legacy requirement of modifying `config/avoiding-d3il.py` for each budget test.
 2. **Automated SLURM Grid Search**: Enhanced `Slurm_Codes/sbatch/eval_fmv3_ode_job.sh` with a configurable loop over `FLOW_STEPS_GRID` (defaulting to `"1 2 5 10"`, overridable via `FMV3_FLOW_STEPS`). Because `flow_steps_v3` is watched as `K` in the plan experiment naming, each evaluation automatically targets and saves to isolated per-budget output directories without risk of overwrites.
 
+***
+
+## Infrastructure: Visualizer Pareto Decoupling & Independent Plot Sizing Controls (DAv3 + DA_VA_v2 U18.1 & U18.2) (August 18, 2026)
+
+**Keywords**: DAv3, DA_VA_v2, Visualizer, U18.1, U18.2, tight_layout regression, separate figure, #pareto-section, plot-target, dual store, build_from_dav3.
+
+1. **Tight-Layout Regression Root Cause (U18.1)**: Diagnosed and resolved the `UserWarning: This figure includes Axes that are not compatible with tight_layout` emitted on every draw with the U18 Pareto panel enabled. Identified that `gridspec_kw={'hspace': 0.45}` modified GridSpec parameters locally, causing Matplotlib's `TightLayoutEngine` to abort adjustment silently and clip right-side canvas content (including the main plot's `Variant` legend and Pareto honesty legends).
+2. **Extraction into Dedicated Figure & Section (U18.1)**: Refactored the Pareto visualization from a shared GridSpec sub-plot into a completely separate Matplotlib figure (`pareto_fig`) and standalone HTML container (`#pareto-section` / `#pareto-area`), bumping the scientific suite tag from `v3.13` to `v3.15`. This decoupled margin calculations across plots, eliminated row-gap management, and enabled clean dual-PNG generation (`{base_name}_pareto.png`) in ZIP exports.
+3. **Decoupled Plot Sizing & Zoom Controls (U18.2)**: Resolved the canvas width competition where the Pareto plot (carrying two right-hand legends) was severely compressed when forced to share the bar chart's `FigWidth`. Implemented a unified editor UI with a target selector (`plot-target`) and four underlying hidden state stores (`width-zoom-main`, `width-zoom-pareto`, `fig-width-main`, `fig-width-pareto`), bumping the suite tag to `v3.16`. Switching the selector loads stored dimensions without triggering unwanted redraws, while `applyZoom()` applies zoom factors independently to each canvas.
+4. **Automated Multi-Viewer Derivation & Offline Coverage**: Propagated changes to `Data_Analysis/Visualizer_VA_v2/index.html` via the 41-anchor build generator (`build_from_dav3.py`) and verified structure against 8 offline regression tests in `test_page_offline.py`, validating zero residual `gridspec_kw` or cross-figure parameter leaks.
+
+***
+
+## Baseline Audit: DPCC K20 Evaluation at Scale (n_trials=20) & Discovery of Corrupt n=2 Post-Processing Baseline (August 19, 2026)
+
+**Keywords**: Baseline audit, DPCC K20, n_trials=20, Job 24639, 100 episodes, S&C ceiling debunked, post_processing corruption, dpcc-r aliasing, baseline repinning.
+
+1. **Large-Sample Evaluation (100 Episodes/Cell)**: Completed large-scale 5-seed × 20-trial evaluation (Job 24639) for the canonical DPCC baseline ($K=20, \text{action\_weight}=10, T=0.5$) on `top-left-hard` and `top-right-hard`, increasing constraint satisfaction resolution from $0.10$ to $0.01$.
+2. **Debunking the False 1.00 S&C Ceiling**: Confirmed that the apparent $1.000$ S&C ceiling reported in historical 2-trial ($n=10$) tables was a small-sample binomial artifact. At $n=20$, tightened variants settled at realistic ceiling values (`dpcc-c-tightened` at $0.95 \pm 0.04$ and `dpcc-t-tightened` at $0.92 \pm 0.05$ on `top-right-hard`), while untightened variants dropped by up to $0.26$ (`dpcc-t` falling from $0.80$ to $0.54$).
+3. **Discovery of Legacy `post_processing` Baseline Corruption**: Discovered that across all historical $n=2$ benchmark runs, `post_processing` was numerically identical to `dpcc-r` across 12–16 metrics (including identical `n_steps`, violations, and solver timings), revealing that the legacy $n=2$ baseline mistakenly dispatched to the full `dpcc-r` per-step QP projector rather than a one-shot terminal projection. At $n=20$, `post_processing` properly decoupled ($0.194\,\text{s}/\text{step}$ vs $0.594\,\text{s}/\text{step}$ for `dpcc-r-tightened`), correcting the historical record.
+4. **Repinning Official Baseline Comparison Targets**: Formally repinned the official paper comparison baseline target to DPCC K20 / aw10 / T0.5 / `dpcc-c-tightened` at $39.1\,\text{s}/\text{ep}$ (TL) and $40.2\,\text{s}/\text{ep}$ (TR) at S&C 1.00 / 0.95.
+
+***
+
+## Baseline Investigation: Naive FMv3ODE K20 vs DPCC Target & Cross-K Trade-off Analysis (August 19, 2026)
+
+**Keywords**: Gen3v5, FMv3ODE, FlowMatchingODE, K20 baseline, cross-K trade-off, Pareto dominance check, low-NFE failure, architecture-matched UNet.
+
+1. **Architecture-Matched Flow Matching Assessment**: Evaluated whether deterministic naive Flow Matching (`models.diffusion.FlowMatchingODE` with Euler ODE) under an identical 4.0M UNet backbone (`Flow_matcher_U_Net_v2`, `freq_dim=32`, `action_weight=10`) could beat the DPCC baseline target without specialized multi-time objectives.
+2. **Pinned Target Victory at K=20**: At matched $K=20$ ($n_{\text{trials}}=2$), `FMv3ODE K20 / T0.5 / dpcc-c-tightened` Pareto-dominated the pinned DPCC K20 target on `top-left-hard` ($26.6\,\text{s}$ vs $38.7\,\text{s}/\text{ep}$, $-31\%$ compute time at S&C 1.00) and `top-right-hard` ($26.8\,\text{s}$ vs $40.2\,\text{s}/\text{ep}$, $-33\%$ compute time at S&C 1.00).
+3. **Cross-K Invalidation & High-NFE Requirement (§9 Addendum)**: Demonstrated that while FMv3ODE beats DPCC at matched $K=20$, it strictly loses against DPCC's own $K=10$ run ($19.3\,\text{s}/\text{ep}$ at S&C 1.00), which is $0.72\times$ cheaper. Furthermore, naive FM collapses at low sampling budgets ($K \le 2$), proving that standard instantaneous velocity modeling cannot achieve real-time 1-step sampling and requires high NFE ($K \ge 20$) to sustain constraint feasibility.
+
+***
+
+## Gen3v6 MeanFlow: Paper-Grade Benchmark Report & One-Step (K=1) Pareto Dominance (August 19, 2026)
+
+**Keywords**: Gen3v6, MeanFlow, UNet32, K=1, one-step sampling, Pareto dominance, 30x speedup, make_figs.py, avoiding-d3il, publication report.
+
+1. **Comprehensive Paper Benchmark Report (`Report_20260819_MF_UNet`)**: Compiled the official paper-grade experimental analysis and automated publication figure generation pipeline (`make_figs.py` for Fig 1–6) comparing architecture-matched MeanFlow-UNet against DPCC Gaussian Diffusion and naive Flow Matching.
+2. **Definitive One-Step Pareto Dominance**: Established that at perfect constraint satisfaction ($\text{S\&C} = 1.00$ across all three obstacle environments), MeanFlow-UNet with **one network evaluation per plan ($K=1$)** achieves:
+   - **$29\times\text{--}30\times$ lower per-step compute time (`avg_time`)** compared to the DPCC K20 baseline ($0.0189\,\text{s}$ vs $0.5654\,\text{s}/\text{step}$ on `top-left-hard`).
+   - **Equal or shorter episode horizons (`n_steps`)**: Completing episodes in $3.0\text{--}9.8$ fewer control steps ($58.6$ vs $68.4$ steps on `top-left-hard`).
+   - **$26.0\times$ lower per-step compute** than naive Flow Matching K20 with $4.7$ fewer steps.
+3. **Sole Non-Dominated Frontier Point**: On the unified aggregate Pareto front ($( \text{avg\_time} \times \text{n\_steps} )$), $K=1$ MeanFlow-UNet constitutes the sole non-dominated operating point. The report proves that interval-average velocity modeling $u(x, r, t)$ transforms sampling budget $K$ into a pure inference-time dial where $K=1$ is the optimal operating regime rather than a degraded approximation.
+
+***
+
+## Mathematical Foundations: Root-Cause Studies on MeanFlow vs iMF Stability & Backbone Inductive Biases (August 19, 2026)
+
+**Keywords**: Gen3v6, Gen3v7, MeanFlow, iMF, AlphaFlow, SiT, UNet, JVP tangent variance, analytic velocity, blind directions, capacity overfit bug, inductive bias.
+
+1. **MeanFlow Success vs iMF Failure Root Cause**: Completed a foundational mathematical study (`STUDY_why_mf_works_imf_fails_and_mf_beats_fm_dpcc.md`) resolving why MeanFlow (Gen3v6) trains stably while iMF (Gen3v4) suffered catastrophic instability:
+   - *Analytic vs Predicted Tangent*: MeanFlow uses the analytic ground-truth velocity $v_{\text{inst}} = x_1 - x_0$ as the JVP $z$-tangent, yielding zero variance and smooth descent. iMF used network-predicted velocities $v_c$, creating multiplicative error amplification ($h \cdot du/dr$) and an unstable self-referential feedback loop where bad predictions corrupted training targets.
+   - *Elimination of CFG Capacity Waste*: MeanFlow eliminated classifier-free guidance, dedicating 100% of network capacity to the active vector field, unlike iMF which wasted ~30% of capacity on unused null tokens.
+   - *Interval Sampling Coverage*: Independent $(r, t)$ sampling resolved the legacy interval starvation bug ($r = t \cdot U$), ensuring robust training coverage across the $h \approx 0.5$ low-NFE operating regime.
+2. **Backbone Mechanics & The 253M Parameter Myth**: Completed an in-depth comparative study (`STUDY_why_af_sit_works_unet_not_and_mf_unet_works.md`) dismantling the prior misconception that AlphaFlow required Transformer backbones:
+   - *Resolution of the UNet Width Bug*: Proved that historical UNet failures were solely due to `freq_dim=256` configuring an over-parameterized 253M parameter model on 96 demonstrations (63.8× excess capacity). Correcting to `freq_dim=32` (4.0M params) yielded successful convergence for both MeanFlow and AlphaFlow.
+   - *Locality vs Global Attention Inductive Bias*: UNet's 1-D convolutional temporal locality creates smoother spatial paths that QP projectors easily correct, whereas DiT global attention can produce locally jagged plans that cause stationary collapses under minimum-cost selection rules.
+   - *Two-Time Conditioning & Blind Directions*: SiT provides native decoupled two-time conditioning via dual embedders modulating adaLN-zero blocks. AlphaFlow's bootstrap objective eliminates MeanFlow's JVP degenerate/blind directions ($\delta_u = h \cdot \delta_D$) at large $h$, explaining why AlphaFlow-SiT establishes the theoretical frontier at scale.
+
+***
+
+## Infrastructure: DA_UAV_v1 Synchronization, Automated Viewer Generation & Multi-Tool Test Isolation (August 19, 2026)
+
+**Keywords**: DA_UAV_v1, Visualizer_UAV_v1, build_from_va2.py, test_snapshot_scan.py, test isolation, sys.modules restoration, changelog relocation.
+
+1. **Organizational Tool Relocation**: Moved the primary UAV data analysis changelog from `Gen15/U4/` to `logs_in_develop/DA_Code/DA_UAV_v1/CHANGELOG_20260815_DA_UAV_v1.md` (leaving pointer stub `MOVED.md`), establishing `DA_UAV_v1` as a standalone cross-generation tool alongside `DA_Code_v3` and `DA_VA_v2`.
+2. **Automated Visualizer Re-generation**: Rebuilt `Visualizer_UAV_v1/index.html` from `Visualizer_VA_v2` via `build_from_va2.py` (41 anchor substitutions, expanding from 145 kB to 166 kB), seamlessly inheriting U18/U18.1/U18.2 independent Pareto figure sections, per-plot zoom, and FigWidth controls with zero manual HTML edits.
+3. **Cross-Tool Discovery Import Isolation**: Extended `Data_Analysis/DA_VA_v2/test_snapshot_scan.py` to cover all 6 DA discovery and HTML implementations. Resolved Python `sys.modules` namespace collisions between identical top-level `config` and `discovery` module names across tools by implementing a dynamic `load_discovery()` isolation wrapper with strict path validation.
+
+

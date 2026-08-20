@@ -126,7 +126,9 @@ def parse_args():
                         'SCENE_MAX_EPISODE_LENGTH defaults). Mirrors DPCC avoiding max_episode_length. '
                         'Episodes early-stop on goal-reach; goal-path scenes that never reach run the '
                         'full budget. Default: per-scene value.')
-    p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
+    p.add_argument('--epoch', type=str, default='best', help="Checkpoint to load: 'best' (lowest val loss; the default and the ONLY choice that matches the D3IL arms), "
+                   "'latest' (last PERIODIC save -- with save_freq=n_train_steps//5 that is "
+                   "step 80000 of 100000, i.e. 80%% trained, NOT the final model), or an int.")
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
                         "DPCC variants (dpcc-c, …) slot in here when Phase-3 lands.")
@@ -146,7 +148,7 @@ def build_experiment(scene, seed, epoch, device):
     p.dataset = f'uav-{scene}'            # → data branch + output path segregation
     args = p.parse_args(experiment='flow_matching_v3_uav', seed=seed)
 
-    ep = epoch if epoch == 'latest' else int(epoch)
+    ep = epoch if epoch in ('latest', 'best') else int(epoch)
     # CONFIG-OVERRIDES-PKL (2026-07-13): pass parsed config args so same-named pickled
     # diffusion kwargs are overridden by the current config (warn-on-change). See
     # logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
