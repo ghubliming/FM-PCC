@@ -556,19 +556,47 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
     has_bounds = 'geo_bounds' in ctypes and config.get('workspace_bounds') is not None
     ws_lb = ws_ub = lb_d = ub_d = None
     _Z_DISP = (0.0, 2.0)        # UAV flight band default display when z is unconstrained
+
+    # Gen15 Fix_2: these two are resolved HERE, before the display-bounds block, because that
+    # block now frames an unbounded axis from the geometry that actually lives on it.
+    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
+    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+
+    def _geo_extent(axis):
+        """(min, max) over every drawn feature on `axis` (0=x, 1=y), or None if nothing is
+        drawn there. Used to frame an axis the workspace box does not bound. Halfspaces use
+        their RAW endpoints — x_active only shortens a segment, so this stays a superset."""
+        vals = []
+        for hs in halfspace_list:
+            _triple, _xa = _normalize_halfspace(hs)
+            vals += [float(_triple[0][axis]), float(_triple[1][axis])]
+        for obs in obstacle_list:
+            _c = float(obs['center'][axis]); _r = float(obs['radius']) + margin
+            vals += [_c - _r, _c + _r]
+        return (min(vals), max(vals)) if vals else None
+
     if has_bounds:
         ws_lb = np.array(config['workspace_bounds']['lb'], dtype=float)
         ws_ub = np.array(config['workspace_bounds']['ub'], dtype=float)
         ws_lb = ws_lb + margin; ws_ub = ws_ub - margin
         lb_d = ws_lb.copy(); ub_d = ws_ub.copy()
-        lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
-        # y may be ±inf too (e.g. a scene relying purely on halfspace walls for y) — clamp display
-        for _i, _fallback in ((0, (-3.5, 3.5)), (1, (-2.0, 2.0))):
-            if np.isinf(lb_d[_i]): lb_d[_i] = _fallback[0]
-            if np.isinf(ub_d[_i]): ub_d[_i] = _fallback[1]
-
-    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
-    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+        # 🔴 Gen15 Fix_2 — CLAMP PER AXIS, NEVER WITH A BOOLEAN MASK. This used to read
+        #     lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
+        # which stamps the *z* flight band (0.0, 2.0) onto ANY infinite axis. corridor declares
+        # y = ±inf deliberately ('y handled by the wall halfspaces', config/uav_projection.yaml),
+        # so its y frame became [0.0, 2.0] — the walls at y = ±0.45 and the cap balls at y = ∓0.5
+        # fell outside _ylim(), and every drawn object appeared shoved to the bottom edge under a
+        # bounds rectangle floating over empty space. The mask also made the x/y fallback loop
+        # that followed it DEAD CODE: nothing is inf after the mask, so np.isinf never fires.
+        # Display only — setup_dpcc_projector keeps the ±inf rows (−inf + margin = −inf) and SLSQP
+        # reads them as unbounded, so no evaluated number was ever affected. See
+        # logs_in_develop/Gen15/fix_2/.
+        for _i, _fb in ((0, (-3.6, 3.6)), (1, (-2.0, 2.0)), (2, _Z_DISP)):
+            # Prefer the real geometry on an unbounded axis; the constants are a last resort
+            # (they frame corridor's ±0.45 walls inside a ±2 m box, which is legible but poor).
+            _geo = _geo_extent(_i) if _i < 2 else None
+            if np.isinf(lb_d[_i]): lb_d[_i] = (_geo[0] - 0.35) if _geo else _fb[0]
+            if np.isinf(ub_d[_i]): ub_d[_i] = (_geo[1] + 0.35) if _geo else _fb[1]
 
     def _xlim(): return (lb_d[0]-0.3, ub_d[0]+0.3) if lb_d is not None else (-3.5, 3.5)
     def _ylim(): return (lb_d[1]-0.3, ub_d[1]+0.3) if lb_d is not None else (-2.0, 2.0)
