@@ -191,16 +191,67 @@ bones — and G0 fails if that count moves in either direction.
 Verified locally (`gate_g0` is pure stdlib): `+46/-4`, `+45/-3`, `+46/-4`, `+45/-3` — G0 PASS,
 19 verbatim files still match.
 
-### 6.4 What is still unverified
+### 6.4 Second run (job `24834`, rev `d0e5624`) — G-B2 confirmed, G-B3 was the gate
 
-- G-B2's parameter ratio has never actually been evaluated (it died before the check). At
-  d=160 the arithmetic predicts ~0.98x for the adaLN bones and ~0.82x for the RoPE bones
-  against the 4.0 M U-Net, both inside the 0.75-1.35 band — **predicted, not measured.**
-- G-B3 has never confirmed gradient reaches `vis_projector`. Until it does, "the visual token
-  is live" rests on construction plus a finite loss, which is weaker than it sounds.
+```
+GB1 PASS  GB6 PASS  GB7 PASS  GB2 PASS  GB45 PASS      GB3 FAIL
+```
+
+**G-B2 now measures what it was written to measure, and the bones are matched:**
+
+| bone | class | params | vs U-Net (4.04 M) |
+|:--|:--|--:|--:|
+| `mf_dit` | `MFDiTOfficialTrajectory` (adaLN) | 4.04 M | **1.00×** |
+| `sit` | `AFSiTTrajectory` (adaLN, frozen sincos) | 3.97 M | **0.98×** |
+| `dit` (mf) | `MFDiTTrajectory` (RoPE) | 3.37 M | **0.84×** |
+| `dit` (af) | `AFDiTTrajectory` (RoPE) | 3.37 M | **0.84×** |
+
+All build at `hidden=160 depth=8 heads=4 patch=1`, `cond_dim=128`, no warning. This is the
+parameter-matching that `bb_unet_ablation` lacked — the retracted 3.5-7× result compared
+against a 253 M U-Net. Whatever U8 reports, it will be at ≤1.00× the baseline bone.
+
+### 6.5 🔴 G-B3 failed on all four bones — and the GATE was wrong, not the model
+
+```
+FAIL mf@mf_dit: vis_projector grad is all zero — the model is IMAGE-BLIND
+```
+…identically for `mf@dit`, `af@sit`, `af@dit`.
+
+**Every one of these bones is a DiT, and DiT zero-inits its final layer.** The RoPE module
+docstring says so in line 6 ("zero-init final layers"); the adaLN bone does it explicitly at
+`mf_dit_official_trajectory.py:356-357`, alongside `adaLN_modulation[-1] = 0` on every block.
+So at step 0 the network emits exactly 0 for any input, and
+
+```
+dL/d(final-layer input) = W_final^T · dL/dout = 0
+```
+
+which makes the gradient of **every parameter upstream of the final layer exactly zero** —
+`vis_projector`, `vis_token`, the blocks, `x_embedder`, all of it. That is adaLN-zero behaving
+as designed. The U-Net has no zero-init final layer, which is why G2/G3/G7 never hit it.
+
+Measuring gradient at step 0 on a zero-init transformer measures nothing. G-B3 now warms up
+5 Adam steps at lr 1e-2 (gate-only values, picked so the measurement is well-conditioned
+rather than a near-underflow coin flip) and then measures.
+
+**Two independent checks, because a gradient test alone cannot separate "zero because
+zero-init" from "zero because disconnected":**
+
+1. gradient reaches `vis_projector` **and** the ResNet encoder — the latter now a hard FAIL
+   rather than a printed flag, since a detached latent is precisely how vision goes dead;
+2. **sensitivity**: two different latents, same `x`/`t`/`h`, must give different backbone
+   output. No autograd involved, so this check survives any future init convention.
+
+The failure mode this gate was written for is still unproven either way — G-B3 has never yet
+returned a meaningful verdict. That is what the next run is for.
+
+### 6.6 What is still unverified
+
+- G-B3 has never passed. Until it does, "the visual token is live" rests on construction,
+  a finite loss, and shape bookkeeping — weaker than it sounds.
 - Nothing has trained.
 
-Re-run `gates_mix_visual.sh bone` (~1 min) before the next pipeline submission.
+Re-run `gates_mix_visual.sh bone` before the next pipeline submission.
 
 ## 7. Expected result — read PLAN §1.3 before budgeting GPU time
 

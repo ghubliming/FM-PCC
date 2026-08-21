@@ -224,6 +224,8 @@ Which side applies depends on a deployment assumption **we have not stated anywh
 
 Note the asymmetry: HardFlow's latency penalty is a flat **1.6×** at every K, DPCC's grows to **6.0×** — because HardFlow's per-plan cost barely moved from H8 to H16 while DPCC's blew up (§3). Under a hard latency budget, HardFlow is the arm that survives the horizon increase.
 
+> **Batch note.** Every ratio in the table above compares an arm *to itself* across configs, so the 4-candidate fan cancels and the 1.6×/4.4×/5.5×/6.0× figures are batch-clean. The *absolute* cross-arm comparison in the last sentence is not — at B=4 HardFlow's H16/r8 per-plan cost would rise from 0.2187 to ≈0.66 s, still under DPCC's 1.336 s at K=5 but above it at K=1/2 (§5.3). The "HardFlow survives the horizon increase" conclusion therefore holds **at K=5 only**.
+
 **Corrected verdict on "better on all three axes":** no.
 **Steps** — better in 4 of 6 rows (`dpcc-c-t` K5 is +1.7 worse, `hf-c-t` K1 is a wash).
 **S&C** — not claimable in either direction at n=6; one row (`hf-c-t` K2) is nominally worse.
@@ -237,19 +239,21 @@ Note the asymmetry: HardFlow's latency penalty is a flat **1.6×** at every K, D
 
 **Answer: half right. DPCC does win at H8/r1. But the flip is driven by horizon, not by replan cadence.**
 
-Best `-tightened` variant of each family, mean over the 3 avoiding scenes, `S&C / steps / s-per-env-step`:
+Best `-tightened` variant of each family, mean over the 3 avoiding scenes, `S&C / steps / s-per-env-step`.
+
+> ⚠️ **Read the cost column together with §5.3.** All DPCC arms ran a 4-candidate fan, all HardFlow arms ran B=1. Batch-matched, four of the "HF cheaper" verdicts below reverse. The S&C and steps columns are unaffected.
 
 | config | K | best DPCC-projection | best HardFlow | who wins |
 |---|---|---|---|---|
 | **H8 / r1** (n=20×3) | 1 | `dpcc-t-t` **1.000** / **61.0** / **0.0181** | 0.960 / 63.4 / 0.0421 | **DPCC dominates** |
 | | 2 | `dpcc-t-t` **1.000** / **60.4** / **0.0271** | 0.900 / 67.1 / 0.0505 | **DPCC dominates** |
 | | 5 | `dpcc-t-t` **0.980** / **60.8** / 0.2250 | 0.900 / 67.3 / **0.1408** | DPCC on S&C + steps; HF 1.6× cheaper |
-| **H16 / r1** (n=6) | 1 | `dpcc-c-t` 1.000 / **58.8** / 0.0813 | 1.000 / 60.5 / **0.0627** | tie on S&C; HF cheaper |
-| | 2 | `dpcc-c-t` 1.000 / **62.7** / 0.0923 | 1.000 / 63.8 / **0.0733** | tie on S&C; HF cheaper |
-| | 5 | `dpcc-c-t` 1.000 / **59.0** / 1.2730 | 1.000 / 61.2 / **0.1997** | **HF 6.4× cheaper** |
-| **H16 / r8** (n=6) | 1 | `dpcc-r-t` 1.000 / **62.3** / 0.0103 | 1.000 / 63.2 / **0.0083** | non-dominated |
+| **H16 / r1** (n=6) | 1 | `dpcc-c-t` 1.000 / **58.8** / 0.0813 | 1.000 / 60.5 / 0.0627 | tie on S&C; HF cheaper **⚠️ batch artifact → §5.3** |
+| | 2 | `dpcc-c-t` 1.000 / **62.7** / 0.0923 | 1.000 / 63.8 / 0.0733 | tie on S&C; HF cheaper **⚠️ batch artifact → §5.3** |
+| | 5 | `dpcc-c-t` 1.000 / **59.0** / 1.2730 | 1.000 / 61.2 / **0.1997** | **HF cheaper — survives batch matching at 1.9–2.4× (§5.3)** |
+| **H16 / r8** (n=6) | 1 | `dpcc-r-t` 1.000 / **62.3** / 0.0103 | 1.000 / 63.2 / 0.0083 | non-dominated **⚠️ batch artifact → §5.3** |
 | | 2 | `dpcc-t-t` **1.000** / **56.0** / 0.0110 | **0.833** / 59.2 / **0.0100** | **DPCC wins** |
-| | 5 | `dpcc-c-t` 1.000 / 65.7 / 0.1670 | 1.000 / **58.0** / **0.0273** | **HF dominates** |
+| | 5 | `dpcc-c-t` 1.000 / 65.7 / 0.1670 | 1.000 / **58.0** / **0.0273** | **HF dominates** (cost win survives §5.3) |
 
 #### The cost ratio isolates the cause
 
@@ -261,17 +265,106 @@ DPCC-cost ÷ HardFlow-cost at K=5:
 
 The ratio jumps ~4× when H goes 8 → 16, then is **flat across cadence**. `r1 → r8` divides both families by ~8 and leaves the ranking untouched.
 
-**Mechanism.** DPCC solves SLSQP post-hoc over **4 candidates × H**; HardFlow solves IPOPT in-loop over **1 trajectory** (`batch_size` hard-asserted to 1 — see `../../HF_iMF/Research/ANALYSIS_hardflow_vs_dpcc_planning_structure.md`). Doubling H costs DPCC **6.6×** (0.194 → 1.274 at K5) and HardFlow **1.4×** (0.135 → 0.200). That single scaling difference is the whole flip.
+**Mechanism.** DPCC solves SLSQP post-hoc over **4 candidates × H**; HardFlow solves IPOPT in-loop over **1 trajectory** (`batch_size` hard-asserted to 1 — see `../../HF_iMF/Research/ANALYSIS_hardflow_vs_dpcc_planning_structure.md`). Doubling H costs DPCC **6.6×** (0.194 → 1.274 at K5) and HardFlow **1.4×** (0.135 → 0.200).
+
+That contrast is real, but the 4:1 fan rides on top of it. §5.3 strips the fan out and shows the underlying batch-free fact: **per solve, doubling H costs SLSQP ~8× and IPOPT ~1.87×**, at every K. That is the actual flip mechanism.
 
 #### Conclusions
 
 1. **Replan cadence is not an arm-selector.** It is a throughput divider, ~8×, applied equally to both families.
 2. **Horizon is the arm-selector.** At H8 DPCC-projection wins outright; at H16 the cost axis flips to HardFlow while S&C ties at 1.000 for both.
-3. **The one decisive HardFlow win in the grid is H16 / K5**, where it is Pareto-dominant: equal S&C, 7.7 fewer steps, 6.1× cheaper.
+3. **The one decisive HardFlow win in the grid is H16 / K5**, where it is Pareto-dominant: equal S&C, 7.7 fewer steps, 6.1× cheaper as measured — **1.9–2.4× cheaper after batch matching (§5.3)**, which is the number to quote. It is the only cell where HardFlow's cost advantage survives the correction.
 4. **Tightening, not the arm, buys constraint satisfaction.** Every `S&C = 1.000` in all 9 rows above is a `-tightened` variant; untightened arms top out at 0.833.
-5. **The 4-candidates-vs-1 confound cuts both ways** and is still open (§6.4): it inflates DPCC's cost *and* plausibly explains part of DPCC's S&C/steps edge at H8.
+5. **The 4-candidates-vs-1 confound cuts both ways.** On cost it is now quantified and largely removed (§5.3): it accounts for ~4× of every raw ratio and reverses the verdict in 4 of 9 rows. On quality it remains open (§6.4) — DPCC's S&C/steps edge at H8 is plausibly bought by the 4-candidate fan, and nothing here separates that.
 
 **Evidence weight — do not read the three blocks as equally solid.** H8/r1 rows are n=60 episodes; both H16 blocks are n=6. The H16 S&C column cannot separate 1.000 from 0.833, so the "DPCC wins" at H16/r8 K2 may be a single-episode artifact. The cost column is near-deterministic and holds at any n.
+
+---
+
+### 5.3 ⚠️ The cost column is batch-confounded — decomposed and corrected
+
+**Every DPCC and `diffuser` arm in every run above ran `batch_size=4`. Every `hardflow_new-*` arm ran `B=1`.** Verified three ways: `resolve_hf_batch_size()` returns `max(1, HFFM_BATCH)` for `-r/-c/-t` and `HFFM_BATCH=1` was set for this job (`run_provenance.json`: `hf_batch_size: 1`, `batch_size_dpcc_arms: 4`); the aggregated H8 CSV records `hf_batch_size = 4.0` for `diffuser`/`dpcc-*` and `1.0` for `hardflow_new-*`; and all three HardFlow suffixes `-r/-c/-t` return byte-identical numbers, which is what B=1 must produce (selection over one candidate is a no-op).
+
+**This is not a small correction. The DPCC projector solves SLSQP in a sequential Python loop over the batch** — `flow_matcher_v3_meanflow/sampling/projection.py:131`, `for i in range(batch_size): res = minimize(...)`. Solve cost is therefore *exactly linear* in B, with no GPU amortisation. Generation is a single batched forward pass and is near-free at B=4.
+
+#### Solves per plan are exactly 4:1
+
+Both families activate on the same number of flow steps at threshold 0.5:
+
+- DPCC: `snapping_start_idx = int((1 - 0.5) * K)`, projects on every step from there (`models/mf_diffusion.py:284–299`) ⇒ `n_proj` = **1, 1, 3** for K = 1, 2, 5.
+- HardFlow: `n_active` = **1, 1, 3** — same K, same threshold. Confirmed empirically from the logged counters: `nlp_total / (steps × n_trials)` = 1.02, 1.02, 3.05.
+
+| K | DPCC solves/plan | HardFlow solves/plan | ratio |
+|---|---|---|---|
+| 1 | 1 × **4** = 4 | 1 × **1** = 1 | **4:1** |
+| 2 | 1 × **4** = 4 | 1 × **1** = 1 | **4:1** |
+| 5 | 3 × **4** = 12 | 3 × **1** = 3 | **4:1** |
+
+#### Additive decomposition (r1 only — r8's 3-decimal `avg_time` is too quantised, §6.3)
+
+Model: `t_total = n_NFE · u + n_solves · c_solve`, with `u` (per-NFE generation cost) read off the projection-free `diffuser` arm. `u` comes out at **0.0092–0.0103 s** across all six cells regardless of K, horizon, or config — that self-consistency is the check that the model is right.
+
+| config | K | u (s/NFE) | **SLSQP / solve** | **IPOPT / solve** |
+|---|---|---|---|---|
+| H8 / r1 | 1 | 0.00960 | 0.00198 | 0.02180 |
+| | 2 | 0.00935 | 0.00205 | 0.02185 |
+| | 5 | 0.00924 | 0.01234 | 0.02049 |
+| H16 / r1 | 1 | 0.01030 | **0.01660** | 0.04070 |
+| | 2 | 0.00985 | **0.01515** | 0.04045 |
+| | 5 | 0.00934 | **0.10228** | 0.03833 |
+
+#### Batch-matched, HardFlow loses on cost almost everywhere
+
+Two independent normalisations of the `-c` arms (raw `dpcc-c` ÷ `hardflow_new-c`):
+
+| config | K | raw D÷H | DPCC re-priced at **B=1** ÷ HF | HF re-priced at **B=4**, DPCC ÷ it |
+|---|---|---|---|---|
+| H8 / r1 | 1 | 0.43 | **0.28** | **0.16** |
+| | 2 | 0.54 | **0.42** | **0.23** |
+| | 5 | 1.44 | **0.61** | **0.61** |
+| H16 / r1 | 1 | 1.25 | **0.44** | **0.42** |
+| | 2 | 1.15 | **0.50** | **0.42** |
+| | 5 | **6.72** | **1.86** | **2.38** |
+
+(< 1 means DPCC is cheaper.) Both normalisations agree on the sign in all six cells.
+
+**Corrections this forces on §5.2:**
+
+1. **H16/r1 K1 and K2 "HF cheaper" are batch artifacts.** Batch-matched, DPCC is **2.0–2.4× cheaper** in both. Those two rows flip.
+2. **H16/r8 K1 "non-dominated" also flips** — same solver structure, same 4:1, and the ratio is cadence-invariant.
+3. **H16 / K5 survives, at a quarter of the headline.** HardFlow is genuinely cheaper there — **1.9–2.4×**, not 6.4×. This is the only cell in the whole grid where HardFlow wins on cost after batch matching.
+4. The §5.2 statement "*horizon is the arm-selector*" **still holds**, but for a sharper reason than the raw numbers showed (below).
+
+#### What is actually true: the two solvers scale differently in H
+
+| K | SLSQP per solve, H8 → H16 | IPOPT per solve, H8 → H16 |
+|---|---|---|
+| 1 | 0.00198 → 0.01660 = **8.4×** | 0.02180 → 0.04070 = **1.87×** |
+| 2 | 0.00205 → 0.01515 = **7.4×** | 0.02185 → 0.04045 = **1.85×** |
+| 5 | 0.01234 → 0.10228 = **8.3×** | 0.02049 → 0.03833 = **1.87×** |
+
+**Doubling the horizon costs SLSQP ~8× per solve and IPOPT ~1.87× per solve, at every K.** IPOPT's 1.87× is essentially linear in the decision-variable count; SLSQP's ~8× is superlinear (≈ H³ — consistent with dense active-set QP factorisation at each iteration, `transition_dim × H` variables with no sparsity exploited).
+
+This is horizon-driven, batch-free, and reproducible across three K values — a real property of the two solvers, not an artifact. Per-solve parity (`SLSQP ÷ IPOPT` = 1):
+
+| K | ratio at H8 | ratio at H16 | extrapolated parity |
+|---|---|---|---|
+| 1 | 0.09 | 0.41 | H ≈ **24** |
+| 2 | 0.09 | 0.37 | H ≈ **26** |
+| 5 | 0.60 | 2.67 | H ≈ **10** |
+
+At K=5 the crossover has already happened by H=16; at K=1/2 it has not, and DPCC stays cheaper per solve even at H=16.
+
+#### Assumptions, and which way they cut
+
+- **Generation cost assumed equal at B=1 and B=4** (kernel-launch-bound 4M UNet). If B=1 generation is actually cheaper, the residual attributed to IPOPT grows and **HardFlow looks worse than shown** — so these numbers are generous to HardFlow.
+- **HF at B=4 assumed 4 sequential IPOPT solves.** HardFlow hard-asserts B=1 (`batch_size must be 1 for optimal control`), so a batched NLP does not exist today; 4× is the honest cost of building it.
+- **SLSQP per-solve cost is not a single constant in K** (0.0020 at K=1/2 vs 0.0123 at K=5, H8). The K=5 projections start from a less-feasible iterate and take more active-set iterations. This does not affect the H8→H16 scaling ratios, which are computed within a fixed K.
+- **n=6 at H16.** The cost column is near-deterministic so this matters far less here than for S&C, but the K=5 SLSQP figure rests on 6 episodes.
+
+#### Consequence
+
+`HFFM_BATCH=4 at H16 K5` (§8.2) is no longer a nice-to-have — **it is the run that decides whether the one surviving HardFlow cost win is real.** The prediction from this decomposition is that HardFlow at B=4 lands at ≈0.53 s/step vs DPCC's 1.27 s/step, i.e. still ~2.4× cheaper. If it does not, the entire HardFlow cost story collapses to a batch artifact.
 
 ---
 
@@ -280,7 +373,7 @@ The ratio jumps ~4× when H goes 8 → 16, then is **flat across cadence**. `r1 
 1. **n=6 cannot resolve S&C.** Every S&C claim above is 6-episode, one-seed. 6/6 and 0.867 are statistically the same measurement. The cost claims are near-deterministic and do not share this problem.
 2. **Amortised ≠ real-time.** §3, §5.1. Whether the 5–7× is a real win depends on whether the deployment can buffer an 8-step segment. HardFlow's own setup assumes it can; ours has not been stated either way. **This is the largest open question in the run** — it decides whether §5's table reads as a win or a regression, and it is a design decision, not a measurement.
 3. **`avg_time` is printed to 3 decimals.** At r8/K1 the values are 0.002–0.012, so quantisation is ±4–25%. **The K1/K2 r8 ratios in §3 are quantisation-limited**; only the K5 numbers (0.167–0.278) are precise. This also explains the `diffuser` per-plan ratio of 1.55–1.63 — an artifact of dividing a 3-decimal 0.002, not a real effect.
-4. **DPCC arms still run 4 candidates, HardFlow 1.** Recorded in provenance now (`batch_size_dpcc_arms=4`, `hf_batch_size=1`). The 5.2× HardFlow advantage at K5 is partly this. Unresolved since the H16/r1 DA.
+4. **DPCC arms still run 4 candidates, HardFlow 1.** Recorded in provenance now (`batch_size_dpcc_arms=4`, `hf_batch_size=1`). **On cost this is now decomposed and mostly removed — see §5.3:** it is worth exactly 4× (SLSQP runs in a sequential loop over the batch), and correcting for it reverses the cost verdict in 4 of 9 head-to-head rows, leaving H16/K5 as the sole surviving HardFlow cost win at 1.9–2.4× rather than 6.4×. **On quality it is still open**: DPCC's S&C and steps edge at H8 may be bought by the 4-candidate fan, and nothing measured here separates that.
 5. **`replan_steps=8` was never swept.** 8 was chosen to match HardFlow. Whether 4 or 16 is better — and where the untightened collapse begins — is unmeasured.
 6. **No H16 diffusion baseline.** The DPCC-diffusion reference is H8 only, so no like-for-like baseline exists at H16.
 
@@ -292,11 +385,13 @@ Defensible today:
 
 > On avoiding-d3il, adopting HardFlow's planning structure (H=16, execute 8) reduces amortised planning cost by 5–7× versus per-step replanning at the same horizon, and by 5.2× versus our H8 per-step configuration at K=5, with no measurable loss in success-and-constraints for constraint-tightened projection. Per-plan solver cost is unchanged; the gain is entirely a reduction in planning frequency, and it is paid for with a 1.6–6.0× increase in worst-case per-tick latency.
 
-Not defensible: **any claim that H16/r8 dominates H8/r1.** It does not — it trades worst-case latency for throughput (§5.1), and the S&C axis is unresolved at n=6. Reporting only the amortised column would be the misleading version of this result. Also not defensible yet: any claim that r8 *improves* S&C, and any "HardFlow beats DPCC by 6×" headline while the candidate counts differ (§6.4).
+Not defensible: **any claim that H16/r8 dominates H8/r1.** It does not — it trades worst-case latency for throughput (§5.1), and the S&C axis is unresolved at n=6. Reporting only the amortised column would be the misleading version of this result. Also not defensible: any claim that r8 *improves* S&C, and — now quantified in §5.3 — **any "HardFlow beats DPCC by 6×" headline.** That 6× is ~4× candidate fan and ~1.7× solver. The batch-matched number is 1.9–2.4×, at H16/K5 only; at H16 K1/K2 and at every H8 cell, batch-matched DPCC is the *cheaper* arm.
 
 The one clean structural claim in the latency data:
 
-> HardFlow's per-tick latency penalty for the horizon increase is a flat 1.6× at every K, while DPCC's grows to 6.0× at K=5 — HardFlow's in-loop projection scales with horizon where DPCC's post-hoc SLSQP does not. Under a hard latency budget, HardFlow is the arm that survives H=16.
+> Per constrained solve, doubling the planning horizon from 8 to 16 costs SLSQP **~8×** and IPOPT **~1.87×**, consistently at K = 1, 2 and 5. HardFlow's in-loop IPOPT scales near-linearly in the decision-variable count; DPCC's post-hoc dense SLSQP scales superlinearly. Under a hard latency budget, HardFlow is the arm that survives growing H.
+
+This version is stated *per solve* and is therefore **batch-free**, unlike the raw wall-clock ratios, which carry a 4:1 candidate-fan factor (§5.3). Quote the per-solve form.
 
 New claim this run supports, which the H8 data could not:
 
@@ -307,7 +402,7 @@ New claim this run supports, which the H8 data could not:
 ## 8. Next runs, in priority order
 
 1. **Scale up: 5 seeds × `n_trials=20` at H16/r8, K ∈ {1,5}.** Every quality claim here is n=6-limited. This is the single highest-value run and costs little now that r8 is 3.5× cheaper.
-2. **`HFFM_BATCH=4` at H16/r8 K5.** Closes the candidate-count confound (§6.4) and makes the HardFlow-vs-DPCC comparison honest. Cheap.
+2. **`HFFM_BATCH=4` at H16 K5 — promoted, near-blocking for any HardFlow cost claim.** §5.3 reduces the raw 6.4× HardFlow cost win to a predicted **~2.4×** (HF at B=4 ≈ 0.53 s/step vs DPCC 1.27 s/step) and reverses it entirely at K=1/2. This run tests that prediction directly. Run it at **r1** (where `avg_time` is not quantisation-limited, §6.3) as well as r8. Cheap. If HF at B=4 does not land near 0.53 s/step, the HardFlow cost story is a batch artifact.
 3. **Cadence sweep `MF_REPLAN_STEPS ∈ {2,4,8,16}`** at K5, tightened + untightened. Locates where the untightened collapse starts and whether 8 is the right operating point — this is the figure the §7 coupling claim wants.
 4. **Per-solve latency histogram** rather than the amortised mean, so §3/§5.1's per-plan story is measured instead of reconstructed by multiplying by 8. Upgraded in priority by §5.1 — worst-case latency is now a headline axis, and we are currently inferring it.
 5. **Decide and write down the buffering assumption** (§6.2). Not a run — a design decision. Until it is stated, §5 has no single correct reading and every cost claim in the paper is ambiguous.

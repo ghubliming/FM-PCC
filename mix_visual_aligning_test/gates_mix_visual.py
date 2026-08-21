@@ -424,15 +424,40 @@ def gate_gb2(device='cuda'):
 
 
 def gate_gb3(device='cuda'):
-    """G-B3 — vision is LIVE: gradient actually flows into the visual projection.
+    """G-B3 — vision is LIVE: the visual latent actually reaches the output.
 
     The U5 lesson: a zero-initialised conditioning path can look perfectly wired and be
-    inert. Construction proving `vis_projector` exists proves nothing; only a non-zero
-    gradient after a real loss step does.
+    inert. Construction proving `vis_projector` exists proves nothing.
+
+    🔴 WHY THIS GATE WARMS UP FIRST (2026-08-21, job 24834)
+    The original one-step version FAILED on all four bones with "grad is all zero", and it
+    was the GATE that was wrong, not the model. Every one of these bones is a DiT: the
+    module docstrings say "zero-init final layers", and `initialize_weights()` sets
+    `final_layer.linear.weight = 0` plus every `adaLN_modulation[-1] = 0`. At step 0 the
+    network therefore outputs exactly 0 for ANY input, and
+        dL/d(final-layer input) = W_final^T . dL/dout = 0
+    so EVERY parameter upstream of it — vis_projector included — has an exactly-zero
+    gradient. That is adaLN-zero working as designed, not an image-blind model. The U-Net
+    has no zero-init final layer, which is why G2/G3/G7 never saw this.
+    Measuring at step 0 on a zero-init transformer measures nothing. Do not "simplify"
+    the warm-up away.
+
+    Two independent checks are made after warm-up, because the gradient test alone cannot
+    tell "zero because zero-init" from "zero because disconnected":
+      (a) gradient reaches `vis_projector` and the ResNet encoder;
+      (b) SENSITIVITY — the backbone's output actually MOVES when the latent changes.
+          (b) involves no autograd at all, so it is the check that survives any future
+          init convention.
     """
     print('\n=== G-B3: the visual token receives gradient ===')
     import torch
     ok = True
+    # Gate-only optimiser settings, chosen to move DECISIVELY off the zero-init: Adam's
+    # step is ~lr regardless of gradient scale, so 5 steps at 1e-2 puts the final layer and
+    # the adaLN gates around 5e-2. At lr=1e-3 they would sit near 5e-3 and the measured
+    # gradient would be ~1e-5 — nonzero, but close enough to underflow that a PASS would be
+    # luck. These numbers train nothing; they only make the measurement well-conditioned.
+    WARMUP, WARMUP_LR = 5, 1e-2
     for arm, bone in _U8_BONES:
         cfg, model, DiffCls, obs_dim = _build(arm, True, 8, 2, device, ml_bone=bone)
         kw = dict(horizon=8, observation_dim=obs_dim, action_dim=3, goal_dim=0,
@@ -443,23 +468,58 @@ def gate_gb3(device='cuda'):
         else:
             kw.update(af_ratio_fm=0.5, af_adp_eps=1e-3, af_clamp_utgt=4.0)
         diffusion = DiffCls(model, **kw).to(device)
+        opt = torch.optim.Adam(diffusion.parameters(), lr=WARMUP_LR)
+
         traj, cond = _fake_visual_batch(2, 8, device)
+        for _ in range(WARMUP):                     # break the zero-init, then measure
+            opt.zero_grad(set_to_none=True)
+            loss, _ = diffusion.loss(traj, cond)
+            loss.backward()
+            opt.step()
+        opt.zero_grad(set_to_none=True)
         loss, _ = diffusion.loss(traj, cond)
         loss.backward()
-        proj = _vnet(model).backbone.vis_projector
+
+        vnet = _vnet(model)
+        proj = vnet.backbone.vis_projector
         w = proj.linear.weight if hasattr(proj, 'linear') else proj.weight
         g = w.grad
         live = g is not None and float(g.abs().sum()) > 0
         if not live:
             ok = False
             print(f'  FAIL {arm}@{bone}: vis_projector grad is {"None" if g is None else "all zero"} '
-                  f'— the model is IMAGE-BLIND despite reporting if_vision=True')
+                  f'AFTER {WARMUP} warm-up steps — the model is IMAGE-BLIND despite '
+                  f'reporting if_vision=True')
             continue
-        # and the encoder itself must be training end-to-end, as in Gen6V4/Gen7
-        enc_g = [p.grad for p in _vnet(model).obs_encoder.parameters() if p.grad is not None]
+        # the encoder itself must be training end-to-end, as in Gen6V4/Gen7
+        enc_g = [p.grad for p in vnet.obs_encoder.parameters() if p.grad is not None]
         enc_live = any(float(x.abs().sum()) > 0 for x in enc_g)
+        if not enc_live:
+            ok = False
+            print(f'  FAIL {arm}@{bone}: the ResNet encoder receives NO gradient — the latent '
+                  f'reached the bone detached. Gen14 trains the encoder end-to-end.')
+            continue
+
+        # (b) gradient-free sensitivity: same x/t, two different latents -> different output.
+        with torch.no_grad():
+            B, H = 2, 8
+            x = torch.randn(B, H, 9, device=device)
+            t = torch.rand(B, device=device)
+            h = torch.rand(B, device=device) * 0.1
+            l1 = torch.randn(B, vnet.backbone.cond_dim, device=device)
+            l2 = torch.randn(B, vnet.backbone.cond_dim, device=device)
+            o1 = vnet.backbone(x, l1, t, h=h)
+            o2 = vnet.backbone(x, l2, t, h=h)
+            o1 = o1[0] if isinstance(o1, tuple) else o1
+            o2 = o2[0] if isinstance(o2, tuple) else o2
+            delta = float((o1 - o2).abs().max())
+        if delta == 0.0:
+            ok = False
+            print(f'  FAIL {arm}@{bone}: output IDENTICAL for two different visual latents — '
+                  f'the token is being discarded downstream.')
+            continue
         print(f'  ok   {arm}@{bone}: |grad vis_projector|={float(g.abs().sum()):.3e}, '
-              f'encoder trains={enc_live}, loss={float(loss):.4f}')
+              f'encoder trains={enc_live}, d(out)/d(latent) max={delta:.3e}, loss={float(loss):.4f}')
     print('  G-B3 PASS' if ok else '  G-B3 FAIL')
     return ok
 
