@@ -50,6 +50,8 @@ Better on amortised s/step everywhere (**1.3–5.2×**). Worse on per-tick laten
 
 **Worth pursuing: yes.** Better on what we measure, 3.5× cheaper to run, and it is the baseline's own planning structure — required for a like-for-like HardFlow comparison whether it wins or not.
 
+**Separate question, answered in §5.2:** this section compares *cadences*. Which *arm* (DPCC-projection vs HardFlow) wins is a different axis — and cadence turns out not to decide it. Horizon does.
+
 **One caveat, stated once:** the time win is amortisation. If we ever claim real-time capability, the per-tick number contradicts it. This does not affect the verdict on the current benchmark.
 
 ---
@@ -226,6 +228,50 @@ Note the asymmetry: HardFlow's latency penalty is a flat **1.6×** at every K, D
 **Steps** — better in 4 of 6 rows (`dpcc-c-t` K5 is +1.7 worse, `hf-c-t` K1 is a wash).
 **S&C** — not claimable in either direction at n=6; one row (`hf-c-t` K2) is nominally worse.
 **Time** — better amortised, worse per-tick, in all 6 rows.
+
+---
+
+### 5.2 Which arm wins where — DPCC projection vs HardFlow (cadence is *not* the selector)
+
+**Question:** does the H8+8 cadence (HardFlow's own default) hand the win to the HardFlow arms, while replan-1 (H8/r1, H16/r1) keeps it with DPCC projection?
+
+**Answer: half right. DPCC does win at H8/r1. But the flip is driven by horizon, not by replan cadence.**
+
+Best `-tightened` variant of each family, mean over the 3 avoiding scenes, `S&C / steps / s-per-env-step`:
+
+| config | K | best DPCC-projection | best HardFlow | who wins |
+|---|---|---|---|---|
+| **H8 / r1** (n=20×3) | 1 | `dpcc-t-t` **1.000** / **61.0** / **0.0181** | 0.960 / 63.4 / 0.0421 | **DPCC dominates** |
+| | 2 | `dpcc-t-t` **1.000** / **60.4** / **0.0271** | 0.900 / 67.1 / 0.0505 | **DPCC dominates** |
+| | 5 | `dpcc-t-t` **0.980** / **60.8** / 0.2250 | 0.900 / 67.3 / **0.1408** | DPCC on S&C + steps; HF 1.6× cheaper |
+| **H16 / r1** (n=6) | 1 | `dpcc-c-t` 1.000 / **58.8** / 0.0813 | 1.000 / 60.5 / **0.0627** | tie on S&C; HF cheaper |
+| | 2 | `dpcc-c-t` 1.000 / **62.7** / 0.0923 | 1.000 / 63.8 / **0.0733** | tie on S&C; HF cheaper |
+| | 5 | `dpcc-c-t` 1.000 / **59.0** / 1.2730 | 1.000 / 61.2 / **0.1997** | **HF 6.4× cheaper** |
+| **H16 / r8** (n=6) | 1 | `dpcc-r-t` 1.000 / **62.3** / 0.0103 | 1.000 / 63.2 / **0.0083** | non-dominated |
+| | 2 | `dpcc-t-t` **1.000** / **56.0** / 0.0110 | **0.833** / 59.2 / **0.0100** | **DPCC wins** |
+| | 5 | `dpcc-c-t` 1.000 / 65.7 / 0.1670 | 1.000 / **58.0** / **0.0273** | **HF dominates** |
+
+#### The cost ratio isolates the cause
+
+DPCC-cost ÷ HardFlow-cost at K=5:
+
+| | H8 / r1 | H16 / r1 | H16 / r8 |
+|---|---|---|---|
+| ratio | **1.60×** | **6.38×** | **6.12×** |
+
+The ratio jumps ~4× when H goes 8 → 16, then is **flat across cadence**. `r1 → r8` divides both families by ~8 and leaves the ranking untouched.
+
+**Mechanism.** DPCC solves SLSQP post-hoc over **4 candidates × H**; HardFlow solves IPOPT in-loop over **1 trajectory** (`batch_size` hard-asserted to 1 — see `../../HF_iMF/Research/ANALYSIS_hardflow_vs_dpcc_planning_structure.md`). Doubling H costs DPCC **6.6×** (0.194 → 1.274 at K5) and HardFlow **1.4×** (0.135 → 0.200). That single scaling difference is the whole flip.
+
+#### Conclusions
+
+1. **Replan cadence is not an arm-selector.** It is a throughput divider, ~8×, applied equally to both families.
+2. **Horizon is the arm-selector.** At H8 DPCC-projection wins outright; at H16 the cost axis flips to HardFlow while S&C ties at 1.000 for both.
+3. **The one decisive HardFlow win in the grid is H16 / K5**, where it is Pareto-dominant: equal S&C, 7.7 fewer steps, 6.1× cheaper.
+4. **Tightening, not the arm, buys constraint satisfaction.** Every `S&C = 1.000` in all 9 rows above is a `-tightened` variant; untightened arms top out at 0.833.
+5. **The 4-candidates-vs-1 confound cuts both ways** and is still open (§6.4): it inflates DPCC's cost *and* plausibly explains part of DPCC's S&C/steps edge at H8.
+
+**Evidence weight — do not read the three blocks as equally solid.** H8/r1 rows are n=60 episodes; both H16 blocks are n=6. The H16 S&C column cannot separate 1.000 from 0.833, so the "DPCC wins" at H16/r8 K2 may be a single-episode artifact. The cost column is near-deterministic and holds at any n.
 
 ---
 

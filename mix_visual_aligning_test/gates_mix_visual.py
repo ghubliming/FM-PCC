@@ -28,6 +28,7 @@ import argparse
 import os
 import subprocess
 import sys
+import difflib
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -54,14 +55,40 @@ VERBATIM = [
     ('mix_visual_aligning/models/visual_gaussian_diffusion.py', 'diffuser_visual_aligning/models/visual_gaussian_diffusion.py', 'diffuser_visual_aligning'),
     # ── from Gen3v6 (flow_matcher_v3_meanflow) — the mf arm ──
     ('mix_visual_aligning/models/mf_diffusion.py',              'flow_matcher_v3_meanflow/models/mf_diffusion.py',              'flow_matcher_v3_meanflow'),
-    ('mix_visual_aligning/models/mf_dit_trajectory.py',         'flow_matcher_v3_meanflow/models/mf_dit_trajectory.py',         'flow_matcher_v3_meanflow'),
-    ('mix_visual_aligning/models/mf_dit_official_trajectory.py','flow_matcher_v3_meanflow/models/mf_dit_official_trajectory.py','flow_matcher_v3_meanflow'),
     ('mix_visual_aligning/models/mlp.py',                       'flow_matcher_v3_meanflow/models/mlp.py',                       'flow_matcher_v3_meanflow'),
     # ── from Gen3v7 (flow_matcher_v3_alphaflow) — the af arm + the two-time trainer ──
     ('mix_visual_aligning/models/af_diffusion.py',        'flow_matcher_v3_alphaflow/models/af_diffusion.py',        'flow_matcher_v3_alphaflow'),
-    ('mix_visual_aligning/models/af_dit_trajectory.py',   'flow_matcher_v3_alphaflow/models/af_dit_trajectory.py',   'flow_matcher_v3_alphaflow'),
-    ('mix_visual_aligning/models/af_sit_trajectory.py',   'flow_matcher_v3_alphaflow/models/af_sit_trajectory.py',   'flow_matcher_v3_alphaflow'),
     ('mix_visual_aligning/utils/training_twotime.py',     'flow_matcher_v3_alphaflow/utils/training.py',             'flow_matcher_v3_alphaflow'),
+]
+
+# ── Gen14 U8 ── grafted files that STILL have a live upstream to check against.
+#
+# The four DiT/SiT bones were VERBATIM copies until U8 added the visual prefix token. A
+# plain existence entry (GRAFTED below) would drop them out of G0's coverage entirely,
+# which is the wrong trade: their upstreams (Gen3v6 / Gen3v7) are still actively edited,
+# and a divergence in the transformer internals is exactly what G0 exists to catch.
+#
+# So they keep a real check, weakened only where U8 needed it: the graft must remain
+# ADDITIVE. `removed` is the number of source lines U8 legitimately rewrote —
+#   RoPE bones (mf_dit/af_dit): 4 = prefix_tokens sum, _build_sequence signature,
+#                                   2-line forward docstring+call
+#   adaLN bones (official/sit): 3 = num_tokens/pos_embed sizing and the forward hunk
+# If that count moves, either someone edited a Gen14 bone by hand or upstream changed
+# underneath it. Both mean: re-open the plan, do not bump the number.
+# (gen14_path, source_path, source_package, removed_lines, why)
+GRAFTED_DIFF = [
+    ('mix_visual_aligning/models/mf_dit_trajectory.py',
+     'flow_matcher_v3_meanflow/models/mf_dit_trajectory.py', 'flow_matcher_v3_meanflow', 4,
+     'Gen3v6 + U8 cond_dim visual PREFIX TOKEN (RoPE bone)'),
+    ('mix_visual_aligning/models/mf_dit_official_trajectory.py',
+     'flow_matcher_v3_meanflow/models/mf_dit_official_trajectory.py', 'flow_matcher_v3_meanflow', 3,
+     'Gen3v6 + U8 cond_dim visual token prepended before pos_embed (adaLN bone)'),
+    ('mix_visual_aligning/models/af_dit_trajectory.py',
+     'flow_matcher_v3_alphaflow/models/af_dit_trajectory.py', 'flow_matcher_v3_alphaflow', 4,
+     'Gen3v7 + U8 cond_dim visual PREFIX TOKEN (RoPE bone, same graft as mf)'),
+    ('mix_visual_aligning/models/af_sit_trajectory.py',
+     'flow_matcher_v3_alphaflow/models/af_sit_trajectory.py', 'flow_matcher_v3_alphaflow', 3,
+     'Gen3v7 + U8 cond_dim visual token; pos_embed stays frozen sincos (SiT fidelity)'),
 ]
 
 # Files that are deliberately grafted — a diff here is EXPECTED. Listed so the ledger is
@@ -111,6 +138,31 @@ def gate_g0(verbose=True):
             failures.append(f'{dst}: DIFFERS from {src}')
         elif verbose:
             print(f'  ok   {dst}')
+    # U8 — the additive-graft check (see GRAFTED_DIFF).
+    print(f'\n  grafted, additive-only (U8 bones, {len(GRAFTED_DIFF)} files):')
+    for dst, src, pkg, want_removed, why in GRAFTED_DIFF:
+        dst_abs, src_abs = os.path.join(REPO, dst), os.path.join(REPO, src)
+        if not os.path.exists(dst_abs):
+            failures.append(f'{dst}: MISSING in Gen14'); continue
+        if not os.path.exists(src_abs):
+            failures.append(f'{src}: MISSING source (upstream moved?)'); continue
+        with open(src_abs, 'rb') as f:
+            src_lines = f.read().decode('utf-8').replace('\r\n', '\n').splitlines()
+        dst_lines = _norm(dst, pkg).splitlines()
+        sm = difflib.SequenceMatcher(None, src_lines, dst_lines, autojunk=False)
+        removed = added = 0
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag in ('replace', 'delete'):
+                removed += i2 - i1
+            if tag in ('replace', 'insert'):
+                added += j2 - j1
+        if removed != want_removed:
+            failures.append(
+                f'{dst}: graft is no longer additive — {removed} source lines removed/rewritten, '
+                f'expected {want_removed}. Either a Gen14 bone was hand-edited or {src} '
+                f'changed upstream. Diff them before touching this number.')
+            continue
+        print(f'    ok   {dst}  <- {why}  (+{added} lines, -{removed})')
     print(f'\n  grafted (diff expected, {len(GRAFTED)} files):')
     for f_, why in GRAFTED.items():
         mark = 'ok  ' if os.path.exists(os.path.join(REPO, f_)) else 'MISS'
@@ -188,19 +240,41 @@ def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode=
     cfg.device, cfg.if_vision, cfg.horizon = device, if_vision, horizon
     cfg.action_dim, cfg.obs_dim, cfg.dim = 3, 6, 32
     cfg.dim_mults, cfg.condition_dropout, cfg.returns_condition = (1, 2, 4, 8), 0.1, False
+    bone_kw = {}
     if ml_bone == 'unet':
         cfg.film_mode = film_mode
     else:
-        cfg.dit_hidden_size, cfg.dit_depth = dit_hidden_size, dit_depth
-        cfg.dit_num_heads, cfg.dit_patch_size = 4, 1
+        # 🔴 The geometry MUST travel as engine kwargs, not as cfg attributes.
+        # VisualDiTTwoTime._knob() gives the engine-passed value precedence (single source
+        # of truth = the config block -> train script -> engine chain), and the engine's own
+        # default is the STATE-ONLY 256. Setting only `cfg.dit_hidden_size` therefore loses
+        # to that default and silently builds a 2.5x model — which is exactly what the
+        # 2026-08-21 gate run produced. Mirror train_mix_visual_aligning.py:418-422 instead.
+        bone_kw = dict(dit_hidden_size=dit_hidden_size, dit_depth=dit_depth,
+                       dit_num_heads=4, dit_patch_size=1)
+        for k, v in bone_kw.items():
+            setattr(cfg, k, v)          # kept in sync so the cfg fallback can never disagree
 
     spec = resolve(engine)
     ModelCls, DiffCls = import_class(spec['model']), import_class(spec['diffusion'])
     obs_dim = 6 if if_vision else 20
     model = ModelCls(state_dim=3 + obs_dim, seq_len=horizon, freq_dim=32,
                      dropout_rate=0.1, device=device, if_vision=if_vision, vis_config=cfg,
-                     dual_head=True, interval_cfg=False, imf_backbone=ml_bone)
+                     dual_head=True, interval_cfg=False, imf_backbone=ml_bone, **bone_kw)
     return cfg, model, DiffCls, obs_dim
+
+
+def _vnet(m):
+    """The velocity network, whatever wrapper `_build` handed back.
+
+    mf/af are `wraps_unet=True` arms: `_build` returns the ENGINE (MeanFlowEngine /
+    AlphaFlowEngine), and the trajectory model that owns `velocity_net` sits one level
+    down at `.model`. Reaching for `engine.velocity_net` is what made G-B2/G-B3 die with
+    an AttributeError on 2026-08-21.
+    """
+    if hasattr(m, 'velocity_net'):
+        return m.velocity_net
+    return m.model.velocity_net
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -318,7 +392,7 @@ def gate_gb2(device='cuda'):
     print('\n=== G-B2: visual bones build, parameter-matched ===')
     ok = True
     _, unet_model, _, _ = _build('mf', True, 8, 2, device, ml_bone='unet')
-    n_unet = sum(p.numel() for p in unet_model.velocity_net.backbone.parameters())
+    n_unet = sum(p.numel() for p in _vnet(unet_model).backbone.parameters())
     print(f'  reference: VisualUNetTwoTime bone = {n_unet / 1e6:.2f} M')
     for arm, bone in _U8_BONES:
         try:
@@ -327,7 +401,7 @@ def gate_gb2(device='cuda'):
             ok = False
             print(f'  FAIL {arm}@{bone}: construction raised {type(e).__name__}: {e}')
             continue
-        vnet = model.velocity_net
+        vnet = _vnet(model)
         if type(vnet).__name__ != 'VisualDiTTwoTime':
             ok = False
             print(f'  FAIL {arm}@{bone}: velocity_net is {type(vnet).__name__}, not VisualDiTTwoTime')
@@ -372,7 +446,7 @@ def gate_gb3(device='cuda'):
         traj, cond = _fake_visual_batch(2, 8, device)
         loss, _ = diffusion.loss(traj, cond)
         loss.backward()
-        proj = model.velocity_net.backbone.vis_projector
+        proj = _vnet(model).backbone.vis_projector
         w = proj.linear.weight if hasattr(proj, 'linear') else proj.weight
         g = w.grad
         live = g is not None and float(g.abs().sum()) > 0
@@ -382,7 +456,7 @@ def gate_gb3(device='cuda'):
                   f'— the model is IMAGE-BLIND despite reporting if_vision=True')
             continue
         # and the encoder itself must be training end-to-end, as in Gen6V4/Gen7
-        enc_g = [p.grad for p in model.velocity_net.obs_encoder.parameters() if p.grad is not None]
+        enc_g = [p.grad for p in _vnet(model).obs_encoder.parameters() if p.grad is not None]
         enc_live = any(float(x.abs().sum()) > 0 for x in enc_g)
         print(f'  ok   {arm}@{bone}: |grad vis_projector|={float(g.abs().sum()):.3e}, '
               f'encoder trains={enc_live}, loss={float(loss):.4f}')

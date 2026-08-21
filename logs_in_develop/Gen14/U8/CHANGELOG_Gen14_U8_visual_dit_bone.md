@@ -35,7 +35,7 @@ it, and — critically — is a **checkpoint-path key**, so DiT and U-Net runs c
 | `config/aligning-d3il-visual.py` | `_ml_bone()`, `_mix_bone_keys()`, `_DROP` sentinel, `ml_bone` in both watch lists, plan-block identity-key removal |
 | `mix_visual_aligning_test/train_mix_visual_aligning.py` | bone validation + print; `imf_backbone` and `dit_*` finally threaded into `model_config` |
 | `mix_visual_aligning_test/eval_mix_visual_aligning.py` | reports the bone from the pkl; **suppresses the FiLM breadcrumb on a DiT checkpoint** |
-| `mix_visual_aligning_test/gates_mix_visual.py` | `_build(..., ml_bone=)`; six new gates; `--gate bone` |
+| `mix_visual_aligning_test/gates_mix_visual.py` | `_build(..., ml_bone=)`; six new gates; `--gate bone`. **Post-run (§6):** `_vnet()` engine unwrap, dit geometry passed as engine kwargs, `GRAFTED_DIFF` additive-graft ledger in G0 |
 | `Slurm_Codes/sbatch/mix_visual_aligning/*.sh` | `MIX_BONE` / `MIX_BONE_<ARM>` knob with the same narrowing discipline as `MIX_FILM_MODE` |
 
 ---
@@ -140,20 +140,67 @@ a loud warning naming the retraction it would reproduce (PLAN §1.2c).
 
 ---
 
-## 6. Verification status
+## 6. Verification status — FIRST CLUSTER RUN, 2026-08-21
 
-**Everything below ran in the AI container, which has no Python packages** — so this is syntax
-and logic, never execution:
+Jobs `24815` (`gates … bone`) and `24830` (pipeline `gates … all`) on i6-gpu-1, git rev `6200512`.
 
-- ✅ all touched Python compiles (`py_compile`), all four sbatch scripts parse (`bash -n`)
-- ✅ config logic exercised with `diffuser`/`yaml` stubbed: bone resolution, cross-arm
-  rejection (`sit` on mf, `mf_dit` on af, unknown → all raise), path fragments, plan mirroring
-- ❌ **no tensor has been created; no model has been built; nothing has trained**
+```
+GB1 PASS   GB6 PASS   GB7 PASS   GB45 PASS      G1..G7 PASS
+GB2 FAIL   GB3 FAIL                             G0  FAIL
+```
 
-🔴 **Gate `bone` on the cluster is the first real execution of any of this.** Run it before
-trusting a DiT training job — G-B6 in particular, since a half-applied token bump is silent.
+**The model path was proven healthy.** G-B1/G-B6/G-B45 are the substantive gates and all four
+bones passed them: state-only builds are unchanged at `cond_dim=0`, prefix/`pos_embed`
+bookkeeping agrees on every bone, outputs come back `(2, 8, 9)`, and one real loss step is
+finite through both the MeanFlow JVP and the alpha-Flow bootstrap with the visual token live.
 
----
+**All three failures were in gate code, not in the trained path.** Fixed below; no model,
+config, or sbatch file needed a change. Train `24831` / eval `24832` were cancelled by
+`--dependency=afterok`, which is the chain behaving correctly.
+
+### 6.1 G-B2 / G-B3 — `AttributeError: 'MeanFlowEngine' object has no attribute 'velocity_net'`
+
+`_build()` returns the ENGINE for mf/af (`wraps_unet=True`, see `engine_registry.py`), and
+`velocity_net` lives one level down on the trajectory model at `.model`. G-B45 never hit this
+because it only touches `diffusion.loss()`. Fixed with a `_vnet()` helper that resolves either
+shape; both gates now go through it.
+
+### 6.2 🔴 The gates were building at `dit_hidden_size=256`, not the matched 160
+
+Visible in the log as the `VisualDiTTwoTime` warning firing on every bone, and as
+`params=32.6M` where the U-Net is `26.4M`. Cause: `_build()` set `cfg.dit_hidden_size = 160`
+as a config attribute only, but `VisualDiTTwoTime._knob()` gives the **engine-passed kwarg
+precedence** — and `MeanFlowEngine`'s own default is the state-only `256`. The cfg value could
+never win. Fixed by passing the geometry as engine kwargs, mirroring
+`train_mix_visual_aligning.py:418-422`, and setting the cfg attrs in sync so the fallback can
+never disagree.
+
+**This did not affect training.** The train script forwards `args.dit_hidden_size` explicitly,
+and `_mix_bone_keys()` sets it to 160, so a real run was always going to be parameter-matched.
+The warning fired exactly as designed — it was written for this failure mode and it caught it.
+
+### 6.3 G0 — the four bones are no longer verbatim copies
+
+Correct and expected: U8 grafted a visual token into them. But dropping them into the
+existence-only `GRAFTED` ledger would remove them from G0's coverage, and their upstreams
+(Gen3v6/Gen3v7) are still actively edited. Instead they moved to a new `GRAFTED_DIFF` ledger
+that keeps a real check, weakened only where U8 needed it: **the graft must stay additive.**
+Each entry pins the number of source lines U8 rewrote — 4 on the RoPE bones, 3 on the adaLN
+bones — and G0 fails if that count moves in either direction.
+
+Verified locally (`gate_g0` is pure stdlib): `+46/-4`, `+45/-3`, `+46/-4`, `+45/-3` — G0 PASS,
+19 verbatim files still match.
+
+### 6.4 What is still unverified
+
+- G-B2's parameter ratio has never actually been evaluated (it died before the check). At
+  d=160 the arithmetic predicts ~0.98x for the adaLN bones and ~0.82x for the RoPE bones
+  against the 4.0 M U-Net, both inside the 0.75-1.35 band — **predicted, not measured.**
+- G-B3 has never confirmed gradient reaches `vis_projector`. Until it does, "the visual token
+  is live" rests on construction plus a finite loss, which is weaker than it sounds.
+- Nothing has trained.
+
+Re-run `gates_mix_visual.sh bone` (~1 min) before the next pipeline submission.
 
 ## 7. Expected result — read PLAN §1.3 before budgeting GPU time
 
