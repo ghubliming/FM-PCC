@@ -230,3 +230,17 @@ Maintain chronological ordering.
 ## Cleanup Requirements
 
 After successfully updating the history file, you MUST explicitly delete any temporary files, intermediate text dumps, or processing scripts you created during your research and analysis steps to keep the workspace clean.
+
+---
+
+## Last Known State (Cutoff for Next Run)
+
+The following commit is the **most recent one already captured** in `MASTER_TEST_HISTORY.md`.
+When running the next auto-update, only process commits **strictly after** this entry.
+
+| Field | Value |
+|---|---|
+| **Commit hash** | `06385075` |
+| **Commit message** | `(Gen16 init) feat: implement mix_visual_avoiding module for Gen16 trajectory modeling and evaluation` |
+| **Commit date** | 2026-08-21 15:48:30 UTC |
+| **What was recorded** | Gen16 (Visual-Avoiding Mix-ML) row added to the Master Trace Map table in `MASTER_TEST_HISTORY.md` (between Gen15 and GEN_X). Covers the `mix_visual_avoiding/` + `mix_visual_avoiding_test/` package, four engines × three guidance arms × D3IL visual avoiding task, Gate A0 isolation from Gen14/Gen9, status: code complete / unverified on hardware. |

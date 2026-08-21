@@ -1,8 +1,8 @@
 # CHANGELOG — Gen16 (Visual-Avoiding Mix-ML) · coding pass 1
 
-**Date:** 2026-08-21 · **Status:** code complete, **NOTHING HAS RUN ON HARDWARE.**
-This container has no Python packages; every check below is stdlib-level. All execution is a
-cluster job on i6-gpu-1.
+**Date:** 2026-08-21 · **Status:** code complete. **Gate battery run on i6-gpu-1 (job 24853):
+9/10 PASS.** The one failure (A7) was a bug in the gate itself, now fixed and **not yet
+re-run** — see §6. No training or eval job has been submitted.
 **Plan:** [`PLAN_Gen16_visual_avoiding_mix_ml.md`](./PLAN_Gen16_visual_avoiding_mix_ml.md)
 
 Gen9's visual-avoiding task now takes the ML objective as a config switch:
@@ -300,14 +300,63 @@ claim is false and every cross-generation comparison is suspect.
 JVP and keep the vision encoder out of it by pre-encoding the latent. If that repack is wrong
 for a one-camera payload, A7 surfaces it in seconds instead of nine hours into a training job.
 
-### Ran here (stdlib only)
+### Cluster run — job 24853, i6-gpu-1, 2026-08-21 20:42, git 0638507
+
+```
+A0: PASS   30 files byte-identical to Gen14, 18 declared edits
+A1: PASS   6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)] · 1 camera (agentview_image)
+A2: PASS   47 modules are spec-driven
+A3: PASS   all four arms resolve to Gen16 classes; no diffusion/fm entry reaches a two-time module
+A4: PASS   all four loadpaths round-trip
+A5: PASS   VisualUNet / VisualUNetTwoTime / VisualDiTTwoTime all TRANSITION_DIM=6 LATENT_DIM=64
+A6: PASS   dataset constants and camera plumbing match the spec
+A7: FAIL   ← MY GATE'S BUG, not the package. Fixed; see below.
+A8: PASS   diffusion refused as a HardFlow host; fm -> raw images, mf/af -> visual_latent (2,64)
+A9: PASS   arm-C fan 4 == arm-B fan 4; both gates at 0.5
+```
+
+**9/10 green on the first cluster run.** What A7 actually proved before it fell over is the
+part that mattered — the models BUILT, on real hardware, with the single-camera spec:
+
+```
+[ VisualUNet ]        MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64) …
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64) …
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+[ AFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+```
+
+So the §5.1 hoist works end-to-end: one camera, a 64-D latent, a 6-D trajectory, on all four
+arms. Every failure was the same line:
+
+```
+TypeError: MeanFlowODE.__init__() got an unexpected keyword argument 'device'
+```
+
+The gate hand-rolled `DiffusionCls(model, device=device, **kwargs)`. `device` is a
+**`utils.Config` kwarg** — `Config.__call__` does `self._class(*args, **self._dict)` and then
+`.to(self._device)` — it is never an engine kwarg. Hand-rolling also meant the gate was not
+testing the path training actually takes.
+
+**Fixed by routing A7 through `utils.Config`**, exactly as `train_mix_visual_avoiding.py`
+does (`savepath=None`, `verbose=False`), and the engine-kwargs assembly now mirrors the train
+script's per-arm branches (`loss_discount` for diffusion; the ODE keys for fm/mf/af; the
+two-time block; mf's and af's own objective constants, with the alpha anneal bound to one
+number). **A7 also now runs `loss.backward()` and checks the gradients are finite** — for the
+two-time arms the JVP is a *forward*-mode graph, and whether reverse-mode can differentiate
+through it is what a training step needs and what a loss value alone does not show.
+
+> 📌 `params=15.2M` is the **whole** `MFTrajectoryModel`, ResNet-18 vision encoder included
+> (~11 M). The 1-D U-Net alone is ~4.0 M, which is the number
+> `config/avoiding-d3il-visual-mix.py` parameter-matches the DiT width against. The two are
+> consistent; do not read 15.2 M as contradicting the "~4.0M U-Net" comment.
+
+**A7 has not been re-run since the fix.** Re-run it before the first training job.
+
+### Offline subset (stdlib only, runs in the AI container)
 
 ```
 $ python3 -m mix_visual_avoiding_test.gates_mix_visual_avoiding --gate offline
-  A0: PASS    30 files byte-identical to Gen14, 18 declared edits
-  A1: PASS    6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)] · 1 camera (agentview_image)
-  A2: PASS    47 modules are spec-driven
-  A9: PASS    arm-C fan 4 == arm-B fan 4; both gates at 0.5
+  A0: PASS   A1: PASS   A2: PASS   A9: PASS
 ```
 
 **A4 was additionally verified off-cluster** by re-running the config module against a stubbed
@@ -332,8 +381,9 @@ Syntax: every `.py` compiles under `py_compile`; every `.sh` passes `bash -n`.
 
 ## 7. What has NOT been verified — read before trusting a number
 
-1. **Nothing has executed a tensor op.** A3–A8 have never run. Run
-   `gates_mix_visual_avoiding.sh` before the first training job.
+1. **A3–A6, A8, A9 passed on hardware (job 24853). A7 has NOT passed yet** — its first run
+   failed on a gate-side constructor bug that is now fixed, and the fix is unverified.
+   Re-run `gates_mix_visual_avoiding.sh a7` before the first training job.
 2. **The dataset has not been opened.** `collect_visual_avoiding_data` has not been touched
    since 2026-05-29. **Confirm `environments/dataset/data/avoiding/all_data/images/bp-cam/`
    still exists on i6-gpu-1 before submitting.** `_load_images` raises with a named cause if

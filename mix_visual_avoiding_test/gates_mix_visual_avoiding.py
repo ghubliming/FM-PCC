@@ -454,16 +454,24 @@ def gate_a7(device='cuda'):
     The mf/af arms differentiate the network with a forward-mode JVP; the vision encoder is
     kept OUT of it by pre-encoding the latent (visual_mf_diffusion.py). If that repack is
     wrong for a single-camera payload, this is where it surfaces — not 9 hours into a run.
+
+    🔴 CONSTRUCTION GOES THROUGH `utils.Config`, exactly as the train script does. An
+    earlier version of this gate called `DiffusionCls(model, device=..., **kwargs)` by hand
+    and every arm died on `unexpected keyword argument 'device'` (job 24853) — `device` is a
+    `Config` kwarg that drives `.to(device)`, never an engine kwarg. Hand-rolling the
+    constructor also meant the gate was not testing the path training actually takes. It
+    does now: `savepath=None` so nothing is pickled, `verbose=False` so the log stays short.
     """
     print('\n=== A7: four arms, one visual training step ===')
     import torch
+    import mix_visual_avoiding.utils as utils
     from mix_visual_avoiding.models import visual_spec
-    from mix_visual_avoiding.models.engine_registry import resolve, import_class
+    from mix_visual_avoiding.models.engine_registry import resolve
 
     H, B = 8, 2
 
     class _Cfg:
-        pass
+        """Stand-in for the Tap args object the config block produces."""
 
     ok = True
     for eng in ('diffusion', 'fm', 'mf', 'af'):
@@ -481,44 +489,76 @@ def gate_a7(device='cuda'):
         cfg.film_mode = 'v1'
         cfg.engine = eng
 
-        ModelCls     = import_class(spec['model'])
-        DiffusionCls = import_class(spec['diffusion'])
+        # ── the backbone / engine wrapper, per ENGINE_SPEC['wraps_unet'] ──────────────
+        if spec['wraps_unet']:
+            model_config = utils.Config(
+                spec['model'], verbose=False, savepath=None,
+                state_dim=visual_spec.TRANSITION_DIM, seq_len=H, freq_dim=32,
+                dropout_rate=0.1, device=device, if_vision=True, vis_config=cfg,
+                dual_head=True, interval_cfg=False, imf_backbone='unet')
+        else:
+            model_config = utils.Config(
+                spec['model'], verbose=False, savepath=None, config=cfg)
 
+        # ── the engine's kwargs, mirroring the train script's assembly ────────────────
         kwargs = dict(horizon=H, observation_dim=visual_spec.OBS_DIM,
                       action_dim=visual_spec.ACTION_DIM, goal_dim=0, n_timesteps=20,
                       loss_type='l2', clip_denoised=False, predict_epsilon=True,
                       action_weight=1.0)
-        if spec['wraps_unet']:
-            model = ModelCls(state_dim=visual_spec.TRANSITION_DIM, seq_len=H, freq_dim=32,
-                             dropout_rate=0.1, device=device, if_vision=True, vis_config=cfg,
-                             dual_head=True, interval_cfg=False, imf_backbone='unet')
-            kwargs.update(if_vision=True, t_schedule='logit_normal', p_mean=-0.4, p_std=1.0,
-                          time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, flow_steps_v3=2,
-                          ode_solver_backend_v3='legacy_euler', ode_solver_method_v3='euler')
-            if eng == 'af':
-                kwargs.update(af_alpha_end_step=100, af_n_train_steps=100)
+        if eng == 'diffusion':
+            kwargs.update(loss_discount=1.0)
         else:
-            model = ModelCls(cfg)
-            if eng != 'diffusion':
-                kwargs.update(time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, flow_steps_v3=2,
-                              ode_solver_backend_v3='legacy_euler',
-                              ode_solver_method_v3='euler')
-            else:
-                kwargs.update(loss_discount=1.0)
+            kwargs.update(time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, flow_steps_v3=2,
+                          ode_solver_backend_v3='legacy_euler',
+                          ode_solver_method_v3='euler')
+        if spec['two_time']:
+            kwargs.update(if_vision=True, mf_freeze_vision_encoder=False,
+                          t_schedule='logit_normal', p_mean=-0.4, p_std=1.0)
+        if eng == 'mf':
+            kwargs.update(meanflow_data_proportion=0.5, mf_adp_p=1.0, mf_adp_eps=0.01)
+        if eng == 'af':
+            # The alpha anneal must span the ACTUAL budget; both keys derive from one number
+            # here for the same reason the train script derives them from n_train_steps.
+            _steps = 100
+            kwargs.update(af_ratio_fm=0.5, af_adp_eps=1e-3, af_clamp_utgt=4.0,
+                          af_alpha_scheduler='sigmoid', af_alpha_init=1.0, af_alpha_end=0.0,
+                          af_alpha_init_step=0, af_alpha_end_step=_steps,
+                          af_alpha_gamma=25.0, af_alpha_clamp=0.005,
+                          af_n_train_steps=_steps)
 
         try:
-            engine = DiffusionCls(model, device=device, **kwargs).to(device)
+            model = model_config()
+            diffusion_config = utils.Config(
+                spec['diffusion'], verbose=False, savepath=None, device=device, **kwargs)
+            engine = diffusion_config(model)
+
             trajectories = torch.randn(B, H, visual_spec.TRANSITION_DIM, device=device)
             conditions = {0: torch.randn(B, visual_spec.OBS_DIM, device=device)}
             for key in visual_spec.COND_IMG_KEYS:
                 conditions[key] = torch.rand(B, *visual_spec.IMG_SHAPE, device=device)
+
             loss, infos = engine.loss(trajectories, conditions)
             finite = bool(torch.isfinite(loss).item())
-            print(f'  {"ok  " if finite else "FAIL"} {eng:<9} loss={loss.item():.4f} '
+            # A backward pass is part of the question for the two-time arms: the JVP is a
+            # FORWARD-mode graph, and whether reverse-mode can then differentiate through it
+            # is exactly what a training step needs and what a loss value alone does not show.
+            grad_ok = True
+            try:
+                loss.backward()
+                grads = [p.grad for p in engine.parameters() if p.grad is not None]
+                grad_ok = bool(grads) and all(torch.isfinite(g).all().item() for g in grads)
+            except Exception as e:
+                print(f'       backward failed: {type(e).__name__}: {e}')
+                grad_ok = False
+            good = finite and grad_ok
+            print(f'  {"ok  " if good else "FAIL"} {eng:<9} loss={loss.item():.4f}  '
+                  f'grads={"finite" if grad_ok else "BAD"}  '
                   f'(cameras={visual_spec.N_CAMERAS}, traj_dim={visual_spec.TRANSITION_DIM})')
-            ok &= finite
+            ok &= good
         except Exception as e:
+            import traceback
             print(f'  FAIL {eng:<9} {type(e).__name__}: {e}')
+            traceback.print_exc()
             ok = False
 
     print(f'  A7 {"PASS" if ok else "FAIL"}')
