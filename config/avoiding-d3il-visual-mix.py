@@ -71,7 +71,32 @@ logbase = 'logs'
 # Single source of truth for the training budget. 🔴 The alpha-Flow anneal MUST span the
 # ACTUAL budget: af_alpha_end_step and af_n_train_steps are BOTH derived from this one name,
 # and af_diffusion.py asserts they agree. Never write the number twice.
-_MIX_N_TRAIN_STEPS = int(1e5)
+_MIX_FULL_N_TRAIN_STEPS = int(1e5)
+_MIX_N_TRAIN_STEPS = int(float(os.environ.get('MIX_TRAIN_STEPS', _MIX_FULL_N_TRAIN_STEPS)))
+
+# 🔴 A SHORTENED RUN MUST NOT LOOK LIKE A FULL ONE. Budget is an identity key: a 50k-step
+# checkpoint and a 100k-step checkpoint are different models, and the whole point of the
+# generation-sibling layout is that two different models never share a directory. So when
+# MIX_TRAIN_STEPS cuts the budget, `train_budget` joins args_to_watch_mix_visual_train and
+# the checkpoint folder gains a trailing '_TB50pct'.
+#
+# At the FULL budget the key is absent entirely (watch() skips keys the block does not
+# define), so every path that exists today is byte-identical to what it was. Nothing that
+# already trained needs re-pathing.
+#
+# Because the tag is derived from the shared watch list, the eval's diffusion_loadpath picks
+# it up automatically via _mix_loadpath -- but ONLY if the eval job sees the same
+# MIX_TRAIN_STEPS. The pipeline exports it explicitly for exactly that reason.
+def _budget_tag():
+    if _MIX_N_TRAIN_STEPS >= _MIX_FULL_N_TRAIN_STEPS:
+        return None
+    pct = 100.0 * _MIX_N_TRAIN_STEPS / _MIX_FULL_N_TRAIN_STEPS
+    # Integer percents stay clean ('50pct'); anything else falls back to the raw step count
+    # so an odd budget is still unambiguous rather than silently rounded into a collision.
+    return f'{int(round(pct))}pct' if abs(pct - round(pct)) < 1e-9 else f'{_MIX_N_TRAIN_STEPS}steps'
+
+
+_MIX_BUDGET_TAG = _budget_tag()
 
 # The NFE budget the two-time arms evaluate at by default. Two-time models are the whole
 # reason low-K is interesting (one u-head query spans an interval), and the Gen3v6/v7
@@ -165,6 +190,9 @@ args_to_watch_mix_visual_train = [
     ('engine', 'E'),                 # the arm identity key
     ('t_schedule', 'ts'),            # mf/af only
     ('af_alpha_scheduler', 'afsch'), # af only
+    # Appended LAST so a reduced-budget run reads as the full name plus a suffix, and so the
+    # full-budget name is unchanged. Set only when the budget is cut (see _budget_tag).
+    ('train_budget', 'TB'),
 ]
 
 args_to_watch_mix_visual_plan = [
@@ -323,6 +351,10 @@ def _mix_train_block(engine, parent, overrides):
            'prefix': f'mix_visual_avoiding_{engine}/'}
     for k in [k for k, v in blk.items() if v is _DROP]:
         del blk[k]
+    # Present ONLY on a reduced budget -- absent means "full 1e5", which is how every
+    # existing path keeps its current name.
+    if _MIX_BUDGET_TAG is not None:
+        blk['train_budget'] = _MIX_BUDGET_TAG
     blk['exp_name'] = watch(args_to_watch_mix_visual_train)
     return blk
 

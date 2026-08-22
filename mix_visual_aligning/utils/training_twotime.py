@@ -67,6 +67,7 @@ class Trainer(object):
         step_start_ema=2000,
         update_ema_every=10,
         log_freq=1000,
+        save_freq=None,
         train_device='cuda',
         results_folder='./results',
     ):
@@ -78,7 +79,14 @@ class Trainer(object):
 
         self.step_start_ema = step_start_ema
         self.log_freq = log_freq
-        self.save_freq = n_train_steps // 5
+        # Resume granularity. The inherited default is n_train_steps // 5 — FIVE saves for a
+        # whole run — so a wall-clock kill discards up to 20 % of the training. Job 24838 lost
+        # 84k steps that way: it died at step 83999 with the newest periodic save at 80000, and
+        # a run killed before the FIRST periodic save keeps nothing at all but state_0.pt.
+        # Pass save_freq (CLI --save-every, env MIX_SAVE_EVERY) to checkpoint more often. It
+        # changes only how many state_<step>.pt files land on disk — never a path key, never
+        # the LR schedule — so a run started at one cadence resumes correctly at another.
+        self.save_freq = int(save_freq) if save_freq else max(1, int(n_train_steps) // 5)
 
         self.n_train_steps = n_train_steps
         self.n_steps_per_epoch = n_steps_per_epoch

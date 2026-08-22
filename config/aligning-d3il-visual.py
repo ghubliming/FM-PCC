@@ -873,7 +873,23 @@ base['plan_imf_visual_aligning'] = {
 # Single source of truth for the training budget. 🔴 The alpha-Flow anneal MUST span the
 # ACTUAL budget (PLAN §6.2a): af_alpha_end_step and af_n_train_steps are BOTH derived from
 # this one name, and af_diffusion.py asserts they agree. Never write the number twice.
-_MIX_N_TRAIN_STEPS = int(1e5)
+_MIX_FULL_N_TRAIN_STEPS = int(1e5)
+_MIX_N_TRAIN_STEPS = int(float(os.environ.get('MIX_TRAIN_STEPS', _MIX_FULL_N_TRAIN_STEPS)))
+
+# 🔴 A SHORTENED RUN MUST NOT LOOK LIKE A FULL ONE. Budget is an identity key: a 50k-step
+# checkpoint and a 100k-step checkpoint are different models, and two different models must
+# never share a directory. When MIX_TRAIN_STEPS cuts the budget, `train_budget` joins
+# args_to_watch_mix_visual_train and the checkpoint folder gains a trailing '_TB50pct'.
+# At the FULL budget the key is absent (watch() skips undefined keys), so every path that
+# exists today keeps its current name. Mirrored from Gen16's avoiding config.
+def _budget_tag():
+    if _MIX_N_TRAIN_STEPS >= _MIX_FULL_N_TRAIN_STEPS:
+        return None
+    pct = 100.0 * _MIX_N_TRAIN_STEPS / _MIX_FULL_N_TRAIN_STEPS
+    return f'{int(round(pct))}pct' if abs(pct - round(pct)) < 1e-9 else f'{_MIX_N_TRAIN_STEPS}steps'
+
+
+_MIX_BUDGET_TAG = _budget_tag()
 
 # One watch list for all four arms. watch() skips keys a block does not define, so each
 # arm's folder name carries exactly its own identity keys (e.g. 'K' only for diffusion,
@@ -898,6 +914,9 @@ args_to_watch_mix_visual_train = [
     ('engine', 'E'),                 # ← Gen14 arm identity key
     ('t_schedule', 'ts'),            # mf/af only
     ('af_alpha_scheduler', 'afsch'), # af only
+    # Appended LAST so a reduced-budget run reads as the full name plus a suffix, and the
+    # full-budget name is unchanged. Set only when the budget is cut (see _budget_tag).
+    ('train_budget', 'TB'),
 ]
 
 args_to_watch_mix_visual_plan = [
@@ -978,6 +997,9 @@ def _mix_train_block(engine, parent, overrides):
            'prefix': f'mix_visual_aligning_{engine}/'}
     for k in [k for k, v in blk.items() if v is _DROP]:
         del blk[k]
+    # Present ONLY on a reduced budget -- absent means "full 1e5".
+    if _MIX_BUDGET_TAG is not None:
+        blk['train_budget'] = _MIX_BUDGET_TAG
     blk['exp_name'] = watch(args_to_watch_mix_visual_train)
     return blk
 

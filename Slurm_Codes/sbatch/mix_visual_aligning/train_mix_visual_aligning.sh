@@ -155,10 +155,36 @@ if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then
     echo "[ train ]          which submits one job per seed."
 fi
 
+# ── Resume + checkpoint cadence + training budget ────────────────────────────
+# Three env knobs, all opt-in, all no-ops when unset:
+#
+#   MIX_AUTO_RESUME=1      pick up the newest state_<step>.pt in the savepath and continue
+#                          from it. Restores step, EMA, Adam moments AND the cosine LR
+#                          schedule exactly (_restore_optimizer_state), so a requeued run is
+#                          not a warm restart -- it is the same run. Ignores state_0.pt.
+#   MIX_SAVE_EVERY=<steps> checkpoint cadence. Default n_train_steps // 5 = five saves for a
+#                          whole run, which is what let job 24838 lose 84k steps to a wall
+#                          -clock kill. On a 24 h visual run use ~5000.
+#   MIX_TRAIN_STEPS=<n>    training budget. 🔴 This is a PATH KEY: anything below the full
+#                          1e5 stamps '_TB<pct>pct' onto the checkpoint folder so a short run
+#                          can never be mistaken for -- or overwrite -- a full one. The EVAL
+#                          must see the same value or its diffusion_loadpath will point at
+#                          the full-budget directory; the pipeline exports it for you.
+#
+#   MIX_TRAIN_STEPS=50000 MIX_SAVE_EVERY=5000 ./Slurm_Codes/submit.sh <this script> mf 6
+if [ -n "$MIX_AUTO_RESUME" ]; then echo "[ train ] auto-resume: ON"; fi
+if [ -n "$MIX_SAVE_EVERY" ]; then echo "[ train ] save_freq  = $MIX_SAVE_EVERY steps"; fi
+if [ -n "$MIX_TRAIN_STEPS" ]; then
+    echo "[ train ] budget     = $MIX_TRAIN_STEPS steps (PATH KEY -> _TB<pct>pct suffix)"
+fi
+
 # $SEEDS is intentionally unquoted: it must word-split into separate --seeds arguments.
+# The ${VAR:+...} forms vanish entirely when the variable is unset.
 python mix_visual_aligning_test/train_mix_visual_aligning.py \
     --engine "$ENGINE" \
     --seeds $SEEDS \
+    ${MIX_AUTO_RESUME:+--auto-resume} \
+    ${MIX_SAVE_EVERY:+--save-every $MIX_SAVE_EVERY} \
     --use-wandb \
     --wandb-project FM-PCC-visual-aligning-gen14
 

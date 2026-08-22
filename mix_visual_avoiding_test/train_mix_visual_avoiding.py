@@ -183,6 +183,9 @@ def parse_top_level_args():
     p.add_argument('--wandb-mode', type=str, default='online',
                    choices=['online', 'offline', 'disabled'])
     p.add_argument('--log-freq', type=int, default=1000)
+    p.add_argument('--save-every', type=int, default=None,
+                   help='checkpoint cadence in steps (default: n_train_steps // 5). Lower it '
+                        'on long visual runs so a wall-clock kill costs minutes, not hours.')
     # ── Gen14 ── the arm selector. Picks the config block, the engine classes and
     # the Trainer. Default 'fm' == the Gen7 reference arm, so a bare invocation
     # reproduces Gen7 behaviour.
@@ -224,6 +227,14 @@ def find_latest_checkpoint_step(results_dir):
             steps.append(int(os.path.basename(cp).replace('state_', '').replace('.pt', '')))
         except ValueError:
             pass
+    # 🔴 STEP 0 IS NOT PROGRESS. The trainer saves on `step % save_freq == 0`, which fires on
+    # the very first iteration, so EVERY run that has ever started owns a state_0.pt. Returning
+    # it made --auto-resume load a randomly-initialised network and announce 'Resuming from
+    # step 0' -- a fresh run wearing a resume's clothes, and one that silently discards the
+    # `resume checkpoint not found` warning that should have fired. state_best.pt is excluded
+    # separately (int('best') raises ValueError above), so a run killed before its first
+    # periodic save correctly reports None and starts over openly.
+    steps = [s for s in steps if s > 0]
     return max(steps) if steps else None
 
 def write_seed_manifest(run_root, seeds, source, cli_args):
@@ -573,6 +584,7 @@ for seed in selected_seeds:
         gradient_accumulate_every=args.gradient_accumulate_every,
         results_folder=args.savepath,
         log_freq=cli_args.log_freq,
+        save_freq=cli_args.save_every,
     )
     if ENGINE_SPEC['two_time']:
         # ⚠️ split_seed exists ONLY on the two-time trainer. This means mf/af use a

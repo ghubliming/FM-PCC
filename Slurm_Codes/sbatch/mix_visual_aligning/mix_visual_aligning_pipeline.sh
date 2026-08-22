@@ -143,6 +143,31 @@ if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
 fi
 
 EXPORT_OPTS="--export=ALL,MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE,MIX_BONE_${ENGINE_UC}=$ML_BONE"
+
+# ── Training budget / resume / save cadence, carried onto BOTH child stages ──────────────
+# 🔴 MIX_TRAIN_STEPS MUST reach the EVAL, not just the train job. It is a checkpoint-path
+# key (config: _budget_tag -> '_TB<pct>pct'), so an eval that does not see it builds
+# diffusion_loadpath for the FULL-budget directory and dies on a missing checkpoint after
+# the GPU is already allocated. Same class of bug as the film_mode narrowing above, which is
+# why it is exported EXPLICITLY here rather than left to --export=ALL.
+#
+# MIX_SAVE_EVERY and MIX_AUTO_RESUME are train-only, but ride along harmlessly; the eval
+# script never reads them.
+if [ -n "$MIX_TRAIN_STEPS" ]; then
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_TRAIN_STEPS=$MIX_TRAIN_STEPS"
+    _PCT=$(( 100 * MIX_TRAIN_STEPS / 100000 ))
+    echo "[ pipeline ] budget = $MIX_TRAIN_STEPS steps (${_PCT}% of 1e5)"
+    echo "[ pipeline ]          🔴 PATH KEY -- checkpoints land in a '..._TB${_PCT}pct' tree,"
+    echo "[ pipeline ]          separate from any full-budget run. Eval inherits the same tag."
+fi
+if [ -n "$MIX_SAVE_EVERY" ]; then
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_SAVE_EVERY=$MIX_SAVE_EVERY"
+    echo "[ pipeline ] save_freq = $MIX_SAVE_EVERY steps"
+fi
+if [ -n "$MIX_AUTO_RESUME" ]; then
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_AUTO_RESUME=$MIX_AUTO_RESUME"
+    echo "[ pipeline ] auto-resume = ON (train stage picks up the newest state_<step>.pt)"
+fi
 if [ "$ML_BONE" != "unet" ]; then
     echo "[ pipeline ] ml_bone = $ML_BONE — VisualDiTTwoTime (visual latent as ONE PREPENDED"
     echo "[ pipeline ]           TOKEN). RETRAIN into a separate '..._B${ML_BONE}_E${ENGINE}' tree;"
