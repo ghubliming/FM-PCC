@@ -217,6 +217,39 @@ Nothing here has executed a tensor op. Run on cluster.
 
 ---
 
+## 4.5 G0 ledger — caught by the gate, job 24864
+
+The first cluster run of this fix **failed G0**:
+
+```
+! mix_visual_aligning/utils/training.py: DIFFERS from fm_visual_aligning/utils/training.py
+! mix_visual_aligning/utils/training_twotime.py: DIFFERS from flow_matcher_v3_alphaflow/utils/training.py
+```
+
+Gen16's A0 ledger already lists both trainers under `EDITED`, and that was checked before
+editing. **Gen14's G0 is a different gate with a different ledger** — it holds those two files
+as `VERBATIM` against their *upstreams* (Gen7 and Gen3v7), not against Gen16. That was not
+checked, and the gate caught it. Working as designed.
+
+Resolution: both files move from `VERBATIM` to `GRAFTED_DIFF`, which keeps a **real** check
+rather than dropping them out of coverage — the upstreams are actively edited and the training
+loop is precisely what G0 must keep watching. The graft is additive with exactly **3** rewritten
+source lines each, enumerated in the ledger entry:
+
+| rewritten line | becomes |
+|---|---|
+| `self.save_freq = n_train_steps // 5` (×1) | honours the `save_freq` argument |
+| `torch.save(<payload>, savepath)` (×2) | `_atomic_torch_save(...)` |
+
+Everything else is insertion-only (`save_freq=None` kwarg, the helper). A 4th removal means
+something that is not Fix_10 changed, and the gate will say so.
+
+Re-running G0's exact logic offline: VERBATIM 17/17 clean, all 6 `GRAFTED_DIFF` entries at
+their declared counts (`training.py` +39/−3, `training_twotime.py` +39/−3) → **G0 PASS**.
+
+Everything else in 24864 was already green, including the whole U8 bone battery
+(G-B1/B2/B3/B4/B5/B6/B7) and G1–G7 — so the DiT bones themselves are verified on hardware.
+
 ## 5. Sibling sync
 
 Applied identically to Gen16 avoiding: `mix_visual_avoiding/utils/training{,_twotime}.py`,

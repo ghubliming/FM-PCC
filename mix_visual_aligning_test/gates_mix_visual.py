@@ -45,7 +45,6 @@ VERBATIM = [
     ('mix_visual_aligning/sampling/projection.py',         'fm_visual_aligning/sampling/projection.py',         'fm_visual_aligning'),
     ('mix_visual_aligning/datasets/sequence.py',           'fm_visual_aligning/datasets/sequence.py',           'fm_visual_aligning'),
     ('mix_visual_aligning/datasets/normalization.py',      'fm_visual_aligning/datasets/normalization.py',      'fm_visual_aligning'),
-    ('mix_visual_aligning/utils/training.py',              'fm_visual_aligning/utils/training.py',              'fm_visual_aligning'),
     ('mix_visual_aligning/utils/arrays.py',                'fm_visual_aligning/utils/arrays.py',                'fm_visual_aligning'),
     ('mix_visual_aligning/utils/serialization.py',         'fm_visual_aligning/utils/serialization.py',         'fm_visual_aligning'),
     ('mix_visual_aligning/utils/setup.py',                 'fm_visual_aligning/utils/setup.py',                 'fm_visual_aligning'),
@@ -58,7 +57,6 @@ VERBATIM = [
     ('mix_visual_aligning/models/mlp.py',                       'flow_matcher_v3_meanflow/models/mlp.py',                       'flow_matcher_v3_meanflow'),
     # ── from Gen3v7 (flow_matcher_v3_alphaflow) — the af arm + the two-time trainer ──
     ('mix_visual_aligning/models/af_diffusion.py',        'flow_matcher_v3_alphaflow/models/af_diffusion.py',        'flow_matcher_v3_alphaflow'),
-    ('mix_visual_aligning/utils/training_twotime.py',     'flow_matcher_v3_alphaflow/utils/training.py',             'flow_matcher_v3_alphaflow'),
 ]
 
 # ── Gen14 U8 ── grafted files that STILL have a live upstream to check against.
@@ -89,6 +87,23 @@ GRAFTED_DIFF = [
     ('mix_visual_aligning/models/af_sit_trajectory.py',
      'flow_matcher_v3_alphaflow/models/af_sit_trajectory.py', 'flow_matcher_v3_alphaflow', 3,
      'Gen3v7 + U8 cond_dim visual token; pos_embed stays frozen sincos (SiT fidelity)'),
+    # ── Fix_10 ── the two trainers. These were VERBATIM until Fix_10; they are moved here
+    # rather than to GRAFTED (which drops a file out of G0's coverage entirely) because the
+    # upstreams are actively edited and the training loop is exactly what G0 must keep
+    # watching. The graft is ADDITIVE and the 3 rewritten lines are enumerated below, so a
+    # 4th means someone changed something that is not Fix_10.
+    #
+    #   1x  self.save_freq = n_train_steps // 5      -> honours the save_freq argument
+    #   2x  torch.save(<payload>, savepath)          -> _atomic_torch_save(...)
+    #
+    # Everything else Fix_10 adds is insertion only: the `save_freq=None` kwarg and the
+    # _atomic_torch_save helper. See logs_in_develop/Gen14/Fix_10/.
+    ('mix_visual_aligning/utils/training.py',
+     'fm_visual_aligning/utils/training.py', 'fm_visual_aligning', 3,
+     'Gen7 + Fix_10 save_freq knob and atomic checkpoint writes'),
+    ('mix_visual_aligning/utils/training_twotime.py',
+     'flow_matcher_v3_alphaflow/utils/training.py', 'flow_matcher_v3_alphaflow', 3,
+     'Gen3v7 + Fix_10 save_freq knob and atomic checkpoint writes'),
 ]
 
 # Files that are deliberately grafted — a diff here is EXPECTED. Listed so the ledger is
