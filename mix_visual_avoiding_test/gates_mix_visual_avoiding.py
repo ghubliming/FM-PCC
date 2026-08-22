@@ -418,13 +418,21 @@ def gate_a5(**_):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def gate_a6(**_):
-    """The dataset's class constants and camera plumbing match the spec.
+    """The dataset's constants, camera plumbing and DATA PATHS are self-consistent.
 
     Static: no data is loaded (the pickles live on the cluster's data volume, and this gate
     must be runnable before a single frame is read).
+
+    🔴 The path half was added after job 24857. The train script had its own copy of the
+    dataset-path literal and it was WRONG — `.../avoiding/train_files.pkl` instead of
+    `.../avoiding/all_data/train_files.pkl`, copied from the aligning layout where the
+    episode list sits one level higher. Nothing caught it until a GPU allocation did, and
+    only after the config pkl had already been written to the checkpoint dir. `sequence.py`
+    now defines the paths once; this gate pins that there is no second copy.
     """
-    print('\n=== A6: dataset <-> spec ===')
+    print('\n=== A6: dataset <-> spec, and the data paths ===')
     from mix_visual_avoiding.models import visual_spec
+    from mix_visual_avoiding.datasets import sequence as seq
     from mix_visual_avoiding.datasets.sequence import ParityAvoidingDataset as DS
 
     checks = [
@@ -434,11 +442,42 @@ def gate_a6(**_):
         ('one CAM_DIR per condition key',
          tuple(DS.CAM_DIRS) == tuple(visual_spec.COND_IMG_KEYS)),
         ('episode_split exists (no window leakage)', hasattr(DS, 'episode_split')),
+        # ── paths: the episode list and the directories it names share one root ──
+        ('STATE_DIR is under DATA_ROOT',
+         seq.STATE_DIR.startswith(seq.DATA_ROOT + '/')),
+        ('DEFAULT_DATASET_PATH is under DATA_ROOT',
+         seq.DEFAULT_DATASET_PATH.startswith(seq.DATA_ROOT + '/')),
+        ('DATA_ROOT names the avoiding task, not aligning',
+         '/avoiding/' in seq.DATA_ROOT + '/' and 'aligning' not in seq.DATA_ROOT),
+        ('the class re-export matches the module definition',
+         DS.DEFAULT_DATASET_PATH == seq.DEFAULT_DATASET_PATH
+         and DS.DATA_ROOT == seq.DATA_ROOT),
     ]
+
+    # ── no SECOND copy of the path anywhere in the generation ────────────────────────
+    # The train script must import it. A literal here is the exact defect job 24857 hit.
+    stray = []
+    scan = _walk_pkg(PKG) + [f'{PKG}_test/{n}' for n in
+                             ('train_mix_visual_avoiding.py', 'eval_mix_visual_avoiding.py')]
+    for path in scan:
+        abs_path = os.path.join(REPO, path)
+        if not os.path.exists(abs_path) or path.endswith('datasets/sequence.py'):
+            continue
+        with open(abs_path, 'rb') as f:
+            code = _strip_comments_and_docstrings(f.read().decode('utf-8'))
+        for lineno, line in enumerate(code.splitlines(), start=1):
+            if re.search(r"['\"]environments/dataset/data/", line):
+                stray.append(f'{path}:{lineno} -> {line.strip()!r}')
+    checks.append((f'no hardcoded data path outside sequence.py ({len(stray)} found)',
+                   not stray))
+
     ok = True
     for label, passed in checks:
         print(f'  {"ok  " if passed else "FAIL"} {label}')
         ok &= bool(passed)
+    for s_ in stray:
+        print(f'    ! {s_}   (import sequence.DEFAULT_DATASET_PATH instead)')
+    print(f'  paths: root={seq.DATA_ROOT}  list={seq.DEFAULT_DATASET_PATH}')
     print(f'  A6 {"PASS" if ok else "FAIL"}')
     return ok
 

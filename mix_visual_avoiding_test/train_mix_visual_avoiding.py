@@ -304,11 +304,22 @@ for seed in selected_seeds:
     _DatasetClass = ParityAvoidingDataset
     print(f'[ train ] dataset=ParityAvoidingDataset — {visual_spec.LAYOUT}')
 
+    # 🔴 The dataset path is IMPORTED, not written here. Gen9 repeated the literal in its
+    # train script and Gen16's first version got it wrong (dropped the `all_data/` segment,
+    # copied from the aligning layout where the episode list sits one level higher) — job
+    # 24857 died on FileNotFoundError. `sequence.py` defines DATA_ROOT / STATE_DIR /
+    # DEFAULT_DATASET_PATH once and reads them itself, so the list and the directories it
+    # names cannot disagree. A config block may still override via `dataset_path`.
+    _dataset_path = getattr(args, 'dataset_path', None) or _DatasetClass.DEFAULT_DATASET_PATH
+    print(f'[ train ] dataset_path = {_dataset_path}')
+
     dataset_config = utils.Config(
         _DatasetClass,
         savepath=(args.savepath, 'dataset_config.pkl'),
-        dataset_path='environments/dataset/data/avoiding/train_files.pkl',
+        dataset_path=_dataset_path,
         horizon=args.horizon,
+        # max_n_episodes reuses max_path_length (200), exactly as Gen9 did — keeping the
+        # episode count identical is part of what makes the Gen9 parity check meaningful.
         max_n_episodes=getattr(args, 'max_path_length', 1000),
     )
     dataset = dataset_config()

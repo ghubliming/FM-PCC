@@ -1,8 +1,14 @@
 # CHANGELOG — Gen16 (Visual-Avoiding Mix-ML) · coding pass 1
 
-**Date:** 2026-08-21 · **Status:** code complete. **Gate battery run on i6-gpu-1 (job 24853):
-9/10 PASS.** The one failure (A7) was a bug in the gate itself, now fixed and **not yet
-re-run** — see §6. No training or eval job has been submitted.
+**Date:** 2026-08-21 (updated 2026-08-22) · **Status:** code complete, **two cluster
+failures found and fixed, neither yet re-run.**
+
+| job | what | outcome |
+|---|---|---|
+| 24853 | full gate battery | **9/10 PASS** — A7 failed on a bug in the GATE (§6) |
+| 24857 | `train … mf 6` | **FileNotFoundError** — wrong dataset path in the train script (§6.1) |
+
+Both fixes are in. Neither has been re-run. No training run has reached step 1 yet.
 **Plan:** [`PLAN_Gen16_visual_avoiding_mix_ml.md`](./PLAN_Gen16_visual_avoiding_mix_ml.md)
 
 Gen9's visual-avoiding task now takes the ML objective as a config switch:
@@ -352,6 +358,53 @@ through it is what a training step needs and what a loss value alone does not sh
 
 **A7 has not been re-run since the fix.** Re-run it before the first training job.
 
+### 6.1 Job 24857 — wrong dataset path (a real Gen16 bug, not a gate bug)
+
+The first `mf` training submission died at `dataset_config()`:
+
+```
+FileNotFoundError: .../d3il/environments/dataset/data/avoiding/train_files.pkl
+```
+
+**Cause.** The train script carried its own copy of the dataset-path literal, and I wrote it
+against the *aligning* layout — where `train_files.pkl` sits directly under the task folder.
+The avoiding data has an extra `all_data/` level:
+
+```
+Gen9 (authority):  environments/dataset/data/avoiding/all_data/train_files.pkl
+Gen16 (shipped):   environments/dataset/data/avoiding/train_files.pkl        ← wrong
+```
+
+The dataset CLASS had the right paths all along (`.../all_data/state`,
+`.../all_data/images/bp-cam`) — only the caller's copy was wrong, so the two disagreed with
+nothing to notice.
+
+**Fix — structural, matching the §5.1 principle.** `datasets/sequence.py` now defines the
+paths ONCE and reads them itself:
+
+```python
+DATA_ROOT            = 'environments/dataset/data/avoiding/all_data'
+STATE_DIR            = f'{DATA_ROOT}/state'
+DEFAULT_DATASET_PATH = f'{DATA_ROOT}/train_files.pkl'
+```
+
+The train script imports `DEFAULT_DATASET_PATH` instead of repeating it (a config block may
+still override via `dataset_path`). The dataset also now raises a **named** FileNotFoundError
+that says what the file is and that it lives only on the cluster data volume, rather than
+letting numpy's bare error surface.
+
+**Gate A6 extended** to pin it: `STATE_DIR` and `DEFAULT_DATASET_PATH` must sit under
+`DATA_ROOT`; `DATA_ROOT` must name `/avoiding/` and not `aligning`; and a static scan asserts
+**no second copy of a `environments/dataset/data/` literal exists anywhere in the generation**
+outside `sequence.py`. Verified offline — Gen16's path is now byte-identical to Gen9's.
+
+⚠️ **This one is on me, and the pattern is worth naming:** I hoisted the *dims and cameras*
+into `visual_spec.py` and then left the *data paths* duplicated at the call site — the exact
+class of bug the hoist existed to prevent, one directory over. A6 now covers both.
+
+📌 `max_n_episodes` reuses `max_path_length` (200), identical to Gen9. Keeping the episode
+count the same is part of what makes the Gen9 parity check meaningful; do not "tidy" it.
+
 ### Offline subset (stdlib only, runs in the AI container)
 
 ```
@@ -384,11 +437,13 @@ Syntax: every `.py` compiles under `py_compile`; every `.sh` passes `bash -n`.
 1. **A3–A6, A8, A9 passed on hardware (job 24853). A7 has NOT passed yet** — its first run
    failed on a gate-side constructor bug that is now fixed, and the fix is unverified.
    Re-run `gates_mix_visual_avoiding.sh a7` before the first training job.
-2. **The dataset has not been opened.** `collect_visual_avoiding_data` has not been touched
-   since 2026-05-29. **Confirm `environments/dataset/data/avoiding/all_data/images/bp-cam/`
-   still exists on i6-gpu-1 before submitting.** `_load_images` raises with a named cause if
-   the on-disk resolution disagrees with `visual_spec.IMG_SHAPE` — deliberately, instead of
-   silently resizing.
+2. **The dataset has still not been opened.** Job 24857 got as far as the episode list and
+   failed on the path (§6.1); with the path fixed, whether the data itself is present and
+   well-formed is **still unverified**. `collect_visual_avoiding_data` has not been touched
+   since 2026-05-29. Confirm `<D3IL>/environments/dataset/data/avoiding/all_data/` exists on
+   i6-gpu-1 with `train_files.pkl`, `state/` and `images/bp-cam/`. `_load_images` raises with
+   a named cause if the on-disk resolution disagrees with `visual_spec.IMG_SHAPE` —
+   deliberately, instead of silently resizing.
 3. **No `ddpm`-arm parity check against Gen9 has been run.** `diffuser_visual_avoiding`
    (Gen9's DDPM baseline) trained and evaluated in June 2026. **The Gen16 `diffusion` arm
    should reproduce it, and that parity is the gate on the whole generation** — if it holds,

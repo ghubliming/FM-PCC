@@ -14,6 +14,23 @@ from ..models import visual_spec
 Batch = namedtuple('Batch', 'trajectories conditions')
 
 
+# ─── where the D3IL visual-avoiding data lives ────────────────────────────────
+# 🔴 ONE definition, used by BOTH the dataset class below and the train script.
+#
+# These three strings must agree with each other — `DEFAULT_DATASET_PATH` is the episode
+# LIST, and the state pickles and camera frames it names are resolved relative to
+# `DATA_ROOT`. Gen9 spelled all three out at their use sites and the train script repeated
+# the first one as a literal; Gen16 shipped that literal WRONG (dropped the `all_data/`
+# segment, copied from the aligning layout where the list sits one level higher) and job
+# 24857 died on FileNotFoundError after the config pkl had already been written.
+#
+# Defining them here and importing them is what makes that class of bug unrepresentable:
+# there is no second place to get it wrong. Gate A6 pins the agreement.
+DATA_ROOT            = 'environments/dataset/data/avoiding/all_data'
+STATE_DIR            = f'{DATA_ROOT}/state'
+DEFAULT_DATASET_PATH = f'{DATA_ROOT}/train_files.pkl'
+
+
 # ─── 6D Visual Dataset for AVOIDING (Gen16, from Gen9 Epoch 2) ────────────────
 
 class ParityAvoidingDataset(torch.utils.data.Dataset):
@@ -45,11 +62,10 @@ class ParityAvoidingDataset(torch.utils.data.Dataset):
     because the robot never grasps anything; it dodges obstacles in a plane.
 
     Data source:
-        - State (des_c_pos, c_pos, actions): loaded from the non-visual state pickles at
-          `environments/dataset/data/avoiding/all_data/state/`. Both `des_c_pos` and
-          `c_pos` are (T+1, 3) but only the x, y indices [0:2] are used.
-        - Images: bp-cam frames from
-          `environments/dataset/data/avoiding/all_data/images/bp-cam/<ep>/*`
+        - State (des_c_pos, c_pos, actions): loaded from the non-visual state pickles under
+          `STATE_DIR`. Both `des_c_pos` and `c_pos` are (T+1, 3) but only the x, y
+          indices [0:2] are used.
+        - Images: bp-cam frames from `<DATA_ROOT>/images/bp-cam/<ep>/*`
           (collected by `collect_visual_avoiding_data.py`).
 
     Returns:
@@ -68,7 +84,12 @@ class ParityAvoidingDataset(torch.utils.data.Dataset):
     # not of the network's observation spec.
     CAM_DIRS = {'primary_img': 'bp-cam'}
 
-    def __init__(self, dataset_path, horizon=8, max_n_episodes=1000):
+    # Re-exported on the class so a caller that already has the class does not need a second
+    # import to learn where its data lives. The module-level names are the definition.
+    DATA_ROOT            = DATA_ROOT
+    DEFAULT_DATASET_PATH = DEFAULT_DATASET_PATH
+
+    def __init__(self, dataset_path=DEFAULT_DATASET_PATH, horizon=8, max_n_episodes=1000):
         super().__init__()
         self.horizon = horizon
 
@@ -77,9 +98,18 @@ class ParityAvoidingDataset(torch.utils.data.Dataset):
         # arrays with no truncation.
         from agents.utils.sim_path import sim_framework_path
 
-        state_files = np.load(sim_framework_path(dataset_path), allow_pickle=True)
-        rp_data_dir = sim_framework_path("environments/dataset/data/avoiding/all_data/state")
-        data_dir    = sim_framework_path("environments/dataset/data/avoiding/all_data")
+        _list_path = sim_framework_path(dataset_path)
+        if not os.path.exists(_list_path):
+            raise FileNotFoundError(
+                f'[ ParityAvoidingDataset ] episode list not found:\n'
+                f'    {_list_path}\n'
+                f'  This is the D3IL visual-avoiding dataset collected by '
+                f'`collect_visual_avoiding_data.py`. It is gitignored and lives only on the '
+                f'cluster data volume. Check that {DATA_ROOT}/ exists and contains '
+                f'train_files.pkl, state/ and images/bp-cam/.')
+        state_files = np.load(_list_path, allow_pickle=True)
+        rp_data_dir = sim_framework_path(STATE_DIR)
+        data_dir    = sim_framework_path(DATA_ROOT)
 
         n_eps = min(len(state_files), max_n_episodes)
 
