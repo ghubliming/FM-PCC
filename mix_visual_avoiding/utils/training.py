@@ -12,6 +12,34 @@ def cycle(dl):
         for data in dl:
             yield data
 
+
+def _atomic_torch_save(payload, savepath):
+    """A checkpoint write that cannot destroy the previous checkpoint.
+
+    🔴 Fix_10. `torch.save` opens the DESTINATION path and writes in place. When the volume
+    fills mid-write, the result is a truncated archive sitting exactly where a known-good
+    checkpoint used to be -- the old one is already gone. That is how job 24838 ended up with
+    a savepath holding state_best.pt and nothing else after an ENOSPC: every write target was
+    also the only copy.
+
+    Writing to a sibling temp file and os.replace()-ing it in makes the swap atomic on POSIX.
+    If the disk is full the TEMP write fails and the existing checkpoint is untouched -- the
+    run dies with its last checkpoint still valid and resumable, which is the whole point.
+    Costs one checkpoint of transient space; that is the price of not losing the run.
+    """
+    tmp = f'{savepath}.tmp.{os.getpid()}'
+    try:
+        torch.save(payload, tmp)
+        os.replace(tmp, savepath)
+    except BaseException:
+        # Never leave a partial temp behind to eat the space we are already short of.
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
+        raise
+
 class EMA():
     '''
         empirical moving average
@@ -277,7 +305,7 @@ class Trainer(object):
             'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
-        torch.save(data, savepath)
+        _atomic_torch_save(data, savepath)
         # print(f'Saved model to {savepath}', flush=True)
 
     def save_best(self):
@@ -295,7 +323,7 @@ class Trainer(object):
             'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, f'state_best.pt')
-        torch.save(data, savepath)
+        _atomic_torch_save(data, savepath)
         # print(f'Saved best model to {savepath}', flush=True)
 
     def save_losses(self):

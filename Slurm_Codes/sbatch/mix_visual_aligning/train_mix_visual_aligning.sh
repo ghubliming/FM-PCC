@@ -161,7 +161,12 @@ fi
 #   MIX_AUTO_RESUME=1      pick up the newest state_<step>.pt in the savepath and continue
 #                          from it. Restores step, EMA, Adam moments AND the cosine LR
 #                          schedule exactly (_restore_optimizer_state), so a requeued run is
-#                          not a warm restart -- it is the same run. Ignores state_0.pt.
+#                          not a warm restart -- it is the same run. Ignores state_0.pt, and
+#                          falls back to state_best.pt when no numbered checkpoint survives.
+#   MIX_RESUME_FROM=<x>    explicit resume target: a step number, or the literal 'best'.
+#                          Overrides the auto-resume choice. Use 'best' when the periodic
+#                          saves are gone -- state_best.pt is a full checkpoint, not just
+#                          weights, so it resumes exactly like a numbered one.
 #   MIX_SAVE_EVERY=<steps> checkpoint cadence. Default n_train_steps // 5 = five saves for a
 #                          whole run, which is what let job 24838 lose 84k steps to a wall
 #                          -clock kill. On a 24 h visual run use ~5000.
@@ -172,7 +177,8 @@ fi
 #                          the full-budget directory; the pipeline exports it for you.
 #
 #   MIX_TRAIN_STEPS=50000 MIX_SAVE_EVERY=5000 ./Slurm_Codes/submit.sh <this script> mf 6
-if [ -n "$MIX_AUTO_RESUME" ]; then echo "[ train ] auto-resume: ON"; fi
+if [ -n "$MIX_AUTO_RESUME" ]; then echo "[ train ] auto-resume: ON (numbered saves first, then state_best.pt)"; fi
+if [ -n "$MIX_RESUME_FROM" ]; then echo "[ train ] resume target = $MIX_RESUME_FROM (explicit)"; fi
 if [ -n "$MIX_SAVE_EVERY" ]; then echo "[ train ] save_freq  = $MIX_SAVE_EVERY steps"; fi
 if [ -n "$MIX_TRAIN_STEPS" ]; then
     echo "[ train ] budget     = $MIX_TRAIN_STEPS steps (PATH KEY -> _TB<pct>pct suffix)"
@@ -184,6 +190,7 @@ python mix_visual_aligning_test/train_mix_visual_aligning.py \
     --engine "$ENGINE" \
     --seeds $SEEDS \
     ${MIX_AUTO_RESUME:+--auto-resume} \
+    ${MIX_RESUME_FROM:+--resume-step $MIX_RESUME_FROM} \
     ${MIX_SAVE_EVERY:+--save-every $MIX_SAVE_EVERY} \
     --use-wandb \
     --wandb-project FM-PCC-visual-aligning-gen14

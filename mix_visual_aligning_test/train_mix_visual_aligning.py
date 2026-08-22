@@ -157,6 +157,24 @@ class Parser(utils.Parser):
     dataset: str = exp
     config: str  = 'config.' + exp
 
+def _resume_target(v):
+    """--resume-step accepts a step NUMBER or the literal 'best'.
+
+    'best' resolves to state_best.pt, which is a FULL checkpoint, not a weights dump:
+    save_best() writes the same _checkpoint_payload() as the periodic saves, so it carries
+    step / model / ema / optimizer / lr_scheduler / best_test_loss / loss histories. It is
+    therefore a legitimate resume point, and on a run whose periodic saves were lost it is
+    the ONLY one. The step it resumes at is whatever step the last val improvement happened
+    on -- read from the payload, never assumed.
+    """
+    if isinstance(v, str) and v.strip().lower() == 'best':
+        return 'best'
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        raise argparse.ArgumentTypeError(f"--resume-step wants an integer step or 'best' (got {v!r})")
+
+
 def parse_top_level_args():
     p = argparse.ArgumentParser()
     p.add_argument('--seed', type=int)
@@ -164,7 +182,7 @@ def parse_top_level_args():
     p.add_argument('--seeds-from-config', type=str)
     p.add_argument('--num-seeds', type=int)
     p.add_argument('--resume-seed', type=int)
-    p.add_argument('--resume-step', type=int)
+    p.add_argument('--resume-step', type=_resume_target)
     p.add_argument('--auto-resume', action='store_true')
     p.add_argument('--use-wandb', action='store_true')
     p.add_argument('--wandb-project', type=str, default='FM-PCC-visual-aligning-gen14')
@@ -570,13 +588,38 @@ for seed in selected_seeds:
     resume_step = None
     if cli_args.auto_resume:
         resume_step = find_latest_checkpoint_step(args.savepath)
+        # ── Fix_10 ── FALL BACK TO state_best.pt when no numbered checkpoint survives.
+        # Job 24838 is the case this exists for: ENOSPC + a 24 h kill at step 83999 left the
+        # savepath holding state_best.pt and nothing else, so find_latest_checkpoint_step
+        # (which parses an int out of the filename, and so cannot see 'best') returned None
+        # and ~84k steps of GPU time looked unrecoverable. It was not: state_best.pt is the
+        # same full payload as a periodic save. Numbered checkpoints still win when present --
+        # they are the later training state; state_best is only the last val improvement.
+        if resume_step is None and os.path.exists(os.path.join(args.savepath, 'state_best.pt')):
+            resume_step = 'best'
+            print('[ train ] auto-resume: no numbered state_<step>.pt survives; '
+                  'falling back to state_best.pt')
     if should_apply_manual_resume(seed, selected_seeds, cli_args):
         resume_step = cli_args.resume_step
     if resume_step is not None:
         cp = os.path.join(args.savepath, f'state_{resume_step}.pt')
         if os.path.exists(cp):
-            print(f'[ train ] Resuming seed {seed} from step {resume_step}')
-            trainer.load(resume_step)
+            print(f'[ train ] Resuming seed {seed} from {os.path.basename(cp)}')
+            try:
+                trainer.load(resume_step)
+            except Exception as _e:
+                # 🔴 A checkpoint written while the disk was filling is TRUNCATED, and
+                # torch.load raises rather than returning garbage. Dying here is correct:
+                # silently starting from scratch would burn the whole wall producing a run
+                # the operator believes is a resume.
+                raise RuntimeError(
+                    f'[ train ] {cp} exists but could not be loaded ({type(_e).__name__}: {_e}).\n'
+                    f'  A checkpoint interrupted by ENOSPC is truncated and unrecoverable. '
+                    f'Delete it and start fresh, or resume from another state_<step>.pt.') from _e
+            # The TRUE step comes from the payload -- for 'best' it is whenever the last val
+            # improvement landed, which is NOT the same as the last periodic save.
+            print(f'[ train ] resumed at step {trainer.step} of {int(args.n_train_steps)} '
+                  f'({int(args.n_train_steps) - int(trainer.step)} remaining)')
         else:
             print(f'[ train ] Resume checkpoint not found: {cp}')
 

@@ -93,6 +93,52 @@ openly** instead of pretending to resume.
 
 New argument, forwarded as `save_freq=cli_args.save_every` into `_trainer_kwargs`.
 
+### 3.3b Resume from `state_best.pt` — 2 train scripts
+
+The savepath for 24838 ended up holding **`state_best.pt` and nothing else**: ENOSPC and the
+24 h kill between them left no numbered checkpoint, and the periodic saves that did exist are
+gone. `find_latest_checkpoint_step` parses an int out of the filename, so it cannot see
+`state_best.pt` and returned `None` — ~84k steps of GPU time looked unrecoverable.
+
+It was not. `save_best()` writes `self._checkpoint_payload()` — the **same full payload** as a
+periodic save (`training_twotime.py:385-391`): `step`, `model`, `ema`, `optimizer`,
+`lr_scheduler`, `best_test_loss`, loss histories. It is a legitimate resume point.
+
+Three changes make it reachable:
+
+1. `--resume-step` now takes a step number **or** the literal `best`, via `_resume_target()`.
+   `trainer.load()` already interpolates `f'state_{epoch}.pt'`, so `'best'` resolves to
+   `state_best.pt` with no change to the trainer at all.
+2. `--auto-resume` falls back to `state_best.pt` when no numbered checkpoint survives.
+   Numbered checkpoints still win when present — they are the *later* training state;
+   `state_best` is only the last val improvement.
+3. `MIX_RESUME_FROM=best|<step>` on the sbatch, for the explicit case.
+
+🔴 **The resumed step is read from the payload, never assumed.** `state_best.pt` is rewritten
+on every val improvement, so its step is whenever the last improvement landed — for 24838 that
+is somewhere at or below 83999 and is *not* necessarily 80000 or 84000. The train script now
+prints `resumed at step N of 100000 (M remaining)` immediately after loading.
+
+A truncated checkpoint (written while the disk was filling) now raises a `RuntimeError` naming
+the file, instead of `torch.load` blowing up anonymously — silently restarting from scratch
+would burn the whole wall on a run the operator believes is a resume.
+
+### 3.3c Checkpoint writes are atomic — 4 trainers
+
+`torch.save` opens the **destination** path and writes in place. On ENOSPC that leaves a
+truncated archive exactly where a known-good checkpoint used to be: the write target and the
+only copy are the same file. This is the mechanism behind 24838's loss — not just "the disk
+filled", but "the disk filled *during a checkpoint write*".
+
+All eight call sites (`save()` and `save_best()` in both trainers, both siblings) now go
+through `_atomic_torch_save()`: write to `<path>.tmp.<pid>`, then `os.replace()`. On POSIX the
+replace is atomic, so a full disk fails the **temp** write and leaves the previous checkpoint
+intact and resumable. The temp file is removed on any exception, including KeyboardInterrupt
+and SIGTERM-driven unwinds, so a failed save cannot itself consume the space that is already
+short.
+
+Cost: one checkpoint of transient space during each save.
+
 ### 3.4 The budget is now a path key — 2 configs
 
 `config/avoiding-d3il-visual-mix.py`, `config/aligning-d3il-visual.py`
@@ -155,6 +201,11 @@ missing checkpoint *after* the GPU is allocated.
 - `watch()` + `_budget_tag` reimplemented in stdlib and run against the real `mf` block:
   full budget produces a name with **no `TB` fragment** (asserted), 50k appends `_TB50pct`.
 - `_budget_tag`: `1e5 -> None`, `5e4 -> 50pct`, `2e4 -> 20pct`, `33333 -> 33333steps`.
+- `_resume_target` exercised via `exec` of the real source: `'best'`/`'BEST'` -> `'best'`,
+  `'80000'` -> `80000`, `'lastest'` -> `ArgumentTypeError`.
+- resume resolution: `['state_best.pt']` -> `'best'` (24838's actual state) ·
+  `['state_0','state_best']` -> `'best'` · `['state_0','state_20000','state_80000','state_best']`
+  -> `80000` (numbered wins) · `[]` -> `None`.
 - `find_latest_checkpoint_step` on the three real cases:
   `['state_0','state_best'] -> None` · `['state_0','state_20000','state_80000','state_best'] -> 80000`
   · 5k cadence killed at 42k `-> 40000`.
@@ -187,11 +238,20 @@ MIX_TRAIN_STEPS=50000 MIX_SAVE_EVERY=5000 \
   ./Slurm_Codes/submit.sh \
   Slurm_Codes/sbatch/mix_visual_avoiding/mix_visual_avoiding_pipeline.sh mf 6
 
-# picking a killed run back up
-MIX_AUTO_RESUME=1 MIX_TRAIN_STEPS=50000 MIX_SAVE_EVERY=5000 \
+# picking job 24838 back up from state_best.pt (Gen14 aligning, full 1e5 budget)
+MIX_RESUME_FROM=best MIX_SAVE_EVERY=5000 \
   ./Slurm_Codes/submit.sh \
-  Slurm_Codes/sbatch/mix_visual_avoiding/train_mix_visual_avoiding.sh mf 6
+  Slurm_Codes/sbatch/mix_visual_aligning/train_mix_visual_aligning.sh <engine> 6
+
+# equivalent here, since no numbered checkpoint survives for it to prefer
+MIX_AUTO_RESUME=1 MIX_SAVE_EVERY=5000 \
+  ./Slurm_Codes/submit.sh \
+  Slurm_Codes/sbatch/mix_visual_aligning/train_mix_visual_aligning.sh <engine> 6
 ```
+
+🔴 Do NOT pass `MIX_TRAIN_STEPS` when resuming an existing full-budget run: it appends
+`_TB<pct>pct` to the savepath, and the resume would then look in a directory that does not
+exist. The budget knob is for FRESH runs.
 
 🔴 **Any manual eval of a reduced-budget run must carry the same `MIX_TRAIN_STEPS`**, or it
 resolves the full-budget path. The pipeline handles this; a standalone
