@@ -27,6 +27,141 @@ HEAVY_KEYS = ('obs_traj', 'act_traj', 'plans', 'frames')
 P_X, P_Y, P_Z = 3, 4, 5
 AIRBORNE_Z = 0.2          # must match the airborne gate in eval_fm_uav.rollout_one
 
+# ── Div_Abort: robust plot windows ───────────────────────────────────────────
+# matplotlib autoscales to the DATA. A single runaway excursion — p_des integrating to
+# hundreds of metres while the drone tumbles, or one wild candidate in the fan — therefore
+# compresses a 7-metre arena into a couple of pixel rows, and the SVG degenerates into two
+# near-empty panels with an x/y/z hike through them. The window is instead built from content
+# that CANNOT run away (the enforced geometry + a robust percentile band of the flown path)
+# and is then allowed to grow for the rest only up to a hard cap. Anything beyond the window
+# is still drawn — matplotlib just clips it — and the excursion is called out in a corner
+# note so nothing is silently hidden.
+
+VIEW_PCT = (2.0, 98.0)     # percentile band of the flown path that always stays in frame
+VIEW_MAX_GROW = 1.0        # extra span (multiples of the core span) the runaway may claim
+
+
+def _finite_cat(arrays):
+    """Flatten `arrays` into one finite 1-D array, or None if nothing usable is left."""
+    out = []
+    for a in arrays:
+        if a is None:
+            continue
+        a = np.asarray(a, dtype=float).reshape(-1)
+        a = a[np.isfinite(a)]
+        if a.size:
+            out.append(a)
+    return np.concatenate(out) if out else None
+
+
+def view_window(core, extra=(), fixed=(), pad=0.4, pct=VIEW_PCT, max_grow=VIEW_MAX_GROW):
+    """(lo, hi) axis limits an excursion cannot destroy.
+
+    core  — content that sets the scale: the flown path (robust `pct` band, so even a flight
+            that itself escaped keeps its normal-flight portion in frame).
+    fixed — content that must ALWAYS be fully visible: the enforced geometry, obstacles.
+    extra — content allowed to widen the window, but only by `max_grow` * core span on each
+            side: the commanded p_des path and the MPC candidate fan.
+    Returns None when there is nothing finite to plot (caller then leaves autoscale alone).
+    """
+    core_cat = _finite_cat(core)
+    fixed_cat = _finite_cat(fixed)
+    if core_cat is not None:
+        lo = float(np.percentile(core_cat, pct[0]))
+        hi = float(np.percentile(core_cat, pct[1]))
+    elif fixed_cat is not None:
+        lo, hi = float(fixed_cat.min()), float(fixed_cat.max())
+    else:
+        return None
+    if fixed_cat is not None:
+        lo, hi = min(lo, float(fixed_cat.min())), max(hi, float(fixed_cat.max()))
+    span = max(hi - lo, 1e-3)
+    ex = _finite_cat(extra)
+    if ex is not None:
+        lo = min(lo, max(float(ex.min()), lo - max_grow * span))
+        hi = max(hi, min(float(ex.max()), hi + max_grow * span))
+    if hi - lo < 1e-6:
+        lo, hi = lo - 0.5, hi + 0.5
+    return lo - pad, hi + pad
+
+
+def _outside_note(ax, series, xlim, ylim):
+    """Corner note naming what the clamped window is cutting off (0 → nothing drawn).
+
+    `series` = [(label, xs, ys), ...]. Keeps the clamp honest: the reader is told how many
+    samples of which path fell outside and how far the worst one went.
+    """
+    msgs = []
+    for label, xs, ys in series:
+        xs = np.asarray(xs, dtype=float).reshape(-1)
+        ys = np.asarray(ys, dtype=float).reshape(-1)
+        if xs.size == 0 or xs.size != ys.size:
+            continue
+        bad = (~np.isfinite(xs)) | (~np.isfinite(ys)) | (xs < xlim[0]) | (xs > xlim[1]) | \
+              (ys < ylim[0]) | (ys > ylim[1])
+        n = int(bad.sum())
+        if n:
+            far = _finite_cat([np.abs(xs[bad]), np.abs(ys[bad])])
+            reach = f', max |coord| {float(far.max()):.1f} m' if far is not None else ''
+            msgs.append(f'{n} {label} pt(s) outside view{reach}')
+    if msgs:
+        ax.text(0.99, 0.01, 'view clamped: ' + '; '.join(msgs), transform=ax.transAxes,
+                fontsize=7, color='crimson', ha='right', va='bottom', zorder=14,
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='white', alpha=0.75, lw=0))
+
+
+def geometry_anchors(geo_config, obstacles, variant=''):
+    """(xs, ys, zs) coordinates that must stay in frame: enforced surfaces + raw obstacles.
+
+    Read-only twin of `draw_projector_geometry`'s geometry resolution (same toggles: geo_free
+    drops the geometric families, -tightened widens the margin) — it only collects extents.
+    """
+    xs, ys, zs = [], [], []
+    for obs in (obstacles or []):
+        c = obs.get('center', [0.0, 0.0, 0.0])
+        r = float(obs.get('radius', 0.0)) if 'radius' in obs else float(
+            np.max(obs.get('half_extents', [0.0])))
+        xs += [float(c[0]) - r, float(c[0]) + r]
+        ys += [float(c[1]) - r, float(c[1]) + r]
+        if len(c) > 2:
+            zs += [float(c[2]) - r, float(c[2]) + r]
+    if not geo_config:
+        return xs, ys, zs
+    ctypes = list(geo_config.get('constraint_types', []))
+    geo_off = 'geo_free' in (variant or '')
+    _infl = geo_config.get('inflation') or {}
+    margin = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
+    if 'tightened' in (variant or ''):
+        margin += float(geo_config.get('enlarge_constraints') or 0.0)
+    ws = geo_config.get('workspace_bounds')
+    if (not geo_off) and 'geo_bounds' in ctypes and ws is not None:
+        lb = np.asarray(ws['lb'], dtype=float) + margin
+        ub = np.asarray(ws['ub'], dtype=float) - margin
+        for axis, acc in enumerate((xs, ys, zs)):
+            if np.isfinite(lb[axis]):
+                acc.append(float(lb[axis]))
+            if np.isfinite(ub[axis]):
+                acc.append(float(ub[axis]))
+    if (not geo_off) and 'halfspace' in ctypes:
+        for hs in geo_config.get('halfspace_constraints', []):
+            (x1, y1), (x2, y2), _side, _xa = _fs_wall_xy(hs)
+            xs += [float(x1), float(x2)]
+            ys += [float(y1), float(y2)]
+    if (not geo_off) and 'obstacles' in ctypes:
+        for ob in geo_config.get('obstacle_constraints', []):
+            c = ob.get('center', [0.0, 0.0])
+            r = float(ob.get('radius', 0.0)) + margin
+            xs += [float(c[0]) - r, float(c[0]) + r]
+            ys += [float(c[1]) - r, float(c[1]) + r]
+    return xs, ys, zs
+
+
+def rollout_divergence(rollout):
+    """The rollout's Div_Abort record, or None when it flew to a normal end."""
+    d = (rollout or {}).get('divergence') or {}
+    return d if d.get('aborted') else None
+
+
 
 def json_safe_rollouts(rollouts):
     """Strip the heavy arrays/frames so the per-rollout metrics stay JSON-serialisable."""
@@ -95,6 +230,18 @@ def save_npz(out_dir, variant, rollouts, args_dict):
     projection_cb_tripped = np.array([_b(r, 'projection_health', 'cb_tripped') for r in rollouts])
     projection_cb_skipped_steps = np.array([_f(r, 'projection_health', 'cb_skipped_steps') for r in rollouts])
 
+    # ── Div_Abort: which rollouts were STOPPED because the drone lost control ────
+    # An aborted row is a miss by construction (physical.safe forced False) and its
+    # constraint counts cover only the steps actually flown, so downstream analysis must
+    # treat divergence_aborted==1 rows separately rather than averaging them in blind.
+    # `divergence_step` is the FM step the abort fired on (-1 when it never did) and
+    # `divergence_reason` the greppable tag (nan_state / out_of_arena / overspeed /
+    # p_des_runaway / inverted; '' when the rollout ended normally).
+    divergence_aborted = np.array([_b(r, 'divergence', 'aborted') for r in rollouts])
+    divergence_step = np.array([_f(r, 'divergence', 'step', -1.0) for r in rollouts])
+    divergence_reason = np.array([(r.get('divergence', {}) or {}).get('reason') or ''
+                                  for r in rollouts], dtype=object)
+
     path = os.path.join(out_dir, f'{variant}.npz')
     np.savez(
         path,
@@ -115,6 +262,9 @@ def save_npz(out_dir, variant, rollouts, args_dict):
         goal_crossed_line=goal_crossed_line,
         projection_cb_tripped=projection_cb_tripped,               # Fix_15.3
         projection_cb_skipped_steps=projection_cb_skipped_steps,   # Fix_15.3
+        divergence_aborted=divergence_aborted,                      # Div_Abort
+        divergence_step=divergence_step,                            # Div_Abort
+        divergence_reason=divergence_reason,                        # Div_Abort
         obs_all=obs_all,
         act_all=act_all,
         sampled_trajectories_all=plans_all,
@@ -150,11 +300,13 @@ def plot_overview(out_dir, variant, scene, rollouts):
 
     fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(16, 8))
     palette = {}
+    _all_x, _all_y, _all_z = [], [], []      # Div_Abort: view-window bookkeeping
     for r in rollouts:
         obs = np.asarray(r.get('obs_traj', []))
         if obs.ndim != 2 or obs.shape[0] == 0:
             continue
         x, y, z = obs[:, P_X], obs[:, P_Y], obs[:, P_Z]
+        _all_x.append(x); _all_y.append(y); _all_z.append(z)
         # Fix_12: color by the class ACTUALLY flown when available (pillars) — the commanded
         # `homotopy` label is only the expert route's tag; the unconditioned FM picks its own.
         _hlabel = r.get('homotopy_flown') or r.get('homotopy', '?')
@@ -162,6 +314,15 @@ def plot_overview(out_dir, variant, scene, rollouts):
         ax_xy.plot(x, y, color=color, lw=1.5, alpha=0.8)
         ax_xy.plot(x[0], y[0], 'o', color='#2ca02c', ms=5, zorder=5)   # start
         ax_xz.plot(x, z, color=color, lw=1.5, alpha=0.8)
+
+        # Div_Abort: ✖ where this trial lost control (the trace stops there).
+        _dv = rollout_divergence(r)
+        if _dv and _dv.get('p') is not None:
+            _ap = np.asarray(_dv['p'], dtype=float)
+            ax_xy.scatter([_ap[0]], [_ap[1]], marker='X', s=150, color='darkred',
+                          edgecolors='white', linewidths=1.0, zorder=8)
+            ax_xz.scatter([_ap[0]], [_ap[2]], marker='X', s=150, color='darkred',
+                          edgecolors='white', linewidths=1.0, zorder=8)
 
     if _draw_obstacles is not None:
         _draw_obstacles(ax_xy, obstacles)
@@ -175,8 +336,32 @@ def plot_overview(out_dir, variant, scene, rollouts):
     ax_xz.set_xlabel('x [m]'); ax_xz.set_ylabel('z [m]')
     ax_xz.grid(True, alpha=0.3); ax_xz.legend(loc='best', fontsize=8)
 
+    # Div_Abort: clamp the overview to a window one runaway trial cannot destroy (same rule as
+    # the foresight SVG — flown paths set the scale, obstacles stay in frame). Aborted traces
+    # stop at their ✖, so the surviving excursion is at most the last step or two.
+    _gx, _gy, _gz = geometry_anchors(None, obstacles)
+    _xl = view_window(_all_x, fixed=_gx)
+    _yl = view_window(_all_y, fixed=_gy)
+    _zl = view_window(_all_z, fixed=list(_gz) + [0.0, AIRBORNE_Z], pad=0.15)
+    if _xl:
+        ax_xy.set_xlim(*_xl); ax_xz.set_xlim(*_xl)
+    if _yl:
+        ax_xy.set_ylim(*_yl)
+    if _zl:
+        ax_xz.set_ylim(*_zl)
+
     fig.suptitle(f'UAV FM eval — {scene} — variant={variant} — {len(rollouts)} trials',
                  fontsize=13)
+    # Div_Abort: flag trials stopped early because the drone lost control.
+    _n_div = sum(1 for r in rollouts if (r.get('divergence') or {}).get('aborted'))
+    if _n_div:
+        _reasons = sorted({r['divergence']['reason'] for r in rollouts
+                           if (r.get('divergence') or {}).get('aborted')})
+        fig.text(0.5, 0.915,
+                 f'✖ DIVERGENCE ABORT on {_n_div}/{len(rollouts)} trials '
+                 f'({", ".join(_reasons)}) — those traces stop at their ✖ marker',
+                 color='white', backgroundcolor='darkred', fontsize=11, fontweight='bold',
+                 ha='center', va='center')
     # Fix_15.3: flag if the projection circuit breaker tripped on ANY trial of this variant.
     _n_tripped = sum(1 for r in rollouts if (r.get('projection_health') or {}).get('cb_tripped'))
     if _n_tripped:
@@ -401,12 +586,22 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None
         obstacles = []
         _draw_obstacles = None
 
+    _div = rollout_divergence(rollout)
     fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(22, 9))
     fig.suptitle(
         f'Rollout {idx} — MPC Decision Points  '
         f'(success={int(bool(_succ))},  {n_cands} cands/step,  '
-        f'every {stride} FM steps shown)',
+        f'every {stride} FM steps shown)'
+        + (f'   ✖ ABORTED at step {_div["step"]} — {_div["reason"]}' if _div else ''),
         fontsize=13)
+    # Div_Abort: loud banner naming WHEN / WHERE / WHY the flight was declared lost. The panels
+    # below therefore show a TRUNCATED episode — everything after this step never happened.
+    if _div:
+        fig.text(0.5, 0.925,
+                 f'✖ DIVERGENCE ABORT — {_div["reason"]} at FM step {_div["step"]} '
+                 f'(t={_div["time_s"]:.2f}s, physics step {_div["physics_step"]}):  {_div["detail"]}',
+                 color='white', backgroundcolor='darkred', fontsize=11, fontweight='bold',
+                 ha='center', va='center')
     # Fix_15.3: loud banner when the projection circuit breaker tripped for this rollout —
     # the green candidate fan below is (partly) UNPROJECTED, so it does NOT reflect the
     # enforced constraints. See projection.py Fix_15.2 (sustained SLSQP slowness).
@@ -419,12 +614,14 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None
                  ha='center', va='center')
 
     # ── candidate fan ─────────────────────────────────────────────────────────
+    _cand_pts = []          # Div_Abort: every drawn candidate point, for the view window
     for step_i, plan in enumerate(plans):
         if step_i % stride != 0:
             continue
         cand = np.asarray(plan)
         if cand.ndim != 3:
             continue
+        _cand_pts.append(cand[:, :, :3].reshape(-1, 3))   # Div_Abort: view-window bookkeeping
         anchor = act[min(step_i, n_steps - 1)]
         for b in range(cand.shape[0]):
             ax_xy.plot(cand[b, :, 0], cand[b, :, 1],
@@ -459,7 +656,7 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None
     ax_xy.legend(handles=_lgd + _geo_handles, fontsize=9)
     ax_xy.set_title(f'XY top-down + enforced constraints  (every {stride} steps)', fontsize=12)
     ax_xy.set_xlabel('X (m)', fontsize=11); ax_xy.set_ylabel('Y (m)', fontsize=11)
-    ax_xy.set_aspect('equal', adjustable='datalim')
+    ax_xy.set_aspect('equal', adjustable='box')   # Div_Abort: 'box' honours the clamped limits
     ax_xy.grid(True, alpha=0.3)
 
     # ── XZ altitude panel — obstacle silhouettes + paths ─────────────────────
@@ -494,6 +691,45 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None
     ax_xz.set_xlabel('X (m)', fontsize=11); ax_xz.set_ylabel('Z (m)', fontsize=11)
     ax_xz.grid(True, alpha=0.3)
 
+    # ── Div_Abort: clamp both panels to a window a runaway cannot destroy ─────
+    # Scale comes from the flown path (robust band) and the enforced geometry; p_des and the
+    # candidate fan may widen it only up to VIEW_MAX_GROW spans. Excursions are still drawn
+    # (matplotlib clips them) and counted in the corner note, so nothing is hidden silently.
+    _cands = np.concatenate(_cand_pts, axis=0) if _cand_pts else np.zeros((0, 3))
+    _gx, _gy, _gz = geometry_anchors(geo_config, obstacles, variant)
+    _xlim = view_window([act[:, 0]], extra=[des[:, 0], _cands[:, 0]], fixed=_gx)
+    _ylim = view_window([act[:, 1]], extra=[des[:, 1], _cands[:, 1]], fixed=_gy)
+    _zlim = view_window([act[:, 2]], extra=[des[:, 2], _cands[:, 2]],
+                        fixed=list(_gz) + [0.0, AIRBORNE_Z], pad=0.15)
+    if _xlim:
+        ax_xy.set_xlim(*_xlim); ax_xz.set_xlim(*_xlim)
+    if _ylim:
+        ax_xy.set_ylim(*_ylim)
+    if _zlim:
+        ax_xz.set_ylim(*_zlim)
+    if _xlim and _ylim:
+        _outside_note(ax_xy, [('p_des', des[:, 0], des[:, 1]), ('actual', act[:, 0], act[:, 1]),
+                              ('candidate', _cands[:, 0], _cands[:, 1])], _xlim, _ylim)
+    if _xlim and _zlim:
+        _outside_note(ax_xz, [('p_des', des[:, 0], des[:, 2]), ('actual', act[:, 0], act[:, 2]),
+                              ('candidate', _cands[:, 0], _cands[:, 2])], _xlim, _zlim)
+
+    # ── Div_Abort: mark WHERE the abort fired, on both panels ────────────────
+    # ✖ = the drone's last physical position; the dotted leader points at the commanded p_des
+    # it was chasing (usually far outside the window — that IS the failure).
+    if _div and _div.get('p') is not None:
+        _ap = np.asarray(_div['p'], dtype=float)
+        _ad = np.asarray(_div.get('p_des') or _div['p'], dtype=float)
+        for _ax, (_i, _j) in ((ax_xy, (0, 1)), (ax_xz, (0, 2))):
+            _ax.plot([_ap[_i], _ad[_i]], [_ap[_j], _ad[_j]], color='darkred', ls=':', lw=1.4,
+                     alpha=0.9, zorder=13)
+            _ax.scatter([_ap[_i]], [_ap[_j]], marker='X', s=260, color='darkred',
+                        edgecolors='white', linewidths=1.2, zorder=14)
+            _ax.annotate(f'ABORT step {_div["step"]}\n{_div["reason"]}',
+                         xy=(_ap[_i], _ap[_j]), xytext=(6, 8), textcoords='offset points',
+                         fontsize=8, color='darkred', fontweight='bold', zorder=14,
+                         bbox=dict(boxstyle='round,pad=0.25', facecolor='white', alpha=0.8, lw=0))
+
     fig.tight_layout()
     fig.savefig(path, bbox_inches='tight')
     plt.close(fig)
@@ -519,6 +755,19 @@ def write_eval_log(out_dir, variant, summary, rollouts):
             f.write("  !!! Those trials ran (partly) UNPROJECTED (sustained SLSQP slowness,\n")
             f.write("  !!! projection.py Fix_15.2) — their constraint metrics are NOT valid.\n")
             f.write('!' * 70 + '\n')
+        # Div_Abort: loud banner if any trial was cut short by a lost-control abort.
+        _diverged = [i for i, r in enumerate(rollouts) if (r.get('divergence') or {}).get('aborted')]
+        if _diverged:
+            f.write('!' * 70 + '\n')
+            f.write(f"  !!! DIVERGENCE ABORT on {len(_diverged)}/{len(rollouts)} trials: {_diverged}\n")
+            for _i in _diverged:
+                _d = rollouts[_i]['divergence']
+                f.write(f"  !!!   trial {_i}: {_d['reason']} @ step {_d['step']} "
+                        f"(t={_d['time_s']:.3f}s)  p={np.round(_d['p'], 2).tolist()}  "
+                        f"p_des={np.round(_d['p_des'], 2).tolist()}  |v|={_d['speed']:.2f} m/s\n")
+                f.write(f"  !!!     why: {_d['detail']}\n")
+            f.write("  !!! Those flights were STOPPED early and are scored as misses.\n")
+            f.write('!' * 70 + '\n')
         for i, r in enumerate(rollouts):
             phys = r.get('physical', {}); goal = r.get('goal', {}); succ = r.get('success', {})
             # Fix_12: show the flown class next to the commanded label (pillars only).
@@ -527,6 +776,9 @@ def write_eval_log(out_dir, variant, summary, rollouts):
             # Fix_15.3: per-rollout circuit-breaker marker (skipped-step count when tripped).
             _ph = r.get('projection_health', {}) or {}
             _cb_str = f"  cb=TRIPPED({int(_ph.get('cb_skipped_steps', 0))})" if _ph.get('cb_tripped') else ''
+            # Div_Abort: per-rollout abort marker (reason + the step it fired on).
+            _dv = r.get('divergence') or {}
+            _dv_str = f"  ABORT({_dv.get('reason')}@{_dv.get('step')})" if _dv.get('aborted') else ''
             f.write(
                 f"  rollout {i:2d}  homotopy={r.get('homotopy','?'):<10}  {_flown_str}"
                 f"success={int(bool(succ.get('strict')))}  "
@@ -534,7 +786,7 @@ def write_eval_log(out_dir, variant, summary, rollouts):
                 f"contact={phys.get('contact_frac', float('nan')):.3f}  "
                 f"min_z={phys.get('min_z', float('nan')):.3f}  "
                 f"goal_dist={goal.get('dist', float('nan')):.3f}  "
-                f"track_err={r.get('track_err_mean', float('nan')):.2f}{_cb_str}\n")
+                f"track_err={r.get('track_err_mean', float('nan')):.2f}{_cb_str}{_dv_str}\n")
         f.write('-' * 70 + '\n')
         _s = summary.get('success', {}); _p = summary.get('physical', {})
         _c = summary.get('constraint', {}); _g = summary.get('goal', {}); _t = summary.get('timing', {})
@@ -554,6 +806,11 @@ def write_eval_log(out_dir, variant, summary, rollouts):
                 f"(to_goal {_st.get('to_goal_mean', float('nan')):.1f} / "
                 f"budget {_st.get('max_episode_length', '?')})\n")
         f.write(f"  track_err_mean        : {summary['track_err_mean']:.3f}\n")
+        # Div_Abort: how many trials never finished because the drone lost control.
+        _n_div = sum(1 for r in rollouts if (r.get('divergence') or {}).get('aborted'))
+        f.write(f"  divergence_aborts     : {_n_div}/{len(rollouts)}"
+                + (f"  reasons={sorted({r['divergence']['reason'] for r in rollouts if (r.get('divergence') or {}).get('aborted')})}"
+                   if _n_div else '') + '\n')
         f.write(f"  fm_ms mean/p95        : {_t.get('fm_ms_mean', float('nan')):.1f}/{_t.get('fm_ms_p95', float('nan')):.1f}\n")
         f.write('  [ PCC constraint metrics: placeholder — Epoch 7 ]\n')
     return path

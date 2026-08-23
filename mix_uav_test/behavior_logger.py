@@ -81,6 +81,19 @@ class BehaviorLogger:
         self.n_contacts = 0
         self._contact_lines = []
         self.track_errs = []
+        # Div_Abort: out-of-band events (currently: the divergence abort). Kept OUTSIDE
+        # `_lines` bookkeeping so they survive text_log=False and always reach the summary.
+        self._notes = []
+
+    def note(self, text):
+        """Record a one-off event (Div_Abort: the divergence abort) with its own banner.
+
+        Always stored (so it reaches `summary_block`), and additionally inlined into the
+        per-step text stream when text_log is on, so the .log reads in chronological order.
+        """
+        self._notes.append(str(text))
+        if self.text_log:
+            self._lines.extend(['!!! ' + '=' * 66, '!!! ' + str(text), '!!! ' + '=' * 66, ''])
 
     def step(self, t, obs, fm_horizon, fm_ms, proj_ms, proj_cost,
              proj_active, state_p, state_v, contact, track_err,
@@ -175,6 +188,9 @@ class BehaviorLogger:
             bl = '  '.join(f'{k}={v}' for k, v in behaviour.items())
             L.append(f'#            {bl}')
         L.append(f'#          proj_active_steps={s["proj_active_steps"]}/{n}  contacts={s["contacts"]}  max_track_err={s["max_track_err"]:.3f}m')
+        if self._notes:                      # Div_Abort
+            L.append('#          EVENTS:')
+            L.extend('#            ' + n for n in self._notes)
         if self._contact_lines:
             L.append('#          CONTACTS:')
             L.extend('# ' + c for c in self._contact_lines)

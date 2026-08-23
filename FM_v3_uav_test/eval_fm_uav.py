@@ -110,6 +110,78 @@ SCENE_MAX_EPISODE_LENGTH = {
 # snapshot from before a `snapshot_configs` fix persist forever across job re-runs.
 _SNAPSHOTTED_DIRS = set()
 
+# ── Div_Abort: divergence detection + episode abort ──────────────────────────
+# A quadrotor that loses control does not merely fail the task — it LEAVES THE ARENA.
+# `p_des` is a free-running integrator (`p_des += Δp_des` every FM step) with no clamp, so
+# once the policy starts emitting a consistent direction the commanded point runs to tens or
+# hundreds of metres while the drone tumbles after it. Nothing in the loop stopped that: the
+# episode burned its whole step budget, and every artifact that AUTOSCALES to the data (the
+# per-rollout `*_mpc_foresight.svg`, the per-variant overview PNG) came out unreadable — two
+# near-empty panels dominated by one x/y/z hike, with the real flight compressed into a few
+# pixels. This guard ends such an episode on the step it is provably lost, records WHEN /
+# WHERE / WHY into every artifact, and lets the plotters draw the abort explicitly.
+#
+# NOT a constraint check: leaving the declared workspace box is a NORMAL, measured constraint
+# violation (`_exec_constraint_violations`), not a divergence. These thresholds are the
+# "the vehicle is gone" boundary and sit far outside every planning surface on purpose.
+#
+# Env overrides (all optional; the defaults are what the cluster runs):
+#   FMPCC_UAV_DIVERGENCE_ABORT=0   → disable entirely (exact pre-Div_Abort behaviour)
+#   FMPCC_UAV_DIV_SLACK_M / _SPEED_MS / _LEAD_M  → retune the three thresholds
+DIVERGENCE_ABORT = os.environ.get('FMPCC_UAV_DIVERGENCE_ABORT', '1').lower() not in ('0', 'false', 'no')
+DIV_ARENA_SLACK_M = float(os.environ.get('FMPCC_UAV_DIV_SLACK_M', '3.0'))
+# Fallback arena for axes the geo entry leaves unbounded (±inf) or scenes that declare no
+# workspace box at all (`empty_no_constraint`). Scene XMLs span |x| <= 3.6, |y| <= 1.6, z <= 2.
+DIV_ARENA_FALLBACK_LB = (-15.0, -15.0, -1.0)
+DIV_ARENA_FALLBACK_UB = (15.0, 15.0, 15.0)
+DIV_SPEED_MAX_MS = float(os.environ.get('FMPCC_UAV_DIV_SPEED_MS', '12.0'))   # expert cruise 0.3-0.5 m/s
+DIV_PDES_LEAD_M = float(os.environ.get('FMPCC_UAV_DIV_LEAD_M', '5.0'))       # |p_des - p|
+
+
+def _divergence_arena(geo_config):
+    """(lb, ub) of the LOST-THE-VEHICLE box = declared workspace box ⊕ DIV_ARENA_SLACK_M.
+
+    Axes the geo entry leaves at ±inf (corridor's y, handled by halfspaces) and scenes with
+    no `workspace_bounds` at all fall back to DIV_ARENA_FALLBACK_{LB,UB}.
+    """
+    lb = np.array(DIV_ARENA_FALLBACK_LB, dtype=float)
+    ub = np.array(DIV_ARENA_FALLBACK_UB, dtype=float)
+    ws = (geo_config or {}).get('workspace_bounds')
+    if ws:
+        wlb = np.asarray(ws.get('lb', [-np.inf] * 3), dtype=float) - DIV_ARENA_SLACK_M
+        wub = np.asarray(ws.get('ub', [np.inf] * 3), dtype=float) + DIV_ARENA_SLACK_M
+        lb = np.where(np.isfinite(wlb), wlb, lb)
+        ub = np.where(np.isfinite(wub), wub, ub)
+    return lb, ub
+
+
+def _check_divergence(p, v, p_des, arena_lb, arena_ub, quat=None):
+    """First unrecoverable-flight condition this state trips → (reason, detail); else (None, '').
+
+    Ordered cheapest/most-fundamental first. `reason` is a short greppable tag that lands in
+    results.json / the npz / the eval log / the foresight SVG; `detail` is the human sentence.
+    """
+    if not (np.all(np.isfinite(p)) and np.all(np.isfinite(v)) and np.all(np.isfinite(p_des))):
+        return 'nan_state', 'non-finite p / v / p_des — the integrator blew up'
+    if np.any(p < arena_lb) or np.any(p > arena_ub):
+        return 'out_of_arena', (f'p={np.round(p, 2).tolist()} left the arena box '
+                                f'{np.round(arena_lb, 2).tolist()}..{np.round(arena_ub, 2).tolist()} '
+                                f'(workspace ⊕ {DIV_ARENA_SLACK_M:.1f} m)')
+    speed = float(np.linalg.norm(v))
+    if speed > DIV_SPEED_MAX_MS:
+        return 'overspeed', f'|v|={speed:.2f} m/s > {DIV_SPEED_MAX_MS:.1f} m/s (expert cruise is 0.3-0.5)'
+    lead = float(np.linalg.norm(np.asarray(p_des, dtype=float) - p))
+    if lead > DIV_PDES_LEAD_M:
+        return 'p_des_runaway', (f'|p_des-p|={lead:.2f} m > {DIV_PDES_LEAD_M:.1f} m — the commanded '
+                                 f'point ran away from the drone (free-running p_des integrator)')
+    if quat is not None:
+        q = np.asarray(quat, dtype=float).reshape(-1)
+        if q.size == 4 and np.all(np.isfinite(q)):
+            cos_tilt = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2])   # body z-axis · world z
+            if cos_tilt < 0.0:
+                return 'inverted', f'body z-axis · world z = {cos_tilt:.2f} < 0 — the drone is upside down'
+    return None, ''
+
 
 def parse_args():
     p = argparse.ArgumentParser(description='Closed-loop UAV FM evaluation.')
@@ -960,6 +1032,22 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     # stopped on. `empty` has a random ill-defined goal → never early-stops (runs full budget).
     goal_reached_latch = False
     steps_run = n_fm     # overwritten at an early break; == full budget on a miss
+    # Div_Abort: divergence/abort bookkeeping for THIS rollout. Every field is persisted
+    # (results.json `divergence` group, npz `divergence_*`, eval log, foresight SVG) so a
+    # lost flight can be read back — WHEN (step/time/physics step), WHERE (p/p_des/v) and
+    # WHY (reason/detail/thresholds) — without re-running anything.
+    arena_lb, arena_ub = _divergence_arena(geo_config)
+    divergence = {
+        'enabled': bool(DIVERGENCE_ABORT),
+        'aborted': False, 'reason': None, 'detail': '',
+        'step': -1, 'time_s': float('nan'), 'physics_step': -1, 'executed_steps': 0,
+        'p': None, 'p_des': None, 'v': None,
+        'speed': float('nan'), 'p_des_lead': float('nan'),
+        'arena_lb': [float(c) for c in arena_lb], 'arena_ub': [float(c) for c in arena_ub],
+        'thresholds': {'arena_slack_m': DIV_ARENA_SLACK_M,
+                       'speed_max_ms': DIV_SPEED_MAX_MS,
+                       'p_des_lead_m': DIV_PDES_LEAD_M},
+    }
 
     for k in range(n_fm):
         p = data.qpos[:3].copy()
@@ -1081,6 +1169,41 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
                 renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
 
+        # ── Div_Abort: stop the episode the step the flight is provably lost ──
+        # Checked AFTER the physics decimation (so it reads the freshly integrated state) and
+        # only while the goal has NOT been latched — a rollout that already reached the goal
+        # exits through the normal break below and is never re-labelled an abort.
+        if DIVERGENCE_ABORT and not goal_reached_latch:
+            _p_now = data.qpos[:3].copy()
+            _v_now = data.qvel[:3].copy()
+            _reason, _detail = _check_divergence(_p_now, _v_now, p_des, arena_lb, arena_ub,
+                                                 quat=data.qpos[3:7])
+            if _reason is not None:
+                divergence.update({
+                    'aborted': True, 'reason': _reason, 'detail': _detail,
+                    'step': int(k), 'time_s': float(k / DATASET_HZ),
+                    'physics_step': int(n_phys), 'executed_steps': int(k + 1),
+                    'p': [float(c) for c in _p_now],
+                    'p_des': [float(c) for c in np.asarray(p_des, dtype=float).reshape(-1)],
+                    'v': [float(c) for c in _v_now],
+                    'speed': float(np.linalg.norm(_v_now)),
+                    'p_des_lead': float(np.linalg.norm(
+                        np.asarray(p_des, dtype=float).reshape(-1) - _p_now)),
+                })
+                blog.note(f'DIVERGENCE ABORT  reason={_reason}  step={k}/{n_fm}  '
+                          f't={k / DATASET_HZ:.3f}s  p={np.round(_p_now, 3).tolist()}  '
+                          f'p_des={np.round(np.asarray(p_des, dtype=float), 3).tolist()}  '
+                          f'|v|={np.linalg.norm(_v_now):.2f}m/s  |  {_detail}')
+                print(f'[ eval ] {scene} variant={variant} trial_seed={trial_seed}: '
+                      f'⚠ DIVERGENCE ABORT at FM step {k}/{n_fm} (t={k / DATASET_HZ:.2f}s) — '
+                      f'reason={_reason}: {_detail}', flush=True)
+                # U_13 step accounting: an abort is a MISS, and a miss costs the FULL budget
+                # (DPCC convention). Charging it the truncated count would make a lost flight
+                # look like a fast one in steps_mean. The true executed count lives in
+                # divergence['executed_steps'].
+                steps_run = n_fm
+                break
+
         # U_13: DPCC avoiding-style early termination (aux_repo/dpcc/scripts/eval.py:264) —
         # stop the instant the goal is reached (goal-path scenes) or the fixed budget is
         # exhausted. `steps_run` (the FM step count at stop) is the deterministic time-to-goal
@@ -1108,6 +1231,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     else:
         goal_reached = bool(goal_dist < goal_radius)
     safe = bool(contact_frac <= limit and airborne)       # contact-free + airborne
+    # Div_Abort: a rollout that flew away is NOT "safe" whatever contact_frac/min_z say — it
+    # may well have left the arena without ever touching an obstacle or dropping to the floor,
+    # and on `empty` (where success == safe) that would have been scored a SUCCESS. Force the
+    # physical-safety axis false so every downstream success flag collapses to 0.
+    if divergence['aborted']:
+        safe = False
     # Scene-aware success (Fix2_metrics): fixed-route scenes must REACH the goal AND be safe;
     # `empty` has a RANDOM goal the unconditioned FM can't be expected to hit, so there
     # success = stable/safe flight only. A goal-path drone that flies around without reaching
@@ -1142,6 +1271,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         'goal_dist': f'{goal_dist:.3f}m', 'safe': safe, 'min_z': f'{min_z:.3f}',
         'contact_frac': f'{contact_frac:.3f}',
     }
+    if divergence['aborted']:
+        behaviour['result'] = f'ABORT({divergence["reason"]})'
+        behaviour['abort_when'] = f'step {divergence["step"]}/{n_fm} (t={divergence["time_s"]:.3f}s)'
+        behaviour['abort_where'] = f'p={divergence["p"]} p_des={divergence["p_des"]}'
+        behaviour['abort_why'] = divergence['detail']
     blog_summary = blog.summary_dict()
     if log_dir is not None:
         blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour)
@@ -1209,6 +1343,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         },
         # U_13: actual FM steps executed (deterministic time-to-goal on success, full budget
         # on a miss) — was the random round(dur*HZ) budget. `max_episode_length` = the budget.
+        # Div_Abort: WHEN/WHERE/WHY this flight was declared lost (all-False group when it
+        # was not). `n_fm_steps` below is charged the FULL budget for an abort (miss
+        # convention); `divergence['executed_steps']` is what actually ran.
+        'divergence': divergence,
         'n_fm_steps': steps_run, 'max_episode_length': n_fm, 'decim': decim, 'dt': dt,
         # ── heavy (npz / gif only; stripped from results.json) ──
         'obs_traj': np.asarray(obs_traj),
@@ -1448,6 +1586,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         },
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'projection': variant,
+        # Div_Abort: variant-level rollup. n_aborted > 0 means some trials were cut short
+        # because the drone lost control — those rows are misses by construction (safe forced
+        # False) and their constraint counts cover fewer steps, so a DA comparing violation
+        # COUNTS across variants must account for them.
+        'divergence': {
+            'n_aborted_trials': int(sum(1 for r in rollouts if r.get('divergence', {}).get('aborted'))),
+            'aborted_trials': [i for i, r in enumerate(rollouts) if r.get('divergence', {}).get('aborted')],
+            'reasons': {i: r['divergence']['reason'] for i, r in enumerate(rollouts)
+                        if r.get('divergence', {}).get('aborted')},
+            'enabled': bool(DIVERGENCE_ABORT),
+        },
         # Fix_15.3: variant-level projection-circuit-breaker rollup. `n_tripped_trials` > 0 means
         # the sustained-slowness breaker (projection.py Fix_15.2) OPENED on some trials, which ran
         # (partly) UNPROJECTED — treat this variant as "projection broken for this geometry", not a
@@ -1484,6 +1633,28 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         print(f'[ eval ] {scene} variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
               f'{_ph["n_tripped_trials"]}/{len(rollouts)} trials ({_ph["total_skipped_steps"]} '
               f'steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.', flush=True)
+
+    # Div_Abort: greppable sentinel when any trial of this variant lost control, mirroring the
+    # PROJECTION_CB_TRIPPED.txt convention — visible from the file tree without opening artifacts.
+    _dv = summary['divergence']
+    if _dv['n_aborted_trials'] > 0:
+        with open(os.path.join(out_dir, 'DIVERGENCE_ABORT.txt'), 'w') as _f:
+            _f.write(f"DIVERGENCE ABORT — {scene} variant={variant}\n")
+            _f.write(f"aborted_trials={_dv['aborted_trials']} "
+                     f"({_dv['n_aborted_trials']}/{len(rollouts)})\n\n")
+            for _i in _dv['aborted_trials']:
+                _d = rollouts[_i]['divergence']
+                _f.write(f"  trial {_i}: reason={_d['reason']}  step={_d['step']}/"
+                         f"{rollouts[_i]['max_episode_length']}  t={_d['time_s']:.3f}s\n")
+                _f.write(f"            p={_d['p']}  p_des={_d['p_des']}  "
+                         f"|v|={_d['speed']:.2f} m/s  |p_des-p|={_d['p_des_lead']:.2f} m\n")
+                _f.write(f"            why: {_d['detail']}\n")
+            _f.write("\nThese rollouts were STOPPED early (the drone had lost control). They are\n")
+            _f.write("scored as misses (physical.safe forced False) and their step count is charged\n")
+            _f.write("the full budget; constraint counts cover only the steps actually flown.\n")
+        print(f'[ eval ] {scene} variant={variant}: ⚠ DIVERGENCE ABORT on '
+              f'{_dv["n_aborted_trials"]}/{len(rollouts)} trials {_dv["aborted_trials"]} — '
+              f'see DIVERGENCE_ABORT.txt', flush=True)
 
     _steps_tg = summary['steps']['to_goal_mean']
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '
