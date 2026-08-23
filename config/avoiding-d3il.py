@@ -1243,7 +1243,7 @@ base = {
         ## flow matching v3 model
         'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
-        'action_weight': 1,
+        'action_weight': 10, # should use 10, same as DPCC, though 1 seems little better
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         # 'n_diffusion_steps': 20, # DEAD code (mathematically irrelevant for FM flow)
