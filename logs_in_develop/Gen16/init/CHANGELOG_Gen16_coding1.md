@@ -502,3 +502,38 @@ so a Data_Analysis sweep cannot pool two arms by mistake.
   avoiding lineage's, so the existing `Data_Analysis` avoiding path should read it. Unverified.
 - Gen14's §5.4 bug is unfixed in Gen14 itself, by design (isolation). Mirror it there if the
   aligning `fm` arm ever runs arm C.
+
+---
+
+## 11. Round 3 (2026-08-23) — DA wiring + the pre-Gen16 baseline DA
+
+No `mix_visual_avoiding/` code was touched this round. Two things happened:
+
+### 11.1 The avoiding-combined DA now scans the Gen16 tree
+
+`Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh` — `--parent-path` went from two roots
+to three:
+
+```
+logs/avoiding-d3il/plans             state-only avoiding
+logs/avoiding-d3il-visual/plans      Gen9  visual avoiding (diffusion, fm)
+logs/avoiding-d3il-visual-mix/plans  Gen16 visual avoiding (diffusion, fm, mf, af)   <- added
+```
+
+This closes §10's second open item as far as *discovery* goes. Gen16's on-disk layout is
+DA_Code_v3 **shape B** — `<candidate>/<seed>/results/halfspace_<geo>/<variant>.npz`
+(`eval_mix_visual_avoiding.py:586`; the seed is the last component of `savepath`, confirmed by the
+`os.path.dirname(args.savepath)/all_seeds/` write at `:1004`) — byte-identical in shape to the two
+trees the DA already reads, so no loader change was needed. Whether the *metrics* survive the trip
+is still unverified: that needs one real Gen16 npz.
+
+Also added: a `[present]` / `[ABSENT ]` echo per root before the run.
+`discover_candidates_recursive()` returns `{}` for a path that is not a directory
+(`multi_candidate_discovery.py:244`) — silently. Without the echo, a Gen16 tree that failed to
+materialise is indistinguishable in the log from one that was never requested.
+
+### 11.2 (removed)
+
+A pre-Gen16 baseline DA written this round was deleted at the user's request: it analysed the
+Gen9 visual tree, not Gen16, and Gen16 had produced no data to analyse. The real DA waits on the
+first Gen16 eval.

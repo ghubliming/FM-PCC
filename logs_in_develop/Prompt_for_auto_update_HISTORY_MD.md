@@ -240,7 +240,7 @@ When running the next auto-update, only process commits **strictly after** this 
 
 | Field | Value |
 |---|---|
-| **Commit hash** | `06385075` |
-| **Commit message** | `(Gen16 init) feat: implement mix_visual_avoiding module for Gen16 trajectory modeling and evaluation` |
-| **Commit date** | 2026-08-21 15:48:30 UTC |
-| **What was recorded** | Gen16 (Visual-Avoiding Mix-ML) row added to the Master Trace Map table in `MASTER_TEST_HISTORY.md` (between Gen15 and GEN_X). Covers the `mix_visual_avoiding/` + `mix_visual_avoiding_test/` package, four engines × three guidance arms × D3IL visual avoiding task, Gate A0 isolation from Gen14/Gen9, status: code complete / unverified on hardware. |
+| **Commit hash** | `eb82d0b2` |
+| **Commit message** | `(Gen14 fix10 hotfix)fix: update G0 ledger to reflect changes in training.py and training_twotime.py for Fix_10, ensuring proper coverage and tracking of upstream edits` |
+| **Commit date** | 2026-08-22 11:49:18 UTC |
+| **What was recorded** | Gen16 Visual-Avoiding Mix-ML architecture, `visual_spec.py` single-source hoist & gym policy bridge (`06385075`); Gate A7 JVP reverse-mode autograd fix & `sequence.py` dataset path consolidation (`afc525fb`, `db4cb99f`); Gen14/Gen16 Fix_10 atomic checkpoint serialization, `state_best.pt` auto-resume, path-integrated training budget tagging (`_TB<pct>pct`), and Gate G0 ledger synchronization (`fdc05273`, `88982dc4`, `eb82d0b2`). |
