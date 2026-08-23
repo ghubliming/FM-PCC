@@ -1,0 +1,27 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Sat Aug 22 10:58:42 UTC 2026
+JOB ID:    24863
+================================================================================
+[ pipeline ] budget = 80000 steps (80% of 1e5)
+[ pipeline ]          🔴 PATH KEY -- checkpoints land in a '..._TB80pct' tree,
+[ pipeline ]          separate from any full-budget run. Eval inherits the same tag.
+[ pipeline ] save_freq = 5000 steps
+[ pipeline ] ml_bone = dit — VisualDiTTwoTime (visual latent as ONE PREPENDED
+[ pipeline ]           TOKEN). RETRAIN into a separate '..._Bdit_Emf' tree;
+[ pipeline ]           U-Net runs are untouched (their path has no _B fragment).
+[ pipeline ]           film_mode is N/A on this bone and absent from the path.
+[ pipeline ]           🔴 Run `gates_mix_visual.sh bone` before trusting a DiT run.
+[ pipeline ] film_mode = v1 (default, additive-bias FiLM)
+Launching Visual-Mix-ML (Gen14) Pipeline — engine=mf seeds='6' bone=dit film=v1 ...
+Step 1: Gates submitted. Job ID: 24864
+  seed 6: train scheduled (afterok:24864). Job ID: 24865
+  seed 6: eval  scheduled (afterok:24865). Job ID: 24866
+--------------------------------------------------------------------------------
+Visual-Mix-ML (Gen14) Pipeline submitted — engine=mf seeds='6'.
+Use 'squeue -u llim' to monitor progress.
+A failed stage cancels its OWN downstream stage; other seeds are unaffected.
+================================================================================
+================================================================================
+PIPELINE END:   Sat Aug 22 10:58:42 UTC 2026
+================================================================================

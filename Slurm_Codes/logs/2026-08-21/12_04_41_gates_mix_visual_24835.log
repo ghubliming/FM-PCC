@@ -1,0 +1,123 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Aug 21 10:04:42 UTC 2026
+JOB NAME:  gates_mix_visual
+JOB ID:    24835
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   c19bbde
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+[ gates ] running: bone
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+=== G-B1: cond_dim=0 leaves every bone unchanged ===
+  ok   MFDiTOfficialTrajectory: 47 params state-only; +3 visual (['vis_projector.bias', 'vis_projector.weight', 'vis_token']), grew=['pos_embed']
+  ok   AFSiTTrajectory: 39 params state-only; +3 visual (['vis_projector.bias', 'vis_projector.weight', 'vis_token']), grew=['pos_embed']
+  ok   MFDiTTrajectory: 82 params state-only; +3 visual (['vis_projector.linear.bias', 'vis_projector.linear.weight', 'vis_tokens']), grew=[]
+  ok   AFDiTTrajectory: 82 params state-only; +3 visual (['vis_projector.linear.bias', 'vis_projector.linear.weight', 'vis_tokens']), grew=[]
+  G-B1 PASS
+
+=== G-B6: prefix / pos-embed bookkeeping ===
+  ok   MFDiTOfficialTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   MFDiTOfficialTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  ok   AFSiTTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   AFSiTTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  ok   MFDiTTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   MFDiTTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  ok   AFDiTTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   AFDiTTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  G-B6 PASS
+
+=== G-B7: bone is a checkpoint-path key ===
+  ok   unet block omits ml_bone (pre-U8 paths preserved)
+  ok   film_mode absent from the DiT block
+  ok   unet block keeps film_mode='v1'
+  ok   distinct exp_name templates (bone fragment present)
+  G-B7 PASS
+
+=== G-B2: visual bones build, parameter-matched ===
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.4M
+  reference: VisualUNetTwoTime bone = 4.04 M
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=mf_dit (MFDiTOfficialTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ MFTrajectoryModel ] backbone=mf_dit  vision=True  unet_width(freq_dim)=32  params=26.4M
+  ok   mf@mf_dit: bone 4.04 M (1.00x U-Net)
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=dit_mf (MFDiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ MFTrajectoryModel ] backbone=dit  vision=True  unet_width(freq_dim)=32  params=25.8M
+  ok   mf@dit: bone 3.37 M (0.84x U-Net)
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=sit (AFSiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ AFTrajectoryModel ] backbone=sit  vision=True  unet_width(freq_dim)=32  params=26.4M
+  ok   af@sit: bone 3.97 M (0.98x U-Net)
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=dit_af (AFDiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ AFTrajectoryModel ] backbone=dit  vision=True  unet_width(freq_dim)=32  params=25.8M
+  ok   af@dit: bone 3.37 M (0.84x U-Net)
+  G-B2 PASS
+
+=== G-B3: the visual token receives gradient ===
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=mf_dit (MFDiTOfficialTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ MFTrajectoryModel ] backbone=mf_dit  vision=True  unet_width(freq_dim)=32  params=26.4M
+  ok   mf@mf_dit: |grad vis_projector|=9.288e+00, encoder trains=True, d(out)/d(latent) max=4.122e-02, loss=2.0000
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=dit_mf (MFDiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ MFTrajectoryModel ] backbone=dit  vision=True  unet_width(freq_dim)=32  params=25.8M
+  ok   mf@dit: |grad vis_projector|=2.558e-01, encoder trains=True, d(out)/d(latent) max=1.044e-02, loss=1.9998
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=sit (AFSiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ AFTrajectoryModel ] backbone=sit  vision=True  unet_width(freq_dim)=32  params=26.4M
+  ok   af@sit: |grad vis_projector|=7.122e-01, encoder trains=True, d(out)/d(latent) max=6.674e-03, loss=2.0000
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=dit_af (AFDiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ AFTrajectoryModel ] backbone=dit  vision=True  unet_width(freq_dim)=32  params=25.8M
+  ok   af@dit: |grad vis_projector|=4.166e-01, encoder trains=True, d(out)/d(latent) max=9.305e-03, loss=2.0000
+  G-B3 PASS
+
+=== G-B4/5: JVP + bootstrap survive the visual token ===
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=mf_dit (MFDiTOfficialTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ MFTrajectoryModel ] backbone=mf_dit  vision=True  unet_width(freq_dim)=32  params=26.4M
+  ok   mf@mf_dit: loss=1.999845 finite raw_mse_u=128.937714
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=dit_mf (MFDiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ MFTrajectoryModel ] backbone=dit  vision=True  unet_width(freq_dim)=32  params=25.8M
+  ok   mf@dit: loss=1.999832 finite raw_mse_u=119.274536
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=sit (AFSiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ AFTrajectoryModel ] backbone=sit  vision=True  unet_width(freq_dim)=32  params=26.4M
+  ok   af@sit: loss=1.999986 finite raw_mse_u=145.376862
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] bone=dit_af (AFDiTTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ AFTrajectoryModel ] backbone=dit  vision=True  unet_width(freq_dim)=32  params=25.8M
+  ok   af@dit: loss=1.999983 finite raw_mse_u=117.458305
+  G-B4/5 PASS
+
+============================================================
+  GB1: PASS
+  GB6: PASS
+  GB7: PASS
+  GB2: PASS
+  GB3: PASS
+  GB45: PASS
+============================================================
+Job completed successfully.

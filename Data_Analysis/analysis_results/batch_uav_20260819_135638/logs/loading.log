@@ -1,0 +1,28 @@
+=== DA_UAV_v1 loading log ===
+
+Loaded:          370
+Failed:          0
+Skipped:         0
+Without timing:  21
+
+[WARN   ] cand3/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand10/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand12/seed6/eval(legacy)/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand26/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand27/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.

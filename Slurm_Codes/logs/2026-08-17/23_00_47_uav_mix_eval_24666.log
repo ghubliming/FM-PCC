@@ -1,0 +1,285 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Aug 18 13:03:41 UTC 2026  |  uav_mix_eval  |  ID 24666  |  NODE i6-gpu-1
+ENGINE: fm   SCENE: pillars   SEEDS: 6   N_TRIALS: 3   K: 10
+GIT REV:   8e8b1ca
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=fm scene=pillars seed=6  Tue Aug 18 13:03:41 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine fm --scene pillars --seed 6 --n-trials 3 --projection fm_only --record none --flow-steps 10
+[ eval ] Gen15 UAV Mix-ML — engine: fm  (Flow Matching (Gen11 FMv3ODE))
+[ eval ] K override from --flow-steps: 10
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=3  (source: --n-trials CLI)
+[ eval ] HardFlow arm: +3 variants ['hardflow_new', 'hardflow_new-c', 'hardflow_new-t'] (from config/uav_mix.py, NOT the shared yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-pillars/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 80000
+[ eval ] engine=fm  NFE budget K=10 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 'pillars' ← variant 'pillars': constraint_types=['dynamics', 'geo_bounds', 'obstacles', 'bounds'] (bounds=True, hs=0, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles]: variants=['diffuser', 'gradient', 'gradient-tightened', 'post_processing', 'post_processing-tightened', 'model_free', 'model_free-tightened', 'bounds_free', 'bounds_free-tightened', 'geo_free', 'geo_free-bounds_free', 'geo_free-model_free', 'model_free-bounds_free', 'model_free-bounds_free-tightened', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened', 'hardflow_new', 'hardflow_new-c', 'hardflow_new-t']  constraints=['dynamics', 'geo_bounds', 'obstacles', 'bounds']  batch_size=4
+[ eval ] pillars feasibility check: homotopy=(L,L,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(L,R,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,L,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,R,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 1/23: 'diffuser'  (n_trials=3)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview.png (+ .svg)
+[ eval ] pillars variant=diffuser: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=diffuser: trial 1/3 done  (58.7s elapsed this variant, ~117.3s to go)
+[ eval ] pillars variant=diffuser: trial 2/3 done  (119.1s elapsed this variant, ~59.6s to go)
+[ eval ] pillars variant=diffuser: trial 3/3 done  (178.4s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=diffuser (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.674  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/diffuser/
+[ eval ] pillars variant=diffuser TIMING: fm_ms=88.8 proj_ms=0.0 total_ms=88.8 (p95=94.4) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 2/23: 'gradient'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=gradient: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=gradient: trial 1/3 done  (65.2s elapsed this variant, ~130.5s to go)
+[ eval ] pillars variant=gradient: trial 2/3 done  (131.1s elapsed this variant, ~65.6s to go)
+[ eval ] pillars variant=gradient: trial 3/3 done  (197.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=gradient (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=10.296  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/gradient/
+[ eval ] pillars variant=gradient TIMING: fm_ms=98.2 proj_ms=0.0 total_ms=98.2 (p95=104.0) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 3/23: 'gradient-tightened'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] pillars variant=gradient-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=gradient-tightened: trial 1/3 done  (65.4s elapsed this variant, ~130.8s to go)
+[ eval ] pillars variant=gradient-tightened: trial 2/3 done  (131.2s elapsed this variant, ~65.6s to go)
+[ eval ] pillars variant=gradient-tightened: trial 3/3 done  (196.9s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=gradient-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=6.335  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/gradient-tightened/
+[ eval ] pillars variant=gradient-tightened TIMING: fm_ms=98.3 proj_ms=0.0 total_ms=98.3 (p95=105.5) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 4/23: 'post_processing'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=post_processing: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=post_processing: trial 1/3 done  (197.4s elapsed this variant, ~394.8s to go)
+[ eval ] pillars variant=post_processing: trial 2/3 done  (301.5s elapsed this variant, ~150.7s to go)
+[ eval ] pillars variant=post_processing: trial 3/3 done  (480.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=post_processing (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.333  steps_to_goal=465/634  track_err=0.764  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/post_processing/
+[ eval ] pillars variant=post_processing TIMING: fm_ms=87.0 proj_ms=180.4 total_ms=267.4 (p95=603.4) budget=30.3ms → real_time_OVER×1733
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 5/23: 'post_processing-tightened'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=post_processing-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=post_processing-tightened: trial 1/3 done  (254.8s elapsed this variant, ~509.6s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=post_processing-tightened: trial 2/3 done  (441.8s elapsed this variant, ~220.9s to go)
+[ eval ] pillars variant=post_processing-tightened: trial 3/3 done  (589.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=post_processing-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.978  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/post_processing-tightened/
+[ eval ] pillars variant=post_processing-tightened TIMING: fm_ms=87.2 proj_ms=217.4 total_ms=304.6 (p95=843.6) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 6/23: 'model_free'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=model_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free: trial 1/3 done  (174.8s elapsed this variant, ~349.6s to go)
+[ eval ] pillars variant=model_free: trial 2/3 done  (324.5s elapsed this variant, ~162.2s to go)
+[ eval ] pillars variant=model_free: trial 3/3 done  (500.7s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.333  safe=0.333  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.574  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free/
+[ eval ] pillars variant=model_free TIMING: fm_ms=88.1 proj_ms=170.2 total_ms=258.2 (p95=364.4) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 7/23: 'model_free-tightened'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=model_free-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free-tightened: trial 1/3 done  (187.1s elapsed this variant, ~374.3s to go)
+[ eval ] pillars variant=model_free-tightened: trial 2/3 done  (371.6s elapsed this variant, ~185.8s to go)
+[ eval ] pillars variant=model_free-tightened: trial 3/3 done  (554.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.691  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free-tightened/
+[ eval ] pillars variant=model_free-tightened TIMING: fm_ms=89.2 proj_ms=197.0 total_ms=286.1 (p95=379.8) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 8/23: 'bounds_free'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=bounds_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=bounds_free: trial 1/3 done  (2347.7s elapsed this variant, ~4695.5s to go)
+[ eval ] pillars variant=bounds_free: trial 2/3 done  (3726.9s elapsed this variant, ~1863.5s to go)
+[ eval ] pillars variant=bounds_free: trial 3/3 done  (5544.3s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.667  steps_to_goal=444/634  track_err=2.327  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/bounds_free/
+[ eval ] pillars variant=bounds_free TIMING: fm_ms=89.0 proj_ms=3533.2 total_ms=3622.2 (p95=15874.3) budget=30.3ms → real_time_OVER×1522
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 9/23: 'bounds_free-tightened'  (n_trials=3)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=bounds_free-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 378 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #2).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 313 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #3).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 564 ms).
+[ eval ] pillars variant=bounds_free-tightened: trial 1/3 done  (2984.1s elapsed this variant, ~5968.2s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 2/3 done  (4380.6s elapsed this variant, ~2190.3s to go)
+[ eval ] pillars variant=bounds_free-tightened: trial 3/3 done  (5238.5s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=bounds_free-tightened: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 1/3 trials (32 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=bounds_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.333  steps_to_goal=497/634  track_err=4.997  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/bounds_free-tightened/
+[ eval ] pillars variant=bounds_free-tightened TIMING: fm_ms=86.3 proj_ms=2787.1 total_ms=2873.4 (p95=21820.4) budget=30.3ms → real_time_OVER×1765
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 10/23: 'geo_free'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=geo_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=geo_free: trial 1/3 done  (92.7s elapsed this variant, ~185.5s to go)
+[ eval ] pillars variant=geo_free: trial 2/3 done  (185.3s elapsed this variant, ~92.7s to go)
+[ eval ] pillars variant=geo_free: trial 3/3 done  (278.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=geo_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.331  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/geo_free/
+[ eval ] pillars variant=geo_free TIMING: fm_ms=85.4 proj_ms=56.0 total_ms=141.5 (p95=142.4) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 11/23: 'geo_free-bounds_free'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=geo_free-bounds_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=geo_free-bounds_free: trial 1/3 done  (86.6s elapsed this variant, ~173.1s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 2/3 done  (173.2s elapsed this variant, ~86.6s to go)
+[ eval ] pillars variant=geo_free-bounds_free: trial 3/3 done  (259.6s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=geo_free-bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.333  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/geo_free-bounds_free/
+[ eval ] pillars variant=geo_free-bounds_free TIMING: fm_ms=85.4 proj_ms=46.2 total_ms=131.6 (p95=132.5) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 12/23: 'geo_free-model_free'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=geo_free-model_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=geo_free-model_free: trial 1/3 done  (73.5s elapsed this variant, ~146.9s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 2/3 done  (146.8s elapsed this variant, ~73.4s to go)
+[ eval ] pillars variant=geo_free-model_free: trial 3/3 done  (220.5s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=geo_free-model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.473  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/geo_free-model_free/
+[ eval ] pillars variant=geo_free-model_free TIMING: fm_ms=85.7 proj_ms=25.4 total_ms=111.1 (p95=122.1) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 13/23: 'model_free-bounds_free'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=model_free-bounds_free: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free-bounds_free: trial 1/3 done  (159.5s elapsed this variant, ~319.0s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 2/3 done  (320.6s elapsed this variant, ~160.3s to go)
+[ eval ] pillars variant=model_free-bounds_free: trial 3/3 done  (482.4s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free-bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.716  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free-bounds_free/
+[ eval ] pillars variant=model_free-bounds_free TIMING: fm_ms=85.6 proj_ms=163.0 total_ms=248.6 (p95=328.8) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 14/23: 'model_free-bounds_free-tightened'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=model_free-bounds_free-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 1/3 done  (142.7s elapsed this variant, ~285.5s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 2/3 done  (309.6s elapsed this variant, ~154.8s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened: trial 3/3 done  (479.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=model_free-bounds_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.627  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/model_free-bounds_free-tightened/
+[ eval ] pillars variant=model_free-bounds_free-tightened TIMING: fm_ms=85.6 proj_ms=161.3 total_ms=246.9 (p95=340.7) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 15/23: 'dpcc-r'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=dpcc-r: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 986 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #2).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 504 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #3).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 112 ms).
+[ eval ] pillars variant=dpcc-r: trial 1/3 done  (2535.5s elapsed this variant, ~5071.0s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-r: trial 2/3 done  (3696.1s elapsed this variant, ~1848.1s to go)
+[ eval ] pillars variant=dpcc-r: trial 3/3 done  (5722.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-r: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 1/3 trials (32 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.333  steps_to_goal=521/634  track_err=3.353  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r/
+[ eval ] pillars variant=dpcc-r TIMING: fm_ms=86.1 proj_ms=3049.4 total_ms=3135.6 (p95=19580.4) budget=30.3ms → real_time_OVER×1789
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 16/23: 'dpcc-r-tightened'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=dpcc-r-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 209 ms).
+[ eval ] pillars variant=dpcc-r-tightened: trial 1/3 done  (2710.1s elapsed this variant, ~5420.3s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-r-tightened: trial 2/3 done  (4987.4s elapsed this variant, ~2493.7s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 3/3 done  (6339.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-r-tightened: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 1/3 trials (16 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.333  steps_to_goal=557/634  track_err=0.919  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r-tightened/
+[ eval ] pillars variant=dpcc-r-tightened TIMING: fm_ms=87.0 proj_ms=3339.0 total_ms=3426.0 (p95=17877.0) budget=30.3ms → real_time_OVER×1825
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 17/23: 'dpcc-c'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=dpcc-c: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=dpcc-c: trial 1/3 done  (3175.9s elapsed this variant, ~6351.9s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=dpcc-c: trial 2/3 done  (5598.9s elapsed this variant, ~2799.5s to go)
+[ eval ] pillars variant=dpcc-c: trial 3/3 done  (7877.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=2.332  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-c/
+[ eval ] pillars variant=dpcc-c TIMING: fm_ms=86.7 proj_ms=4049.6 total_ms=4136.3 (p95=22326.2) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 18/23: 'dpcc-c-tightened'  (n_trials=3)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] pillars variant=dpcc-c-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=dpcc-c-tightened: trial 1/3 done  (2220.6s elapsed this variant, ~4441.3s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 122 ms).
+[ eval ] pillars variant=dpcc-c-tightened: trial 2/3 done  (5089.8s elapsed this variant, ~2544.9s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-c-tightened: trial 3/3 done  (8868.4s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-c-tightened: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 1/3 trials (8 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-c-tightened (B=4, proj=on, sel=minimum_projection_cost): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=2.421  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-c-tightened/
+[ eval ] pillars variant=dpcc-c-tightened TIMING: fm_ms=86.5 proj_ms=4571.1 total_ms=4657.6 (p95=26239.8) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 19/23: 'dpcc-t'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] pillars variant=dpcc-t: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=dpcc-t: trial 1/3 done  (1685.2s elapsed this variant, ~3370.4s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 234 ms).
+[ eval ] pillars variant=dpcc-t: trial 2/3 done  (3636.4s elapsed this variant, ~1818.2s to go)
+[ eval ] pillars variant=dpcc-t: trial 3/3 done  (7865.6s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-t: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 1/3 trials (8 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.988  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-t/
+[ eval ] pillars variant=dpcc-t TIMING: fm_ms=88.2 proj_ms=4042.1 total_ms=4130.3 (p95=22384.4) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 20/23: 'dpcc-t-tightened'  (n_trials=3)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] pillars variant=dpcc-t-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 21 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #2).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 22 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #3).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 565 ms).
+[ eval ] pillars variant=dpcc-t-tightened: trial 1/3 done  (2632.8s elapsed this variant, ~5265.6s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 2/3 done  (5116.5s elapsed this variant, ~2558.3s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 3/3 done  (6891.4s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-t-tightened: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 1/3 trials (48 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=6.953  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-t-tightened/
+[ eval ] pillars variant=dpcc-t-tightened TIMING: fm_ms=86.1 proj_ms=3532.0 total_ms=3618.1 (p95=21549.8) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 21/23: 'hardflow_new'  (n_trials=3)
+[hardflow] engine=fm K=10 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] pillars variant=hardflow_new: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=hardflow_new: trial 1/3 done  (7394.7s elapsed this variant, ~14789.5s to go)
+[ eval ] pillars variant=hardflow_new: trial 2/3 done  (9192.3s elapsed this variant, ~4596.1s to go)
+[ eval ] pillars variant=hardflow_new: trial 3/3 done  (11338.8s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=hardflow_new (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=25.992  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/hardflow_new/
+[ eval ] pillars variant=hardflow_new TIMING: fm_ms=142.1 proj_ms=5814.3 total_ms=5956.4 (p95=36021.9) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 22/23: 'hardflow_new-c'  (n_trials=3)
+[hardflow] engine=fm K=10 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=minimum_projection_cost
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] pillars variant=hardflow_new-c: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=hardflow_new-c: trial 1/3 done  (2573.1s elapsed this variant, ~5146.2s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 2/3 done  (4579.4s elapsed this variant, ~2289.7s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 3/3 done  (11359.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=hardflow_new-c (B=4, proj=off, sel=minimum_projection_cost): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=19.331  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/hardflow_new-c/
+[ eval ] pillars variant=hardflow_new-c TIMING: fm_ms=140.2 proj_ms=5826.7 total_ms=5967.0 (p95=48070.2) budget=30.3ms → real_time_OVER×1902
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 23/23: 'hardflow_new-t'  (n_trials=3)
+[hardflow] engine=fm K=10 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=temporal_consistency
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5/6/run_provenance_4.json
+[ eval ] pillars variant=hardflow_new-t: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=hardflow_new-t: trial 1/3 done  (1400.4s elapsed this variant, ~2800.8s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 2/3 done  (3202.5s elapsed this variant, ~1601.3s to go)
+slurmstepd-i6-gpu-1: error: *** JOB 24666 ON i6-gpu-1 CANCELLED AT 2026-08-19T13:04:08 DUE TO TIME LIMIT ***
+JOB END: Wed Aug 19 13:04:08 UTC 2026

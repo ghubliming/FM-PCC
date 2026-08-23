@@ -1,0 +1,534 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Aug 22 18:54:46 UTC 2026
+JOB NAME:  eval_mix_visual_avoiding
+JOB ID:    24862
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   eb82d0b
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+[ eval ] engine=mf
+[ eval ] seeds='6'
+[ eval ] film_mode = v1  (MIX_FILM_MODE_MF; must match the checkpoint)
+[ eval ] ml_bone = unet  (MIX_BONE_MF; must match the checkpoint)
+[ eval ] NFE: config default for engine=mf
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] engine=mf | MeanFlow (Gen3v6) | two_time=True | wraps_unet=True | nfe_key=flow_steps_v3 | source=flow_matcher_v3_meanflow/ (Gen3v6) via Gen14
+[ eval ] config block: plan_mix_visual_avoiding_mf
+[ eval ] task spec: 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ eval ] config yaml: config/visual_avoiding_mix_eval.yaml
+[ eval ] resolved  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=4  hf_candidate_cost=prox
+[ eval ] replan_steps=1 (per-step replanning (historic default))
+[ eval ] Overriding seeds from --seeds: [6]
+[ utils/setup ] Made savepath: logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6
+
+[ eval loading ] logs/avoiding-d3il-visual-mix/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/6
+
+[ eval loading ] ml_bone = unet (VisualUNet(TwoTime) — FiLM) (from train-time model_config.pkl)
+[ eval loading ] film_mode = v1 (from train-time model_config.pkl)
+[ config->pkl ] INFO  flow_steps_v3: train=100 -> eval=2  (sampling knob; applied)
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 17793.52it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:02<00:00, 37.10it/s]
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, 1 camera: primary_img)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+[ TrainerTwoTime ] episode-level split: 5224 train / 562 test windows (deterministic; split_seed unused)
+[ utils/training ] Restored optimizer + LR schedule (lr=9.706e-06)
+[ utils/training ] Restored loss history from checkpoint at step 86000
+[ eval ] weight source: EMA (matches state_best selection)
+
+[ eval pkl values ] (config-overrides-pkl active for same-named keys)
+    horizon: 8  (config: 8)
+    n_diffusion_steps: 100  (config: None)
+    clip_denoised: False  (config: False)
+
+[ eval ] matched K = 2 for every arm (key: flow_steps_v3; savepath: logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6)
+[ eval ] [ VisualNormalizer ] obs=[ Normalizer ] dim: 4
+    -: [ 0.23 -0.28  0.21 -0.28]
+    +: [0.82 0.49 0.77 0.49]
+ act=[ Normalizer ] dim: 2
+    -: [-0.01  0.  ]
+    +: [0.01 0.01]
+
+[ provenance ] wrote logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/run_provenance.json
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f7966b7e-9e5a-11f1-a991-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+---------------- avoiding-d3il | top-right-hard | diffuser | engine=mf | seed=6 | K=2 ----------------
+Success rate: 0.733
+Constraints satisfied: 0.167
+Success rate (goal and constraints): 0.167
+Avg number of steps: 66.64 +- 5.72
+Avg number of constraint violations: 11.87 +- 11.71
+Avg total violation: 3.244 +- 4.420
+Average computation time per step: 0.025
+Tracking error: 0.043
+---------------- avoiding-d3il | top-right-hard | dpcc-r | engine=mf | seed=6 | K=2 ----------------
+Success rate: 0.733
+Constraints satisfied: 0.700
+Success rate (goal and constraints): 0.700
+Avg number of steps: 68.95 +- 5.95
+Avg number of constraint violations: 0.30 +- 1.04
+Avg total violation: 0.001 +- 0.005
+Average computation time per step: 0.031
+---------------- avoiding-d3il | top-right-hard | dpcc-r-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 0.833
+Constraints satisfied: 0.833
+Success rate (goal and constraints): 0.833
+Avg number of steps: 70.80 +- 5.61
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.032
+---------------- avoiding-d3il | top-right-hard | dpcc-c | engine=mf | seed=6 | K=2 ----------------
+Success rate: 0.700
+Constraints satisfied: 0.567
+Success rate (goal and constraints): 0.567
+Avg number of steps: 74.19 +- 8.13
+Avg number of constraint violations: 0.47 +- 1.20
+Avg total violation: 0.003 +- 0.008
+Average computation time per step: 0.031
+---------------- avoiding-d3il | top-right-hard | dpcc-c-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 0.767
+Constraints satisfied: 0.767
+Success rate (goal and constraints): 0.767
+Avg number of steps: 73.39 +- 6.26
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.033
+---------------- avoiding-d3il | top-right-hard | dpcc-t | engine=mf | seed=6 | K=2 ----------------
+Success rate: 0.633
+Constraints satisfied: 0.500
+Success rate (goal and constraints): 0.500
+Avg number of steps: 73.00 +- 8.76
+Avg number of constraint violations: 0.77 +- 1.28
+Avg total violation: 0.004 +- 0.011
+Average computation time per step: 0.032
+---------------- avoiding-d3il | top-right-hard | dpcc-t-tightened | engine=mf | seed=6 | K=2 ----------------
+/data/home/llim/FMPCC/FM-PCC/mix_visual_avoiding_test/eval_mix_visual_avoiding.py:725: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(
+Success rate: 0.833
+Constraints satisfied: 0.833
+Success rate (goal and constraints): 0.833
+Avg number of steps: 71.00 +- 5.84
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.032
+---------------- avoiding-d3il | top-right-hard | hardflow_new-r | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+/data/home/llim/FMPCC/FM-PCC/mix_visual_avoiding_test/eval_mix_visual_avoiding.py:721: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(min(n_trials, plot_how_many), 6,
+Success rate: 0.633
+Constraints satisfied: 0.633
+Success rate (goal and constraints): 0.633
+Avg number of steps: 70.47 +- 7.36
+Avg number of constraint violations: 0.20 +- 0.54
+Avg total violation: 0.001 +- 0.002
+Average computation time per step: 0.102
+[hardflow] NFE=21420  NLP solves=7140  NLP failures=0  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-right-hard | hardflow_new-c | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 0.700
+Constraints satisfied: 0.667
+Success rate (goal and constraints): 0.667
+Avg number of steps: 71.81 +- 8.67
+Avg number of constraint violations: 0.20 +- 0.75
+Avg total violation: 0.002 +- 0.007
+Average computation time per step: 0.100
+[hardflow] NFE=22368  NLP solves=7456  NLP failures=15  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-right-hard | hardflow_new-t | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 0.533
+Constraints satisfied: 0.433
+Success rate (goal and constraints): 0.433
+Avg number of steps: 74.38 +- 5.17
+Avg number of constraint violations: 0.97 +- 1.52
+Avg total violation: 0.007 +- 0.017
+Average computation time per step: 0.106
+[hardflow] NFE=21216  NLP solves=7072  NLP failures=24  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-right-hard | hardflow_new-r-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 0.700
+Constraints satisfied: 0.700
+Success rate (goal and constraints): 0.700
+Avg number of steps: 70.10 +- 5.58
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.103
+[hardflow] NFE=21096  NLP solves=7032  NLP failures=12  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-right-hard | hardflow_new-c-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 0.867
+Constraints satisfied: 0.867
+Success rate (goal and constraints): 0.867
+Avg number of steps: 71.88 +- 6.96
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.105
+[hardflow] NFE=24300  NLP solves=8100  NLP failures=40  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-right-hard | hardflow_new-t-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 0.800
+Constraints satisfied: 0.800
+Success rate (goal and constraints): 0.800
+Avg number of steps: 74.33 +- 5.51
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.109
+[hardflow] NFE=23892  NLP solves=7964  NLP failures=28  batch(mpc)=4  act_threshold=0.5
+/data/home/llim/FMPCC/FM-PCC/mix_visual_avoiding_test/eval_mix_visual_avoiding.py:412: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
+
+[ eval loading ] logs/avoiding-d3il-visual-mix/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/6
+
+[ eval loading ] ml_bone = unet (VisualUNet(TwoTime) — FiLM) (from train-time model_config.pkl)
+[ eval loading ] film_mode = v1 (from train-time model_config.pkl)
+[ config->pkl ] INFO  flow_steps_v3: train=100 -> eval=2  (sampling knob; applied)
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 17340.17it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 51.22it/s]
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, 1 camera: primary_img)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+[ TrainerTwoTime ] episode-level split: 5224 train / 562 test windows (deterministic; split_seed unused)
+[ utils/training ] Restored optimizer + LR schedule (lr=9.706e-06)
+[ utils/training ] Restored loss history from checkpoint at step 86000
+[ eval ] weight source: EMA (matches state_best selection)
+
+[ eval pkl values ] (config-overrides-pkl active for same-named keys)
+    horizon: 8  (config: 8)
+    n_diffusion_steps: 100  (config: None)
+    clip_denoised: False  (config: False)
+
+[ eval ] matched K = 2 for every arm (key: flow_steps_v3; savepath: logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6)
+[ eval ] [ VisualNormalizer ] obs=[ Normalizer ] dim: 4
+    -: [ 0.23 -0.28  0.21 -0.28]
+    +: [0.82 0.49 0.77 0.49]
+ act=[ Normalizer ] dim: 2
+    -: [-0.01  0.  ]
+    +: [0.01 0.01]
+
+[ provenance ] unchanged, kept logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/run_provenance.json
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_832d2618-9e61-11f1-a991-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+---------------- avoiding-d3il | top-left-hard | diffuser | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 51.43 +- 5.06
+Avg number of constraint violations: 9.53 +- 1.82
+Avg total violation: 1.150 +- 0.173
+Average computation time per step: 0.024
+Tracking error: 0.181
+---------------- avoiding-d3il | top-left-hard | dpcc-r | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 81.70 +- 0.46
+Avg number of constraint violations: 11.70 +- 0.46
+Avg total violation: 0.854 +- 0.067
+Average computation time per step: 0.039
+---------------- avoiding-d3il | top-left-hard | dpcc-r-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 56.13 +- 0.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.034
+---------------- avoiding-d3il | top-left-hard | dpcc-c | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 81.60 +- 0.55
+Avg number of constraint violations: 11.60 +- 0.55
+Avg total violation: 0.843 +- 0.055
+Average computation time per step: 0.039
+---------------- avoiding-d3il | top-left-hard | dpcc-c-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 55.93 +- 0.36
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+---------------- avoiding-d3il | top-left-hard | dpcc-t | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 81.73 +- 0.63
+Avg number of constraint violations: 11.83 +- 0.64
+Avg total violation: 0.946 +- 0.054
+Average computation time per step: 0.040
+---------------- avoiding-d3il | top-left-hard | dpcc-t-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 55.60 +- 0.49
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+---------------- avoiding-d3il | top-left-hard | hardflow_new-r | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 81.80 +- 0.40
+Avg number of constraint violations: 11.80 +- 0.40
+Avg total violation: 0.888 +- 0.077
+Average computation time per step: 0.187
+[hardflow] NFE=29808  NLP solves=9936  NLP failures=1240  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-left-hard | hardflow_new-c | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 81.93 +- 0.44
+Avg number of constraint violations: 11.93 +- 0.44
+Avg total violation: 0.920 +- 0.064
+Average computation time per step: 0.186
+[hardflow] NFE=29856  NLP solves=9952  NLP failures=1276  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-left-hard | hardflow_new-t | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 81.77 +- 0.42
+Avg number of constraint violations: 12.03 +- 0.71
+Avg total violation: 0.979 +- 0.062
+Average computation time per step: 0.188
+[hardflow] NFE=29796  NLP solves=9932  NLP failures=1336  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-left-hard | hardflow_new-r-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 56.07 +- 0.51
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.138
+[hardflow] NFE=20544  NLP solves=6848  NLP failures=8  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-left-hard | hardflow_new-c-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 55.90 +- 0.54
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.136
+[hardflow] NFE=20484  NLP solves=6828  NLP failures=16  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | top-left-hard | hardflow_new-t-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 55.40 +- 0.49
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.134
+[hardflow] NFE=20304  NLP solves=6768  NLP failures=0  batch(mpc)=4  act_threshold=0.5
+
+[ eval loading ] logs/avoiding-d3il-visual-mix/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/6
+
+[ eval loading ] ml_bone = unet (VisualUNet(TwoTime) — FiLM) (from train-time model_config.pkl)
+[ eval loading ] film_mode = v1 (from train-time model_config.pkl)
+[ config->pkl ] INFO  flow_steps_v3: train=100 -> eval=2  (sampling knob; applied)
+Loading states:   0%|          | 0/86 [00:00<?, ?it/s]Loading states: 100%|██████████| 86/86 [00:00<00:00, 17021.86it/s]
+Loading images:   0%|          | 0/86 [00:00<?, ?it/s]Loading images: 100%|██████████| 86/86 [00:01<00:00, 51.56it/s]
+[ ParityAvoidingDataset ] 86 episodes, 5786 windows (horizon=8, traj_dim=6, 1 camera: primary_img)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+[ TrainerTwoTime ] episode-level split: 5224 train / 562 test windows (deterministic; split_seed unused)
+[ utils/training ] Restored optimizer + LR schedule (lr=9.706e-06)
+[ utils/training ] Restored loss history from checkpoint at step 86000
+[ eval ] weight source: EMA (matches state_best selection)
+
+[ eval pkl values ] (config-overrides-pkl active for same-named keys)
+    horizon: 8  (config: 8)
+    n_diffusion_steps: 100  (config: None)
+    clip_denoised: False  (config: False)
+
+[ eval ] matched K = 2 for every arm (key: flow_steps_v3; savepath: logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6)
+[ eval ] [ VisualNormalizer ] obs=[ Normalizer ] dim: 4
+    -: [ 0.23 -0.28  0.21 -0.28]
+    +: [0.82 0.49 0.77 0.49]
+ act=[ Normalizer ] dim: 2
+    -: [-0.01  0.  ]
+    +: [0.01 0.01]
+
+[ provenance ] unchanged, kept logs/avoiding-d3il-visual-mix/plans/mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_A0.5_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/run_provenance.json
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_a402caf6-9e6a-11f1-a991-d85ed34e311e.xml' with default provider at slot 1
+
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+---------------- avoiding-d3il | both-hard | diffuser | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 0.000
+Success rate (goal and constraints): 0.000
+Avg number of steps: 51.43 +- 5.06
+Avg number of constraint violations: 9.00 +- 0.00
+Avg total violation: 0.218 +- 0.002
+Average computation time per step: 0.024
+Tracking error: 0.181
+---------------- avoiding-d3il | both-hard | dpcc-r | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.038
+---------------- avoiding-d3il | both-hard | dpcc-r-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.97 +- 0.18
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.040
+---------------- avoiding-d3il | both-hard | dpcc-c | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.038
+---------------- avoiding-d3il | both-hard | dpcc-c-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 52.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.044
+---------------- avoiding-d3il | both-hard | dpcc-t | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.037
+---------------- avoiding-d3il | both-hard | dpcc-t-tightened | engine=mf | seed=6 | K=2 ----------------
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.93 +- 0.25
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.040
+---------------- avoiding-d3il | both-hard | hardflow_new-r | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.127
+[hardflow] NFE=18720  NLP solves=6240  NLP failures=0  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | both-hard | hardflow_new-c | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.129
+[hardflow] NFE=18720  NLP solves=6240  NLP failures=0  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | both-hard | hardflow_new-t | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 51.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.128
+[hardflow] NFE=18720  NLP solves=6240  NLP failures=0  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | both-hard | hardflow_new-r-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 52.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.137
+[hardflow] NFE=19080  NLP solves=6360  NLP failures=1  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | both-hard | hardflow_new-c-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 52.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.136
+[hardflow] NFE=19080  NLP solves=6360  NLP failures=2  batch(mpc)=4  act_threshold=0.5
+---------------- avoiding-d3il | both-hard | hardflow_new-t-tightened | engine=mf | seed=6 | K=2 ----------------
+[ hardflow ] host engine=mf  init_noise=1.0  two_time=True
+[ hardflow ] engine=mf  init_noise_scale=1.0  two_time=True  act_thr=0.5  visual=True
+Success rate: 1.000
+Constraints satisfied: 1.000
+Success rate (goal and constraints): 1.000
+Avg number of steps: 52.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.140
+[hardflow] NFE=19080  NLP solves=6360  NLP failures=0  batch(mpc)=4  act_threshold=0.5
+[ eval ] Gen16 visual-avoiding eval finished — engine=mf (MeanFlow (Gen3v6)), seeds=[6].
+Job completed successfully.

@@ -1247,6 +1247,11 @@ done)
 20 trails
 24559 - 24560
 
+---
+U10 
+24633/4
+24650 rerun (been told last time is replan 1 not 8)
+
 # Gen3v7 alpha flow 
 1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
 EVAL 23786
@@ -1337,9 +1342,21 @@ af/mf 24224/5
 24417 mf
 14418 af
 
+- U8
+24815/6 FAIL 
+24834 rerun 835/6 Start FAIL Time/Space limit 84k
+24683 FAIL 
+24872
+
+
 # Gen0 
 - Fix2
 thres test 24279 T
+
+---
+
+24639 see ntrial 20
+(FMv3ODE 24698 ntrail20)
 
 
 # Gen15
@@ -1349,3 +1366,23 @@ mf_unet corridor 24579, 24583( mf eval at K=10 (chained to the train))
 scurve 24588 + 89
 
 24612 mf pillars
+
+--- 
+fm replica 24655/8/9
+
+---
+try more K mf 24707
+and fm (Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh fm corridor "6" "1 2 5 10 20" 10 fm_only none) 24713
+
+---
+24744 fix the mf run ((checkpoint_epoch_best BUG fixed)
+
+---
+af corridor 
+24924/5
+
+
+# Gen16 
+24850? NO logging? what happened? -> 24583/4 PASS
+24855 GO FAIL
+24859 rerun

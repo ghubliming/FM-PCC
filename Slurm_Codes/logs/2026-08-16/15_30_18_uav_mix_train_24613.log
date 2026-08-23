@@ -237,4 +237,79 @@ Initial test loss:   0.9999, a0 loss:   1.2629
   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 93: 100%|██████████| 1000/1000 [04:35<00:00,  3.63it/s, a0_loss=0.0354, a0_loss_test=0.188, aux_loss=0.89, diffusion_loss=1.91, loss=0.955, loss_test=0.936, lr=9.04e-7, per_dim_rms_u=0.112, raw_mse=0.907, raw_mse_u=0.907, step=93999]Epoch 93: 100%|██████████| 1000/1000 [04:35<00:00,  3.63it/s, a0_loss=0.0354, a0_loss_test=0.188, aux_loss=0.89, diffusion_loss=1.91, loss=0.955, loss_test=0.936, lr=9.04e-7, per_dim_rms_u=0.112, raw_mse=0.907, raw_mse_u=0.907, step=93999]
   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 94: 100%|██████████| 1000/1000 [04:38<00:00,  3.60it/s, a0_loss=0.018, a0_loss_test=0.0627, aux_loss=0.712, diffusion_loss=1.96, loss=0.981, loss_test=0.933, lr=6.28e-7, per_dim_rms_u=0.0845, raw_mse=0.514, raw_mse_u=0.514, step=94999]Epoch 94: 100%|██████████| 1000/1000 [04:38<00:00,  3.59it/s, a0_loss=0.018, a0_loss_test=0.0627, aux_loss=0.712, diffusion_loss=1.96, loss=0.981, loss_test=0.933, lr=6.28e-7, per_dim_rms_u=0.0845, raw_mse=0.514, raw_mse_u=0.514, step=94999]
   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 95: 100%|██████████| 1000/1000 [04:23<00:00,  3.79it/s, a0_loss=0.0269, a0_loss_test=0.0234, aux_loss=0.656, diffusion_loss=1.87, loss=0.933, loss_test=0.935, lr=4.02e-7, per_dim_rms_u=0.0903, raw_mse=0.587, raw_mse_u=0.587, step=95999]Epoch 95: 100%|██████████| 1000/1000 [04:23<00:00,  3.79it/s, a0_loss=0.0269, a0_loss_test=0.0234, aux_loss=0.656, diffusion_loss=1.87, loss=0.933, loss_test=0.935, lr=4.02e-7, per_dim_rms_u=0.0903, raw_mse=0.587, raw_mse_u=0.587, step=95999]
-  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 96: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.0239, a0_loss_test=0.0532, aux_loss=0.762, diffusion_loss=1.82, loss=0.91, loss_test=0.932, lr=2.26e-7, per_dim_rms_u=0.0963, raw_mse=0.668, raw_mse_u=0.668, step=96999]Epoch 96: 100%|██████████| 1000/1000 [04:27<00:00,  3.74it/s, a0_loss=0.0239, a0_loss_test=0.0532, aux_loss=0.762, diffusion_loss=1.82, loss=0.91, loss_test=0.932, lr=2.26e-7, per_dim_rms_u=0.0963, raw_mse=0.668, raw_mse_u=0.668, step=96999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 97: 100%|██████████| 1000/1000 [04:19<00:00,  3.86it/s, a0_loss=0.00643, a0_loss_test=0.0321, aux_loss=0.291, diffusion_loss=1.86, loss=0.929, loss_test=0.934, lr=1.01e-7, per_dim_rms_u=0.0627, raw_mse=0.283, raw_mse_u=0.283, step=97999]Epoch 97: 100%|██████████| 1000/1000 [04:19<00:00,  3.86it/s, a0_loss=0.00643, a0_loss_test=0.0321, aux_loss=0.291, diffusion_loss=1.86, loss=0.929, loss_test=0.934, lr=1.01e-7, per_dim_rms_u=0.0627, raw_mse=0.283, raw_mse_u=0.283, step=97999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 98: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.0203, a0_loss_test=0.237, aux_loss=0.481, diffusion_loss=1.84, loss=0.919, loss_test=0.936, lr=2.52e-8, per_dim_rms_u=0.0866, raw_mse=0.54, raw_mse_u=0.54, step=98999]Epoch 98: 100%|██████████| 1000/1000 [04:31<00:00,  3.68it/s, a0_loss=0.0203, a0_loss_test=0.237, aux_loss=0.481, diffusion_loss=1.84, loss=0.919, loss_test=0.936, lr=2.52e-8, per_dim_rms_u=0.0866, raw_mse=0.54, raw_mse_u=0.54, step=98999]
+  0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99:   0%|          | 0/1000 [00:00<?, ?it/s]Epoch 99: 100%|██████████| 1000/1000 [04:40<00:00,  3.57it/s, a0_loss=0.0324, a0_loss_test=0.063, aux_loss=0.94, diffusion_loss=1.94, loss=0.969, loss_test=0.935, lr=0, per_dim_rms_u=0.111, raw_mse=0.891, raw_mse_u=0.891, step=1e+5]Epoch 99: 100%|██████████| 1000/1000 [04:40<00:00,  3.57it/s, a0_loss=0.0324, a0_loss_test=0.063, aux_loss=0.94, diffusion_loss=1.94, loss=0.969, loss_test=0.935, lr=0, per_dim_rms_u=0.111, raw_mse=0.891, raw_mse_u=0.891, step=1e+5]
+wandb: - 0.052 MB of 0.052 MB uploadedwandb: \ 0.052 MB of 0.052 MB uploadedwandb: | 0.052 MB of 0.052 MB uploadedwandb: / 0.052 MB of 0.052 MB uploadedwandb: - 0.066 MB of 0.079 MB uploaded (0.004 MB deduped)wandb: \ 0.066 MB of 0.079 MB uploaded (0.004 MB deduped)wandb: | 0.108 MB of 0.108 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 3.4%
+wandb: 
+wandb: Run history:
+wandb:        test/a0_loss ▃▂▂▁▁▁▁▁▁▁▁▁▁▁▂▁█▂▁▁▁▁▁▁▂▁▁▁▁▆▁▁▁▂▁▂▁▁▁▁
+wandb:            test/aux █▄▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:        test/fm_frac ▅▃▇▆▆▄▁▅▄▄▅▄▁█▇▅▄▃▂▂▄▄▁█▂▄▄▄▂▄▅▂▂▂▄▃▄▅▄▃
+wandb:         test/h_mean ▁▂▃▃▄▃▄▂▃▃▃▄▅▂▃▂▅▄▅▆▄▄█▁▅▄▃▅▅▁▂▄▅▇▂▃▅▂▅▇
+wandb:       test/h_mse_b0 █▄▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       test/h_mse_b1 █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▅▁▁▁▁▁▁▁▁▁▂▁▁▁▁▁
+wandb:       test/h_mse_b2 ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▆▁▁▁▁▁▁▁▁▁▁
+wandb:       test/h_mse_b3 ▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:           test/loss ██████▇▇▇▇▇▇▇▆▆▆▆▆▆▅▅▅▅▅▄▄▄▄▃▃▃▂▂▂▂▁▂▁▁▁
+wandb:  test/per_dim_rms_u █▅▄▃▂▂▂▂▂▂▁▂▂▂▂▁▂▂▁▁▁▁▁▁▂▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁
+wandb:        test/raw_mse ▆▃▂▁▁▁▁▁▁▁▁▁▁▁▂▁█▂▁▁▁▁▁▁▂▁▁▁▁▅▁▁▁▂▁▂▁▁▁▁
+wandb:      test/raw_mse_u ▆▃▂▁▁▁▁▁▁▁▁▁▁▁▂▁█▂▁▁▁▁▁▁▂▁▁▁▁▅▁▁▁▂▁▂▁▁▁▁
+wandb:      test/raw_mse_v █▄▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       train/a0_loss █▅▃▁▁▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:           train/aux █▄▂▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       train/fm_frac ▂▂▂▃▆▆▆▅▃▅▃▅▅▇▃▆▁▁▅▃▆▃█▂▅▃▆▁▇▃▅▅▆▃▆▂▅▆▅▃
+wandb:        train/h_mean ▃▄▃▄▃▂▂▃▃▄▄▂▃▁▃▂█▇▃▂▂▅▂▄▂▂▂▇▁▃▃▄▂▂▂▇▃▃▃▅
+wandb:      train/h_mse_b0 █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      train/h_mse_b1 █▄▃▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      train/h_mse_b2 █▄▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▁▁▁
+wandb:      train/h_mse_b3 ▅█▇▅▇▁▅▅▄▃▁
+wandb:          train/loss ████████▇▇▇▇▇▇▆▆▅▆▆▆▇▅▅▅▅▄▇▄▅▆▄▅▂▄▂▃▃▃▃▁
+wandb: train/per_dim_rms_u █▆▄▂▂▂▂▃▂▂▂▂▁▂▁▂▁▁▂▂▁▁▁▂▁▁▂▁▁▁▁▂▁▁▁▁▁▁▁▁
+wandb:       train/raw_mse █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     train/raw_mse_u █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     train/raw_mse_v █▄▂▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:              engine mf
+wandb:     final_test_loss 0.93497
+wandb:    final_train_loss 0.9127
+wandb:                seed 6
+wandb:              status completed
+wandb:        test/a0_loss 0.06299
+wandb:            test/aux 0.60071
+wandb:        test/fm_frac 0.49
+wandb:         test/h_mean 0.12752
+wandb:       test/h_mse_b0 0.73171
+wandb:       test/h_mse_b1 0.30724
+wandb:       test/h_mse_b2 6.32595
+wandb:       test/h_mse_b3 0.38238
+wandb:           test/loss 0.93497
+wandb:  test/per_dim_rms_u 0.09347
+wandb:        test/raw_mse 1.69229
+wandb:      test/raw_mse_u 1.69229
+wandb:      test/raw_mse_v 0.60071
+wandb:       train/a0_loss 0.00855
+wandb:           train/aux 0.23394
+wandb:       train/fm_frac 0.375
+wandb:        train/h_mean 0.17286
+wandb:      train/h_mse_b0 0.13702
+wandb:      train/h_mse_b1 0.38104
+wandb:      train/h_mse_b2 0.05889
+wandb:      train/h_mse_b3 0.07896
+wandb:          train/loss 0.9127
+wandb: train/per_dim_rms_u 0.05388
+wandb:       train/raw_mse 0.20899
+wandb:     train/raw_mse_u 0.20899
+wandb:     train/raw_mse_v 0.23394
+wandb: 
+wandb: 🚀 View run uav-pillars-mix_uav_mf-H8_Dmf_diffusion.MeanFlowODE_9D_dp0.5_bbunet-S6-slurm-24613 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-mix/runs/nuwei5ss
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-mix
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260816_133023-nuwei5ss/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Gen15 UAV Mix-ML training completed (engine=mf).
+Job completed successfully. Trained engine=mf scene=pillars for seeds=[6]
+JOB END: Sun Aug 16 20:58:32 UTC 2026
