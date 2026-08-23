@@ -4832,3 +4832,86 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
    - Extended `_resume_target()` and `--resume-step` to accept `'best'`, enabling seamless recovery from `state_best.pt` with automatic step extraction from the loaded checkpoint payload (`step`, `optimizer`, `ema`, `best_test_loss`).
 4. **Path-Integrated Training Budgets (`_budget_tag`)**: Introduced dynamic training budget tagging in `config/aligning-d3il-visual.py` and `config/avoiding-d3il-visual-mix.py`. When `MIX_TRAIN_STEPS` specifies a reduced budget (e.g. 50,000 steps), the experiment directory is tagged with `_TB50pct` or `_TB<N>steps`. Guarantees that reduced-budget runs cannot collide with or silently overwrite full-budget checkpoints, and automatically synchronizes evaluation load paths when executed within the pipeline.
 5. **Gen14 Gate G0 Ledger Synchronization**: Updated Gate G0 in `mix_visual_aligning_test/gates_mix_visual.py` to move `training.py` and `training_twotime.py` from `VERBATIM` to `GRAFTED_DIFF` (+39/−3 lines each), rigorously auditing the exact 3 modified lines (`save_freq` argument and atomic save calls) while maintaining automated drift detection against upstream implementations.
+
+***
+
+## Gen16 & Data Analysis Batch Discovery: Multi-Root Avoiding Pipeline Integration & Parent-Path Visibility (August 23, 2026)
+
+**Keywords**: Gen16, Data_Analysis, run_da_batch_avoiding_combined.sh, multi-root discovery, parent-path visibility, Shape B layout, silent discovery skip fix.
+
+1. **Multi-Root Pipeline Expansion (`run_da_batch_avoiding_combined.sh`)**: Extended the unified avoiding Data Analysis discovery pipeline to incorporate three distinct parent roots: (1) `logs/avoiding-d3il/plans` (state-only avoiding), (2) `logs/avoiding-d3il-visual/plans` (Gen9 visual avoiding baseline), and (3) `logs/avoiding-d3il-visual-mix/plans` (Gen16 Visual-Avoiding Mix-ML across `diffusion`, `fm`, `mf`, `af`).
+2. **Layout Compatibility & Zero Loader Changes**: Verified that Gen16 writes evaluation artifacts following DA_Code_v3 Shape B (`<candidate>/<seed>/results/halfspace_<geo>/<variant>.npz`), matching the schema of legacy roots and enabling automated batch ingestion without requiring loader or aggregator refactoring.
+3. **Explicit Root Directory Diagnostic Echoes**: Addressed an edge case where `multi_candidate_discovery.py::discover_candidates_recursive()` silently returned empty dicts for missing directories, making ungenerated runs indistinguishable from unrequested runs. Added pre-execution `[present]` / `[ABSENT ]` console diagnostics in `run_da_batch_avoiding_combined.sh` to give immediate visibility into path resolution before executing discovery.
+
+***
+
+## Gen15 UAV Mix-ML: Dedicated AlphaFlow SiT Transformer Backbone Configuration (`imf_backbone='sit'`) (August 23, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, AlphaFlow, SiT, Scalable Interpolant Transformer, imf_backbone, af_sit_trajectory, uav_mix.py, parameter matching caveat.
+
+1. **AlphaFlow SiT Backbone Switch (`config/uav_mix.py`)**: Configured the `af` (AlphaFlow) arm in Gen15 to utilize AlphaFlow's native `sit` (Scalable Interpolant Transformer, `af_sit_trajectory.py` from Gen3v7 U2) backbone by setting `imf_backbone = 'sit'` across both training (`mix_uav_af`) and evaluation (`plan_mix_uav_af`) blocks.
+2. **Savepath Synchronization & Checkpoint Collision Guard**: Ensured that the evaluation block mirrors `imf_backbone = 'sit'` so `_uav_mix_exp_name` dynamically reconstructs the exact checkpoint path (`..._as1.0_ae0.0_bbsit/`), preventing evaluation loader mismatches while guaranteeing separation from any future `af+unet` runs.
+3. **Preservation of U-Net Headline Baseline**: Retained `_TWO_TIME_BACKBONE['imf_backbone'] = 'unet'` for the `mf` arm, maintaining the unconfounded 4.0M parameter U-Net comparison between Flow Matching and MeanFlow. Documented that because SiT dimensions scale from `dit_hidden_size` and `dit_depth` rather than `freq_dim`, the `af@sit` arm serves as a designated exploratory transformer appendix rather than a parameter-matched baseline.
+
+***
+
+## Gen16 Visual-Avoiding Mix-ML: First Cluster Benchmark Execution, Zero Tightened Violations & 16–23× Speedup (August 23, 2026)
+
+**Keywords**: Gen16, Visual-Avoiding, Mix-ML, MeanFlow, K=2, U-Net, B4_PARITY, candidate fan 4, Pareto dominance, tightened projector, action weight aw1 vs aw10, top-right-hard deficit.
+
+1. **End-to-End Validation of Visual Mix Pipeline (Batch `batch_avoiding_combined_20260823_085253`)**: Completed the first full cluster evaluation of Gen16 Visual-Avoiding Mix-ML on the architecture-matched U-Net backbone (`mf` MeanFlow, seed 6, K=2, 30 trials/cell). Verified end-to-end execution across 13 variants × 3 halfspaces (`top-left-hard`, `top-right-hard`, `both-hard`), fully exercising the visual JVP graph, pre-encoded visual latents, `VisualPolicy` gym adapter, DPCC projector, and HardFlow in-loop sampler.
+2. **Zero Constraint Violations on Tightened Geometries**: Across all nine `*-tightened` cells, the policy registered `total_violations = 0.000` and $\text{S\&C} \equiv n_{\text{success}}$ (1.00 on `top-left-hard` and `both-hard`). Confirmed that the tightened projector guarantees total physical safety in visual avoiding, localizing all failures to policy goal-reaching rather than constraint violations.
+3. **Pareto Dominance on TL & BH, Deficit on TR**:
+   - On `top-left-hard` and `both-hard`, Gen16 at K=2 achieved strict Pareto dominance over the pinned DPCC baseline (1.00 S&C, 52–56 steps vs 59–70 steps), achieving **16× to 23× wall-clock speedup** per episode ($1.7\text{--}2.3\,\text{s}$ vs $36.5\text{--}39.1\,\text{s}/\text{ep}$).
+   - On `top-right-hard`, Gen16 exhibited a mode-coverage deficit, achieving 0.77 S&C (0.87 for `hardflow_new-c-tightened`) vs DPCC's 0.95, establishing a non-dominated trade-off rather than blanket dominance.
+4. **Arm-C B4_PARITY Verification & Action Weight Confound Diagnosis**:
+   - Confirmed full `B4_PARITY` execution: Arm C ran at matched candidate fan $B=4$ ($19\text{--}24\text{k}$ NFE, $8.1\text{k}$ NLP solves), rescuing TR success to 0.87 at a $3.5\times$ compute cost over Arm B.
+   - Diagnosed that Gen16 trained with `action_weight = 1` (`aw1`) inherited from Gen7 FM, whereas all historical benchmarks and state-MeanFlow baselines were trained with `aw10`. Identified `aw1` vs `aw10` retraining as the priority target to resolve the TR goal-reaching gap.
+
+***
+
+## Gen14 Visual-Mix-ML: First DiT Backbone Benchmark (`mf@dit`), Projector Efficiency Deficit & Selection Rule Inversion (August 23, 2026)
+
+**Keywords**: Gen14, Visual-Mix-ML, U8, VisualDiTTwoTime, RoPE DiT, 3.37M params, distance metric, projector extraction deficit, candidate selection inversion, bounds_free over-restriction.
+
+1. **Successful Execution of 80k DiT Pipeline (Job 24874/24875)**: Executed the first end-to-end training and evaluation of the transformer ML-bone on visual aligning (`mf@dit` RoPE DiT, 3.37M params, `_TB80pct` budget, seed 6, n=30/cell), passing all 14 hardware gates (including G0 Fix_10 synchronization) and completing 80,000 steps in ~12h 50m without circuit-breaker trips or OOM crashes.
+2. **Evaluation on D3IL Distance Metric**: Because strict success remained at the floor ($<2\%$, cap at 400 steps), models were evaluated on the authoritative D3IL aligning distance metric (`mean_dist_per_rollout`, initialized at do-nothing baseline 0.4547m). DiT achieved lower pooled distance performance than the matched U-Net (0.3959m vs 0.3425m for mf-v1).
+3. **Projector Extraction Deficit & Distribution Variance**:
+   - *Raw vs Projected Quality*: DiT produced superior raw unguided plans compared to U-Net (0.4187m vs 0.4656m unguided distance on `combined_5`). However, DPCC projection improved DiT by only **0.061m** compared to **0.179m** for U-Net ($3\times$ lower extraction efficiency).
+   - *Distribution Shape*: Analysis of `context_final_xy_dist` revealed DiT has half the variance (sd 0.1747 vs 0.3100) and fewer catastrophic deviations, but U-Net has a significantly sharper tail reaching $<5\,\text{cm}$ twice as often (13.8% vs 6.7%).
+4. **Candidate Selection Inversion & Constraint Over-Restriction**:
+   - *Selection Rule Inversion*: Minimum-projection-cost selection (`-c`) is DiT's best rule (0.3577m) and U-Net's worst rule (0.4094m), while temporal consistency (`-t`) is U-Net's best rule (0.2867m). Proved that candidate selection rules must be configured per-backbone rather than globally inherited.
+   - *Bounds Constraint Audit*: `bounds_free` yielded the best distance for all backbones (0.3253m for DiT, 0.2835m for U-Net) without increasing violations, proving that the default bounding cage is over-restrictive for the aligning workspace.
+
+***
+
+## Visual-Aligning HardFlow (Arm C) vs DPCC (Arm B) Benchmark: Candidate-Fan Parity ($B=4$), Significance Analysis & Selection Interaction (August 23, 2026)
+
+**Keywords**: Gen14, HardFlow, DPCC, Arm B vs Arm C, B4_PARITY, candidate fan 4, paired permutation test, Bonferroni correction, temporal consistency, min-cost selection rescue.
+
+1. **Exhaustive Multi-Engine Benchmark (`DA_VA_v2`, Batch `batch_va2_20260823_135156`)**: Conducted the first systematic cross-engine evaluation of HardFlow in-loop sampling (Arm C) against the DPCC projector (Arm B) across 18 visual-aligning candidates at verified `B4_PARITY` (candidate fan $B=4$, `hf_batch_size = 4.0`, identical threshold $\text{dt} = 0.5$).
+2. **Selection Rule Interaction & Weak-Selection Rescue**:
+   - Directionally, HardFlow reduced constraint violations in 9 of 12 matched pairings across both `mf` and `af` engines.
+   - HardFlow's benefits were concentrated on weak selection rules: under min-cost selection (`-c`), HardFlow dramatically reduced violations (69.5 $\rightarrow$ 60.3 untightened, 12.6 $\rightarrow$ 2.2 tightened on `mf`; 85.6 $\rightarrow$ 57.2 untightened, 18.6 $\rightarrow$ 4.5 tightened on `af`).
+   - Under strong temporal selection (`-t`), HardFlow lost to DPCC on every metric across both engines and both geometries.
+3. **Paired Significance Testing & Bonferroni Correction (50,000 Permutations)**:
+   - *Constraint Metrics*: None of the 12 constraint violation pairings reached statistical significance ($p < 0.05$), with high variance relative to mean shifts (|dz| $\le 0.37$).
+   - *Distance Metric*: Revealed that HardFlow's primary statistically validated benefit is a distance improvement on weak selection rules. `mf` tightened under `-c` improved final distance by 0.067m at **dz = −0.69, p = 0.0001**, surviving full Bonferroni correction across all 24 tests.
+4. **Computational Cost & Deployment Verdict**: HardFlow exhibited a flat $\sim 3.3\times$ wall-clock penalty across all pairings (146–194ms vs 42–57ms). Furthermore, `dpcc-t` + tightening achieved **0.0000 violations** on `mf` at 42ms (which HardFlow never matched, landing at 0.33 violations at 146ms). Concluded that as currently configured at equal thresholds ($\text{dt}=0.5$), HardFlow does not justify its $3.3\times$ cost, and a joint threshold sweep is required to test if Arm C holds constraints at lower thresholds where Arm B fails.
+
+***
+
+## Aggregated Divergence Abort (`Div_Abort`) & Robust Matplotlib Window Clamping Architecture Across UAV and Visual-Aligning Pipelines (August 23, 2026)
+
+**Keywords**: Aggregated, Div_Abort, divergence abort, out_of_arena, des_runaway, physical.safe, eval_artifacts, view_window, box aspect, matplotlib clamp, DIVERGENCE_ABORT.txt, 11 files.
+
+1. **Root Cause Analysis of Lost Rollouts & Plot Aspect Distortion**: Investigated controller divergence where free-running command integration without absolute positional bounding caused unbounded commanded trajectory drift (tens to hundreds of meters for UAV, off-table for robotic arm), while matplotlib data-limit autoscaling collapsed physical workspaces (~7m arena or 0.6×0.9m table) into unreadable pixel slivers in foresight SVG/PNG diagnostics.
+2. **UAV Divergence Guard (`eval_mix_uav.py`, `eval_fm_uav.py`, `behavior_logger.py`)**:
+   - *Multi-Condition Trip Sensor*: Evaluated per FM step across five criteria: `nan_state`, `out_of_arena` (position outside workspace box $\oplus$ 3.0m slack), `overspeed` ($|v| > 12\,\text{m/s}$ vs 0.3–0.5 m/s cruise), `p_des_runaway` ($|p_{\text{des}} - p| > 5.0\,\text{m}$), and `inverted` (attitude $\hat{z}_{\text{body}} \cdot \hat{z}_{\text{world}} < 0$).
+   - *Metric & State Integrity*: On abort, forces `physical.safe = False` (preventing false success on `empty` scene), charges the full step budget to prevent distorted step averages, creates `DIVERGENCE_ABORT.txt` sentinel, and logs full state telemetry to `results.json`, NPZ, and behavior logs.
+3. **Visual Aligning Divergence Guard (`aligning_sim.py`, 4 Evaluation Scripts)**:
+   - *Task-Specific Thresholds*: Formulated independent bounds tailored to the Franka workspace: `nan_state`, `out_of_arena` evaluated against the union of the table box ($[-0.30, 1.60] \times [\pm 1.20] \times [-0.50, 1.50]$) and expanded bounds, and `des_runaway` ($|des\_c\_pos - c\_pos| > 0.25\,\text{m}$ evaluated in XY-only to match physical tracking error metrics).
+   - *Zero-Overhead Replan Interruption*: Sets `agent.abort_episode`, breaking the `Aligning_Sim` episode loop immediately across both visual and non-visual branches without executing expensive subsequent QP solves.
+4. **Matplotlib Robust Window Clamping (`eval_artifacts.py`)**:
+   - *Bounding Geometry*: Replaced `adjustable='datalim'` with `'box'` and implemented `view_window()` / `align_view_window()`, framing plots strictly around the 2–98 percentile executed path and active constraint geometry, restricting command and candidate fan expansion to at most 1.0 core span per side.
+   - *Unclipped Diagnostics & Abort Callouts*: Integrated red corner annotations reporting unclipped coordinate excursions, and rendered dark-red **✖** abort markers at the failure coordinate connected via dotted leader lines to the runaway command position.

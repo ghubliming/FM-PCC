@@ -240,7 +240,7 @@ When running the next auto-update, only process commits **strictly after** this 
 
 | Field | Value |
 |---|---|
-| **Commit hash** | `eb82d0b2` |
-| **Commit message** | `(Gen14 fix10 hotfix)fix: update G0 ledger to reflect changes in training.py and training_twotime.py for Fix_10, ensuring proper coverage and tracking of upstream edits` |
-| **Commit date** | 2026-08-22 11:49:18 UTC |
-| **What was recorded** | Gen16 Visual-Avoiding Mix-ML architecture, `visual_spec.py` single-source hoist & gym policy bridge (`06385075`); Gate A7 JVP reverse-mode autograd fix & `sequence.py` dataset path consolidation (`afc525fb`, `db4cb99f`); Gen14/Gen16 Fix_10 atomic checkpoint serialization, `state_best.pt` auto-resume, path-integrated training budget tagging (`_TB<pct>pct`), and Gate G0 ledger synchronization (`fdc05273`, `88982dc4`, `eb82d0b2`). |
+| **Commit hash** | `1288118a` |
+| **Commit message** | `(Div_Abor For V_A and UAV)feat: implement episode abort guard in aligning simulation for runaway end-effector trajectories` |
+| **Commit date** | 2026-08-23 20:09:05 UTC |
+| **What was recorded** | Gen16 multi-root DA combined batch discovery (`735a1c6b`); Gen15 UAV Mix-ML dedicated AlphaFlow SiT transformer backbone configuration (`7cc86c73`); Gen16 first cluster benchmark results with zero tightened violations & 16-23x speedup (`1288118a`); Gen14 U8 DiT visual-aligning benchmark with projector extraction deficit & selection rule inversion (`1288118a`); Visual-aligning HardFlow vs DPCC benchmark with candidate-fan parity & paired significance testing (`1288118a`); Repo-wide Div_Abort divergence abort and robust matplotlib window clamping architecture across UAV and visual-aligning pipelines (`1288118a`). |

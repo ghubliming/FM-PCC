@@ -86,6 +86,37 @@ dpcc_threshold = float(os.environ.get('DPCC_THRESHOLD',
 # single tidy control entry. CLI `--flow-steps N` still overrides the block's K.
 flow_steps_cli = args_cli.flow_steps
 
+# ── MPC CANDIDATE FAN, arms A/B — the SECOND fan, until now unsettable (Gen3v6 sync) ─────
+# Gen12 has TWO independent candidate fans and only one of them used to be reachable:
+#   arms A/B (`diffuser`, `dpcc-*`) -> args.batch_size, from the plan_fm_v3_hardflow block.
+#                                      Was a hardcoded 4; config/avoiding-d3il.py now reads
+#                                      FMPCC_MPC_BATCH.
+#   arm C    (`hardflow_new-*`)     -> hf_batch_size above (HFFM_BATCH / hardflow.batch_size),
+#                                      with bare `hardflow_new` pinned to 1 by
+#                                      resolve_hf_batch_size().
+# Read here to build the path tag and to report it — the VALUE is consumed by the config
+# module, which is why this has to happen before the first Parser().parse_args().
+mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+if mpc_batch < 1:
+    raise ValueError(f'FMPCC_MPC_BATCH must be >= 1, got {mpc_batch}')
+if mpc_batch != hf_batch_size:
+    print(f'[ eval ] ⚠️  arms A/B fan (mpc={mpc_batch}) != arm-C fan (HFFM_BATCH={hf_batch_size}) '
+          f'-- both arms solve SERIALLY per candidate, so avg_time is not comparable across arms '
+          f'(B4_PARITY). Set FMPCC_MPC_BATCH=HFFM_BATCH unless the mismatch is the experiment.')
+# 🔴 PATH COLLISION GUARD — hf_paths.eval_name()'s `mpc<N>` token has ALWAYS described arm C
+# only (it is fed hf_batch_size); arms A/B were an invisible constant 4. So an mpc=1 arms-A/B
+# run would land in the very same `K…_mpc1_n…` directory as the historic B1 runs, whose DPCC
+# arms ran at 4 — different controllers, one folder. Gen12 builds savepath itself and never
+# applies config's custom_msg, so the tag is applied to the eval-name below instead. A
+# non-default fan auto-tags itself; an explicit FMPCC_RUN_MSG always wins.
+if mpc_batch != 4 and not os.environ.get('FMPCC_RUN_MSG'):
+    os.environ['FMPCC_RUN_MSG'] = f'mpc{mpc_batch}'
+    print(f'[ eval ] non-default mpc fan -> auto-tagged results path with '
+          f'FMPCC_RUN_MSG=mpc{mpc_batch} (set it yourself to override)')
+run_msg = hf_paths.sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+print(f'[ eval ] mpc fan: arms A/B={mpc_batch}, arm C={hf_batch_size}'
+      + (f'  |  run_msg={run_msg}' if run_msg else ''))
+
 
 def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0'):
     """Gen3v2's interceptor: the pickled config names the class that TRAINED the
@@ -221,6 +252,8 @@ for exp in exps:
                     'flow_steps_K': int(flow_steps),
                     'hf_act_threshold': float(hf_act_threshold),
                     'hf_batch_size': int(hf_batch_size),
+                    'mpc_batch_arms_ab': int(mpc_batch),
+                    'run_msg': run_msg,
                     'dpcc_threshold': float(dpcc_threshold),
                     'force_overwrite': bool(FORCE_OVERWRITE),
                     'checkpoint_dir': checkpoint_dir,

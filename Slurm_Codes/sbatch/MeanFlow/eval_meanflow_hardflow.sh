@@ -88,14 +88,28 @@ fi
 #                        Bare `hardflow_new` is pinned to 1 by resolve_hf_batch_size()
 #                        regardless of this value — that arm IS the faithful batch-1 control.
 #                        Set HFFM_BATCH=1 only to deliberately reproduce an old B1 run.
+#    FMPCC_MPC_BATCH     candidate fan (mpc) for arms A/B (`diffuser`, `dpcc-*`) — the SECOND,
+#                        independent fan. It was a hardcoded 4 in the plan block of
+#                        config/avoiding-d3il.py and therefore unsettable; HFFM_BATCH above has
+#                        only ever moved arm C. Keep the two EQUAL unless the mismatch IS the
+#                        experiment: both arms loop SERIALLY over candidates around their CPU
+#                        solve (projection.py scipy SLSQP / hardflow_projection.py IPOPT), so an
+#                        unequal fan scales one arm's projection wall-time and voids the timing
+#                        comparison — the B4_PARITY confound.
+#                        FMPCC_MPC_BATCH=1 HFFM_BATCH=1 -> a single candidate in EVERY arm, i.e.
+#                        MPC candidate selection switched OFF (dpcc-r/-c/-t and
+#                        hardflow_new-r/-c/-t then all collapse to index 0 — do not run the trio).
+#                        A value != 4 auto-tags the results path (FMPCC_RUN_MSG=mpc<N>) because
+#                        batch_size is not one of the folder-name tokens.
 #    HFFM_ACT_THRESHOLD  fraction of late steps the NLP is active (0.5 == DPCC threshold 0.5)
 #    HFFM_FLOW_STEPS     matched K for EVERY arm (overrides plan-block flow_steps).
 #                        🔵 U9: when set it PINS this job to that single K; leave it unset to
 #                        get the whole {1,2,5,10,20} grid in one job (see §5).
 export HFFM_BATCH="${HFFM_BATCH:-4}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
+export FMPCC_MPC_BATCH="${FMPCC_MPC_BATCH:-4}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
-echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"
+echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm C)  FMPCC_MPC_BATCH=$FMPCC_MPC_BATCH (arms A/B)  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"
 
 # ── H8+8 (U10) knobs — all optional, all defaulting to the historic behaviour ──────────
 #   MF_HORIZON        checkpoint horizon; MUST equal what the checkpoint was TRAINED at
@@ -129,7 +143,8 @@ for K in $FLOW_STEPS_GRID; do
     echo "================================================================================"
     echo "[ eval ] K = $K   ($(date))"
     echo "================================================================================"
-    python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py --flow-steps "$K"
+    # "$@" forwards submit.sh script args to the eval, e.g. --config <a pruned projection yaml>
+    python FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py --flow-steps "$K" "$@"
 done
 
 echo "Evaluation completed successfully."

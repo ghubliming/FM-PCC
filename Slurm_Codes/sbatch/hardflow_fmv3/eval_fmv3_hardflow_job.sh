@@ -100,19 +100,30 @@ cd "$REPO"
 # silently hands arm C a 4x compute discount. Bare `hardflow_new` stays at 1 regardless
 # (resolve_hf_batch_size), so the faithful upstream control is still one variant away.
 # Set HFFM_BATCH=1 only to deliberately reproduce an old `B1` run.
+#
+# 🔵 FMPCC_MPC_BATCH — the SECOND, independent candidate fan: arms A/B (`diffuser`, `dpcc-*`),
+# i.e. the plan block's `batch_size`. It was a hardcoded 4 and therefore unsettable, while
+# HFFM_BATCH above has only ever moved arm C. Keep the two EQUAL unless the mismatch IS the
+# experiment. `FMPCC_MPC_BATCH=1 HFFM_BATCH=1` gives a single candidate in EVERY arm — MPC
+# candidate SELECTION switched off, which is what isolates how much of DPCC's success rate
+# comes from the selection rule rather than from the projector. At a fan of 1 the -r/-c/-t
+# variants all collapse to index 0 in both arms, so run ONE of them, not the trio.
+# A value != 4 auto-tags the eval-name (`..._msgmpc<N>`), because the existing `mpc<N>` token
+# in hf_paths.eval_name describes arm C only.
 export HFFM_BATCH="${HFFM_BATCH:-4}"
-echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)"
+export FMPCC_MPC_BATCH="${FMPCC_MPC_BATCH:-4}"
+echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)  FMPCC_MPC_BATCH=$FMPCC_MPC_BATCH (arms A/B fan)"
 if [ -n "${HFFM_FLOW_STEPS:-}" ]; then
     echo "[ eval ] K sweep: $HFFM_FLOW_STEPS   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
     for K in $HFFM_FLOW_STEPS; do
         echo "================================================================================"
         echo "[ eval ] K = $K   ($(date))"
         echo "================================================================================"
-        python FM_v3_hardflow_test/eval_FM_v3_hardflow.py --flow-steps "$K"
+        python FM_v3_hardflow_test/eval_FM_v3_hardflow.py --flow-steps "$K" "$@"
     done
 else
     echo "[ eval ] single run, K from plan block   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
-    python FM_v3_hardflow_test/eval_FM_v3_hardflow.py
+    python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "$@"
 fi
 
 echo "Evaluation completed successfully."

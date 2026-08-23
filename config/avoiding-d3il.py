@@ -46,6 +46,30 @@ _yaml_threshold = (_num(_env_threshold) if _env_threshold is not None
 _hf_act_threshold = _num(os.environ.get('HFFM_ACT_THRESHOLD', 1.0))
 _hf_batch_size = int(os.environ.get('HFFM_BATCH', 1))
 
+# ── MPC CANDIDATE FAN for arms A/B (`diffuser`, `dpcc-*`) — the SECOND, independent fan ──
+# There are TWO candidate fans in an arms-A/B/C eval and they are set in different places:
+#   arms A/B (`diffuser`, `dpcc-*`)  -> the plan block's `batch_size`      = THIS knob
+#   arm C    (`hardflow_new-*`)      -> `hardflow.batch_size` / HFFM_BATCH -> resolve_hf_batch_size()
+#                                       (bare `hardflow_new` is pinned to 1 regardless)
+# BOTH arms loop SERIALLY over candidates around their CPU solve — projection.py
+# `for i in range(batch_size)` (scipy SLSQP) and hardflow_projection.py
+# `for b in range(batch_size)` (CasADi/IPOPT) — so the fan scales projection wall-time
+# almost linearly in each arm and a MISMATCH voids every arm-B-vs-arm-C timing comparison.
+# That is the B4_PARITY confound
+# (logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260820_HF_lower_avgtime_batchsize_confound.md);
+# until now only arm C's fan was settable, so "hold BOTH arms at one candidate" — the
+# control that isolates how much of DPCC's success rate is MPC candidate SELECTION rather
+# than the projector — could not be expressed at all.
+#   FMPCC_MPC_BATCH=1 HFFM_BATCH=1 <command>     -> single candidate in every arm
+# ⚠️ At a fan of 1 the selection RULES collapse: dpcc-r/-c/-t all execute index 0
+#    (sampling/policies.py — `which_trajectory = 0` in every branch) and so do
+#    hardflow_new-r/-c/-t. Running the trio at mpc==1 is redundant compute, not three arms.
+# ⚠️ `batch_size` is NOT a results-folder token, so an mpc1 and an mpc4 run at the same
+#    K/A/T would land in the SAME directory and clobber each other. The eval scripts
+#    auto-tag a non-default fan via FMPCC_RUN_MSG=mpc<N>, the same guard U10 uses for
+#    replan_steps. Default 4 => every existing command and path is unchanged.
+_mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+
 # ── H8+8 (U10) — Gen3v6 MeanFlow horizon / backbone, read ONCE ────────────────────────
 # `horizon` is a TRAINING property (dataset windows in datasets/sequence.py:71-83 and the
 # per-step loss weights in models/helpers.py:295-314 are both sized by it), so an H16 study
@@ -1157,7 +1181,7 @@ base = {
     'plan_fm_v3_hardflow': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,            # arms A/B; arm C uses hardflow.batch_size (default 1)
+        'batch_size': _mpc_batch,   # arms A/B fan (FMPCC_MPC_BATCH); arm C: hardflow.batch_size/HFFM_BATCH
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -1381,7 +1405,7 @@ base = {
         # (trap #6). Only sampling knobs (flow_steps_v3, solver, threshold) may differ.
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,
+        'batch_size': _mpc_batch,   # arms A/B fan (FMPCC_MPC_BATCH); arm C: hardflow.batch_size/HFFM_BATCH
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -1478,7 +1502,7 @@ base = {
         # config-overrides-pkl reconciliation stays a silent no-op.
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,
+        'batch_size': _mpc_batch,   # arms A/B fan (FMPCC_MPC_BATCH); arm C: hardflow.batch_size/HFFM_BATCH
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,

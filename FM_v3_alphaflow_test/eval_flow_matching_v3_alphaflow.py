@@ -108,6 +108,34 @@ print(f'[ eval ] resolved  cfg={_cfg_path}  dpcc_threshold={diffusion_timestep_t
       f'hf_act_threshold={hf_act_threshold}  hf_batch={hf_batch_size}  '
       f'hf_candidate_cost={hf_candidate_cost}')
 
+# ── MPC CANDIDATE FAN, arms A/B — the SECOND fan, until now unsettable (Gen3v6 sync) ─────
+# This eval has TWO independent candidate fans and only one of them used to be reachable:
+#   arms A/B (`diffuser`, `dpcc-*`) -> args.batch_size, from the plan block. Was a hardcoded
+#                                      4; config/avoiding-d3il.py now reads FMPCC_MPC_BATCH.
+#   arm C    (`hardflow_new-*`)     -> hf_batch_size above (HFFM_BATCH / hardflow.batch_size),
+#                                      with bare `hardflow_new` pinned to 1 by
+#                                      resolve_hf_batch_size().
+# Read here only to build the collision tag and to report it — the VALUE is consumed by the
+# config module, which is why this has to happen before the first Parser().parse_args().
+mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+if mpc_batch < 1:
+    raise ValueError(f'FMPCC_MPC_BATCH must be >= 1, got {mpc_batch}')
+if mpc_batch != hf_batch_size:
+    print(f'[ eval ] ⚠️  arms A/B fan (mpc={mpc_batch}) != arm-C fan (HFFM_BATCH={hf_batch_size}) '
+          f'-- both arms solve SERIALLY per candidate, so avg_time is not comparable across arms '
+          f'(B4_PARITY). Set FMPCC_MPC_BATCH=HFFM_BATCH unless the mismatch is the experiment.')
+# 🔴 PATH COLLISION GUARD — the arms-A/B fan is NOT a results-folder token, so an mpc4 and an
+# mpc1 run at the same K/A/T would write to the SAME directory and clobber each other.
+# Promoting it to a real token would rename every historic path, so a non-default fan auto-tags
+# itself via the existing custom-message slot instead (the guard Gen3v6 U10 uses for the replan
+# cadence). An explicit FMPCC_RUN_MSG always wins. Must be set BEFORE the first
+# Parser().parse_args(), which is what imports config/<exp>.py.
+if mpc_batch != 4 and not os.environ.get('FMPCC_RUN_MSG'):
+    os.environ['FMPCC_RUN_MSG'] = f'mpc{mpc_batch}'
+    print(f'[ eval ] non-default mpc fan -> auto-tagged results path with '
+          f'FMPCC_RUN_MSG=mpc{mpc_batch} (set it yourself to override)')
+print(f'[ eval ] mpc fan: arms A/B={mpc_batch}, arm C={hf_batch_size}')
+
 exps = config['exps']
 seeds = config['seeds']
 if args_cli.seed is not None:
