@@ -398,6 +398,13 @@ base = {
     'mix_uav_af': {
         **_UAV_TASK,
         **_TWO_TIME_BACKBONE,
+        # 🔴 OVERRIDES _TWO_TIME_BACKBONE's 'unet' for THIS ARM ONLY — `mf` keeps 'unet', so the
+        # mf-vs-fm headline comparison is untouched. 'sit' is alpha-Flow's OWN backbone
+        # (af_sit_trajectory.py, Gen3v7 U2); it sizes from dit_hidden_size/dit_depth, NOT from
+        # freq_dim, so this arm is NOT parameter-matched to the 4.0 M U-Net rows — it is the
+        # deferred appendix arm (PLAN §6), never the architecture-matched claim.
+        # ⚠️ plan_mix_uav_af below MUST carry the same value or eval rebuilds a different savepath.
+        'imf_backbone': 'sit',
         'engine': 'af',
         'model': 'models.af_engine.AlphaFlowEngine',
         'diffusion': 'models.af_diffusion.AlphaFlowODE',
@@ -430,6 +437,6 @@ base = {
         # ⚠️ MUST match the training block (see the mf plan block's note).
         'af_alpha_init': 1.0,
         'af_alpha_end': 0.0,
-        'imf_backbone': 'unet',
+        'imf_backbone': 'sit',
     },
 }
