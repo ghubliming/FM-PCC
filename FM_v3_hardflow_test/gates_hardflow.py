@@ -48,6 +48,7 @@ from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
     HardFlowSampler,
     TrajectoryLayout,
     hardflow_step_budget,           # HFK1 (2026-08-24)
+    hardflow_regime, HF_OK, HF_THIN, HF_DEGENERATE,   # HFK1b (2026-08-24)
 )
 
 EXP = 'avoiding-d3il'
@@ -502,7 +503,7 @@ def gate_g6(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
     print('\n-- G6: HFK1 low-K degeneracy + NFE accounting ' + '-' * 30)
     ok = True
 
-    # (a) helper vs the literal gate expression, over the whole grid we ever ship
+    # (a) helpers vs the literal gate expression, over the whole grid we ever ship
     grid_ok = True
     for K in (1, 2, 3, 5, 6, 10, 14, 20):
         for A in (0.0, 0.1, 0.25, 0.5, 0.9, 1.0):
@@ -513,9 +514,30 @@ def gate_g6(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
                 grid_ok = False
                 print(f'    MISMATCH K={K} A={A}: helper={hardflow_step_budget(K, A)} '
                       f'loop=({len(active)}, {len(genuine)})')
+            # HFK1b: the regime classifier must agree with the same literal loop, and
+            # `first_lookahead` must be (1 - tau_next) at the FIRST genuine step — the
+            # least trustworthy guided step, and the one Thm. 4's bound is worst at.
+            tier, n_a, n_g, la = hardflow_regime(K, A)
+            exp_tier = (HF_DEGENERATE if not genuine
+                        else HF_THIN if len(genuine) == 1 else HF_OK)
+            exp_la = (1.0 - float(genuine[0] + 1) / K) if genuine else 0.0
+            if (tier, n_a, n_g) != (exp_tier, len(active), len(genuine)) \
+                    or abs(la - exp_la) > 1e-12:
+                grid_ok = False
+                print(f'    REGIME MISMATCH K={K} A={A}: got ({tier}, {n_a}, {n_g}, '
+                      f'{la:.6f}) expected ({exp_tier}, {len(active)}, {len(genuine)}, '
+                      f'{exp_la:.6f})')
     ok &= grid_ok
-    print(f'  (a) hardflow_step_budget == literal loop gate on 8x6 grid: '
+    print(f'  (a) hardflow_step_budget + hardflow_regime == literal loop gate on 8x6 grid: '
           f'{"OK" if grid_ok else "FAIL"}')
+    # the two tiers that must warn, and the one that must not
+    tier_ref = {(1, 0.5): HF_DEGENERATE, (2, 0.5): HF_DEGENERATE, (3, 0.5): HF_THIN,
+                (5, 0.5): HF_OK, (1, 1.0): HF_DEGENERATE, (2, 1.0): HF_THIN,
+                (5, 1.0): HF_OK, (20, 0.0): HF_DEGENERATE}
+    tier_ok = all(hardflow_regime(K, A)[0] == t for (K, A), t in tier_ref.items())
+    ok &= tier_ok
+    print(f'  (a) tier reference table {{(K, A): tier}} -> '
+          f'{"OK" if tier_ok else "FAIL"}')
 
     # the documented reference row (DEGENERACY §4.1), A = 0.5 as shipped
     ref = {1: (1, 0), 2: (1, 0), 5: (3, 2), 10: (5, 4), 20: (10, 9)}

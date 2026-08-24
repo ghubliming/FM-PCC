@@ -17,7 +17,8 @@ from diffuser.utils import provenance   # U10.1 — env-override provenance (sha
 from flow_matcher_v3_meanflow.sampling.projection import Projector
 # Gen3v6 U3 — arm C: HardFlow in-loop constrained sampler (verbatim Gen12 port; queried at h=0).
 from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
-    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size)
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
+    hardflow_step_budget)          # HFK1 (2026-08-24)
 # REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
 from realtime_recording.behavior_logger import RTRecorder
 RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
@@ -766,6 +767,8 @@ for exp in exps:
                               f'act_threshold={hf_act_threshold}')
 
                     if config['write_to_file']:
+                        _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
+                                        if is_hardflow and flow_steps else (0, 0))
                         np.savez(f'{save_path}/{variant}.npz',
                                  n_success=n_success,
                                  n_success_and_constraints=n_success_and_constraints,
@@ -782,6 +785,18 @@ for exp in exps:
                                  nlp_failures_total=int(nlp_failures_total),
                                  hf_batch_size=int(batch_size),
                                  hf_act_threshold=float(hf_act_threshold),
+                                 # HFK1 (2026-08-24) — the degeneracy verdict, RECORDED rather
+                                 # than left for a DA to re-derive. A step is genuinely HardFlow
+                                 # only if it is active AND non-terminal; at the terminal step
+                                 # tau=1 kills the lookahead, the damping and the feedback. So
+                                 # hf_n_genuine == 0 means this row is Pi_S(Euler sample) —
+                                 # sample-then-project, == DPCC modulo solver — and must NOT be
+                                 # reported as a HardFlow result. True at K=1 always, and at
+                                 # K=2 under the shipped A=0.5.
+                                 # See logs_in_develop/aggregated_hardflow_lowK/
+                                 hf_n_active=int(_hf_budget[0]),
+                                 hf_n_genuine=int(_hf_budget[1]),
+                                 hf_degenerate=bool(is_hardflow and _hf_budget[1] == 0),
                                  obs_all=np.array(obs_all, dtype=object),
                                  act_all=np.array(act_all, dtype=object),
                                  sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))

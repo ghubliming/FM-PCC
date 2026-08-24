@@ -382,6 +382,23 @@ class HardFlowNLP:
             # fix_4-style counter: with IPOPT silenced this is the ONLY signal
             # left that a solve did not converge, so it is reported per episode.
             self.n_failures += 1
+            # [HFK1b 2026-08-24] The OTHER kind of "incomplete HardFlow", and the dangerous
+            # one. The fallback below returns IPOPT's last iterate, which is NOT guaranteed
+            # feasible — so for this plan the safety guarantee (paper Prop. 1, which rides
+            # entirely on the terminal solve) simply does not hold, silently. IPOPT is muted
+            # by default and `n_failures` only surfaces in the end-of-episode rollup, so a run
+            # could previously produce constraint violations with no in-log signal at all.
+            # Announce the FIRST one loudly, then stay quiet and let the counter do the rest —
+            # a per-solve print would flood a batch log.
+            # Note DPCC fails the other way: its circuit breaker returns the trajectory
+            # UNPROJECTED (also unsafe, also silent) — see projection.py.
+            if self.n_failures == 1:
+                print(f'[hardflow][NLP-FAILURE] first non-converged solve at tau={float(tau):.3f}. '
+                      f'Falling back to IPOPT\'s last iterate, which may be INFEASIBLE — the '
+                      f'terminal-solve safety guarantee does not hold for this plan. Further '
+                      f'failures are silent; read `nlp_failures` in the run summary for the '
+                      f'total, and check the constraint metrics before trusting this row. '
+                      f'See logs_in_develop/aggregated_hardflow_lowK/')
             return np.asarray(
                 self.opti.debug.value(self.x1), dtype=float).reshape(-1)
 
@@ -448,6 +465,53 @@ def hardflow_step_budget(flow_steps, activation_threshold):
     A = float(activation_threshold)
     n_active = max(K - int((1.0 - A) * K), 1)      # `or k == K-1` forces at least one
     return n_active, n_active - 1
+
+
+# ── HFK1b (2026-08-24) — three regimes, not two ──────────────────────────────────────────
+# "Is this HardFlow?" is not a yes/no question. There are three answers, and the middle one
+# is the one that used to pass unnoticed:
+#
+#   DEGENERATE  n_genuine == 0   No HardFlow arithmetic runs at all. The arm is
+#                                Pi_S(Euler sample) = sample-then-project (== DPCC modulo
+#                                solver). SAFE and useful, but it must not be LABELLED
+#                                HardFlow. K=1 always; K=2 at A <= 0.5; any K at A = 0.0.
+#   THIN        n_genuine == 1   HardFlow runs, but as a SINGLE nudge. Nothing measurable can
+#                                be attributed to it: one step is inside the seed-to-seed
+#                                noise of every metric we report. Worse, the lone step is the
+#                                EARLIEST active one, so it carries the largest lookahead of
+#                                any step at that K -- exactly the regime the paper's Thm. 4
+#                                bound degrades in and its Rmk. 9 tells you to skip.
+#                                K=2 at A=1.0; K=3, K=4 at A=0.5.
+#   OK          n_genuine >= 2   Enough guided steps to attribute an effect to.
+#
+# `first_lookahead` = 1 - tau_next at the FIRST genuine step = how far the endpoint
+# extrapolation has to reach at the least trustworthy guided step. The paper's own N=10 /
+# A=0.5 configuration sits at 0.4 with 4 genuine steps; that is the reference "known-good"
+# point. A LARGE first_lookahead is not automatically bad -- A=1.0 always starts near tau=0
+# and so always maxes it out -- but combined with a small n_genuine it means the one thing
+# HardFlow did was also the thing it does worst.
+HF_DEGENERATE = 'DEGENERATE'
+HF_THIN = 'THIN'
+HF_OK = 'OK'
+
+
+def hardflow_regime(flow_steps, activation_threshold):
+    """(tier, n_active, n_genuine, first_lookahead) for a (K, A) pair.
+
+    Pure arithmetic over the shipped gate -- no model, no run. Pinned against the literal
+    loop by `gates_hardflow.py::gate_g6`.
+    """
+    K = int(flow_steps)
+    n_active, n_genuine = hardflow_step_budget(K, activation_threshold)
+    k0 = K - n_active                              # index of the FIRST active step
+    first_lookahead = (1.0 - float(k0 + 1) / K) if n_genuine else 0.0
+    if n_genuine == 0:
+        tier = HF_DEGENERATE
+    elif n_genuine == 1:
+        tier = HF_THIN
+    else:
+        tier = HF_OK
+    return tier, n_active, n_genuine, first_lookahead
 
 
 # ── B4_PARITY (2026-08-20) — per-variant MPC candidate-fan size for arm C ──────────────
@@ -582,20 +646,32 @@ class HardFlowSampler:
         K = int(flow_steps)
         dt = 1.0 / K
 
-        # [HFK1 2026-08-24] Announce a degenerate configuration in the log instead of letting
-        # a DA discover it three weeks later. `n_genuine == 0` means every NLP solve is the
-        # terminal tau=1 one, so this arm is sample-then-project, NOT HardFlow — see
-        # `hardflow_step_budget` above. Warned once per (K, A); nothing else changes.
-        n_active, n_genuine = hardflow_step_budget(K, self.activation_threshold)
-        if n_genuine == 0 and getattr(self, '_hf_degenerate_warned', None) != (K, self.activation_threshold):
-            self._hf_degenerate_warned = (K, self.activation_threshold)
-            print(f'[hardflow][DEGENERATE] K={K} A={self.activation_threshold}: '
-                  f'n_active={n_active}, n_genuine=0 — every NLP solve is the terminal '
-                  f'tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, '
-                  f'== DPCC modulo solver/variable-scope, NOT HardFlow. Do NOT report these '
-                  f'rows as HardFlow results. First non-degenerate settings: K>=3 with '
-                  f'activation_threshold=1.0, or K>=5 with A=0.5. See '
-                  f'logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md')
+        # [HFK1b 2026-08-24] Announce the REGIME in the log instead of letting a DA discover
+        # it three weeks later. Two tiers warn: DEGENERATE (no HardFlow math at all) and THIN
+        # (one guided step — HardFlow ran, but nothing can be attributed to it). Warned once
+        # per (K, A); nothing about the computation changes. See `hardflow_regime` above.
+        hf_tier, n_active, n_genuine, first_lookahead = hardflow_regime(
+            K, self.activation_threshold)
+        if hf_tier != HF_OK and getattr(self, '_hf_regime_warned', None) != (K, self.activation_threshold):
+            self._hf_regime_warned = (K, self.activation_threshold)
+            _hdr = f'[hardflow][{hf_tier}] K={K} A={self.activation_threshold}: '
+            if hf_tier == HF_DEGENERATE:
+                print(_hdr + f'n_active={n_active}, n_genuine=0 — every NLP solve is the '
+                      f'terminal tau=1 solve, so this arm runs Pi_S(Euler sample): '
+                      f'sample-then-project, == DPCC modulo solver/variable-scope, NOT '
+                      f'HardFlow. The result is still SAFE and still worth having as a '
+                      f'one-shot-projection comparison — just do NOT label it a HardFlow '
+                      f'result.')
+            else:
+                print(_hdr + f'n_active={n_active}, n_genuine=1 — HardFlow runs, but as a '
+                      f'SINGLE nudge, and that lone guided step carries this K\'s largest '
+                      f'lookahead ({first_lookahead:.2f}), the regime the paper\'s Thm. 4 '
+                      f'bound degrades in. One step cannot be separated from seed noise: do '
+                      f'NOT rest a HardFlow claim on this row.')
+            print(f'[hardflow][{hf_tier}] first non-degenerate: K>=3 at A=0.5 or K>=2 at '
+                  f'A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, '
+                  f'which is the paper\'s own N=10 / A=0.5 regime. See '
+                  f'logs_in_develop/aggregated_hardflow_lowK/')
 
         # fix_4: the initial-noise law is taken from the HOST model's own sampler
         # via `init_noise_scale` (Gen3v7 α-Flow: sigma=1.0, af_diffusion.py:260),
@@ -727,6 +803,9 @@ class HardFlowSampler:
             # sample-then-project rows WITHOUT re-deriving the gate arithmetic.
             'n_active': n_active,
             'n_genuine': n_genuine,
+            # HFK1b: 'OK' | 'THIN' | 'DEGENERATE' — see `hardflow_regime`.
+            'hf_tier': hf_tier,
+            'first_lookahead': first_lookahead,
             'dof_chains': dof_chains,
         }
         return out, infos

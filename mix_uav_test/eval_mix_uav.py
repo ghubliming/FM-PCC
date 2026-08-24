@@ -73,7 +73,8 @@ from diffuser.utils import provenance   # U10.1 — env-override provenance (sha
 # machine without it can still run every DPCC variant. The ImportError only fires if a
 # `hardflow*` variant is actually requested.
 from mix_uav.sampling.hardflow_projection import (
-    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size)
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
+    hardflow_step_budget)          # HFK1 (2026-08-24)
 from mix_uav.models import engine_registry
 import mix_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
@@ -1745,6 +1746,11 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # Fix_10 (2/2): summary mirrors rollout_one's grouped schema — same group names, `_rate`/
     # `_mean` suffixes inside each group instead of flat top-level keys.
     succ = np.mean([r['success']['strict'] for r in rollouts])
+    # HFK1 (2026-08-24) — (n_active, n_genuine) for this arm; (0, 0) for the non-HardFlow arms,
+    # which have no in-loop NLP and therefore no notion of a genuine step.
+    _hf_budget = (hardflow_step_budget(int(config['flow_steps_v3']),
+                                       float(getattr(policy.sampler, 'activation_threshold', 0.0)))
+                  if _is_hardflow(variant) else (0, 0))
     summary = {
         'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts), 'variant': variant,
         'physical': {
@@ -1807,10 +1813,20 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'tripped_trials': [i for i, r in enumerate(rollouts) if r.get('projection_health', {}).get('cb_tripped')],
         },
         # ── Gen15 U2 — HardFlow accounting. ⚠️ FAIRNESS: `hardflow_new` evaluates the network
-        # TWICE per ODE step (reference step + terminal predict), so an arm-C run at K costs
-        # 2K network evals while a DPCC arm at K costs K. Comparing the two at "the same K" is
-        # therefore comparing HALF the generation budget on the DPCC side. Record the real
-        # count so the DA can normalise; `nfe_per_plan` is the number to quote.
+        # twice per ACTIVE ODE step (reference step + terminal predict), so an arm-C run costs
+        # K + n_active - 1 network evals against a DPCC arm's K. Comparing at "the same K" is
+        # therefore comparing a smaller generation budget on the DPCC side — EXCEPT at K=1,
+        # where the two are now equal (HFK1 2026-08-24 removed the terminal lookahead call,
+        # whose weight (1 - tau) was exactly zero). Record the real count so the DA can
+        # normalise; `nfe_per_plan` is the number to quote.
+        #
+        # ⚠️ HFK1 (2026-08-24): `n_genuine` is the honest "is this HardFlow at all?" field.
+        # A step is genuinely HardFlow only if it is active AND non-terminal — at the terminal
+        # step tau=1 kills the endpoint lookahead, the damped pull-back and the feedback alike.
+        # n_genuine == 0 => this row is Pi_S(Euler sample): sample-then-project, == DPCC modulo
+        # solver/variable-scope, and it must NOT be reported as a HardFlow result. Always true
+        # at K=1; also at K=2 under the shipped A=0.5.
+        # See logs_in_develop/aggregated_hardflow_lowK/
         'hardflow': ({
             'is_hardflow': True,
             'nfe_total': int(getattr(policy.sampler, 'nfe', 0)),
@@ -1822,6 +1838,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'activation_threshold': float(getattr(policy.sampler, 'activation_threshold', 0.0)),
             'init_noise_scale': float(getattr(policy.sampler, 'init_noise_scale', 0.0)),
             'two_time': bool(getattr(policy.sampler, 'two_time', False)),
+            'n_active': int(_hf_budget[0]),
+            'n_genuine': int(_hf_budget[1]),
+            'is_degenerate': bool(_hf_budget[1] == 0),
         } if _is_hardflow(variant) else {'is_hardflow': False}),
     }
 

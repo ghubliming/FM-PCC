@@ -69,8 +69,19 @@ HardFlow-ness lives entirely in the *active, non-terminal* steps, and at K=1 the
   whole `avoiding-d3il` corpus is at K=1 (zero genuine steps) and its gate score *falls* as
   genuine steps are added (1.000 → 0.933 → 0.933 → 0.833 for K = 1/2/5/10).
 
-If the goal is to test HardFlow the algorithm, the first non-degenerate settings are
-**K ≥ 3 with A = 1.0**, or **K ≥ 5 with A = 0.5** (the paper itself runs N=10 / A=0.5).
+If the goal is to test HardFlow the algorithm, the boundary is **K ≥ 3 at the shipped A = 0.5**,
+or **K ≥ 2 at A = 1.0** — 1 genuine step each. **K ≥ 5 at A = 0.5** (2 genuine steps) is the first
+setting structurally comparable to the paper's own N=10 / A=0.5 run, and is what I'd actually use.
+
+| K | n_active / n_genuine at A=0.5 (shipped) | verdict |
+|---|---|---|
+| 1 | 1 / **0** | degenerate, unconditionally (any A) |
+| 2 | 1 / **0** | degenerate at A=0.5; A=1.0 buys 1 genuine step |
+| 3 | 2 / 1 | first non-degenerate at A=0.5 |
+| 4 | 2 / 1 | |
+| 5 | 3 / 2 | first paper-comparable |
+| 10 | 5 / 4 | |
+| 20 | 10 / 9 | |
 
 ---
 
@@ -138,8 +149,9 @@ When `n_genuine == 0`, the sampler prints once per `(K, A)`:
 ```
 [hardflow][DEGENERATE] K=1 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal
 tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo
-solver/variable-scope, NOT HardFlow. Do NOT report these rows as HardFlow results. First
-non-degenerate settings: K>=3 with activation_threshold=1.0, or K>=5 with A=0.5. …
+solver/variable-scope, NOT HardFlow. Do NOT report these rows as HardFlow results.
+Non-degenerate from K>=3 at A=0.5, or K>=2 at A=1.0 (1 genuine step each); K>=5 at A=0.5
+for 2+, which is the first setting comparable to the paper's N=10 / A=0.5. …
 ```
 
 Warn-once state is held on `getattr(self, '_hf_degenerate_warned', None)`, so no `__init__`
@@ -269,3 +281,103 @@ HFFM_FLOW_STEPS=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanf
 
 **Re-baseline note:** any HF NFE / avg_time comparison that crosses 2026-08-24 is invalid (2.1).
 Success and constraint numbers are unaffected — trajectories are bit-identical.
+
+---
+
+# HFK1b (2026-08-24, same day) — warn on INCOMPLETE HardFlow, not just absent HardFlow
+
+The HFK1 banner above only fires at `n_genuine == 0`. That leaves the middle case silent, and it is
+the one that actually misleads: **HardFlow ran, but only just.** Plus a second, unrelated sense of
+"incomplete" that was fully silent — a solve that did not converge.
+
+## B.1 Three regimes, not two — `hardflow_regime(K, A)`
+
+New alongside `hardflow_step_budget`, in all six copies, exported from the five packages:
+
+```python
+tier, n_active, n_genuine, first_lookahead = hardflow_regime(K, A)
+```
+
+| tier | condition | meaning |
+|---|---|---|
+| `DEGENERATE` | `n_genuine == 0` | no HardFlow arithmetic at all — `Π_S(Euler sample)` |
+| **`THIN`** | **`n_genuine == 1`** | **HardFlow ran, as a single nudge — nothing attributable** |
+| `OK` | `n_genuine >= 2` | enough guided steps to attribute an effect to |
+
+`first_lookahead` = `1 − τ⁺` at the **first genuine step** — how far the endpoint extrapolation must
+reach at the least trustworthy guided step. The paper's own N=10 / A=0.5 sits at **0.40 with 4
+genuine steps**; that is the known-good reference.
+
+Where the tiers land:
+
+| K | A=0.5 (five gens) | A=1.0 (Gen12) |
+|---|---|---|
+| 1 | `DEGENERATE` 0 gen | `DEGENERATE` 0 gen |
+| 2 | `DEGENERATE` 0 gen | **`THIN`** 1 gen, lookahead **0.50** |
+| 3 | **`THIN`** 1 gen, lookahead 0.33 | `OK` 2 gen |
+| 4 | **`THIN`** 1 gen, lookahead 0.25 | `OK` 3 gen |
+| 5 | `OK` 2 gen, lookahead 0.40 | `OK` 4 gen |
+| 10 | `OK` 4 gen, lookahead 0.40 ← paper | `OK` 9 gen |
+| 20 | `OK` 9 gen, lookahead 0.45 | `OK` 19 gen |
+
+**A large `first_lookahead` is not automatically bad** — `A = 1.0` always starts near τ=0 and so
+always maxes it out (0.90 at K=10), yet it has 9 genuine steps. It is bad *combined with a small
+`n_genuine`*: at K=2 / A=1.0 the single thing HardFlow does is also the thing it does worst.
+
+Validated against the literal loop gate over **32 K × 6 A = 192 cells**, `n_active`, `n_genuine`,
+tier and `first_lookahead` all exact — run here, passes.
+
+## B.2 The sampler now warns on `THIN` too
+
+`sample()` warns once per `(K, A)` whenever the tier is not `OK`:
+
+```
+[hardflow][THIN] K=3 A=0.5: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge,
+and that lone guided step carries this K's largest lookahead (0.33), the regime the paper's
+Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a
+HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable
+effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. …
+```
+
+The `DEGENERATE` text also now states plainly that the row is **still safe and still worth having**
+as a one-shot-projection comparison — it was previously only prohibitive, which invited deleting
+rows that are useful.
+
+`infos` gains `hf_tier` and `first_lookahead`. The npz/results.json writers are unchanged: tier is a
+pure function of `n_genuine`, which they already record.
+
+## B.3 🔴 The other "incomplete": a solve that did not converge
+
+`HardFlowNLP.solve` catches `RuntimeError` from `solve_limited()`, bumps `n_failures`, and returns
+**IPOPT's last iterate — which is not guaranteed feasible.** With IPOPT muted by default and
+`n_failures` surfacing only in the end-of-episode rollup, a run could produce constraint violations
+with **no in-log signal at all**. For that plan the safety guarantee — paper Prop. 1, which rides
+entirely on the terminal solve — simply does not hold.
+
+The first failure now announces itself:
+
+```
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last
+iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this
+plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and
+check the constraint metrics before trusting this row.
+```
+
+First occurrence only — a per-solve print would flood a batch log; the counter carries the total.
+(DPCC fails the *other* way: its circuit breaker returns the trajectory **unprojected**, also unsafe,
+also silent — `projection.py`.)
+
+This is exactly the signal DEGENERACY §8.3 said would settle the unexplained 2/6-vs-6/6 collapse on
+Gen12 CAND_39/CAND_40, and which nobody had read.
+
+## B.4 `gate_g6` extended
+
+Part (a) now cross-checks `hardflow_regime` — tier, counts and `first_lookahead` — against the
+literal loop on the same grid, plus a tier reference table `{(K, A): tier}`. Arithmetic-only, so it
+runs in this container: **passes**.
+
+## B.5 Files touched (B.1–B.4)
+
+Six `sampling/hardflow_projection.py` · five `sampling/__init__.py` ·
+`FM_v3_hardflow_test/gates_hardflow.py`. All `py_compile` clean.

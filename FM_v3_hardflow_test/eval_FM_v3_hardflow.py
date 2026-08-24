@@ -30,7 +30,8 @@ from flow_matcher_v3_hardflow.sampling.policies import Policy
 from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 from flow_matcher_v3_hardflow.sampling.projection import Projector
 from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
-    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size)
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
+    hardflow_step_budget)          # HFK1 (2026-08-24)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
@@ -585,7 +586,14 @@ for exp in exps:
                       f'NLP failures={nlp_failures_total}{hf_report}')
                 if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
                 if config['write_to_file']:
-                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
+                    # HFK1 (2026-08-24) — record the degeneracy verdict instead of leaving a
+                    # DA to re-derive it. hf_n_genuine == 0 => this row is Pi_S(Euler sample),
+                    # i.e. sample-then-project (== DPCC modulo solver), NOT HardFlow. Always
+                    # true at K=1; also at K=2 under the shipped A=0.5. See
+                    # logs_in_develop/aggregated_hardflow_lowK/
+                    _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
+                                  if is_hardflow and flow_steps else (0, 0))
+                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, hf_n_active=int(_hf_budget[0]), hf_n_genuine=int(_hf_budget[1]), hf_degenerate=bool(is_hardflow and _hf_budget[1] == 0), trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
                     # [Gen12fix8] dpcc_threshold recorded. The results dir name
                     # (hf_paths.eval_name) encodes only the HF activation threshold, so with
                     # DPCC's threshold now independently settable a run could otherwise be

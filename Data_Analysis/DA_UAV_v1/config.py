@@ -340,6 +340,12 @@ METRIC_LABELS = {
     'nlp_failures_total':               'HardFlow NLP Failures (total)',
     'activation_threshold':             'HardFlow Activation Threshold',
     'init_noise_scale':                 'ODE Init Noise Scale',
+    # HFK1 (2026-08-24) — is this row HardFlow at all? n_genuine counts ODE steps that are
+    # ACTIVE and NON-TERMINAL; only those run HardFlow's lookahead / damping / feedback.
+    # 0 => sample-then-project (== DPCC modulo solver). See logs_in_develop/aggregated_hardflow_lowK/
+    'n_active':                         'HardFlow NLP-Active Steps',
+    'n_genuine':                        'Genuine HardFlow Steps (0 = degenerate)',
+    'hf_degenerate':                    'HardFlow DEGENERATE (1 = sample-then-project)',
 }
 
 # Rendered as percentages by the reporter/visualizer.

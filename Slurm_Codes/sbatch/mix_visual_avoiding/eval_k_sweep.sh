@@ -56,7 +56,8 @@ SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 #    algorithm with IPOPT instead of SLSQP — NOT HardFlow. The sampler now prints
 #    `[hardflow][DEGENERATE]` for these; keep the rows if you want the cheap one-shot-projection
 #    comparison (it is matched-NFE since 2026-08-24), but do NOT label them HardFlow results.
-#    First non-degenerate settings: K>=3 with A=1.0, or K>=5 with A=0.5.
+#    Non-degenerate from K>=3 at the shipped A=0.5, or K>=2 at A=1.0 (1 genuine step each);
+#    K>=5 at A=0.5 gives 2+, the first setting comparable to the paper's N=10 / A=0.5.
 #    See logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md
 KS="${3:-1 2 5 10 20}"
 

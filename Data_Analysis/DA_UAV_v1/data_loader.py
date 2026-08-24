@@ -294,11 +294,21 @@ class UnitLoader:
         """The run-level scalars: HardFlow NFE accounting + the timing rollup.
 
         `nfe_per_plan` is the number to quote when comparing a HardFlow arm with
-        a DPCC one: `hardflow_new` evaluates the network TWICE per ODE step (the
-        reference step and the terminal predict), so an arm-C run at K costs 2K
-        network evals while a DPCC arm at K costs K. Comparing them "at the same
-        K" is comparing half the generation budget on the DPCC side (Gen15 U2).
+        a DPCC one: `hardflow_new` evaluates the network twice per ACTIVE ODE step
+        (the reference step and the terminal predict), so an arm-C run costs
+        K + n_active - 1 network evals while a DPCC arm at K costs K. Comparing
+        them "at the same K" is comparing a smaller generation budget on the DPCC
+        side (Gen15 U2) — except at K=1, where HFK1 (2026-08-24) made the two
+        equal by dropping the terminal lookahead call, whose weight was exactly 0.
         `nfe_effective` below is the normalised figure to put on an x-axis.
+
+        HFK1 also adds `n_genuine`: the number of ODE steps that are ACTIVE and
+        NON-TERMINAL, i.e. the only steps where HardFlow's endpoint lookahead,
+        damped pull-back and feedback actually run. `n_genuine == 0` means the row
+        is Pi_S(Euler sample) — sample-then-project, == DPCC modulo solver — and
+        must NOT be read as a HardFlow result. Runs written before 2026-08-24 have
+        no such field, so it is DERIVED here from K and activation_threshold; the
+        derivation is exact, since the gate is pure arithmetic.
         """
         path = unit.get('results_json')
         if not path or not os.path.isfile(path):
@@ -319,6 +329,28 @@ class UnitLoader:
                 if field in hardflow:
                     out[field] = _as_float(hardflow[field])
             out['is_hardflow'] = 1.0
+            # HFK1 (2026-08-24) — degeneracy verdict. Prefer what the run recorded;
+            # DERIVE it for the whole pre-2026-08-24 corpus, which predates the field.
+            if 'n_genuine' in hardflow:
+                out['n_active'] = _as_float(hardflow.get('n_active'))
+                out['n_genuine'] = _as_float(hardflow['n_genuine'])
+            else:
+                K = unit.get('K')
+                A = out.get('activation_threshold')
+                if K not in (None, '') and A is not None and not np.isnan(A):
+                    K = int(float(K))
+                    n_active = max(K - int((1.0 - float(A)) * K), 1)
+                    out['n_active'] = float(n_active)
+                    out['n_genuine'] = float(n_active - 1)
+            if 'n_genuine' in out:
+                out['hf_degenerate'] = 1.0 if out['n_genuine'] == 0 else 0.0
+                if out['hf_degenerate']:
+                    self._note('WARN',
+                               f'{_uid(unit)}: HardFlow arm is DEGENERATE '
+                               f'(K={unit.get("K")}, A={out.get("activation_threshold")}, '
+                               f'n_genuine=0) — this row is sample-then-project, not '
+                               f'HardFlow. Do not label it a HardFlow result. See '
+                               f'logs_in_develop/aggregated_hardflow_lowK/')
         else:
             out['is_hardflow'] = 0.0
 
