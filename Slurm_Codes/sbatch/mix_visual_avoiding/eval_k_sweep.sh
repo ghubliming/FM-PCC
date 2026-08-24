@@ -48,6 +48,16 @@ case "$ENGINE" in
 esac
 
 SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
+# ⚠️ [HFK1 2026-08-24] K=1 and K=2 are DEGENERATE for the HardFlow arm. HardFlow's guidance
+#    lives only in ACTIVE NON-TERMINAL ODE steps; the terminal step has tau=1, which kills the
+#    endpoint lookahead, snaps instead of nudging, and has no successor call to react. At K=1
+#    the only step IS the terminal step, and at K=2 the shipped activation_threshold=0.5 floors
+#    step 0 out. Both therefore run Pi_S(Euler sample) = sample-then-project, i.e. DPCC's
+#    algorithm with IPOPT instead of SLSQP — NOT HardFlow. The sampler now prints
+#    `[hardflow][DEGENERATE]` for these; keep the rows if you want the cheap one-shot-projection
+#    comparison (it is matched-NFE since 2026-08-24), but do NOT label them HardFlow results.
+#    First non-degenerate settings: K>=3 with A=1.0, or K>=5 with A=0.5.
+#    See logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md
 KS="${3:-1 2 5 10 20}"
 
 N_SEEDS=$(echo $SEEDS | wc -w)

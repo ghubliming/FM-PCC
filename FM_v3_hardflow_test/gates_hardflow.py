@@ -21,7 +21,14 @@ plausible-looking trajectories.
                     claimed (including one place where the plan is wrong — see
                     gate_g2.__doc__).
   G3  end-to-end    The full constrained sampler runs, is feasible at the end,
-                    and reports NFE = 2K with K NLP solves.
+                    and reports NFE = K + n_active - 1 with n_active NLP solves
+                    (A = 1.0, so n_active = K).
+  G4  threshold     Final-step invariant + solve count, both read off the shared
+                    `hardflow_step_budget` helper (DPCC floor rounding, fix_8).
+  G6  HFK1 low-K    The low-K degeneracy is pinned: the budget helper matches the
+                    literal loop gate, K=1 is threshold-invariant and carries ZERO
+                    genuine HardFlow steps, and NFE excludes the skipped terminal
+                    lookahead call. See HF_Study/DEGENERACY_HardFlow_at_low_K.md.
 
 Usage (cluster):
     python FM_v3_hardflow_test/gates_hardflow.py
@@ -40,6 +47,7 @@ from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
     HardFlowNLP,
     HardFlowSampler,
     TrajectoryLayout,
+    hardflow_step_budget,           # HFK1 (2026-08-24)
 )
 
 EXP = 'avoiding-d3il'
@@ -320,8 +328,13 @@ def gate_g3(flow_steps, device, halfspace_variant='both-hard', config_path=CONFI
 
     T = ACTION_DIM + STATE_DIM
     model = StubVelocity(torch.full((1, HORIZON, T), 0.2, device=device))
+    # [HFK1 2026-08-24] Was `activation_threshold=0.0`. Under fix_6's DPCC polarity 0.0 means
+    # TERMINAL-ONLY (n_active = 1), so this gate has been building a 1-solve sampler while
+    # asserting K solves and 2K NFE below — a pre-fix_6 contract that no longer holds. G3's
+    # subject is the "every step is solved" end-to-end path, which is A = 1.0.
+    G3_THRESHOLD = 1.0
     sampler = HardFlowSampler(model=model, layout=L, nlp=nlp, device=device,
-                              activation_threshold=0.0)
+                              activation_threshold=G3_THRESHOLD)
 
     centre = np.asarray(obstacles[0]['center'], dtype=float)
     radius = float(obstacles[0]['radius'])
@@ -344,14 +357,20 @@ def gate_g3(flow_steps, device, halfspace_variant='both-hard', config_path=CONFI
     print(f'  min obstacle distance = {min(dists):.4f} (radius {radius:.3f}) '
           f'-> {"feasible" if feasible else "VIOLATED"}')
 
-    nfe_ok = infos['nfe'] == 2 * flow_steps
-    solves_ok = infos['nlp_solves'] == flow_steps
+    # [HFK1 2026-08-24] NFE is now K + n_active - 1, not K + n_active: the terminal step's
+    # lookahead call was multiplied by (1 - tau_next) == 0 and is no longer made.
+    n_active, n_genuine = hardflow_step_budget(flow_steps, G3_THRESHOLD)
+    exp_nfe = flow_steps + n_active - 1
+    nfe_ok = infos['nfe'] == exp_nfe
+    solves_ok = infos['nlp_solves'] == n_active
     ok &= nfe_ok and solves_ok
-    print(f'  NFE = {infos["nfe"]} (expected {2 * flow_steps})   '
-          f'NLP solves = {infos["nlp_solves"]} (expected {flow_steps})   '
+    print(f'  NFE = {infos["nfe"]} (expected {exp_nfe})   '
+          f'NLP solves = {infos["nlp_solves"]} (expected {n_active})   '
           f'failures = {infos["nlp_failures"]}')
-    print('    ^ arm C costs 2 network evals per ODE step vs arm B\'s 1. Any '
-          'matched-K\n      comparison must report this (PLAN §5).')
+    print(f'    ^ at A={G3_THRESHOLD} arm C costs ~2 network evals per ODE step vs arm B\'s 1 '
+          f'(minus the\n      skipped terminal lookahead). Any matched-K comparison must '
+          f'report this (PLAN §5).\n      genuine (non-terminal) HardFlow steps here: '
+          f'{n_genuine} of {flow_steps}.')
     print(f'  G3 -> {"PASS" if ok else "FAIL"}')
     return bool(ok)
 
@@ -391,8 +410,13 @@ def gate_g4(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
                 device, thr, halfspace_variant, config_path)
             torch.manual_seed(0)
             x, infos = sampler.sample(cond, flow_steps=K, batch_size=1)
-            # expected active steps (exact DPCC gate): k >= (1 - thr)*K, plus final step
-            expected = sum(1 for k in range(K) if (k >= (1.0 - thr) * K) or (k == K - 1))
+            # [HFK1 2026-08-24] Was the RAW-FLOAT form `k >= (1.0 - thr) * K`, i.e. CEIL.
+            # Gen12 fix_8 moved the sampler to DPCC's FLOOR `int((1 - thr) * K)` but never
+            # updated this gate, so G4 has been asserting the pre-fix_8 count ever since —
+            # it disagrees with the shipped sampler at (K=2, thr=0.9), (K=5, thr=0.5),
+            # (K=5, thr=0.9) and (K=10, thr=0.9): 4 of its 12 cells. Both the gate and the
+            # loop now read the SAME helper, so they cannot drift apart again.
+            expected, n_genuine = hardflow_step_budget(K, thr)
             solves = infos['nlp_solves']
             # terminal feasibility (safety guarantee) must hold at every threshold
             traj = x[0].detach().cpu().numpy()
@@ -404,6 +428,7 @@ def gate_g4(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
             prev_solves = solves
             ok &= feasible and count_ok and mono_ok
             print(f'  K={K:>2} thr={thr:<4} solves={solves:>2} (exp {expected:>2})  '
+                  f'genuine={n_genuine:>2}{" DEGENERATE" if n_genuine == 0 else "          "}  '
                   f'min_d={dmin:.3f} {"feasible" if feasible else "VIOLATED"}  '
                   f'{"OK" if (feasible and count_ok and mono_ok) else "FAIL"}')
     print(f'  G4 -> {"PASS" if ok else "FAIL"}')
@@ -456,6 +481,91 @@ def gate_g5(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
     return bool(ok)
 
 
+# ---------------------------------------------------------------------------#
+# G6 — HFK1: low-K degeneracy is detected, announced, and costed correctly
+# ---------------------------------------------------------------------------#
+def gate_g6(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
+    """HFK1 (2026-08-24): the low-K degeneracy is pinned, not rediscovered.
+
+    A step does real HardFlow work only if it is ACTIVE and NOT the terminal step —
+    at k = K-1 the flow time is exactly 1, which kills the endpoint lookahead, turns
+    the pull-back into a full snap, and leaves no successor call to react. So:
+
+      (a) `hardflow_step_budget` must agree with the LITERAL loop gate on a K x A grid
+          (it is the single source both the sampler and G4 now read);
+      (b) K=1 is degenerate at EVERY threshold, and — since the gate cannot fire
+          anywhere else — its output must be BIT-IDENTICAL across thresholds;
+      (c) NFE is K + n_active - 1: the terminal lookahead call is no longer made.
+
+    See logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md.
+    """
+    print('\n-- G6: HFK1 low-K degeneracy + NFE accounting ' + '-' * 30)
+    ok = True
+
+    # (a) helper vs the literal gate expression, over the whole grid we ever ship
+    grid_ok = True
+    for K in (1, 2, 3, 5, 6, 10, 14, 20):
+        for A in (0.0, 0.1, 0.25, 0.5, 0.9, 1.0):
+            active = [k for k in range(K)
+                      if (k >= int((1.0 - A) * K)) or (k == K - 1)]
+            genuine = [k for k in active if k != K - 1]
+            if hardflow_step_budget(K, A) != (len(active), len(genuine)):
+                grid_ok = False
+                print(f'    MISMATCH K={K} A={A}: helper={hardflow_step_budget(K, A)} '
+                      f'loop=({len(active)}, {len(genuine)})')
+    ok &= grid_ok
+    print(f'  (a) hardflow_step_budget == literal loop gate on 8x6 grid: '
+          f'{"OK" if grid_ok else "FAIL"}')
+
+    # the documented reference row (DEGENERACY §4.1), A = 0.5 as shipped
+    ref = {1: (1, 0), 2: (1, 0), 5: (3, 2), 10: (5, 4), 20: (10, 9)}
+    ref_ok = all(hardflow_step_budget(K, 0.5) == v for K, v in ref.items())
+    ok &= ref_ok
+    print(f'  (a) A=0.5 reference row {ref} -> {"OK" if ref_ok else "FAIL"}')
+
+    # (b) K=1 is threshold-invariant, bit for bit
+    outs = {}
+    for A in (0.0, 0.5, 1.0):
+        sampler, _nlp, _L, cond, _c, _r, _i = _make_sampler(
+            device, A, halfspace_variant, config_path)
+        torch.manual_seed(0)
+        x, infos = sampler.sample(cond, flow_steps=1, batch_size=1)
+        outs[A] = (x.detach().cpu().numpy(), infos['nlp_solves'],
+                   infos['nfe'], infos['n_genuine'])
+    base = outs[0.0][0]
+    inv_ok = all(np.array_equal(base, outs[A][0]) for A in outs)
+    deg_ok = all(outs[A][3] == 0 and outs[A][1] == 1 for A in outs)
+    ok &= inv_ok and deg_ok
+    print(f'  (b) K=1 output identical across A in {{0.0, 0.5, 1.0}}: '
+          f'{"OK" if inv_ok else "FAIL"}   n_genuine==0 & 1 solve everywhere: '
+          f'{"OK" if deg_ok else "FAIL"}')
+    print(f'      ^ at K=1 the arm is Pi_S(one Euler step) — sample-then-project, '
+          f'NOT HardFlow.')
+
+    # (c) NFE accounting: the terminal lookahead call is skipped
+    nfe_ok = True
+    for K in (1, 2, 5):
+        for A in (0.5, 1.0):
+            sampler, _nlp, _L, cond, _c, _r, _i = _make_sampler(
+                device, A, halfspace_variant, config_path)
+            torch.manual_seed(0)
+            _x, infos = sampler.sample(cond, flow_steps=K, batch_size=1)
+            n_active, n_genuine = hardflow_step_budget(K, A)
+            exp = K + n_active - 1
+            cell = (infos['nfe'] == exp and infos['nlp_solves'] == n_active
+                    and infos['n_active'] == n_active
+                    and infos['n_genuine'] == n_genuine)
+            nfe_ok &= cell
+            print(f'      K={K:>2} A={A:<4} NFE={infos["nfe"]:>2} (exp {exp:>2})  '
+                  f'solves={infos["nlp_solves"]:>2} (exp {n_active:>2})  '
+                  f'genuine={n_genuine}  {"OK" if cell else "FAIL"}')
+    ok &= nfe_ok
+    print(f'  (c) NFE == K + n_active - 1: {"OK" if nfe_ok else "FAIL"}')
+
+    print(f'  G6 -> {"PASS" if ok else "FAIL"}')
+    return bool(ok)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--flow-steps', type=int, default=5)
@@ -473,6 +583,7 @@ def main():
         'G3 end-to-end': gate_g3(args.flow_steps, args.device, args.halfspace_variant, args.config),
         'G4 U4 threshold': gate_g4(args.device, args.halfspace_variant, args.config),
         'G5 U4.2 selection': gate_g5(args.device, args.halfspace_variant, args.config),
+        'G6 HFK1 low-K': gate_g6(args.device, args.halfspace_variant, args.config),
     }
 
     print('\n' + '=' * 60)

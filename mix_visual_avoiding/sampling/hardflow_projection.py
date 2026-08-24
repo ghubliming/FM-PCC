@@ -82,8 +82,21 @@ WHAT IT DOES (PLAN §1.2), per ODE step k of K:
   2. terminal predict  x1_ref = x_ref + (1 - tau_{k+1}) * f(x_ref, tau_{k+1})
   3. projection        solve a prox-NLP: keep x1 near x1_ref, satisfy constraints
   4. pull-back         x_{k+1} = x_ref + tau_{k+1} * (x1_proj - x1_ref)
-The prox weight carries a tau^2 factor, so early steps are nudged and late
-steps are pulled hard onto the feasible set.
+The prox weight carries a tau^2 factor -- but it does NOT schedule anything here.
+Our port implements the prox term ALONE (upstream's optional cost C(.) is dropped
+on purpose, so arms B and C solve the same feasible-set problem), and for a pure
+quadratic prox `argmin c*||x1 - x1_ref||^2 s.t. h <= 0` is independent of c > 0.
+So the NLP is exactly Pi_S(x1_ref) at every active step, for any reg_scale and any
+tau.  What actually damps early steps is the LINEAR tau_{k+1} factor in the
+pull-back (4).  Pinned by `gates_hardflow.py::gate_g2`; see DEGENERACY §5 (D2).
+
+STEP k = K-1 IS ALWAYS A PLAIN PROJECTION.  There tau_{k+1} == 1, so (2) collapses
+to x1_ref = x_ref (no lookahead), (4) collapses to x_{k+1} = x1_proj (full snap),
+and no step k+1 exists to react.  That is by design -- it is the paper's safety
+proposition -- but it means HardFlow's distinctive behaviour lives ONLY in the
+active NON-terminal steps.  `hardflow_step_budget()` counts them; when it returns
+n_genuine == 0 (always at K=1, and at K=2 under the shipped A=0.5) this sampler is
+sample-then-project, not HardFlow, and `sample()` says so in the log.
 
 WHY THIS IS LEGAL ON A TWO-TIME MODEL (and why α-Flow is the BEST host for it)
 -----------------------------------------------------------------------------
@@ -114,7 +127,8 @@ DIFFERENCES FROM UPSTREAM, ALL DELIBERATE (see the Gen12 changelog §4):
     be enforcing *different* constraint sets and the comparison would be void.
   * No value-model warm start.  FMPCC has no value model; upstream's warmstart
     only picked a noise seed and the s0 parameter, both of which we get for
-    free.  This also keeps the NFE accounting clean (2K here, K+2K upstream).
+    free.  This also keeps the NFE accounting clean (K + n_active - 1 here
+    since 2026-08-24, K+2K upstream).
   * The initial noise matches THE HOST MODEL'S OWN SAMPLER, via the explicit
     `init_noise_scale` argument.  See the fix_4 warning below — this is the one
     thing that does NOT transfer when the port is moved to a new generation.
@@ -459,6 +473,38 @@ def resolve_activation_threshold(activation):
     return thr
 
 
+# ── HFK1 (2026-08-24) — how many of the K steps are actually HardFlow? ────────────────────
+# 🔴 A step does real HardFlow work only if it is ACTIVE **and NOT the terminal step**. At
+# k = K-1 the flow time is tau_next == 1.0 EXACTLY, which independently kills all three of
+# HardFlow's ingredients:
+#   I1 endpoint lookahead  (1 - tau_next) == 0  -> the "predicted endpoint" IS the Euler point
+#   I2 damped pull-back     tau_next == 1       -> a full snap onto the feasible set, no nudge
+#   I3 feedback             no step k+1         -> the network never sees the correction
+# That collapse is not a bug: it IS the paper's safety proposition (the terminal solve is what
+# guarantees h(x_N) <= 0). But it means `n_genuine == 0` runs execute `Pi_S(Euler sample)` --
+# sample-then-project, i.e. DPCC's algorithm with a different solver -- and carry NO in-loop
+# guidance. This is UNCONDITIONAL at K=1 (the only step is the last step) and also true at
+# K=2 under the shipped activation_threshold=0.5 (floor gate deactivates step 0).
+# Full derivation + the empirical consequences:
+#   logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md  (§0.1, §3, §4.1)
+def hardflow_step_budget(flow_steps, activation_threshold):
+    """(n_active, n_genuine) for the shipped gate `k >= int((1-A)*K) or k == K-1`.
+
+    n_active  — ODE steps that solve the NLP (>= 1: the terminal solve is forced).
+    n_genuine — those that are NOT the terminal step, i.e. the only steps where HardFlow's
+                lookahead / damped pull-back / feedback actually run. 0 => not HardFlow.
+
+    Reference table (matches DEGENERACY §4.1):
+        A=0.5 (shipped): K=1 -> 1/0 · K=2 -> 1/0 · K=5 -> 3/2 · K=10 -> 5/4 · K=20 -> 10/9
+        A=1.0:           K=1 -> 1/0 · K=2 -> 2/1 · K=5 -> 5/4
+        A=0.0:           terminal-only at every K -> n_genuine = 0
+    """
+    K = int(flow_steps)
+    A = float(activation_threshold)
+    n_active = max(K - int((1.0 - A) * K), 1)      # `or k == K-1` forces at least one
+    return n_active, n_active - 1
+
+
 # ── B4_PARITY (2026-08-20) — per-variant MPC candidate-fan size for arm C ──────────────
 # 🔴 P0. This function exists because `hardflow.batch_size` used to default to 1 while the
 # DPCC arms ran `args.batch_size` (4). Both arms loop SERIALLY over candidates around their
@@ -688,6 +734,21 @@ class HardFlowSampler:
         K = int(flow_steps)
         dt = 1.0 / K
 
+        # [HFK1 2026-08-24] Announce a degenerate configuration in the log instead of letting
+        # a DA discover it three weeks later. `n_genuine == 0` means every NLP solve is the
+        # terminal tau=1 one, so this arm is sample-then-project, NOT HardFlow — see
+        # `hardflow_step_budget` above. Warned once per (K, A); nothing else changes.
+        n_active, n_genuine = hardflow_step_budget(K, self.activation_threshold)
+        if n_genuine == 0 and getattr(self, '_hf_degenerate_warned', None) != (K, self.activation_threshold):
+            self._hf_degenerate_warned = (K, self.activation_threshold)
+            print(f'[hardflow][DEGENERATE] K={K} A={self.activation_threshold}: '
+                  f'n_active={n_active}, n_genuine=0 — every NLP solve is the terminal '
+                  f'tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, '
+                  f'== DPCC modulo solver/variable-scope, NOT HardFlow. Do NOT report these '
+                  f'rows as HardFlow results. First non-degenerate settings: K>=3 with '
+                  f'activation_threshold=1.0, or K>=5 with A=0.5. See '
+                  f'logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md')
+
         # fix_4: the initial-noise law is taken from the HOST model's own sampler
         # via `init_noise_scale` (Gen3v7 α-Flow: sigma=1.0, af_diffusion.py:260),
         # NOT hardcoded to Gen12's 0.5 and NOT read off the legacy FMv3ODE class
@@ -761,8 +822,28 @@ class HardFlowSampler:
             # See logs_in_develop/Gen12/fix_8/.
             active = (k >= int((1.0 - self.activation_threshold) * K)) or (k == K - 1)
             if active:
-                V_next = self._velocity_batch(X_ref, tau_next, s0_all, cond_net, returns_net)
-                X1_ref = X_ref + (1.0 - tau_next) * V_next            # (B, dof) GPU
+                # [HFK1 2026-08-24] The TERMINAL step has tau_next == 1, so the lookahead
+                # weight (1 - tau_next) is zero and V_next used to be computed only to be
+                # multiplied away. Skipping it is a no-op on the trajectory, saves 1 NFE per
+                # plan, and removes the IEEE `0.0 * NaN = NaN` hazard at t = 1.0 — the CLOSED
+                # edge of the CFM training support (t ~ U[0,1)), where the backbone is least
+                # trustworthy and the poisoned X1_ref would go straight into the NLP.
+                #
+                # The test is STRUCTURAL (`k < K-1`) rather than `1.0 - tau_next > 0.0`: for
+                # K in {1,2,5,10,20} the float sum lands on exactly 1.0, but for K in
+                # {6,14,24,28,...} it leaves a +1.1e-16 residue. That residue is orders below
+                # float32 epsilon (it changes nothing on the tensor), yet a float test would
+                # read it as "lookahead alive" and keep the waste and the hazard for those K.
+                #
+                # ⚠️ `policy.nfe` now reads K + n_active - 1 (was K + n_active), so HF NFE and
+                # wall-time figures are NOT comparable with pre-2026-08-24 runs. Trajectories
+                # are unchanged. See logs_in_develop/aggregated_hardflow_lowK/
+                #   CHANGELOG_20260824_hardflow_terminal_nfe_and_K1_guard.md
+                if k < K - 1:
+                    V_next = self._velocity_batch(X_ref, tau_next, s0_all, cond_net, returns_net)
+                    X1_ref = X_ref + (1.0 - tau_next) * V_next        # (B, dof) GPU
+                else:
+                    X1_ref = X_ref                                    # terminal: tau_next == 1
                 # --- CPU NLP boundary: one transfer out, serial per-candidate solve
                 #     (== DPCC's Projector.project loop), one transfer back.
                 X1_ref_np = X1_ref.detach().cpu().numpy()
@@ -809,6 +890,11 @@ class HardFlowSampler:
             'nlp_solves': self.nlp.n_solves - n_solves_before,
             'nlp_failures': self.nlp.n_failures - n_fail_before,
             'activation_threshold': self.activation_threshold,
+            # [HFK1 2026-08-24] So a DA can check the §9.1 prediction (nlp_solves
+            # per plan == n_active) and separate genuine-HardFlow rows from
+            # sample-then-project rows WITHOUT re-deriving the gate arithmetic.
+            'n_active': n_active,
+            'n_genuine': n_genuine,
             'dof_chains': dof_chains,
         }
         return out, infos
