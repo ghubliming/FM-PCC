@@ -198,6 +198,113 @@ This exists because of a real prior failure: the Fix_8 defect (`bb_unet_ablation
 compared an unmatched backbone and had to be **retracted** by the 2026-08-19 study. G-B2 now enforces
 the bracket on every run.
 
+### 3.6 External reference points — the D3IL baseline and Diffusion Policy
+
+Everything above is internal to this repo, so it says nothing about whether **4 M is a sane size for
+this task at all**. Two outside anchors settle that: the benchmark's own reference implementation,
+and the field's default visuomotor policy.
+
+#### 3.6.1 The original D3IL aligning-vision model
+
+`aux_repo/d3il/configs/aligning_vision_config.yaml` selects `agents: ddpm_encdec_vision` — so the
+model D3IL itself reports for *this exact task* is **`DiffusionEncDec`**
+(`agents/models/diffusion/diffusion_models.py:687`), a transformer encoder–decoder denoiser inside a
+16-step DDPM, with blocks from `agents/models/act/act_vae.py`.
+
+**Its vision encoder is our vision encoder.** Verified, not assumed:
+
+```bash
+diff /workspaces/aux_repo/d3il/agents/models/vision/multi_image_obs_encoder.py \
+     /workspaces/FM-PCC/d3il/agents/models/vision/multi_image_obs_encoder.py   # → identical
+```
+
+Same `shape_meta` (two `3x96x96` cameras), same `get_resnet(output_size=64)` (robomimic `VisualCore`,
+ResNet18Conv + SpatialSoftmax(32 kp) + Linear→64), same `share_rgb_model=False`, `use_group_norm=True`,
+`imagenet_norm=True`. Same **128-D latent**. That is a large piece of luck for this comparison: the
+D3IL baseline and every Gen14 arm differ *only* in the trajectory net.
+
+Denoiser budget, counted analytically at `embed_dim=64`, `state_dim=128`, `action_dim=3`,
+`obs_seq_len=5`, `action_seq_len=4`, `linear_output=True`:
+
+| Component | Params |
+|---|---:|
+| `TransformerEncoder` — 2 × `EncoderBlock` (49,856) + final LN | 99,776 |
+| `TransformerDecoder` — 4 × `DecoderBlock` (62,336) + final LN | 249,408 |
+| `tok_emb` (128 → 64) | 8,256 |
+| `pos_emb` (seq 8 × 64) | 512 |
+| `time_emb` (Sinusoidal + 64→128→64) | 16,576 |
+| `action_emb` (3 → 64) | 256 |
+| `action_pred` (64 → 3, linear head) | 195 |
+| **Total `DiffusionEncDec`** | **374,979** |
+
+`DecoderBlock` is the heavier one because `CausalSelfCrossAttention` carries **seven** `Linear(64,64)`
+(q/k/v + cross-q/k/v + proj) against `SelfAttention`'s four.
+
+The rest of the D3IL vision family is the same order: `beso_vision` is a 4-layer GPT at `n_embd=72`
+(≈ 0.25 M of blocks), `act_vision` a 2+2 encoder / 4 decoder VAE at `embed_dim=64` (≈ 0.45 M of
+blocks). **No D3IL vision agent has a trajectory net above ~0.5 M.**
+
+#### 3.6.2 Diffusion Policy (Chi et al., RSS 2023) — the consensus flagship
+
+The field default for visuomotor manipulation, and the *actual upstream of this repo's vision encoder*
+(§4, point 1). Counted from `aux_repo/visual_transformer_refs_(Claude_pulled)/diffusion_policy` at its
+shipped config values:
+
+| Variant | Config | Geometry | Denoiser params |
+|---|---|---|---:|
+| **DP-C** (CNN) | `train_diffusion_unet_image_workspace.yaml` | `ConditionalUnet1D`, `down_dims=[512,1024,2048]`, `dsed=128`, `k=5`, FiLM `cond_predict_scale=True` | **255.1 M** at our geometry (act 3, global_cond 128×2); 306.5 M at DP's robomimic-image geometry (act 10, cond 2048) |
+| **DP-T** (Transformer) | `train_diffusion_transformer_hybrid_workspace.yaml` | 8 decoder layers, `n_emb=256`, 4 heads, MLP cond encoder | **9.0 M** at our geometry; 9.2 M at DP's |
+
+DP's encoder is the same ResNet-18 pair but with `fc = Identity`, so it emits **512 per camera → 1024**,
+and feeds `n_obs_steps=2` of it — an **8× wider** conditioning signal than the 128-D latent D3IL (and
+we) compress to. That gap, not the block counts, is where DP's extra capacity actually goes.
+
+#### 3.6.3 The full bracket
+
+Encoder column is the shared 22.36 M wherever the D3IL encoder is used (measured: gate log
+`26.4 M total − 4.04 M bone`); DP's own encoder is the same backbone with a wider head (~22.4 M).
+
+| Model | Trajectory net | Bone params | × U-Net v1 | Total policy | Inference NFE |
+|---|---|---:|---:|---:|---:|
+| **D3IL `ddpm_encdec_vision`** — the benchmark's own aligning-vision model | Transformer enc-dec, E=64, 2+4 blocks | **0.375 M** | **0.09×** | **22.74 M** | 16 (DDPM) |
+| D3IL `beso_vision` | GPT, E=72, 4 layers | ~0.3 M | ~0.08× | ~22.7 M | 3 (`euler_ancestral`) |
+| D3IL `act_vision` | CVAE transformer, E=64 | ~0.5 M | ~0.12× | ~22.9 M | 1 |
+| Gen14 `unet` v1 — **our reference** | 1-D conv U-Net, `dim=32` | **4.036 M** | 1.00× | 26.4 M | K (1–20) |
+| Gen14 `unet` v2 (`filmv2`) | + per-block FiLM | 4.101 M | 1.02× | 26.5 M | K |
+| Gen14 `mf_dit` (adaLN, untrained here) | DiT 160 × 8 | 4.04 M | 1.00× | 26.4 M | K |
+| Gen14 `sit` (untrained here) | SiT 160 × 8 | 3.97 M | 0.98× | 26.4 M | K |
+| **Gen14 `dit` — the bone that trained** | iMF RoPE DiT 160 × 10 | **3.371 M** | **0.84×** | 25.8 M | K |
+| **Diffusion Policy — Transformer** | 8 × 256 transformer | **8.99 M** | **2.23×** | ~31.4 M | 100 DDPM / 10 DDIM |
+| **Diffusion Policy — CNN** | `ConditionalUnet1D` [512,1024,2048] | **255.1 M** | **63.2×** | ~277.4 M | 100 DDPM / 10 DDIM |
+
+Three things fall out of this table.
+
+1. **The U8 bracket is ~10× the head we inherited this encoder from.** Every Gen14 bone
+   (3.37–4.10 M) is roughly **9–11×** the D3IL aligning-vision denoiser. This is a sizing fact, not
+   an endorsement — D3IL's own agents do not solve this task, so their number is not a target. What
+   it does establish is that the trajectory net is not the small part of this design, which matters
+   for §13.
+
+2. **Where each design spends its parameters is completely different.** Share of the total policy
+   living in the trajectory net: D3IL **1.6%**, Gen14 **~15%**, DP-C **92%**. Two consequences. First,
+   any claim of the form "architecture X is better for visuomotor control" that crosses these regimes
+   is comparing perception budgets, not architectures. Second — and this is the one that matters —
+   **85% of our trainable parameters are a from-scratch ResNet pair**, which on a 900-episode dataset
+   is the dominant design risk in the whole stack. See §13.1.
+
+3. **DP-C's default width is almost exactly the retracted Fix_8 build.** 255.1 M here vs the
+   253 M `freq_dim=256` U-Net that invalidated `bb_unet_ablation` (§3.5). These are *different
+   networks* and the collision is arithmetic coincidence, not lineage — but it is a useful reframing:
+   the Fix_8 defect was accidentally training a **DP-C-scale** trunk on a D3IL-scale dataset. That is
+   why it failed, and it is also why DP-C is not a target to chase here.
+
+**Caveats on these numbers.** All external counts are analytic (no torch in this container) from the
+shipped source at the shipped config values, using the same method that reproduced the Gen14 gate log
+exactly (§3). They are *denoiser/trajectory-net* counts on the aligning geometry; DP has never been
+run on D3IL aligning in this repo, so its row is a **capacity reference, not a scored baseline**. The
+D3IL row is a capacity reference too — no D3IL agent has been re-run under our eval harness, so do
+not read it as a performance comparison.
+
 ---
 
 ## 4. Where the image enters — the one real design decision
@@ -395,6 +502,10 @@ claim must lead with a matched row, and right now there isn't one.
 
 ## 11. Next steps (eval-only unless marked)
 
+> ⚠️ **Read §13 first (added 2026-08-24).** Items 1–3 below assume the bone is the interesting
+> variable. §13 argues from the U7+U8 evidence that it is not — the 85%-of-parameters from-scratch
+> encoder on 900 episodes is — and puts two hours-scale probes ahead of every training item here.
+
 1. **[train]** `mf @ mf_dit` at full budget — the 4.04 M exactly-matched bone. Without it U8 has no
    clean claim, and every DiT-vs-U-Net sentence has to carry the 0.84× caveat.
 2. **[train, cheap]** A U-Net at `H = 32` or a DiT at `H = 8` with `dim_mults = (1,2)` — directly
@@ -416,3 +527,226 @@ The DiT that trained is the **iMF RoPE bone at 3.37 M (0.84×)**, not the parame
 temporal-collapse by attention over 16 tokens of which half are conditioning — and the most useful
 thing this comparison surfaced is that **at `H = 8` about 80% of the "temporal" U-Net never sees more
 than one timestep.**
+
+---
+
+## 13. Direction — what is actually the bottleneck? (added 2026-08-24, rewritten same day)
+
+Asked directly: *is the model too weak? pull a pretrained visual backbone and fine-tune? enlarge the
+ML bone?*
+
+**Framing correction, and it changes the answer.** The first draft of this section argued partly from
+"D3IL and Diffusion Policy do X, we do Y". That is an appeal to authority and it is **withdrawn**.
+D3IL built this setup and its own agents do not solve it; there is no normative value in matching
+their choices. From here they appear in exactly two roles, both factual rather than prescriptive:
+
+* **as an audit of our own code** — we inherited their encoder *verbatim* (§1, §3.6.1), so their
+  design decisions are sitting in our repo whether or not we endorse them, and
+* **as parameter reference points** (§3.6), which is arithmetic, not advice.
+
+Every argument below stands on our own numbers and on first principles.
+
+### 13.1 The real mismatch is data, not capacity — and it is in the encoder, not the bone
+
+The dataset is **900 episodes** (`config/aligning-d3il-visual.py:422`), `max_path_length = 512`.
+
+The trainable model is **26.4 M parameters, of which 22.36 M — 85 % — is a pair of ResNet-18 towers
+initialised at random and learned end-to-end**, because
+`config/aligning-d3il-visual.py:1309,1349` ship `'mf_freeze_vision_encoder': False`.
+
+> **We are training two ImageNet-scale convnets from scratch on 900 demonstrations, and spending 15 %
+> of the model on the part that actually does the task.**
+
+That is the data-efficiency defect, and it is *five times larger* than the entire bone question this
+document was written to study. Nothing about the U-Net-vs-DiT comparison touches it: both arms carry
+the identical untrained 22.36 M.
+
+**This flips part of the earlier verdict.** Pretrained or frozen visual features are now the *leading*
+candidate — not as a fix for "too little capacity", but as a fix for **too little data for the
+capacity we are already spending**. With 900 episodes, the correct move under a limited-data regime is
+to *shrink the trainable footprint*, not grow it.
+
+**And the hook already exists, unwired.** `mf_freeze_vision_encoder` is plumbed end-to-end
+(`visual_mf_diffusion.py:29,35,51`, `visual_af_diffusion.py:29,34,45`,
+`train_mix_visual_aligning.py:500`) and defaults to `False`. Flipping it is a **config-line ablation,
+no code**. `d3il/agents/models/vision/model_getter.py` additionally carries an unwired
+`_get_resnet(name, weights=…)` (ImageNet) and `get_r3m` (R3M robot-pretrained) — so "pretrained
+encoder" is a wiring job, not a port.
+
+### 13.2 Correction to the earlier argument
+
+The first draft claimed: *"it fails on the train split, so a pretrained encoder — which buys
+generalisation — is the wrong tool."* **That was too strong and is withdrawn.**
+
+Failing on seen data rules out a *classical* generalisation gap. It does **not** rule out a perception
+problem, because a from-scratch encoder on 900 episodes can drive training loss down while the 128-D
+latent carries little task-relevant signal — the trajectory head then fits the *state* channel and
+treats the image as noise. **Train-split failure and an image-blind latent are fully compatible.**
+G-B3 proves gradient reaches `vis_projector`; it does not prove the latent is *informative*.
+
+That distinction is measurable and cheap — see §13.4, probe P2.
+
+### 13.3 What still stands, independent of any outside comparison
+
+**(a) The failure is invariant across every axis we have varied.** Pooling U7 + U8: three structurally
+different trunks (U-Net v1 concat-cond, U-Net v2 FiLM, iMF RoPE DiT), two engines (`mf`, `af`), two
+projector arms (DPCC B, HardFlow C), two geometries, eleven variants. Every cell lands in
+**0.29–0.47 m** against a do-nothing baseline of **0.4547 m**, at `n_steps = 400.0` (the cap), at
+**< 2.1 % S&C**. Changing the bone moves ~0.05 m; nothing leaves the band. **A shared bottleneck
+upstream of the bone** — and §13.1 names the largest thing sitting upstream of it.
+
+**(b) Enlarging the bone is the wrong lever, and §5 is the reason.** At `H = 8`, **~80 % of the U-Net
+bone already operates on a length-1 sequence**. Adding width to a trunk that is mostly an MLP on a
+single timestep buys parameters, not capability — and under a 900-episode budget, added parameters are
+a cost, not a hedge. If the trunk changes at all, the variable is the **horizon** (`H = 8 → 32`,
+§11.2), which gives the deep blocks a sequence to convolve over. `mf@mf_dit` at 4.04 M (§11.1) stays
+on the list because it removes the 0.84 × / 80 %-budget confounds — not because it will escape the band.
+
+**(c) The conditioning is a single frame.** `config/aligning-d3il-visual.py:729-730` set
+`window_size: 1, obs_seq_len: 1`, so the mean-pool at `visual_dit_twotime.py:216` is a no-op over
+`T = 1`. On first principles: from one frame the box's **velocity is unobservable**, so a pushing task
+is not Markov in the conditioning we supply — the policy cannot tell "box moving toward target" from
+"box stalled against the gripper". It is a config lock, not an architectural limit, and on the DiT the
+fix is the mechanism §4 already chose (emit `n_obs` visual tokens instead of one).
+
+**(d) The latent is 128-D behind a 32-keypoint spatial-softmax.** Whatever its provenance, the
+question is only whether 128 numbers can carry box pose + target pose + gripper relation well enough
+to push accurately. That is measurable (§13.4 P2), and widening it costs ~20 K parameters in
+`vis_projector` — trivial next to the 22.36 M above it.
+
+**(e) The harness may not be winnable as configured.** `max_episode_length: 400`
+(`config/aligning-d3il-visual.py:722`) and `n_steps = 400.0` in essentially every projected cell:
+**nothing ever terminates**. Independently, DA §3.6 found `bounds_free` is the best or near-best cell
+for **every bone in both geometries** at comparable violations — the bounds cage is over-restrictive
+and is costing 0.03–0.05 m for safety the task was not losing.
+
+### 13.4 Four probes, none of which need a new architecture
+
+Ordered by cost. The first three are hours, not GPU-weeks.
+
+| # | Probe | Cost | What it decides |
+|---|---|---|---|
+| **P1** | **Replay a ground-truth demonstration through our eval harness** — open loop, no model | no GPU | If a real demo does not score `success` under our criterion + 400-step cap + bounds + `combined_5`, the ceiling is in the harness and every number in this generation is measuring the harness. **Run this first regardless of everything else.** |
+| **P2** | **Latent-informativeness probe** — freeze a trained checkpoint's encoder, fit a linear head from the 128-D latent to the ground-truth box pose / target pose | minutes | Directly answers §13.2. High error ⇒ the from-scratch encoder never learned the task variables ⇒ §13.1 is confirmed and pretrained/frozen features are the fix. Low error ⇒ perception is fine and the bottleneck is downstream. |
+| **P3** | **State-only aligning through the same stack** (`base['ddpm_encdec_vision_nonvisual']`, `config/aligning-d3il-visual.py:781`; Gen7 `fix_18_nonvisual_step1`) | 1 train run | Works ⇒ the FM + MPC + harness stack is sound and the gap is purely perception. Fails ⇒ perception is not the story at all and §13.3(e)/planner is. |
+| **P4** | **`mf_freeze_vision_encoder: True` + pretrained init** — one config line, plus wiring `weights='IMAGENET1K_V1'` or `get_r3m` | 1 train run | The direct test of §13.1. Trainable footprint drops 26.4 M → ~4 M, which is the right size for 900 episodes. |
+
+**P1 → P2 → P3 → P4** is the order. P1 and P2 together cost less than one training job and can
+invalidate or confirm the whole §13.1 thesis before any GPU-week is committed.
+
+### 13.5 The direction: win on data efficiency, not on model size
+
+Taking the limited-data constraint seriously as the *design premise* rather than an obstacle, the
+build target is:
+
+1. **Small trainable footprint.** ~4 M trainable (the bone), with the 22.36 M perception stack frozen
+   or pretrained — the inverse of today's 85/15 split. This is the single change most aligned with a
+   900-episode budget.
+2. **Richer conditioning, not a richer trunk.** Obs window 1 → 2+ (velocity becomes observable), latent
+   128 → wider if P2 says it is starved. Both are cheap in parameters; both add *information*, which is
+   what data-limited regimes are short of — unlike width, which adds *capacity*, which is what they
+   already have too much of.
+3. **Keep the horizon honest.** `H = 8` wastes ~80 % of the U-Net bone (§5). Either raise `H` or shrink
+   `dim_mults`; do not pay for blocks that see one timestep.
+4. **Fix or replace the measurement.** Strict success at 0.3–2.1 % is 0–2 episodes per 30-cell; every DA
+   on this task has abandoned success for distance and flagged the noise floor (U8 DA §9.6, U7 DA §227).
+   A comparative claim cannot be made on an instrument that cannot resolve the comparison. P1 decides
+   whether that floor is ours to fix; if it is, fixing it is worth more than any model change here.
+   Until then, `avoiding-d3il` (S&C 1.000) is where the FM-vs-DPCC claim is testable, and visual
+   aligning is a development target rather than a headline one.
+
+**Pretrained encoder: yes — but as frozen features under a limited-data budget (P4), not as a
+capacity upgrade, and after P1/P2 have said which failure it is fixing.
+Bigger bone: no — §13.3(b), and it is the wrong direction for 900 episodes.**
+
+### 13.6 What would change this verdict
+
+- **P2 shows the 128-D latent linearly decodes box and target pose accurately** → perception is not the
+  bottleneck, §13.1 is wrong, and attention moves to the planner/horizon/projector.
+- **P1 shows a ground-truth demo fails our success criterion** → nothing above is measurable yet; fix
+  the harness before running P2–P4.
+- **P4 (frozen + pretrained, ~4 M trainable) leaves the 0.29–0.47 m band unmoved** → the data-efficiency
+  thesis is falsified too, and the remaining suspects are the action space, the replan cadence and the
+  400-step cap.
+
+### 13.7 The pretrained-encoder idea: verdict, and what it actually costs
+
+**Verdict: it is now the leading candidate, and parking it in the first draft was wrong.** But the
+reason it is right is *not* "our model needs more capacity" — it is §13.1: **85 % of our trainable
+parameters are a from-scratch ResNet-18 pair being fitted to 900 episodes.** That reframing decides
+*which kind* of pretraining to reach for, so it matters.
+
+Three different things get called "use a pretrained model". They have wildly different costs.
+
+| | What it means | Change | Trainable params |
+|---|---|---|---:|
+| **A. Pretrained init** | `ResNet18Conv(pretrained=True)` — same architecture, ImageNet weights | ~1 line | 26.4 M |
+| **B. Freeze** | `mf_freeze_vision_encoder: True` — encoder stops learning | 1 config line, already plumbed | **~4.0 M** |
+| **C. Foundation encoder** | swap in R3M / DINOv2 / CLIP | real port | varies |
+
+**A is one bool and nothing else moves.** `d3il/agents/models/vision/model_getter.py::get_resnet`
+hard-codes `backbone_kwargs=dict(input_coord_conv=False, pretrained=False)`, and
+`base_nets.py:510` passes it straight to `vision_models.resnet18(pretrained=...)`. Adding a
+`pretrained: bool = False` kwarg to `get_resnet` is **backwards-compatible by default** — no other
+generation changes behaviour — and then the flag is set from the `rgb_model` block of the encoder
+config. ⚠️ That block is **byte-identical by design** between `visual_unet_twotime.py:83-96` and
+`visual_dit_twotime.py:101-113` (red comment on both); the change must land in **both** or the
+U-Net-vs-DiT comparison silently breaks and G0 will say so.
+
+**B is already wired**, end to end and unused: `mf_freeze_vision_encoder`
+(`visual_mf_diffusion.py:29,35,51`, `visual_af_diffusion.py:29,34,45`,
+`train_mix_visual_aligning.py:500`), default `False` at `config/aligning-d3il-visual.py:1309,1349`.
+
+**C needs care.** `get_r3m` does an unguarded `import r3m` (`model_getter.py:59`) — the package must
+exist in the cluster env or the build dies at instantiation. Do not schedule C before A/B report.
+
+#### The experiment is a 2×2, and the fourth cell is not optional
+
+| init | encoder | trainable | what it isolates |
+|---|---|---:|---|
+| random | trained | 26.4 M | today's baseline |
+| **ImageNet** | trained | 26.4 M | does the initialisation alone help? |
+| **ImageNet** | **frozen** | **4.0 M** | the data-efficiency bet — the cell the idea points at |
+| random | **frozen** | 4.0 M | **control** |
+
+Without the fourth cell, a win in the third is confounded between *"pretrained features are good"*
+and *"training 4 M instead of 26 M parameters on 900 episodes is good"*. Those are different claims
+and only one of them generalises to the next task. Four runs, and P2 (§13.4) should be measured on
+each checkpoint — a latent that linearly decodes box pose is the mechanism; the distance metric is
+only the consequence.
+
+#### Three things that will bite, found by reading the code
+
+1. **🔴 The GroupNorm surgery discards part of the pretraining.** `use_group_norm=True` runs
+   `replace_submodules(…, isinstance(x, nn.BatchNorm2d), → nn.GroupNorm(C//16, C))`
+   (`multi_image_obs_encoder.py:62-69`). **Every BatchNorm2d in the pretrained ResNet is replaced by
+   a freshly initialised GroupNorm** — its affine parameters and running statistics are thrown away.
+   The conv filters survive, which is where most of the transferable structure lives, so this is not
+   a blocker (robomimic and `diffusion_policy` both do exactly this and it works). But the network
+   arrives *decalibrated*, which argues **against hard-freezing everything**: prefer
+   *pretrained init + low-LR fine-tune*, or freeze the convs and let the GroupNorms train. A hard
+   freeze of a BN-stripped ImageNet ResNet is the weakest version of this idea, and it is the one
+   the existing flag implements — worth knowing before reading its result.
+
+2. **🔴 The spatial bottleneck is 3×3.** `ResNet18Conv.output_shape` is
+   `ceil(96/32) = 3` (`base_nets.py:535-537`), so the trunk emits `512 × 3 × 3` and SpatialSoftmax
+   places **32 keypoints over 9 spatial positions**. Whatever the initialisation, sub-cell
+   localisation of the box comes only from the softmax over a 3×3 grid. If P2 says the latent cannot
+   decode box pose, **this** is a stronger suspect than the weights — and the fix is input
+   resolution or a shallower stride, not pretraining. Test resolution and pretraining separately or
+   the result is uninterpretable.
+
+3. **No internet on compute nodes.** `pretrained=True` triggers a torchvision download into
+   `~/.cache/torch/hub/checkpoints/`. Pre-fetch it on the login node once, or the first Slurm job
+   fails at model construction — after the gates have passed, which makes it look like a code bug.
+   One good thing: `imagenet_norm: True` is already on, so input normalisation already matches the
+   pretrained statistics; nothing to change there.
+
+#### Where it sits in the order
+
+P1 (demo replay) and P2 (latent probe) still come first — they cost hours, and P2 in particular tells
+you *whether the latent is the problem at all*, which is exactly the question the pretrained encoder
+is being proposed to answer. If P2 says the 128-D latent already decodes box and target pose
+accurately, the encoder is fine and this whole branch is dead; if it says the latent is
+uninformative, the 2×2 above is the right next spend and **the frozen+pretrained cell is the one to
+beat**. Either way P2 costs minutes and converts the idea from a bet into a measurement.

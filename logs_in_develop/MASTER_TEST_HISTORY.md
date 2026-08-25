@@ -4915,3 +4915,38 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
 4. **Matplotlib Robust Window Clamping (`eval_artifacts.py`)**:
    - *Bounding Geometry*: Replaced `adjustable='datalim'` with `'box'` and implemented `view_window()` / `align_view_window()`, framing plots strictly around the 2–98 percentile executed path and active constraint geometry, restricting command and candidate fan expansion to at most 1.0 core span per side.
    - *Unclipped Diagnostics & Abort Callouts*: Integrated red corner annotations reporting unclipped coordinate excursions, and rendered dark-red **✖** abort markers at the failure coordinate connected via dotted leader lines to the runaway command position.
+
+***
+
+## Full MPC-Fan Parity (`FMPCC_MPC_BATCH`), Candidate Selection Deconfounding & Avoiding-D3IL Benchmark (August 23–24, 2026)
+
+**Keywords**: Gen3v6, Gen3v7, Gen12, FMPCC_MPC_BATCH, HFFM_BATCH, B4_PARITY, candidate fan, MPC selection deconfounding, action_weight aw10, avoiding-d3il, path collision guard, _msgmpc1.
+
+1. **Independent Arms A/B Candidate Fan Control (`FMPCC_MPC_BATCH`)**: Resolved the long-standing capability asymmetry where Arm C fan could be modulated via `HFFM_BATCH` while Arms A/B remained hardcoded to $B=4$ in `config/avoiding-d3il.py`. Introduced `_mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))` across `plan_fm_v3_hardflow`, `plan_fm_v3_meanflow`, and `plan_fm_v3_alphaflow` (leaving non-arm-C plans untouched to preserve historic paths). Added mismatch diagnostic warnings (`FMPCC_MPC_BATCH != HFFM_BATCH`), non-positive reject guards ($<1$), and forwarded CLI configs across all three Slurm sbatch entrypoints.
+2. **Automated Collision-Free Path Tagging (`_msgmpc1`, `msgr8-mpc1`)**: Implemented dynamic results directory disambiguation via `hf_paths.resolve_run_msg()` and custom run messages to prevent $B=1$ evaluations from overwriting baseline $B=4$ runs. In Gen3v6, composed cleanly with replan steps (`msgr8-mpc1`), while Gen12 provenance explicitly records `mpc_batch_arms_ab` and `run_msg`. Synchronized `action_weight = 10` (`a649a708`) for consistency with DPCC baselines.
+3. **Candidate Selection Deconfounding on `avoiding-d3il` (Jobs 24991/24992)**: Conducted full fan parity ($B=1$ on all arms) on MeanFlow (`bbunet`, C147) and FMv3ODE (`aw10`, C64), yielding key architectural findings:
+   - *Selection Rule Collapse & Waste Elimination*: Proved candidate selection is pure dead compute for `-r` and `-r-tightened` (rollouts are bit-identical at $B=1$, saving $1.29\times$ wall-clock time).
+   - *Harmful Selection on Tightened Geometries*: On `dpcc-c-tightened`, dropping $B=4 \rightarrow 1$ **improved S&C from 0.833 to 1.000** and dropped execution by **33.5 steps** (94.0 $\rightarrow$ 60.5) because ranking by minimal projection cost selects lazy, stalled trajectories when the tightening margin already guarantees safety.
+   - *Load-Bearing Untightened Selection*: Under untightened bounds, $B=4$ ranking recovered feasible paths candidate 0 missed (S&C 0.667 vs 0.333), demonstrating that candidate ranking only provides value when constraints are allowed to be violated.
+4. **True Parity Performance & Compute Scaling**:
+   - *End-to-End Speedup*: $B=1$ delivered a $1.24\text{--}1.36\times$ end-to-end speedup (CPU projection scaled $\sim 3.3\times$ from 8.5ms to 2.5ms/step while GPU forward generation remained flat at 18.5ms).
+   - *DPCC vs HardFlow at $B=1$ Parity*: On the reported tightened arm, DPCC dominated HardFlow with equal-or-better S&C (1.000 in all 3 scenarios on both MF and FM) at $2.4\times$ lower cost (0.020–0.021 s/step vs 0.047–0.051 s/step). HardFlow held an advantage solely on untightened bounds (S&C 0.500 vs 0.333), demonstrating that in-loop constrained sampling adds value only in un-tightened regimes where post-hoc projection fails.
+
+***
+
+## Aggregated HardFlow Terminal Step NFE Pruning, Low-K Degeneracy Proof & Regime Classification Across All 6 Generations (`HFK1` / `HFK1b`) (August 24, 2026)
+
+**Keywords**: Aggregated, HardFlow, HFK1, HFK1b, low-K degeneracy, sample-then-project, terminal NFE pruning, hardflow_step_budget, hardflow_regime, gate_g6, NLP-FAILURE banner, marking register, 6 generations.
+
+1. **Terminal Step Zero-Weight NFE Pruning (All 6 Copies)**: Discovered that at terminal step $k = K-1$, $\tau_{\text{next}} = 1.0$ causes lookahead velocity scaling $(1 - \tau_{\text{next}}) V_{\text{next}} \equiv 0 \cdot V_{\text{next}}$. Replaced unconditional velocity network evaluation with structural branch `if k < K - 1: ... else: X1_ref = X_ref` across all 6 live generations (`flow_matcher_v3_{hardflow,meanflow,alphaflow}`, `mix_uav`, `mix_visual_aligning`, `mix_visual_avoiding`). Reduced HardFlow NFE budget from $K + n_{\text{active}}$ to $K + n_{\text{active}} - 1$, establishing exact 1-NFE parity at $K=1$ against DPCC Arm B and eliminating IEEE non-finite propagation on the untrained $t=1.0$ boundary.
+2. **Mathematical Analysis of Low-K Degeneracy**: Formally established that when $n_{\text{genuine}} = 0$ ($n_{\text{active}} = 1$), HardFlow reduces exactly to $\Pi_S(\text{Euler sample})$—sample-then-project (DPCC with IPOPT instead of SLSQP). All HardFlow-specific mechanisms (endpoint lookahead $I_1$, damped pullback $I_2$, velocity feedback $I_3$, threshold modulation) are mathematically inert at $K=1$ (all $A$) and at $K=2$ ($A \le 0.5$).
+3. **Shared Step Budget & 3-Tier Regime Engine (`hardflow_regime`)**: Introduced shared helpers `hardflow_step_budget(K, A)` and `hardflow_regime(K, A)` classifying execution into three regimes:
+   - `DEGENERATE` ($n_{\text{genuine}} = 0$): Sample-then-project one-shot Euclidean projection ($K=1$ all $A$; $K=2$ at $A \le 0.5$).
+   - `THIN` ($n_{\text{genuine}} = 1$): Single guided step carrying maximum lookahead $1 - \tau^+$ ($K=2$ at $A=1.0$; $K=3\text{--}4$ at $A=0.5$), vulnerable to seed variance.
+   - `OK` ($n_{\text{genuine}} \ge 2$): Multi-step guided HardFlow ($K \ge 5$ at $A=0.5$, matching paper reference $N=10, A=0.5$).
+4. **Runtime Diagnostics, Non-Convergence Sentinel & Stale Gate Synchronization**:
+   - *Runtime Banners*: Added warn-once log banners `[hardflow][DEGENERATE]`, `[hardflow][THIN]`, and `[hardflow][NLP-FAILURE]` (alerting on non-converged IPOPT solves falling back to potentially infeasible last iterates). Exported `n_active`, `n_genuine`, `hf_tier`, `first_lookahead` into `infos` and telemetry NPZ.
+   - *Gate Unstaling (`gates_hardflow.py`)*: Fixed G3 (updated assertions from pre-`fix_6` to $A=1.0$ contract), updated G4 to match DPCC floor rounding `int((1-T)*K)`, and added comprehensive `gate_g6` asserting step budget math and regime invariance across a 192-cell $(K, A)$ grid. Corrected docstrings regarding prox weight scaling and NFE accounting.
+5. **Corpus-Wide Marking Register & Benchmark Cross-Validation**:
+   - *Marking Register (`REGISTER_20260824_degenerate_HF_rows_and_warnings.md`)*: Audited and classified all historical HardFlow evaluations across Gen12–Gen16, formalizing how to validly cite low-K rows as IPOPT terminal projections without attributing gains to in-loop sampling.
+   - *Cross-K Benchmark Analysis (`DA_20260824_does_HF_pay_when_it_actually_runs.md`)*: Analyzed MeanFlow UNet@32 across $K \in \{1, 2, 5, 10\}$ ($n=15$/cell). Identified an unexplained solver failure spike at $K=5$ (1.67% vs 0.21–0.66%), and concluded that genuine HardFlow requires $K \ge 5$ with threshold sweeps on the untightened/harder-constraint settings to demonstrate valid in-loop separation.

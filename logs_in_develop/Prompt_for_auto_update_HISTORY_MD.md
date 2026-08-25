@@ -240,7 +240,7 @@ When running the next auto-update, only process commits **strictly after** this 
 
 | Field | Value |
 |---|---|
-| **Commit hash** | `1288118a` |
-| **Commit message** | `(Div_Abor For V_A and UAV)feat: implement episode abort guard in aligning simulation for runaway end-effector trajectories` |
-| **Commit date** | 2026-08-23 20:09:05 UTC |
-| **What was recorded** | Gen16 multi-root DA combined batch discovery (`735a1c6b`); Gen15 UAV Mix-ML dedicated AlphaFlow SiT transformer backbone configuration (`7cc86c73`); Gen16 first cluster benchmark results with zero tightened violations & 16-23x speedup (`1288118a`); Gen14 U8 DiT visual-aligning benchmark with projector extraction deficit & selection rule inversion (`1288118a`); Visual-aligning HardFlow vs DPCC benchmark with candidate-fan parity & paired significance testing (`1288118a`); Repo-wide Div_Abort divergence abort and robust matplotlib window clamping architecture across UAV and visual-aligning pipelines (`1288118a`). |
+| **Commit hash** | `7111fb25` |
+| **Commit message** | `(aggregated_hardflow_lowK;)feat: implement hardflow step budget calculation and degeneracy tracking in evaluation pipelines to distinguish between genuine hardflow and sample-then-project behavior.` |
+| **Commit date** | 2026-08-24 12:54:32 UTC |
+| **What was recorded** | Full MPC-fan parity (`FMPCC_MPC_BATCH`), candidate selection deconfounding, and DPCC vs HardFlow parity evaluation on `avoiding-d3il` (`83471f8d`, `a649a708`); Aggregated HardFlow terminal step zero-weight NFE pruning, low-K degeneracy proof ($n_{\text{genuine}}=0$ sample-then-project), 3-tier regime engine (`hardflow_regime`), runtime warn-once diagnostics (`[DEGENERATE]`, `[THIN]`, `[NLP-FAILURE]`), and stale gate synchronization (`96e47ac0`, `7111fb25`). |

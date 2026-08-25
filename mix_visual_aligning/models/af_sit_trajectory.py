@@ -271,6 +271,13 @@ class AFSiTTrajectory(nn.Module):
         # >0 = the 128-D dual-cam latent is PREPENDED as one token (not summed into adaLN's `c`
         # — see logs_in_develop/Gen14/U8/DECISION_Gen14_U8_injection_choice.md §2/§4.1).
         cond_dim: int = 0,
+        # ── Gen14 U9 ── WHERE the visual latent enters. 'token' == U8, bit-identical.
+        #   'token' : prepended as one sequence token (U8, the shipped design point)
+        #   'adaln' : summed into adaLN's `c` — the transformer analogue of VisualUNet v1's
+        #             cond_mlp-into-`t`, the best-scoring mechanism this generation has
+        #   'both'  : token AND modulation
+        # Same graft as mf_dit_official_trajectory.py; keep the two in step.
+        vis_cond_mode: str = 'token',
         **unused,  # tolerate UNet-/iMF-only kwargs threaded by the engine
     ):
         super().__init__()
@@ -293,10 +300,24 @@ class AFSiTTrajectory(nn.Module):
         self.use_visual = cond_dim > 0
         self.cond_dim = cond_dim
         self.num_visual_tokens = 1 if self.use_visual else 0
+        # ── Gen14 U9 ── in 'adaln' the latent claims no sequence position. num_tokens on
+        # the NEXT line picks this up, so the FROZEN sin-cos pos_embed is built one row
+        # shorter and the strip in forward() follows automatically. G-B6 covers all modes.
+        self.vis_cond_mode = str(vis_cond_mode)
+        if self.vis_cond_mode not in ('token', 'adaln', 'both'):
+            raise ValueError(
+                f"[ AFSiTTrajectory ] vis_cond_mode='{self.vis_cond_mode}' is not one "
+                "of 'token' | 'adaln' | 'both'.")
+        if self.use_visual and self.vis_cond_mode == 'adaln':
+            self.num_visual_tokens = 0
         self.num_tokens = self.num_visual_tokens + self.num_patches
         if self.use_visual:
             self.vis_projector = nn.Linear(cond_dim, hidden_size)
             self.vis_token = nn.Parameter(torch.zeros(1, 1, hidden_size))
+            # ── Gen14 U9 ── no sequence token in 'adaln', so vis_token would be a dead
+            # parameter in every checkpoint. Remove it so the state_dict states the mode.
+            if self.vis_cond_mode == 'adaln':
+                del self.vis_token
 
         # FROZEN sin-cos pos-embed (requires_grad=False, as α-Flow's SiT).
         # Gen14 U8: sized over num_tokens = num_visual_tokens + num_patches, so the prepended
@@ -361,6 +382,19 @@ class AFSiTTrajectory(nn.Module):
         b = x.shape[0]
         return x.reshape(b, self.num_patches * self.patch_size, self.transition_dim)
 
+    @staticmethod
+    def _pool_cond(cond):
+        """Gen14 U9 — (B, cond_dim) out of whatever the wrapper handed down.
+
+        Mirrors the window pooling inside _prepend_visual so the two conditioning paths
+        can never disagree about what 'the latent' is. At window_size=1 it is a no-op.
+        """
+        if cond is None:
+            raise ValueError(
+                '[ AFSiTTrajectory ] vis_cond_mode needs a visual latent but got None — '
+                'the wrapper must resolve cond -> (B, cond_dim).')
+        return cond.mean(dim=1) if cond.ndim == 3 else cond
+
     def _prepend_visual(self, x, cond):
         """Gen14 U8 — prepend the visual token. No-op (and `cond` ignored) when state-only.
 
@@ -377,6 +411,9 @@ class AFSiTTrajectory(nn.Module):
                 "`cond`; training image-blind is exactly what this guard prevents.")
         if cond.ndim == 3:                 # (B, T_win, C) -> pool the window
             cond = cond.mean(dim=1)
+        # ── Gen14 U9 ── the guards above still run in 'adaln'; only the concat is skipped.
+        if self.vis_cond_mode == 'adaln':
+            return x
         vis = self.vis_token + self.vis_projector(cond)[:, None]   # (B, 1, D)
         return torch.cat([vis, x], dim=1)
 
@@ -401,6 +438,10 @@ class AFSiTTrajectory(nn.Module):
         x = x + self.pos_embed                          # (B, num_tokens, D)
         # c = noise_labels(t) + noise_labels_next(r), matching α-Flow's dit.py:199 (y dropped).
         c = self.noise_labels_embedder(t_abs) + self.noise_labels_next_embedder(r_abs)
+        # ── Gen14 U9 ── vision into the MODULATION path. Fully skipped in 'token', so that
+        # mode stays BIT-IDENTICAL to U8 (G-B9 asserts it).
+        if self.use_visual and self.vis_cond_mode in ('adaln', 'both'):
+            c = c + self.vis_projector(self._pool_cond(cond))
 
         for block in self.blocks:
             x = block(x, c)

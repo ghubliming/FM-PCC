@@ -149,6 +149,43 @@ else
     echo "[ train ] ml_bone = $ML_BONE  -- VisualDiTTwoTime, visual latent as ONE TOKEN;"
     echo "[ train ]           film_mode is N/A on this bone and is absent from the path."
 fi
+# -- Gen14 U9 -- PERCEPTION-FIRST knobs. Same narrowing shape as MIX_FILM_MODE/MIX_BONE:
+# MIX_<KNOB>_<ENGINE> for one arm, bare MIX_<KNOB> for all two-time arms. All three default
+# to the pre-U9 value, and at the defaults the checkpoint path is character-for-character
+# the U8 one -- nothing existing is orphaned.
+#
+#   MIX_VIS_PRETRAINED=1     ImageNet init of the dual ResNet-18   (default 0 = random)
+#   MIX_VIS_LR_SCALE=0.1     encoder LR = train_lr * scale         (default 1.0; 0.0 = frozen)
+#   MIX_VIS_COND=adaln       latent into adaLN's `c` not the seq   (default token = U8)
+#
+# The headline U9 run (PLAN Gen14/U9 R1):
+#   MIX_BONE_MF=mf_dit MIX_VIS_PRETRAINED=1 MIX_VIS_LR_SCALE=0.1 MIX_VIS_COND=adaln \
+#     ./Slurm_Codes/submit.sh <this script> mf 6
+#
+# 🔴 MIX_VIS_PRETRAINED=1 downloads ImageNet weights into ~/.cache/torch/hub/checkpoints/ and
+#    COMPUTE NODES HAVE NO INTERNET. Pre-fetch once on the login node:
+#      python -c "import torchvision as tv; tv.models.resnet18(pretrained=True)"
+#    Gate G-B11 turns a silent fallback to random weights into a loud failure.
+eval "VIS_PRETRAINED=\${MIX_VIS_PRETRAINED_${ENGINE_UC}:-\${MIX_VIS_PRETRAINED:-0}}"
+eval "VIS_LR_SCALE=\${MIX_VIS_LR_SCALE_${ENGINE_UC}:-\${MIX_VIS_LR_SCALE:-1.0}}"
+eval "VIS_COND=\${MIX_VIS_COND_${ENGINE_UC}:-\${MIX_VIS_COND:-token}}"
+case "$VIS_PRETRAINED" in 0|1|true|false) ;; *) echo "[ train ] ERROR: MIX_VIS_PRETRAINED='$VIS_PRETRAINED' (want 0|1)"; exit 1 ;; esac
+case "$VIS_COND" in token|adaln|both) ;; *) echo "[ train ] ERROR: MIX_VIS_COND='$VIS_COND' (want token|adaln|both)"; exit 1 ;; esac
+if [ "$VIS_COND" != "token" ] && [ "$ML_BONE" != "mf_dit" ] && [ "$ML_BONE" != "sit" ]; then
+    echo "[ train ] ERROR: MIX_VIS_COND='$VIS_COND' needs an adaLN bone (mf_dit|sit), got '$ML_BONE'."
+    echo "[ train ]        The RoPE bones have no adaLN pathway; the knob would be silently ignored."
+    exit 1
+fi
+unset MIX_VIS_PRETRAINED MIX_VIS_LR_SCALE MIX_VIS_COND
+export "MIX_VIS_PRETRAINED_${ENGINE_UC}=$VIS_PRETRAINED"
+export "MIX_VIS_LR_SCALE_${ENGINE_UC}=$VIS_LR_SCALE"
+export "MIX_VIS_COND_${ENGINE_UC}=$VIS_COND"
+if [ "$VIS_PRETRAINED" = "0" ] && [ "$VIS_LR_SCALE" = "1.0" ] && [ "$VIS_COND" = "token" ]; then
+    echo "[ train ] U9 knobs = ALL DEFAULT (pre-U9 behaviour; path unchanged)"
+else
+    echo "[ train ] U9: vis_pretrained=$VIS_PRETRAINED  vis_lr_scale=$VIS_LR_SCALE  vis_cond_mode=$VIS_COND"
+fi
+
 if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then
     echo "[ train ] WARNING: $(echo $SEEDS | wc -w) seeds will run SEQUENTIALLY in this one job"
     echo "[ train ]          against the 24 h wall. Prefer mix_visual_aligning_pipeline.sh,"

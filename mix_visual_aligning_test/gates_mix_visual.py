@@ -239,7 +239,8 @@ def gate_g1():
 
 
 def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode='v1',
-           ml_bone='unet', dit_hidden_size=160, dit_depth=8):
+           ml_bone='unet', dit_hidden_size=160, dit_depth=8,
+           vis_pretrained=False, vis_cond_mode='token'):
     """Minimal in-memory build of one arm — no dataset, no checkpoint.
 
     Gen14 U8: `ml_bone` selects the generative backbone ('unet' | 'mf_dit' | 'sit' | 'dit').
@@ -255,6 +256,10 @@ def _build(engine, if_vision=True, horizon=8, batch=2, device='cuda', film_mode=
     cfg.device, cfg.if_vision, cfg.horizon = device, if_vision, horizon
     cfg.action_dim, cfg.obs_dim, cfg.dim = 3, 6, 32
     cfg.dim_mults, cfg.condition_dropout, cfg.returns_condition = (1, 2, 4, 8), 0.1, False
+    # ── Gen14 U9 ── both default to the pre-U9 value, so every U8 gate that calls _build()
+    # without them builds exactly the model it built before.
+    cfg.vis_pretrained = bool(vis_pretrained)
+    cfg.vis_cond_mode = str(vis_cond_mode)
     bone_kw = {}
     if ml_bone == 'unet':
         cfg.film_mode = film_mode
@@ -1000,12 +1005,221 @@ def gate_g7(device='cuda'):
     return ok
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Gen14 U9 — perception-first gates. Plan: logs_in_develop/Gen14/U9/
+#
+# U9 adds three ML-side knobs, all defaulting to the pre-U9 value:
+#   vis_pretrained  (bool)  ImageNet init of the dual ResNet-18
+#   vis_lr_scale    (float) encoder LR multiplier, trainer-side
+#   vis_cond_mode   (str)   'token' (U8) | 'adaln' | 'both'
+# These gates exist to prove the ADDITIVITY claim on hardware rather than by reading.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# The adaLN pair. The RoPE bones (dit) have no adaLN pathway and are deliberately excluded —
+# VisualDiTTwoTime RAISES if vis_cond_mode != 'token' reaches them.
+_U9_ADALN_BONES = (('mf', 'mf_dit'), ('af', 'sit'))
+
+
+def _encoder_spec_block(path):
+    """The rgb_model spec as written, for the byte-identity check in G-B8."""
+    import re
+    src = open(os.path.join(REPO, path), 'rb').read().decode('utf-8').replace('\r\n', '\n')
+    m = re.search(r"'rgb_model':\s*\{(.*?)\}", src, re.S)
+    if m is None:
+        return None
+    return re.sub(r'\s+', ' ', m.group(1)).strip()
+
+
+def gate_gb8():
+    """G-B8 — the two two-time encoder specs are still identical.
+
+    🔴 WHY THIS GATE EXISTS. visual_unet_twotime.py and visual_dit_twotime.py each build their
+    own MultiImageObsEncoder config, and both carry a red comment saying the block is
+    BYTE-IDENTICAL by design: the whole U-Net-vs-DiT comparison assumes the two arms differ
+    only in the trajectory bone. Before U9 that was a comment. U9 makes the block carry a
+    FLAG, which is exactly the kind of thing that gets added to one file and forgotten in the
+    other — and the failure is silent, because both models still build and train fine.
+
+    visual_unet.py (the fm/diffusion arm) is NOT compared here: it is a G0 VERBATIM file with
+    a different upstream, it is untouched by U9, and folding it in would force it out of the
+    VERBATIM ledger for no experimental gain.
+    """
+    print('\n=== G-B8: encoder spec identical across the two-time wrappers ===')
+    paths = ('mix_visual_aligning/models/visual_unet_twotime.py',
+             'mix_visual_aligning/models/visual_dit_twotime.py')
+    specs = {p: _encoder_spec_block(p) for p in paths}
+    ok = True
+    for p, spec in specs.items():
+        if spec is None:
+            print(f'  ! {p}: no rgb_model block found'); ok = False
+    if ok:
+        a, b = (specs[p] for p in paths)
+        if a != b:
+            ok = False
+            print('  ! the two rgb_model specs DIFFER — the U-Net-vs-DiT comparison is void')
+            print(f'    unet_twotime: {a}')
+            print(f'    dit_twotime : {b}')
+        else:
+            print(f'  ok   both wrappers: {a}')
+        if "'pretrained'" not in a:
+            ok = False
+            print("  ! 'pretrained' missing from the rgb_model spec — U9 C1 is not wired")
+    print('\n  G-B8 PASS' if ok else '\n  G-B8 FAIL')
+    return ok
+
+
+def gate_gb9(device='cuda'):
+    """G-B9 — vis_cond_mode: 'token' is a bit-identical no-op, 'adaln' really moves the latent.
+
+    Three claims, one per mode:
+      (a) token  — same seed, same weights, same output as a build that never heard of U9.
+                   This is THE additivity guarantee; if it fails, every U8 result is at risk.
+      (b) adaln  — the sequence is one token shorter (num_visual_tokens == 0), vis_token is
+                   gone from the state_dict, and two different latents still produce different
+                   outputs (the latent reaches the output through `c`, not through attention).
+      (c) both   — keeps the token AND responds to the latent.
+
+    🔴 The sensitivity check WARMS UP first, for the same reason G-B3 does: these are
+    adaLN-ZERO bones, every adaLN_modulation[-1] and both final layers start at exactly 0, so
+    at step 0 the network emits 0 for any input and a naive difference reads 0.0 in every
+    mode. See gate_gb3's note (job 24834, 2026-08-21).
+    """
+    import torch
+    print('\n=== G-B9: vis_cond_mode token/adaln/both ===')
+    WARMUP, WARMUP_LR = 5, 1e-2
+    ok = True
+
+    for arm, bone in _U9_ADALN_BONES:
+        # (a) bit-identity of the default path
+        torch.manual_seed(0)
+        _, m_ref, _, _ = _build(arm, ml_bone=bone, device=device)
+        torch.manual_seed(0)
+        _, m_tok, _, _ = _build(arm, ml_bone=bone, device=device, vis_cond_mode='token')
+        sd_ref, sd_tok = _vnet(m_ref).state_dict(), _vnet(m_tok).state_dict()
+        same = (sd_ref.keys() == sd_tok.keys()) and all(
+            torch.equal(sd_ref[k], sd_tok[k]) for k in sd_ref)
+        print(f"  {'ok  ' if same else 'FAIL'} {arm}@{bone} token: state_dict identical to the "
+              f"pre-U9 build ({len(sd_ref)} tensors)")
+        ok &= same
+
+        # (b)/(c) structure + sensitivity
+        for mode, want_tokens, want_vis_token in (('adaln', 0, False), ('both', 1, True)):
+            torch.manual_seed(0)
+            _, model, DiffCls, obs_dim = _build(arm, ml_bone=bone, device=device,
+                                                vis_cond_mode=mode)
+            bb = _vnet(model).backbone
+            n_tok = int(getattr(bb, 'num_visual_tokens', -1))
+            has_vt = hasattr(bb, 'vis_token')
+            struct = (n_tok == want_tokens) and (has_vt == want_vis_token)
+            print(f"  {'ok  ' if struct else 'FAIL'} {arm}@{bone} {mode}: "
+                  f"num_visual_tokens={n_tok} (want {want_tokens}), "
+                  f"vis_token present={has_vt} (want {want_vis_token})")
+            ok &= struct
+
+            diffusion = DiffCls(model, horizon=8, observation_dim=obs_dim, action_dim=3,
+                                if_vision=True).to(device)
+            opt = torch.optim.Adam(diffusion.parameters(), lr=WARMUP_LR)
+            traj, cond = _fake_visual_batch(2, 8, device)
+            for _ in range(WARMUP):
+                opt.zero_grad(set_to_none=True)
+                loss, _ = diffusion.loss(traj, cond)
+                loss.backward(); opt.step()
+
+            B, H = 2, 8
+            x = torch.randn(B, H, 9, device=device)
+            t = torch.rand(B, device=device)
+            h = torch.rand(B, device=device)
+            with torch.no_grad():
+                l1 = torch.randn(B, bb.cond_dim, device=device)
+                l2 = torch.randn(B, bb.cond_dim, device=device)
+                o1, o2 = bb(x, l1, t, h=h), bb(x, l2, t, h=h)
+                o1 = o1[0] if isinstance(o1, tuple) else o1
+                o2 = o2[0] if isinstance(o2, tuple) else o2
+                delta = float((o1 - o2).abs().max())
+            live = delta > 0.0
+            print(f"  {'ok  ' if live else 'FAIL'} {arm}@{bone} {mode}: "
+                  f"d(out)/d(latent) max = {delta:.4e}"
+                  + ('' if live else '   <-- the latent does NOT reach the output'))
+            ok &= live
+            del model, diffusion, opt
+            torch.cuda.empty_cache() if device == 'cuda' else None
+
+    print('\n  G-B9 PASS' if ok else '\n  G-B9 FAIL')
+    return ok
+
+
+def gate_gb11():
+    """G-B11 — vis_pretrained=True really loaded weights from disk, and did not fall back.
+
+    🔴 WHY THIS IS NOT PARANOIA. `pretrained=True` makes torchvision fetch ImageNet weights
+    into ~/.cache/torch/hub/checkpoints/, and COMPUTE NODES HAVE NO INTERNET. A run whose
+    download failed, or an env on torchvision >= 0.15 where the `pretrained=` kwarg was
+    removed, can end up training a randomly-initialised encoder while every log line says
+    `vis_pretrained=True`. That does not crash. It produces a null result that looks like an
+    architecture finding, and it would take a week to catch by any other means.
+
+    The test needs no checksum and no network: build the encoder TWICE under two different
+    torch seeds.
+      * loaded from a file -> the two builds agree exactly (weights are seed-independent)
+      * random init        -> the two builds differ (weights come from the RNG)
+    The control (pretrained=False) must show the opposite, otherwise the test itself is
+    vacuous — e.g. if some caller had already made init deterministic.
+    """
+    import torch
+    print('\n=== G-B11: pretrained weights actually loaded ===')
+    sys.path.insert(0, os.path.join(REPO, 'd3il'))
+    from agents.models.vision.model_getter import get_resnet
+
+    def _trunk(pretrained, seed):
+        torch.manual_seed(seed)
+        net = get_resnet(input_shape=[3, 96, 96], output_size=64, pretrained=pretrained)
+        return {k: v.detach().clone() for k, v in net.backbone.state_dict().items()}
+
+    ok = True
+    try:
+        a, b = _trunk(True, 0), _trunk(True, 12345)
+    except TypeError as e:
+        print(f'  ! get_resnet rejected pretrained=: {e}')
+        print('    -> torchvision >= 0.15 removed the `pretrained` kwarg; switch '
+              "base_nets.py:510 to weights='IMAGENET1K_V1'.")
+        print('\n  G-B11 FAIL')
+        return False
+    except Exception as e:
+        print(f'  ! could not build a pretrained trunk: {type(e).__name__}: {e}')
+        print('    -> almost certainly the weights are not in ~/.cache/torch/hub/checkpoints/.')
+        print('    -> pre-fetch ONCE on the login node (compute nodes have no internet):')
+        print('       python -c "import torchvision as tv; tv.models.resnet18(pretrained=True)"')
+        print('\n  G-B11 FAIL')
+        return False
+
+    det = all(torch.equal(a[k], b[k]) for k in a)
+    print(f"  {'ok  ' if det else 'FAIL'} pretrained=True is seed-independent "
+          f"({len(a)} tensors) -> weights came from a file, not the RNG")
+    ok &= det
+
+    c, d = _trunk(False, 0), _trunk(False, 12345)
+    rnd = any(not torch.equal(c[k], d[k]) for k in c)
+    print(f"  {'ok  ' if rnd else 'FAIL'} pretrained=False IS seed-dependent "
+          f"-> the control is meaningful (a passing test above is not vacuous)")
+    ok &= rnd
+
+    if det and rnd:
+        diff = max(float((a[k].float() - c[k].float()).abs().max())
+                   for k in a if a[k].dtype.is_floating_point)
+        print(f'  ok   pretrained and random trunks differ (max |dw| = {diff:.4e})')
+
+    print('\n  G-B11 PASS' if ok else '\n  G-B11 FAIL')
+    return ok
+
+
 GATES = {'gb1': gate_gb1, 'gb6': gate_gb6, 'gb7': gate_gb7,
          'gb2': gate_gb2, 'gb3': gate_gb3, 'gb45': gate_gb45,
+         # Gen14 U9
+         'gb8': gate_gb8, 'gb9': gate_gb9, 'gb11': gate_gb11,
          'g0': gate_g0, 'g1': gate_g1, 'g2': gate_g2,
          'g3': gate_g3, 'g4': gate_g4, 'g5': gate_g5, 'g6': gate_g6,
          'g7': gate_g7}
-NEEDS_GPU = {'g2', 'g3', 'g5', 'g7', 'gb2', 'gb3', 'gb45'}
+NEEDS_GPU = {'g2', 'g3', 'g5', 'g7', 'gb2', 'gb3', 'gb45', 'gb9'}
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -1019,8 +1233,9 @@ if __name__ == '__main__':
     elif a.gate == 'static':
         names = [g for g in GATES if g not in NEEDS_GPU]
     elif a.gate == 'bone':
-        # Gen14 U8 — just the ML-bone gates (G-B1..G-B7)
-        names = ['gb1', 'gb6', 'gb7', 'gb2', 'gb3', 'gb45']
+        # Gen14 U8 — the ML-bone gates (G-B1..G-B7)
+        # Gen14 U9 — plus the perception/conditioning gates (G-B8, G-B9, G-B11)
+        names = ['gb1', 'gb6', 'gb7', 'gb2', 'gb3', 'gb45', 'gb8', 'gb9', 'gb11']
     else:
         names = [a.gate]
 

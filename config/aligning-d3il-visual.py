@@ -914,6 +914,15 @@ args_to_watch_mix_visual_train = [
     ('engine', 'E'),                 # ← Gen14 arm identity key
     ('t_schedule', 'ts'),            # mf/af only
     ('af_alpha_scheduler', 'afsch'), # af only
+    # ── Gen14 U9 ── perception / conditioning identity keys. Each is emitted by
+    # _mix_u9_keys() ONLY when it differs from the pre-U9 value, and watch() skips keys a
+    # block does not define — so every path that exists today keeps its exact current name
+    # and a U9 run lands in its own tree. This is the same absent-when-default trick
+    # ml_bone, film_mode and train_budget already use; it is what stops U9 from orphaning
+    # every U8 checkpoint and results folder.
+    ('vis_pretrained', 'VP'),
+    ('vis_lr_scale',   'VLR'),
+    ('vis_cond_mode',  'VC'),
     # Appended LAST so a reduced-budget run reads as the full name plus a suffix, and the
     # full-budget name is unchanged. Set only when the budget is cut (see _budget_tag).
     ('train_budget', 'TB'),
@@ -1238,6 +1247,74 @@ def _mix_bone_keys(engine):
     }
 
 
+# ═══ Gen14 U9 — perception-first knobs ═══════════════════════════════════════════════
+# Three ML-side flags. NONE of them touches the projector, the constraint YAML, the MPC
+# candidate fan, the horizon or the observation window — U9 is deliberately comparable to
+# U8 cell for cell (PLAN §3).
+#
+#   MIX_VIS_PRETRAINED=1        ImageNet init of the dual ResNet-18 (default 0 = random,
+#                               i.e. every pre-U9 run). Only the WEIGHTS change: the
+#                               architecture, LATENT_DIM=128 and cond_dim are untouched, so
+#                               every U8 gate stays valid exactly as written.
+#   MIX_VIS_LR_SCALE=0.1        encoder LR = train_lr * scale (default 1.0 = pre-U9).
+#                               0.0 is the hard-freeze extreme.
+#   MIX_VIS_COND=adaln          where the latent enters the transformer (default 'token'
+#                               = U8, bit-identical). adaLN bones only (mf_dit / sit).
+#
+# 🔴 EVERY key is emitted ONLY when non-default. At the defaults _mix_u9_keys() returns {},
+#    watch() skips all three, and the checkpoint path is character-for-character the U8 one
+#    — which is what makes the R0 reproduction run in PLAN §6 a real check rather than a
+#    new tree that trivially "passes".
+_U9_DEFAULTS = {'vis_pretrained': False, 'vis_lr_scale': 1.0, 'vis_cond_mode': 'token'}
+
+
+def _mix_u9_keys(engine):
+    """U9 knobs for one arm, present only where they differ from the pre-U9 behaviour."""
+    def _env(name):
+        return os.environ.get(f'{name}_{engine.upper()}') or os.environ.get(name)
+
+    out = {}
+
+    raw = _env('MIX_VIS_PRETRAINED')
+    if raw is not None:
+        if raw.strip().lower() not in ('0', '1', 'true', 'false'):
+            raise ValueError(
+                f"CRITICAL: MIX_VIS_PRETRAINED='{raw}' must be 0|1|true|false.")
+        val = raw.strip().lower() in ('1', 'true')
+        if val != _U9_DEFAULTS['vis_pretrained']:
+            out['vis_pretrained'] = val
+
+    raw = _env('MIX_VIS_LR_SCALE')
+    if raw is not None:
+        try:
+            val = float(raw)
+        except ValueError:
+            raise ValueError(f"CRITICAL: MIX_VIS_LR_SCALE='{raw}' is not a float.")
+        if val < 0.0:
+            raise ValueError(f"CRITICAL: MIX_VIS_LR_SCALE={val} must be >= 0.")
+        if val != _U9_DEFAULTS['vis_lr_scale']:
+            # Rendered as-is ('VLR0.1'): dotted fragments are already the house style
+            # here (the plan paths carry 'T0.5'), so no p-substitution is introduced.
+            out['vis_lr_scale'] = val
+
+    raw = _env('MIX_VIS_COND')
+    if raw is not None:
+        if raw not in ('token', 'adaln', 'both'):
+            raise ValueError(
+                f"CRITICAL: MIX_VIS_COND='{raw}' is not one of token|adaln|both.")
+        if raw != _U9_DEFAULTS['vis_cond_mode']:
+            # Guarded here as well as in VisualDiTTwoTime: a RoPE bone has no adaLN path,
+            # and a knob that is silently ignored is how a null result gets manufactured.
+            if raw != 'token' and _ml_bone(engine) not in ('mf_dit', 'sit'):
+                raise ValueError(
+                    f"CRITICAL: MIX_VIS_COND='{raw}' needs an adaLN bone, but the '{engine}' "
+                    f"arm is on ml_bone='{_ml_bone(engine)}'. Set MIX_BONE_{engine.upper()}"
+                    "=mf_dit (mf) or sit (af).")
+            out['vis_cond_mode'] = raw
+
+    return out
+
+
 # ─── arm: diffusion (Gen6V4) ────────────────────────────────────────────────────────────────
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
 # Gen6V4's own hyperparameters (action_weight=10), otherwise it is not the Gen6V4 baseline
@@ -1314,6 +1391,9 @@ base['mix_visual_aligning_mf'] = _mix_train_block('mf', 'fm_visual_aligning', {
     # Gen14 U8: _mix_bone_keys emits ml_bone + film_mode on the U-Net bone, or ml_bone +
     # the DiT sizing (film_mode ABSENT) on a transformer bone. MIX_BONE_MF=mf_dit|dit.
     **_mix_bone_keys('mf'),
+    # Gen14 U9 — empty dict at the defaults, so this line is inert on every
+    # pre-U9 configuration and the path string is unchanged.
+    **_mix_u9_keys('mf'),
 })
 
 # ─── arm: af (Gen3v7 alpha-Flow) ───────────────────────────────────────────────────────
@@ -1357,6 +1437,9 @@ base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
     # comparison is architecture-controlled only if BOTH arms sit on the same bone — use
     # the bare MIX_BONE to move them together.
     **_mix_bone_keys('af'),
+    # Gen14 U9 — empty dict at the defaults, so this line is inert on every
+    # pre-U9 configuration and the path string is unchanged.
+    **_mix_u9_keys('af'),
 })
 
 # ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────

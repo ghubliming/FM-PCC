@@ -98,6 +98,14 @@ class VisualDiTTwoTime(nn.Module):
                     'in_hand_image':   {'shape': [3, 96, 96], 'type': 'rgb'},
                 }
             }
+            # ── Gen14 U9 ── ImageNet initialisation of the ResNet-18 trunk.
+            # Default False == every pre-U9 run, byte-identical. Only the WEIGHTS change:
+            # architecture, LATENT_DIM, use_group_norm, imagenet_norm and share_rgb_model are
+            # all untouched, so cond_dim never moves and every U8 gate stays valid as written.
+            # 🔴 The encoder spec below is BYTE-IDENTICAL between visual_unet_twotime.py and
+            # visual_dit_twotime.py by design — drift silently breaks the U-Net-vs-DiT
+            # comparison this generation exists to make. Gate G-B8 asserts it on every run.
+            _vis_pretrained = bool(getattr(config, 'vis_pretrained', False))
             obs_encoder_cfg = OmegaConf.create({
                 '_target_': 'agents.models.vision.multi_image_obs_encoder.MultiImageObsEncoder',
                 'shape_meta': shape_meta,
@@ -105,6 +113,7 @@ class VisualDiTTwoTime(nn.Module):
                     '_target_': 'agents.models.vision.model_getter.get_resnet',
                     'input_shape': [3, 96, 96],
                     'output_size': 64,
+                    'pretrained': _vis_pretrained,
                 },
                 'resize_shape':    None,
                 'random_crop':     False,
@@ -116,6 +125,10 @@ class VisualDiTTwoTime(nn.Module):
             latent_dim = self.LATENT_DIM
             print(f'[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — '
                   f'LATENT_DIM={self.LATENT_DIM}, imagenet_norm=True, share_rgb_model=False')
+            # ── Gen14 U9 ── say it out loud: a run whose encoder was ImageNet-initialised
+            # must be identifiable from the log alone, not only from the path key.
+            print(f'[ VisualDiTTwoTime ] vis_pretrained={_vis_pretrained}  (ImageNet ResNet-18 init)' if _vis_pretrained else
+                  f'[ VisualDiTTwoTime ] vis_pretrained=False  (random init — pre-U9 behaviour)')
         else:
             self.obs_encoder = None
             latent_dim = 0
@@ -163,6 +176,29 @@ class VisualDiTTwoTime(nn.Module):
             # Gen14 U8 — this is the switch that turns the visual token on.
             cond_dim=latent_dim,
         )
+        # ── Gen14 U9 ── WHERE the visual latent enters the transformer.
+        # 'token' (default) == U8, bit-identical. 'adaln' routes it into the adaLN
+        # conditioning vector `c` instead — the transformer analogue of VisualUNet v1's
+        # cond_mlp-into-`t`, which is the best-scoring mechanism this generation has.
+        #
+        # 🔴 adaLN-ONLY. The RoPE bones (dit_mf / dit_af) are forward(x, cos, sin) and have no
+        # adaLN pathway at all, so the knob is not forwarded to them and they keep exact U8
+        # semantics. Passing it anyway would be swallowed by their **unused and silently do
+        # nothing, which is worse than not offering it.
+        _vis_cond_mode = str(_knob('vis_cond_mode', getattr(config, 'vis_cond_mode', 'token')))
+        if _vis_cond_mode not in ('token', 'adaln', 'both'):
+            raise ValueError(
+                f"[ VisualDiTTwoTime ] vis_cond_mode='{_vis_cond_mode}' is not one of "
+                "'token' | 'adaln' | 'both'.")
+        if variant in ('mf_dit', 'sit'):
+            bone_kwargs.update(vis_cond_mode=_vis_cond_mode)
+        elif _vis_cond_mode != 'token':
+            raise ValueError(
+                f"[ VisualDiTTwoTime ] vis_cond_mode='{_vis_cond_mode}' was requested on bone "
+                f"'{variant}', which is a RoPE bone with NO adaLN pathway. Use ml_bone=mf_dit "
+                "or sit, or leave vis_cond_mode='token'. Refusing to run a knob that would be "
+                "silently ignored.")
+
         if variant in ('dit_mf', 'dit_af'):
             # iMF DiT sizing knobs the adaLN pair does not have.
             bone_kwargs.update(
@@ -190,6 +226,10 @@ class VisualDiTTwoTime(nn.Module):
         print(f'[ VisualDiTTwoTime ] bone={variant} ({cls_name})  hidden={hidden_size} '
               f'depth={depth} heads={num_heads} patch={patch_size}  cond_dim={latent_dim} '
               f'(visual token {"ON" if latent_dim else "OFF"})')
+        # ── Gen14 U9 ── the conditioning PATH is now a free variable, so it belongs in the
+        # same line a reader checks to identify a run.
+        print(f'[ VisualDiTTwoTime ] vis_cond_mode={_vis_cond_mode}  '
+              f'(visual tokens in sequence: {getattr(self.backbone, "num_visual_tokens", 0)})')
 
         # dual_head / interval_cfg are structural on the U-Net; on every transformer bone the
         # twin u/v FinalLayers are native and (omega, t_min, t_max) are always accepted, so

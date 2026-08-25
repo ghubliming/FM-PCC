@@ -97,6 +97,10 @@ class Trainer(object):
         log_freq=1000,
         save_freq=None,
         train_device='cuda',
+        # ── Gen14 U9 ── encoder learning-rate scale. 1.0 == pre-U9, and at 1.0 the
+        # optimiser below is constructed EXACTLY as before (one param group), so old
+        # checkpoints resume unchanged. See the block at self.optimizer for why.
+        vis_lr_scale=1.0,
         results_folder='./results',
     ):
         super().__init__()
@@ -174,6 +178,43 @@ class Trainer(object):
         self.current_test_a0_loss = None
 
         self.optimizer = torch.optim.Adam(diffusion_model.parameters(), lr=train_lr)
+        # ── Gen14 U9 ── OPTIONAL two-group LR: the vision encoder at train_lr*vis_lr_scale,
+        # everything else at train_lr.
+        #
+        # 🔴 WHY THIS IS A REBUILD AND NOT AN EDIT OF THE LINE ABOVE. At vis_lr_scale==1.0
+        # nothing here runs, so the optimiser object, its param-group count and its
+        # state_dict layout are byte-for-byte the pre-U9 ones. That matters because
+        # _restore_optimizer_state() calls optimizer.load_state_dict() on checkpoints
+        # written before U9: a checkpoint saved with ONE group cannot be loaded into an
+        # optimiser with TWO, and this pipeline auto-resumes near the 24 h wall routinely.
+        # Paying one throwaway Adam construction keeps that guarantee free of conditionals.
+        #
+        # Motivation: 22.36 M of the 26.4 M trainable parameters are the dual ResNet-18,
+        # fitted to 900 episodes. use_group_norm=True also strips the pretrained
+        # BatchNorms, so an ImageNet-initialised encoder arrives DECALIBRATED — it needs
+        # some adaptation, just not at the full rate. Hence a scale, not a freeze;
+        # vis_lr_scale=0.0 is the hard-freeze extreme and is still reachable.
+        self.vis_lr_scale = float(vis_lr_scale)
+        self.vis_param_group = False
+        if self.vis_lr_scale != 1.0:
+            enc = getattr(getattr(diffusion_model, 'model', None), 'velocity_net', None)
+            enc = getattr(enc, 'obs_encoder', None) if enc is not None else None
+            if enc is None:
+                raise ValueError(
+                    '[ utils/training ] vis_lr_scale != 1.0 but no obs_encoder was found at '
+                    'model.velocity_net.obs_encoder. Refusing to train with a silently '
+                    'ignored encoder LR — this is exactly the class of bug that produces a '
+                    'null result nobody can explain.')
+            vis_ids = {id(q) for q in enc.parameters()}
+            vis_p = [q for q in diffusion_model.parameters() if id(q) in vis_ids]
+            rest_p = [q for q in diffusion_model.parameters() if id(q) not in vis_ids]
+            self.optimizer = torch.optim.Adam(
+                [{'params': rest_p, 'lr': train_lr},
+                 {'params': vis_p, 'lr': train_lr * self.vis_lr_scale}])
+            self.vis_param_group = True
+            print(f'[ utils/training ] U9 vis_lr_scale={self.vis_lr_scale} — '
+                  f'{len(rest_p)} trunk tensors @ {train_lr:g}, '
+                  f'{len(vis_p)} encoder tensors @ {train_lr * self.vis_lr_scale:g}')
         self.lr_scheduler = get_cosine_schedule_with_warmup(
             optimizer=self.optimizer,
             num_warmup_steps=lr_warmup_steps,
@@ -300,6 +341,10 @@ class Trainer(object):
                 if 'a0_loss' in infos:
                     logs["a0_loss_test"] = self.current_test_a0_loss
             logs["lr"] = self.lr_scheduler.get_last_lr()[0]
+            # ── Gen14 U9 ── get_last_lr()[0] is the TRUNK group. With a split the encoder
+            # rate would otherwise be invisible in every log and every lr_history plot.
+            if self.vis_param_group:
+                logs["lr_vis"] = self.lr_scheduler.get_last_lr()[1]
             logs["step"] = self.step
 
             if (self.step + 1) % self.log_freq == 0 or step == n_train_steps - 1:

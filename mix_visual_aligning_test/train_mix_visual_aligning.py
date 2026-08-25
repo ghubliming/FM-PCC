@@ -577,6 +577,11 @@ for seed in selected_seeds:
         # arms on unguided TASK SUCCESS (split-independent), never on test_loss.
         _trainer_kwargs['split_seed']    = getattr(args, 'split_seed', 42)
         _trainer_kwargs['gradient_clip'] = getattr(args, 'gradient_clip', 0.0)
+        # ── Gen14 U9 ── encoder LR scale. Only the two-time trainer (mf/af) implements it,
+        # which is also the only place U9 runs. 1.0 == pre-U9: the trainer then builds the
+        # optimiser exactly as before, one param group, so pre-U9 checkpoints auto-resume
+        # unchanged. Passing it unconditionally is safe because the default IS the old value.
+        _trainer_kwargs['vis_lr_scale']  = float(getattr(args, 'vis_lr_scale', 1.0))
     trainer_config = utils.Config(
         TrainerCls,
         savepath=(args.savepath, 'trainer_config.pkl'),

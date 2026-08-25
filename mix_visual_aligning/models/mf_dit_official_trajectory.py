@@ -278,6 +278,13 @@ class MFDiTOfficialTrajectory(nn.Module):
         # >0 = the 128-D dual-cam latent is PREPENDED as one token (not summed into adaLN's `c`
         # — see logs_in_develop/Gen14/U8/DECISION_Gen14_U8_injection_choice.md §2/§4.1).
         cond_dim: int = 0,
+        # ── Gen14 U9 ── WHERE the visual latent enters. 'token' == U8, bit-identical.
+        #   'token' : prepended as one sequence token (U8, the shipped design point)
+        #   'adaln' : summed into adaLN's `c`, the way DiT conditions on a class label —
+        #             the transformer analogue of VisualUNet v1's cond_mlp-into-`t`, which
+        #             is the best-scoring mechanism this generation has (0.3425 pooled)
+        #   'both'  : token AND modulation
+        vis_cond_mode: str = 'token',
         max_cfg: float = 4.0,
         **unused,  # tolerate UNet-/iMF-only kwargs threaded by the engine
     ):
@@ -302,10 +309,27 @@ class MFDiTOfficialTrajectory(nn.Module):
         self.use_visual = cond_dim > 0
         self.cond_dim = cond_dim
         self.num_visual_tokens = 1 if self.use_visual else 0
+        # ── Gen14 U9 ── in 'adaln' the latent never joins the sequence, so it claims no
+        # position. num_tokens is computed on the NEXT line and picks this up, which keeps
+        # pos_embed, the sin-cos table and the strip in forward() consistent automatically
+        # (G-B6 asserts the three agree; that assertion now covers all three modes).
+        self.vis_cond_mode = str(vis_cond_mode)
+        if self.vis_cond_mode not in ('token', 'adaln', 'both'):
+            raise ValueError(
+                f"[ MFDiTOfficialTrajectory ] vis_cond_mode='{self.vis_cond_mode}' is not one "
+                "of 'token' | 'adaln' | 'both'.")
+        if self.use_visual and self.vis_cond_mode == 'adaln':
+            self.num_visual_tokens = 0
         self.num_tokens = self.num_visual_tokens + self.num_patches
         if self.use_visual:
             self.vis_projector = nn.Linear(cond_dim, hidden_size)
             self.vis_token = nn.Parameter(torch.zeros(1, 1, hidden_size))
+            # ── Gen14 U9 ── 'adaln' has no sequence token, so vis_token would be an
+            # untrainable dead parameter sitting in every checkpoint. Remove it: the
+            # state_dict then states the conditioning mode honestly, and a checkpoint
+            # trained in one mode cannot be silently loaded into another.
+            if self.vis_cond_mode == 'adaln':
+                del self.vis_token
 
         # learned ABSOLUTE pos-embed, sin-cos initialised (requires_grad=True, as in MFDiT).
         # Gen14 U8: sized over num_tokens = num_visual_tokens + num_patches, so the prepended
@@ -371,6 +395,20 @@ class MFDiTOfficialTrajectory(nn.Module):
         b = x.shape[0]
         return x.reshape(b, self.num_patches * self.patch_size, self.transition_dim)
 
+    @staticmethod
+    def _pool_cond(cond):
+        """Gen14 U9 — (B, cond_dim) out of whatever the wrapper handed down.
+
+        Mirrors the window pooling already inside _prepend_visual so the two conditioning
+        paths can never disagree about what 'the latent' is. At window_size=1 (the shipped
+        aligning setting) the mean is a no-op.
+        """
+        if cond is None:
+            raise ValueError(
+                '[ MFDiTOfficialTrajectory ] vis_cond_mode needs a visual latent but got '
+                'None — the wrapper must resolve cond -> (B, cond_dim).')
+        return cond.mean(dim=1) if cond.ndim == 3 else cond
+
     def _prepend_visual(self, x, cond):
         """Gen14 U8 — prepend the visual token. No-op (and `cond` ignored) when state-only.
 
@@ -387,6 +425,10 @@ class MFDiTOfficialTrajectory(nn.Module):
                 "`cond`; training image-blind is exactly what this guard prevents.")
         if cond.ndim == 3:                 # (B, T_win, C) -> pool the window
             cond = cond.mean(dim=1)
+        # ── Gen14 U9 ── the guards above still run in 'adaln' (an image-blind run must
+        # fail loudly in EVERY mode); only the concatenation is skipped.
+        if self.vis_cond_mode == 'adaln':
+            return x
         vis = self.vis_token + self.vis_projector(cond)[:, None]   # (B, 1, D)
         return torch.cat([vis, x], dim=1)
 
@@ -413,6 +455,11 @@ class MFDiTOfficialTrajectory(nn.Module):
         x = self._prepend_visual(x, cond)               # Gen14 U8 — no-op when state-only
         x = x + self.pos_embed                          # (B, num_tokens, D)
         c = self.t_embedder(t_abs) + self.r_embedder(r_abs) + self.w_embedder(w)
+        # ── Gen14 U9 ── vision into the MODULATION path. Fully skipped in 'token', so
+        # that mode stays BIT-IDENTICAL to U8 (G-B9 asserts it) — this is an added branch,
+        # never an added no-op arithmetic term.
+        if self.use_visual and self.vis_cond_mode in ('adaln', 'both'):
+            c = c + self.vis_projector(self._pool_cond(cond))
 
         for block in self.blocks:
             x = block(x, c)
