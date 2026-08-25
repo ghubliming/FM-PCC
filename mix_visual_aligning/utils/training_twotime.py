@@ -197,14 +197,39 @@ class Trainer(object):
         self.vis_lr_scale = float(vis_lr_scale)
         self.vis_param_group = False
         if self.vis_lr_scale != 1.0:
-            enc = getattr(getattr(diffusion_model, 'model', None), 'velocity_net', None)
-            enc = getattr(enc, 'obs_encoder', None) if enc is not None else None
+            # 🔴 RESOLVE THE ENCODER THROUGH THE WRAPPER'S OWN HELPER (job 25043, 2026-08-25).
+            # The first version of this reached for `diffusion_model.model.velocity_net` and
+            # died, because `.model` is the ENGINE (MeanFlowEngine / AlphaFlowEngine) and
+            # `velocity_net` lives one level further down on the trajectory model. That is the
+            # SAME engine-vs-trajectory-model confusion that broke G-B2/G-B3 in U8 and that
+            # `gates_mix_visual._vnet()` exists to absorb; hard-coding the chain here repeated
+            # it. `VisualMeanFlow._visual_backbone()` / `VisualAlphaFlow._visual_backbone()`
+            # (visual_mf_diffusion.py:39, visual_af_diffusion.py:38) are the single source of
+            # truth for that walk, so ask them; the explicit chain stays only as a fallback.
+            enc, probed = None, []
+            _bb = getattr(diffusion_model, '_visual_backbone', None)
+            if callable(_bb):
+                try:
+                    enc = getattr(_bb(), 'obs_encoder', None)
+                    probed.append('_visual_backbone().obs_encoder')
+                except Exception as e:                    # a wrapper whose walk does not apply
+                    probed.append(f'_visual_backbone() raised {type(e).__name__}')
+            if enc is None:
+                node = diffusion_model
+                for step in ('model', 'model', 'velocity_net'):
+                    node = getattr(node, step, None)
+                    if node is None:
+                        break
+                enc = getattr(node, 'obs_encoder', None) if node is not None else None
+                probed.append('model.model.velocity_net.obs_encoder')
             if enc is None:
                 raise ValueError(
-                    '[ utils/training ] vis_lr_scale != 1.0 but no obs_encoder was found at '
-                    'model.velocity_net.obs_encoder. Refusing to train with a silently '
-                    'ignored encoder LR — this is exactly the class of bug that produces a '
-                    'null result nobody can explain.')
+                    f'[ utils/training ] vis_lr_scale={self.vis_lr_scale} but no obs_encoder '
+                    f'could be resolved on {type(diffusion_model).__name__}. Tried: '
+                    f'{", ".join(probed)}. If this is a STATE-ONLY run (if_vision=False) there '
+                    'is no encoder to scale and vis_lr_scale must stay 1.0. Refusing to train '
+                    'with a silently ignored encoder LR — that is exactly the class of bug '
+                    'that produces a null result nobody can explain.')
             vis_ids = {id(q) for q in enc.parameters()}
             vis_p = [q for q in diffusion_model.parameters() if id(q) in vis_ids]
             rest_p = [q for q in diffusion_model.parameters() if id(q) not in vis_ids]

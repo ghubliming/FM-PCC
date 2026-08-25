@@ -359,6 +359,59 @@ All fixes are **config-plumbing / gate / logging only** — no model, no trainin
 The gate battery is now: the six U8 bone gates (green twice), `gb8` / `gb9` / `gb11` (green twice),
 `gb7` restored to its long-passing form, and `G0`–`G7` (green twice).
 
+### 6b.6 R1 first attempt — job 25043: the guard fired, correctly, on my own bug
+
+`MIX_BONE_MF=mf_dit MIX_VIS_PRETRAINED=1 MIX_VIS_LR_SCALE=0.1 MIX_VIS_COND=adaln`, seed 6.
+
+**Everything U9 adds resolved correctly.** The log confirms, on real hardware, three things that had
+only been argued before:
+
+```
+[ train ] U9: vis_pretrained=1  vis_lr_scale=0.1  vis_cond_mode=adaln
+savepath  ..._Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6
+[ VisualDiTTwoTime ] vis_pretrained=True  (ImageNet ResNet-18 init)
+[ VisualDiTTwoTime ] vis_cond_mode=adaln  (visual tokens in sequence: 0)
+```
+
+* **The path key renders exactly as predicted** — `_VPTrue_VLR0.1_VCadaln`. This is the empirical
+  answer to §6b.4's open question about how `watch()` renders a `bool` and a `float`, and it settles
+  the manual R1-vs-R4 check: **R1 cannot overwrite R4.**
+* `pretrained=True` reached torchvision (`weights=ResNet18_Weights.IMAGENET1K_V1` in the warning).
+* `adaln` reached the bone and removed the visual token from the sequence.
+* The §6b.3 log fix works: `visual tokens in sequence: 0` is now the *correct* report for `adaln`,
+  not the lie it used to be for the RoPE bones.
+
+Then the trainer refused to start:
+
+```
+ValueError: vis_lr_scale != 1.0 but no obs_encoder was found at model.velocity_net.obs_encoder.
+```
+
+**The guard worked. The accessor behind it did not.** `Trainer` receives the *diffusion wrapper*
+(`VisualMeanFlow`), whose `.model` is the **engine**; `velocity_net` lives one level further down on
+the trajectory model:
+
+```
+VisualMeanFlow -> .model (MeanFlowEngine) -> .model (MFTrajectoryModel) -> .velocity_net -> .obs_encoder
+```
+
+This is the **same engine-vs-trajectory-model confusion that broke G-B2/G-B3 in U8**, and the reason
+`gates_mix_visual._vnet()` exists. I hard-coded the chain in the trainer instead of asking the object,
+and repeated the bug one layer over.
+
+**Fix:** resolve through the wrapper's own helper, `_visual_backbone()`
+(`visual_mf_diffusion.py:39`, `visual_af_diffusion.py:38`) — the single source of truth for that walk
+— keeping the explicit chain only as a fallback, and naming every path tried in the error text.
+Verified against stand-ins mirroring the real class structure: the job-25043 layout now resolves via
+`_visual_backbone()`, a state-only model still raises (correctly — there is no encoder to scale), and
+the old accessor is confirmed to return `None`.
+
+G0 re-verified: `training_twotime.py` at **+109/−3**, pin held.
+
+**Worth stating plainly:** this failure cost ~90 seconds of dataset loading, not a GPU-week. The
+guard was written precisely so a silently-ignored encoder LR could not become a null result nobody
+could explain — and the first thing it caught was my own mistake.
+
 ---
 
 ## 7. Honest caveat
