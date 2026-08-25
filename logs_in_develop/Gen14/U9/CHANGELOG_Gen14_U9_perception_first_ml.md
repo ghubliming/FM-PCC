@@ -287,10 +287,77 @@ line above it. Fixed with a `use_visual` fallback. No behaviour changed; the mod
 A log line that lies about the architecture is worse than no log line, and this generation has been
 bitten by exactly that class of thing before.
 
-### 6b.4 Status
+### 6b.4 🔴 SECOND FAILURE (job 25038), the root cause, and the revert
 
-Both fixes are **gate/logging only**. `G0` re-verified after them: 17/17 verbatim, 6/6 pins. Re-run
-`gates_mix_visual.sh bone` to confirm G-B7, then the run matrix is unblocked.
+The re-run failed the same gate, one arm over:
+
+```
+GB7 ERROR: ValueError: MIX_VIS_COND='adaln' needs an adaLN bone,
+           but the 'af' arm is on ml_bone='unet'.
+```
+
+**§6b.2's fix treated the symptom.** Clearing the env in `_load()` was necessary but not sufficient,
+because the *new probe added in that same fix* used the **bare** `MIX_VIS_COND=adaln`. This config
+module **defines all four arms on import**, so the bare form reached `_mix_u9_keys('af')` while
+`_ml_bone('af')` still returned `unet`. The `MIX_FILM_MODE` comment in the config warns about exactly
+this hazard; I did not apply it to my own knob.
+
+#### The root cause: a config module that could refuse to import
+
+A validity check spanning **two independent knobs** does not belong in a module that is imported for
+**every arm at once**. Raising there made the config unimportable for any arm whose bone is not
+adaLN — which is most arms, most of the time — and it took the gate down twice, on two different
+arms, before that became obvious.
+
+**Fix (kept): drop, do not raise.** `config/aligning-d3il-visual.py` now drops `vis_cond_mode` for a
+non-adaLN bone and prints a one-line stderr note. What genuinely needed preventing was a **lying path
+key** — a `_VCadaln` fragment on a checkpoint whose bone ignored the setting — and dropping the key
+prevents exactly that, the same treatment `film_mode` gets on a DiT bone. The **hard** failure now
+lives only where the arm is known, and still fires in both places:
+
+| Layer | When it fires |
+|---|---|
+| `train_mix_visual_aligning.sh` + `mix_visual_aligning_pipeline.sh` | **submit time**, before a GPU is allocated |
+| `VisualDiTTwoTime.__init__` | **build time**, the backstop |
+| `config/aligning-d3il-visual.py` | never raises — drops the key and warns |
+
+Verified locally on the isolated resolver; both failing environments now return cleanly:
+
+| environment | `mf` | `af` |
+|---|---|---|
+| job 25034 (bare adaln, no bone) | `{}` | `{}` |
+| job 25038 (bare adaln + `MIX_BONE_MF`) | all 3 keys | 2 keys, `vis_cond_mode` dropped |
+| R1 as the sbatch narrows it | all 3 keys | `{}` |
+
+#### The revert: G-B7 is back to its pre-U9 form
+
+Both failures were in **code I added**, never in the checks that had passed since U8. So `gate_gb7`
+is now **byte-identical to `2368aa1a`** — verified — and the U9 probe, the `_BONE_COUPLED` tuple and
+the U9 path-key assertions are gone. With the config no longer raising, the original simple `_load()`
+is safe again: an ambient `MIX_VIS_COND` can no longer make the module unimportable.
+
+`gb8` / `gb9` / `gb11` are untouched and all three PASSED on both cluster runs.
+
+🔴 **What the revert costs, and the manual check that replaces it.** Nothing now *automatically*
+asserts that a U9 run gets its own `exp_name`. If that ever broke, **R1 would overwrite R4** and the
+headline run would destroy its own control. The replacement is a two-second eyeball on the `savepath`
+line each train job already prints:
+
+* **R4** → `..._Bmf_dit_Emf_tslogit_normal/6` — **no** `_VP` / `_VLR` / `_VC` fragments
+* **R1** → the same, **plus** `_VPTrue_VLR0.1_VCadaln`
+
+If R1's savepath is missing those fragments, **kill the job** — it is about to train into R4's
+directory. The path-key logic itself was verified locally (table above); the untested part is only
+how `watch()` renders a `bool` and a `float`, and `if_vision` already renders as `VTrue` in every
+existing path, so the shape is known.
+
+### 6b.5 Status
+
+All fixes are **config-plumbing / gate / logging only** — no model, no training, no control code.
+`G0` re-verified after every edit: 17/17 verbatim, 6/6 pins.
+
+The gate battery is now: the six U8 bone gates (green twice), `gb8` / `gb9` / `gb11` (green twice),
+`gb7` restored to its long-passing form, and `G0`–`G7` (green twice).
 
 ---
 

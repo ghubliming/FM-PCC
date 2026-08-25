@@ -1,6 +1,7 @@
 from diffuser.utils import watch
 import yaml
 import os
+import sys                     # Gen14 U9 — stderr notes from _mix_u9_keys()
 
 # Read the threshold dynamically from the YAML config, abort if not found
 with open('config/visual_aligning_eval.yaml', 'r') as f:
@@ -1303,14 +1304,32 @@ def _mix_u9_keys(engine):
             raise ValueError(
                 f"CRITICAL: MIX_VIS_COND='{raw}' is not one of token|adaln|both.")
         if raw != _U9_DEFAULTS['vis_cond_mode']:
-            # Guarded here as well as in VisualDiTTwoTime: a RoPE bone has no adaLN path,
-            # and a knob that is silently ignored is how a null result gets manufactured.
-            if raw != 'token' and _ml_bone(engine) not in ('mf_dit', 'sit'):
-                raise ValueError(
-                    f"CRITICAL: MIX_VIS_COND='{raw}' needs an adaLN bone, but the '{engine}' "
-                    f"arm is on ml_bone='{_ml_bone(engine)}'. Set MIX_BONE_{engine.upper()}"
-                    "=mf_dit (mf) or sit (af).")
-            out['vis_cond_mode'] = raw
+            # 🔴 DROP, DO NOT RAISE (jobs 25034 / 25038, 2026-08-25).
+            #
+            # This module defines ALL FOUR arms on import, and a bare MIX_VIS_COND rides
+            # along to every one of them. Raising here made the whole config UNIMPORTABLE
+            # for any arm whose bone is not adaLN -- which is most of them, most of the
+            # time -- and it took down G-B7 twice: once on 'mf', then on 'af'. A config
+            # module that cannot be imported is a worse failure than the one being guarded.
+            #
+            # What actually needs preventing is a LYING PATH KEY: a '_VCadaln' fragment on
+            # a checkpoint whose bone has no adaLN pathway and ignored the setting. Dropping
+            # the key prevents exactly that, with no collateral damage -- the same treatment
+            # film_mode gets on a DiT bone (_DROP in _mix_bone_keys).
+            #
+            # The HARD failure lives where the arm is actually known, which is where it
+            # belongs and where it still fires:
+            #   * Slurm_Codes/.../train_mix_visual_aligning.sh and the pipeline -- at SUBMIT
+            #     time, before a GPU is allocated;
+            #   * VisualDiTTwoTime.__init__ -- at build time, as the backstop.
+            bone = _ml_bone(engine)
+            if bone not in ('mf_dit', 'sit'):
+                print(f"[ config ] NOTE: MIX_VIS_COND='{raw}' ignored for the '{engine}' arm "
+                      f"(ml_bone='{bone}' has no adaLN pathway); the key is dropped so no "
+                      f"'_VC{raw}' fragment lands in a path that did not use it. Use "
+                      f"MIX_VIS_COND_{engine.upper()} to target one arm.", file=sys.stderr)
+            else:
+                out['vis_cond_mode'] = raw
 
     return out
 

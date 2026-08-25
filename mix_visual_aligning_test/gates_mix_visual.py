@@ -584,6 +584,18 @@ def gate_gb45(device='cuda'):
     return ok
 
 
+# ── Gen14 U9 (2026-08-25) ──────────────────────────────────────────────────────────────
+# G-B7 is RESTORED to its pre-U9 form. The U9 additions I put here failed on the cluster
+# twice (jobs 25034, 25038) and both failures were in the added code, never in the checks
+# below — which have passed since U8. The ROOT CAUSE was `_mix_u9_keys()` raising for an arm
+# nobody was running; that is fixed in config/aligning-d3il-visual.py (drop the key, warn,
+# never raise), which is also why this simpler `_load()` is safe again: an ambient
+# MIX_VIS_COND no longer makes the config unimportable.
+#
+# The one thing lost with the additions is an automatic check that a U9 run gets its own
+# exp_name (R1 must not overwrite R4). That is now a MANUAL check: the train log's `savepath`
+# line for an R1 run must carry the _VP/_VLR/_VC fragments and the R4 one must not.
+# See logs_in_develop/Gen14/U9/CHANGELOG_...md §6b.
 def gate_gb7():
     """G-B7 — path identity: two bones must NOT collide in one checkpoint directory.
 
@@ -596,21 +608,8 @@ def gate_gb7():
     ok = True
     path = os.path.join('config', 'aligning-d3il-visual.py')
 
-    # 🔴 Gen14 U9 (job 25034, 2026-08-25). This gate SWEEPS ml_bone, so it must clear every
-    # variable whose validity DEPENDS on the bone — not just MIX_BONE*. MIX_VIS_COND is
-    # cross-checked against the resolved bone in _mix_u9_keys(), so an ambient
-    # MIX_VIS_COND=adaln inherited through --export=ALL made `_load({})` (the ml_bone='unet'
-    # probe) raise, and G-B7 died with a ValueError. The GUARD was right — adaln on a U-Net
-    # is a silently-ignored knob — the gate was the thing not isolating its own inputs.
-    # Any future bone-coupled env var belongs in this tuple.
-    _BONE_COUPLED = ('MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF',
-                     'MIX_VIS_COND', 'MIX_VIS_COND_MF', 'MIX_VIS_COND_AF',
-                     'MIX_VIS_PRETRAINED', 'MIX_VIS_PRETRAINED_MF', 'MIX_VIS_PRETRAINED_AF',
-                     'MIX_VIS_LR_SCALE', 'MIX_VIS_LR_SCALE_MF', 'MIX_VIS_LR_SCALE_AF')
-    _saved = {k: os.environ[k] for k in _BONE_COUPLED if k in os.environ}
-
     def _load(env):
-        for k in _BONE_COUPLED:
+        for k in ('MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF'):
             os.environ.pop(k, None)
         os.environ.update(env)
         spec = importlib.util.spec_from_file_location('_cfg_probe', path)
@@ -621,15 +620,9 @@ def gate_gb7():
     try:
         b_unet = _load({})['mix_visual_aligning_mf']
         b_dit = _load({'MIX_BONE_MF': 'mf_dit'})['mix_visual_aligning_mf']
-        # Gen14 U9 — the three U9 knobs are PATH KEYS too, so they get the same treatment
-        # ml_bone gets above: absent at the defaults, present when set.
-        b_u9 = _load({'MIX_BONE_MF': 'mf_dit', 'MIX_VIS_PRETRAINED': '1',
-                      'MIX_VIS_LR_SCALE': '0.1', 'MIX_VIS_COND': 'adaln'}
-                     )['mix_visual_aligning_mf']
     finally:
-        for k in _BONE_COUPLED:
+        for k in ('MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF'):
             os.environ.pop(k, None)
-        os.environ.update(_saved)          # leave the caller's env exactly as we found it
         sys.modules.pop('_cfg_probe', None)
 
     # 🔴 The U-Net block must NOT define ml_bone: watch() skips undefined keys, which is what
@@ -661,37 +654,8 @@ def gate_gb7():
         print('  FAIL both bones produce the SAME exp_name — checkpoints WILL collide.')
     else:
         print(f'  ok   distinct exp_name templates (bone fragment present)')
-
-    # ── Gen14 U9 ── the same absent-when-default contract, for the three new path keys.
-    _u9 = ('vis_pretrained', 'vis_lr_scale', 'vis_cond_mode')
-    leaked = [k for k in _u9 if k in b_dit]
-    if leaked:
-        ok = False
-        print(f'  FAIL U9 keys present at their DEFAULTS: {leaked} — that changes every '
-              f'existing checkpoint path and orphans the U8 trees.')
-    else:
-        print('  ok   U9 keys absent at the defaults (U8 paths byte-identical)')
-    missing = [k for k in _u9 if k not in b_u9]
-    if missing:
-        ok = False
-        print(f'  FAIL U9 keys did NOT reach the block when set: {missing} — the run would '
-              f'train U9 settings into the DEFAULT directory and overwrite it.')
-    else:
-        print(f"  ok   U9 keys present when set: vis_pretrained={b_u9['vis_pretrained']}, "
-              f"vis_lr_scale={b_u9['vis_lr_scale']}, vis_cond_mode={b_u9['vis_cond_mode']!r}")
-    if str(b_u9['exp_name']) == exp_dit:
-        ok = False
-        print('  FAIL the U9 run produces the SAME exp_name as the plain mf_dit run — '
-              'R1 would overwrite R4.')
-    else:
-        print('  ok   U9 run gets its own exp_name (R1 cannot overwrite R4)')
-
     print('  G-B7 PASS' if ok else '  G-B7 FAIL')
     return ok
-
-
-
-
 
 def _fake_visual_batch(batch, horizon, device):
     import torch
