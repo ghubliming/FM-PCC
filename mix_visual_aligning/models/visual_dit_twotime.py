@@ -228,8 +228,18 @@ class VisualDiTTwoTime(nn.Module):
               f'(visual token {"ON" if latent_dim else "OFF"})')
         # ── Gen14 U9 ── the conditioning PATH is now a free variable, so it belongs in the
         # same line a reader checks to identify a run.
+        #
+        # 🔴 The two bone families count their visual tokens in DIFFERENT attributes: the
+        # adaLN pair exposes `num_visual_tokens`, while the RoPE pair keeps that count as a
+        # local and folds it into `prefix_tokens` (mf_dit_trajectory.py:306,319). Reading
+        # only the first name made this line print 'visual tokens in sequence: 0' for the
+        # RoPE bones in job 25034 — on a bone that DOES prepend one. A log line that lies
+        # about the architecture is worse than no log line, so fall back to `use_visual`.
+        _n_vis = getattr(self.backbone, 'num_visual_tokens', None)
+        if _n_vis is None:
+            _n_vis = int(bool(getattr(self.backbone, 'use_visual', False)))
         print(f'[ VisualDiTTwoTime ] vis_cond_mode={_vis_cond_mode}  '
-              f'(visual tokens in sequence: {getattr(self.backbone, "num_visual_tokens", 0)})')
+              f'(visual tokens in sequence: {_n_vis})')
 
         # dual_head / interval_cfg are structural on the U-Net; on every transformer bone the
         # twin u/v FinalLayers are native and (omega, t_min, t_max) are always accepted, so

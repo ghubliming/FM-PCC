@@ -39,6 +39,7 @@ That is not a promise, it is checked three ways:
 | `mix_visual_aligning_test/probe_latent_informativeness.py` | **new** — the P2 probe | ✅ new file |
 | `config/aligning-d3il-visual.py` | `_mix_u9_keys()`, 3 watch-list entries, splat into the mf/af blocks | ✅ |
 | `Slurm_Codes/sbatch/mix_visual_aligning/train_mix_visual_aligning.sh` | 3 env knobs with narrowing + validation | ✅ |
+| `Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh` | same 3 knobs resolved + narrowed, and **added to `EXPORT_OPTS`** so the EVAL job resolves the same path keys as the train job | ✅ |
 
 **Deliberately NOT touched:** `mix_visual_aligning/models/visual_unet.py` (a G0 **VERBATIM** file —
 editing it would force it out of the ledger for no experimental gain; it is the fm/diffusion arm and
@@ -212,6 +213,84 @@ Full matrix (R0–R6, including the **non-optional** R6 init control) in PLAN §
 * Any statement about whether U9 moves the metric.
 
 **Nothing is committed.** No `git commit` was run, per the standing rule.
+
+---
+
+## 6b. FIRST CLUSTER RUN — job 25034, 2026-08-25, GIT REV `2368aa1`
+
+`gates_mix_visual.sh all` on `i6-gpu-1`. **16 of 17 PASS. The one failure was gate code, not model
+code, and the model path passed every substantive check.**
+
+### 6b.1 What passed
+
+| Gate | Result |
+|---|---|
+| **G-B9** | **PASS** — `token` state_dict **identical** to the pre-U9 build (387 tensors `mf_dit`, 367 `sit`). `adaln`: `num_visual_tokens=0`, `vis_token` absent, `d(out)/d(latent) = 2.41e-01` (mf) / `7.04e-01` (af). `both`: token present and responsive (`2.68e-01` / `5.94e-01`). **The additivity claim is now measured, not argued.** |
+| **G-B11** | **PASS** — `pretrained=True` is seed-independent across 120 tensors; `pretrained=False` is seed-dependent (control is not vacuous); trunks differ by `max abs(dw) = 1.27e+01`. **The ImageNet weights are in the cluster cache and really load.** |
+| **G-B8** | **PASS** — both wrappers carry the identical `rgb_model` spec including `'pretrained'`. |
+| **G0** | **PASS** — 17 verbatim files match; all 6 `GRAFTED_DIFF` pins hold at the values predicted here (`+92/−3`, `+86/−3`, `+84/−3`, and the two untouched RoPE bones at `+46/−4`). |
+| G-B1, G-B2, G-B3, G-B45, G-B6, G1–G7 | **PASS** — unchanged from U8, which is the point. |
+
+**torchvision resolved.** The warning `The current behavior is equivalent to passing
+weights=ResNet18_Weights.IMAGENET1K_V1` confirms the env is ≥ 0.13 (deprecation shim active) and
+< 0.15 (kwarg still accepted). `pretrained=` works here; no `weights=` migration is needed.
+
+### 6b.2 🔴 G-B7 FAIL — a gate that did not isolate its own inputs
+
+```
+GB7 ERROR: ValueError: CRITICAL: MIX_VIS_COND='adaln' needs an adaLN bone,
+           but the 'mf' arm is on ml_bone='unet'.
+```
+
+**Not a model defect, and the guard was right.** G-B7 exists to prove `ml_bone` is a path key, so it
+**sweeps** `ml_bone` by re-importing the config with different env settings. Its `_load()` helper
+cleared `MIX_BONE*` — and nothing else. An ambient `MIX_VIS_COND=adaln`, inherited into the job
+through `--export=ALL`, therefore survived into the `ml_bone='unet'` probe, where `_mix_u9_keys()`
+correctly refuses a knob the U-Net would silently ignore.
+
+The bug is that **a gate which varies X must clear everything whose validity depends on X.** U9 added
+a bone-coupled variable and G-B7 did not learn about it.
+
+**Fix (`gates_mix_visual.py`):**
+
+* `_BONE_COUPLED` now names all 12 bone-coupled variables; `_load()` clears the tuple, and any future
+  bone-coupled variable belongs in it.
+* The caller's environment is **restored** in the `finally` block instead of being silently eaten —
+  the old code left `MIX_BONE*` unset for every gate that ran after it.
+* Verified locally: the exact failing probe now returns `{}`, and the ambient value is restored.
+
+**And the gap it exposed got closed.** The three U9 knobs are path keys and *nothing asserted it*.
+G-B7 now also checks:
+
+* U9 keys **absent** at the defaults → U8 paths stay byte-identical, nothing is orphaned;
+* U9 keys **present** when set → a U9 run cannot train into the default directory and overwrite it;
+* the U9 `exp_name` **differs** from the plain `mf_dit` one → **R1 cannot overwrite R4.**
+
+That last assertion is worth more than the failure cost. It is the check that keeps the run matrix
+in PLAN §6 from silently collapsing into one directory.
+
+### 6b.3 A lying log line, found by reading the log
+
+Four times, for the RoPE bones:
+
+```
+[ VisualDiTTwoTime ] bone=dit_mf (MFDiTTrajectory) ... cond_dim=128 (visual token ON)
+[ VisualDiTTwoTime ] vis_cond_mode=token  (visual tokens in sequence: 0)   <-- WRONG
+```
+
+The two bone families count visual tokens in **different attributes**: the adaLN pair exposes
+`num_visual_tokens`, while the RoPE pair keeps that count as a local and folds it into
+`prefix_tokens` (`mf_dit_trajectory.py:306,319`). My print read only the first name with a default of
+`0`, so it reported *zero visual tokens* on a bone that does prepend one — directly contradicting the
+line above it. Fixed with a `use_visual` fallback. No behaviour changed; the model was always correct.
+
+A log line that lies about the architecture is worse than no log line, and this generation has been
+bitten by exactly that class of thing before.
+
+### 6b.4 Status
+
+Both fixes are **gate/logging only**. `G0` re-verified after them: 17/17 verbatim, 6/6 pins. Re-run
+`gates_mix_visual.sh bone` to confirm G-B7, then the run matrix is unblocked.
 
 ---
 

@@ -142,7 +142,42 @@ if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
     exit 1
 fi
 
+# -- Gen14 U9 -- PERCEPTION-FIRST knobs, resolved and narrowed exactly like ML_BONE above.
+# 🔴 ALL THREE ARE PATH KEYS (config: _mix_u9_keys -> '_VP..' / '_VLR..' / '_VC..'), so they
+# MUST reach the EVAL as well as the train job. An eval that does not see them rebuilds
+# diffusion_loadpath for the DEFAULT tree and dies on a missing checkpoint after the GPU is
+# already allocated -- the same class of bug the MIX_TRAIN_STEPS note below describes.
+# Exported EXPLICITLY rather than left to --export=ALL for exactly that reason.
+#
+# At the defaults (0 / 1.0 / token) _mix_u9_keys() returns {} and the path is the pre-U9 one,
+# so a bare pipeline invocation is completely unaffected by any of this.
+eval "VIS_PRETRAINED=\${MIX_VIS_PRETRAINED_${ENGINE_UC}:-\${MIX_VIS_PRETRAINED:-0}}"
+eval "VIS_LR_SCALE=\${MIX_VIS_LR_SCALE_${ENGINE_UC}:-\${MIX_VIS_LR_SCALE:-1.0}}"
+eval "VIS_COND=\${MIX_VIS_COND_${ENGINE_UC}:-\${MIX_VIS_COND:-token}}"
+case "$VIS_PRETRAINED" in
+    0|1|true|false) ;;
+    *) echo "ERROR: MIX_VIS_PRETRAINED='$VIS_PRETRAINED' is not 0|1|true|false."; exit 1 ;;
+esac
+case "$VIS_COND" in
+    token|adaln|both) ;;
+    *) echo "ERROR: MIX_VIS_COND='$VIS_COND' is not token|adaln|both."; exit 1 ;;
+esac
+if [ "$VIS_COND" != "token" ] && [ "$ML_BONE" != "mf_dit" ] && [ "$ML_BONE" != "sit" ]; then
+    echo "ERROR: MIX_VIS_COND='$VIS_COND' needs an adaLN bone (mf_dit|sit), got '$ML_BONE'."
+    echo "       The RoPE bones have no adaLN pathway -- the knob would be silently ignored."
+    exit 1
+fi
+
 EXPORT_OPTS="--export=ALL,MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE,MIX_BONE_${ENGINE_UC}=$ML_BONE"
+EXPORT_OPTS="$EXPORT_OPTS,MIX_VIS_PRETRAINED_${ENGINE_UC}=$VIS_PRETRAINED"
+EXPORT_OPTS="$EXPORT_OPTS,MIX_VIS_LR_SCALE_${ENGINE_UC}=$VIS_LR_SCALE"
+EXPORT_OPTS="$EXPORT_OPTS,MIX_VIS_COND_${ENGINE_UC}=$VIS_COND"
+if [ "$VIS_PRETRAINED" = "0" ] && [ "$VIS_LR_SCALE" = "1.0" ] && [ "$VIS_COND" = "token" ]; then
+    echo "[ pipeline ] U9 knobs = ALL DEFAULT (pre-U9 behaviour; checkpoint path unchanged)"
+else
+    echo "[ pipeline ] U9: vis_pretrained=$VIS_PRETRAINED vis_lr_scale=$VIS_LR_SCALE vis_cond_mode=$VIS_COND"
+    echo "[ pipeline ]     🔴 PATH KEYS -- this run lands in its own tree, carried to BOTH stages."
+fi
 
 # ── Training budget / resume / save cadence, carried onto BOTH child stages ──────────────
 # 🔴 MIX_TRAIN_STEPS MUST reach the EVAL, not just the train job. It is a checkpoint-path
