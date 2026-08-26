@@ -15,3 +15,4 @@
 - [DA target = best variant of DPCC K20/aw10](da-target-is-best-baseline-variant.md) — paper baseline is pinned to K20+aw10+GaussianDiffusion; pick its best projection variant as Target (other K = additional/conservative check); beating it on ANY axis (S&C held) = win; run in every DA
 - [MeanFlow-family upstreams in aux_repo](meanflow-family-upstreams.md) — MeanFlow (PyTorch, only real iMF trainer) vs imeanflow (JAX official, torch branch inference-only) vs alphaflow (bootstrapped target, α-anneal)
 - [Visual-transformer refs in aux_repo](visual-transformer-refs-auxrepo.md) — diffusion_policy (= true upstream of D3IL's vision encoder) + act, pulled 2026-08-20 for Gen14 U8
+- [UAV budget_ms/33 Hz is not a target](uav-budget-ms-not-a-goal.md) — data-rate artefact + cluster latency; never report as real-time pass/fail

@@ -986,7 +986,11 @@ base = {
     'plan': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,
+        # Gen0 DPCC baseline fan (FMPCC_MPC_BATCH). No arm C here, so this is the ONLY fan in
+        # the block — nothing to match against and no B4_PARITY warning to emit. scripts/eval.py
+        # auto-tags a non-default fan onto custom_msg so an mpc1 run cannot land on the mpc4
+        # baseline (`batch_size` is not a folder token; `_msg_suffix` in exp_name below is).
+        'batch_size': _mpc_batch,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,

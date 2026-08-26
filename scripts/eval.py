@@ -58,6 +58,35 @@ constraint_types = config['constraint_types']
 # resolved threshold here makes a repeat of that failure visible in the first lines of the log.
 print(f"[ eval ] diffusion_timestep_threshold (from YAML) = {config.get('diffusion_timestep_threshold', '<MISSING>')}")
 
+# ── MPC CANDIDATE FAN — the Gen0 DPCC baseline arm (Gen3v6/Gen3v7/Gen12 sync) ─────────────
+# `args.batch_size` is the DPCC candidate pool: the policy samples B trajectories, projects
+# each one, and `trajectory_selection` keeps one. Until now it was a hardcoded 4 in the
+# `plan` block, so the control "hold the baseline at a single candidate" — the one that
+# isolates how much of DPCC's success rate is MPC candidate SELECTION rather than the
+# projector — could not be expressed. config/avoiding-d3il.py now reads FMPCC_MPC_BATCH.
+#
+# Unlike the arm-A/B/C generations there is NO arm C here, so this is the only fan in the
+# run: nothing to match against, and no B4_PARITY mismatch warning to emit.
+#
+# ⚠️ At a fan of 1 the selection rules collapse: dpcc-r/-c/-t all execute index 0
+#    (sampling/policies.py — `which_trajectory = 0` in every branch), so the trio is
+#    redundant compute rather than three arms.
+mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+if mpc_batch < 1:
+    raise ValueError(f'FMPCC_MPC_BATCH must be >= 1, got {mpc_batch}')
+# 🔴 PATH COLLISION GUARD — `batch_size` is NOT a results-folder token, so an mpc4 and an
+# mpc1 run at the same H/K/T would write to the SAME directory and clobber each other.
+# Promoting it to a real token would rename every historic DPCC path, so a non-default fan
+# auto-tags itself through the existing custom-message slot (`custom_msg` in the `plan`
+# block, appended by `_msg_suffix` in its exp_name) instead. An explicit FMPCC_RUN_MSG
+# always wins. Must be set BEFORE the first Parser().parse_args(), which is what imports
+# config/<exp>.py — a later write would be too late for both the fan and the folder name.
+if mpc_batch != 4 and not os.environ.get('FMPCC_RUN_MSG'):
+    os.environ['FMPCC_RUN_MSG'] = f'mpc{mpc_batch}'
+    print(f'[ eval ] non-default mpc fan -> auto-tagged results path with '
+          f'FMPCC_RUN_MSG=mpc{mpc_batch} (set it yourself to override)')
+print(f'[ eval ] mpc fan: DPCC baseline arm={mpc_batch}')
+
 for exp in exps:
     for halfspace_variant in halfspace_variants:
         robot_name = exp.split('-')[0]

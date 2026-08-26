@@ -240,7 +240,7 @@ When running the next auto-update, only process commits **strictly after** this 
 
 | Field | Value |
 |---|---|
-| **Commit hash** | `7111fb25` |
-| **Commit message** | `(aggregated_hardflow_lowK;)feat: implement hardflow step budget calculation and degeneracy tracking in evaluation pipelines to distinguish between genuine hardflow and sample-then-project behavior.` |
-| **Commit date** | 2026-08-24 12:54:32 UTC |
-| **What was recorded** | Full MPC-fan parity (`FMPCC_MPC_BATCH`), candidate selection deconfounding, and DPCC vs HardFlow parity evaluation on `avoiding-d3il` (`83471f8d`, `a649a708`); Aggregated HardFlow terminal step zero-weight NFE pruning, low-K degeneracy proof ($n_{\text{genuine}}=0$ sample-then-project), 3-tier regime engine (`hardflow_regime`), runtime warn-once diagnostics (`[DEGENERATE]`, `[THIN]`, `[NLP-FAILURE]`), and stale gate synchronization (`96e47ac0`, `7111fb25`). |
+| **Commit hash** | `6c2df738` |
+| **Commit message** | `(Gen14 U9 hotfix)fix: resolve encoder access in Trainer to prevent silent failures with visual learning rate scaling` |
+| **Commit date** | 2026-08-25 06:34:05 UTC |
+| **What was recorded** | Gen14 U9 perception-first architecture upgrade: ImageNet initialization (`vis_pretrained`, `get_resnet`), GroupNorm decalibration discovery (40 `BatchNorm2d` replacements, 19.2k parameters), two-group optimizer with scaled visual learning rate (`vis_lr_scale`, `lr_vis`), vision-as-modulation (`vis_cond_mode='adaln'`) on adaLN transformer bones (`mf_dit_official`, `af_sit`), P2 latent informativeness ridge probe (`probe_latent_informativeness.py`), verification gates G-B8/G-B9/G-B11, and cluster incident fixes for config import isolation and `_visual_backbone` resolution (`2368aa1a`, `aaee819e`, `fd8c311f`, `6c2df738`). |

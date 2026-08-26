@@ -75,8 +75,20 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
 fi
 
 # 4) Run DPCC Evaluation
+#
+# 🔵 FMPCC_MPC_BATCH — the DPCC candidate fan (`args.batch_size` in the `plan` block of
+#    config/avoiding-d3il.py): B trajectories are sampled, each is projected, and
+#    `trajectory_selection` keeps one. Gen0 has no arm C, so this is the ONLY fan here.
+#      FMPCC_MPC_BATCH=1 <submit>   -> single candidate; isolates how much of DPCC's success
+#                                      rate comes from MPC candidate SELECTION vs the projector.
+#    Projection is a per-candidate serial loop (scipy SLSQP), so the fan scales projection
+#    wall-time almost linearly. A non-default fan auto-tags its results path `_msgmpc<N>`
+#    (scripts/eval.py) so it cannot clobber the mpc4 baseline. Default 4 => unchanged.
+export FMPCC_MPC_BATCH="${FMPCC_MPC_BATCH:-4}"
+echo "[ dpcc ] FMPCC_MPC_BATCH=$FMPCC_MPC_BATCH (DPCC candidate fan)  FMPCC_RUN_MSG=${FMPCC_RUN_MSG:-<auto>}"
+
 cd "$REPO"
 
-python scripts/eval.py
+python scripts/eval.py "$@"
 
 echo "Evaluation completed successfully."
