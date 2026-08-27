@@ -648,67 +648,86 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
 # and sit well outside every planning surface on purpose.
 #
 # Env overrides: FMPCC_ALIGN_DIVERGENCE_ABORT=0 disables the guard entirely (old behaviour);
-# FMPCC_ALIGN_DIV_SLACK_M / FMPCC_ALIGN_DIV_LEAD_M retune the two thresholds.
+# FMPCC_ALIGN_DIV_SLACK_M / FMPCC_ALIGN_DIV_SPEED_MS retune the two live thresholds.
+#
+# v2 (2026-08-27) — the guard now reads the ARM, never the command. Deleted:
+#   `des_runaway`       |des_c_pos - c_pos|_xy > 0.25 m. Direction-blind lead check on a
+#                       free-running integrator: a large lead is a SYMPTOM that the episode
+#                       may be lost, never a measurement that the arm is. Direction-blind:
+#                       its UAV twin `p_des_runaway` treated a lagging climb (recoverable)
+#                       and a thrust-saturated dive (fatal) as the same 5 m.
+#   `des_out_of_arena`  the same signal expressed as a bound instead of a lead — it bounds the
+#                       COMMANDED point, which is not the robot either.
+# A runaway command with a stationary arm is now simply a failed rollout that runs out its
+# budget. Its plots stay readable via align_view_window() below, which scales to the ACTUAL
+# arm path and lets des_c_pos widen the window by at most ALIGN_VIEW_MAX_GROW core spans.
+# See logs_in_develop/aggregated_divergence_abort/CHANGELOG_20260827_div_abort_v2_scene_envelope.md
 ALIGN_DIVERGENCE_ABORT = os.environ.get(
     'FMPCC_ALIGN_DIVERGENCE_ABORT', '1').lower() not in ('0', 'false', 'no')
-ALIGN_DIV_SLACK_M = float(os.environ.get('FMPCC_ALIGN_DIV_SLACK_M', '0.30'))
-# The physical-table box, in the Franka frame: the reachable aligning area sits well inside
-# x∈[0,1.1], y∈[±0.9], z∈[0,1.0]. `align_divergence_arena` takes the UNION of this and the
-# declared workspace ⊕ slack, so with every geo entry shipped today (the widest is
-# x∈[0.20,0.80], y∈[±0.45]) THIS box is what actually bounds the guard — the slack knob only
-# takes effect if a future geo entry declares a workspace wider than the table itself.
-ALIGN_DIV_FALLBACK_LB = (-0.30, -1.20, -0.50)
-ALIGN_DIV_FALLBACK_UB = (1.60, 1.20, 1.50)
-# |des_c_pos − c_pos| IN XY: under D3IL's PD tracking the arm never lags its command by this
-# much unless the command itself ran away. XY-only deliberately — it is the same quantity the
-# eval already reports as `max_physical_tracking_error` (which is computed on [:2]), so the
-# threshold can be sanity-checked against real runs; z is left to the arena box, which avoids
-# tripping on any steady-state height offset between the commanded and the realised TCP.
-# 0.25 m is a quarter of the aligning table, i.e. far beyond any healthy tracking error.
-ALIGN_DIV_LEAD_M = float(os.environ.get('FMPCC_ALIGN_DIV_LEAD_M', '0.25'))
+ALIGN_DIV_SLACK_M = float(os.environ.get('FMPCC_ALIGN_DIV_SLACK_M', '0.15'))
+# The physical-table box, in the Franka frame — the "arm has left the building" bound, the
+# aligning twin of the UAV guard's `off_map`. Fires on POSITION ALONE.
+ALIGN_TABLE_LB = (-0.30, -1.20, -0.50)
+ALIGN_TABLE_UB = (1.60, 1.20, 1.50)
+# TASK ENVELOPE — the box the aligning task actually happens in: the WIDEST Cartesian surface
+# any shipped geo entry declares (x∈[0.30,0.70], y∈[±0.35], z∈[0.05,0.40] in
+# config/visual_aligning_eval.yaml), opened out to the reachable aligning area. A FIXED
+# property of the task, deliberately NOT `geo_config['workspace_bounds']`: the geo variants
+# SHRINK that box for ablations (`geo_bounds_only_1/2`, relaxed vs tight `combined_*`), and a
+# shrunken PLANNING box must never become an abort trigger — going outside it is exactly the
+# constraint violation the eval exists to measure. Keying off a fixed envelope means the same
+# motion aborts, or does not, identically under every variant.
+ALIGN_ROUTE_LB = (0.20, -0.45, 0.02)
+ALIGN_ROUTE_UB = (0.80, 0.45, 0.50)
+# `ee_overspeed`: TCP speed from a finite difference of c_pos across one control step
+# (RT_CONTROL_HZ). DISABLED BY DEFAULT (0 = off) and this is deliberate: unlike the UAV, where
+# a free fall from cruise altitude gives a hard physical constant to anchor the number to, the
+# arm has no such reference and no measured speed distribution in-repo. Shipping a guessed
+# threshold that fires ALONE is exactly the mistake `des_runaway` was. Measure `c_pos_history`
+# from a healthy cluster run first, then enable with FMPCC_ALIGN_DIV_SPEED_MS=<value>.
+ALIGN_DIV_SPEED_MS = float(os.environ.get('FMPCC_ALIGN_DIV_SPEED_MS', '0'))
 
 
-def align_divergence_arena(geo_config):
-    """(lb, ub) of the LOST-THE-ARM box: the UNION of the declared workspace box ⊕
-    ALIGN_DIV_SLACK_M and the physical fallback box.
-
-    The union — not the declared box alone — matters here: the aligning geo variants
-    deliberately SHRINK `workspace_bounds` for ablations (`geo_bounds_only_1/2`, relaxed vs
-    tight `combined_*`), and a shrunken PLANNING box must never become an abort trigger. Going
-    outside it is exactly the constraint violation the eval is there to measure. So the guard
-    can only ever fire once the arm/command has left the physical table area as well.
-    """
-    lb = np.array(ALIGN_DIV_FALLBACK_LB, dtype=float)
-    ub = np.array(ALIGN_DIV_FALLBACK_UB, dtype=float)
-    ws = (geo_config or {}).get('workspace_bounds')
-    if ws:
-        wlb = np.asarray(ws.get('lb', [-np.inf] * 3), dtype=float) - ALIGN_DIV_SLACK_M
-        wub = np.asarray(ws.get('ub', [np.inf] * 3), dtype=float) + ALIGN_DIV_SLACK_M
-        lb = np.where(np.isfinite(wlb), np.minimum(lb, wlb), lb)
-        ub = np.where(np.isfinite(wub), np.maximum(ub, wub), ub)
-    return lb, ub
+def align_route_envelope():
+    """(lb, ub) of the box the aligning task actually happens in, ⊕ ALIGN_DIV_SLACK_M."""
+    return (np.array(ALIGN_ROUTE_LB, dtype=float) - ALIGN_DIV_SLACK_M,
+            np.array(ALIGN_ROUTE_UB, dtype=float) + ALIGN_DIV_SLACK_M)
 
 
-def check_align_divergence(des, cpos, arena_lb, arena_ub):
-    """First unrecoverable condition this step trips → (reason, detail); else (None, '').
+def check_align_divergence(des, cpos, prev_cpos=None, dt=None):
+    """First lost-the-arm condition this step trips → (reason, detail); else (None, '').
 
+    Reads the ARM (`cpos`, and its finite-difference speed) — never the command's lead over
+    it. `des` is used only for the NaN check, because a non-finite command is an unambiguous
+    integrator blow-up rather than a judgement call about control authority.
     `reason` is a short greppable tag that lands in the stats JSON / npz / foresight SVG.
     """
     des = np.asarray(des, dtype=float).reshape(-1)[:3]
     cpos = np.asarray(cpos, dtype=float).reshape(-1)[:3]
     if not (np.all(np.isfinite(des)) and np.all(np.isfinite(cpos))):
         return 'nan_state', 'non-finite des_c_pos / c_pos — the command integrator blew up'
-    if np.any(des < arena_lb) or np.any(des > arena_ub):
-        return 'des_out_of_arena', (f'des_c_pos={np.round(des, 3).tolist()} left the arena box '
-                                    f'{np.round(arena_lb, 2).tolist()}..{np.round(arena_ub, 2).tolist()} '
-                                    f'(workspace ⊕ {ALIGN_DIV_SLACK_M:.2f} m)')
-    if np.any(cpos < arena_lb) or np.any(cpos > arena_ub):
-        return 'ee_out_of_arena', (f'c_pos={np.round(cpos, 3).tolist()} left the arena box '
-                                   f'{np.round(arena_lb, 2).tolist()}..{np.round(arena_ub, 2).tolist()}')
-    lead = float(np.linalg.norm(des[:2] - cpos[:2]))      # XY, matching max_physical_tracking_error
-    if lead > ALIGN_DIV_LEAD_M:
-        return 'des_runaway', (f'|des_c_pos-c_pos|_xy={lead:.3f} m > {ALIGN_DIV_LEAD_M:.2f} m — the '
-                               f'commanded point ran away from the arm (free-running integrator)')
+
+    if np.any(cpos < np.array(ALIGN_TABLE_LB)) or np.any(cpos > np.array(ALIGN_TABLE_UB)):
+        return 'off_table', (f'c_pos={np.round(cpos, 3).tolist()} is off the table box '
+                             f'{list(ALIGN_TABLE_LB)}..{list(ALIGN_TABLE_UB)} — the arm has '
+                             f'left the physical workspace entirely')
+
+    lo, hi = align_route_envelope()
+    off_route = [ax for ax, c, l, h in zip('xyz', cpos, lo, hi) if c < l or c > h]
+    if off_route:
+        return 'ee_off_route', (f'c_pos={np.round(cpos, 3).tolist()} is outside the aligning '
+                                f'task envelope {np.round(lo, 3).tolist()}..'
+                                f'{np.round(hi, 3).tolist()} on {"/".join(off_route)} '
+                                f'(task box ⊕ {ALIGN_DIV_SLACK_M:.2f} m) — the EE is nowhere '
+                                f'the task ever goes')
+
+    if ALIGN_DIV_SPEED_MS > 0 and prev_cpos is not None and dt:
+        prev = np.asarray(prev_cpos, dtype=float).reshape(-1)[:3]
+        if np.all(np.isfinite(prev)):
+            speed = float(np.linalg.norm(cpos - prev)) / float(dt)
+            if speed > ALIGN_DIV_SPEED_MS:
+                return 'ee_overspeed', (f'|v_ee|={speed:.3f} m/s > {ALIGN_DIV_SPEED_MS:.3f} m/s '
+                                        f'(finite difference of c_pos over one control step)')
     return None, ''
 
 
@@ -1114,7 +1133,7 @@ def _collect_per_rollout_arrays(agent):
         # Div_Abort: rollouts STOPPED early because the command ran away. An aborted row
         # covers fewer steps than a normal one, so downstream analysis must treat
         # divergence_aborted==1 separately rather than averaging it in blind. `reason` is
-        # '' for a normal rollout; nan_state / des_out_of_arena / ee_out_of_arena / des_runaway
+        # '' for a normal rollout; nan_state / off_table / ee_off_route / ee_overspeed
         # otherwise.
         divergence_aborted=np.array([1 if d.get('aborted') else 0
                                      for d in agent.history_divergence], dtype=np.int32),
@@ -2367,23 +2386,31 @@ class VisualAgentWrapper:
         # solves on a runaway command buys nothing. The EE holds position for the one step it
         # takes Aligning_Sim to notice `abort_episode` and break the episode loop.
         if ALIGN_DIVERGENCE_ABORT and not self.abort_episode:
-            _arena_lb, _arena_ub = align_divergence_arena(self.geo_config)
+            # `curr_rollout_c_pos` was appended with THIS step's position by the bookkeeping
+            # above, so [-2] is the previous step — the finite difference for `ee_overspeed`.
+            _prev_cpos = (self.curr_rollout_c_pos[-2]
+                          if len(self.curr_rollout_c_pos) >= 2 else None)
+            _route_lb, _route_ub = align_route_envelope()
             _reason, _detail = check_align_divergence(
-                des_robot_pos_np, robot_pos_np, _arena_lb, _arena_ub)
+                des_robot_pos_np, robot_pos_np,
+                prev_cpos=_prev_cpos, dt=1.0 / float(RT_CONTROL_HZ))
             if _reason is not None:
                 self.abort_episode = True
                 self.curr_rollout_divergence = {
                     'enabled': True, 'aborted': True, 'reason': _reason, 'detail': _detail,
                     'step': int(self.step_counter),
+                    # des_c_pos / lead are kept as DIAGNOSTICS only — neither is a trigger any
+                    # more (v2). The foresight SVG still draws the leader to the commanded point.
                     'des_c_pos': [float(c) for c in np.asarray(des_robot_pos_np, dtype=float).reshape(-1)[:3]],
                     'c_pos': [float(c) for c in np.asarray(robot_pos_np, dtype=float).reshape(-1)[:3]],
-                    'lead': float(np.linalg.norm(              # XY, see ALIGN_DIV_LEAD_M
+                    'lead': float(np.linalg.norm(
                         np.asarray(des_robot_pos_np, dtype=float).reshape(-1)[:2]
                         - np.asarray(robot_pos_np, dtype=float).reshape(-1)[:2])),
-                    'arena_lb': [float(c) for c in _arena_lb],
-                    'arena_ub': [float(c) for c in _arena_ub],
-                    'thresholds': {'arena_slack_m': ALIGN_DIV_SLACK_M,
-                                   'lead_m': ALIGN_DIV_LEAD_M},
+                    'route_lb': [float(c) for c in _route_lb],
+                    'route_ub': [float(c) for c in _route_ub],
+                    'table_lb': list(ALIGN_TABLE_LB), 'table_ub': list(ALIGN_TABLE_UB),
+                    'thresholds': {'route_slack_m': ALIGN_DIV_SLACK_M,
+                                   'ee_speed_ms': ALIGN_DIV_SPEED_MS},
                 }
                 print(f'[ Div_Abort ] rollout {self.rollout_counter}: ⚠ DIVERGENCE ABORT at step '
                       f'{self.step_counter} — reason={_reason}: {_detail}', flush=True)

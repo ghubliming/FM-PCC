@@ -235,8 +235,8 @@ def save_npz(out_dir, variant, rollouts, args_dict):
     # constraint counts cover only the steps actually flown, so downstream analysis must
     # treat divergence_aborted==1 rows separately rather than averaging them in blind.
     # `divergence_step` is the FM step the abort fired on (-1 when it never did) and
-    # `divergence_reason` the greppable tag (nan_state / out_of_arena / overspeed /
-    # p_des_runaway / inverted; '' when the rollout ended normally).
+    # `divergence_reason` the greppable tag (nan_state / off_map / off_route /
+    # overspeed / inverted; '' when the rollout ended normally).
     divergence_aborted = np.array([_b(r, 'divergence', 'aborted') for r in rollouts])
     divergence_step = np.array([_f(r, 'divergence', 'step', -1.0) for r in rollouts])
     divergence_reason = np.array([(r.get('divergence', {}) or {}).get('reason') or ''
