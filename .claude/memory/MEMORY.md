@@ -16,3 +16,4 @@
 - [MeanFlow-family upstreams in aux_repo](meanflow-family-upstreams.md) — MeanFlow (PyTorch, only real iMF trainer) vs imeanflow (JAX official, torch branch inference-only) vs alphaflow (bootstrapped target, α-anneal)
 - [Visual-transformer refs in aux_repo](visual-transformer-refs-auxrepo.md) — diffusion_policy (= true upstream of D3IL's vision encoder) + act, pulled 2026-08-20 for Gen14 U8
 - [UAV budget_ms/33 Hz is not a target](uav-budget-ms-not-a-goal.md) — data-rate artefact + cluster latency; never report as real-time pass/fail
+- [HardFlow low-K degeneracy](hardflow-low-K-degeneracy.md) — K1/K2 at A=0.5 run NO HardFlow math; tag rows ✅/❌ and build claims on ✅ only
