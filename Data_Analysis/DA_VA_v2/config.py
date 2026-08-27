@@ -207,6 +207,8 @@ VARIANT_ORDER = [
     'dpcc-r', 'dpcc-c', 'dpcc-t',
     'dpcc-c-dt0p25', 'dpcc-c-dt0p5', 'dpcc-c-dt2p0', 'dpcc-c-dt4p0',
     'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',
+    # [SolverSwap] SLSQP-backend twins — a separate corpus, never pooled with the above.
+    'hardflow_sls', 'hardflow_sls-r', 'hardflow_sls-c', 'hardflow_sls-t',
     'gradient',
     'post_processing',
     'model_free',
@@ -224,6 +226,7 @@ VARIANT_ORDER = [
 MAJOR_VARIANTS = [
     'dpcc-r', 'dpcc-c', 'dpcc-t',
     'hardflow_new-c', 'hardflow_new-r', 'hardflow_new-t',
+    'hardflow_sls-c', 'hardflow_sls-r', 'hardflow_sls-t',   # [SolverSwap]
     'diffuser',
 ]
 

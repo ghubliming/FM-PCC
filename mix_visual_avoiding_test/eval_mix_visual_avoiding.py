@@ -64,6 +64,8 @@ from mix_visual_avoiding.sampling.hardflow_projection import (
     build_hardflow_sampler, resolve_activation_threshold, resolve_hf_batch_size,
     resolve_engine_hf,
     hardflow_step_budget,          # HFK1 (2026-08-24)
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend,
 )
 from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 # REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder
@@ -588,8 +590,15 @@ for exp in exps:
                              if 'avoiding' in exp else f'{args.savepath}/results')
                 os.makedirs(save_path, exist_ok=True)
 
+                # [SolverSwap] 🔴 The artifact name carries the NLP backend, so an SLSQP run
+                # lands BESIDE the IPOPT corpus instead of overwriting it. Defined at the TOP
+                # of the variant loop because the aggregate-only reader and the per-variant log
+                # both need it before inference starts. Under 'ipopt' it is the old name
+                # unchanged, so nothing already on disk moves.
+                variant_out = artifact_variant_label(variant, resolve_nlp_backend())
+
                 if args_cli.aggregate_only:
-                    npz_path = os.path.join(save_path, f'{variant}.npz')
+                    npz_path = os.path.join(save_path, f'{variant_out}.npz')
                     if not os.path.exists(npz_path):
                         print(f'[ eval ] skipping {variant} seed {seed}: no npz at {npz_path}')
                         continue
@@ -604,7 +613,7 @@ for exp in exps:
                                 colors[seed % len(colors)], linewidth=2)
                     continue
 
-                log_file = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+                log_file = open(os.path.join(save_path, f'eval_{variant_out}.log'), 'w')
                 original_stdout = sys.stdout
                 sys.stdout = Tee(sys.stdout, log_file)
                 try:
@@ -970,7 +979,7 @@ for exp in exps:
                     if config.get('write_to_file', True):
                         _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
                                         if is_hardflow and flow_steps else (0, 0))
-                        np.savez(f'{save_path}/{variant}.npz',
+                        np.savez(f'{save_path}/{variant_out}.npz',
                                  n_success=n_success,
                                  n_success_and_constraints=n_success_and_constraints,
                                  n_steps=n_steps,
@@ -1014,7 +1023,7 @@ for exp in exps:
                                  sampled_trajectories_all=np.array(sampled_trajectories_all,
                                                                    dtype=object))
 
-                    fig.savefig(f'{save_path}/{variant}.png')
+                    fig.savefig(f'{save_path}/{variant_out}.png')
                     plt.close(fig)
                     ax_all[0, variant_idx].set_title(variant)
 

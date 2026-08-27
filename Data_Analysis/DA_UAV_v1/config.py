@@ -404,6 +404,8 @@ VARIANT_ORDER = [
     'dpcc-c', 'dpcc-c-tightened',
     'dpcc-t', 'dpcc-t-tightened',
     'hardflow_new', 'hardflow_new-c', 'hardflow_new-t',
+    # [SolverSwap] SLSQP-backend twins — a separate corpus, never pooled with the above.
+    'hardflow_sls', 'hardflow_sls-c', 'hardflow_sls-t',
     'gradient', 'gradient-tightened',
     'post_processing', 'post_processing-tightened',
     'model_free', 'model_free-tightened',
@@ -420,6 +422,8 @@ MAJOR_VARIANTS = [
     'dpcc-r', 'dpcc-c', 'dpcc-t',
     'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened',
     'hardflow_new', 'hardflow_new-c', 'hardflow_new-t',
+    # [SolverSwap] SLSQP-backend twins — headline arms on the new default backend.
+    'hardflow_sls', 'hardflow_sls-c', 'hardflow_sls-t',
 ]
 
 # Variants that run NO projector at all — their constraint columns describe the

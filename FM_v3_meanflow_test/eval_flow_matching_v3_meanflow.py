@@ -18,7 +18,9 @@ from flow_matcher_v3_meanflow.sampling.projection import Projector
 # Gen3v6 U3 — arm C: HardFlow in-loop constrained sampler (verbatim Gen12 port; queried at h=0).
 from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
     HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
-    hardflow_step_budget)          # HFK1 (2026-08-24)
+    hardflow_step_budget,          # HFK1 (2026-08-24)
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend)
 # REAL_TIME_RECORDING_UPDATE — per-step timing/digital-twin recorder (see logs_in_develop/REALTIME_RECORDING)
 from realtime_recording.behavior_logger import RTRecorder
 RT_CONTROL_HZ = 30   # REAL_TIME_RECORDING_UPDATE — assumed deployment loop rate (budget=1000/hz ms); tune per target hardware
@@ -438,10 +440,17 @@ for exp in exps:
             for variant_idx, variant in enumerate(projection_variants):
                 save_path = f'{args.savepath}/results/halfspace_{halfspace_variant}' if 'avoiding' in exp else f'{args.savepath}/results'
                 os.makedirs(save_path, exist_ok=True)
+
+                # [SolverSwap] 🔴 The artifact name carries the NLP backend, so an SLSQP run
+                # lands BESIDE the IPOPT corpus instead of overwriting it. Defined at the TOP
+                # of the variant loop because the aggregate-only reader and the per-variant log
+                # both need it before inference starts. Under 'ipopt' it is the old name
+                # unchanged, so nothing already on disk moves.
+                variant_out = artifact_variant_label(variant, resolve_nlp_backend())
                 
                 if args_cli.aggregate_only:
                     # LOAD DATA MODE
-                    npz_path = os.path.join(save_path, f'{variant}.npz')
+                    npz_path = os.path.join(save_path, f'{variant_out}.npz')
                     if not os.path.exists(npz_path):
                         print(f'[ eval ] skipping {variant} for seed {seed}, no results found at {npz_path}')
                         continue
@@ -458,7 +467,7 @@ for exp in exps:
                     continue
 
                 # INFERENCE MODE
-                log_file = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+                log_file = open(os.path.join(save_path, f'eval_{variant_out}.log'), 'w')
                 original_stdout = sys.stdout
                 sys.stdout = Tee(sys.stdout, log_file)
                 
@@ -776,7 +785,7 @@ for exp in exps:
                     if config['write_to_file']:
                         _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
                                         if is_hardflow and flow_steps else (0, 0))
-                        np.savez(f'{save_path}/{variant}.npz',
+                        np.savez(f'{save_path}/{variant_out}.npz',
                                  n_success=n_success,
                                  n_success_and_constraints=n_success_and_constraints,
                                  n_steps=n_steps,
@@ -813,7 +822,7 @@ for exp in exps:
                                  obs_all=np.array(obs_all, dtype=object),
                                  act_all=np.array(act_all, dtype=object),
                                  sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object))
-                    fig.savefig(f'{save_path}/{variant}.png')
+                    fig.savefig(f'{save_path}/{variant_out}.png')
                     plt.close(fig)
                     ax_all[0, variant_idx].set_title(variant)
                     

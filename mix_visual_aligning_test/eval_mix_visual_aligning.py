@@ -71,6 +71,8 @@ from mix_visual_aligning.sampling.hardflow_projection import (
     encode_visual_cond,
     resolve_activation_threshold,
     resolve_hf_batch_size,          # B4_PARITY (2026-08-20)
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend,
 )
 # Gen14 — the arm dispatch table. Every engine-specific branch lives there, not here.
 from mix_visual_aligning.models.engine_registry import (
@@ -3025,15 +3027,22 @@ if __name__ == '__main__':
             variant = geo_variant
             if args_cli.eval_on_train:
                 variant   = f'{variant}_train_set'
-                save_path = f'{args.savepath}/results_train_set/{geo_name}/{variant}'
+            # [SolverSwap] 🔴 The artifact name carries the NLP backend, so an SLSQP run
+            # lands BESIDE the IPOPT corpus instead of overwriting it. Aligning keys its
+            # whole per-variant DIRECTORY on this name, so isolating it here isolates
+            # every artifact inside (npz, partial sidecar, png, logs). Under 'ipopt' the
+            # label is the old name unchanged, so nothing already on disk moves.
+            variant_out = artifact_variant_label(variant, resolve_nlp_backend())
+            if args_cli.eval_on_train:
+                save_path = f'{args.savepath}/results_train_set/{geo_name}/{variant_out}'
             else:
-                save_path = f'{args.savepath}/results/{geo_name}/{variant}'
+                save_path = f'{args.savepath}/results/{geo_name}/{variant_out}'
             os.makedirs(save_path, exist_ok=True)
 
             if args_cli.aggregate_only:
                 continue
 
-            log_f = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+            log_f = open(os.path.join(save_path, f'eval_{variant_out}.log'), 'w')
             old_stdout, old_stderr = sys.stdout, sys.stderr
             sys.stdout = Tee(sys.stdout, log_f)
             sys.stderr = Tee(sys.stderr, log_f)
@@ -3202,7 +3211,9 @@ if __name__ == '__main__':
                     hf_sampler=hf_sampler,          # U7: arm C; None on every other variant
                     trajectory_selection=trajectory_selection,
                     eval_on_train=args_cli.eval_on_train,
-                    variant=variant,
+                    # [SolverSwap] the AGENT only uses this for naming (episode_id, realtime logs,
+                    # partial sidecar), so it gets the artifact label — otherwise those collide too.
+                    variant=variant_out,
                     max_action_delta=geo_config.get('max_action_delta', None),
                     mpc_foresight_stride=geo_config.get('mpc_foresight_stride', 6),
                     geo_config=geo_config,
@@ -3284,7 +3295,7 @@ if __name__ == '__main__':
                     nlp_backend_used = str(getattr(getattr(hf_sampler, 'nlp', None), 'nlp_backend', 'n/a'))
                     _npz_payload = _collect_per_rollout_arrays(agent)
                     np.savez(
-                        f'{save_path}/{variant}.npz',
+                        f'{save_path}/{variant_out}.npz',
                         success_rate=success_rate, entropy=entropy,
                         mode_encoding=mode_encoding.numpy(),
                         elapsed_seconds=elapsed, seed=seed,
@@ -3299,7 +3310,7 @@ if __name__ == '__main__':
                         **_npz_payload,
                     )
                     # C5: variant finished → drop the now-redundant crash-safety sidecar.
-                    _partial = os.path.join(save_path, f'{variant}.partial.npz')
+                    _partial = os.path.join(save_path, f'{variant_out}.partial.npz')
                     if os.path.exists(_partial):
                         try:
                             os.remove(_partial)
@@ -3413,7 +3424,7 @@ if __name__ == '__main__':
                         axes[i, 5].set_title(f'MPC Foresight — {n_cands} candidates/step')
 
                     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-                    fig.savefig(f'{save_path}/{variant}.png')
+                    fig.savefig(f'{save_path}/{variant_out}.png')
                     plt.close(fig)
 
                 # ── Aligning eval summary ────────────────────────────────────

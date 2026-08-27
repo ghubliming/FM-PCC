@@ -74,7 +74,9 @@ from diffuser.utils import provenance   # U10.1 — env-override provenance (sha
 # `hardflow*` variant is actually requested.
 from mix_uav.sampling.hardflow_projection import (
     HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
-    hardflow_step_budget)          # HFK1 (2026-08-24)
+    hardflow_step_budget,          # HFK1 (2026-08-24)
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend)
 from mix_uav.models import engine_registry
 import mix_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
@@ -1668,7 +1670,12 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     _seed_str   = os.path.basename(parsed.savepath)
     seed_dir    = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str)
     geo_dir     = os.path.join(seed_dir, config.get('geo_tag', scene))
-    out_dir     = os.path.join(geo_dir, variant)
+    # [SolverSwap] 🔴 The output folder carries the NLP backend, so an SLSQP run lands
+    # BESIDE the IPOPT corpus instead of overwriting it. Under 'ipopt' the label is the
+    # old name unchanged, so nothing already on disk moves. Isolating the DIRECTORY
+    # isolates the npz, the eval log, the plots and the diagnostics in one move.
+    variant_out = artifact_variant_label(variant, resolve_nlp_backend())
+    out_dir     = os.path.join(geo_dir, variant_out)
     diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
 
@@ -1909,9 +1916,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     json_rollouts = artifacts.json_safe_rollouts(rollouts)
     with open(os.path.join(out_dir, 'results.json'), 'w') as f:
         json.dump({'summary': summary, 'rollouts': json_rollouts}, f, indent=2)
-    npz_path = artifacts.save_npz(out_dir, variant, rollouts, vars(args))
-    artifacts.write_eval_log(out_dir, variant, summary, rollouts)
-    artifacts.plot_overview(out_dir, variant, scene, rollouts)
+    npz_path = artifacts.save_npz(out_dir, variant_out, rollouts, vars(args))
+    artifacts.write_eval_log(out_dir, variant_out, summary, rollouts)
+    artifacts.plot_overview(out_dir, variant_out, scene, rollouts)
 
     # Fix_15.3: drop a greppable sentinel in the variant dir when the projection circuit breaker
     # tripped, so a tripped (UNPROJECTED, invalid-constraint) result is obvious from the file tree

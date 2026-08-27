@@ -31,7 +31,9 @@ from diffuser.utils import provenance   # U10.1 — env-override provenance (sha
 from flow_matcher_v3_hardflow.sampling.projection import Projector
 from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
     HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
-    hardflow_step_budget)          # HFK1 (2026-08-24)
+    hardflow_step_budget,          # HFK1 (2026-08-24)
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
@@ -366,7 +368,14 @@ for exp in exps:
                 # PLAN §3.6: refuse to clobber a finished dir.
                 save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}'
                              if 'avoiding' in exp else f'{args.savepath}/results')
-                npz_path = f'{save_path}/{variant}.npz'
+                # [SolverSwap] 🔴 artifact name carries the backend so an SLSQP run lands BESIDE
+                # the IPOPT corpus instead of overwriting it (the clobber guard below would
+                # otherwise just skip, or FORCE_OVERWRITE would destroy it). Resolved from the
+                # module because the policy does not exist yet; asserted against the live NLP
+                # once it does. IPOPT keeps the old name exactly, so nothing on disk moves.
+                nlp_backend_planned = resolve_nlp_backend()
+                variant_out = artifact_variant_label(variant, nlp_backend_planned)
+                npz_path = f'{save_path}/{variant_out}.npz'
                 if os.path.exists(npz_path) and not FORCE_OVERWRITE:
                     print(f'[ eval ] {npz_path} already exists — skipping. '
                           'Set FORCE_OVERWRITE=1 to re-run it.')
@@ -581,6 +590,12 @@ for exp in exps:
                 # U4/U4.2: also report the activation threshold and selection for arm C.
                 # [SolverSwap] the solver is now selectable, so it must be IN the log.
                 nlp_backend_used = str(getattr(getattr(policy, 'nlp', None), 'nlp_backend', 'n/a'))
+                # [SolverSwap] the filename was chosen before the policy existed. If the two ever
+                # disagree the run is about to write an SLSQP result into an IPOPT filename —
+                # fail loudly rather than corrupt the corpus.
+                assert not is_hardflow or nlp_backend_used == nlp_backend_planned, (
+                    f'nlp_backend mismatch: artifact named for {nlp_backend_planned!r} but the '
+                    f'NLP ran {nlp_backend_used!r} — refusing to mislabel {npz_path}')
                 hf_report = (f'  act_thr={hf_act_threshold:g}  sel={hf_selection}'
                              f'  nlp_backend={nlp_backend_used}'
                              if is_hardflow else '')
@@ -602,7 +617,7 @@ for exp in exps:
                     # DPCC's threshold now independently settable a run could otherwise be
                     # silently mislabeled (folder says thres0.1 while arms A/B ran at 0.5).
                     # Keep the two equal unless you deliberately want them to differ.
-                fig.savefig(f'{save_path}/{variant}.png')
+                fig.savefig(f'{save_path}/{variant_out}.png')
                 plt.close(fig)
                 ax_all[0, variant_idx].set_title(variant)
                 env.close()

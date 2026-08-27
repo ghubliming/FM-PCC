@@ -153,6 +153,37 @@ def resolve_nlp_backend(requested=None):
     return backend
 
 
+def artifact_variant_label(variant, backend=None):
+    """The name a result FILE gets for `variant` under `backend`.
+
+    🔴 This exists to stop a swap run from destroying the IPOPT corpus. Every eval
+    writes `{save_path}/{variant}.npz`, so re-running `hardflow_new-c-tightened` on
+    the new backend would overwrite the very rows chapters 1-3 of the DA are built
+    on — silently, and with no way back.
+
+        ipopt : returns `variant` UNCHANGED. Every pre-existing path stays exactly
+                what it was, so nothing already on disk moves or is reinterpreted.
+        slsqp : renames the stem, `hardflow_new-c-tightened` ->
+                `hardflow_sls-c-tightened`. The suffix grammar (-r/-c/-t,
+                -tightened) is untouched, and the name still starts with
+                'hardflow', so arm-C branching keeps working.
+
+    Non-HardFlow variants (diffuser, dpcc-*) are returned unchanged on both
+    backends: they never touch this NLP.
+
+    ⚠️ DA discovery uses explicit allow-lists of variant names, so a new label is
+    INVISIBLE until it is registered in the DA configs. That registration ships
+    with this change; a later variant needs the same treatment.
+    """
+    backend = resolve_nlp_backend(backend)
+    variant = str(variant)
+    if backend != 'slsqp' or not variant.startswith('hardflow'):
+        return variant
+    stem, sep, suffix = variant.partition('-')
+    stem = 'hardflow_sls' if stem in ('hardflow_new', 'hardflow') else f'{stem}_sls'
+    return f'{stem}{sep}{suffix}'
+
+
 class TrajectoryLayout:
     """Index bookkeeping for the flattened, s0-free trajectory vector.
 

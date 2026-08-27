@@ -109,11 +109,57 @@ Arms A/B (no NLP) record `'n/a'`, never a backend name.
 | `mix_uav_test/eval_mix_uav.py` | summary **json** |
 | `mix_visual_avoiding/sampling/policies.py` | unguided path → `'n/a'` |
 
+### 2.3b · 🔴 Artifact naming — the swap must not destroy the IPOPT corpus
+
+Every eval writes `{save_path}/{variant}.npz`. Re-running `hardflow_new-c-tightened` on the new
+backend would have **overwritten the exact rows chapters 1–3 of the DA are built on** — silently,
+with no way back. Recording the backend *inside* the file does not help: the old file is already gone.
+
+`artifact_variant_label(variant, backend)` (next to `resolve_nlp_backend`, all six copies) fixes it:
+
+| backend | `hardflow_new-c-tightened` becomes | effect |
+|---|---|---|
+| `ipopt` | `hardflow_new-c-tightened` — **unchanged** | every pre-existing path stays exactly what it was; nothing on disk moves or is reinterpreted |
+| `slsqp` | `hardflow_sls-c-tightened` | lands **beside** the IPOPT corpus |
+
+Non-HardFlow variants (`diffuser`, `dpcc-*`) pass through untouched on both backends — they never
+touch this NLP. The `-r/-c/-t` and `-tightened` suffix grammar is preserved, and the name still
+starts with `hardflow`, so arm-C branching keeps working.
+
+Applied to **every** path that could collide, not just the npz:
+
+| eval | isolated |
+|---|---|
+| `FM_v3_hardflow` | npz (incl. the clobber guard), png |
+| `FM_v3_meanflow`, `FM_v3_alphaflow` | npz, png, `eval_*.log`, the `aggregate_only` reader |
+| `mix_visual_avoiding` | npz, png, `eval_*.log`, the `aggregate_only` reader |
+| `mix_visual_aligning` | the whole per-variant **directory** (`results/{geo}/{variant}`), so npz, partial sidecar, png, logs, realtime logs follow |
+| `mix_uav` | the whole per-variant **directory** (`{geo_dir}/{variant}`), so npz, eval log, plots, diagnostics follow |
+
+Two details worth knowing:
+
+- In `FM_v3_hardflow` the path is chosen **before** the policy exists, so the label uses the
+  module-level `resolve_nlp_backend()`. An `assert` after the policy is built compares it against
+  the live `policy.nlp.nlp_backend` and fails loudly rather than write an SLSQP result into an
+  IPOPT filename.
+- In `mix_visual_aligning` the agent receives `variant=variant_out`, because `self.variant` is used
+  only for naming (episode ids, realtime logs, the partial sidecar) — those would otherwise collide too.
+
 ### 2.4 · DA registration
 
-- `Data_Analysis/DA_Code_v3/config.py` — `nlp_backend_slsqp` in `HARDFLOW_METRICS`, label, type
-- `Data_Analysis/DA_UAV_v1/config.py` + `data_loader.py` — label, and lifted from the `hardflow` json block
-- `DA_VA_v2` needs no change: its npz ingestion is generic and picks the float twin up by shape
+🔴 **DA discovery is an explicit allow-list of variant names, so an unregistered name is
+INVISIBLE rather than an error.** Without this section the swap runs would produce data that
+never appears in any table. Registered:
+
+- `DA_Code_v3/config.py` — `hardflow_sls*` in `HARDFLOW_VARIANTS` and the headline
+  `MAJOR_VARIANTS`; plus `nlp_backend_slsqp` in `HARDFLOW_METRICS`, label, type
+- `DA_UAV_v1/config.py` — `hardflow_sls*` in both the variant list and `MAJOR_VARIANTS`;
+  `data_loader.py` lifts `nlp_backend_slsqp` from the `hardflow` json block
+- `DA_VA_v2/config.py` — `hardflow_sls*` in `VARIANT_ORDER` and `MAJOR_VARIANTS`; the npz
+  ingestion is generic, so the float twin arrives by shape with no loader change
+
+**Never pool `hardflow_new-*` with `hardflow_sls-*`** — different solver, and the whole point of
+the rename is that the two corpora stay separable.
 
 ---
 
@@ -167,7 +213,8 @@ method, SLSQP could close it. Nothing else in the corpus would reveal that.
   `_solve_slsqp` — the `from_dof`/`to_dof` round-trip and the `Projector` kwargs are code-correct
   but unexercised.
 - **Baseline shift is real and intended:** every future arm-C run changes solver. Existing
-  results predate the field, so a row with no `nlp_backend` is an **IPOPT** row. Do not pool.
+  results predate the field, so a row with no `nlp_backend` is an **IPOPT** row, and it now also
+  carries the old `hardflow_new-*` name. Do not pool the two corpora.
 - `FM_v3_hardflow_test/bench_solver_hf_vs_dpcc.py` is now **pinned** to `nlp_backend='ipopt'`.
   Flipping the default silently turned it into an SLSQP-vs-SLSQP bench reporting ~1.0×;
   any script whose whole point is the old solver must pin it explicitly.
