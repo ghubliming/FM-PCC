@@ -522,6 +522,8 @@ for exp in exps:
                     pos_tracking_errors = np.zeros((n_trials, args.max_episode_length - 1))
                     # Gen3v7 U3 — HardFlow-arm metrics (0 for arms A/B).
                     nfe_total = 0
+                    # [SolverSwap] default for arms A/B, which run no NLP at all.
+                    nlp_backend_used = 'n/a'
                     nlp_solves_total = 0
                     nlp_failures_total = 0
 
@@ -675,9 +677,14 @@ for exp in exps:
                     # Gen3v7 U3 — HardFlow-arm metric summary (nfe accumulated on the sampler).
                     if is_hardflow:
                         nfe_total = int(getattr(policy, 'nfe', 0))
+                        # [SolverSwap] read off the live NLP object, not the config, so the
+                        # recorded value is what actually ran (env override included).
+                        nlp_backend_used = str(getattr(getattr(policy, 'nlp', None), 'nlp_backend', 'n/a'))
                         print(f'[hardflow] NFE={nfe_total}  NLP solves={nlp_solves_total}  '
                               f'NLP failures={nlp_failures_total}  batch(mpc)={batch_size}  '
-                              f'act_threshold={hf_act_threshold}')
+                              f'act_threshold={hf_act_threshold}  '
+                              # [SolverSwap] the solver is now selectable, so it must be IN the log.
+                              f'nlp_backend={nlp_backend_used}')
 
                     if config['write_to_file']:
                         _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
@@ -696,6 +703,12 @@ for exp in exps:
                                  nfe_total=int(nfe_total),
                                  nlp_solves_total=int(nlp_solves_total),
                                  nlp_failures_total=int(nlp_failures_total),
+                                 # [SolverSwap] 'slsqp' (DPCC scipy) or 'ipopt' (original CasADi).
+                                 # Present on EVERY row so a DA can never pool the two backends.
+                                 nlp_backend=str(nlp_backend_used),
+                                 # numeric twin: generic DA loaders coerce npz scalars to float, so the
+                                 # string alone would land as NaN. 1.0 = DPCC scipy SLSQP, 0.0 = IPOPT.
+                                 nlp_backend_slsqp=float(nlp_backend_used == 'slsqp'),
                                  hf_batch_size=int(batch_size),
                                  hf_act_threshold=float(hf_act_threshold),
                                  # HFK1 (2026-08-24) — the degeneracy verdict, RECORDED rather

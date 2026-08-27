@@ -338,6 +338,8 @@ METRIC_LABELS = {
     'nfe_effective':                    'Network Evaluations per Plan (effective)',
     'nlp_solves_total':                 'HardFlow NLP Solves (total)',
     'nlp_failures_total':               'HardFlow NLP Failures (total)',
+    # [SolverSwap 2026-08-27] 1.0 = DPCC scipy SLSQP, 0.0 = original CasADi IPOPT.
+    'nlp_backend_slsqp':                'NLP Backend (1 = DPCC SLSQP, 0 = IPOPT)',
     'activation_threshold':             'HardFlow Activation Threshold',
     'init_noise_scale':                 'ODE Init Noise Scale',
     # HFK1 (2026-08-24) — is this row HardFlow at all? n_genuine counts ODE steps that are

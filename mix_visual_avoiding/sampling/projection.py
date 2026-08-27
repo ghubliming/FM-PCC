@@ -235,6 +235,11 @@ class Projector:
 
         projection_costs = np.ones(batch_size, dtype=np.float32)
         sol_np = np.zeros((batch_size, self.horizon * self.transition_dim), dtype=np.float32)
+        # [SolverSwap 2026-08-27] ADD-ON, behaviour-neutral: record per-solve scipy
+        # convergence so a caller can COUNT failures. DPCC itself still silently keeps
+        # `res.x` on non-convergence — that is unchanged here on purpose, so arm B's
+        # numbers do not move. Read by HardFlowNLP._solve_slsqp for `nlp_failures`.
+        self.last_solve_success = []
         for i in range(batch_size):
             # Cost
             cost_fun = lambda x: 0.5 * x @ Q @ x + r_np_double[i] @ x # + (A_double @ x - b_double) @ (A_double @ x - b_double)
@@ -267,6 +272,7 @@ class Projector:
                       f'— kept unprojected trajectory (batch {i}).', flush=True)
                 continue
 
+            self.last_solve_success.append(bool(res.success))
             sol_np[i] = res.x
             projection_costs[i] = 0.5 * sol_np[i] @ Q @ sol_np[i] + r_np[i] @ sol_np[i] + 0.5 * trajectory_np[i] @ Q @ trajectory_np[i]
 

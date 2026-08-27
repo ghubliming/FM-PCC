@@ -275,7 +275,9 @@ class VisualHardFlowPolicy(_VisualPolicyBase):
             # No NLP => this is the unguided host sampler. Say so rather than reporting
             # an arm-C number that had no arm C in it.
             trajectories, infos = self.model(cond, projector=None, horizon=horizon)
-            self.last_info = {'nlp_solves': 0, 'nlp_failures': 0, 'hardflow_active': False}
+            # [SolverSwap] 'n/a', not a backend name — no NLP ran on this path at all.
+            self.last_info = {'nlp_solves': 0, 'nlp_failures': 0, 'hardflow_active': False,
+                              'nlp_backend': 'n/a'}
             return trajectories, infos
 
         from .hardflow_projection import encode_visual_cond

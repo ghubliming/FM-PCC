@@ -579,7 +579,10 @@ for exp in exps:
                 print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                 # PLAN §5: compute must be reported alongside success, per arm.
                 # U4/U4.2: also report the activation threshold and selection for arm C.
+                # [SolverSwap] the solver is now selectable, so it must be IN the log.
+                nlp_backend_used = str(getattr(getattr(policy, 'nlp', None), 'nlp_backend', 'n/a'))
                 hf_report = (f'  act_thr={hf_act_threshold:g}  sel={hf_selection}'
+                             f'  nlp_backend={nlp_backend_used}'
                              if is_hardflow else '')
                 print(f'Compute: K={flow_steps}  batch={batch_size}  '
                       f'NFE={nfe_total}  NLP solves={nlp_solves_total}  '
@@ -593,7 +596,7 @@ for exp in exps:
                     # logs_in_develop/aggregated_hardflow_lowK/
                     _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
                                   if is_hardflow and flow_steps else (0, 0))
-                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, hf_n_active=int(_hf_budget[0]), hf_n_genuine=int(_hf_budget[1]), hf_degenerate=bool(is_hardflow and _hf_budget[1] == 0), trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
+                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, nlp_backend=str(nlp_backend_used), nlp_backend_slsqp=float(nlp_backend_used == 'slsqp'), variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, hf_n_active=int(_hf_budget[0]), hf_n_genuine=int(_hf_budget[1]), hf_degenerate=bool(is_hardflow and _hf_budget[1] == 0), trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
                     # [Gen12fix8] dpcc_threshold recorded. The results dir name
                     # (hf_paths.eval_name) encodes only the HF activation threshold, so with
                     # DPCC's threshold now independently settable a run could otherwise be

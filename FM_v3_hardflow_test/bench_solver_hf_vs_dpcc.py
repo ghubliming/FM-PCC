@@ -175,7 +175,10 @@ def run(args):
     print('=' * 78)
 
     # --- arm C: HardFlow's IPOPT NLP (operates on the dof vector, s_0 pinned)
+    # [SolverSwap] PIN to ipopt. The shipped default is now 'slsqp', so without
+    # this the bench would compare SLSQP against SLSQP and report ~1.0x.
     nlp = HardFlowNLP(layout, constraint_list, STUB_MINS, STUB_MAXS,
+                      nlp_backend='ipopt',
                       dt=args.dt, reg_scale=1.0, print_level=0, print_time=False)
 
     # --- arm B: DPCC's projector, scipy SLSQP, same constraint_list

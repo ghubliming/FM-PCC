@@ -325,7 +325,10 @@ class UnitLoader:
         hardflow = summary.get('hardflow') or {}
         if hardflow.get('is_hardflow'):
             for field in ('nfe_per_plan', 'nlp_solves_total', 'nlp_failures_total',
-                          'activation_threshold', 'init_noise_scale', 'nfe_total'):
+                          'activation_threshold', 'init_noise_scale', 'nfe_total',
+                          # [SolverSwap] float twin of `nlp_backend`; the string stays
+                          # in the json for humans and never enters the scalars dict.
+                          'nlp_backend_slsqp'):
                 if field in hardflow:
                     out[field] = _as_float(hardflow[field])
             out['is_hardflow'] = 1.0

@@ -87,6 +87,11 @@ HARDFLOW_METRICS = [
     'activation_threshold',
     'batch_size',
     'flow_steps',
+    # [SolverSwap 2026-08-27] WHICH NLP solver arm C used. The npz carries the
+    # string as `nlp_backend` and this float twin (1.0 = DPCC scipy SLSQP,
+    # 0.0 = the original CasADi IPOPT); generic loaders coerce npz scalars to
+    # float, so the twin is the one that survives. Never pool rows that disagree.
+    'nlp_backend_slsqp',
 ]
 
 # Plot styling
@@ -119,6 +124,7 @@ METRIC_LABELS = {
     'nlp_failures': 'NLP Failures',
     'nfe': 'Network Fn Evals',
     'activation_threshold': 'Activation Threshold (DPCC polarity)',
+    'nlp_backend_slsqp': 'NLP Backend (1 = DPCC SLSQP, 0 = IPOPT)',
     'batch_size': 'MPC Candidates',
     'flow_steps': 'Flow Steps (K)',
 }
@@ -136,6 +142,7 @@ METRIC_TYPES = {
     'nlp_failures': 'continuous',
     'nfe': 'continuous',
     'activation_threshold': 'continuous',
+    'nlp_backend_slsqp': 'continuous',
     'batch_size': 'continuous',
     'flow_steps': 'continuous',
 }

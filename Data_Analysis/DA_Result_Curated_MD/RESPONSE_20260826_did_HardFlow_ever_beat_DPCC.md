@@ -415,6 +415,44 @@ C-jump is a deliberate deviation from the paper, which assumes an instantaneous-
 
 ---
 
+## 4j · ✅ Measured — the offline half of the swap has now run (job 25121)
+
+Both projectors were built side by side on the **identical** NLP and timed — no checkpoint, no env, no permanent solver change. `horizon=8`, 3 seeds × 50 reps, 2026-08-27.
+Full write-up: `logs_in_develop/Gen12/Solver_Bench/RESULTS_20260827_solver_bench_ipopt_vs_slsqp.md`.
+
+### The `~0 diff` question — answered: yes
+
+`‖Π_IPOPT − Π_SLSQP‖` on near-feasible references: **mean 3.4e-4, max 1.0e-3** over 100 solves (seeds 2–3). Theory said ~0; measurement says ~1e-3. **In the degenerate regime the two solvers return the same point.** Seed 1 shows mean 0.058 / max 2.89 — that is *exactly one* diverging solve out of 50 (`2.89/50 = 0.058` reconstructs the mean), and it is the only `endpoint` solve where SLSQP itself returned a mildly infeasible point (`+7.2e-4`). One bad solve in 150, not a systematic disagreement.
+
+So 4e's reading holds and 4c's solve-side differences are confirmed small: **the solver does not change *what* arm C produces.**
+
+### What it does change is cost — by 4.33×
+
+| reference regime | IPOPT (HF) | SLSQP (DPCC) | ratio |
+|---|---:|---:|---:|
+| `endpoint` — what HardFlow actually solves | 47.6 ms | 11.0 ms | **4.33×** |
+| `iterate` — what post-hoc projection solves | 54.2 ms | 34.0 ms | 1.63× |
+
+IPOPT's `endpoint` median across three independent seeds: 47.638 / 47.327 / 47.700 ms — a 0.4 % spread. That is a floor, not a solve.
+
+**And the difficulty axis settles the overhead argument.** Same problem size, harder problem: IPOPT **1.14×**, SLSQP **3.09×**. SLSQP's time is work; IPOPT's is per-call setup. So HardFlow's endpoint trick — its central optimisation — is worth **3.09× to SLSQP and 1.14× to IPOPT**. *HardFlow ships the one solver that cannot cash it in.* That is the mechanism behind Q6 Part 4, now measured on our own constraint set.
+
+### Projected effect (extrapolation, flagged)
+
+Applying 4.33× to the fan-matched parity run (generator 18.5 ms; DPCC 2.4 ms/step, HF 30 ms/step): arm C goes **48.5 → 25.4 ms/step** against DPCC's 20.9, i.e. **2.32× → 1.22×**. Only the solve term moves — solve count and generator are untouched, and nothing here touches S&C or steps.
+
+**Which lands on 4f's first decision row: cost stops being the story, and S&C and steps decide.** Chapters 1–3 already decide those against HardFlow. So the full swap is now expected to remove HardFlow's cost excuse **without rescuing it**.
+
+### Free finding — the IPOPT failure defect, reproduced offline
+
+On noisy references IPOPT failed to converge **39/150 (26 %)** and returned residuals **3× larger** than SLSQP, each failure silently keeping a possibly-infeasible last iterate. Same defect as 2b (12.5–13.5 % on visual-avoiding TL untightened), now reproducible with no GPU.
+
+⚠️ Read that with care: **both** solvers return infeasible output on the noisy regime, which is synthetic (σ = 0.60 in normalized coords) and not calibrated against real mid-ODE iterates. When two independent codes fail on the same inputs, the inputs are the suspect. **This is not evidence that DPCC fails in real eval.** What survives the caveat is the *relative* result: IPOPT fails more often and worse on the same problems.
+
+⚠️ Absolute ms here are not eval ms (the bench forces `halfspace=both-hard`, τ=1.0, warm process, no generator — IPOPT reads 47.6 ms here vs 30 ms in eval). **Only ratios transfer.**
+
+---
+
 # 5 · Does the V_A frame/GIF recording inflate `avg_time` and distort the results?
 
 ## 5a · Verdict — no run wasted, no number retracted, no fix required

@@ -3278,6 +3278,10 @@ if __name__ == '__main__':
                 # selected_idx_all. Only the aggregate scalars that need Aligning_Sim's return
                 # (success_rate/entropy/mode_encoding/n_success/mean_distance) are added here.
                 if geo_config.get('write_to_file', True):
+                    # [SolverSwap] which NLP solver arm C actually used ('n/a' for arms A/B).
+                    # Read off the live NLP object so it reflects what RAN, env override
+                    # included — recorded on every row so a DA can never pool the backends.
+                    nlp_backend_used = str(getattr(getattr(hf_sampler, 'nlp', None), 'nlp_backend', 'n/a'))
                     _npz_payload = _collect_per_rollout_arrays(agent)
                     np.savez(
                         f'{save_path}/{variant}.npz',
@@ -3289,6 +3293,9 @@ if __name__ == '__main__':
                         mean_distance=mean_dist.flatten().numpy(),
                         complete=True,                                # C5: full/authoritative run
                         args=vars(args),
+                        nlp_backend=nlp_backend_used,
+                        # numeric twin — generic DA loaders coerce npz scalars to float.
+                        nlp_backend_slsqp=float(nlp_backend_used == 'slsqp'),
                         **_npz_payload,
                     )
                     # C5: variant finished → drop the now-redundant crash-safety sidecar.

@@ -88,4 +88,12 @@ With `both` (default) the script prints the endpoint→iterate ratio for **each*
 
 ## Status
 
-Written, syntax-checked, **not run** — no Python in this container. Next step is one `submit.sh` on i6-gpu-1. Results and their interpretation belong in a `RESULTS_*` file in this folder, and any conclusion that changes the audit goes back into `AUDIT_20260827_*` §0.
+**✅ Run 2026-08-27 — job 25121, i6-gpu-1, git `1897f4f`, 50 s wall.** Default config (`reps=50 horizon=8 ref=both runs=3`), no code changes needed, no solver permanently changed.
+
+Headline: **IPOPT 47.6 ms vs SLSQP 11.0 ms = 4.33×** on the reference HardFlow actually solves; IPOPT is overhead-dominated (1.14× from easy to hard problem, against SLSQP's 3.09×); the two projectors agree to ~1e-3 in the degenerate regime. The feasibility gate fired (non-zero exit) on the synthetic noisy regime, where **both** solvers return infeasible output — read `RESULTS_*` §5 before treating that as a bug.
+
+- Results: `RESULTS_20260827_solver_bench_ipopt_vs_slsqp.md` (this folder)
+- Fed back into `Data_Analysis/DA_Result_Curated_MD/AUDIT_20260827_*` §0.1 / §0.3 and `RESPONSE_20260826_*` 4j
+- Raw log: `temp/2808/2026-08-27/12_38_52_bench_solver_hf_vs_dpcc_25121.log`; CSV/JSON left on the cluster at `logs/solver_bench/25121/`
+
+**Still open:** the horizon sweep (`HFFM_BENCH_HORIZON=8` then `16`) was not run — now optional confirmation rather than the deciding test, since the difficulty axis already established overhead domination. And the `iterate` regime's σ = 0.60 is uncalibrated against real mid-ODE iterates; calibrate it before using the feasibility gate as a regression check.

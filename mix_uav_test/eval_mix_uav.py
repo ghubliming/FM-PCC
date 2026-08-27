@@ -1889,6 +1889,10 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'nfe_total': int(getattr(policy.sampler, 'nfe', 0)),
             'nlp_solves_total': int(getattr(policy.nlp, 'n_solves', 0)),
             'nlp_failures_total': int(getattr(policy.nlp, 'n_failures', 0)),
+            # [SolverSwap] 'slsqp' (DPCC scipy) or 'ipopt' (original CasADi). Read off
+            # the live NLP object so it reflects what RAN, env override included.
+            'nlp_backend': str(getattr(policy.nlp, 'nlp_backend', 'n/a')),
+            'nlp_backend_slsqp': float(getattr(policy.nlp, 'nlp_backend', '') == 'slsqp'),
             # one 'plan' = one outer FM/MPC step; summed over all rollouts of this variant.
             'nfe_per_plan': (float(getattr(policy.sampler, 'nfe', 0))
                              / max(sum(int(r['n_fm_steps']) for r in rollouts), 1)),

@@ -35,6 +35,8 @@ So at K = 1–2 **we are not measuring IPOPT against SLSQP; we are measuring Cas
 
 ⚠️ Two-point fit, and the two points come from different code paths (our port at H8, their code at H16). The fitted split is indicative; the **sublinear scaling itself is not** — it holds regardless of the fit.
 
+**✅ CONFIRMED 2026-08-27 (job 25121) — this is no longer a fit.** The Gen12 solver bench ran both projectors side by side on the *identical* NLP, `horizon=8`, 3 seeds × 50 reps. On the near-feasible reference HardFlow actually solves, **IPOPT 47.6 ms vs SLSQP 11.0 ms = 4.33×**. And the overhead claim is now measured on a second axis — same problem size, harder problem: **IPOPT 47.6 → 54.2 ms (1.14×), SLSQP 11.0 → 34.0 ms (3.09×)**. SLSQP's time is work; IPOPT's is floor. Consequence: HardFlow's endpoint trick is worth **3.09× to SLSQP and only 1.14× to IPOPT** — *HardFlow ships the one solver that cannot cash in its own central optimisation.* Full numbers: `logs_in_develop/Gen12/Solver_Bench/RESULTS_20260827_solver_bench_ipopt_vs_slsqp.md`.
+
 **This is measured, not reconstructed.** The fan-matched parity run (K=2, both arms at fan 1) timed it directly: DPCC **2.4 ms/step**, HardFlow **30 ms/step**, on top of an 18.5 ms generator.
 
 ### 0.2 · So which run? Give HardFlow our solver — not our baseline their solver
@@ -68,6 +70,8 @@ Either way the question closes, which is why this is the run.
 ### 0.3 · What follows
 
 **HardFlow's cost disadvantage in our harness is mostly an engineering tax, not the algorithm.** Give the HF arm a solver sized for a 44-variable dense problem — SLSQP, or IPOPT with the per-call setup hoisted — and its solve should fall toward ~6 ms plus setup. At that point HardFlow's genuine 3.2× easier NLP would actually surface, and arm B vs arm C would become an algorithm comparison rather than a solver-plumbing one.
+
+**✅ Measured 2026-08-27 (job 25121).** The predicted fall came in at **11.0 ms**, not ~6 ms — the fitted "work" term was low — but the direction and size hold: **4.33× off HardFlow's solve.** Extrapolating that ratio onto the fan-matched parity run moves arm C from 48.5 → 25.4 ms/step against DPCC's 20.9, i.e. **2.32× → 1.22×**. That is §0.2's first decision row: *cost stops being the story, S&C and steps decide* — and chapters 1–3 already decide those against HardFlow. Two caveats: it is an extrapolation until an arm-C-with-SLSQP eval actually runs, and it changes only the solve term, not the solve count or the generator. Separately, the bench reproduced the IPOPT-failure defect offline (**26 % non-convergence** on noisy references, 3× larger residual than SLSQP) with no GPU and no checkpoint — see `RESULTS_20260827_*` §5 for why most of that is the synthetic reference regime rather than the eval.
 
 **Correction this forces on the companion doc:** chapter 4 calls the solver swap "the smallest term". That is true of the **trajectory** — the `fm` rollouts came out bit-identical, so the solver does not change *what* is produced. It is false of **cost**, where the solver is the largest term by far. Both statements are now carried in 4f.
 

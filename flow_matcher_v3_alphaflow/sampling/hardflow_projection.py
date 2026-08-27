@@ -103,6 +103,7 @@ default — a wrong scale is silent, so the call site must state it).
 explicitly anyway.  `gates_hardflow_alphaflow.py::gate_h3` pins it numerically.
 """
 
+import os
 import time
 
 import numpy as np
@@ -123,6 +124,34 @@ except ImportError:  # pragma: no cover - the cluster env has it, this container
 # ---------------------------------------------------------------------------#
 # ------------------------------- DOF layout --------------------------------#
 # ---------------------------------------------------------------------------#
+
+# ---------------------------------------------------------------------------#
+# [SolverSwap 2026-08-27] NLP backend selection  (ADD-ON — nothing was removed)
+# ---------------------------------------------------------------------------#
+# Job 25121 measured, on the IDENTICAL NLP and the same constraint_list:
+# IPOPT 47.6 ms vs scipy SLSQP 11.0 ms per solve (4.33x), the two backends
+# agreeing to mean 3.4e-4 / max 1.0e-3 over 100 solves. IPOPT is an interior-
+# point code for large SPARSE NLPs; ours is 44 dense variables, so most of its
+# cost is size-independent per-call setup (it is only 1.14x slower on a 3x
+# harder problem, against SLSQP's 3.09x — the signature of overhead, not work).
+# So 'slsqp' is the default. The IPOPT path is NOT deleted and stays selectable:
+#     kwarg / config : nlp_backend='ipopt'
+#     env override   : FMPCC_HF_NLP_BACKEND=ipopt
+# Every run announces which backend ran, in the LOG and in `nlp_backend`
+# (episode info -> eval npz/json -> DA), so no result is ever ambiguous.
+# Full write-up: logs_in_develop/aggregated_hf_nlp_backend/
+NLP_BACKENDS = ('slsqp', 'ipopt')
+DEFAULT_NLP_BACKEND = 'slsqp'
+
+
+def resolve_nlp_backend(requested=None):
+    """Explicit kwarg > FMPCC_HF_NLP_BACKEND env var > DEFAULT_NLP_BACKEND."""
+    backend = requested or os.environ.get('FMPCC_HF_NLP_BACKEND') or DEFAULT_NLP_BACKEND
+    backend = str(backend).strip().lower()
+    if backend not in NLP_BACKENDS:
+        raise ValueError(f'nlp_backend must be one of {NLP_BACKENDS}, got {backend!r}')
+    return backend
+
 
 class TrajectoryLayout:
     """Index bookkeeping for the flattened, s0-free trajectory vector.
@@ -194,7 +223,8 @@ class HardFlowNLP:
 
     def __init__(self, layout, constraint_list, mins, maxs, dt=1.0,
                  reg_scale=1.0, dynamics_mode='deriv', linear_dynamics=None,
-                 print_level=0, print_time=False, solver_opts=None):
+                 print_level=0, print_time=False, solver_opts=None,
+                 nlp_backend=None):
         if cs is None:
             raise ImportError(
                 'casadi is required for the Gen12 hardflow_new sampler. '
@@ -212,6 +242,12 @@ class HardFlowNLP:
 
         self.n_solves = 0
         self.n_failures = 0
+
+        # [SolverSwap] Which solver actually runs. `resolve_nlp_backend` above.
+        self.nlp_backend = resolve_nlp_backend(nlp_backend)
+        self.constraint_list = constraint_list
+        self._s0 = None
+        self.projector = None
 
         self.opti = cs.Opti()
         self.s0_param = self.opti.parameter(layout.state_dim)
@@ -241,6 +277,18 @@ class HardFlowNLP:
         if solver_opts:
             opts.update(solver_opts)
         self.opti.solver('ipopt', opts)
+
+        # [SolverSwap] The IPOPT NLP above is ALWAYS built, so the backend can be
+        # flipped without touching any other code path; `solve()` picks which one
+        # actually runs. Announce it — a run whose solver is not in its own log is
+        # a run nobody can interpret later.
+        if self.nlp_backend == 'slsqp':
+            self.projector = self._build_slsqp_projector(constraint_list)
+        print('[hardflow][NLP-BACKEND] {}{}  dof={}  reg_scale={}'.format(
+            self.nlp_backend,
+            '  (scipy SLSQP via DPCC Projector — IPOPT built but idle)'
+            if self.nlp_backend == 'slsqp' else '  (CasADi/IPOPT — original path)',
+            self.layout.dof, self.reg_scale))
 
     # -- symbolic helpers ----------------------------------------------------
 
@@ -365,9 +413,96 @@ class HardFlowNLP:
     # -- solve ---------------------------------------------------------------
 
     def set_s0(self, s0):
-        self.opti.set_value(self.s0_param, np.asarray(s0, dtype=float).reshape(-1))
+        # [SolverSwap] also kept for the slsqp backend, which rebuilds the full
+        # trajectory (from_dof) before handing it to DPCC's projector.
+        self._s0 = np.asarray(s0, dtype=float).reshape(-1)
+        self.opti.set_value(self.s0_param, self._s0)
 
+    # -- [SolverSwap 2026-08-27] backend dispatch ----------------------------
+    #
+    # ADD-ON. `_solve_ipopt` below is the original `solve` body, byte-for-byte.
+    #
+    # Why the two backends solve the SAME problem: HardFlow's cost is
+    #     0.5 * reg_scale * tau^2 * ||x - x_ref||^2
+    # a positive SCALAR multiple of the squared distance. A positive scalar does
+    # not move an argmin, so HF's NLP is exactly Pi_S(x_ref) — which is what
+    # DPCC's `Projector.project` computes (Q = I, r = -x_ref). `tau` is therefore
+    # accepted and ignored by the slsqp path; that is exact, not an approximation.
+    # Residual formulation gaps (s_0 scope, the Bounds(-5,5) box) are the ones
+    # catalogued in the companion DA doc 4c and measured at ~1e-3.
     def solve(self, x1_ref, tau):
+        """Project `x1_ref` onto the feasible set at flow time `tau`, via `self.nlp_backend`."""
+        if self.nlp_backend == 'slsqp':
+            return self._solve_slsqp(x1_ref, tau)
+        return self._solve_ipopt(x1_ref, tau)
+
+    def _build_slsqp_projector(self, constraint_list):
+        """DPCC's scipy-SLSQP projector, pinned to the IPOPT path's geometry."""
+        from .projection import Projector
+
+        class _Limits:
+            def __init__(self, mins, maxs):
+                self.mins, self.maxs = np.asarray(mins), np.asarray(maxs)
+
+        class _StubNormalizer:
+            """`Projector` reads only `.normalizers[k].mins/.maxs`.
+
+            Built from the SAME mins/maxs the IPOPT path uses, so both backends
+            see identical limits — which is the whole point of the swap.
+            """
+
+            def __init__(self, mins, maxs, action_dim):
+                self.normalizers = {
+                    'actions': _Limits(mins[:action_dim], maxs[:action_dim]),
+                    'observations': _Limits(mins[action_dim:], maxs[action_dim:]),
+                }
+
+        L = self.layout
+        return Projector(
+            horizon=L.horizon, transition_dim=L.transition_dim,
+            action_dim=L.action_dim, goal_dim=0,
+            constraint_list=constraint_list,
+            normalizer=_StubNormalizer(self.mins, self.maxs, L.action_dim),
+            variant='states_actions', dt=self.dt, skip_initial_state=True,
+            device='cpu', solver='scipy', parallelize=False)
+
+    def _solve_slsqp(self, x1_ref, tau):
+        """`Pi_S(x1_ref)` via DPCC's scipy SLSQP. Same feasible set, same argmin."""
+        x1_ref = np.asarray(x1_ref, dtype=float).reshape(-1)
+        L = self.layout
+        if self._s0 is None:
+            raise RuntimeError(
+                'set_s0() must be called before solve() on the slsqp backend — '
+                'the DPCC projector takes a FULL trajectory, so s_0 has to be '
+                'reinstated before the call and dropped again after it.')
+        full = L.from_dof(x1_ref, self._s0).reshape(1, L.horizon, L.transition_dim)
+        self.n_solves += 1
+        _t0 = time.perf_counter()
+        sol, _cost = self.projector.project(
+            torch.tensor(full, dtype=torch.float32, device='cpu'))
+        # Mirrors the mix_uav IPOPT accounting: a run that books solver time as
+        # inference time repeats the Fix_1 failure. `getattr` because only the UAV
+        # copy initialises `solve_ms`; elsewhere this creates it harmlessly.
+        self.solve_ms = getattr(self, 'solve_ms', 0.0) + (time.perf_counter() - _t0) * 1e3
+        # DPCC keeps scipy's last iterate on non-convergence exactly as IPOPT keeps
+        # its own — same silent-infeasibility exposure, so the two backends stay
+        # comparable. `last_solve_success` (projection.py, additive, behaviour-
+        # neutral) is only what makes those failures COUNTABLE here.
+        n_bad = sum(1 for ok in getattr(self.projector, 'last_solve_success', ()) if not ok)
+        if n_bad:
+            self.n_failures += n_bad
+            if self.n_failures == n_bad:
+                print(f'[hardflow][NLP-FAILURE] first non-converged SLSQP solve at '
+                      f'tau={float(tau):.3f}. Keeping scipy\'s last iterate, which may be '
+                      f'INFEASIBLE — the terminal-solve safety guarantee does not hold for '
+                      f'this plan. Same exposure as the IPOPT path. Further failures are '
+                      f'silent; read `nlp_failures` in the run summary for the total.')
+        out = np.asarray(sol.detach().cpu().numpy(), dtype=float).reshape(-1)
+        # s_0 is dropped again here, so anything the projector did to it is
+        # discarded — equivalent to DPCC's post-projection `apply_conditioning`.
+        return L.to_dof(out)
+
+    def _solve_ipopt(self, x1_ref, tau):
         """Project `x1_ref` onto the feasible set at flow time `tau`."""
         x1_ref = np.asarray(x1_ref, dtype=float).reshape(-1)
         self.opti.set_value(self.tau_param, float(tau))
@@ -796,6 +931,9 @@ class HardFlowSampler:
             'nfe': self.nfe - nfe_before,
             'nfe_total': self.nfe,
             'nlp_solves': self.nlp.n_solves - n_solves_before,
+            # [SolverSwap] which solver produced this episode. Carried all the way
+            # to the eval npz/json so a DA can never mix the two backends silently.
+            'nlp_backend': self.nlp.nlp_backend,
             'nlp_failures': self.nlp.n_failures - n_fail_before,
             'activation_threshold': self.activation_threshold,
             # [HFK1 2026-08-24] So a DA can check the §9.1 prediction (nlp_solves
@@ -831,7 +969,7 @@ class HardFlowPolicy:
                  trajectory_selection='random', candidate_cost='prox',
                  dynamics_mode='deriv', linear_dynamics=None, print_level=0,
                  print_time=False, device='cuda', goal_dim=0, verbose=False,
-                 init_noise_scale=1.0):
+                 init_noise_scale=1.0, nlp_backend=None):
         """`init_noise_scale` defaults to Gen3v7's sigma=1.0 (af_diffusion.py:260).
         It is a REQUIRED consideration when porting — see the module docstring."""
         assert goal_dim == 0, (
@@ -869,7 +1007,9 @@ class HardFlowPolicy:
             layout=self.layout, constraint_list=constraint_list,
             mins=mins, maxs=maxs, dt=dt, reg_scale=reg_scale,
             dynamics_mode=dynamics_mode, linear_dynamics=linear_dynamics,
-            print_level=print_level, print_time=print_time)
+            print_level=print_level, print_time=print_time,
+            # [SolverSwap] None => resolve_nlp_backend (env, then DEFAULT_NLP_BACKEND).
+            nlp_backend=nlp_backend)
 
         self.sampler = HardFlowSampler(
             model=model, layout=self.layout, nlp=self.nlp,
