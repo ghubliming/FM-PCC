@@ -209,7 +209,32 @@ _UAV_PLAN = {
     # `hardflow_new` is still available and now resolves to B=1 (the faithful control) via
     # mix_uav/sampling/hardflow_projection.py::resolve_hf_batch_size — add it back here if
     # you want that arm, but know it is a DIFFERENT experiment, not a rename.
-    'hardflow_variants': ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t'],
+    # ── U5 (2026-08-27) — ACTIVE LIST. Pre-U5 value, kept for rollback (do not delete):
+    #   'hardflow_variants': ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t'],
+    #
+    # Three changes:
+    #  1. Bare `hardflow_new` is BACK. B4_PARITY removed it because at B=4 it was byte-identical
+    #     to `-r`; it is re-added deliberately as the B=1 arm. `resolve_hf_batch_size` pins the
+    #     bare name to 1 and gives every `-r`/`-c`/`-t` name the run-level `mpc_batch_size` (4).
+    #     So this list now spans BOTH fan sizes, which is the point: B=1 is upstream-faithful
+    #     HardFlow, B=4 is the DPCC-matched fan. They are different experiments, not a rename.
+    #  2. `-geo_free` siblings for the three selection arms — HardFlow's prox-NLP built from
+    #     dynamics + action bounds ONLY, no walls/pillars/box. The arm-C mirror of the
+    #     `dpcc-*-geo_free` rows added to config/uav_projection.yaml in the same update, so the
+    #     two arms stay constraint-matched row-for-row (the Gen12 port's first design rule).
+    #  3. DPCC's own fan is untouched — arm B reads `mpc_batch_size` (4) directly and is never
+    #     routed through `resolve_hf_batch_size`.
+    #
+    # Batch sizes resolved at runtime (mix_uav/sampling/hardflow_projection.py):
+    #   hardflow_new                → B=1     hardflow_new-r/-c/-t            → B=4
+    #   hardflow_new-r/-c/-t-geo_free → B=4   (U5 patch strips the toggle suffix first)
+    'hardflow_variants': [
+        'hardflow_new',                                                    # B=1, full stack
+        'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',              # B=4, full stack
+        'hardflow_new-r-geo_free',                                         # B=4, geometry OFF
+        'hardflow_new-c-geo_free',
+        'hardflow_new-t-geo_free',
+    ],
     'hardflow': {
         # `dynamics_mode='deriv'` needs NO fitted linear-dynamics .npz — it writes the UAV's own
         # x[t+1] = x[t] + dt*dx[t] rows straight into the NLP. This is why HardFlow is portable

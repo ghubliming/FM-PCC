@@ -4975,3 +4975,80 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
    - *New Gate Suite (G-B8, G-B9, G-B11)*: Added G-B8 (enforcing byte-identical `rgb_model` specs containing `'pretrained'` across UNet and DiT), G-B9 (verifying bit-identical state dicts in `token` mode and latent sensitivity in `adaln`/`both` modes after 5-step Adam warmup), and G-B11 (verifying deterministic seed-invariance of pretrained weights loaded from local cluster cache).
    - *Gate G-B7 Config Import Isolation*: Diagnosed failure in Job 25034/25038 where ambient `MIX_VIS_COND=adaln` caused config import crashes during unconditioned U-Net sweeps. Resolved by making `config/aligning-d3il-visual.py` drop inapplicable flags with warnings rather than raising on global import, and reverting G-B7 to its isolated pre-U9 state.
    - *Trainer Wrapper Accessor Fix*: Resolved Job 25043 startup crash where `Trainer` attempted to resolve `diffusion_model.model.velocity_net` (failing because `.model` was the `MeanFlowEngine` wrapper). Fixed by delegating encoder lookup through `_visual_backbone()` helper. Verified path disambiguation (`_VPTrue_VLR0.1_VCadaln`), ensuring the R1 headline run cannot collide with or overwrite the R4 baseline.
+
+***
+
+## Gen14 Visual-Mix-ML: Perception-First Stack Evaluation (U9-R1), Truncation Artifact Discovery & Selection Shift (August 26, 2026)
+
+**Keywords**: Gen14, Visual-Mix-ML, U9-R1, perception-first, vis_pretrained, ImageNet init, vis_lr_scale, vis_cond_mode, adaln, truncation artifact, Div_Abort confound, dpcc-c regression, candidate 13, batch_va2_20260826_142750.
+
+1. **Hardware Verification & Multi-Group Execution (Jobs 25045–25048, Candidate 13)**: Completed the first end-to-end evaluation of the U9 perception-first architecture on visual aligning (`mf` engine, `mf_dit` bone, `vis_pretrained=True`, `vis_lr_scale=0.1`, `vis_cond_mode=adaln`, seed 6, 100k steps). Passed all 17 hardware verification gates (GB1–GB11, G0–G7), verified that visual encoder parameters updated at 0.1× visual learning rate ($2\times 10^{-5}$ vs $2\times 10^{-4}$ trunk), and confirmed directory disambiguation (`_VPTrue_VLR0.1_VCadaln`) preventing collisions with pre-U9 runs.
+2. **Primary Distance Metric Performance**: Evaluated paired on Train-10 contexts against U8 DiT (`cand12`, 80k) and `mf` U-Net v1 (`cand15`, 100k). Goal success remained pinned at the floor (1/320, strictly inside study-only `geo_free-bounds_free`). On clean legal rollouts, U9-R1 achieved a best distance of 0.1302m (clean tail $\le 15\text{cm}$ at 10%) compared to 0.1208m for U8 DiT and **0.0258m for `mf` U-Net v1** (20% clean tail), hovering within noise of the 0.3985m do-nothing baseline.
+3. **Forensic Discovery of Div_Abort Truncation Artifacts**:
+   - *Apparent Constraint Win Refuted*: U9-R1 initially registered an apparent perfect constraint score (`0-viol = 1.00`) on three tightened arms. Forensic investigation revealed this was an artifact of the newly introduced `ALIGN_DIVERGENCE_ABORT` guard (commit `1288118a`), which was absent during comparator evaluations. The guard truncated **25.0% of R1 arm-B rollouts** upon commanded tracking error crossing 0.25m (mean aborted episode length 99 steps), artificially capping opportunities for violation.
+   - *Parity Under Equalized Filtering*: Restricting all candidates to guard-surviving rollouts (`MaxPhysErr <= 0.25m`), all three candidates achieved `0-viol = 1.00` on `dpcc-r`, `dpcc-t`, and `post_processing`, completely eliminating R1's apparent constraint advantage and restoring `mf` U-Net v1 dominance on legal minimum distance (0.0258m vs 0.1302m).
+   - *Telemetry Capping*: Confirmed that R1's "lowest tracking error in batch" (`MaxPhysErr = 0.1599`) was purely an artifact of the guard truncating rollouts at the 0.25m boundary (diverged rollouts mean 0.2520m vs full-length 0.1074m).
+4. **Statistically Validated `dpcc-c` Selection Degradation**: Under min-projection-cost selection (`dpcc-c`), U9-R1 exhibited a statistically significant regression of +0.11m to +0.14m in final distance across both `combined_5` and `tightened` geometries, **losing 10 of 10 paired contexts** against U8 DiT (sign test $p=0.002$, $t(9)=3.48$). Proved that U9 shifted the plan distribution shape such that minimum-projection-cost trajectories select systematically worse task plans.
+5. **Real-Time Latency Advantage & Roadmap for Unconfounded Controls**:
+   - *Throughput Gain*: Pruning the visual token from the sequence in `vis_cond_mode='adaln'` yielded a verified speedup, executing full in-loop QP control steps at **41.5–47.2 ms (21–24 Hz)**, outperforming U8 DiT (54.9–59.9 ms).
+   - *Control Roadmap*: Because R1 ablated three knobs simultaneously, full attribution requires executing matched controls: R4 (same `mf_dit` bone at U9 defaults), R6 (`vis_pretrained=False` init control to isolate GroupNorm decalibration), and the P2 linear probing suite (`probe_latent_informativeness.py`).
+
+***
+
+## Gen0 DPCC MPC-Fan Parity (`FMPCC_MPC_BATCH`) & Evaluator Memory Safety Architecture (August 26, 2026)
+
+**Keywords**: Gen0, DPCC baseline, FMPCC_MPC_BATCH, candidate fan, MPC selection deconfounding, config/avoiding-d3il.py, scripts/eval.py, eval_dpcc_job.sh, _msgmpc1, path collision guard.
+
+1. **Candidate Fan Parity Extension to Gen0 Baseline**: Extended `FMPCC_MPC_BATCH` support into the Gen0 DPCC baseline (`plan` block in `config/avoiding-d3il.py`, `scripts/eval.py`, `Slurm_Codes/sbatch/eval_dpcc_job.sh`). Enabled full deconfounding of MPC candidate selection ($B=1$ vs $B=4$) against the pinned Gaussian Diffusion baseline (`K20`, `aw10`), allowing researchers to quantify how much of DPCC's historical success stems from multi-candidate trajectory selection versus the differential projector.
+2. **Automated Collision-Free Results Tagging (`_msgmpc1`, `_msg20trials-mpc1`)**: Implemented dynamic leaf disambiguation in `config/avoiding-d3il.py` to ensure $B=1$ evaluation runs automatically append `_msgmpc1` (or respect custom `FMPCC_RUN_MSG`), preventing $B=1$ runs from silently clobbering baseline $B=4$ results at matched $(H, K, T)$.
+3. **Early Argument Parsing & Knobs Sanitization**: Integrated fan environment reading and validation prior to Hydra/Parser configuration imports in `scripts/eval.py`. Enforces positive integer bounds ($B \ge 1$) and logs explicit console provenance (`[ eval ] mpc fan: DPCC baseline arm=<N>`). Verified via stub imports that default fan ($B=4$) preserves byte-identical paths and outputs for all historical scripts.
+
+***
+
+## Visual Aligning Cross-Engine Sampler Step (`K`) Diagnostic, D3IL Baseline Inaction & Bimodal Engagement Regimes (August 26, 2026)
+
+**Keywords**: Gen14, visual aligning, K sampler steps, NFE ablation, D3IL baseline, untouched metric, bimodal engagement, MeanFlow K100, AlphaFlow K2, inverted step response, batch_va2_20260826_142750.
+
+1. **D3IL Vision Baseline Inaction Discovery**: Audited the official `d3il_baseline_ddpm_encdec_vision` reference policy on `aligning-d3il-visual` across 1,080 rollouts (seed 42) and 2,804 rollouts (6 seeds, `geo=none`). Revealed that the baseline policy is effectively a physical no-op: median final box→target distance is **0.999× to 1.000× of the starting distance**, with **55.6% to 70.0% of rollouts completely untouched** (box moved $<5\,\text{mm}$ over the entire episode). Established that strict task success is universally pinned by orientation misalignment (median final angle error 32°–62°).
+2. **Visual Flow Matching Dominance on Distance Metric**: On the test split, `cand4` (FM filmv1, K=20) decisively outperformed the D3IL baseline, removing 65% of the starting distance gap (0.352× remaining) and placing **20.0% of rollouts within 5 cm** of the goal (vs 0.1%–0.8% for baseline). On the training split, MeanFlow K=100 achieved 0.277× distance remaining with 33.3% of rollouts $\le 5\,\text{cm}$.
+3. **Bimodal Task Engagement & $K$ as an Operating Switch**: Proved that policy performance in visual aligning is fundamentally bimodal across model architectures:
+   - *Engaged Models (0.28×–0.41× distance left, 10%–20% untouched)*: MeanFlow K=100, AlphaFlow K=2, `cand4` (FM filmv1), Diffusion K=100.
+   - *Unengaged Models (0.95×–1.00× distance left, 23%–80% untouched)*: FlowMatching (K=20 and K=100), Diffusion K=20, `cand3` (FM filmv2), `cand17` (Diffusion steps400, 80% untouched), and both D3IL baselines.
+   - *Operating Switch*: Sampler step count $K$ does not smoothly tune distance; rather, it flips architectures between unengaged and engaged states (e.g., Diffusion K=20 at 0.957× flips to 0.409× at K=100).
+4. **Engine-Specific $K$ Response & AlphaFlow Inversion**:
+   - *MeanFlow (K=2 vs K=100)*: Increasing $K=2 \rightarrow 100$ improved median distance from 0.235m (0.602×) to 0.139m (0.277×), placing 33% vs 20% within 5cm (Wilcoxon $p=0.069$, strong trend).
+   - *AlphaFlow Inversion (K=2 vs K=100)*: AlphaFlow exhibited a statistically robust **inverted step response** ($p=0.008$): $K=2$ achieved 0.140m (0.289× left, 17% $\le 5\,\text{cm}$) while $K=100$ degraded to 0.340m (0.689× left, 3% $\le 5\,\text{cm}$). Proved that AlphaFlow's coarse 2-step execution benefits from truncation errors, whereas the converged ODE trajectory drifts away from task targets.
+   - *FlowMatching Stagnation*: FM remained completely unengaged at both $K=20$ (0.979×, 43% untouched) and $K=100$ (0.951×, 40% untouched), diagnosing an upstream visual conditioning or training defect.
+5. **Metric Standardization**: Established "untouched %" ($|\text{final\_dist} - \text{init\_dist}| < 5\,\text{mm}$) and unblended XY Cartesian distance (`context_final_xy_dist`) as standard diagnostic metrics, replacing the distorted 50/50 position-rotation blended `mean_dist_per_rollout`.
+
+***
+
+## HardFlow vs DPCC Solver Architectural Audit & Standalone IPOPT vs SLSQP Benchmark (August 27, 2026)
+
+**Keywords**: Gen12, HardFlow, DPCC, solver audit, IPOPT, scipy SLSQP, CasADi overhead, 44 variables, sublinear scaling, bench_solver_hf_vs_dpcc.py, bench_solver_hf_vs_dpcc.sh, timing reconciliation.
+
+1. **Reconciliation of Published vs Internal HardFlow Timings**: Conducted a line-by-line source audit of upstream HardFlow (`aux_repo/HardFlow`) and paper formulations (`arXiv:2511.08425v3`), resolving why HardFlow claims a 3.2× speedup over its baseline while running 1.4×–14× slower than DPCC in FM-PCC:
+   - *Upstream Comparison*: Upstream compared IPOPT on clean endpoints (7.0 ms) against IPOPT on noisy iterates (22.6 ms) — a genuine 3.2× easier NLP optimization.
+   - *Internal Comparison*: FM-PCC compares IPOPT on endpoints (~30 ms) against **scipy SLSQP** on noisy iterates (2.1–21 ms). The baseline in FM-PCC is a fundamentally different, 12× faster solver routine.
+2. **Identification of Size-Independent CasADi/IPOPT Overhead**: Formally demonstrated that on a 44-variable dense robotic NLP ($H=8$, dof $= 8 \times 6 - 4 = 44$), IPOPT's cost is dominated by size-independent setup (CasADi `Opti` substitution, KKT matrix assembly, linear solver spin-up). Scaling empirical solves from $H=8$ (44 vars, 30.0 ms) to $H=16$ (92 vars, 49.7 ms) revealed sublinear scaling ($2.09\times$ variables $\rightarrow 1.66\times$ time), establishing that **~24 ms (81%) of an H8 IPOPT solve is fixed per-call overhead** rather than optimization work.
+3. **Design of Isolated Cross-Solver Benchmark Harness**:
+   - *Standalone Suite (`bench_solver_hf_vs_dpcc.py`, `bench_solver_hf_vs_dpcc.sh`)*: Implemented an isolated benchmarking utility comparing `HardFlowNLP` (IPOPT) and `Projector` (scipy SLSQP) side by side on identical `avoiding-d3il` constraint geometry without modifying production code paths.
+   - *Dual Reference Regimes*: Evaluated both solvers across `endpoint` (small perturbation of smooth path) and `iterate` (high-variance noisy trajectory) references to isolate algorithm benefits from solver execution overhead.
+   - *Correctness & Feasibility Verification*: Asserted solution agreement ($\|\Pi_{\text{IPOPT}} - \Pi_{\text{SLSQP}}\|$) and hard feasibility checks on obstacle and box bounds residuals, guaranteeing that non-converged IPOPT iterates or infeasible solutions trigger non-zero exit codes.
+
+***
+
+## Divergence Abort Refactor (`Div_Abort` v2): Migration to Physical Workspace & Scene Flight Envelopes (August 27, 2026)
+
+**Keywords**: Aggregated, Div_Abort v2, divergence abort, physical workspace, flight envelope, overspeed, off_route, off_table, ee_off_route, view clamp, 9 files.
+
+1. **Root Cause Analysis of Command-Based False Aborts**: Diagnosed that v1's command-lead abort checks (`p_des_runaway` with $|p_{\text{des}} - p| > 5.0\,\text{m}$ for UAV, and `des_runaway` with $|des\_c\_pos - c\_pos|_{\text{xy}} > 0.25\,\text{m}$ for visual aligning) were direction-blind triggers operating on free-running command integrators. Proved that while downward UAV command leads induce thrust floor saturation and flips, upward leads (recoverable climbs) and sideways leads (64° aggressive tilts) were falsely terminated despite the aircraft flying safely in-bounds.
+2. **UAV Guard Architecture v2 (`eval_mix_uav.py`, `eval_fm_uav.py`, `eval_artifacts.py`)**:
+   - *Per-Scene Physical Flight Envelopes*: Replaced variable geometry bounds with fixed `SCENE_FLIGHT_ENVELOPE` covering the bounding box of expert trajectories $\oplus$ 2.0m slack across all scenes (`empty`, `corridor`, `pillars`, `s_curve`). Aborts now trigger on physical vehicle position `off_route` or `off_map`.
+   - *Physical Velocity Cap (`overspeed`)*: Introduced an independent speed trigger capped at **6.0 m/s**, strictly above any free-fall velocity achievable within the arena ceiling ($\sqrt{2gh} = 5.05\,\text{m/s}$), preventing spurious aborts from normal aggressive maneuvers.
+   - *Command Decoupling*: Deleted `p_des_runaway` from triggers entirely; preserved `p_des` coordinates solely as non-trigger diagnostic telemetry for leader lines in foresight SVGs.
+3. **Visual Aligning Guard Architecture v2 (`eval_mix_visual_aligning.py`, `eval_fm_visual_aligning.py`, `eval_imf_visual_aligning.py`, `eval_visual_aligning_dpcc.py`)**:
+   - *Physical Workspace Envelope*: Deleted `des_runaway` and `des_out_of_arena`. Added `off_table` (testing $c\_pos$ against the physical Franka table box $[-0.30, 1.60] \times [\pm 1.20] \times [-0.50, 1.50]$) and `ee_off_route` (testing $c\_pos$ against the Cartesian task envelope $[0.20, 0.80] \times [\pm 0.45] \times [0.02, 0.50] \oplus 0.15\,\text{m}$ slack).
+   - *Safe Velocity Staging*: Implemented `ee_overspeed` finite-difference TCP velocity check, shipping disabled by default (`FMPCC_ALIGN_DIV_SPEED_MS=0`) to prevent uncalibrated false aborts until hardware TCP speed distributions are profiled.
+4. **Resolution of Foresight SVG Aspect Distortion**: Clarified the dual mechanisms resolving plot distortion: `eval_artifacts.view_window()` bounds matplotlib axes around the 2–98 percentile flown trajectory (preventing runaway commanded points from shrinking the canvas), while `Div_Abort` v2 halts the episode the moment the physical vehicle leaves the arena, preventing runaway vehicle paths from blowing out the axis scales.
+

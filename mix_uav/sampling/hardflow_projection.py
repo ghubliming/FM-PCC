@@ -507,10 +507,26 @@ def hardflow_regime(flow_steps, activation_threshold):
 #                                                   a fan, so asking for one asks for the fan.
 #                                                   Matches the DPCC arms by construction.
 #   `...-tightened`           -> composes          geometry suffix, stripped before parsing.
+#   `...-geo_free` etc.       -> composes          U5 constraint-group toggle, stripped too.
+#
+# 🔴 U5 (2026-08-27) — the strip list is NOT cosmetic. The selector test below is
+# `name.endswith(('-r','-c','-t'))`, so ANY suffix appended after the selector hides it:
+# `hardflow_new-r-geo_free` ends in 'e', falls through to the bare-name branch and silently
+# runs at B=1 while its `dpcc-r-geo_free` counterpart runs at B=4 — reintroducing exactly the
+# fan mismatch B4_PARITY was written to kill, in the one place nobody would look. Every
+# constraint-group toggle that can legally follow a selector MUST be listed in _TOGGLE_SUFFIXES,
+# and the strip loop repeats until nothing matches so composites (`-geo_free-bounds_free`) also
+# resolve. Regression-check: resolve_hf_batch_size('hardflow_new-r-geo_free', 4) == 4.
 #
 # ⚠️ At B>1 `hardflow_new` and `hardflow_new-r` would be byte-identical (both select index 0),
 # so running both at the same fan is duplicated compute. Pinning the bare name to 1 is what
 # gives it a distinct meaning instead.
+# Suffixes that may legally follow the selector token in an arm-C variant name. Stripped
+# before the `-r`/`-c`/`-t` test so a toggle never masks the selector. Keep in sync with the
+# variant-name gates in mix_uav_test/eval_mix_uav.py::setup_dpcc_projector.
+_TOGGLE_SUFFIXES = ('_train_set', '-tightened', '-geo_free', '-bounds_free', '-model_free')
+
+
 def resolve_hf_batch_size(variant, configured_batch):
     """MPC candidate-fan size for one arm-C variant. See the block comment above.
 
@@ -522,9 +538,15 @@ def resolve_hf_batch_size(variant, configured_batch):
     and must never be routed through here.
     """
     name = str(variant)
-    for _suffix in ('_train_set', '-tightened'):   # bookkeeping/geometry suffixes
-        if name.endswith(_suffix):
-            name = name[:-len(_suffix)]
+    # U5: strip repeatedly — suffixes compose (e.g. `-geo_free-bounds_free`, `-geo_free-tightened`).
+    _stripped = True
+    while _stripped:
+        _stripped = False
+        for _suffix in _TOGGLE_SUFFIXES:
+            if name.endswith(_suffix):
+                name = name[:-len(_suffix)]
+                _stripped = True
+                break
     if not name.startswith('hardflow'):
         raise ValueError(
             f'resolve_hf_batch_size is for arm-C (hardflow*) variants only, got {variant!r}')

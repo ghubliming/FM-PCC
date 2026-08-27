@@ -240,7 +240,7 @@ When running the next auto-update, only process commits **strictly after** this 
 
 | Field | Value |
 |---|---|
-| **Commit hash** | `6c2df738` |
-| **Commit message** | `(Gen14 U9 hotfix)fix: resolve encoder access in Trainer to prevent silent failures with visual learning rate scaling` |
-| **Commit date** | 2026-08-25 06:34:05 UTC |
-| **What was recorded** | Gen14 U9 perception-first architecture upgrade: ImageNet initialization (`vis_pretrained`, `get_resnet`), GroupNorm decalibration discovery (40 `BatchNorm2d` replacements, 19.2k parameters), two-group optimizer with scaled visual learning rate (`vis_lr_scale`, `lr_vis`), vision-as-modulation (`vis_cond_mode='adaln'`) on adaLN transformer bones (`mf_dit_official`, `af_sit`), P2 latent informativeness ridge probe (`probe_latent_informativeness.py`), verification gates G-B8/G-B9/G-B11, and cluster incident fixes for config import isolation and `_visual_backbone` resolution (`2368aa1a`, `aaee819e`, `fd8c311f`, `6c2df738`). |
+| **Commit hash** | `20b58743` |
+| **Commit message** | `((Div_Abor For V_A and UAV) v2) Refactor divergence abort conditions for visual aligning` |
+| **Commit date** | 2026-08-27 11:18:16 UTC |
+| **What was recorded** | Gen14 U9 perception-first stack evaluation (U9-R1) and Div_Abort truncation artifact discovery (`30dd65a3`); Gen0 DPCC MPC candidate fan parity (`FMPCC_MPC_BATCH`, `_msgmpc1`) (`30dd65a3`); Visual aligning cross-engine sampler step ($K$) diagnostic, D3IL baseline inaction (56–70% untouched no-op), and bimodal engagement regimes (`94ea2d12`); Gen12 HardFlow vs DPCC solver audit and standalone IPOPT vs scipy SLSQP benchmark harness (`c1e48526`); Divergence abort refactor (Div_Abort v2) replacing direction-blind command-lead triggers with physical scene flight envelopes (`SCENE_FLIGHT_ENVELOPE`), physical velocity caps (`overspeed` 6.0 m/s), and Franka table workspace bounds (`off_table`, `ee_off_route`) across 9 evaluation and telemetry files (`20b58743`). |

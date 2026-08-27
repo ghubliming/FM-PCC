@@ -41,33 +41,83 @@ diffusion_timestep_threshold: 0.5
 #   • `geo_free*` variants get NONE — geometry is already gone, tightening touches nothing.
 # (Unlike visual-aligning, where the geo loop AUTO-generates the tightened twin for every
 # variant, this UAV yaml enumerates each `-tightened` explicitly — so they must be listed.)
+# projection_variants: [
+#   # ── DPCC paper Table 1 baselines ──
+#   'diffuser',
+#   'gradient',
+#   'gradient-tightened',
+#   'post_processing',
+#   'post_processing-tightened',
+#   'model_free',               # dynamics OFF, rest ON
+#   'model_free-tightened',
+#   # ── U8: constraint-group ablation toggles (composable, see docstring above) ──
+#   'bounds_free',               # action-bound OFF, rest ON — geometry KEPT
+#   'bounds_free-tightened',     # U8c: geometry kept → tightening is meaningful (mirrors model_free-tightened)
+#   'geo_free',                  # geo_bounds+halfspace+obstacles OFF, rest ON (dynamics+bounds only)
+#   'geo_free-bounds_free',      # dynamics ALONE (no bounds, no geometric constraints)
+#   'geo_free-model_free',       # bounds ALONE (no dynamics, no geometric constraints)
+#   'model_free-bounds_free',    # geometry ALONE (no dynamics, no action bound) — U8b: the
+#                                #   missing 3rd of the "X alone" trilogy. Complements bounds-alone
+#                                #   (geo_free-model_free) & dynamics-alone (geo_free-bounds_free);
+#                                #   isolates geometry-without-dynamics for the U_13 study.
+#   'model_free-bounds_free-tightened',  # U8c: geometry KEPT → tightening meaningful (the sibling U8b flagged)
+#   # ── DPCC paper Table 1 main results ──
+#   'dpcc-r',
+#   'dpcc-r-tightened',
+#   'dpcc-c',
+#   'dpcc-c-tightened',
+#   'dpcc-t',
+#   'dpcc-t-tightened',
+# ]
+
+# ══ U5 (2026-08-27) — ACTIVE LIST ════════════════════════════════════════════════════════
+# The block above is the pre-U5 list, kept commented for rollback (do not delete).
+#
+# WHY: the U8 ablation toggles (`geo_free`, `bounds_free`, `model_free` and their composites)
+# were STUDY instruments — they answered "which constraint family does the work?" and that
+# question is answered. Running them as standalone variants costs ~13 of 20 variant-slots per
+# eval job for rows no benchmark table reports. U5 keeps only the two arms the benchmark
+# hierarchy actually compares — DPCC (arm B) and HardFlow (arm C, listed in config/uav_mix.py) —
+# plus the unprojected `diffuser` reference row, which is the denominator every DA needs.
+#
+# 🔴 `-geo_free` IS RETAINED, BUT ONLY AS A COMPOSABLE SUFFIX, NEVER AS A STANDALONE VARIANT.
+# `dpcc-c-geo_free` = the full DPCC projector with the GEOMETRIC group (geo_bounds + halfspace
+# + obstacles) switched off, while `dynamics` and the action-magnitude `bounds` stay ON. That
+# is the "correct the dynamics and the action bound, ignore the scene geometry" projector.
+# This needs NO new code path: the three gates in `setup_dpcc_projector` are substring tests
+# (`'geo_free' not in variant`), and composing them onto a selector was the documented intent
+# from U8 — see FM_v3_uav_test/eval_fm_uav.py:815, which already spells out
+# `dpcc-c-geo_free-bounds_free`. A brand-new token would have had to be mirrored into BOTH
+# eval scripts to keep Gen11 and Gen15 reading this shared yaml the same way; reusing the
+# existing token keeps them identical by construction.
+#
+# ⚠️ SHARED FILE. config/uav.py (Gen11) and config/uav_mix.py (Gen15) both read this list, so
+# this change reaches Gen11's next eval too. That is safe here precisely because `-geo_free`
+# already exists in Gen11's gating code (eval_fm_uav.py:836/894/904) with identical semantics.
+#
+# Slots: 10 here + 7 HardFlow (config/uav_mix.py `hardflow_variants`) = 17 variants/job,
+# down from 20 + 3 = 23.
 projection_variants: [
-  # ── DPCC paper Table 1 baselines ──
+  # ── unprojected reference (DPCC paper Table 1, row 1) — no projector at all ──
   'diffuser',
-  'gradient',
-  'gradient-tightened',
-  'post_processing',
-  'post_processing-tightened',
-  'model_free',               # dynamics OFF, rest ON
-  'model_free-tightened',
-  # ── U8: constraint-group ablation toggles (composable, see docstring above) ──
-  'bounds_free',               # action-bound OFF, rest ON — geometry KEPT
-  'bounds_free-tightened',     # U8c: geometry kept → tightening is meaningful (mirrors model_free-tightened)
-  'geo_free',                  # geo_bounds+halfspace+obstacles OFF, rest ON (dynamics+bounds only)
-  'geo_free-bounds_free',      # dynamics ALONE (no bounds, no geometric constraints)
-  'geo_free-model_free',       # bounds ALONE (no dynamics, no geometric constraints)
-  'model_free-bounds_free',    # geometry ALONE (no dynamics, no action bound) — U8b: the
-                               #   missing 3rd of the "X alone" trilogy. Complements bounds-alone
-                               #   (geo_free-model_free) & dynamics-alone (geo_free-bounds_free);
-                               #   isolates geometry-without-dynamics for the U_13 study.
-  'model_free-bounds_free-tightened',  # U8c: geometry KEPT → tightening meaningful (the sibling U8b flagged)
-  # ── DPCC paper Table 1 main results ──
-  'dpcc-r',
+
+  # ── arm B: DPCC, FULL constraint stack (dynamics + bounds + geo_bounds + halfspace + obstacles) ──
+  'dpcc-r',                    # random candidate selection
   'dpcc-r-tightened',
-  'dpcc-c',
+  'dpcc-c',                    # minimum-projection-cost selection
   'dpcc-c-tightened',
-  'dpcc-t',
+  'dpcc-t',                    # temporal-consistency selection
   'dpcc-t-tightened',
+
+  # ── arm B': DPCC with GEOMETRY OFF — dynamics + action bound only (U5) ──
+  # Enforces the physics (p_des ← act, p ← act) and the dataset action-magnitude cap, and
+  # enforces NOTHING about walls, pillars or the workspace box. Violations are still SCORED
+  # against the full raw geometry (`_exec_constraint_violations` is variant-independent), so a
+  # clean row here means the GENERATOR flew a legal path on its own.
+  # No `-tightened` siblings: tightening only shifts geo surfaces, which these rows removed.
+  'dpcc-r-geo_free',
+  'dpcc-c-geo_free',
+  'dpcc-t-geo_free',
 ]
 
 # ── Constraints (E9) ────────────────────────────────────────────────────────
