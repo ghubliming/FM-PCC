@@ -113,17 +113,58 @@ cd "$REPO"
 export HFFM_BATCH="${HFFM_BATCH:-4}"
 export FMPCC_MPC_BATCH="${FMPCC_MPC_BATCH:-4}"
 echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)  FMPCC_MPC_BATCH=$FMPCC_MPC_BATCH (arms A/B fan)"
+
+# ── [SolverSwap 2026-08-28] HFFM_SOLVERS — the SAME K under BOTH NLP backends ────────────
+# Arm C's NLP backend is a PROCESS-level default (FMPCC_HF_NLP_BACKEND ->
+# hardflow_projection.resolve_nlp_backend), so one python process = one backend. To measure
+# IPOPT and SLSQP on the SAME node, in the SAME job, back to back, this loops the eval once
+# per backend for every K.
+#
+#   HFFM_SOLVERS=""             (default) ONE pass on the shipped default -> slsqp
+#   HFFM_SOLVERS="ipopt slsqp"  TWO passes per K -> the A/B the swap actually needs
+#
+# The passes do NOT collide and nothing is overwritten: an ipopt pass writes `hardflow_new-*`,
+# an slsqp pass writes `hardflow_sls-*` (hardflow_projection.artifact_variant_label). The
+# SHARED arms (`diffuser`, `dpcc-*`) are run by whichever pass goes FIRST and then SKIPPED by
+# the second (the `already exists` guard in the eval), so they cost one run, are measured once,
+# and BOTH hardflow arms are compared against the identical DPCC row.
+#
+# Order matters for reading the log, not for correctness: put ipopt first so the expensive arm
+# and the DPCC baseline land in the same pass.
+HFFM_SOLVERS="${HFFM_SOLVERS:-}"
+if [ -n "$HFFM_SOLVERS" ]; then
+    echo "[ hardflow ] NLP backend sweep: $HFFM_SOLVERS  (one process per backend; ipopt -> hardflow_new-*, slsqp -> hardflow_sls-*)"
+else
+    echo "[ hardflow ] NLP backend: code default (slsqp).  Set HFFM_SOLVERS=\"ipopt slsqp\" for the A/B."
+fi
+
+# One eval invocation per backend. $1 = K ("" -> the plan block's flow_steps); rest passed through.
+run_eval () {
+    local K="$1"; shift
+    local kargs=()
+    if [ -n "$K" ]; then kargs=(--flow-steps "$K"); fi
+    if [ -z "$HFFM_SOLVERS" ]; then
+        python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+        return
+    fi
+    for S in $HFFM_SOLVERS; do
+        echo "--------------------------------------------------------------------------------"
+        echo "[ eval ] NLP backend = $S   K = ${K:-plan-block}   ($(date))"
+        echo "--------------------------------------------------------------------------------"
+        FMPCC_HF_NLP_BACKEND="$S" python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+    done
+}
 if [ -n "${HFFM_FLOW_STEPS:-}" ]; then
     echo "[ eval ] K sweep: $HFFM_FLOW_STEPS   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
     for K in $HFFM_FLOW_STEPS; do
         echo "================================================================================"
         echo "[ eval ] K = $K   ($(date))"
         echo "================================================================================"
-        python FM_v3_hardflow_test/eval_FM_v3_hardflow.py --flow-steps "$K" "$@"
+        run_eval "$K" "$@"
     done
 else
     echo "[ eval ] single run, K from plan block   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
-    python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "$@"
+    run_eval "" "$@"
 fi
 
 echo "Evaluation completed successfully."

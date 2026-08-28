@@ -5052,3 +5052,51 @@ E7 restored the full PCC/DPCC projector skeleton (candidate fan, selection, cons
    - *Safe Velocity Staging*: Implemented `ee_overspeed` finite-difference TCP velocity check, shipping disabled by default (`FMPCC_ALIGN_DIV_SPEED_MS=0`) to prevent uncalibrated false aborts until hardware TCP speed distributions are profiled.
 4. **Resolution of Foresight SVG Aspect Distortion**: Clarified the dual mechanisms resolving plot distortion: `eval_artifacts.view_window()` bounds matplotlib axes around the 2–98 percentile flown trajectory (preventing runaway commanded points from shrinking the canvas), while `Div_Abort` v2 halts the episode the moment the physical vehicle leaves the arena, preventing runaway vehicle paths from blowing out the axis scales.
 
+***
+
+## Gen15 U5: Projection Variant Slimming, `-geo_free` Composites & HardFlow Fan Batch-Size Bugfix (August 27, 2026)
+
+**Keywords**: Gen15, U5, projection-variant slimming, uav_projection.yaml, uav_mix.py, hardflow_projection.py, dpcc-geo_free, hardflow_new-geo_free, resolve_hf_batch_size, suffix masking fix, candidate fan parity.
+
+1. **Projection Variants Slimming (20 $\rightarrow$ 10 Slots)**: Retired standalone U8 ablation study variants (`gradient`, `post_processing`, `model_free`, `bounds_free`, `geo_free`, and their pairwise composites) from `config/uav_projection.yaml`. These study instruments had answered the constraint contribution questions for `U_8_new_projection_var_upgrade`, but occupied 13 of 20 variant slots per eval job without appearing in published benchmark tables. Preserved `diffuser` (the unprojected baseline denominator), the 6 core `dpcc-*` variants (`dpcc-r/c/t` and `-tightened`), and introduced 3 new `dpcc-*-geo_free` composites (10 active YAML rows; legacy definitions preserved as comments).
+2. **Implementation of "Dynamics + Action Bounds Only" Composites (`dpcc-{r,c,t}-geo_free`)**:
+   - Reused the existing substring matching mechanism in `setup_dpcc_projector` (`eval_mix_uav.py:927/986/995`, `eval_fm_uav.py:836/894/904`), where appending `-geo_free` disables `geo_bounds`, `halfspace`, and `obstacles` constraint groups while retaining robot physical `bounds` and quadrotor `dynamics`.
+   - Avoided creating a separate `geo_constraint_variants` folder tag, keeping all full-stack and geometry-free variants unified under the same per-scene `geo_tag` directory (`…/<scene>_bounds+dynamics+…/`) for seamless DA table aggregation.
+   - Preserved full raw geometry scoring in `_exec_constraint_violations(obs_traj, config)`: zero violations on a `-geo_free` rollout directly certifies that the trajectory generator produced an obstacle-free flight without projector assistance.
+3. **HardFlow Variant Expansion & Upstream B=1 Restoration**:
+   - Expanded `hardflow_variants` in `config/uav_mix.py` from 3 to 7: restored bare `hardflow_new` (upstream-faithful $B=1$ baseline) alongside $B=4$ full-stack variants (`hardflow_new-r`, `-c`, `-t`) and their 3 geometry-free counterparts (`hardflow_new-{r,c,t}-geo_free`). Total variant slots per evaluation job reduced from 23 to 17 (10 YAML + 7 HardFlow).
+4. **Correction of Suffix-Masking Bug in `resolve_hf_batch_size`**:
+   - Diagnosed a critical fan-resolution bug in `mix_uav/sampling/hardflow_projection.py`: the legacy check `if name.endswith(('-r', '-c', '-t'))` evaluated after single suffix stripping failed on compound names like `hardflow_new-r-geo_free` (ending in `'e'`), causing them to silently drop to $B=1$ while their DPCC counterparts ran at $B=4$.
+   - Replaced single-pass stripping with iterative reduction over `_TOGGLE_SUFFIXES = ('_train_set', '-tightened', '-geo_free', '-bounds_free', '-model_free')`. Verified that all selector and toggle combinations correctly resolve to their expected fan sizes ($B=1$ for bare `hardflow_new`, $B=4$ for all `-r/-c/-t` variants and composites), preventing serial solver loop discrepancies from distorting wall-clock benchmark comparisons.
+
+***
+
+## Gen15: UAV-MIX Multi-K Evaluation Pipeline & Train-Once Orchestration (August 27, 2026)
+
+**Keywords**: Gen15, uav_mix_ksweep_pipeline.sh, Slurm orchestration, afterok dependency, multi-K evaluation, matched budget, engine validation, train-once fan-out.
+
+1. **Train-Once Multi-K Fan-Out Architecture**: Implemented `Slurm_Codes/sbatch/uav_mix/uav_mix_ksweep_pipeline.sh` to automate multi-NFE evaluation campaigns for UAV-Mix. Leveraged the architectural property of continuous-time flow matching engines (`fm`, `mf`, `af`), where sampler step count $K$ is an evaluation-time parameter resolved via `engine_registry.apply_nfe`. The pipeline executes a single `train_mix_uav.sh` training job and schedules multiple evaluation jobs across a list of target $K$ values using Slurm dependencies (`--dependency=afterok:${TRAIN_ID}`). This eliminates wasteful retraining of identical weights across different step budgets.
+2. **Diffusion Engine Training-Time Guard**: Added explicit engine validation that rejects $K$-sweep lists when `ENGINE=diffusion`. Because DDPM/Diffusion models construct their noise schedule from `n_diffusion_steps` at training time, altering $K$ during evaluation is a no-op in `apply_nfe`; the script halts early with an informative error rather than generating misleadingly tagged output directories.
+3. **Unified Logging & Matched-Budget Tracking**: Standardized timestamped logging across chained pipeline jobs (`$LOG_DIR/${TIME}_%x_%j.log`) and enforced directory isolation under `logs/UAV_MIX/uav-${SCENE}/mix_uav_${ENGINE}/.../${SEED}/` (with `plans/` partitioned per $K$).
+
+***
+
+## Aggregated HardFlow NLP Backend: scipy SLSQP Integration, 4.3× Acceleration & Clashing-Free Artifact Isolation (August 27, 2026)
+
+**Keywords**: Aggregated, HardFlow NLP backend, scipy SLSQP, DPCC Projector, CasADi bypass, 4.33× speedup, Job 25121, artifact_variant_label, hardflow_sls, DA allow-list, 6 generations.
+
+1. **Empirical Validation of Solver Discrepancy (Job 25121 Audit)**: Evaluated `HardFlowNLP` (IPOPT) and DPCC's `Projector` (scipy SLSQP) on the identical 44-variable robotic NLP across 3 seeds × 50 reps (`RESULTS_20260827_solver_bench_ipopt_vs_slsqp.md`):
+   - *Endpoint Regime (What HardFlow Solves)*: IPOPT required **47.6 ms** (spread 47.3–47.7 ms, demonstrating fixed per-call setup dominance) vs SLSQP's **11.0 ms**, delivering a **4.33× speedup** with sub-millimeter solution agreement ($\|\Pi_{\text{IPOPT}} - \Pi_{\text{SLSQP}}\| \le 1.0\times 10^{-3}$).
+   - *Overhead Domination Confirmed*: HardFlow's near-feasible endpoint projection trick yielded a **3.09× speedup** on SLSQP ($34.0 \rightarrow 11.0\,\text{ms}$) but only **1.14×** on IPOPT ($54.2 \rightarrow 47.6\,\text{ms}$), proving that CasADi/IPOPT setup overhead swallowed the core computational benefit of the algorithm.
+2. **Universal SLSQP Backend Integration Across 6 Sibling Generations**:
+   - Deployed the scipy SLSQP solver backend by default (`DEFAULT_NLP_BACKEND = 'slsqp'`) across `flow_matcher_v3_hardflow` (Gen12), `flow_matcher_v3_meanflow` (Gen3v6), `flow_matcher_v3_alphaflow` (Gen3v7), `mix_uav` (Gen15), `mix_visual_aligning` (Gen14), and `mix_visual_avoiding` (Gen16) in `*/sampling/hardflow_projection.py`.
+   - Preserved full backward-compatibility and zero deleted code: original CasADi/IPOPT solver bodies remain intact as `_solve_ipopt`, selectable via explicit argument (`nlp_backend='ipopt'`) or environment variable (`FMPCC_HF_NLP_BACKEND=ipopt`). The CasADi NLP remains built on instantiation for zero-cost runtime toggling.
+   - Added `self.last_solve_success` recording in DPCC's `Projector` (`*/sampling/projection.py`, 6 behavior-neutral lines) to ensure `nlp_failures` is accurately tracked across SLSQP HardFlow solves without altering DPCC Arm B output.
+3. **Comprehensive Identification & Telemetry Tagging**:
+   - Implemented three-tier solver tracking: constructor console banner (`[hardflow][NLP-BACKEND] slsqp`), per-variant compute summary lines (`nlp_backend={...}`), and dual artifact fields: `nlp_backend` (string identifier) and `nlp_backend_slsqp` (numeric float twin: `1.0` for SLSQP, `0.0` for IPOPT, `'n/a'` for arms A/B) ensuring compatibility with DA float-coercing loaders.
+4. **Collision-Free Artifact Renaming (`hardflow_sls-*`) & DA Allow-List Registration**:
+   - Introduced `artifact_variant_label(variant, backend)` across all 6 generations to automatically remap SLSQP variants from `hardflow_new-*` to `hardflow_sls-*` (e.g., `hardflow_new-c-tightened` $\rightarrow$ `hardflow_sls-c-tightened`) while leaving IPOPT paths as `hardflow_new-*`.
+   - Prevented catastrophic overwriting of historical IPOPT benchmark corpora across `.npz` files, PNG plots, evaluation logs, partial checkpoint sidecars, and whole variant directory subtrees (`mix_uav`, `mix_visual_aligning`).
+   - Registered `hardflow_sls*` variants and `nlp_backend_slsqp` metrics into Data Analysis allow-lists (`DA_Code_v3/config.py`, `DA_UAV_v1/config.py`, `DA_UAV_v1/data_loader.py`, `DA_VA_v2/config.py`), ensuring new SLSQP runs are immediately visible in benchmark tables and Pareto plots while keeping IPOPT and SLSQP datasets strictly separated.
+
+

@@ -240,7 +240,7 @@ When running the next auto-update, only process commits **strictly after** this 
 
 | Field | Value |
 |---|---|
-| **Commit hash** | `20b58743` |
-| **Commit message** | `((Div_Abor For V_A and UAV) v2) Refactor divergence abort conditions for visual aligning` |
-| **Commit date** | 2026-08-27 11:18:16 UTC |
-| **What was recorded** | Gen14 U9 perception-first stack evaluation (U9-R1) and Div_Abort truncation artifact discovery (`30dd65a3`); Gen0 DPCC MPC candidate fan parity (`FMPCC_MPC_BATCH`, `_msgmpc1`) (`30dd65a3`); Visual aligning cross-engine sampler step ($K$) diagnostic, D3IL baseline inaction (56–70% untouched no-op), and bimodal engagement regimes (`94ea2d12`); Gen12 HardFlow vs DPCC solver audit and standalone IPOPT vs scipy SLSQP benchmark harness (`c1e48526`); Divergence abort refactor (Div_Abort v2) replacing direction-blind command-lead triggers with physical scene flight envelopes (`SCENE_FLIGHT_ENVELOPE`), physical velocity caps (`overspeed` 6.0 m/s), and Franka table workspace bounds (`off_table`, `ee_off_route`) across 9 evaluation and telemetry files (`20b58743`). |
+| **Commit hash** | `2c3c38d5` |
+| **Commit message** | `((/aggregated_hf_nlp_backend) HOTFIX 2)feat: introduce artifact renaming for SLSQP backends to prevent overwriting IPOPT evaluation data` |
+| **Commit date** | 2026-08-27 21:23:54 UTC |
+| **What was recorded** | Gen15 U5 projection-variant slimming (20 $\rightarrow$ 10), `dpcc-*-geo_free` / `hardflow_new-*-geo_free` dynamics-and-bounds composites, and suffix-masking batch-size bugfix in `resolve_hf_batch_size` (`d5a34c0d`); Gen15 UAV-MIX K-SWEEP pipeline orchestration script with train-once eval-fanout dependency management (`1897f4f9`); Aggregated HardFlow NLP backend migration across 6 sibling generations integrating DPCC's scipy SLSQP solver by default, unlocking 4.33× solve acceleration and countable solver success telemetry while preserving IPOPT parity (`ee9a4fc4`); Dynamic artifact and directory isolation (`hardflow_sls-*` vs `hardflow_new-*`) and DA allow-list registration across 3 DA configs to prevent overwriting historical IPOPT corpora (`2c3c38d5`). |

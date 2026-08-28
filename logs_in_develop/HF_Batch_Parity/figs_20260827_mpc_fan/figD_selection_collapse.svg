@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="392" viewBox="0 0 880 392" role="img">
+<rect x="0" y="0" width="880" height="392" fill="var(--fig-bg,#ffffff)"/>
+<text x="24" y="30" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">Figure D — At fan 1 the three selection rules become bit-identical</text>
+<text x="24" y="50" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">Pooled S&amp;C for the random / min-projection-cost / temporal-consistency rules, tightened arm. Identity verified per (seed × scenario) block, not just in the mean.</text>
+<line x1="76.00" y1="286.00" x2="840.00" y2="286.00" stroke="var(--fig-mute,#5b6570)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="76.00" y1="286.00" x2="840.00" y2="286.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="290" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.00</text>
+<line x1="76.00" y1="243.50" x2="840.00" y2="243.50" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="247.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.25</text>
+<line x1="76.00" y1="201.00" x2="840.00" y2="201.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="205.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.50</text>
+<line x1="76.00" y1="158.50" x2="840.00" y2="158.50" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="162.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.75</text>
+<line x1="76.00" y1="116.00" x2="840.00" y2="116.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="120.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">1.00</text>
+<text x="30" y="201.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0" transform="rotate(-90,30,201.0)">pooled S&amp;C</text>
+<rect x="90.00" y="121.67" width="26.00" height="164.33" fill="var(--fig-f4,#b4472e)" rx="2" opacity="0.9"/>
+<text x="103.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">r</text>
+<rect x="118.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="0.9"/>
+<text x="131.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">c</text>
+<rect x="146.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="0.9"/>
+<text x="159.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">t</text>
+<text x="131.0" y="107.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f4,#b4472e)" text-anchor="middle" font-weight="650" letter-spacing="0">differ</text>
+<text x="131.0" y="316" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f4,#b4472e)" text-anchor="middle" font-weight="600" letter-spacing="0">fan 4</text>
+<rect x="195.00" y="127.33" width="26.00" height="158.67" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="208.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">r</text>
+<rect x="223.00" y="127.33" width="26.00" height="158.67" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="236.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">c</text>
+<rect x="251.00" y="127.33" width="26.00" height="158.67" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="264.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">t</text>
+<text x="236.0" y="118.33333333333334" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="650" letter-spacing="0">identical</text>
+<text x="236.0" y="316" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="600" letter-spacing="0">fan 1</text>
+<text x="188.0" y="338" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="middle" font-weight="650" letter-spacing="0">DPCC Gen0</text>
+<rect x="338.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="0.9"/>
+<text x="351.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">r</text>
+<rect x="366.00" y="252.00" width="26.00" height="34.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="0.9"/>
+<text x="379.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">c</text>
+<rect x="394.00" y="121.67" width="26.00" height="164.33" fill="var(--fig-f4,#b4472e)" rx="2" opacity="0.9"/>
+<text x="407.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">t</text>
+<text x="379.0" y="107.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f4,#b4472e)" text-anchor="middle" font-weight="650" letter-spacing="0">differ</text>
+<text x="379.0" y="316" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f4,#b4472e)" text-anchor="middle" font-weight="600" letter-spacing="0">fan 4</text>
+<rect x="443.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="456.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">r</text>
+<rect x="471.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="484.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">c</text>
+<rect x="499.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="512.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">t</text>
+<text x="484.0" y="107.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="650" letter-spacing="0">identical</text>
+<text x="484.0" y="316" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="600" letter-spacing="0">fan 1</text>
+<text x="436.0" y="338" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="middle" font-weight="650" letter-spacing="0">AlphaFlow</text>
+<rect x="586.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="599.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">r</text>
+<rect x="614.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="627.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">c</text>
+<rect x="642.00" y="116.00" width="26.00" height="170.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="655.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">t</text>
+<text x="627.0" y="107.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="650" letter-spacing="0">identical</text>
+<text x="627.0" y="316" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="600" letter-spacing="0">fan 1</text>
+<text x="631.5" y="338" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="middle" font-weight="650" letter-spacing="0">MeanFlow-DiT</text>
+<rect x="729.00" y="123.08" width="26.00" height="162.92" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="742.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">r</text>
+<rect x="757.00" y="123.08" width="26.00" height="162.92" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="770.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">c</text>
+<rect x="785.00" y="123.08" width="26.00" height="162.92" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="0.9"/>
+<text x="798.0" y="300" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">t</text>
+<text x="770.0" y="114.08333333333331" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="650" letter-spacing="0">identical</text>
+<text x="770.0" y="316" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f1,#1f6f8b)" text-anchor="middle" font-weight="600" letter-spacing="0">fan 1</text>
+<text x="774.5" y="338" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="middle" font-weight="650" letter-spacing="0">FMv3ODE</text>
+<text x="24" y="342" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">At fan 4 the three rules choose different candidates and diverge. At fan 1 every rule executes index 0, so -r / -c / -t are the same rollout: S&amp;C and step counts match exactly in all 15 blocks,</text>
+<text x="24" y="360" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">in every generation tested. Evaluating all three at fan 1 costs 3× the projection compute for zero additional information.</text>
+</svg>

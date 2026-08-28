@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="470" viewBox="0 0 880 470" role="img">
+<rect x="0" y="0" width="880" height="470" fill="var(--fig-bg,#ffffff)"/>
+<text x="24" y="30" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">Figure B — Safety–cost plane: dropping the fan moves DPCC and AlphaFlow in opposite directions</text>
+<text x="24" y="50" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">Tightened arms. y = success-and-constraints over 30 paired episodes (Wilson 95% CI). x = per-step cost, log scale.</text>
+<line x1="78.00" y1="398.00" x2="690.00" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="402" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.0</text>
+<line x1="78.00" y1="338.40" x2="690.00" y2="338.40" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="342.4" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.2</text>
+<line x1="78.00" y1="278.80" x2="690.00" y2="278.80" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="282.8" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.4</text>
+<line x1="78.00" y1="219.20" x2="690.00" y2="219.20" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="223.20000000000002" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.6</text>
+<line x1="78.00" y1="159.60" x2="690.00" y2="159.60" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="163.6" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">0.8</text>
+<line x1="78.00" y1="100.00" x2="690.00" y2="100.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="68" y="104.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">1.0</text>
+<line x1="78.00" y1="100.00" x2="78.00" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="78.0" y="416" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">10</text>
+<line x1="177.85" y1="100.00" x2="177.85" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="177.8485464463086" y="416" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">20</text>
+<line x1="309.84" y1="100.00" x2="309.84" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="309.8411452273496" y="416" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">50</text>
+<line x1="409.69" y1="100.00" x2="409.69" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="409.6896916736582" y="416" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">100</text>
+<line x1="509.54" y1="100.00" x2="509.54" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="509.5382381199669" y="416" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">200</text>
+<line x1="641.53" y1="100.00" x2="641.53" y2="398.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="641.5308369010079" y="416" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">500</text>
+<text x="384.0" y="436" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">per-step cost (ms, log)</text>
+<text x="20" y="249.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0" transform="rotate(-90,20,249.0)">S&amp;C  (successes / 30)</text>
+<line x1="78.00" y1="100.00" x2="78.00" y2="398.00" stroke="var(--fig-mute,#5b6570)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="78.00" y1="398.00" x2="690.00" y2="398.00" stroke="var(--fig-mute,#5b6570)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="656.14" y1="133.83" x2="656.14" y2="100.00" stroke="var(--fig-f4,#b4472e)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="563.63" y1="163.54" x2="563.63" y2="105.51" stroke="var(--fig-f4,#b4472e)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="656.14" y1="100.00" x2="569.44" y2="118.62" stroke="var(--fig-f4,#b4472e)" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+<polygon points="563.63,119.87 569.28,115.73 570.47,121.32" fill="var(--fig-f4,#b4472e)" opacity="0.9"/>
+<circle cx="656.14" cy="100.00" r="5.5" fill="var(--fig-bg,#ffffff)" opacity="1" stroke="var(--fig-f4,#b4472e)" stroke-width="2"/>
+<circle cx="563.63" cy="119.87" r="5.5" fill="var(--fig-f4,#b4472e)" opacity="1" stroke="var(--fig-f4,#b4472e)" stroke-width="1"/>
+<text x="573.6255787300574" y="110.86666666666667" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="600" letter-spacing="0">DPCC  dpcc-c-tight</text>
+<line x1="658.63" y1="133.83" x2="658.63" y2="100.00" stroke="var(--fig-f4,#b4472e)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="563.77" y1="163.54" x2="563.77" y2="105.51" stroke="var(--fig-f4,#b4472e)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="658.63" y1="100.00" x2="569.60" y2="118.65" stroke="var(--fig-f4,#b4472e)" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+<polygon points="563.77,119.87 569.44,115.76 570.61,121.35" fill="var(--fig-f4,#b4472e)" opacity="0.9"/>
+<circle cx="658.63" cy="100.00" r="5.5" fill="var(--fig-bg,#ffffff)" opacity="1" stroke="var(--fig-f4,#b4472e)" stroke-width="2"/>
+<circle cx="563.77" cy="119.87" r="5.5" fill="var(--fig-f4,#b4472e)" opacity="1" stroke="var(--fig-f4,#b4472e)" stroke-width="1"/>
+<text x="553.772403595406" y="134.86666666666667" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f4,#b4472e)" text-anchor="end" font-weight="600" letter-spacing="0">DPCC  dpcc-t-tight</text>
+<line x1="188.27" y1="149.68" x2="188.27" y2="101.76" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="119.51" y1="133.83" x2="119.51" y2="100.00" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="188.27" y1="109.93" x2="125.40" y2="100.85" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+<polygon points="119.51,100.00 126.24,98.09 125.43,103.74" fill="var(--fig-f1,#1f6f8b)" opacity="0.9"/>
+<circle cx="188.27" cy="109.93" r="5.5" fill="var(--fig-bg,#ffffff)" opacity="1" stroke="var(--fig-f1,#1f6f8b)" stroke-width="2"/>
+<circle cx="119.51" cy="100.00" r="5.5" fill="var(--fig-f1,#1f6f8b)" opacity="1" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1"/>
+<text x="129.50889035371313" y="91.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="600" letter-spacing="0">AF  dpcc-t-tight</text>
+<line x1="168.64" y1="369.67" x2="168.64" y2="286.83" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="119.52" y1="133.83" x2="119.52" y2="100.00" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1.2" stroke-linecap="butt" opacity="0.45"/>
+<line x1="168.64" y1="338.40" x2="120.72" y2="105.83" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+<polygon points="119.52,100.00 123.60,105.68 118.01,106.84" fill="var(--fig-f1,#1f6f8b)" opacity="0.9"/>
+<circle cx="168.64" cy="338.40" r="5.5" fill="var(--fig-bg,#ffffff)" opacity="1" stroke="var(--fig-f1,#1f6f8b)" stroke-width="2"/>
+<circle cx="119.52" cy="100.00" r="5.5" fill="var(--fig-f1,#1f6f8b)" opacity="1" stroke="var(--fig-f1,#1f6f8b)" stroke-width="1"/>
+<text x="109.5179507815547" y="115.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="end" font-weight="600" letter-spacing="0">AF  dpcc-c-tight</text>
+<circle cx="724.00" cy="108.00" r="5.5" fill="var(--fig-bg,#ffffff)" opacity="1" stroke="var(--fig-ink,#1b1f24)" stroke-width="2"/>
+<text x="736" y="112" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">fan 4</text>
+<circle cx="724.00" cy="130.00" r="5.5" fill="var(--fig-ink,#1b1f24)" opacity="1" stroke="var(--fig-ink,#1b1f24)" stroke-width="1"/>
+<text x="736" y="134" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">fan 1</text>
+<text x="714" y="162" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">up  = safer</text>
+<text x="714" y="178" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">left = cheaper</text>
+<text x="714" y="204" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="600" letter-spacing="0">AlphaFlow moves</text>
+<text x="714" y="218" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="600" letter-spacing="0">up AND left.</text>
+<text x="714" y="240" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="600" letter-spacing="0">DPCC moves left,</text>
+<text x="714" y="254" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="600" letter-spacing="0">slightly down</text>
+<text x="714" y="268" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="400" letter-spacing="0">(not resolvable,</text>
+<text x="714" y="282" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="400" letter-spacing="0">see Fig C).</text>
+<text x="24" y="448" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">Hollow = fan 4, filled = fan 1. AlphaFlow's dpcc-c-tightened arm is the extreme case: at fan 4 the min-cost rule stalls episodes to 181 steps (S&amp;C 6/30); at fan 1 there is no candidate to choose and it reaches 30/30.</text>
+</svg>

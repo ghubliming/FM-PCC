@@ -379,6 +379,14 @@ def warn_pkl_config_mismatch(diffusion, args):
 # 4. Main eval loop
 # ══════════════════════════════════════════════════════════════════════════════════════
 
+# [SolverSwap 2026-08-28] PLOT artifacts also have to carry the backend, not just the npz.
+# `nlp_backend_run` is a process-level constant (resolve_nlp_backend reads the env once), so
+# the per-variant plots go through artifact_variant_label like the npz does, and the combined
+# `all.png` grid takes a backend tag. Under 'ipopt' the tag is EMPTY and every legacy filename
+# stays byte-identical, so nothing already on disk moves or is overwritten.
+nlp_backend_run = resolve_nlp_backend()
+backend_tag = '' if nlp_backend_run == 'ipopt' else f'_{nlp_backend_run}'
+
 for exp in exps:
     for halfspace_variant in halfspace_variants:
         robot_name = exp.split('-')[0]
@@ -415,6 +423,10 @@ for exp in exps:
             plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
+        # [SolverSwap] which variants THIS pass actually wrote. A second pass (other
+        # backend) skips the arms it already has, leaving their all-seeds figures blank —
+        # saving those would overwrite the good ones from the first pass.
+        ran_variant_idx = set()
 
         for seed in seeds:
             args = Parser().parse_args(experiment=EXPERIMENT, seed=seed)
@@ -602,6 +614,7 @@ for exp in exps:
                     if not os.path.exists(npz_path):
                         print(f'[ eval ] skipping {variant} seed {seed}: no npz at {npz_path}')
                         continue
+                    ran_variant_idx.add(variant_idx)
                     print(f'[ eval ] aggregating {variant} - seed {seed}')
                     data = np.load(npz_path, allow_pickle=True)
                     if 'obs_all' in data:
@@ -631,6 +644,7 @@ for exp in exps:
                               f'diffusion arm (no velocity field). '
                               f'Hosts are fm / mf / af.')
                         continue
+                    ran_variant_idx.add(variant_idx)
 
                     # [Gen0fix2] threshold 0 => the activation gate fires only on the FINAL
                     # step, i.e. ONE projection after the last ODE step — the paper's
@@ -1032,7 +1046,7 @@ for exp in exps:
                     log_file.close()
 
             if not args_cli.aggregate_only:
-                fig_all.savefig(f'{save_path}/all.png')
+                fig_all.savefig(f'{save_path}/all{backend_tag}.png')
                 plt.close(fig_all)   # fix_7: the only figure never closed -> "More than 20
                                      # figures have been opened" once the variant list grew.
                 env.close()
@@ -1041,6 +1055,10 @@ for exp in exps:
         path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
         for variant_idx, (fig, axis) in enumerate(zip(figs_all_seeds, axes_all_seeds)):
+            if variant_idx not in ran_variant_idx:
+                print(f'[ eval ] all_seeds: {projection_variants[variant_idx]!r} not run in this pass (backend={nlp_backend_run}) -- leaving the existing figure alone.')
+                plt.close(fig)
+                continue
             axis.set_xlim(ax_limits[0])
             axis.set_ylim(ax_limits[1])
             axis.set_facecolor([1, 1, 0.9])
@@ -1055,8 +1073,8 @@ for exp in exps:
                     axis.add_patch(matplotlib.patches.Circle(
                         co['center'], co['radius'] + enlarge_constraints,
                         color='b', alpha=0.1, linestyle='--'))
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.png', bbox_inches='tight')
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.pdf',
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.png', bbox_inches='tight')
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.pdf',
                         bbox_inches='tight', format='pdf')
             plt.close(fig)
 

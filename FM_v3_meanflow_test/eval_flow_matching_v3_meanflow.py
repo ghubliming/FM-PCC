@@ -187,6 +187,14 @@ constraint_types = config['constraint_types']
 # block reads into args.flow_steps_v3 / args.flow_steps — so it also drives the results-dir name
 # (`_K{K}_`) and distinct-K runs never collide. Resolved per-seed below.
 
+# [SolverSwap 2026-08-28] PLOT artifacts also have to carry the backend, not just the npz.
+# `nlp_backend_run` is a process-level constant (resolve_nlp_backend reads the env once), so
+# the per-variant plots go through artifact_variant_label like the npz does, and the combined
+# `all.png` grid takes a backend tag. Under 'ipopt' the tag is EMPTY and every legacy filename
+# stays byte-identical, so nothing already on disk moves or is overwritten.
+nlp_backend_run = resolve_nlp_backend()
+backend_tag = '' if nlp_backend_run == 'ipopt' else f'_{nlp_backend_run}'
+
 for exp in exps:
     for halfspace_variant in halfspace_variants:
         robot_name = exp.split('-')[0]
@@ -209,6 +217,10 @@ for exp in exps:
         figs_all_seeds, axes_all_seeds = zip(*[plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
+        # [SolverSwap] which variants THIS pass actually wrote. A second pass (other
+        # backend) skips the arms it already has, leaving their all-seeds figures blank —
+        # saving those would overwrite the good ones from the first pass.
+        ran_variant_idx = set()
         for seed in seeds:
             args = Parser().parse_args(experiment='plan_fm_v3_meanflow', seed=seed)
             
@@ -454,6 +466,7 @@ for exp in exps:
                     if not os.path.exists(npz_path):
                         print(f'[ eval ] skipping {variant} for seed {seed}, no results found at {npz_path}')
                         continue
+                    ran_variant_idx.add(variant_idx)
                     print(f'[ eval ] Aggregating existing results for {variant} - seed {seed}')
                     data = np.load(npz_path, allow_pickle=True)
                     # Use saved obs_all for aggregation plot
@@ -467,6 +480,7 @@ for exp in exps:
                     continue
 
                 # INFERENCE MODE
+                ran_variant_idx.add(variant_idx)
                 log_file = open(os.path.join(save_path, f'eval_{variant_out}.log'), 'w')
                 original_stdout = sys.stdout
                 sys.stdout = Tee(sys.stdout, log_file)
@@ -831,7 +845,7 @@ for exp in exps:
                     log_file.close()
             
             if not args_cli.aggregate_only:
-                fig_all.savefig(f'{save_path}/all.png')
+                fig_all.savefig(f'{save_path}/all{backend_tag}.png')
                 plt.close(fig_all)   # fix_7: was the only figure never closed -> "More than 20
                                      # figures have been opened" once the variant list grew to 13.
                 env.close()
@@ -840,6 +854,10 @@ for exp in exps:
         path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
         for variant_idx, (fig, ax) in enumerate(zip(figs_all_seeds, axes_all_seeds)):
+            if variant_idx not in ran_variant_idx:
+                print(f'[ eval ] all_seeds: {projection_variants[variant_idx]!r} not run in this pass (backend={nlp_backend_run}) -- leaving the existing figure alone.')
+                plt.close(fig)
+                continue
             ax.set_xlim(ax_limits[0])
             ax.set_ylim(ax_limits[1])
             ax.set_facecolor([1, 1, 0.9])
@@ -849,8 +867,8 @@ for exp in exps:
                 for constraint in obstacle_constraints:
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'] + enlarge_constraints, color='b', alpha=0.1, linestyle='--'))
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.png', bbox_inches='tight')
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.pdf', bbox_inches='tight', format='pdf')
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.png', bbox_inches='tight')
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.pdf', bbox_inches='tight', format='pdf')
             plt.close(fig)
         
         if not args_cli.aggregate_only:

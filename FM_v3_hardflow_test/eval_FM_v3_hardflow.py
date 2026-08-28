@@ -160,6 +160,14 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', dev
     return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
 
 
+# [SolverSwap 2026-08-28] PLOT artifacts also have to carry the backend, not just the npz.
+# `nlp_backend_run` is a process-level constant (resolve_nlp_backend reads the env once), so
+# the per-variant plots go through artifact_variant_label like the npz does, and the combined
+# `all.png` grid takes a backend tag. Under 'ipopt' the tag is EMPTY and every legacy filename
+# stays byte-identical, so nothing already on disk moves or is overwritten.
+nlp_backend_run = resolve_nlp_backend()
+backend_tag = '' if nlp_backend_run == 'ipopt' else f'_{nlp_backend_run}'
+
 for exp in exps:
     for halfspace_variant in halfspace_variants:
         robot_name = exp.split('-')[0]
@@ -182,6 +190,10 @@ for exp in exps:
         figs_all_seeds, axes_all_seeds = zip(*[plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
+        # [SolverSwap] which variants THIS pass actually wrote. A second pass (other
+        # backend) skips the arms it already has, leaving their all-seeds figures blank —
+        # saving those would overwrite the good ones from the first pass.
+        ran_variant_idx = set()
         for seed in seeds:
             args = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seed)
             # checkpoint_dir + eval K come from the plan block (config/avoiding-d3il.py);
@@ -381,6 +393,7 @@ for exp in exps:
                           'Set FORCE_OVERWRITE=1 to re-run it.')
                     continue
                 os.makedirs(save_path, exist_ok=True)
+                ran_variant_idx.add(variant_idx)
 
                 if is_hardflow:
                     # ---------------- arm C ----------------
@@ -622,13 +635,16 @@ for exp in exps:
                 ax_all[0, variant_idx].set_title(variant)
                 env.close()
             if save_path is not None:
-                fig_all.savefig(f'{save_path}/all.png')
-        variant_idx = 0
+                fig_all.savefig(f'{save_path}/all{backend_tag}.png')
         # fix_5: eval knobs already live in the eval-name folder; all_seeds sits beside
         # the per-seed dirs at <train>/<eval>/all_seeds/halfspace_<hv>/.
         path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
-        for fig, ax in zip(figs_all_seeds, axes_all_seeds):
+        for variant_idx, (fig, ax) in enumerate(zip(figs_all_seeds, axes_all_seeds)):
+            if variant_idx not in ran_variant_idx:
+                print(f'[ eval ] all_seeds: {projection_variants[variant_idx]!r} not run in this pass (backend={nlp_backend_run}) -- leaving the existing figure alone.')
+                plt.close(fig)
+                continue
             ax.set_xlim(ax_limits[0])
             ax.set_ylim(ax_limits[1])
             ax.set_facecolor([1, 1, 0.9])
@@ -638,6 +654,6 @@ for exp in exps:
                 for constraint in obstacle_constraints:
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'] + enlarge_constraints, color='b', alpha=0.1, linestyle='--'))
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.png', bbox_inches='tight')
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.pdf', bbox_inches='tight', format='pdf')
-            variant_idx += 1
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.png', bbox_inches='tight')
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.pdf', bbox_inches='tight', format='pdf')
+            plt.close(fig)

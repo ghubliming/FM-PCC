@@ -17,3 +17,4 @@
 - [Visual-transformer refs in aux_repo](visual-transformer-refs-auxrepo.md) — diffusion_policy (= true upstream of D3IL's vision encoder) + act, pulled 2026-08-20 for Gen14 U8
 - [UAV budget_ms/33 Hz is not a target](uav-budget-ms-not-a-goal.md) — data-rate artefact + cluster latency; never report as real-time pass/fail
 - [HardFlow low-K degeneracy](hardflow-low-K-degeneracy.md) — K1/K2 at A=0.5 run NO HardFlow math; tag rows ✅/❌ and build claims on ✅ only
+- [Never write URLs / publish artifacts unless asked](no-unrequested-urls-or-artifacts.md) — deliver repo files + terminal summary; no links by default
