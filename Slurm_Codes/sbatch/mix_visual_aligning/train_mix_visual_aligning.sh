@@ -186,6 +186,55 @@ else
     echo "[ train ] U9: vis_pretrained=$VIS_PRETRAINED  vis_lr_scale=$VIS_LR_SCALE  vis_cond_mode=$VIS_COND"
 fi
 
+# ── Gen14 U10 ── alpha-FLOW SCHEDULE (af arm only). The knob that decides whether this
+# arm actually trains the alpha-Flow target, or anneals onto MeanFlow's before it finishes.
+#
+#   MIX_AF_ALPHA_SCHED   constant | step | linear | exponential | log | sigmoid  (default sigmoid)
+#   MIX_AF_ALPHA_INIT    alpha at step 0                                          (default 1.0 = pure FM)
+#   MIX_AF_ALPHA_END     alpha at the end of the anneal                           (default 0.0 = MeanFlow)
+#   MIX_AF_ALPHA_CLAMP   snap-to-endpoint threshold                               (default 0.005)
+#   MIX_AF_ALPHA_GAMMA   sigmoid steepness                                        (default 25.0)
+#
+# 🔴 WHY YOU PROBABLY WANT THIS. At the shipped defaults the sigmoid + clamp force alpha to
+# EXACTLY 0 from ~71.2 % of the budget onward, so the last ~28.8 % of training runs the
+# MeanFlow target, not alpha-Flow's. Gen14 U5 measured the cost: test raw_mse_u 2.657 at
+# step 70 k (alpha 0.0067) -> 8.504 at step 72 k (alpha 0), a 2.9x jump that never recovers.
+# See logs_in_develop/Gen14/U5/DA_20260804_mf_af_visual_aligning_first_run.md §3.
+#
+# 🔴 PATH KEY. A non-default value stamps '_AF<tag>' onto the checkpoint folder, the plans/
+# results folder and the eval's diffusion_loadpath (config: _mix_af_alpha_keys). At the
+# defaults NOTHING is stamped, so every existing af tree keeps its exact current name.
+# This is what stops a re-tuned run from silently overwriting the alpha->0 checkpoint —
+# 'af_alpha_scheduler' alone would NOT have, since 'sigmoid' is unchanged by MIX_AF_ALPHA_END.
+#
+#   # alpha held where U5 found af's best model — the arm alpha-Flow was meant to be:
+#   MIX_AF_ALPHA_SCHED=constant MIX_AF_ALPHA_INIT=0.05 MIX_AF_ALPHA_END=0.05 \
+#     ./Slurm_Codes/submit.sh <this script> af 6
+#
+#   # keep upstream's anneal, just never reach 0 (tests "is the clamp the bug?"):
+#   MIX_AF_ALPHA_END=0.02 MIX_AF_ALPHA_CLAMP=1e-4 \
+#     ./Slurm_Codes/submit.sh <this script> af 6
+if [ "$ENGINE" = "af" ]; then
+    AF_A_SET=""
+    for v in MIX_AF_ALPHA_SCHED MIX_AF_ALPHA_INIT MIX_AF_ALPHA_END MIX_AF_ALPHA_CLAMP MIX_AF_ALPHA_GAMMA; do
+        eval "val=\${$v:-}"
+        if [ -n "$val" ]; then AF_A_SET="$AF_A_SET $v=$val"; fi
+    done
+    if [ -n "$AF_A_SET" ]; then
+        echo "[ train ] alpha schedule OVERRIDE:$AF_A_SET"
+        echo "[ train ]   -> checkpoint + results dirs gain an '_AF<tag>' fragment (config validates and builds it)"
+    else
+        echo "[ train ] alpha schedule = SHIPPED DEFAULT (sigmoid 1.0 -> 0.0, clamp 0.005)"
+        echo "[ train ]   ⚠  alpha snaps to EXACTLY 0 at ~71.2% of the budget: the last ~28.8% of"
+        echo "[ train ]      this run trains the MEANFLOW target, not alpha-Flow's. Gen14 U5 §3"
+        echo "[ train ]      measured that as a 2.9x jump in test raw_mse_u. Set MIX_AF_ALPHA_*"
+        echo "[ train ]      if you meant to train alpha-Flow at its own operating point."
+    fi
+elif [ -n "${MIX_AF_ALPHA_SCHED:-}${MIX_AF_ALPHA_INIT:-}${MIX_AF_ALPHA_END:-}${MIX_AF_ALPHA_CLAMP:-}${MIX_AF_ALPHA_GAMMA:-}" ]; then
+    echo "[ train ] ERROR: MIX_AF_ALPHA_* is set but engine='$ENGINE'. These knobs exist only on the af arm."
+    exit 1
+fi
+
 if [ "$(echo $SEEDS | wc -w)" -gt 1 ]; then
     echo "[ train ] WARNING: $(echo $SEEDS | wc -w) seeds will run SEQUENTIALLY in this one job"
     echo "[ train ]          against the 24 h wall. Prefer mix_visual_aligning_pipeline.sh,"

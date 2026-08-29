@@ -144,6 +144,27 @@ unset MIX_BONE
 export "MIX_BONE_${ENGINE_UC}=$ML_BONE"
 echo "[ eval ] ml_bone = $ML_BONE  (MIX_BONE_${ENGINE_UC}; must match the checkpoint)"
 
+# ── Gen14 U10 ── alpha-FLOW SCHEDULE (af arm only). Like film_mode and ml_bone above, a
+# non-default schedule is a CHECKPOINT-PATH key ('_AF<tag>', config: _mix_af_alpha_keys),
+# so this job MUST see the same MIX_AF_ALPHA_* env the training job saw. If it does not,
+# diffusion_loadpath resolves to the DEFAULT (alpha annealed to 0) tree — which either dies
+# on a missing checkpoint or, worse, silently evaluates the wrong model under the right name.
+# The pipeline exports these for you; set them by hand only when running this script alone.
+if [ "$ENGINE" = "af" ]; then
+    _AF_A=""
+    for _v in MIX_AF_ALPHA_SCHED MIX_AF_ALPHA_INIT MIX_AF_ALPHA_END MIX_AF_ALPHA_CLAMP MIX_AF_ALPHA_GAMMA; do
+        eval "_val=\${$_v:-}"
+        if [ -n "$_val" ]; then _AF_A="$_AF_A $_v=$_val"; fi
+    done
+    if [ -n "$_AF_A" ]; then
+        echo "[ eval ] alpha schedule:$_AF_A  (must match the checkpoint)"
+    else
+        echo "[ eval ] alpha schedule = SHIPPED DEFAULT -> resolving the alpha->0 checkpoint tree."
+        echo "[ eval ]   ⚠  If you trained with MIX_AF_ALPHA_*, set the SAME values here or this"
+        echo "[ eval ]      job will look in the wrong directory."
+    fi
+fi
+
 # ── Gen14 U6 ── $4 = NFE override (flow_steps_v3), fm/mf/af only. Blank -> config default
 # (mf/af: 2, fm: 100). Changes BOTH the sampler and the results folder, so a sweep lands in
 # sibling H8_K<N>_... directories instead of overwriting. Also changes the projection budget:

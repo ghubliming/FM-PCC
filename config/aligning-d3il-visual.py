@@ -915,6 +915,12 @@ args_to_watch_mix_visual_train = [
     ('engine', 'E'),                 # ← Gen14 arm identity key
     ('t_schedule', 'ts'),            # mf/af only
     ('af_alpha_scheduler', 'afsch'), # af only
+    # 🔴 Gen14 U10 — the alpha SCHEDULE as an identity key. Emitted by
+    # _mix_af_alpha_keys() ONLY when a value differs from the shipped default, and
+    # watch() skips undefined keys, so every pre-U10 af path is unchanged. Without it,
+    # `af_alpha_end=0.02` under the same 'sigmoid' scheduler lands in the SAME directory
+    # as the alpha->0 run and overwrites it.
+    ('af_alpha', 'AF'),             # af only, non-default schedules only
     # ── Gen14 U9 ── perception / conditioning identity keys. Each is emitted by
     # _mix_u9_keys() ONLY when it differs from the pre-U9 value, and watch() skips keys a
     # block does not define — so every path that exists today keeps its exact current name
@@ -1338,6 +1344,121 @@ def _mix_u9_keys(engine):
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
 # Gen6V4's own hyperparameters (action_weight=10), otherwise it is not the Gen6V4 baseline
 # it claims to be.
+# ─── Gen14 U10 — the alpha-Flow schedule as an OVERRIDABLE, PATH-BEARING knob ──────────
+# WHY THIS EXISTS. `af_alpha_end: 0.0` means the af arm trains on the MeanFlow target for
+# its last ~28.8 % of steps (the sigmoid + `af_alpha_clamp=0.005` snap α to exactly 0 at
+# ~0.712*end_step). Gen14 U5 measured what that costs: test raw_mse_u 2.657 @ step 70 k
+# (alpha 0.0067) -> 8.504 @ step 72 k (alpha 0), a 2.9x jump that never recovers, landing on
+# mf's own plateau. See logs_in_develop/Gen14/U5/DA_20260804_mf_af_visual_aligning_first_run.md
+# and Data_Analysis/DA_Result_Curated_MD/ANALYSIS_20260829_alphaflow_vs_meanflow_visual_aligning_are_they_the_same.md §5.
+#
+# 🔴 THE PATH KEY IS THE WHOLE POINT. `af_alpha_scheduler` was already a watched key
+# ('afsch'), but `af_alpha_end`, `af_alpha_init` and `af_alpha_clamp` were NOT — so a rerun
+# with `af_alpha_end=0.02` under the SAME 'sigmoid' scheduler produced a
+# character-for-character IDENTICAL checkpoint directory and would have silently overwritten
+# (or auto-resumed into) the existing alpha->0 run. The derived `af_alpha` tag below closes
+# that: it joins args_to_watch_mix_visual_train, so the checkpoint tree, the plans/ results
+# tree and the eval's diffusion_loadpath all move together, from one list.
+#
+# ABSENT AT THE DEFAULTS. Exactly the trick _budget_tag() and _mix_u9_keys() already use:
+# every key here is emitted ONLY when it differs from the shipped value, and watch() skips
+# undefined keys — so every path that exists today (cand6 included) is unchanged.
+#
+#   MIX_AF_ALPHA_SCHED=constant MIX_AF_ALPHA_INIT=0.05 MIX_AF_ALPHA_END=0.05  -> _AFconst0p05
+#   MIX_AF_ALPHA_END=0.02                                                    -> _AFend0p02
+#   MIX_AF_ALPHA_CLAMP=1e-4                                                  -> _AFclamp0p0001
+_AF_ALPHA_DEFAULTS = {
+    'af_alpha_scheduler': 'sigmoid',
+    'af_alpha_init':      1.0,
+    'af_alpha_end':       0.0,
+    'af_alpha_clamp':     0.005,
+    'af_alpha_gamma':     25.0,
+}
+_AF_ALPHA_SCHEDULERS = ('constant', 'step', 'linear', 'exponential', 'log', 'sigmoid')
+
+
+def _af_num(name, raw):
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"CRITICAL: {name}='{raw}' is not a float.")
+
+
+def _af_frag(value):
+    """Filesystem-safe fragment: 0.05 -> '0p05', 0.0001 -> '0p0001'. House style is 'p'."""
+    txt = f'{value:g}'
+    if 'e' in txt or 'E' in txt:          # 1e-04 -> plain decimal, so the tag stays readable
+        txt = f'{value:.10f}'.rstrip('0').rstrip('.')
+    return txt.replace('.', 'p').replace('-', 'm')
+
+
+def _mix_af_alpha_keys():
+    """alpha-Flow schedule overrides for the af arm, present only where non-default.
+
+    Returns a dict that is ** -spread into the af training block. When nothing is
+    overridden it is EMPTY, so the af path string is byte-identical to the pre-U10 one.
+    """
+    out, tag = {}, []
+
+    raw = os.environ.get('MIX_AF_ALPHA_SCHED')
+    if raw is not None:
+        if raw not in _AF_ALPHA_SCHEDULERS:
+            raise ValueError(
+                f"CRITICAL: MIX_AF_ALPHA_SCHED='{raw}' is not one of "
+                f"{'|'.join(_AF_ALPHA_SCHEDULERS)} (af_diffusion._get_ratio).")
+        if raw != _AF_ALPHA_DEFAULTS['af_alpha_scheduler']:
+            out['af_alpha_scheduler'] = raw     # already watched as 'afsch'
+
+    for env_name, key, label in (
+            ('MIX_AF_ALPHA_INIT',  'af_alpha_init',  'init'),
+            ('MIX_AF_ALPHA_END',   'af_alpha_end',   'end'),
+            ('MIX_AF_ALPHA_CLAMP', 'af_alpha_clamp', 'clamp'),
+            ('MIX_AF_ALPHA_GAMMA', 'af_alpha_gamma', 'g'),
+    ):
+        raw = os.environ.get(env_name)
+        if raw is None:
+            continue
+        val = _af_num(env_name, raw)
+        if key in ('af_alpha_init', 'af_alpha_end') and not (0.0 <= val <= 1.0):
+            raise ValueError(f"CRITICAL: {env_name}={val} must lie in [0, 1]; "
+                             f"alpha=1 is pure FM, alpha=0 is MeanFlow.")
+        if key == 'af_alpha_clamp' and not (0.0 <= val < 0.5):
+            raise ValueError(f"CRITICAL: {env_name}={val} must lie in [0, 0.5).")
+        if val != _AF_ALPHA_DEFAULTS[key]:
+            out[key] = val
+            tag.append(f'{label}{_af_frag(val)}')
+
+    # 'constant' collapses init/end into one number — say it once, not twice.
+    if out.get('af_alpha_scheduler') == 'constant':
+        if 'af_alpha_init' not in out and 'af_alpha_end' not in out:
+            # _get_ratio('constant') returns af_alpha_init, whose shipped value is 1.0 —
+            # i.e. PURE FLOW MATCHING for the whole run, which is certainly not what anyone
+            # typing MIX_AF_ALPHA_SCHED=constant meant. Refuse rather than train it.
+            raise ValueError(
+                "CRITICAL: MIX_AF_ALPHA_SCHED=constant needs MIX_AF_ALPHA_INIT (and/or "
+                "MIX_AF_ALPHA_END) — the shipped af_alpha_init is 1.0, so a bare 'constant' "
+                "would train PURE FLOW MATCHING for every step.")
+        held = out.get('af_alpha_end', out.get('af_alpha_init',
+                                               _AF_ALPHA_DEFAULTS['af_alpha_end']))
+        # 🔴 The clamp fires on EVERY scheduler, constant included (af_diffusion._get_ratio
+        # tail). A held alpha below it snaps to exactly 0 and the run is MeanFlow from step
+        # 0 while the folder name still says 'AFconst...' — the precise lie this tag exists
+        # to prevent. Lower MIX_AF_ALPHA_CLAMP alongside it, or raise alpha.
+        _clamp = out.get('af_alpha_clamp', _AF_ALPHA_DEFAULTS['af_alpha_clamp'])
+        if 0.0 < held < _clamp:
+            raise ValueError(
+                f"CRITICAL: constant alpha={held} is below af_alpha_clamp={_clamp}, so "
+                f"_get_ratio snaps it to 0.0 and the arm trains the MeanFlow target for "
+                f"every step. Set MIX_AF_ALPHA_CLAMP < {held} or raise alpha.")
+        tag = [f'const{_af_frag(held)}'] + [t for t in tag
+                                            if not t.startswith(('init', 'end'))]
+
+    if tag:
+        # 🔴 The path key. Absent unless something moved, so pre-U10 trees are untouched.
+        out['af_alpha'] = 'AF' + '-'.join(tag)
+    return out
+
+
 base['mix_visual_aligning_diffusion'] = _mix_train_block('diffusion', 'visual_aligning_dpcc', {
     'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
     'diffusion': 'mix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
@@ -1459,6 +1580,10 @@ base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
     # Gen14 U9 — empty dict at the defaults, so this line is inert on every
     # pre-U9 configuration and the path string is unchanged.
     **_mix_u9_keys('af'),
+    # Gen14 U10 — alpha-schedule overrides + the `af_alpha` path tag. Empty (and so
+    # completely inert) unless MIX_AF_ALPHA_* is set. MUST stay LAST: it overrides the
+    # af_alpha_* literals above.
+    **_mix_af_alpha_keys(),
 })
 
 # ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────

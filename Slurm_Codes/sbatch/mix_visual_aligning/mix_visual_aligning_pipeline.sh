@@ -179,6 +179,40 @@ else
     echo "[ pipeline ]     🔴 PATH KEYS -- this run lands in its own tree, carried to BOTH stages."
 fi
 
+# ── Gen14 U10 ── alpha-FLOW SCHEDULE (af arm only), carried onto BOTH child stages ───────
+# 🔴 SAME CONTRACT AS MIX_TRAIN_STEPS BELOW, and for the same reason: a non-default alpha
+# schedule stamps '_AF<tag>' onto the CHECKPOINT path (config: _mix_af_alpha_keys), so an
+# eval that does not see the identical env resolves diffusion_loadpath to the DEFAULT
+# (alpha->0) tree and either dies on a missing checkpoint or — far worse — silently scores
+# the wrong model. Exported explicitly, never left to --export=ALL.
+#
+# Why you would set it: at the shipped default the sigmoid + clamp force alpha to EXACTLY 0
+# from ~71.2% of the budget on, so the af arm finishes on the MEANFLOW target. Gen14 U5 §3
+# measured that as test raw_mse_u 2.657 -> 8.504 at the snap.
+#
+#   MIX_AF_ALPHA_SCHED=constant MIX_AF_ALPHA_INIT=0.05 MIX_AF_ALPHA_END=0.05 \
+#     ./Slurm_Codes/submit.sh <this script> af "6"
+_AF_ALPHA_ANY=""
+for _v in MIX_AF_ALPHA_SCHED MIX_AF_ALPHA_INIT MIX_AF_ALPHA_END MIX_AF_ALPHA_CLAMP MIX_AF_ALPHA_GAMMA; do
+    eval "_val=\${$_v:-}"
+    if [ -n "$_val" ]; then
+        if [ "$ENGINE" != "af" ]; then
+            echo "ERROR: $_v is set but engine='$ENGINE'. The alpha schedule exists only on the af arm."
+            exit 1
+        fi
+        EXPORT_OPTS="$EXPORT_OPTS,$_v=$_val"
+        _AF_ALPHA_ANY="$_AF_ALPHA_ANY $_v=$_val"
+    fi
+done
+if [ -n "$_AF_ALPHA_ANY" ]; then
+    echo "[ pipeline ] alpha schedule:$_AF_ALPHA_ANY"
+    echo "[ pipeline ]     🔴 PATH KEY -- '_AF<tag>' tree, carried to BOTH stages."
+elif [ "$ENGINE" = "af" ]; then
+    echo "[ pipeline ] alpha schedule = SHIPPED DEFAULT (sigmoid 1.0 -> 0.0, clamp 0.005):"
+    echo "[ pipeline ]     ⚠  the last ~28.8% of this run trains the MEANFLOW target, not"
+    echo "[ pipeline ]        alpha-Flow's. Set MIX_AF_ALPHA_* to train alpha-Flow proper."
+fi
+
 # ── Training budget / resume / save cadence, carried onto BOTH child stages ──────────────
 # 🔴 MIX_TRAIN_STEPS MUST reach the EVAL, not just the train job. It is a checkpoint-path
 # key (config: _budget_tag -> '_TB<pct>pct'), so an eval that does not see it builds
