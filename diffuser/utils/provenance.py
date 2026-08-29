@@ -68,6 +68,13 @@ TRACKED_ENV = (
     'FMPCC_BOX_OBS_GUARD', 'FMPCC_BOX_OBS_MAX_OVERLAP_M', 'FMPCC_BOX_HALF_SIDE_M',
     # Gen15 mix_uav
     'UAV_MIX_FLOW_STEPS', 'UAV_MIX_HF_OFF',
+    # Gen14 U10/U11 mix_visual_aligning — bone, perception, alpha schedule, projection budget
+    'MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF',
+    'MIX_VIS_PRETRAINED', 'MIX_VIS_LR_SCALE', 'MIX_VIS_COND',
+    'MIX_TRAIN_STEPS', 'MIX_PROJ_T',
+    'MIX_AF_ALPHA_SCHED', 'MIX_AF_ALPHA_INIT', 'MIX_AF_ALPHA_END',
+    'MIX_AF_ALPHA_CLAMP', 'MIX_AF_ALPHA_GAMMA',
+    'FMPCC_HF_NLP_BACKEND',
     # job-level
     'TRAIN_SEEDS', 'AUTO_RESUME', 'FORCE_OVERWRITE',
 )

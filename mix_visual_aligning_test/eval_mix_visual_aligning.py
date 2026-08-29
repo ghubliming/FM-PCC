@@ -2769,11 +2769,43 @@ if __name__ == '__main__':
                              'BOTH the sampler and the results folder name. Omit to use the '
                              "config default (mf/af: 2, fm: 100). Not valid for 'diffusion', "
                              'whose NFE key is n_diffusion_steps.')
+    # ── Gen14 U11 ── --proj-threshold / MIX_PROJ_T: the PROJECTION budget knob.
+    #
+    # T = the fraction of the LATE ODE over which the projector runs. The sampler projects on
+    # every step from int((1 - T) * K) to the end, so solves per replan ~= T*K:
+    #     T=0.5  K=100 -> 50      T=0.1 K=100 -> 10      T=0.05 K=100 -> 5      T=0.5 K=2 -> 1
+    #
+    # 🔴 IT MUST BE APPLIED IN TWO PLACES OR THE RESULT IS MISLABELLED. This file loads
+    # `config/visual_aligning_eval.yaml` ITSELF (below) and that dict — not the config module —
+    # is what reaches setup_dpcc_projector via `_gc = dict(config)`. The config module's copy
+    # is what reaches `args`, and therefore exp_name and the results folder. Setting only one
+    # gives a run whose folder says T0.1 while the projector runs at 0.5, or the reverse.
+    # Both are set together below, from one resolved value, and asserted equal.
+    parser.add_argument('--proj-threshold', type=float, default=None, metavar='T',
+                        help='override diffusion_timestep_threshold (the DPCC projection '
+                             'budget) for this run. Applies to the projector, to HardFlow '
+                             '(which inherits it when hardflow.activation_threshold is null) '
+                             'AND to the results folder name. Env fallback: MIX_PROJ_T.')
     args_cli, remaining = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining
 
     with open('config/visual_aligning_eval.yaml', 'r') as f:
         config = yaml.safe_load(f)
+
+    # Resolve T once: CLI > env > yaml. MIX_PROJ_T is read here too so the env form works
+    # identically whether it reaches us through the sbatch or through --export.
+    _T_SRC, _T_OVERRIDE = 'config/visual_aligning_eval.yaml', None
+    if args_cli.proj_threshold is not None:
+        _T_OVERRIDE, _T_SRC = float(args_cli.proj_threshold), 'cli --proj-threshold'
+    elif os.environ.get('MIX_PROJ_T') is not None:
+        try:
+            _T_OVERRIDE = float(os.environ['MIX_PROJ_T'])
+        except ValueError:
+            raise SystemExit(f"[ eval ] ERROR: MIX_PROJ_T={os.environ['MIX_PROJ_T']!r} is not a float.")
+        _T_SRC = 'env MIX_PROJ_T'
+    if _T_OVERRIDE is not None and not (0.0 <= _T_OVERRIDE <= 1.0):
+        raise SystemExit(f'[ eval ] ERROR: projection threshold {_T_OVERRIDE} must lie in '
+                         f'[0, 1] — it is a FRACTION of the late ODE, not a step count.')
 
     if args_cli.seed:
         seeds, _seed_src = [args_cli.seed], 'cli --seed'
@@ -2843,6 +2875,40 @@ if __name__ == '__main__':
         print(f'[ eval ] --flow-steps: projection budget {max(_old_k - int((1 - _thr) * _old_k), 1)} -> '
               f'{max(int(args_cli.flow_steps) - int((1 - _thr) * int(args_cli.flow_steps)), 1)} '
               f'projector call(s) per replan at threshold T={_thr}')
+
+    # ── Gen14 U11 ── apply T to BOTH consumers, from the single resolved value above.
+    # Same timing rule as --flow-steps: the plan-block mutation has to happen BEFORE any
+    # Parser().parse_args(), because exp_name = watch(args_to_watch_mix_visual_plan) is
+    # resolved inside parse_args and 'diffusion_timestep_threshold' is one of its keys.
+    _plan_blk_T = importlib.import_module(Parser.config).base[EXPERIMENT]
+    if _T_OVERRIDE is not None:
+        _old_T = _plan_blk_T.get('diffusion_timestep_threshold',
+                                 config.get('diffusion_timestep_threshold', 0.5))
+        config['diffusion_timestep_threshold']      = _T_OVERRIDE   # -> projector + HardFlow
+        _plan_blk_T['diffusion_timestep_threshold'] = _T_OVERRIDE   # -> args, folder, snapshot
+        _k_now = (int(args_cli.flow_steps) if args_cli.flow_steps is not None
+                  else _plan_blk_T.get('flow_steps_v3'))
+        print(f'[ eval ] --proj-threshold: diffusion_timestep_threshold {_old_T} -> '
+              f'{_T_OVERRIDE}  (source: {_T_SRC})')
+        print(f'[ eval ]   applied to BOTH the projector config AND the results folder key T')
+        if isinstance(_k_now, int):
+            print(f'[ eval ]   projection budget: '
+                  f'{max(_k_now - int((1 - _old_T) * _k_now), 1)} -> '
+                  f'{max(_k_now - int((1 - _T_OVERRIDE) * _k_now), 1)} '
+                  f'projector call(s) per replan at K={_k_now}')
+        print(f'[ eval ]   HardFlow inherits it unless hardflow.activation_threshold or '
+              f'HFFM_ACT_THRESHOLD is set')
+    # 🔴 The guard that makes the two-place application safe: if these ever disagree the run
+    # is mislabelled, so fail here rather than write a folder that lies about its own setting.
+    _T_plan = _plan_blk_T.get('diffusion_timestep_threshold')
+    _T_yaml = config.get('diffusion_timestep_threshold', 0.5)
+    if _T_plan is not None and abs(float(_T_plan) - float(_T_yaml)) > 1e-12:
+        raise SystemExit(
+            f'[ eval ] ERROR: projection threshold disagrees between the config module '
+            f'({_T_plan}, drives the results folder name) and the eval yaml ({_T_yaml}, '
+            f'drives the actual projector). A run in this state would be mislabelled. '
+            f'Set --proj-threshold / MIX_PROJ_T rather than editing one of them by hand.')
+    print(f'[ eval ] projection threshold T = {_T_yaml}  (source: {_T_SRC})')
 
     for _seed_i, seed in enumerate(seeds):
         # Fix_11: seed X/N — the outermost breadcrumb level (mirrors UAV's Fix_11).
@@ -2922,13 +2988,33 @@ if __name__ == '__main__':
         # precisely because a silent fallback would train the wrong architecture into a
         # directory whose name claims otherwise). Neither reaches args.json, which
         # Parser.save writes for TRAIN only. Written next to the results. Never fatal.
+        #
+        # 🔴 Gen14 U11 — two fixes here. (a) `yaml_path` pointed at
+        # config/projection_eval.yaml, which this generation does NOT read; the file exists,
+        # so the record looked plausible while describing a config no visual-aligning run
+        # ever used. It now names the yaml actually loaded at the top of main(). (b) the
+        # projection budget — the single most consequential eval knob, and the one
+        # --proj-threshold/MIX_PROJ_T moves — was recorded nowhere. `t_override_source`
+        # distinguishes "T=0.1 because the submitter asked" from "T=0.5 because the yaml
+        # said so", which is invisible in the results path (both write a T token).
         provenance.write(
             _base_results, role='eval',
-            yaml_path=os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml'),
+            yaml_path='config/visual_aligning_eval.yaml',
             resolved={
                 'projection_variants': list(projection_variants),
                 'hardflow_variants': _hf_variants,
                 'hardflow_variants_from_env': bool(os.environ.get('HFFM_VARIANTS')),
+                'diffusion_timestep_threshold': config.get('diffusion_timestep_threshold'),
+                't_override_source': _T_SRC,
+                'flow_steps_v3': getattr(args, 'flow_steps_v3', None),
+                'n_diffusion_steps': getattr(args, 'n_diffusion_steps', None),
+                'projector_calls_per_replan': (
+                    max(int(getattr(args, 'flow_steps_v3', 0))
+                        - int((1 - float(config.get('diffusion_timestep_threshold', 0.5)))
+                              * int(getattr(args, 'flow_steps_v3', 0))), 1)
+                    if getattr(args, 'flow_steps_v3', None) else None),
+                'hf_nlp_backend': os.environ.get('FMPCC_HF_NLP_BACKEND', 'slsqp (default)'),
+                'engine': ENGINE,
                 'horizon': getattr(args, 'horizon', None),
                 'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
                 'exp_name': getattr(args, 'exp_name', None),

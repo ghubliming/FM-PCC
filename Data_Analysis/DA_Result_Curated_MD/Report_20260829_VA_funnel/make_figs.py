@@ -21,7 +21,7 @@ NEAR = 0.15            # "near the goal"
 TRAIN, UNT, TGT = 'train', 'combined_5', 'combined_5-tightened'
 ARMB = ['dpcc-r', 'dpcc-c', 'dpcc-t', 'post_processing']
 ARMC = ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']
-FAM = {'mf': '#1e8449', 'af': '#7d3c98', 'fm': '#2471a3', 'dz': '#c0392b', 'bl': '#7f8c8d'}
+FAM = {'mf': '#1e8449', 'fm': '#2471a3', 'dz': '#c0392b', 'bl': '#7f8c8d'}
 
 
 # ───────────────────────────── data ────────────────────────────────────────
@@ -40,6 +40,19 @@ def load():
                  round(fl(r['context_box_init_xy_y']), 4))
             cells[(r['Candidate'], r['split'], r['geo'], r['variant'])][k] = r
     return cells
+
+
+def raw_cell(C, c, sp, g, v):
+    """A cell at WHATEVER n it has — used only for the truncation audit (fig 6 / README §5)."""
+    return C.get((c, sp, g, v))
+
+
+def wall_hours(d):
+    """(n, ms/step, steps, hours the full 30 rollouts would have needed)."""
+    rs = list(d.values())
+    ms = stt.mean(fl(r['avg_time_ms']) for r in rs)
+    st = stt.mean(fl(r['n_steps']) for r in rs)
+    return len(rs), ms, st, ms * st * 30 / 1000 / 3600
 
 
 def S(d):
@@ -74,13 +87,49 @@ def bestB(C, c, sp, g, arm=ARMB):
     return got[0]
 
 
+def best_horse(C, fam, geos=(UNT, TGT), arm=ARMB):
+    """The BEST HORSE for one engine: search K x geometry x projector, pick the winner.
+
+    Scored on the constraint-clean near tail (rollouts both <15 cm and zero-violation),
+    tie-broken on median final distance. Arm C is excluded here on purpose: only one arm
+    in this roster carries it, so including it would not be a like-for-like race (see §4).
+    Returns (cand, K, geo, variant, stats) or None.
+    """
+    runs = []
+    for c in FAMILY[fam]:
+        K = ENG[c][2]
+        for g in geos:
+            for v in arm:
+                s = cell(C, c, TRAIN, g, v)
+                if s:
+                    runs.append((c, K, g, v, s))
+    if not runs:
+        return None
+    runs.sort(key=lambda r: (-r[4]['nc'], r[4]['med']))
+    return runs[0]
+
+
 # candidate -> (family, engine label, K, backbone)
-ENG = {'14': ('mf', 'MeanFlow', 2), '6': ('af', 'AlphaFlow', 2),
+# Roster is deliberately narrow: the three Gen14 `mix` engines on the matched UNet FiLM v1
+# bone, plus the d3il vision baseline. No `af` arm, no Gen6v4.
+ENG = {'14': ('mf', 'MeanFlow', 2),
        '11': ('fm', 'FlowMatching', 20), '9': ('dz', 'Diffusion aw10', 20),
-       '13': ('mf', 'MeanFlow', 100), '5': ('af', 'AlphaFlow', 100),
+       '13': ('mf', 'MeanFlow', 100),
        '10': ('fm', 'FlowMatching', 100), '8': ('dz', 'Diffusion', 100)}
-V1 = ['14', '6', '11', '9']          # matched bone: UNet FiLM v1, 4.04 M
-SHORT = {'mf': 'MF', 'af': 'AF', 'fm': 'FM', 'dz': 'DIFF', 'bl': 'BASE'}
+V1 = ['14', '11', '9']               # matched bone: UNet FiLM v1
+# Every candidate that IS this engine, so "best K" is a search, not an assumption.
+FAMILY = {'mf': ['14', '13'], 'fm': ['11', '10'], 'dz': ['9', '8']}
+FAM_LABEL = {'mf': 'MeanFlow', 'fm': 'FlowMatching', 'dz': 'Diffusion aw10'}
+# Every arm that enters the funnel. 🔴 STAGE 1 IS ALWAYS THE UNGUIDED (`diffuser`) ARM —
+# no projection, so all six are measured on one footing and "can the generative model move
+# the box" is answered before any projector is involved. The projector enters at Stage 2.
+ENTRANTS = [('14', 'mf', 2), ('13', 'mf', 100), ('11', 'fm', 20),
+            ('10', 'fm', 100), ('9', 'dz', 20), ('8', 'dz', 100)]
+STAGE1_GATE = 0.80      # median fraction of the starting gap left. The data breaks cleanly
+                        # at 0.602 -> 0.951, so the gate is placed inside that gap and NO
+                        # entrant sits near the line. 🔴 Do not set it to 0.60: MeanFlow K2
+                        # reads 0.602 and an exact-0.60 gate silently eliminates it.
+SHORT = {'mf': 'MF', 'fm': 'FM', 'dz': 'DIFF', 'bl': 'BASE'}
 
 
 # ────────────────────────── minimal SVG canvas ─────────────────────────────
@@ -169,89 +218,118 @@ class Fig:
         print('wrote', name)
 
 
-# ───────────────── fig 1 — stage 1: does the box move at all ───────────────
+# ───────────────── fig 1 — Stage 1: the unguided arm, nothing else ─────────────────
 def fig1(C):
+    """Stage 1 — `diffuser` only. Can the generative model move the box, before any projector?"""
     bars = []
-    for c in V1:
-        fam, lab, K = ENG[c]
-        v, s = bestB(C, c, TRAIN, UNT)
-        bars.append((f'{lab} K{K}', v, s['frac'], s['unt'], fam, False))
-    v, s = bestB(C, '16', 'test', UNT)
-    bars.append(('DPCC baseline (Gen6v4)', v, s['frac'], s['unt'], 'bl', True))
+    for c, fam, K in ENTRANTS:
+        st = cell(C, c, TRAIN, UNT, 'diffuser')
+        bars.append((f'{FAM_LABEL[fam].split()[0]} K{K}', f'cand{c} · unguided',
+                     st['frac'], st['unt'], fam, st['frac'] <= STAGE1_GATE))
+    bars.sort(key=lambda b: b[2])
     d = C[('17', 'test', 'none', 'd3il_baseline')]
-    st = S(d) if False else None
     rs = list(d.values())
-    f = [fl(r['context_final_xy_dist']) for r in rs]
-    i0 = [fl(r['context_init_xy_dist']) for r in rs]
-    bars.append(('d3il ddpm-vision baseline', '(no projector)',
-                 stt.median(f[j] / i0[j] for j in range(len(rs))),
-                 sum(1 for j in range(len(rs)) if abs(f[j] - i0[j]) < 0.005) / len(rs),
-                 'bl', True))
+    ff = [fl(r['context_final_xy_dist']) for r in rs]
+    ii = [fl(r['context_init_xy_dist']) for r in rs]
+    bars.append(('d3il baseline', 'test split, n=1080',
+                 stt.median(ff[j] / ii[j] for j in range(len(rs))),
+                 sum(1 for j in range(len(rs)) if abs(ff[j] - ii[j]) < 0.005) / len(rs),
+                 'bl', False))
 
-    fg = Fig(760, 340, ml=210, mr=118, mt=52, mb=56)
+    fg = Fig(790, 380, ml=176, mr=156, mt=54, mb=56)
     fg.axes((0, 1.12), (0, len(bars)))
     fg.grid(xt=[0, .2, .4, .6, .8, 1.0], xfmt=lambda v: f'{v:.1f}x')
     fg.frame('median final distance / starting distance   (1.00x = the box never got closer)', '',
-             'Stage 1 - does the box get to the goal?',
-             'each engine at its OWN best DPCC projector; UNet FiLM v1, train, combined_5, n=30')
+             'Stage 1 - can the generative model move the box?',
+             'UNGUIDED arm only, no projection - one footing for every entrant. n=30, train, combined_5')
     bh = (fg.B - fg.T) / len(bars) * 0.62
-    for i, (lab, var, frac, unt, fam, dashed) in enumerate(bars):
+    for i, (lab, sub, frac, unt, fam, keep) in enumerate(bars):
         yc = fg.T + (i + 0.5) * (fg.B - fg.T) / len(bars)
-        fg.rect(fg.L, yc - bh / 2, fg.X(frac) - fg.L, bh, FAM[fam],
-                op=0.45 if dashed else 0.92)
-        fg.text(fg.L - 10, yc - 1, lab, 10.5, '#111', 'end', bold=not dashed)
-        fg.text(fg.L - 10, yc + 11, var, 9.0, '#777', 'end')
-        fg.text(fg.X(frac) + 6, yc + 4, f'{frac:.2f}x   ({unt*100:.0f}% untouched)',
-                9.5, '#111')
-    fg.line(fg.X(1.0), fg.T, fg.X(1.0), fg.B, '#111', 1.4, '5,4')
-    fg.text(fg.X(1.0) - 5, fg.T - 6, 'did nothing', 9.5, '#111', 'end')
+        fg.rect(fg.L, yc - bh / 2, fg.X(frac) - fg.L, bh, FAM[fam], op=0.92 if keep else 0.30)
+        fg.text(fg.L - 10, yc - 1, lab, 10.5, '#111', 'end', bold=keep)
+        fg.text(fg.L - 10, yc + 11, sub, 8.5, '#888', 'end')
+        fg.text(fg.X(frac) + 6, yc + 4,
+                f'{frac:.2f}x  ({unt*100:.0f}% untouched)  ' + ('PASS' if keep else 'OUT'),
+                9.5, '#111' if keep else '#999', bold=keep)
+    fg.line(fg.X(STAGE1_GATE), fg.T, fg.X(STAGE1_GATE), fg.B, '#111', 1.5, '5,4')
+    fg.text(fg.X(STAGE1_GATE) - 5, fg.T - 6, f'gate {STAGE1_GATE:.2f}x', 9.5, '#111', 'end', bold=True)
+    fg.line(fg.X(1.0), fg.T, fg.X(1.0), fg.B, '#999', 1.2, '2,3')
+    fg.text(fg.X(1.0) + 5, fg.T - 6, 'did nothing', 9.5, '#999')
     fg.save('fig1_stage1_distance.svg')
 
 
-# ───────────── fig 2 — the funnel: 30 -> near -> near & clean ──────────────
+# ───────────────── fig 2 — the elimination funnel, stage by stage ─────────────────
 def fig2(C):
-    cols = []
-    for c in V1:
-        fam, lab, K = ENG[c]
-        for g, gl in ((UNT, 'untightened'), (TGT, 'tightened')):
-            b = bestB(C, c, TRAIN, g)
-            if b:
-                v, s = b
-                cols.append((f'{SHORT[fam]} K{K}', gl, v, s, fam))
-    fg = Fig(880, 400, ml=64, mr=16, mt=52, mb=86)
-    fg.axes((0, len(cols)), (0, 30))
-    fg.grid(yt=[0, 5, 10, 15, 20, 25, 30], yfmt=lambda v: f'{v:.0f}')
-    fg.frame('', 'rollouts (out of 30)', 'Stages 1 -> 2 - reaching the goal, then reaching it legally',
-             'grey = all 30 | mid = within 15 cm | solid = within 15 cm AND zero constraint violations')
-    w = (fg.R - fg.L) / len(cols)
-    for i, (lab, gl, var, s, fam) in enumerate(cols):
-        x = fg.L + i * w
-        fg.rect(x + w * .14, fg.Y(30), w * .72, fg.B - fg.Y(30), '#e9e9e9')
-        fg.rect(x + w * .14, fg.Y(s['near']), w * .72, fg.B - fg.Y(s['near']), FAM[fam], op=.38)
-        fg.rect(x + w * .14, fg.Y(s['nc']), w * .72, fg.B - fg.Y(s['nc']), FAM[fam], op=1.0)
-        fg.text(x + w / 2, fg.Y(s['near']) - 14, s['near'], 10, '#555', 'middle')
-        fg.text(x + w / 2, fg.Y(s['nc']) - 3, s['nc'], 11, '#111', 'middle', bold=True)
-        fg.text(x + w / 2, fg.B + 15, lab, 10, '#111', 'middle', bold=True)
-        fg.text(x + w / 2, fg.B + 28, gl, 9, '#666', 'middle')
-        fg.text(x + w / 2, fg.B + 40, var, 8.5, '#888', 'middle')
-        fg.text(x + w / 2, fg.B + 54, f"0-viol {s['zv']:.2f}", 8.5, '#444', 'middle')
-        fg.text(x + w / 2, fg.B + 66, f"{s['ms']:.0f} ms", 8.5, '#444', 'middle')
+    rows = []
+    for c, fam, K in ENTRANTS:
+        st1 = cell(C, c, TRAIN, UNT, 'diffuser')          # Stage 1: unguided, always
+        s1 = st1['frac'] <= STAGE1_GATE
+        horse, trunc, tn = None, None, -1
+        for g in (TGT, UNT):
+            for v in ARMB:
+                d = C.get((c, TRAIN, g, v))
+                if not d:
+                    continue
+                if len(d) == 30:
+                    st = S(d)
+                    if horse is None or (st['nc'], -st['med']) > (horse[2]['nc'], -horse[2]['med']):
+                        horse = (g, v, st)
+                elif len(d) > tn:
+                    trunc, tn = (g, v, d), len(d)
+        s2 = s1 and horse is not None
+        if s1 and not s2 and trunc:
+            n, ms, sp, hrs = wall_hours(trunc[2])
+            note = f'{trunc[1]} truncated {n}/30 - needed {hrs:.0f} h'
+        elif not s1:
+            note = 'never engages the box'
+        else:
+            note = f"{horse[1]} · {'tightened' if horse[0] == TGT else 'combined_5'}"
+        rows.append((f'{FAM_LABEL[fam].split()[0]} K{K}', fam, st1, s1, s2, horse, note))
+    rows.sort(key=lambda r: (-r[4], -r[3], r[2]['frac']))
+
+    fg = Fig(880, 356, ml=150, mr=16, mt=80, mb=28)
+    cols = [(0.00, 'Stage 1  distance', 'unguided: moves the box?'),
+            (0.26, 'Stage 2  constraints', 'a complete projected cell?'),
+            (0.54, 'Stage 3  time', 'ms / control step'),
+            (0.72, 'why', '')]
+    W = fg.R - fg.L
+    for a, t, sub in cols:
+        x = fg.L + a * W
+        fg.line(x - 8, fg.T - 36, x - 8, fg.B, '#ddd', 1.0)
+        fg.text(x, fg.T - 22, t, 10.5, '#111', bold=True)
+        if sub:
+            fg.text(x, fg.T - 10, sub, 8.5, '#888')
+    fg.text(fg.L - 150, 22, 'The funnel - who is still standing after each stage', 13, '#111', bold=True)
+    fg.text(fg.L - 150, 38, 'six entrants; an arm leaves the moment it fails a stage', 10.5, '#555')
+    rh = (fg.B - fg.T) / len(rows)
+    for i, (lab, fam, st1, s1, s2, horse, note) in enumerate(rows):
+        yc = fg.T + (i + 0.5) * rh
+        fg.rect(fg.L - 146, yc - rh * 0.34, 138, rh * 0.68, FAM[fam],
+                op=0.92 if s2 else (0.32 if s1 else 0.14))
+        fg.text(fg.L - 77, yc + 4, lab, 10.5, '#fff' if s2 else '#333', 'middle', bold=s2)
+        fg.text(fg.L, yc + 4, f"{st1['frac']:.2f}x  " + ('PASS' if s1 else 'OUT'),
+                10, '#111' if s1 else '#bbb', bold=s1)
+        fg.text(fg.L + 0.26 * W, yc + 4,
+                ('PASS' if s2 else ('OUT - 24 h wall' if s1 else '-')),
+                10, '#111' if s2 else '#bbb', bold=s2)
+        fg.text(fg.L + 0.54 * W, yc + 4, (f"{horse[2]['ms']:.0f} ms" if s2 else '-'),
+                10, '#111' if s2 else '#bbb', bold=s2)
+        fg.text(fg.L + 0.72 * W, yc + 4, note, 8.5, '#666' if s1 else '#bbb')
+        if i:
+            fg.line(fg.L - 150, fg.T + i * rh, fg.R, fg.T + i * rh, '#eee', 1.0)
     fg.save('fig2_funnel.svg')
 
 
 # ─────────── fig 3 — stage 3: cost of one clean near-goal rollout ──────────
 def fig3(C):
     pts = []
-    for c in V1:
-        fam, lab, K = ENG[c]
-        for g, mk in ((UNT, 'o'), (TGT, 's')):
-            b = bestB(C, c, TRAIN, g)
-            if b:
-                v, s = b
-                pts.append((f'{SHORT[fam]} K{K}{" tight" if g == TGT else ""}',
-                            s['ms'], s['nc'] / 30, fam, mk))
-    b = bestB(C, '16', 'test', UNT)
-    pts.append(('DPCC-base', b[1]['ms'], b[1]['nc'] / 30, 'bl', 'o'))
+    for fam in ('mf', 'fm', 'dz'):
+        c, K, g, v, s = best_horse(C, fam)
+        pts.append((f'{SHORT[fam]} K{K}{" tight" if g == TGT else ""}',
+                    s['ms'], s['nc'] / 30, fam, 's' if g == TGT else 'o'))
+        if fam == 'mf' and g == TGT:
+            v2, s2 = bestB(C, c, TRAIN, UNT)
+            pts.append((f'{SHORT[fam]} K{K} matched', s2['ms'], s2['nc'] / 30, fam, 'o'))
     fg = Fig(720, 420, ml=76, mr=26, mt=52, mb=58)
     fg.axes((18, 3000), (-0.012, 0.40), xlog=True)
     fg.grid(xt=[20, 50, 100, 200, 500, 1000, 2000], yt=[0, .1, .2, .3, .4],
@@ -259,7 +337,7 @@ def fig3(C):
     fg.frame('avg_time   [ ms / control step ]   (log)',
              'rollouts within 15 cm AND constraint-clean',
              'Stage 3 - what the clean near-goal rollouts cost',
-             'circle = combined_5 | square = combined_5-tightened | up-and-left is better')
+             "each engine's best horse. circle = combined_5, square = tightened; up-and-left is better")
     for lab, x, y, fam, mk in pts:
         fg.marker(fg.X(x), fg.Y(y), mk, FAM[fam], filled=True)
         fg.text(fg.X(x) + 9, fg.Y(y) - 8, lab, 9.5, '#111', bold=True)
@@ -270,7 +348,7 @@ def fig3(C):
 # ──────────────── fig 4 — HardFlow (IPOPT NLP) vs DPCC ─────────────────────
 def fig4(C):
     groups = []
-    for c, cl in (('14', 'MeanFlow K2'), ('6', 'AlphaFlow K2')):
+    for c, cl in (('14', 'MeanFlow K2'),):
         for g, gl in ((UNT, 'untightened'), (TGT, 'tightened')):
             row = []
             for rule in ('r', 'c', 't'):
@@ -280,13 +358,13 @@ def fig4(C):
                     row.append((rule, a, b))
             if row:
                 groups.append((f'{cl} - {gl}', row))
-    fg = Fig(880, 420, ml=64, mr=16, mt=52, mb=92)
-    fg.axes((0, 12), (0, 16))
+    fg = Fig(660, 420, ml=64, mr=16, mt=52, mb=92)
+    fg.axes((0, 6), (0, 16))
     fg.grid(yt=[0, 4, 8, 12, 16], yfmt=lambda v: f'{v:.0f}')
     fg.frame('', 'rollouts within 15 cm AND clean  (of 30)',
-             'Stage 4 - HardFlow (in-loop IPOPT NLP) vs the DPCC projector',
-             'paired: same checkpoint, same geometry, same selection rule; light = DPCC, dark = HardFlow')
-    w = (fg.R - fg.L) / 12
+             'HardFlow (in-loop IPOPT NLP) vs the DPCC projector',
+             'MeanFlow K2 only - the one arm carrying arm C; light = DPCC, dark = HardFlow')
+    w = (fg.R - fg.L) / 6
     i = 0
     for gi, (glab, row) in enumerate(groups):
         x0 = fg.L + i * w
@@ -303,7 +381,7 @@ def fig4(C):
             fg.text(x + w / 2, fg.B + 63, f"{b['zv']:.2f}", 8.5, '#8e44ad', 'middle')
             i += 1
         fg.text((x0 + fg.L + i * w) / 2, fg.B + 82, glab, 10.5, '#111', 'middle', bold=True)
-        if i < 12:
+        if i < 6:
             fg.line(fg.L + i * w, fg.T, fg.L + i * w, fg.B + 68, '#bbb', 1.0, '3,3')
     fg.text(fg.L + 4, fg.T + 14, 'rows under the axis:  ms/step (DPCC, HardFlow)  then  0-viol rate',
             9, '#666')
@@ -312,9 +390,9 @@ def fig4(C):
 
 # ────────────────── fig 5 — the K ladder (unguided arm) ────────────────────
 def fig5(C):
-    pairs = [('MeanFlow', '13', '14', 100, 2), ('AlphaFlow', '5', '6', 100, 2),
+    pairs = [('MeanFlow', '13', '14', 100, 2),
              ('FlowMatching', '10', '11', 100, 20), ('Diffusion', '8', '9', 100, 20)]
-    fg = Fig(760, 360, ml=132, mr=112, mt=52, mb=58)
+    fg = Fig(760, 300, ml=132, mr=112, mt=52, mb=58)
     fg.axes((0, 1.12), (0, len(pairs)))
     fg.grid(xt=[0, .2, .4, .6, .8, 1.0], xfmt=lambda v: f'{v:.1f}x')
     fg.frame('median final distance / starting distance', '',
@@ -337,6 +415,38 @@ def fig5(C):
     fg.save('fig5_k_ladder.svg')
 
 
+# ───────── fig 6 — what the 24 h Slurm wall killed (the projected K=100 arms) ─────────
+def fig6(C):
+    """Hours the DPCC-projected `dpcc-r` cell needed for 30 rollouts, against the 24 h wall."""
+    rows = []
+    for c, fam, K in (('14', 'mf', 2), ('11', 'fm', 20), ('9', 'dz', 20),
+                      ('10', 'fm', 100), ('8', 'dz', 100), ('13', 'mf', 100)):
+        d = raw_cell(C, c, TRAIN, UNT, 'dpcc-r')
+        if d:
+            n, ms, st, hrs = wall_hours(d)
+            rows.append((f'{FAM_LABEL[fam].split()[0]} K{K}', n, ms, hrs, fam))
+    rows.sort(key=lambda r: r[3])
+    fg = Fig(780, 320, ml=150, mr=150, mt=54, mb=56)
+    fg.axes((0.1, 90), (0, len(rows)), xlog=True)
+    fg.grid(xt=[0.1, 0.3, 1, 3, 10, 30, 90], xfmt=lambda v: f'{v:g}')
+    fg.frame('GPU-hours the cell needed for all 30 rollouts   (log)', '',
+             'What the 24 h Slurm wall killed',
+             'DPCC-projected arm (`dpcc-r`), train, combined_5 - measured ms/step x steps x 30')
+    bh = (fg.B - fg.T) / len(rows) * 0.6
+    for i, (lab, n, ms, hrs, fam) in enumerate(rows):
+        yc = fg.T + (i + 0.5) * (fg.B - fg.T) / len(rows)
+        done = n == 30
+        fg.rect(fg.X(0.1), yc - bh / 2, fg.X(hrs) - fg.X(0.1), bh, FAM[fam],
+                op=0.92 if done else 0.40)
+        fg.text(fg.L - 10, yc + 4, lab, 11, '#111', 'end', bold=not done)
+        mark = f'{hrs:.1f} h   ' + (f'✓ {n}/30' if done else f'✗ died at {n}/30')
+        fg.text(fg.X(hrs) + 7, yc + 4, mark, 9.5, '#111' if done else '#b03a2e',
+                bold=not done)
+    fg.line(fg.X(24), fg.T, fg.X(24), fg.B, '#b03a2e', 1.6, '6,4')
+    fg.text(fg.X(24) - 5, fg.T - 6, '24 h wall', 10, '#b03a2e', 'end', bold=True)
+    fg.save('fig6_wall.svg')
+
+
 if __name__ == '__main__':
     C = load()
-    fig1(C); fig2(C); fig3(C); fig4(C); fig5(C)
+    fig1(C); fig2(C); fig3(C); fig4(C); fig5(C); fig6(C)

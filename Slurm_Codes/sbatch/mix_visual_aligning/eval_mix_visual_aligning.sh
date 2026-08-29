@@ -186,9 +186,121 @@ else
     echo "[ eval ] NFE: config default for engine=$ENGINE"
 fi
 
+# ── Gen14 U11 ── MIX_PROJ_T: PROJECTION THRESHOLD (arm B, DPCC) — SWEEPABLE ───────────────
+# T = the fraction of the LATE ODE over which the projector runs. The sampler projects on
+# every step from int((1 - T) * K) to the end, so solves/replan ~= T*K.
+#
+#   T=0.5  K=100 -> 50 solves   (shipped; ~15 s/step, 50 h for 30 rollouts, NEVER finished)
+#   T=0.1  K=100 -> 10 solves
+#   T=0.05 K=100 ->  5 solves
+#
+# 🔴 SWEEP FORM. MIX_PROJ_T takes a SPACE-SEPARATED LIST and this job runs one full eval
+#    pass per value, sequentially, in the same allocation:
+#      MIX_PROJ_T="0.1 0.05"  -> two passes, T=0.1 then T=0.05
+#    Each pass writes its OWN results dir (T is a plan path key), so the passes cannot
+#    collide with each other or with the existing T0.5 run. `set -e` is relaxed around the
+#    loop so a failure in pass 1 does not silently discard pass 2 — each pass reports its
+#    own exit status and the job fails at the end if any pass failed.
+#
+# ✅ Cannot overwrite anything: results land in H8_K<K>_Meuler_T<T>_..., and the CHECKPOINT
+#    path is untouched (T is eval-only) — same weights, no retraining.
+# 🔴 Set it here, NOT in config/visual_aligning_eval.yaml: that YAML is read once at config
+#    import and feeds every block in the file, so an edit re-points every later eval.
+#
+# HardFlow (arm C) INHERITS this value when `hardflow.activation_threshold: null` (the
+# default), so arms B and C stay matched. HFFM_ACT_THRESHOLD overrides arm C alone.
+PROJ_T_LIST="${MIX_PROJ_T:-}"
+if [ -n "$PROJ_T_LIST" ]; then
+    for _t in $PROJ_T_LIST; do
+        if ! awk -v t="$_t" 'BEGIN{exit !(t+0==t && t>=0 && t<=1)}' </dev/null; then
+            echo "[ eval ] ERROR: MIX_PROJ_T entry '$_t' must be a number in [0, 1] (a FRACTION"
+            echo "         of the late ODE, not a step count)."
+            exit 1
+        fi
+    done
+    echo "[ eval ] projection threshold sweep: T = $PROJ_T_LIST   (config default 0.5)"
+    for _t in $PROJ_T_LIST; do
+        if [ -n "$FLOW_STEPS" ]; then
+            awk -v t="$_t" -v k="$FLOW_STEPS" 'BEGIN{
+                n = k - int((1-t)*k); if (n < 1) n = 1;
+                printf "[ eval ]   T=%-6s -> %2d projector call(s)/replan  -> dir H8_K%d_Meuler_T%s_...\n", t, n, k, t }'
+        else
+            echo "[ eval ]   T=$_t -> dir H8_K<K>_Meuler_T${_t}_..."
+        fi
+    done
+else
+    echo "[ eval ] projection threshold T = config default (0.5), single pass"
+    if [ -n "$FLOW_STEPS" ] && [ "$FLOW_STEPS" -ge 50 ] 2>/dev/null; then
+        echo "[ eval ]   ⚠  WARNING: K=$FLOW_STEPS at T=0.5 means ~$((FLOW_STEPS/2)) SLSQP solves per replan."
+        echo "[ eval ]      Every K>=50 projected cell in this tree has hit the 24 h wall and"
+        echo "[ eval ]      truncated (mf K100 died at 11/30, needing 50 h). Set MIX_PROJ_T=0.1"
+        echo "[ eval ]      or 0.05 unless you have deliberately raised --time."
+    fi
+fi
+
+# ── Gen14 U11 ── arm C on/off and its NLP backend, for this job only ─────────────────────
+# HFFM_VARIANTS   enables arm C without editing config/visual_aligning_eval.yaml
+#                 (shipped `hardflow_variants: []` = arm C OFF).
+# FMPCC_HF_NLP_BACKEND  slsqp (default) | ipopt. On slsqp the artifacts are renamed
+#                 hardflow_new-* -> hardflow_sls-* (hardflow_projection.artifact_variant_label),
+#                 so an SLSQP run can never overwrite the IPOPT corpus.
+if [ -n "${HFFM_VARIANTS:-}" ]; then
+    echo "[ eval ] arm C ENABLED: HFFM_VARIANTS='$HFFM_VARIANTS'"
+    echo "[ eval ]   NLP backend = ${FMPCC_HF_NLP_BACKEND:-slsqp (default)}"
+    if [ "${FMPCC_HF_NLP_BACKEND:-slsqp}" = "slsqp" ]; then
+        echo "[ eval ]   -> artifacts written as hardflow_sls-*  (IPOPT corpus untouched)"
+    else
+        echo "[ eval ]   ⚠  ipopt writes hardflow_new-* — the SAME names as the existing corpus."
+        echo "[ eval ]      Different T means a different results dir, so this is safe here,"
+        echo "[ eval ]      but do not re-run ipopt at T=0.5 without FORCE/overwrite intent."
+    fi
+    if [ -n "${HFFM_ACT_THRESHOLD:-}" ]; then
+        echo "[ eval ]   arm C threshold OVERRIDE = $HFFM_ACT_THRESHOLD (arms B and C deliberately UNMATCHED)"
+    else
+        echo "[ eval ]   arm C threshold inherits arm B's T (arms B and C matched)"
+    fi
+else
+    echo "[ eval ] arm C (HardFlow) OFF — set HFFM_VARIANTS to enable"
+fi
+
 # $SEEDS and $FLOW_ARG are intentionally unquoted: $SEEDS must word-split into separate
 # --seeds arguments, and $FLOW_ARG must vanish entirely when empty.
-python mix_visual_aligning_test/eval_mix_visual_aligning.py \
-    --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train $FLOW_ARG
+run_eval () {                      # $1 = threshold ("" -> config default)
+    local targ=()
+    if [ -n "$1" ]; then targ=(--proj-threshold "$1"); fi
+    python mix_visual_aligning_test/eval_mix_visual_aligning.py \
+        --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train \
+        $FLOW_ARG "${targ[@]}"
+}
 
+# Relax `set -e` around the sweep so one failing threshold does not throw away the others;
+# the exit status is re-raised at the end so the job still fails loudly.
+FAILED=""
+if [ -n "$PROJ_T_LIST" ]; then
+    set +e
+    for T in $PROJ_T_LIST; do
+        echo "================================================================================"
+        echo "[ eval ] PASS  T = $T   ($(date))"
+        echo "================================================================================"
+        # 🔴 unset the env form: with --proj-threshold given, a lingering MIX_PROJ_T list
+        # ("0.1 0.05") would fail the eval's float() and kill the pass. The CLI flag is the
+        # single source of truth inside the loop.
+        MIX_PROJ_T= run_eval "$T"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+            echo "[ eval ] ❌ PASS T=$T FAILED (exit $rc)"
+            FAILED="$FAILED T=$T"
+        else
+            echo "[ eval ] ✅ PASS T=$T done"
+        fi
+    done
+    set -e
+else
+    run_eval ""
+fi
+
+if [ -n "$FAILED" ]; then
+    echo "[ eval ] one or more passes failed:$FAILED"
+    exit 1
+fi
 echo "Job completed successfully."

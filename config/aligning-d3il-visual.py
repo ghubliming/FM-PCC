@@ -12,6 +12,44 @@ if 'diffusion_timestep_threshold' not in _proj_config:
 
 _yaml_threshold = _proj_config['diffusion_timestep_threshold']
 
+# ─── Gen14 U11 — MIX_PROJ_T: the projection threshold as an env knob ───────────────────
+# `diffusion_timestep_threshold` (T) is the fraction of the LATE ODE over which the DPCC
+# projector runs: the sampler projects on every step from int((1 - T) * K) to the end, so
+# the solve count per replan is ~T*K.
+#
+#     T = 0.5 , K = 100  ->  50 SLSQP solves / replan   (the shipped setting; 15 s/step,
+#                                                        needs 50 h for 30 rollouts and has
+#                                                        NEVER finished inside the 24 h wall)
+#     T = 0.1 , K = 100  ->  10 solves / replan
+#     T = 0.05, K = 100  ->   5 solves / replan
+#     T = 0.5 , K = 2    ->   1 solve  / replan
+#
+# 🔴 WHY AN ENV KNOB RATHER THAN A YAML EDIT. The YAML value is read ONCE, here, at config
+# import, and feeds EVERY block in this file — Gen6v4, Gen7 and all four Gen14 arms. Editing
+# it to run one job silently re-points every other eval that imports the config afterwards,
+# and it is exactly the kind of edit that gets left behind. MIX_PROJ_T is per-job, travels
+# with --export, and disappears when the job does.
+#
+# ✅ NO COLLISION RISK, BY CONSTRUCTION. `diffusion_timestep_threshold` is already a PLAN
+# path key — ('diffusion_timestep_threshold', 'T') in args_to_watch_mix_visual_plan — so the
+# results folder carries it: T=0.5 writes `H8_K100_Meuler_T0.5_...`, T=0.1 writes
+# `H8_K100_Meuler_T0.1_...`. A new threshold can never overwrite an old run's results.
+# The CHECKPOINT path is untouched (T is eval-only), so no retraining is implied.
+_env_T = os.environ.get('MIX_PROJ_T')
+if _env_T is not None:
+    try:
+        _env_T = float(_env_T)
+    except ValueError:
+        raise ValueError(f"CRITICAL: MIX_PROJ_T='{_env_T}' is not a float.")
+    if not (0.0 <= _env_T <= 1.0):
+        raise ValueError(
+            f"CRITICAL: MIX_PROJ_T={_env_T} must lie in [0, 1] — it is a FRACTION of the "
+            f"late ODE, not a step count. 0.0 = terminal solve only, 1.0 = every step.")
+    print(f"[ config ] MIX_PROJ_T: diffusion_timestep_threshold {_yaml_threshold} -> {_env_T} "
+          f"(results folder key 'T' moves with it; checkpoint path unchanged)",
+          file=sys.stderr)
+    _yaml_threshold = _env_T
+
 args_to_watch_dpcc_train = [
     ('prefix', ''),
     ('horizon', 'H'),
