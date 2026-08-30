@@ -139,24 +139,54 @@ else
 fi
 
 # One eval invocation per backend. $1 = K ("" -> the plan block's flow_steps); rest passed through.
+#
+# 🔴 K_ENV_SCALAR (2026-08-30) — HFFM_FLOW_STEPS had TWO readers that disagreed. THIS script treats
+# it as a space-separated LIST and loops it, handing each K down as `--flow-steps $K`. But the
+# variable stayed exported, and config/avoiding-d3il.py reads the SAME name as a scalar
+# `int(os.environ.get('HFFM_FLOW_STEPS', 2))` at MODULE-IMPORT time — before argparse can apply
+# --flow-steps. A single value reads identically both ways, which is why every single-K job ever
+# submitted worked; the multi-K sweep documented at the top of this file killed job 25161 in 5 s:
+#     ValueError: invalid literal for int() with base 10: '10 20'
+# Fix: the list is snapshotted into HFFM_K_LIST and HFFM_FLOW_STEPS is UNSET (below), then each
+# child gets it back as the SCALAR for its own K. Env and CLI now always agree, so the
+# config-derived exp_name ('_K{K}_') always names the K that was actually evaluated.
 run_eval () {
     local K="$1"; shift
-    local kargs=()
-    if [ -n "$K" ]; then kargs=(--flow-steps "$K"); fi
+    local kargs=() kenv=()
+    if [ -n "$K" ]; then
+        kargs=(--flow-steps "$K")
+        kenv=(env "HFFM_FLOW_STEPS=$K")
+    else
+        # No override: the plan block's flow_steps decides. STRIP the variable rather than pass it
+        # through empty — int('') is a ValueError too.
+        kenv=(env -u HFFM_FLOW_STEPS)
+    fi
     if [ -z "$HFFM_SOLVERS" ]; then
-        python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+        "${kenv[@]}" python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
         return
     fi
     for S in $HFFM_SOLVERS; do
         echo "--------------------------------------------------------------------------------"
         echo "[ eval ] NLP backend = $S   K = ${K:-plan-block}   ($(date))"
         echo "--------------------------------------------------------------------------------"
-        FMPCC_HF_NLP_BACKEND="$S" python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+        "${kenv[@]}" "FMPCC_HF_NLP_BACKEND=$S" python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
     done
 }
 if [ -n "${HFFM_FLOW_STEPS:-}" ]; then
-    echo "[ eval ] K sweep: $HFFM_FLOW_STEPS   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
-    for K in $HFFM_FLOW_STEPS; do
+    # K_ENV_SCALAR (see run_eval): snapshot the list, then take the multi-value variable OUT of the
+    # environment so no child can import a config with a non-integer HFFM_FLOW_STEPS. Validate up
+    # front — a typo'd grid should fail in 1 s here, not after the first K has already burned hours.
+    HFFM_K_LIST="$HFFM_FLOW_STEPS"
+    unset HFFM_FLOW_STEPS
+    for K in $HFFM_K_LIST; do
+        case "$K" in
+            ''|*[!0-9]*)
+                echo "[ eval ] FATAL: HFFM_FLOW_STEPS entry '$K' is not a positive integer (list: '$HFFM_K_LIST')" >&2
+                exit 2 ;;
+        esac
+    done
+    echo "[ eval ] K sweep: $HFFM_K_LIST   FORCE_OVERWRITE=${FORCE_OVERWRITE:-0}"
+    for K in $HFFM_K_LIST; do
         echo "================================================================================"
         echo "[ eval ] K = $K   ($(date))"
         echo "================================================================================"

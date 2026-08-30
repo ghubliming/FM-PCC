@@ -78,15 +78,28 @@ cd "$REPO"
 # 4) Aggregate one table per K bucket (K<K>_n<n>). Buckets are never mixed (PLAN §5 /
 #    Gen13 fix_7): --flow-steps selects exactly one bucket. Mirrors the eval job —
 #    DEFAULT reports the single plan-block K; set HFFM_FLOW_STEPS to report a swept grid.
+#    🔴 K_ENV_SCALAR (2026-08-30) — same fix as the eval job. This loop reads HFFM_FLOW_STEPS as a
+#    LIST, but load_results imports config/avoiding-d3il.py, which reads the SAME name as a scalar
+#    `int(...)` at import time. A multi-K aggregation therefore died the same way the eval did
+#    (job 25161). Snapshot the list, unset the variable, hand each child its own scalar K.
 if [ -n "${HFFM_FLOW_STEPS:-}" ]; then
-    for K in $HFFM_FLOW_STEPS; do
+    HFFM_K_LIST="$HFFM_FLOW_STEPS"
+    unset HFFM_FLOW_STEPS
+    for K in $HFFM_K_LIST; do
+        case "$K" in
+            ''|*[!0-9]*)
+                echo "[ load_results ] FATAL: HFFM_FLOW_STEPS entry '$K' is not a positive integer (list: '$HFFM_K_LIST')" >&2
+                exit 2 ;;
+        esac
+    done
+    for K in $HFFM_K_LIST; do
         echo "================================================================================"
         echo "[ load_results ] K = $K"
         echo "================================================================================"
-        python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py --flow-steps "$K"
+        env "HFFM_FLOW_STEPS=$K" python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py --flow-steps "$K"
     done
 else
-    python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py
+    env -u HFFM_FLOW_STEPS python FM_v3_hardflow_test/load_results_FM_v3_hardflow.py
 fi
 
 echo "Aggregation completed successfully."
