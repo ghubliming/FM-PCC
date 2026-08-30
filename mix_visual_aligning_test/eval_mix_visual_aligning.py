@@ -2797,11 +2797,17 @@ if __name__ == '__main__':
     _T_SRC, _T_OVERRIDE = 'config/visual_aligning_eval.yaml', None
     if args_cli.proj_threshold is not None:
         _T_OVERRIDE, _T_SRC = float(args_cli.proj_threshold), 'cli --proj-threshold'
-    elif os.environ.get('MIX_PROJ_T') is not None:
+    elif str(os.environ.get('MIX_PROJ_T') or '').strip():
+        # 🔴 `.strip()` truthiness, NOT `is not None` (job 25215): shell `VAR= cmd` exports
+        # the EMPTY STRING rather than unsetting, so `is not None` was True and float('')
+        # crashed. Blank is treated as absent, matching config's _env_or_none.
+        _raw_T = os.environ['MIX_PROJ_T'].strip()
         try:
-            _T_OVERRIDE = float(os.environ['MIX_PROJ_T'])
+            _T_OVERRIDE = float(_raw_T)
         except ValueError:
-            raise SystemExit(f"[ eval ] ERROR: MIX_PROJ_T={os.environ['MIX_PROJ_T']!r} is not a float.")
+            raise SystemExit(f'[ eval ] ERROR: MIX_PROJ_T={_raw_T!r} is not a float. '
+                             f'(A space-separated sweep list belongs in the sbatch, which '
+                             f'passes one value per pass via --proj-threshold.)')
         _T_SRC = 'env MIX_PROJ_T'
     if _T_OVERRIDE is not None and not (0.0 <= _T_OVERRIDE <= 1.0):
         raise SystemExit(f'[ eval ] ERROR: projection threshold {_T_OVERRIDE} must lie in '

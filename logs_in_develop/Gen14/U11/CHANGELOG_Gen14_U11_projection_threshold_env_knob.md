@@ -205,3 +205,64 @@ Dry-run:
 ```
 
 Invalid entries are rejected before the first pass starts (`MIX_PROJ_T="0.1 7"` → exit 1).
+
+---
+
+## Fix — job 25215: `MIX_PROJ_T= run_eval` exported a BLANK, not an unset
+
+**Both sweep passes died at config-import**, before a single rollout:
+
+```
+File "config/aligning-d3il-visual.py", line 41, in <module>
+    _env_T = float(_env_T)
+ValueError: could not convert string to float: ''
+ValueError: CRITICAL: MIX_PROJ_T='' is not a float.
+[ eval ] ❌ PASS T=0.1 FAILED (exit 1)
+[ eval ] ❌ PASS T=0.05 FAILED (exit 1)
+```
+
+**Cause — mine.** Inside the sweep loop I wrote `MIX_PROJ_T= run_eval "$T"` to clear the list
+form before handing the pass its value via `--proj-threshold`. **`VAR= cmd` does not unset VAR —
+it exports it as the empty string.** So `os.environ.get('MIX_PROJ_T')` returned `''`, the
+`is not None` guard was True, and `float('')` raised. The sweep was the only caller that used
+that idiom, so it broke exactly the feature it was added for, and broke it on both passes.
+
+Everything upstream of the crash was correct — the banner resolved and printed the whole plan
+(`T=0.1 -> 10 calls`, `T=0.05 -> 5 calls`, arm C on, `slsqp -> hardflow_sls-*`, arms B/C matched),
+so the failure is isolated to this one shell idiom.
+
+**Fixed in two independent places, deliberately — keep both.**
+
+1. **The cause, in the sbatch.** Save / real `unset` / restore around the call, so the child sees
+   no variable at all:
+   ```bash
+   MIX_PROJ_T_SAVED="$MIX_PROJ_T"
+   unset MIX_PROJ_T                 # a real unset, so the child sees no variable at all
+   run_eval "$T"
+   rc=$?
+   MIX_PROJ_T="$MIX_PROJ_T_SAVED"   # restore for the next iteration's bookkeeping
+   ```
+   Simulated: child now sees `MIX_PROJ_T=None` on both passes; the old form gave `''`.
+
+2. **The brittleness, in the readers.** A knob must not be one shell quirk away from a crash, so
+   **blank now means unset** everywhere. New `_env_or_none()` in the config (returns `None` for
+   unset *or* whitespace-only, and strips), routed through by `MIX_PROJ_T` **and** the U10
+   `MIX_AF_ALPHA_*` readers, which had the identical latent defect. The eval's own reader switched
+   from `is not None` to `.strip()` truthiness, and its error message now names the likely cause
+   (a sweep list reaching the child).
+
+| `MIX_PROJ_T` | before | after |
+|---|---|---|
+| unset | inert ✅ | inert ✅ |
+| `''` / `'   '` | 💥 **ValueError at import** | inert ✅ |
+| `'0.1'` / `' 0.05 '` | override ✅ | override ✅ (stripped) |
+| `'abc'` | rejected ✅ | rejected ✅ |
+| `'1.5'` | rejected ✅ | rejected ✅ |
+| `'0.1 0.05'` reaching the child | 💥 bare `ValueError` | `SystemExit` naming the cause ✅ |
+
+⚠️ **Sibling not touched:** `_mix_u9_keys()` reads `MIX_VIS_PRETRAINED` / `MIX_VIS_LR_SCALE` /
+`MIX_VIS_COND` with the same `if raw is not None` shape and would raise the same way on a blank.
+No current sbatch uses the `VAR=` idiom on those, so it is latent, not live — flagged here rather
+than changed, since it is outside U11.
+
+**Re-run:** the same command. Nothing else about the job changes.

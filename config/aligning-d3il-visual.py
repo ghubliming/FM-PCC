@@ -35,7 +35,23 @@ _yaml_threshold = _proj_config['diffusion_timestep_threshold']
 # results folder carries it: T=0.5 writes `H8_K100_Meuler_T0.5_...`, T=0.1 writes
 # `H8_K100_Meuler_T0.1_...`. A new threshold can never overwrite an old run's results.
 # The CHECKPOINT path is untouched (T is eval-only), so no retraining is implied.
-_env_T = os.environ.get('MIX_PROJ_T')
+def _env_or_none(name):
+    """Env value, or None when unset **or blank**.
+
+    🔴 BLANK MUST MEAN UNSET (job 25215). Shell `VAR= cmd` does not unset VAR — it exports
+    it as the EMPTY STRING, so `os.environ.get(name)` returns '' and `is not None` is True.
+    That turned a sweep loop's own `MIX_PROJ_T= run_eval` into `float('')` and killed both
+    passes at config-import. `env -u VAR cmd` is the correct shell idiom and the sbatch now
+    uses it, but a knob must not be one shell quirk away from a crash — so blank is treated
+    as absent here too, and every MIX_* reader below goes through this function.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return None
+    return str(raw).strip()
+
+
+_env_T = _env_or_none('MIX_PROJ_T')
 if _env_T is not None:
     try:
         _env_T = float(_env_T)
@@ -1438,7 +1454,7 @@ def _mix_af_alpha_keys():
     """
     out, tag = {}, []
 
-    raw = os.environ.get('MIX_AF_ALPHA_SCHED')
+    raw = _env_or_none('MIX_AF_ALPHA_SCHED')      # blank == unset, see _env_or_none
     if raw is not None:
         if raw not in _AF_ALPHA_SCHEDULERS:
             raise ValueError(
@@ -1453,7 +1469,7 @@ def _mix_af_alpha_keys():
             ('MIX_AF_ALPHA_CLAMP', 'af_alpha_clamp', 'clamp'),
             ('MIX_AF_ALPHA_GAMMA', 'af_alpha_gamma', 'g'),
     ):
-        raw = os.environ.get(env_name)
+        raw = _env_or_none(env_name)              # blank == unset, see _env_or_none
         if raw is None:
             continue
         val = _af_num(env_name, raw)

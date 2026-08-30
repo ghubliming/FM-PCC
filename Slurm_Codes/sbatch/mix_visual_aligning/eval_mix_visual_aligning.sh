@@ -282,11 +282,19 @@ if [ -n "$PROJ_T_LIST" ]; then
         echo "================================================================================"
         echo "[ eval ] PASS  T = $T   ($(date))"
         echo "================================================================================"
-        # 🔴 unset the env form: with --proj-threshold given, a lingering MIX_PROJ_T list
-        # ("0.1 0.05") would fail the eval's float() and kill the pass. The CLI flag is the
-        # single source of truth inside the loop.
-        MIX_PROJ_T= run_eval "$T"
+        # 🔴 UNSET the env form for the child: with --proj-threshold given, a lingering
+        # MIX_PROJ_T list ("0.1 0.05") would fail the eval's float() and kill the pass. The
+        # CLI flag is the single source of truth inside the loop.
+        #
+        # `env -u`, NOT `MIX_PROJ_T=` (job 25215): the assignment form does not unset — it
+        # exports the EMPTY STRING, so the config's `os.environ.get(...) is not None` was
+        # True and float('') killed BOTH passes at import. The readers now also treat blank
+        # as absent, so this is belt-and-braces; keep both.
+        MIX_PROJ_T_SAVED="$MIX_PROJ_T"
+        unset MIX_PROJ_T                 # a real unset, so the child sees no variable at all
+        run_eval "$T"
         rc=$?
+        MIX_PROJ_T="$MIX_PROJ_T_SAVED"   # restore for the next iteration's bookkeeping
         if [ $rc -ne 0 ]; then
             echo "[ eval ] ❌ PASS T=$T FAILED (exit $rc)"
             FAILED="$FAILED T=$T"
