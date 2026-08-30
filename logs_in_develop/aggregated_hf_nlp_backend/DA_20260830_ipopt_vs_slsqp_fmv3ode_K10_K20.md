@@ -274,6 +274,47 @@ the split uses the calibrated 2.17 ms/NFE. The calibration is stable across K (2
 reproduces zero projection cost for `diffuser`, but a direct `proj_ms` counter on the D3IL arms — as
 the UAV path already has — would settle it. Worth adding before this decomposition is cited.
 
+### 5.4 🔴 This run is NOT threshold-matched — HardFlow vs DPCC cannot be read from it
+
+`config/hardflow_projection_eval.yaml` defines the two knobs as the same quantity:
+
+```
+diffusion_timestep_threshold: 0.5          # DPCC (arms A/B)
+
+# ── U4 late-activation threshold (fix_6: DPCC polarity) ──
+# SAME meaning as DPCC's diffusion_timestep_threshold: the fraction of the (late)
+# trajectory over which the NLP is active — HIGHER = MORE projection.
+#   1.0 -> every step        0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
+activation_threshold: 1.0
+```
+
+Every row in this run confirms it: `dpcc_threshold = 0.50`, `activation_threshold = 1.00`.
+**DPCC projected the last half of the trajectory; HardFlow projected all of it.**
+
+This is the shipped default, not a mistake in the submission — and the default has never been DPCC
+parity. `activation_threshold` was introduced in U4 (`18fa5c28`) with the opposite polarity and a
+default of `0.0` = "every ODE step"; Fix 6 (`3e90c136`) inverted the polarity to match DPCC's
+convention and set the default to `1.0`, which is the *same behaviour* under the new sign. The
+config names `0.5` explicitly as the DPCC-parity value, and matching it has always required setting
+`HFFM_ACT_THRESHOLD=0.5` by hand.
+
+**Consequence for §5.1–5.3:** HardFlow was handed roughly twice DPCC's projection workload —
+81.2 solves/step and 158.3 NFE/step against DPCC's 0 and 81.3 — and then compared on wall clock.
+The IPOPT-vs-SLSQP result is unaffected (both backends ran the identical setting, so the A/B is
+internally matched and every number in §1–4 stands). But the **HardFlow-vs-DPCC** rows in §5.1–5.3
+are not a fair comparison and must not be quoted as one.
+
+What can still be said from this run:
+
+- At 2× the projection workload, HardFlow-SLSQP lands within **8 % of DPCC's wall clock** at K=20
+  (0.516 vs 0.478 s) at equal 100 % S&C and equal 0.00000 violations.
+- Its **projection** is already cheaper than DPCC's — 0.53× at K=20 (§5.2) — while doing ~20× the
+  solves.
+- Its remaining deficit is generation, and that deficit is exactly the active-step count (§5.2),
+  which is what `activation_threshold` controls.
+
+What cannot be said: whether HardFlow beats, ties, or loses to DPCC. This run does not test it.
+
 ## 6 — Decision
 
 **Keep `slsqp` as `DEFAULT_NLP_BACKEND`.** Rationale, in order of weight:
@@ -283,6 +324,22 @@ the UAV path already has — would settle it. Worth adding before this decomposi
 3. HardFlow moves from 4.07–4.75× DPCC's cost to 1.05–1.21× — it stops being priced out, and the
    bench's endpoint-trick advantage (3.09× under SLSQP, 1.14× under IPOPT) becomes collectable.
 4. IPOPT's zero failures here do not generalise; its measured failure rates elsewhere are worse.
+
+**On replacing the DPCC projector with HardFlow-SLSQP: undecided — this run cannot answer it, by
+construction.** HardFlow ran at `activation_threshold = 1.0` against DPCC at `0.5`, i.e. twice the
+projection workload (§5.4). The comparison has to be re-run matched before any verdict.
+
+The indicators from this run are favourable: carrying 2× the workload, HardFlow-SLSQP still lands
+within 8 % of DPCC on wall clock at equal S&C and equal violations, and its projection term is
+already 0.53× DPCC's. Its whole remaining deficit is generation, which scales exactly with the
+active-step count — the knob that was left at maximum.
+
+**The deciding run** — one job, cheap, fully specified:
+`HFFM_ACT_THRESHOLD=0.5` (DPCC parity) at K20 with `FMPCC_HF_NLP_BACKEND=slsqp`, tightened variants,
+DPCC at its existing 0.5, ≥3 seeds and `n_trials` ≥ 10, reporting **steps and violations alongside
+S&C** and confirming the degeneracy gate on every row. Worth sweeping
+`HFFM_ACT_THRESHOLD ∈ {0.1, 0.25, 0.5}` in the same job, since lower values cut solves and NFE
+together.
 
 **Conditions attached:**
 - Report `nlp_failures` on every SLSQP run — it is the only signal that a plan lost the

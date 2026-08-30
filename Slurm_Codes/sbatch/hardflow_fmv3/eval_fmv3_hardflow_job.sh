@@ -131,6 +131,37 @@ echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm-C fan for -r/-c/-t; bare hardflow
 #
 # Order matters for reading the log, not for correctness: put ipopt first so the expensive arm
 # and the DPCC baseline land in the same pass.
+# ── HFFM_ACT_THRESHOLD — arm C's projection budget ───────────────────────────────────────
+# 🔴 THRESHOLD PARITY. This is the SAME quantity as DPCC's `diffusion_timestep_threshold`
+# (0.5 in config/hardflow_projection_eval.yaml): the fraction of the late trajectory over
+# which the NLP is active. HIGHER = MORE projection. If the two differ, arm C and arms A/B
+# are running different projection budgets and their wall-clock comparison is void — which
+# is exactly what happened up to job 25222, where the yaml shipped 1.0 against DPCC's 0.5
+# and handed arm C ~2x the work (see the DA in logs_in_develop/aggregated_hf_nlp_backend/).
+# The yaml default is now 0.5, i.e. matched. Override per run, or sweep:
+#   HFFM_ACT_THRESHOLD=0.25            single value, overrides the yaml
+#   HFFM_ACT_THRESHOLDS="0.1 0.25 0.5" sweep; each value is its own results dir (thres<A>)
+# Unset (default) = whatever the yaml says. The value is a token in the results dir name
+# (`K<K>_thres<A>_mpc<B>_n<n>`, hf_paths.eval_name), so no two settings can collide.
+HFFM_ACT_THRESHOLDS="${HFFM_ACT_THRESHOLDS:-${HFFM_ACT_THRESHOLD:-}}"
+if [ -n "$HFFM_ACT_THRESHOLDS" ]; then
+    for A in $HFFM_ACT_THRESHOLDS; do
+        case "$A" in
+            ''|*[!0-9.]*|*.*.*)
+                echo "[ eval ] FATAL: HFFM_ACT_THRESHOLD entry '$A' is not a number in [0,1] (list: '$HFFM_ACT_THRESHOLDS')" >&2
+                exit 2 ;;
+        esac
+    done
+    _n_a=$(set -- $HFFM_ACT_THRESHOLDS; echo $#)
+    if [ "$_n_a" -gt 1 ]; then
+        echo "[ hardflow ] activation_threshold sweep: $HFFM_ACT_THRESHOLDS   (DPCC diffusion_timestep_threshold = 0.5; MATCH IT unless the mismatch IS the experiment)"
+    else
+        echo "[ hardflow ] activation_threshold = $HFFM_ACT_THRESHOLDS (override)   (DPCC diffusion_timestep_threshold = 0.5; MATCH IT unless the mismatch IS the experiment)"
+    fi
+else
+    echo "[ hardflow ] activation_threshold: from config/hardflow_projection_eval.yaml (0.5 = DPCC parity).  Set HFFM_ACT_THRESHOLD=<A> or HFFM_ACT_THRESHOLDS=\"...\" to override."
+fi
+
 HFFM_SOLVERS="${HFFM_SOLVERS:-}"
 if [ -n "$HFFM_SOLVERS" ]; then
     echo "[ hardflow ] NLP backend sweep: $HFFM_SOLVERS  (one process per backend; ipopt -> hardflow_new-*, slsqp -> hardflow_sls-*)"
@@ -152,24 +183,39 @@ fi
 # config-derived exp_name ('_K{K}_') always names the K that was actually evaluated.
 run_eval () {
     local K="$1"; shift
-    local kargs=() kenv=()
+    # env is assembled as: all -u options FIRST, then assignments (GNU env parses options
+    # before NAME=VALUE). Each child therefore sees a scalar for every knob, never a list.
+    local unsets=() sets=() kargs=()
     if [ -n "$K" ]; then
         kargs=(--flow-steps "$K")
-        kenv=(env "HFFM_FLOW_STEPS=$K")
+        sets+=("HFFM_FLOW_STEPS=$K")
     else
-        # No override: the plan block's flow_steps decides. STRIP the variable rather than pass it
-        # through empty — int('') is a ValueError too.
-        kenv=(env -u HFFM_FLOW_STEPS)
+        # No override: the plan block's flow_steps decides. STRIP the variable rather than
+        # pass it through empty — int('') is a ValueError too.
+        unsets+=(-u HFFM_FLOW_STEPS)
     fi
-    if [ -z "$HFFM_SOLVERS" ]; then
-        "${kenv[@]}" python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
-        return
-    fi
-    for S in $HFFM_SOLVERS; do
-        echo "--------------------------------------------------------------------------------"
-        echo "[ eval ] NLP backend = $S   K = ${K:-plan-block}   ($(date))"
-        echo "--------------------------------------------------------------------------------"
-        "${kenv[@]}" "FMPCC_HF_NLP_BACKEND=$S" python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+    local alist="${HFFM_ACT_THRESHOLDS:-__cfg__}"
+    for A in $alist; do
+        local aunset=() aset=()
+        if [ "$A" = "__cfg__" ]; then
+            aunset=(-u HFFM_ACT_THRESHOLD)
+        else
+            aset=("HFFM_ACT_THRESHOLD=$A")
+        fi
+        if [ -z "$HFFM_SOLVERS" ]; then
+            echo "[ eval ] activation_threshold = ${A/__cfg__/yaml}   ($(date))"
+            env "${unsets[@]}" "${aunset[@]}" "${sets[@]}" "${aset[@]}" \
+                python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+            continue
+        fi
+        for S in $HFFM_SOLVERS; do
+            echo "--------------------------------------------------------------------------------"
+            echo "[ eval ] NLP backend = $S   K = ${K:-plan-block}   A = ${A/__cfg__/yaml}   ($(date))"
+            echo "--------------------------------------------------------------------------------"
+            env "${unsets[@]}" "${aunset[@]}" "${sets[@]}" "${aset[@]}" \
+                "FMPCC_HF_NLP_BACKEND=$S" \
+                python FM_v3_hardflow_test/eval_FM_v3_hardflow.py "${kargs[@]}" "$@"
+        done
     done
 }
 if [ -n "${HFFM_FLOW_STEPS:-}" ]; then

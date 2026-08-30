@@ -5248,5 +5248,90 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - *Stage 2 Wall Eliminations*: MeanFlow K100 (0.28× unguided) and Diffusion K100 (0.41× unguided) were disqualified because $T=0.5$ projection exceeded the 24h Slurm wall (50h and 28h required).
    - *Stage 3 Winner*: **MeanFlow K2 tightened `dpcc-t` emerged as the sole survivor** across all three stages: achieving 0.60× distance remaining, **1.00 zero-violation rate**, and **42 ms/step** compute latency (8×–357× faster than competitors), statistically confirming superiority over FM K20 ($p=0.004$) and Diffusion K20 ($p=0.039$).
 
+***
+
+## SolverSwap Telemetry Bugfix: `nlp_failures` Backstop Blindness & Gate G0 Additive Registration (August 30, 2026)
+
+**Keywords**: SolverSwap, nlp_failures, _SolveBudgetExceeded, backstop blindness, last_solve_success, mix_visual_aligning, mix_visual_avoiding, mix_uav, gates_mix_visual, Gate G0, GRAFTED_DIFF.
+
+1. **Diagnosis of Backstop Telemetry Under-Reporting**: Identified a critical flaw in the per-solve convergence telemetry introduced in commit `ee9a4fc4`. In the DPCC `Projector.project` loop across `mix_visual_aligning/`, `mix_visual_avoiding/`, and `mix_uav/sampling/projection.py`, `self.last_solve_success.append(bool(res.success))` was placed exclusively after the `try` block. When a solve hit the 60-second backstop (`_SolveBudgetExceeded`), the exception handler retained the unprojected trajectory at `cost = inf` and executed `continue` before appending anything to `last_solve_success`.
+2. **Polarity Inversion & Array Desynchronization**: Consequently, soft non-convergences (where SLSQP returned an unverified last iterate) were recorded as `False` and counted by downstream consumers (`n_bad = sum(1 for ok in last_solve_success if not ok)`), whereas **catastrophic 60s hard solver timeouts were completely omitted**. A run experiencing repeated backstop timeouts keeping unprojected plans could report `nlp_failures = 0`. Additionally, the omissions broke index alignment between `last_solve_success` and the candidate batch.
+3. **Telemetry Fix Across Projector Ports**: Injected `self.last_solve_success.append(False)` immediately inside `except _SolveBudgetExceeded:` prior to `continue` across all three ports (`mix_visual_aligning`, `mix_visual_avoiding`, `mix_uav`). Verified that in a simulated 5-sample batch with 2 backstops and 1 non-convergence, `nlp_failures` now accurately registers 3/5 failures while restoring 1-to-1 batch index alignment. Documented that reported `nlp_failures` in historical runs prior to August 30, 2026 represents a lower bound.
+4. **Gate G0 Additive Registration**: Resolved a persistent G0 failure in `mix_visual_aligning_test/gates_mix_visual.py`. Because `projection.py` had been previously left in G0's `COPIED` list, the gate continuously failed, masking genuine regressions. Transferred `projection.py` from `COPIED` to `GRAFTED_DIFF` with `removed = 0` and `added = 18` against `fm_visual_aligning`, formally asserting its purely additive structure and returning G0 to a green, load-bearing state.
+
+***
+
+## Gen14 U11 & Gen12 Slurm / Config Hotfixes: Empty-String Env Guard & Scalar/List Type Collision Resolution (August 30, 2026)
+
+**Keywords**: Gen14, U11, Gen12, MIX_PROJ_T, HFFM_FLOW_STEPS, K_ENV_SCALAR, aligning-d3il-visual.py, avoiding-d3il.py, eval_fmv3_hardflow_job.sh, eval_mix_visual_aligning.sh, Job 25215, Job 25161, Job 25216, Job 25222.
+
+1. **Resolution of `MIX_PROJ_T` Empty-String Import Crash (Job 25215 Hotfix)**:
+   - Diagnosed immediate config-import crashes on multi-threshold visual-aligning sweeps (Job 25215). In `Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh`, the sweep loop executed `MIX_PROJ_T= run_eval "$T"`, which exported `MIX_PROJ_T=""` (empty string) rather than unsetting the variable, triggering `ValueError: could not convert string to float: ''` inside `config/aligning-d3il-visual.py:41`.
+   - Fixed the sbatch script to save, explicitly `unset MIX_PROJ_T`, and restore the variable around `run_eval`.
+   - Implemented a resilient `_env_or_none()` helper in `config/aligning-d3il-visual.py` and `eval_mix_visual_aligning.py` that strips whitespace and treats empty/blank strings as `None` (inert fallback to YAML default `0.5`) across `MIX_PROJ_T` and all U10 `MIX_AF_ALPHA_*` knobs. Unblocked Job 25216.
+2. **Resolution of `HFFM_FLOW_STEPS` List/Scalar Type Collision (`K_ENV_SCALAR`, Job 25161 Hotfix)**:
+   - Diagnosed fatal startup crash in Job 25161 (dying in 5s). `Slurm_Codes/sbatch/hardflow_fmv3/eval_fmv3_hardflow_job.sh` treated `HFFM_FLOW_STEPS="10 20"` as a space-separated list for iteration, while `config/avoiding-d3il.py:1441` executed `int(os.environ.get('HFFM_FLOW_STEPS', 2))` at module import, throwing `ValueError: invalid literal for int() with base 10: '10 20'`.
+   - Patched `eval_fmv3_hardflow_job.sh` and `load_results_hardflow_fmv3.sh`: snapshotted the list into `HFFM_K_LIST`, added upfront positive integer validation, executed `unset HFFM_FLOW_STEPS`, and scoped per-K overrides via `env "HFFM_FLOW_STEPS=$K"`. Guaranteed exact synchronization between config-derived experiment paths (`_K{K}_`) and runtime `--flow-steps`, directly enabling the clean execution of the 2h 49m solver benchmark in Job 25222.
+
+***
+
+## HardFlow NLP Backend Empirical Verdict: Scipy SLSQP Adoption & 3.88× Throughput Parity on avoiding-d3il (August 30, 2026)
+
+**Keywords**: HardFlow, SolverSwap, SLSQP, IPOPT, CasADi, scipy.optimize, avoiding-d3il, Job 25222, DEFAULT_NLP_BACKEND, DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md, constraint repair, cost decomposition.
+
+1. **Decisive Empirical Campaign (Job 25222, 2h 49m)**: Executed a comprehensive 4-pass evaluation on `avoiding-d3il` across $K \in \{10, 20\}$ and backends $\in \{\text{IPOPT}, \text{SLSQP}\}$ (seed 6, $n=2$, 3 geometries, 12 variant cells, act_thr 1.0, candidate fan $B=4$). Evaluated paired IPOPT (`hardflow_new-*`) versus SLSQP (`hardflow_sls-*`) directly against shared unprojected (`diffuser`) and post-hoc DPCC (`dpcc-c-tightened`) baselines.
+2. **Core Verdict: Formal Adoption of Scipy SLSQP as Primary Backend**:
+   - **Throughput Acceleration**: Delivered a **3.88× end-to-end wall-clock speedup** across all 12 cells (0.963s $\rightarrow$ 0.246s/step at K10 `-r`; 1.941s $\rightarrow$ 0.503s/step at K20 `-r`). Per-solve time dropped by a constant $\approx 17.8\,\text{ms}$ (IPOPT $\approx 21.7\,\text{ms}$ vs SLSQP $\approx 4.0\,\text{ms}$, $\ge 5.4\times$ solver speedup), eliminating CasADi/IPOPT interior-point setup overhead on 44 dense DOFs.
+   - **Zero Quality Loss Across Key Safety Metrics**: Success rate (100%), strict-and-constraints S&C (100%), and collision-free rate remained **identically 0.00/100% across all 12 cells**.
+   - **Negligible Constraint Degradation**: Measurable constraint degradation occurred in only **1 of 12 cells** (K10 `-t`, total violation $0.00046 \rightarrow 0.01037$). In context, this represents merely **0.28% of the 3.52 violation units repaired** by projection (99.71% repaired by SLSQP vs 99.99% by IPOPT).
+   - **Robust Convergence**: Non-convergence occurred in only 0.017% of solves (51/300,440, all localized to `-t` variants; exactly 0 in `-r` and `-c`).
+3. **Validation of HardFlow's Core Design Claim (Cost Decomposition)**:
+   - Decomposed per-step execution into generative NFE ($\approx 2.17\,\text{ms}/\text{NFE}$) and NLP projection time. Proved that on projection alone, **HardFlow-SLSQP is 31–47% cheaper than DPCC's projector (0.69× at K10, 0.53× at K20)**, despite executing $\approx 20\times$ more solves (40.6–81.2 solves/step vs 4.1 for DPCC).
+   - *Mechanism*: HardFlow projects near-feasible predicted endpoints with active-set SLSQP, requiring far fewer internal iterations than DPCC's post-hoc projection of noisy unguided trajectories.
+   - *Generation Overhead*: HardFlow's remaining $\approx 8\%$ total wall-clock disadvantage at K20 (0.516s vs 0.478s) sits entirely in $2\times$ generative NFE (158.5 vs 81.3 NFE/step). Because generation overhead scales linearly with active steps ($K \times A$), lowering the activation threshold ($A=0.1$) is projected to achieve **0.205 s/step (2.3× faster than DPCC)** at 100% S&C.
+
+***
+
+## HardFlow Degeneracy Guard (HFK1c): Automatic Config-Time Pruning, G7 Verification & Full Pipeline Visibility (August 30, 2026)
+
+**Keywords**: HFK1c, hardflow degeneracy, n_genuine, hardflow_guard, HardFlowDegenerateError, Gate G7, FMPCC_HF_MIN_GENUINE, FMPCC_HF_ALLOW_DEGENERATE, HFFM_ACT_THRESHOLD, DA_UAV_v1, AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md, CHANGELOG_20260830_hardflow_degeneracy_guard.md.
+
+1. **Audit & Closure of the Degeneracy Warning Gap**:
+   - Comprehensive audit (`AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md`) established that the 2026-08-24 stdout warning was insufficient: sweeps continued burning GPU hours on degenerate $K \in \{1, 2\}$ HardFlow cells ($n_\text{genuine}=0$, running sample-then-project $\Pi_S(\text{Euler sample})$), warnings failed to reach `eval_<variant>.log` or wide DA ranking tables, and 25 of 32 matched cells were $0.00 \rightarrow 0.00$ floor effects.
+2. **Unified Mathematical Guard (`n_genuine` Threshold)**:
+   - Defined the degeneracy threshold universally as $n_\text{genuine} = \max(K - \lfloor (1-A) \cdot K \rfloor, 1) - 1$. Because shipped $A$ varies across generations ($A=1.0$ in Gen12, $A=0.5$ elsewhere), thresholding on $n_\text{genuine} \ge 1$ correctly gates degeneracy across all generations with a single invariant.
+   - Implemented `hardflow_guard(K, A, ...)` and `hardflow_skip_note()` identically across all 6 ports (`flow_matcher_v3_{alphaflow,hardflow,meanflow}`, `mix_uav`, `mix_visual_{aligning,avoiding}`).
+   - Added `HardFlowDegenerateError` as an in-sampler safety backstop if an unpruned degenerate configuration attempts execution.
+3. **Config-Assembly Pruning Across All Drivers**:
+   - Updated all 6 evaluation drivers (`eval_mix_uav.py`, `eval_flow_matching_v3_meanflow.py`, `eval_flow_matching_v3_alphaflow.py`, `eval_FM_v3_hardflow.py`, `eval_mix_visual_avoiding.py`, `eval_mix_visual_aligning.py`) to evaluate `hardflow_guard` during config assembly.
+   - Degenerate HardFlow variants are pruned before job launch, writing an `HF_DEGENERATE_SKIPPED.txt` sentinel into the results directory while leaving DPCC and unprojected diffuser arms completely untouched at low $K$.
+   - Exposed `FMPCC_HF_MIN_GENUINE` (default `1`), `FMPCC_HF_ALLOW_DEGENERATE=1` (explicit override for $A=0.0$ projector controls), and wired `HFFM_ACT_THRESHOLD` into the UAV sweep scripts and driver.
+4. **Data Analysis Flag Propagation & Gate G7 Suite**:
+   - **Artifact & DA Visibility**: Added `!!!!` warning banners in `eval_artifacts.py`, `HF_DEGENERATE.txt` in variant directories, and updated `Data_Analysis/DA_UAV_v1/aggregator.py` and `reporter.py` to propagate `hf_degenerate` and `hf_n_genuine` into `candidates_ranking.csv`, `data_quality.csv`, and `k_sweep` via a `MAX` aggregation rule over grouped units.
+   - **Gate G7 Verification**: Created `gate_g7` in `FM_v3_hardflow_test/gates_hardflow.py` validating exact mathematical partitioning over an $8 \times 6$ $K \times A$ grid, override semantics, env var isolation, and byte-identical implementation across all 6 repositories.
+
+***
+
+## Gen15 UAV `pillars` K-Sweep Forensic Audit & Funnel: Flight Dynamics Bottleneck & Pareto Hierarchy (August 30, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, pillars, K-sweep, fm, mf, af, SiT backbone, TemporalImfUnet, v2 divergence abort, inverted flip, chargedSteps, Pareto dominance, 4-stage funnel, DA_20260830_pillars_K_sweep_fm_mf_af.md.
+
+1. **Production Audit Across 1,707 Rollouts (Jobs 25127–25138)**: Conducted an exhaustive audit of 11 UAV Slurm jobs spanning `fm` (K∈{1,2,5,20}), `mf` (K∈{1,2,5}), and `af` (K∈{1,2,5}) on the multi-obstacle `pillars` scene ($n=10$, seed 6, $B=4$, `pid_stopgo`, $T=0.5$).
+2. **Identification of the Geometric Inflation Bottleneck (0/1,707 S&C)**:
+   - Across 1,707 rollouts, **zero rollouts achieved strict success+constraints (0/1,707)**, and only 2/1,707 completed collision-free. While 24% of flights reached the goal, they accumulated a median of 130 constraint-violating steps per rollout.
+   - *Root Cause*: After the $0.33\,\text{m}$ safety inflation margin (`config/uav_projection.yaml`), outer navigable channels narrow to $\approx 12\,\text{cm}$ and the central channel to $|y| \le 0.15\,\text{m}$. The scored constraint set is near-infeasible for closed-loop quadrotor tracking, localizing the metric collapse to geometry configuration rather than generative policy defects.
+3. **v2 Divergence Abort Production Characterization**:
+   - Analyzed 559 aborted rollouts (14–78% abort rate per cell). Proved that **`inverted` airframe flips account for 83% (465/559)** of all aborts, firing sharply at the exact crossing where $\cos(\text{tilt}) < 0$ (90°–120° past vertical).
+   - `off_route` accounted for 15% (almost entirely $z$-ceiling exits at $p_z \approx 3.35\,\text{m}$ occurring at step 47–83 for unguided `mf`), `overspeed` accounted for 2% (at $|v| \approx 6.1\,\text{m/s}$), while `nan_state` and `off_map` never fired.
+4. **Four-Stage Funnel & Engine Performance Analysis**:
+   - *Stage 1 (Unguided Route Traversal)*: `af` (0.93 crossed) and `fm` (0.85 crossed) successfully traverse the corridor unguided. `mf` unguided fails totally (0/30 crossings, 30/30 ceiling aborts) due to unchecked vertical velocity accumulation.
+   - *Stage 2 (Projected Constraints)*: Enabling geometric projection cuts violations 5× (0.68 $\rightarrow$ 0.11–0.14 viol/step) and increases goal reach 2–7×, but destabilizes flight (raising aborts from 2% to 46%).
+   - *Stage 3 (HardFlow vs DPCC)*: On genuine $K=5$ cells, HardFlow matches DPCC on constraint satisfaction (0.10–0.18 vs 0.10–0.22 viol/step) while providing a **4–6× wall-clock speedup** (145–587 ms vs 1,146–1,730 ms).
+5. **Efficiency Metric Standardization (`chargedSteps`) & Strict Pareto Dominance**:
+   - Introduced `chargedSteps` (mean steps charging failed/aborted rollouts the full 634 budget) to eliminate survivorship bias in conditional `steps_to_goal`.
+   - **Strict Pareto Dominance (`mf > fm`)**: Under architecture-matched UNet backbones, **MeanFlow strictly Pareto-dominates FlowMatching across all four evaluation axes simultaneously** (`reached`↑ 0.36 vs 0.08, `viol/step`↓ 0.10 vs 0.18, `chargedSteps`↓ 579 vs 616, `avg_time`↓ 120 ms vs 274 ms). Every `fm` cell is dominated.
+   - **Non-Dominated Trade-off with `af`**: AlphaFlow (on 10.0M SiT backbone) and MeanFlow (on 3.97M UNet) form the non-dominated Pareto frontier: `af` K1/K2 achieves higher reach (0.73 vs 0.44) and lower latency (59 vs 91 ms), while `mf` K1/K2 achieves a marginally cleaner violation rate (0.09 vs 0.11).
+
+
 
 

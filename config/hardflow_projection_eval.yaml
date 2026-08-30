@@ -121,10 +121,25 @@ hardflow:
   # trajectory over which the NLP is active — HIGHER = MORE projection. The NLP is
   # solved when tau_next >= (1 - threshold); the FINAL step is ALWAYS solved (the
   # terminal solve is what the safety guarantee rides on). Env override: HFFM_ACT_THRESHOLD.
-  #   1.0 -> every step (full; the safe default, matches old behaviour)
+  #   1.0 -> every step (full; upstream HardFlow behaviour)
   #   0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
   #   0.0 -> terminal-only NLP (~ post-hoc projection of the final sample)
-  activation_threshold: 1.0
+  #
+  # 🔴 THRESHOLD PARITY (2026-08-30) — this MUST equal `diffusion_timestep_threshold`
+  # above (0.5), or arm C is compared against arms A/B at a different projection budget.
+  # It was 1.0 until now, which is NOT a mistake in any submit command — it is the
+  # shipped default, and it has never meant DPCC parity: U4 (18fa5c28) introduced this
+  # knob at 0.0 under the OPPOSITE polarity (0.0 = every step) and fix_6 (3e90c136)
+  # inverted the sign to DPCC's convention, carrying the same "every step" behaviour
+  # over as 1.0. So every Gen12 run before this one gave HardFlow ~2x the projection
+  # workload DPCC got (81.2 vs 0 solves/step, 158.3 vs 81.3 NFE/step at K20) and then
+  # compared them on wall clock. Job 25222 is the run that exposed it; see
+  # logs_in_develop/aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md §5.4.
+  # Every OTHER generation already ships 0.5 (alphaflow, meanflow, visual_avoiding_mix,
+  # uav_mix) or inherits DPCC's value (visual_aligning: null) — Gen12 was the last outlier.
+  # The value lands in the results dir name as `thres0.5` (hf_paths.eval_name), so the
+  # setting is visible in the path without opening the npz.
+  activation_threshold: 0.5
   # Back-compat alias, used only if activation_threshold is absent: all|late -> 1.0|0.5
   activation: all
 
