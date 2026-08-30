@@ -36,6 +36,7 @@ Usage (cluster):
 """
 
 import argparse
+import os          # HFK1c (2026-08-30) — G7 toggles the guard's env knobs
 import sys
 
 import numpy as np
@@ -49,6 +50,8 @@ from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
     TrajectoryLayout,
     hardflow_step_budget,           # HFK1 (2026-08-24)
     hardflow_regime, HF_OK, HF_THIN, HF_DEGENERATE,   # HFK1b (2026-08-24)
+    hardflow_guard, HardFlowDegenerateError,          # HFK1c (2026-08-30)
+    resolve_hf_min_genuine, hf_allow_degenerate,
 )
 
 EXP = 'avoiding-d3il'
@@ -588,6 +591,125 @@ def gate_g6(device, halfspace_variant='both-hard', config_path=CONFIG_PATH):
     return bool(ok)
 
 
+# ---------------------------------------------------------------------------#
+# G7 — HFK1c: the degeneracy GUARD actually blocks, and the opt-in actually opens
+# ---------------------------------------------------------------------------#
+def gate_g7():
+    """HFK1c (2026-08-30): degenerate HardFlow arms are DISABLED, not merely warned about.
+
+    The `[hardflow][DEGENERATE]` banner shipped 2026-08-24 and stopped nothing — the Gen15
+    UAV sweep kept spending cluster hours on K=1/K=2 HardFlow cells no claim could cite
+    (AUDIT_20260830 §3). This gate pins the guard that replaced the warning:
+
+      (a) the default guard blocks EXACTLY the cells with n_genuine == 0, and nothing else,
+          across the K x A grid we ship — including A=0.0, which is degenerate at EVERY K;
+      (b) `FMPCC_HF_ALLOW_DEGENERATE=1` re-opens them (this is how the A=0.0 projector
+          control at matched K is run, and it is the ONLY supported use);
+      (c) `FMPCC_HF_MIN_GENUINE=2` also blocks THIN, and `=0` disables the guard entirely;
+      (d) the blocked reason names the escape hatch, so a reader of the log can act on it;
+      (e) all six HardFlow ports carry byte-identical guard arithmetic — a fix that lands
+          in one generation and not its siblings is the recurring failure mode here.
+
+    Pure arithmetic + env: no model, no GPU, no cluster. See
+    logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md
+    """
+    print('\n-- G7: HFK1c degeneracy guard ' + '-' * 30)
+    ok = True
+    saved = {k: os.environ.get(k) for k in
+              ('FMPCC_HF_ALLOW_DEGENERATE', 'FMPCC_HF_MIN_GENUINE')}
+
+    def _setenv(**kw):
+        for k, v in kw.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    try:
+        # (a) default: block iff n_genuine == 0, over the full shipped grid
+        _setenv(FMPCC_HF_ALLOW_DEGENERATE=None, FMPCC_HF_MIN_GENUINE=None)
+        grid_ok = True
+        for K in (1, 2, 3, 5, 6, 10, 14, 20):
+            for A in (0.0, 0.1, 0.25, 0.5, 0.9, 1.0):
+                _, n_genuine = hardflow_step_budget(K, A)
+                allowed = hardflow_guard(K, A)[0]
+                if allowed != (n_genuine >= 1):
+                    grid_ok = False
+                    print(f'    GUARD MISMATCH K={K} A={A}: n_genuine={n_genuine} '
+                          f'allowed={allowed} (expected {n_genuine >= 1})')
+        print(f'  (a) blocks exactly n_genuine==0 over 48 cells  '
+              f'{"OK" if grid_ok else "FAIL"}')
+        ok &= grid_ok
+
+        # A=0.0 is terminal-only at ANY K -> always blocked by default. This is the cell
+        # the projector-only control needs, which is why it needs the opt-in.
+        a0_ok = all(not hardflow_guard(K, 0.0)[0] for K in (1, 5, 10, 20, 50))
+        print(f'      A=0.0 blocked at every K                   {"OK" if a0_ok else "FAIL"}')
+        ok &= a0_ok
+
+        # (b) opt-in re-opens
+        _setenv(FMPCC_HF_ALLOW_DEGENERATE='1')
+        optin_ok = hardflow_guard(10, 0.0)[0] and hardflow_guard(1, 0.5)[0] \
+            and hf_allow_degenerate()
+        print(f'  (b) FMPCC_HF_ALLOW_DEGENERATE=1 re-opens        '
+              f'{"OK" if optin_ok else "FAIL"}')
+        ok &= optin_ok
+
+        # (c) MIN_GENUINE raises / disables the bar
+        _setenv(FMPCC_HF_ALLOW_DEGENERATE=None, FMPCC_HF_MIN_GENUINE='2')
+        thin_ok = (hardflow_regime(3, 0.5)[0] == HF_THIN
+                   and not hardflow_guard(3, 0.5)[0]      # THIN now blocked
+                   and hardflow_guard(5, 0.5)[0]          # OK still allowed
+                   and resolve_hf_min_genuine() == 2)
+        _setenv(FMPCC_HF_MIN_GENUINE='0')
+        off_ok = hardflow_guard(1, 0.5)[0] and resolve_hf_min_genuine() == 0
+        print(f'  (c) MIN_GENUINE=2 blocks THIN, =0 disables      '
+              f'{"OK" if (thin_ok and off_ok) else "FAIL"}')
+        ok &= (thin_ok and off_ok)
+
+        # (d) the reason is actionable when blocked, and empty when not
+        _setenv(FMPCC_HF_ALLOW_DEGENERATE=None, FMPCC_HF_MIN_GENUINE=None)
+        blocked_ok, blocked_why = hardflow_guard(1, 0.5)[:2]
+        pass_ok, pass_why = hardflow_guard(10, 0.5)[:2]
+        reason_ok = (not blocked_ok
+                     and 'FMPCC_HF_ALLOW_DEGENERATE=1' in blocked_why
+                     and 'n_genuine=0' in blocked_why
+                     and pass_ok and pass_why == '')
+        print(f'  (d) blocked reason names the opt-in             '
+              f'{"OK" if reason_ok else "FAIL"}')
+        ok &= reason_ok
+
+        # (e) all six ports identical — see the sibling-sync convention in CLAUDE.md
+        here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ports = ('flow_matcher_v3_alphaflow', 'flow_matcher_v3_hardflow',
+                 'flow_matcher_v3_meanflow', 'mix_uav', 'mix_visual_aligning',
+                 'mix_visual_avoiding')
+        blocks, missing = set(), []
+        for p in ports:
+            path = os.path.join(here, p, 'sampling', 'hardflow_projection.py')
+            if not os.path.exists(path):
+                missing.append(p)
+                continue
+            text = open(path).read()
+            blocks.add(text[text.index('def hardflow_step_budget'):
+                            text.index('# ── B4_PARITY')])
+            if 'raise HardFlowDegenerateError' not in text:
+                missing.append(f'{p} (no backstop raise)')
+        ports_ok = len(blocks) == 1 and not missing
+        print(f'  (e) {len(ports)} ports share one guard, all with backstop    '
+              f'{"OK" if ports_ok else "FAIL"}')
+        if missing:
+            print(f'      missing/divergent: {missing}')
+        ok &= ports_ok
+    finally:
+        for k, v in saved.items():
+            _setenv(**{k: v})
+
+    print(f'  G7 -> {"PASS" if ok else "FAIL"}')
+    return bool(ok)
+
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--flow-steps', type=int, default=5)
@@ -606,6 +728,7 @@ def main():
         'G4 U4 threshold': gate_g4(args.device, args.halfspace_variant, args.config),
         'G5 U4.2 selection': gate_g5(args.device, args.halfspace_variant, args.config),
         'G6 HFK1 low-K': gate_g6(args.device, args.halfspace_variant, args.config),
+        'G7 HFK1c guard': gate_g7(),
     }
 
     print('\n' + '=' * 60)

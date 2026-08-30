@@ -138,12 +138,19 @@ class Reporter:
                          diagnostics JSONs are absent, since the npz never
                          carries timing at all.
         `npz_complete`   0 means the npz is a crash-safety partial.
+        `hf_degenerate`  1 means this unit is a DEGENERATE HardFlow arm — n_genuine
+                         == 0, so NO HardFlow arithmetic ran and the row is
+                         Pi_S(Euler sample) = sample-then-project (== DPCC modulo
+                         solver/variable-scope). Valid as a solver comparison; never
+                         as a HardFlow result. Exclude from best-of / win-count /
+                         Pareto claims. See logs_in_develop/aggregated_hardflow_lowK/
         """
         table = self.agg.quality
         if table is None or table.empty:
             return table
         lead = ['Candidate', 'FolderName', 'scene', 'engine', 'K', 'seed', 'split',
-                'geo', 'variant', 'source', 'has_projector', 'n_rollouts',
+                'geo', 'variant', 'hf_degenerate', 'hf_n_genuine',
+                'source', 'has_projector', 'n_rollouts',
                 'n_cb_tripped', 'cb_tripped_rate', 'cb_skipped_steps', 'cb_trips',
                 'backstop_hits', 'cb_sentinel', 'timing_missing',
                 'n_diagnostics_json', 'npz_complete']
@@ -248,6 +255,11 @@ class Reporter:
                 'scene': entry.get('scene', ''),
                 'engine': entry.get('engine', ''),
                 'K': entry.get('K'),
+                # [HFK1c 2026-08-30] 1 => this candidate carries a DEGENERATE HardFlow arm
+                # (n_genuine == 0): sample-then-project, NOT HardFlow. Never cite such a row
+                # as a HardFlow result, and exclude it from best-of / Pareto claims.
+                # See logs_in_develop/aggregated_hardflow_lowK/
+                'hf_degenerate': entry.get('hf_degenerate', 0.0),
                 'NFE_effective': entry.get('nfe_effective', np.nan),
                 'Success+Constraint (%)': accuracy * 100,
                 'Std (%)': entry.get('accuracy_std', np.nan) * 100,

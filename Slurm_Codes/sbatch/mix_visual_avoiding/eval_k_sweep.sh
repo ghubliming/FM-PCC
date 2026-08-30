@@ -59,6 +59,20 @@ SEEDS="${2:-${MIX_SEEDS:-6 7 8 9 10}}"
 #    Non-degenerate from K>=3 at the shipped A=0.5, or K>=2 at A=1.0 (1 genuine step each);
 #    K>=5 at A=0.5 gives 2+, the first setting comparable to the paper's N=10 / A=0.5.
 #    See logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md
+#
+# 🔴 [HFK1c 2026-08-30] THE ADVICE ABOVE ("keep the rows ... one-shot-projection comparison")
+#    IS WITHDRAWN, and the eval now ENFORCES it. AUDIT_20260830 tested whether those rows
+#    deliver the projector-only control they were kept for: 25 of 32 matched cells are
+#    0.00 -> 0.00 floor effects, and in the 7 cells with signal HardFlow is WORSE in 5 —
+#    K=1/2 varies the projector AND K at once, so the comparison runs where the sample is a
+#    single Euler step and every arm floors. The clean instrument is A=0.0 at matched K.
+#    The eval now DROPS the HardFlow variants at degenerate K (HF_DEGENERATE_SKIPPED.txt
+#    sentinel); the DPCC/diffuser arms at those K still run. Knobs:
+#      FMPCC_HF_ALLOW_DEGENERATE=1  run it anyway (only for the A=0.0 control at K>=5)
+#      FMPCC_HF_MIN_GENUINE=2       also block THIN; 0 disables the guard
+#    See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+export FMPCC_HF_ALLOW_DEGENERATE="${FMPCC_HF_ALLOW_DEGENERATE:-}"
+export FMPCC_HF_MIN_GENUINE="${FMPCC_HF_MIN_GENUINE:-}"
 KS="${3:-1 2 5 10 20}"
 
 N_SEEDS=$(echo $SEEDS | wc -w)

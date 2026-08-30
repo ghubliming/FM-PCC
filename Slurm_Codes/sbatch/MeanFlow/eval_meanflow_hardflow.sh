@@ -107,6 +107,18 @@ fi
 #                        get the whole {1,2,5,10,20} grid in one job (see §5).
 export HFFM_BATCH="${HFFM_BATCH:-4}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
+
+# ── [HFK1c 2026-08-30] HardFlow degeneracy guard knobs ────────────────────────────────────
+# A DEGENERATE arm (n_genuine == 0) runs NO HardFlow arithmetic — it is Pi_S(Euler sample)
+# = sample-then-project, == DPCC modulo solver/variable-scope — so the eval now DROPS it and
+# writes an HF_DEGENERATE_SKIPPED.txt sentinel instead of burning GPU on an uncitable row.
+#   FMPCC_HF_ALLOW_DEGENERATE=1  run it anyway. Only supported use: the projector-only
+#                                control, A=0.0 at K>=5 (terminal-only at any K).
+#   FMPCC_HF_MIN_GENUINE=2       also block THIN (one guided step); 0 disables the guard.
+# See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+export FMPCC_HF_ALLOW_DEGENERATE="${FMPCC_HF_ALLOW_DEGENERATE:-}"
+export FMPCC_HF_MIN_GENUINE="${FMPCC_HF_MIN_GENUINE:-}"
+
 export FMPCC_MPC_BATCH="${FMPCC_MPC_BATCH:-4}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
 echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm C)  FMPCC_MPC_BATCH=$FMPCC_MPC_BATCH (arms A/B)  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"

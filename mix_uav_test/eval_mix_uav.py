@@ -75,6 +75,7 @@ from diffuser.utils import provenance   # U10.1 — env-override provenance (sha
 from mix_uav.sampling.hardflow_projection import (
     HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
     hardflow_step_budget,          # HFK1 (2026-08-24)
+    hardflow_guard, hardflow_skip_note,   # HFK1c (2026-08-30) — the degeneracy guard
     # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
     artifact_variant_label, resolve_nlp_backend)
 from mix_uav.models import engine_registry
@@ -435,6 +436,18 @@ def _load_base_cfg(scene, seed):
     # from `plan_mix_uav_<engine>` instead. The CONSTRAINTS still come from the shared yaml —
     # which is the half that has to match for the comparison to mean anything.
     cfg['hardflow'] = dict(getattr(plan_args, 'hardflow', {}) or {})
+    # [HFK1c 2026-08-30 / R4] `HFFM_ACT_THRESHOLD` is the per-job override for A, and until now
+    # it was wired into Slurm_Codes/sbatch/{MeanFlow,AlphaFlow,mix_visual_aligning} but NOT the
+    # UAV path — `config/uav_mix.py` hardcoded 0.5, so A was the one HardFlow knob this
+    # generation could not sweep. It has to be settable here because the supported way to
+    # recover the projector-only control is `A=0.0 at K>=5` (terminal-only at ANY K), which is
+    # the clean replacement for the low-K degenerate rows this guard now blocks. Same env name
+    # and same polarity as the sibling generations. See AUDIT_20260830 §6.
+    _hf_env_A = os.environ.get('HFFM_ACT_THRESHOLD')
+    if _hf_env_A not in (None, ''):
+        cfg['hardflow']['activation_threshold'] = _hf_env_A
+        print(f'[ eval ][hardflow] HFFM_ACT_THRESHOLD={_hf_env_A} → overriding '
+              f'activation_threshold for this job')
     _hf_variants = list(getattr(plan_args, 'hardflow_variants', []) or [])
     if not engine_registry.get(ENGINE)['supports_hardflow']:
         # e.g. the `diffusion` arm: HardFlow's NLP needs v = f(x, t) and a DDPM has no velocity
@@ -446,6 +459,28 @@ def _load_base_cfg(scene, seed):
     if os.environ.get('UAV_MIX_HF_OFF'):
         _hf_variants = []
         print('[ eval ] UAV_MIX_HF_OFF set → HardFlow arm disabled for this run')
+    # [HFK1c 2026-08-30] Degeneracy guard. Same principle as the `supports_hardflow` drop
+    # above — drop the arm at config time rather than crash (or, worse, silently produce an
+    # uncitable row) inside the sampler hours into a job. A DEGENERATE arm runs no HardFlow
+    # arithmetic at all, so there is nothing for it to measure; see
+    # logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+    if _hf_variants:
+        # Resolve A through the SAME fallback chain the policy build uses (line ~1633), or
+        # the guard would judge a different arm than the one that runs.
+        _hf_A = resolve_activation_threshold(cfg['hardflow'].get(
+            'activation_threshold', cfg.get('diffusion_timestep_threshold', 0.5)))
+        _hf_ok, _hf_reason, _hf_tier, _, _hf_ngen, _ = hardflow_guard(
+            int(cfg['flow_steps_v3']), _hf_A)
+        if not _hf_ok:
+            print(f'[ eval ][hardflow][BLOCKED] dropping {len(_hf_variants)} HardFlow '
+                  f'variant(s) {_hf_variants}: {_hf_reason}')
+            cfg['hardflow_skipped'] = {'variants': list(_hf_variants),
+                                       'reason': _hf_reason,
+                                       'tier': _hf_tier,
+                                       'n_genuine': int(_hf_ngen),
+                                       'K': int(cfg['flow_steps_v3']),
+                                       'A': float(_hf_A)}
+            _hf_variants = []
     if _hf_variants:
         _existing = list(cfg.get('projection_variants') or [])
         cfg['projection_variants'] = _existing + [v for v in _hf_variants if v not in _existing]
@@ -1721,6 +1756,15 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         _basename = 'constraint_overview_tightened' if _is_this_tightened else 'constraint_overview'
         plot_geo_constraints(config.get('geo_tag', scene), config, geo_dir,
                              is_tightened=_is_this_tightened, basename=_basename)
+        # [HFK1c 2026-08-30] If the degeneracy guard dropped the HardFlow arm, leave the record
+        # HERE, beside the variant folders — a reader browsing the results tree must be able to
+        # see that the arm was deliberately SKIPPED, not that it was never configured or that it
+        # crashed. Mirrors the PROJECTION_CB_TRIPPED.txt / DIVERGENCE_ABORT.txt sentinel pattern.
+        _hf_skip = config.get('hardflow_skipped')
+        if _hf_skip:
+            with open(os.path.join(geo_dir, 'HF_DEGENERATE_SKIPPED.txt'), 'w') as _f:
+                _f.write(hardflow_skip_note(', '.join(_hf_skip['variants']),
+                                            _hf_skip['K'], _hf_skip['A'], _hf_skip['reason']))
 
     # Write config snapshot at the eval-tag-aware seed dir (once per PROCESS, on first
     # variant/geo_tag — Fix_8). setup.py's mkdir() no longer auto-snapshots during eval
@@ -1937,6 +1981,25 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         print(f'[ eval ] {scene} variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
               f'{_ph["n_tripped_trials"]}/{len(rollouts)} trials ({_ph["total_skipped_steps"]} '
               f'steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.', flush=True)
+
+    # [HFK1c 2026-08-30] A DEGENERATE HardFlow row can only reach this point under an explicit
+    # FMPCC_HF_ALLOW_DEGENERATE=1 opt-in. Mark it in the file tree too, so the row is
+    # identifiable without opening results.json — same reasoning as the CB sentinel above.
+    _hfs = summary.get('hardflow') or {}
+    if _hfs.get('is_hardflow') and _hfs.get('is_degenerate'):
+        with open(os.path.join(out_dir, 'HF_DEGENERATE.txt'), 'w') as _f:
+            _f.write(f"DEGENERATE HardFlow arm — {scene} variant={variant}\n")
+            _f.write(f"K={config['flow_steps_v3']}  A={_hfs.get('activation_threshold')}  "
+                     f"n_active={_hfs.get('n_active')}  n_genuine=0\n\n")
+            _f.write("NO HardFlow arithmetic ran: every NLP solve is the terminal tau=1 solve,\n")
+            _f.write("so this row is Pi_S(Euler sample) = sample-then-project, == DPCC modulo\n")
+            _f.write("solver/variable-scope. It is a valid SOLVER comparison; it is NOT a\n")
+            _f.write("HardFlow result and must not carry a HardFlow claim.\n\n")
+            _f.write("It exists because FMPCC_HF_ALLOW_DEGENERATE=1 was set for this job.\n")
+            _f.write("See logs_in_develop/aggregated_hardflow_lowK/\n")
+        print(f'[ eval ] {scene} variant={variant}: ⚠ DEGENERATE HardFlow arm (n_genuine=0) — '
+              f'ran under FMPCC_HF_ALLOW_DEGENERATE=1. NOT a HardFlow result. '
+              f'See HF_DEGENERATE.txt.', flush=True)
 
     # Div_Abort: greppable sentinel when any trial of this variant lost control, mirroring the
     # PROJECTION_CB_TRIPPED.txt convention — visible from the file tree without opening artifacts.

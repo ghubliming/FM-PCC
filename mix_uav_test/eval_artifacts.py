@@ -755,6 +755,23 @@ def write_eval_log(out_dir, variant, summary, rollouts):
             f.write("  !!! Those trials ran (partly) UNPROJECTED (sustained SLSQP slowness,\n")
             f.write("  !!! projection.py Fix_15.2) — their constraint metrics are NOT valid.\n")
             f.write('!' * 70 + '\n')
+        # [HFK1c 2026-08-30] Loud banner when this row is a DEGENERATE HardFlow arm. Such a row
+        # can only exist under an explicit FMPCC_HF_ALLOW_DEGENERATE=1 opt-in (the guard drops
+        # the arm otherwise), but the opt-in is per JOB while this log is read per VARIANT weeks
+        # later — so the row has to carry its own warning. `n_genuine == 0` means no HardFlow
+        # arithmetic ran: the arm is Pi_S(Euler sample) = sample-then-project, == DPCC modulo
+        # solver/variable-scope. See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+        _hf = summary.get('hardflow') or {}
+        if _hf.get('is_hardflow') and _hf.get('is_degenerate'):
+            f.write('!' * 70 + '\n')
+            f.write(f"  !!! DEGENERATE HardFlow arm — n_genuine=0 "
+                    f"(n_active={_hf.get('n_active')}, A={_hf.get('activation_threshold')})\n")
+            f.write("  !!! NO HardFlow arithmetic ran. Every NLP solve is the terminal tau=1\n")
+            f.write("  !!! solve, so this row is Pi_S(Euler sample) = sample-then-project,\n")
+            f.write("  !!! == DPCC modulo solver/variable-scope. It is NOT a HardFlow result\n")
+            f.write("  !!! and must not carry a HardFlow claim.\n")
+            f.write("  !!! See logs_in_develop/aggregated_hardflow_lowK/\n")
+            f.write('!' * 70 + '\n')
         # Div_Abort: loud banner if any trial was cut short by a lost-control abort.
         _diverged = [i for i, r in enumerate(rollouts) if (r.get('divergence') or {}).get('aborted')]
         if _diverged:

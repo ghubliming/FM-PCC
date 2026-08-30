@@ -287,3 +287,10 @@ The four SLSQP solves per replan are independent (same constraints, different `x
 ---
 
 *All numbers sourced from the curated reports in this directory. No number was independently computed for this notebook. See individual reports for methodology, statistics, and reproduction instructions.*
+
+
+---
+
+# by User notes to update
+the Pillars results is good
+/workspaces/FM-PCC/logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md

@@ -735,6 +735,117 @@ def hardflow_regime(flow_steps, activation_threshold):
     return tier, n_active, n_genuine, first_lookahead
 
 
+# ── HFK1c (2026-08-30) — the degeneracy GUARD.  Degenerate arms are OFF by default. ───────
+# 🔴 WHY A GUARD AND NOT JUST THE WARNING ABOVE.  The `[hardflow][DEGENERATE]` banner has
+# existed since 2026-08-24 and it stopped nothing.  AUDIT_20260830 found the Gen15 UAV
+# K-sweep still spending cluster hours on K=1/K=2 HardFlow cells that no claim can cite, and
+# the flag never reached the ranking CSVs, so a degenerate row could still be promoted to
+# "HardFlow's best result".  A line printed into a 3000-line stdout log is not a control.
+# This is the control.
+#
+# WHAT IS BLOCKED: `n_genuine == 0` — no HardFlow arithmetic runs at all and the arm is
+# Pi_S(Euler sample) = sample-then-project (== DPCC modulo solver/variable-scope).
+#
+# 🔴 THE THRESHOLD IS IN `n_genuine`, NOT IN K.  The shipped `A` is NOT uniform across
+# generations — Gen12 ships A=1.0, every other generation ships (or inherits) 0.5 — so
+# "K <= 2 is degenerate" is true for five generations and FALSE for Gen12.  `n_genuine` is
+# A-aware by construction, so one threshold is correct everywhere.  See REGISTER_20260824 §1.
+#
+# WHY THIS IS NOT KEPT AS A CONTROL.  It was retained for one question: "does HardFlow's
+# PROJECTOR alone beat DPCC's, independent of K?"  The question is real; K=1/2 cannot answer
+# it, because it varies the projector AND K at once — the comparison then runs at the one
+# operating point where the sample is a single Euler step and every arm floors.  Measured on
+# the Gen15 UAV corpus: 25 of 32 matched cells are 0.00 -> 0.00, and in the 7 cells with any
+# signal HardFlow is WORSE in 5.  The clean instrument is `A = 0.0` at matched K — terminal-
+# only at ANY K, since n_active = max(K - floor(1*K), 1) = 1 — which isolates the projector at
+# unchanged K and unchanged sample quality.  That is a different run, and it is the supported
+# way to get the control back:
+#
+#     FMPCC_HF_ALLOW_DEGENERATE=1  with  HFFM_ACT_THRESHOLD=0.0  and  K >= 5
+#
+# Numbers and full derivation: logs_in_develop/aggregated_hardflow_lowK/
+#   AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md  §4, §6
+HF_MIN_GENUINE_DEFAULT = 1        # 1 = block DEGENERATE only.  2 also blocks THIN.
+
+
+class HardFlowDegenerateError(RuntimeError):
+    """A degenerate (or sub-threshold) HardFlow arm was run without an explicit opt-in.
+
+    Callers that sweep should ask `hardflow_guard()` BEFORE building the policy and skip the
+    variant cleanly — see `hardflow_guard.__doc__`.  This exception is the backstop for the
+    callers that do not, so that a degenerate arm can never run silently.
+    """
+
+
+def _env_flag(name):
+    return str(os.environ.get(name, '')).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def hf_allow_degenerate():
+    """True if this job explicitly opted in to running degenerate/sub-threshold HardFlow."""
+    return _env_flag('FMPCC_HF_ALLOW_DEGENERATE')
+
+
+def resolve_hf_min_genuine(requested=None):
+    """Explicit arg > FMPCC_HF_MIN_GENUINE env var > HF_MIN_GENUINE_DEFAULT.
+
+    0 disables the guard entirely (equivalent to FMPCC_HF_ALLOW_DEGENERATE=1).
+    """
+    val = requested if requested is not None else os.environ.get('FMPCC_HF_MIN_GENUINE')
+    if val is None or str(val).strip() == '':
+        return HF_MIN_GENUINE_DEFAULT
+    try:
+        out = int(str(val).strip())
+    except (TypeError, ValueError):
+        raise ValueError(f'FMPCC_HF_MIN_GENUINE must be an integer, got {val!r}')
+    if out < 0:
+        raise ValueError(f'FMPCC_HF_MIN_GENUINE must be >= 0, got {out}')
+    return out
+
+
+def hardflow_guard(flow_steps, activation_threshold, min_genuine=None, allow_degenerate=None):
+    """Should this HardFlow arm run at all?
+
+    Returns `(ok, reason, tier, n_active, n_genuine, first_lookahead)`.
+      ok      — False => do not run this arm.  `reason` is a one-line, log-ready explanation
+                (empty string when ok is True).
+    Pure arithmetic over (K, A) and the environment: no model, no run, safe to call during
+    config assembly.  Sweeps should call this while building `projection_variants` and drop
+    the blocked arms there — dropping the arm beats crashing inside the sampler hours in.
+    """
+    tier, n_active, n_genuine, first_lookahead = hardflow_regime(
+        flow_steps, activation_threshold)
+    if allow_degenerate is None:
+        allow_degenerate = hf_allow_degenerate()
+    min_genuine = resolve_hf_min_genuine(min_genuine)
+    if allow_degenerate or min_genuine == 0:
+        return True, '', tier, n_active, n_genuine, first_lookahead
+    if n_genuine < min_genuine:
+        what = ('runs NO HardFlow arithmetic (every NLP solve is the terminal tau=1 solve, so '
+                'the arm is Pi_S(Euler sample) = sample-then-project, == DPCC modulo '
+                'solver/variable-scope)' if n_genuine == 0 else
+                f'runs only {n_genuine} genuine step(s), below the required {min_genuine}')
+        reason = (f'K={int(flow_steps)} A={float(activation_threshold)} -> n_genuine={n_genuine} '
+                  f'[{tier}]: this arm {what}. No claim can cite it, so it is DISABLED. '
+                  f'For a genuine arm use n_genuine>={min_genuine} (at A=0.5 that is K>=3; '
+                  f'K>=5 for an attributable effect). To run it anyway — e.g. the A=0.0 '
+                  f'projector control at matched K — set FMPCC_HF_ALLOW_DEGENERATE=1. '
+                  f'See logs_in_develop/aggregated_hardflow_lowK/'
+                  f'AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md')
+        return False, reason, tier, n_active, n_genuine, first_lookahead
+    return True, '', tier, n_active, n_genuine, first_lookahead
+
+
+def hardflow_skip_note(variant, flow_steps, activation_threshold, reason):
+    """The text written to the `HF_DEGENERATE_SKIPPED.txt` sentinel in a skipped variant dir."""
+    return (f'HARDFLOW ARM DISABLED — degeneracy guard (HFK1c 2026-08-30)\n'
+            f'variant={variant}  K={int(flow_steps)}  A={float(activation_threshold)}\n\n'
+            f'{reason}\n\n'
+            f'Nothing was evaluated for this variant; there are no results in this folder.\n'
+            f'This file is the record that the arm was SKIPPED, not that it failed.\n')
+
+
+
 # ── B4_PARITY (2026-08-20) — per-variant MPC candidate-fan size for arm C ──────────────
 # 🔴 P0. This function exists because `hardflow.batch_size` used to default to 1 while the
 # DPCC arms ran `args.batch_size` (4). Both arms loop SERIALLY over candidates around their
@@ -968,8 +1079,14 @@ class HardFlowSampler:
         # it three weeks later. Two tiers warn: DEGENERATE (no HardFlow math at all) and THIN
         # (one guided step — HardFlow ran, but nothing can be attributed to it). Warned once
         # per (K, A); nothing about the computation changes. See `hardflow_regime` above.
-        hf_tier, n_active, n_genuine, first_lookahead = hardflow_regime(
+        # [HFK1c 2026-08-30] BACKSTOP. Sweeps are expected to call `hardflow_guard()` while
+        # assembling `projection_variants` and drop blocked arms there (no crash, the sweep
+        # continues). This raise catches every caller that does not, so a degenerate arm can
+        # never run silently. Opt in with FMPCC_HF_ALLOW_DEGENERATE=1.
+        _hf_ok, _hf_reason, hf_tier, n_active, n_genuine, first_lookahead = hardflow_guard(
             K, self.activation_threshold)
+        if not _hf_ok:
+            raise HardFlowDegenerateError('[hardflow][BLOCKED] ' + _hf_reason)
         if hf_tier != HF_OK and getattr(self, '_hf_regime_warned', None) != (K, self.activation_threshold):
             self._hf_regime_warned = (K, self.activation_threshold)
             _hdr = f'[hardflow][{hf_tier}] K={K} A={self.activation_threshold}: '

@@ -64,6 +64,7 @@ from mix_visual_avoiding.sampling.hardflow_projection import (
     build_hardflow_sampler, resolve_activation_threshold, resolve_hf_batch_size,
     resolve_engine_hf,
     hardflow_step_budget,          # HFK1 (2026-08-24)
+    hardflow_guard, hardflow_skip_note,   # HFK1c (2026-08-30) — the degeneracy guard
     # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
     artifact_variant_label, resolve_nlp_backend,
 )
@@ -631,6 +632,19 @@ for exp in exps:
                 sys.stdout = Tee(sys.stdout, log_file)
                 try:
                     is_hardflow = variant.startswith('hardflow')
+                    # [HFK1c 2026-08-30] Degeneracy guard — a DEGENERATE arm (n_genuine == 0) runs no
+                    # HardFlow arithmetic at all, so it produces a row no claim can cite. Skip the variant
+                    # and leave a sentinel; the sweep continues. Opt in with FMPCC_HF_ALLOW_DEGENERATE=1
+                    # (the supported use is the A=0.0 projector control at matched K).
+                    # See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+                    if is_hardflow:
+                        _hf_ok, _hf_why = hardflow_guard(flow_steps, hf_act_threshold)[:2]
+                        if not _hf_ok:
+                            print(f'[hardflow][BLOCKED] skipping variant {variant}: {_hf_why}')
+                            os.makedirs(save_path, exist_ok=True)
+                            with open(os.path.join(save_path, 'HF_DEGENERATE_SKIPPED.txt'), 'w') as _f:
+                                _f.write(hardflow_skip_note(variant, flow_steps, hf_act_threshold, _hf_why))
+                            continue
                     print(f'---------------- {exp} | {halfspace_variant} | {variant} | '
                           f'engine={ENGINE} | seed={seed} | K={flow_steps} ----------------')
 

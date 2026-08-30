@@ -70,6 +70,7 @@ from mix_visual_aligning.sampling.hardflow_projection import (
     build_hardflow_sampler,
     encode_visual_cond,
     resolve_activation_threshold,
+    hardflow_guard, hardflow_skip_note,   # HFK1c (2026-08-30) — the degeneracy guard
     resolve_hf_batch_size,          # B4_PARITY (2026-08-20)
     # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
     artifact_variant_label, resolve_nlp_backend,
@@ -3187,6 +3188,29 @@ if __name__ == '__main__':
                 # `hf_sampler` path instead.
                 hf_sampler = None
                 is_hardflow = variant.startswith('hardflow')
+                # [HFK1c 2026-08-30] Degeneracy guard. A DEGENERATE arm (n_genuine == 0) runs no
+                # HardFlow arithmetic at all — it is Pi_S(Euler sample) = sample-then-project —
+                # so it yields a row no claim can cite. Skip the variant and leave a sentinel;
+                # the sweep continues, exactly like the `resolve_engine_hf` refusal below. Opt in
+                # with FMPCC_HF_ALLOW_DEGENERATE=1 (supported use: the A=0.0 projector control at
+                # matched K). See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+                if is_hardflow:
+                    _hf_K = int(getattr(diffusion_model, 'flow_steps_v3', 2))
+                    # Resolve A exactly as the sampler build below does, or the guard would
+                    # judge a different arm than the one that runs.
+                    _hf_cfg_g = geo_config.get('hardflow', {}) or {}
+                    _hf_A = resolve_activation_threshold(
+                        os.environ.get('HFFM_ACT_THRESHOLD')
+                        or (_hf_cfg_g.get('activation_threshold')
+                            if _hf_cfg_g.get('activation_threshold') is not None
+                            else geo_config.get('diffusion_timestep_threshold', 0.5)))
+                    _hf_ok, _hf_why = hardflow_guard(_hf_K, _hf_A)[:2]
+                    if not _hf_ok:
+                        print(f'[hardflow][BLOCKED] skipping variant {variant!r}: {_hf_why}')
+                        os.makedirs(save_path, exist_ok=True)
+                        with open(os.path.join(save_path, 'HF_DEGENERATE_SKIPPED.txt'), 'w') as _f:
+                            _f.write(hardflow_skip_note(variant, _hf_K, _hf_A, _hf_why))
+                        continue
                 if is_hardflow and obs_normalizer is not None:
                     # Refuse the diffusion arm loudly, before the GPU is spent. DDPM has no
                     # velocity field, so `hardflow_new` — which integrates v = f(x, t) outside
