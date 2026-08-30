@@ -1,0 +1,161 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Aug 25 09:09:27 UTC 2026
+JOB NAME:  train_mix_visual_aligning
+JOB ID:    25043
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   fd8c311
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+[ train ] engine=mf  seeds='6'
+[ train ] film_mode = v1  (MIX_FILM_MODE_MF; unset -> v1)
+[ train ] ml_bone = mf_dit  -- VisualDiTTwoTime, visual latent as ONE TOKEN;
+[ train ]           film_mode is N/A on this bone and is absent from the path.
+[ train ] U9: vis_pretrained=1  vis_lr_scale=0.1  vis_cond_mode=adaln
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.28.2 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260825_090932-v4h13xrs
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run aligning-d3il-visual-mf-mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln-S6-slurm-25043
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-gen14
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-gen14/runs/v4h13xrs
+[ train ] Seeds: [6]  (source: cli --seeds)
+[ train ] engine=mf | MeanFlow (Gen3v6) | two_time=True | wraps_unet=True | nfe_key=flow_steps_v3 | source=flow_matcher_v3_meanflow/ (Gen3v6)
+[ train ] config block: mix_visual_aligning_mf
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6
+[ train ] dataset=ParityAligningDataset (visual, 9D trajectory)
+
+[utils/config ] Config: <class 'mix_visual_aligning.datasets.sequence.ParityAligningDataset'>
+    dataset_path: environments/dataset/data/aligning/train_files.pkl
+    horizon: 8
+    max_n_episodes: 1000
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/dataset_config.json
+
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 2774.42it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  14%|█▎        | 123/900 [00:10<01:03, 12.25it/s]Loading images:  28%|██▊       | 252/900 [00:20<00:51, 12.62it/s]Loading images:  43%|████▎     | 387/900 [00:30<00:39, 12.99it/s]Loading images:  58%|█████▊    | 522/900 [00:40<00:29, 12.91it/s]Loading images:  73%|███████▎  | 657/900 [00:50<00:18, 13.12it/s]Loading images:  88%|████████▊ | 792/900 [01:00<00:08, 13.16it/s]Loading images: 100%|██████████| 900/900 [01:09<00:00, 13.04it/s]
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet18_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet18_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+[ train ] Saved obs_normalizer → logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/obs_normalizer.pkl
+[ train ] Saved act_normalizer → logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/act_normalizer.pkl
+[ train ] obs_normalizer [ Normalizer ] dim: 6
+    -: [ 0.22 -0.35  0.12  0.21 -0.36  0.1 ]
+    +: [0.72 0.47 0.25 0.74 0.49 0.27]
+
+[ train ] act_normalizer [ Normalizer ] dim: 3
+    -: [-0.01 -0.01 -0.01]
+    +: [0.01 0.01 0.01]
+
+[ train ] film_mode = v1 (additive-bias FiLM (default)) — architecture key; v1/v2 checkpoints are NOT interchangeable
+[ train ] ml_bone = mf_dit — VisualDiTTwoTime, visual latent enters as ONE PREPENDED TOKEN (hidden=160, depth=8); parameter-matched to the ~4.0M U-Net — see Gen14/U8 PLAN section 8
+
+[utils/config ] Config: <class 'mix_visual_aligning.models.mf_engine.MeanFlowEngine'>
+    dit_aux_head_depth: 2
+    dit_condition_on_t: False
+    dit_depth: 8
+    dit_hidden_size: 160
+    dit_num_heads: 4
+    dit_patch_size: 1
+    dropout_rate: 0.1
+    dual_head: True
+    freq_dim: 32
+    if_vision: True
+    imf_backbone: mf_dit
+    interval_cfg: False
+    seq_len: 8
+    state_dim: 9
+    vis_config: Namespace(config='config.aligning-d3il-visual', seed=6, dataset='aligning-d3il-visual', model='mix_visual_aligning.models.mf_engine.MeanFlowEngine', diffusion='mix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', action_dim=3, obs_dim=6, if_vision=True, horizon=8, time_beta_alpha_v3=1.5, time_beta_beta_v3=1.0, action_weight=1, loss_type='l2', dim=32, dim_mults=(1, 2, 4, 8), condition_dropout=0.1, returns_condition=False, max_path_length=1000, logbase='logs', prefix='mix_visual_aligning_mf/', exp_name='mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln', batch_size=64, learning_rate=0.0002, ema_decay=0.995, n_steps_per_epoch=1000, n_train_steps=100000.0, gradient_accumulate_every=2, train_test_split=0.9, device='cuda', t_schedule='logit_normal', p_mean=-0.4, p_std=1.0, meanflow_data_proportion=0.5, mf_adp_p=1.0, mf_adp_eps=0.01, dual_head=True, interval_cfg=False, gradient_clip=1.0, split_seed=42, mf_freeze_vision_encoder=False, ml_bone='mf_dit', dit_hidden_size=160, dit_depth=8, dit_num_heads=4, dit_patch_size=1, vis_pretrained=True, vis_lr_scale=0.1, vis_cond_mode='adaln', engine='mf', savepath='logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6')
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/model_config.json
+
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualDiTTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualDiTTwoTime ] vis_pretrained=True  (ImageNet ResNet-18 init)
+[ VisualDiTTwoTime ] bone=mf_dit (MFDiTOfficialTrajectory)  hidden=160 depth=8 heads=4 patch=1  cond_dim=128 (visual token ON)
+[ VisualDiTTwoTime ] vis_cond_mode=adaln  (visual tokens in sequence: 0)
+[ MFTrajectoryModel ] backbone=mf_dit  vision=True  unet_width(freq_dim)=32  params=26.4M
+[ train ] n_timesteps (legacy buffer size) = 100  (continuous-time engine; does not affect training dynamics)
+
+[utils/config ] Config: <class 'mix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow'>
+    action_dim: 3
+    action_weight: 1
+    clip_denoised: False
+    flow_steps_v3: 100
+    goal_dim: 0
+    horizon: 8
+    if_vision: True
+    loss_type: l2
+    meanflow_data_proportion: 0.5
+    mf_adp_eps: 0.01
+    mf_adp_p: 1.0
+    mf_freeze_vision_encoder: False
+    n_timesteps: 100
+    observation_dim: 6
+    ode_solver_backend_v3: legacy_euler
+    ode_solver_method_v3: euler
+    p_mean: -0.4
+    p_std: 1.0
+    predict_epsilon: True
+    t_schedule: logit_normal
+    time_beta_alpha_v3: 1.5
+    time_beta_beta_v3: 1.0
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'mix_visual_aligning.utils.training_twotime.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    gradient_clip: 1.0
+    log_freq: 1000
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000.0
+    results_folder: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6
+    save_freq: None
+    split_seed: 42
+    train_batch_size: 64
+    train_lr: 0.0002
+    train_test_split: 0.9
+    vis_lr_scale: 0.1
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/aligning-d3il-visual/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/6/trainer_config.json
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/mix_visual_aligning_test/train_mix_visual_aligning.py", line 590, in <module>
+    trainer = trainer_config(diffusion, dataset)
+  File "/u/home/llim/FMPCC/FM-PCC/mix_visual_aligning/utils/config.py", line 97, in __call__
+    instance = self._class(*args, **kwargs, **self._dict)
+  File "/u/home/llim/FMPCC/FM-PCC/mix_visual_aligning/utils/training_twotime.py", line 203, in __init__
+    raise ValueError(
+ValueError: [ utils/training ] vis_lr_scale != 1.0 but no obs_encoder was found at model.velocity_net.obs_encoder. Refusing to train with a silently ignored encoder LR — this is exactly the class of bug that produces a null result nobody can explain.
+wandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.008 MB of 0.008 MB uploadedwandb: / 0.008 MB of 0.008 MB uploadedwandb: - 0.008 MB of 0.008 MB uploadedwandb: \ 0.008 MB of 0.008 MB uploadedwandb: | 0.018 MB of 0.039 MB uploaded (0.004 MB deduped)wandb: / 0.039 MB of 0.039 MB uploaded (0.004 MB deduped)wandb: 🚀 View run aligning-d3il-visual-mf-mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln-S6-slurm-25043 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-gen14/runs/v4h13xrs
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-visual-aligning-gen14
+wandb: Synced 6 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260825_090932-v4h13xrs/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.

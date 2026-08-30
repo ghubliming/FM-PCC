@@ -1252,6 +1252,13 @@ U10
 24633/4
 24650 rerun (been told last time is replan 1 not 8)
 
+---
+
+- Batch = 1 study 
+24991/2
+25104 seed 78910
+(25105 Fmv3ODE-in-Hardflow run, batch study)
+
 # Gen3v7 alpha flow 
 1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
 EVAL 23786
@@ -1283,6 +1290,10 @@ unet validation 24348 KILLED try full seeds train
 
 24594/5 ntrail 20 run
 
+---
+
+25102 batch 1 run
+
 # Gen12 
 init pipeline run 23767 -> All killed, not run
 fix1(.3) -> debug_chain_23782 
@@ -1312,6 +1323,12 @@ vs 24198 0.05thres (K10, K20 run -> 24207)
 Ablation DPCC baseline 0.1thres 24215 / 0.05thres 24226
 - Claude Claim the diffusion_timestep_threshold: 1 for DPCC not working, lets see if ture, set it to 1, 24254, feels run it beofre but we rerun it again. --> Gen0F2
 
+---
+HF solver compare
+25121
+in real job 25161
+
+
 # Gen14 
 Test -> 24082
 faile fix2 24907
@@ -1337,6 +1354,7 @@ af/mf 24224/5
 
 20 run 24405 Diffu
 24409 FM
+(K20 ntrail20 run 25006)
 
 - FiLM v2 
 24417 mf
@@ -1348,6 +1366,16 @@ af/mf 24224/5
 24683 FAIL 
 24872
 
+- U9 
+25033 FAIL 
+25037 FAIL 
+255041
+
+- U10 af enable 
+25190
+
+- U11 the K threshold 0.1/0.05 K100 mf test
+25191
 
 # Gen0 
 - Fix2
@@ -1358,6 +1386,8 @@ thres test 24279 T
 24639 see ntrial 20
 (FMv3ODE 24698 ntrail20)
 
+---
+25101 batch 1 run
 
 # Gen15
 test 24578
@@ -1381,8 +1411,26 @@ and fm (Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh fm corr
 af corridor 
 24924/5
 
+---
+
+- U5 and pillars
+
+25126 af train + eval
+fm. eval: 25127-30
+mf, 25131-33
+diffu. 25134
 
 # Gen16 
 24850? NO logging? what happened? -> 24583/4 PASS
 24855 GO FAIL
 24859 rerun
+
+----
+
+Scurve Train dpcc,fm,mf
+25007-9
+
+Eval:
+25072/73/75
+
+25077-84(low K Arm)

@@ -1,0 +1,126 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Aug 27 17:24:59 UTC 2026
+JOB NAME:  bench_solver_hf_vs_dpcc
+JOB ID:    25121
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   1897f4f
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+[ bench ] reps=50 horizon=8 ref=both runs=3
+[ bench ] out -> /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121
+
+################ bench run 1 / 3  (seed=1) ################
+==============================================================================
+Gen12 solver bench -- HardFlow IPOPT vs DPCC SLSQP, same NLP
+  horizon=8  dof=44  vars(DPCC)=48
+  halfspace=both-hard  reps=50  tau=1.0
+==============================================================================
+
+--- reference regime: endpoint
+  IPOPT (HardFlow) :   47.638 ms median (49.283 +- 8.206 mean)
+  SLSQP (DPCC)     :   10.837 ms median (10.871 +- 1.145 mean)
+  IPOPT / SLSQP    :     4.40x
+  ||Pi_I - Pi_S||  : mean 0.05821  max 2.89165
+  max residual     : IPOPT +1.00e-08   SLSQP +7.19e-04   (>0 == INFEASIBLE)
+  IPOPT failures   : 0 / 50
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+
+--- reference regime: iterate
+  IPOPT (HardFlow) :   55.900 ms median (65.772 +- 27.079 mean)
+  SLSQP (DPCC)     :   42.325 ms median (60.347 +- 68.166 mean)
+  IPOPT / SLSQP    :     1.32x
+  ||Pi_I - Pi_S||  : mean 2.86742  max 6.58800
+  max residual     : IPOPT +6.69e-02   SLSQP +1.76e-02   (>0 == INFEASIBLE)
+  IPOPT failures   : 17 / 50
+
+--- endpoint vs iterate (the audit §0.1 claim)
+  IPOPT: 47.638 -> 55.900 ms = 1.17x harder on a noisy reference
+  SLSQP: 10.837 -> 42.325 ms = 3.91x
+
+[ bench ] appended 2 row(s) -> /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/solver_bench.csv
+[ bench ] wrote /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/run_1.json
+
+🔴 [ bench ] a projector returned INFEASIBLE output -- this is a bug, and it matters more than the timing above.
+
+################ bench run 2 / 3  (seed=2) ################
+==============================================================================
+Gen12 solver bench -- HardFlow IPOPT vs DPCC SLSQP, same NLP
+  horizon=8  dof=44  vars(DPCC)=48
+  halfspace=both-hard  reps=50  tau=1.0
+==============================================================================
+
+--- reference regime: endpoint
+  IPOPT (HardFlow) :   47.327 ms median (47.075 +- 5.395 mean)
+  SLSQP (DPCC)     :   10.871 ms median (10.727 +- 0.871 mean)
+  IPOPT / SLSQP    :     4.35x
+  ||Pi_I - Pi_S||  : mean 0.00040  max 0.00103
+  max residual     : IPOPT +1.00e-08   SLSQP +4.77e-10   (>0 == INFEASIBLE)
+  IPOPT failures   : 0 / 50
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+
+--- reference regime: iterate
+  IPOPT (HardFlow) :   56.027 ms median (71.586 +- 32.007 mean)
+  SLSQP (DPCC)     :   29.466 ms median (176.460 +- 467.716 mean)
+  IPOPT / SLSQP    :     1.90x
+  ||Pi_I - Pi_S||  : mean 2.87969  max 5.97812
+  max residual     : IPOPT +6.14e-02   SLSQP +1.87e-02   (>0 == INFEASIBLE)
+  IPOPT failures   : 15 / 50
+
+--- endpoint vs iterate (the audit §0.1 claim)
+  IPOPT: 47.327 -> 56.027 ms = 1.18x harder on a noisy reference
+  SLSQP: 10.871 -> 29.466 ms = 2.71x
+
+[ bench ] appended 2 row(s) -> /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/solver_bench.csv
+[ bench ] wrote /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/run_2.json
+
+🔴 [ bench ] a projector returned INFEASIBLE output -- this is a bug, and it matters more than the timing above.
+
+################ bench run 3 / 3  (seed=3) ################
+==============================================================================
+Gen12 solver bench -- HardFlow IPOPT vs DPCC SLSQP, same NLP
+  horizon=8  dof=44  vars(DPCC)=48
+  halfspace=both-hard  reps=50  tau=1.0
+==============================================================================
+
+--- reference regime: endpoint
+  IPOPT (HardFlow) :   47.700 ms median (48.366 +- 7.430 mean)
+  SLSQP (DPCC)     :   11.228 ms median (11.173 +- 0.820 mean)
+  IPOPT / SLSQP    :     4.25x
+  ||Pi_I - Pi_S||  : mean 0.00034  max 0.00102
+  max residual     : IPOPT +1.00e-08   SLSQP +4.77e-10   (>0 == INFEASIBLE)
+  IPOPT failures   : 0 / 50
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+
+--- reference regime: iterate
+  IPOPT (HardFlow) :   50.538 ms median (67.076 +- 53.260 mean)
+  SLSQP (DPCC)     :   30.302 ms median (103.938 +- 322.264 mean)
+  IPOPT / SLSQP    :     1.67x
+  ||Pi_I - Pi_S||  : mean 2.65541  max 5.59008
+  max residual     : IPOPT +4.09e-02   SLSQP +1.99e-02   (>0 == INFEASIBLE)
+  IPOPT failures   : 7 / 50
+
+--- endpoint vs iterate (the audit §0.1 claim)
+  IPOPT: 47.700 -> 50.538 ms = 1.06x harder on a noisy reference
+  SLSQP: 11.228 -> 30.302 ms = 2.70x
+
+[ bench ] appended 2 row(s) -> /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/solver_bench.csv
+[ bench ] wrote /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/run_3.json
+
+🔴 [ bench ] a projector returned INFEASIBLE output -- this is a bug, and it matters more than the timing above.
+
+================================================================================
+[ bench ] all runs done. Aggregate CSV: /u/home/llim/FMPCC/FM-PCC/logs/solver_bench/25121/solver_bench.csv
+================================================================================
+================================================================================
+JOB END:   Thu Aug 27 17:25:49 UTC 2026
+================================================================================

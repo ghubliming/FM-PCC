@@ -289,3 +289,122 @@ GIT REV:   7cc86c7
 [ eval ] corridor variant=dpcc-r-tightened: trial 6/10 done  (598.5s elapsed this variant, ~399.0s to go)
 [ eval ] corridor variant=dpcc-r-tightened: trial 7/10 done  (703.2s elapsed this variant, ~301.4s to go)
 [ eval ] corridor variant=dpcc-r-tightened: trial 8/10 done  (748.9s elapsed this variant, ~187.2s to go)
+[ eval ] corridor variant=dpcc-r-tightened: trial 9/10 done  (898.5s elapsed this variant, ~99.8s to go)
+[ eval ] corridor variant=dpcc-r-tightened: trial 10/10 done  (1116.9s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.400  success_relaxed=0.400  safe=0.400  goal_reached=0.700  steps_to_goal=275/396  track_err=1.999  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened/
+[ eval ] corridor variant=dpcc-r-tightened TIMING: fm_ms=30.2 proj_ms=303.4 total_ms=333.7 (p95=907.5) budget=30.3ms → real_time_OVER×3111
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 17/23: 'dpcc-c'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] corridor variant=dpcc-c: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=dpcc-c: trial 1/10 done  (46.6s elapsed this variant, ~419.7s to go)
+[ eval ] corridor variant=dpcc-c: trial 2/10 done  (91.9s elapsed this variant, ~367.5s to go)
+[ eval ] corridor variant=dpcc-c: trial 3/10 done  (138.3s elapsed this variant, ~322.8s to go)
+[ eval ] corridor variant=dpcc-c: trial 4/10 done  (184.1s elapsed this variant, ~276.2s to go)
+[ eval ] corridor variant=dpcc-c: trial 5/10 done  (228.7s elapsed this variant, ~228.7s to go)
+[ eval ] corridor variant=dpcc-c: trial 6/10 done  (276.9s elapsed this variant, ~184.6s to go)
+[ eval ] corridor variant=dpcc-c: trial 7/10 done  (326.7s elapsed this variant, ~140.0s to go)
+[ eval ] corridor variant=dpcc-c: trial 8/10 done  (372.0s elapsed this variant, ~93.0s to go)
+[ eval ] corridor variant=dpcc-c: trial 9/10 done  (418.0s elapsed this variant, ~46.4s to go)
+[ eval ] corridor variant=dpcc-c: trial 10/10 done  (465.4s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=264/396  track_err=0.546  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c/
+[ eval ] corridor variant=dpcc-c TIMING: fm_ms=30.1 proj_ms=139.1 total_ms=169.2 (p95=227.7) budget=30.3ms → real_time_OVER×2637
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 18/23: 'dpcc-c-tightened'  (n_trials=10)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] corridor variant=dpcc-c-tightened: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] corridor variant=dpcc-c-tightened: trial 1/10 done  (88.5s elapsed this variant, ~796.3s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 2/10 done  (135.1s elapsed this variant, ~540.6s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 3/10 done  (311.9s elapsed this variant, ~727.7s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 4/10 done  (449.2s elapsed this variant, ~673.8s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 5/10 done  (495.2s elapsed this variant, ~495.2s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 6/10 done  (676.4s elapsed this variant, ~450.9s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 7/10 done  (839.2s elapsed this variant, ~359.7s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 8/10 done  (885.8s elapsed this variant, ~221.5s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 9/10 done  (1016.6s elapsed this variant, ~113.0s to go)
+[ eval ] corridor variant=dpcc-c-tightened: trial 10/10 done  (1168.1s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-c-tightened (B=4, proj=on, sel=minimum_projection_cost): success=0.400  success_relaxed=0.400  safe=0.400  goal_reached=0.600  steps_to_goal=275/396  track_err=3.272  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened/
+[ eval ] corridor variant=dpcc-c-tightened TIMING: fm_ms=30.1 proj_ms=309.2 total_ms=339.3 (p95=632.9) budget=30.3ms → real_time_OVER×3234
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 19/23: 'dpcc-t'  (n_trials=10)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] corridor variant=dpcc-t: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=dpcc-t: trial 1/10 done  (47.3s elapsed this variant, ~425.9s to go)
+[ eval ] corridor variant=dpcc-t: trial 2/10 done  (92.1s elapsed this variant, ~368.2s to go)
+[ eval ] corridor variant=dpcc-t: trial 3/10 done  (137.0s elapsed this variant, ~319.7s to go)
+[ eval ] corridor variant=dpcc-t: trial 4/10 done  (183.0s elapsed this variant, ~274.5s to go)
+[ eval ] corridor variant=dpcc-t: trial 5/10 done  (227.5s elapsed this variant, ~227.5s to go)
+[ eval ] corridor variant=dpcc-t: trial 6/10 done  (276.4s elapsed this variant, ~184.3s to go)
+[ eval ] corridor variant=dpcc-t: trial 7/10 done  (326.9s elapsed this variant, ~140.1s to go)
+[ eval ] corridor variant=dpcc-t: trial 8/10 done  (372.4s elapsed this variant, ~93.1s to go)
+[ eval ] corridor variant=dpcc-t: trial 9/10 done  (418.6s elapsed this variant, ~46.5s to go)
+[ eval ] corridor variant=dpcc-t: trial 10/10 done  (467.5s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=264/396  track_err=0.544  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t/
+[ eval ] corridor variant=dpcc-t TIMING: fm_ms=30.1 proj_ms=139.2 total_ms=169.3 (p95=229.3) budget=30.3ms → real_time_OVER×2645
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 20/23: 'dpcc-t-tightened'  (n_trials=10)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] corridor variant=dpcc-t-tightened: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] corridor variant=dpcc-t-tightened: trial 1/10 done  (162.5s elapsed this variant, ~1462.2s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 2/10 done  (209.6s elapsed this variant, ~838.5s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 3/10 done  (364.3s elapsed this variant, ~850.0s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 4/10 done  (488.5s elapsed this variant, ~732.8s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 5/10 done  (533.2s elapsed this variant, ~533.2s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 6/10 done  (731.8s elapsed this variant, ~487.9s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 7/10 done  (816.3s elapsed this variant, ~349.9s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 8/10 done  (862.7s elapsed this variant, ~215.7s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 9/10 done  (942.1s elapsed this variant, ~104.7s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 10/10 done  (1127.0s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.400  success_relaxed=0.400  safe=0.400  goal_reached=0.500  steps_to_goal=267/396  track_err=2.890  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened/
+[ eval ] corridor variant=dpcc-t-tightened TIMING: fm_ms=30.2 proj_ms=283.4 total_ms=313.7 (p95=675.5) budget=30.3ms → real_time_OVER×3317
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 21/23: 'hardflow_new-r'  (n_trials=10)
+[hardflow] engine=af K=5 noise_sigma=1.0 two_time=True dyn=deriv A=0.5 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] corridor variant=hardflow_new-r: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=hardflow_new-r: trial 1/10 done  (110.0s elapsed this variant, ~989.8s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 2/10 done  (207.2s elapsed this variant, ~828.9s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 3/10 done  (311.5s elapsed this variant, ~726.8s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 4/10 done  (417.2s elapsed this variant, ~625.8s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 5/10 done  (515.6s elapsed this variant, ~515.6s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 6/10 done  (624.6s elapsed this variant, ~416.4s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 7/10 done  (740.0s elapsed this variant, ~317.2s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 8/10 done  (842.0s elapsed this variant, ~210.5s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 9/10 done  (945.1s elapsed this variant, ~105.0s to go)
+[ eval ] corridor variant=hardflow_new-r: trial 10/10 done  (1054.9s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new-r (B=4, proj=off, sel=random): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=271/396  track_err=0.564  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-r/
+[ eval ] corridor variant=hardflow_new-r TIMING: fm_ms=52.0 proj_ms=330.3 total_ms=382.3 (p95=677.2) budget=30.3ms → real_time_OVER×2707
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 22/23: 'hardflow_new-c'  (n_trials=10)
+[hardflow] engine=af K=5 noise_sigma=1.0 two_time=True dyn=deriv A=0.5 sel=minimum_projection_cost
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_3.json
+[ eval ] corridor variant=hardflow_new-c: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=hardflow_new-c: trial 1/10 done  (104.7s elapsed this variant, ~942.4s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 2/10 done  (201.1s elapsed this variant, ~804.4s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 3/10 done  (303.7s elapsed this variant, ~708.6s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 4/10 done  (407.5s elapsed this variant, ~611.2s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 5/10 done  (500.8s elapsed this variant, ~500.8s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 6/10 done  (613.5s elapsed this variant, ~409.0s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 7/10 done  (726.5s elapsed this variant, ~311.4s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 8/10 done  (820.3s elapsed this variant, ~205.1s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 9/10 done  (926.3s elapsed this variant, ~102.9s to go)
+[ eval ] corridor variant=hardflow_new-c: trial 10/10 done  (1033.7s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new-c (B=4, proj=off, sel=minimum_projection_cost): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=266/396  track_err=0.546  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c/
+[ eval ] corridor variant=hardflow_new-c TIMING: fm_ms=52.1 proj_ms=328.8 total_ms=380.9 (p95=678.2) budget=30.3ms → real_time_OVER×2660
+[ eval ] corridor [geo_tag=corridor_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 23/23: 'hardflow_new-t'  (n_trials=10)
+[hardflow] engine=af K=5 noise_sigma=1.0 two_time=True dyn=deriv A=0.5 sel=temporal_consistency
+[ provenance ] wrote logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/run_provenance_4.json
+[ eval ] corridor variant=hardflow_new-t: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=hardflow_new-t: trial 1/10 done  (107.2s elapsed this variant, ~965.0s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 2/10 done  (204.4s elapsed this variant, ~817.8s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 3/10 done  (309.0s elapsed this variant, ~720.9s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 4/10 done  (413.7s elapsed this variant, ~620.5s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 5/10 done  (513.5s elapsed this variant, ~513.5s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 6/10 done  (625.8s elapsed this variant, ~417.2s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 7/10 done  (739.6s elapsed this variant, ~317.0s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 8/10 done  (833.3s elapsed this variant, ~208.3s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 9/10 done  (940.9s elapsed this variant, ~104.5s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 10/10 done  (1048.4s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new-t (B=4, proj=off, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=268/396  track_err=0.557  → logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5/6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t/
+[ eval ] corridor variant=hardflow_new-t TIMING: fm_ms=52.2 proj_ms=331.2 total_ms=383.4 (p95=680.3) budget=30.3ms → real_time_OVER×2681
+UAV Mix-ML eval complete (engine=af).
+Job completed successfully. Evaluated engine=af scene=corridor for seeds=[6]
+JOB END: Sun Aug 23 22:23:06 UTC 2026

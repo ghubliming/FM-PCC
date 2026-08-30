@@ -1,0 +1,23 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Sat Aug 29 22:17:52 UTC 2026
+JOB ID:    25190
+================================================================================
+[ pipeline ] U9 knobs = ALL DEFAULT (pre-U9 behaviour; checkpoint path unchanged)
+[ pipeline ] alpha schedule: MIX_AF_ALPHA_SCHED=constant MIX_AF_ALPHA_INIT=0.05 MIX_AF_ALPHA_END=0.05
+[ pipeline ]     🔴 PATH KEY -- '_AF<tag>' tree, carried to BOTH stages.
+[ pipeline ] save_freq = 5000 steps
+[ pipeline ] ml_bone = unet (default, the Gen14 baseline bone)
+[ pipeline ] film_mode = v1 (default, additive-bias FiLM)
+Launching Visual-Mix-ML (Gen14) Pipeline — engine=af seeds='6' K=2 bone=unet film=v1 ...
+Step 1: Gates submitted. Job ID: 25206
+  seed 6: train scheduled (afterok:25206). Job ID: 25207
+  seed 6: eval  scheduled (afterok:25207). Job ID: 25208
+--------------------------------------------------------------------------------
+Visual-Mix-ML (Gen14) Pipeline submitted — engine=af seeds='6'.
+Use 'squeue -u llim' to monitor progress.
+A failed stage cancels its OWN downstream stage; other seeds are unaffected.
+================================================================================
+================================================================================
+PIPELINE END:   Sat Aug 29 22:17:52 UTC 2026
+================================================================================
