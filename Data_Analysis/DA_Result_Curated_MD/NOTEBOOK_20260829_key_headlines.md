@@ -19,6 +19,7 @@
 | 2026-08-25 | FM K=20 (NFE-matched control) added to avoiding DA — 21× decomposed |
 | 2026-08-26 | K-sampler-steps sweep on visual-aligning |
 | 2026-08-29 | **VA funnel report** — 4-engine funnel, mf/af win Stage 1–3 |
+| 2026-08-27 | MPC candidate-fan study: B=4 → 1, fan scales projector only, sign flips by model |
 | 2026-08-29 | α-Flow vs MeanFlow analysis — confirmed same engine, different curriculum |
 
 ---
@@ -196,6 +197,63 @@ Six cells reach **10/10 constraint-clean**:
 
 ---
 
+## Headline 5 — MPC Candidate Fan B=4 May Not Be Necessary; B=1 Is Statistically Good ⚠️
+
+> **Source:** [DA_20260827_mpc_candidate_fan_avoiding](DA_20260827_mpc_candidate_fan_avoiding.md) · Full analysis: [`DA_20260827_mpc1_full_seeds_state_avoiding.md`](../../logs_in_develop/HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding.md)
+
+### The finding
+
+The MPC candidate fan (`FMPCC_MPC_BATCH`, default B=4) draws B trajectories per replan and executes one via a selection rule. The fan parity study (5 seeds × 3 scenarios × 2 trials = **30 episodes per arm**, paired at 15 blocks) shows that **dropping B from 4 → 1 is statistically harmless — or beneficial — for the flow-based engines**, and that the fan's entire cost sits in serial CPU projection solves, not the generator.
+
+### Three mechanistic findings
+
+| # | Finding | Strength |
+|---|---|---|
+| **F1** | Fan scales **only the projector** — 3.2–4.4× on projection, generator flat ≤ 2%. End-to-end: DPCC 1.86–1.89×, AlphaFlow 1.39–1.51×, **MeanFlow 1.29–1.33×**. | tightly measured |
+| **F2** | Safety effect **changes sign by model**. DPCC untightened loses (20/30 → 7/30, *p*=0.016). **AlphaFlow gains** — `-c-tightened` 6/30 → **30/30** (*p*=0.0005, survives Bonferroni) with 113 fewer steps. | resolved, 4 arms |
+| **F3** | At B=1 the `-r`/`-c`/`-t` selection rules are **bit-identical** in all 15 blocks, every generation. Running all three = **3× wasted projection compute**. | exact |
+
+> *"The fan is free on the generator and linear on the projector. Every millisecond the fan costs is a serial CPU solve — the generator batch is not the problem and is not the thing to change."*
+> — [DA_20260827_mpc_candidate_fan_avoiding.md](DA_20260827_mpc_candidate_fan_avoiding.md), §2.1
+
+### For the flagship `mf_unet`: B=1 is flat-or-better at the tightened operating point
+
+The flagship already wins at fan 4 on 300 episodes a side (§10.1 of the full analysis):
+
+| | S&C | steps | ms/step | vs DPCC target |
+|---|---:|---:|---:|---:|
+| DA target — DPCC K20 `dpcc-c-tightened` | 0.983 | 69.0 | 564 | — |
+| **`mf_unet` K1** `dpcc-t-tightened` fan 4 | **0.993** | **61.0** | **18.1** | **31×** |
+| **`mf_unet` K2** `dpcc-t-tightened` fan 4 | **0.993** | **60.4** | **27.1** | **21×** |
+
+At K2 fan 1 (seed 6, 6 episodes): all three tightened arms hit **1.000 S&C** at 63.0 steps, 20.9 ms — flat-or-better. At K1 fan 1: **zero runs exist yet**.
+
+> *"The flagship already wins at fan 4 on 300 episodes a side. The fan question does not decide the paper claim. It is margin on a claim already won."*
+> — [DA_20260827_mpc1_full_seeds_state_avoiding.md](../../logs_in_develop/HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding.md), §10.1
+
+### The better option: parallelise, don't shrink B
+
+The four SLSQP solves per replan are independent (same constraints, different `x0`) but run **serially in a Python `for` loop** on one CPU core. Parallelising would give **B=4 the B=1 latency with no safety exposure**:
+
+| `mf_unet` | total today (B=4 serial) | **B=4 parallelised** | B=1 today |
+|---|---:|---:|---:|
+| **K1** | 18.1 ms | **≈ 11.7 ms** | ~11.7 ms |
+| K2 | 27.1 ms | **≈ 20.8 ms** | 20.9 ms (measured) |
+
+> *"A parallelised B=4 costs what B=1 costs. The second strictly dominates — it also removes the -c stall exposure rather than trading against it."*
+> — [DA_20260827_mpc1_full_seeds_state_avoiding.md](../../logs_in_develop/HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding.md), §10.5
+
+### Caveats
+
+- ⚠️ **Fan-1 evidence is 50× thinner** — 300 episodes at fan 4 vs 6 (K2) or 0 (K1) at fan 1
+- ⚠️ **DPCC tightened is unresolved, not null** — −2/30, *p*=0.50, CI [−5, 0]; design MDE ≈ 8/30 at 80% power
+- ⚠️ **2 of 4 generations excluded** — MeanFlow and FMv3ODE seed sets split across incompatible configs
+- ⚠️ **Single task** — `avoiding-d3il` only; F2's sign may not transfer
+
+> **Status: ⚠️ Directional.** For the flagship, B=1 is likely harmless at the tightened operating point, but the fan-1 evidence is too thin (6 episodes at K2, 0 at K1) to bank. The robust recommendation is: **parallelise the projector** (code change, not an experiment) to get B=1 speed at B=4 safety. Run `mf_unet` K1 fan 1 at 20 trials only if the parallelisation is not done.
+
+---
+
 ## Summary Scorecard
 
 | task | claim | evidence | blocking item |
@@ -206,6 +264,7 @@ Six cells reach **10/10 constraint-clean**:
 | **Visual Aligning** | MF ≈ AF (same engine) | ⚠️ Not separable (p = 0.39) | Constant-α training run |
 | **UAV corridor** | MF > FM at K ≤ 2 | 🟡 Directional (1 seed, n=10) | Multi-seed, diffusion baseline |
 | **UAV pillars** | MF > FM > DPCC? | 🔴 Not yet tested | Expand pillars to full sweep |
+| **Avoiding** (state) | MPC fan B=4 not needed; B=1 statistically good | ⚠️ Directional (30 ep. fan 4, 6 ep. fan 1) | K1 fan 1 @ 20 trials; parallelise projector |
 
 ---
 

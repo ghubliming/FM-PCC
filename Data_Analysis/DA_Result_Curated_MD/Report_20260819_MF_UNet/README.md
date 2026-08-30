@@ -7,6 +7,38 @@ sensitivity is quantified separately in §8.
 
 ---
 
+## 0. Candidate index
+
+Every figure and table in this report names runs by a short **panel tag** (`M1t`, `D20c`, …). This
+is the mapping back to the batch's own `Candidate` column, so any row here can be traced to a
+directory on the cluster. Source: `candidates_multidimensional_aggregated.csv` of
+`temp/1808/batch_avoiding_combined_20260818_152911/` (155 candidates total; these 8 are the ones
+this report uses — the list is `RUNS` in `make_figs.py`).
+
+| cand | tag | run | engine | K | eval folder |
+|---:|---|---|---|---:|---|
+| **8** | `D1` | DPCC K1 | `models.GaussianDiffusion` | 1 | `H8_K1_T0.5_Dmodels.GaussianDiffusion` |
+| **7** | `D10` | DPCC K10 | `models.GaussianDiffusion` | 10 | `H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5` |
+| **15** | `D20` | **DPCC K20 — the baseline** | `models.GaussianDiffusion` | 20 | `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5` |
+| **156** | `F20` | naive FM K20 | `models.diffusion.FlowMatchingODE` | 20 | `H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE` |
+| **138** | `M1` | **MF-UNet K1 — the headline run** | `flow_matcher_v3_meanflow.models.MeanFlowODE` | 1 | `H8_K1_Meuler_T0.5_A0.5_B1_D…MeanFlowODE` |
+| **142** | `M2` | MF-UNet K2 | `…MeanFlowODE` | 2 | `H8_K2_Meuler_T0.5_A0.5_B1_D…MeanFlowODE` |
+| **147** | `M5` | MF-UNet K5 | `…MeanFlowODE` | 5 | `H8_K5_Meuler_T0.5_A0.5_B1_D…MeanFlowODE` |
+| **135** | `M10` | MF-UNet K10 | `…MeanFlowODE` | 10 | `H8_K10_Meuler_T0.5_A0.5_B1_D…MeanFlowODE` |
+
+A tag's trailing letter is the **selection rule**, not part of the candidate: `c` =
+`dpcc-c-tightened` (minimum projection cost), `t` = `dpcc-t-tightened` (temporal consistency). So
+`M1t` is candidate 138 evaluated under `dpcc-t-tightened`; the same candidate appears as `M1c` in the
+same panel.
+
+*Two naming notes, neither of which is a configuration difference.* Candidate 8's eval folder is
+nested inside its checkpoint folder (`…/H8_K1_Dmodels.GaussianDiffusion_aw10/H8_K1_T0.5_…`) while 7
+and 15 are flat — an older path convention. All three DPCC runs are `aw10`; candidate 8 carries it in
+the checkpoint directory rather than the eval directory, so the absent `aw10_thres0.5` fragment in
+its eval-folder name does **not** mean a different action weight.
+
+---
+
 ## 1. Summary
 
 Constraint satisfaction (S&C) is **saturated and near-identical** across the compared methods — it

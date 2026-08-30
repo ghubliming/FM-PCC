@@ -42,7 +42,6 @@ VERBATIM = [
     ('mix_visual_aligning/models/unet1d_temporal_film.py', 'fm_visual_aligning/models/unet1d_temporal_film.py', 'fm_visual_aligning'),
     ('mix_visual_aligning/models/visual_unet.py',          'fm_visual_aligning/models/visual_unet.py',          'fm_visual_aligning'),
     ('mix_visual_aligning/models/fm_diffusion.py',         'fm_visual_aligning/models/diffusion.py',            'fm_visual_aligning'),
-    ('mix_visual_aligning/sampling/projection.py',         'fm_visual_aligning/sampling/projection.py',         'fm_visual_aligning'),
     ('mix_visual_aligning/datasets/sequence.py',           'fm_visual_aligning/datasets/sequence.py',           'fm_visual_aligning'),
     ('mix_visual_aligning/datasets/normalization.py',      'fm_visual_aligning/datasets/normalization.py',      'fm_visual_aligning'),
     ('mix_visual_aligning/utils/arrays.py',                'fm_visual_aligning/utils/arrays.py',                'fm_visual_aligning'),
@@ -104,6 +103,22 @@ GRAFTED_DIFF = [
     ('mix_visual_aligning/utils/training_twotime.py',
      'flow_matcher_v3_alphaflow/utils/training.py', 'flow_matcher_v3_alphaflow', 3,
      'Gen3v7 + Fix_10 save_freq knob and atomic checkpoint writes'),
+    # ── SolverSwap (2026-08-27), registered 2026-08-30 ── `last_solve_success`.
+    #
+    # 🔴 WHY THIS ENTRY EXISTS. The SolverSwap commit (ee9a4fc4) grafted per-solve
+    # convergence telemetry into this file but left it in COPIED, so G0 reported
+    # "the copy assumption broke" on every run since. The failure was correct and it was
+    # load-bearing: while it sat unregistered, nobody re-read the graft — and the graft had
+    # a bug (the backstop path appended nothing, so `nlp_failures` was blind to hard
+    # solver failures; fixed 2026-08-30, see the comment at the append site).
+    # Registering it here restores a MEANINGFUL green and keeps the file under real check.
+    #
+    # removed=0 is deliberate and is the strongest form of this entry: the graft is purely
+    # insertive (two added lines plus comments), so ZERO upstream lines were rewritten. Any
+    # future edit that changes an existing line in this file fails G0 immediately.
+    ('mix_visual_aligning/sampling/projection.py',
+     'fm_visual_aligning/sampling/projection.py', 'fm_visual_aligning', 0,
+     'Gen7 + SolverSwap last_solve_success telemetry (additive, behaviour-neutral)'),
 ]
 
 # Files that are deliberately grafted — a diff here is EXPECTED. Listed so the ledger is

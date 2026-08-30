@@ -5154,4 +5154,99 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - Figures: `logs_in_develop/HF_Batch_Parity/figs_20260827_mpc_fan/` — 4 SVG figures (`figA_cost_decomposition`, `figB_safety_cost_pareto`, `figC_paired_blocks`, `figD_selection_collapse`), `simple_summary.png`, `results_mpc_fan_20260827.csv` (24 arm-level rows), `table_mpc_fan.tex` (booktabs table).
    - Analysis scripts: pure-Python stdlib (`stats.py` exact Wilcoxon, `svglib.py` SVG writer, `figs.py`/`figs2.py`/`tables.py`/`png.py`), all in `figs_20260827_mpc_fan/`.
 
+***
+
+## Gen15 UAV Mix-ML: s_curve Three-Way K-Sweep (`fm` / `mf` / `diffusion`) & Flight Stability Forensic Audit (August 28, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, s_curve, three-way K-sweep, fm, mf, diffusion, divergence abort, p_des_runaway, inverted flip, DPCC fail-closed, controller saturation, Jobs 25072–25084, DA_20260827_s_curve_three_way_fm_mf_diffusion.md.
+
+1. **Empirical Campaign Across 1,097 Rollouts (Jobs 25072–25084)**: Completed a systematic, matched 3-way K-sweep across `fm` (K∈{1,2,5,10,20}), `mf` (K∈{1,2,5,10,20}), and `diffusion` (K=20) on the hardest `s_curve` scene (`max_episode_length = 871`, seed 6, $B=4$, `pid_stopgo`, `threshold = 0.5`, 20 projection variants × 5 trials = 1,097 rollouts, ~76 GPU-hours).
+2. **Finding 1 — Flight-Stability Failure Dominates Over Planning (90.5% Divergence Aborts)**: Across all 220 variant-arms, exactly **one rollout** achieved success+constraints (`mf` K=2 `geo_free`, 1/5; all other 219 rows scored **0/5**). **993 of 1,097 rollouts (90.5%) ended in divergence aborts**: 736 from `p_des_runaway` (free-running integrator divergence) and 259 from `inverted` airframe flips. Aborts occurred early (median steps 248–427, 28–49% of the episode), establishing that rollouts terminate due to CascadedPID dynamics limits in sharp 90°+90° transitions before reaching goal-seeking horizons.
+3. **Finding 2 — DPCC Projector Fails Closed**: Full `dpcc-c` scored **0.0 violations and 5/5 collision-free across every `mf` arm at all K**, but goal distance pinned at **3.06–3.08 m** (zero arrivals). The safety projection prevents wall collisions by pinning the vehicle into an immobile, safe holding position when forward paths violate tight corridor boundaries.
+4. **Finding 3 — Diffusion Baseline Exhibits Worst Performance**: `diffusion` K=20 + `dpcc-c` degraded severely: **203.0 violating steps**, $\Sigma\text{ viol} = 131.4$, **5,347.5 ms/step**, and **88/97 rollouts aborted** (75 ending in physical `inverted` crashes, a failure mode unique to the diffusion arm while `fm`/`mf` primarily triggered `p_des_runaway`).
+5. **Finding 4 — Inverse NFE Scaling on Highly Dynamic Maneuvers**: Increasing sampler step count $K$ monotonically worsened stability on both flow engines: abort rates climbed (`fm` 79% $\rightarrow$ 95%, `mf` 88% $\rightarrow$ 98%), abort onset accelerated (`fm` 427 $\rightarrow$ 327 steps, `mf` 376 $\rightarrow$ 248 steps), and goal-line crossings collapsed (`fm` 21 $\rightarrow$ 5 per 100, `mf` 11 $\rightarrow$ 2 per 100). Low NFE ($K=1$) emerged as the optimal operating budget on `s_curve`.
+6. **Architectural Diagnosis & Scene Roadmap**: Concluded that `s_curve` serves as an informative negative benchmark localizing the bottleneck to low-level attitude tracking and rapid segment blending rather than the generative policy. Established `pillars` as the targeted proving ground for multi-obstacle avoidance where constraint geometry is binding yet dynamically flyable.
+
+***
+
+## Gen13 U11, U12 & U13: HardFlow Mix-ML Reassembly, Family-First Naming & Foresight Smoothness Diagnostics (August 28, 2026)
+
+**Keywords**: Gen13, U11, U12, U13, HF_Mix_ML, TemporalImfUnet, mf_matcher, af_matcher, family-first layout, eval_raw_ml.sh, eval_hfproj_ml.sh, HF_EVAL_SAVE_PNG, plan_roughness, plan_roughness_raw, foresight fan, Jobs 23991/25007.
+
+1. **HF_Mix_ML Architectural Assembly (Gen13 U11)**: Rebuilt the HardFlow generative core (`HardFlow/hardflow/models_flow/ml/`) to support three switchable training objectives via `--ml_type`: `imf` (frozen iMF with predicted-$v_c$ JVP tangent), `mf` (MeanFlow with analytic-$v$ JVP tangent), and `af` (AlphaFlow with bootstrapped $\alpha: 1 \rightarrow 0$ schedule). All three objectives share the identical `TemporalImfUnet` dual-head backbone and u-only `ImfFlowPolicy` sampler/projector, isolating the mathematical training target as the sole experimental variable.
+2. **Empirical Validation & Late-Training u-Head Divergence**: Evaluated the first 100k-step checkpoints on `avoiding-v0` (H16, seed 6, n=200): MeanFlow achieved **95.5% (K1) and 97.0% (K2)**, while AlphaFlow achieved **89.0% (K1) and 98.0% (K2)** under HardFlow projection (up from 1.0–11.5% unguided). Diagnosed the "adaptive loss masking trap": while composite training loss hovered near ~2.0, the core velocity metric `raw_mse_u` reached an optimal minimum mid-training before diverging late, indicating early checkpoint snapshotting is critical.
+3. **Family-First Namespace Reorganization & Disk Flood Fix (Gen13 U12 & U12.2)**:
+   - Replaced legacy `imf` prefix in Mix-ML evaluation scripts with dedicated wrappers: `eval_raw_ml.sh` (unguided), `eval_hfproj_ml.sh` (HardFlow-projected), and `eval_ml_hardflow.sh`.
+   - Structured checkpoint and evaluation results into a clean 3-family hierarchy: `logs/avoiding-v0/{flow,eval}/<imf|mf|af>/<exp_name>/`.
+   - Patched `HardFlow/run/eval_imf.py` with `HF_EVAL_SAVE_PNG=0` default gating for Mix-ML, eliminating unconditional per-episode PNG writes that previously caused `OSError: Errno 28` (disk quota exhaustion) during 200-trial sweeps (e.g. Job 23991).
+4. **Foresight Fan & Trajectory Smoothness Diagnostic (Gen13 U13)**:
+   - Implemented `HardFlow/run_scripts/eval_smoothness_diag_ml.sh` and `Slurm_Codes/sbatch/hardflow/eval_smoothness_diag_ml_hardflow.sh` to quantify trajectory smoothness across the MF/AF low-NFE matrix ($K \in \{1, 2\}$).
+   - Reused `run/eval_imf.py` roughness capture to report paired `plan_roughness` (post-NLP projected plan) and `plan_roughness_raw` (pre-NLP unguided plan) along with `*_fan.png`/`*.npz` foresight plots under `smooth_hfproj_K<k>_n<n>/`.
+   - Integrated legacy-flat checkpoint fallback with prominent two-stream warning banners (`tee /dev/stderr`) to guarantee backward compatibility without requiring manual filesystem migrations.
+
+***
+
+## Reproducibility Regression Test Architecture: Golden Snapshot Verification & Latency Bounding Gate (August 28, 2026)
+
+**Keywords**: Reproducibility regression test, golden snapshot, repro_test, verify.py, record_golden.py, cells_config.yaml, epsilon tolerance, per-trial avg_time, CUDA determinism, GEN_X migration.
+
+1. **Fast 2-Step Regression Architecture (`DESIGN_reproducibility_regression_test.md`)**: Designed a lightweight, deterministic regression testing framework (`logs_in_develop/Reproducibility_Regression_Test/`) to guard the evaluation pipeline against silent code regressions, dependency shifts, and numerical drift during iterative development and ahead of the upcoming GEN_X unified rebuild.
+2. **Dual Operating Paradigms (Mode A vs Mode B)**:
+   - *Mode A (Ad-Hoc Direct Diff)*: Zero-setup workflow that takes an existing `.npz` artifact from `logs/`, runs 3 fresh evaluation trials under identical configuration/seeds, and diffs metrics in ~30 seconds (`python repro_test/verify.py --golden <path.npz> ...`).
+   - *Mode B (Managed Golden Snapshots)*: Formal CI/batch verification suite driven by `cells_config.yaml`, maintaining structured golden archives (`golden.npz`, `cell_meta.json`, `rng_state.pt`) across 8 representative cross-environment regression cells covering `avoiding-d3il`, `visual_aligning`, `visual_avoiding`, and `uav_*`.
+3. **Multi-Tier Numerical Tolerance Strategy**:
+   - *Exact Matching (`==`)*: Discrete outcome and count metrics (`n_success`, `collision_free_completed`, `n_violations`, `n_steps`).
+   - *Tight $\epsilon$-Matching (`atol=1e-5, rtol=1e-4`)*: Full continuous trajectory arrays (`obs_all`, `act_all`, `sampled_traj_first`) to accommodate legitimate cross-GPU floating point variations.
+   - *Loose $\epsilon$-Matching (`atol=1e-3`)*: Cumulative violation integrals (`total_violations`).
+4. **Per-Trial `avg_time` Range Check**: Leveraged the `(n_trials,)` structure of `avg_time` in `.npz` files to perform statistical latency bounding per trial against golden reference times. Configured with a default generous range `time_rel_tol = 0.50` ($\pm 50\%$) to flag major algorithmic regressions (e.g. accidental $10 \rightarrow 100$ ODE step inflation) while rejecting micro-jitter false alarms. Soft-fail warnings report latency shifts without breaking builds, with optional `--time-hard-fail` enforcement for dedicated CI runners.
+5. **Deterministic Runtime Enforcement**: Locked reproducibility parameters at script entry (`torch.use_deterministic_algorithms(True, warn_only=True)`, `torch.backends.cudnn.deterministic=True`, `torch.backends.cudnn.benchmark=False`, `CUBLAS_WORKSPACE_CONFIG=:4096:8`).
+
+***
+
+## Gen14 U10: AlphaFlow Schedule Path-Bearing Knobs & Alpha-Cliff Safety Guard (August 29, 2026)
+
+**Keywords**: Gen14, U10, af_alpha_schedule, MIX_AF_ALPHA, config/aligning-d3il-visual.py, path collision prevention, alpha cliff, sigmoid snap, cand6, args_to_watch_mix_visual_train.
+
+1. **Path Collision Vulnerability Closed**: Addressed a critical directory collision risk in `config/aligning-d3il-visual.py`. Previously, `args_to_watch_mix_visual_train` watched only `afsch` (`af_alpha_scheduler`), meaning any modifications to $\alpha$ boundary values (such as setting `af_alpha_end: 0.02`) generated identical directory paths (`..._afschsigmoid/6`), causing tuned runs to silently overwrite or resume from `cand6`.
+2. **Dynamic Path-Bearing Knob Implementation**:
+   - Added `_AF_ALPHA_DEFAULTS`, `_mix_af_alpha_keys()`, and appended `('af_alpha', 'AF')` to `args_to_watch_mix_visual_train`.
+   - Exposed five environment knobs: `MIX_AF_ALPHA_SCHED` (default `sigmoid`), `MIX_AF_ALPHA_INIT` (default `1.0`), `MIX_AF_ALPHA_END` (default `0.0`), `MIX_AF_ALPHA_CLAMP` (default `0.005`), and `MIX_AF_ALPHA_GAMMA` (default `25.0`).
+   - Implemented conditional tag emission: when knobs match shipped defaults, keys are omitted, ensuring **all historical directory paths (including `cand6`) remain byte-identical**. Non-default values render unambiguous tags (e.g., `AFconst0p05`, `AFend0p02`, `AFend0p01-clamp0p0001`) that automatically synchronize checkpoints, `plans/`, and `diffusion_loadpath`.
+3. **Rigorous Configuration-Import Guards**: Injected fail-fast validation before GPU allocation: validates scheduler types against `af_diffusion._get_ratio`, restricts `init`/`end` to $[0, 1]$, bounds `clamp` to $[0, 0.5)$, explicitly rejects bare `SCHED=constant` (which defaults `init=1.0` and would train pure Flow Matching for 100k steps), and blocks constant $\alpha$ settings below `clamp` (which would silently collapse to MeanFlow from step 0 while mislabeling the directory).
+4. **Alpha-Cliff Diagnostic Context**: Documented the mathematical root cause motivating U10: under the default sigmoid schedule with `clamp=0.005`, $\alpha$ is snapped to exactly 0.0 at ~71.2% of training budget (step 71,180). Measured in Gen14 U5, this sudden snap caused test raw MSE(u) to jump **2.9× from 2.657 (step 70k) to 8.504 (step 72k)**, permanently degrading AlphaFlow onto MeanFlow's plateau. U10 enables sweepable constant-$\alpha$ and softened-clamp regimes to isolate the true non-snapped AlphaFlow operating point.
+
+***
+
+## Gen14 U11: Projection Timestep Threshold Sweep Knob (`MIX_PROJ_T`) & Two-Place Override Synchronization (August 29, 2026)
+
+**Keywords**: Gen14, U11, MIX_PROJ_T, diffusion_timestep_threshold, projection threshold, visual aligning, 24h Slurm wall, two-place override bug, diffuser/utils/provenance, t_override_source.
+
+1. **Resolution of 24-Hour Slurm Wall Exhaustion on High-NFE Visual Aligning**: Addressed execution failures on K$\ge$50 projected visual-aligning evaluations where the shipped threshold $T=0.5$ forces the DPCC projector to solve SLSQP optimizations for 50% of the trajectory (50 solves per replan at $K=100$). This resulted in 14,988 ms/step for MeanFlow K100 `dpcc-r`, requiring 50 hours for 30 rollouts and hitting the 24h cluster wall limit at 11/30 episodes.
+2. **Two-Place Override Desynchronization Bugfix**:
+   - Diagnosed a dangerous decoupling where `diffusion_timestep_threshold` was read in two independent places: `config/aligning-d3il-visual.py` (which generated the `_T0.5` result folder name) and `eval_mix_visual_aligning.py` (which re-read `config/visual_aligning_eval.yaml` to instantiate `setup_dpcc_projector`).
+   - A naive environment override moved only the config module, creating mislabeled folders (`T0.1`) executing unprojected $T=0.5$ runs. Implemented unified CLI (`--proj-threshold`) and environment (`MIX_PROJ_T`) resolution with an explicit assertion asserting equality between config and YAML parameters.
+3. **Multi-Threshold Sweep & Wall-Clock Feasibility**:
+   - Enabled space-separated list sweeping (`MIX_PROJ_T="0.1 0.05"`) within a single Slurm allocation, executing passes sequentially with isolated result directories (`H8_K100_Meuler_T0.1_...`).
+   - Cutting $T$ from 0.5 to 0.1/0.05 reduces projector calls from 50 to 10/5 per replan, slashing estimated rollout time from 50.0h down to **~12.4h ($T=0.1$) and ~7.7h ($T=0.05$) for DPCC**, and **~4.1h/3.5h for HardFlow-SLSQP**, enabling complete K=100 evaluation within standard Slurm allocations.
+   - Automatically synchronizes HardFlow Arm C via inherited activation threshold when `activation_threshold: null`.
+4. **Enhanced Provenance Tracking**: Upgraded `diffuser/utils/provenance.py` to record `t_override_source` (distinguishing explicit overrides from YAML defaults), `projector_calls_per_replan`, and dynamically updated `yaml_path` to point accurately to `visual_aligning_eval.yaml`.
+
+***
+
+## Visual Aligning Forensic Cross-Engine Analysis: AlphaFlow vs MeanFlow Equivalence & Three-Stage Funnel Verdict (August 29, 2026)
+
+**Keywords**: Gen14, visual aligning, AlphaFlow vs MeanFlow, training curriculum, alpha cliff, JVP loss, VisualUNetTwoTime, three-stage funnel, sole survivor, MF K2, Report_20260829_VA_funnel, ANALYSIS_20260829_alphaflow_vs_meanflow.
+
+1. **AlphaFlow vs MeanFlow Engine Equivalence Discovery**: Completed an exhaustive mathematical and source audit (`ANALYSIS_20260829_alphaflow_vs_meanflow_visual_aligning_are_they_the_same.md`) comparing AlphaFlow (`cand6`) and MeanFlow (`cand14`) on `aligning-d3il-visual`. Proved that once the visual backbone is held constant (`VisualUNetTwoTime`, 4.04M params), α-Flow is **not a distinct engine but an annealing training curriculum for MeanFlow**:
+   - Both methods share byte-identical Euler samplers (29-line diff, all in comments), identical training wrappers, and identical JVP targets when $\alpha=0$.
+   - Under the shipped sigmoid schedule, α-Flow spends 28.8% in pure Flow Matching ($\alpha=1.0$), 42.4% in bootstrapped interpolation, and the **final 28.8% (28,820 steps) training the identical MeanFlow JVP loss**.
+   - Consequently, empirical performance across 30 paired contexts is statistically indistinguishable (sign test $p=0.136$, Wilcoxon $p=0.393$).
+2. **Identification of the Alpha-Cliff Degradation**: Traced training dynamics (`Gen14/U5`) to reveal that α-Flow achieved its optimal test raw MSE(u) of **2.657 at step 70k ($\alpha \approx 0.007$)**, but snapping $\alpha \rightarrow 0$ at step 71,180 caused test MSE to spike **2.9× to 8.504** (landing on MeanFlow's 7–10 plateau). Existing benchmark numbers evaluate the post-cliff degraded checkpoint. Furthermore, `state_best.pt` selection tracked flat adaptive loss (~1.0) rather than raw MSE, missing the optimal pre-cliff weights.
+3. **Three-Stage Evaluation Funnel & Sole Survivor (`Report_20260829_VA_funnel`, `NOTEBOOK_20260829_key_headlines.md`)**:
+   - *Funnel Structure*: Implemented a strict 3-stage elimination gate: Stage 1 (Unguided Engagement, threshold $<0.80\times$ distance remaining), Stage 2 (Projected Constraint Satisfaction), Stage 3 (Inference Latency).
+   - *Stage 1 Eliminations*: FM K20/K100, Diffusion K20, and D3IL baseline failed to engage (0.95×–1.00× distance left, 40%–70% untouched).
+   - *Stage 2 Wall Eliminations*: MeanFlow K100 (0.28× unguided) and Diffusion K100 (0.41× unguided) were disqualified because $T=0.5$ projection exceeded the 24h Slurm wall (50h and 28h required).
+   - *Stage 3 Winner*: **MeanFlow K2 tightened `dpcc-t` emerged as the sole survivor** across all three stages: achieving 0.60× distance remaining, **1.00 zero-violation rate**, and **42 ms/step** compute latency (8×–357× faster than competitors), statistically confirming superiority over FM K20 ($p=0.004$) and Diffusion K20 ($p=0.039$).
+
+
 

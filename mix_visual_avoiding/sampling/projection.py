@@ -270,6 +270,18 @@ class Projector:
                 self._cost_exploded_count = getattr(self, '_cost_exploded_count', 0) + 1
                 print(f'[ projector ] solve backstop hit ({_PROJ_SOLVE_BACKSTOP_S:.0f}s) '
                       f'— kept unprojected trajectory (batch {i}).', flush=True)
+                # 🔴 [SolverSwap FIX 2026-08-30] This append is REQUIRED and must stay
+                # BEFORE the `continue`. Without it the backstop path recorded nothing,
+                # so `HardFlowNLP._solve_slsqp`'s
+                #     n_bad = sum(1 for ok in last_solve_success if not ok)
+                # counted soft non-convergence but was BLIND to the hard failures — a
+                # timed-out solve whose trajectory is kept UNPROJECTED at cost=inf, which
+                # is the most severe outcome this loop can produce. `nlp_failures` therefore
+                # under-reported exactly the failures that matter most.
+                # It also keeps the list index-aligned with the batch: one entry per
+                # element, so last_solve_success[i] really is element i for any future
+                # caller that indexes rather than counts.
+                self.last_solve_success.append(False)
                 continue
 
             self.last_solve_success.append(bool(res.success))
