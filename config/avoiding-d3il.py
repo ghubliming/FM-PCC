@@ -83,6 +83,38 @@ _mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
 _mf_horizon = int(os.environ.get('MF_HORIZON', 8))
 _mf_backbone = os.environ.get('MF_BACKBONE', 'mf_dit')
 
+# ── Gen3v7 α-Flow — backbone + probe-size knobs, read ONCE (2026-08-31) ───────────────
+# Same contract as MF_BACKBONE above, for the α-Flow arm.
+#   AF_BONE=unet AF_ALPHA_CLAMP=0.05 <command>
+#
+# `af_alpha_clamp` is the α below which the schedule snaps to exactly 0. It encodes
+# "the probe dt = α·h has become too small for the backbone to resolve" — and that floor
+# is BACKBONE-DEPENDENT: the U-Net's time code has ~4 resolving frequencies on [0,1]
+# against the SiT's ~32 (freq_dim=32 sets BOTH channel width and time-embed width), so the
+# U-Net needs a probe ~8x larger to see the same step. Upstream's 0.005 was chosen for a
+# SiT in latent space. Full derivation: logs_in_develop/Gen3v7_AlphaFlow/Study/
+# REPORT_20260830_af_unet_vs_sit_avoiding_root_cause.md §7.3, §7.5, §9.1.
+#
+# 🔴 PATH SAFETY. At the default 0.005 the key is OMITTED from the training block, so
+#    watch() skips it (utils/setup.py:25) and every existing α-Flow checkpoint path stays
+#    BYTE-IDENTICAL — nothing is orphaned. Any other value emits an '_ac<val>' token, so a
+#    re-clamped run trains into its OWN tree and CANNOT --auto-resume onto the old weights.
+#    That collision is exactly the stale-seed-6 defect (REPORT §2.2); this is the guard.
+# ⚠️ CLI flags cannot do this job: utils.Parser.add_extras is commented out
+#    (flow_matcher_v3_alphaflow/utils/setup.py:76), so `--imf_backbone unet` is ignored.
+_af_backbone = os.environ.get('AF_BONE', 'sit')
+# Which checkpoint the AF plan block loads. 'best' is the historical default, but for α-Flow
+# `best` is selected by a metric whose dominant term is 0.75+0.25*alpha (REPORT §4.3), so it is
+# ALWAYS the ~step-69k mid-homotopy model. AF_EPOCH=latest evaluates the end of training instead.
+# ⚠️ diffusion_epoch is NOT a results-path token — pair it with FMPCC_RUN_MSG so the two evals
+#    do not overwrite each other:  AF_EPOCH=latest FMPCC_RUN_MSG=latest <command>
+_af_diffusion_epoch = os.environ.get('AF_EPOCH', 'best')
+_AF_CLAMP_DEFAULT = 0.005
+_af_alpha_clamp = float(os.environ.get('AF_ALPHA_CLAMP', _AF_CLAMP_DEFAULT))
+_af_clamp_is_default = (_af_alpha_clamp == _AF_CLAMP_DEFAULT)
+_af_clamp_key = {} if _af_clamp_is_default else {'af_alpha_clamp': _af_alpha_clamp}
+_af_clamp_tok = '' if _af_clamp_is_default else '_ac{af_alpha_clamp}'
+
 #------------------------ base ------------------------#
 
 ## automatically make experiment names for planning
@@ -201,6 +233,7 @@ args_to_watch_fmv3_af_train = [
     ('af_alpha_end', 'ae'),          # 0.0  — α at the end (0.0 ⇒ ends as MeanFlow)
     ('af_alpha_gamma', 'ag'),        # 25.0 — sigmoid sharpness
     ('af_ratio_fm', 'rf'),           # 0.5  — fraction of the batch forced to h=0 (FM anchors)
+    ('af_alpha_clamp', 'ac'),      # ABSENT at the 0.005 default => pre-existing paths unchanged
 ]
 
 logbase = 'logs'
@@ -912,7 +945,10 @@ base = {
         'af_alpha_gamma': 25.0,
         # snap-to-exact-0/1 guard. Without it α becomes a tiny-but-nonzero number and every
         # sample takes the discrete branch with dt≈0 ⇒ a degenerate near-identity target.
-        'af_alpha_clamp': 0.005,
+        # 🔴 Emitted ONLY when non-default (see _af_clamp_key above) so the default path is
+        # byte-identical and a re-clamped run gets its own '_ac' tree. Constructor default
+        # is 0.005 (af_diffusion.py:93) and the train script reads it with getattr(...,0.005).
+        **_af_clamp_key,
 
         'af_ratio_fm': 0.5,      # FM anchors (h=0). Upstream ships {0.25,0.5,0.75}; Gen3v4/
                                  # Gen3v6 use 0.5, so 0.5 keeps the A/B controlled.
@@ -929,7 +965,7 @@ base = {
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
         ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'sit' (U2: α-Flow's own SiT).
-        'imf_backbone': 'sit',       # U2 default: α-Flow's own SiT (was 'dit'); use 'dit'/'unet' for A/B
+        'imf_backbone': _af_backbone,  # U2 default 'sit'; AF_BONE=unet|dit|sit. MUST equal the plan block.
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -1556,7 +1592,7 @@ base = {
         'af_alpha_scheduler': 'sigmoid',
         'af_alpha_init_step': 0,
         'af_alpha_end_step': 100000,
-        'af_alpha_clamp': 0.005,
+        'af_alpha_clamp': _af_alpha_clamp,   # AF_ALPHA_CLAMP — also feeds _af_clamp_tok below
         'af_clamp_utgt': 4.0,
         'af_adp_eps': 1e-3,
 
@@ -1576,7 +1612,7 @@ base = {
         'dual_head': True,
         'interval_cfg': False,
         ## valid: 'unet' | 'dit' | 'sit' (U2) — MUST equal the train block's value.
-        'imf_backbone': 'sit',
+        'imf_backbone': _af_backbone,   # AF_BONE — MUST equal the train block
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -1600,8 +1636,9 @@ base = {
         ## (H, D, aw, bb, ts, ai, ae, ag, rf) or eval silently finds no checkpoint.
         'diffusion_loadpath': 'f:flow_matching_v3_alphaflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
-                  '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}',
-        'diffusion_epoch': 'best',
+                  '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}'
+                  + _af_clamp_tok,
+        'diffusion_epoch': _af_diffusion_epoch,   # AF_EPOCH=latest for the §10.2 A/B
     },
 
     ## ── Hyperparameter Tuning Blocks ──────────────────────────────────

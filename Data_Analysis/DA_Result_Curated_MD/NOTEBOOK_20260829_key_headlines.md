@@ -292,5 +292,11 @@ The four SLSQP solves per replan are independent (same constraints, different `x
 ---
 
 # by User notes to update
+1. 
 the Pillars results is good
 /workspaces/FM-PCC/logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md
+
+
+2.
+HF beat DPCC in the d3il avoiding. 
+/workspaces/FM-PCC/logs_in_develop/aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md

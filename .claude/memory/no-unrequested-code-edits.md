@@ -11,4 +11,6 @@ When the user asks a question (e.g. "do I only need to change X?"), answer it â€
 
 **Why:** 2026-07-13 during Gen3v4_imf debugging, I patched the eval script + config and wrote a changelog in response to a pure question; the user objected ("i never let you change any of the code or write changelog") and everything had to be reverted.
 
-**How to apply:** propose the exact edit (snippet + file:line) in the reply and wait for explicit go-ahead. Related: [[no-auto-commit-no-coauthor]], [[changelog-after-coding-tasks]] (changelogs only after *requested* coding tasks).
+**Carve-out (2026-08-31, explicit): MD reports/analysis docs are NOT covered.** *"alwys update MD, Dont ask me"* â€” when a question extends or corrects an analysis/report MD I already own, WRITE the update into the file immediately and report what landed. Never ask "want me to fold this in?" for an MD. Code and config still need a go-ahead.
+
+**How to apply:** for code/config, propose the exact edit (snippet + file:line) in the reply and wait for explicit go-ahead; for MDs, just do it. Related: [[no-auto-commit-no-coauthor]], [[changelog-after-coding-tasks]] (changelogs only after *requested* coding tasks).

@@ -7,6 +7,15 @@ avoiding-d3il, `K{10,20}_thres1_mpc4_n2`, seed 6, n_trials 2, act_thr 1.0, both 
 Four passes: K ∈ {10,20} × backend ∈ {ipopt, slsqp}. Shared arms (`diffuser`,
 `dpcc-c-tightened`) ran once in the IPOPT pass, so both hardflow arms share one identical DPCC row.
 
+**Run 2 (threshold-matched):** job **25237**, i6-gpu-1, rev `938641c`.
+2026-08-30 17:09:44 → 19:09:43 UTC (2 h 00 m), clean exit.
+Log `temp/3008/19_09_43_eval_fmv3_hardflow_job_25237.log`,
+data `temp/3008/batch_avoiding_combined_20260830_201516/`.
+Identical design, but `activation_threshold = 0.5` — **matched to DPCC's
+`diffusion_timestep_threshold`** — written to `K{10,20}_thres0.5_mpc4_n2_msgthrmatch/` so the
+pre-existing `thres0.5` corpus is untouched. All 72 compute lines report `act_thr=0.5`; the only
+`already exists` skips are the 12 intended shared-arm skips inside the new folders.
+
 Prior: bench job 25121 — `Gen12/Solver_Bench/RESULTS_20260827_solver_bench_ipopt_vs_slsqp.md`.
 
 ---
@@ -27,6 +36,11 @@ Prior: bench job 25121 — `Gen12/Solver_Bench/RESULTS_20260827_solver_bench_ipo
 
 This is not a close call. The quality loss is three orders of magnitude smaller than the quantity
 being protected, and it is confined to one selection variant.
+
+**And at matched threshold, HardFlow-SLSQP beats the DPCC projector at K=20** (run 2, §5.4):
+`hardflow_sls-t-tightened` takes **61.0 steps vs DPCC's 62.2 and 0.343 s vs 0.475 s (0.72×)**, both
+at 100 % S&C and 0.00000 violations — fewer steps *and* less time, i.e. Pareto domination. At K=10
+it is faster (0.84×) but uses more steps: a trade-off, not a win.
 
 **The bench's own decision rule is now satisfied.** `RESULTS_20260827` §3 set it out: *"cost
 collapses to parity → cost stops being the story; S&C and steps decide."* Cost did collapse to
@@ -274,46 +288,176 @@ the split uses the calibrated 2.17 ms/NFE. The calibration is stable across K (2
 reproduces zero projection cost for `diffuser`, but a direct `proj_ms` counter on the D3IL arms — as
 the UAV path already has — would settle it. Worth adding before this decomposition is cited.
 
-### 5.4 🔴 This run is NOT threshold-matched — HardFlow vs DPCC cannot be read from it
+### 5.4 Threshold parity — and the matched re-run (job 25237)
 
-`config/hardflow_projection_eval.yaml` defines the two knobs as the same quantity:
+`config/hardflow_projection_eval.yaml` defines the two knobs as the same quantity: HardFlow's
+`activation_threshold` has the **same meaning** as DPCC's `diffusion_timestep_threshold` — the
+fraction of the late trajectory over which the NLP is active, higher = more projection.
 
-```
-diffusion_timestep_threshold: 0.5          # DPCC (arms A/B)
+**Run 1 was not matched:** `dpcc_threshold = 0.50`, `activation_threshold = 1.00` on every row.
+DPCC projected the last half; HardFlow projected all of it, carrying ~2× the projection workload
+(81.2 vs 0 solves/step, 158.3 vs 81.3 NFE/step at K20). That was the shipped default, not a bad
+submit — U4 (`18fa5c28`) introduced the knob at `0.0` under the opposite polarity ("every step")
+and fix_6 (`3e90c136`) inverted the sign, carrying the same behaviour over as `1.0`. Gen12 was the
+last config not at DPCC parity; alphaflow, meanflow, visual_avoiding_mix and uav_mix already ship
+0.5, and visual_aligning inherits DPCC's value via `null`.
 
-# ── U4 late-activation threshold (fix_6: DPCC polarity) ──
-# SAME meaning as DPCC's diffusion_timestep_threshold: the fraction of the (late)
-# trajectory over which the NLP is active — HIGHER = MORE projection.
-#   1.0 -> every step        0.5 -> last half (== DPCC diffusion_timestep_threshold 0.5)
-activation_threshold: 1.0
-```
+Fixed (`activation_threshold: 0.5`) and re-run as job **25237**. **The IPOPT-vs-SLSQP result in
+§1–4 is unaffected** — both backends always ran the identical setting, so that A/B was internally
+matched throughout.
 
-Every row in this run confirms it: `dpcc_threshold = 0.50`, `activation_threshold = 1.00`.
-**DPCC projected the last half of the trajectory; HardFlow projected all of it.**
+#### Matched results, K=20, A=0.5 (all arms, seed 6, n_trials 2, 3 geometries)
 
-This is the shipped default, not a mistake in the submission — and the default has never been DPCC
-parity. `activation_threshold` was introduced in U4 (`18fa5c28`) with the opposite polarity and a
-default of `0.0` = "every ODE step"; Fix 6 (`3e90c136`) inverted the polarity to match DPCC's
-convention and set the default to `1.0`, which is the *same behaviour* under the new sign. The
-config names `0.5` explicitly as the DPCC-parity value, and matching it has always required setting
-`HFFM_ACT_THRESHOLD=0.5` by hand.
+| variant | S&C | viol | total_viol | steps | s/step | NFE/step | solves/step | non-conv |
+|---|---|---|---|---|---|---|---|---|
+| `diffuser` | 0 % | 18.50 | 4.85470 | 65.0 | 0.175 | 81.2 | 0 | 0 |
+| **DPCC** `dpcc-c-tightened` | 100 % | 0.00 | 0.00000 | **62.2** | **0.475** | 81.3 | 0 | 0 |
+| HF-IPOPT `-r-tightened` | 100 % | 0.00 | 0.00000 | 68.2 | 1.064 | 117.7 | 40.6 | 0 |
+| HF-SLSQP `-r-tightened` | 100 % | 0.00 | 0.00000 | 68.2 | 0.338 | 117.7 | 40.6 | 0 |
+| HF-IPOPT `-c-tightened` | 100 % | 0.00 | 0.00000 | 103.2 | 0.999 | 117.1 | 40.4 | 0 |
+| HF-SLSQP `-c-tightened` | 100 % | 0.00 | 0.00000 | 103.0 | 0.334 | 117.1 | 40.4 | 0 |
+| HF-IPOPT `-t-tightened` | 100 % | 0.00 | 0.00000 | **61.2** | 1.108 | 117.9 | 40.7 | 2.0 |
+| **HF-SLSQP `-t-tightened`** | **100 %** | **0.00** | **0.00000** | **61.0** | **0.343** | 117.9 | 40.7 | 15.0 |
 
-**Consequence for §5.1–5.3:** HardFlow was handed roughly twice DPCC's projection workload —
-81.2 solves/step and 158.3 NFE/step against DPCC's 0 and 81.3 — and then compared on wall clock.
-The IPOPT-vs-SLSQP result is unaffected (both backends ran the identical setting, so the A/B is
-internally matched and every number in §1–4 stands). But the **HardFlow-vs-DPCC** rows in §5.1–5.3
-are not a fair comparison and must not be quoted as one.
+Degeneracy gate ✅ on every row: `hf_degenerate = 0`, `hf_n_genuine` = 9 at K20 and 4 at K10
+(A=0.5 activates the last half: 10 of 20 steps, 5 of 10). These are genuine HardFlow solves.
 
-What can still be said from this run:
+#### Pareto verdict at matched threshold
 
-- At 2× the projection workload, HardFlow-SLSQP lands within **8 % of DPCC's wall clock** at K=20
-  (0.516 vs 0.478 s) at equal 100 % S&C and equal 0.00000 violations.
-- Its **projection** is already cheaper than DPCC's — 0.53× at K=20 (§5.2) — while doing ~20× the
-  solves.
-- Its remaining deficit is generation, and that deficit is exactly the active-step count (§5.2),
-  which is what `activation_threshold` controls.
+Tightened arms only — all sit at 100 % S&C and 0.00000 violations, so the precondition holds.
 
-What cannot be said: whether HardFlow beats, ties, or loses to DPCC. This run does not test it.
+| K | arm | steps vs DPCC | time vs DPCC | verdict |
+|---|---|---|---|---|
+| 10 | `sls-r-tightened` | 68.2 vs 63.2 (worse) | 0.166 vs 0.199 (**0.83×**) | trade-off |
+| 10 | `sls-c-tightened` | 136.8 vs 63.2 (worse) | 0.162 (**0.82×**) | trade-off |
+| 10 | `sls-t-tightened` | 64.0 vs 63.2 (worse) | 0.167 (**0.84×**) | trade-off |
+| 20 | `sls-r-tightened` | 68.2 vs 62.2 (worse) | 0.338 (**0.71×**) | trade-off |
+| 20 | `sls-c-tightened` | 103.0 vs 62.2 (worse) | 0.334 (**0.70×**) | trade-off |
+| 20 | **`sls-t-tightened`** | **61.0 vs 62.2 (BETTER)** | **0.343 (0.72×)** | **HardFlow Pareto-dominates** |
+
+**At K=20, `hardflow_sls-t-tightened` beats DPCC on both axes** — fewer steps and 0.72× the wall
+clock, at equal success and equal constraint satisfaction. This is the strong form of the claim and
+it is **measured, not extrapolated**. (The projection made before this run predicted 0.379 s; the
+measurement is 0.343 s.)
+
+At K=10 every tightened arm is 0.82–0.84× DPCC's time but uses more steps — non-dominated, and the
+honest description there is "faster, slightly longer trajectories".
+
+#### SLSQP speedup at A=0.5
+
+| | A=1.0 (run 1) | A=0.5 (run 2) |
+|---|---|---|
+| IPOPT → SLSQP speedup | 3.88× | **3.02×** (range 2.61–3.23×) |
+| per-solve saving | 17.8 ms (sd 0.54) | **16.9 ms** (sd 0.97) |
+
+The per-solve saving reproduces across a completely different projection budget — independent
+confirmation of the fixed-overhead account in §3. The end-to-end ratio drops because at A=0.5
+generation is a larger share of the total.
+
+#### 🔴 Non-convergence gets worse at A=0.5 — for **both** backends
+
+Run 1's "IPOPT: 0 failures" does not generalise. At A=0.5, per-cell non-convergence counts:
+
+| K | arm | IPOPT | SLSQP |
+|---|---|---|---|
+| 10 | `-c` | 0 | 6.7 |
+| 10 | `-t` | 0.3 | **81.3** |
+| 10 | `-t-tightened` | 0 | 2.3 |
+| 20 | `-c` | **13.3** | 0 |
+| 20 | `-t` | **29.7** | **175.7** |
+| 20 | `-t-tightened` | 2.0 | 15.0 |
+
+IPOPT now fails too — 29.7 per cell on K20 `-t`, and 13.3 on K20 `-c` where SLSQP has none. This
+matches the bench, which measured IPOPT at 26 % non-convergence on harder references. **Neither
+backend is the reliable one.**
+
+The failures also reach the outcome on **untightened** arms, in both directions: K10 `-c` 67 % → 50 %
+(SLSQP worse), K20 `-c` 50 % → 67 % (SLSQP better), K20 `-t` 67 % → 50 % (SLSQP worse), with
+violations moving 1.33 → 2.50 there. **On every tightened arm both backends are identical at 100 %
+S&C and 0.00000 violations.** The tightened variants are the ones that hold; the untightened ones
+are unstable under either solver and should not carry a claim.
+
+### 5.5 Best horse vs best horse
+
+Variant-by-variant pairing answers "does this solver change this arm". The question that decides
+the paper is different: **does the best HardFlow configuration beat the best DPCC configuration.**
+Only the winner of each stable has to be good.
+
+**Qualification criteria** — an arm is eligible only if it is actually solving the problem:
+
+1. `S&C = 100 %` (success *and* constraints, all geometries), and
+2. `total_violations < 1e-6`.
+
+The second is not pedantry: the qualifying arms report ~3–4e-08, which is the solver's constraint
+tolerance and a formulation constant, not a violation (the bench saw the identical `+1.00e-08`
+bit-identical across three seeds). Arms that leave real violation mass — every untightened
+`-r`/`-c`/`-t` — are disqualified, under both backends.
+
+Ranked by wall clock, matched threshold A=0.5:
+
+| K | rank | arm | steps | s/step |
+|---|---|---|---|---|
+| 10 | 1 | `hardflow_sls-c-tightened` | 136.8 | **0.162** |
+| 10 | 2 | `hardflow_sls-r-tightened` | 68.2 | 0.166 |
+| 10 | 3 | `hardflow_sls-t-tightened` | **64.0** | 0.167 |
+| 10 | 4 | `dpcc-c-tightened` | 63.2 | 0.199 |
+| 10 | 5–7 | the three `hardflow_new-*-tightened` (IPOPT) | — | 0.486–0.532 |
+| 20 | 1 | `hardflow_sls-c-tightened` | 103.0 | **0.334** |
+| 20 | 2 | `hardflow_sls-r-tightened` | 68.2 | 0.338 |
+| 20 | 3 | `hardflow_sls-t-tightened` | **61.0** | 0.343 |
+| 20 | 4 | `dpcc-c-tightened` | 62.2 | 0.475 |
+| 20 | 5–7 | the three `hardflow_new-*-tightened` (IPOPT) | — | 0.999–1.108 |
+
+**Every qualifying HardFlow-SLSQP arm is faster than DPCC at both K.** DPCC ranks 4th of 7 at both
+budgets. So on wall clock alone the answer is unambiguous; steps are what decide it.
+
+| K | best HF-SLSQP | steps vs DPCC | time vs DPCC | verdict |
+|---|---|---|---|---|
+| 10 | `sls-t-tightened` (step-best) | 64.0 vs 63.2 = **1.013×** | 0.167 vs 0.199 = **0.838×** | trade-off — 16 % faster, 1.3 % longer |
+| 20 | `sls-t-tightened` (step-best) | 61.0 vs 62.2 = **0.981×** | 0.343 vs 0.475 = **0.723×** | **HardFlow Pareto-dominates** |
+
+`-c-tightened` is the fastest arm at both K but is disqualified as a *best horse* by trajectory
+length (136.8 and 103.0 steps — it wanders); it is the known-bad B=4 arm and its step count says so
+independently. `-t-tightened` is the horse to run: it is within 0.5 % of the fastest HardFlow arm
+and is the only one competitive with DPCC on steps.
+
+**Answer: at K=20 the best HardFlow beats the best DPCC on both axes. At K=10 it wins on time and
+loses by 1.3 % on steps.**
+
+#### 🔴 The comparison is currently biased toward HardFlow
+
+`projection_variants` in `config/hardflow_projection_eval.yaml` ships **six** HardFlow variants and
+**one** DPCC variant (`dpcc-c-tightened`). Taking the best of six against the best of one is
+multiple-comparison shopping on one side of the race. With three geometries × 2 trials the noise
+floor is not small, and "best of six" will beat "best of one" some of the time on noise alone.
+
+**Before this claim is published, DPCC needs its own stable in the same run** — add
+`dpcc-r`, `dpcc-t`, `dpcc-c`, `dpcc-r-tightened`, `dpcc-t-tightened` alongside the incumbent, so
+both sides field six and the best-of-six comparison is symmetric. Those variants exist and are
+routinely run in other generations; they were pruned here for compute (Gen15 U5 slimming). This is
+a one-line config change and adds five arm-B rows, which are the cheap arms.
+
+#### Dropping the MPC fan (batch = 1) — the untested lever
+
+The candidate fan is the other half of HardFlow's cost. `K20_thres0.5_mpc1_n2` (older rev,
+`(Gen12_Bf_U5)` parent) has bare `hardflow_new` at fan 1:
+
+| variant | fan | S&C | viol | steps | s/step | NFE/step | solves/step |
+|---|---|---|---|---|---|---|---|
+| `dpcc-c-tightened` | 4 | 100 % | 0.00 | 62.2 | 0.475 | 81.3 | 0 |
+| `hardflow_new` (IPOPT) | **1** | 100 % | 0.00 | 67.7 | 0.488 | **31.5** | 11.2 |
+
+At fan 1 HardFlow holds 100 % S&C and zero violations on **31.5 NFE/step — 2.6× fewer than DPCC's
+81.3** — because the fan multiplies the network evaluations, and the fan is where HardFlow's
+generation deficit (§5.2) actually comes from. Even under IPOPT it is already at DPCC's wall clock;
+under SLSQP the 11.2 solves/step would cost ~0.19 s less.
+
+⚠️ **This row is not fan-matched.** `mpc1` in the folder name is the *arm-C* fan only; arms A/B kept
+the default 4, so this is HardFlow@1 vs DPCC@4 — unfair to HardFlow on candidate quality and unfair
+to DPCC on cost. It cannot be quoted. The clean experiment is `FMPCC_MPC_BATCH=1 HFFM_BATCH=1`,
+both arms at one candidate, which also isolates how much of DPCC's success rate comes from
+candidate *selection* rather than from the projector. At fan 1 the `-r`/`-c`/`-t` suffixes collapse
+to index 0, so run one of them, not the trio.
 
 ## 6 — Decision
 
@@ -325,21 +469,24 @@ What cannot be said: whether HardFlow beats, ties, or loses to DPCC. This run do
    bench's endpoint-trick advantage (3.09× under SLSQP, 1.14× under IPOPT) becomes collectable.
 4. IPOPT's zero failures here do not generalise; its measured failure rates elsewhere are worse.
 
-**On replacing the DPCC projector with HardFlow-SLSQP: undecided — this run cannot answer it, by
-construction.** HardFlow ran at `activation_threshold = 1.0` against DPCC at `0.5`, i.e. twice the
-projection workload (§5.4). The comparison has to be re-run matched before any verdict.
+**On replacing the DPCC projector with HardFlow-SLSQP: the evidence now supports it at K=20, and
+the deciding experiment has been run.** At matched threshold (both 0.5, job 25237),
+`hardflow_sls-t-tightened` takes fewer steps *and* 0.72× the wall clock of DPCC at equal 100 % S&C
+and equal 0.00000 violations — Pareto domination, measured. At K=10 the same arm is 0.84× on time
+but longer in steps: a trade-off, not a win.
 
-The indicators from this run are favourable: carrying 2× the workload, HardFlow-SLSQP still lands
-within 8 % of DPCC on wall clock at equal S&C and equal violations, and its projection term is
-already 0.53× DPCC's. Its whole remaining deficit is generation, which scales exactly with the
-active-step count — the knob that was left at maximum.
-
-**The deciding run** — one job, cheap, fully specified:
-`HFFM_ACT_THRESHOLD=0.5` (DPCC parity) at K20 with `FMPCC_HF_NLP_BACKEND=slsqp`, tightened variants,
-DPCC at its existing 0.5, ≥3 seeds and `n_trials` ≥ 10, reporting **steps and violations alongside
-S&C** and confirming the degeneracy gate on every row. Worth sweeping
-`HFFM_ACT_THRESHOLD ∈ {0.1, 0.25, 0.5}` in the same job, since lower values cut solves and NFE
-together.
+What is still needed before this is a paper claim:
+- **A symmetric field.** Six HardFlow variants currently race one DPCC variant (§5.5). Add
+  `dpcc-{r,t,c}` and `dpcc-{r,t}-tightened` to `projection_variants` so best-of-six meets
+  best-of-six. Cheapest and most important of these follow-ups.
+- **Seeds.** Both runs are seed 6, `n_trials` 2 — 6 rollouts per cell. The K20 step margin is
+  61.0 vs 62.2, about 2 %, which 6 rollouts cannot separate from noise. Re-run at ≥3 seeds and
+  `n_trials` ≥ 10; this is cheap now (a full SLSQP sweep is a third of an IPOPT one at A=0.5).
+- **`-t` stability.** The winning arm is the one whose untightened sibling carries 175.7
+  non-converged solves per cell at K20. The tightened version shows 15.0 and still lands at
+  0.00000 violations, but that margin should be understood before it is relied on.
+- **Restrict claims to tightened arms.** Untightened `-r`/`-c`/`-t` swing in both directions
+  between backends and never reach 100 % S&C.
 
 **Conditions attached:**
 - Report `nlp_failures` on every SLSQP run — it is the only signal that a plan lost the
