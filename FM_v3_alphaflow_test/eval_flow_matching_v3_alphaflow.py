@@ -142,6 +142,20 @@ print(f'[ eval ] mpc fan: arms A/B={mpc_batch}, arm C={hf_batch_size}')
 
 exps = config['exps']
 seeds = config['seeds']
+# ── AF_SEEDS env override (2026-08-31) ────────────────────────────────────────────────
+# The seed list lives in config/alphaflow_projection_eval.yaml, which is read at JOB
+# RUNTIME. That is a race for any queued/dependent job: a `submit_after.sh` eval reads
+# whatever the file says hours later, not what it said at submit time. Two evals that need
+# different seed lists therefore cannot both be in the queue. This env is baked into the
+# job by `--export=ALL` at submit time, so each job carries its own list.
+#   AF_SEEDS="7"          -> single-seed screen
+#   AF_SEEDS="7 8 9 10"   -> the four VALID seeds of job 24389 (seed 6 is the stale
+#                            pre-Fix_8 253M checkpoint — see REPORT ... §2.2)
+# Same shape as AF_FLOW_STEPS in the sbatch. --seed still wins over both.
+_af_seeds_env = os.environ.get('AF_SEEDS')
+if _af_seeds_env:
+    seeds = [int(s) for s in _af_seeds_env.replace(',', ' ').split()]
+    print(f'[ eval ] AF_SEEDS override: seeds from env = {seeds} (yaml said {config["seeds"]})')
 if args_cli.seed is not None:
     seeds = [args_cli.seed]
     print(f'[ eval ] Overriding seeds from config to: {seeds}')

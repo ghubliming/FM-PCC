@@ -89,6 +89,9 @@ cd "$REPO"
 # Override the grid without editing this file:  AF_FLOW_STEPS="2" sbatch ...
 FLOW_STEPS_GRID="${AF_FLOW_STEPS:-1 2 5 10 20}"
 echo "[ eval ] NFE budgets to evaluate: $FLOW_STEPS_GRID"
+# Seeds: env wins over config/alphaflow_projection_eval.yaml (read at RUNTIME, so a queued
+# dependent job would otherwise pick up whatever the file says when it finally starts).
+echo "[ eval ] AF_SEEDS='${AF_SEEDS:-<unset — yaml decides>}'  AF_BONE='${AF_BONE:-sit}'  AF_ALPHA_CLAMP='${AF_ALPHA_CLAMP:-0.005}'  AF_EPOCH='${AF_EPOCH:-best}'"
 
 for K in $FLOW_STEPS_GRID; do
     echo "================================================================================"
