@@ -72,6 +72,13 @@ RECORD="${7:-none}"
 export FMPCC_HF_ALLOW_DEGENERATE="${FMPCC_HF_ALLOW_DEGENERATE:-}"
 export FMPCC_HF_MIN_GENUINE="${FMPCC_HF_MIN_GENUINE:-}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-}"
+# 🔴 Gen15 Fix_16 — forwarded to every child eval job (sbatch --export=ALL by default, but
+# make it explicit so the sweep is reproducible from the log alone). See eval_mix_uav.sh.
+export FMPCC_SAFE_EPS_MODE="${FMPCC_SAFE_EPS_MODE:-scaled}"
+export FMPCC_SAFE_EPS_FRAC="${FMPCC_SAFE_EPS_FRAC:-1e-3}"
+export FMPCC_UAV_EVAL_TAG="${FMPCC_UAV_EVAL_TAG:-}"
+echo "[ fix_16 ] SAFE_EPS_MODE='$FMPCC_SAFE_EPS_MODE' SAFE_EPS_FRAC='$FMPCC_SAFE_EPS_FRAC' \
+EVAL_TAG='${FMPCC_UAV_EVAL_TAG:-<none>}'"
 echo "[ hardflow ] guard: FMPCC_HF_MIN_GENUINE='${FMPCC_HF_MIN_GENUINE:-<default 1>}' \
 FMPCC_HF_ALLOW_DEGENERATE='${FMPCC_HF_ALLOW_DEGENERATE:-<unset>}' \
 HFFM_ACT_THRESHOLD='${HFFM_ACT_THRESHOLD:-<config default>}'"

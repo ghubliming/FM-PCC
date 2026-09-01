@@ -30,11 +30,22 @@ PROJECTION="${5:-fm_only}"
 RECORD="${6:-none}"          # 'gif'/'all' → overhead GIFs per rollout (slower); 'none' = fast
 FLOW_STEPS="${7:-}"          # empty = use the plan block's flow_steps_v3
 
+# 🔴 Gen15 Fix_16 — degenerate (constant) action-dimension handling.
+#   FMPCC_SAFE_EPS_MODE  'scaled' (default, the fix) | 'legacy' (pre-fix eps=1.0, for A/B)
+#   FMPCC_SAFE_EPS_FRAC  fraction of the median non-constant half-width (default 1e-3)
+#   FMPCC_UAV_EVAL_TAG   appended to the eval folder name. REQUIRED for A/B: two runs that
+#                        differ only in an env knob otherwise share a folder and the second
+#                        SILENTLY OVERWRITES the first.
+export FMPCC_SAFE_EPS_MODE="${FMPCC_SAFE_EPS_MODE:-scaled}"
+export FMPCC_SAFE_EPS_FRAC="${FMPCC_SAFE_EPS_FRAC:-1e-3}"
+export FMPCC_UAV_EVAL_TAG="${FMPCC_UAV_EVAL_TAG:-}"
+
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log; fi
 echo "================================================================================"
 echo "JOB START: $(date)  |  $SLURM_JOB_NAME  |  ID $SLURM_JOB_ID  |  NODE $(hostname)"
 echo "ENGINE: $ENGINE   SCENE: $SCENE   SEEDS: $SEEDS   N_TRIALS: $NTRIALS   K: ${FLOW_STEPS:-<plan block>}"
+echo "FIX_16:  SAFE_EPS_MODE=$FMPCC_SAFE_EPS_MODE  SAFE_EPS_FRAC=$FMPCC_SAFE_EPS_FRAC  EVAL_TAG=${FMPCC_UAV_EVAL_TAG:-<none>}"
 echo "GIT REV:   $(git rev-parse --short HEAD 2>/dev/null || echo 'N/A')"
 echo "================================================================================"
 function on_exit { echo "JOB END: $(date)"; }

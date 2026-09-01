@@ -666,6 +666,38 @@ and it is bought at **174 → 7 064 ms**. For `mf` and `af` the best `chargedSte
 
 ---
 
+---
+
+## 11. Why does `mf` fail unguided while `fm` and `af` fly? → **moved**
+
+This started as a subsection of this DA and outgrew it. It now lives in its own study:
+
+> 📄 **[`../Study/STUDY_20260901_mf_unguided_failure_uav_pillars.md`](../Study/STUDY_20260901_mf_unguided_failure_uav_pillars.md)**
+> — *Why MeanFlow cannot fly the UAV unguided, and FlowMatching / α-Flow can*
+
+**The five results that matter to the rest of this DA:**
+
+1. 🔴 **§9.1's `mf` gate failure is real but is a *projector-dependency* statement, not a model-quality
+   verdict.** `mf`'s raw plan is unusable open-loop; with the dynamics projection on it is competitive.
+   §9 and §10 are computed on projected rows and are **unaffected**.
+2. ✅ **Only the projector's dynamics constraint repairs it.** Full ablation: every `model_free` cell is
+   110–174 m from goal, every dynamics-ON cell with everything else dropped is 0.58 m. Action bounds
+   and geometry do nothing. `fm` needs none of it.
+3. 🔴 **The raw command is mis-directed, not weak.** Measured from `act_all`: `|Δp_des| = 0.0517` m/step
+   (2–4× *larger* than expert) of which only **+0.0069** is forward, with `std Δz` **22×** `std Δx`.
+   Same weights + dynamics-only projection → **+0.0111** forward, `std Δz` cut **24×**.
+4. 🔴 **No bug found and no root cause established.** Three explanations were tested and all three died
+   (the average-velocity sampler, the U-Net, and a 185× train/sample time-distribution starvation) —
+   each killed by `af`, which shares the property and flies. Two candidates remain and are perfectly
+   confounded: the two-time U-Net's `E(τ)+E(h)` coordinate vs. the MeanFlow objective.
+5. 🟡 **It is a weakness worth reporting, not hiding.** An engine that cannot run without the MPC
+   projector is strictly less useful than one that can, and `fm` and `af` both can. That belongs
+   *next to* the `mf > fm` claim of §10.4, not instead of it.
+
+The study also carries a section on the **`pid_stopgo` low-level controller** (`v_des = 0`, strict
+stop-and-go) — including a 🟡 flag that the U9 expert data was rebuilt specifically to make the PID
+velocity feed-forward trustworthy, and the eval then sets that feed-forward to zero.
+
 ## 8. Provenance
 
 * Logs: `temp/3008/2026-08-27/{18_34_21,18_34_44,18_31_47,18_39_02}_*.log`,

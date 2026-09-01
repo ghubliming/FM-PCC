@@ -56,6 +56,7 @@ No torch/MuJoCo in the Docker dev env — this is cluster-only; here it is synta
 """
 
 import os
+import re
 import sys
 import json
 import time
@@ -112,7 +113,45 @@ def _uav_eval_tag(config, controller, engine=None):
     thresh = config.get('diffusion_timestep_threshold', 0.5)
     parts  = [f'E{engine or ENGINE}', f'K{k}', f'mpc{mpc_b}', controller]
     parts.append(f'T{thresh:g}')
+    # 🔴 Gen15 Fix_16 — optional run tag, appended last. Two evals that differ ONLY in an
+    # environment knob (e.g. FMPCC_SAFE_EPS_MODE=scaled vs legacy) produce an identical
+    # folder name and the second SILENTLY OVERWRITES the first. Set FMPCC_UAV_EVAL_TAG to
+    # keep A/B runs side by side. Sanitised to [A-Za-z0-9._-] so it cannot escape the path.
+    run_tag = os.environ.get('FMPCC_UAV_EVAL_TAG', '').strip()
+    if run_tag:
+        parts.append(re.sub(r'[^A-Za-z0-9._-]+', '-', run_tag).strip('-'))
     return '_'.join(parts)
+
+
+def _report_degenerate_dims(dataset, config):
+    """🔴 Gen15 Fix_16 — say out loud which channels carry no data, and what they can command.
+
+    A dimension with `min == max` has no scale and no gradient signal; the normalizer has to
+    invent a width for it, and that width becomes BOTH the channel's physical output scale and
+    the `action_bounds:'auto'` cap the projector derives from `mins`/`maxs`. Before this fix a
+    single terse `Constant data in dimension 2` line was the only trace, and the +/-1 m ceiling
+    it implied was invisible. Print the actual numbers so the next reader does not have to
+    reverse-engineer them from the artifacts.
+    """
+    try:
+        norms = dataset.normalizer.normalizers
+    except Exception:
+        return
+    for key in ('actions', 'observations'):
+        n = norms.get(key)
+        dims = list(getattr(n, 'degenerate_dims', []) or [])
+        if not dims:
+            continue
+        eps_map = getattr(n, 'degenerate_eps', {}) or {}
+        for i in dims:
+            w = eps_map.get(i, float('nan'))
+            print(f'[ eval ] Fix_16 DEGENERATE {key}[{i}]: constant in the expert data — '
+                  f'no training signal for this channel. Widened by eps={w:.3e}; a saturated '
+                  f'model output on it commands +/-{w:.3e} data-units/step.')
+        if key == 'actions' and config.get('action_bounds', 'auto') == 'auto':
+            lb = np.asarray(n.mins, dtype=float); ub = np.asarray(n.maxs, dtype=float)
+            print(f'[ eval ] Fix_16 projector action_bounds=auto → lb={np.round(lb, 6)} '
+                  f'ub={np.round(ub, 6)}  (degenerate dims now bounded, not +/-1)')
 
 
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
@@ -1611,6 +1650,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                   f'(false-positive constant channel; UAV has no goal dims)')
             model_fm.goal_dim = 0
         traj_dim = int(dataset.observation_dim + dataset.action_dim)
+        _report_degenerate_dims(dataset, config)
         projector = setup_dpcc_projector(
             parsed, config,
             dataset.normalizer.normalizers['observations'],
