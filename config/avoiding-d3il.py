@@ -111,6 +111,22 @@ _af_backbone = os.environ.get('AF_BONE', 'sit')
 _af_diffusion_epoch = os.environ.get('AF_EPOCH', 'best')
 _AF_CLAMP_DEFAULT = 0.005
 _af_alpha_clamp = float(os.environ.get('AF_ALPHA_CLAMP', _AF_CLAMP_DEFAULT))
+# ── AF_ALPHA_END — the terminal α of the schedule (2026-09-01) ────────────────────────
+# 0.0 (the default, and every upstream recipe) anneals α to EXACTLY zero, which routes the
+# whole tail into `compute_u_target`'s alpha<=0 branch — Gen3v6's MeanFlow JVP target,
+# unmodified (af_diffusion.py:552). So a run that ends at 0.0 DEPLOYS A MEANFLOW MODEL:
+# α-Flow's bootstrapped target trains none of the final weights. That is upstream's design
+# (α-Flow is a curriculum whose destination is MeanFlow), but it means the bootstrapped
+# objective has never actually been evaluated on this task.
+#   AF_ALPHA_END=0.05 <command>   -> α floors at ~0.05: the discrete branch stays live to
+#                                    the last step, so the deployed model is genuinely AF.
+# Upstream's own switch for the same intent is `discrete_training: true`
+# (aux_repo/alphaflow/src/training/loss.py:421-426), which floors α at clamp_value instead
+# of snapping to 0; this key reaches the same state without a code port.
+# 🔴 PATH SAFETY: 'af_alpha_end' is an UNCONDITIONAL args_to_watch token ('ae', line ~233),
+#    so any value already lands in its own '_ae<val>' tree — no --auto-resume collision.
+#    Keep this in sync between the TRAIN block and the PLAN block or eval finds no weights.
+_af_alpha_end = float(os.environ.get('AF_ALPHA_END', 0.0))
 _af_clamp_is_default = (_af_alpha_clamp == _AF_CLAMP_DEFAULT)
 _af_clamp_key = {} if _af_clamp_is_default else {'af_alpha_clamp': _af_alpha_clamp}
 _af_clamp_tok = '' if _af_clamp_is_default else '_ac{af_alpha_clamp}'
@@ -933,7 +949,7 @@ base = {
         ##    RESCALED to OUR budget) ────────────────────────────────────────────────
         'af_alpha_scheduler': 'sigmoid',
         'af_alpha_init': 1.0,
-        'af_alpha_end': 0.0,
+        'af_alpha_end': _af_alpha_end,   # AF_ALPHA_END — >0 keeps the bootstrap live to the end
         'af_alpha_init_step': 0,
         # 🔴🔴 THE #1 SILENT FAILURE OF THIS GENERATION (PLAN §11 trap 1). MUST equal
         # 'n_train_steps' below. Upstream anneals over 400000 steps; copying that verbatim
@@ -1580,7 +1596,7 @@ base = {
         'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
         ## MUST match training (these four are in diffusion_loadpath)
         'af_alpha_init': 1.0,
-        'af_alpha_end': 0.0,
+        'af_alpha_end': _af_alpha_end,   # AF_ALPHA_END — must match the training block
         'af_alpha_gamma': 25.0,
         'af_ratio_fm': 0.5,
         't_schedule': 'logit_normal',

@@ -100,6 +100,10 @@ TRAIN_SEEDS="${TRAIN_SEEDS:-6}"
 RESUME_FLAG=""
 if [ "${AUTO_RESUME:-1}" = "1" ]; then RESUME_FLAG="--auto-resume"; fi
 echo "[ train ] seeds='$TRAIN_SEEDS'  resume='$RESUME_FLAG'  extra='$*'"
+# α-Flow knobs are env-driven (config/avoiding-d3il.py). Echo them so the log is self-describing:
+# AF_ALPHA_END>0 means the bootstrapped target trains the final weights instead of annealing to
+# the MeanFlow branch — the difference between deploying α-Flow and deploying MeanFlow.
+echo "[ train ] AF_BONE='${AF_BONE:-sit}'  AF_ALPHA_CLAMP='${AF_ALPHA_CLAMP:-0.005}'  AF_ALPHA_END='${AF_ALPHA_END:-0.0}'"
 
 python FM_v3_alphaflow_test/train_flow_matching_v3_alphaflow.py \
     --seeds $TRAIN_SEEDS \

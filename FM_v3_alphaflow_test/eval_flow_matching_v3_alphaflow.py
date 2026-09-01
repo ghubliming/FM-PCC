@@ -182,6 +182,18 @@ if args_cli.flow_steps is not None:
 projection_variants = config['projection_variants']
 halfspace_variants = config['avoiding_halfspace_variants'] if 'avoiding' in exps[0] else ['top-left']
 n_trials = config['n_trials']
+# ── AF_NTRIALS env override (2026-09-01) ──────────────────────────────────────────────
+# Same race as AF_SEEDS above: n_trials lives in config/alphaflow_projection_eval.yaml,
+# which is read at JOB RUNTIME. A pipeline eval queued behind a 4 h training job reads
+# whatever the file says when it finally starts, so a `sed` at submit time is unsafe — and
+# two evals needing different budgets cannot both sit in the queue. --export=ALL bakes this
+# into the job at submit time instead.
+#   AF_NTRIALS=20   -> the statistically usable budget (5x seeds is NOT a substitute)
+_af_ntrials_env = os.environ.get('AF_NTRIALS')
+if _af_ntrials_env:
+    n_trials = int(_af_ntrials_env)
+    print(f'[ eval ] AF_NTRIALS override: n_trials from env = {n_trials} '
+          f'(yaml said {config["n_trials"]})')
 plot_how_many = config['plot_how_many']
 constraint_types = config['constraint_types']
 # 🔴 FIX_9_CFG_PROVENANCE — diffusion_timestep_threshold and the hf_* knobs were resolved ABOVE,
