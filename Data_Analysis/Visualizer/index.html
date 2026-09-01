@@ -86,6 +86,28 @@
         .preset-item input[type="checkbox"] { margin: 2px 8px 0 0 !important; flex-shrink: 0 !important;
                                               width: auto !important; padding: 0 !important; }
         .preset-n { color: #666; font-weight: normal; }
+        /* U19: Path Audit Map — model-family tabs + the second candidate selector.
+           The audit map is the one table that lists EVERY candidate in the batch (130+ on the
+           avoiding batches), and until now it was one undivided wall sorted by candidate id:
+           the mf runs, the af runs and the diffusion baselines interleaved with no way to read
+           one family at a time. The family is already written in the run path (the folder right
+           after `plans/`), so it is parsed, not configured. */
+        .audit-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
+        .audit-tab { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 5px 11px;
+                     border: 1px solid #000; background: #eee; cursor: pointer; white-space: nowrap; }
+        .audit-tab.active { background: #000; color: #fff; }
+        .audit-tab .fam-n { font-weight: normal; opacity: 0.65; }
+        .fam-tag { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
+        .fam-dir { font-size: 9px; color: #777; font-family: monospace; word-break: break-all; }
+        /* the global `select, input { width:100% }` rule would blow a bare checkbox up to a
+           full-width box — same override .hl-box needs. */
+        input.sel-box[type="checkbox"] { width: auto; padding: 0; margin: 0; border: none;
+                                         cursor: pointer; transform: scale(1.3); vertical-align: middle; }
+        .audit-note { font-size: 10px; color: #666; margin-bottom: 8px; line-height: 1.5; }
+        .audit-bulk { font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline;
+                      color: #007bff; margin-right: 10px; }
+        tr.sel-row td { background: #eaf3ff; }
+        tr.sel-row td.selcell { background: #d6e9ff; }
         .preset-hint { font-size: 9px; color: #555; line-height: 1.45; margin-bottom: 7px;
                        text-transform: none; letter-spacing: 0; font-weight: normal; }
     </style>
@@ -168,14 +190,14 @@
 </div>
 
 <div class="main">
-    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.16</div></div>
+    <div class="toolbar"><div id="engine-status" class="status">ENGINE_READY</div><div>SCIENTIFIC_SUITE_v3.17</div></div>
     <div class="content">
         <div id="scorecard-area" style="display:none"><label>Performance Scorecard</label><div class="scorecard-grid" id="scorecard-container"></div></div>
         <div id="plot-area"><p style="padding-top: 200px; color: #999;">CHOOSE_EXPERIMENT_TO_START</p></div>
         <div class="path-section" id="pareto-section" style="display:none; border-top: 2px solid #000;"><label>Pareto Plot &mdash; AVG_TIME &times; N_STEPS (separate figure)</label><div id="pareto-area"></div></div>
         <div class="path-section" id="selection-map-section" style="display:none; border-top: 2px dashed #007bff; margin-bottom: 0;"><label style="color:#007bff;">Plot Legend — Selected Candidates (this plot only)</label><div id="selection-map-container"></div></div>
         <div class="path-section" id="summary-section" style="display:none; border-top: 2px solid #000;"><label>Result Matrices — Selected Candidates &times; All Variants</label><div id="summary-container"></div></div>
-        <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map</label><div id="path-map-container"></div></div>
+        <div class="path-section" id="path-section" style="display:none"><label>Path Audit Map &mdash; grouped by model &middot; SEL = 2nd candidate selector</label><div id="path-map-container"></div></div>
     </div>
 </div>
 
@@ -1952,6 +1974,97 @@ def build_latex(ctx, batch_label, stamp):
     out += [r"\end{verbatim}", "}", "", r"\end{document}", ""]
     return "\n".join(out)
 
+# ---------------------------------------------------------------------------------------
+# U19: model family, parsed off the run path.
+#
+# Every run folder already says which generative model produced it — it is the directory
+# immediately below `plans/`:
+#
+#   .../logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/<train_cfg>/<eval_cfg>
+#                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# so the grouping is READ, never configured: a batch that gains `flow_matching_v3_<new>`
+# gets a tab for free, and no list here can go stale against the cluster.
+#
+# Rule order is load-bearing. `imeanflow` contains `meanflow`, and `flow_matching_v3_*`
+# contains `flow_matching` for EVERY family — so the specific names are tested first and the
+# generic FM rule is last, as the fallthrough for "a flow model with no further label".
+# ---------------------------------------------------------------------------------------
+FAMILY_ORDER = [
+    ('diffusion', 'DIFFUSION / DPCC'),
+    ('fm',        'FM'),
+    ('mf',        'MF'),
+    ('imf',       'iMF'),
+    ('af',        'AF'),
+    ('hardflow',  'HARDFLOW'),
+    ('drifting',  'DRIFTING'),
+    ('other',     'OTHER'),
+]
+FAMILY_LABELS = dict(FAMILY_ORDER)
+FAMILY_COLORS = {
+    'diffusion': '#c62828', 'fm': '#1565c0', 'mf': '#2e7d32', 'imf': '#00838f',
+    'af': '#6a1b9a', 'hardflow': '#ef6c00', 'drifting': '#795548', 'other': '#666666',
+}
+
+# The short-token alternatives (`_mf`, `_af`, `fm_`) are anchored on separators on purpose:
+# a bare substring test would read `hardflow` as `af` and `fm_visual_*` as nothing at all.
+_FAMILY_RULES = [
+    ('imf',       re.compile(r'imeanflow|(?:^|[_\-(])imf(?:$|[_\-)])')),
+    ('mf',        re.compile(r'meanflow|(?:^|[_\-(])mf(?:$|[_\-)])')),
+    ('af',        re.compile(r'alphaflow|(?:^|[_\-(])af(?:$|[_\-)])')),
+    ('hardflow',  re.compile(r'hardflow')),
+    ('drifting',  re.compile(r'drifting')),
+    ('diffusion', re.compile(r'diffusion|dpcc|ddpm|baseline')),
+    ('fm',        re.compile(r'flow_?matching|ode_selectable|(?:^|[_\-(])fm(?:$|[_\-)])')),
+]
+
+
+def _model_folder(path):
+    """The run's MODEL folder: the segment directly below `plans*/` in the run path."""
+    parts = [p for p in str(path or "").split('/') if p]
+    for i, seg in enumerate(parts):
+        # `plans`, but also `plans(Bf_U8)` / `plans(Bf_DC-FIX)` — the UAV batches version the
+        # plans directory itself, and a bare == test dropped every one of those runs to OTHER.
+        if seg.lower().startswith('plans') and i + 1 < len(parts):
+            return parts[i + 1]
+    # No plans/ segment at all (the _DA_VA_BRIDGE_ baseline folders, hand-placed runs): the
+    # model name sits one level above the leaf run dir.
+    if len(parts) >= 2:
+        return parts[-2]
+    return parts[-1] if parts else ""
+
+
+def _model_class(path):
+    """`models.visual_mf_diffusion.VisualMeanFlow` -> `VisualMeanFlow`, or ''."""
+    m = re.search(r'models\.[A-Za-z0-9_]+\.([A-Za-z0-9_]+)', str(path or ""))
+    return m.group(1) if m else ""
+
+
+def _classify(text):
+    low = str(text or "").lower()
+    for key, rx in _FAMILY_RULES:
+        if rx.search(low):
+            return key
+    return None
+
+
+def _model_family(path):
+    # The folder name is the authority. Only when it says nothing do we fall back to the
+    # model CLASS token — and never to the full path, which carries the training module name
+    # (`...visual_gaussian_diffusion.VisualFlowMatching`) and would file half the flow runs
+    # under diffusion.
+    return _classify(_model_folder(path)) or _classify(_model_class(path)) or 'other'
+
+
+def _active_audit_tab():
+    try:
+        val = window._auditTab
+    except Exception:
+        val = None
+    val = 'all' if val is None else str(val)
+    return val if (val == 'all' or val in FAMILY_LABELS) else 'all'
+
+
 def render_path_map():
     if df_agg is None: return
     p_col = 'Full_Path' if 'Full_Path' in df_agg.columns else 'Folder_Name'
@@ -1967,30 +2080,99 @@ def render_path_map():
         mapping = _dedup.sort_values('Candidate', key=lambda s: s.astype(int))
     except ValueError:
         mapping = _dedup.sort_values('Candidate')
-    
-    html = '<table><thead><tr><th style="width:100px">ID</th>'
-    if has_missing: html += '<th style="width:120px; color: orange;">Warnings</th>'
-    if stamp_map: html += '<th style="width:150px">Last Run</th>'
-    html += '<th>Source Path (Audit)</th></tr></thead><tbody>'
 
+    # U19: the SEL column IS the sidebar's "6. Candidates" list, drawn a second time next to
+    # the paths. It is rendered from the sidebar's live state (not from a copy kept here), so
+    # the two can never disagree — this table is re-rendered wholesale on every highlight
+    # toggle and a remembered set would go stale the first time the sidebar was touched.
+    selected = set(get_checked("cand-check"))
+
+    # classify first: the active tab may name a family this batch does not have (the user
+    # switched batches while a tab was open), and that must fall back to ALL rather than
+    # render an empty table with every row hidden.
+    entries, counts = [], {}
     for _, row in mapping.iterrows():
-        segs = str(row[p_col]).split('/')
-        c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
+        fam = _model_family(row[p_col])
+        counts[fam] = counts.get(fam, 0) + 1
+        entries.append((row, fam))
+    active = _active_audit_tab()
+    if active != 'all' and not counts.get(active):
+        active = 'all'
+    try:
+        window._auditTab = active
+    except Exception:
+        pass
 
-        html += f'<tr><td><strong>{_cand_name_html(row["Candidate"])}</strong></td>'
+    tabs = (f'<div class="audit-tab{" active" if active == "all" else ""}" data-fam="all"'
+            f' onclick="showAuditTab(\'all\')" title="Every candidate in the batch">'
+            f'ALL <span class="fam-n">&middot; {len(entries)}</span></div>')
+    for key, label in FAMILY_ORDER:
+        n = counts.get(key, 0)
+        if not n:
+            continue                     # no dead tab for a family this batch never ran
+        tabs += (f'<div class="audit-tab{" active" if active == key else ""}" data-fam="{key}"'
+                 f' onclick="showAuditTab(\'{key}\')"'
+                 f' title="Runs whose model folder under plans/ reads as {label}">'
+                 f'{label} <span class="fam-n">&middot; {n}</span></div>')
+
+    head = ('<table><thead><tr>'
+            '<th style="width:44px" title="Select this candidate — the same checkbox as sidebar 6. Candidates">SEL</th>'
+            '<th style="width:92px">ID</th>'
+            '<th style="width:150px">Model</th>')
+    if has_missing: head += '<th style="width:110px; color: orange;">Warnings</th>'
+    if stamp_map:   head += '<th style="width:150px">Last Run</th>'
+    head += '<th>Source Path (Audit)</th></tr></thead><tbody>'
+
+    body = ""
+    for row, fam in entries:
+        cand = str(row["Candidate"])
+        path = row[p_col]
+        segs = str(path).split('/')
+        c_path = "".join([f'<span class="p-slash">/</span><span class="p-seg-{i%6}">{s}</span>' for i, s in enumerate(segs) if s])
+        on = cand in selected
+        hidden = "" if active in ("all", fam) else ' style="display:none"'
+        folder = _model_folder(path)
+        # kept out of the f-string: a backslash-escaped quote inside an f-string EXPRESSION is
+        # a SyntaxError on the CPython 3.11 that pyodide 2024.1.1 ships, and the whole
+        # <script type="py"> block then fails to compile — silently, page never boots.
+        row_cls = ' class="sel-row"' if on else ''
+
+        body += (f'<tr data-fam="{fam}" data-cand="{_esc_attr(cand)}"{row_cls}{hidden}>'
+                 f'<td class="selcell" style="text-align:center;width:44px">'
+                 f'<input type="checkbox" class="audit-sel sel-box" value="{_esc_attr(cand)}"'
+                 f'{" checked" if on else ""} onchange="toggle_audit_select(this)"'
+                 f' title="Plot CAND_{cand} — ticks the same box as sidebar 6. Candidates"></td>'
+                 f'<td style="width:92px"><strong>{_cand_name_html(cand)}</strong></td>'
+                 f'<td style="width:150px"><span class="fam-tag" style="color:{FAMILY_COLORS.get(fam, "#666")}">'
+                 f'{FAMILY_LABELS[fam]}</span><br>'
+                 f'<span class="fam-dir" title="{_esc_attr(folder)}">{folder}</span></td>')
+
         if has_missing:
             missing_val = row["Missing_Seeds"]
             if pd.isna(missing_val) or str(missing_val).strip() == '':
-                html += '<td style="color: green; font-weight: bold;">ALL SEEDS</td>'
+                body += '<td style="color: green; font-weight: bold;">ALL SEEDS</td>'
             else:
-                html += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
+                body += f'<td style="color: orange; font-weight: bold;">MISSING:<br>{missing_val}</td>'
 
         if stamp_map:
-            html += _stamp_cell(stamp_map, row["Candidate"])
+            body += _stamp_cell(stamp_map, cand)
 
-        html += f'<td><code>{c_path}</code>{_folder_btn(row[p_col], row["Candidate"])}</td></tr>'
+        body += f'<td><code>{c_path}</code>{_folder_btn(path, cand)}</td></tr>'
 
-    document.getElementById("path-map-container").innerHTML = html + "</tbody></table>"
+    note = ('<div class="audit-note">'
+            '<b>Tabs</b> group the batch by generative model, parsed from the folder under '
+            '<code>plans/</code> in each run path &mdash; not from a hardcoded list, so a new '
+            'model folder shows up on its own tab automatically.<br>'
+            '<b>SEL</b> is a second view of sidebar <b>6. Candidates</b>: tick here to put that '
+            'candidate on the plot and in the Result Matrices. The two lists are the same '
+            'checkboxes, so they always agree.<br>'
+            '<span class="audit-bulk" onclick="select_audit_visible(true)">[SELECT ALL SHOWN]</span>'
+            '<span class="audit-bulk" onclick="select_audit_visible(false)">[DESELECT ALL SHOWN]</span>'
+            '<span class="audit-bulk" onclick="select_audit_visible(false, true)">[CLEAR EVERY CANDIDATE]</span>'
+            '</div>')
+
+    document.getElementById("path-map-container").innerHTML = (
+        f'<div class="audit-tabs">{tabs}</div>{note}{head}{body}</tbody></table>')
 
 document.set_highlight = create_proxy(set_highlight)
 document.clear_highlights = create_proxy(clear_highlights)
@@ -2001,6 +2183,10 @@ asyncio.ensure_future(init_manifest())
 
 <script>
     window.currentMode = "list";
+    // U19: which Path Audit Map family tab is open. Lives on `window` (not in Python) because
+    // Python re-renders that table wholesale on every highlight toggle and every replot — it
+    // reads this back to re-hide the rows it just re-emitted, so the open tab survives.
+    window._auditTab = "all";
     function switchMode(mode) {
         window.currentMode = mode;
         document.getElementById("btn-list").classList.toggle("active", mode === 'list');
@@ -2104,6 +2290,7 @@ asyncio.ensure_future(init_manifest())
 
     async function trigger_plot() {
         sync_variant_presets();
+        sync_audit_selection();
         if (window.document.trigger_plot) {
             try {
                 await window.document.trigger_plot();
@@ -2146,6 +2333,68 @@ asyncio.ensure_future(init_manifest())
     }
     function clear_highlights() {
         if (window.document.clear_highlights) window.document.clear_highlights();
+    }
+
+    // U19: Path Audit Map — family tabs.
+    //
+    // One table, rows hidden by tab, rather than one table per family: a batch carries 130+
+    // candidates and duplicating every row into an "ALL" pane plus a family pane doubles a DOM
+    // that already holds two checkboxes and a ZIP button per row. Hiding is also what keeps a
+    // candidate ONE row with ONE checkbox, so no candidate can show two disagreeing SEL states.
+    function showAuditTab(fam) {
+        window._auditTab = fam;
+        const box = document.getElementById("path-map-container");
+        if (!box) return;
+        for (const t of box.getElementsByClassName("audit-tab")) {
+            t.classList.toggle("active", t.dataset.fam === fam);
+        }
+        for (const tr of box.querySelectorAll("tbody tr")) {
+            tr.style.display = (fam === "all" || tr.dataset.fam === fam) ? "" : "none";
+        }
+    }
+
+    // U19: the audit map's SEL column is a SECOND VIEW of sidebar "6. Candidates", not a second
+    // filter — it drives the very same .cand-check boxes. Anything else would give the page two
+    // candidate selections that could disagree, and no way to tell which one the plot used.
+    function _candBox(value) {
+        for (const b of document.getElementsByClassName("cand-check")) {
+            if (b.value === value) return b;
+        }
+        return null;
+    }
+    function toggle_audit_select(el) {
+        const box = _candBox(el.value);
+        if (!box) return;                     // candidate not in the sidebar list (stale render)
+        box.checked = el.checked;
+        trigger_plot();                       // re-syncs every audit box on its way through
+    }
+    // Like sync_variant_presets: the audit boxes state a FACT about the sidebar list, so they are
+    // recomputed from it after every redraw rather than remembered. This is what makes [ALL] /
+    // [NONE] in the sidebar, and a hand-ticked sidebar box, show up here without a re-render.
+    function sync_audit_selection() {
+        const checked = new Set();
+        for (const b of document.getElementsByClassName("cand-check")) {
+            if (b.checked) checked.add(b.value);
+        }
+        for (const a of document.getElementsByClassName("audit-sel")) {
+            a.checked = checked.has(a.value);
+            const tr = a.closest ? a.closest("tr") : null;
+            if (tr) tr.classList.toggle("sel-row", a.checked);
+        }
+    }
+    window.sync_audit_selection = sync_audit_selection;
+
+    // Bulk-select scoped to the OPEN TAB ("all shown"), which is the point of the tabs: tick
+    // every mf run, or every diffusion baseline, in one click. `everything` ignores the tab and
+    // clears the whole batch, so a stray selection hiding behind another tab can still be cleared.
+    function select_audit_visible(state, everything) {
+        for (const a of document.getElementsByClassName("audit-sel")) {
+            const tr = a.closest ? a.closest("tr") : null;
+            if (!everything && tr && tr.style.display === "none") continue;
+            const box = _candBox(a.value);
+            if (box) box.checked = state;
+        }
+        trigger_plot();
     }
 
     function bulkSelect(className, state) {
