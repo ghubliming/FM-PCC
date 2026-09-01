@@ -917,14 +917,28 @@ def resolve_engine_hf(engine):
 def encode_visual_cond(model, cond):
     """Turn `VisualAgentWrapper`'s raw cond into the ENCODED cond the sampler needs.
 
-    Mirrors `VisualMeanFlow.forward` / `VisualAlphaFlow.forward` / `VisualFlowMatching.forward`
-    exactly — same unpack, same `[:, -1]` snapshot, same single `_encode_once` call — because
+    Mirrors each wrapper's OWN `forward()` — same unpack, same `[:, -1]` snapshot — because
     the HardFlow sampler bypasses `model.forward()` (it replaces `p_sample_loop` wholesale)
-    and would otherwise never reach the encoder those wrappers run.
+    and would otherwise never reach the conditioning path those wrappers set up.
 
-    Encoding ONCE here, not per ODE step, is also what the wrappers do and is numerically
-    identical: the encoder is deterministic in eval mode (GroupNorm, no dropout) and the
-    images are constant across the ODE loop.
+    The two engine families do NOT share that path, and this function must not assume they do:
+
+      * TWO-TIME (`VisualMeanFlow`, `VisualAlphaFlow`) expose `_encode_once` and want the
+        PRE-ENCODED `'visual_latent'`. That method exists for a MeanFlow-specific reason —
+        the latent is captured as a constant inside `_p_losses_meanflow`'s JVP closure so its
+        forward-mode tangent is zero — and encoding once here, not per ODE step, is what the
+        wrappers do and is numerically identical (deterministic encoder in eval mode,
+        images constant across the ODE loop).
+
+      * SINGLE-TIME (`VisualFlowMatching`, Gen7) has NO `_encode_once` and never needed one.
+        It passes the raw dual-cam window through as `'visual'` and lets the backbone encode
+        (`visual_fm_diffusion.py::forward`). `_VISUAL_COND_KEYS` already admits `'visual'`,
+        so the sampler's own conditioning guard accepts this untouched.
+
+    Assuming `_encode_once` unconditionally raised `AttributeError: 'VisualFlowMatching'
+    object has no attribute '_encode_once'` and made arm C unreachable for engine=fm — it
+    never surfaced because every earlier arm-C run was mf or af. See
+    logs_in_develop/Gen14/DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md Part 4.
 
     A cond that is already encoded, or a non-visual model, passes through untouched.
     """
@@ -934,6 +948,10 @@ def encode_visual_cond(model, cond):
         return cond                                  # already encoded upstream
     if 0 in cond and isinstance(cond[0], tuple):
         bp_imgs, inhand_imgs, obs_seq = cond[0]
+        if not hasattr(model, '_encode_once'):
+            # Single-time engine: hand back exactly what its own forward() builds.
+            return {0: obs_seq[:, -1],
+                    'visual': (bp_imgs, inhand_imgs, obs_seq)}
         return {0: obs_seq[:, -1],
                 'visual_latent': model._encode_once(bp_imgs, inhand_imgs)}
     return cond
