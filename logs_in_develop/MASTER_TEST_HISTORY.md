@@ -5418,3 +5418,106 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - *Problem*: In `FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py`, seeds were previously loaded exclusively from `config/alphaflow_projection_eval.yaml` at job execution time. In queued, multi-stage Slurm dependency chains (`submit_after.sh`), modifying the YAML on disk between job submission and execution caused queued jobs to execute unintended seed sets.
    - *Fix*: Added `AF_SEEDS` environment variable support in `eval_flow_matching_v3_alphaflow.py` and `Slurm_Codes/sbatch/AlphaFlow/eval_alphaflow.sh`. When defined (e.g. `AF_SEEDS="7 8 9 10"` or `AF_SEEDS="7"`), the environment variable is passed via `--export=ALL` and baked into the job environment, overriding YAML defaults at script initialization.
    - *Outcome*: Eliminates evaluation pipeline race conditions and enables automated multi-seed sweeps restricted strictly to verified valid seeds (excluding the stale pre-Fix_8 seed 6 checkpoint) across $K \in \{1, 2, 5, 10, 20\}$ budgets.
+
+***
+
+## Data Analysis Suite v3.17: Path Audit Map Model-Family Tabs & Synchronized SEL Candidate Selector (September 1, 2026)
+
+**Keywords**: DAv3, Data Analysis, Visualizer, SCIENTIFIC_SUITE_v3.17, U19, path audit map, model-family tabs, candidate selector, SEL column, test_audit_families_offline.py, CHANGELOG_U19_audit_model_tabs_and_second_selector.md, commit 7ae33beb.
+
+1. **Path-Derived Model Family Classification**:
+   - Resolved the audit map visualization bottleneck in DAv3 (`Data_Analysis/Visualizer/index.html`), where large batches with 130+ candidates (`batch_avoiding_combined_*`) presented an undivided wall of interleaved model families (MF, AF, HardFlow, Diffusion), requiring cumbersome cross-referencing with the distant sidebar "6. Candidates" list (`CHANGELOG_U19_audit_model_tabs_and_second_selector.md`).
+   - Implemented deterministic, path-based model classification (`_model_family()`) with an ordered precedence rule list: `DIFFUSION / DPCC`, `FM`, `MF`, `iMF`, `AF`, `HARDFLOW`, `DRIFTING`, `OTHER`.
+   - Handled load-bearing path edge cases: tested `iMF` before `MF` (preventing `imeanflow` substring collisions), placed generic `FM` last as a fallthrough for unlabeled flow models, anchored short tokens (`_mf`, `_af`, `fm_`) on directory separators, matched versioned plans folders via prefix matching (`plans(Bf_*)`), and resolved unversioned bridge roots (`_DA_VA_BRIDGE_d3il_baseline`) via leaf directory and class name tokens.
+
+2. **Single-Table Tab Filtering & Zero-State Guard**:
+   - Implemented a dynamic tab bar above the Path Audit Map (`ALL · n` plus present model families with active candidate counts).
+   - Designed DOM representation as a single table with rows toggled via CSS/JS (`window._auditTab`), avoiding duplicated DOM nodes (preventing double checkboxes and zip download buttons) and ensuring candidate selection state remains strictly singular and consistent.
+   - Added automatic fallback to `ALL` upon batch switches if the currently active model family is absent in the newly loaded batch.
+
+3. **Live, Bidirectionally Synchronized SEL Candidate Selector**:
+   - Added a leading `SEL` checkbox column directly into the Path Audit Map, establishing a live secondary view of the sidebar candidate checklist without creating divergent selection states.
+   - Wired bidirectional event synchronization: audit map checkbox clicks update the sidebar `.cand-check` elements and trigger replotting (`toggle_audit_select()`); sidebar bulk operations (`[ALL]`, `[NONE]`) and manual selections dynamically recompute audit map `SEL` states upon plot execution (`sync_audit_selection()`).
+   - Integrated tab-scoped bulk action controls (`[SELECT ALL SHOWN]`, `[DESELECT ALL SHOWN]`, `[CLEAR EVERY CANDIDATE]`) and visual row highlighting (`.sel-row` light blue tint).
+
+4. **Offline Validation Test Harness**:
+   - Created `Data_Analysis/Visualizer/test_audit_families_offline.py` using Python standard library to assert the parser against 16 synthetic edge-case fixtures and **472 distinct run paths across 39 batches** under `Data_Analysis/analysis_results/`.
+   - Verified 100% classification coverage with zero paths falling through to `OTHER` (8 Diffusion/DPCC, 7 FM, 7 MF, 17 iMF, 5 AF, 4 HardFlow, 1 Drifting). Parser code is read directly from `index.html`'s `<script type="py">` block to guarantee continuous synchronization.
+
+***
+
+## Gen14 Visual Aligning Flagship: MeanFlow vs Flow Matching, K=20 Operating Point, T=0.2 Late Projection & Fix_11 Single-Time Engine Bridge (September 1, 2026)
+
+**Keywords**: Gen14, visual aligning, flagship, batch_va2_20260901_093100, Jobs 25247 & 25248, MF vs FM, K20 operating point, unguided tail failure, T0.2 late-stage projection, Fix_11, encode_visual_cond, single-time engine, hardflow_projection.py, DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md, commit 159a0318.
+
+1. **MeanFlow Outperforms Flow Matching on Visual Aligning ($p = 9.0 \times 10^{-8}$)**:
+   - Evaluated the flagship comparison on `aligning-d3il-visual` (Jobs 25247 [mf] & 25248 [fm], seed 6, $K=20$, $T=0.2$, SLSQP candidate fan $B=4$ parity, 380 mf + 160 fm rollouts paired by initial geometry fingerprint) (`DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md`).
+   - *Architecture-Matched Superiority*: On matched `VisualUNet` backbones (26.4M params), MeanFlow achieved **54% lower final box-to-target distance** than Flow Matching (**$0.1875\,\text{m}$ vs $0.4085\,\text{m}$, exact sign test $p = 9.0 \times 10^{-8}$** pooled across 6 variants; unguided `diffuser` $0.0933\,\text{m}$ vs $0.3266\,\text{m}$, $p=0.022$; `dpcc-r` $0.1553\,\text{m}$ vs $0.4373\,\text{m}$, $p=0.0039$).
+   - *Untouched Box Elimination*: MeanFlow unguided moved the box on **10 of 10 rollouts (0 untouched, progress 0.790)**, whereas Flow Matching failed to move the box on 4 of 10 rollouts (progress 0.260), and the visual DPCC-diffusion baseline left the box untouched on 23 of 33 rollouts (progress -0.111).
+
+2. **Settling the Sampling Resolution: K=20 as the Optimal Operating Point**:
+   - Evaluated the unguided (`diffuser`) arm across $K \in \{2, 20, 100\}$ on matched `filmv1` UNet weights across the same 10 geometric contexts:
+     - *K=2 Tail Pathology*: At $K=2$, sampling suffered severe tail catastrophe—on **4 of 10 contexts, the policy pushed the box further from the target than where it started** (worst case $0.903\,\text{m}$ from a $0.474\,\text{m}$ start, $\text{sd} = 0.301\,\text{m}$). Two Euler steps fail to integrate the velocity field, actively degrading task progress on 40% of contexts.
+     - *K=20 Tail Elimination*: Increasing to $K=20$ completely eliminated tail failures (**0 of 10 worse than doing nothing**, max distance $0.262\,\text{m}$, mean $0.0933\,\text{m}$, exact paired permutation test **$p = 0.043$ vs $K=2$**).
+     - *K=100 Diminishing Returns*: Increasing resolution from $K=20$ to $K=100$ yielded no measurable improvement ($0.1361\,\text{m}$ vs $0.0933\,\text{m}$, exact permutation $p=0.459$, dead 5/5 sign split) while increasing network evaluation latency by $4.8\times$ ($190.5\,\text{ms} \rightarrow 908\,\text{ms}/\text{replan}$, exactly linear at $b = 8.98\,\text{ms}/\text{NFE}$). Firmly established $K=20$ as the optimal inference operating point.
+
+3. **Late-Stage Projection Budgeting ($T=0.2$) & HardFlow-SLSQP Parity**:
+   - *T=0.2 Acceleration*: Restricting projection to late-stage integration ($\tau \in [0.80, 1.00]$, reducing budget from 10 to 4 solves/replan) delivered a **$2.3\times$ speedup ($1065\,\text{ms} \rightarrow 439\,\text{ms}/\text{replan}$ on `dpcc-r`)** with zero degradation in final distance ($0.4373\,\text{m}$ vs $0.4371\,\text{m}$, $p=1.000$).
+   - *HardFlow vs DPCC Constraint Parity*: On `combined_5-tightened`, HardFlow-SLSQP achieved $\ge$ zero-violation rates in **3 of 3 matched selection rules** (1.000 / 0.00 viol vs 0.900 / 2.70 on `-r`, 1.000 / 0.00 vs 0.900 / 4.30 on `-c`, 0.900 / 0.60 vs 0.800 / 1.50 on `-t`) at lower per-replan latency (pooled $286.4\,\text{ms}$ vs $304.8\,\text{ms}$, per-solve $26.8–37.9\,\text{ms}$ vs $33.3–39.7\,\text{ms}$).
+   - *Geometric Tightening Requirement*: On un-tightened geometry (`combined_5`), projection failed to eliminate executed violations (49.5 vs 53.2 violations) because physical execution checks exceed un-tightened planning envelopes, demonstrating that constraint claims must be established on tightened geometry.
+
+4. **Fix_11: Single-Time Conditioning Bridge for Arm C (`hardflow_projection.py`)**:
+   - *Problem*: Flagship FM Job 25248 crashed at item 17/38 on the first `hardflow_new-r` cell with `AttributeError: 'VisualFlowMatching' object has no attribute '_encode_once'` (`CHANGELOG_20260901_encode_visual_cond_single_time_engine.md`).
+   - *Root Cause*: `encode_visual_cond` in `mix_visual_aligning/sampling/hardflow_projection.py` unconditionally invoked `_encode_once`, a method unique to two-time engines (`VisualMeanFlow`, `VisualAlphaFlow`) created to zero JVP forward tangents during training. Single-time `VisualFlowMatching` (Gen7) passes raw camera inputs via `'visual': (bp_imgs, inhand_imgs, obs_seq)` and encodes directly within the backbone.
+   - *Fix*: Added `hasattr(model, '_encode_once')` branching in `encode_visual_cond`. If absent, the function mirrors `VisualFlowMatching.forward` by returning `{0: obs_seq[:, -1], 'visual': (bp_imgs, inhand_imgs, obs_seq)}`, restoring full HardFlow Arm C support for single-time Flow Matching models without altering two-time engine paths.
+
+***
+
+## Gen3v7 α-Flow on avoiding-d3il: Curriculum Formulation, T1 Clamp Diagnostic, and `AF_ALPHA_END` Decoupling (September 1, 2026)
+
+**Keywords**: Gen3v7, AlphaFlow, avoiding-d3il, U-Net, DA_20260901_AF_UNet_alpha_clamp_T1_negative.md, curriculum hypothesis, AF_ALPHA_END, AF_NTRIALS, alpha clamp T1 audit, Job 25251, latest vs best checkpoint selection, commit beb7f26c.
+
+1. **The Curriculum Nature of α-Flow & The U-Net Decision Bar**:
+   - Conducted a comprehensive structural audit of α-Flow on `avoiding-d3il` (`DA_20260901_AF_UNet_alpha_clamp_T1_negative.md`).
+   - *The Metric Standard*: Focused strictly on the unprojected `diffuser` arm on `top-right-hard` (seed 6, $n_{\text{trials}}=20$, $K=1$), defining the exact target bar required for AF-UNet to beat MF-UNet: **$\text{goal reached} > 0.85$ AND $\text{steps} < 59.70$** (MF-UNet baseline: 0.85 goal reached, 59.70 steps; 5-seed pooled: 0.97 goal reached, 61.5 steps).
+   - *Upstream Design Confirmation*: Proved that α-Flow ends on MeanFlow's objective by design ($\alpha \le 0 \implies \text{dt} = 0 \implies$ routes to `_compute_mean_velocity_c` JVP in upstream `loss.py` and `af_diffusion.py:552`). α-Flow is formally a **curriculum hypothesis** asserting that the path $\text{FM} \rightarrow \text{bootstrapped} \rightarrow \text{MeanFlow}$ reaches a superior basin compared to training MeanFlow directly.
+
+2. **Forensic Audit of the T1 Clamp Ablation (Job 25251, clamp 0.05)**:
+   - Evaluated the T1 run on `avoiding-d3il` (seed 7, $\alpha_{\text{clamp}}=0.05$, 4h 17m):
+     - *Curriculum Truncation*: Discovered that the symmetric clamp (`if ratio < clamp: ratio = 0; elif ratio > 1-clamp: ratio = 1`) compressed the genuine bootstrap phase by **44% (42,346 $\rightarrow$ 23,556 steps)**, replacing bootstrap training with 47.8% plain FM and 22.8% pure MeanFlow.
+     - *Field Degradation*: Training metrics degraded substantially—validation `raw_mse_u` worsened $2.3\times$ (**$6.86 \rightarrow 15.78$** vs MF-UNet's 1.90) and `per_dim_rms_u` increased $0.336 \rightarrow 0.418$, with damage concentrated in $h>0$ buckets ($h_{\text{mse}}$ bucket 1: 23.6, bucket 2: 41.1 vs bucket 0: 3.48).
+     - *Checkpoint Selection Asymmetry*: Traced why T1 appeared to improve qualitative plans and K=1 rollout success ($0/2 \rightarrow 2/2$, 62.0 steps) despite worse field metrics: past baseline runs evaluated `state_best.pt` (a mid-homotopy step-69k model selected on $0.75+0.25\alpha$ loss artifact), whereas T1 evaluated `state_latest.pt` (step 80k post-curriculum model). Evaluating α-Flow at the end of its curriculum rather than mid-homotopy accounts for the empirical difference.
+
+3. **Decoupling Terminal Alpha with `AF_ALPHA_END` & Runtime Pipeline Safety**:
+   - *Terminal Alpha Decoupling*: Implemented `AF_ALPHA_END` in `config/avoiding-d3il.py` and `train_flow_matching_v3_alphaflow.py`. Standard α-Flow anneals to $\alpha=0.0$ (MeanFlow endpoint); setting `AF_ALPHA_END` to non-zero values (e.g., 0.05, 0.20) maintains an active bootstrap probe ($\text{dt} = \alpha \cdot \mathbb{E}[h] \approx 0.013–0.050$) through the final training step, allowing direct evaluation of α-Flow's distinct objective on the frozen 4.0M U-Net.
+   - *Collision-Free Tree Tagging*: Added unconditional `_ae{af_alpha_end}` directory token generation across training savepaths and planning loadpaths, ensuring distinct terminal alpha configurations train in isolated trees and preventing `--auto-resume` collisions on seed 6.
+   - *Pipeline Race-Condition Guard (`AF_NTRIALS`)*: Added `AF_NTRIALS` environment variable parsing in `FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py` and sbatch submission scripts, allowing evaluation trial counts to be exported at submission time without mutating shared YAML configuration files during queued SLURM pipeline execution.
+
+***
+
+## Gen15 UAV Mix-ML: Pillars K-Sweep Audit, MeanFlow Unguided Instability Diagnosis & Fix_16 Adaptive Scaling for Degenerate Dimensions (September 1, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, uav-pillars, K-sweep, DA_20260830_pillars_K_sweep_fm_mf_af.md, STUDY_20260901_mf_unguided_failure_uav_pillars.md, CHANGELOG_fix16_degenerate_action_channel.md, SafeLimitsNormalizer, degenerate action channel, vertical feedback instability, Fix_16, FMPCC_SAFE_EPS_MODE, FMPCC_UAV_EVAL_TAG, commit d2102257.
+
+1. **UAV Pillars K-Sweep & Pareto Dominance Across Engines (`DA_20260830_pillars_K_sweep_fm_mf_af.md`)**:
+   - Conducted a comprehensive multi-engine evaluation on `uav-pillars` across 1707 rollouts ($K \in \{1, 2, 5, 20\}$, seed 6, $n=10$ trials/cell, 33 Hz Cascaded PID + MJPC tracking, DPCC & HardFlow-SLSQP projection).
+   - *Strict Pareto Dominance of MeanFlow over Flow Matching*: On matched `UNet` backbones with projection, MeanFlow achieved strict 4-axis Pareto dominance over Flow Matching (`goal_reached` **0.36 vs 0.08**, `divergence_aborts` **0.53 vs 0.67**, `viol/step` **0.10 vs 0.18**, and expected `chargedSteps` **579 vs 616**). Flow Matching was Pareto-dominated across all K settings.
+   - *HardFlow-SLSQP Throughput Superiority*: HardFlow-SLSQP matched DPCC constraint satisfaction while providing a **$4–6\times$ speedup** ($145–587\,\text{ms}$ vs $1146–1730\,\text{ms}/\text{step}$ at $K=5$).
+   - *Low-K Degeneracy Audit*: Confirmed that at $K=1$ and $K=2$ ($A=0.5$), `n_genuine=0`, meaning low-K HardFlow runs reduce to sample-then-project ($\Pi_S(\text{Euler})$) and only $K \ge 5$ represents genuine iterative in-loop HardFlow guidance.
+   - *Geometric Tightening Finding*: Strict success+constraints scored 0/1707 with median 130 violating steps due to inflated obstacle margins ($0.33\,\text{m}$) leaving narrow $\approx 12\,\text{cm}$ outer flight channels, identifying the obstacle geometry definition as the primary constraint bottleneck.
+
+2. **Root Cause Diagnosis of Unguided MeanFlow Vertical Instability (`STUDY_20260901_mf_unguided_failure_uav_pillars.md`)**:
+   - Investigated the striking divergence where unguided MeanFlow failed completely (0/30 line crossings, 30/30 divergence aborts, climbing vertically out of the flight envelope at steps 47–144) while unguided Flow Matching and α-Flow crossed 26/30 and 28/30.
+   - *Deconstructing the Causal Chain*:
+     1. *Zero Training Variance (Enabling Condition)*: Expert `pillars` trajectories maintain constant altitude ($\Delta z \equiv 0.0$), containing zero vertical control variance or error-correction demonstrations; the learned vertical feedback gain is completely unconstrained by training data.
+     2. *Normalizer Scale Defect (Amplifier)*: `SafeLimitsNormalizer(eps=1)` (inherited from upstream DPCC) widened constant dimensions $[c, c] \rightarrow [c-1, c+1]$, turning `unnormalize` into an identity mapping for constant channels. This created an unscaled $\pm 1.0\,\text{m}$ ceiling and $\approx 23\times$ higher gain than physical horizontal channels ($\max |\Delta x| \approx 0.044\,\text{m}$).
+     3. *Closed-Loop Positive Feedback (Differentiator)*: Empirical regressions ($\Delta z_{\text{cmd}} \sim b_1 \cdot e_z$) revealed MeanFlow learned a **destabilizing positive altitude-feedback gain ($b_1 = +0.112\,\text{m}/\text{m}$ error at $K=1$, $+0.080$ at $K=2$, $+0.031$ at $K=5$)**, whereas FM and AF learned restoring/neutral gains ($-0.016\dots -0.002$). In closed loop with `pid_stopgo`, altitude error compounded via $e_z(t+1) \approx e_z(t)(1+b_1)$, quantitatively predicting the observed 47–144 step abort window from first principles.
+     4. *Correction of Prior Assumptions*: Refuted the "forward plan collapse" hypothesis—per step-bin, MeanFlow's forward command $\Delta x$ was equal to or larger than FM/AF (+0.0013 vs +0.0006 at steps 0–5); the drone remained near the start line solely because vertical runaway triggered early aborts before forward motion could accumulate.
+     5. *Dynamics Constraint Recovery*: Proved the dynamics projection constraint specifically breaks the vertical feedback loop, restoring forward velocity (+0.0069 $\rightarrow$ +0.0111 m/step) and cutting vertical variance $24\times$ ($0.166 \rightarrow 0.0068\,\text{m}$).
+
+3. **Fix_16: Adaptive Scaling for Degenerate Dimensions (`CHANGELOG_fix16_degenerate_action_channel.md`)**:
+   - *Adaptive Epsilon Scaling*: Refactored `SafeLimitsNormalizer` in `mix_uav/datasets/normalization.py` to derive epsilon adaptively from the median half-width of active non-constant channels:
+     $$\text{eps} = \text{FMPCC\_SAFE\_EPS\_FRAC} \times \text{median}(\text{half-width of non-constant dims}) \approx 3.998 \times 10^{-5}\,\text{m}$$
+   - *Impact & Safety*: Saturated constant channel commands are reduced **$25,000\times$** ($1.0\,\text{m} \rightarrow 3.998 \times 10^{-5}\,\text{m}/\text{step}$), reducing maximum theoretical episode vertical drift from $634\,\text{m}$ to **$0.025\,\text{m}$**.
+   - *Zero-Retrain Compatibility*: Because $\text{normalize}(c) = 0$ for any $\text{eps}$, normalized training data is bit-identical and Fix_16 operates with 100% backward compatibility on existing model checkpoints.
+   - *Diagnostic & Logging Upgrades*: Unmuted `LimitsNormalizer` clipping warnings with once-per-normalizer throttle, added `_report_degenerate_dims()` in `mix_uav_test/eval_mix_uav.py`, provided `FMPCC_SAFE_EPS_MODE=legacy` reproduction fallback, and introduced `FMPCC_UAV_EVAL_TAG` to ensure A/B evaluation runs never overwrite existing plan directories.
