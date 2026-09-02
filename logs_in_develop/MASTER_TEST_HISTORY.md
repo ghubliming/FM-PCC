@@ -5521,3 +5521,59 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - *Impact & Safety*: Saturated constant channel commands are reduced **$25,000\times$** ($1.0\,\text{m} \rightarrow 3.998 \times 10^{-5}\,\text{m}/\text{step}$), reducing maximum theoretical episode vertical drift from $634\,\text{m}$ to **$0.025\,\text{m}$**.
    - *Zero-Retrain Compatibility*: Because $\text{normalize}(c) = 0$ for any $\text{eps}$, normalized training data is bit-identical and Fix_16 operates with 100% backward compatibility on existing model checkpoints.
    - *Diagnostic & Logging Upgrades*: Unmuted `LimitsNormalizer` clipping warnings with once-per-normalizer throttle, added `_report_degenerate_dims()` in `mix_uav_test/eval_mix_uav.py`, provided `FMPCC_SAFE_EPS_MODE=legacy` reproduction fallback, and introduced `FMPCC_UAV_EVAL_TAG` to ensure A/B evaluation runs never overwrite existing plan directories.
+
+***
+
+## Gen14 Visual Aligning K=10/T=0.4 Operating Point, HardFlow-SLSQP Pareto Dominance & FM Stale-Checkout Diagnosis (September 2, 2026)
+
+**Keywords**: Gen14, visual aligning, K-sweep, K=10, T=0.4, batch_va2_20260902_114841, Jobs 25273 & 25274, HardFlow-SLSQP, DPCC, Pareto dominance, sampler cost model, stale checkout, Fix_11, DA_20260902_Gen14_K10_T0.4_mf_and_fm_resubmit.md.
+
+1. **FM Job Stale-Checkout Failure Diagnosis (Job 25274)**:
+   - FM resubmit (K=20, T=0.2, seed 6) crashed at item 17/38 on the first arm-C cell with the identical `AttributeError: 'VisualFlowMatching' object has no attribute '_encode_once'` seen in the 09-01 flagship (`DA_20260902_Gen14_K10_T0.4_mf_and_fm_resubmit.md` §1.1).
+   - *Root Cause*: Both jobs stamped `GIT REV: 7ae33be`, which is **two commits before `159a0318`** where Fix_11 landed. The cluster checkout was behind when `sbatch` fired. Python's traceback proved the on-disk file had the fix while the in-memory module did not — the classic signature of a `git pull` landing after process import.
+   - *Outcome*: Not a regression; plain resubmit at current HEAD required, verifying `GIT REV` stamps `159a0318` or later.
+
+2. **Unguided K-Sweep: Threshold Refined to $2 < K^{*} \le 10$ (MF `filmv1`, Seed 6, 10 Paired Contexts)**:
+   - Filled the missing K=10 cell into the unguided (`diffuser`) NFE sweep on `aligning-d3il-visual` (mean initial distance $0.4530\,\text{m}$):
+
+   | K | mean dist (m) | max (m) | worse-than-nothing | untouched | ms/replan |
+   |---|---|---|---|---|---|
+   | 2 | 0.3676 | 0.9030 | **4/10** | 0/10 | 28.4 |
+   | **10** | **0.1730** | 0.4387 | **0/10** | 1/10 | **99.2** |
+   | 20 | 0.0933 | 0.2617 | 0/10 | 0/10 | 190.5 |
+   | 100 | 0.1440 | 0.4618 | 1/10 | 0/10 | 924.6 |
+
+   - *Threshold Location*: K=2 pushed the box *further from the target* on 4/10 contexts (worst case $0.903\,\text{m}$ from $0.474\,\text{m}$ start). **K=10 eliminated every worse-than-nothing outcome (0/10)**. The failure is a threshold, not a gradual loss of resolution — whatever fails at K=2 is already fully repaired by K=10.
+   - *K=10 vs K=20*: Split **5/5**, permutation $p = 0.250$, mean gap $+0.0797\,\text{m}$ (~$10\times$ noise floor but statistically unproven at $n=10$). K=20 remains the safe quality operating point; K=10 is the operating point when latency matters.
+   - *K=20 vs K=100*: Confirmed a second time — **no measurable improvement at $4.8\times$ the cost** ($p = 0.459$, dead 5/5 sign split).
+
+3. **Sampler Cost Model Validated Across $K = 2\dots100$**:
+   - Refitted linear model with K=10 included: $\text{ms/replan} = 8.43 + 9.159 \cdot K$, max residual **$1.7\,\text{ms}$** over a $50\times$ range in K. The K=10 prediction from the prior two-point fit ($100.2\,\text{ms}$) landed within $1\,\text{ms}$ of the measured $99.2\,\text{ms}$. **The sampler is exactly linear in NFE with an ~8 ms fixed overhead; no hidden per-step cost and no batching win to recover.**
+
+4. **★ HardFlow-SLSQP Pareto-Dominates DPCC at K=10 — First Significant Arm-B/Arm-C Result**:
+   - On `combined_5-tightened`, MF `filmv1`, 10 paired contexts, pooled over `-r`/`-c`/`-t` ($n=30$):
+
+   | axis | DPCC | HardFlow-SLSQP | paired test | $p$ |
+   |---|---|---|---|---|
+   | zero-violation rate | 0.667 | **0.867** | McNemar 9/3 | 0.146 |
+   | violations/rollout | 12.87 | **0.97** | sign 10/3 | 0.092 |
+   | **ms/replan** | **491.8** | **206.3** | sign 26/1 | **$< 0.001$** |
+   | final distance | — | — | sign 12/11 | 1.000 |
+
+   - *Per-variant latency significance*: `-r` $\Delta = +325.0\,\text{ms}$, sign 9/0, $p = 0.0039$; `-c` $\Delta = +320.1\,\text{ms}$, sign 9/0, $p = 0.0039$; `-t` $\Delta = +211.4\,\text{ms}$, sign 8/1, $p = 0.0391$.
+   - `hardflow_sls-r` at K=10/T=0.4 is **Pareto-dominant** over `dpcc-r` at K=10/T=0.4: strictly better on constraints (1.000 vs 0.700 zero-violation; 0.00 vs 12.30 violations/rollout), **$2.7\times$ cheaper** ($192.5$ vs $517.5\,\text{ms}$, $p = 0.0039$), and distance is a wash ($0.2365$ vs $0.4196\,\text{m}$, sign 4/4, $p = 1.000$). This is the first time the arm-B/arm-C comparison has cleared significance on any axis.
+
+5. **Opposite Scaling Mechanism: Why Lowering K Helps HardFlow and Hurts DPCC**:
+   - Both K=10/T=0.4 and K=20/T=0.2 make exactly 4 projector calls per replan (only the $\tau$ window differs: $\{0.60, 0.70, 0.80, 0.90\}$ vs $\{0.80, 0.85, 0.90, 0.95\}$).
+   - At K=10, **DPCC got $+186.95\,\text{ms}$ more expensive** (sign 23/4, $p < 0.001$) because earlier-$\tau$ iterates are further from the constraint manifold, burning more solver iterations per call. **HardFlow got $-80.09\,\text{ms}$ cheaper** (sign 0/27, $p < 0.001$) because its cost tracks the sampler, so halving NFE halves the scaling component. **Lowering K is cheap for HardFlow and expensive for DPCC.**
+
+6. **`hardflow_sls-r` K=10 Pareto-Dominates `hardflow_sls-r` K=20**:
+   - Constraints are **bit-identical** (1.000 zero-violation, 0.00 violations/rollout at both K). Latency is **30% lower** ($192.5$ vs $275.3\,\text{ms}$, sign 0/9, $p = 0.004$). Distance is a wash ($0.2365$ vs $0.2108\,\text{m}$, sign 6/2, $p = 0.289$). **Halving the NFE cost nothing for constraint satisfaction.**
+   - Pooled over `-r`/`-c`/`-t`: zero-violation 0.867 (K=10) vs 0.967 (K=20), McNemar 3/0, $p = 0.250$ — the `-c` and `-t` variants lose a small amount of constraint quality at K=10 while `-r` loses none.
+
+7. **Caveats & Outstanding Items**:
+   - FM arm still has no arm-C data (stale checkout; requires resubmit).
+   - All results are seed 6 only, $n=10$ contexts, one checkpoint (`filmv1`).
+   - **100% of arm-C items hit a non-converged SLSQP solve** at the second projector call in both K configs (§1.3 of `DA_20260902`). Executed violations remain 0.00, but the terminal-solve feasibility guarantee does not hold as documented.
+   - No $K$ between 2 and 10 has been tested; K=5 is the most informative missing cell.
+   - Untouched-box rates are elevated under `-t`/`-c` projection (up to 6/10) and not yet explained.
