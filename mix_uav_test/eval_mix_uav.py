@@ -87,6 +87,12 @@ from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 
 # it through the registry, so nothing below branches on the value itself.
 ENGINE = engine_registry.DEFAULT_ENGINE
 
+# ── Gen15 U6 ── checkpoint selector for this process. None => use the plan block's value
+# (which config/uav_mix.py resolves from UAV_MIX_EPOCH). Set once from --epoch in main(),
+# same pattern as ENGINE above; _load_base_cfg injects the resolved value into the cfg dict
+# so build_experiment AND _uav_eval_tag read one number.
+EPOCH_OVERRIDE = None
+
 def _uav_eval_tag(config, controller, engine=None):
     """Eval-parameter folder name — mirrors args_to_watch_fm_visual_plan style.
 
@@ -113,6 +119,15 @@ def _uav_eval_tag(config, controller, engine=None):
     thresh = config.get('diffusion_timestep_threshold', 0.5)
     parts  = [f'E{engine or ENGINE}', f'K{k}', f'mpc{mpc_b}', controller]
     parts.append(f'T{thresh:g}')
+    # 🔴 Gen15 U6 — WHICH CHECKPOINT produced these rows. Absent at the shipped 'best', so
+    # every results folder that exists today keeps its exact name; present for anything else,
+    # so a `--epoch latest` pass lands BESIDE the `best` one instead of silently overwriting
+    # it. Those are different models: on the af arm `best` is chosen on a test_loss that
+    # scales with alpha and therefore prefers a MID-CURRICULUM checkpoint (Gen3v7 DA
+    # 2026-09-01 §3.1). Appended before the free-form run tag so that stays last.
+    _ep = config.get('diffusion_epoch', 'best')
+    if str(_ep) != 'best':
+        parts.append(f'EP{_ep}')
     # 🔴 Gen15 Fix_16 — optional run tag, appended last. Two evals that differ ONLY in an
     # environment knob (e.g. FMPCC_SAFE_EPS_MODE=scaled vs legacy) produce an identical
     # folder name and the second SILENTLY OVERWRITES the first. Set FMPCC_UAV_EVAL_TAG to
@@ -343,9 +358,18 @@ def parse_args():
                         'SCENE_MAX_EPISODE_LENGTH defaults). Mirrors DPCC avoiding max_episode_length. '
                         'Episodes early-stop on goal-reach; goal-path scenes that never reach run the '
                         'full budget. Default: per-scene value.')
-    p.add_argument('--epoch', type=str, default='best', help="Checkpoint to load: 'best' (lowest val loss; the default and the ONLY choice that matches the D3IL arms), "
-                   "'latest' (last PERIODIC save -- with save_freq=n_train_steps//5 that is "
-                   "step 80000 of 100000, i.e. 80%% trained, NOT the final model), or an int.")
+    # ── Gen15 U6 ── default is now None, meaning "take the plan block's value", which
+    # config/uav_mix.py resolves from UAV_MIX_EPOCH. Before U6 this flag existed but was
+    # (a) unreachable from Slurm (the sbatch never passed it) and (b) NOT part of the results
+    # folder name, so a `latest` run silently OVERWROTE the `best` run of the same weights.
+    # Both are fixed: the sbatch forwards it, and `_uav_eval_tag` emits '_EP<sel>'.
+    p.add_argument('--epoch', type=str, default=None,
+                   help="Checkpoint to load: 'best' (lowest val loss; the shipped default), "
+                        "'latest' (newest state_<step>.pt), or an int step. Applies to the "
+                        "loader AND the results folder name ('_EP<sel>'). Env fallback: "
+                        "UAV_MIX_EPOCH. Use 'latest' on the af arm to deploy the model the "
+                        "alpha schedule actually produced -- 'best' is chosen on a test_loss "
+                        "that scales with alpha and prefers a MID-CURRICULUM checkpoint.")
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
                         "DPCC variants (dpcc-c, …) slot in here when Phase-3 lands.")
@@ -371,6 +395,49 @@ def build_experiment(scene, seed, epoch, device, flow_steps=None):
     # logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
     experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device, override_args=args)
     diffusion = experiment.diffusion
+
+    # ── Gen15 U6 ── say WHICH weights are about to be rolled out. `trainer.step` is read back
+    # out of the checkpoint file itself, so this is the file's own claim about where in
+    # training it came from — not the config's. (`latest` -> -1 is already caught inside
+    # load_diffusion, guarded there since 2026-08-19.)
+    _ckpt_step = getattr(getattr(experiment, 'trainer', None), 'step', None)
+    print(f'[ eval ] checkpoint = state_{experiment.epoch}.pt  (trained to step {_ckpt_step})')
+    # Stash on the parsed args: eval_scene's provenance.write() receives `parsed`, not the
+    # experiment, and the RESOLVED epoch is the only thing that identifies the weights.
+    args._u6_ckpt_epoch, args._u6_ckpt_step = experiment.epoch, _ckpt_step
+
+    # 🔴 THE ONE CHECK THAT SEPARATES alpha-FLOW FROM MeanFlow AT DEPLOYMENT. af_diffusion.py
+    # routes `alpha <= 0` into Gen3v6's MeanFlow JVP body UNMODIFIED (line 568), so a
+    # checkpoint taken from the alpha=0 tail IS a MeanFlow model however the folder is named —
+    # which is what EVERY Gen15 af run has been until U6. Printing alpha at the loaded step
+    # puts that in the EVAL log, not only in a training log from a different job hours before.
+    # _get_ratio is a staticmethod precisely so schedule questions need no training loop; the
+    # alpha values come from the TRAIN-time diffusion_config.pkl.
+    if _ckpt_step is not None and hasattr(diffusion, 'af_alpha_end'):
+        try:
+            _a = diffusion._get_ratio(
+                diffusion.af_alpha_scheduler, diffusion.af_alpha_init, diffusion.af_alpha_end,
+                diffusion.af_alpha_init_step, diffusion.af_alpha_end_step,
+                diffusion.af_alpha_gamma, diffusion.af_alpha_clamp, int(_ckpt_step))
+        except Exception as _e:
+            print(f'[ eval ] alpha at step {_ckpt_step}: unavailable ({type(_e).__name__})')
+        else:
+            print(f'[ eval ] alpha(step {_ckpt_step}) = {_a:.4f}  '
+                  f'[{diffusion.af_alpha_scheduler} {diffusion.af_alpha_init} -> '
+                  f'{diffusion.af_alpha_end} over {diffusion.af_alpha_end_step} steps, '
+                  f'clamp {diffusion.af_alpha_clamp}]')
+            print('[ eval ]   ' + (
+                '🔴 alpha = 0 -> these weights were trained on the MeanFlow target '
+                '(af_diffusion.py:568). This is an alpha-Flow CURRICULUM endpoint, not the '
+                'alpha-Flow objective. Set UAV_MIX_AF_ALPHA_END>0 and retrain to change that.'
+                if _a <= 0.0 else
+                'alpha-Flow objective ACTIVE at this checkpoint.'))
+    _bone = getattr(diffusion, 'imf_backbone', None) or getattr(
+        getattr(diffusion, 'model', None), 'imf_backbone', None)
+    if _bone:
+        print(f'[ eval ] ml bone = {_bone}  '
+              f'(U6 default is \'unet\', the 4.0 M arm matched to fm/mf; '
+              f'\'sit\' is ~9.4 M and NOT parameter-matched)')
 
     # 🔴 Gen15 — pin K onto the LOADED model. This is one of the two halves of the Gen11 K bug:
     # `override_args` here is the TRAIN block's args, which carry no `flow_steps_v3`, so the
@@ -467,6 +534,12 @@ def _load_base_cfg(scene, seed):
     cfg['flow_steps_v3']                = int(os.environ.get(
         'UAV_MIX_FLOW_STEPS', getattr(plan_args, 'flow_steps_v3', 20)))
     cfg['engine']                       = ENGINE
+    # ── Gen15 U6 ── same treatment, same reason, for the checkpoint selector: `_uav_eval_tag`
+    # reads it off this dict, and build_experiment loads from it, so both halves of the run
+    # are named by ONE value. CLI --epoch (EPOCH_OVERRIDE) wins over the plan block, which
+    # config/uav_mix.py has already resolved from UAV_MIX_EPOCH.
+    cfg['diffusion_epoch'] = (EPOCH_OVERRIDE if EPOCH_OVERRIDE is not None
+                              else getattr(plan_args, 'diffusion_epoch', 'best'))
 
     # ── Gen15 U2: the HardFlow arm is declared in Gen15's OWN config, never in the yaml ──────
     # `config/uav_projection.yaml` is SHARED READ-ONLY with Gen11 (init plan §1.9 / drift-scan
@@ -1778,6 +1851,18 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'model_savepath': parsed.savepath,
             'eval_params_dir': eval_params_dir,
             'seed': _seed_str,
+            # ── Gen15 U6 ── WHICH WEIGHTS produced these rows, and on which backbone.
+            # The selector alone is not enough: 'latest' is a REQUEST whose answer depends on
+            # what happened to be on disk when the job ran, so two evals of the "same"
+            # checkpoint months apart can resolve it differently. Record request and answer.
+            # `imf_backbone` is here because U6 flipped the af default from 'sit' to 'unet',
+            # and every pre-U6 af row in the corpus is a ~9.4 M SiT — a fact the numbers
+            # themselves do not carry.
+            'diffusion_epoch': config.get('diffusion_epoch'),
+            'checkpoint_epoch_resolved': getattr(parsed, '_u6_ckpt_epoch', None),
+            'checkpoint_step': getattr(parsed, '_u6_ckpt_step', None),
+            'imf_backbone': getattr(parsed, 'imf_backbone', None),
+            'af_alpha_end': getattr(parsed, 'af_alpha_end', None),
         })
 
     # E9 U2: constraint-geometry schematic (constraint_overview.png + .svg), mirroring
@@ -2100,8 +2185,12 @@ def eval_scene(scene, args):
     # loaded diffusion object (Gen11 built the model first and K never reached it — see the
     # module docstring). _load_base_cfg needs only (scene, seed), so the reorder is safe.
     base_cfg = _load_base_cfg(scene, args.seed)
+    # U6: base_cfg['diffusion_epoch'] — NOT args.epoch. The two differ whenever the selector
+    # came from UAV_MIX_EPOCH rather than the CLI, and loading a different checkpoint than the
+    # one the folder name claims is the exact failure this token was added to prevent.
     model_fm, dataset, parsed, horizon = build_experiment(
-        scene, args.seed, args.epoch, args.device, flow_steps=base_cfg['flow_steps_v3'])
+        scene, args.seed, base_cfg['diffusion_epoch'], args.device,
+        flow_steps=base_cfg['flow_steps_v3'])
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 
@@ -2164,7 +2253,7 @@ def eval_scene(scene, args):
 
 
 def main():
-    global ENGINE
+    global ENGINE, EPOCH_OVERRIDE
     args, remaining = parse_args()
 
     # Publish the engine selection to module scope BEFORE anything resolves a config block or
@@ -2172,6 +2261,31 @@ def main():
     ENGINE = args.engine
     _row = engine_registry.get(ENGINE)
     print(f'[ eval ] Gen15 UAV Mix-ML — engine: {ENGINE}  ({_row["label"]})')
+
+    # ── Gen15 U6 ── publish the checkpoint selector to module scope, same as ENGINE above.
+    # Validation is delegated to config/uav_mix._uav_epoch so the CLI form and the
+    # UAV_MIX_EPOCH env form cannot disagree about what is legal — a typo dies here instead of
+    # becoming a 'state_<garbage>.pt' FileNotFoundError minutes into a GPU allocation.
+    if args.epoch is not None:
+        from config.uav_mix import _uav_epoch as _uav_epoch_validate
+        try:
+            EPOCH_OVERRIDE = _uav_epoch_validate(args.epoch)
+        except ValueError as _e:
+            raise SystemExit(f'[ eval ] ERROR: {_e}  (source: cli --epoch)')
+        print(f'[ eval ] checkpoint selector = {EPOCH_OVERRIDE!r}  (source: cli --epoch)')
+    elif os.environ.get('UAV_MIX_EPOCH', '').strip():
+        print(f"[ eval ] checkpoint selector = "
+              f"{os.environ['UAV_MIX_EPOCH'].strip()!r}  (source: env UAV_MIX_EPOCH)")
+    else:
+        print("[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)")
+    if ENGINE == 'af' and EPOCH_OVERRIDE in (None, 'best') and \
+            not os.environ.get('UAV_MIX_EPOCH', '').strip():
+        print("[ eval ]   ⚠  af arm on 'best': state_best.pt is chosen on an alpha-weighted "
+              "test_loss and")
+        print("[ eval ]      therefore prefers a MID-CURRICULUM model. If this checkpoint was "
+              "trained with")
+        print("[ eval ]      UAV_MIX_AF_ALPHA_END, 'best' discards the very thing the floor "
+              "produced. Use --epoch latest.")
 
     # --flow-steps K overrides the plan block for this process. Exported via the environment so
     # _load_base_cfg picks it up without threading an extra argument through eval_scene.

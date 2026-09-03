@@ -200,6 +200,26 @@ class Trainer(object):
             remaining_steps -= steps_this_epoch
             epoch += 1
 
+        # ── Gen15 U6 ── SAVE THE MODEL THE SCHEDULE ACTUALLY ENDS ON.
+        #
+        # 🔴 The periodic save fires on `self.step % self.save_freq == 0` inside train_epoch,
+        # and self.step only ever reaches n_train_steps - 1 there. So the newest NUMERIC
+        # checkpoint is the last multiple of save_freq strictly BELOW n_train_steps — at the
+        # default save_freq = n_train_steps // 5 that is step 80000 of 100000. `--epoch latest`
+        # has therefore always deployed a model 20% short of the end of training, and no save
+        # cadence fixes it: the last multiple of ANY frequency is < n_train_steps. The eval's
+        # own --epoch help text has documented this as a known wart; U6 removes the wart.
+        #
+        # Fires ONLY on a completed run: the early return at the top of this method means
+        # there are steps left to do and that run's periodic saves still stand. Costs one extra
+        # state_<n_train_steps>.pt per completed run.
+        if self.step >= self.n_train_steps:
+            _last_periodic = (int(self.n_train_steps) - 1) // self.save_freq * self.save_freq
+            print(f'[ utils/training ] final checkpoint: step {self.step} '
+                  f'(the periodic save only reaches {_last_periodic}); '
+                  f'"latest" now resolves to the end of the schedule', flush=True)
+            self.save(self.step)
+
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
 

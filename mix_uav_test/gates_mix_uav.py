@@ -629,6 +629,161 @@ def gate_G8(device='cpu'):
     return ok
 
 
+def gate_G9():
+    """G9 — Gen15 U6: what each of the three af knobs is ALLOWED to move.
+
+    🔴 WHY. U6 flips the af arm's default backbone from 'sit' to 'unet' and adds two knobs.
+    Three separate ways that can go wrong, all silent:
+
+      * the BONE and ALPHA knobs must reach the CHECKPOINT path, or two different models share
+        one directory and the second overwrites the first (that is what `bb`/`ae` are for, and
+        G2 already checks the cross-product — this gate checks the knobs actually RESOLVE);
+      * the EPOCH knob must NOT reach the checkpoint path — it selects among files already in
+        one tree — but it MUST reach the eval-params folder, or a `latest` pass overwrites the
+        `best` pass of the same weights. On the af arm those are different models: `best` is
+        chosen on an alpha-weighted test_loss and prefers a MID-CURRICULUM checkpoint;
+      * the TRAIN and PLAN blocks must agree on bone and alpha, or eval rebuilds a savepath the
+        trainer never wrote and dies on a missing checkpoint after the GPU is allocated.
+    """
+    import importlib.util
+    ok = True
+    path = os.path.join(_REPO, 'config', 'uav_mix.py')
+
+    def _load(env):
+        for k in ('UAV_MIX_BONE_AF', 'UAV_MIX_AF_ALPHA_END', 'UAV_MIX_EPOCH'):
+            os.environ.pop(k, None)
+        os.environ.update(env)
+        spec = importlib.util.spec_from_file_location('_uav_cfg_probe', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    class A:
+        pass
+
+    def _ckpt(mod, blk):
+        a = A()
+        for k, v in blk.items():
+            setattr(a, k, v)
+        return mod._uav_mix_exp_name(a)
+
+    try:
+        m_def  = _load({})
+        m_sit  = _load({'UAV_MIX_BONE_AF': 'sit'})
+        m_a02  = _load({'UAV_MIX_AF_ALPHA_END': '0.2'})
+        m_ep   = _load({'UAV_MIX_EPOCH': 'latest'})
+    finally:
+        for k in ('UAV_MIX_BONE_AF', 'UAV_MIX_AF_ALPHA_END', 'UAV_MIX_EPOCH'):
+            os.environ.pop(k, None)
+        sys.modules.pop('_uav_cfg_probe', None)
+
+    # (a) the config's bone whitelist must not drift from the registry's.
+    _reg = tuple(engine_registry.get('af')['backbones'])
+    if tuple(m_def._UAV_AF_BONES) != _reg:
+        ok = False
+        print(f'  ✗ (a) config _UAV_AF_BONES={m_def._UAV_AF_BONES} != registry {_reg} — the '
+              f'config would accept or reject a bone the model layer disagrees about')
+    else:
+        print(f'  ✓ (a) bone whitelist agrees with engine_registry: {list(_reg)}')
+
+    # (b) the U6 defaults, and train/plan agreement on every env-resolved key.
+    tb, pb = m_def.base['mix_uav_af'], m_def.base['plan_mix_uav_af']
+    if tb['imf_backbone'] != 'unet':
+        ok = False
+        print(f"  ✗ (b) default af bone is {tb['imf_backbone']!r}, expected 'unet' — U6 exists "
+              f"to make the af arm parameter-matched to the 4.0 M fm/mf U-Net")
+    else:
+        print("  ✓ (b) default af bone = 'unet' (was 'sit'; ~9.4 M and NOT param-matched)")
+    if float(tb['af_alpha_end']) != 0.0 or pb['diffusion_epoch'] != 'best':
+        ok = False
+        print(f"  ✗ (b) shipped defaults moved: af_alpha_end={tb['af_alpha_end']}, "
+              f"diffusion_epoch={pb['diffusion_epoch']!r} (want 0.0 / 'best')")
+    else:
+        print("  ✓ (b) shipped defaults intact: af_alpha_end=0.0, diffusion_epoch='best'")
+    for mod, label in ((m_def, 'default'), (m_sit, 'sit'), (m_a02, 'alpha0.2')):
+        _t, _p = mod.base['mix_uav_af'], mod.base['plan_mix_uav_af']
+        _bad = [k for k in ('imf_backbone', 'af_alpha_end') if _t[k] != _p[k]]
+        if _bad:
+            ok = False
+            print(f'  ✗ (b) {label}: train/plan disagree on {_bad} — eval would rebuild a '
+                  f'savepath the trainer never wrote')
+    if ok:
+        print('  ✓ (b) train and plan blocks agree on bone + alpha in every configuration')
+
+    # (c) bone and alpha DO move the checkpoint tree, and each value gets its own.
+    names = {lbl: _ckpt(mod, mod.base['mix_uav_af'])
+             for lbl, mod in (('default(unet)', m_def), ('sit', m_sit), ('alpha0.2', m_a02))}
+    if len(set(names.values())) != 3:
+        ok = False
+        print(f'  ✗ (c) checkpoint-path COLLISION across bone/alpha values: {names}')
+    else:
+        print('  ✓ (c) bone and alpha each land in their own checkpoint tree:')
+        for lbl, nm in names.items():
+            print(f'          {lbl:14s} {nm}')
+
+    # (d) the epoch knob must NOT touch the checkpoint tree.
+    if _ckpt(m_ep, m_ep.base['mix_uav_af']) != names['default(unet)']:
+        ok = False
+        print('  ✗ (d) UAV_MIX_EPOCH moved the CHECKPOINT path — it is an EVAL-only selector '
+              'and must never orphan a checkpoint')
+    elif m_ep.base['plan_mix_uav_af']['diffusion_epoch'] != 'latest':
+        ok = False
+        print(f"  ✗ (d) UAV_MIX_EPOCH=latest did not reach the plan block "
+              f"({m_ep.base['plan_mix_uav_af']['diffusion_epoch']!r})")
+    else:
+        print("  ✓ (d) UAV_MIX_EPOCH reaches the plan block and leaves the checkpoint path alone")
+
+    # (e) ...but it MUST reach the eval-params folder, or `latest` overwrites `best`.
+    try:
+        from mix_uav_test.eval_mix_uav import _uav_eval_tag
+    except Exception as e:
+        print(f'  ⊘ (e) could not import _uav_eval_tag ({type(e).__name__}: {e}) — '
+              f'the eval-folder token is UNCHECKED in this run')
+    else:
+        _base = dict(flow_steps_v3=20, mpc_batch_size=4, diffusion_timestep_threshold=0.5)
+        t_best = _uav_eval_tag({**_base, 'diffusion_epoch': 'best'}, 'pid_stopgo', engine='af')
+        t_late = _uav_eval_tag({**_base, 'diffusion_epoch': 'latest'}, 'pid_stopgo', engine='af')
+        t_none = _uav_eval_tag(_base, 'pid_stopgo', engine='af')
+        if t_best != t_none:
+            ok = False
+            print(f"  ✗ (e) an explicit 'best' changed the folder name ({t_none} -> {t_best}) — "
+                  f"every existing UAV results path would move")
+        elif t_late != t_best + '_EPlatest':
+            ok = False
+            print(f'  ✗ (e) eval-params folder is not a strict extension.\n'
+                  f'          best  : {t_best}\n          latest: {t_late}')
+        else:
+            print(f"  ✓ (e) eval folder: {t_best}  (+'_EPlatest' when non-default; "
+                  f"pre-U6 names unchanged)")
+
+    # (f) a typo must die at config time, not as state_<garbage>.pt inside a GPU allocation.
+    _bad_ok = True
+    for env in ({'UAV_MIX_BONE_AF': 'mf_dit'},        # the mf arm's class, not af's
+                {'UAV_MIX_BONE_AF': 'unett'},
+                {'UAV_MIX_AF_ALPHA_END': '1.5'},      # outside [0, 1]
+                {'UAV_MIX_AF_ALPHA_END': '0.001'},    # below af_alpha_clamp -> snaps to 0
+                {'UAV_MIX_AF_ALPHA_END': 'abc'},
+                {'UAV_MIX_EPOCH': 'lastest'}):
+        try:
+            _load(env)
+        except ValueError:
+            continue
+        except Exception as e:
+            print(f'  ⊘ (f) {env} raised {type(e).__name__} instead of ValueError: {e}')
+            continue
+        finally:
+            for k in ('UAV_MIX_BONE_AF', 'UAV_MIX_AF_ALPHA_END', 'UAV_MIX_EPOCH'):
+                os.environ.pop(k, None)
+            sys.modules.pop('_uav_cfg_probe', None)
+        ok = _bad_ok = False
+        print(f'  ✗ (f) {env} was ACCEPTED — it would surface as a missing checkpoint or a '
+              f'lying folder name hours later')
+    if _bad_ok:
+        print('  ✓ (f) malformed bone / alpha / epoch values rejected at config-import time')
+
+    return ok
+
+
 GATES = {
     'G0': ('every arm builds', lambda a: gate_G0(a.device)),
     'G1': ('fm parity vs Gen11', lambda a: gate_G1(a.gen11_savepath, a.gen15_savepath)),
@@ -639,6 +794,7 @@ GATES = {
     'G6': ('per-plan wall clock', lambda a: gate_G6(a.device)),
     'G7': ('infos contract + projector timing', lambda a: gate_G7(a.device)),
     'G8': ('hardflow arm: noise scale + field', lambda a: gate_G8(a.device)),
+    'G9': ('U6 af knobs: bone / alpha / epoch path safety', lambda a: gate_G9()),
 }
 
 

@@ -26,6 +26,7 @@ over DRY — the repo's copy-modify convention), and it means a future re-tune o
 max_path_length in Gen11 does NOT propagate here. Do not "fix" this by importing.
 """
 
+import os                       # Gen15 U6 — the UAV_MIX_* env knobs below
 import yaml
 from diffuser.utils import watch
 
@@ -114,6 +115,144 @@ def _uav_mix_exp_name(args):
 logbase = 'logs/UAV_MIX'
 
 
+# ═══ Gen15 U6 — the three env knobs this generation shipped without ═════════════════════
+#
+# Before U6 `config/uav_mix.py` read NO environment variable at all. Three consequences,
+# all of them silent:
+#
+#  1. 🔴 `af_alpha_end: 0.0` was unreachable. The sigmoid + `af_alpha_clamp=0.005` snap alpha
+#     to EXACTLY 0 from ~71.2% of the budget on, and af_diffusion.py:568 routes `alpha <= 0`
+#     into Gen3v6's `_p_losses_meanflow` body UNMODIFIED. So every Gen15 `af` checkpoint ever
+#     trained DEPLOYS A MEANFLOW MODEL wearing an alpha-Flow folder name — jobs 25135-25138
+#     (pillars) included. The bootstrapped objective has never trained a single weight we
+#     evaluated. Gen3v7 hit the identical defect and fixed it with AF_ALPHA_END
+#     (config/avoiding-d3il.py:114-129, commit beb7f26c); this is the same fix, Gen15 spelling.
+#
+#  2. 🔴 The `af` arm was pinned to the SiT backbone, which is NOT parameter-matched to the
+#     4.0 M U-Net the `fm`/`mf` arms run (dit_hidden_size=256, dit_depth=8 => ~9.4 M by the
+#     18*depth*d^2 rule). Every published Gen15 af-vs-mf row therefore confounds OBJECTIVE
+#     with BACKBONE and PARAMETER COUNT. U6 flips the default to 'unet' — which is what
+#     _TWO_TIME_BACKBONE's own comment says this generation locked itself to — and keeps
+#     'sit' one env var away, so the appendix arm is preserved, not deleted.
+#
+#  3. The checkpoint the eval deploys was fixed at 'best'. On the af arm `best` is chosen on
+#     a test_loss that scales with alpha, so it structurally prefers a MID-CURRICULUM model
+#     (Gen3v7 DA 2026-09-01 §3.1/§4.2 — `latest` vs `best` was the whole difference between
+#     0/2 and 2/2 goals at K=1). Pairing knob 1 with 'best' floors alpha and then discards
+#     the checkpoint the floor produced.
+#
+# ✅ PATH SAFETY IS ALREADY GUARANTEED for knobs 1 and 2: `('af_alpha_end', 'ae')` and
+#    `('imf_backbone', 'bb')` are UNCONDITIONAL exp_name_tokens
+#    (mix_uav/models/engine_registry.py:316-317) and `_uav_mix_exp_name` renders them for
+#    every run. So each value already trains into its OWN directory — no overwrite, no
+#    --auto-resume collision. Gate G2 asserts exactly this across the knob cross-product.
+#    Knob 3 is eval-only and gets its folder token in `_uav_eval_tag` (eval_mix_uav.py).
+#
+# 🔴 THE DEFAULT FLIP IS NOT PATH-NEUTRAL, AND THAT IS THE POINT. The af checkpoint path
+#    carries `_bbsit` today and `_bbunet` from now on. Existing SiT checkpoints are NOT
+#    touched, NOT overwritten and NOT deleted — they simply are no longer what a bare
+#    `... af` invocation resolves to. Reach them again with UAV_MIX_BONE_AF=sit. A default
+#    `af` eval WILL fail on a missing checkpoint until the U-Net arm has been trained; that
+#    is a loud, correct failure, and far better than the silent confound it replaces.
+
+
+def _env_or_none(name):
+    """Env value, or None when unset **or blank**.
+
+    🔴 BLANK MUST MEAN UNSET. Shell `VAR= cmd` does not unset VAR — it exports the EMPTY
+    STRING, so a bare `os.environ.get(name) is not None` is True and `float('')` kills the
+    job at config import. Gen14 learned this the expensive way (job 25215); Gen15 inherits
+    the rule rather than the bug.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return None
+    return str(raw).strip()
+
+
+# Must equal engine_registry.get('af')['backbones']. Not imported here: this module is read
+# at config-import time and must not pull in the model package. The U6 gate asserts the two
+# agree, so drift is caught rather than assumed away.
+_UAV_AF_BONES = ('unet', 'dit', 'sit')
+_UAV_AF_BONE_DEFAULT = 'unet'
+
+
+def _uav_af_bone():
+    """The af arm's ML backbone. UAV_MIX_BONE_AF, default 'unet' (U6 — was 'sit')."""
+    raw = _env_or_none('UAV_MIX_BONE_AF')
+    if raw is None:
+        return _UAV_AF_BONE_DEFAULT
+    if raw not in _UAV_AF_BONES:
+        raise ValueError(
+            f"CRITICAL: UAV_MIX_BONE_AF='{raw}' is not one of {list(_UAV_AF_BONES)}. "
+            f"('mf_dit' belongs to the mf arm — a different class with different provenance; "
+            f"accepting it here would train a model whose folder names another architecture.)")
+    return raw
+
+
+def _uav_af_alpha_end():
+    """Terminal alpha of the af schedule. UAV_MIX_AF_ALPHA_END, default 0.0 (= MeanFlow).
+
+    >0 floors alpha so the bootstrapped branch stays live to the last step, i.e. the deployed
+    model is genuinely alpha-Flow. Upstream's own switch for the same intent is
+    `discrete_training: true` (aux_repo/alphaflow/src/training/loss.py:421-426), which floors
+    alpha at clamp_value instead of snapping to 0 — so this is a supported deviation, not an
+    invented knob. ⚠️ It IS a deviation: every upstream recipe ends at 0, because alpha-Flow
+    is a CURRICULUM whose destination is MeanFlow. Say so in any write-up.
+
+    🔴 Must land below 1 - af_alpha_clamp and above af_alpha_clamp, or _get_ratio snaps it to
+    an endpoint and the folder name lies about what trained.
+    """
+    raw = _env_or_none('UAV_MIX_AF_ALPHA_END')
+    if raw is None:
+        return 0.0
+    try:
+        val = float(raw)
+    except ValueError:
+        raise ValueError(f"CRITICAL: UAV_MIX_AF_ALPHA_END='{raw}' is not a float.")
+    if not (0.0 <= val <= 1.0):
+        raise ValueError(
+            f"CRITICAL: UAV_MIX_AF_ALPHA_END={val} must lie in [0, 1]; "
+            f"alpha=1 is pure flow matching, alpha=0 is MeanFlow.")
+    _clamp = 0.005                      # af_alpha_clamp, below
+    if 0.0 < val < _clamp:
+        raise ValueError(
+            f"CRITICAL: UAV_MIX_AF_ALPHA_END={val} is below af_alpha_clamp={_clamp}, so "
+            f"_get_ratio snaps it to exactly 0.0 and the arm ends on the MeanFlow target "
+            f"while the folder still reads '_ae{val:g}'. Raise alpha, or lower the clamp.")
+    return val
+
+
+_UAV_EPOCH_DEFAULT = 'best'
+
+
+def _uav_epoch(raw=None):
+    """Which checkpoint the eval deploys. UAV_MIX_EPOCH: 'best' | 'latest' | <step>.
+
+    Returns the value for `diffusion_epoch`. `raw=None` reads the environment; the eval
+    script passes its --epoch through here too, so the CLI and the env form can never
+    disagree about what is legal. Rejecting a typo HERE keeps it from becoming a
+    'state_<garbage>.pt' FileNotFoundError minutes into a GPU allocation.
+    """
+    if raw is None:
+        raw = _env_or_none('UAV_MIX_EPOCH')
+    if raw is None:
+        return _UAV_EPOCH_DEFAULT
+    val = str(raw).strip()
+    if val in ('best', 'latest'):
+        return val
+    if not val.isdigit():
+        raise ValueError(
+            f"CRITICAL: UAV_MIX_EPOCH/--epoch='{val}' is not 'best', 'latest', or a "
+            f"non-negative step number.")
+    return int(val)
+
+
+_AF_BONE      = _uav_af_bone()
+_AF_ALPHA_END = _uav_af_alpha_end()
+_UAV_EPOCH    = _uav_epoch()
+
+
 # ── Shared UAV task/data settings — identical on all three arms by construction ─────────────
 # Anything an engine must NOT change lives here. Copied verbatim from Gen11's
 # `flow_matching_v3_uav` block; the per-engine blocks below spread this dict first and then
@@ -171,7 +310,11 @@ _UAV_PLAN = {
     'loadbase': None,
     'logbase': logbase,
     'exp_name': _uav_mix_exp_name,
-    'diffusion_epoch': 'best',
+    # ── Gen15 U6 ── UAV_MIX_EPOCH. Eval-only: it picks among files already in the checkpoint
+    # tree, so the CHECKPOINT path is untouched and no retrain is implied. The RESULTS folder
+    # gains an '_EP<sel>' token (eval_mix_uav.py:_uav_eval_tag) when non-default, so a
+    # 'latest' pass lands beside the 'best' one instead of silently overwriting it.
+    'diffusion_epoch': _UAV_EPOCH,
 
     # 🔴 K (NFE budget) — the primary experimental axis of Gen15 (PLAN §7.3).
     #
@@ -423,13 +566,26 @@ base = {
     'mix_uav_af': {
         **_UAV_TASK,
         **_TWO_TIME_BACKBONE,
-        # 🔴 OVERRIDES _TWO_TIME_BACKBONE's 'unet' for THIS ARM ONLY — `mf` keeps 'unet', so the
-        # mf-vs-fm headline comparison is untouched. 'sit' is alpha-Flow's OWN backbone
-        # (af_sit_trajectory.py, Gen3v7 U2); it sizes from dit_hidden_size/dit_depth, NOT from
-        # freq_dim, so this arm is NOT parameter-matched to the 4.0 M U-Net rows — it is the
-        # deferred appendix arm (PLAN §6), never the architecture-matched claim.
+        # ── Gen15 U6 (2026-09-03) ── THE DEFAULT IS NOW 'unet', RESOLVED FROM UAV_MIX_BONE_AF.
+        #
+        # It used to be a hard 'sit'. 'sit' is alpha-Flow's OWN backbone (af_sit_trajectory.py,
+        # Gen3v7 U2) and it sizes from dit_hidden_size/dit_depth, NOT from freq_dim — so at
+        # 256/8 it is ~9.4 M against the fm/mf arms' 4.0 M U-Net. Every af-vs-mf row Gen15 has
+        # published therefore moves OBJECTIVE, BACKBONE and PARAMETER COUNT together, which is
+        # the one thing `architecture-matched-beat-is-the-strong-claim` says must never happen
+        # in a headline. _TWO_TIME_BACKBONE's own comment already says this generation is
+        # "LOCKED to 'unet' for the headline comparison"; the af arm was the exception.
+        #
+        # 'sit' is KEPT, not deleted — it is the deferred appendix arm (PLAN §6) and it is one
+        # env var away:  UAV_MIX_BONE_AF=sit
+        #
+        # ✅ 'bb' is an UNCONDITIONAL exp_name token, so 'unet' and 'sit' train into separate
+        #    trees and neither can overwrite the other (gate G2 asserts the cross-product).
+        # 🔴 The flip DOES move the default path: `_bbsit` -> `_bbunet`. Existing SiT
+        #    checkpoints survive untouched but are no longer what a bare `af` run resolves to,
+        #    so a default af EVAL fails on a missing checkpoint until the U-Net arm is trained.
         # ⚠️ plan_mix_uav_af below MUST carry the same value or eval rebuilds a different savepath.
-        'imf_backbone': 'sit',
+        'imf_backbone': _AF_BONE,
         'engine': 'af',
         'model': 'models.af_engine.AlphaFlowEngine',
         'diffusion': 'models.af_diffusion.AlphaFlowODE',
@@ -438,7 +594,18 @@ base = {
         # ── Gen3v7 alpha-schedule knobs ──────────────────────────────────────────────────────
         'af_alpha_scheduler': 'sigmoid',
         'af_alpha_init': 1.0,        # alpha at step 0   (1.0 ⇒ start as pure flow matching)
-        'af_alpha_end': 0.0,         # alpha at the end  (0.0 ⇒ end as MeanFlow)
+        # ── Gen15 U6 ── UAV_MIX_AF_ALPHA_END. 0.0 (the default, and every upstream recipe)
+        # anneals alpha to EXACTLY zero, which routes the whole tail into af_diffusion.py:568 —
+        # Gen3v6's MeanFlow JVP body, unmodified. A run that ends at 0.0 DEPLOYS A MEANFLOW
+        # MODEL. That is upstream's design (alpha-Flow is a curriculum whose destination IS
+        # MeanFlow), but it means the bootstrapped objective is untested on this task.
+        #   UAV_MIX_AF_ALPHA_END=0.2 -> alpha floors at 0.2, the discrete branch stays live to
+        #                               the last step, and the deployed model is genuinely AF.
+        # 🔴 PATH SAFETY: 'ae' is an UNCONDITIONAL exp_name token, so every value already lands
+        #    in its own '_ae<val>' tree. Keep this in sync with the PLAN block or eval finds no
+        #    weights. Verify with `train/discrete_frac` > 0 at the final epochs — if it is 0.0
+        #    the run was MeanFlow whatever the folder says.
+        'af_alpha_end': _AF_ALPHA_END,
         'af_alpha_init_step': 0,
         # 🔴 MUST equal n_train_steps — AlphaFlowODE.__init__ hard-asserts it. Upstream's
         # 400000 would hold alpha≈1 for our whole run, i.e. train plain flow matching under an
@@ -459,9 +626,11 @@ base = {
         'diffusion': 'models.af_diffusion.AlphaFlowODE',
         'prefix': 'plans/mix_uav_af/',
         'diffusion_loadpath': 'f:mix_uav_af/H{horizon}_D{diffusion}',
-        # ⚠️ MUST match the training block (see the mf plan block's note).
+        # ⚠️ MUST match the training block (see the mf plan block's note). Both of these are
+        # env-resolved as of U6 and read the SAME module-level value the train block does, so
+        # a plan/train mismatch is now unrepresentable rather than merely warned about.
         'af_alpha_init': 1.0,
-        'af_alpha_end': 0.0,
-        'imf_backbone': 'sit',
+        'af_alpha_end': _AF_ALPHA_END,
+        'imf_backbone': _AF_BONE,
     },
 }

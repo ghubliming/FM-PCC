@@ -68,6 +68,12 @@ TRACKED_ENV = (
     'FMPCC_BOX_OBS_GUARD', 'FMPCC_BOX_OBS_MAX_OVERLAP_M', 'FMPCC_BOX_HALF_SIDE_M',
     # Gen15 mix_uav
     'UAV_MIX_FLOW_STEPS', 'UAV_MIX_HF_OFF',
+    # Gen15 U6 — the af arm's backbone (default flipped 'sit' -> 'unet'), the terminal alpha
+    # (>0 = alpha-Flow actually trains the final weights) and the checkpoint the eval deploys.
+    # The first two are checkpoint-path keys and the third is a results-path key, but a run
+    # that leaves them all at the default is indistinguishable from a pre-U6 one by name; this
+    # is where that gets recorded.
+    'UAV_MIX_BONE_AF', 'UAV_MIX_AF_ALPHA_END', 'UAV_MIX_EPOCH',
     # Gen14 U10/U11 mix_visual_aligning — bone, perception, alpha schedule, projection budget
     'MIX_BONE', 'MIX_BONE_MF', 'MIX_BONE_AF',
     'MIX_VIS_PRETRAINED', 'MIX_VIS_LR_SCALE', 'MIX_VIS_COND',

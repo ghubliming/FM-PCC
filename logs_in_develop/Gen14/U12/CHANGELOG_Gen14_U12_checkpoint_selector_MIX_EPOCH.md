@@ -250,8 +250,10 @@ baselines are cand7 (`best`, published) and the Stage-1 `_EPlatest` re-read of c
 
 ## 6. Risks and open items
 
-1. **Disk.** §2.3 adds one checkpoint per completed run. `/data` was at 100 % during the Gen3v7 runs
-   (27 G free of 7.0 T). Check free space before Stage 2.
+1. **Disk.** §2.3 adds one checkpoint per completed run, but `clean_weights.py` keeps
+   `state_best.pt` + the highest-numbered file, so a pruned tree ends up the same size as before
+   — holding the endpoint instead of step 80 000. Check free space anyway: `/data` was at 100 %
+   during the Gen3v7 runs (27 G free of 7.0 T).
 2. **Stage 1 may abort immediately** if the cand7 tree has no numeric checkpoint (see the ⚠ above).
    That is information, and it is cheap to get.
 3. **Single seed.** Stage 2 is seed 6, matching U10 and the Gen3v7 win. The Gen3v7 result it is
