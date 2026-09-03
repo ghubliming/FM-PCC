@@ -51,8 +51,11 @@ from config import (
 logger = logging.getLogger(__name__)
 
 # Path-encoded axes carried on every row (discovery._make_unit puts them there).
+# `run_tag` is the trailing `_{tag}` of the eval folder (FMPCC_UAV_EVAL_TAG). It is
+# an EXPERIMENT axis: `..._T0.5_fix16scaled` and `..._T0.5_fix16legacy` are two arms
+# of an A/B and must never be pooled.
 AXIS_COLUMNS = ['scene', 'engine', 'K', 'mpc_batch', 'controller', 'threshold',
-                'backbone', 'generation']
+                'run_tag', 'backbone', 'generation']
 
 ID_COLUMNS = (['Candidate', 'FolderName', 'FullPath', 'seed', 'split',
                'geo', 'geo_scene', 'variant', 'variant_base', 'tightened',
@@ -67,7 +70,12 @@ AGG_KEYS = (['Candidate', 'FolderName', 'FullPath', 'split',
 # The K-sweep cell: everything that must be held equal for a K comparison to be
 # a K comparison. Seeds are pooled, candidates are not a key (K IS the candidate
 # axis here — that is the whole point).
-K_SWEEP_KEYS = ['scene', 'engine', 'geo', 'variant', 'split', 'K']
+#
+# 🔴 [Fix_16 DA, 2026-09-03] `run_tag` MUST be here. Candidate is deliberately not a
+# key, so without it the pre-fix, `fix16legacy` and `fix16scaled` runs of the same
+# engine/K/variant land in ONE cell and get averaged — a 100 %-abort arm silently
+# blended with a 0 %-abort arm. That is strictly worse than the drop it replaces.
+K_SWEEP_KEYS = ['scene', 'engine', 'geo', 'variant', 'split', 'K', 'run_tag']
 
 
 class Aggregator:
@@ -251,7 +259,7 @@ class Aggregator:
         table = _reduce(per_rollout, AGG_KEYS)
         if table.empty:
             return table
-        seeds = (per_rollout.groupby(AGG_KEYS, observed=True)['seed']
+        seeds = (per_rollout.groupby(AGG_KEYS, observed=True, dropna=False)['seed']
                  .nunique().reset_index().rename(columns={'seed': 'n_seeds'}))
         return table.merge(seeds, on=AGG_KEYS, how='left')
 
@@ -275,6 +283,18 @@ class Aggregator:
         if usable.empty:
             logger.info('  k_sweep skipped — no candidate has a parsable K')
             return pd.DataFrame()
+        # Dropping here is legitimate (a K sweep needs a K) but must never be quiet:
+        # an unparsed folder name looks identical to a run that was never done.
+        unparsed = per_rollout[per_rollout['K'].isna()]
+        if not unparsed.empty:
+            folders = sorted(set(unparsed['FolderName'].astype(str)))
+            logger.info(
+                f'  k_sweep: {len(unparsed)} rollout(s) from {len(folders)} candidate(s) '
+                f'have no K and are excluded from uav_k_sweep.csv (normal for a Gen11 '
+                f'model-folder candidate): '
+                f'{", ".join(folders[:6])}{" …" if len(folders) > 6 else ""}. '
+                f'They stay complete in per_rollout_detail.csv. If one of these IS an '
+                f'eval-tag folder, discovery has already warned about it by name.')
 
         table = _reduce(usable, keys)
         if table.empty:
@@ -294,7 +314,7 @@ class Aggregator:
             logger.warning(
                 f'  k_sweep: {len(mixed)} cell(s) pool MORE THAN ONE candidate at the '
                 f'same K — they differ in an axis this table does not key on '
-                f'(mpc batch / controller / threshold / backbone). See the '
+                f'(mpc batch / controller / threshold / backbone / run tag). See the '
                 f'`candidates` column in uav_k_sweep.csv before reading those rows.')
         return table.sort_values([k for k in keys if k != 'K'] + ['K', 'mask', 'metric'])
 
@@ -459,7 +479,10 @@ def _reduce(per_rollout, keys):
         subset = long if mask == 'all' else long[long[flag_column].fillna(0) != 1.0]
         if subset.empty:
             continue
-        grouped = (subset.groupby(keys + ['metric'], observed=True)['value']
+        # `dropna=False`: a NaN in ANY key column (an unparsable K, say) would
+        # otherwise delete those rollouts here with no error and no log line —
+        # which is exactly how the six Fix_16 A/B runs went missing on 2026-09-03.
+        grouped = (subset.groupby(keys + ['metric'], observed=True, dropna=False)['value']
                    .agg(['mean', 'std', 'min', 'max', 'count'])
                    .reset_index())
         grouped['mask'] = mask

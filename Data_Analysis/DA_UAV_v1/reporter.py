@@ -44,7 +44,7 @@ from discovery import format_snapshot_ts, snapshot_by_seed_str
 logger = logging.getLogger(__name__)
 
 AXIS_COLUMNS = ['scene', 'engine', 'K', 'mpc_batch', 'controller', 'threshold',
-                'backbone', 'generation']
+                'run_tag', 'backbone', 'generation']
 
 
 class Reporter:
@@ -182,6 +182,7 @@ class Reporter:
                 'mpc_batch': axes.get('mpc_batch'),
                 'controller': axes.get('controller', ''),
                 'threshold': axes.get('threshold'),
+                'run_tag': axes.get('run_tag', ''),
                 'backbone': axes.get('backbone', ''),
                 'data_proportion': axes.get('data_proportion', ''),
                 'alpha_init': axes.get('alpha_init', ''),

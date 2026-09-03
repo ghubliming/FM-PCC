@@ -151,6 +151,79 @@ def test_eval_tag_parse():
 
     check('unparsable tag yields {}', discovery.parse_eval_tag('random_folder'), {})
 
+    # ── trailing run tag (FMPCC_UAV_EVAL_TAG) ────────────────────────────────
+    # Regression: before Fix_16 DA (2026-09-03) these folders did not match at
+    # all, K came back None, and the axis groupbys dropped every one of their
+    # rollouts on the NaN key — silently.
+    got = discovery.parse_eval_tag('Emf_K1_mpc4_pid_stopgo_T0.5_fix16scaled')
+    check('run tag: engine', got.get('engine'), 'mf')
+    check('run tag: K parsed (was None)', got.get('K'), 1)
+    check('run tag: controller still right', got.get('controller'), 'pid_stopgo')
+    check('run tag: threshold still right', got.get('threshold'), 0.5)
+    check('run tag: captured', got.get('run_tag'), 'fix16scaled')
+
+    got = discovery.parse_eval_tag('Emf_K5_mpc4_pid_stopgo_T0.5_fix16legacy')
+    check('run tag: other arm', got.get('run_tag'), 'fix16legacy')
+    check('run tag: other arm K', got.get('K'), 5)
+
+    # untagged folders must stay untagged, not absorb the controller or threshold
+    got = discovery.parse_eval_tag('Emf_K4_mpc4_pid_stopgo_T0.5')
+    check('no run tag → empty', got.get('run_tag'), '')
+    check('no run tag: controller intact', got.get('controller'), 'pid_stopgo')
+
+    # tag containing separators the sanitiser allows (`[^A-Za-z0-9._-]` → `-`)
+    got = discovery.parse_eval_tag('Efm_K20_mpc4_pid_const_v_T0.5_ab-1.2_x')
+    check('dotted/dashed tag', got.get('run_tag'), 'ab-1.2_x')
+    check('dotted/dashed tag: controller', got.get('controller'), 'pid_const_v')
+    check('dotted/dashed tag: threshold', got.get('threshold'), 0.5)
+
+    # Gen11 spelling (no E-token) takes a tag too
+    got = discovery.parse_eval_tag('K20_mpc4_pid_stopgo_anchorP_T0.5_probe')
+    check('Gen11 + run tag: K', got.get('K'), 20)
+    check('Gen11 + run tag: controller', got.get('controller'), 'pid_stopgo_anchorP')
+    check('Gen11 + run tag: tag', got.get('run_tag'), 'probe')
+
+    # display_name must keep the two arms of an A/B apart
+    base = {'scene': 'pillars', 'engine': 'mf', 'K': 1, 'backbone': 'unet',
+            'data_proportion': '0.5'}
+    a = discovery.display_name(dict(base, run_tag='fix16scaled'), 'x')
+    b = discovery.display_name(dict(base, run_tag='fix16legacy'), 'x')
+    c = discovery.display_name(dict(base, run_tag=''), 'x')
+    check('display_name: arms differ', a != b, True)
+    check('display_name: arm vs untagged differ', a != c, True)
+    check('display_name: untagged unchanged', c, 'pillars|mf|K1|bbunet|dp0.5')
+    check('display_name: tag suffix', a, 'pillars|mf|K1|bbunet|dp0.5|@fix16scaled')
+
+    # A folder that is not eval-tag-shaped is the ordinary legacy case (a Gen11
+    # MODEL folder used as the candidate) and must stay QUIET; one that IS
+    # eval-tag-shaped but does not parse is a parser bug and must be LOUD.
+    import logging
+
+    class _Catch(logging.Handler):
+        def __init__(self):
+            super().__init__()
+            self.seen = []
+
+        def emit(self, record):
+            self.seen.append(record.getMessage())
+
+    catcher = _Catch()
+    discovery.logger.addHandler(catcher)
+    # main() sets the ROOT level to ERROR to keep this suite's output readable;
+    # discovery.logger inherits it, so a WARNING would be filtered before it ever
+    # reaches the handler. Pin the level for the duration of this check.
+    previous_level = discovery.logger.level
+    discovery.logger.setLevel(logging.WARNING)
+    discovery._WARNED_UNPARSED_TAGS.clear()
+    discovery.parse_eval_tag('H8_Dmodels.diffusion.FlowMatchingODE_9D')
+    check('legacy model folder warns: no', len(catcher.seen), 0)
+    discovery.parse_eval_tag('Emf_K1_mpc4_pid_stopgo_TWOPOINTFIVE')
+    check('tag-shaped miss warns: yes', len(catcher.seen), 1)
+    discovery.parse_eval_tag('Emf_K1_mpc4_pid_stopgo_TWOPOINTFIVE')
+    check('and only once per name', len(catcher.seen), 1)
+    discovery.logger.setLevel(previous_level)
+    discovery.logger.removeHandler(catcher)
+
 
 def test_model_dir_parse():
     print('\n[model-dir parser]')

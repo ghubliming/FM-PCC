@@ -128,9 +128,13 @@ All six collapse to one `FolderName`, so they are **absent from `candidates_deta
 `Candidate`), which is what every number in this DA is computed from. Nothing is lost — but do
 not read the tagged runs out of the aggregate CSVs.
 
-➡️ **Action:** extend the folder-name regex in the UAV DA discovery step to accept a trailing
-`_<tag>`, and carry the tag as its own column. Until then, tagged runs must be read
-per-rollout.
+➡️ ✅ **FIXED same day.** `run_tag` is now parsed, labelled and used as a grouping key —
+including in `K_SWEEP_KEYS`, without which the fixed regex would have *pooled* the two A/B arms
+instead of dropping them, which is worse. `_reduce` also groups with `dropna=False` so a NaN
+axis can never silently delete rollouts again. See
+[`../../DA_Code/DA_UAV_v1/CHANGELOG_20260903_run_tag_axis.md`](../../DA_Code/DA_UAV_v1/CHANGELOG_20260903_run_tag_axis.md).
+🔴 The numbers in **this** DA were computed from `per_rollout_detail.csv` before that fix and
+are unaffected; re-run `main_da_batch.py` over the 0309 tree to regenerate correct aggregates.
 
 ---
 
